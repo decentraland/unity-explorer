@@ -29,7 +29,7 @@ namespace DCL.PluginSystem.Global
             FriendsCache = new FriendsCache();
             RpcFriendsService = new RPCFriendsService(friendsEventBus, FriendsCache, selfProfile, socialServicesRPC);
             FriendsService = useAnalytics ? new FriendServiceAnalyticsDecorator(RpcFriendsService, analyticsController!) : RpcFriendsService;
-            ConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS));
+            ConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus));
         }
 
         public void Dispose()

@@ -74,17 +74,17 @@ namespace DCL.Events
         }
 
         private void OnBackButtonClicked() =>
-            eventsController.OpenSection(EventsSection.CALENDAR, eventsController.CurrentCalendarFromDate);
+            eventsController.OpenSection(EventsSection.Calendar, eventsController.CurrentCalendarFromDate);
 
         private void OnGoToNextDayButtonClicked() =>
-            eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, currentDay.AddDays(1));
+            eventsController.OpenSection(EventsSection.EventsByDay, currentDay.AddDays(1));
 
         private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView) =>
             mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
 
         private void OnSectionOpen(EventsSection section, DateTime date)
         {
-            if (section != EventsSection.EVENTS_BY_DAY)
+            if (section != EventsSection.EventsByDay)
                 return;
 
             loadEventsCts = loadEventsCts.SafeRestart();

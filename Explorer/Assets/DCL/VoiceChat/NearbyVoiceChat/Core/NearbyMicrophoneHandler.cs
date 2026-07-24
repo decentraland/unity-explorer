@@ -44,7 +44,7 @@ namespace DCL.VoiceChat
             this.islandRoom = islandRoom;
             this.configuration = configuration;
 
-            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
+            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.Nearby);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;

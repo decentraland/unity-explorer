@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private CancellationTokenSource? cts;
         private string connectionString = string.Empty;
@@ -84,7 +84,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 throw new WarningException("Room is already running");
 
             cts = cts.SafeRestart();
-            attemptToConnectState.Set(AttemptToConnectState.NONE);
+            attemptToConnectState.Set(AttemptToConnectState.None);
 
             if (connectionString == string.Empty)
             {
@@ -98,15 +98,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
-            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
 
-            if (attemptToConnectState.Value() is AttemptToConnectState.ERROR)
+            if (attemptToConnectState.Value() is AttemptToConnectState.Error)
             {
                 // A failed attempt (e.g. revoked token → 401) is terminal; cancel the loop so it stops re-attempting the same credentials forever.
                 cts.SafeCancelAndDispose();
                 cts = null;
                 roomState.Set(IConnectiveRoom.State.Stopped);
-                attemptToConnectState.Set(AttemptToConnectState.NONE);
+                attemptToConnectState.Set(AttemptToConnectState.None);
                 return false;
             }
 
@@ -180,7 +180,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             Result connectResult = await freshRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
 
-            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
+            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.Success : AttemptToConnectState.Error;
             attemptToConnectState.Set(connectionState);
 
             if (connectResult.Success)

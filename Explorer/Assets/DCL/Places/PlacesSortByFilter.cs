@@ -2,7 +2,7 @@
 {
     public enum PlacesSortByFilter
     {
-        MOST_ACTIVE,
-        BEST_RATED,
+        MostActive,
+        BestRated,
     }
 }

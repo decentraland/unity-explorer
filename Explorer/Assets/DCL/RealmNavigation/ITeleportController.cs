@@ -49,10 +49,10 @@ namespace DCL.RealmNavigation
 
         public AssignResult Assign(Vector2Int newParcel, string? newSpawnPointName = null)
         {
-            if (consumed) return AssignResult.PARCEL_ALREADY_CONSUMED;
+            if (consumed) return AssignResult.ParcelAlreadyConsumed;
             value = newParcel;
             SpawnPointName = newSpawnPointName;
-            return AssignResult.OK;
+            return AssignResult.Ok;
         }
 
         public Vector2Int ConsumeByTeleportOperation()
@@ -67,7 +67,7 @@ namespace DCL.RealmNavigation
 
     public enum AssignResult
     {
-        OK,
-        PARCEL_ALREADY_CONSUMED,
+        Ok,
+        ParcelAlreadyConsumed,
     }
 }

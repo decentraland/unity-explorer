@@ -23,19 +23,19 @@ namespace DCL.LOD
             //In worlds, only SDK7 scenes with a resolved ISS descriptor participate in LODs.
             //Anything else keeps the legacy always-full-scene behavior
             if (scenesAreFixed && (!sceneDefinitionComponent.IsSDK7 || !issDescriptor.SupportsDescriptor()))
-                return VisualSceneState.SHOWING_SCENE;
+                return VisualSceneState.ShowingScene;
 
             //For SDK6 scenes, we just show lod0
             if (!sceneDefinitionComponent.IsSDK7)
-                return VisualSceneState.SHOWING_LOD;
+                return VisualSceneState.ShowingLod;
 
-            int isSceneLoaded = currentVisualSceneState == VisualSceneState.SHOWING_SCENE
+            int isSceneLoaded = currentVisualSceneState == VisualSceneState.ShowingScene
                 ? unloadTolerance
                 : 0;
 
             return partition.Bucket < sdk7LodThreshold + isSceneLoaded
-                ? VisualSceneState.SHOWING_SCENE
-                : VisualSceneState.SHOWING_LOD;
+                ? VisualSceneState.ShowingScene
+                : VisualSceneState.ShowingLod;
         }
 
     }

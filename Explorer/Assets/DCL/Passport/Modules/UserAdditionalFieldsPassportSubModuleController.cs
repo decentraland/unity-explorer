@@ -89,91 +89,91 @@ namespace DCL.Passport.Modules
         {
             if (!string.IsNullOrEmpty(currentProfile.Gender))
             {
-                AddAdditionalField(AdditionalFieldType.GENDER, currentProfile.Gender, false);
-                AddAdditionalField(AdditionalFieldType.GENDER, currentProfile.Gender, true);
+                AddAdditionalField(AdditionalFieldType.Gender, currentProfile.Gender, false);
+                AddAdditionalField(AdditionalFieldType.Gender, currentProfile.Gender, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.GENDER, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.Gender, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.Country))
             {
-                AddAdditionalField(AdditionalFieldType.COUNTRY, currentProfile.Country, false);
-                AddAdditionalField(AdditionalFieldType.COUNTRY, currentProfile.Country, true);
+                AddAdditionalField(AdditionalFieldType.Country, currentProfile.Country, false);
+                AddAdditionalField(AdditionalFieldType.Country, currentProfile.Country, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.COUNTRY, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.Country, string.Empty, true);
 
             if (currentProfile.Birthdate != null && currentProfile.Birthdate.Value != new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc))
             {
-                AddAdditionalField(AdditionalFieldType.BIRTH_DATE, currentProfile.Birthdate.Value.ToString("dd/MM/yyyy"), false);
-                AddAdditionalField(AdditionalFieldType.BIRTH_DATE, currentProfile.Birthdate.Value.ToString("dd/MM/yyyy"), true);
+                AddAdditionalField(AdditionalFieldType.BirthDate, currentProfile.Birthdate.Value.ToString("dd/MM/yyyy"), false);
+                AddAdditionalField(AdditionalFieldType.BirthDate, currentProfile.Birthdate.Value.ToString("dd/MM/yyyy"), true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.BIRTH_DATE, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.BirthDate, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.Pronouns))
             {
-                AddAdditionalField(AdditionalFieldType.PRONOUNS, currentProfile.Pronouns, false);
-                AddAdditionalField(AdditionalFieldType.PRONOUNS, currentProfile.Pronouns, true);
+                AddAdditionalField(AdditionalFieldType.Pronouns, currentProfile.Pronouns, false);
+                AddAdditionalField(AdditionalFieldType.Pronouns, currentProfile.Pronouns, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.PRONOUNS, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.Pronouns, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.RelationshipStatus))
             {
-                AddAdditionalField(AdditionalFieldType.RELATIONSHIP_STATUS, currentProfile.RelationshipStatus, false);
-                AddAdditionalField(AdditionalFieldType.RELATIONSHIP_STATUS, currentProfile.RelationshipStatus, true);
+                AddAdditionalField(AdditionalFieldType.RelationshipStatus, currentProfile.RelationshipStatus, false);
+                AddAdditionalField(AdditionalFieldType.RelationshipStatus, currentProfile.RelationshipStatus, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.RELATIONSHIP_STATUS, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.RelationshipStatus, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.SexualOrientation))
             {
-                AddAdditionalField(AdditionalFieldType.SEXUAL_ORIENTATION, currentProfile.SexualOrientation, false);
-                AddAdditionalField(AdditionalFieldType.SEXUAL_ORIENTATION, currentProfile.SexualOrientation, true);
+                AddAdditionalField(AdditionalFieldType.SexualOrientation, currentProfile.SexualOrientation, false);
+                AddAdditionalField(AdditionalFieldType.SexualOrientation, currentProfile.SexualOrientation, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.SEXUAL_ORIENTATION, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.SexualOrientation, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.Language))
             {
-                AddAdditionalField(AdditionalFieldType.LANGUAGE, currentProfile.Language, false);
-                AddAdditionalField(AdditionalFieldType.LANGUAGE, currentProfile.Language, true);
+                AddAdditionalField(AdditionalFieldType.Language, currentProfile.Language, false);
+                AddAdditionalField(AdditionalFieldType.Language, currentProfile.Language, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.LANGUAGE, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.Language, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.Profession))
             {
-                AddAdditionalField(AdditionalFieldType.PROFESSION, currentProfile.Profession, false);
-                AddAdditionalField(AdditionalFieldType.PROFESSION, currentProfile.Profession, true);
+                AddAdditionalField(AdditionalFieldType.Profession, currentProfile.Profession, false);
+                AddAdditionalField(AdditionalFieldType.Profession, currentProfile.Profession, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.PROFESSION, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.Profession, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.EmploymentStatus))
             {
-                AddAdditionalField(AdditionalFieldType.EMPLOYMENT_STATUS, currentProfile.EmploymentStatus, false);
-                AddAdditionalField(AdditionalFieldType.EMPLOYMENT_STATUS, currentProfile.EmploymentStatus, true);
+                AddAdditionalField(AdditionalFieldType.EmploymentStatus, currentProfile.EmploymentStatus, false);
+                AddAdditionalField(AdditionalFieldType.EmploymentStatus, currentProfile.EmploymentStatus, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.EMPLOYMENT_STATUS, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.EmploymentStatus, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.Hobbies))
             {
-                AddAdditionalField(AdditionalFieldType.HOBBIES, currentProfile.Hobbies, false);
-                AddAdditionalField(AdditionalFieldType.HOBBIES, currentProfile.Hobbies, true);
+                AddAdditionalField(AdditionalFieldType.Hobbies, currentProfile.Hobbies, false);
+                AddAdditionalField(AdditionalFieldType.Hobbies, currentProfile.Hobbies, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.HOBBIES, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.Hobbies, string.Empty, true);
 
             if (!string.IsNullOrEmpty(currentProfile.RealName))
             {
-                AddAdditionalField(AdditionalFieldType.REAL_NAME, currentProfile.RealName, false);
-                AddAdditionalField(AdditionalFieldType.REAL_NAME, currentProfile.RealName, true);
+                AddAdditionalField(AdditionalFieldType.RealName, currentProfile.RealName, false);
+                AddAdditionalField(AdditionalFieldType.RealName, currentProfile.RealName, true);
             }
             else
-                AddAdditionalField(AdditionalFieldType.REAL_NAME, string.Empty, true);
+                AddAdditionalField(AdditionalFieldType.RealName, string.Empty, true);
 
             view.AdditionalInfoContainer.gameObject.SetActive(instantiatedAdditionalFields.Count > 0);
         }
@@ -189,7 +189,7 @@ namespace DCL.Passport.Modules
             newAdditionalField.EditionDropdown.options.Clear();
             newAdditionalField.EditionDropdown.options.Add(new TMP_Dropdown.OptionData { text = EDITION_DROPDOWN_DEFAULT_OPTION });
             newAdditionalField.EditionTextInput.text = string.Empty;
-            newAdditionalField.EditionTextInputPlaceholder.text = type == AdditionalFieldType.BIRTH_DATE ? EDITION_PLACE_HOLDER_FOR_DATES : EDITION_PLACE_HOLDER;
+            newAdditionalField.EditionTextInputPlaceholder.text = type == AdditionalFieldType.BirthDate ? EDITION_PLACE_HOLDER_FOR_DATES : EDITION_PLACE_HOLDER;
 
             foreach (AdditionalFieldConfiguration additionalFieldConfig in view.AdditionalFieldsConfiguration.additionalFields)
             {
@@ -236,40 +236,40 @@ namespace DCL.Passport.Modules
                 string? valueToSave = !string.IsNullOrEmpty(additionalFieldForEdition.EditionTextInput.text) ? additionalFieldForEdition.EditionTextInput.text : null;
                 switch (additionalFieldForEdition.Type)
                 {
-                    case AdditionalFieldType.GENDER:
+                    case AdditionalFieldType.Gender:
                         profile.Gender = valueToSave;
                         break;
-                    case AdditionalFieldType.COUNTRY:
+                    case AdditionalFieldType.Country:
                         profile.Country = valueToSave;
                         break;
-                    case AdditionalFieldType.BIRTH_DATE:
+                    case AdditionalFieldType.BirthDate:
                         if (valueToSave != null)
                             profile.Birthdate = DateTime.SpecifyKind(DateTime.ParseExact(valueToSave, validInputFormatsForDate, CultureInfo.InvariantCulture, DateTimeStyles.None), DateTimeKind.Utc);
                         else
                             profile.Birthdate = null;
                         break;
-                    case AdditionalFieldType.PRONOUNS:
+                    case AdditionalFieldType.Pronouns:
                         profile.Pronouns = valueToSave;
                         break;
-                    case AdditionalFieldType.RELATIONSHIP_STATUS:
+                    case AdditionalFieldType.RelationshipStatus:
                         profile.RelationshipStatus = valueToSave;
                         break;
-                    case AdditionalFieldType.SEXUAL_ORIENTATION:
+                    case AdditionalFieldType.SexualOrientation:
                         profile.SexualOrientation = valueToSave;
                         break;
-                    case AdditionalFieldType.LANGUAGE:
+                    case AdditionalFieldType.Language:
                         profile.Language = valueToSave;
                         break;
-                    case AdditionalFieldType.PROFESSION:
+                    case AdditionalFieldType.Profession:
                         profile.Profession = valueToSave;
                         break;
-                    case AdditionalFieldType.EMPLOYMENT_STATUS:
+                    case AdditionalFieldType.EmploymentStatus:
                         profile.EmploymentStatus = valueToSave;
                         break;
-                    case AdditionalFieldType.HOBBIES:
+                    case AdditionalFieldType.Hobbies:
                         profile.Hobbies = valueToSave;
                         break;
-                    case AdditionalFieldType.REAL_NAME:
+                    case AdditionalFieldType.RealName:
                         profile.RealName = valueToSave;
                         break;
                 }

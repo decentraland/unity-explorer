@@ -9,13 +9,13 @@ namespace DCL.Web3.Authenticators
         public enum ErrorReason
         {
             /// <summary>404: the identity does not exist or has already been retrieved (identities are single-use).</summary>
-            NOT_FOUND,
+            NotFound,
 
             /// <summary>410: the identity expired before retrieval (server-side TTL is 15 minutes).</summary>
-            EXPIRED,
+            Expired,
 
             /// <summary>403: the retrieval came from a different IP than the one that stored the identity (commonly a VPN or private relay).</summary>
-            IP_MISMATCH,
+            IpMismatch,
         }
 
         public ErrorReason Reason { get; }
@@ -29,9 +29,9 @@ namespace DCL.Web3.Authenticators
         private static string MessageFor(ErrorReason reason, string identityId) =>
             reason switch
             {
-                ErrorReason.NOT_FOUND => $"Signin identity {identityId} was not found or was already retrieved",
-                ErrorReason.EXPIRED => $"Signin identity {identityId} expired before it was retrieved",
-                ErrorReason.IP_MISMATCH => $"Signin identity {identityId} was stored from a different IP: a VPN or private relay is likely interfering",
+                ErrorReason.NotFound => $"Signin identity {identityId} was not found or was already retrieved",
+                ErrorReason.Expired => $"Signin identity {identityId} expired before it was retrieved",
+                ErrorReason.IpMismatch => $"Signin identity {identityId} was stored from a different IP: a VPN or private relay is likely interfering",
                 _ => $"Signin identity {identityId} retrieval failed: {reason}",
             };
     }

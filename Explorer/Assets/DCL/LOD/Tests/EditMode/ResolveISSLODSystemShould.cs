@@ -292,7 +292,7 @@ namespace DCL.LOD.Tests
         {
             var lodInfo = SceneLODInfo.Create();
             lodInfo.id = SCENE_ID;
-            lodInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
+            lodInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.Processing;
 
             world.Create(lodInfo, sceneDefinition, descriptor);
             return lodInfo.InitialSceneStateLOD;

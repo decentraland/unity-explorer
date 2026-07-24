@@ -441,13 +441,13 @@ namespace DCL.Multiplayer.Movement
             switch (glideState)
             {
                 case GlideState.ClosingProp:
-                    return GlideStateValue.CLOSING_PROP;
+                    return GlideStateValue.ClosingProp;
                 case GlideState.Gliding:
-                    return GlideStateValue.GLIDING;
+                    return GlideStateValue.Gliding;
                 case GlideState.OpeningProp:
-                    return GlideStateValue.OPENING_PROP;
+                    return GlideStateValue.OpeningProp;
                 case GlideState.PropClosed:
-                    return GlideStateValue.PROP_CLOSED;
+                    return GlideStateValue.PropClosed;
                 default: throw new ArgumentOutOfRangeException(nameof(glideState), glideState, null);
             }
         }

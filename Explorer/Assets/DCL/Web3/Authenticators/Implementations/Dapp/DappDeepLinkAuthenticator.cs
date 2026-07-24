@@ -131,9 +131,9 @@ namespace DCL.Web3.Authenticators
                                                                      .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>()
                                                                      .WithCustomExceptionAsync(e => e.ResponseCode switch
                                                                                                     {
-                                                                                                        404 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.NOT_FOUND, identityId),
-                                                                                                        410 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.EXPIRED, identityId),
-                                                                                                        403 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.IP_MISMATCH, identityId),
+                                                                                                        404 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.NotFound, identityId),
+                                                                                                        410 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.Expired, identityId),
+                                                                                                        403 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.IpMismatch, identityId),
                                                                                                         _ => e,
                                                                                                     });
 
@@ -166,7 +166,7 @@ namespace DCL.Web3.Authenticators
 
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
-            return new DecentralandIdentity(new Web3Address(signerAddress), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.DEEPLINK);
+            return new DecentralandIdentity(new Web3Address(signerAddress), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.Deeplink);
         }
 
         // Field names mirror the auth server's JSON payloads verbatim, so they intentionally break the naming rules.

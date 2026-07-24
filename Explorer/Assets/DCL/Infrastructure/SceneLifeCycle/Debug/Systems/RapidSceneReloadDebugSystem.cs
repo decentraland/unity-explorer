@@ -87,7 +87,7 @@ namespace ECS.SceneLifeCycle.Debug
         [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(SmartWearableId))]
         private void ForceUnloadLoadedScenes(in Entity entity, ref SceneLoadingState sceneLoadingState)
         {
-            sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+            sceneLoadingState.VisualSceneState = VisualSceneState.Uninitialized;
             sceneLoadingState.PromiseCreated = false;
             sceneLoadingState.FullQuality = false;
             World.Add(entity, new DeleteEntityIntention { DeferDeletion = true });
@@ -98,7 +98,7 @@ namespace ECS.SceneLifeCycle.Debug
         [None(typeof(ISceneFacade), typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(SmartWearableId))]
         private void AbortLoadingScenes(in Entity entity, ref SceneLoadingState sceneLoadingState)
         {
-            sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+            sceneLoadingState.VisualSceneState = VisualSceneState.Uninitialized;
             sceneLoadingState.PromiseCreated = false;
             sceneLoadingState.FullQuality = false;
             World.Add(entity, new DeleteEntityIntention { DeferDeletion = true });

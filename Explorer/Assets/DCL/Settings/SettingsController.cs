@@ -24,11 +24,11 @@ namespace DCL.Settings
     {
         public enum SettingsSection
         {
-            GENERAL,
-            GRAPHICS,
-            SOUND,
-            CONTROLS,
-            CHAT
+            General,
+            Graphics,
+            Sound,
+            Controls,
+            Chat
         }
 
         private readonly SettingsView view;
@@ -86,11 +86,11 @@ namespace DCL.Settings
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
             {
-                [SettingsSection.GENERAL] = (view.GeneralSectionContainer, view.GeneralSectionButton, view.GeneralSectionBackground, settingsMenuConfiguration.GeneralSectionConfig),
-                [SettingsSection.GRAPHICS] = (view.GraphicsSectionContainer, view.GraphicsSectionButton, view.GraphicsSectionBackground, settingsMenuConfiguration.GraphicsSectionConfig),
-                [SettingsSection.SOUND] = (view.SoundSectionContainer, view.SoundSectionButton, view.SoundSectionBackground, settingsMenuConfiguration.SoundSectionConfig),
-                [SettingsSection.CONTROLS] = (view.ControlsSectionContainer, view.ControlsSectionButton, view.ControlsSectionBackground, settingsMenuConfiguration.ControlsSectionConfig),
-                [SettingsSection.CHAT] = (view.ChatSectionContainer, view.ChatSectionButton, view.ChatSectionBackground, settingsMenuConfiguration.ChatSectionConfig),
+                [SettingsSection.General] = (view.GeneralSectionContainer, view.GeneralSectionButton, view.GeneralSectionBackground, settingsMenuConfiguration.GeneralSectionConfig),
+                [SettingsSection.Graphics] = (view.GraphicsSectionContainer, view.GraphicsSectionButton, view.GraphicsSectionBackground, settingsMenuConfiguration.GraphicsSectionConfig),
+                [SettingsSection.Sound] = (view.SoundSectionContainer, view.SoundSectionButton, view.SoundSectionBackground, settingsMenuConfiguration.SoundSectionConfig),
+                [SettingsSection.Controls] = (view.ControlsSectionContainer, view.ControlsSectionButton, view.ControlsSectionBackground, settingsMenuConfiguration.ControlsSectionConfig),
+                [SettingsSection.Chat] = (view.ChatSectionContainer, view.ChatSectionButton, view.ChatSectionBackground, settingsMenuConfiguration.ChatSectionConfig),
             };
 
             foreach (var pair in sections)

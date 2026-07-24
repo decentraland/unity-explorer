@@ -13,7 +13,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 PromiseCreated = false,
                 FullQuality = true,
-                VisualSceneState = VisualSceneState.ROAD,
+                VisualSceneState = VisualSceneState.Road,
             };
 
         public static SceneLoadingState CreatePortableExperience() =>
@@ -21,7 +21,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 PromiseCreated = true,
                 FullQuality = true,
-                VisualSceneState = VisualSceneState.SHOWING_SCENE,
+                VisualSceneState = VisualSceneState.ShowingScene,
             };
 
         //Testing purpose
@@ -30,7 +30,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 PromiseCreated = true,
                 FullQuality = true,
-                VisualSceneState = VisualSceneState.SHOWING_SCENE,
+                VisualSceneState = VisualSceneState.ShowingScene,
             };
 
         //Testing purpose
@@ -39,15 +39,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 PromiseCreated = true,
                 FullQuality = true,
-                VisualSceneState = VisualSceneState.SHOWING_LOD,
+                VisualSceneState = VisualSceneState.ShowingLod,
             };
     }
 
     public enum VisualSceneState
     {
-        UNINITIALIZED,
-        SHOWING_SCENE,
-        SHOWING_LOD,
-        ROAD,
+        Uninitialized,
+        ShowingScene,
+        ShowingLod,
+        Road,
     }
 }

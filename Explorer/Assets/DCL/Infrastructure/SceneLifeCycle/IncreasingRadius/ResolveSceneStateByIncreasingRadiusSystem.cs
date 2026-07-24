@@ -268,7 +268,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void Unload(in Entity entity, ref SceneLoadingState sceneState)
         {
-            sceneState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+            sceneState.VisualSceneState = VisualSceneState.Uninitialized;
             sceneState.PromiseCreated = false;
             sceneState.FullQuality = false;
 
@@ -289,13 +289,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0, issDescriptor);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
-            if (candidateBy == VisualSceneState.SHOWING_SCENE && !sceneLoadingLimit.CanLoadScene(sceneDefinitionComponent))
+            if (candidateBy == VisualSceneState.ShowingScene && !sceneLoadingLimit.CanLoadScene(sceneDefinitionComponent))
             {
                 //Lets do a quality reduction analysis
-                candidateBy = VisualSceneState.SHOWING_LOD;
+                candidateBy = VisualSceneState.ShowingLod;
             }
             //Reduce quality
-            if (candidateBy == VisualSceneState.SHOWING_LOD)
+            if (candidateBy == VisualSceneState.ShowingLod)
             {
                 if (sceneLoadingLimit.CanLoadLOD(sceneDefinitionComponent))
                 {
@@ -308,7 +308,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     {
                         //This wasnt previously quality reducted. Lets try to unload it and on next iteration we will try to load
                         TryUnload(entity, ref sceneState);
-                        candidateBy = VisualSceneState.UNINITIALIZED;
+                        candidateBy = VisualSceneState.Uninitialized;
                     }
                     // Reduce the quality of this LOD if we have not yet hit the quality-reduction limit
                     sceneState.FullQuality = false;
@@ -317,12 +317,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 {
                     // Nothing else can load. And we need to unload the loaded which are still inside the loading range
                     TryUnload(entity, ref sceneState);
-                    candidateBy = VisualSceneState.UNINITIALIZED;
+                    candidateBy = VisualSceneState.Uninitialized;
                 }
             }
 
             //No new promise is required
-            if (candidateBy == VisualSceneState.UNINITIALIZED
+            if (candidateBy == VisualSceneState.Uninitialized
                 || sceneState.VisualSceneState == candidateBy)
                 return;
 
@@ -347,7 +347,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             switch (sceneState.VisualSceneState)
             {
-                case VisualSceneState.SHOWING_LOD:
+                case VisualSceneState.ShowingLod:
                     //The SceneLODInfo may still be in the entity, since it remains there until SceneIsReady (Check UnloadSceneLODInfoSystem)
                     //Therefore, we need to make this check because we dont want to break the entity mutual exclusive state
                     if (!World.Has<SceneLODInfo>(entity))

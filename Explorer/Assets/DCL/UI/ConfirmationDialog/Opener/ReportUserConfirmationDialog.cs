@@ -31,7 +31,7 @@ namespace DCL.UI.ConfirmationDialog.Opener
                     ct)
                 .SuppressToResultAsync(reportCategory);
 
-            return !ct.IsCancellationRequested && dialogResult.Success && dialogResult.Value != ConfirmationResult.CANCEL;
+            return !ct.IsCancellationRequested && dialogResult.Success && dialogResult.Value != ConfirmationResult.Cancel;
         }
     }
 }

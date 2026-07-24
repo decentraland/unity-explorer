@@ -76,7 +76,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
                 if (i < half)
                 {
                     registry.IsActiveSpeaker(wallet).Returns(true);
-                    world.Add(e, new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY));
+                    world.Add(e, new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.Nearby));
                 }
             }
 

@@ -232,7 +232,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             // Assert - handler is notified with WheelSlot when trigger came from wheel intent (not Shortcut)
             Assert.AreEqual(1, testShortcutHandler.NotifyCalls.Count, "Handler should be notified once");
-            Assert.AreEqual(EmoteTriggerSource.WHEEL_SLOT, testShortcutHandler.NotifyCalls[0]);
+            Assert.AreEqual(EmoteTriggerSource.WheelSlot, testShortcutHandler.NotifyCalls[0]);
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity), "Emote should still be triggered");
         }
 

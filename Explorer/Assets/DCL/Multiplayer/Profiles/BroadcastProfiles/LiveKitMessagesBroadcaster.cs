@@ -56,10 +56,10 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
                 foreach ((string walletId, RoomSource rooms) in announcedWallets)
                 {
-                    if (EnumUtils.HasFlag(rooms, RoomSource.ISLAND))
+                    if (EnumUtils.HasFlag(rooms, RoomSource.Island))
                         islandList.Add(walletId);
 
-                    if (EnumUtils.HasFlag(rooms, RoomSource.GATEKEEPER))
+                    if (EnumUtils.HasFlag(rooms, RoomSource.Gatekeeper))
                         sceneList.Add(walletId);
                 }
 
@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             {
                 currentSource.RemoveFlag(roomSource);
 
-                if (currentSource == RoomSource.NONE)
+                if (currentSource == RoomSource.None)
                     announcedWallets.Remove(walletId);
                 else
                     announcedWallets[walletId] = currentSource;

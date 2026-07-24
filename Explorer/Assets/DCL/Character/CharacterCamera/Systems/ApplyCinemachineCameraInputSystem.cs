@@ -44,7 +44,7 @@ namespace DCL.CharacterCamera.Systems
                     dvc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
                     break;
                 case CameraMode.ThirdPerson:
-                case CameraMode.SDKCamera:
+                case CameraMode.SdkCamera:
                     CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
                     tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
                     tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
@@ -73,7 +73,7 @@ namespace DCL.CharacterCamera.Systems
         private void ForceLookAt(in Entity entity, in CameraComponent camera, ref ICinemachinePreset cinemachinePreset, in CameraLookAtIntent lookAtIntent)
         {
             // Only process the LookAtIntent if we're not in SDKCamera mode
-            if (camera.Mode == CameraMode.SDKCamera) return;
+            if (camera.Mode == CameraMode.SdkCamera) return;
 
             switch (camera.Mode)
             {

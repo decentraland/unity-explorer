@@ -38,7 +38,7 @@ namespace DCL.VoiceChat
             this.currentChannel = currentChannel;
             this.communityDataProvider = communityDataProvider;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
             {
                 currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
                 statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
@@ -147,12 +147,12 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 // If we just ended a call, we need to re-check the call status, etc., in case we need to show the button
-                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                case VoiceChatStatus.Disconnected or VoiceChatStatus.VoiceChatGenericError or VoiceChatStatus.VoiceChatEndingCall:
                     OnCurrentChannelChanged(currentChannel.Value);
                     break;
 
                 // When we join a call, if it is for THIS community, we need to hide the button. If it's another community's call, we keep it.
-                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL or  VoiceChatStatus.VOICE_CHAT_IN_CALL when
+                case VoiceChatStatus.VoiceChatStartingCall or  VoiceChatStatus.VoiceChatInCall when
                     communityCallOrchestrator.IsEqualToCurrentStreamingCommunity(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)):
                     view.gameObject.SetActive(false);
                     break;

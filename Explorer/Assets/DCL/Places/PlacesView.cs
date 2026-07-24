@@ -57,10 +57,10 @@ namespace DCL.Places
         private void Awake()
         {
             // Tabs subscriptions
-            browseSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.BROWSE));
-            favoritesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.FAVORITES));
-            recentlyVisitedSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.RECENTLY_VISITED));
-            myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MY_PLACES));
+            browseSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.Browse));
+            favoritesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.Favorites));
+            recentlyVisitedSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.RecentlyVisited));
+            myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MyPlaces));
 
             // Filters subscriptions
             filtersDropdown.SortByBestRatedSelected += OnSortByBestRatedSelected;
@@ -144,16 +144,16 @@ namespace DCL.Places
 
             switch (section)
             {
-                case PlacesSection.BROWSE:
+                case PlacesSection.Browse:
                     browseSectionTab.SetSelected(true);
                     break;
-                case PlacesSection.FAVORITES:
+                case PlacesSection.Favorites:
                     favoritesSectionTab.SetSelected(true);
                     break;
-                case PlacesSection.RECENTLY_VISITED:
+                case PlacesSection.RecentlyVisited:
                     recentlyVisitedSectionTab.SetSelected(true);
                     break;
-                case PlacesSection.MY_PLACES:
+                case PlacesSection.MyPlaces:
                     myPlacesSectionTab.SetSelected(true);
                     break;
             }

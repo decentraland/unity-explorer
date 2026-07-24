@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             Assert.IsTrue(world.Has<TriggerAreaComponent>(entity));
             Assert.IsTrue(world.TryGet(entity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
-            Assert.AreEqual(SDKEntityTriggerAreaMeshType.SPHERE, triggerAreaComponent.MeshType);
+            Assert.AreEqual(SDKEntityTriggerAreaMeshType.Sphere, triggerAreaComponent.MeshType);
             Assert.AreEqual(ColliderLayer.ClCustom3, triggerAreaComponent.LayerMask);
         }
 

@@ -36,7 +36,7 @@ namespace DCL.UI.ProfileElements
             }
 
             // Wait until the property is bound
-            while (property.Value.ThumbnailState == ProfileThumbnailViewModel.State.NOT_BOUND)
+            while (property.Value.ThumbnailState == ProfileThumbnailViewModel.State.NotBound)
                 await UniTask.Yield();
 
             if (ct.IsCancellationRequested)
@@ -47,7 +47,7 @@ namespace DCL.UI.ProfileElements
             Sprite? previousUserSprite = profileRepository.GetLatestThumbnailForUser(userId);
             bool seededPreviousSprite = previousUserSprite != null;
 
-            property.UpdateValue(new ProfileThumbnailViewModel(ProfileThumbnailViewModel.State.LOADING, previousUserSprite, property.Value.ProfileColor, property.Value.FitAndCenterImage));
+            property.UpdateValue(new ProfileThumbnailViewModel(ProfileThumbnailViewModel.State.Loading, previousUserSprite, property.Value.ProfileColor, property.Value.FitAndCenterImage));
 
             try
             {

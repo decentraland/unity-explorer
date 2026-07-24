@@ -4,11 +4,11 @@ namespace DCL.ApplicationGuards
 {
     public enum SpecCategory
     {
-        OS,
-        CPU,
-        GPU,
-        VRAM,
-        RAM,
+        Os,
+        Cpu,
+        Gpu,
+        Vram,
+        Ram,
         Storage,
         ComputeShaders
     }

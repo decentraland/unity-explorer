@@ -9,7 +9,7 @@ namespace DCL.UI.ErrorPopup
     {
         public ErrorPopupWithRetryController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override void OnViewInstantiated()
         {
@@ -18,10 +18,10 @@ namespace DCL.UI.ErrorPopup
             viewInstance!.ExitButton.onClick.AddListener(() =>
             {
                 ExitUtils.Exit();
-                inputData.SelectedOption = Result.EXIT;
+                inputData.SelectedOption = Result.Exit;
             });
 
-            viewInstance.RestartButton.onClick.AddListener(() => inputData.SelectedOption = Result.RESTART);
+            viewInstance.RestartButton.onClick.AddListener(() => inputData.SelectedOption = Result.Restart);
         }
 
         protected override void OnBeforeViewShow()
@@ -32,10 +32,10 @@ namespace DCL.UI.ErrorPopup
             viewInstance!.TitleText.text = inputData.Title;
             viewInstance!.RetryButtonText.text = inputData.RetryText;
             viewInstance!.ExitButtonText.text = inputData.ExitText;
-            viewInstance.InternetLostIcon.SetActive(inputData.IconType == IconType.CONNECTION_LOST);
-            viewInstance.ErrorIcon.SetActive(inputData.IconType == IconType.ERROR);
-            viewInstance.WarningIcon.SetActive(inputData.IconType == IconType.WARNING);
-            viewInstance.ClockIcon.SetActive(inputData.IconType == IconType.CLOCK);
+            viewInstance.InternetLostIcon.SetActive(inputData.IconType == IconType.ConnectionLost);
+            viewInstance.ErrorIcon.SetActive(inputData.IconType == IconType.Error);
+            viewInstance.WarningIcon.SetActive(inputData.IconType == IconType.Warning);
+            viewInstance.ClockIcon.SetActive(inputData.IconType == IconType.Clock);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -43,16 +43,16 @@ namespace DCL.UI.ErrorPopup
 
         public enum Result
         {
-            EXIT,
-            RESTART,
+            Exit,
+            Restart,
         }
 
         public enum IconType
         {
-            WARNING,
-            ERROR,
-            CONNECTION_LOST,
-            CLOCK
+            Warning,
+            Error,
+            ConnectionLost,
+            Clock
         }
 
         public class Input
@@ -72,7 +72,7 @@ namespace DCL.UI.ErrorPopup
                 string description = "An error was encountered. Please reload to try again.",
                 string retryText = "Reload",
                 string exitText = "Exit Application",
-                IconType iconType = IconType.ERROR)
+                IconType iconType = IconType.Error)
             {
                 Title = title;
                 Description = description;

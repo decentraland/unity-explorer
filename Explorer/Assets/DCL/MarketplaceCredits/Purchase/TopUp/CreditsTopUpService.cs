@@ -13,10 +13,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
     {
         private enum PollOutcome
         {
-            CREDITED,
-            FAILED,
-            TIMED_OUT,
-            CANCELLED,
+            Credited,
+            Failed,
+            TimedOut,
+            Cancelled,
         }
 
         private static readonly TimeSpan FOREGROUND_POLL_INTERVAL = TimeSpan.FromSeconds(1.5);
@@ -39,7 +39,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
         public CreditsTopUpStatus CurrentStatus { get; private set; } = CreditsTopUpStatus.Idle();
 
         public bool IsOrderInFlight =>
-            CurrentStatus.Stage is CreditsTopUpStage.CREATING_CHECKOUT or CreditsTopUpStage.WAITING_FOR_PAYMENT;
+            CurrentStatus.Stage is CreditsTopUpStage.CreatingCheckout or CreditsTopUpStage.WaitingForPayment;
 
         public event Action<CreditsTopUpStatus>? StatusChanged;
 
@@ -86,7 +86,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
 
         public void StopWaitingForBrowser()
         {
-            if (CurrentStatus.Stage != CreditsTopUpStage.WAITING_FOR_PAYMENT)
+            if (CurrentStatus.Stage != CreditsTopUpStage.WaitingForPayment)
                 return;
 
             // Cancels only the foreground poll; RunTopUpAsync then hands the order off to the
@@ -98,11 +98,11 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
         {
             switch (CurrentStatus.Stage)
             {
-                case CreditsTopUpStage.CREDITED:
-                case CreditsTopUpStage.FAILED:
+                case CreditsTopUpStage.Credited:
+                case CreditsTopUpStage.Failed:
                     SetStatus(CreditsTopUpStatus.Idle());
                     break;
-                case CreditsTopUpStage.PENDING_TIMEOUT:
+                case CreditsTopUpStage.PendingTimeout:
                     pendingAcknowledged = true;
                     SetStatus(CreditsTopUpStatus.Idle());
                     break;
@@ -141,10 +141,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                 skipForegroundCts = null;
 
                 // Only the skip token fired (the user stopped waiting), not the outer ct: fall through to the background poll.
-                if (outcome == PollOutcome.CANCELLED && !ct.IsCancellationRequested)
-                    outcome = PollOutcome.TIMED_OUT;
+                if (outcome == PollOutcome.Cancelled && !ct.IsCancellationRequested)
+                    outcome = PollOutcome.TimedOut;
 
-                if (outcome == PollOutcome.TIMED_OUT)
+                if (outcome == PollOutcome.TimedOut)
                 {
                     SetStatus(CreditsTopUpStatus.PendingTimeout(pack, orderId));
                     (outcome, order) = await PollOrderAsync(orderId, backgroundPollInterval, backgroundPollTimeout, ct);
@@ -152,13 +152,13 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
 
                 switch (outcome)
                 {
-                    case PollOutcome.CREDITED:
+                    case PollOutcome.Credited:
                         await RefreshBalanceAsync(ct);
 
                         if (!pendingAcknowledged)
                             SetStatus(CreditsTopUpStatus.Credited(pack, orderId, order.creditsGranted, order.newBalance));
                         break;
-                    case PollOutcome.FAILED:
+                    case PollOutcome.Failed:
                         if (!pendingAcknowledged)
                             SetStatus(CreditsTopUpStatus.GrantFailed(pack, orderId, order.error));
                         break;
@@ -178,7 +178,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
             while (DateTime.UtcNow < deadline)
             {
                 if (ct.IsCancellationRequested)
-                    return (PollOutcome.CANCELLED, default(CreditsOrderStatusResponse));
+                    return (PollOutcome.Cancelled, default(CreditsOrderStatusResponse));
 
                 EnumResult<CreditsOrderStatusResponse, CreditsOrderPollError> result = await creditsAPIClient.GetCheckoutOrderAsync(orderId, ct);
 
@@ -187,15 +187,15 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                     switch (result.Value.status)
                     {
                         case CreditsOrderStatusResponse.STATUS_CREDITED:
-                            return (PollOutcome.CREDITED, result.Value);
+                            return (PollOutcome.Credited, result.Value);
                         case CreditsOrderStatusResponse.STATUS_FAILED:
-                            return (PollOutcome.FAILED, result.Value);
+                            return (PollOutcome.Failed, result.Value);
                     }
                 }
                 else
                 {
                     if (result.Error!.Value.State == CreditsOrderPollError.Cancelled)
-                        return (PollOutcome.CANCELLED, default(CreditsOrderStatusResponse));
+                        return (PollOutcome.Cancelled, default(CreditsOrderStatusResponse));
 
                     ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Order status poll failed for {orderId}: {result.Error.Value.State} {result.Error.Value.Message}");
                 }
@@ -203,10 +203,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                 bool cancelled = await UniTask.Delay(interval, cancellationToken: ct).SuppressCancellationThrow();
 
                 if (cancelled)
-                    return (PollOutcome.CANCELLED, default(CreditsOrderStatusResponse));
+                    return (PollOutcome.Cancelled, default(CreditsOrderStatusResponse));
             }
 
-            return (PollOutcome.TIMED_OUT, default(CreditsOrderStatusResponse));
+            return (PollOutcome.TimedOut, default(CreditsOrderStatusResponse));
         }
 
         private async UniTask RefreshBalanceAsync(CancellationToken ct)

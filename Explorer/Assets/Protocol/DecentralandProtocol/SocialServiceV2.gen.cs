@@ -609,15 +609,15 @@ namespace Decentraland.SocialService.V2 {
   }
 
   public enum FriendshipStatus {
-    [pbr::OriginalName("REQUEST_SENT")] RequestSent = 0,
-    [pbr::OriginalName("REQUEST_RECEIVED")] RequestReceived = 1,
+    [pbr::OriginalName("RequestSent")] RequestSent = 0,
+    [pbr::OriginalName("RequestReceived")] RequestReceived = 1,
     [pbr::OriginalName("CANCELED")] Canceled = 2,
     [pbr::OriginalName("ACCEPTED")] Accepted = 3,
     [pbr::OriginalName("REJECTED")] Rejected = 4,
     [pbr::OriginalName("DELETED")] Deleted = 5,
-    [pbr::OriginalName("BLOCKED")] Blocked = 6,
-    [pbr::OriginalName("NONE")] None = 7,
-    [pbr::OriginalName("BLOCKED_BY")] BlockedBy = 8,
+    [pbr::OriginalName("Blocked")] Blocked = 6,
+    [pbr::OriginalName("None")] None = 7,
+    [pbr::OriginalName("BlockedBy")] BlockedBy = 8,
   }
 
   public enum PrivateMessagePrivacySetting {

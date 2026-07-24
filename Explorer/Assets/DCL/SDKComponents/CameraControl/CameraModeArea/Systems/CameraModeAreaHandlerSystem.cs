@@ -74,7 +74,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             if (pbCameraModeArea.IsDirty)
                 sdkEntityTriggerAreaComponent.UpdateAreaSize(pbCameraModeArea.Area);
 
-            if (cameraData.CameraMode == CameraMode.SDKCamera) return;
+            if (cameraData.CameraMode == CameraMode.SdkCamera) return;
 
             if (sdkEntityTriggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
             {
@@ -125,7 +125,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
 
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Applied));
         }
 
         internal void OnExitedCameraModeArea()
@@ -138,7 +138,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             if (camera.CameraInputChangeEnabled)
                 camera.Mode = cameraModeBeforeLastAreaEnter == CameraMode.InWorld? CameraMode.ThirdPerson : cameraModeBeforeLastAreaEnter;
 
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Removed));
         }
 
         [Query]

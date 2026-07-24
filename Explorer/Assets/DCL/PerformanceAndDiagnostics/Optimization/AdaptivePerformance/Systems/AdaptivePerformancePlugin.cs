@@ -27,7 +27,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
         {
             physicsSettings = settings.phyiscsSettings;
 
-            Physics.simulationMode = physicsSettings.Mode == PhysSimulationMode.MANUAL ? SimulationMode.Script : SimulationMode.FixedUpdate;
+            Physics.simulationMode = physicsSettings.Mode == PhysSimulationMode.Manual ? SimulationMode.Script : SimulationMode.FixedUpdate;
 
             return UniTask.CompletedTask;
         }

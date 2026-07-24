@@ -54,30 +54,30 @@ namespace DCL.MarketplaceCredits.Purchase
         public async UniTask<CreditsPurchaseResult> PurchaseAsync(string tradeId, int expectedPriceCredits, CancellationToken ct)
         {
             if (!isFeatureEnabled)
-                return new CreditsPurchaseResult(CreditsPurchaseError.FEATURE_DISABLED);
+                return new CreditsPurchaseResult(CreditsPurchaseError.FeatureDisabled);
 
             IWeb3Identity? identity = identityCache.Identity;
 
             if (identity == null)
-                return new CreditsPurchaseResult(CreditsPurchaseError.UNKNOWN_ERROR, message: "No web3 identity");
+                return new CreditsPurchaseResult(CreditsPurchaseError.UnknownError, message: "No web3 identity");
 
             string buyer = identity.Address;
 
             try { return await PurchaseInternalAsync(tradeId, expectedPriceCredits, buyer, ct); }
             catch (OperationCanceledException)
             {
-                return new CreditsPurchaseResult(CreditsPurchaseError.CANCELLED);
+                return new CreditsPurchaseResult(CreditsPurchaseError.Cancelled);
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                return new CreditsPurchaseResult(CreditsPurchaseError.UNKNOWN_ERROR, message: e.Message);
+                return new CreditsPurchaseResult(CreditsPurchaseError.UnknownError, message: e.Message);
             }
         }
 
         private async UniTask<CreditsPurchaseResult> PurchaseInternalAsync(string tradeId, int expectedPriceCredits, string buyer, CancellationToken ct)
         {
-            SetState(CreditsPurchaseState.RESOLVING_LISTING);
+            SetState(CreditsPurchaseState.ResolvingListing);
 
             TradeDto? trade;
 
@@ -86,27 +86,27 @@ namespace DCL.MarketplaceCredits.Purchase
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Trade {tradeId} could not be fetched: {e.Message}");
-                return Fail(CreditsPurchaseError.LISTING_NOT_AVAILABLE, message: e.Message);
+                return Fail(CreditsPurchaseError.ListingNotAvailable, message: e.Message);
             }
 
             if (trade == null)
-                return Fail(CreditsPurchaseError.LISTING_NOT_AVAILABLE);
+                return Fail(CreditsPurchaseError.ListingNotAvailable);
 
             if (string.Equals(trade.signer, buyer, StringComparison.OrdinalIgnoreCase))
-                return Fail(CreditsPurchaseError.OWN_LISTING);
+                return Fail(CreditsPurchaseError.OwnListing);
 
             if (trade.received.Length == 0 || trade.received[0].assetType != CreditsTradeEncoder.ASSET_TYPE_USD_PEGGED_MANA)
-                return Fail(CreditsPurchaseError.LISTING_NOT_AVAILABLE, message: "Trade is not listed as credits");
+                return Fail(CreditsPurchaseError.ListingNotAvailable, message: "Trade is not listed as credits");
 
             int usdCents = CreditsTradeEncoder.UsdWeiToCents(trade.received[0].amount);
 
             if (usdCents <= 0)
-                return Fail(CreditsPurchaseError.LISTING_NOT_AVAILABLE, message: "Trade has no price");
+                return Fail(CreditsPurchaseError.ListingNotAvailable, message: "Trade has no price");
 
             if (usdCents != expectedPriceCredits * CENTS_PER_CREDIT)
-                return Fail(CreditsPurchaseError.PRICE_CHANGED, message: $"Listed for {usdCents} cents, expected {expectedPriceCredits * CENTS_PER_CREDIT}");
+                return Fail(CreditsPurchaseError.PriceChanged, message: $"Listed for {usdCents} cents, expected {expectedPriceCredits * CENTS_PER_CREDIT}");
 
-            SetState(CreditsPurchaseState.AUTHORIZING);
+            SetState(CreditsPurchaseState.Authorizing);
 
             AuthorizeCreditResponse authorization;
 
@@ -117,12 +117,12 @@ namespace DCL.MarketplaceCredits.Purchase
                 bool insufficient = (e.Text ?? string.Empty).IndexOf("insufficient", StringComparison.OrdinalIgnoreCase) >= 0
                                     || (e.Text ?? string.Empty).IndexOf("balance", StringComparison.OrdinalIgnoreCase) >= 0;
 
-                return Fail(insufficient ? CreditsPurchaseError.INSUFFICIENT_CREDITS : CreditsPurchaseError.AUTHORIZATION_FAILED, message: e.Text);
+                return Fail(insufficient ? CreditsPurchaseError.InsufficientCredits : CreditsPurchaseError.AuthorizationFailed, message: e.Text);
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                return Fail(CreditsPurchaseError.AUTHORIZATION_FAILED, message: e.Message);
+                return Fail(CreditsPurchaseError.AuthorizationFailed, message: e.Message);
             }
 
             string useCreditsCalldata;
@@ -138,10 +138,10 @@ namespace DCL.MarketplaceCredits.Purchase
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
                 await ReleaseIntentAsync(authorization.credit.id);
-                return Fail(CreditsPurchaseError.ENCODING_FAILED, message: e.Message);
+                return Fail(CreditsPurchaseError.EncodingFailed, message: e.Message);
             }
 
-            SetState(CreditsPurchaseState.SIGNING);
+            SetState(CreditsPurchaseState.Signing);
 
             RelayResult relay;
 
@@ -155,26 +155,26 @@ namespace DCL.MarketplaceCredits.Purchase
 
             switch (relay.Outcome)
             {
-                case RelayOutcome.BROADCAST:
+                case RelayOutcome.Broadcast:
                     txHash = relay.TxHash;
                     break;
-                case RelayOutcome.SIGNATURE_REJECTED:
+                case RelayOutcome.SignatureRejected:
                     await ReleaseIntentAsync(authorization.credit.id);
-                    return Fail(CreditsPurchaseError.SIGNATURE_REJECTED, message: relay.Message);
-                case RelayOutcome.SIGNING_FAILED:
+                    return Fail(CreditsPurchaseError.SignatureRejected, message: relay.Message);
+                case RelayOutcome.SigningFailed:
                     await ReleaseIntentAsync(authorization.credit.id);
-                    return Fail(CreditsPurchaseError.SIGNING_FAILED, message: relay.Message);
-                case RelayOutcome.AMBIGUOUS_BROADCAST:
-                    SetState(CreditsPurchaseState.FAILED);
-                    return new CreditsPurchaseResult(CreditsPurchaseError.SETTLEMENT_PENDING, message: relay.Message);
-                case RelayOutcome.RELAYER_REJECTED:
+                    return Fail(CreditsPurchaseError.SigningFailed, message: relay.Message);
+                case RelayOutcome.AmbiguousBroadcast:
+                    SetState(CreditsPurchaseState.Failed);
+                    return new CreditsPurchaseResult(CreditsPurchaseError.SettlementPending, message: relay.Message);
+                case RelayOutcome.RelayerRejected:
                     if (web3Provider.IsThirdWebOTP)
                     {
                         await ReleaseIntentAsync(authorization.credit.id);
-                        return Fail(CreditsPurchaseError.RELAYER_UNAVAILABLE, message: relay.Message);
+                        return Fail(CreditsPurchaseError.RelayerUnavailable, message: relay.Message);
                     }
 
-                    SetState(CreditsPurchaseState.SUBMITTING);
+                    SetState(CreditsPurchaseState.Submitting);
                     CreditsPurchaseResult? fallbackFailure = null;
 
                     try { txHash = await SendWalletTransactionAsync(buyer, useCreditsCalldata, ct); }
@@ -191,7 +191,7 @@ namespace DCL.MarketplaceCredits.Purchase
                         if (!userRejected)
                             ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
 
-                        fallbackFailure = Fail(userRejected ? CreditsPurchaseError.SIGNATURE_REJECTED : CreditsPurchaseError.RELAYER_UNAVAILABLE, message: e.Message);
+                        fallbackFailure = Fail(userRejected ? CreditsPurchaseError.SignatureRejected : CreditsPurchaseError.RelayerUnavailable, message: e.Message);
                     }
 
                     if (fallbackFailure != null)
@@ -206,24 +206,24 @@ namespace DCL.MarketplaceCredits.Purchase
             if (string.IsNullOrEmpty(txHash))
             {
                 await ReleaseIntentAsync(authorization.credit.id);
-                return Fail(CreditsPurchaseError.RELAYER_UNAVAILABLE, message: "No transaction hash");
+                return Fail(CreditsPurchaseError.RelayerUnavailable, message: "No transaction hash");
             }
 
-            SetState(CreditsPurchaseState.WAITING_SETTLEMENT);
+            SetState(CreditsPurchaseState.WaitingSettlement);
 
             SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(txHash!, SETTLEMENT_TIMEOUT, ct); // non-null: guarded by IsNullOrEmpty check at line 195
 
             switch (settlement)
             {
-                case SettlementOutcome.CONFIRMED:
-                    SetState(CreditsPurchaseState.SUCCESS);
+                case SettlementOutcome.Confirmed:
+                    SetState(CreditsPurchaseState.Success);
                     return CreditsPurchaseResult.Ok(txHash!);
-                case SettlementOutcome.REVERTED:
+                case SettlementOutcome.Reverted:
                     await ReleaseIntentAsync(authorization.credit.id);
-                    return Fail(CreditsPurchaseError.TRANSACTION_REVERTED, txHash);
+                    return Fail(CreditsPurchaseError.TransactionReverted, txHash);
                 default:
-                    SetState(CreditsPurchaseState.FAILED);
-                    return new CreditsPurchaseResult(CreditsPurchaseError.SETTLEMENT_PENDING, txHash);
+                    SetState(CreditsPurchaseState.Failed);
+                    return new CreditsPurchaseResult(CreditsPurchaseError.SettlementPending, txHash);
             }
         }
 
@@ -261,7 +261,7 @@ namespace DCL.MarketplaceCredits.Purchase
 
         private CreditsPurchaseResult Fail(CreditsPurchaseError error, string? txHash = null, string? message = null)
         {
-            SetState(CreditsPurchaseState.FAILED);
+            SetState(CreditsPurchaseState.Failed);
             return new CreditsPurchaseResult(error, txHash, message);
         }
 

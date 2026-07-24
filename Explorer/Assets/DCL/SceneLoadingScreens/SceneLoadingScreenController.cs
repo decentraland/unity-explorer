@@ -37,7 +37,7 @@ namespace DCL.SceneLoadingScreens
         // private IntVariable? progressLabel;
         private string progressLocalizationString = string.Empty;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider,

@@ -20,7 +20,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void SetUp()
         {
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
-            callStatus = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
+            callStatus = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.Disconnected);
             loadingStatus = new FakeLoadingStatus(LoadingStatus.LoadingStage.Completed);
         }
 
@@ -75,7 +75,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
 
             // Act
-            callStatus.Value = VoiceChatStatus.VOICE_CHAT_IN_CALL;
+            callStatus.Value = VoiceChatStatus.VoiceChatInCall;
 
             // Assert
             Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
@@ -87,10 +87,10 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             // Arrange
             using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
-            callStatus.Value = VoiceChatStatus.VOICE_CHAT_IN_CALL;
+            callStatus.Value = VoiceChatStatus.VoiceChatInCall;
 
             // Act
-            callStatus.Value = VoiceChatStatus.DISCONNECTED;
+            callStatus.Value = VoiceChatStatus.Disconnected;
 
             // Assert
             Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
@@ -104,7 +104,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             manager.Dispose();
 
             // Act — should not trigger further state changes
-            callStatus.Value = VoiceChatStatus.VOICE_CHAT_IN_CALL;
+            callStatus.Value = VoiceChatStatus.VoiceChatInCall;
             loadingStatus.CurrentStageMut.Value = LoadingStatus.LoadingStage.Init;
 
             // Assert

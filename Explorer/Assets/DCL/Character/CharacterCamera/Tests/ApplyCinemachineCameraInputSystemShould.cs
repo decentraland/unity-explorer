@@ -262,7 +262,7 @@ namespace DCL.Character.CharacterCamera.Tests
             // Arrange
             Vector3 lookAtTarget = new Vector3(10, 0, 10);
             Vector3 playerPosition = Vector3.zero;
-            world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.SDKCamera });
+            world.Set(entity, new CameraComponent(camera) { Mode = CameraMode.SdkCamera });
             world.Add(entity, new CameraLookAtIntent(lookAtTarget, playerPosition));
 
             // Act

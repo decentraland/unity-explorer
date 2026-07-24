@@ -28,8 +28,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
     {
         private enum ScrollDirection
         {
-            UP,
-            DOWN
+            Up,
+            Down
         }
 
         private struct ReelToDeleteInfo
@@ -202,13 +202,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     await ReelCommonActions.DownloadReelToFileAsync(response.url, ct);
                     ScreenshotDownloaded?.Invoke();
 
-                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.DOWNLOAD,
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Download,
                         reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Failure);
                 }
             }
 
@@ -219,7 +219,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void CopyPictureLink(CameraReelResponseCompact response)
         {
             ReelCommonActions.CopyReelLink(response.id, decentralandUrlsSource!, systemClipboard!);
-            view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.LinkCopiedMessage);
+            view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Success, reelGalleryStringMessages?.LinkCopiedMessage);
         }
 
         private void ShareToX(CameraReelResponseCompact response)
@@ -236,12 +236,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 {
                     await cameraReelStorageService.UpdateScreenshotVisibilityAsync(response.id, isPublic, ct);
                     response.isPublic = isPublic;
-                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Success, reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
                 }
                 catch (UnityWebRequestException e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Failure);
                 }
             }
 
@@ -299,13 +299,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 ScreenshotDeleted?.Invoke();
                 StorageUpdated?.Invoke(response);
 
-                view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
+                view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Success, reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
             }
             catch (UnityWebRequestException e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
 
-                view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
+                view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Failure);
             }
         }
 
@@ -520,7 +520,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 return;
             }
 
-            HandleElementsVisibility(ScrollDirection.UP);
+            HandleElementsVisibility(ScrollDirection.Up);
 
             previousY = view.scrollRect.verticalNormalizedPosition;
             isLoading = false;
@@ -540,7 +540,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if (view.scrollRect is { verticalNormalizedPosition: >= 1f, velocity: { y: > 0f } } or { verticalNormalizedPosition: <= 0f, velocity: { y: < 0f } })
                 return;
 
-            HandleElementsVisibility(value.y > previousY ? ScrollDirection.UP : ScrollDirection.DOWN);
+            HandleElementsVisibility(value.y > previousY ? ScrollDirection.Up : ScrollDirection.Down);
             CheckNeedsToLoadMore();
 
             previousY = value.y;
@@ -591,7 +591,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             if (currentSize == 0) return;
 
-            if (scrollDirection == ScrollDirection.UP)
+            if (scrollDirection == ScrollDirection.Up)
             {
                 while (beginVisible >= 0 && ViewIntersectsImage(thumbnailImages[beginVisible].view.thumbnailImage))
                     beginVisible--;

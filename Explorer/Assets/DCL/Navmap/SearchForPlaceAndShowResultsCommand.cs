@@ -40,7 +40,7 @@ namespace DCL.Navmap
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
-            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.SEARCH);
+            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.Search);
             searchResultPanelController.ClearResults();
             searchResultPanelController.SetLoadingState();
             searchBarController.SetInputText((string.IsNullOrEmpty(@params.text) ? @params.category : @params.text) ?? string.Empty);

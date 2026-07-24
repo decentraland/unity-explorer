@@ -69,7 +69,7 @@ namespace DCL.ExplorePanel
         public PlacesController PlacesController { get; }
         public EventsController EventsController { get; }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
 
@@ -101,10 +101,10 @@ namespace DCL.ExplorePanel
             dclInput = DCLInput.Instance;
             this.profileMenuController = profileMenuController;
             this.inputBlock = inputBlock;
-            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
             this.mvcManager = mvcManager;
             this.communitiesBrowserController = communitiesBrowserController;
-            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
+            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
             this.eventsApiService = eventsApiService;
             this.communitiesLiveTracker = communitiesLiveTracker;
             this.creditsPanelController = creditsPanelController;
@@ -417,12 +417,12 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -444,7 +444,7 @@ namespace DCL.ExplorePanel
                 viewInstance!.ProfileMenuCloserButton.gameObject.SetActive(true);
                 viewInstance.ProfileMenuCloserButton.onClick.AddListener(OnProfileMenuCloserClicked);
 
-                await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, 0), new ControllerNoData(), profileMenuCts.Token);
+                await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0), new ControllerNoData(), profileMenuCts.Token);
                 await profileMenuController.HideViewAsync(CancellationToken.None);
             }
             catch (OperationCanceledException)
