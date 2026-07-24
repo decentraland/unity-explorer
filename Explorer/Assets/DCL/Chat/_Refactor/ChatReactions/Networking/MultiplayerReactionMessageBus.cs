@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.Diagnostics;
@@ -26,32 +27,17 @@ namespace DCL.Chat.ChatReactions.Networking
         // The effective bound is tightened to the actual atlas tile count via the constructor.
         private const int MAX_VALID_EMOJI_INDEX = 4096;
 
-        // Hard cap on the batch size a single situational packet can claim. Compliant senders
-        // batch at most ChatReactionsMessageConfig.NetworkFlushThreshold (range 0-50) per packet.
-        private const int MAX_SITUATIONAL_REACTION_COUNT = 50;
-
-        // Per-sender intake budgets. Chat reactions are single-action packets (a human toggling
-        // pills); situational packets can arrive faster while spam-clicking the reactions bar.
-        private const float CHAT_REACTION_TOKENS_PER_SECOND = 4f;
-        private const float CHAT_REACTION_BURST_CAPACITY = 8f;
-        private const float SITUATIONAL_TOKENS_PER_SECOND = 20f;
-        private const float SITUATIONAL_BURST_CAPACITY = 20f;
-        private const int MAX_RATE_TRACKED_SENDERS = 256;
-
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly IWeb3IdentityCache identityCache;
         private readonly string routingUser;
         private readonly int maxValidEmojiIndex;
+        private readonly int situationalReceiveCountCap;
         private readonly CancellationTokenSource cts = new ();
         private readonly IMessageDeduplication<float> situationalDedup = new MessageDeduplication<float>();
         private readonly IMessageDeduplication<string> chatReactionDedup = new MessageDeduplication<string>();
-
-        private readonly PerSenderRateLimiter situationalRateLimiter = new (
-            SITUATIONAL_TOKENS_PER_SECOND, SITUATIONAL_BURST_CAPACITY, MAX_RATE_TRACKED_SENDERS);
-
-        private readonly PerSenderRateLimiter chatReactionRateLimiter = new (
-            CHAT_REACTION_TOKENS_PER_SECOND, CHAT_REACTION_BURST_CAPACITY, MAX_RATE_TRACKED_SENDERS);
+        private readonly PerSenderRateLimiter situationalRateLimiter;
+        private readonly PerSenderRateLimiter chatReactionRateLimiter;
 
         public event Action<ReactionReceivedArgs>? ReactionReceived;
 
@@ -60,6 +46,7 @@ namespace DCL.Chat.ChatReactions.Networking
             IUserBlockingCache userBlockingCache,
             IWeb3IdentityCache identityCache,
             string routingUser,
+            ChatReactionsConfig config,
             int maxValidEmojiIndex = MAX_VALID_EMOJI_INDEX)
         {
             this.messagePipesHub = messagePipesHub;
@@ -67,6 +54,13 @@ namespace DCL.Chat.ChatReactions.Networking
             this.identityCache = identityCache;
             this.routingUser = routingUser;
             this.maxValidEmojiIndex = Mathf.Clamp(maxValidEmojiIndex, 1, MAX_VALID_EMOJI_INDEX);
+            situationalReceiveCountCap = config.SituationalReceiveCountCap;
+
+            situationalRateLimiter = new PerSenderRateLimiter(
+                config.SituationalReceiveRatePerSecond, config.SituationalReceiveBurst, config.MaxRateTrackedSenders);
+
+            chatReactionRateLimiter = new PerSenderRateLimiter(
+                config.ChatReactionReceiveRatePerSecond, config.ChatReactionReceiveBurst, config.MaxRateTrackedSenders);
 
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[MultiplayerReactionBus] Subscribing to Reaction and ChatReaction on Island/Scene/Chat pipes");
 
@@ -178,7 +172,7 @@ namespace DCL.Chat.ChatReactions.Networking
                 if (!situationalRateLimiter.TryPass(receivedMessage.FromWalletId, UnityEngine.Time.unscaledTime))
                     return;
 
-                int count = Mathf.Clamp(receivedMessage.Payload.Count, 1, MAX_SITUATIONAL_REACTION_COUNT);
+                int count = Mathf.Clamp(receivedMessage.Payload.Count, 1, situationalReceiveCountCap);
 
                 ReactionReceived?.Invoke(new ReactionReceivedArgs(
                     receivedMessage.FromWalletId,

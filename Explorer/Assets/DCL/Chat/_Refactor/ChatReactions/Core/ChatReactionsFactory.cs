@@ -64,6 +64,7 @@ namespace DCL.Chat.ChatReactions.Core
                 userBlockingCache,
                 web3IdentityCache,
                 environment,
+                reactionsConfig,
                 reactionsConfig.SafeTotalTiles);
             
             var messageReactionService = new ChatMessageReactionService(reactionBus,
@@ -148,6 +149,7 @@ namespace DCL.Chat.ChatReactions.Core
             IUserBlockingCache userBlockingCache,
             IWeb3IdentityCache web3IdentityCache,
             DecentralandEnvironment environment,
+            ChatReactionsConfig reactionsConfig,
             int maxValidEmojiIndex)
         {
             string serverEnv = environment switch
@@ -161,7 +163,7 @@ namespace DCL.Chat.ChatReactions.Core
             string routingUser = $"message-router-{serverEnv}-0";
 
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatPlugin] Using MultiplayerReactionMessageBus (routingUser={routingUser})");
-            return new MultiplayerReactionMessageBus(messagePipesHub, userBlockingCache, web3IdentityCache, routingUser, maxValidEmojiIndex);
+            return new MultiplayerReactionMessageBus(messagePipesHub, userBlockingCache, web3IdentityCache, routingUser, reactionsConfig, maxValidEmojiIndex);
         }
 
         private sealed class SettingsUnsubscriber : IDisposable

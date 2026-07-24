@@ -1,3 +1,4 @@
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
@@ -12,6 +13,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Chat.ChatReactions.Tests
 {
@@ -21,6 +23,7 @@ namespace DCL.Chat.ChatReactions.Tests
         private FakeMessagePipesHub pipesHub = null!;
         private IMultiPool multiPool = null!;
         private List<ReactionReceivedArgs> received = null!;
+        private ChatReactionsConfig config = null!;
         private MultiplayerReactionMessageBus? bus;
 
         [SetUp]
@@ -29,12 +32,14 @@ namespace DCL.Chat.ChatReactions.Tests
             pipesHub = new FakeMessagePipesHub();
             multiPool = Substitute.For<IMultiPool>();
             received = new List<ReactionReceivedArgs>();
+            config = ScriptableObject.CreateInstance<ChatReactionsConfig>();
         }
 
         [TearDown]
         public void TearDown()
         {
             bus?.Dispose();
+            UnityEngine.Object.DestroyImmediate(config);
         }
 
         [Test]
@@ -165,6 +170,7 @@ namespace DCL.Chat.ChatReactions.Tests
                 Substitute.For<IUserBlockingCache>(),
                 Substitute.For<IWeb3IdentityCache>(),
                 routingUser: "message-router-test-0",
+                config: config,
                 maxValidEmojiIndex: maxValidEmojiIndex);
 
             newBus.ReactionReceived += args => received.Add(args);
