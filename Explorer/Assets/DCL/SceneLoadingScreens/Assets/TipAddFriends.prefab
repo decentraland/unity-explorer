@@ -124,6 +124,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 212.3392
       objectReference: {fileID: 0}
+    - target: {fileID: 6455313194973673589, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7510907615130953338, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_text
       value: Add Friends

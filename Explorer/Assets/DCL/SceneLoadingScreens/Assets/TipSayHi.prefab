@@ -535,6 +535,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: SceneLoadingTipAction
       objectReference: {fileID: 0}
+    - target: {fileID: 5821765197461066070, guid: 88d142307cfbc4417ac0ad01a0e5e256, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -1.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 7951985042051678186, guid: 88d142307cfbc4417ac0ad01a0e5e256, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
