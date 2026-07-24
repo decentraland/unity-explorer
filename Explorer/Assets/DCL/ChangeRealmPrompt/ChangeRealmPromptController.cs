@@ -65,8 +65,9 @@ namespace DCL.ChangeRealmPrompt
 
         /// <summary>
         /// The destination shown to the user: for a URL realm the authority (host[:port]) with any misleading
-        /// path/query stripped; a world name or realm alias is shown unchanged. This — with rich-text disabled
-        /// in <see cref="OnViewInstantiated"/> — is what the user actually consents to.
+        /// userinfo (<c>https://trusted@evil.com</c>) and path/query stripped, so the true host is shown — not a
+        /// spoof; a world name or realm alias is shown unchanged. This — with rich-text disabled in
+        /// <see cref="OnViewInstantiated"/> — is what the user actually consents to.
         /// </summary>
         private static string DestinationHostFor(string realm)
         {
@@ -79,7 +80,14 @@ namespace DCL.ChangeRealmPrompt
             int end = start;
 
             while (end < realm.Length && realm[end] != '/' && realm[end] != '?' && realm[end] != '#')
+            {
+                // Skip past any userinfo (e.g. https://decentraland.org@evil.com) so the real host after the
+                // last '@' is displayed, not the trusted-looking prefix (consent-prompt spoofing, SEC-004).
+                if (realm[end] == '@')
+                    start = end + 1;
+
                 end++;
+            }
 
             return end > start ? realm.Substring(start, end - start) : realm;
         }

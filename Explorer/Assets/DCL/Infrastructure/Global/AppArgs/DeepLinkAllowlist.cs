@@ -15,7 +15,7 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Always permitted</b> — benign navigation / share / login intents whose worst case is already
     ///             gated elsewhere (a consent prompt, a matching login token, or a plain coordinate): realm,
-    ///             position, spawnpoint, community, signin, authRequestId, force-open-backpack.
+    ///             position, community, signin, authRequestId, force-open-backpack.
     ///         </item>
     ///         <item>
     ///             <b>Permitted only for a loopback realm</b> — the local-development params Creator Hub and the
