@@ -19,10 +19,10 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility.UIToolkit;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 using ProcessOtherAvatarsInteractionSystem = DCL.Interaction.Systems.ProcessOtherAvatarsInteractionSystem;
 using PlayerOriginatedProximitySystem = DCL.Interaction.Systems.PlayerOriginatedProximitySystem;
+using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -38,10 +38,8 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
 
-        private HoverCanvas hoverCanvas;
-        private Settings settings;
-        private Material hoverMaterial;
-        private Material hoverOorMaterial;
+        private HoverCanvas hoverCanvas = null!;
+        private Settings settings = null!;
 
         public GlobalInteractionPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -65,11 +63,11 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose() { }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(Settings pluginSettings, CancellationToken ct)
         {
-            this.settings = settings;
+            settings = pluginSettings;
 
-            hoverCanvas = (await assetsProvisioner.ProvideInstanceAsync(settings.hoverCanvasSettings.HoverUIDocument, ct: ct)).Value.rootVisualElement.Q<HoverCanvas>();
+            hoverCanvas = (await assetsProvisioner.ProvideInstanceAsync(pluginSettings.hoverCanvasSettings.HoverUIDocument, ct: ct)).Value.rootVisualElement.Q<HoverCanvas>();
             hoverCanvas.Initialize();
         }
 
@@ -81,11 +79,11 @@ namespace DCL.PluginSystem.Global
                     new PlayerOriginRaycastResultForGlobalEntities(),
                     new HoverStateComponent(),
                     new HoverFeedbackComponent(hoverCanvas.TooltipsCount),
-                    new ProximityResultForSceneEntities()),
+                    new ProximityResultForSceneEntities(),
+                    new SyntheticPointerInput()),
                 builder.World, arguments.PlayerEntity);
 
-            PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, DCLInput.Instance.Camera.Point, entityCollidersGlobalCache,
-                playerInteractionEntity, 100f);
+            PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, entityCollidersGlobalCache, playerInteractionEntity, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE);
             PlayerOriginatedProximitySystem.InjectToWorld(ref builder, entityCollidersGlobalCache, scenesCache, playerInteractionEntity);
 
             DCLInput.PlayerActions playerInput = DCLInput.Instance.Player;

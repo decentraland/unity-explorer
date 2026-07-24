@@ -7,7 +7,6 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
-using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
@@ -56,8 +55,15 @@ namespace DCL.Interaction.Systems
         private void ProcessPointerEvents(ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
             ref ProximityResultForSceneEntities proximityResultForSceneEntities,
             ref HoverFeedbackComponent hoverFeedbackComponent,
-            ref HoverStateComponent hoverStateComponent)
+            ref HoverStateComponent hoverStateComponent,
+            ref SyntheticPointerInput syntheticPointerInput)
         {
+            // Synthetic instructions apply to exactly this frame: a post that survived from an earlier frame
+            // (this system did not run since it was made) is discarded unread, and consuming the component
+            // here guarantees a driver that stops re-posting leaves no residue.
+            SyntheticPointerInput synthetic = syntheticPointerInput.IsPostedThisFrame ? syntheticPointerInput : default(SyntheticPointerInput);
+            syntheticPointerInput = default(SyntheticPointerInput);
+
             // Process all PBPointerEvents components to see if any of them is qualified
             hoverFeedbackComponent.Clear();
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderSceneEntityInfo previousEntityInfo);
@@ -67,6 +73,7 @@ namespace DCL.Interaction.Systems
                 TryGetInteractableEntity(
                     in raycastResultForSceneEntities,
                     in proximityResultForSceneEntities,
+                    synthetic.AimPoint.HasValue,
                     out GlobalColliderSceneEntityInfo entityInfo,
                     out PBPointerEvents? pbPointerEvents,
                     out Collider? collider)
@@ -85,6 +92,7 @@ namespace DCL.Interaction.Systems
                     ref hoverFeedbackComponent,
                     pbPointerEvents!,
                     newEntityIsSelected,
+                    in synthetic,
                     out bool isAtDistance);
 
                     hoverStateComponent.AssignCollider(collider!, isAtDistance, hoverFeedbackComponent.ScreenPositionOverride == null);
@@ -107,6 +115,7 @@ namespace DCL.Interaction.Systems
 
         private bool TryGetInteractableEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
             in ProximityResultForSceneEntities proximityResultForSceneEntities,
+            bool syntheticAim,
             out GlobalColliderSceneEntityInfo entityInfo,
             out PBPointerEvents? pbPointerEvents,
             out Collider? collider
@@ -115,6 +124,7 @@ namespace DCL.Interaction.Systems
             // Check cursor type first
             if (TryGetInteractableEntityFromCursor(
                     in raycastResultForSceneEntities,
+                    syntheticAim,
                     out GlobalColliderSceneEntityInfo cursorEntityInfo,
                     out PBPointerEvents? cursorPointerEvents,
                     out Collider? cursorCollider))
@@ -145,12 +155,13 @@ namespace DCL.Interaction.Systems
         }
 
         private bool TryGetInteractableEntityFromCursor(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
+            bool syntheticAim,
             out GlobalColliderSceneEntityInfo entityInfo,
             out PBPointerEvents? pbPointerEvents,
             out Collider? cursorCollider)
         {
             if (
-                IsPointingOnEntity(in raycastResultForSceneEntities, out GlobalColliderSceneEntityInfo pointedEntityInfo)
+                IsPointingOnEntity(in raycastResultForSceneEntities, syntheticAim, out GlobalColliderSceneEntityInfo pointedEntityInfo)
                 && pointedEntityInfo.TryGetPointerEvents(out PBPointerEvents? foundPointerEvents)
                 && HasCursorEvent(foundPointerEvents!))
             {
@@ -166,9 +177,10 @@ namespace DCL.Interaction.Systems
             return false;
         }
 
-        private bool IsPointingOnEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, out GlobalColliderSceneEntityInfo entityInfo)
+        private bool IsPointingOnEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, bool syntheticAim, out GlobalColliderSceneEntityInfo entityInfo)
         {
-            bool canHover = eventSystem.IsPointerOverGameObject() == false;
+            // A synthetic ray does not originate from the OS cursor, so UI under the cursor cannot occlude it
+            bool canHover = syntheticAim || eventSystem.IsPointerOverGameObject() == false;
             entityInfo = raycastResultForSceneEntities.EntityInfo ?? default(GlobalColliderSceneEntityInfo);
             return raycastResultForSceneEntities.IsValidHit && canHover && raycastResultForSceneEntities.EntityInfo != null;
         }
@@ -262,12 +274,20 @@ namespace DCL.Interaction.Systems
             ref HoverFeedbackComponent hoverFeedbackComponent,
             PBPointerEvents pbPointerEvents,
             bool newEntityIsSelected,
+            in SyntheticPointerInput synthetic,
             out bool isAtDistance
         )
         {
             isAtDistance = false;
             bool highlightEnabled = true;
             var anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
+
+            if (synthetic.PressButton.HasValue || synthetic.ReleaseButton.HasValue)
+                anyInputInfo = new InteractionInputUtils.AnyInputInfo(
+                    anyInputInfo.AnyButtonWasPressedThisFrame || synthetic.PressButton.HasValue,
+                    anyInputInfo.AnyButtonWasReleasedThisFrame || synthetic.ReleaseButton.HasValue,
+                    anyInputInfo.AnyButtonIsPressed || synthetic.PressButton.HasValue);
+
             Vector2? screenPositionOverride = null;
 
             pbPointerEvents.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
@@ -311,9 +331,16 @@ namespace DCL.Interaction.Systems
                 HighlightNewEntity(entityInfo, isAtDistance);
 
             if (isAtDistance)
-
+            {
                 // Add all inputs that were pressed/unpressed this frame
                 InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
+
+                if (synthetic.PressButton.HasValue)
+                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.PressButton.Value, PointerEventType.PetDown);
+
+                if (synthetic.ReleaseButton.HasValue)
+                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.ReleaseButton.Value, PointerEventType.PetUp);
+            }
         }
 
         private Vector2 GetColliderCenterScreenPosition(Collider collider)
