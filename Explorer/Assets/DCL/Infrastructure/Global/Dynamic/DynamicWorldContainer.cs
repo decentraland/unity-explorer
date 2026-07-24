@@ -1015,6 +1015,7 @@ namespace Global.Dynamic
                 staticContainer.SceneReadinessReportQueue,
                 profilesRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
+                bootstrapContainer.UseLocalAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 bootstrapContainer.Analytics.EntitiesAnalytics,

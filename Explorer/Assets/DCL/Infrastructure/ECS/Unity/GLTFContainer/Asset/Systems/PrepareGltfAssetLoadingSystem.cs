@@ -62,6 +62,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             {
                 if (options.UseRemoteAssetBundles)
                     loadRawGltf |= sceneData.SceneContent.IsRawAsset(intention.Name);
+                else if (options.UseLocalAssetBundles)
+
+                    // Whole-scene degrade: when the manifest could not be fetched from the local
+                    // asset-bundle server every AB request would dead-end, so load raw GLTFs instead.
+                    loadRawGltf |= sceneData.SceneEntityDefinition.assetBundleManifestVersion is not { assetBundleManifestRequestFailed: false };
                 else
                     loadRawGltf = true;
             }
@@ -85,6 +90,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         {
             public bool LocalSceneDevelopment;
             public bool UseRemoteAssetBundles;
+            public bool UseLocalAssetBundles;
             public bool PreviewingBuilderCollection;
         }
     }

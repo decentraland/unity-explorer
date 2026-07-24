@@ -134,6 +134,10 @@ namespace Global.Editor
                 SerializedProperty remoteWorldContentServerProperty = parent.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHibridWorld));
                 SerializedProperty remoteSceneContentServerProperty = parent.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHybridSceneContentServer));
                 SerializedProperty useHibridAssets = parent.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles));
+                SerializedProperty useLocalAssets = parent.FindPropertyRelative(nameof(RealmLaunchSettings.useLocalAssetBundles));
+
+                EditorGUI.PropertyField(position, useLocalAssets);
+                position.y += singleLineHeight;
 
                 EditorGUI.PropertyField(position, useHibridAssets);
                 position.y += singleLineHeight;
@@ -256,7 +260,7 @@ namespace Global.Editor
             switch (initialRealmValue)
             {
                 case InitialRealm.Localhost:
-                    var fieldToAdd = 1;
+                    var fieldToAdd = 2;
 
                     if (property.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles)).boolValue)
                     {
