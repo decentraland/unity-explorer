@@ -19,16 +19,16 @@ namespace DCL.SceneLoadingScreens
         [field: SerializeField]
         public CanvasGroup RootCanvasGroup { get; private set; } = null!;
 
-        public virtual void Set(SceneTips.LoadedTip tip, Sprite[] fallbackSprites)
+        public virtual void Set(SceneTips.LoadedTip tip)
         {
             TitleLabel.text = tip.Title;
             BodyLabel.text = tip.Body;
 
             Option<Sprite> spriteResource = tip.Image.Resource;
 
-            Sprite icon = spriteResource.Has
+            Sprite? icon = spriteResource.Has
                 ? spriteResource.Value
-                : fallbackSprites[Random.Range(0, fallbackSprites.Length)];
+                : null;
 
             Image.sprite = icon;
         }

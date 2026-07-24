@@ -45,9 +45,6 @@ namespace DCL.SceneLoadingScreens
         [SerializeField]
         private LoadingTipCatalogSO tipCatalog = null!;
 
-        [SerializeField]
-        private Sprite[] fallbackSprites = null!;
-
         [field: SerializeField]
         public Image Background { get; private set; } = null!;
 
@@ -87,7 +84,7 @@ namespace DCL.SceneLoadingScreens
             TipView view = Instantiate(tipCatalog.TryGet(tip.Key, out TipView? preConfiguredPrefab)
                 ? preConfiguredPrefab! : tipViewPrefab, tipsParent);
 
-            view.Set(tip, fallbackSprites);
+            view.Set(tip);
 
             TipBreadcrumb breadcrumb = Instantiate(breadcrumbPrefab, breadcrumbParent);
             int breadcrumbIndex = tipsBreadcrumbs.Count;
