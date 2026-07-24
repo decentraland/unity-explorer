@@ -63,7 +63,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
@@ -101,7 +101,7 @@ namespace DCL.Communities.CommunitiesBrowser
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.view = view;

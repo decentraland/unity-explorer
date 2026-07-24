@@ -23,6 +23,7 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
+        public const string SPAWN_POINT = "spawnpoint";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
         public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
@@ -31,6 +32,14 @@ namespace Global.AppArgs
         /// The community received here (by its ID) will be shown through a notification inviting the user to click on it and open that community card.
         /// </summary>
         public const string COMMUNITY = "community";
+
+        public const string FORCE_OPEN_BACKPACK = "force-open-backpack";
+
+        // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
+        public const string SIGNIN = "signin";
+
+        // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
+        public const string AUTH_REQUEST_ID = "authRequestId";
 
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
@@ -97,6 +106,16 @@ namespace Global.AppArgs
 
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
         public const string ALTTESTER = "alttester";
+
+        /// <summary>
+        ///     Starts the embedded MCP (Model Context Protocol) server on 127.0.0.1 so coding agents can drive the client.
+        /// </summary>
+        public const string MCP = "mcp";
+
+        /// <summary>
+        ///     Overrides the port the embedded MCP server listens on (implies <see cref="MCP" />).
+        /// </summary>
+        public const string MCP_PORT = "mcp-port";
 
         public const string REPORT_USER = "report-user";
 

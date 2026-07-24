@@ -2,8 +2,11 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.FeatureFlags;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
+using DCL.MarketplaceCredits.Purchase.TopUp;
+using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Web3.Identities;
 using MVC;
@@ -21,9 +24,11 @@ namespace DCL.PluginSystem.Global
         private readonly ICreditsPurchaseService creditsPurchaseService;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
 
         private CreditPurchaseModalController? creditPurchaseModalController;
+        private ICreditsTopUpService? creditsTopUpService;
+        private CreditsTopUpModalController? creditsTopUpModalController;
 
         public CreditPurchasePlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -31,7 +36,7 @@ namespace DCL.PluginSystem.Global
             ICreditsPurchaseService creditsPurchaseService,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWeb3IdentityCache web3IdentityCache,
-            IWebBrowser webBrowser)
+            UnityAppWebBrowser webBrowser)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -44,6 +49,8 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             creditPurchaseModalController?.Dispose();
+            creditsTopUpModalController?.Dispose();
+            creditsTopUpService?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -61,16 +68,31 @@ namespace DCL.PluginSystem.Global
                 OpenGetCreditsPanelAsync);
 
             mvcManager.RegisterController(creditPurchaseModalController);
+
+            creditsTopUpService = new CreditsTopUpService(marketplaceCreditsAPIClient, web3IdentityCache, webBrowser);
+
+            CreditsTopUpModalView topUpViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CreditsTopUpPopupPrefab, ct: ct)).GetComponent<CreditsTopUpModalView>();
+
+            creditsTopUpModalController = new CreditsTopUpModalController(
+                CreditsTopUpModalController.CreateLazily(topUpViewAsset, null),
+                creditsTopUpService,
+                marketplaceCreditsAPIClient,
+                web3IdentityCache);
+
+            mvcManager.RegisterController(creditsTopUpModalController);
         }
 
         private UniTask OpenGetCreditsPanelAsync(CancellationToken ct) =>
-            mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
+            FeaturesRegistry.Instance.IsEnabled(FeatureId.CREDITS_TOPUP)
+                ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_PURCHASE_MODAL)), ct)
+                : mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
 
         [Serializable]
         public class CreditPurchaseSettings : IDCLPluginSettings
         {
             [field: Header("Credit purchase")]
             [field: SerializeField] internal AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
         }
     }
 }

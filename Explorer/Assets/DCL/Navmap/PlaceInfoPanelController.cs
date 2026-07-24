@@ -41,7 +41,7 @@ namespace DCL.Navmap
         private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
@@ -73,7 +73,7 @@ namespace DCL.Navmap
             HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             HomePlaceEventBus homePlaceEventBus,
             IDonationsService donationsService,
@@ -187,13 +187,18 @@ namespace DCL.Navmap
             thumbnailImage.RequestImage(place.image);
             view.PlaceNameLabel.text = place.title;
             view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
-            view.LikeRateLabel.text = $"{(place.like_rate_as_float ?? 0) * 100:F0}%";
+            view.LikeRateLabel.text = $"{(place.LikeRateAsFloat ?? 0) * 100:F0}%";
             view.PlayerCountLabel.text = place.user_count.ToString();
             view.DescriptionLabel.text = string.IsNullOrEmpty(place.description) ? "No description" : place.description;
             view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
-            view.CoordinatesLabel.text = place.base_position;
+
+            bool isWorld = place.IsWorld;
+
+            view.CoordinatesLabel.text = isWorld ? place.world_name : place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
-            view.StartNavigationButton.gameObject.SetActive(true);
+
+            // Worlds are not on the Genesis map, so on-map navigation doesn't apply to them.
+            view.StartNavigationButton.gameObject.SetActive(!isWorld);
             view.StopNavigationButton.gameObject.SetActive(false);
             view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(place.creator_address));
 
@@ -304,7 +309,7 @@ namespace DCL.Navmap
 
             if (isHome)
             {
-                if (!string.IsNullOrEmpty(place.world_name))
+                if (place.IsWorld)
                 {
                     homePlaceEventBus.SetAsHome(place.world_name);
                 }
@@ -358,7 +363,18 @@ namespace DCL.Navmap
 
             navmapBus.JumpIn(place!);
 
-            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) && originParcel != null ? originParcel : currentBaseParcel;
+            // Worlds live on a separate realm; the goto command teleports there by world name.
+            if (place!.IsWorld)
+            {
+                chatMessagesBus
+                   .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
+                        $"/{ChatCommandsUtils.COMMAND_GOTO} {place.world_name}",
+                        ChatMessageOrigin.JUMP_IN);
+
+                return;
+            }
+
+            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place.title) && originParcel != null ? originParcel : currentBaseParcel;
 
             chatMessagesBus
                .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
@@ -373,7 +389,7 @@ namespace DCL.Navmap
         }
 
         private void OpenUrl(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
 
         private void OnLikeButtonClick(bool isEnabled)
         {

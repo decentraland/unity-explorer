@@ -69,14 +69,14 @@ namespace DCL.Character.CharacterMotion.Systems
                 // Anchor the height on the scene's spawn point as a best guess: the exact parcel floor
                 // isn't knowable yet (the scene's colliders load later), so TeleportCharacterSystem
                 // snaps the avatar onto the floor once the scene is ready.
-                (Vector3 spawnTarget, _) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);
+                (Vector3 spawnTarget, _) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel, teleportIntent.SpawnPointName);
                 targetWorldPosition.y = spawnTarget.y;
 
                 teleportIntent.Position = targetWorldPosition;
             }
             else
             {
-                (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);
+                (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel, teleportIntent.SpawnPointName);
 
                 var originalTargetPosition = targetWorldPosition;
 

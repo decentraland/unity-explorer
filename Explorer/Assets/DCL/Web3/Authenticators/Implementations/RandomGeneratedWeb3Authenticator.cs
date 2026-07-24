@@ -45,12 +45,9 @@ namespace DCL.Web3.Authenticators
                 ephemeralAccount,
                 expiration,
                 authChain,
-                IWeb3Identity.Web3IdentitySource.None
+                IWeb3Identity.Web3IdentitySource.NONE
             ).AsUniTaskResult<IWeb3Identity>();
         }
-
-        public UniTask LogoutAsync(CancellationToken ct) =>
-            UniTask.CompletedTask;
 
         public UniTask<string> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)
         {

@@ -1,12 +1,11 @@
-﻿
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using Global.Dynamic;
-using UnityEngine.Playables;
 using UnityEngine;
+using UnityEngine.Playables;
 
-namespace DCL.AvatarAnimation
+namespace DCL.AvatarAnimation.Editor
 {
     // Note: It can't work with player avatar, input is overriden by real input
 

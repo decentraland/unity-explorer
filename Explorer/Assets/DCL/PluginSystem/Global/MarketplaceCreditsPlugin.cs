@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly MainUIView mainUIView;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.Global
         public MarketplaceCreditsPlugin(
             MainUIView mainUIView,
             IAssetsProvisioner assetsProvisioner,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,

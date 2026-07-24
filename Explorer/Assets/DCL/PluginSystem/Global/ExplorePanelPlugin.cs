@@ -60,6 +60,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
@@ -105,7 +106,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
@@ -113,7 +114,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -202,12 +203,12 @@ namespace DCL.PluginSystem.Global
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
-            IWeb3Authenticator web3Authenticator,
+            ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             IRealmData realmData,
             IProfileCache profileCache,
@@ -579,10 +580,6 @@ namespace DCL.PluginSystem.Global
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
             eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
-                webRequestController,
-                clipboard,
-                webBrowser,
-                eventsApiService,
                 eventsThumbnailLoader,
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
@@ -591,7 +588,9 @@ namespace DCL.PluginSystem.Global
             explorePanelView.CreditsPanelView.gameObject.SetActive(userCreditsEnabled);
 
             if (userCreditsEnabled)
-                creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache);
+                creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
+                    topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CREDITS_TOPUP),
+                    openTopUpPanel: () => mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD))).Forget());
 
             explorePanelController = new
                 ExplorePanelController(
@@ -626,6 +625,9 @@ namespace DCL.PluginSystem.Global
 
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;
+
+            if (appArgs.HasFlag(AppArgsFlags.FORCE_OPEN_BACKPACK))
+                BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, ct).Forget();
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)

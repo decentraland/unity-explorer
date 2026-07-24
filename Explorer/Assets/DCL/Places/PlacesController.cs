@@ -41,7 +41,7 @@ namespace DCL.Places
             PlaceCategoriesSO placesCategories,
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,

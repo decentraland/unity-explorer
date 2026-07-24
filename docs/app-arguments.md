@@ -252,6 +252,21 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+## UI Flags
+
+### `force-open-backpack`
+**Description:** Automatically opens the Backpack panel once the user lands in the world (after authentication and the loading screen). Presence-only: any value triggers it. Also works when a deep link reaches an already-running client — the Backpack opens immediately (or once loading completes).
+
+**Usage:**
+```bash
+--force-open-backpack
+```
+```
+decentraland://?force-open-backpack=true
+```
+
+---
+
 ## Performance & Caching Flags
 
 ### `disable-disk-cache`
@@ -307,6 +322,27 @@ More detailed instructions on how to test can be found in the description of rel
 **Usage:**
 ```bash
 --identity-expiration-duration 3600
+```
+
+---
+
+### `mcp`
+**Description:** Starts the embedded MCP (Model Context Protocol) server on `http://127.0.0.1:8123/unity-explorer-mcp` so coding agents can observe and drive the client (screenshots, player/scene state, scene logs, teleport/movement, chat commands). The listener binds to localhost only and rejects non-localhost browser Origins. See [MCP Automation](mcp-automation.md).
+
+**Usage:**
+```bash
+--mcp
+```
+
+---
+
+### `mcp-port`
+**Type:** String (integer port, 1024–65535)
+**Description:** Starts the embedded MCP server on a specific port (implies `mcp`). Use distinct ports when running multiple instances via `--multi-instance`.
+
+**Usage:**
+```bash
+--mcp-port 8124
 ```
 
 ---

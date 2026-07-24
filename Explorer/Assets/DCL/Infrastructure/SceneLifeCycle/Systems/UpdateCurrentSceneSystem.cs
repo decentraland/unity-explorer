@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -38,16 +39,13 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sceneNameBinding;
         private readonly ElementBinding<string> sceneParcelsBinding;
         private readonly ElementBinding<string> sceneHeightBinding;
-        private readonly ElementBinding<string> sdk6Binding;
+        private readonly ElementBinding<string> sdkVersionBinding;
         private readonly ElementBinding<string> globalPositionBinding;
         private readonly ElementBinding<string> sceneRelativePositionBinding;
-        private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject? sceneBoundsCube;
         private ISceneFacade? currentActiveScene;
         private Vector2Int previousParcelPosition;
-
-        private Vector2Int lastParcel;
 
         //Debug only
         private readonly Dictionary<Material, Color> originalColors = new ();
@@ -67,8 +65,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.currentSceneInfo = currentSceneInfo;
             this.playerEntity = playerEntity;
 
-            debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
-            sdk6Binding = new ElementBinding<string>(string.Empty);
+            sdkVersionBinding = new ElementBinding<string>(string.Empty);
             sceneNameBinding = new ElementBinding<string>(string.Empty);
             sceneParcelsBinding = new ElementBinding<string>(string.Empty);
             sceneHeightBinding = new ElementBinding<string>(string.Empty);
@@ -76,8 +73,7 @@ namespace ECS.SceneLifeCycle.Systems
             sceneRelativePositionBinding = new ElementBinding<string>(string.Empty);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
-                         .SetVisibilityBinding(debugInfoVisibilityBinding)
-                         .AddCustomMarker("SDK 6:", sdk6Binding)
+                        .AddCustomMarker("SDK 7:", sdkVersionBinding)
                          .AddCustomMarker("Name:", sceneNameBinding)
                          .AddCustomMarker("Parcels:", sceneParcelsBinding)
                          .AddCustomMarker("Height (m):", sceneHeightBinding)
@@ -94,16 +90,12 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void Update(float t)
         {
             if (!realmData.Configured)
-            {
-                lastParcel = new Vector2Int(int.MinValue, int.MinValue);
                 return;
-            }
             Vector2Int parcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
-            lastParcel = parcel;
             UpdateSceneReadiness(parcel);
 
-            if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsConnectedAndExpanded)
+            if (debugBuilder.IsVisible)
                 RefreshSceneDebugInfo();
         }
 
@@ -145,7 +137,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void RefreshSceneDebugInfo()
         {
-            sdk6Binding.Value = currentActiveScene != null ? bool.FalseString : bool.TrueString;
+            sdkVersionBinding.Value = currentActiveScene != null ? bool.TrueString : bool.FalseString;
 
             Vector3 globalPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
             globalPositionBinding.Value = FormatPositionVector(globalPosition);
@@ -247,7 +239,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         //Debug only
-        private void OnBackfaceCullingToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        private void OnBackfaceCullingToggle(ChangeEvent<bool> evt)
         {
             backfaceCulling = evt.newValue;
 

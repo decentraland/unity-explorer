@@ -35,7 +35,7 @@ namespace DCL.Web3.Identities
                     accountFactory.CreateAccount(new EthECKey(jsonRoot.key)),
                     DateTime.Parse(jsonRoot.expiration, null, DateTimeStyles.RoundtripKind),
                     authChain,
-                    IWeb3Identity.Web3IdentitySource.Cached);
+                    IWeb3Identity.Web3IdentitySource.CACHED);
             }
 
             public string Serialize(IWeb3Identity identity)
