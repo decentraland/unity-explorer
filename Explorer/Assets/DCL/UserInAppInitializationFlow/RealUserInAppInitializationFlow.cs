@@ -233,8 +233,13 @@ namespace DCL.UserInAppInitializationFlow
                 if (result.Success == false)
                 {
                     //Fail straight away
-                    string message = result.Error.AsMessage();
-                    ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+                    // Do not log cancellation as an error (CLAUDE.md §9): on shutdown the loading result
+                    // is a propagated TaskError.Cancelled, not a genuine auth failure.
+                    if (result.Error?.State != TaskError.Cancelled && !ct.IsCancellationRequested)
+                    {
+                        string message = result.Error.AsMessage();
+                        ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+                    }
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
