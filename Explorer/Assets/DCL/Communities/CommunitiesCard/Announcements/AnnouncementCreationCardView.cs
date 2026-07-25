@@ -1,5 +1,6 @@
 ﻿using DCL.Audio;
 using DCL.Chat;
+using DCL.Clipboard;
 using DCL.Emoji;
 using DCL.Profiles;
 using DCL.UI.CustomInputField;
@@ -40,6 +41,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private string currentProfileThumbnailUrl = null!;
         private AnnouncementEmojiController? announcementEmojiController;
+        private ClipboardManager? subscribedClipboardManager;
 
         private void Awake()
         {
@@ -50,17 +52,23 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             announcementInput.onValueChanged.AddListener(OnAnnouncementInputValueChanged);
             announcementInput.PasteShortcutPerformed += OnAnnouncementInputPasteShortcut;
             createAnnouncementButton.onClick.AddListener(OnCreateAnnouncementButton);
-            ViewDependencies.ClipboardManager.OnPaste += OnPasteClipboardText;
+            subscribedClipboardManager = ViewDependencies.ClipboardManager;
+            subscribedClipboardManager.OnPaste += OnPasteClipboardText;
         }
 
         private void OnDestroy()
         {
-            announcementInput.onSelect.RemoveListener(OnAnnouncementInputSelected);
-            announcementInput.onDeselect.RemoveListener(OnAnnouncementInputDeselected);
-            announcementInput.onValueChanged.RemoveListener(OnAnnouncementInputValueChanged);
-            announcementInput.PasteShortcutPerformed -= OnAnnouncementInputPasteShortcut;
-            createAnnouncementButton.onClick.RemoveListener(OnCreateAnnouncementButton);
-            ViewDependencies.ClipboardManager.OnPaste -= OnPasteClipboardText;
+            if (announcementInput != null)
+            {
+                announcementInput.onSelect.RemoveListener(OnAnnouncementInputSelected);
+                announcementInput.onDeselect.RemoveListener(OnAnnouncementInputDeselected);
+                announcementInput.onValueChanged.RemoveListener(OnAnnouncementInputValueChanged);
+                announcementInput.PasteShortcutPerformed -= OnAnnouncementInputPasteShortcut;
+            }
+            if (createAnnouncementButton != null)
+                createAnnouncementButton.onClick.RemoveListener(OnCreateAnnouncementButton);
+            if (subscribedClipboardManager != null)
+                subscribedClipboardManager.OnPaste -= OnPasteClipboardText;
 
             announcementEmojiController?.Dispose();
         }

@@ -83,7 +83,8 @@ namespace DCL.Profiles
 
         public void Dispose()
         {
-            GetCompact().Dispose();
+            // POOL's actionOnRelease runs Clear(), which already disposes the compact info -
+            // disposing it here too made every pooled release a double-dispose.
             POOL.Release(this);
         }
 

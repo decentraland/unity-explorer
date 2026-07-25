@@ -37,7 +37,9 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(string url, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
-            bool useKtx = textureArguments.UseKtx && ktxEnabled && !WebRequestUtils.IsLocalhost(url);
+            // Never hand a non-publicly-routable content URL to the hosted converter: its workers
+            // cannot reach the host, so the job hangs until TCP timeout and clogs the converter queue.
+            bool useKtx = textureArguments.UseKtx && ktxEnabled && !WebRequestUtils.IsNonPubliclyRoutable(url);
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
             UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
 

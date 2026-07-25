@@ -93,6 +93,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            DCLInput.Instance.Disable();
             DCLInput.Reset();
         }
     }

@@ -16,8 +16,16 @@ namespace DCL.Web3.Chains
 
         private bool disposed;
 
-        public static AuthChain Create() =>
-            POOL.Get()!;
+        public static AuthChain Create()
+        {
+            // Reset the recycled instance: a pooled AuthChain comes back with disposed == true
+            // (set by the Dispose that released it), which made its next Dispose a no-op — the
+            // instance never returned to the pool again and reads saw stale state.
+            AuthChain instance = POOL.Get()!;
+            instance.disposed = false;
+            instance.chain.Clear();
+            return instance;
+        }
 
         private AuthChain() { }
 

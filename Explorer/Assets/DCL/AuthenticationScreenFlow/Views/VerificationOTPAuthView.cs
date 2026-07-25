@@ -33,14 +33,14 @@ namespace DCL.AuthenticationScreenFlow
         public void Show(string email)
         {
             InputField.Clear();
-            ShowAsync(CancellationToken.None).Forget();
+            ShowAsync(destroyCancellationToken).Forget();
             description.text = description.text.Replace("your@email.com", email); // Update description with user email
         }
 
         public void Hide(int hideAnimHash)
         {
             this.hideAnimHash = hideAnimHash;
-            HideAsync(CancellationToken.None).Forget();
+            HideAsync(destroyCancellationToken).Forget();
         }
 
         public override async UniTask ShowAsync(CancellationToken ct)

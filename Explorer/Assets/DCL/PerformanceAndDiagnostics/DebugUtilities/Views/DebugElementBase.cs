@@ -5,7 +5,7 @@ namespace DCL.DebugUtilities.Views
 {
     public abstract class DebugElementBase<TElement, TDef> : VisualElement where TElement: DebugElementBase<TElement, TDef> where TDef: IDebugElementDef
     {
-        protected TDef definition { get; private set; }
+        protected TDef definition { get; private set; } = default!;
 
         public void Initialize(TDef definition)
         {

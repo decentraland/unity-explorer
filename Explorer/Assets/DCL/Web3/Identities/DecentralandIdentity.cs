@@ -7,6 +7,8 @@ namespace DCL.Web3.Identities
 {
     public class DecentralandIdentity : IWeb3Identity
     {
+        private bool disposed;
+
         public Web3Address Address { get; }
         public DateTime Expiration { get; }
         public IWeb3Account EphemeralAccount { get; }
@@ -33,11 +35,22 @@ namespace DCL.Web3.Identities
 
         public void Dispose()
         {
+            if (disposed)
+                return;
+
+            disposed = true;
             AuthChain.Dispose();
         }
 
         public AuthChain Sign(string entityId)
         {
+            // Tracked on the identity itself: the pooled AuthChain's disposed flag is reset when the
+            // pool re-issues the instance, so it cannot be trusted after this identity released it.
+            // ObjectDisposedException (not OperationCanceledException) so the failure is not silently
+            // swallowed by the standard catch (OperationCanceledException) { } blocks.
+            if (disposed)
+                throw new ObjectDisposedException(nameof(DecentralandIdentity), $"Cannot sign, the identity for {Address} has been disposed");
+
             if (Expiration < DateTime.UtcNow)
                 throw new Web3IdentityException(this, $"Cannot sign, identity has expired: {Expiration:s}");
 

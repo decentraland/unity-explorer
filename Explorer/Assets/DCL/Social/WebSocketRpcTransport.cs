@@ -94,6 +94,7 @@ namespace DCL.SocialService
                         }
                     }
                     catch (OperationCanceledException) { break; }
+                    catch (ObjectDisposedException) { break; }
                     catch (WebSocketException e)
                     {
                         OnErrorEvent?.Invoke(e);
@@ -119,6 +120,12 @@ namespace DCL.SocialService
             {
                 OnErrorEvent?.Invoke(e);
             }
+            // The socket can be disposed mid-send during teardown/reconnect (isDisposed was false at
+            // entry); surface it like a send failure so callers don't believe the message was delivered.
+            catch (ObjectDisposedException e)
+            {
+                OnErrorEvent?.Invoke(e);
+            }
         }
 
         public virtual async UniTask SendMessageAsync(string data, CancellationToken ct)
@@ -127,6 +134,10 @@ namespace DCL.SocialService
 
             try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
             catch (WebSocketException e)
+            {
+                OnErrorEvent?.Invoke(e);
+            }
+            catch (ObjectDisposedException e)
             {
                 OnErrorEvent?.Invoke(e);
             }
@@ -141,7 +152,8 @@ namespace DCL.SocialService
 
             if (State is WebSocketState.Open or WebSocketState.CloseReceived)
             {
-                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
+                try { await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct); }
+                catch (ObjectDisposedException) { return; }
                 OnCloseEvent?.Invoke();
             }
         }

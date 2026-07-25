@@ -143,8 +143,8 @@ namespace DCL.WebRequests.Dumper
                 }
             }
 
-            if (!commonArguments.HasValue || argsType == null)
-                throw new JsonSerializationException("Required properties 'commonArguments' or 'argsType' are missing");
+            if (!commonArguments.HasValue || argsType == null || requestType == null || args == null)
+                throw new JsonSerializationException("Required properties 'commonArguments', 'requestType', 'argsType', or 'args' are missing");
 
             var envelope = new WebRequestDump.Envelope(requestType, commonArguments.Value, argsType, args, headersInfo, startTime, effectiveUrl);
             envelope.Conclude(statusKind, endTime);

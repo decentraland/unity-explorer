@@ -238,11 +238,15 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid PrewarmAsync(CancellationToken ct)
             {
-                await friendsPanelController.InitAsync(ct);
-                await PreWarmFriendsCacheAsync(ct);
+                try
+                {
+                    await friendsPanelController.InitAsync(ct);
+                    await PreWarmFriendsCacheAsync(ct);
 
-                // TODO should not unsubscribe as the user can re-login with another account, and thus, pre-warming will be skipped
-                loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
+                    // TODO should not unsubscribe as the user can re-login with another account, and thus, pre-warming will be skipped
+                    loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
+                }
+                catch (OperationCanceledException) { }
             }
         }
 

@@ -93,6 +93,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             // Merge the region with any adjacent free regions in the freeRegions list.
             // The freeRegions list should always be kept sorted. If you merge regions, make sure the result is still sorted.
 
+            // a zero-length slice was never rented (Rent rejects 0): nothing to release
+            if (slice.Length == 0)
+                return;
+
             if (!rentedRegions.Remove(slice))
             {
                 ReportHub.LogError(ReportCategory.AVATAR, "Trying to release a slice that was not rented");

@@ -36,7 +36,11 @@ namespace SceneRunner.Scene
                 }
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception) { }
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportCategory, $"Hybrid scene fetch failed at {coordinate}: {e.GetType().Name}: {e.Message}");
+                return (false, "");
+            }
 
             ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
             return (false, "");
@@ -77,7 +81,11 @@ namespace SceneRunner.Scene
                 }
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception) { }
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportCategory, $"Hybrid scene fetch failed at {coordinate}: {e.GetType().Name}: {e.Message}");
+                return (false, "");
+            }
 
             ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
             return (false, "");
@@ -97,10 +105,11 @@ namespace SceneRunner.Scene
                 return (true, getSceneDefinition[0].id!);
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception) { }
-
-            ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
-            return (false, "");
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportCategory, $"Hybrid scene fetch failed at {coordinate}: {e.GetType().Name}: {e.Message}");
+                return (false, "");
+            }
         }
     }
 }

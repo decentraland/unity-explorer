@@ -55,26 +55,26 @@ public class SkyboxRenderController : MonoBehaviour
     private LensFlareDataSRP? activeLensFlareData;
 
     [Header("Skybox Color")]
-    [GradientUsage(true)] [SerializeField] private Gradient skyZenitColorRamp;
-    [GradientUsage(true)] [SerializeField] private Gradient skyHorizonColorRamp;
-    [GradientUsage(true)] [SerializeField] private Gradient skyNadirColorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient skyZenitColorRamp = null!;
+    [GradientUsage(true)] [SerializeField] private Gradient skyHorizonColorRamp = null!;
+    [GradientUsage(true)] [SerializeField] private Gradient skyNadirColorRamp = null!;
 
     [InspectorName("Rim Light Color")]
-    [GradientUsage(true)] [SerializeField] private Gradient rimColorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient rimColorRamp = null!;
 
     [Header("Indirect Lighting")]
     [InspectorName("Enabled")] [SerializeField] private bool indirectLight = true;
-    [GradientUsage(true)] [SerializeField] private Gradient indirectSkyRamp;
-    [GradientUsage(true)] [SerializeField] private Gradient indirectEquatorRamp;
-    [GradientUsage(true)] [SerializeField] private Gradient groundEquatorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient indirectSkyRamp = null!;
+    [GradientUsage(true)] [SerializeField] private Gradient indirectEquatorRamp = null!;
+    [GradientUsage(true)] [SerializeField] private Gradient groundEquatorRamp = null!;
 
     [Header("Clouds")]
-    [GradientUsage(true)] [SerializeField] private Gradient cloudsColorRamp;
-    [SerializeField] private AnimationCurve cloudsHighlightsIntensity;
+    [GradientUsage(true)] [SerializeField] private Gradient cloudsColorRamp = null!;
+    [SerializeField] private AnimationCurve cloudsHighlightsIntensity = null!;
 
     [Header("Fog")]
     [InspectorName("Enabled")] [SerializeField] private bool fog = true;
-    [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp = null!;
 
     private Material skyboxMaterial;
 

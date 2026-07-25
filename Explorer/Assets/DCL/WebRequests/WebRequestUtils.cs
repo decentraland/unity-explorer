@@ -177,6 +177,50 @@ namespace DCL.WebRequests
             || url.StartsWith("https://[::1]", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
+        ///     True when the URL's host is syntactically recognizable as non-publicly-routable and
+        ///     therefore unreachable from hosted Decentraland services (the media converter, etc.):
+        ///     loopback, RFC1918, CGNAT (100.64/10), link-local, unique-local IPv6 and the
+        ///     .local/.internal/.lan suffixes. It does NOT resolve DNS, so a public hostname that
+        ///     resolves to a private address still passes.
+        /// </summary>
+        public static bool IsNonPubliclyRoutable(string url)
+        {
+            if (IsLocalhost(url)) return true;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri)) return false;
+
+            string host = uri.Host;
+
+            if (uri.IsLoopback
+                || host.EndsWith(".local", StringComparison.OrdinalIgnoreCase)
+                || host.EndsWith(".internal", StringComparison.OrdinalIgnoreCase)
+                || host.EndsWith(".lan", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (System.Net.IPAddress.TryParse(host.Trim('[', ']'), out System.Net.IPAddress? ip))
+            {
+                if (System.Net.IPAddress.IsLoopback(ip)) return true;
+
+                Span<byte> b = stackalloc byte[16];
+
+                if (!ip.TryWriteBytes(b, out int written)) return false;
+
+                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && written == 4)
+                {
+                    return b[0] == 10
+                           || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+                           || (b[0] == 192 && b[1] == 168)
+                           || (b[0] == 100 && b[1] >= 64 && b[1] <= 127)
+                           || (b[0] == 169 && b[1] == 254);
+                }
+
+                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                    return ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal || (b[0] & 0xFE) == 0xFC;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         ///     Does nothing with the web request
         /// </summary>
         public readonly struct NoOp<TWebRequest> : IWebRequestOp<TWebRequest, NoResult> where TWebRequest: struct, ITypedWebRequest
