@@ -40,52 +40,43 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private Web3ConfirmationPopupConfig transactionConfig;
         [SerializeField] private Web3ConfirmationPopupConfig signingConfig;
 
-        [Header("RECIPIENT GATE")]
+        [Header("RECIPIENT CONFIRMATION")]
         [SerializeField] private TransactionRecipientPopupView recipientPopup;
 
-        [Header("Can be Null")]
-        [SerializeField] private GameObject? defaultContent;
-
-        private void UseConfig(Web3ConfirmationPopupConfig config)
-        {
-            title.text = config.Title;
-            description.text = config.Description;
-            continueButtonText.text = config.ConfirmButtonText;
-        }
-
-        public async UniTask<bool> ShowAsync(TransactionConfirmationRequest request, CancellationToken ct)
+        /// <summary>
+        ///     Asks for confirmation of the transaction or signature, followed by a confirmation of the
+        ///     recipient when <paramref name="recipientDescription" /> is given.
+        /// </summary>
+        public async UniTask<bool> ShowAsync(TransactionConfirmationRequest request, string? recipientDescription, CancellationToken ct)
         {
             gameObject.SetActive(true);
 
             try
             {
-                // First confirmation: the standard transaction/signing popup.
-                bool confirmed = await ShowDefaultAsync(request, ct);
+                if (!await ShowDefaultAsync(request, ct))
+                    return false;
 
-                // Second confirmation: a scene transaction with a resolved recipient must clear the
-                // recipient gate, shown only after the user confirms the first popup.
-                if (confirmed && request.Gate != RecipientGate.None)
-                    confirmed = await recipientPopup.ShowAsync(request, ct);
+                if (recipientDescription == null)
+                    return true;
 
-                return confirmed;
+                return await recipientPopup.ShowAsync(recipientDescription, ct);
             }
             finally { gameObject.SetActive(false); }
         }
 
         private async UniTask<bool> ShowDefaultAsync(TransactionConfirmationRequest request, CancellationToken ct)
         {
-            if (defaultContent != null) defaultContent.SetActive(true);
-
             UseConfig(request.IsTransaction ? transactionConfig : signingConfig);
 
             // Hide description and details panel for internal features (Gifting, Donations)
             // since they already display this information in their own UI
             description.gameObject.SetActive(!request.HideDescription);
-            transactionInfoPanel.SetActive(request.IsTransaction && !request.HideDetailsPanel);
 
-            if (request.IsTransaction && !request.HideDetailsPanel)
+            bool showDetails = request.IsTransaction && !request.HideDetailsPanel;
+            transactionInfoPanel.SetActive(showDetails);
+
+            if (showDetails)
             {
-                // string networkName = string.IsNullOrEmpty(request.NetworkName) ? "Ethereum Mainnet" : request.NetworkName!;
                 string feeEth = string.IsNullOrEmpty(request.EstimatedGasFeeEth) ? "0.0" : request.EstimatedGasFeeEth!;
                 string balanceEth = string.IsNullOrEmpty(request.BalanceEth) ? "0.0" : request.BalanceEth!;
 
@@ -93,23 +84,15 @@ namespace DCL.AuthenticationScreenFlow
                 balanceValue.text = $"{balanceEth} ETH";
             }
 
-            var tcs = new UniTaskCompletionSource<bool>();
+            int clickedIndex = await UniTask.WhenAny(continueButton.OnClickAsync(ct), cancelButton.OnClickAsync(ct));
+            return clickedIndex == 0;
+        }
 
-            cancelButton.onClick.AddListener(OnCancel);
-            continueButton.onClick.AddListener(OnContinue);
-
-            try { return await tcs.Task.AttachExternalCancellation(ct); }
-            finally
-            {
-                cancelButton.onClick.RemoveListener(OnCancel);
-                continueButton.onClick.RemoveListener(OnContinue);
-
-                // Hide the default content so only the recipient popup remains for the second step.
-                if (defaultContent != null) defaultContent.SetActive(false);
-            }
-
-            void OnCancel() => tcs.TrySetResult(false);
-            void OnContinue() => tcs.TrySetResult(true);
+        private void UseConfig(Web3ConfirmationPopupConfig config)
+        {
+            title.text = config.Title;
+            description.text = config.Description;
+            continueButtonText.text = config.ConfirmButtonText;
         }
     }
 }

@@ -12,20 +12,16 @@ namespace DCL.Web3
         NativeTransfer,
 
         /// <summary>
-        ///     ERC-20 transfer(address,uint256) call. The real recipient and amount live in the
-        ///     calldata, while the transaction's `to` field points at the token contract.
+        ///     ERC-20 transfer(address,uint256) call.
         /// </summary>
         Erc20Transfer,
 
         /// <summary>
-        ///     Any other contract call that cannot be decoded into a plain transfer.
+        ///     Any other contract call, which cannot be decoded into a plain transfer.
         /// </summary>
         ContractCall,
     }
 
-    /// <summary>
-    ///     The recipient and asset movement of a transaction, resolved from its shape.
-    /// </summary>
     public readonly struct DecodedTransaction
     {
         public readonly TransactionKind Kind;
@@ -43,8 +39,7 @@ namespace DCL.Web3
         public readonly BigInteger Amount;
 
         /// <summary>
-        ///     The token contract address for an ERC-20 transfer (the transaction's `to` field);
-        ///     null for native transfers and opaque contract calls.
+        ///     The token contract of an ERC-20 transfer; null otherwise.
         /// </summary>
         public readonly string? TokenContract;
 
@@ -58,14 +53,13 @@ namespace DCL.Web3
     }
 
     /// <summary>
-    ///     Resolves who actually receives assets in an eth_sendTransaction, regardless of asset.
-    ///     A native transfer sends to the `to` field, but an ERC-20 transfer sends to an address
-    ///     encoded in the calldata (the `to` field is the token contract), so the real recipient
-    ///     must be decoded from that calldata.
+    ///     Resolves who actually receives the assets of an eth_sendTransaction. A native transfer sends to
+    ///     the `to` field, but an ERC-20 transfer sends to an address encoded in the calldata while `to`
+    ///     holds the token contract.
     /// </summary>
     public static class TransactionRecipientDecoder
     {
-        // ERC-20 transfer(address,uint256): keccak256("transfer(address,uint256)")[0..4]
+        // keccak256("transfer(address,uint256)")[0..4]
         private const string TRANSFER_SELECTOR = "a9059cbb";
 
         private const int SELECTOR_LENGTH = 8; // 4 bytes
@@ -82,8 +76,7 @@ namespace DCL.Web3
             if (cleanData.Length == 0)
                 return new DecodedTransaction(TransactionKind.NativeTransfer, toAddress, ParseHex(value), null);
 
-            // ERC-20 transfer(address,uint256): the recipient and amount are in the calldata and the
-            // `to` field is the token contract.
+            // ERC-20 transfer(address,uint256): recipient and amount come from the calldata.
             if (cleanData.Length >= ERC20_TRANSFER_LENGTH
                 && cleanData.StartsWith(TRANSFER_SELECTOR, StringComparison.OrdinalIgnoreCase))
             {
@@ -93,7 +86,7 @@ namespace DCL.Web3
                 return new DecodedTransaction(TransactionKind.Erc20Transfer, recipient, amount, toAddress);
             }
 
-            // Anything else is an opaque contract call: the recipient is the contract itself.
+            // Opaque contract call: the contract itself is the closest thing to a recipient.
             return new DecodedTransaction(TransactionKind.ContractCall, toAddress, ParseHex(value), null);
         }
 

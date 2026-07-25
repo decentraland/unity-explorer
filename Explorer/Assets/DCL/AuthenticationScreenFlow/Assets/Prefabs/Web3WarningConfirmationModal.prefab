@@ -1265,7 +1265,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.UI.Flows::DCL.AuthenticationScreenFlow.TransactionRecipientPopupView
   description: {fileID: 8007467556033942281}
-  overlayButton: {fileID: 0}
   cancelButton: {fileID: 7004116153913930171}
   confirmButton: {fileID: 7151957426761071945}
 --- !u!1 &5599131109019950483

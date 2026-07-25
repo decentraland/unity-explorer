@@ -2139,7 +2139,6 @@ MonoBehaviour:
       used to continue a scene, save a choice, or verify your account. \L\nOnly continue
       if you trust this experience."
   recipientPopup: {fileID: 7955668499527329207}
-  defaultContent: {fileID: 0}
 --- !u!1 &6665411606974361329
 GameObject:
   m_ObjectHideFlags: 0

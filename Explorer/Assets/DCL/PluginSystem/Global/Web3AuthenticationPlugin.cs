@@ -7,7 +7,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
+using DCL.Donations;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
@@ -48,11 +48,11 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ITransactionRecipientResolver recipientResolver;
+        private readonly IProfileRepository profileRepository;
+        private readonly IDonationsService donationsService;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
-        private Web3ConfirmationPopupView? transactionConfirmationView;
 
         public Web3AuthenticationPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -75,7 +75,8 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
-            ITransactionRecipientResolver recipientResolver
+            IProfileRepository profileRepository,
+            IDonationsService donationsService
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -98,7 +99,8 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
-            this.recipientResolver = recipientResolver;
+            this.profileRepository = profileRepository;
+            this.donationsService = donationsService;
         }
 
         public void Dispose() { }
@@ -135,28 +137,17 @@ namespace DCL.PluginSystem.Global
 
         private void InitializeTransactionConfirmationPopup(Web3ConfirmationPopupView popupPrefab)
         {
-            transactionConfirmationView = Object.Instantiate(popupPrefab);
-            transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
-            transactionConfirmationView.gameObject.SetActive(false);
-            web3Authenticator.SetTransactionConfirmationCallback(ShowConfirmationAsync);
-        }
+            Web3ConfirmationPopupView view = Object.Instantiate(popupPrefab);
+            view.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
+            view.gameObject.SetActive(false);
 
-        /// <summary>
-        ///     Resolves the recipient gate (plain-language "who receives this") before showing the popup.
-        ///     Resolution failures are non-fatal: the popup falls back to its default transaction view.
-        /// </summary>
-        private async UniTask<bool> ShowConfirmationAsync(TransactionConfirmationRequest request, CancellationToken ct)
-        {
-            try { await recipientResolver.ResolveAsync(request, ct); }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
-
-            return await transactionConfirmationView!.ShowAsync(request, ct);
+            var controller = new Web3ConfirmationPopupController(view, profileRepository, donationsService, storedIdentityProvider);
+            web3Authenticator.SetTransactionConfirmationCallback(controller.ShowAsync);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData, storedIdentityProvider);
+            LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData);
         }
     }
 
