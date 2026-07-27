@@ -290,5 +290,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string PLACE_LINK_COPIED = "place_link_copied";
             public const string PLACE_NAVIGATION_STARTED = "place_navigation_started";
         }
+
+        public static class Profiling
+        {
+            public const string LOADING_TIMES = "synthetic_loading_times";
+        }
     }
 }

@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.AutoPilot;
 using DCL.Profiling;
 using DCL.Profiling.ECS;
@@ -27,11 +28,12 @@ namespace DCL.PluginSystem.Global
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly IAppArgs appArgs;
         private readonly ILoadingStatus loadingStatus;
+        private readonly LoadingTimes.LoadingTimes? loadingTimes;
 
         public ProfilingPlugin(IProfiler profiler, IRealmData realmData, MemoryBudget memoryBudget,
             IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache, DCLVersion dclVersion,
             AdaptivePhysicsSettings adaptivePhysicsSettings, SceneLoadingLimit sceneLoadingLimit,
-            IAppArgs appArgs, ILoadingStatus loadingStatus)
+            IAppArgs appArgs, ILoadingStatus loadingStatus, IAnalyticsController analytics)
         {
             this.profiler = profiler;
             this.realmData = realmData;
@@ -43,11 +45,15 @@ namespace DCL.PluginSystem.Global
             this.memoryBudget = memoryBudget;
             this.appArgs = appArgs;
             this.loadingStatus = loadingStatus;
+
+            if (appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME))
+                loadingTimes = new LoadingTimes.LoadingTimes(loadingStatus, analytics);
         }
 
         public void Dispose()
         {
             profiler.Dispose();
+            loadingTimes?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
