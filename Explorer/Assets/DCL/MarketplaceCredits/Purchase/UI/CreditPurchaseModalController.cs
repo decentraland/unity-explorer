@@ -131,7 +131,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             await UniTask.WhenAny(
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
-                viewInstance.DoneButton.OnClickAsync(ct));
+                viewInstance.DoneButton.OnClickAsync(ct),
+                viewInstance.CloseBackground.OnClickAsync(ct));
         }
 
         private async UniTask LoadBalanceAndArmAsync(CancellationToken ct)

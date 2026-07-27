@@ -35,6 +35,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public Button ConfirmButton { get; private set; } = null!;
         [field: SerializeField] public Button CancelButton { get; private set; } = null!;
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
+        [field: SerializeField] public Button CloseBackground { get; private set; } = null!;
 
         [field: Header("States")]
         [field: SerializeField] public GameObject ConfirmStateContainer { get; private set; } = null!;
