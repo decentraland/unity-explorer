@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
 using ECS.SceneLifeCycle.Realm;
@@ -52,7 +53,7 @@ namespace Global.Dynamic.RealmUrl
         {
             string realm = realmLaunchSettings.customRealm;
 
-            if (realm.StartsWith("http://", StringComparison.Ordinal) || realm.StartsWith("https://", StringComparison.Ordinal))
+            if (ExternalUrlPolicy.IsWebScheme(realm))
                 return realm;
 
             return await realmNames.UrlFromNameAsync(realm, ct);
