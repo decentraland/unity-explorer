@@ -19,7 +19,6 @@ namespace DCL.FeatureFlags
     /// </summary>
     public static class DeepLinkWorldWhitelistProvider
     {
-        private const int TIMEOUT_SECONDS = 5;
         private static readonly char[] SEPARATORS = { ',', '\n', '\r', ';' };
 
         /// <summary>
@@ -30,8 +29,8 @@ namespace DCL.FeatureFlags
         {
             try
             {
+                // At this moment IWebRequestController can't be injected so perform a "raw" unity request
                 using UnityWebRequest request = UnityWebRequest.Get(fetchUrl);
-                request.timeout = TIMEOUT_SECONDS;
                 request.SetRequestHeader("X-Debug", "false");
 
                 await request.SendWebRequest().WithCancellation(ct);
@@ -43,7 +42,7 @@ namespace DCL.FeatureFlags
                 }
 
                 FeatureFlagsResultDto dto = JsonConvert.DeserializeObject<FeatureFlagsResultDto>(request.downloadHandler.text);
-                dto = StripAppNamePrefix(dto);
+                dto = HttpFeatureFlagsProvider.StripAppNameFromKeys(FeatureFlagOptions.APP_NAME, dto);
 
                 return ReadWorlds(new FeatureFlagsConfiguration(dto));
             }
@@ -78,24 +77,6 @@ namespace DCL.FeatureFlags
             }
 
             return worlds;
-        }
-
-        // Mirrors HttpFeatureFlagsProvider.StripAppNameFromKeys: drops the "explorer-" app prefix so variant keys match
-        // the codebase flag constants (e.g. "deeplink-whitelisted-worlds").
-        private static FeatureFlagsResultDto StripAppNamePrefix(FeatureFlagsResultDto dto)
-        {
-            const string PREFIX = "explorer-";
-
-            if (dto.variants == null)
-                return dto;
-
-            var variants = new Dictionary<string, FeatureFlagVariantDto>();
-
-            foreach ((string key, FeatureFlagVariantDto value) in dto.variants)
-                variants[key.Replace(PREFIX, "", StringComparison.OrdinalIgnoreCase)] = value;
-
-            dto.variants = variants;
-            return dto;
         }
     }
 }

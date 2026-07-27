@@ -15,6 +15,11 @@ namespace Global.AppArgs
     {
         private readonly Dictionary<string, string> appParameters = new ();
 
+        // A decentraland:// deep link seen during parsing but not yet processed. Deferred so its whitelisted-realm
+        // params can be gated once the world whitelist is available (see InitializeDeepLinks). Null once processed
+        // or when the launch has no deep link.
+        private string? pendingDeepLink;
+
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
         {
             [AppArgsFlags.DEBUG] = string.Empty,
@@ -25,11 +30,25 @@ namespace Global.AppArgs
         public ApplicationParametersParser(string[] args) : this(true, args) { }
 
         public ApplicationParametersParser(bool useInEditorFlags = true, params string[] args)
+            : this(useInEditorFlags, deferDeepLinks: false, args) { }
+
+        /// <summary>
+        ///     Parses CLI flags (e.g. <see cref="AppArgsFlags.FeatureFlags" />.URL) but leaves any deep link
+        ///     unprocessed, so its whitelisted-realm params can be gated once the world whitelist is fetched. Call
+        ///     <see cref="InitializeDeepLinks" /> afterwards to process it.
+        /// </summary>
+        public static ApplicationParametersParser CreateDeferringDeepLinks(string[] args) =>
+            new (true, deferDeepLinks: true, args);
+
+        private ApplicationParametersParser(bool useInEditorFlags, bool deferDeepLinks, params string[] args)
         {
             ParseApplicationParameters(args);
 
             if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();
+
+            if (!deferDeepLinks)
+                InitializeDeepLinks();
 
             LogArguments();
         }
@@ -76,14 +95,35 @@ namespace Global.AppArgs
 
                     // Application parameters may come embedded in a deep link:
                     // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&local-scene=true&otherparam=blahblah"
-                    Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(arg);
-
-                    foreach ((string key, string value) in deepLinkParameters)
-                        appParameters[key] = value;
+                    // Stored, not processed here: the whitelisted-realm gate needs the world whitelist, which may not
+                    // be available yet. InitializeDeepLinks() processes it once it is.
+                    pendingDeepLink = arg;
                 }
                 else if (!string.IsNullOrEmpty(lastKeyStored))
                     appParameters[lastKeyStored] = arg;
             }
+        }
+
+        /// <summary>
+        ///     Whether a deep link was seen during parsing but not yet processed.
+        /// </summary>
+        public bool HasPendingDeepLink => pendingDeepLink != null;
+
+        /// <summary>
+        ///     Processes the deep link captured during construction (merging its allowlisted params), applying the
+        ///     current <see cref="DeepLinkAllowlist" /> whitelisted-realm gate. Idempotent; a no-op without a deep link.
+        /// </summary>
+        public void InitializeDeepLinks()
+        {
+            if (pendingDeepLink == null)
+                return;
+
+            Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(pendingDeepLink);
+
+            foreach ((string key, string value) in deepLinkParameters)
+                appParameters[key] = value;
+
+            pendingDeepLink = null;
         }
 
         public static Dictionary<string, string> ProcessDeepLinkParameters(string deepLinkString)
