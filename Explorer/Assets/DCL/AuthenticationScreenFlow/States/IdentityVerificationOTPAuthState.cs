@@ -125,12 +125,12 @@ namespace DCL.AuthenticationScreenFlow
             catch (InvalidEmailException e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.INVALID_EMAIL);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.InvalidEmail);
             }
             catch (Exception e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
             }
             finally{ compositeWeb3Provider.OTPSendSucceeded -= OnOTPSendSucceeded; }
         }

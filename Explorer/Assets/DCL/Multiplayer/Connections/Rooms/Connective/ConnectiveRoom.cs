@@ -28,23 +28,23 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
     public enum RoomSelection : byte
     {
-        NEW,
-        PREVIOUS,
+        New,
+        Previous,
     }
 
     public enum AttemptToConnectState
     {
-        NONE,
-        SUCCESS,
-        ERROR,
+        None,
+        Success,
+        Error,
         /// <summary>
         ///     Indicates that the loop was successfully launched but in the current context connection was not required
         /// </summary>
-        NO_CONNECTION_REQUIRED,
+        NoConnectionRequired,
         /// <summary>
         ///     Indicates that the connection failed due to a 403 Forbidden Access error
         /// </summary>
-        FORBIDDEN_ACCESS,
+        ForbiddenAccess,
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private readonly string logPrefix;
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IObjectPool<IRoom> roomPool;
         private readonly bool isDuplicateIdentityStopFeatureEnabled;
@@ -70,7 +70,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         protected ConnectiveRoom()
         {
-            isDuplicateIdentityStopFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY);
+            isDuplicateIdentityStopFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.StopOnDuplicateIdentity);
 
             logPrefix = GetType().Name;
 
@@ -113,7 +113,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         ///     When the new room is connected, it can be invalid so it's possible to revert to the previous one
         /// </summary>
         protected virtual RoomSelection SelectValidRoom() =>
-            RoomSelection.NEW;
+            RoomSelection.New;
 
         public async UniTask<bool> StartAsync()
         {
@@ -121,12 +121,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 throw new InvalidOperationException("Room is already running");
 
             isDuplicateIdentityDetected = false;
-            attemptToConnectState.Set(AttemptToConnectState.NONE);
+            attemptToConnectState.Set(AttemptToConnectState.None);
             roomState.Set(IConnectiveRoom.State.Starting);
             room.ConnectionUpdated += OnConnectionUpdated;
             RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
-            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
-            return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
+            return attemptToConnectState.Value() is not AttemptToConnectState.Error;
         }
 
         public virtual async UniTask StopAsync()
@@ -144,7 +144,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         }
 
         protected virtual void OnForbiddenAccess() =>
-            attemptToConnectState.Set(AttemptToConnectState.FORBIDDEN_ACCESS);
+            attemptToConnectState.Set(AttemptToConnectState.ForbiddenAccess);
 
         public IConnectiveRoom.State CurrentState() =>
             roomState.Value();
@@ -171,7 +171,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - DuplicateIdentity detected, stopping reconnection loop");
                 connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
-                attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
+                attemptToConnectState.Set(AttemptToConnectState.NoConnectionRequired);
             }
             else
             {
@@ -217,7 +217,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             roomState.Set(IConnectiveRoom.State.Stopped);
 
             if (connectionIsNoLongerRequired)
-                attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
+                attemptToConnectState.Set(AttemptToConnectState.NoConnectionRequired);
 
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -226,7 +226,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         protected void SetNoConnectionRequired()
         {
-            attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
+            attemptToConnectState.Set(AttemptToConnectState.NoConnectionRequired);
         }
 
         protected async UniTask<RoomSelection> TryConnectToRoomAsync(string connectionString, CancellationToken token)
@@ -237,7 +237,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             (Result connectResult, RoomSelection roomSelection) = await ChangeRoomsAsync(roomPool, credentials, token);
 
-            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
+            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.Success : AttemptToConnectState.Error;
             attemptToConnectState.Set(connectionState);
 
             if (connectResult.Success == false)
@@ -248,12 +248,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             switch (roomSelection)
             {
-                case RoomSelection.NEW:
+                case RoomSelection.New:
                     roomState.Set(IConnectiveRoom.State.Running);
                     ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to finished successfully {connectionString}");
 
                     break;
-                case RoomSelection.PREVIOUS:
+                case RoomSelection.Previous:
                     // preserve the previous state (for whatever reason)
                     ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Connection to the previous room was preserved");
                     break;
@@ -290,7 +290,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             if (connectResult.Success == false)
             {
                 roomsPool.Release(newRoom);
-                return (connectResult, RoomSelection.PREVIOUS);
+                return (connectResult, RoomSelection.Previous);
             }
 
             // now it's a moment to check if we should drop the new room and keep the previous one

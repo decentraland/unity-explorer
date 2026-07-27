@@ -9,9 +9,9 @@ namespace DCL.MarketplaceCredits.Purchase
 {
     public enum SettlementOutcome
     {
-        CONFIRMED,
-        REVERTED,
-        PENDING,
+        Confirmed,
+        Reverted,
+        Pending,
     }
 
     // This poller waits for a broadcast transaction to land on Polygon, this is needed to confirm or not if a transaction has been confirmed or not
@@ -39,7 +39,7 @@ namespace DCL.MarketplaceCredits.Purchase
             while (DateTime.UtcNow < deadline)
             {
                 if (ct.IsCancellationRequested)
-                    return SettlementOutcome.PENDING;
+                    return SettlementOutcome.Pending;
 
                 try
                 {
@@ -58,15 +58,15 @@ namespace DCL.MarketplaceCredits.Purchase
                         string? status = receipt[STATUS_FIELD]?.ToString();
 
                         if (string.Equals(status, CONFIRMED_STATUS, StringComparison.OrdinalIgnoreCase))
-                            return SettlementOutcome.CONFIRMED;
+                            return SettlementOutcome.Confirmed;
 
                         if (string.Equals(status, REVERTED_STATUS, StringComparison.OrdinalIgnoreCase))
-                            return SettlementOutcome.REVERTED;
+                            return SettlementOutcome.Reverted;
                     }
                 }
                 catch (OperationCanceledException)
                 {
-                    return SettlementOutcome.PENDING;
+                    return SettlementOutcome.Pending;
                 }
                 catch (Exception e)
                 {
@@ -76,10 +76,10 @@ namespace DCL.MarketplaceCredits.Purchase
                 bool cancelled = await UniTask.Delay(POLL_INTERVAL, cancellationToken: ct).SuppressCancellationThrow();
 
                 if (cancelled)
-                    return SettlementOutcome.PENDING;
+                    return SettlementOutcome.Pending;
             }
 
-            return SettlementOutcome.PENDING;
+            return SettlementOutcome.Pending;
         }
     }
 }

@@ -45,8 +45,8 @@ namespace ECS.StreamableLoading.Tests
                         CommunicationData.URLHelpers.URLAddress.EMPTY,
                         cancellationTokenSource: cts,
                         attempts: 1,
-                        permittedSources: AssetSource.EMBEDDED,
-                        currentSource: AssetSource.EMBEDDED),
+                        permittedSources: AssetSource.Embedded,
+                        currentSource: AssetSource.Embedded),
                 };
 
                 var promise = AssetPromise<StubAsset, StubIntention>.Create(world, intention, PartitionComponent.TOP_PRIORITY);

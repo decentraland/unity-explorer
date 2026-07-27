@@ -685,7 +685,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             );
 
             // Set up the EntityParticipantTable mock to return the target entity
-            var entry = new IReadOnlyEntityParticipantTable.Entry(targetAvatarId, targetEntity, RoomSource.GATEKEEPER);
+            var entry = new IReadOnlyEntityParticipantTable.Entry(targetAvatarId, targetEntity, RoomSource.Gatekeeper);
             entityParticipantTable.TryGet(targetAvatarId, out _).Returns(x => {
                 x[1] = entry;
                 return true;

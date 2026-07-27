@@ -324,7 +324,7 @@ namespace DCL.Chat.ChatMessages
         {
             var request = new UserProfileMenuRequest
             {
-                WalletAddress = new Web3Address(userId), Position = position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero,
+                WalletAddress = new Web3Address(userId), Position = position, AnchorPoint = MenuAnchorPoint.TopRight, Offset = Vector2.zero,
             };
 
             contextMenuService.ShowUserProfileMenuAsync(request).Forget();
@@ -340,7 +340,7 @@ namespace DCL.Chat.ChatMessages
                 chatConfig.ContextMenuOffset,
                 chatConfig.VerticalPadding,
                 chatConfig.ElementsSpacing,
-                anchorPoint: ContextMenuOpenDirection.TOP_LEFT);
+                anchorPoint: ContextMenuOpenDirection.TopLeft);
 
             string textToCopy = viewModel.IsTranslated ? viewModel.TranslatedText : viewModel.Message.Message;
             contextMenu.AddControl(new ButtonContextMenuControlSettings(

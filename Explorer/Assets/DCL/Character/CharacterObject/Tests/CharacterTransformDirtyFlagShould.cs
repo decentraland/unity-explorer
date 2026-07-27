@@ -371,7 +371,7 @@ namespace DCL.Character.CharacterObject.Tests
                 rotationY = 45f,
                 velocity = Vector3.zero,
                 velocitySqrMagnitude = 0f,
-                movementKind = MovementKind.IDLE,
+                movementKind = MovementKind.Idle,
                 isInstant = false
             };
 
@@ -443,7 +443,7 @@ namespace DCL.Character.CharacterObject.Tests
                 rotationY = 90f,
                 velocity = Vector3.zero,
                 velocitySqrMagnitude = 0f,
-                movementKind = MovementKind.IDLE,
+                movementKind = MovementKind.Idle,
                 isInstant = false
             };
 

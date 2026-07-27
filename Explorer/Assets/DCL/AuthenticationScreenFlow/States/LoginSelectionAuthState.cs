@@ -114,14 +114,14 @@ namespace DCL.AuthenticationScreenFlow
         {
             switch (errorType)
             {
-                case ErrorType.NONE: break;
-                case ErrorType.CONNECTION_ERROR:
+                case ErrorType.None: break;
+                case ErrorType.ConnectionError:
                     view.ErrorPopupRoot.SetActive(true);
                     break;
-                case ErrorType.RESTRICTED_USER:
+                case ErrorType.RestrictedUser:
                     view.RestrictedUserContainer.SetActive(true);
                     break;
-                case ErrorType.INVALID_EMAIL:
+                case ErrorType.InvalidEmail:
                     view.SetEmailInputFieldErrorState(true);
                     Enter();
                     return;
@@ -207,9 +207,9 @@ namespace DCL.AuthenticationScreenFlow
 
     public enum ErrorType
     {
-        NONE = 0,
-        CONNECTION_ERROR = 1,
-        RESTRICTED_USER = 2,
-        INVALID_EMAIL = 3,
+        None = 0,
+        ConnectionError = 1,
+        RestrictedUser = 2,
+        InvalidEmail = 3,
     }
 }

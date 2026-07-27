@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Emotes
             string emoteHash,
             bool loop,
             BodyShape bodyShape,
-            AssetSource permittedSources = AssetSource.ALL,
+            AssetSource permittedSources = AssetSource.All,
             int timeout = StreamableLoadingDefaults.TIMEOUT
         ) : this()
         {

@@ -104,12 +104,12 @@ namespace DCL.AuthenticationScreenFlow
             catch (Web3Exception e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
             }
             catch (Exception e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
             }
         }
     }

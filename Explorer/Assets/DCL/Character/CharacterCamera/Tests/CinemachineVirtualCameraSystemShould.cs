@@ -75,7 +75,7 @@ namespace DCL.Character.CharacterCamera.Tests
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
             cinemachineCameraAudioSettings = Substitute.For<ICinemachineCameraAudioSettings>();
             system = new ControlCinemachineVirtualCameraSystem(world, cinemachineCameraAudioSettings);
-            world.Create(new InputMapComponent(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
+            world.Create(new InputMapComponent(InputMapComponent.Kind.Player | InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts));
 
             inputMap = world.CacheInputMap();
 
@@ -93,7 +93,7 @@ namespace DCL.Character.CharacterCamera.Tests
         [Test]
         public void InitInputMapComponent()
         {
-            Assert.That(inputMap.GetInputMapComponent(world).Active, Is.EqualTo(InputMapComponent.Kind.PLAYER | InputMapComponent.Kind.CAMERA | InputMapComponent.Kind.SHORTCUTS));
+            Assert.That(inputMap.GetInputMapComponent(world).Active, Is.EqualTo(InputMapComponent.Kind.Player | InputMapComponent.Kind.Camera | InputMapComponent.Kind.Shortcuts));
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
         }
 
@@ -233,10 +233,10 @@ namespace DCL.Character.CharacterCamera.Tests
         public void SwitchFromSDKCameraToThirdPerson()
         {
             CameraComponent component = world.Get<CameraComponent>(entity);
-            component.Mode = CameraMode.SDKCamera;
+            component.Mode = CameraMode.SdkCamera;
             world.Set(entity, component);
 
-            Assert.That(component.Mode, Is.EqualTo(CameraMode.SDKCamera));
+            Assert.That(component.Mode, Is.EqualTo(CameraMode.SdkCamera));
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
             component.Mode = CameraMode.ThirdPerson;

@@ -43,7 +43,7 @@ namespace CRDT.CRDTTests.Protocol
             {
                 ParsedCRDTTestFile.TestFileInstruction instruction = parsedFile.fileInstructions[i];
 
-                if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
+                if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.Message)
                 {
                     (CRDTMessage msg, CRDTReconciliationResult? expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
                     CRDTReconciliationResult result = crdt.ProcessMessage(msg);
@@ -54,7 +54,7 @@ namespace CRDT.CRDTTests.Protocol
                                                                       + $"in line:{instruction.lineNumber} for file {instruction.fileName}. Expected: {expectedResult}, actual: {result}");
                     }
                 }
-                else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)
+                else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FinalState)
                 {
                     CRDTProtocol.State finalState = ParsedCRDTTestFile.InstructionToFinalState(instruction);
                     bool sameState = AreStatesEqual(crdt.CRDTState, finalState, out string reason);
@@ -75,12 +75,12 @@ namespace CRDT.CRDTTests.Protocol
             {
                 ParsedCRDTTestFile.TestFileInstruction instruction = parsedFile.fileInstructions[i];
 
-                if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
+                if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.Message)
                 {
                     (CRDTMessage msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
                     crdt.ProcessMessage(msg);
                 }
-                else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)
+                else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FinalState)
                 {
                     // The order of messages is not important
 

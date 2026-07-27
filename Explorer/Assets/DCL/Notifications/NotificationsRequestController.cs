@@ -47,7 +47,7 @@ namespace DCL.Notifications
 
             serializerSettings = new () { Converters = new JsonConverter[]
             {
-                new NotificationJsonDtoConverter(FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS))
+                new NotificationJsonDtoConverter(FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends))
             } };
 
             lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();

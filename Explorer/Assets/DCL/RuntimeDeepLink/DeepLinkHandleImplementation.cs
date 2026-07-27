@@ -50,17 +50,17 @@ namespace DCL.RuntimeDeepLink
                 // Guard: only consume a signin while a login here is waiting for one, and only if the link
                 // was minted for that login.
                 if (string.IsNullOrEmpty(awaitedRequestId) || deeplink.ValueOf(AppArgsFlags.AUTH_REQUEST_ID) != awaitedRequestId)
-                    return DeepLinkHandleResult.DEFERRED;
+                    return DeepLinkHandleResult.Deferred;
 
                 // The id persists in the property until it is overwritten or cleared.
                 deeplinkSigninIdentityId.Value = signin;
-                return DeepLinkHandleResult.CONSUMED;
+                return DeepLinkHandleResult.Consumed;
             }
 
             if (!routeNavigationDeepLinks)
             {
                 ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"navigation deep link routing is disabled, dropping: {deeplink}");
-                return DeepLinkHandleResult.CONSUMED;
+                return DeepLinkHandleResult.Consumed;
             }
 
             Vector2Int? position = deeplink.Position();
@@ -103,7 +103,7 @@ namespace DCL.RuntimeDeepLink
                 handled = true;
             }
 
-            return handled ? DeepLinkHandleResult.CONSUMED : DeepLinkHandleResult.NO_MATCHES;
+            return handled ? DeepLinkHandleResult.Consumed : DeepLinkHandleResult.NoMatches;
         }
     }
 }

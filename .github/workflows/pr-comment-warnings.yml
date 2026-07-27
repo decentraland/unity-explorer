@@ -2,12 +2,19 @@
 ---
 name: Comment Warning Ratchet on PR
 
-# Runs in the trusted base-repo context after the (possibly fork) "Unity Test"
-# run completes, so it can comment with write permissions without exposing them
-# to the untrusted lint job. Mirrors pr-comment-artifact-url.yml.
+# Runs in the trusted base-repo context alongside the (possibly fork) "Unity Test"
+# workflow, so it can comment with write permissions without exposing them to the
+# untrusted lint job. Mirrors pr-comment-artifact-url.yml.
+#
+# 'requested' -> post a "Lint pending" banner the moment Unity Test starts, so a
+#                stale Passed/Blocked banner from a previous run never lingers.
+# 'completed' -> ALWAYS refresh the banner: Passed / Blocked / Skipped (no C#
+#                changes) / Unavailable (lint did not finish). Keyed on the hidden
+#                <!-- warning-ratchet --> marker so every state edits the same comment.
 on:
   workflow_run:
     types:
+      - "requested"
       - "completed"
     workflows:
       - "Unity Test"
@@ -18,7 +25,50 @@ permissions:
   pull-requests: write
 
 jobs:
+  pending:
+    if: github.event.action == 'requested' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve PR number
+        id: pr
+        env:
+          WORKFLOW_RUN_EVENT_OBJ: ${{ toJSON(github.event.workflow_run) }}
+        run: |
+          PR_NUMBER=$(jq -r '.pull_requests[0].number' <<< "$WORKFLOW_RUN_EVENT_OBJ")
+          echo "PR number: $PR_NUMBER"
+          if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" ]]; then
+            echo "No PR associated with this run, skipping."
+            echo "pr-number=" >> "$GITHUB_OUTPUT"
+          else
+            echo "pr-number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Find existing comment
+        if: steps.pr.outputs.pr-number != ''
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue-number: ${{ steps.pr.outputs.pr-number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- warning-ratchet -->'
+
+      - name: Upsert pending banner
+        if: steps.pr.outputs.pr-number != ''
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ steps.pr.outputs.pr-number }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: |-
+            <!-- warning-ratchet -->
+            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+
+            Lint in progress, come back later!
+
+            [badge]: https://img.shields.io/badge/Lint-Pending!-ffff00?logo=github&style=for-the-badge
+
   comment:
+    if: github.event.action == 'completed'
     runs-on: ubuntu-latest
     steps:
       - name: Resolve PR number
@@ -50,7 +100,7 @@ jobs:
         id: result
         run: |
           if [ ! -f warning-result.json ]; then
-            echo "No warning-result.json found, skipping."
+            echo "No warning-result.json found, treating as absent."
             echo "found=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -62,52 +112,86 @@ jobs:
           echo "baseline=$baseline" >> "$GITHUB_OUTPUT"
           echo "allow-equal=$allow_equal" >> "$GITHUB_OUTPUT"
 
+      # Always compose a body, even when the artifact is absent (lint skipped or the
+      # Unity Test run failed before counting), so the banner never goes stale.
       - name: Compose comment body
-        if: steps.result.outputs.found == 'true'
+        if: steps.pr.outputs.pr-number != ''
         id: body
         env:
+          FOUND: ${{ steps.result.outputs.found }}
           COUNT: ${{ steps.result.outputs.count }}
           BASELINE: ${{ steps.result.outputs.baseline }}
           ALLOW_EQUAL: ${{ steps.result.outputs.allow-equal }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
         run: |
           DELIM="EOF_$(uuidgen)"
+          LOGO='<img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">'
+          BADGE_STYLE="?logo=github&style=for-the-badge"
+          DETAILS=""
+
+          if [ "$FOUND" != "true" ]; then
+            if [ "$CONCLUSION" = "success" ]; then
+              BADGE="https://img.shields.io/badge/Lint-Skipped-lightgrey${BADGE_STYLE}"
+              MSG="No C# files changed — lint ratchet skipped."
+            elif [ "$CONCLUSION" = "skipped" ]; then
+              BADGE="https://img.shields.io/badge/Lint-Skipped-lightgrey${BADGE_STYLE}"
+              MSG="Lint ratchet not evaluated for this run."
+            else
+              BADGE="https://img.shields.io/badge/Lint-Unavailable-ff0000${BADGE_STYLE}"
+              MSG="Lint did not finish (\`${CONCLUSION}\`) — the warning ratchet could not be evaluated. [See logs](${RUN_URL})."
+            fi
+          else
+            if [ -z "$BASELINE" ]; then
+              MSG="**Warnings counted: $COUNT** (no baseline established yet)"
+              BADGE="https://img.shields.io/badge/Lint-Passed!-3fb950${BADGE_STYLE}"
+            elif [ "$COUNT" -lt "$BASELINE" ]; then
+              MSG="**Warnings count reduced: $BASELINE => $COUNT**"
+              BADGE="https://img.shields.io/badge/Lint-Passed!-3fb950${BADGE_STYLE}"
+            elif [ "$ALLOW_EQUAL" = "true" ] && [ "$COUNT" -eq "$BASELINE" ]; then
+              MSG="**Warnings unchanged: $BASELINE => $COUNT** — allowed on release/hotfix branches."
+              BADGE="https://img.shields.io/badge/Lint-Passed!-3fb950${BADGE_STYLE}"
+            else
+              MSG="**Warnings not reduced: $BASELINE => $COUNT** — remove at least one warning to merge."
+              BADGE="https://img.shields.io/badge/Lint-Blocked!-ff0000${BADGE_STYLE}"
+            fi
+
+            # List the warnings/errors in files this PR changed, collapsed by default.
+            total=$(jq -r '.pr_findings_total // 0' warning-result.json)
+            if [ "$total" -gt 0 ]; then
+              {
+                echo ""
+                echo "<details><summary>Warnings/errors in files changed by this PR ($total)</summary>"
+                echo ""
+                echo '```'
+                jq -r '.pr_findings[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
+                shown=$(jq -r '.pr_findings | length' warning-result.json)
+                if [ "$total" -gt "$shown" ]; then
+                  echo ""
+                  echo "…and $((total - shown)) more (see the csharp-lint-reports artifact)."
+                fi
+                echo '```'
+                echo ""
+                echo "</details>"
+              } > details.md
+              DETAILS="details.md"
+            fi
+          fi
+
           {
             echo "body<<$DELIM"
             echo "<!-- warning-ratchet -->"
-            blocked=false
-            if [ -z "$BASELINE" ]; then
-              echo "**Warnings counted: $COUNT** (no baseline established yet)"
-            elif [ "$COUNT" -lt "$BASELINE" ]; then
-              echo "**Warnings count reduced: $BASELINE => $COUNT**"
-            elif [ "$ALLOW_EQUAL" = "true" ] && [ "$COUNT" -eq "$BASELINE" ]; then
-              echo "**Warnings unchanged: $BASELINE => $COUNT** — allowed on release/hotfix branches."
-            else
-              echo "**Warnings not reduced: $BASELINE => $COUNT** — remove at least one warning to merge."
-              blocked=true
-            fi
-
-            # Always list the warnings/errors in files this PR changed, collapsed by default.
-            total=$(jq -r '.pr_findings_total // 0' warning-result.json)
-            if [ "$total" -gt 0 ]; then
-              echo ""
-              echo "<details><summary>Warnings/errors in files changed by this PR ($total)</summary>"
-              echo ""
-              echo '```'
-              jq -r '.pr_findings[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
-              shown=$(jq -r '.pr_findings | length' warning-result.json)
-              if [ "$total" -gt "$shown" ]; then
-                echo ""
-                echo "…and $((total - shown)) more (see the csharp-lint-reports artifact)."
-              fi
-              echo '```'
-              echo ""
-              echo "</details>"
-            fi
+            echo "![badge]  $LOGO"
+            echo ""
+            echo "$MSG"
+            [ -n "$DETAILS" ] && cat "$DETAILS"
+            echo ""
+            echo "[badge]: $BADGE"
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
       - name: Find existing comment
-        if: steps.result.outputs.found == 'true'
+        if: steps.pr.outputs.pr-number != ''
         uses: peter-evans/find-comment@v2
         id: find-comment
         with:
@@ -116,7 +200,7 @@ jobs:
           body-includes: '<!-- warning-ratchet -->'
 
       - name: Upsert comment
-        if: steps.result.outputs.found == 'true'
+        if: steps.pr.outputs.pr-number != ''
         uses: peter-evans/create-or-update-comment@v3
         with:
           issue-number: ${{ steps.pr.outputs.pr-number }}

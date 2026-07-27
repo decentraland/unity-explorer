@@ -51,7 +51,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnSectionOpen(EventsSection section, DateTime fromDate)
         {
-            if (section != EventsSection.EVENTS_BY_DAY)
+            if (section != EventsSection.EventsByDay)
                 return;
 
             analytics.Track(AnalyticsEvents.Events.EVENTS_BY_DAY_OPENED, new JObject { { "date", fromDate.ToString("yyyy-MM-dd") } });

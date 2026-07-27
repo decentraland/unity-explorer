@@ -35,17 +35,17 @@ namespace DCL.VoiceChat
                 new ReactiveProperty<bool>(false),
                 new ReactiveProperty<bool>(false),
                 new ReactiveProperty<bool>(false),
-                new ReactiveProperty<VoiceChatParticipantCommunityRole>(VoiceChatParticipantCommunityRole.NONE),
+                new ReactiveProperty<VoiceChatParticipantCommunityRole>(VoiceChatParticipantCommunityRole.None),
                 new ReactiveProperty<bool>(false)
             );
     }
 
     public enum VoiceChatParticipantCommunityRole
     {
-        NONE,
-        USER,
-        MODERATOR,
-        OWNER,
+        None,
+        User,
+        Moderator,
+        Owner,
     }
 
 }

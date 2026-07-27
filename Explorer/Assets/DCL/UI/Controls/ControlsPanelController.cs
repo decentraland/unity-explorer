@@ -6,7 +6,7 @@ namespace DCL.UI.Controls
 {
     public class ControlsPanelController : ControllerBase<ControlsPanelView>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         private UniTaskCompletionSource? closeViewTask;
 

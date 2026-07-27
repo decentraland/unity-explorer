@@ -23,10 +23,10 @@ namespace DCL.LOD.Components
 
         public enum State
         {
-            UNINITIALIZED,
-            PROCESSING,
-            FAILED,
-            RESOLVED
+            Uninitialized,
+            Processing,
+            Failed,
+            Resolved
         }
 
         public State CurrentState;
@@ -37,12 +37,12 @@ namespace DCL.LOD.Components
 
         public void ForgetLoading(World world)
         {
-            if (CurrentState is State.FAILED or State.RESOLVED)
+            if (CurrentState is State.Failed or State.Resolved)
                 return;
 
             AssetBundlePromise.ForgetLoading(world);
 
-            if (CurrentState is State.PROCESSING)
+            if (CurrentState is State.Processing)
             {
                 Generation++;
                 Clear();
@@ -56,7 +56,7 @@ namespace DCL.LOD.Components
                 UnityObjectUtils.SafeDestroy(ParentContainer);
             }
 
-            CurrentState = State.UNINITIALIZED;
+            CurrentState = State.Uninitialized;
         }
 
         private void Clear()
@@ -98,7 +98,7 @@ namespace DCL.LOD.Components
             ParentContainer != null && Assets.Count == TotalAssetsToInstantiate;
 
         public bool IsProcessing() =>
-            CurrentState is State.PROCESSING;
+            CurrentState is State.Processing;
 
 
         public void Initialize(string sceneID, Vector3 sceneGeometryBaseParcelPosition, AssetBundleData resultAsset, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)

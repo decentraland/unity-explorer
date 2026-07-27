@@ -60,7 +60,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 return DeleteOutfitOutcome.Failed;
             }
 
-            if (ct.IsCancellationRequested || decision == ConfirmationResult.CANCEL)
+            if (ct.IsCancellationRequested || decision == ConfirmationResult.Cancel)
                 return DeleteOutfitOutcome.Cancelled;
 
             try

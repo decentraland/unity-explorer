@@ -10,10 +10,10 @@ namespace DCL.Donations.UI
     {
         private enum SubViews
         {
-            DEFAULT,
-            LOADING,
-            TX_CONFIRMED,
-            ERROR
+            Default,
+            Loading,
+            TxConfirmed,
+            Error
         }
 
         public event Action<DonationPanelViewModel, decimal>? SendDonationRequested;
@@ -36,14 +36,14 @@ namespace DCL.Donations.UI
             donationDefaultView.buyMoreManaButton.onClick.AddListener(() => BuyMoreRequested?.Invoke());
 
             donationErrorView.contactSupportButton.onClick.AddListener(() => ContactSupportRequested?.Invoke());
-            donationErrorView.tryAgainButton.onClick.AddListener(() => ShowSubView(SubViews.DEFAULT));
+            donationErrorView.tryAgainButton.onClick.AddListener(() => ShowSubView(SubViews.Default));
 
             donationDefaultView.SendDonationRequested += (vm, amount) => SendDonationRequested?.Invoke(vm, amount);
         }
 
         public void SetDefaultLoadingState(bool active)
         {
-            ShowSubView(SubViews.DEFAULT);
+            ShowSubView(SubViews.Default);
 
             if (active)
                 donationDefaultView.loadingView.ShowLoading(true);
@@ -53,27 +53,27 @@ namespace DCL.Donations.UI
 
         public void ShowLoading(DonationPanelViewModel viewModel, decimal donationAmount, bool isThirdWeb = false)
         {
-            ShowSubView(SubViews.LOADING);
+            ShowSubView(SubViews.Loading);
             donationLoadingView.SetWaitingMessage(isThirdWeb);
             donationLoadingView.ConfigurePanel(viewModel, donationAmount);
         }
 
         public void ShowErrorModal()
         {
-            ShowSubView(SubViews.ERROR);
+            ShowSubView(SubViews.Error);
         }
 
         private void ShowSubView(SubViews newSubView)
         {
-            donationDefaultView.gameObject.SetActive(newSubView == SubViews.DEFAULT);
-            donationConfirmedView.gameObject.SetActive(newSubView == SubViews.TX_CONFIRMED);
-            donationErrorView.gameObject.SetActive(newSubView == SubViews.ERROR);
-            donationLoadingView.gameObject.SetActive(newSubView == SubViews.LOADING);
+            donationDefaultView.gameObject.SetActive(newSubView == SubViews.Default);
+            donationConfirmedView.gameObject.SetActive(newSubView == SubViews.TxConfirmed);
+            donationErrorView.gameObject.SetActive(newSubView == SubViews.Error);
+            donationLoadingView.gameObject.SetActive(newSubView == SubViews.Loading);
         }
 
         public async UniTask ShowTxConfirmedAsync(DonationPanelViewModel viewModel, CancellationToken ct)
         {
-            ShowSubView(SubViews.TX_CONFIRMED);
+            ShowSubView(SubViews.TxConfirmed);
 
             await donationConfirmedView.ShowAsync(viewModel, ct);
         }

@@ -98,6 +98,7 @@ namespace DCL.FeatureFlags
 
     public enum FeatureFlag
     {
+    
         None = 0,
         MultiplayerCompressionWin,
         MultiplayerCompressionMac,

@@ -44,7 +44,7 @@ namespace DCL.McpServer.Tools
             if (message.Length > MAX_MESSAGE_LENGTH)
                 return UniTask.FromResult(McpToolResult.Error($"message exceeds the {MAX_MESSAGE_LENGTH} character limit."));
 
-            chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, message, ChatMessageOrigin.CHAT);
+            chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, message, ChatMessageOrigin.Chat);
 
             return UniTask.FromResult(McpToolResult.Text($"Sent to Nearby: {message}"));
         }

@@ -25,7 +25,7 @@ namespace DCL.Character.CharacterMotion
             characterPhysics.ExternalAcceleration = characterPhysics.ExternalForce / settings.CharacterMass;
 
             // An open glider catches the airflow with a larger effective area, so continuous external forces act on it stronger
-            if (glideState.Value == GlideStateValue.GLIDING)
+            if (glideState.Value == GlideStateValue.Gliding)
                 characterPhysics.ExternalAcceleration *= settings.GlideWindResponse;
 
             // v += a * dt (Vertical acceleration is read by ApplyGravity via ExternalAcceleration.y)

@@ -42,14 +42,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             prevState = next;
 
             // IDLE → SPEAKING: dispatch by activation. FOCUS_RESUMED is a continuation, not a fresh use.
-            if (prev == NearbyVoiceChatState.IDLE && next == NearbyVoiceChatState.OPEN_MIC)
+            if (prev == NearbyVoiceChatState.Idle && next == NearbyVoiceChatState.OpenMic)
             {
                 switch (stateModel.CurrentActivation)
                 {
-                    case NearbyVoiceActivation.BUTTON:
+                    case NearbyVoiceActivation.Button:
                         TrackSpeakButton(enabled: true);
                         break;
-                    case NearbyVoiceActivation.PUSH_TO_TALK:
+                    case NearbyVoiceActivation.PushToTalk:
                         analytics.Track(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_PTT);
                         break;
                 }
@@ -57,8 +57,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             }
 
             // SPEAKING → IDLE: button-toggle off. Skip suppression-driven stops (call/scene/loading) — system, not user.
-            if (prev == NearbyVoiceChatState.OPEN_MIC && next == NearbyVoiceChatState.IDLE
-                && stateModel.CurrentActivation == NearbyVoiceActivation.BUTTON
+            if (prev == NearbyVoiceChatState.OpenMic && next == NearbyVoiceChatState.Idle
+                && stateModel.CurrentActivation == NearbyVoiceActivation.Button
                 && stateModel.ActiveSuppression.Value == null)
             {
                 TrackSpeakButton(enabled: false);
@@ -69,9 +69,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             // - Disable() is unconditional, so toggle-off can fire from IDLE or SPEAKING.
             // - Enable() is gated to DISABLED, so toggle-on is only DISABLED → IDLE.
             // Transitions involving SUPPRESSED are system-driven (call/scene/loading) and are skipped.
-            if (next == NearbyVoiceChatState.DISABLED && prev is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.OPEN_MIC)
+            if (next == NearbyVoiceChatState.Disabled && prev is NearbyVoiceChatState.Idle or NearbyVoiceChatState.OpenMic)
                 TrackToggle(enabled: false);
-            else if (prev == NearbyVoiceChatState.DISABLED && next == NearbyVoiceChatState.IDLE)
+            else if (prev == NearbyVoiceChatState.Disabled && next == NearbyVoiceChatState.Idle)
                 TrackToggle(enabled: true);
         }
 

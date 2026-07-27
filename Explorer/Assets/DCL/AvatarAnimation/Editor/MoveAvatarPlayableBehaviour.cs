@@ -15,7 +15,7 @@ namespace DCL.AvatarAnimation.Editor
     public class MoveAvatarPlayableBehaviour : BaseAvatarPlayableBehaviour
     {
         public float Forward = 0.0f;
-        public MovementKind MovementAnimation = MovementKind.IDLE;
+        public MovementKind MovementAnimation = MovementKind.Idle;
         public float Rotation = 0.0f;
 
         private Transform cachedCharacterControllerTransform;
@@ -43,7 +43,7 @@ namespace DCL.AvatarAnimation.Editor
 
             if (hasInputcomponent)
             {
-                movement.Kind = MovementKind.IDLE;
+                movement.Kind = MovementKind.Idle;
                 movement.Axes = Vector2.zero;
             }
         }

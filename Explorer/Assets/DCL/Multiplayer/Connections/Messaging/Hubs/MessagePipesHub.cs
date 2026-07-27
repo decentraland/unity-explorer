@@ -22,11 +22,11 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
             ThroughputBufferBunch sceneBufferBunch,
             ThroughputBufferBunch chatBufferBunch
         ) : this(
-            new MessagePipe(roomHub.SceneRoom().Room().DataPipe.WithThroughputMeasure(sceneBufferBunch), multiPool, memoryPool, RoomSource.GATEKEEPER)
+            new MessagePipe(roomHub.SceneRoom().Room().DataPipe.WithThroughputMeasure(sceneBufferBunch), multiPool, memoryPool, RoomSource.Gatekeeper)
                .WithLog("Scene"),
-            new MessagePipe(roomHub.IslandRoom().DataPipe.WithThroughputMeasure(islandBufferBunch), multiPool, memoryPool, RoomSource.ISLAND)
+            new MessagePipe(roomHub.IslandRoom().DataPipe.WithThroughputMeasure(islandBufferBunch), multiPool, memoryPool, RoomSource.Island)
                .WithLog("Island"),
-            new MessagePipe(roomHub.ChatRoom().DataPipe.WithThroughputMeasure(chatBufferBunch), multiPool, memoryPool, RoomSource.CHAT)
+            new MessagePipe(roomHub.ChatRoom().DataPipe.WithThroughputMeasure(chatBufferBunch), multiPool, memoryPool, RoomSource.Chat)
                .WithLog("Chat")
         ) { }
 

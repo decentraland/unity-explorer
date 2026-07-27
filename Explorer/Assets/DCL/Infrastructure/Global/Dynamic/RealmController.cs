@@ -340,7 +340,7 @@ namespace Global.Dynamic
                     {
                         world.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
                         world.Add<DeleteEntityIntention>(entity);
-                        sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+                        sceneLoadingState.VisualSceneState = VisualSceneState.Uninitialized;
                         sceneLoadingState.PromiseCreated = false;
                     }
                 });

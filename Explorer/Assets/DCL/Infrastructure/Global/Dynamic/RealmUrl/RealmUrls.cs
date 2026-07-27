@@ -26,7 +26,7 @@ namespace Global.Dynamic.RealmUrl
             return realmLaunchSettings.initialRealm switch
                    {
                        InitialRealm.GenesisCity => decentralandUrlsSource.Url(DecentralandUrl.Genesis),
-                       InitialRealm.SDK => IRealmNavigator.SDK_TEST_SCENES_URL,
+                       InitialRealm.Sdk => IRealmNavigator.SDK_TEST_SCENES_URL,
                        InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
                        InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
                        InitialRealm.TestScenes => IRealmNavigator.TEST_SCENES_URL,

@@ -106,7 +106,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             if (hasPreviousVirtualCamera)
             {
                 previousVirtualCamera!.enabled = false;
-                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Removed));
             }
 
             UpdateGlobalWorldCameraMode(mainCameraComponent.virtualCameraInstance != null);
@@ -174,7 +174,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             mainCameraComponent.virtualCameraInstance = virtualCameraInstance;
             virtualCameraInstance.enabled = true;
 
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Applied));
 
             return true;
         }
@@ -184,13 +184,13 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             ref CameraComponent cameraComponent = ref globalWorld.Get<CameraComponent>(cameraData.CameraEntityProxy.Object);
             if (isAnyVirtualCameraActive)
             {
-                if (cameraComponent.Mode != CameraMode.SDKCamera)
+                if (cameraComponent.Mode != CameraMode.SdkCamera)
                 {
                     lastNonSDKCameraMode = cameraComponent.Mode;
-                    cameraComponent.Mode = CameraMode.SDKCamera;
+                    cameraComponent.Mode = CameraMode.SdkCamera;
                 }
             }
-            else if (cameraComponent.Mode == CameraMode.SDKCamera)
+            else if (cameraComponent.Mode == CameraMode.SdkCamera)
             {
                 cameraComponent.Mode = lastNonSDKCameraMode;
             }
@@ -217,7 +217,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private void FinalizeMainCameraComponent(in MainCameraComponent mainCameraComponent)
         {
             DisableActiveVirtualCamera(mainCameraComponent);
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Removed));
         }
 
         // User leaves the scene

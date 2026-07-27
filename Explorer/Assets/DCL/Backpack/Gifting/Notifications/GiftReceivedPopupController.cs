@@ -25,7 +25,7 @@ namespace DCL.Backpack.Gifting.Notifications
         private readonly IGiftItemLoaderService giftItemLoaderService;
         private readonly IMVCManager mvcManager;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private ImageController imageController;
         private CancellationTokenSource? lifeCts;
