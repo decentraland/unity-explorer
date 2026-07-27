@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Global.AppArgs
 {
@@ -17,14 +19,16 @@ namespace Global.AppArgs
     ///             position, community, signin, authRequestId, force-open-backpack, spawnpoint.
     ///         </item>
     ///         <item>
-    ///             <b>Permitted only for a loopback realm</b> — the local-development params Creator Hub and the
+    ///             <b>Permitted only for a whitelisted realm</b> — the local-development params Creator Hub and the
     ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, dclenv, hub,
-    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance. They are gated on
-    ///             <c>Uri.IsLoopback</c> of the target realm (127.0.0.1 / localhost / [::1]) so a remote-realm deep
-    ///             link from a web page can never enable them, while a legitimate local-dev launch (which always
-    ///             targets loopback) works. Each is individually low-harm — an analytics tag, a cosmetic toggle, an
-    ///             instance count, an env enum, or a screen skip that still forces auth when no valid identity is
-    ///             cached — and the loopback gate confines them to the dev context.
+    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance, scene-console. A realm is
+    ///             "whitelisted" when it is loopback (127.0.0.1 / localhost / [::1]) OR its world matches the
+    ///             build-time <c>DEEPLINK_WHITELISTED_WORLDS</c> list (see <see cref="IsRealmWhitelisted" /> and
+    ///             <see cref="DeepLinkWorldWhitelist" />). A remote-realm deep link from a web page can never enable
+    ///             them unless that exact world was explicitly whitelisted for the build. Each is individually
+    ///             low-harm — an analytics tag, a cosmetic toggle, an instance count, an env enum, a screen skip that
+    ///             still forces auth when no valid identity is cached, or the per-scene JS console — and the
+    ///             whitelisted-realm gate confines them to the dev context.
     ///         </item>
     ///         <item>
     ///             <b>Never permitted</b> — everything else, in particular params that launch code
@@ -33,10 +37,11 @@ namespace Global.AppArgs
     ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>, <c>optimized-assets-url</c>,
     ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>); bypass a version/specs screen
     ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable other dev/test modes
-    ///             (<c>debug</c>, <c>scene-console</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>).
+    ///             (<c>debug</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>).
     ///         </item>
     ///     </list>
-    ///     Both permitted sets are a product decision (SEC-019/020 "Design affected") — changing them requires sign-off.
+    ///     Both permitted sets and the world whitelist are a product decision (SEC-019/020 "Design affected") —
+    ///     changing them requires sign-off.
     /// </summary>
     public static class DeepLinkAllowlist
     {
@@ -69,13 +74,14 @@ namespace Global.AppArgs
         };
 
         // Local-development params Creator Hub / sdk-commands attach to preview deep links. Permitted ONLY when the
-        // target realm is loopback (see ApplicationParametersParser.ProcessDeepLinkParameters) — a remote-realm deep
-        // link can never enable them. The SEC-005 exec params (creator-hub-bin-path, launch-cdp-monitor-on-start)
-        // are deliberately NOT here; they stay dropped for every realm.
-        private static readonly HashSet<string> LOOPBACK_REALM_PERMITTED_KEYS = new()
+        // target realm is whitelisted — loopback OR a build-configured world (see IsRealmWhitelisted). A remote-realm
+        // deep link can never enable them unless that world was explicitly whitelisted for the build. The SEC-005 exec
+        // params (creator-hub-bin-path, launch-cdp-monitor-on-start) are deliberately NOT here; they stay dropped for
+        // every realm.
+        private static readonly HashSet<string> WHITELISTED_REALM_PERMITTED_KEYS = new()
         {
             // Enables local-scene-development mode (opens an LSD websocket to the realm). Only meaningful against a
-            // local server; loopback-gated so an attacker can't point LSD at a remote realm (SEC-020).
+            // local/dev server; whitelisted-realm-gated so an attacker can't point LSD at an arbitrary remote realm (SEC-020).
             AppArgsFlags.LOCAL_SCENE,
 
             // Target environment (org/zone/today). A DCL-owned enum, not a URL — cannot point at attacker infra.
@@ -93,12 +99,87 @@ namespace Global.AppArgs
 
             // Allows multiple client instances (local multi-instance dev workflow).
             AppArgsFlags.MULTIPLE_RUNNING_INSTANCES,
+
+            // Opens the per-scene JS console (dev tooling for inspecting a scene under development).
+            AppArgsFlags.SCENE_CONSOLE,
         };
+
+        // Lazily loaded & cached, lowercased world names from the build-time DeepLinkWorldWhitelist resource. Null until
+        // first access (or after a test override reset); empty in local/Editor runs where the resource is absent.
+        private static HashSet<string>? whitelistedWorlds;
 
         public static bool IsPermitted(string key) =>
             PERMITTED_KEYS.Contains(key);
 
-        public static bool IsPermittedForLoopbackRealm(string key) =>
-            LOOPBACK_REALM_PERMITTED_KEYS.Contains(key);
+        public static bool IsPermittedForWhitelistedRealm(string key) =>
+            WHITELISTED_REALM_PERMITTED_KEYS.Contains(key);
+
+        /// <summary>
+        ///     Whether the realm a deep link targets is trusted enough to accept the whitelisted-realm dev params:
+        ///     loopback, or a world explicitly listed in the build-time <c>DEEPLINK_WHITELISTED_WORLDS</c> secret.
+        /// </summary>
+        public static bool IsRealmWhitelisted(string? realm)
+        {
+            if (string.IsNullOrEmpty(realm))
+                return false;
+
+            if (Uri.TryCreate(realm, UriKind.Absolute, out Uri? uri) && uri.IsLoopback)
+                return true;
+
+            return IsRealmWhitelistedWorld(realm);
+        }
+
+        internal static void OverrideWhitelistedWorldsForTesting(IEnumerable<string>? worlds) =>
+            whitelistedWorlds = worlds == null ? null : Normalize(worlds);
+
+        private static bool IsRealmWhitelistedWorld(string realm)
+        {
+            HashSet<string> whitelist = WhitelistedWorlds();
+
+            if (whitelist.Count == 0)
+                return false;
+
+            string candidate = ExtractWorldName(realm);
+            return candidate.Length > 0 && whitelist.Contains(candidate);
+        }
+
+        // A world realm is either the bare ENS name (e.g. "myworld.dcl.eth") or a worlds-content-server URL whose
+        // last path segment is that ENS. We match the extracted name exactly (case-insensitive) against the configured
+        // list — the exact-membership check, not the shape of the name, is the trust boundary.
+        private static string ExtractWorldName(string realm)
+        {
+            if (Uri.TryCreate(realm, UriKind.Absolute, out Uri? uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            {
+                string path = uri.AbsolutePath.Trim('/');
+                int lastSlash = path.LastIndexOf('/');
+                string segment = lastSlash >= 0 ? path.Substring(lastSlash + 1) : path;
+                return segment.ToLowerInvariant();
+            }
+
+            // Not an http(s) URL — treat the whole value as a bare world name.
+            return realm.ToLowerInvariant();
+        }
+
+        private static HashSet<string> WhitelistedWorlds()
+        {
+            if (whitelistedWorlds != null)
+                return whitelistedWorlds;
+
+            var config = Resources.Load<DeepLinkWorldWhitelist>(DeepLinkWorldWhitelist.RESOURCE_NAME);
+            whitelistedWorlds = config == null ? new HashSet<string>() : Normalize(config.Worlds);
+            return whitelistedWorlds;
+        }
+
+        private static HashSet<string> Normalize(IEnumerable<string> worlds)
+        {
+            var set = new HashSet<string>();
+
+            foreach (string world in worlds)
+                if (!string.IsNullOrWhiteSpace(world))
+                    set.Add(world.Trim().ToLowerInvariant());
+
+            return set;
+        }
     }
 }

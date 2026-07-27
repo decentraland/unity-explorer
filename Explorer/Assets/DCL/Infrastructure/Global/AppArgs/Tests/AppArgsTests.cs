@@ -5,6 +5,13 @@ namespace Global.AppArgs.Tests
 {
     public class AppArgsTest
     {
+        [TearDown]
+        public void TearDown()
+        {
+            // Reset the cached/overridden world whitelist so tests don't leak state into one another.
+            DeepLinkAllowlist.OverrideWhitelistedWorldsForTesting(null);
+        }
+
         [Test]
         public void DeepLinkSigninWithHostSegmentParsesSignin()
         {
@@ -132,6 +139,69 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(output.ContainsKey("creator-hub-bin-path"), "creator-hub-bin-path must never be permitted (SEC-005), even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), "launch-cdp-monitor-on-start must never be permitted, even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.COMMS_ADAPTER), "comms-adapter must never be permitted, even for a loopback realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsSceneConsoleForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&scene-console=true");
+
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for a loopback (local dev) realm");
+        }
+
+        [Test]
+        public void DeepLinkDropsSceneConsoleForRemoteRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&scene-console=true");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a non-whitelisted remote realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsDevParamsForWhitelistedWorldRealm()
+        {
+            // Arrange
+            DeepLinkAllowlist.OverrideWhitelistedWorldsForTesting(new[] { "test-world.dcl.eth" });
+
+            // Act
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&scene-console=true");
+
+            // Assert
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene must survive for a whitelisted world realm");
+            Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv must survive for a whitelisted world realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for a whitelisted world realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsDevParamsForWhitelistedWorldContentServerUrlRealm()
+        {
+            // Arrange
+            DeepLinkAllowlist.OverrideWhitelistedWorldsForTesting(new[] { "test-world.dcl.eth" });
+
+            // Act
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://worlds-content-server.decentraland.org/world/test-world.dcl.eth&local-scene=true");
+
+            // Assert
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene must survive when the realm URL resolves to a whitelisted world");
+        }
+
+        [Test]
+        public void DeepLinkDropsDevParamsForNonWhitelistedWorldRealm()
+        {
+            // Arrange
+            DeepLinkAllowlist.OverrideWhitelistedWorldsForTesting(new[] { "test-world.dcl.eth" });
+
+            // Act
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=other-world.dcl.eth&local-scene=true&scene-console=true");
+
+            // Assert
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped for a world that is not whitelisted");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a world that is not whitelisted");
         }
     }
 }
