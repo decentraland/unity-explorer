@@ -6,6 +6,10 @@ namespace DCL.Prefs
 
         public const string LAUNCH_COUNT = "LaunchCount";
 
+        // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
+        // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
+        public const string CREATOR_HUB_BIN_PATH = "CreatorHub.BinPath";
+
         public const string PREVIOUS_SEARCHES = "previous_searches";
 
         public const string WEB3_IDENTITY = "Web3Authentication.Identity";
