@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.Diagnostics;
@@ -21,17 +22,22 @@ namespace DCL.Chat.ChatReactions.Networking
 {
     public sealed class MultiplayerReactionMessageBus : IReactionMessageBus
     {
-        // Sanity bound for emoji indices arriving from the network.
+        // Absolute sanity bound for emoji indices arriving from the network.
         // The emoji panel has ~3,580 entries (358 pages × 10); 4096 is a safe power-of-two ceiling.
+        // The effective bound is tightened to the actual atlas tile count via the constructor.
         private const int MAX_VALID_EMOJI_INDEX = 4096;
 
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly IWeb3IdentityCache identityCache;
         private readonly string routingUser;
+        private readonly int maxValidEmojiIndex;
+        private readonly int situationalReceiveCountCap;
         private readonly CancellationTokenSource cts = new ();
         private readonly IMessageDeduplication<float> situationalDedup = new MessageDeduplication<float>();
         private readonly IMessageDeduplication<string> chatReactionDedup = new MessageDeduplication<string>();
+        private readonly PerSenderRateLimiter situationalRateLimiter;
+        private readonly PerSenderRateLimiter chatReactionRateLimiter;
 
         public event Action<ReactionReceivedArgs>? ReactionReceived;
 
@@ -39,12 +45,22 @@ namespace DCL.Chat.ChatReactions.Networking
             IMessagePipesHub messagePipesHub,
             IUserBlockingCache userBlockingCache,
             IWeb3IdentityCache identityCache,
-            string routingUser)
+            string routingUser,
+            ChatReactionsConfig config,
+            int maxValidEmojiIndex = MAX_VALID_EMOJI_INDEX)
         {
             this.messagePipesHub = messagePipesHub;
             this.userBlockingCache = userBlockingCache;
             this.identityCache = identityCache;
             this.routingUser = routingUser;
+            this.maxValidEmojiIndex = Mathf.Clamp(maxValidEmojiIndex, 1, MAX_VALID_EMOJI_INDEX);
+            situationalReceiveCountCap = config.SituationalReceiveCountCap;
+
+            situationalRateLimiter = new PerSenderRateLimiter(
+                config.SituationalReceiveRatePerSecond, config.SituationalReceiveBurst, config.MaxRateTrackedSenders);
+
+            chatReactionRateLimiter = new PerSenderRateLimiter(
+                config.ChatReactionReceiveRatePerSecond, config.ChatReactionReceiveBurst, config.MaxRateTrackedSenders);
 
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[MultiplayerReactionBus] Subscribing to Reaction and ChatReaction on Island/Scene/Chat pipes");
 
@@ -146,13 +162,17 @@ namespace DCL.Chat.ChatReactions.Networking
 
                 int emojiIndex = receivedMessage.Payload.EmojiIndex;
 
-                if (emojiIndex < 0 || emojiIndex >= MAX_VALID_EMOJI_INDEX)
+                if (emojiIndex < 0 || emojiIndex >= maxValidEmojiIndex)
                 {
                     ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Rejected situational reaction with out-of-range emoji index {emojiIndex} from={receivedMessage.FromWalletId}");
                     return;
                 }
 
-                int count = Mathf.Max(1, receivedMessage.Payload.Count);
+                // Silent drop: a flood that exceeds the budget must not pay for per-drop logging either.
+                if (!situationalRateLimiter.TryPass(receivedMessage.FromWalletId, UnityEngine.Time.unscaledTime))
+                    return;
+
+                int count = Mathf.Clamp(receivedMessage.Payload.Count, 1, situationalReceiveCountCap);
 
                 ReactionReceived?.Invoke(new ReactionReceivedArgs(
                     receivedMessage.FromWalletId,
@@ -195,7 +215,7 @@ namespace DCL.Chat.ChatReactions.Networking
                 int rawEmojiIndex = receivedMessage.Payload.EmojiIndex;
                 var (emojiIndex, isRemoval) = ReactionWireEncoding.Decode(rawEmojiIndex);
 
-                if (emojiIndex < 0 || emojiIndex >= MAX_VALID_EMOJI_INDEX)
+                if (emojiIndex < 0 || emojiIndex >= maxValidEmojiIndex)
                 {
                     ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Rejected chat reaction with out-of-range emoji index {emojiIndex} from={walletId}");
                     return;
@@ -213,6 +233,11 @@ namespace DCL.Chat.ChatReactions.Networking
                 }
 
                 chatReactionDedup.Remove(walletId, oppositeKey);
+
+                // After dedup so pipe duplicates don't consume budget.
+                // Silent drop: a flood that exceeds the budget must not pay for per-drop logging either.
+                if (!chatReactionRateLimiter.TryPass(walletId, UnityEngine.Time.unscaledTime))
+                    return;
 
                 ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received chat reaction: emoji={emojiIndex} isRemoval={isRemoval} messageId={receivedMessage.Payload.MessageId} from={walletId}");
 
