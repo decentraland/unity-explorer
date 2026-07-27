@@ -23,7 +23,7 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         private static readonly TimeSpan LONG_RUNNING_HINT_DELAY = TimeSpan.FromSeconds(10);
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private enum State { Waiting, Success, Failed }
 
@@ -274,7 +274,7 @@ namespace DCL.Backpack.Gifting.Presenters
                     .ConfirmationDialogOpener
                     .OpenConfirmationDialogAsync(dialogParams, ct);
 
-                if (result == ConfirmationResult.CONFIRM)
+                if (result == ConfirmationResult.Confirm)
                 {
                     ReportHub.Log(ReportCategory.GIFTING, GiftingTextIds.RetryLogMessage);
                     await mvcManager.ShowAsync(IssueCommand(inputData), ct);

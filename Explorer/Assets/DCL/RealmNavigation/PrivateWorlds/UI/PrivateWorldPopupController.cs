@@ -24,7 +24,7 @@ namespace DCL.PrivateWorlds.UI
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource? validateCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public PrivateWorldPopupController(ViewFactoryMethod viewFactory, IInputBlock inputBlock,
             IWorldPermissionsService worldPermissionsService) : base(viewFactory)

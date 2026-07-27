@@ -55,7 +55,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             sourceFactory = new FakeNearbyAudioSourceFactory();
 
             system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
@@ -196,7 +196,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
                 registry.SeedActiveStream(wallet, "sid-1");
             }
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             system.Update(0);
 
@@ -230,12 +230,12 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
             CreateStreamingAvatar(WALLET, SID);
             registry.SeedActiveStream(WALLET, SID);
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             system.Update(0);
             Assert.That(CountAudioEntities(), Is.EqualTo(0), "suppressed tick must not allocate");
 
-            stateModel.Resume(SuppressionReason.CALL);
+            stateModel.Resume(SuppressionReason.Call);
 
             system.Update(0);
             Assert.That(CountAudioEntities(), Is.EqualTo(1), "resume must re-bind from the unchanged component snapshot");
@@ -369,7 +369,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
             // Replace registry with the mock for the lifetime of this test.
             var localBindings = new HashSet<StreamKey>();
-            using var localStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            using var localStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             var localFactory = new FakeNearbyAudioSourceFactory();
             try
             {

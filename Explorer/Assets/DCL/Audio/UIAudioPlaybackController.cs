@@ -180,7 +180,7 @@ namespace DCL.Audio
         private bool CheckAudioCategory(AudioClipConfig audioClipConfig)
         {
             //We can only play UI sounds through this bus. Other sounds are discarded
-            if (audioClipConfig.Category is not (AudioCategory.Chat or AudioCategory.Music or AudioCategory.UI))
+            if (audioClipConfig.Category is not (AudioCategory.Chat or AudioCategory.Music or AudioCategory.Ui))
             {
                 ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it is from category {audioClipConfig.Category} and this bus only supports Chat, Music or UI");
                 return false;
@@ -228,7 +228,7 @@ namespace DCL.Audio
         {
             switch (audioCategory)
             {
-                case AudioCategory.UI:
+                case AudioCategory.Ui:
                     return UiAudioSource;
                 case AudioCategory.Chat:
                     return ChatAudioSource;
@@ -261,7 +261,7 @@ namespace DCL.Audio
             {
                 switch(audioClipPair.Key.Category)
                 {
-                    case AudioCategory.UI:
+                    case AudioCategory.Ui:
                         if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.UI_Volume))
                             continue;
                         break;

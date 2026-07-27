@@ -65,7 +65,6 @@ namespace Global.AppArgs
         public const string SIMULATE_MEMORY = "simulateMemory";
 
         public const string LAUNCH_CDP_MONITOR_ON_START = "launch-cdp-monitor-on-start";
-        public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
         public const string GRAPHICS = "graphics";
@@ -131,6 +130,7 @@ namespace Global.AppArgs
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+        public const string LOCAL_AB = "local-ab";
 
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 

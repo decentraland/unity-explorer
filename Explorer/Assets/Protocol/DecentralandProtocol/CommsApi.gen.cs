@@ -80,9 +80,9 @@ namespace Decentraland.Kernel.Apis {
   }
   #region Enums
   public enum VideoTrackSourceType {
-    [pbr::OriginalName("VTST_UNKNOWN")] VtstUnknown = 0,
-    [pbr::OriginalName("VTST_CAMERA")] VtstCamera = 1,
-    [pbr::OriginalName("VTST_SCREEN_SHARE")] VtstScreenShare = 2,
+    [pbr::OriginalName("VtstUnknown")] VtstUnknown = 0,
+    [pbr::OriginalName("VtstCamera")] VtstCamera = 1,
+    [pbr::OriginalName("VtstScreenShare")] VtstScreenShare = 2,
   }
 
   #endregion

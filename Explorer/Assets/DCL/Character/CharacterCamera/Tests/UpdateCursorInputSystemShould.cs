@@ -199,7 +199,7 @@ namespace DCL.Character.CharacterCamera.Tests
             // Arrange
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free, PositionIsDirty = true });
             ref var cameraData = ref world.Get<ExposedCameraData>(entity);
-            cameraData.CameraMode = CameraMode.SDKCamera;
+            cameraData.CameraMode = CameraMode.SdkCamera;
 
             Press(mouse.leftButton); // Temporal lock
 

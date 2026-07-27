@@ -1,4 +1,6 @@
+using DCL.Browser;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System;
@@ -18,6 +20,11 @@ namespace Global.Dynamic
     [Serializable]
     public class RealmLaunchSettings : ILaunchMode
     {
+        /// <summary>
+        ///     abgen's default port; used for local asset bundles when no explicit --optimized-assets-url is given.
+        /// </summary>
+        public const string DEFAULT_LOCAL_ASSET_BUNDLES_URL = "http://127.0.0.1:5147";
+
         [Serializable]
         public struct PredefinedScenes
         {
@@ -34,6 +41,9 @@ namespace Global.Dynamic
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles;
+        [SerializeField] [Tooltip("Local scene development only: load the scene's asset bundles from a locally running abgen instead of loading "
+                                  + "raw GLTFs. The server URL comes from --optimized-assets-url, defaulting to " + DEFAULT_LOCAL_ASSET_BUNDLES_URL
+                                  + " (abgen's default port) when not provided")] internal bool useLocalAssetBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
@@ -75,7 +85,7 @@ namespace Global.Dynamic
             {
                 return new HybridSceneParams
                 {
-                    EnableHybridScene = useRemoteAssetsBundles,
+                    EnableHybridScene = useRemoteAssetsBundles && !useLocalAssetBundles,
                     HybridSceneContentServer = remoteHybridSceneContentServer,
                     World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World)
                         ? remoteHibridWorld
@@ -104,11 +114,24 @@ namespace Global.Dynamic
 
             bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string? localSceneParamValue)
                                            && ParseLocalSceneParameter(localSceneParamValue!)
-                                           && IsRealmAValidUrl(realmParamValue);
+                                           && ExternalUrlPolicy.IsWebScheme(realmParamValue);
 
             if (isLocalSceneDevelopment)
             {
-                SetLocalSceneDevelopmentRealm(realmParamValue, appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles);
+                // The serialized checkbox is an Editor convenience only: player builds opt in
+                // exclusively through the app arg, so a box ticked (and accidentally committed)
+                // in the scene asset cannot ship enabled.
+                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || (Application.isEditor && useLocalAssetBundles);
+                bool useRemoteAB = appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles;
+
+                if (useLocalAB && useRemoteAB)
+                {
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"Both '{AppArgsFlags.LOCAL_AB}' and '{AppArgsFlags.LSD_USE_REMOTE_AB}' were provided: local asset bundles take precedence");
+                    useRemoteAB = false;
+                }
+
+                useLocalAssetBundles = useLocalAB;
+                SetLocalSceneDevelopmentRealm(realmParamValue, useRemoteAB);
 
                 if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_SERVER, out string? serverValue))
                     ParseLsdRemoteABServer(serverValue!);
@@ -173,10 +196,6 @@ namespace Global.Dynamic
 
         private bool IsRealmAWorld(string realmParam) =>
             realmParam.IsEns();
-
-        private bool IsRealmAValidUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
-            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {

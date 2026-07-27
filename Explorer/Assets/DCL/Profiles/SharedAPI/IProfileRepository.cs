@@ -14,27 +14,27 @@ namespace DCL.Profiles
             /// <summary>
             ///     Individual requests will be delayed and batched together
             /// </summary>
-            DEFAULT = 0,
+            Default = 0,
 
             /// <summary>
             ///     Individual request will be dispatched immediately
             ///     Use it with caution to enforce a single request when "foreground" strictly requires only one profile
             /// </summary>
-            ENFORCE_SINGLE_GET = 1,
+            EnforceSingleGet = 1,
 
             /// <summary>
             ///     The request can be delayed according to the retry policy until the required version or non-null profile is provided <br />
             ///     The request can still return `null` as a last measure (if all attempts exceeded) <br />
             ///     When the request is not resolved it will be repeated in a non-batched mode
             /// </summary>
-            DELAY_UNTIL_RESOLVED = 2,
+            DelayUntilResolved = 2,
 
             /// <summary>
             ///     Forces the request to go directly to the catalyst (lambdas) instead of the centralized profiles service. <br />
             ///     Implicitly enforces a single GET request (not batched). <br />
             ///     Compact tiers are not supported on catalysts, so the tier is forced to Full.
             /// </summary>
-            FORCE_FETCH_FROM_CATALYST = 4,
+            ForceFetchFromCatalyst = 4,
         }
 
         public const string PROFILE_FRAGMENTATION_OBSOLESCENCE = "Should be moved to the unified POST originated from the client";

@@ -2,32 +2,32 @@ namespace DCL.MarketplaceCredits.Purchase
 {
     public enum CreditsPurchaseState
     {
-        RESOLVING_LISTING,
-        AUTHORIZING,
-        SIGNING,
-        SUBMITTING,
-        WAITING_SETTLEMENT,
-        SUCCESS,
-        FAILED,
+        ResolvingListing,
+        Authorizing,
+        Signing,
+        Submitting,
+        WaitingSettlement,
+        Success,
+        Failed,
     }
 
     public enum CreditsPurchaseError
     {
-        NONE,
-        FEATURE_DISABLED,
-        LISTING_NOT_AVAILABLE,
-        OWN_LISTING,
-        PRICE_CHANGED,
-        INSUFFICIENT_CREDITS,
-        AUTHORIZATION_FAILED,
-        SIGNATURE_REJECTED,
-        SIGNING_FAILED,
-        RELAYER_UNAVAILABLE,
-        TRANSACTION_REVERTED,
-        SETTLEMENT_PENDING,
-        CANCELLED,
-        ENCODING_FAILED,
-        UNKNOWN_ERROR,
+        None,
+        FeatureDisabled,
+        ListingNotAvailable,
+        OwnListing,
+        PriceChanged,
+        InsufficientCredits,
+        AuthorizationFailed,
+        SignatureRejected,
+        SigningFailed,
+        RelayerUnavailable,
+        TransactionReverted,
+        SettlementPending,
+        Cancelled,
+        EncodingFailed,
+        UnknownError,
     }
 
     public readonly struct CreditsPurchaseResult
@@ -36,7 +36,7 @@ namespace DCL.MarketplaceCredits.Purchase
         public readonly string? TxHash;
         public readonly string? Message;
 
-        public bool Success => Error == CreditsPurchaseError.NONE;
+        public bool Success => Error == CreditsPurchaseError.None;
 
         public CreditsPurchaseResult(CreditsPurchaseError error, string? txHash = null, string? message = null)
         {
@@ -46,6 +46,6 @@ namespace DCL.MarketplaceCredits.Purchase
         }
 
         public static CreditsPurchaseResult Ok(string txHash) =>
-            new (CreditsPurchaseError.NONE, txHash);
+            new (CreditsPurchaseError.None, txHash);
     }
 }

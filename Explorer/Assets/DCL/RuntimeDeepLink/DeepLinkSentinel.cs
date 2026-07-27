@@ -73,7 +73,7 @@ namespace DCL.RuntimeDeepLink
 
                 DeepLinkHandleResult result = handle.HandleDeepLink(deepLinkCreateResult.Value);
 
-                if (result == DeepLinkHandleResult.DEFERRED)
+                if (result == DeepLinkHandleResult.Deferred)
                 {
                     // Leave the file in place so the awaiting login can claim it.
                     if (!deferralTimer.IsRunning)
@@ -92,10 +92,10 @@ namespace DCL.RuntimeDeepLink
 
                 switch (result)
                 {
-                    case DeepLinkHandleResult.CONSUMED:
+                    case DeepLinkHandleResult.Consumed:
                         ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, "successfully handled deeplink");
                         break;
-                    case DeepLinkHandleResult.NO_MATCHES:
+                    case DeepLinkHandleResult.NoMatches:
                         ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, "found no actionable content in deeplink");
                         break;
                 }

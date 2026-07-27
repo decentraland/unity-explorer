@@ -6,11 +6,11 @@ namespace DCL.Profiling
     {
         public enum PerformanceBottleneck
         {
-            INDETERMINATE, // Cannot be determined
-            PRESENT_LIMITED, // Limited by presentation (vsync or framerate cap)
-            CPU, // Limited by CPU (main and/or render thread)
-            GPU, // Limited by GPU
-            BALANCED, // Limited by both CPU and GPU, i.e. well balanced
+            Indeterminate, // Cannot be determined
+            PresentLimited, // Limited by presentation (vsync or framerate cap)
+            Cpu, // Limited by CPU (main and/or render thread)
+            Gpu, // Limited by GPU
+            Balanced, // Limited by both CPU and GPU, i.e. well balanced
         }
 
         private const float K_NEAR_FULL_FRAME_TIME_THRESHOLD_PERCENT = 0.2f;
@@ -33,7 +33,7 @@ namespace DCL.Profiling
         private static PerformanceBottleneck DetermineBottleneck(FrameTiming timing)
         {
             if (timing.gpuFrameTime == 0)
-                return PerformanceBottleneck.INDETERMINATE;
+                return PerformanceBottleneck.Indeterminate;
 
             float fullFrameTime = Mathf.Max((float)timing.cpuFrameTime, (float)timing.gpuFrameTime);
             double fullFrameTimeWithMargin = (1.0 - K_NEAR_FULL_FRAME_TIME_THRESHOLD_PERCENT) * fullFrameTime;
@@ -42,12 +42,12 @@ namespace DCL.Profiling
             if (timing.gpuFrameTime > fullFrameTimeWithMargin &&
                 timing.cpuMainThreadFrameTime < fullFrameTimeWithMargin &&
                 timing.cpuRenderThreadFrameTime < fullFrameTimeWithMargin)
-                return PerformanceBottleneck.GPU;
+                return PerformanceBottleneck.Gpu;
 
             // One of the CPU times is close to frame time, GPU is not
             if (timing.gpuFrameTime < fullFrameTimeWithMargin &&
                 (timing.cpuMainThreadFrameTime > fullFrameTimeWithMargin || timing.cpuRenderThreadFrameTime > fullFrameTimeWithMargin))
-                return PerformanceBottleneck.CPU;
+                return PerformanceBottleneck.Cpu;
 
             // Check if we're limited by vsync or target frame rate
             if (timing.syncInterval > 0)
@@ -56,10 +56,10 @@ namespace DCL.Profiling
                 if (timing.gpuFrameTime < fullFrameTimeWithMargin &&
                     timing.cpuMainThreadFrameTime < fullFrameTimeWithMargin &&
                     timing.cpuRenderThreadFrameTime < fullFrameTimeWithMargin)
-                    return PerformanceBottleneck.PRESENT_LIMITED;
+                    return PerformanceBottleneck.PresentLimited;
             }
 
-            return PerformanceBottleneck.BALANCED;
+            return PerformanceBottleneck.Balanced;
         }
     }
 }

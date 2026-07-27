@@ -18,17 +18,17 @@ namespace DCL.Browser.DecentralandUrls
             /// <summary>
             ///     URL is static and can be safely cached
             /// </summary>
-            STATIC = 0,
+            Static = 0,
 
             /// <summary>
             ///     URL should be invalidated upon realm change
             /// </summary>
-            REALM_DEPENDENT = 1,
+            RealmDependent = 1,
 
             /// <summary>
             ///     URL can't be cached if FF are not yet configured
             /// </summary>
-            FEATURE_FLAGS_DEPENDENT = 2,
+            FeatureFlagsDependent = 2,
         }
 
         protected const string ENV = "{ENV}";
@@ -143,10 +143,10 @@ namespace DCL.Browser.DecentralandUrls
 
                 switch (urlData.Caching)
                 {
-                    case CacheBehaviour.REALM_DEPENDENT when !realmData.Configured:
+                    case CacheBehaviour.RealmDependent when !realmData.Configured:
                         return REALM_DEPENDENT;
 
-                    case CacheBehaviour.FEATURE_FLAGS_DEPENDENT when FeatureFlagsConfiguration.Instance.IsEmpty:
+                    case CacheBehaviour.FeatureFlagsDependent when FeatureFlagsConfiguration.Instance.IsEmpty:
                         return urlData.Url ?? FEATURE_FLAG_DEPENDENT;
 
                     default:
@@ -177,7 +177,7 @@ namespace DCL.Browser.DecentralandUrls
         {
             using PooledObject<List<DecentralandUrl>> _ = ListPool<DecentralandUrl>.Get(out List<DecentralandUrl>? realmDependentCachedUrls);
 
-            realmDependentCachedUrls.AddRange(cache.Where(kvp => kvp.Value.Caching == CacheBehaviour.REALM_DEPENDENT).Select(kvp => kvp.Key));
+            realmDependentCachedUrls.AddRange(cache.Where(kvp => kvp.Value.Caching == CacheBehaviour.RealmDependent).Select(kvp => kvp.Key));
 
             foreach (DecentralandUrl url in realmDependentCachedUrls)
                 cache.Remove(url);
@@ -188,27 +188,27 @@ namespace DCL.Browser.DecentralandUrls
 
         /// <summary>
         ///     The "--optimized-assets-url" arg or the flag variant payload override the base url, otherwise
-        ///     https://abcdn.decentraland.{ENV}. FEATURE_FLAGS_DEPENDENT means it is re-resolved (not cached) until flags load.
+        ///     https://abcdn.decentraland.{ENV}. FeatureFlagsDependent means it is re-resolved (not cached) until flags load.
         /// </summary>
         private UrlData ResolveOptimizedAssetsUrl(string dedicatedHostUrl)
         {
             if (optimizedAssetsBaseOverride is { Length: > 0 })
-                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, optimizedAssetsBaseOverride);
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, optimizedAssetsBaseOverride);
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
                 return isTodayEnvironment
-                    ? dedicatedHostUrl // STATIC — pinned on construction before the domain switches to org
-                    : new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, dedicatedHostUrl.Replace(ENV, decentralandDomain));
+                    ? dedicatedHostUrl // Static — pinned on construction before the domain switches to org
+                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHostUrl.Replace(ENV, decentralandDomain));
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
                 return dedicatedHostUrl;
 
             if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.OPTIMIZED_ASSETS, FeatureFlagsStrings.OPTIMIZED_ASSETS_BASE_URL_VARIANT, out string? customBaseUrl) && customBaseUrl is { Length: > 0 })
-                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, customBaseUrl.TrimEnd('/'));
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, customBaseUrl.TrimEnd('/'));
 
-            return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, $"https://abcdn.decentraland.{ENV}");
+            return new UrlData(CacheBehaviour.FeatureFlagsDependent, $"https://abcdn.decentraland.{ENV}");
         }
 
         /// <summary>Registry-composed endpoints inherit the registry base's caching so a flag-driven base is not cached early.</summary>
@@ -343,10 +343,10 @@ namespace DCL.Browser.DecentralandUrls
             }
 
             public static UrlData RealmDependent(string? url) =>
-                new (CacheBehaviour.REALM_DEPENDENT, url);
+                new (CacheBehaviour.RealmDependent, url);
 
             public static implicit operator UrlData(string rawUrl) =>
-                new (CacheBehaviour.STATIC, rawUrl);
+                new (CacheBehaviour.Static, rawUrl);
 
             public override string ToString() =>
                 Url ?? "<NOT_CONFIGURED>";

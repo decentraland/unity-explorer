@@ -14,7 +14,7 @@ namespace DCL.AvatarAnimation.Editor
         public float Forward = 0.0f;
 
         [Tooltip("Makes the avatar use a given animation while moving forward. While the clip is not playing, the animation is Idle.")]
-        public MovementKind MovementAnimation = MovementKind.IDLE;
+        public MovementKind MovementAnimation = MovementKind.Idle;
 
         [Tooltip("Makes the avatar rotate a given amount of degrees per second. Positive means turning to the right.")]
         [Range(-360.0f, 360.0f)]

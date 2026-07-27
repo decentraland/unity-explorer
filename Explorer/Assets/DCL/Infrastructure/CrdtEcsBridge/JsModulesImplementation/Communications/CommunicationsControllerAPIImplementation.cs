@@ -55,7 +55,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 totalLength += filteredLength;
             }
             // Filter RES_CRDT_STATE messages before receiving
-            else if (commsMessageType == CommsMessageType.RES_CRDT_STATE)
+            else if (commsMessageType == CommsMessageType.ResCRDTState)
             {
                 int filteredLength = FilterCRDTStateMessage(sourceData, filteredUnbounded, isTrustedSource);
                 totalLength += filteredLength;

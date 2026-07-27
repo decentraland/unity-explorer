@@ -40,7 +40,7 @@ namespace DCL.EmotesWheel
         private CancellationTokenSource? slotSetUpCts;
 
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             SelfProfile selfProfile,
@@ -234,19 +234,19 @@ namespace DCL.EmotesWheel
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.EMOTES);
+            inputBlock.Disable(InputMapComponent.Kind.Emotes);
         }
 
         // Note: This must be called once the menu has loaded and is ready to be closed
         private void UnblockShortcutToEmoteSlotsSetup()
         {
-            inputBlock.Enable(InputMapComponent.Kind.EMOTE_WHEEL);
+            inputBlock.Enable(InputMapComponent.Kind.EmoteWheel);
         }
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.EMOTE_WHEEL);
-            inputBlock.Enable(InputMapComponent.Kind.EMOTES);
+            inputBlock.Disable(InputMapComponent.Kind.EmoteWheel);
+            inputBlock.Enable(InputMapComponent.Kind.Emotes);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

@@ -2,12 +2,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
 {
     public enum CreditsTopUpStage
     {
-        IDLE,
-        CREATING_CHECKOUT,
-        WAITING_FOR_PAYMENT,
-        PENDING_TIMEOUT,
-        CREDITED,
-        FAILED,
+        Idle,
+        CreatingCheckout,
+        WaitingForPayment,
+        PendingTimeout,
+        Credited,
+        Failed,
     }
 
     public readonly struct CreditsTopUpStatus
@@ -33,24 +33,24 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
         }
 
         public static CreditsTopUpStatus Idle() =>
-            new (CreditsTopUpStage.IDLE, default(CreditPack));
+            new (CreditsTopUpStage.Idle, default(CreditPack));
 
         public static CreditsTopUpStatus CreatingCheckout(CreditPack pack) =>
-            new (CreditsTopUpStage.CREATING_CHECKOUT, pack);
+            new (CreditsTopUpStage.CreatingCheckout, pack);
 
         public static CreditsTopUpStatus WaitingForPayment(CreditPack pack, string orderId) =>
-            new (CreditsTopUpStage.WAITING_FOR_PAYMENT, pack, orderId);
+            new (CreditsTopUpStage.WaitingForPayment, pack, orderId);
 
         public static CreditsTopUpStatus PendingTimeout(CreditPack pack, string orderId) =>
-            new (CreditsTopUpStage.PENDING_TIMEOUT, pack, orderId);
+            new (CreditsTopUpStage.PendingTimeout, pack, orderId);
 
         public static CreditsTopUpStatus Credited(CreditPack pack, string orderId, int creditsGranted, int newBalance) =>
-            new (CreditsTopUpStage.CREDITED, pack, orderId, creditsGranted, newBalance);
+            new (CreditsTopUpStage.Credited, pack, orderId, creditsGranted, newBalance);
 
         public static CreditsTopUpStatus CheckoutFailed(CreditPack pack, CreditsCheckoutError error, string? errorMessage) =>
-            new (CreditsTopUpStage.FAILED, pack, errorMessage: errorMessage, checkoutError: error);
+            new (CreditsTopUpStage.Failed, pack, errorMessage: errorMessage, checkoutError: error);
 
         public static CreditsTopUpStatus GrantFailed(CreditPack pack, string orderId, string? errorMessage) =>
-            new (CreditsTopUpStage.FAILED, pack, orderId, errorMessage: errorMessage);
+            new (CreditsTopUpStage.Failed, pack, orderId, errorMessage: errorMessage);
     }
 }

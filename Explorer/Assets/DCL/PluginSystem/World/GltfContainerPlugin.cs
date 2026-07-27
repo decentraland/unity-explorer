@@ -41,6 +41,7 @@ namespace DCL.PluginSystem.World
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILaunchMode launchMode;
         private readonly bool useRemoteAssetBundles;
+        private readonly bool useLocalAssetBundles;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
@@ -56,6 +57,7 @@ namespace DCL.PluginSystem.World
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILaunchMode launchMode,
             bool useRemoteAssetBundles,
+            bool useLocalAssetBundles,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
@@ -66,6 +68,7 @@ namespace DCL.PluginSystem.World
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.launchMode = launchMode;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
+            this.useLocalAssetBundles = useLocalAssetBundles;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
@@ -107,6 +110,7 @@ namespace DCL.PluginSystem.World
                 {
                     LocalSceneDevelopment = localSceneDevelopment,
                     UseRemoteAssetBundles = useRemoteAssetBundles,
+                    UseLocalAssetBundles = useLocalAssetBundles,
                     PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                 });
 

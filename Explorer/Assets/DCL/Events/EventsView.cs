@@ -57,8 +57,8 @@ namespace DCL.Events
 
         public void OpenSection(EventsSection section)
         {
-            eventsCalendarView.gameObject.SetActive(section == EventsSection.CALENDAR);
-            eventsByDayView.gameObject.SetActive(section == EventsSection.EVENTS_BY_DAY);
+            eventsCalendarView.gameObject.SetActive(section == EventsSection.Calendar);
+            eventsByDayView.gameObject.SetActive(section == EventsSection.EventsByDay);
         }
     }
 }

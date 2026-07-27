@@ -197,7 +197,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (avatarTransform == localAvatarTransform)
             {
                 localAvatarTransform = null;
-                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.REMOVED));
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Removed));
             }
         }
 
@@ -214,7 +214,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (shouldHide && profile.UserId == web3IdentityCache.Identity?.Address)
             {
                 localAvatarTransform = avatarTransform;
-                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.APPLIED));
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Applied));
             }
         }
 
@@ -250,7 +250,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 if (profile.UserId == web3IdentityCache.Identity?.Address)
                 {
                     ownAvatarEntity = entity;
-                    sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreatePassportCannotBeOpened(SceneRestrictionsAction.APPLIED));
+                    sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreatePassportCannotBeOpened(SceneRestrictionsAction.Applied));
                 }
             }
             else
@@ -262,7 +262,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             globalWorld.TryRemove<IgnoreInteractionComponent>(entity);
 
             if (ownAvatarEntity == entity)
-                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreatePassportCannotBeOpened(SceneRestrictionsAction.REMOVED));
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreatePassportCannotBeOpened(SceneRestrictionsAction.Removed));
         }
 
         private bool TryGetAvatarEntity(Transform transform, out Entity entity)

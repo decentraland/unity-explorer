@@ -113,7 +113,7 @@ namespace MVC
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
-            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action? onShow = null, bool isOpenedOnWorldAvatar = false)
+            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, Action? onShow = null, bool isOpenedOnWorldAvatar = false)
         {
             Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(walletId, ct);
 
@@ -123,7 +123,7 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint, isOpenedOnWorldAvatar);
         }
 
-        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default)
         {
             if (string.IsNullOrEmpty(participantWalletId)) return;
 
@@ -149,14 +149,14 @@ namespace MVC
         }
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide, Action? onContextMenuShow,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isOpenedOnWorldAvatar = false)
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, bool isOpenedOnWorldAvatar = false)
         {
             genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendsService, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCache, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, nearbyMuteService);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
         }
 
         private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
                 friendsService, mvcManager,
@@ -182,21 +182,21 @@ namespace MVC
         {
             switch (anchorPoint)
             {
-                case MenuAnchorPoint.TOP_LEFT:
-                    return ContextMenuOpenDirection.TOP_LEFT;
-                case MenuAnchorPoint.TOP_RIGHT:
-                    return ContextMenuOpenDirection.TOP_RIGHT;
-                case MenuAnchorPoint.BOTTOM_LEFT:
-                    return ContextMenuOpenDirection.BOTTOM_LEFT;
-                case MenuAnchorPoint.BOTTOM_RIGHT:
-                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
-                case MenuAnchorPoint.CENTER_LEFT:
-                    return ContextMenuOpenDirection.CENTER_LEFT;
-                case MenuAnchorPoint.CENTER_RIGHT:
-                    return ContextMenuOpenDirection.CENTER_RIGHT;
+                case MenuAnchorPoint.TopLeft:
+                    return ContextMenuOpenDirection.TopLeft;
+                case MenuAnchorPoint.TopRight:
+                    return ContextMenuOpenDirection.TopRight;
+                case MenuAnchorPoint.BottomLeft:
+                    return ContextMenuOpenDirection.BottomLeft;
+                case MenuAnchorPoint.BottomRight:
+                    return ContextMenuOpenDirection.BottomRight;
+                case MenuAnchorPoint.CenterLeft:
+                    return ContextMenuOpenDirection.CenterLeft;
+                case MenuAnchorPoint.CenterRight:
+                    return ContextMenuOpenDirection.CenterRight;
                 default:
-                case MenuAnchorPoint.DEFAULT:
-                    return ContextMenuOpenDirection.BOTTOM_RIGHT;
+                case MenuAnchorPoint.Default:
+                    return ContextMenuOpenDirection.BottomRight;
             }
         }
     }

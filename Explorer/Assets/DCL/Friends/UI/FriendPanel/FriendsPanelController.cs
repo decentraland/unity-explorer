@@ -26,9 +26,9 @@ namespace DCL.Friends.UI.FriendPanel
     {
         public enum FriendsPanelTab
         {
-            FRIENDS,
-            REQUESTS,
-            BLOCKED,
+            Friends,
+            Requests,
+            Blocked,
         }
 
         private const int FRIENDS_PAGE_SIZE = 50;
@@ -44,7 +44,7 @@ namespace DCL.Friends.UI.FriendPanel
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public event Action? FriendsPanelOpened;
         public event Action<string>? OnlineFriendClicked;
@@ -69,7 +69,7 @@ namespace DCL.Friends.UI.FriendPanel
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
 
-            bool isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS);
+            bool isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus);
             if (isConnectivityStatusEnabled)
             {
                 friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(
@@ -110,7 +110,7 @@ namespace DCL.Friends.UI.FriendPanel
                 mvcManager,
                 new RequestsRequestManager(friendsService, friendEventBus, profileDataProvider, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
-                FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING),
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking),
                 webBrowser,
                 decentralandUrlsSource,
                 selfProfile);
@@ -189,25 +189,25 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance.CloseButton.onClick.AddListener(CloseFriendsPanel);
             viewInstance.BackgroundCloseButton.onClick.AddListener(CloseFriendsPanel);
 
-            bool isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
+            bool isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking);
             viewInstance.BlockedTabButton.gameObject.SetActive(isUserBlockingFeatureEnabled);
-            ToggleTabs(FriendsPanelTab.FRIENDS);
+            ToggleTabs(FriendsPanelTab.Friends);
         }
 
-        private void OnFriendsTabButtonClicked() => ToggleTabs(FriendsPanelTab.FRIENDS);
-        private void OnRequestsTabButtonClicked() => ToggleTabs(FriendsPanelTab.REQUESTS);
-        private void OnBlockedTabButtonClicked() => ToggleTabs(FriendsPanelTab.BLOCKED);
+        private void OnFriendsTabButtonClicked() => ToggleTabs(FriendsPanelTab.Friends);
+        private void OnRequestsTabButtonClicked() => ToggleTabs(FriendsPanelTab.Requests);
+        private void OnBlockedTabButtonClicked() => ToggleTabs(FriendsPanelTab.Blocked);
         public void CloseFriendsPanel() => closeTaskCompletionSource.TrySetResult();
         private void FriendRequestCountChanged(int count) => sidebarRequestNotificationIndicator.SetNotificationCount(count);
 
         internal void ToggleTabs(FriendsPanelTab tab)
         {
-            viewInstance!.FriendsTabSelected.SetActive(tab == FriendsPanelTab.FRIENDS);
-            viewInstance.FriendsSection.SetActive(tab == FriendsPanelTab.FRIENDS);
-            viewInstance.RequestsTabSelected.SetActive(tab == FriendsPanelTab.REQUESTS);
-            viewInstance.RequestsSection.SetActive(tab == FriendsPanelTab.REQUESTS);
-            viewInstance.BlockedTabSelected.SetActive(tab == FriendsPanelTab.BLOCKED);
-            viewInstance.BlockedSection.SetActive(tab == FriendsPanelTab.BLOCKED);
+            viewInstance!.FriendsTabSelected.SetActive(tab == FriendsPanelTab.Friends);
+            viewInstance.FriendsSection.SetActive(tab == FriendsPanelTab.Friends);
+            viewInstance.RequestsTabSelected.SetActive(tab == FriendsPanelTab.Requests);
+            viewInstance.RequestsSection.SetActive(tab == FriendsPanelTab.Requests);
+            viewInstance.BlockedTabSelected.SetActive(tab == FriendsPanelTab.Blocked);
+            viewInstance.BlockedSection.SetActive(tab == FriendsPanelTab.Blocked);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -27,10 +27,10 @@ namespace DCL.Communities.CommunitiesCard.Members
     {
         public enum MemberListSections
         {
-            MEMBERS,
-            BANNED,
-            REQUESTS,
-            INVITES,
+            Members,
+            Banned,
+            Requests,
+            Invites,
         }
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
@@ -141,13 +141,13 @@ namespace DCL.Communities.CommunitiesCard.Members
             contextMenu.AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
                        .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!), iconColor: redColor, textColor: redColor)));
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.ReportUser))
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportOptionSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx!), iconColor: redColor, textColor: redColor));
         }
 
         public void Close()
         {
-            ToggleSection(MemberListSections.MEMBERS, false);
+            ToggleSection(MemberListSections.Members, false);
             confirmationDialogCts.SafeCancelAndDispose();
             contextMenuCts.SafeCancelAndDispose();
         }
@@ -161,7 +161,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             contextMenuCts = contextMenuCts.SafeRestart();
             UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
 
-            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.Friend ? status : UserProfileContextMenuControlSettings.FriendshipStatus.Disabled);
             elementView.CanUnHover = false;
 
             removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
@@ -186,8 +186,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                 ? profile.Role is not CommunityMemberRole.owner
                 : communityData?.role is CommunityMemberRole.moderator && profile.Role is not CommunityMemberRole.owner && profile.Role is not CommunityMemberRole.moderator;
 
-            kickUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.MEMBERS;
-            banUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.MEMBERS;
+            kickUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.Members;
+            banUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.Members;
 
             communityOptionsSeparatorContextMenuElement!.Enabled = removeModeratorContextMenuElement.Enabled ||
                                                                    addModeratorContextMenuElement.Enabled ||
@@ -229,7 +229,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                              fromUserInfo: ownProfile?.Compact ?? default(Profile.CompactInfo)), ct)
                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                 TransferOwnershipRequested?.Invoke(profile);
             }
@@ -252,7 +252,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                 KickUserRequested?.Invoke(profile);
             }
@@ -275,7 +275,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                 BanUserRequested?.Invoke(profile);
             }

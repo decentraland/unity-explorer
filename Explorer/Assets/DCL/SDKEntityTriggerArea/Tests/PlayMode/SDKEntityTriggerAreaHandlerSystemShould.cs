@@ -358,8 +358,8 @@ namespace DCL.SDKEntityTriggerArea.Tests
         }
 
         [Test]
-        [TestCase(SDKEntityTriggerAreaMeshType.BOX)]
-        [TestCase(SDKEntityTriggerAreaMeshType.SPHERE)]
+        [TestCase(SDKEntityTriggerAreaMeshType.Box)]
+        [TestCase(SDKEntityTriggerAreaMeshType.Sphere)]
         public async Task SetupColliderTypeCorrectly(SDKEntityTriggerAreaMeshType meshType)
         {
             // Workaround for Unity bug not awaiting async Setup correctly
@@ -372,7 +372,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             system.Update(0);
 
-            if (meshType == SDKEntityTriggerAreaMeshType.BOX)
+            if (meshType == SDKEntityTriggerAreaMeshType.Box)
             {
                 Assert.IsTrue(sdkEntityTriggerArea.BoxCollider.enabled);
                 Assert.IsFalse(sdkEntityTriggerArea.SphereCollider.enabled);

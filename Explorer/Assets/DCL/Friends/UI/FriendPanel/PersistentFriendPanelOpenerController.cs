@@ -25,7 +25,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private CancellationTokenSource? friendRequestReceivedCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public event Action? FriendshipNotificationClicked;
 
@@ -85,13 +85,13 @@ namespace DCL.Friends.UI.FriendPanel
 
                 switch (friendshipStatus)
                 {
-                    case FriendshipStatus.FRIEND:
+                    case FriendshipStatus.Friend:
                         if (friendsPanelController.State != ControllerState.ViewHidden)
-                            friendsPanelController.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
+                            friendsPanelController.ToggleTabs(FriendsPanelController.FriendsPanelTab.Friends);
                         else
-                            mvcManager.ShowAndForget(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS)), ct);
+                            mvcManager.ShowAndForget(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends)), ct);
                         break;
-                    case FriendshipStatus.REQUEST_RECEIVED:
+                    case FriendshipStatus.RequestReceived:
                         mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                         {
                             Request = new FriendRequest(

@@ -11,8 +11,8 @@ namespace CRDT.CRDTTests.Protocol
     {
         public enum InstructionType
         {
-            MESSAGE = 0,
-            FINAL_STATE = 1,
+            Message = 0,
+            FinalState = 1,
         }
 
         public string fileName;

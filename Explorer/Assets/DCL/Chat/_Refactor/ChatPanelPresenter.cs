@@ -323,7 +323,7 @@ namespace DCL.Chat
             //We only need to hide the chat if a fullscreen view is shown
             switch (evt.ViewSortingLayer)
             {
-                case CanvasOrdering.SortingLayer.FULLSCREEN:
+                case CanvasOrdering.SortingLayer.Fullscreen:
                     chatStateMachine.SetVisibility(false);
                     break;
             }
@@ -331,7 +331,7 @@ namespace DCL.Chat
 
         private void OnMVCViewClosed(ChatSharedAreaEvents.MVCViewClosedEvent evt)
         {
-            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.Fullscreen) return;
 
             if (!chatStateMachine.IsFocused)
                 chatStateMachine.PopState();

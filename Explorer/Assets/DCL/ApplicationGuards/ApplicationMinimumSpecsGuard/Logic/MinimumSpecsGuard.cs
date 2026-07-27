@@ -71,11 +71,11 @@ namespace DCL.ApplicationGuards
 
             // OS
             string os = systemInfoProvider.OperatingSystem;
-            results.Add(new SpecResult(SpecCategory.OS, profile.OsCheck(os), profile.OsRequirement, os));
+            results.Add(new SpecResult(SpecCategory.Os, profile.OsCheck(os), profile.OsRequirement, os));
 
             // CPU
             string cpu = systemInfoProvider.ProcessorType;
-            results.Add(new SpecResult(SpecCategory.CPU, profile.CpuCheck(cpu), profile.CpuRequirement, cpu));
+            results.Add(new SpecResult(SpecCategory.Cpu, profile.CpuCheck(cpu), profile.CpuRequirement, cpu));
 
             // GPU
             string gpuName = systemInfoProvider.GraphicsDeviceName;
@@ -93,7 +93,7 @@ namespace DCL.ApplicationGuards
             string actualGpuDisplayString = $"{gpuName}".Trim();
 
             results.Add(new SpecResult(
-                SpecCategory.GPU,
+                SpecCategory.Gpu,
                 isGpuSpecMet,
                 gpuRequirementMessage,
                 actualGpuDisplayString
@@ -106,7 +106,7 @@ namespace DCL.ApplicationGuards
 
             // NOTE: e.g., shows "16 GB" not "15.7 GB"
             string actualVramDisplay = $"{roundedActualVramGB} GB";
-            results.Add(new SpecResult(SpecCategory.VRAM, isVramMet, profile.VramRequirement, actualVramDisplay));
+            results.Add(new SpecResult(SpecCategory.Vram, isVramMet, profile.VramRequirement, actualVramDisplay));
 
             // RAM
             int actualRamMB = systemInfoProvider.SystemMemorySize;
@@ -115,7 +115,7 @@ namespace DCL.ApplicationGuards
 
             // NOTE: e.g., shows "16 GB" not "15.7 GB"
             string actualRamDisplay = $"{roundedActualRamGB} GB";
-            results.Add(new SpecResult(SpecCategory.RAM, isRamMet, profile.RamRequirement, actualRamDisplay));
+            results.Add(new SpecResult(SpecCategory.Ram, isRamMet, profile.RamRequirement, actualRamDisplay));
 
             try
             {

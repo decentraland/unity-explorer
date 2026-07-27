@@ -22,16 +22,16 @@
         /// <summary>
         ///     A PX loaded explicitly by the user.
         /// </summary>
-        LOCAL,
+        Local,
 
         /// <summary>
         ///     A PX that runs for all users.
         /// </summary>
-        GLOBAL,
+        Global,
 
         /// <summary>
         ///     A PX attached to a Smart Wearable.
         /// </summary>
-        SMART_WEARABLE
+        SmartWearable
     }
 }

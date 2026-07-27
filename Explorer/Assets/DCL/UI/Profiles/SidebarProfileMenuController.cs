@@ -11,7 +11,7 @@ namespace DCL.UI.Profiles
         {
         }
 
-        public override CanvasOrdering.SortingLayer Layer { get; } = CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer { get; } = CanvasOrdering.SortingLayer.Popup;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);

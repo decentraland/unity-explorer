@@ -23,7 +23,7 @@ namespace DCL.McpServer.Tools
         private const float MAX_SECONDS = 30f;
         private const float COMPLETION_GRACE_SEC = 5f;
 
-        private static readonly MovementKind[] ALLOWED_KINDS = { MovementKind.WALK, MovementKind.JOG, MovementKind.RUN };
+        private static readonly MovementKind[] ALLOWED_KINDS = { MovementKind.Walk, MovementKind.Jog, MovementKind.Run };
 
         private readonly World world;
         private readonly Entity playerEntity;
@@ -61,7 +61,7 @@ namespace DCL.McpServer.Tools
             float seconds = Mathf.Clamp(arguments.GetFloat("seconds", 1f), MIN_SECONDS, MAX_SECONDS);
             bool jump = arguments.GetBool("jump", false);
 
-            if (!arguments.TryGetEnum("kind", MovementKind.JOG, out MovementKind kind, ALLOWED_KINDS))
+            if (!arguments.TryGetEnum("kind", MovementKind.Jog, out MovementKind kind, ALLOWED_KINDS))
                 return McpToolResult.Error("kind must be one of: walk, jog, run.");
 
             Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;

@@ -52,7 +52,7 @@ namespace DCL.Passport.Modules
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.colorPickerController = colorPickerController;
-            isNameEditorFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PROFILE_NAME_EDITOR);
+            isNameEditorFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ProfileNameEditor);
             userNameElementPresenter = new UserNameElementPresenter(view.UserNameElement);
             walletAddressElementPresenter = new UserWalletAddressElementPresenter(view.UserWalletAddressElement);
 
@@ -103,7 +103,7 @@ namespace DCL.Passport.Modules
                     view.ClaimNameButton.gameObject.SetActive(false);
 
                     view.NameColorPickerView.gameObject.SetActive(
-                        FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && ownProfile.HasClaimedName
+                        FeaturesRegistry.Instance.IsEnabled(FeatureId.NameColorChange) && ownProfile.HasClaimedName
                     );
                     colorPickerController.SetColor(ownProfile.UserNameColor);
 

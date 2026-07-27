@@ -62,12 +62,12 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.WAITING_FOR_PAYMENT);
+            await WaitForStageAsync(CreditsTopUpStage.WaitingForPayment);
 
             // Assert
             webBrowser.Received(1).OpenUrlMainThreadOnly(CHECKOUT_URL);
             Assert.AreEqual(ORDER_ID, service.CurrentStatus.OrderId);
-            Assert.AreEqual(CreditsTopUpStage.CREATING_CHECKOUT, recordedStatuses[0].Stage);
+            Assert.AreEqual(CreditsTopUpStage.CreatingCheckout, recordedStatuses[0].Stage);
         }
 
         [TestCase(CreditsCheckoutError.FeatureDisabled)]
@@ -83,7 +83,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.FAILED);
+            await WaitForStageAsync(CreditsTopUpStage.Failed);
 
             // Assert
             Assert.AreEqual(checkoutError, service.CurrentStatus.CheckoutError);
@@ -100,7 +100,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.IDLE);
+            await WaitForStageAsync(CreditsTopUpStage.Idle);
 
             // Assert
             webBrowser.DidNotReceive().OpenUrlMainThreadOnly(Arg.Any<string>());
@@ -118,7 +118,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.CREDITED);
+            await WaitForStageAsync(CreditsTopUpStage.Credited);
 
             // Assert
             Assert.AreEqual(50, service.CurrentStatus.CreditsGranted);
@@ -136,7 +136,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.FAILED);
+            await WaitForStageAsync(CreditsTopUpStage.Failed);
 
             // Assert
             Assert.AreEqual("card_declined", service.CurrentStatus.ErrorMessage);
@@ -155,11 +155,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.PENDING_TIMEOUT);
+            await WaitForStageAsync(CreditsTopUpStage.PendingTimeout);
 
             // Assert: the background window also expires and the soft state persists.
             await UniTask.Delay(200);
-            Assert.AreEqual(CreditsTopUpStage.PENDING_TIMEOUT, service.CurrentStatus.Stage);
+            Assert.AreEqual(CreditsTopUpStage.PendingTimeout, service.CurrentStatus.Stage);
         }
 
         [Test]
@@ -169,13 +169,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreateService(foregroundTimeoutMs: 30, backgroundTimeoutMs: 5000);
 
             creditsAPIClient.GetCheckoutOrderAsync(ORDER_ID, Arg.Any<CancellationToken>())
-                            .Returns(_ => service.CurrentStatus.Stage == CreditsTopUpStage.PENDING_TIMEOUT
+                            .Returns(_ => service.CurrentStatus.Stage == CreditsTopUpStage.PendingTimeout
                                  ? Order(CreditsOrderStatusResponse.STATUS_CREDITED, creditsGranted: 50, newBalance: 62)
                                  : Order(CreditsOrderStatusResponse.STATUS_PROCESSING));
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.CREDITED);
+            await WaitForStageAsync(CreditsTopUpStage.Credited);
 
             // Assert
             Assert.AreEqual(50, service.CurrentStatus.CreditsGranted);
@@ -196,17 +196,17 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                                  : Order(CreditsOrderStatusResponse.STATUS_PROCESSING));
 
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.PENDING_TIMEOUT);
+            await WaitForStageAsync(CreditsTopUpStage.PendingTimeout);
 
             // Act
             service.AcknowledgeTerminalState();
-            Assert.AreEqual(CreditsTopUpStage.IDLE, service.CurrentStatus.Stage);
+            Assert.AreEqual(CreditsTopUpStage.Idle, service.CurrentStatus.Stage);
             releaseCredit = true;
             await UniTask.Delay(200);
 
             // Assert: the late grant refreshed the balance without re-surfacing a UI state.
             await creditsAPIClient.Received(1).GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-            Assert.AreEqual(CreditsTopUpStage.IDLE, service.CurrentStatus.Stage);
+            Assert.AreEqual(CreditsTopUpStage.Idle, service.CurrentStatus.Stage);
         }
 
         [Test]
@@ -217,20 +217,20 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // user closed the browser tab). The foreground timeout is long, so the hand-off can only
             // come from StopWaitingForBrowser, not from a timeout.
             creditsAPIClient.GetCheckoutOrderAsync(ORDER_ID, Arg.Any<CancellationToken>())
-                            .Returns(_ => service.CurrentStatus.Stage == CreditsTopUpStage.PENDING_TIMEOUT
+                            .Returns(_ => service.CurrentStatus.Stage == CreditsTopUpStage.PendingTimeout
                                  ? Order(CreditsOrderStatusResponse.STATUS_CREDITED, creditsGranted: 50, newBalance: 62)
                                  : Order(CreditsOrderStatusResponse.STATUS_PROCESSING));
 
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.WAITING_FOR_PAYMENT);
+            await WaitForStageAsync(CreditsTopUpStage.WaitingForPayment);
 
             // Act
             service.StopWaitingForBrowser();
 
             // Assert
-            await WaitForStageAsync(CreditsTopUpStage.CREDITED);
+            await WaitForStageAsync(CreditsTopUpStage.Credited);
             Assert.AreEqual(50, service.CurrentStatus.CreditsGranted);
-            Assert.IsTrue(recordedStatuses.Exists(s => s.Stage == CreditsTopUpStage.PENDING_TIMEOUT));
+            Assert.IsTrue(recordedStatuses.Exists(s => s.Stage == CreditsTopUpStage.PendingTimeout));
         }
 
         [Test]
@@ -241,13 +241,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(Order(CreditsOrderStatusResponse.STATUS_FAILED, error: "card_declined"));
 
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.FAILED);
+            await WaitForStageAsync(CreditsTopUpStage.Failed);
 
             // Act
             service.StopWaitingForBrowser();
 
             // Assert
-            Assert.AreEqual(CreditsTopUpStage.FAILED, service.CurrentStatus.Stage);
+            Assert.AreEqual(CreditsTopUpStage.Failed, service.CurrentStatus.Stage);
         }
 
         [Test]
@@ -258,7 +258,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(Order(CreditsOrderStatusResponse.STATUS_PROCESSING));
 
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.WAITING_FOR_PAYMENT);
+            await WaitForStageAsync(CreditsTopUpStage.WaitingForPayment);
 
             // Act
             service.StartTopUp(PACK);
@@ -279,7 +279,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.CREDITED);
+            await WaitForStageAsync(CreditsTopUpStage.Credited);
 
             // Assert
             Assert.AreEqual(50, service.CurrentStatus.CreditsGranted);
@@ -297,7 +297,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.CREDITED);
+            await WaitForStageAsync(CreditsTopUpStage.Credited);
 
             // Assert
             Assert.AreEqual(50, service.CurrentStatus.CreditsGranted);
@@ -311,13 +311,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(Order(CreditsOrderStatusResponse.STATUS_FAILED, error: "card_declined"));
 
             service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.FAILED);
+            await WaitForStageAsync(CreditsTopUpStage.Failed);
 
             // Act
             service.AcknowledgeTerminalState();
 
             // Assert
-            Assert.AreEqual(CreditsTopUpStage.IDLE, service.CurrentStatus.Stage);
+            Assert.AreEqual(CreditsTopUpStage.Idle, service.CurrentStatus.Stage);
             Assert.IsFalse(service.IsOrderInFlight);
         }
 

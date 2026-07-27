@@ -27,19 +27,19 @@ namespace ECS.StreamableLoading.AssetBundles
             this.assetBundlesURL = assetBundlesURL;
         }
 
-        protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
+        protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state, bool ignoreCacheHash = false)
         {
             if (state.Value != StreamableLoadingState.Status.NotStarted) return;
 
             // Remove not supported flags
-            assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
+            assetBundleIntention.RemovePermittedSource(AssetSource.Addressable); // addressables are not implemented
 
             // First priority
-            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))
+            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.Embedded))
             {
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = 1;
-                ca.CurrentSource = AssetSource.EMBEDDED;
+                ca.CurrentSource = AssetSource.Embedded;
                 ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash, assetBundleIntention.CommonArguments.CustomEmbeddedSubDirectory);
                 assetBundleIntention.CommonArguments = ca;
 
@@ -47,7 +47,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
 
             // Second priority
-            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
+            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.Web))
             {
                 if (assetBundleIntention.AssetBundleManifest.assetBundleManifestRequestFailed)
                 {
@@ -65,6 +65,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 // Hash was already translated to the CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash.
                 ca.URL = assetBundlesURL.Append(new URLPath(assetBundleIntention.AssetBundleManifest.GetCdnRequestPath(assetBundleIntention.Hash, assetBundleIntention.ParentEntityID)));
                 assetBundleIntention.CommonArguments = ca;
+                
+                if (ignoreCacheHash) return;
 
                 assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifest.ComputeCacheHash(assetBundleIntention.Hash);
             }

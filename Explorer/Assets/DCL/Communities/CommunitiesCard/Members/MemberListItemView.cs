@@ -44,7 +44,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private bool canUnHover = true;
         private bool isUserCard = false;
-        private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.MEMBERS;
+        private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.Members;
 
         public ICommunityMemberData? UserProfile { get; protected set; }
 
@@ -117,20 +117,20 @@ namespace DCL.Communities.CommunitiesCard.Members
             currentSection = section;
             isUserCard = isSelfCard;
 
-            addFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.FriendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.MEMBERS);
-            acceptFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.FriendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.MEMBERS);
+            addFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.FriendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.Members);
+            acceptFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.FriendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.Members);
 
             // Disable this button as part of the UI/UX decision to reduce the entry clutter, highlighting only non-friends. The old condition was:
             // !isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL
             removeFriendButton.gameObject.SetActive(false);
 
-            cancelFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.FriendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.MEMBERS);
-            unblockFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.FriendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.MEMBERS);
+            cancelFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.FriendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.Members);
+            unblockFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.FriendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.Members);
 
-            deleteRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.REQUESTS);
-            acceptRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.REQUESTS);
-            cancelInviteButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.INVITES);
-            unbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.BANNED);
+            deleteRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.Requests);
+            acceptRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.Requests);
+            cancelInviteButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.Invites);
+            unbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.Banned);
         }
 
         public void SubscribeToInteractions(Action<ICommunityMemberData> mainButton,

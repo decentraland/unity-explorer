@@ -14,21 +14,25 @@ namespace ECS.StreamableLoading.AssetBundles
 {
     public static class AssetBundleManifestFallbackHelper
     {
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false, bool skipException = false)
+        /// <summary>
+        ///     <paramref name="useManualManifest" /> stamps the manual manifest instead of fetching a real one —
+        ///     used by local scene development when its bundles come as raw GLTFs rather than from an asset-bundle server.
+        /// </summary>
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
         {
-            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, isLSD, skipException);
+            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest, skipException);
 
             entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
         }
 
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false)
         {
-            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, isLSD);
+            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest);
         }
 
-        private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false, bool skipException = false)
+        private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
         {
-            if (isLSD)
+            if (useManualManifest)
             {
                 entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
                 return;
