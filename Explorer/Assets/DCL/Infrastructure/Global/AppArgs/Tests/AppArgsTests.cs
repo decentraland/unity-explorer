@@ -9,7 +9,7 @@ namespace Global.AppArgs.Tests
         public void TearDown()
         {
             // Reset the cached/overridden world whitelist so tests don't leak state into one another.
-            DeepLinkAllowlist.OverrideWhitelistedWorldsForTesting(null);
+            DeepLinkAllowlist.SetWhitelistedWorlds(null);
         }
 
         [Test]
@@ -163,7 +163,7 @@ namespace Global.AppArgs.Tests
         public void DeepLinkKeepsDevParamsForWhitelistedWorldRealm()
         {
             // Arrange
-            DeepLinkAllowlist.OverrideWhitelistedWorldsForTesting(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
@@ -179,7 +179,7 @@ namespace Global.AppArgs.Tests
         public void DeepLinkKeepsDevParamsForWhitelistedWorldContentServerUrlRealm()
         {
             // Arrange
-            DeepLinkAllowlist.OverrideWhitelistedWorldsForTesting(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
@@ -193,7 +193,7 @@ namespace Global.AppArgs.Tests
         public void DeepLinkDropsDevParamsForNonWhitelistedWorldRealm()
         {
             // Arrange
-            DeepLinkAllowlist.OverrideWhitelistedWorldsForTesting(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(

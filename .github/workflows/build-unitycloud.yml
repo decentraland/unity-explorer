@@ -595,9 +595,6 @@ jobs:
           PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
-          # Comma-separated world ENS names whose deep links may carry the whitelisted-realm dev params
-          # (see DeepLinkAllowlist / Editor.CloudBuild). Unset -> loopback-only, the safe default.
-          PARAM_DEEPLINK_WHITELISTED_WORLDS: ${{ secrets.DEEPLINK_WHITELISTED_WORLDS }}
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
           PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'

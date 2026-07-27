@@ -1,7 +1,6 @@
 using AltTester.AltTesterUnitySDK.Editor;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem.Global;
-using Global.AppArgs;
 using JetBrains.Annotations;
 using System;
 using System.Collections;
@@ -19,7 +18,6 @@ namespace Editor
         public static Dictionary<string, object> Parameters { get; private set; }
 
         private static string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
-        private static string DEEPLINK_WHITELISTED_WORLDS = "DEEPLINK_WHITELISTED_WORLDS";
 
         // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
         [UsedImplicitly]
@@ -63,16 +61,6 @@ namespace Editor
             else
             {
                 Debug.Log($"[INSTALL_SOURCE]: write key not found");
-            }
-
-            if (Parameters.TryGetValue(DEEPLINK_WHITELISTED_WORLDS, out object whitelistedWorlds))
-            {
-                Debug.Log("[DEEPLINK_WHITELISTED_WORLDS]: value found");
-                WriteWhitelistedWorldsToConfig(whitelistedWorlds as string);
-            }
-            else
-            {
-                Debug.Log("[DEEPLINK_WHITELISTED_WORLDS]: value not found");
             }
 
             if (Parameters.TryGetValue("IS_RELEASE_BUILD", out object isReleaseBuild)
@@ -151,48 +139,6 @@ namespace Editor
             }
             else // TODO (Vit): create default and add to Addressables (config = ScriptableObject.CreateInstance<AnalyticsConfiguration>());
                 Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found , when trying to load it from AssetDatabase. Creating SO config file via {nameof(ScriptableObject.CreateInstance)}");
-        }
-
-        // Bakes the DEEPLINK_WHITELISTED_WORLDS secret (comma-separated world ENS names) into the
-        // DeepLinkWorldWhitelist resource so the deep-link allowlist can trust those worlds' dev params at runtime.
-        // The asset is created under Resources on first build so DeepLinkAllowlist can Resources.Load it at cold-start.
-        private static void WriteWhitelistedWorldsToConfig(string csv)
-        {
-            var worlds = new List<string>();
-
-            if (!string.IsNullOrWhiteSpace(csv))
-                foreach (string world in csv.Split(','))
-                {
-                    string trimmed = world.Trim();
-
-                    if (trimmed.Length > 0)
-                        worlds.Add(trimmed);
-                }
-
-            const string RESOURCES_DIR = "Assets/Resources";
-            string assetPath = $"{RESOURCES_DIR}/{DeepLinkWorldWhitelist.RESOURCE_NAME}.asset";
-
-            string[] guids = AssetDatabase.FindAssets($"t:{nameof(DeepLinkWorldWhitelist)}");
-            DeepLinkWorldWhitelist config;
-
-            if (guids.Length > 0)
-                config = AssetDatabase.LoadAssetAtPath<DeepLinkWorldWhitelist>(AssetDatabase.GUIDToAssetPath(guids[0]));
-            else
-            {
-                config = ScriptableObject.CreateInstance<DeepLinkWorldWhitelist>();
-
-                if (!AssetDatabase.IsValidFolder(RESOURCES_DIR))
-                    AssetDatabase.CreateFolder("Assets", "Resources");
-
-                AssetDatabase.CreateAsset(config, assetPath);
-            }
-
-            config.SetWorlds(worlds.ToArray());
-            EditorUtility.SetDirty(config);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            Debug.Log($"[DEEPLINK_WHITELISTED_WORLDS]: baked {worlds.Count} world(s) into {assetPath}");
         }
     }
 }

@@ -196,13 +196,19 @@ namespace Global.Dynamic
             canShutdown = true;
             ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
 
-            IAppArgs applicationParametersParser = new ApplicationParametersParser(
+            string[] rawApplicationParameters =
 #if UNITY_EDITOR
-                debugSettings.AppParameters
+                debugSettings.AppParameters;
 #else
-                Environment.GetCommandLineArgs()
+                Environment.GetCommandLineArgs();
 #endif
-            );
+
+            // Preemptively fetch the deep-link world whitelist from feature flags BEFORE parsing the deep link, so the
+            // allowlist can trust configured worlds at cold-start — feature flags are otherwise not initialized until
+            // later in bootstrap. Best-effort: only runs for deep-link launches and fails safe to loopback-only.
+            await InitializeDeepLinkWorldWhitelistAsync(rawApplicationParameters, ct);
+
+            IAppArgs applicationParametersParser = new ApplicationParametersParser(rawApplicationParameters);
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -299,6 +305,10 @@ namespace Global.Dynamic
 
                 bootstrap.InitializeFeaturesRegistry();
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+
+                // Refresh the deep-link world whitelist from the now-fully-loaded feature flags — covers runtime
+                // (post-launch) deep links and the case where the preemptive cold-start fetch was unavailable.
+                DeepLinkAllowlist.SetWhitelistedWorlds(DeepLinkWorldWhitelistProvider.ReadWorlds(FeatureFlagsConfiguration.Instance));
 
                 DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
 
@@ -457,6 +467,42 @@ namespace Global.Dynamic
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
 
             return false;
+        }
+
+        private async UniTask InitializeDeepLinkWorldWhitelistAsync(string[] rawApplicationParameters, CancellationToken ct)
+        {
+            // Only needed for deep-link launches; skip the network call on normal launches to avoid startup latency.
+            if (!HasDeepLinkArgument(rawApplicationParameters))
+                return;
+
+            string featureFlagsOverride = RawArgumentValue(rawApplicationParameters, $"--{AppArgsFlags.FeatureFlags.URL}");
+
+            // Mirrors DecentralandUrlsSource's DecentralandUrl.FeatureFlags — resolved here because the urls source
+            // does not exist yet this early in bootstrap.
+            string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
+                ? $"https://feature-flags.decentraland.{decentralandEnvironment.ToString().ToLowerInvariant()}"
+                : featureFlagsOverride.TrimEnd('/');
+
+            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/explorer.json", ct);
+            DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
+        }
+
+        private static bool HasDeepLinkArgument(string[] args)
+        {
+            foreach (string arg in args)
+                if (arg.StartsWith("decentraland://", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+            return false;
+        }
+
+        private static string RawArgumentValue(string[] args, string flag)
+        {
+            for (var i = 0; i < args.Length - 1; i++)
+                if (string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase))
+                    return args[i + 1];
+
+            return string.Empty;
         }
 
         private async UniTask RegisterBlockedPopupAsync(UnityAppWebBrowser webBrowser, CancellationToken ct)
