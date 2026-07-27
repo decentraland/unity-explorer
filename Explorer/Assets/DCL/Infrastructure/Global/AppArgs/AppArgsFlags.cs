@@ -107,6 +107,16 @@ namespace Global.AppArgs
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
         public const string ALTTESTER = "alttester";
 
+        /// <summary>
+        ///     Starts the embedded MCP (Model Context Protocol) server on 127.0.0.1 so coding agents can drive the client.
+        /// </summary>
+        public const string MCP = "mcp";
+
+        /// <summary>
+        ///     Overrides the port the embedded MCP server listens on (implies <see cref="MCP" />).
+        /// </summary>
+        public const string MCP_PORT = "mcp-port";
+
         public const string REPORT_USER = "report-user";
 
         public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
@@ -121,6 +131,7 @@ namespace Global.AppArgs
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+        public const string LOCAL_AB = "local-ab";
 
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 

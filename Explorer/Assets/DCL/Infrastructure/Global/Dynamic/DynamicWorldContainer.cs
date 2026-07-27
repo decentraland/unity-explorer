@@ -1,4 +1,5 @@
 using Arch.Core;
+using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationGuards;
 using DCL.AssetsProvision;
@@ -24,6 +25,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
+using DCL.McpServer.Systems;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
@@ -85,8 +87,6 @@ namespace Global.Dynamic
 
         public IGlobalRealmController RealmController { get; }
 
-        public IRealmNavigator RealmNavigator { get; }
-
         public GlobalWorldFactory GlobalWorldFactory { get; }
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; }
@@ -112,7 +112,6 @@ namespace Global.Dynamic
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
             IGlobalRealmController realmController,
-            IRealmNavigator realmNavigator,
             GlobalWorldFactory globalWorldFactory,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
             IReadOnlyList<IDCLWorldPlugin> worldPlugins,
@@ -130,7 +129,6 @@ namespace Global.Dynamic
         {
             this.uiShellContainer = uiShellContainer;
             RealmController = realmController;
-            RealmNavigator = realmNavigator;
             GlobalWorldFactory = globalWorldFactory;
             GlobalPlugins = globalPlugins;
             WorldPlugins = worldPlugins;
@@ -842,6 +840,23 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER))
+                globalPlugins.Add(new McpServerPlugin(
+                    appArgs,
+                    new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS)),
+                    chatContainer.ChatMessagesBus,
+                    staticContainer.ScenesCache,
+                    commsContainer.CurrentSceneInfo,
+                    staticContainer.LoadingStatus,
+                    realmNavigatorContainer.WorldInfoHub,
+                    realmContainer.ReloadSceneController,
+                    bootstrapContainer.DiagnosticsContainer,
+                    exposedGlobalDataContainer.ExposedCameraData,
+                    staticContainer.EntityCollidersGlobalCache,
+                    coroutineRunner,
+                    globalWorld,
+                    localSceneDevelopment));
+
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
 
@@ -1000,6 +1015,7 @@ namespace Global.Dynamic
                 staticContainer.SceneReadinessReportQueue,
                 profilesRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
+                bootstrapContainer.UseLocalAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 bootstrapContainer.Analytics.EntitiesAnalytics,
@@ -1009,7 +1025,6 @@ namespace Global.Dynamic
             var container = new DynamicWorldContainer(
                 uiShellContainer,
                 realmContainer.RealmController,
-                realmNavigator,
                 globalWorldFactory,
                 globalPlugins,
                 worldPlugins,

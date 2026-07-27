@@ -25,7 +25,7 @@ namespace DCL.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, TestWebRequestController.INSTANCE, false, cache);
+            new (world, TestWebRequestController.INSTANCE, false, false, cache);
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {

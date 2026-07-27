@@ -232,6 +232,9 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
+            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
+                cliOptimizedAssetsUrl = RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL;
+
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
                 realmData,

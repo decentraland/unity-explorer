@@ -60,6 +60,7 @@ namespace Global.Dynamic
         public IAppArgs AppArgs { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
+        public bool UseLocalAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
         public RealmClock RealmClock { get; } = new ();
         public WebRequestsContainer WebRequestsContainer { get; private set; }
@@ -106,6 +107,7 @@ namespace Global.Dynamic
                 WebBrowser = browser,
                 LaunchMode = realmLaunchSettings,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
+                UseLocalAssetBundles = realmLaunchSettings.useLocalAssetBundles,
                 AppArgs = applicationParametersParser,
                 DebugSettings = debugSettings,
                 VolumeBus = new VolumeBus(),
