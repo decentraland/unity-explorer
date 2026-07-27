@@ -51,10 +51,10 @@ namespace MVC.Tests
         }
 
         [Test]
-        [TestCase(CanvasOrdering.SortingLayer.POPUP)]
-        [TestCase(CanvasOrdering.SortingLayer.FULLSCREEN)]
-        [TestCase(CanvasOrdering.SortingLayer.OVERLAY)]
-        [TestCase(CanvasOrdering.SortingLayer.PERSISTENT)]
+        [TestCase(CanvasOrdering.SortingLayer.Popup)]
+        [TestCase(CanvasOrdering.SortingLayer.Fullscreen)]
+        [TestCase(CanvasOrdering.SortingLayer.Overlay)]
+        [TestCase(CanvasOrdering.SortingLayer.Persistent)]
         public async Task Show(CanvasOrdering.SortingLayer layer)
         {
             IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
@@ -66,19 +66,19 @@ namespace MVC.Tests
 
             switch (layer)
             {
-                case CanvasOrdering.SortingLayer.POPUP:
+                case CanvasOrdering.SortingLayer.Popup:
                     await popupCloserView.Received().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushPopup(controller);
                     break;
-                case CanvasOrdering.SortingLayer.FULLSCREEN:
+                case CanvasOrdering.SortingLayer.Fullscreen:
                     await popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushFullscreen(controller);
                     break;
-                case CanvasOrdering.SortingLayer.OVERLAY:
+                case CanvasOrdering.SortingLayer.Overlay:
                     await popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushOverlay(controller);
                     break;
-                case CanvasOrdering.SortingLayer.PERSISTENT:
+                case CanvasOrdering.SortingLayer.Persistent:
                     await popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushPersistent(controller);
                     break;

@@ -34,7 +34,7 @@ namespace Global.Editor
             { "Restricted Actions", new Vector2Int(80, -4) },
         };
 
-        private static readonly InitialRealm[] TEST_REALMS = { InitialRealm.SDK, InitialRealm.Goerli, InitialRealm.StreamingWorld, InitialRealm.TestScenes };
+        private static readonly InitialRealm[] TEST_REALMS = { InitialRealm.Sdk, InitialRealm.Goerli, InitialRealm.StreamingWorld, InitialRealm.TestScenes };
 
         private static float singleLineHeight => EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 

@@ -10,10 +10,10 @@ namespace DCL.Landscape.Jobs
 {
     public enum NoiseJobOperation
     {
-        SET,
-        ADD,
-        MULTIPLY,
-        SUBTRACT,
+        Set,
+        Add,
+        Multiply,
+        Subtract,
     }
 
     [BurstCompile(CompileSynchronously = true)]
@@ -69,13 +69,13 @@ namespace DCL.Landscape.Jobs
 
                 switch (noiseSettings.noiseType)
                 {
-                    case NoiseType.PERLIN:
+                    case NoiseType.Perlin:
                         noiseValue = noise.cnoise(new float2(sampleX, sampleY));
                         break;
-                    case NoiseType.SIMPLEX:
+                    case NoiseType.Simplex:
                         noiseValue = noise.snoise(new float2(sampleX, sampleY));
                         break;
-                    case NoiseType.CELLULAR:
+                    case NoiseType.Cellular:
                         noiseValue = noise.cellular(new float2(sampleX, sampleY)).x;
                         break;
                     default: throw new ArgumentOutOfRangeException();
@@ -105,16 +105,16 @@ namespace DCL.Landscape.Jobs
 
             switch (operation)
             {
-                case NoiseJobOperation.SET:
+                case NoiseJobOperation.Set:
                     result[index] = tempValue;
                     break;
-                case NoiseJobOperation.ADD:
+                case NoiseJobOperation.Add:
                     result[index] += tempValue;
                     break;
-                case NoiseJobOperation.MULTIPLY:
+                case NoiseJobOperation.Multiply:
                     result[index] *= tempValue;
                     break;
-                case NoiseJobOperation.SUBTRACT:
+                case NoiseJobOperation.Subtract:
                     result[index] -= tempValue;
                     break;
             }

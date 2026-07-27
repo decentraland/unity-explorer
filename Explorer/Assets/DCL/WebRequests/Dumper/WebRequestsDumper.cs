@@ -142,9 +142,9 @@ namespace DCL.WebRequests.Dumper
             public enum StatusKind
             {
                 // Request is either not sent due to budgeting or is still processing
-                NOT_CONCLUDED = 0,
-                FAILURE = 1,
-                SUCCESS = 2,
+                NotConcluded = 0,
+                Failure = 1,
+                Success = 2,
             }
 
             public readonly object Args;
@@ -176,7 +176,7 @@ namespace DCL.WebRequests.Dumper
                 Args = args;
                 HeadersInfo = headersInfo;
                 RequestType = requestType;
-                Status = StatusKind.NOT_CONCLUDED;
+                Status = StatusKind.NotConcluded;
                 StartTime = startTime;
                 EffectiveUrl = effectiveUrl;
             }

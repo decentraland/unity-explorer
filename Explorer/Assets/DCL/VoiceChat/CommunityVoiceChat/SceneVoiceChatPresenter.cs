@@ -34,7 +34,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
-            if (status is not (VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL))
+            if (status is not (VoiceChatStatus.Disconnected or VoiceChatStatus.VoiceChatGenericError or VoiceChatStatus.VoiceChatEndingCall))
             {
                 view.VoiceChatContainer.gameObject.SetActive(false);
                 return;
@@ -55,7 +55,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnActiveCommunityChanged(ActiveCommunityVoiceChat? activeCommunityVoiceChat)
         {
-            if (voiceChatOrchestrator.CurrentCallStatus.Value is not (VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL))
+            if (voiceChatOrchestrator.CurrentCallStatus.Value is not (VoiceChatStatus.Disconnected or VoiceChatStatus.VoiceChatGenericError or VoiceChatStatus.VoiceChatEndingCall))
             {
                 view.VoiceChatContainer.gameObject.SetActive(false);
                 return;

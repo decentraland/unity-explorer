@@ -52,7 +52,7 @@ namespace DCL.VoiceChat.UI
         private void Awake()
         {
             soundWaveAnimator.gameObject.SetActive(false);
-            SetState(NearbyVoiceChatState.DISABLED);
+            SetState(NearbyVoiceChatState.Disabled);
 
             button.onClick.AddListener(HideHoverTooltip);
         }
@@ -66,18 +66,18 @@ namespace DCL.VoiceChat.UI
         {
             MetaStateSprites sprites = state switch
                                        {
-                                           NearbyVoiceChatState.DISABLED => disconnectedSprites,
-                                           NearbyVoiceChatState.IDLE => hearingSprites,
-                                           NearbyVoiceChatState.OPEN_MIC => speakingSprites,
-                                           NearbyVoiceChatState.SUPPRESSED => blockedSprites,
+                                           NearbyVoiceChatState.Disabled => disconnectedSprites,
+                                           NearbyVoiceChatState.Idle => hearingSprites,
+                                           NearbyVoiceChatState.OpenMic => speakingSprites,
+                                           NearbyVoiceChatState.Suppressed => blockedSprites,
                                            _ => disconnectedSprites,
                                        };
 
-            greenDotImage.SetActive(state is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.OPEN_MIC);
+            greenDotImage.SetActive(state is NearbyVoiceChatState.Idle or NearbyVoiceChatState.OpenMic);
             unselectedImage.sprite = sprites.unselected;
             hoverStateImage.sprite = sprites.hover;
 
-            soundWaveAnimator.gameObject.SetActive(state == NearbyVoiceChatState.OPEN_MIC);
+            soundWaveAnimator.gameObject.SetActive(state == NearbyVoiceChatState.OpenMic);
         }
 
         public void InitializeSoundWave(Func<float> amplitudeProvider)

@@ -152,7 +152,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             {
                                 wearable.GetUrn()
                             }, BodyShape.MALE,
-                        Array.Empty<string>(), AssetSource.EMBEDDED),
+                        Array.Empty<string>(), AssetSource.Embedded),
                         PartitionComponent.TOP_PRIORITY);
             }
 
@@ -228,7 +228,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             {
                                 wearable.GetUrn()
                             }, BodyShape.FEMALE,
-                        Array.Empty<string>(), AssetSource.EMBEDDED),
+                        Array.Empty<string>(), AssetSource.Embedded),
                         PartitionComponent.TOP_PRIORITY);
             }
 

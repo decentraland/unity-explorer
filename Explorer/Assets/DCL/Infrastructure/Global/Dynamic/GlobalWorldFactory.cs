@@ -124,7 +124,7 @@ namespace Global.Dynamic
             this.hybridSceneParams = hybridSceneParams;
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
-            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
             this.useLocalAssetBundles = useLocalAssetBundles;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneRoomStatus = sceneRoomStatus;
@@ -135,7 +135,7 @@ namespace Global.Dynamic
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
-            this.isBuilderCollectionPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
+            this.isBuilderCollectionPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections);
             this.entitiesAnalytics = entitiesAnalytics;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;

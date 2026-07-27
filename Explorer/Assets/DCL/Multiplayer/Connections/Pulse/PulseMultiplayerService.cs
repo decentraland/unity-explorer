@@ -79,7 +79,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public async UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue)
         {
-            if (transport.State is ITransport.TransportState.CONNECTED or ITransport.TransportState.CONNECTING)
+            if (transport.State is ITransport.TransportState.Connected or ITransport.TransportState.Connecting)
                 return true;
 
             return await ConnectWithRetriesAsync(ct, maxAttempts);
@@ -104,7 +104,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void Send(OutgoingMessage outgoingMessage)
         {
-            if (transport.State != ITransport.TransportState.CONNECTED)
+            if (transport.State != ITransport.TransportState.Connected)
             {
                 outgoingMessage.Dispose();
                 return;

@@ -3,7 +3,7 @@ namespace Global.Dynamic
     public enum InitialRealm
     {
         GenesisCity,
-        SDK,
+        Sdk,
         Goerli,
         StreamingWorld,
         TestScenes,

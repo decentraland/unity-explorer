@@ -34,14 +34,14 @@ namespace ECS.StreamableLoading.AssetBundles
             if (state.Value != StreamableLoadingState.Status.NotStarted) return;
 
             // Remove not supported flags
-            assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
+            assetBundleIntention.RemovePermittedSource(AssetSource.Addressable); // addressables are not implemented
 
             // First priority
-            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))
+            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.Embedded))
             {
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = 1;
-                ca.CurrentSource = AssetSource.EMBEDDED;
+                ca.CurrentSource = AssetSource.Embedded;
                 ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash, assetBundleIntention.CommonArguments.CustomEmbeddedSubDirectory);
                 assetBundleIntention.CommonArguments = ca;
 
@@ -49,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
 
             // Second priority
-            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
+            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.Web))
             {
                 if (assetBundleIntention.AssetBundleManifestVersion == null || assetBundleIntention.AssetBundleManifestVersion.assetBundleManifestRequestFailed)
                 {
@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
-                ca.CurrentSource = AssetSource.WEB;
+                ca.CurrentSource = AssetSource.Web;
                 assetBundleIntention.Hash = assetBundleIntention.AssetBundleManifestVersion.CheckCasing(assetBundleIntention.Hash);
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;

@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
             IAnalyticsController analyticsController,
             bool enableAnalytics)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.DONATIONS))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.Donations))
                 return new DonationsServiceDisabled();
 
             IDonationsService core = new DonationsService(scenesCache, ethereumApi, webRequestController, realmData,

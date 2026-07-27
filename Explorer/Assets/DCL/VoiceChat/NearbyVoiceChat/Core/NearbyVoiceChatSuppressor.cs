@@ -30,7 +30,7 @@ namespace DCL.VoiceChat
             // Suppress while world is still loading so we do not attempt to connect before the player spawns.
             // User preference (DISABLED/IDLE from PlayerPrefs) is preserved as preBlockedState and restored on Resume(LOADING).
             if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
-                stateModel.Suppress(SuppressionReason.LOADING);
+                stateModel.Suppress(SuppressionReason.Loading);
 
             loadingStageSubscription = loadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged);
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
@@ -48,17 +48,17 @@ namespace DCL.VoiceChat
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
             if (status.IsInCall())
-                stateModel.Suppress(SuppressionReason.CALL);
+                stateModel.Suppress(SuppressionReason.Call);
             else if (status.IsNotConnected())
-                stateModel.Resume(SuppressionReason.CALL);
+                stateModel.Resume(SuppressionReason.Call);
         }
 
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
         {
             if (stage == LoadingStatus.LoadingStage.Completed)
-                stateModel.Resume(SuppressionReason.LOADING);
+                stateModel.Resume(SuppressionReason.Loading);
             else
-                stateModel.Suppress(SuppressionReason.LOADING);
+                stateModel.Suppress(SuppressionReason.Loading);
         }
     }
 }

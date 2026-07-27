@@ -341,21 +341,21 @@ namespace DCL.Friends
                     switch (response.Accepted.Status)
                     {
                         case Decentraland.SocialService.V2.FriendshipStatus.Accepted:
-                            return FriendshipStatus.FRIEND;
+                            return FriendshipStatus.Friend;
                         case Decentraland.SocialService.V2.FriendshipStatus.Blocked:
-                            return FriendshipStatus.BLOCKED;
+                            return FriendshipStatus.Blocked;
                         case Decentraland.SocialService.V2.FriendshipStatus.RequestReceived:
-                            return FriendshipStatus.REQUEST_RECEIVED;
+                            return FriendshipStatus.RequestReceived;
                         case Decentraland.SocialService.V2.FriendshipStatus.RequestSent:
-                            return FriendshipStatus.REQUEST_SENT;
+                            return FriendshipStatus.RequestSent;
                         case Decentraland.SocialService.V2.FriendshipStatus.BlockedBy:
-                            return FriendshipStatus.BLOCKED_BY;
+                            return FriendshipStatus.BlockedBy;
                     }
 
                     break;
             }
 
-            return FriendshipStatus.NONE;
+            return FriendshipStatus.None;
         }
 
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize,

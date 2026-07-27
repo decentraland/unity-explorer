@@ -19,8 +19,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         // https://github.com/decentraland/js-sdk-toolchain/blob/c8695cd9b94e87ad567520089969583d9d36637f/packages/@dcl/sdk/src/network/binary-message-bus.ts#L3-L7
         protected enum CommsMessageType {
           CRDT = 1,
-          REQ_CRDT_STATE = 2,   // Special signal to receive CRDT State from a peer
-          RES_CRDT_STATE = 3    // Special signal to send CRDT State to a peer
+          ReqCRDTState = 2,   // Special signal to receive CRDT State from a peer
+          ResCRDTState = 3    // Special signal to send CRDT State to a peer
         }
 
         private readonly List<PoolableByteArray> eventsToProcess = new ();
@@ -71,9 +71,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 {
                     byte firstByte = poolable.Span[0];
 
-                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = firstByte == (int)CommsMessageType.REQ_CRDT_STATE
-                        ? ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED
-                        : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
+                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = firstByte == (int)CommsMessageType.ReqCRDTState
+                        ? ISceneCommunicationPipe.ConnectivityAssertiveness.DeliveryAsserted
+                        : ISceneCommunicationPipe.ConnectivityAssertiveness.DropIfNotConnected;
 
                     // Filter CRDT messages before sending
                     if (firstByte == (int)CommsMessageType.CRDT)
@@ -85,7 +85,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                     }
 
                     // Filter RES_CRDT_STATE messages before sending
-                    if (firstByte == (int)CommsMessageType.RES_CRDT_STATE)
+                    if (firstByte == (int)CommsMessageType.ResCRDTState)
                     {
                         Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
                         int filteredLength = FilterCRDTStateMessage(poolable.Memory.Span, filtered, isTrustedSource: true);

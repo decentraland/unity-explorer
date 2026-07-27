@@ -135,7 +135,7 @@ namespace DCL.Chat.ChatInput
 
         private void OnBlockedUpdated(Result<PrivateConversationUserStateService.ChatUserState> result)
         {
-            fsm.CurrentState!.OnBlockedUpdated(result is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.CONNECTED });
+            fsm.CurrentState!.OnBlockedUpdated(result is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.Connected });
         }
 
         public void Dispose()

@@ -19,13 +19,13 @@ namespace DCL.Minimap
         private readonly Dictionary<SceneRestrictions, GameObject> restrictionsGameObjects = new();
         private readonly Dictionary<SceneRestrictions, string> restrictionsTexts = new()
         {
-            { SceneRestrictions.CAMERA_LOCKED, "• Camera locked" },
-            { SceneRestrictions.AVATAR_HIDDEN, "• Avatars hidden" },
-            { SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED, "• Avatar movement disabled" },
-            { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• User Options Menu disabled" },
-            { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences disabled" },
-            { SceneRestrictions.SKYBOX_TIME_UI_BLOCKED, "• Day/Night controller disabled"},
-            { SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED, "• Nearby voice disabled" },
+            { SceneRestrictions.CameraLocked, "• Camera locked" },
+            { SceneRestrictions.AvatarHidden, "• Avatars hidden" },
+            { SceneRestrictions.AvatarMovementsBlocked, "• Avatar movement disabled" },
+            { SceneRestrictions.PassportCannotBeOpened, "• User Options Menu disabled" },
+            { SceneRestrictions.ExperiencesBlocked, "• Experiences disabled" },
+            { SceneRestrictions.SkyboxTimeUiBlocked, "• Day/Night controller disabled"},
+            { SceneRestrictions.NearbyVoiceChatBlocked, "• Nearby voice disabled" },
         };
 
         public SceneRestrictionsController(ISceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
@@ -72,7 +72,7 @@ namespace DCL.Minimap
         {
             int currentRestrictionCounter = restrictionsRegistry[sceneRestriction.Type];
 
-            currentRestrictionCounter += sceneRestriction.Action == SceneRestrictionsAction.APPLIED ? 1 : -1;
+            currentRestrictionCounter += sceneRestriction.Action == SceneRestrictionsAction.Applied ? 1 : -1;
             currentRestrictionCounter = Mathf.Clamp(currentRestrictionCounter, 0, int.MaxValue);
 
             restrictionsRegistry[sceneRestriction.Type] = currentRestrictionCounter;

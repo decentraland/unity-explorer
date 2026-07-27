@@ -28,7 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             buttons.Add(ContextMenuButton);
             buttons.Add(ChatButton);
             base.Configure(profile, profileDataProvider);
-            SetOnlineStatus(OnlineStatus.OFFLINE);
+            SetOnlineStatus(OnlineStatus.Offline);
         }
 
         public void SetOnlineStatus(OnlineStatus onlineStatus)
@@ -41,7 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             buttons.Add(ContextMenuButton);
             buttons.Add(ChatButton);
 
-            if (onlineStatus != OnlineStatus.OFFLINE)
+            if (onlineStatus != OnlineStatus.Offline)
                 buttons.Add(JumpInButton);
         }
 

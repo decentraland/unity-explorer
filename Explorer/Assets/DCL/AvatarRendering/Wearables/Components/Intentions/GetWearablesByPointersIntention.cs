@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         /// </summary>
         public long ResolvedWearablesIndices;
 
-        public GetWearablesByPointersIntention(List<URN> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.ALL)
+        public GetWearablesByPointersIntention(List<URN> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.All)
         {
             Pointers = pointers;
             BodyShape = bodyShape;

@@ -62,7 +62,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             UniTask menuTask = UniTask.WhenAny(panelLifecycleTask!.Task, contextMenuTask.Task);
 
             ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.UserId), buttonPosition, default(Vector2),
-                popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
+                popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TopRight).Forget();
         }
 
         private void JumpInClicked(Profile.CompactInfo profile) =>

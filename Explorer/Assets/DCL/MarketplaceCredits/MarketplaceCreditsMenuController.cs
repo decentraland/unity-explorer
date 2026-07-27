@@ -29,7 +29,7 @@ namespace DCL.MarketplaceCredits
         public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action<bool> MarketplaceCreditsOpened;
 
@@ -156,7 +156,7 @@ namespace DCL.MarketplaceCredits
         protected override void OnBeforeViewShow()
         {
             closeTaskCompletionSource = new UniTaskCompletionSource();
-            OpenSection(MarketplaceCreditsSection.WELCOME);
+            OpenSection(MarketplaceCreditsSection.Welcome);
             SetSidebarButtonAnimationAsPaused(true);
             MarketplaceCreditsOpened.Invoke(inputData.IsOpenedFromNotification);
         }
@@ -185,16 +185,16 @@ namespace DCL.MarketplaceCredits
 
             switch (section)
             {
-                case MarketplaceCreditsSection.WELCOME:
+                case MarketplaceCreditsSection.Welcome:
                     viewInstance.SetInfoLinkButtonActive(false);
                     marketplaceCreditsWelcomeSubController?.OpenSection();
                     break;
-                case MarketplaceCreditsSection.VERIFY_EMAIL:
+                case MarketplaceCreditsSection.VerifyEmail:
                     haveJustClaimedCredits = false;
                     marketplaceCreditsVerifyEmailSubController?.OpenSection();
                     viewInstance.TotalCreditsWidget.gameObject.SetActive(false);
                     break;
-                case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
+                case MarketplaceCreditsSection.GoalsOfTheWeek:
                     if (marketplaceCreditsGoalsOfTheWeekSubController != null)
                     {
                         marketplaceCreditsGoalsOfTheWeekSubController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
@@ -202,12 +202,12 @@ namespace DCL.MarketplaceCredits
                     }
                     viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
-                case MarketplaceCreditsSection.WEEK_GOALS_COMPLETED:
+                case MarketplaceCreditsSection.WeekGoalsCompleted:
                     haveJustClaimedCredits = false;
                     marketplaceCreditsWeekGoalsCompletedSubController?.OpenSection();
                     viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
-                case MarketplaceCreditsSection.PROGRAM_ENDED:
+                case MarketplaceCreditsSection.ProgramEnded:
                     haveJustClaimedCredits = false;
                     viewInstance.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
                     marketplaceCreditsProgramEndedSubController?.OpenSection();
@@ -225,7 +225,7 @@ namespace DCL.MarketplaceCredits
             // We open the welcome section after closing the credits unlocked panel
             isCreditsUnlockedPanelOpen = false;
             haveJustClaimedCredits = true;
-            OpenSection(MarketplaceCreditsSection.WELCOME);
+            OpenSection(MarketplaceCreditsSection.Welcome);
         }
 
         public void ShowErrorNotification(string message)
@@ -296,8 +296,8 @@ namespace DCL.MarketplaceCredits
             SetSidebarButtonAsClaimIndicator(true);
 
             // If the user is in the Goals of the Week section, we need to refresh the information
-            if (currentSection == MarketplaceCreditsSection.GOALS_OF_THE_WEEK && !isCreditsUnlockedPanelOpen)
-                OpenSection(MarketplaceCreditsSection.WELCOME);
+            if (currentSection == MarketplaceCreditsSection.GoalsOfTheWeek && !isCreditsUnlockedPanelOpen)
+                OpenSection(MarketplaceCreditsSection.Welcome);
         }
 
         private void OnMarketplaceCreditsNotificationClicked(object[] parameters)

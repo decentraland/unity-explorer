@@ -11,9 +11,9 @@
 
     public enum GlideStateValue
     {
-        PROP_CLOSED,
-        OPENING_PROP,
-        GLIDING,
-        CLOSING_PROP
+        PropClosed,
+        OpeningProp,
+        Gliding,
+        ClosingProp
     }
 }

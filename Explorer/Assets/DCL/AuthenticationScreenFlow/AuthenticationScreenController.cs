@@ -73,7 +73,7 @@ namespace DCL.AuthenticationScreenFlow
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? loginCancellationTokenSource;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
@@ -152,7 +152,7 @@ namespace DCL.AuthenticationScreenFlow
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
-            bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
+            bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
 
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
@@ -212,7 +212,7 @@ namespace DCL.AuthenticationScreenFlow
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TOKEN_FILE, ct));
+                    fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
                 else
                 {
                     fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);

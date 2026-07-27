@@ -30,7 +30,7 @@ namespace DCL.Audio
 
     public enum AudioCategory
     {
-        UI,
+        Ui,
         Chat,
         World,
         Avatar,

@@ -192,7 +192,7 @@ namespace DCL.Multiplayer.Movement
 
             // Debug purposes. Simulate package lost when Running
             if (debugSettings.SelfSending
-                && input.Kind != MovementKind.RUN // simulate package lost when Running
+                && input.Kind != MovementKind.Run // simulate package lost when Running
                )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage,
                                debugSettings.Latency + (debugSettings.Latency * Random.Range(0, debugSettings.LatencyJitter)))

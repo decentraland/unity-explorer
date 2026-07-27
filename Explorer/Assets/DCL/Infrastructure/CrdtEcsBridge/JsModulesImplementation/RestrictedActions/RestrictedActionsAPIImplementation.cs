@@ -189,7 +189,7 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 EmoteId = urn,
                 Spatial = true,
-                TriggerSource = TriggerSource.SCENE,
+                TriggerSource = TriggerSource.Scene,
                 Mask = mask,
             });
         }
@@ -321,22 +321,22 @@ namespace CrdtEcsBridge.RestrictedActions
                     return true;
                 case ExplorerUi.EuCameraReel:
                     section = ExploreSections.CameraReel;
-                    gatingFeature = FeatureId.CAMERA_REEL;
+                    gatingFeature = FeatureId.CameraReel;
                     return true;
                 case ExplorerUi.EuCommunities:
                     section = ExploreSections.Communities;
-                    // FeatureId.COMMUNITIES is never populated in FeaturesRegistry (its state is
+                    // FeatureId.Communities is never populated in FeaturesRegistry (its state is
                     // identity-dependent), so the gate lives in the IExplorerUiActions implementation,
                     // which can reach CommunitiesFeatureAccess.
                     gatingFeature = null;
                     return true;
                 case ExplorerUi.EuPlaces:
                     section = ExploreSections.Places;
-                    gatingFeature = FeatureId.DISCOVER;
+                    gatingFeature = FeatureId.Discover;
                     return true;
                 case ExplorerUi.EuEvents:
                     section = ExploreSections.Events;
-                    gatingFeature = FeatureId.DISCOVER;
+                    gatingFeature = FeatureId.Discover;
                     return true;
                 default:
                     section = default(ExploreSections);

@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.LightSource
         public CullingFlags Culling;
         public CookieInfo Cookie;
 
-        public bool IsCulled => Culling != CullingFlags.NONE;
+        public bool IsCulled => Culling != CullingFlags.None;
 
         public LightSourceComponent(Light lightSourceInstance) : this()
         {
@@ -34,9 +34,9 @@ namespace DCL.SDKComponents.LightSource
         [Flags]
         public enum CullingFlags
         {
-            NONE = 0,
-            TOO_MANY_LIGHT_SOURCES = 1,
-            CULLED_BY_LOD = 1 << 1
+            None = 0,
+            TooManyLightSources = 1,
+            CulledByLod = 1 << 1
         }
 
         public struct CookieInfo

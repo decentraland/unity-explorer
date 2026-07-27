@@ -128,7 +128,7 @@ namespace DCL.Profiles
                     }
 
                     claimedNameColor = value;
-                    if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && value is { a: > 0 })
+                    if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NameColorChange) && value is { a: > 0 })
                         UserNameColor = value.Value;
                 }
             }
@@ -258,7 +258,7 @@ namespace DCL.Profiles
                     MentionName = new string(mentionBuffer);
                 }
 
-                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && claimedNameColor is { a: > 0 })
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NameColorChange) && claimedNameColor is { a: > 0 })
                     UserNameColor = claimedNameColor.Value;
                 else
                     UserNameColor = NameColorHelper.GetNameColor(DisplayName);

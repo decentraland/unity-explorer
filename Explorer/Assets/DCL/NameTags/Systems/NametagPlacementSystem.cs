@@ -54,7 +54,7 @@ namespace DCL.Nametags
         {
             this.nametagHolderPool = nametagHolderPool;
             this.nametagsData = nametagsData;
-            includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_GHOSTS);
+            includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarGhosts);
         }
 
         public override void Initialize()
@@ -164,7 +164,7 @@ namespace DCL.Nametags
                 return;
             }
 
-            nametagHolder.Nametag.VoiceChat = voiceChatComponent.Type == VoiceChatType.NEARBY || voiceChatComponent.IsSpeaking;
+            nametagHolder.Nametag.VoiceChat = voiceChatComponent.Type == VoiceChatType.Nearby || voiceChatComponent.IsSpeaking;
 
             nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;
             nametagHolder.Nametag.Hushed = voiceChatComponent.IsHushed; // hushed is cleared to false when changing room

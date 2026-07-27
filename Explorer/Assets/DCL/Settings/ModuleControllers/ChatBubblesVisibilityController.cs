@@ -27,17 +27,17 @@ namespace DCL.Settings.ModuleControllers
         {
             switch (index)
             {
-                case (int)ChatBubbleVisibilitySettings.ALL:
-                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.ALL);
-                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.ALL);
+                case (int)ChatBubbleVisibilitySettings.All:
+                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.All);
+                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.All);
                     break;
-                case (int)ChatBubbleVisibilitySettings.NEARBY_ONLY:
-                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.NEARBY_ONLY);
-                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.NEARBY_ONLY);
+                case (int)ChatBubbleVisibilitySettings.NearbyOnly:
+                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.NearbyOnly);
+                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.NearbyOnly);
                     break;
-                case (int)ChatBubbleVisibilitySettings.NONE:
-                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.NONE);
-                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.NONE);
+                case (int)ChatBubbleVisibilitySettings.None:
+                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.None);
+                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.None);
                     break;
                 default:
                     ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatPrivacySettingsController: {index}");

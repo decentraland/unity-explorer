@@ -434,7 +434,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
-            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT)));
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.Chat)));
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
