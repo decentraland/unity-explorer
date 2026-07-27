@@ -40,7 +40,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ProfileChangesBus profileChangesBus;
         private readonly string? referrer;
 
-        private const int REFERRAL_REQUEST_TIMEOUT_SECONDS = 5;
+        /// <summary>Total budget for the whole referral registration (POST + PATCH), not per request.</summary>
+        private const int REFERRAL_REGISTRATION_TIMEOUT_SECONDS = 5;
 
         private readonly AvatarRandomizer avatarRandomizer = new ();
 
@@ -338,15 +339,18 @@ namespace DCL.AuthenticationScreenFlow
 
         /// <summary>
         ///     Registers the referral: POST creates it, PATCH marks the invited user as signed up.
-        ///     Awaited by the caller so the create completes before the user enters the world (i.e.
-        ///     before LOGGED_IN), but time-boxed and best-effort so it never blocks or fails
-        ///     onboarding. A duplicate (already-registered) is expected when the web setup flow
-        ///     already recorded it and is treated as a no-op.
+        ///     Awaited by the caller so the create completes before the user enters the world, but
+        ///     time-boxed and best-effort so it never blocks or fails onboarding. Both requests
+        ///     share ONE timeout budget, so the worst case onboarding delay is that budget and not
+        ///     the sum of a per-request timeout. The token is independent of the login-flow token
+        ///     on purpose: attribution should survive login-flow cancellation, just not hang.
         /// </summary>
         private async UniTask RegisterReferralAsync()
         {
             if (referrer == null)
                 return;
+
+            using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(REFERRAL_REGISTRATION_TIMEOUT_SECONDS));
 
             try
             {
@@ -359,17 +363,15 @@ namespace DCL.AuthenticationScreenFlow
                                                new CommonArguments(URLAddress.FromString(url)),
                                                GenericPostArguments.CreateJson(jsonBody),
                                                string.Empty,
-                                               CancellationToken.None)
-                                          .WithNoOpAsync()
-                                          .Timeout(TimeSpan.FromSeconds(REFERRAL_REQUEST_TIMEOUT_SECONDS));
+                                               budget.Token)
+                                          .WithNoOpAsync();
 
                 await webRequestController.SignedFetchPatchAsync(
                                                new CommonArguments(URLAddress.FromString(url)),
                                                GenericPostArguments.Empty,
                                                string.Empty,
-                                               CancellationToken.None)
-                                          .WithNoOpAsync()
-                                          .Timeout(TimeSpan.FromSeconds(REFERRAL_REQUEST_TIMEOUT_SECONDS));
+                                               budget.Token)
+                                          .WithNoOpAsync();
             }
             catch (Exception e)
             {
