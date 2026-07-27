@@ -57,6 +57,32 @@ namespace DCL.McpServer.Core
             return AddField(name, field, isRequired);
         }
 
+        /// <summary>
+        ///     Adds a field that admits any JSON type, for an argument whose shape is decided by another argument —
+        ///     a value written into a reflected member, a method parameter. JSON Schema means "any" by omitting
+        ///     "type", so the field carries only its description.
+        /// </summary>
+        public McpJsonSchema Any(string name, string? description = null, bool isRequired = false)
+        {
+            var field = new JObject();
+
+            if (description != null)
+                field["description"] = description;
+
+            return AddField(name, field, isRequired);
+        }
+
+        /// <summary>Adds an array field whose items may be of any JSON type (see <see cref="Any" />).</summary>
+        public McpJsonSchema AnyArray(string name, string? description = null, bool isRequired = false)
+        {
+            var field = new JObject { ["type"] = "array" };
+
+            if (description != null)
+                field["description"] = description;
+
+            return AddField(name, field, isRequired);
+        }
+
         /// <summary>Adds an array field whose items are all integers.</summary>
         public McpJsonSchema IntegerArray(string name, string? description = null, bool isRequired = false)
         {

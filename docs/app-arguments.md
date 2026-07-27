@@ -347,6 +347,16 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `mcp-reflection`
+**Description:** Adds the MCP reflection tools (`get_component_property`, `set_component_property`, `call_static_method`) to the server's tool list, for a UI test suite that has to read or force component state the UI does not expose. They reach in-process state directly — `call_static_method` only through methods marked `[McpCallable]`, the two property tools through any member of a component of a client UI element — so they sit behind two gates and this flag is only the second one: it does nothing on its own (the server still needs `mcp` or `mcp-port`), and nothing at all in a release build, where the `MCP_TEST_AUTOMATION` compile define has already removed those tools from the binary. Without the flag they are absent from `tools/list` rather than failing when called. **It must never be added to `DeepLinkAllowlist`** — arbitrary in-process mutation has to stay unreachable from a crafted `decentraland://` link. See [MCP Automation](mcp-automation.md#security-model).
+
+**Usage:**
+```bash
+--mcp --mcp-reflection
+```
+
+---
+
 ### `launch-cdp-monitor-on-start`
 **Type:** Boolean
 **Description:** Launches the Chrome DevTools Protocol (CDP) monitor on application start. Enables remote debugging capabilities.

@@ -80,6 +80,10 @@ namespace DCL.FeatureFlags
             SetFeatureState(FeatureId.VoiceChat, IsEnabled(FeatureId.Friends) && IsEnabled(FeatureId.FriendsUserBlocking) && (isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
             SetFeatureState(FeatureId.CommunityVoiceChat, IsEnabled(FeatureId.VoiceChat));
             SetFeatureState(FeatureId.NearbyVoiceChat, IsEnabled(FeatureId.VoiceChat) && appArgs.ResolveFeatureFlagArg(AppArgsFlags.NEARBY_VOICE_CHAT, featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT) || Application.isEditor));
+
+            //The MCP reflection tools only exist inside the MCP server, so the flag is inert without it. In a release
+            //build the tools are compiled out, and nothing reads this.
+            SetFeatureState(FeatureId.McpReflection, IsEnabled(FeatureId.McpServer) && appArgs.HasFlag(AppArgsFlags.MCP_REFLECTION));
         }
 
         /// <summary>
@@ -211,5 +215,6 @@ namespace DCL.FeatureFlags
         CreditsWearablePurchase = 68,
         CreditsTopup = 69,
         McpServer = 70,
+        McpReflection = 71,
     }
 }

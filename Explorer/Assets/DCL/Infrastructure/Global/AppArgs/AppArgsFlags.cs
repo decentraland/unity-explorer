@@ -116,6 +116,16 @@ namespace Global.AppArgs
         /// </summary>
         public const string MCP_PORT = "mcp-port";
 
+        /// <summary>
+        ///     Adds the MCP reflection tools (get/set_component_property, call_static_method) to the server's tool list.
+        ///     Inert on its own: it does nothing unless <see cref="MCP" /> or <see cref="MCP_PORT" /> also started the
+        ///     server, and nothing at all in a release build, where the <c>MCP_TEST_AUTOMATION</c> define has already
+        ///     removed those tools from the binary. This flag is the second gate inside the builds that do have them.
+        ///     <b>It must never be added to <c>DeepLinkAllowlist</c></b>: arbitrary in-process reads, writes and
+        ///     invocation must stay unreachable from a crafted <c>decentraland://</c> link.
+        /// </summary>
+        public const string MCP_REFLECTION = "mcp-reflection";
+
         public const string REPORT_USER = "report-user";
 
         public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";

@@ -39,25 +39,27 @@ Deeper reference, loaded only when the task reaches it:
    - *Use it*: launch nothing. If port 8000 isn't serving the target scene folder (`lsof -nP -i :8000 -sTCP:LISTEN`, then check the PID's cwd), kill whatever holds it and run `npm run start -- --no-client`. Skip step 3 if the tools are already available.
    - *From scratch*: **MANDATORY — follow-up question**: kill the previously-running scene server, or keep it and run a second stack alongside? Never kill it unasked.
      - *Kill it*: kill the port-8000 dev server, have the user close the running client (never kill an Editor process yourself), then continue below.
-     - *Keep it*: leave it and its Explorer untouched; start a second stack on its own ports — a different dev-server port (`--port`; the launched client follows it automatically), a different MCP port (`--mcp-port`, implies `--mcp`), and `--multi-instance` so a second Explorer instance can run concurrently:
+     - *Keep it*: leave it and its Explorer untouched; start a second stack on its own ports — a different dev-server port (`--port`) and, on the second client's launch line in step 2, a different MCP port (`--mcp-port`, implies `--mcp`) plus `--multi-instance` so a second Explorer instance can run concurrently:
 
        ```bash
-       npm install && npm run start -- --port 8666 --multi-instance --mcp-port 8124
+       npm install && npm run start -- --port 8666 --no-client
        ```
 
-       From here on use the chosen ports instead of 8000/8123 — including step 3's registration, which needs a distinct server name (e.g. `claude mcp add --transport http --scope user explorer2 http://127.0.0.1:8124/unity-explorer-mcp`; the tools then surface as `mcp__explorer2__*`).
+       From here on use the chosen ports instead of 8000/8123 — the launch line in step 2 needs `--realm http://127.0.0.1:8666 --mcp-port 8124 --multi-instance` instead of `--realm http://127.0.0.1:8000 --mcp`, and step 3's registration needs a distinct server name (e.g. `claude mcp add --transport http --scope user explorer2 http://127.0.0.1:8124/unity-explorer-mcp`; the tools then surface as `mcp__explorer2__*`).
 
-   **No server found** — serve the scene and launch the Explorer in one command from the scene folder (keep it running in the background; if something else already holds port 8000, apply the same kill-or-keep question and port overrides as above):
+   **No server found** — serve the scene from its folder (keep it running in the background; if something else already holds port 8000, apply the same kill-or-keep question and port overrides as above), then launch the client yourself in step 2:
 
    ```bash
-   npm install && npm run start -- --mcp
+   npm install && npm run start -- --no-client
    ```
 
-   This serves the scene at `http://127.0.0.1:8000`, auto-launches the **installed** Decentraland client connected to it with the MCP server enabled (port 8123; `--mcp-port <port>` picks another and implies `--mcp` — adjust the 8123 URLs in steps 1 and 3 to match), and the LSD dev server hot-reloads the running Explorer on file changes. Other useful flags: `--port <port>` (dev-server port; the launched client follows it automatically), `--position x,y`, `--skip-auth-screen`, `-n` (new client instance), `--multi-instance` (allow concurrent Explorer instances), `--no-client` (serve only, launch nothing). Anything after a second standalone `--` is forwarded verbatim into the launch as extra Explorer params, e.g. `npm run start -- --mcp -- --windowed-mode --resolution 1280x720` (npm consumes the first `--`). If `--mcp` is rejected as an unknown option, the scene's `@dcl/sdk-commands` predates the flag — update `@dcl/sdk`, or fall back to step 2.
+   This serves the scene at `http://127.0.0.1:8000` and the LSD dev server hot-reloads the running Explorer on file changes. Other useful flags: `--port <port>` (dev-server port).
+
+   **Do not use `npm run start -- --mcp` (or `--mcp-port`) to launch the client.** `@dcl/sdk-commands` accepts both and forwards them into the `decentraland://` deep link it launches the installed client with, but the client's deep-link allowlist drops them — so the client comes up with **no MCP server and no error**, and step 4 then hangs on a port nothing is listening on. The flags only work on the client's own command line, which is what step 2 does. (`docs/mcp-automation.md` → Enabling tracks the fix.)
 
    **A freshly launched Explorer needs the user to log in.** The client opens on the auth screen unless a previous session's login is still cached (`--skip-auth-screen` only skips it when a valid identity exists — a missing or expired login shows it anyway, and extra `--multi-instance` instances always ask). Tell the user to log in, then wait — step 4's polling only starts succeeding once they're through, and only then can you continue working on the scene through the MCP server.
 
-2. **(Alternative) Launch a specific Explorer build manually** — a local build or the Editor instead of the installed client. Serve with `npm run start -- --no-client` in step 1, then:
+2. **Launch the Explorer against the served scene**, with the MCP flag on its own command line. The same line works for the installed client, a local build or the Editor — point it at whichever `Decentraland.app` you mean:
 
    ```bash
    # macOS
@@ -67,7 +69,7 @@ Deeper reference, loaded only when the task reaches it:
      --mcp --windowed-mode --resolution 1280x720
    ```
 
-   On Windows call `Decentraland.exe` with the same arguments. Add `--disable-hud --skybox-time-enabled false --landscape-terrain-enabled false` when you want deterministic screenshots without HUD noise.
+   On Windows call `Decentraland.exe` with the same arguments. In the Unity Editor, put `--mcp` in `Main Scene Loader → Debug Settings → App Parameters` instead and hit Play. Add `--disable-hud --skybox-time-enabled false --landscape-terrain-enabled false` when you want deterministic screenshots without HUD noise.
 
 3. **Connect the MCP server** (default port 8123):
 
@@ -112,7 +114,7 @@ Paths are relative to this skill's directory; requires curl + python3; pass `-p 
 - `scene.json` changes (parcels, spawn points) are not hot-reloaded — restart the `npm run start` process, then `reload_scene`.
 - After `teleport` or `reload_scene`, always re-check `get_scene_state` before interacting; readiness can lag a few seconds.
 - One parcel is 16×16 m; parcel `(x, y)` spans world positions `(16x..16x+16, 16y..16y+16)`. `--position 0,0` spawns at parcel 0,0.
-- If the connection drops, the client probably crashed or was closed — relaunch it the same way it was started (`npm run start -- --mcp`, or the manual launch line); the MCP endpoint URL stays the same.
+- If the connection drops, the client probably crashed or was closed — relaunch it with step 2's launch line (the `--mcp` flag has to be on it; the dev server from step 1 keeps running and needs no restart); the MCP endpoint URL stays the same.
 - **Missing tools**: `mcp__explorer__*` tools absent in-session are recoverable (typically the Explorer wasn't running when the session started, so the registered server failed its startup connection). Ask the user to run `/mcp` and reconnect the `explorer` server — an interactive command only the user can run; a successful reconnect binds all the server's tools into the running session (verified). A plain `claude mcp add` mid-session does NOT surface tools by itself. Last resort: drive the endpoint directly with curl JSON-RPC (`POST /unity-explorer-mcp`, methods `initialize` then `tools/call`; responses may be SSE-framed, tool payloads are JSON in `result.content[0].text`, screenshots are base64 in image content blocks).
 - After a hot reload the player can end up off-parcel (e.g. parcel `0,-1`); `get_scene_state` then reports a null scene and `reload_scene` fails with "no scene at the current parcel". Check `get_player_state` → `parcel`, `move_to` back inside, and the scene loads again.
 - Each file save triggers a rebuild: editing usage and import in separate saves produces a transient `SceneError: X is not defined` between them. Write new modules before wiring them in, and prefer a single whole-file write for multi-part edits to one file.

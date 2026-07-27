@@ -4,6 +4,9 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
+#if MCP_TEST_AUTOMATION
+using DCL.FeatureFlags;
+#endif
 using DCL.Interaction.Utility;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
@@ -11,6 +14,7 @@ using DCL.McpServer.Utils;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.UI.DebugMenu.MessageBus;
+using DCL.WebRequests.Analytics;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
@@ -24,8 +28,9 @@ namespace DCL.McpServer.Systems
 {
     /// <summary>
     ///     Hosts the embedded MCP server so external coding agents can observe and drive the client.
-    ///     Registered only when the mcp/mcp-port app arg is present (command line or deep link);
-    ///     the server binds to 127.0.0.1 exclusively and validates browser Origins.
+    ///     Registered only when the mcp/mcp-port app arg is present on the command line — the deep-link allowlist
+    ///     drops both keys, and must keep doing so; the server binds to 127.0.0.1 exclusively and validates
+    ///     browser Origins.
     /// </summary>
     public class McpServerPlugin : IDCLGlobalPluginWithoutSettings
     {
@@ -53,6 +58,7 @@ namespace DCL.McpServer.Systems
         private readonly bool localSceneDevelopment;
 
         private readonly SceneLogBuffer logBuffer;
+        private readonly McpNetworkLogBuffer? networkLogBuffer;
         private readonly DebugMenuConsoleLogEntryBus logEntryBus;
 
         private McpHttpServer? server;
@@ -74,6 +80,7 @@ namespace DCL.McpServer.Systems
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
+            McpNetworkLogBuffer? networkLogBuffer,
             bool localSceneDevelopment)
         {
             port = appArgs.TryGetValue(AppArgsFlags.MCP_PORT, out string? portValue)
@@ -93,6 +100,7 @@ namespace DCL.McpServer.Systems
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
+            this.networkLogBuffer = networkLogBuffer;
             this.localSceneDevelopment = localSceneDevelopment;
 
             logBuffer = new SceneLogBuffer();
@@ -107,6 +115,13 @@ namespace DCL.McpServer.Systems
             screenshotTool?.Dispose();
             server?.Dispose();
             serverCts.SafeCancelAndDispose();
+
+#if MCP_TEST_AUTOMATION
+
+            // Last, once nothing can queue another press: a held key is asserted by every later keyboard event, so
+            // one left down here would keep firing its action for the rest of the process.
+            McpKeyboardInput.Reset();
+#endif
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -114,6 +129,7 @@ namespace DCL.McpServer.Systems
             McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
             McpPointerEventSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
 
+            screenshotTool?.Dispose();
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
 
             var toolsRegistry = new McpToolsRegistry()
@@ -132,11 +148,39 @@ namespace DCL.McpServer.Systems
                           .Add(new ListSceneEntitiesTool(worldInfoHub))
                           .Add(new GetEntityDetailsTool(worldInfoHub))
                           .Add(new TriggerEmoteTool(globalWorldActions))
-                          .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
-                          .Build();
+                          .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity));
 
-            server = new McpHttpServer(toolsRegistry, port);
+            // Without a buffer there is no HTTP history to read, so the tool stays out of tools/list rather than
+            // answering every call with an empty log.
+            if (networkLogBuffer != null)
+                toolsRegistry.Add(new GetNetworkLogTool(networkLogBuffer));
+
+#if MCP_TEST_AUTOMATION
+
+            // The client-UI automation surface: absent from release builds, where no flow drives the client's own UI.
+            toolsRegistry.Add(new ListUiElementsTool())
+                         .Add(new GetUiStateTool())
+                         .Add(new ClickUiTool())
+                         .Add(new HoverUiTool())
+                         .Add(new SetUiTextTool())
+                         .Add(new ScrollTool())
+                         .Add(new PressKeyTool());
+
+            // Arbitrary in-process reads, writes and invocation, so they take a second gate even here: opted into
+            // with --mcp-reflection, and absent from tools/list otherwise rather than failing when called.
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpReflection))
+                toolsRegistry.Add(new GetComponentPropertyTool())
+                             .Add(new SetComponentPropertyTool())
+                             .Add(new CallStaticMethodTool());
+#endif
+
+            toolsRegistry.Build();
+
+            // Stop and release the previous instance first: an abandoned listener keeps the port bound for the
+            // lifetime of the process, so the replacement would never manage to start on it.
             serverCts = serverCts.SafeRestart();
+            server?.Dispose();
+            server = new McpHttpServer(toolsRegistry, port);
 
             bool started = server.TryStart();
 

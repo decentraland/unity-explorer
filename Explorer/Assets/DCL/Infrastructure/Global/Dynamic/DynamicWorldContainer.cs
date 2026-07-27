@@ -851,6 +851,9 @@ namespace Global.Dynamic
             }
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
+            {
+                staticContainer.WebRequestsContainer.EnableMcpNetworkLog();
+
                 globalPlugins.Add(new McpServerPlugin(
                     appArgs,
                     new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
@@ -865,7 +868,9 @@ namespace Global.Dynamic
                     staticContainer.EntityCollidersGlobalCache,
                     coroutineRunner,
                     globalWorld,
+                    staticContainer.WebRequestsContainer.NetworkLogBuffer,
                     localSceneDevelopment));
+            }
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
