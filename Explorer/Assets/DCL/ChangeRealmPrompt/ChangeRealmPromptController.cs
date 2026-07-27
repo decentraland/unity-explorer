@@ -13,6 +13,8 @@ namespace DCL.ChangeRealmPrompt
 
         private const string DEFAULT_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 
+        private const string DEFAULT_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
+
         private readonly ICursor cursor;
         private readonly Action<string, Vector2Int?> changeRealmCallback;
         private Action<ChangeRealmPromptResultType>? resultCallback;
