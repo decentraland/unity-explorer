@@ -134,7 +134,7 @@ namespace Global.Dynamic
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
                 new AnrSimulateChatCommand(),
 
-                // Temporarily disabled (accidentally merged via #9489):
+                // Temporarily disabled (for dev only)
                 // new FloodReactionsChatCommand(currentChannelService),
                 // streamReactionsChatCommand,
 #if UNITY_STANDALONE_WIN
