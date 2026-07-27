@@ -14,6 +14,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.Chat.ChatReactions.Tests
 {
@@ -39,7 +40,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void TearDown()
         {
             bus?.Dispose();
-            UnityEngine.Object.DestroyImmediate(config);
+            Object.DestroyImmediate(config);
         }
 
         [Test]
@@ -181,14 +182,14 @@ namespace DCL.Chat.ChatReactions.Tests
         {
             var payload = new Reaction { EmojiIndex = emojiIndex, Count = count, Timestamp = timestamp };
             pipesHub.Island.Deliver(Packet.MessageOneofCase.Reaction,
-                new ReceivedMessage<Reaction>(payload, new Packet(), fromWallet, multiPool, RoomSource.ISLAND, string.Empty));
+                new ReceivedMessage<Reaction>(payload, new Packet(), fromWallet, multiPool, RoomSource.Island, string.Empty));
         }
 
         private void DeliverChatReaction(string fromWallet, int wireEmojiIndex, string messageId, FakeMessagePipe? pipe = null)
         {
             var payload = new ChatReaction { EmojiIndex = wireEmojiIndex, MessageId = messageId, Address = string.Empty };
             (pipe ?? pipesHub.Island).Deliver(Packet.MessageOneofCase.ChatReaction,
-                new ReceivedMessage<ChatReaction>(payload, new Packet(), fromWallet, multiPool, RoomSource.ISLAND, string.Empty));
+                new ReceivedMessage<ChatReaction>(payload, new Packet(), fromWallet, multiPool, RoomSource.Island, string.Empty));
         }
 
         private sealed class FakeMessagePipesHub : IMessagePipesHub
@@ -214,7 +215,7 @@ namespace DCL.Chat.ChatReactions.Tests
                 throw new NotSupportedException("Receive-only fake");
 
             public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived,
-                IMessagePipe.ThreadStrict threadStrict = IMessagePipe.ThreadStrict.MAIN_THREAD_ONLY) where T: class, IMessage, new() =>
+                IMessagePipe.ThreadStrict threadStrict = IMessagePipe.ThreadStrict.MainThreadOnly) where T: class, IMessage, new() =>
                 handlers[ofCase] = onMessageReceived;
 
             public void Deliver<T>(Packet.MessageOneofCase ofCase, ReceivedMessage<T> message) where T: class, IMessage, new()
