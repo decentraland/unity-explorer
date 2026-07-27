@@ -7,13 +7,22 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 {
     public class CreditPurchaseModalView : ViewBase, IView
     {
+        [field: SerializeField] public RectTransform ContainerTransform { get; private set; } = null!;
+
         [field: Header("Item card")]
+        [field: SerializeField] public GameObject Item { get; private set; } = null!;
         [field: SerializeField] public Image ItemThumbnail { get; private set; } = null!;
         [field: SerializeField] public Image ItemBackground { get; private set; } = null!;
         [field: SerializeField] public Image ItemCategory { get; private set; } = null!;
         [field: SerializeField] public Image ItemCategoryBackground { get; private set; } = null!;
         [field: SerializeField] public TMP_Text ItemName { get; private set; } = null!;
         [field: SerializeField] public TMP_Text RarityLabel { get; private set; } = null!;
+
+        [field: Header("Completed Item card")]
+        [field: SerializeField] public Image ItemThumbnailCompleted { get; private set; } = null!;
+        [field: SerializeField] public Image ItemBackgroundCompleted { get; private set; } = null!;
+        [field: SerializeField] public Image ItemCategoryCompleted { get; private set; } = null!;
+        [field: SerializeField] public Image ItemCategoryBackgroundCompleted { get; private set; } = null!;
 
         [field: Header("Price and balance")]
         [field: SerializeField] public TMP_Text PriceCreditsText { get; private set; } = null!;

@@ -102,9 +102,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             if (viewInstance == null)
                 return;
 
-            await UniTask.WhenAny(
-                viewInstance.CloseButton.OnClickAsync(ct),
-                viewInstance.DoneButton.OnClickAsync(ct));
+            await viewInstance.CloseButton.OnClickAsync(ct);
         }
 
         private void BindPackItems()
@@ -184,8 +182,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             switch (status.Stage)
             {
                 case CreditsTopUpStage.CREDITED:
-                    viewInstance.ResultText.text = string.Format(SUCCESS_TEXT, status.CreditsGranted, status.NewBalance);
-                    viewInstance.BalanceCreditsText.text = string.Format(AVAILABLE_CREDITS_TEXT, status.NewBalance);
+                    viewInstance.BalanceCreditsText.text = status.NewBalance.ToString();
                     break;
                 case CreditsTopUpStage.FAILED:
                     (string reason, bool allowRetry) = MapFailureCopy(status);
@@ -210,9 +207,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
 
             viewInstance.PackSelectionContainer.SetActive(packsVisible);
             viewInstance.WaitingForBrowserContainer.SetActive(newState == ModalState.WAITING_FOR_BROWSER);
-            viewInstance.SuccessContainer.SetActive(newState == ModalState.SUCCESS);
             viewInstance.FailedContainer.SetActive(newState == ModalState.FAILED);
-            viewInstance.DoneButton.gameObject.SetActive(newState is ModalState.SUCCESS or ModalState.PENDING);
 
             foreach (CreditsTopUpPackItemView packItem in viewInstance.PackItems)
                 packItem.BuyButton.interactable = newState == ModalState.PACK_SELECTION;
@@ -237,7 +232,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 UserCreditsResponse credits = await creditsAPIClient.GetUserCreditsAsync(identity.Address, ct);
 
                 if (!ct.IsCancellationRequested && viewInstance != null)
-                    viewInstance.BalanceCreditsText.text = string.Format(AVAILABLE_CREDITS_TEXT, credits.usd.credits.ToString());
+                    viewInstance.BalanceCreditsText.text = credits.usd.credits.ToString();
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
