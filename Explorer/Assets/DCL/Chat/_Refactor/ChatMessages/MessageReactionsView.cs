@@ -57,9 +57,7 @@ namespace DCL.Chat.ChatMessages
 
             reactions.GetAggregateCounts(countsBuffer);
 
-            // Render-boundary clamp: no reaction set — however it was populated —
-            // may instantiate more pills than the hard ceiling.
-            int totalCount = Mathf.Min(countsBuffer.Count, ReactionSet.MAX_DISTINCT_EMOJIS);
+            int totalCount = countsBuffer.Count;
 
             PopulateItems(totalCount, reactions);
             LayoutRows();

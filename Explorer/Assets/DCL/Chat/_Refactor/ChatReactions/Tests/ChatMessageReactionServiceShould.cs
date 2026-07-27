@@ -10,11 +10,10 @@ namespace DCL.Chat.ChatReactions.Tests
     [TestFixture]
     public class ChatMessageReactionServiceShould
     {
-        private string ownWallet = null!;
-        private ChatHistory chatHistory = null!;
-        private FakeReactionBus fakeBus = null!;
-        private IWeb3IdentityCache identityCache = null!;
-        private ChatMessageReactionService service = null!;
+        private string ownWallet;
+        private ChatHistory chatHistory;
+        private FakeReactionBus fakeBus;
+        private ChatMessageReactionService service;
 
         [SetUp]
         public void SetUp()
@@ -31,7 +30,7 @@ namespace DCL.Chat.ChatReactions.Tests
             var identity = new IWeb3Identity.Random();
             ownWallet = identity.Address;
 
-            identityCache = new IWeb3IdentityCache.Fake(identity);
+            var identityCache = new IWeb3IdentityCache.Fake(identity);
 
             service = new ChatMessageReactionService(fakeBus, chatHistory, identityCache);
         }
@@ -39,7 +38,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [TearDown]
         public void TearDown()
         {
-            service.Dispose();
+            service?.Dispose();
             OfficialWalletsHelper.Reset();
             FeatureFlagsConfiguration.Reset();
         }
@@ -277,107 +276,11 @@ namespace DCL.Chat.ChatReactions.Tests
             Assert.That(reactions!.HasReacted(0, ownWallet), Is.True);
         }
 
-        // ── Remote flood hardening ───────────────────────────────
-
-        [Test]
-        public void CapRemoteDistinctReactionsAtProductLimit()
-        {
-            // Arrange
-            service.Dispose();
-            service = new ChatMessageReactionService(fakeBus, chatHistory, identityCache, maxDistinctReactionsPerMessage: 3);
-
-            ChatChannel channel = chatHistory.AddOrGetChannel(
-                new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
-
-            ChatMessage msg = CreateMessage("walletA", 1000);
-            channel.AddMessage(msg);
-
-            // Act — a remote sender floods 10 distinct emojis onto one message
-            for (int emoji = 0; emoji < 10; emoji++)
-                service.HandleRemoteReaction(RemoteAdd("0xattacker", emoji, msg.MessageId));
-
-            // Assert
-            ReactionSet? reactions = channel.GetReactions(msg.MessageId);
-            Assert.That(reactions, Is.Not.Null);
-            Assert.That(reactions!.DistinctEmojiCount, Is.EqualTo(3));
-        }
-
-        [Test]
-        public void AllowRemoteReactionOnExistingEmojiWhenProductLimitReached()
-        {
-            // Arrange
-            service.Dispose();
-            service = new ChatMessageReactionService(fakeBus, chatHistory, identityCache, maxDistinctReactionsPerMessage: 3);
-
-            ChatChannel channel = chatHistory.AddOrGetChannel(
-                new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
-
-            ChatMessage msg = CreateMessage("walletA", 1000);
-            channel.AddMessage(msg);
-
-            for (int emoji = 0; emoji < 3; emoji++)
-                service.HandleRemoteReaction(RemoteAdd("0xfirst", emoji, msg.MessageId));
-
-            // Act — another wallet piles onto an already-present emoji
-            service.HandleRemoteReaction(RemoteAdd("0xsecond", 0, msg.MessageId));
-
-            // Assert
-            ReactionSet reactions = channel.GetReactions(msg.MessageId)!;
-            Assert.That(reactions.DistinctEmojiCount, Is.EqualTo(3));
-            Assert.That(reactions.GetReactors(0)!.Count, Is.EqualTo(2));
-        }
-
-        [Test]
-        public void ProcessRemoteRemovalWhenProductLimitReached()
-        {
-            // Arrange
-            service.Dispose();
-            service = new ChatMessageReactionService(fakeBus, chatHistory, identityCache, maxDistinctReactionsPerMessage: 3);
-
-            ChatChannel channel = chatHistory.AddOrGetChannel(
-                new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
-
-            ChatMessage msg = CreateMessage("walletA", 1000);
-            channel.AddMessage(msg);
-
-            for (int emoji = 0; emoji < 3; emoji++)
-                service.HandleRemoteReaction(RemoteAdd("0xfirst", emoji, msg.MessageId));
-
-            // Act
-            service.HandleRemoteReaction(new ReactionReceivedArgs(
-                "0xfirst", 2, 1, ReactionType.Message, msg.MessageId, isRemoval: true));
-
-            // Assert
-            Assert.That(channel.GetReactions(msg.MessageId)!.DistinctEmojiCount, Is.EqualTo(2));
-        }
-
-        [Test]
-        public void CapRemoteDistinctReactionsAtHardCeilingWhenProductLimitDisabled()
-        {
-            // Arrange — default service has maxDistinctReactionsPerMessage = 0 (unlimited)
-            ChatChannel channel = chatHistory.AddOrGetChannel(
-                new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
-
-            ChatMessage msg = CreateMessage("walletA", 1000);
-            channel.AddMessage(msg);
-
-            // Act — flood far beyond the hard ceiling
-            for (int emoji = 0; emoji < 100; emoji++)
-                service.HandleRemoteReaction(RemoteAdd("0xattacker", emoji, msg.MessageId));
-
-            // Assert
-            ReactionSet? reactions = channel.GetReactions(msg.MessageId);
-            Assert.That(reactions, Is.Not.Null);
-            Assert.That(reactions!.DistinctEmojiCount, Is.EqualTo(ReactionSet.MAX_DISTINCT_EMOJIS));
-        }
-
         // ── Test helpers ─────────────────────────────────────────
 
         private static ChatMessage CreateMessage(string walletAddress, double timestamp) =>
             new ("hello", "User", walletAddress, false, walletAddress, timestamp);
 
-        private static ReactionReceivedArgs RemoteAdd(string wallet, int emojiIndex, string messageId) =>
-            new (wallet, emojiIndex, 1, ReactionType.Message, messageId);
     }
 }
 

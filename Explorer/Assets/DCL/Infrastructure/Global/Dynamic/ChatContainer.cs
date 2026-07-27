@@ -52,8 +52,6 @@ namespace Global.Dynamic
 
         public ReloadSceneChatCommand ReloadSceneChatCommand { get; }
 
-        public StreamReactionsChatCommand StreamReactionsChatCommand { get; }
-
         public PlayerPrefsTranslationSettings TranslationSettings { get; }
 
         private ChatContainer(
@@ -65,7 +63,6 @@ namespace Global.Dynamic
             CurrentChannelService currentChannelService,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ReloadSceneChatCommand reloadSceneChatCommand,
-            StreamReactionsChatCommand streamReactionsChatCommand,
             PlayerPrefsTranslationSettings translationSettings)
         {
             ChatHistory = chatHistory;
@@ -76,7 +73,6 @@ namespace Global.Dynamic
             CurrentChannelService = currentChannelService;
             ChatSharedAreaEventBus = chatSharedAreaEventBus;
             ReloadSceneChatCommand = reloadSceneChatCommand;
-            StreamReactionsChatCommand = streamReactionsChatCommand;
             TranslationSettings = translationSettings;
         }
 
@@ -111,10 +107,6 @@ namespace Global.Dynamic
 
             var currentChannelService = new CurrentChannelService();
 
-            // Reactions live in ChatPlugin, built after this container; the plugin attaches the real
-            // stream control to this command once the reactions feature exists (see CreatePlugin).
-            var streamReactionsChatCommand = new StreamReactionsChatCommand();
-
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -133,8 +125,6 @@ namespace Global.Dynamic
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
                 new AnrSimulateChatCommand(),
-                new FloodReactionsChatCommand(currentChannelService),
-                streamReactionsChatCommand,
 #if UNITY_STANDALONE_WIN
                 new AnrDumpChatCommand(),
 #endif
@@ -163,7 +153,6 @@ namespace Global.Dynamic
                 currentChannelService,
                 new ChatSharedAreaEventBus(),
                 reloadSceneChatCommand,
-                streamReactionsChatCommand,
                 new PlayerPrefsTranslationSettings());
         }
 
@@ -225,7 +214,6 @@ namespace Global.Dynamic
                 commsContainer.MessagePipesHub,
                 bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
-                StreamReactionsChatCommand,
                 CurrentChannelService);
 
         public void Dispose()

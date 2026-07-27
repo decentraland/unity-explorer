@@ -63,8 +63,6 @@ namespace DCL.Chat.ChatMessages
         // especially if the state machine grows further
         private bool isFocused;
 
-        private bool reactionRefreshScheduled;
-
         private bool separatorIsVisible => separatorFixedIndexFromBottom > -1;
 
         public ChatMessageFeedPresenter(ChatMessageFeedView view,
@@ -572,29 +570,7 @@ namespace DCL.Chat.ChatMessages
 
             viewModel.Reactions = currentChannelService.CurrentChannel.GetReactions(messageId);
             reactionInteraction.HideTooltip();
-            ScheduleReactionRefresh();
-        }
-
-        // Reactions arrive one event per add/remove, so a burst would trigger a full
-        // scroll-view reconstruction per event — quadratic work. All reaction changes
-        // within a frame coalesce into a single rebuild on the next frame.
-        private void ScheduleReactionRefresh()
-        {
-            if (reactionRefreshScheduled) return;
-
-            reactionRefreshScheduled = true;
-            RefreshNextFrameAsync(loadChannelCts.Token).Forget();
-
-            async UniTaskVoid RefreshNextFrameAsync(CancellationToken ct)
-            {
-                bool cancelled = await UniTask.NextFrame(ct).SuppressCancellationThrow();
-                reactionRefreshScheduled = false;
-
-                if (cancelled) return;
-
-                try { view.ReconstructScrollView(false); }
-                catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
-            }
+            view.ReconstructScrollView(false);
         }
 
         private void OnRequestScrollAction()

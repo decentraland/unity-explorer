@@ -200,17 +200,6 @@ namespace DCL.Chat.ChatReactions.Networking
             }
             else
             {
-                // Mirror the send-path limit: compliant clients never send a new distinct emoji
-                // beyond it, so anything that arrives past the cap is history drift or a flood.
-                // ReactionSet.MAX_DISTINCT_EMOJIS additionally bounds the set inside AddReaction.
-                if (IsNewEmojiAndLimitReached(channel.GetReactions(localMessageId), args.EmojiIndex))
-                {
-                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES,
-                        $"[ChatMessageReactionService] Dropped remote reaction beyond distinct limit: emoji={args.EmojiIndex} sender={args.WalletId}");
-
-                    return;
-                }
-
                 channel.AddReaction(localMessageId, args.EmojiIndex, args.WalletId);
                 ReactionPersistenceRequested?.Invoke(channel.Id, localMessageId, args.EmojiIndex, args.WalletId, false);
             }

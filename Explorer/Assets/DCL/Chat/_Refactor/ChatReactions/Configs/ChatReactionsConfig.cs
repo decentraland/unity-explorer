@@ -81,35 +81,6 @@ namespace DCL.Chat.ChatReactions.Configs
         [Range(0, 256)]
         public int MaxPerAvatarQueued = 64;
 
-        [Header("NETWORK RECEIVE LIMITS (SECURITY)")]
-        [Note("Hard cap on the reaction count a single situational packet can claim on receive. " +
-              "Self-contained and independent of any send-side config. Shared by the message bus " +
-              "intake clamp and the situational target's per-packet clamp.")]
-        [Range(1, 256)]
-        public int SituationalReceiveCountCap = 50;
-
-        [Note("Per-sender sustained budget (packets/sec) for chat (per-message) reactions on receive.")]
-        [Range(1f, 60f)]
-        public float ChatReactionReceiveRatePerSecond = 4f;
-
-        [Note("Per-sender burst allowance for chat reactions on receive.")]
-        [Range(1f, 120f)]
-        public float ChatReactionReceiveBurst = 8f;
-
-        [Note("Per-sender sustained budget (packets/sec) for situational reactions on receive.")]
-        [Range(1f, 120f)]
-        public float SituationalReceiveRatePerSecond = 20f;
-
-        [Note("Per-sender burst allowance for situational reactions on receive.")]
-        [Range(1f, 240f)]
-        public float SituationalReceiveBurst = 20f;
-
-        [Note("Max distinct senders tracked by the per-sender receive rate limiter; bounds the " +
-              "limiter's own memory under spoofed-address floods (excess senders fail closed " +
-              "until slots free).")]
-        [Range(16, 4096)]
-        public int MaxRateTrackedSenders = 256;
-
         [Header("DYNAMIC SCALING")]
         [Note("Master toggle for pool-pressure-based per-avatar cap scaling. " +
               "When disabled, static MaxParticlesPerAvatar is used unchanged.")]
