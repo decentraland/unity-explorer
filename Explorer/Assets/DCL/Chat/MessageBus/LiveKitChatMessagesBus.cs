@@ -57,7 +57,7 @@ namespace DCL.Chat.MessageBus
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
 
-            isChatMessageRateLimiterEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_MESSAGE_RATE_LIMIT);
+            isChatMessageRateLimiterEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ChatMessageRateLimit);
 
             if (isChatMessageRateLimiterEnabled)
             {
@@ -65,7 +65,7 @@ namespace DCL.Chat.MessageBus
                 messageRateLimiter.LoadConfigurationFromFeatureFlag();
             }
 
-            isNearbyChannelBufferEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_MESSAGE_BUFFER);
+            isNearbyChannelBufferEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ChatMessageBuffer);
 
             if (isNearbyChannelBufferEnabled)
             {
@@ -74,7 +74,7 @@ namespace DCL.Chat.MessageBus
                 roomHub.IslandRoom().ConnectionUpdated += OnIslandConnectionUpdated;
             }
 
-            isPrivateChatRequiresTopicEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC);
+            isPrivateChatRequiresTopicEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PrivateChatRequiresTopic);
 
             identityCache.OnIdentityCleared += OnIdentityCleared;
 

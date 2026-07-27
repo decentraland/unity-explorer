@@ -8,7 +8,7 @@ namespace DCL.VoiceChat.UI
     {
         private UniTaskCompletionSource? closeViewTask;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public NearbyVoicePanelController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 

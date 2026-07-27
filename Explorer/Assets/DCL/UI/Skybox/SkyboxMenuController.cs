@@ -18,7 +18,7 @@ namespace DCL.UI.Skybox
         private bool? pendingInteractableState;
         private bool isRestrictedByScene;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public SkyboxMenuController(ViewFactoryMethod viewFactory, SkyboxSettingsAsset skyboxSettings, ISceneRestrictionBusController sceneRestrictionBusController) : base(viewFactory)
         {
@@ -117,9 +117,9 @@ namespace DCL.UI.Skybox
 
         private void OnSceneRestrictionChanged(SceneRestriction restriction)
         {
-            if (restriction.Type != SceneRestrictions.SKYBOX_TIME_UI_BLOCKED) return;
+            if (restriction.Type != SceneRestrictions.SkyboxTimeUiBlocked) return;
 
-            isRestrictedByScene = restriction.Action == SceneRestrictionsAction.APPLIED;
+            isRestrictedByScene = restriction.Action == SceneRestrictionsAction.Applied;
             SetInteractable(!isRestrictedByScene);
         }
 

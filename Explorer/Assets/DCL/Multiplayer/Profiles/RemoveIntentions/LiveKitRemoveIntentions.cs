@@ -30,22 +30,22 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         // TODO how to remove boiler-plate methods and preserve RoomSource?
         private void OnConnectionUpdateFromIsland(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
-            OnConnectionUpdated(room, connectionUpdate, RoomSource.ISLAND);
+            OnConnectionUpdated(room, connectionUpdate, RoomSource.Island);
         }
 
         private void OnConnectionUpdateFromScene(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
-            OnConnectionUpdated(room, connectionUpdate, RoomSource.GATEKEEPER);
+            OnConnectionUpdated(room, connectionUpdate, RoomSource.Gatekeeper);
         }
 
         private void OnParticipantUpdateFromIsland(LKParticipant participant, UpdateFromParticipant update)
         {
-            ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.ISLAND);
+            ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.Island);
         }
 
         private void OnParticipantUpdateFromScene(LKParticipant participant, UpdateFromParticipant update)
         {
-            ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.GATEKEEPER);
+            ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.Gatekeeper);
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, RoomSource roomSource)

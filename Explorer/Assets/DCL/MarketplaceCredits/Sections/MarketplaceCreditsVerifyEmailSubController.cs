@@ -84,7 +84,7 @@ namespace DCL.MarketplaceCredits.Sections
                             continue;
 
                         await marketplaceCreditsAPIClient.MarkUserAsStartedProgramAsync(ct);
-                        marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WELCOME);
+                        marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.Welcome);
                         break;
                     }
                 }
@@ -115,7 +115,7 @@ namespace DCL.MarketplaceCredits.Sections
                 {
                     // Removes email subscription
                     await marketplaceCreditsAPIClient.SubscribeEmailAsync(string.Empty, ct);
-                    marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WELCOME);
+                    marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.Welcome);
                 }
             }
             catch (OperationCanceledException) { }

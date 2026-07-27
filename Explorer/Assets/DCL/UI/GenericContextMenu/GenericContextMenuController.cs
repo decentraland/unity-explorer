@@ -36,7 +36,7 @@ namespace DCL.UI
 
         private const float SEVERE_BOUNDARY_VIOLATION_THRESHOLD = 0.4f;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ControlsPoolManager controlsPoolManager;
         private NativeArray<float3> worldRectCorners;
@@ -316,17 +316,17 @@ namespace DCL.UI
         {
             return direction switch
                    {
-                       ContextMenuOpenDirection.BOTTOM_RIGHT => offsetFromTarget,
-                       ContextMenuOpenDirection.BOTTOM_LEFT => new Vector2(-offsetFromTarget.x, offsetFromTarget.y),
-                       ContextMenuOpenDirection.TOP_RIGHT => new Vector2(offsetFromTarget.x, -offsetFromTarget.y),
-                       ContextMenuOpenDirection.TOP_LEFT => new Vector2(-offsetFromTarget.x, -offsetFromTarget.y),
-                       ContextMenuOpenDirection.CENTER_RIGHT => new Vector2(offsetFromTarget.x, 0),
-                       ContextMenuOpenDirection.CENTER_LEFT => new Vector2(-offsetFromTarget.x, 0),
+                       ContextMenuOpenDirection.BottomRight => offsetFromTarget,
+                       ContextMenuOpenDirection.BottomLeft => new Vector2(-offsetFromTarget.x, offsetFromTarget.y),
+                       ContextMenuOpenDirection.TopRight => new Vector2(offsetFromTarget.x, -offsetFromTarget.y),
+                       ContextMenuOpenDirection.TopLeft => new Vector2(-offsetFromTarget.x, -offsetFromTarget.y),
+                       ContextMenuOpenDirection.CenterRight => new Vector2(offsetFromTarget.x, 0),
+                       ContextMenuOpenDirection.CenterLeft => new Vector2(-offsetFromTarget.x, 0),
                        _ => Vector2.zero,
                    };
         }
 
-        private Vector3 GetControlsPosition(ControlsContainerView container, Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect, ContextMenuOpenDirection initialDirection = ContextMenuOpenDirection.TOP_LEFT, bool exactPosition = false)
+        private Vector3 GetControlsPosition(ControlsContainerView container, Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect, ContextMenuOpenDirection initialDirection = ContextMenuOpenDirection.TopLeft, bool exactPosition = false)
         {
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
             var float3Position = new float3(position.x, position.y, position.z);
@@ -465,14 +465,14 @@ namespace DCL.UI
         {
             ContextMenuOpenDirection smartDirection = initialDirection;
 
-            if (initialHorizontal == HorizontalPosition.RIGHT && outOfBoundsOnRight)
+            if (initialHorizontal == HorizontalPosition.Right && outOfBoundsOnRight)
                 smartDirection = GetOppositeHorizontalDirection(initialDirection);
-            else if (initialHorizontal == HorizontalPosition.LEFT && outOfBoundsOnLeft)
+            else if (initialHorizontal == HorizontalPosition.Left && outOfBoundsOnLeft)
                 smartDirection = GetOppositeHorizontalDirection(initialDirection);
 
-            if (initialVertical == VerticalPosition.TOP && outOfBoundsOnTop)
+            if (initialVertical == VerticalPosition.Top && outOfBoundsOnTop)
                 smartDirection = GetOppositeVerticalDirection(smartDirection);
-            else if (initialVertical == VerticalPosition.BOTTOM && outOfBoundsOnBottom)
+            else if (initialVertical == VerticalPosition.Bottom && outOfBoundsOnBottom)
                 smartDirection = GetOppositeVerticalDirection(smartDirection);
 
             return smartDirection;
@@ -553,11 +553,11 @@ namespace DCL.UI
             bool avoidRight = outOfBoundsPercentRight > 0;
             bool avoidLeft = outOfBoundsPercentLeft > 0;
 
-            if ((initialVertical == VerticalPosition.TOP && !avoidTop) ||
-                (initialVertical == VerticalPosition.BOTTOM && !avoidBottom) ||
-                initialVertical == VerticalPosition.CENTER ||
-                (initialHorizontal == HorizontalPosition.LEFT && !avoidLeft) ||
-                (initialHorizontal == HorizontalPosition.RIGHT && !avoidRight))
+            if ((initialVertical == VerticalPosition.Top && !avoidTop) ||
+                (initialVertical == VerticalPosition.Bottom && !avoidBottom) ||
+                initialVertical == VerticalPosition.Center ||
+                (initialHorizontal == HorizontalPosition.Left && !avoidLeft) ||
+                (initialHorizontal == HorizontalPosition.Right && !avoidRight))
                 AddToFallbackDirections(initialDirection);
 
             ProcessTopBoundaryViolation(
@@ -599,42 +599,42 @@ namespace DCL.UI
         {
             if (outOfBoundsPercentTop <= outOfBoundsPercentBottom || outOfBoundsPercentTop <= 0) return;
 
-            if (initialHorizontal == HorizontalPosition.LEFT)
+            if (initialHorizontal == HorizontalPosition.Left)
             {
-                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+                AddToFallbackDirections(ContextMenuOpenDirection.BottomLeft);
 
                 if (!skipCenter && !avoidBottom)
-                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.CenterLeft);
 
                 if (!avoidRight)
                 {
-                    AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.BottomRight);
 
                     if (!skipCenter && !avoidBottom)
-                        AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+                        AddToFallbackDirections(ContextMenuOpenDirection.CenterRight);
                 }
             }
             else
             {
-                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                AddToFallbackDirections(ContextMenuOpenDirection.BottomRight);
 
                 if (!skipCenter && !avoidBottom)
-                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.CenterRight);
 
                 if (!avoidLeft)
                 {
-                    AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.BottomLeft);
 
                     if (!skipCenter && !avoidBottom)
-                        AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+                        AddToFallbackDirections(ContextMenuOpenDirection.CenterLeft);
                 }
             }
 
-            if (!ContainsDirection(ContextMenuOpenDirection.TOP_LEFT) && !avoidLeft)
-                AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+            if (!ContainsDirection(ContextMenuOpenDirection.TopLeft) && !avoidLeft)
+                AddToFallbackDirections(ContextMenuOpenDirection.TopLeft);
 
-            if (!ContainsDirection(ContextMenuOpenDirection.TOP_RIGHT) && !avoidRight)
-                AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+            if (!ContainsDirection(ContextMenuOpenDirection.TopRight) && !avoidRight)
+                AddToFallbackDirections(ContextMenuOpenDirection.TopRight);
         }
 
         private void ProcessBottomBoundaryViolation(
@@ -647,57 +647,57 @@ namespace DCL.UI
         {
             if (outOfBoundsPercentBottom <= 0) return;
 
-            if (initialHorizontal == HorizontalPosition.LEFT)
+            if (initialHorizontal == HorizontalPosition.Left)
             {
-                AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+                AddToFallbackDirections(ContextMenuOpenDirection.TopLeft);
 
                 if (!skipCenter && !avoidTop)
-                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.CenterLeft);
 
                 if (!avoidRight)
                 {
-                    AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.TopRight);
 
                     if (!skipCenter && !avoidTop)
-                        AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+                        AddToFallbackDirections(ContextMenuOpenDirection.CenterRight);
                 }
             }
             else
             {
-                AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+                AddToFallbackDirections(ContextMenuOpenDirection.TopRight);
 
                 if (!skipCenter && !avoidTop)
-                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.CenterRight);
 
                 if (!avoidLeft)
                 {
-                    AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+                    AddToFallbackDirections(ContextMenuOpenDirection.TopLeft);
 
                     if (!skipCenter && !avoidTop)
-                        AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+                        AddToFallbackDirections(ContextMenuOpenDirection.CenterLeft);
                 }
             }
 
-            if (!ContainsDirection(ContextMenuOpenDirection.BOTTOM_LEFT) && !avoidLeft)
-                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+            if (!ContainsDirection(ContextMenuOpenDirection.BottomLeft) && !avoidLeft)
+                AddToFallbackDirections(ContextMenuOpenDirection.BottomLeft);
 
-            if (!ContainsDirection(ContextMenuOpenDirection.BOTTOM_RIGHT) && !avoidRight)
-                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+            if (!ContainsDirection(ContextMenuOpenDirection.BottomRight) && !avoidRight)
+                AddToFallbackDirections(ContextMenuOpenDirection.BottomRight);
         }
 
         private void ProcessHorizontalBoundaryViolation(bool avoidLeft, bool avoidRight)
         {
             if (avoidLeft)
             {
-                AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
-                AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
-                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                AddToFallbackDirections(ContextMenuOpenDirection.TopRight);
+                AddToFallbackDirections(ContextMenuOpenDirection.CenterRight);
+                AddToFallbackDirections(ContextMenuOpenDirection.BottomRight);
             }
             else if (avoidRight)
             {
-                AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
-                AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
-                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+                AddToFallbackDirections(ContextMenuOpenDirection.TopLeft);
+                AddToFallbackDirections(ContextMenuOpenDirection.CenterLeft);
+                AddToFallbackDirections(ContextMenuOpenDirection.BottomLeft);
             }
         }
 
@@ -709,35 +709,35 @@ namespace DCL.UI
         {
             if (outOfBoundsPercentTop > 0 || outOfBoundsPercentBottom > 0) return;
 
-            if (initialHorizontal == HorizontalPosition.LEFT)
+            if (initialHorizontal == HorizontalPosition.Left)
             {
-                if (initialVertical != VerticalPosition.TOP && !ContainsDirection(ContextMenuOpenDirection.TOP_LEFT))
-                    AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
+                if (initialVertical != VerticalPosition.Top && !ContainsDirection(ContextMenuOpenDirection.TopLeft))
+                    AddToFallbackDirections(ContextMenuOpenDirection.TopLeft);
 
-                if (initialVertical != VerticalPosition.CENTER && !ContainsDirection(ContextMenuOpenDirection.CENTER_LEFT))
-                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
+                if (initialVertical != VerticalPosition.Center && !ContainsDirection(ContextMenuOpenDirection.CenterLeft))
+                    AddToFallbackDirections(ContextMenuOpenDirection.CenterLeft);
 
-                if (initialVertical != VerticalPosition.BOTTOM && !ContainsDirection(ContextMenuOpenDirection.BOTTOM_LEFT))
-                    AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+                if (initialVertical != VerticalPosition.Bottom && !ContainsDirection(ContextMenuOpenDirection.BottomLeft))
+                    AddToFallbackDirections(ContextMenuOpenDirection.BottomLeft);
 
-                AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
-                AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
-                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                AddToFallbackDirections(ContextMenuOpenDirection.TopRight);
+                AddToFallbackDirections(ContextMenuOpenDirection.CenterRight);
+                AddToFallbackDirections(ContextMenuOpenDirection.BottomRight);
             }
             else
             {
-                if (initialVertical != VerticalPosition.TOP && !ContainsDirection(ContextMenuOpenDirection.TOP_RIGHT))
-                    AddToFallbackDirections(ContextMenuOpenDirection.TOP_RIGHT);
+                if (initialVertical != VerticalPosition.Top && !ContainsDirection(ContextMenuOpenDirection.TopRight))
+                    AddToFallbackDirections(ContextMenuOpenDirection.TopRight);
 
-                if (initialVertical != VerticalPosition.CENTER && !ContainsDirection(ContextMenuOpenDirection.CENTER_RIGHT))
-                    AddToFallbackDirections(ContextMenuOpenDirection.CENTER_RIGHT);
+                if (initialVertical != VerticalPosition.Center && !ContainsDirection(ContextMenuOpenDirection.CenterRight))
+                    AddToFallbackDirections(ContextMenuOpenDirection.CenterRight);
 
-                if (initialVertical != VerticalPosition.BOTTOM && !ContainsDirection(ContextMenuOpenDirection.BOTTOM_RIGHT))
-                    AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_RIGHT);
+                if (initialVertical != VerticalPosition.Bottom && !ContainsDirection(ContextMenuOpenDirection.BottomRight))
+                    AddToFallbackDirections(ContextMenuOpenDirection.BottomRight);
 
-                AddToFallbackDirections(ContextMenuOpenDirection.TOP_LEFT);
-                AddToFallbackDirections(ContextMenuOpenDirection.CENTER_LEFT);
-                AddToFallbackDirections(ContextMenuOpenDirection.BOTTOM_LEFT);
+                AddToFallbackDirections(ContextMenuOpenDirection.TopLeft);
+                AddToFallbackDirections(ContextMenuOpenDirection.CenterLeft);
+                AddToFallbackDirections(ContextMenuOpenDirection.BottomLeft);
             }
         }
 
@@ -759,15 +759,15 @@ namespace DCL.UI
 
         private enum HorizontalPosition
         {
-            LEFT,
-            RIGHT,
+            Left,
+            Right,
         }
 
         private enum VerticalPosition
         {
-            TOP,
-            CENTER,
-            BOTTOM,
+            Top,
+            Center,
+            Bottom,
         }
 
         [BurstCompile]
@@ -775,18 +775,18 @@ namespace DCL.UI
         {
             switch (direction)
             {
-                case ContextMenuOpenDirection.TOP_LEFT:
-                case ContextMenuOpenDirection.CENTER_LEFT:
-                case ContextMenuOpenDirection.BOTTOM_LEFT:
-                    return HorizontalPosition.LEFT;
+                case ContextMenuOpenDirection.TopLeft:
+                case ContextMenuOpenDirection.CenterLeft:
+                case ContextMenuOpenDirection.BottomLeft:
+                    return HorizontalPosition.Left;
 
-                case ContextMenuOpenDirection.TOP_RIGHT:
-                case ContextMenuOpenDirection.CENTER_RIGHT:
-                case ContextMenuOpenDirection.BOTTOM_RIGHT:
-                    return HorizontalPosition.RIGHT;
+                case ContextMenuOpenDirection.TopRight:
+                case ContextMenuOpenDirection.CenterRight:
+                case ContextMenuOpenDirection.BottomRight:
+                    return HorizontalPosition.Right;
 
                 default:
-                    return HorizontalPosition.RIGHT;
+                    return HorizontalPosition.Right;
             }
         }
 
@@ -795,20 +795,20 @@ namespace DCL.UI
         {
             switch (direction)
             {
-                case ContextMenuOpenDirection.TOP_LEFT:
-                case ContextMenuOpenDirection.TOP_RIGHT:
-                    return VerticalPosition.TOP;
+                case ContextMenuOpenDirection.TopLeft:
+                case ContextMenuOpenDirection.TopRight:
+                    return VerticalPosition.Top;
 
-                case ContextMenuOpenDirection.CENTER_LEFT:
-                case ContextMenuOpenDirection.CENTER_RIGHT:
-                    return VerticalPosition.CENTER;
+                case ContextMenuOpenDirection.CenterLeft:
+                case ContextMenuOpenDirection.CenterRight:
+                    return VerticalPosition.Center;
 
-                case ContextMenuOpenDirection.BOTTOM_LEFT:
-                case ContextMenuOpenDirection.BOTTOM_RIGHT:
-                    return VerticalPosition.BOTTOM;
+                case ContextMenuOpenDirection.BottomLeft:
+                case ContextMenuOpenDirection.BottomRight:
+                    return VerticalPosition.Bottom;
 
                 default:
-                    return VerticalPosition.BOTTOM;
+                    return VerticalPosition.Bottom;
             }
         }
 
@@ -821,30 +821,30 @@ namespace DCL.UI
 
             switch (direction)
             {
-                case ContextMenuOpenDirection.TOP_LEFT:
-                case ContextMenuOpenDirection.BOTTOM_LEFT:
-                case ContextMenuOpenDirection.CENTER_LEFT:
+                case ContextMenuOpenDirection.TopLeft:
+                case ContextMenuOpenDirection.BottomLeft:
+                case ContextMenuOpenDirection.CenterLeft:
                     result.x -= halfWidth;
                     break;
-                case ContextMenuOpenDirection.TOP_RIGHT:
-                case ContextMenuOpenDirection.BOTTOM_RIGHT:
-                case ContextMenuOpenDirection.CENTER_RIGHT:
+                case ContextMenuOpenDirection.TopRight:
+                case ContextMenuOpenDirection.BottomRight:
+                case ContextMenuOpenDirection.CenterRight:
                     result.x += halfWidth;
                     break;
             }
 
             switch (direction)
             {
-                case ContextMenuOpenDirection.TOP_LEFT:
-                case ContextMenuOpenDirection.TOP_RIGHT:
+                case ContextMenuOpenDirection.TopLeft:
+                case ContextMenuOpenDirection.TopRight:
                     result.y += halfHeight;
                     break;
-                case ContextMenuOpenDirection.BOTTOM_LEFT:
-                case ContextMenuOpenDirection.BOTTOM_RIGHT:
+                case ContextMenuOpenDirection.BottomLeft:
+                case ContextMenuOpenDirection.BottomRight:
                     result.y -= halfHeight;
                     break;
-                case ContextMenuOpenDirection.CENTER_LEFT:
-                case ContextMenuOpenDirection.CENTER_RIGHT:
+                case ContextMenuOpenDirection.CenterLeft:
+                case ContextMenuOpenDirection.CenterRight:
                     break;
             }
 
@@ -896,12 +896,12 @@ namespace DCL.UI
         {
             return direction switch
                    {
-                       ContextMenuOpenDirection.TOP_LEFT => ContextMenuOpenDirection.TOP_RIGHT,
-                       ContextMenuOpenDirection.CENTER_LEFT => ContextMenuOpenDirection.CENTER_RIGHT,
-                       ContextMenuOpenDirection.BOTTOM_LEFT => ContextMenuOpenDirection.BOTTOM_RIGHT,
-                       ContextMenuOpenDirection.TOP_RIGHT => ContextMenuOpenDirection.TOP_LEFT,
-                       ContextMenuOpenDirection.CENTER_RIGHT => ContextMenuOpenDirection.CENTER_LEFT,
-                       ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.BOTTOM_LEFT,
+                       ContextMenuOpenDirection.TopLeft => ContextMenuOpenDirection.TopRight,
+                       ContextMenuOpenDirection.CenterLeft => ContextMenuOpenDirection.CenterRight,
+                       ContextMenuOpenDirection.BottomLeft => ContextMenuOpenDirection.BottomRight,
+                       ContextMenuOpenDirection.TopRight => ContextMenuOpenDirection.TopLeft,
+                       ContextMenuOpenDirection.CenterRight => ContextMenuOpenDirection.CenterLeft,
+                       ContextMenuOpenDirection.BottomRight => ContextMenuOpenDirection.BottomLeft,
                        _ => direction,
                    };
         }
@@ -911,10 +911,10 @@ namespace DCL.UI
         {
             return direction switch
                    {
-                       ContextMenuOpenDirection.TOP_LEFT => ContextMenuOpenDirection.BOTTOM_LEFT,
-                       ContextMenuOpenDirection.TOP_RIGHT => ContextMenuOpenDirection.BOTTOM_RIGHT,
-                       ContextMenuOpenDirection.BOTTOM_LEFT => ContextMenuOpenDirection.TOP_LEFT,
-                       ContextMenuOpenDirection.BOTTOM_RIGHT => ContextMenuOpenDirection.TOP_RIGHT,
+                       ContextMenuOpenDirection.TopLeft => ContextMenuOpenDirection.BottomLeft,
+                       ContextMenuOpenDirection.TopRight => ContextMenuOpenDirection.BottomRight,
+                       ContextMenuOpenDirection.BottomLeft => ContextMenuOpenDirection.TopLeft,
+                       ContextMenuOpenDirection.BottomRight => ContextMenuOpenDirection.TopRight,
                        _ => direction,
                    };
         }

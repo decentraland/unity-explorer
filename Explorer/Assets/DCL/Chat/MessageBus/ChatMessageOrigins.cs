@@ -4,12 +4,12 @@ namespace DCL.Chat.MessageBus
 {
     public enum ChatMessageOrigin
     {
-        CHAT,
-        DEBUG_PANEL,
-        RESTRICTED_ACTION_API,
-        MINIMAP,
-        JUMP_IN,
-        TELEPORT_PROMPT,
+        Chat,
+        DebugPanel,
+        RestrictedActionApi,
+        Minimap,
+        JumpIn,
+        TeleportPrompt,
     }
 
     public static class ChatMessageOriginExtensions
@@ -18,12 +18,12 @@ namespace DCL.Chat.MessageBus
         {
             return origin switch
                    {
-                       ChatMessageOrigin.CHAT => "chat",
-                       ChatMessageOrigin.DEBUG_PANEL => "debug panel",
-                       ChatMessageOrigin.RESTRICTED_ACTION_API => "RestrictedActionAPI",
-                       ChatMessageOrigin.MINIMAP => "minimap",
-                       ChatMessageOrigin.JUMP_IN => "jump in",
-                       ChatMessageOrigin.TELEPORT_PROMPT => "teleport prompt",
+                       ChatMessageOrigin.Chat => "chat",
+                       ChatMessageOrigin.DebugPanel => "debug panel",
+                       ChatMessageOrigin.RestrictedActionApi => "RestrictedActionAPI",
+                       ChatMessageOrigin.Minimap => "minimap",
+                       ChatMessageOrigin.JumpIn => "jump in",
+                       ChatMessageOrigin.TeleportPrompt => "teleport prompt",
                        _ => throw new ArgumentOutOfRangeException(nameof(origin), origin, null),
                    };
         }

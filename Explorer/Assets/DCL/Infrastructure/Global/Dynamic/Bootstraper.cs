@@ -122,6 +122,7 @@ namespace Global.Dynamic
                 bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
+                bootstrapContainer.UseLocalAssetBundles,
                 world,
                 playerEntity,
                 memoryCap,
@@ -226,7 +227,7 @@ namespace Global.Dynamic
 
             // Gate the v49 deps-digest cache-keying scheme behind the feature flag. Off by default means every
             // manifest reports SupportsDepsDigests() == false and the entire pipeline takes the legacy code path.
-            AssetBundleManifestVersion.DepsDigestKeyingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.AB_DEPS_DIGEST_CACHE_KEY);
+            AssetBundleManifestVersion.DepsDigestKeyingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ABDepsDigestCacheKey);
         }
 
         public GlobalWorld CreateGlobalWorld(

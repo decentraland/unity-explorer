@@ -31,14 +31,14 @@ namespace DCL.Settings.ModuleControllers
         {
             switch (index)
             {
-                case (int)PointAtMarkerVisibilitySettings.VisibilitySetting.FRIENDS_ONLY:
-                    pointAtMarkerVisibilitySettings.SetMarkerVisibility(PointAtMarkerVisibilitySettings.VisibilitySetting.FRIENDS_ONLY);
+                case (int)PointAtMarkerVisibilitySettings.VisibilitySetting.FriendsOnly:
+                    pointAtMarkerVisibilitySettings.SetMarkerVisibility(PointAtMarkerVisibilitySettings.VisibilitySetting.FriendsOnly);
                     break;
-                case (int)PointAtMarkerVisibilitySettings.VisibilitySetting.ALL:
-                    pointAtMarkerVisibilitySettings.SetMarkerVisibility(PointAtMarkerVisibilitySettings.VisibilitySetting.ALL);
+                case (int)PointAtMarkerVisibilitySettings.VisibilitySetting.All:
+                    pointAtMarkerVisibilitySettings.SetMarkerVisibility(PointAtMarkerVisibilitySettings.VisibilitySetting.All);
                     break;
-                case (int)PointAtMarkerVisibilitySettings.VisibilitySetting.NONE:
-                    pointAtMarkerVisibilitySettings.SetMarkerVisibility(PointAtMarkerVisibilitySettings.VisibilitySetting.NONE);
+                case (int)PointAtMarkerVisibilitySettings.VisibilitySetting.None:
+                    pointAtMarkerVisibilitySettings.SetMarkerVisibility(PointAtMarkerVisibilitySettings.VisibilitySetting.None);
                     break;
                 default:
                     ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for PointAtMarkerVisibilityController: {index}");

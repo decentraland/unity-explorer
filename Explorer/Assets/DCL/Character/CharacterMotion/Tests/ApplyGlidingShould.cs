@@ -31,7 +31,7 @@ namespace DCL.Character.CharacterMotion.Tests
             Execute(rigidTransform, ref glideState);
 
             Assert.IsTrue(Mathf.Approximately(-GLIDE_MAX_GRAVITY, rigidTransform.GravityVelocity.y), "Fall speed is clamped to GlideMaxGravity");
-            Assert.AreEqual(GlideStateValue.GLIDING, glideState.Value);
+            Assert.AreEqual(GlideStateValue.Gliding, glideState.Value);
         }
 
         [Test]
@@ -76,6 +76,6 @@ namespace DCL.Character.CharacterMotion.Tests
             };
 
         private static GlideState GlidingState() =>
-            new () { Value = GlideStateValue.GLIDING };
+            new () { Value = GlideStateValue.Gliding };
     }
 }

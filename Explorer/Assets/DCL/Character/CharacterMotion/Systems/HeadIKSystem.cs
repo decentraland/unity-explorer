@@ -83,7 +83,7 @@ namespace DCL.CharacterMotion.Systems
 
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World), World.Has<InWorldCameraComponent>(camera));
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC) && playerEntity != Entity.Null && World.TryGet<CharacterTransform>(playerEntity, out var playerTransform))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.HeadSync) && playerEntity != Entity.Null && World.TryGet<CharacterTransform>(playerEntity, out var playerTransform))
                 UpdateRemoteIKQuery(World, t, playerTransform.Position);
         }
 

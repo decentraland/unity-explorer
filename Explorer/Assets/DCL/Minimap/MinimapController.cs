@@ -92,7 +92,7 @@ namespace DCL.Minimap
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public MinimapController(
             MinimapView minimapView,
@@ -603,7 +603,7 @@ namespace DCL.Minimap
 
         private void ReloadScene() =>
             chatMessagesBus.SendWithUtcNowTimestamp(
-                ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.MINIMAP
+                ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.Minimap
             );
 
         private void SetAnimatorController(bool isGenesisModeActivated)

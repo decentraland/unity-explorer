@@ -57,7 +57,7 @@ namespace DCL.McpServer.Tools
             bool waitForReady = arguments.GetBool("waitForReady", true);
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-            chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {x},{y}", ChatMessageOrigin.RESTRICTED_ACTION_API);
+            chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {x},{y}", ChatMessageOrigin.RestrictedActionApi);
 
             if (!waitForReady)
                 return McpToolResult.Text($"Teleport to ({x},{y}) requested.");

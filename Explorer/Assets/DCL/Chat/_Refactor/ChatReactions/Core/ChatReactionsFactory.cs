@@ -95,10 +95,10 @@ namespace DCL.Chat.ChatReactions.Core
                 remoteTarget, worldReactor, situationalReactionFacade,
                 streamEmitter);
 
-            simulationLoop.WorldReactionsEnabled = chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.NONE;
+            simulationLoop.WorldReactionsEnabled = chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.None;
             simulationLoop.UIReactionsEnabled = chatSettingsAsset.chatReactionsEnabled;
 
-            ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler = visibility => simulationLoop.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.NONE;
+            ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler = visibility => simulationLoop.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.None;
             chatSettingsAsset.BubblesVisibilityChanged += bubblesHandler;
 
             ChatSettingsAsset.ChatReactionsEnabledDelegate reactionsHandler = enabled => simulationLoop.UIReactionsEnabled = enabled;

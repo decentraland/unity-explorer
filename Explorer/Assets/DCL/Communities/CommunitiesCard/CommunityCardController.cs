@@ -64,7 +64,7 @@ namespace DCL.Communities.CommunitiesCard
         private const string CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error unsubscribing notifications for this community. Please try again.";
         private const string DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error subscribing notifications for this community. Please try again.";
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
@@ -406,7 +406,7 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunitiesAnnouncements))
                 announcementsSectionController = new AnnouncementsSectionController(
                     viewInstance.AnnouncementsSectionView,
                     communitiesDataProvider,
@@ -443,7 +443,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
-                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunitiesAnnouncements))
                     viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
                 else
                     viewInstance.MembersListView.SetLoadingStateActive(true);
@@ -580,17 +580,17 @@ namespace DCL.Communities.CommunitiesCard
             sectionCancellationTokenSource = sectionCancellationTokenSource.SafeRestart();
             switch (section)
             {
-                case CommunityCardView.Sections.PHOTOS:
+                case CommunityCardView.Sections.Photos:
                     viewInstance!.CameraReelGalleryConfigs.PhotosView.SetAdminEmptyTextActive(communityData.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
                     cameraReelGalleryController!.ShowPlacesGalleryAsync(communityPlaceIds, sectionCancellationTokenSource.Token).Forget();
                     break;
-                case CommunityCardView.Sections.MEMBERS:
+                case CommunityCardView.Sections.Members:
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
                     break;
-                case CommunityCardView.Sections.PLACES:
+                case CommunityCardView.Sections.Places:
                     placesSectionController!.ShowPlaces(communityData, communityPlaceIds, sectionCancellationTokenSource.Token);
                     break;
-                case CommunityCardView.Sections.ANNOUNCEMENTS:
+                case CommunityCardView.Sections.Announcements:
                     announcementsSectionController!.ShowAnnouncements(communityData, sectionCancellationTokenSource.Token);
                     break;
             }
@@ -802,10 +802,10 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void RestoreInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));

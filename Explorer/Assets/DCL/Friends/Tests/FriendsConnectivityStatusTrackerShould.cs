@@ -57,7 +57,7 @@ namespace DCL.Friends.Tests
 
             //Assert
             Assert.AreEqual(2, onlineEventsCount);
-            Assert.AreEqual(OnlineStatus.ONLINE, tracker.GetFriendStatus(friendProfile.UserId));
+            Assert.AreEqual(OnlineStatus.Online, tracker.GetFriendStatus(friendProfile.UserId));
         }
 
         [Test]
@@ -67,13 +67,13 @@ namespace DCL.Friends.Tests
             var friendProfile = new Profile.CompactInfo(FRIEND_ID, "TestFriend");
             eventBus.BroadcastFriendConnected(friendProfile);
             await UniTask.Delay(DEBOUNCE_WAIT_MS);
-            Assert.AreEqual(OnlineStatus.ONLINE, tracker.GetFriendStatus(friendProfile.UserId));
+            Assert.AreEqual(OnlineStatus.Online, tracker.GetFriendStatus(friendProfile.UserId));
 
             //Act
             tracker.Reset();
 
             //Assert
-            Assert.AreEqual(OnlineStatus.OFFLINE, tracker.GetFriendStatus(friendProfile.UserId));
+            Assert.AreEqual(OnlineStatus.Offline, tracker.GetFriendStatus(friendProfile.UserId));
         }
 
         [Test]
@@ -91,7 +91,7 @@ namespace DCL.Friends.Tests
 
             //Assert
             Assert.AreEqual(0, onlineEventsCount);
-            Assert.AreEqual(OnlineStatus.OFFLINE, tracker.GetFriendStatus(friendProfile.UserId));
+            Assert.AreEqual(OnlineStatus.Offline, tracker.GetFriendStatus(friendProfile.UserId));
         }
     }
 }

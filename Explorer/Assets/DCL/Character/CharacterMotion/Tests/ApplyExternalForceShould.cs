@@ -36,7 +36,7 @@ namespace DCL.Character.CharacterMotion.Tests
         {
             CharacterRigidTransform rigidTransform = WithExternalForce(new Vector3(10f, 20f, 0f));
 
-            var glideState = new GlideState { Value = GlideStateValue.PROP_CLOSED };
+            var glideState = new GlideState { Value = GlideStateValue.PropClosed };
 
             ApplyExternalForce.Execute(settings, ref rigidTransform, glideState, DT);
 
@@ -49,7 +49,7 @@ namespace DCL.Character.CharacterMotion.Tests
         {
             CharacterRigidTransform rigidTransform = WithExternalForce(new Vector3(10f, 20f, 0f));
 
-            var glideState = new GlideState { Value = GlideStateValue.GLIDING };
+            var glideState = new GlideState { Value = GlideStateValue.Gliding };
 
             ApplyExternalForce.Execute(settings, ref rigidTransform, glideState, DT);
 
@@ -62,7 +62,7 @@ namespace DCL.Character.CharacterMotion.Tests
         {
             CharacterRigidTransform rigidTransform = WithExternalForce(new Vector3(10f, 20f, 5f));
 
-            var glideState = new GlideState { Value = GlideStateValue.GLIDING };
+            var glideState = new GlideState { Value = GlideStateValue.Gliding };
 
             ApplyExternalForce.Execute(settings, ref rigidTransform, glideState, DT);
 

@@ -186,9 +186,9 @@ namespace DCL.Passport
                     MainScroll.content = section.Panel.transform as RectTransform;
             }
 
-            BadgeInfoModuleView.gameObject.SetActive(passportSection == PassportSection.BADGES);
+            BadgeInfoModuleView.gameObject.SetActive(passportSection == PassportSection.Badges);
 
-            bool isNotPhotos = passportSection != PassportSection.PHOTOS;
+            bool isNotPhotos = passportSection != PassportSection.Photos;
             ViewportSoftMask.enabled = isNotPhotos;
             ViewportMaskGraphic.enabled = isNotPhotos;
 

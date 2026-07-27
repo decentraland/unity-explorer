@@ -19,7 +19,7 @@ namespace DCL.Landscape.NoiseGeneration
                 noiseDataPointer.size,
                 in noiseData.settings, maxHeight,
                 new float2(noiseDataPointer.offsetX, noiseDataPointer.offsetZ),
-                NoiseJobOperation.SET);
+                NoiseJobOperation.Set);
 
             return noiseJob.Schedule(noiseDataPointer.size * noiseDataPointer.size, batchCount, parentJobHandle);
         }

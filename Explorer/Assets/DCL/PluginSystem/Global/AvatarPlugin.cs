@@ -173,7 +173,7 @@ namespace DCL.PluginSystem.Global
             AvatarLoaderSystem.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_HIGHLIGHT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarHighlight))
                 AvatarHighlightSystem.InjectToWorld(ref builder, highlightData);
 
             cacheCleaner.Register(avatarPoolRegistry);
@@ -182,7 +182,7 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
-            bool includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_GHOSTS);
+            bool includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarGhosts);
 
             if (includeGhosts)
                 AvatarGhostSystem.InjectToWorld(ref builder, ghostMaterial);

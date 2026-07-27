@@ -220,7 +220,7 @@ namespace ECS.Unity.AvatarShape.Tests
             var characterEmoteIntent = globalWorld.Get<CharacterEmoteIntent>(globalEntity);
             Assert.AreEqual(emoteUrn, characterEmoteIntent.EmoteId);
             Assert.IsTrue(characterEmoteIntent.Spatial);
-            Assert.AreEqual(TriggerSource.SCENE, characterEmoteIntent.TriggerSource);
+            Assert.AreEqual(TriggerSource.Scene, characterEmoteIntent.TriggerSource);
         }
 
         [Test]
@@ -311,7 +311,7 @@ namespace ECS.Unity.AvatarShape.Tests
             var characterEmoteIntent = globalWorld.Get<CharacterEmoteIntent>(globalEntity);
             Assert.AreEqual(emoteUrn, characterEmoteIntent.EmoteId);
             Assert.IsTrue(characterEmoteIntent.Spatial);
-            Assert.AreEqual(TriggerSource.SCENE, characterEmoteIntent.TriggerSource);
+            Assert.AreEqual(TriggerSource.Scene, characterEmoteIntent.TriggerSource);
         }
 
         [Test]
@@ -564,7 +564,7 @@ namespace ECS.Unity.AvatarShape.Tests
             var characterEmoteIntent = globalWorld.Get<CharacterEmoteIntent>(globalEntity);
             Assert.AreEqual(emoteUrn, characterEmoteIntent.EmoteId);
             Assert.IsTrue(characterEmoteIntent.Spatial);
-            Assert.AreEqual(TriggerSource.SCENE, characterEmoteIntent.TriggerSource);
+            Assert.AreEqual(TriggerSource.Scene, characterEmoteIntent.TriggerSource);
         }
     }
 }

@@ -15,9 +15,9 @@ namespace DCL.AssetsProvision
 
         public enum State
         {
-            UNLOADED,
-            LOADING,
-            LOADED,
+            Unloaded,
+            Loading,
+            Loaded,
         }
 
         public State CurrentState { get; private set; }
@@ -26,7 +26,7 @@ namespace DCL.AssetsProvision
         {
             this.reference = reference;
             asset = null;
-            CurrentState = State.UNLOADED;
+            CurrentState = State.Unloaded;
         }
 
         public async UniTask<Weak<T>> AssetAsync(CancellationToken token)
@@ -35,20 +35,20 @@ namespace DCL.AssetsProvision
             {
                 if (asset == null)
                 {
-                    CurrentState = State.LOADING;
+                    CurrentState = State.Loading;
                     var handle = reference.LoadAssetAsync();
                     await handle.Task!.AsUniTask().AttachExternalCancellation(token);
                     if (handle.Status != AsyncOperationStatus.Succeeded) throw new Exception($"Load failed: {reference.RuntimeKey}");
                     T value = handle.Result!;
                     asset = new Owned<T>(value);
-                    CurrentState = State.LOADED;
+                    CurrentState = State.Loaded;
                 }
 
                 return asset!.Downgrade();
             }
             catch (Exception)
             {
-                CurrentState = State.UNLOADED;
+                CurrentState = State.Unloaded;
                 throw;
             }
         }
@@ -59,7 +59,7 @@ namespace DCL.AssetsProvision
             reference.ReleaseAsset();
             asset.Dispose(out _);
             asset = null;
-            CurrentState = State.UNLOADED;
+            CurrentState = State.Unloaded;
         }
 
         public void Dispose()

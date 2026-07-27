@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Systems
         {
             RoomSource prevValue = indicatorComponent.ConnectedTo;
 
-            indicatorComponent.ConnectedTo = entityParticipantTable.TryGet(avatarShapeComponent.ID, out IReadOnlyEntityParticipantTable.Entry entry) ? entry.ConnectedTo : RoomSource.NONE;
+            indicatorComponent.ConnectedTo = entityParticipantTable.TryGet(avatarShapeComponent.ID, out IReadOnlyEntityParticipantTable.Entry entry) ? entry.ConnectedTo : RoomSource.None;
 
             if (prevValue != indicatorComponent.ConnectedTo)
                 nametagHolder.Nametag.DebugText = indicatorComponent.ConnectedTo.ToString();

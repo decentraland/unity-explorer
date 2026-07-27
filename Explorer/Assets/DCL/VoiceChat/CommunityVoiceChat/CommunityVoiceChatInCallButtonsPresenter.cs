@@ -62,7 +62,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnCommunityCallStateChanged(VoiceChatStatus callStatus)
         {
-            if (callStatus != VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+            if (callStatus != VoiceChatStatus.VoiceChatInCall) return;
 
             bool isSpeaker = orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value;
             OnIsSpeakerChanged(isSpeaker);

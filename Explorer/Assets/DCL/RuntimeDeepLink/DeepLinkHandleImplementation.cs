@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.ChangeRealmPrompt;
 using DCL.Chat.Commands;
 using DCL.Communities;
 using DCL.ExplorePanel;
@@ -50,17 +51,17 @@ namespace DCL.RuntimeDeepLink
                 // Guard: only consume a signin while a login here is waiting for one, and only if the link
                 // was minted for that login.
                 if (string.IsNullOrEmpty(awaitedRequestId) || deeplink.ValueOf(AppArgsFlags.AUTH_REQUEST_ID) != awaitedRequestId)
-                    return DeepLinkHandleResult.DEFERRED;
+                    return DeepLinkHandleResult.Deferred;
 
                 // The id persists in the property until it is overwritten or cleared.
                 deeplinkSigninIdentityId.Value = signin;
-                return DeepLinkHandleResult.CONSUMED;
+                return DeepLinkHandleResult.Consumed;
             }
 
             if (!routeNavigationDeepLinks)
             {
                 ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"navigation deep link routing is disabled, dropping: {deeplink}");
-                return DeepLinkHandleResult.CONSUMED;
+                return DeepLinkHandleResult.Consumed;
             }
 
             Vector2Int? position = deeplink.Position();
@@ -72,11 +73,7 @@ namespace DCL.RuntimeDeepLink
 
             if (realm.HasValue)
             {
-                if(position.HasValue)
-                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token, spawnPointName).Forget();
-                else
-                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token, spawnPointName).Forget();
-
+                ShowRealmChangePromptAsync(realm.Value.Value, position).Forget();
                 handled = true;
             }
             else if (position.HasValue)
@@ -103,7 +100,20 @@ namespace DCL.RuntimeDeepLink
                 handled = true;
             }
 
-            return handled ? DeepLinkHandleResult.CONSUMED : DeepLinkHandleResult.NO_MATCHES;
+            return handled ? DeepLinkHandleResult.Consumed : DeepLinkHandleResult.NoMatches;
+        }
+
+        private async UniTaskVoid ShowRealmChangePromptAsync(string realm, Vector2Int? position)
+        {
+            // Empty message → the prompt renders the default confirmation text and requires an explicit click (SEC-003).
+            if (token.IsCancellationRequested)
+                return;
+
+            await UniTask.SwitchToMainThread(token);
+
+            var parameters = new ChangeRealmPromptController.Params(string.Empty, realm, position);
+
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(parameters), token);
         }
     }
 }
