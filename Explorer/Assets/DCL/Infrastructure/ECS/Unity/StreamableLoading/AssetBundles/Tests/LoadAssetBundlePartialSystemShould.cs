@@ -137,7 +137,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
         private ABPromise NewABPromise()
         {
-            var intention = GetAssetBundleIntention.FromHash("bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda", typeof(GameObject), permittedSources: AssetSource.WEB);
+            var intention = GetAssetBundleIntention.FromHash("bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda", typeof(GameObject), permittedSources: AssetSource.Web);
             var partition = PartitionComponent.TOP_PRIORITY;
             var assetPromise = ABPromise.Create(world, intention, partition);
             world.Get<StreamableLoadingState>(assetPromise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());

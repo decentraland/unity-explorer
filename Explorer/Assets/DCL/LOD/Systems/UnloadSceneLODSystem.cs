@@ -70,9 +70,9 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLODForISS(in Entity entity, ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent,
             ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
         {
-            if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.ShowingScene)
             {
-                if (sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.RESOLVED)
+                if (sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.Resolved)
                     return;
 
                 sceneLODInfo.InitialSceneStateLOD.AssetsShouldGoToTheBridge = LODUtils.ShouldGoToTheBridge(partitionComponent);
@@ -97,7 +97,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLODWhenSceneReady(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
             ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
         {
-            if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
+            if (sceneLoadingState.VisualSceneState == VisualSceneState.ShowingScene)
             {
                 if (!sceneFacade.IsSceneReady())
                     return;

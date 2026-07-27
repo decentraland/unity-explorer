@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
         public void SetUp()
         {
             transport = Substitute.For<ITransport>();
-            transport.State.Returns(ITransport.TransportState.NONE);
+            transport.State.Returns(ITransport.TransportState.None);
 
             urlsSource = Substitute.For<IDecentralandUrlsSource>();
 
@@ -59,7 +59,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
         public void NotAttemptConnectionWhenAlreadyConnected()
         {
             // Arrange
-            transport.State.Returns(ITransport.TransportState.CONNECTED);
+            transport.State.Returns(ITransport.TransportState.Connected);
 
             // Act
             bool connected = service.ConnectAsync(cts.Token, maxAttempts: 1).GetAwaiter().GetResult();

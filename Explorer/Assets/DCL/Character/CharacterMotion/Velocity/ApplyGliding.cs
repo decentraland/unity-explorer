@@ -34,20 +34,20 @@ namespace DCL.Character.CharacterMotion
             // Once the 'ready' flag becomes true the actual gliding sequence starts
             bool enoughTimeSinceLastJump = (physicsTick - jumpInput.Trigger.TickWhenJumpWasConsumed) * dt >= settings.JumpToGlideTimeInterval;
             bool coolingDown = (physicsTick - glideState.CooldownStartedTick) * dt < settings.GlideCooldown;
-            bool readyToStartGliding = enoughTimeSinceLastJump && !coolingDown && glideState.Value == GlideStateValue.PROP_CLOSED;
+            bool readyToStartGliding = enoughTimeSinceLastJump && !coolingDown && glideState.Value == GlideStateValue.PropClosed;
 
             // Start gliding if want, can and ready
             if (glideState.WantsToGlide && canTriggerGliding && readyToStartGliding)
             {
-                glideState.Value = GlideStateValue.OPENING_PROP;
+                glideState.Value = GlideStateValue.OpeningProp;
                 return;
             }
 
-            if (glideState.Value == GlideStateValue.GLIDING)
+            if (glideState.Value == GlideStateValue.Gliding)
             {
                 if (!jumpInput.IsPressed || !canTriggerGliding)
                     // Stop gliding if the jump button is released or any other condition prevents it
-                    glideState.Value = GlideStateValue.CLOSING_PROP;
+                    glideState.Value = GlideStateValue.ClosingProp;
                 else
                     // Otherwise clamp the fall speed only: upward velocity (jump momentum, external forces like wind) must pass through untouched
                     rigidTransform.GravityVelocity.y = Mathf.Max(rigidTransform.GravityVelocity.y, -settings.GlideMaxGravity);

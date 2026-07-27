@@ -53,10 +53,10 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                             .Returns(UniTask.FromResult(CreateAuthorization()));
 
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.BROADCAST, TX_HASH)));
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.Broadcast, TX_HASH)));
 
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
-                            .Returns(UniTask.FromResult(SettlementOutcome.CONFIRMED));
+                            .Returns(UniTask.FromResult(SettlementOutcome.Confirmed));
 
             service = new CreditsPurchaseService(
                 shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller,
@@ -131,7 +131,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.IsTrue(result.Success);
             Assert.AreEqual(TX_HASH, result.TxHash);
             CollectionAssert.AreEqual(
-                new[] { CreditsPurchaseState.RESOLVING_LISTING, CreditsPurchaseState.AUTHORIZING, CreditsPurchaseState.SIGNING, CreditsPurchaseState.WAITING_SETTLEMENT, CreditsPurchaseState.SUCCESS },
+                new[] { CreditsPurchaseState.ResolvingListing, CreditsPurchaseState.Authorizing, CreditsPurchaseState.Signing, CreditsPurchaseState.WaitingSettlement, CreditsPurchaseState.Success },
                 recordedStates);
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
         }
@@ -148,7 +148,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditsPurchaseResult result = await disabledService.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.FEATURE_DISABLED, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.FeatureDisabled, result.Error);
             await shopAPIClient.DidNotReceive().GetTradeAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
@@ -164,7 +164,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.OWN_LISTING, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.OwnListing, result.Error);
             await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
@@ -175,7 +175,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS + 5, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.PRICE_CHANGED, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.Error);
             await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
@@ -192,7 +192,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.AUTHORIZATION_FAILED, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.AuthorizationFailed, result.Error);
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
         }
 
@@ -201,13 +201,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.SIGNATURE_REJECTED)));
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.SignatureRejected)));
 
             // Act
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.SIGNATURE_REJECTED, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.SignatureRejected, result.Error);
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts.Length == 1 && salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
         }
 
@@ -216,7 +216,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.RELAYER_REJECTED, message: "down")));
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.RelayerRejected, message: "down")));
 
             web3Provider.IsThirdWebOTP.Returns(true);
 
@@ -224,7 +224,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.RELAYER_UNAVAILABLE, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.RelayerUnavailable, result.Error);
             await web3Provider.DidNotReceive().SendAsync(Arg.Any<EthApiRequest>(), Arg.Any<Web3RequestSource>(), Arg.Any<CancellationToken>());
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
         }
@@ -236,7 +236,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             const string FALLBACK_TX_HASH = "0xfa11bacc";
 
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.RELAYER_REJECTED, message: "down")));
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.RelayerRejected, message: "down")));
 
             web3Provider.IsThirdWebOTP.Returns(false);
 
@@ -258,13 +258,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
-                            .Returns(UniTask.FromResult(SettlementOutcome.REVERTED));
+                            .Returns(UniTask.FromResult(SettlementOutcome.Reverted));
 
             // Act
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.TRANSACTION_REVERTED, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.TransactionReverted, result.Error);
             await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
         }
 
@@ -273,13 +273,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
-                            .Returns(UniTask.FromResult(SettlementOutcome.PENDING));
+                            .Returns(UniTask.FromResult(SettlementOutcome.Pending));
 
             // Act
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.SETTLEMENT_PENDING, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.SettlementPending, result.Error);
             Assert.AreEqual(TX_HASH, result.TxHash);
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
         }
@@ -289,13 +289,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.AMBIGUOUS_BROADCAST, message: "timeout")));
+                         .Returns(UniTask.FromResult(new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "timeout")));
 
             // Act
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.SETTLEMENT_PENDING, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.SettlementPending, result.Error);
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
             await settlementPoller.DidNotReceive().WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>());
         }
@@ -312,7 +312,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(CreditsPurchaseError.LISTING_NOT_AVAILABLE, result.Error);
+            Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, result.Error);
             await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
     }

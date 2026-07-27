@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.World
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL, assetBundleURL,
                 launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment);
 
-            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS);
+            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress);
@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.World
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
 
-            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS);
+            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache, byteWeightedProgress);

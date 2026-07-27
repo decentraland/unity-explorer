@@ -132,7 +132,7 @@ namespace PortableExperiences.Controller
                 world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
                 world.Add(portableExperienceEntity, new PortableExperienceMetadata
                 {
-                    Type = isGlobalPortableExperience ? PortableExperienceType.GLOBAL : PortableExperienceType.LOCAL,
+                    Type = isGlobalPortableExperience ? PortableExperienceType.Global : PortableExperienceType.Local,
                     Ens = portableExperienceId,
                     Id = portableExperienceEntity.Id.ToString(),
                     Name = realmData.RealmName,
@@ -160,17 +160,17 @@ namespace PortableExperiences.Controller
 
             switch (metadata.Type)
             {
-                case PortableExperienceType.GLOBAL:
+                case PortableExperienceType.Global:
                     // Cannot kill a Global PX ever
                     return false;
 
-                case PortableExperienceType.LOCAL:
+                case PortableExperienceType.Local:
                     if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
 
                     ISceneFacade currentSceneFacade = scenesCache.CurrentScene.Value;
                     return currentSceneFacade != null && metadata.ParentSceneId == currentSceneFacade.Info.Name;
 
-                case PortableExperienceType.SMART_WEARABLE:
+                case PortableExperienceType.SmartWearable:
                     // Can always kill a Smart Wearable PX
                     return true;
             }

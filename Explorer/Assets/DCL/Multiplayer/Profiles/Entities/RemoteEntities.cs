@@ -84,7 +84,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             tempRemoveAll.Clear();
             tempRemoveAll.AddRange(entityParticipantTable.Wallets());
-            foreach (string wallet in tempRemoveAll) Remove(wallet, RoomSource.GATEKEEPER | RoomSource.ISLAND, world);
+            foreach (string wallet in tempRemoveAll) Remove(wallet, RoomSource.Gatekeeper | RoomSource.Island, world);
         }
 
         public void TryRemove(string walletId, RoomSource roomSource, World world)

@@ -47,7 +47,7 @@ namespace DCL.Character.CharacterMotion.Tests
             var characterTransform = new CharacterTransform(characterGameObject.transform);
             var rigidTransform = new CharacterRigidTransform();
             var animationComponent = new CharacterAnimationComponent();
-            var movementInput = new MovementInputComponent { Kind = MovementKind.IDLE, Axes = Vector2.zero };
+            var movementInput = new MovementInputComponent { Kind = MovementKind.Idle, Axes = Vector2.zero };
             var jumpInput = new JumpInputComponent { IsPressed = false };
             completionSource ??= new UniTaskCompletionSource<bool>();
             var moveIntent = new PlayerMoveToWithDurationIntent(startPosition, targetPosition, cameraTarget, avatarTarget, completionSource, duration);
@@ -170,7 +170,7 @@ namespace DCL.Character.CharacterMotion.Tests
             Assert.That(world.Has<PlayerMoveToWithDurationIntent>(e), Is.True);
 
             // Simulate movement input
-            world.Set(e, new MovementInputComponent { Kind = MovementKind.JOG, Axes = new Vector2(1, 0) });
+            world.Set(e, new MovementInputComponent { Kind = MovementKind.Jog, Axes = new Vector2(1, 0) });
 
             // Update should detect input and remove intent
             system.Update(0.1f);
@@ -367,7 +367,7 @@ namespace DCL.Character.CharacterMotion.Tests
             system.Update(0.1f);
 
             // Simulate movement input to interrupt
-            world.Set(e, new MovementInputComponent { Kind = MovementKind.JOG, Axes = new Vector2(1, 0) });
+            world.Set(e, new MovementInputComponent { Kind = MovementKind.Jog, Axes = new Vector2(1, 0) });
 
             // Update should detect input and interrupt
             system.Update(0.1f);
@@ -449,7 +449,7 @@ namespace DCL.Character.CharacterMotion.Tests
             system.Update(0.1f);
 
             // Act
-            world.Set(e, new MovementInputComponent { Kind = MovementKind.JOG, Axes = new Vector2(1, 0) });
+            world.Set(e, new MovementInputComponent { Kind = MovementKind.Jog, Axes = new Vector2(1, 0) });
             system.Update(0.1f);
 
             // Assert

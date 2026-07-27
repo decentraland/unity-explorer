@@ -14,7 +14,7 @@ namespace DCL.ApplicationGuards
         private readonly string current;
         private readonly string latest;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public LauncherRedirectionScreenController(ApplicationVersionGuard versionGuard, ViewFactoryMethod viewFactory, string current, string latest) : base(viewFactory)
         {

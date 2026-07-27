@@ -38,7 +38,7 @@ namespace DCL.WebRequests
                 return (false, TimeSpan.Zero);
 
             // Unless repetitions are enforced, non-idempotent requests should not be retried
-            if (!idempotent && retryPolicy.strictness != RetryPolicy.Strictness.ENFORCED)
+            if (!idempotent && retryPolicy.strictness != RetryPolicy.Strictness.Enforced)
                 return (false, TimeSpan.Zero);
 
             // Handle "Retry-After" header. Applicable for 429 Too Many Requests and 503 Service Unavailable
@@ -85,7 +85,7 @@ namespace DCL.WebRequests
                 return (true, retryDelay);
             }
 
-            if (retryPolicy.strictness == RetryPolicy.Strictness.RETRY_AFTER_REQUIRED)
+            if (retryPolicy.strictness == RetryPolicy.Strictness.RetryAfterRequired)
 
                 // If default policy is not applied, return immediately
                 return (false, TimeSpan.Zero);

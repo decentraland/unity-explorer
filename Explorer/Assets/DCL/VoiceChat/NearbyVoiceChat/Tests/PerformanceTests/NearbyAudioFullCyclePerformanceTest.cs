@@ -72,7 +72,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
             IUserBlockingCache userBlockingCache = Substitute.For<IUserBlockingCache>();
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 

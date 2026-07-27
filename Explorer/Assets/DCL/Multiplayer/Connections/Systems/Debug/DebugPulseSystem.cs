@@ -164,7 +164,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         {
             return transport.State switch
                    {
-                       ITransport.TransportState.DISCONNECTED or ITransport.TransportState.NONE => true,
+                       ITransport.TransportState.Disconnected or ITransport.TransportState.None => true,
                        _ => false,
                    };
         }

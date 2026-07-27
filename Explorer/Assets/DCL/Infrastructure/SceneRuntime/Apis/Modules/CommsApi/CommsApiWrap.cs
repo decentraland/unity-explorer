@@ -174,7 +174,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
                 sceneCommunicationPipe.SendMessage(
                     encoded, sceneId,
-                    ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED,
+                    ISceneCommunicationPipe.ConnectivityAssertiveness.DropIfNotConnected,
                     disposeCts.Token);
             }
             catch (Exception e)

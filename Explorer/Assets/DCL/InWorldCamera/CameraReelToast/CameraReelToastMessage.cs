@@ -9,9 +9,9 @@ namespace DCL.InWorldCamera.CameraReelToast
 {
     public enum CameraReelToastMessageType
     {
-        FAILURE,
-        SUCCESS,
-        DOWNLOAD
+        Failure,
+        Success,
+        Download
     }
 
     public class CameraReelToastMessage : MonoBehaviour
@@ -58,13 +58,13 @@ namespace DCL.InWorldCamera.CameraReelToast
 
             switch (type)
             {
-                case CameraReelToastMessageType.SUCCESS:
+                case CameraReelToastMessageType.Success:
                     ShowNotificationAsync(message, SuccessToastDefaultMessage, SuccessToastView, SuccessToastDuration, showSuccessCts.Token).Forget();
                     break;
-                case CameraReelToastMessageType.FAILURE:
+                case CameraReelToastMessageType.Failure:
                     ShowNotificationAsync(message, FailureToastDefaultMessage, FailureToastView, FailureToastDuration, showFailureCts.Token).Forget();
                     break;
-                case CameraReelToastMessageType.DOWNLOAD:
+                case CameraReelToastMessageType.Download:
                     DownloadToastView.PrepareToBeClicked();
 
                     ShowNotificationAsync(message, SuccessToastDefaultMessage,

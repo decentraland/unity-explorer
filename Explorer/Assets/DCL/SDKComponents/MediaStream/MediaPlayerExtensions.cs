@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (hasPlaying)
             {
-                if (playing != mediaPlayer.State is PlayerState.PLAYING)
+                if (playing != mediaPlayer.State is PlayerState.Playing)
                 {
                     if (playing)
                         mediaPlayer.Play();
@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.MediaStream
                         mediaPlayer.Pause();
                 }
             }
-            else if (mediaPlayer.State is PlayerState.PLAYING)
+            else if (mediaPlayer.State is PlayerState.Playing)
                 mediaPlayer.Stop();
         }
 

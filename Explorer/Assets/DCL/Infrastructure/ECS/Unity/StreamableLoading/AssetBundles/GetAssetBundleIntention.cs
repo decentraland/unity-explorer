@@ -46,7 +46,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public bool LookForDependencies;
 
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
-            string? hash = null, AssetSource permittedSources = AssetSource.ALL,
+            string? hash = null, AssetSource permittedSources = AssetSource.All,
             URLSubdirectory customEmbeddedSubDirectory = default,
             AssetBundleManifestVersion? assetBundleVersion = null,
             string parentEntityID = "",
@@ -83,11 +83,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetSource permittedSources = AssetSource.ALL,
+        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetSource permittedSources = AssetSource.All,
             URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (expectedAssetType, hash: hash, name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
-        public static GetAssetBundleIntention FromHash(string hash, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
+        public static GetAssetBundleIntention FromHash(string hash, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.All,
             URLSubdirectory customEmbeddedSubDirectory = default, CancellationTokenSource cancellationTokenSource = null,
             AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false, bool lookForDependencies = false) =>
             new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, lookForDependencies: lookForDependencies, cancellationTokenSource: cancellationTokenSource);

@@ -118,17 +118,17 @@ namespace DCL.Navmap
 
             view.EventsTabButton.onClick.AddListener(() =>
             {
-                if (Toggle(Section.EVENTS))
+                if (Toggle(Section.Events))
                     FetchAndShowEventsOfThePlace();
             });
 
             view.PhotosTabButton.onClick.AddListener(() =>
             {
-                if (Toggle(Section.PHOTOS))
+                if (Toggle(Section.Photos))
                     FetchPhotos();
             });
 
-            view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.OVERVIEW));
+            view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.Overview));
 
             dislikeButton = new MultiStateButtonController(view.DislikeButton, true);
             dislikeButton.OnButtonClicked += OnDislikeButtonClick;
@@ -254,18 +254,18 @@ namespace DCL.Navmap
             if (currentSection == section)
                 return false;
 
-            if (section != Section.PHOTOS)
+            if (section != Section.Photos)
             {
                 showPlaceGalleryCancellationToken?.SafeCancelAndDispose();
                 view.SetPhotoTabText(-1);
             }
 
-            view.EventsTabContainer.SetActive(section == Section.EVENTS);
-            view.EventsTabSelected.SetActive(section == Section.EVENTS);
-            view.OverviewTabContainer.SetActive(section == Section.OVERVIEW);
-            view.OverviewTabSelected.SetActive(section == Section.OVERVIEW);
-            view.PhotosTabContainer.SetActive(section == Section.PHOTOS);
-            view.PhotosTabSelected.SetActive(section == Section.PHOTOS);
+            view.EventsTabContainer.SetActive(section == Section.Events);
+            view.EventsTabSelected.SetActive(section == Section.Events);
+            view.OverviewTabContainer.SetActive(section == Section.Overview);
+            view.OverviewTabSelected.SetActive(section == Section.Overview);
+            view.PhotosTabContainer.SetActive(section == Section.Photos);
+            view.PhotosTabSelected.SetActive(section == Section.Photos);
 
             currentSection = section;
             return true;
@@ -369,7 +369,7 @@ namespace DCL.Navmap
                 chatMessagesBus
                    .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
                         $"/{ChatCommandsUtils.COMMAND_GOTO} {place.world_name}",
-                        ChatMessageOrigin.JUMP_IN);
+                        ChatMessageOrigin.JumpIn);
 
                 return;
             }
@@ -379,7 +379,7 @@ namespace DCL.Navmap
             chatMessagesBus
                .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
                     $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}",
-                    ChatMessageOrigin.JUMP_IN);
+                    ChatMessageOrigin.JumpIn);
         }
 
         private void Share()
@@ -539,9 +539,9 @@ namespace DCL.Navmap
 
         public enum Section
         {
-            OVERVIEW,
-            PHOTOS,
-            EVENTS,
+            Overview,
+            Photos,
+            Events,
         }
     }
 }

@@ -9,27 +9,27 @@ namespace ECS.SceneLifeCycle.Realm
 {
     public enum ChangeRealmError
     {
-        MESSAGE_ERROR,
-        CHANGE_CANCELLED,
-        NOT_REACHABLE,
-        LOCAL_SCENE_DEVELOPMENT_BLOCKED,
-        UNAUTHORIZED_WORLD_ACCESS,
-        TIMEOUT,
+        MessageError,
+        ChangeCancelled,
+        NotReachable,
+        LocalSceneDevelopmentBlocked,
+        UnauthorizedWorldAccess,
+        Timeout,
 
         /// <summary>
         /// World requires a password to access.
         /// </summary>
-        PASSWORD_REQUIRED,
+        PasswordRequired,
 
         /// <summary>
         /// User cancelled the password entry.
         /// </summary>
-        PASSWORD_CANCELLED,
+        PasswordCancelled,
 
         /// <summary>
         /// User is not on the allow-list for this world.
         /// </summary>
-        WHITELIST_ACCESS_DENIED
+        WhitelistAccessDenied
     }
 
     public static class ChangeRealmErrors
@@ -37,25 +37,25 @@ namespace ECS.SceneLifeCycle.Realm
         public static TaskError AsTaskError(this ChangeRealmError e) =>
             e switch
             {
-                ChangeRealmError.MESSAGE_ERROR => TaskError.MessageError,
-                ChangeRealmError.CHANGE_CANCELLED => TaskError.Cancelled,
-                ChangeRealmError.NOT_REACHABLE => TaskError.MessageError,
-                ChangeRealmError.LOCAL_SCENE_DEVELOPMENT_BLOCKED => TaskError.MessageError,
-                ChangeRealmError.TIMEOUT => TaskError.Timeout,
-                ChangeRealmError.PASSWORD_REQUIRED => TaskError.MessageError,
-                ChangeRealmError.PASSWORD_CANCELLED => TaskError.Cancelled,
-                ChangeRealmError.WHITELIST_ACCESS_DENIED => TaskError.MessageError,
-                ChangeRealmError.UNAUTHORIZED_WORLD_ACCESS => TaskError.MessageError,
+                ChangeRealmError.MessageError => TaskError.MessageError,
+                ChangeRealmError.ChangeCancelled => TaskError.Cancelled,
+                ChangeRealmError.NotReachable => TaskError.MessageError,
+                ChangeRealmError.LocalSceneDevelopmentBlocked => TaskError.MessageError,
+                ChangeRealmError.Timeout => TaskError.Timeout,
+                ChangeRealmError.PasswordRequired => TaskError.MessageError,
+                ChangeRealmError.PasswordCancelled => TaskError.Cancelled,
+                ChangeRealmError.WhitelistAccessDenied => TaskError.MessageError,
+                ChangeRealmError.UnauthorizedWorldAccess => TaskError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
 
         public static ChangeRealmError AsChangeRealmError(this TaskError e) =>
             e switch
             {
-                TaskError.MessageError => ChangeRealmError.MESSAGE_ERROR,
-                TaskError.Timeout => ChangeRealmError.TIMEOUT,
-                TaskError.Cancelled => ChangeRealmError.CHANGE_CANCELLED,
-                TaskError.UnexpectedException => ChangeRealmError.MESSAGE_ERROR,
+                TaskError.MessageError => ChangeRealmError.MessageError,
+                TaskError.Timeout => ChangeRealmError.Timeout,
+                TaskError.Cancelled => ChangeRealmError.ChangeCancelled,
+                TaskError.UnexpectedException => ChangeRealmError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
 

@@ -84,8 +84,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private bool isSectionActivated;
         private string currentSearchText = string.Empty;
-        private CommunitiesRightSideSections currentSection = CommunitiesRightSideSections.MAIN_SECTION;
-        private bool isInvitesAndRequestsSectionActive => currentSection == CommunitiesRightSideSections.INVITES_AND_REQUESTS_SECTION;
+        private CommunitiesRightSideSections currentSection = CommunitiesRightSideSections.MainSection;
+        private bool isInvitesAndRequestsSectionActive => currentSection == CommunitiesRightSideSections.InvitesAndRequestsSection;
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
@@ -263,7 +263,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ViewAllMyCommunitiesResults()
         {
             ClearSearchBar();
-            SetActiveSection(CommunitiesRightSideSections.MAIN_SECTION);
+            SetActiveSection(CommunitiesRightSideSections.MainSection);
             mainRightSectionPresenter.ViewAllMyCommunitiesResults();
         }
 
@@ -281,7 +281,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadJoinRequestsAndAllCommunities()
         {
-            SetActiveSection(CommunitiesRightSideSections.MAIN_SECTION);
+            SetActiveSection(CommunitiesRightSideSections.MainSection);
             loadResultsCts = loadResultsCts.SafeRestart();
 
             mainRightSectionPresenter.SetAsLoading();
@@ -298,7 +298,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void LoadInvitesAndRequestsResults()
         {
             ClearSearchBar();
-            SetActiveSection(CommunitiesRightSideSections.INVITES_AND_REQUESTS_SECTION);
+            SetActiveSection(CommunitiesRightSideSections.InvitesAndRequestsSection);
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadInvitesAndRequestsAsync(loadResultsCts.Token).Forget();
             return;
@@ -466,10 +466,10 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         private void DisableShortcutsInput(string text) =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void RestoreInput(string text) =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void SearchBarValueChanged(string searchText)
         {
@@ -492,7 +492,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (currentSearchText == searchText)
                 return;
 
-            SetActiveSection(CommunitiesRightSideSections.MAIN_SECTION);
+            SetActiveSection(CommunitiesRightSideSections.MainSection);
 
             if (string.IsNullOrEmpty(searchText))
                 mainRightSectionPresenter.LoadAllCommunities();
@@ -508,12 +508,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
             switch (activeSection)
             {
-                case CommunitiesRightSideSections.MAIN_SECTION:
+                case CommunitiesRightSideSections.MainSection:
                     view.SetResultsSectionActive(true);
                     view.InvitesAndRequestsView.SetSectionActive(false);
                     manageRequestReceivedCts?.SafeCancelAndDispose();
                     break;
-                case CommunitiesRightSideSections.INVITES_AND_REQUESTS_SECTION:
+                case CommunitiesRightSideSections.InvitesAndRequestsSection:
                     view.SetResultsSectionActive(false);
                     view.InvitesAndRequestsView.SetSectionActive(true);
                     break;
@@ -898,7 +898,7 @@ namespace DCL.Communities.CommunitiesBrowser
             try
             {
                 await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(
-                    new BlockUserPromptParams(new Web3Address(profile.Address), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)), CancellationToken.None);
+                    new BlockUserPromptParams(new Web3Address(profile.Address), profile.Name, BlockUserPromptParams.UserBlockAction.Block)), CancellationToken.None);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -954,13 +954,13 @@ namespace DCL.Communities.CommunitiesBrowser
 
     public enum CommunitiesRightSideSections
     {
-        MAIN_SECTION,
-        INVITES_AND_REQUESTS_SECTION,
+        MainSection,
+        InvitesAndRequestsSection,
     }
 
     public enum CommunitiesViews
     {
-        BROWSE_ALL_COMMUNITIES,
-        FILTERED_COMMUNITIES,
+        BrowseAllCommunities,
+        FilteredCommunities,
     }
 }

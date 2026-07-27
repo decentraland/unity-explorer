@@ -13,14 +13,14 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         public void Enqueue(string walletId)
         {
             using (mutexSync.GetScope())
-                set.Add(new RemoveIntention(walletId, RoomSource.PULSE));
+                set.Add(new RemoveIntention(walletId, RoomSource.Pulse));
         }
 
         /// <summary>Drops a pending remove so a newer re-join supersedes a not-yet-applied leave.</summary>
         public void Cancel(string walletId)
         {
             using (mutexSync.GetScope())
-                set.Remove(new RemoveIntention(walletId, RoomSource.PULSE));
+                set.Remove(new RemoveIntention(walletId, RoomSource.Pulse));
         }
 
         public OwnedBunch<RemoveIntention> Bunch() =>

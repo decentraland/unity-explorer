@@ -38,29 +38,29 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         {
             get
             {
-                if (serverPeer == null) return ITransport.TransportState.NONE;
+                if (serverPeer == null) return ITransport.TransportState.None;
 
                 switch (serverPeer.Value.State)
                 {
                     case PeerState.AcknowledgingConnect:
                     case PeerState.Connecting:
                     case PeerState.ConnectionPending:
-                        return ITransport.TransportState.CONNECTING;
+                        return ITransport.TransportState.Connecting;
 
                     case PeerState.ConnectionSucceeded:
                     case PeerState.Connected:
-                        return ITransport.TransportState.CONNECTED;
+                        return ITransport.TransportState.Connected;
 
                     case PeerState.Disconnected:
-                        return ITransport.TransportState.DISCONNECTED;
+                        return ITransport.TransportState.Disconnected;
 
                     case PeerState.AcknowledgingDisconnect:
                     case PeerState.DisconnectLater:
                     case PeerState.Disconnecting:
-                        return ITransport.TransportState.DISCONNECTING;
+                        return ITransport.TransportState.Disconnecting;
 
                     default:
-                        return ITransport.TransportState.NONE;
+                        return ITransport.TransportState.None;
                 }
             }
         }
@@ -113,7 +113,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
             try
             {
-                await UniTask.WaitUntil(() => State == ITransport.TransportState.CONNECTED, cancellationToken: ct)
+                await UniTask.WaitUntil(() => State == ITransport.TransportState.Connected, cancellationToken: ct)
                              .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
             }
             catch (TimeoutException)

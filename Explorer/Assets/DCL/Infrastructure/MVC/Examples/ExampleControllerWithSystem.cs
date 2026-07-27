@@ -14,7 +14,7 @@ namespace MVC
             binding = new BridgeSystemBinding<ExampleControllerSystem>(this, QueryDataQuery, system);
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         [Query]
         private void QueryData(in MVCCheetSheet.ExampleViewDataComponent component)

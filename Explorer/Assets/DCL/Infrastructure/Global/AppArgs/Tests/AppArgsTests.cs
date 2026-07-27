@@ -66,7 +66,7 @@ namespace Global.AppArgs.Tests
         public void DeepLinkKeepsAllowlistedParams()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=https://peer.decentraland.org&position=10,20&community=abc&signin=id1&authRequestId=req1&force-open-backpack=true");
+                "decentraland://?realm=https://peer.decentraland.org&position=10,20&community=abc&signin=id1&authRequestId=req1&force-open-backpack=true&spawnpoint=lobby");
 
             Assert.AreEqual("https://peer.decentraland.org", output.GetValueOrDefault(AppArgsFlags.REALM));
             Assert.AreEqual("10,20", output.GetValueOrDefault(AppArgsFlags.POSITION));
@@ -74,6 +74,7 @@ namespace Global.AppArgs.Tests
             Assert.AreEqual("id1", output.GetValueOrDefault(AppArgsFlags.SIGNIN));
             Assert.AreEqual("req1", output.GetValueOrDefault(AppArgsFlags.AUTH_REQUEST_ID));
             Assert.IsTrue(output.ContainsKey(AppArgsFlags.FORCE_OPEN_BACKPACK), "force-open-backpack must survive (shipped feature #9398)");
+            Assert.AreEqual("lobby", output.GetValueOrDefault(AppArgsFlags.SPAWN_POINT), "spawnpoint must survive (named scene spawn point #9369)");
         }
 
         [Test]

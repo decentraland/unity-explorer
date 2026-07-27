@@ -93,7 +93,7 @@ namespace DCL.AuthenticationScreenFlow
             if (!IsUserAllowedToAccessToBeta(identity))
             {
                 profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
-                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.RESTRICTED_USER);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.RestrictedUser);
             }
             else
             {
@@ -146,12 +146,12 @@ namespace DCL.AuthenticationScreenFlow
                 catch (TimeoutException e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
+                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
                 }
                 catch (Exception e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
+                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
                 }
             }
         }

@@ -23,16 +23,16 @@ namespace DCL.Passport.Configuration
 
     public enum AdditionalFieldType
     {
-        GENDER,
-        COUNTRY,
-        BIRTH_DATE,
-        PRONOUNS,
-        RELATIONSHIP_STATUS,
-        SEXUAL_ORIENTATION,
-        LANGUAGE,
-        PROFESSION,
-        EMPLOYMENT_STATUS,
-        HOBBIES,
-        REAL_NAME,
+        Gender,
+        Country,
+        BirthDate,
+        Pronouns,
+        RelationshipStatus,
+        SexualOrientation,
+        Language,
+        Profession,
+        EmploymentStatus,
+        Hobbies,
+        RealName,
     }
 }

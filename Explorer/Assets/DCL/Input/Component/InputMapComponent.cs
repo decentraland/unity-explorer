@@ -11,26 +11,26 @@ namespace DCL.Input.Component
 
         public static readonly Kind[] BLOCK_USER_INPUT =
         {
-            Kind.IN_WORLD_CAMERA,
-            Kind.CAMERA,
-            Kind.SHORTCUTS,
-            Kind.PLAYER,
-            Kind.VOICE_CHAT
+            Kind.InWorldCamera,
+            Kind.Camera,
+            Kind.Shortcuts,
+            Kind.Player,
+            Kind.VoiceChat
         };
 
 
         [Flags]
         public enum Kind
         {
-            NONE = 0,
-            PLAYER = 1,
-            CAMERA = 1 << 1,
-            FREE_CAMERA = 1 << 2,
-            EMOTE_WHEEL = 1 << 3,
-            EMOTES = 1 << 4,
-            SHORTCUTS = 1 << 5,
-            IN_WORLD_CAMERA = 1 << 6,
-            VOICE_CHAT = 1 << 7,
+            None = 0,
+            Player = 1,
+            Camera = 1 << 1,
+            FreeCamera = 1 << 2,
+            EmoteWheel = 1 << 3,
+            Emotes = 1 << 4,
+            Shortcuts = 1 << 5,
+            InWorldCamera = 1 << 6,
+            VoiceChat = 1 << 7,
         }
 
         private Kind active;

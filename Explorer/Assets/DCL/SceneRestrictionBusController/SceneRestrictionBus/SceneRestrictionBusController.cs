@@ -11,7 +11,7 @@ namespace DCL.SceneRestrictionBusController.SceneRestrictionBus
 
         public void PushSceneRestriction(SceneRestriction.SceneRestriction sceneRestriction)
         {
-            if (sceneRestriction.Action == SceneRestriction.SceneRestrictionsAction.APPLIED)
+            if (sceneRestriction.Action == SceneRestriction.SceneRestrictionsAction.Applied)
                 activeRestrictions[sceneRestriction.Type] = sceneRestriction;
             else
                 activeRestrictions.Remove(sceneRestriction.Type);

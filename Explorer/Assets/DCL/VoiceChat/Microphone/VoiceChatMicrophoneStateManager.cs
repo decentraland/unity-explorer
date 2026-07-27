@@ -67,12 +67,12 @@ namespace DCL.VoiceChat
 
         private void UpdateMicrophoneState()
         {
-            bool shouldEnableMicrophone = currentCallStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL && isRoomConnected;
+            bool shouldEnableMicrophone = currentCallStatus == VoiceChatStatus.VoiceChatInCall && isRoomConnected;
 
-            bool shouldDisableMicrophone = currentCallStatus == VoiceChatStatus.DISCONNECTED ||
-                                           currentCallStatus == VoiceChatStatus.VOICE_CHAT_ENDING_CALL ||
-                                           (!isRoomConnected && currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTING_CALL &&
-                                            currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
+            bool shouldDisableMicrophone = currentCallStatus == VoiceChatStatus.Disconnected ||
+                                           currentCallStatus == VoiceChatStatus.VoiceChatEndingCall ||
+                                           (!isRoomConnected && currentCallStatus != VoiceChatStatus.VoiceChatStartingCall &&
+                                            currentCallStatus != VoiceChatStatus.VoiceChatStartedCall);
 
             if (shouldEnableMicrophone) { microphoneHandler.EnableMicrophoneForCall(); }
             else if (shouldDisableMicrophone) { microphoneHandler.DisableMicrophoneForCall(); }

@@ -50,7 +50,7 @@ namespace DCL.CharacterMotion.Systems
         {
             Vector3 currentPosition = characterController.transform.position;
 
-            if (glideState.Value == GlideStateValue.GLIDING)
+            if (glideState.Value == GlideStateValue.Gliding)
             {
                 // Reset fall height if gliding
                 stunComponent.TopUngroundedHeight = currentPosition.y;

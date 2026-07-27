@@ -14,7 +14,7 @@ namespace DCL.ApplicationGuards
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IAnalyticsController analytics;
         private readonly IReadOnlyList<SpecResult> specResult;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         public readonly UniTaskCompletionSource HoldingTask;
 
         private MinimumSpecsTablePresenter specsTablePresenter;

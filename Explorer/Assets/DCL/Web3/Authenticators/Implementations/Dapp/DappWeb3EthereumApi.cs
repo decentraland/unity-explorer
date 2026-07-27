@@ -79,7 +79,7 @@ namespace DCL.Web3.Authenticators
         }
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
-            SendAsync(request, Web3RequestSource.SDKScene, ct);
+            SendAsync(request, Web3RequestSource.SdkScene, ct);
 
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
@@ -191,7 +191,7 @@ namespace DCL.Web3.Authenticators
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 return new DecentralandIdentity(new Web3Address(response.sender),
-                    ephemeralAccount, sessionExpiration, authChain, IWeb3Identity.Web3IdentitySource.DAPP);
+                    ephemeralAccount, sessionExpiration, authChain, IWeb3Identity.Web3IdentitySource.Dapp);
             }
             catch (Exception)
             {

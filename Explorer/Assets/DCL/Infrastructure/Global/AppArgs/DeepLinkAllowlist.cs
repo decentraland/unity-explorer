@@ -14,7 +14,7 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Always permitted</b> — benign navigation / share / login intents whose worst case is already
     ///             gated elsewhere (a consent prompt, a matching login token, or a plain coordinate): realm,
-    ///             position, community, signin, authRequestId, force-open-backpack.
+    ///             position, community, signin, authRequestId, force-open-backpack, spawnpoint.
     ///         </item>
     ///         <item>
     ///             <b>Permitted only for a loopback realm</b> — the local-development params Creator Hub and the
@@ -61,6 +61,11 @@ namespace Global.AppArgs
 
             // Opens the user's own backpack panel on landing (shipped deep-link feature). Benign in-client navigation.
             AppArgsFlags.FORCE_OPEN_BACKPACK,
+
+            // Named spawn point within the destination scene (#9369). A landing refinement in the same class as
+            // POSITION — it only picks where inside an already-permitted realm/position navigation the user arrives,
+            // with no capability, infra, or exec impact.
+            AppArgsFlags.SPAWN_POINT,
         };
 
         // Local-development params Creator Hub / sdk-commands attach to preview deep links. Permitted ONLY when the
