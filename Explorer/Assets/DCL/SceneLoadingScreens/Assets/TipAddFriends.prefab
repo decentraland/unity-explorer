@@ -22,7 +22,7 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: 68f9eff02d2384f72b6d01286cf5cff8, type: 3}
     - target: {fileID: 1450107832291094929, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_text
-      value: "Open profile <color=#FFBE47>\u2192</color> to see events"
+      value: "Open profile <color=#FFBE47>\u2192</color> Add friend"
       objectReference: {fileID: 0}
     - target: {fileID: 1450107832291094929, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_characterSpacing
@@ -123,6 +123,18 @@ PrefabInstance:
     - target: {fileID: 6455313194973673589, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 212.3392
+      objectReference: {fileID: 0}
+    - target: {fileID: 6455313194973673589, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7423570456732473033, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 33
+      objectReference: {fileID: 0}
+    - target: {fileID: 7423570456732473033, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7510907615130953338, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_text
