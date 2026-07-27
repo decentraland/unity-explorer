@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public bool LookForDependencies;
 
         private GetAssetBundleIntention(Type? expectedObjectType, AssetBundleManifestVersion assetBundle, string? name = null,
-            string? hash = null, AssetSource permittedSources = AssetSource.ALL,
+            string? hash = null, AssetSource permittedSources = AssetSource.All,
             URLSubdirectory customEmbeddedSubDirectory = default,
             string parentEntityID = "",
             bool isDependency = false,
@@ -77,11 +77,12 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetBundleManifestVersion assetBundleManifestVersion, string parentEntityID, AssetSource permittedSources = AssetSource.ALL,
+        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetBundleManifestVersion assetBundleManifestVersion, string parentEntityID,
+            AssetSource permittedSources = AssetSource.All,
             URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (expectedAssetType, assetBundleManifestVersion, hash: hash, name: name, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
-        public static GetAssetBundleIntention FromHash(string hash, AssetBundleManifestVersion assetBundleManifestVersion, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
+        public static GetAssetBundleIntention FromHash(string hash, AssetBundleManifestVersion assetBundleManifestVersion, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.All,
             URLSubdirectory customEmbeddedSubDirectory = default, CancellationTokenSource cancellationTokenSource = null,
             string parentEntityID = "", bool isDependency = false, bool lookForDependencies = false) =>
             new (expectedAssetType, assetBundleManifestVersion, hash: hash, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, lookForDependencies: lookForDependencies, cancellationTokenSource: cancellationTokenSource);
