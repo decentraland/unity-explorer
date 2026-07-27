@@ -1,3 +1,4 @@
+using DCL.Web3;
 using DCL.Web3.Authenticators;
 using NUnit.Framework;
 
@@ -30,7 +31,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
         public void AppendLowercasedReferrerWhenValid()
         {
             string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: false,
-                referrer: "0x24E5F44999C151F08609F8E27B2238C773C4D020");
+                Web3Address.FromUntrusted("0x24E5F44999C151F08609F8E27B2238C773C4D020"));
 
             Assert.AreEqual(
                 $"{BASE_URL}/{REQUEST_ID}?loginMethod={LOGIN_METHOD}&flow=deeplink&referrer=0x24e5f44999c151f08609f8e27b2238c773c4d020",
@@ -42,9 +43,21 @@ namespace DCL.AuthenticationScreenFlow.Tests
         [TestCase("not-an-address")]
         [TestCase("0x123")]
         [TestCase("javascript:alert(1)")]
-        public void OmitReferrerWhenInvalid(string? referrer)
+        public void OmitReferrerWhenInvalid(string? rawReferrer)
         {
-            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: false, referrer);
+            // FromUntrusted degrades every invalid value to null, matching how the
+            // authenticator constructs the field.
+            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: false, Web3Address.FromUntrusted(rawReferrer));
+
+            StringAssert.DoesNotContain("referrer", url);
+        }
+
+        [Test]
+        public void OmitReferrerWhenAddressWasBuiltUnvalidated()
+        {
+            // Defense-in-depth: even a Web3Address constructed directly from garbage
+            // (the ctor does not validate) must not reach the URL.
+            string url = DeepLinkSignInUrl.Build(BASE_URL, REQUEST_ID, LOGIN_METHOD, bridgeOnly: false, new Web3Address("not-an-address"));
 
             StringAssert.DoesNotContain("referrer", url);
         }

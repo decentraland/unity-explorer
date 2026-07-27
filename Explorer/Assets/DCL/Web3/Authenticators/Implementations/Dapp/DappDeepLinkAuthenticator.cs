@@ -33,7 +33,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWebRequestController webRequestController;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
-        private readonly string? referrer;
+        private readonly Web3Address? referrer;
         private readonly URLBuilder urlBuilder = new ();
         private readonly DCLSemaphoreSlim loginMutex = new ();
 
@@ -54,7 +54,9 @@ namespace DCL.Web3.Authenticators
             this.webRequestController = webRequestController;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
             this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
-            this.referrer = referrer;
+            // Normalized/validated once at construction so the field is always canonical;
+            // an invalid launch-argument value degrades to "no referrer".
+            this.referrer = Web3Address.FromUntrusted(referrer);
         }
 
         public void Dispose()

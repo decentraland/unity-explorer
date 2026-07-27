@@ -4,20 +4,21 @@ using NUnit.Framework;
 namespace DCL.AuthenticationScreenFlow.Tests
 {
     [TestFixture]
-    public class ReferrerArgShould
+    public class Web3AddressValidationShould
     {
         private const string VALID_REFERRER = "0x24e5f44999c151f08609f8e27b2238c773c4d020";
 
         [Test]
-        public void KeepValidLowercaseAddress()
+        public void AcceptValidLowercaseAddress()
         {
-            Assert.AreEqual(VALID_REFERRER, ReferrerArg.Normalize(VALID_REFERRER));
+            Assert.IsTrue(Web3Address.IsValid(VALID_REFERRER));
+            Assert.AreEqual(VALID_REFERRER, Web3Address.FromUntrusted(VALID_REFERRER)!.Value.ToString());
         }
 
         [Test]
         public void LowercaseMixedCaseAddress()
         {
-            Assert.AreEqual(VALID_REFERRER, ReferrerArg.Normalize("0x24E5F44999C151F08609F8E27B2238C773C4D020"));
+            Assert.AreEqual(VALID_REFERRER, Web3Address.FromUntrusted("0x24E5F44999C151F08609F8E27B2238C773C4D020")!.Value.ToString());
         }
 
         [TestCase(null)]
@@ -28,9 +29,10 @@ namespace DCL.AuthenticationScreenFlow.Tests
         [TestCase("0xZZZ5f44999c151f08609f8e27b2238c773c4d020")]
         [TestCase(" 0x24e5f44999c151f08609f8e27b2238c773c4d020")]
         [TestCase("0x24e5f44999c151f08609f8e27b2238c773c4d0201")]
-        public void RejectInvalidValues(string? referrer)
+        public void RejectInvalidValues(string? value)
         {
-            Assert.IsNull(ReferrerArg.Normalize(referrer));
+            Assert.IsFalse(Web3Address.IsValid(value));
+            Assert.IsNull(Web3Address.FromUntrusted(value));
         }
     }
 }

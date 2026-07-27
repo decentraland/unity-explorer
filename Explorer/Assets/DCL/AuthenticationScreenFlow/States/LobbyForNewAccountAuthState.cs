@@ -38,7 +38,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly string? referrer;
+        private readonly Web3Address? referrer;
 
         /// <summary>Total budget for the whole referral registration (POST + PATCH), not per request.</summary>
         private const int REFERRAL_REGISTRATION_TIMEOUT_SECONDS = 5;
@@ -80,7 +80,9 @@ namespace DCL.AuthenticationScreenFlow
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
-            this.referrer = ReferrerArg.Normalize(referrer);
+            // Normalized/validated once at construction so the field is always canonical;
+            // an invalid launch-argument value degrades to "no referral tracking".
+            this.referrer = Web3Address.FromUntrusted(referrer);
 
             characterPreviewView = viewInstance.CharacterPreviewView;
             characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
@@ -356,8 +358,8 @@ namespace DCL.AuthenticationScreenFlow
             {
                 string url = decentralandUrlsSource.Url(DecentralandUrl.ReferralProgress);
 
-                // referrer is regex-validated at construction, safe to interpolate
-                var jsonBody = $"{{\"referrer\":\"{referrer}\"}}";
+                // referrer is validated at construction (Web3Address.FromUntrusted), safe to interpolate
+                var jsonBody = $"{{\"referrer\":\"{referrer.Value}\"}}";
 
                 await webRequestController.SignedFetchPostAsync(
                                                new CommonArguments(URLAddress.FromString(url)),

@@ -22,6 +22,39 @@ namespace DCL.Web3
             this.address = address.ToLower();
         }
 
+        /// <summary>
+        ///     Whether the value is a strictly valid Ethereum address ("0x" + 40 hex chars).
+        ///     Meant for untrusted inputs (launch arguments, deep links, query params) before
+        ///     wrapping them in a <see cref="Web3Address" /> — the constructor itself accepts
+        ///     any string and only lowercases it.
+        /// </summary>
+        public static bool IsValid(string? address)
+        {
+            if (address == null || address.Length != ETH_ADDRESS_LENGTH)
+                return false;
+
+            if (address[0] != '0' || address[1] != 'x')
+                return false;
+
+            for (var i = 2; i < address.Length; i++)
+            {
+                char c = address[i];
+                bool isHexDigit = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+
+                if (!isHexDigit)
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Returns the value as a lowercased <see cref="Web3Address" /> when it is strictly
+        ///     valid (see <see cref="IsValid" />), null otherwise.
+        /// </summary>
+        public static Web3Address? FromUntrusted(string? address) =>
+            IsValid(address) ? new Web3Address(address) : (Web3Address?)null;
+
         public override string ToString() =>
             address;
 
