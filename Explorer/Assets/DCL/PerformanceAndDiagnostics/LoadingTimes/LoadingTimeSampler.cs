@@ -9,6 +9,7 @@ namespace DCL.LoadingTimes
         private const string START_LABEL = "start_time_s";
         private const string STOP_LABEL = "stop_time_s";
         private const string DURATION_LABEL = "duration_s";
+        private const string SCENE_HASH_LABEL = "scene_hash";
 
         private static readonly StageMeasure[] STAGE_MEASURES = new StageMeasure[(byte)LoadingStatus.LoadingStage.Completed]; //Auth-screen disabled
         private static float startTime;
@@ -34,10 +35,11 @@ namespace DCL.LoadingTimes
             current++;
         }
 
-        public static JObject ToJObject()
+        public static JObject ToJObject(string? sceneHash)
         {
             JObject jObject = new JObject
             {
+                { SCENE_HASH_LABEL, sceneHash },
                 { START_LABEL, startTime },
                 { STOP_LABEL, stopTime },
                 { DURATION_LABEL, stopTime - startTime }

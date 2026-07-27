@@ -1,6 +1,8 @@
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
+using ECS.SceneLifeCycle;
+using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
 
@@ -10,11 +12,13 @@ namespace DCL.LoadingTimes
     {
         private readonly ILoadingStatus loadingStatus;
         private readonly IAnalyticsController analytics;
+        private readonly IScenesCache scenesCache;
 
-        public LoadingTimes(ILoadingStatus loadingStatus, IAnalyticsController analytics)
+        public LoadingTimes(ILoadingStatus loadingStatus, IAnalyticsController analytics, IScenesCache scenesCache)
         {
             this.loadingStatus = loadingStatus;
             this.analytics = analytics;
+            this.scenesCache = scenesCache;
 
             loadingStatus.CurrentStageMut.OnUpdate += OnStageUpdated;
         }
@@ -30,9 +34,11 @@ namespace DCL.LoadingTimes
 
             if (stage == LoadingStatus.LoadingStage.Completed)
             {
-                analytics.Track(AnalyticsEvents.Profiling.LOADING_TIMES, LoadingTimeSampler.ToJObject(), true);
+                JObject payload = LoadingTimeSampler.ToJObject(scenesCache.CurrentScene.Value?.Info.Name);
+
+                analytics.Track(AnalyticsEvents.Profiling.LOADING_TIMES, payload, true);
 #if UNITY_EDITOR
-                ReportHub.LogProductionInfo(LoadingTimeSampler.ToJObject().ToString());
+                ReportHub.LogProductionInfo(payload.ToString());
 #endif
                 Application.Quit();
             }

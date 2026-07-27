@@ -47,7 +47,7 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
 
             if (appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME))
-                loadingTimes = new LoadingTimes.LoadingTimes(loadingStatus, analytics);
+                loadingTimes = new LoadingTimes.LoadingTimes(loadingStatus, analytics, scenesCache);
         }
 
         public void Dispose()
