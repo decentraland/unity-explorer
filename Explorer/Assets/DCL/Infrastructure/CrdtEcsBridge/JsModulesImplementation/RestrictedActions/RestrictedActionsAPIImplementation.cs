@@ -214,13 +214,13 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return (int)OpenExplorerUiResult.RejectedNotCurrentScene;
 
-            // Underflow-safe recent-gesture check: never subtract unsigned ticks. The "== 0" guard is
-            // load-bearing — a scene where no user input has ever been recorded must be rejected.
+            // Accept only calls made within USER_GESTURE_WINDOW_TICKS of the last recorded pointer gesture.
+            // The "== 0" guard is not redundant: 0 means "no input was ever recorded".
             uint lastUserInputTick = sceneStateProvider.LastUserInputTick;
 
             if (lastUserInputTick == 0 || lastUserInputTick + USER_GESTURE_WINDOW_TICKS < sceneStateProvider.TickNumber)
             {
-                ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, "OpenExplorerUi: rejected, call did not originate from a recent user gesture");
+                ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenExplorerUi: rejected, call did not originate from a recent user gesture");
                 return (int)OpenExplorerUiResult.RejectedNoUserGesture;
             }
 
