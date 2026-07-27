@@ -44,7 +44,7 @@ namespace DCL.LoadingTimes
             };
 
             foreach (var measure in STAGE_MEASURES)
-                jObject.Add($"{STAGE_PREFIX}{measure.Stage}", new JObject
+                jObject.Add($"{STAGE_PREFIX}{measure.Stage.ToString().ToLower()}", new JObject
                 {
                     { START_LABEL, measure.StartTime },
                     { STOP_LABEL, measure.StopTime },
