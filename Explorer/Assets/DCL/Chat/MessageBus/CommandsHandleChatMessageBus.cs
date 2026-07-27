@@ -1,4 +1,3 @@
-#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
@@ -37,7 +36,7 @@ namespace DCL.Chat.MessageBus
             commandCts.SafeCancelAndDispose();
         }
 
-        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin messageOrigin, double timestamp)
         {
             if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                 return;
@@ -49,12 +48,12 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            this.origin.Send(channel, message, origin, timestamp);
+            origin.Send(channel, message, messageOrigin, timestamp);
         }
 
         private async UniTaskVoid HandleChatCommandAsync(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, string message)
         {
-            string[] split = message.Replace(", ", ",").Split(' '); // Split by space but keep commas
+            string[] split = message.TrimEnd().Replace(", ", ",").Split(' '); // Split by space but keep commas
             string userCommand = split[0][1..];
             string[] parameters = new ArraySegment<string>(split, 1, split.Length - 1).ToArray()!;
 

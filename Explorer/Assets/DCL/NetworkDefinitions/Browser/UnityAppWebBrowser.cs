@@ -23,7 +23,10 @@ namespace DCL.Browser
                 return;
             }
 
-            Application.OpenURL(Uri.EscapeUriString(url));
+            // Uri.EscapeUriString percent-encodes '%', double-encoding URLs that already contain escaped
+            // sequences (e.g. a Stripe checkout fragment's %2F becomes %252F), which breaks Stripe's atob()
+            // decode. AbsoluteUri escapes only unescaped characters and preserves existing escapes.
+            Application.OpenURL(Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ? uri.AbsoluteUri : url);
         }
 
         public virtual void OpenUrlMainThreadOnly(DecentralandUrl url)

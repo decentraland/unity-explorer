@@ -122,6 +122,7 @@ namespace Global.Dynamic
                 bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
+                bootstrapContainer.UseLocalAssetBundles,
                 world,
                 playerEntity,
                 memoryCap,
@@ -170,7 +171,7 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    StartParcel = new StartParcel(realmLaunchSettings.targetScene),
+                    StartParcel = new StartParcel(realmLaunchSettings.targetScene, realmLaunchSettings.spawnPointName),
                     EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,

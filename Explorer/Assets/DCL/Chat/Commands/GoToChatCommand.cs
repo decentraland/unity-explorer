@@ -15,15 +15,18 @@ namespace DCL.Chat.Commands
     ///
     /// Usage:
     ///     /goto *x,y*          — teleport to parcel
+    ///     /goto *x,y/name*     — teleport to parcel, landing at the named spawn point
     ///     /goto random         — teleport to a random parcel
     ///     /goto crowd          — teleport to the most populated scene
     ///     /goto *world*        — teleport to a world
     ///     /goto *world/x,y*    — teleport to a world at specific parcel
+    ///     /goto *world/name*   — teleport to a world, landing at the named spawn point
+    ///     /goto *world/x,y/name* — teleport to a world at specific parcel, landing at the named spawn point
     /// </summary>
     public class GoToChatCommand : IChatCommand
     {
         public string Command => "goto";
-        public string Description => "<b>/goto <i><x,y | random | crowd | world | world/x,y></i></b>\n  Teleport inside of Genesis or World";
+        public string Description => "<b>/goto <i><x,y | x,y/spawn | random | crowd | world | world/x,y | world/spawn | world/x,y/spawn></i></b>\n  Teleport inside of Genesis or World";
 
         private readonly ChatTeleporter chatTeleporter;
         private readonly IWebRequestController webRequestController;
@@ -41,43 +44,29 @@ namespace DCL.Chat.Commands
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            if (ChatParamUtils.IsPositionParameter(parameters[0], true))
-                return await chatTeleporter.TeleportToParcelAsync(await GetPositionAsync(parameters[0], ct), false, ct);
+            GotoTarget target = ChatParamUtils.ParseGotoTarget(parameters[0]);
 
-            if (TryParseWorldWithPosition(parameters[0], out string world, out string position))
-                return await chatTeleporter.TeleportToRealmAsync(world, ChatParamUtils.ParseRawPosition(position), ct);
+            if (target.IsRandom)
+                return await chatTeleporter.TeleportToParcelAsync(GetRandomParcel(), false, ct);
 
-            return await chatTeleporter.TeleportToRealmAsync(parameters[0], ct);
+            if (target.IsCrowd)
+                return await chatTeleporter.TeleportToParcelAsync(await FindCrowdAsync(ct), false, ct);
+
+            if (target.World != null)
+                return target.Parcel.HasValue
+                    ? await chatTeleporter.TeleportToRealmAsync(target.World, target.Parcel.Value, ct, target.SpawnPoint)
+                    : await chatTeleporter.TeleportToRealmAsync(target.World, ct, target.SpawnPoint);
+
+            if (target.Parcel is { } parcel)
+                return await chatTeleporter.TeleportToParcelAsync(parcel, false, ct, target.SpawnPoint);
+
+            return $"🔴 Invalid parameters, usage:\n{Description}";
         }
 
-        private static bool TryParseWorldWithPosition(string param, out string world, out string position)
-        {
-            int slashIndex = param.IndexOf('/');
-
-            if (slashIndex > 0 && slashIndex < param.Length - 1)
-            {
-                world = param.Substring(0, slashIndex);
-                position = param.Substring(slashIndex + 1);
-                return ChatParamUtils.IsPositionParameter(position, false);
-            }
-
-            world = null;
-            position = null;
-            return false;
-        }
-
-        private UniTask<Vector2Int> GetPositionAsync(string positionParameter, CancellationToken ct)
-        {
-            return positionParameter switch
-                   {
-                       ChatParamUtils.PARAMETER_RANDOM => UniTask.FromResult(new Vector2Int(
-                           Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x),
-                           Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y))
-                       ),
-                       ChatParamUtils.PARAMETER_CROWD => FindCrowdAsync(ct),
-                       _ => UniTask.FromResult(ChatParamUtils.ParseRawPosition(positionParameter))
-                   };
-        }
+        private static Vector2Int GetRandomParcel() =>
+            new (
+                Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x),
+                Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y));
 
         private async UniTask<Vector2Int> FindCrowdAsync(CancellationToken ct)
         {
@@ -90,10 +79,13 @@ namespace DCL.Chat.Commands
             return new Vector2Int(topScene.baseCoords[0], topScene.baseCoords[1]);
         }
 
+        // ReSharper disable InconsistentNaming
+        // Archipelago hot-scenes API response - fields must match the JSON wire format.
         private struct HotScene
         {
             public string name;
             public int[] baseCoords;
         }
+        // ReSharper restore InconsistentNaming
     }
 }

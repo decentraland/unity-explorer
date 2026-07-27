@@ -81,6 +81,8 @@ namespace DCL.CharacterCamera.Systems
                     cinemachinePreset.ForceFirstPersonCameraLookAt(lookAtIntent);
                     break;
                 case CameraMode.Free:
+                    cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
+                    break;
                 case CameraMode.ThirdPerson:
                     cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
                     break;
