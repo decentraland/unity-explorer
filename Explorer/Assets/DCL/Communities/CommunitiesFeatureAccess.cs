@@ -19,16 +19,21 @@ namespace DCL.Communities
 
         private bool? storedResult;
 
-        //TODO REMOVE THIS!!!! HACK TO ENABLE COMMUNITIES ALL THE TIME
-        // Compile-time so the hack cannot leak into player builds; define COMMUNITIES_FORCE_USER_WHITELIST
-        // in the Editor to exercise the real feature-flag + allowlist gating.
-        private static bool ForceEnabledInEditor
+#if UNITY_EDITOR
+        // Lets Editor tests exercise the real gating that <see cref="forceEnabledInEditor" /> otherwise short-circuits.
+        internal static bool disableForTests { get; set; }
+#endif
+
+        private static bool forceEnabledInEditor
         {
+            //TODO REMOVE THIS!!!! HACK TO ENABLE COMMUNITIES ALL THE TIME
+            // Compile-time so the hack cannot leak into player builds; define COMMUNITIES_FORCE_USER_WHITELIST
+            // in the Editor to exercise the real feature-flag + allowlist gating.
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
 #if UNITY_EDITOR && !COMMUNITIES_FORCE_USER_WHITELIST
-                return true;
+                return !disableForTests;
 #else
                 return false;
 #endif
@@ -52,7 +57,7 @@ namespace DCL.Communities
         ///     identity-independent, so it is safe to call from bootstrap paths that run before login.
         /// </summary>
         public bool IsFeatureEnabled() =>
-            ForceEnabledInEditor || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
+            forceEnabledInEditor || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
         /// <summary>
         ///     Checks if the Communities feature flag is activated and if the user is allowed to use the feature
@@ -62,7 +67,7 @@ namespace DCL.Communities
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
         public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct)
         {
-            if (ForceEnabledInEditor)
+            if (forceEnabledInEditor)
                 return true;
 
             if (storedResult != null)
@@ -93,7 +98,7 @@ namespace DCL.Communities
         ///     result of the last completed check, or false while no check has resolved for the current identity.
         /// </summary>
         public bool IsUserAllowedCached() =>
-            ForceEnabledInEditor || (storedResult ?? false);
+            forceEnabledInEditor || (storedResult ?? false);
 
         public bool TryGetCommunityIdFromAppArgs(out string? communityId) =>
             appArgs.TryGetValue(AppArgsFlags.COMMUNITY, out communityId) && !string.IsNullOrEmpty(communityId);
