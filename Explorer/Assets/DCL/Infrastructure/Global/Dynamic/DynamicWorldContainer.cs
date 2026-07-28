@@ -234,7 +234,8 @@ namespace Global.Dynamic
                 appArgs,
                 dynamicWorldParams.IsolateScenesCommunication,
                 dynamicWorldParams.EnableAnalytics,
-                localSceneDevelopment);
+                localSceneDevelopment,
+                dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
 
