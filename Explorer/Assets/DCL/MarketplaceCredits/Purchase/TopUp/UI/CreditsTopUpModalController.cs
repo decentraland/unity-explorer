@@ -102,7 +102,8 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             if (viewInstance == null)
                 return;
 
-            await viewInstance.CloseButton.OnClickAsync(ct);
+            await UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct),
+                viewInstance.DoneButton.OnClickAsync(ct));
         }
 
         private void BindPackItems()
@@ -208,6 +209,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             viewInstance.PackSelectionContainer.SetActive(packsVisible);
             viewInstance.WaitingForBrowserContainer.SetActive(newState == ModalState.WAITING_FOR_BROWSER);
             viewInstance.FailedContainer.SetActive(newState == ModalState.FAILED);
+            viewInstance.SuccessContainer.SetActive(newState == ModalState.SUCCESS);
 
             foreach (CreditsTopUpPackItemView packItem in viewInstance.PackItems)
                 packItem.BuyButton.interactable = newState == ModalState.PACK_SELECTION;

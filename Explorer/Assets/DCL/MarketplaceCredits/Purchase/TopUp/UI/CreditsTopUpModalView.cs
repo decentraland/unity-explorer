@@ -25,7 +25,9 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         [field: SerializeField] public GameObject PackSelectionContainer { get; private set; } = null!;
         [field: SerializeField] public GameObject WaitingForBrowserContainer { get; private set; } = null!;
         [field: SerializeField] public GameObject FailedContainer { get; private set; } = null!;
+        [field: SerializeField] public GameObject SuccessContainer { get; private set; } = null!;
         [field: SerializeField] public TMP_Text FailedReasonText { get; private set; } = null!;
         [field: SerializeField] public Button RetryButton { get; private set; } = null!;
+        [field: SerializeField] public Button DoneButton { get; private set; } = null!;
     }
 }

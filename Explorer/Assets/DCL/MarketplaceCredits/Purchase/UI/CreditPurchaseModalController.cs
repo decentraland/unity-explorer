@@ -343,7 +343,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                     viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, NORMAL_HEIGHT);
                     break;
             }
-            viewInstance.ConfirmStateContainer.SetActive(newState is ModalState.LOADING_BALANCE or ModalState.READY_TO_CONFIRM or ModalState.INSUFFICIENT_CREDITS);
+            viewInstance.ConfirmStateContainer.SetActive(newState is ModalState.LOADING_BALANCE or ModalState.READY_TO_CONFIRM);
             viewInstance.ProgressStateContainer.SetActive(purchasing);
             viewInstance.SuccessStateContainer.SetActive(newState == ModalState.SUCCESS);
             viewInstance.FailedStateContainer.SetActive(newState == ModalState.FAILED);
@@ -352,8 +352,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             viewInstance.Item.SetActive(newState is ModalState.LOADING_BALANCE or ModalState.READY_TO_CONFIRM or ModalState.INSUFFICIENT_CREDITS);
 
             viewInstance.ConfirmButton.interactable = newState == ModalState.READY_TO_CONFIRM;
-            viewInstance.CloseButton.interactable = !purchasing;
-            viewInstance.CancelButton.interactable = !purchasing;
         }
 
         private void RequestClose() =>
