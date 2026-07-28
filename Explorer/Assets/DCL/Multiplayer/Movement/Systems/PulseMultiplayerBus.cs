@@ -75,10 +75,10 @@ namespace DCL.Multiplayer.Movement
         {
             switch (peerIdCache.GetWalletInRealm(subjectId, realmData.RealmName, out wallet))
             {
-                case PeerIdCache.LookupResult.UNKNOWN_PEER:
+                case PeerIdCache.LookupResult.UnknownPeer:
                     ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received {messageType} from unknown peer {subjectId}");
                     return false;
-                case PeerIdCache.LookupResult.REALM_MISMATCH:
+                case PeerIdCache.LookupResult.RealmMismatch:
                     // Expected while a realm-change purge is pending, so not a warning
                     ReportHub.Log(ReportCategory.MULTIPLAYER, $"Dropped {messageType} from peer {subjectId} in a different realm");
                     return false;

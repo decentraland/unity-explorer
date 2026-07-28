@@ -15,12 +15,12 @@ namespace DCL.MarketplaceCredits.Purchase.UI
     {
         private enum ModalState
         {
-            LOADING_BALANCE,
-            READY_TO_CONFIRM,
-            INSUFFICIENT_CREDITS,
-            PURCHASING,
-            SUCCESS,
-            FAILED,
+            LoadingBalance,
+            ReadyToConfirm,
+            InsufficientCredits,
+            Purchasing,
+            Success,
+            Failed,
         }
 
         private const float NORMAL_HEIGHT = 491;
@@ -39,7 +39,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private bool settlementPending;
         private CancellationTokenSource? lifeCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public CreditPurchaseModalController(
             ViewFactoryMethod viewFactory,
@@ -78,6 +78,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.ItemName.text = inputData.ItemName;
                 viewInstance.RarityLabel.text = inputData.RarityName;
                 viewInstance.RarityLabel.color = inputData.RarityColor;
+                viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
                 viewInstance.PriceCreditsText.text = inputData.Listing.priceCredits.ToString();
 
                 if (inputData.ItemThumbnail != null)
@@ -131,13 +132,14 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             await UniTask.WhenAny(
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
+                viewInstance.InsufficientCancelButton.OnClickAsync(ct),
                 viewInstance.DoneButton.OnClickAsync(ct),
                 viewInstance.CloseBackground.OnClickAsync(ct));
         }
 
         private async UniTask LoadBalanceAndArmAsync(CancellationToken ct)
         {
-            SetUiState(ModalState.LOADING_BALANCE);
+            SetUiState(ModalState.LoadingBalance);
 
             IWeb3Identity? identity = identityCache.Identity;
 
@@ -157,7 +159,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 if (viewInstance != null)
                     viewInstance.BalanceCreditsText.text = credits.usd.credits.ToString();
 
-                SetUiState(CanAfford(inputData.Listing, credits) ? ModalState.READY_TO_CONFIRM : ModalState.INSUFFICIENT_CREDITS);
+                SetUiState(CanAfford(inputData.Listing, credits) ? ModalState.ReadyToConfirm : ModalState.InsufficientCredits);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -169,7 +171,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private void OnConfirmClicked()
         {
-            if (currentState != ModalState.READY_TO_CONFIRM || lifeCts == null || lifeCts.IsCancellationRequested)
+            if (currentState != ModalState.ReadyToConfirm || lifeCts == null || lifeCts.IsCancellationRequested)
                 return;
 
             PurchaseAsync(lifeCts.Token).Forget();
@@ -177,7 +179,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private void OnRetryClicked()
         {
-            if (currentState != ModalState.FAILED || settlementPending || lifeCts == null || lifeCts.IsCancellationRequested)
+            if (currentState != ModalState.Failed || settlementPending || lifeCts == null || lifeCts.IsCancellationRequested)
                 return;
 
             LoadBalanceAndArmAsync(lifeCts.Token).Forget();
@@ -197,7 +199,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private async UniTask PurchaseAsync(CancellationToken ct)
         {
-            SetUiState(ModalState.PURCHASING);
+            SetUiState(ModalState.Purchasing);
             NativeWindowManager.RequestTemporaryWindowMode();
 
             try
@@ -206,7 +208,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
                 if (result.Success)
                 {
-                    SetUiState(ModalState.SUCCESS);
+                    SetUiState(ModalState.Success);
                     RefreshBalanceAsync(lifeCts?.Token ?? CancellationToken.None).Forget();
                 }
                 else
@@ -227,32 +229,32 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         {
             switch (result.Error)
             {
-                case CreditsPurchaseError.CANCELLED:
-                    SetUiState(ModalState.READY_TO_CONFIRM);
+                case CreditsPurchaseError.Cancelled:
+                    SetUiState(ModalState.ReadyToConfirm);
                     break;
-                case CreditsPurchaseError.INSUFFICIENT_CREDITS:
-                    SetUiState(ModalState.INSUFFICIENT_CREDITS);
+                case CreditsPurchaseError.InsufficientCredits:
+                    SetUiState(ModalState.InsufficientCredits);
                     break;
-                case CreditsPurchaseError.SETTLEMENT_PENDING:
+                case CreditsPurchaseError.SettlementPending:
                     settlementPending = true;
                     ShowFailure("Your purchase is still processing. Your credits are reserved and the purchase will complete automatically — check back soon.", allowRetry: false);
                     break;
-                case CreditsPurchaseError.SIGNATURE_REJECTED:
+                case CreditsPurchaseError.SignatureRejected:
                     ShowFailure("The signature request was rejected.", allowRetry: true);
                     break;
-                case CreditsPurchaseError.PRICE_CHANGED:
+                case CreditsPurchaseError.PriceChanged:
                     ShowFailure("The price of this item changed. Please reopen the item to see the new price.", allowRetry: false);
                     break;
-                case CreditsPurchaseError.LISTING_NOT_AVAILABLE:
+                case CreditsPurchaseError.ListingNotAvailable:
                     ShowFailure("This item is no longer available for purchase with credits.", allowRetry: false);
                     break;
-                case CreditsPurchaseError.OWN_LISTING:
+                case CreditsPurchaseError.OwnListing:
                     ShowFailure("You cannot buy your own listing.", allowRetry: false);
                     break;
-                case CreditsPurchaseError.TRANSACTION_REVERTED:
+                case CreditsPurchaseError.TransactionReverted:
                     ShowFailure("The purchase failed on-chain. Your credits were not spent.", allowRetry: true);
                     break;
-                case CreditsPurchaseError.RELAYER_UNAVAILABLE:
+                case CreditsPurchaseError.RelayerUnavailable:
                     ShowFailure("The purchase service is temporarily unavailable. Please try again later.", allowRetry: true);
                     break;
                 default:
@@ -263,16 +265,16 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private void OnPurchaseStateChanged(CreditsPurchaseState state)
         {
-            if (viewInstance == null || currentState != ModalState.PURCHASING)
+            if (viewInstance == null || currentState != ModalState.Purchasing)
                 return;
 
             viewInstance.ProgressStatusText.text = state switch
             {
-                CreditsPurchaseState.RESOLVING_LISTING => "Checking availability...",
-                CreditsPurchaseState.AUTHORIZING => "Reserving your credits...",
-                CreditsPurchaseState.SIGNING => "Waiting for your signature...",
-                CreditsPurchaseState.SUBMITTING => "Submitting the purchase...",
-                CreditsPurchaseState.WAITING_SETTLEMENT => "Completing the purchase...",
+                CreditsPurchaseState.ResolvingListing => "Checking availability...",
+                CreditsPurchaseState.Authorizing => "Reserving your credits...",
+                CreditsPurchaseState.Signing => "Waiting for your signature...",
+                CreditsPurchaseState.Submitting => "Submitting the purchase...",
+                CreditsPurchaseState.WaitingSettlement => "Completing the purchase...",
                 _ => viewInstance.ProgressStatusText.text,
             };
         }
@@ -310,7 +312,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private void ShowFailure(string reason, bool allowRetry)
         {
-            SetUiState(ModalState.FAILED);
+            SetUiState(ModalState.Failed);
 
             if (viewInstance == null)
                 return;
@@ -326,32 +328,32 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             if (viewInstance == null)
                 return;
 
-            bool purchasing = newState == ModalState.PURCHASING;
+            bool purchasing = newState == ModalState.Purchasing;
 
             switch (newState)
             {
-                case ModalState.SUCCESS:
+                case ModalState.Success:
                     viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, COMPLETED_HEIGHT);
                     break;
-                case ModalState.PURCHASING:
+                case ModalState.Purchasing:
                     viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, PURCHASING_HEIGHT);
                     break;
-                case ModalState.INSUFFICIENT_CREDITS:
+                case ModalState.InsufficientCredits:
                     viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, INSUFFICIENT_CREDITS_HEIGHT);
                     break;
                 default:
                     viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, NORMAL_HEIGHT);
                     break;
             }
-            viewInstance.ConfirmStateContainer.SetActive(newState is ModalState.LOADING_BALANCE or ModalState.READY_TO_CONFIRM);
+            viewInstance.ConfirmStateContainer.SetActive(newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm);
             viewInstance.ProgressStateContainer.SetActive(purchasing);
-            viewInstance.SuccessStateContainer.SetActive(newState == ModalState.SUCCESS);
-            viewInstance.FailedStateContainer.SetActive(newState == ModalState.FAILED);
-            viewInstance.InsufficientCreditsContainer.SetActive(newState == ModalState.INSUFFICIENT_CREDITS);
-            viewInstance.BalanceLoadingSpinner.SetActive(newState == ModalState.LOADING_BALANCE);
-            viewInstance.Item.SetActive(newState is ModalState.LOADING_BALANCE or ModalState.READY_TO_CONFIRM or ModalState.INSUFFICIENT_CREDITS);
+            viewInstance.SuccessStateContainer.SetActive(newState == ModalState.Success);
+            viewInstance.FailedStateContainer.SetActive(newState == ModalState.Failed);
+            viewInstance.InsufficientCreditsContainer.SetActive(newState == ModalState.InsufficientCredits);
+            viewInstance.BalanceLoadingSpinner.SetActive(newState == ModalState.LoadingBalance);
+            viewInstance.Item.SetActive(newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits);
 
-            viewInstance.ConfirmButton.interactable = newState == ModalState.READY_TO_CONFIRM;
+            viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
         }
 
         private void RequestClose() =>

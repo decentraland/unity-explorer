@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 543383342138890165, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_Name
-      value: TipMakeAMove
+      value: TipMakeMove
       objectReference: {fileID: 0}
     - target: {fileID: 565513630802350116, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_Type
@@ -19,7 +19,7 @@ PrefabInstance:
     - target: {fileID: 565513630802350116, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 68f9eff02d2384f72b6d01286cf5cff8, type: 3}
+      objectReference: {fileID: 21300000, guid: 089798e4e628c4810949862aaf077ff0, type: 3}
     - target: {fileID: 1450107832291094929, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_text
       value: ' Press <color=#FFBE47>B</color> to open Emotes Wheel'
@@ -119,6 +119,18 @@ PrefabInstance:
     - target: {fileID: 6455313194973673589, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 244.31653
+      objectReference: {fileID: 0}
+    - target: {fileID: 6455313194973673589, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7423570456732473033, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 33
+      objectReference: {fileID: 0}
+    - target: {fileID: 7423570456732473033, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7510907615130953338, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_text

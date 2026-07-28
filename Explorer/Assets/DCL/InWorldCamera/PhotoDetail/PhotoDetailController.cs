@@ -50,7 +50,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private bool isClosing;
         private int currentReelIndex;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public PhotoDetailController(ViewFactoryMethod viewFactory,
             PhotoDetailInfoController photoDetailInfoController,
@@ -184,13 +184,13 @@ namespace DCL.InWorldCamera.PhotoDetail
                     ScreenshotDownloaded?.Invoke();
 
                     viewInstance!.cameraReelToastMessage?.ShowToastMessage(
-                        CameraReelToastMessageType.DOWNLOAD,
+                        CameraReelToastMessageType.Download,
                         photoDetailStringMessages.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Failure);
                 }
             }
 
@@ -200,7 +200,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void CopyReelLinkClicked()
         {
             ReelCommonActions.CopyReelLink(inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard);
-            viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, photoDetailStringMessages.LinkCopiedMessage);
+            viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Success, photoDetailStringMessages.LinkCopiedMessage);
         }
 
         private void ShareReelClicked()
@@ -227,7 +227,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                     await cameraReelStorageService.UpdateScreenshotVisibilityAsync(reelId,
                         isPublic, ct);
                     galleryEventBus.ReelPublicStateChanged(reelId, isPublic);
-                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS,
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Success,
                         photoDetailStringMessages.PhotoSuccessfullyUpdatedMessage);
                     
                     if(!isPublic)
@@ -237,7 +237,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.Failure);
                 }
             }
 

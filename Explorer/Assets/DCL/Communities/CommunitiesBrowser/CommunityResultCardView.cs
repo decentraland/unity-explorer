@@ -112,7 +112,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_COMMUNITY_INVITATION_TEXT_FORMAT, currentCommunityName), DELETE_COMMUNITY_INVITATION_CANCEL_TEXT, DELETE_COMMUNITY_INVITATION_CONFIRM_TEXT, communityThumbnail.ImageSprite, true, false), ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel)
                     return;
 
                 RejectCommunityInvitationButtonClicked?.Invoke(CommunityId, currentInviteOrRequestId, this);
@@ -189,7 +189,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMembersCount(int memberCount)
         {
-            bool isMembersCounterEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_MEMBERS_COUNTER);
+            bool isMembersCounterEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunitiesMembersCounter);
             communityMembersSeparator.SetActive(isMembersCounterEnabled);
             communityMembersCountText.gameObject.SetActive(isMembersCounterEnabled);
 
@@ -203,41 +203,41 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetActionButtonsState(CommunityPrivacy privacy, InviteRequestAction type, bool isMember, bool isStreaming = false, bool hasJoined = false)
         {
             if (isStreaming)
-                SetActionButtonsState(hasJoined ? ActionButtonsState.STREAMING_GOTO : ActionButtonsState.STREAMING_JOIN);
+                SetActionButtonsState(hasJoined ? ActionButtonsState.StreamingGoto : ActionButtonsState.StreamingJoin);
             else if ((privacy == CommunityPrivacy.@public || isMember) && type == InviteRequestAction.none)
-                SetActionButtonsState(isMember ? ActionButtonsState.PUBLIC_VIEW : ActionButtonsState.PUBLIC_JOIN);
+                SetActionButtonsState(isMember ? ActionButtonsState.PublicView : ActionButtonsState.PublicJoin);
             else if (privacy == CommunityPrivacy.@private && !isMember && type != InviteRequestAction.invite)
-                SetActionButtonsState(type == InviteRequestAction.request_to_join ? ActionButtonsState.PRIVATE_CANCEL_JOIN : ActionButtonsState.PRIVATE_REQUEST_JOIN);
+                SetActionButtonsState(type == InviteRequestAction.request_to_join ? ActionButtonsState.PrivateCancelJoin : ActionButtonsState.PrivateRequestJoin);
             else if (type == InviteRequestAction.invite)
-                SetActionButtonsState(ActionButtonsState.PRIVATE_WITH_INVITE);
+                SetActionButtonsState(ActionButtonsState.PrivateWithInvite);
         }
 
         private void SetActionButtonsState(ActionButtonsState buttonsState)
         {
             switch (buttonsState)
             {
-                case ActionButtonsState.PUBLIC_JOIN:
-                case ActionButtonsState.PUBLIC_VIEW:
+                case ActionButtonsState.PublicJoin:
+                case ActionButtonsState.PublicView:
                     SetPublicState(buttonsState, isActiveState: true);
                     SetStreamingState(buttonsState, isActiveState: false);
                     SetPrivateJoinRequestState(buttonsState, isActiveState: false);
                     SetPrivateInvitationState(isActiveState: false);
                     break;
-                case ActionButtonsState.STREAMING_JOIN:
-                case ActionButtonsState.STREAMING_GOTO:
+                case ActionButtonsState.StreamingJoin:
+                case ActionButtonsState.StreamingGoto:
                     SetPublicState(buttonsState, isActiveState: false);
                     SetStreamingState(buttonsState, isActiveState: true);
                     SetPrivateJoinRequestState(buttonsState, isActiveState: false);
                     SetPrivateInvitationState(isActiveState: false);
                     break;
-                case ActionButtonsState.PRIVATE_REQUEST_JOIN:
-                case ActionButtonsState.PRIVATE_CANCEL_JOIN:
+                case ActionButtonsState.PrivateRequestJoin:
+                case ActionButtonsState.PrivateCancelJoin:
                     SetPublicState(buttonsState, isActiveState: false);
                     SetStreamingState(buttonsState, isActiveState: false);
                     SetPrivateJoinRequestState(buttonsState, isActiveState: true);
                     SetPrivateInvitationState(isActiveState: false);
                     break;
-                case ActionButtonsState.PRIVATE_WITH_INVITE:
+                case ActionButtonsState.PrivateWithInvite:
                     SetPublicState(buttonsState, isActiveState: false);
                     SetStreamingState(buttonsState, isActiveState: false);
                     SetPrivateJoinRequestState(buttonsState, isActiveState: false);
@@ -250,16 +250,16 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             joinOrViewButtonsContainer.SetActive(isActiveState);
             if (!isActiveState) return;
-            joinCommunityButton.gameObject.SetActive(buttonsState is ActionButtonsState.PUBLIC_JOIN);
-            viewCommunityButton.gameObject.SetActive(buttonsState is ActionButtonsState.PUBLIC_VIEW);
+            joinCommunityButton.gameObject.SetActive(buttonsState is ActionButtonsState.PublicJoin);
+            viewCommunityButton.gameObject.SetActive(buttonsState is ActionButtonsState.PublicView);
         }
 
         private void SetPrivateJoinRequestState(ActionButtonsState buttonsState, bool isActiveState)
         {
             requestOrCancelToJoinButtonsContainer.SetActive(isActiveState);
             if (!isActiveState) return;
-            requestToJoinButton.gameObject.SetActive(buttonsState is ActionButtonsState.PRIVATE_REQUEST_JOIN);
-            cancelJoinRequestButton.gameObject.SetActive(buttonsState is ActionButtonsState.PRIVATE_CANCEL_JOIN);
+            requestToJoinButton.gameObject.SetActive(buttonsState is ActionButtonsState.PrivateRequestJoin);
+            cancelJoinRequestButton.gameObject.SetActive(buttonsState is ActionButtonsState.PrivateCancelJoin);
         }
 
         private void SetPrivateInvitationState(bool isActiveState)
@@ -274,8 +274,8 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             joinStreamButtonContainer.SetActive(isActiveState);
             if (!isActiveState) return;
-            goToStreamButton.gameObject.SetActive(buttonsState is ActionButtonsState.STREAMING_GOTO);
-            joinStreamButton.gameObject.SetActive(buttonsState is ActionButtonsState.STREAMING_JOIN);
+            goToStreamButton.gameObject.SetActive(buttonsState is ActionButtonsState.StreamingGoto);
+            joinStreamButton.gameObject.SetActive(buttonsState is ActionButtonsState.StreamingJoin);
         }
 
 
@@ -418,14 +418,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private enum ActionButtonsState
         {
-            PUBLIC_JOIN,
-            PUBLIC_VIEW,
-            STREAMING_JOIN,
-            STREAMING_GOTO,
-            PRIVATE_REQUEST_JOIN,
-            PRIVATE_CANCEL_JOIN,
-            PRIVATE_WITH_INVITE,
-            DEFAULT,
+            PublicJoin,
+            PublicView,
+            StreamingJoin,
+            StreamingGoto,
+            PrivateRequestJoin,
+            PrivateCancelJoin,
+            PrivateWithInvite,
+            Default,
         }
     }
 }

@@ -111,7 +111,7 @@ namespace DCL.Chat
                     contextMenuSettings.Offset,
                     contextMenuSettings.VerticalLayoutPadding,
                     contextMenuSettings.ElementsSpacing,
-                    ContextMenuOpenDirection.TOP_LEFT)
+                    ContextMenuOpenDirection.TopLeft)
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText,
                     contextMenuSettings.ViewCommunitySprite,
                     OpenCommunityCard));
@@ -455,23 +455,23 @@ namespace DCL.Chat
                         verticalLayoutPadding: chatConfig.chatContextMenuSettings.VerticalPadding,
                         elementsSpacing: chatConfig.chatContextMenuSettings.ElementsSpacing,
                         offsetFromTarget: chatConfig.chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget,
-                        anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
-                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] =
+                        anchorPoint: ContextMenuOpenDirection.TopLeft)
+                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.All] =
                         new ToggleWithCheckContextMenuControlSettings("All Messages",
-                            x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
-                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.MENTIONS_ONLY] =
+                            x => OnNotificationPingOptionSelected(ChatAudioSettings.All), toggleGroup))
+                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.MentionsOnly] =
                         new ToggleWithCheckContextMenuControlSettings("Mentions Only",
-                            x => OnNotificationPingOptionSelected(ChatAudioSettings.MENTIONS_ONLY), toggleGroup))
-                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] =
+                            x => OnNotificationPingOptionSelected(ChatAudioSettings.MentionsOnly), toggleGroup))
+                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.None] =
                         new ToggleWithCheckContextMenuControlSettings("None",
-                            x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
+                            x => OnNotificationPingOptionSelected(ChatAudioSettings.None), toggleGroup)));
 
             contextMenuInstance = new GenericContextMenu(
                     chatConfig.chatContextMenuSettings.ContextMenuWidth,
                     chatConfig.chatContextMenuSettings.OffsetFromTarget,
                     chatConfig.chatContextMenuSettings.VerticalPadding,
                     chatConfig.chatContextMenuSettings.ElementsSpacing,
-                    anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
+                    anchorPoint: ContextMenuOpenDirection.TopLeft)
                 .AddControl(subMenuSettings);
 
 

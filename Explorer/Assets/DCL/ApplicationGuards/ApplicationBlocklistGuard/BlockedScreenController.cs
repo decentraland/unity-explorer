@@ -17,7 +17,7 @@ namespace DCL.ApplicationGuards
         private readonly UnityAppWebBrowser webBrowser;
         private readonly StringBuilder infoTextBuilder = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public BlockedScreenController(ViewFactoryMethod viewFactory, UnityAppWebBrowser webBrowser) : base(viewFactory)
         {

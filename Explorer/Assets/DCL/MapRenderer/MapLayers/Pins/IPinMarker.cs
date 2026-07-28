@@ -10,8 +10,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
     {
         public enum ScaleType
         {
-            MINIMAP,
-            NAVMAP,
+            Minimap,
+            Navmap,
         }
 
         bool IsVisible { get; }

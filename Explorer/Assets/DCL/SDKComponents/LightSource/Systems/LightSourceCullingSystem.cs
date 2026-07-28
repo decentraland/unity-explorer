@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceComponent.Index = -1;
             lightSourceComponent.Rank = -1;
             lightSourceComponent.TypeRank = -1;
-            lightSourceComponent.Culling = LightSourceComponent.CullingFlags.NONE;
+            lightSourceComponent.Culling = LightSourceComponent.CullingFlags.None;
         }
 
         [Query]
@@ -131,7 +131,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceComponent.TypeRank = typeRank;
 
             if (lightSourceComponent.Rank >= maxLightCount)
-                lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.TOO_MANY_LIGHT_SOURCES;
+                lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.TooManyLightSources;
 
             bool shouldDisableShadows = (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Point && lightSourceComponent.TypeRank >= settings.SceneLimitations.MaxPointLightShadows) ||
                                         (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot && lightSourceComponent.TypeRank >= settings.SceneLimitations.MaxSpotLightShadows);

@@ -64,8 +64,8 @@ namespace DCL.UI.ProfileElements
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
-            connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
-            profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
+            connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.Online);
+            profilePictureView.GreyOut(connectionStatus != OnlineStatus.Online ? offlineThumbnailGreyOutOpacity : 0.0f);
         }
 
         private void OnOpenProfileClicked()
@@ -77,7 +77,7 @@ namespace DCL.UI.ProfileElements
             cts = cts.SafeRestart();
             ProfileContextMenuOpened?.Invoke();
             openProfileButton.OnSelect(null);
-            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(currentWalledId, openProfileButton.transform.position, CONTEXT_MENU_OFFSET, cts.Token, contextMenuTask.Task, OnProfileContextMenuClosed, MenuAnchorPoint.TOP_LEFT).Forget();
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(currentWalledId, openProfileButton.transform.position, CONTEXT_MENU_OFFSET, cts.Token, contextMenuTask.Task, OnProfileContextMenuClosed, MenuAnchorPoint.TopLeft).Forget();
         }
 
         private void OnProfileContextMenuClosed()

@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            builder.World.Create(new InputMapComponent(InputMapComponent.Kind.NONE));
+            builder.World.Create(new InputMapComponent(InputMapComponent.Kind.None));
 
             ApplyInputMapsSystem.InjectToWorld(ref builder);
             UpdateInputJumpSystem.InjectToWorld(ref builder, DCLInput.Instance.Player.Jump);

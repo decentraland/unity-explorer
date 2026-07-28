@@ -58,9 +58,9 @@ namespace DCL.Landscape.Settings
 
         private enum GroundMeshPiece
         {
-            MIDDLE,
-            EDGE,
-            CORNER,
+            Middle,
+            Edge,
+            Corner,
         }
     }
 

@@ -358,17 +358,6 @@ decentraland://?force-open-backpack=true
 
 ---
 
-### `creator-hub-bin-path`
-**Type:** String (file path)
-**Description:** Specifies a custom path to the Creator Hub binary. Used when the Creator Hub needs to be launched from a non-standard location.
-
-**Usage:**
-```bash
---creator-hub-bin-path /path/to/creator-hub
-```
-
----
-
 ### `use-log-matrix`
 **Type:** String (file path)
 **Description:** Enables logging to a matrix file. The value should be the path to the log matrix file.

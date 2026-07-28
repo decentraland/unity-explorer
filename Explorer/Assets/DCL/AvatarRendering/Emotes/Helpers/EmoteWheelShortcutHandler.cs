@@ -34,10 +34,10 @@ namespace DCL.AvatarRendering.Emotes
         {
             switch (source)
             {
-                case EmoteTriggerSource.SHORTCUT:
+                case EmoteTriggerSource.Shortcut:
                     ignoreNextRelease = true;
                     break;
-                case EmoteTriggerSource.WHEEL_SLOT:
+                case EmoteTriggerSource.WheelSlot:
                     lockUntilTime = UnityEngine.Time.time + QUICK_EMOTE_LOCK_TIME;
                     break;
                 default:

@@ -74,7 +74,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             analytics.Track(AnalyticsEvents.Settings.CHAT_BUBBLES_VISIBILITY_CHANGED, new JObject
             {
-                { "visibility",  visibility == ChatBubbleVisibilitySettings.NONE ? "none" : visibility == ChatBubbleVisibilitySettings.NEARBY_ONLY ? "nearby" : "all"},
+                { "visibility",  visibility == ChatBubbleVisibilitySettings.None ? "none" : visibility == ChatBubbleVisibilitySettings.NearbyOnly ? "nearby" : "all"},
             });
         }
     }

@@ -65,7 +65,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 GetAssetBundleIntention.FromHash(
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     typeof(Texture2D),
-                    permittedSources: AssetSource.ALL,
+                    permittedSources: AssetSource.All,
                     assetBundleManifestVersion: assetBundleManifestVersion,
                     parentEntityID: attachment.GetEntityId(),
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()

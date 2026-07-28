@@ -17,6 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public Image ItemCategoryBackground { get; private set; } = null!;
         [field: SerializeField] public TMP_Text ItemName { get; private set; } = null!;
         [field: SerializeField] public TMP_Text RarityLabel { get; private set; } = null!;
+        [field: SerializeField] public Image RarityBackground { get; private set; } = null!;
 
         [field: Header("Completed Item card")]
         [field: SerializeField] public Image ItemThumbnailCompleted { get; private set; } = null!;
@@ -34,6 +35,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: Header("Actions")]
         [field: SerializeField] public Button ConfirmButton { get; private set; } = null!;
         [field: SerializeField] public Button CancelButton { get; private set; } = null!;
+        [field: SerializeField] public Button InsufficientCancelButton { get; private set; } = null!;
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
         [field: SerializeField] public Button CloseBackground { get; private set; } = null!;
 
