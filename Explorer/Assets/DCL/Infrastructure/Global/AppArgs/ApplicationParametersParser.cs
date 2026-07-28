@@ -101,11 +101,16 @@ namespace Global.AppArgs
             var uri = new Uri(deepLinkString);
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
+            var droppedKeys = new List<string>();
+
+            // Tier 1: always-permitted (base) navigation/login params.
             foreach (string uriQueryKey in uriQuery.AllKeys)
             {
                 // if the deep link is not constructed correctly (AKA 'decentraland://?&blabla=blabla') a 'null' parameter can be detected...
                 if (uriQueryKey == null) continue;
-                output[uriQueryKey] = uriQuery.Get(uriQueryKey);
+
+                if (DeepLinkAllowlist.IsPermitted(uriQueryKey))
+                    output[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
 
             if (output.TryGetValue(AppArgsFlags.REALM, out string? realmParamValue))
@@ -120,9 +125,26 @@ namespace Global.AppArgs
                 output[AppArgsFlags.REALM] = realmParamValue;
             }
 
-            // Patch for WinOS sometimes affecting the 'skip-auth-screen' parameter in deep links putting a '/' at the end
-            if (output.TryGetValue(AppArgsFlags.SKIP_AUTH_SCREEN, out string? value) && value?.EndsWith('/') == true)
-                output[AppArgsFlags.SKIP_AUTH_SCREEN] = value[..^1];
+            // Tier 2 (SEC-019/020): the local-development params Creator Hub / sdk-commands attach to preview deep
+            // links (local-scene, dclenv, hub, skip-auth-screen, landscape-terrain-enabled, multi-instance) are
+            // permitted only when the target realm is loopback — a remote-realm deep link from a web page cannot
+            // enable them. Everything not in either tier is dropped.
+            bool realmIsLoopback = output.TryGetValue(AppArgsFlags.REALM, out string? loopbackRealm)
+                                   && Uri.TryCreate(loopbackRealm, UriKind.Absolute, out Uri? loopbackRealmUri)
+                                   && loopbackRealmUri.IsLoopback;
+
+            foreach (string uriQueryKey in uriQuery.AllKeys)
+            {
+                if (uriQueryKey == null || output.ContainsKey(uriQueryKey)) continue;
+
+                if (realmIsLoopback && DeepLinkAllowlist.IsPermittedForLoopbackRealm(uriQueryKey))
+                    output[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                else
+                    droppedKeys.Add(uriQueryKey);
+            }
+
+            if (droppedKeys.Count > 0)
+                ReportHub.LogWarning(ReportCategory.ALWAYS, $"Dropped {droppedKeys.Count} non-allowlisted deep-link param(s): {string.Join(", ", droppedKeys)}");
 
             return output;
         }
