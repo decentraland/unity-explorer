@@ -14,7 +14,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
     {
         private const string ORDER_ID = "order-1";
 
-        private static readonly CreditPack PACK = CreditPackCatalog.PACKS[2];
+        private static readonly CreditPack PACK = new ("pack_25", 24.99f, 235, true, string.Empty);
 
         private ICreditsTopUpService topUpService = null!;
         private CreditsTopUpModalController controller = null!;
@@ -38,7 +38,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 () => null!,
                 topUpService,
                 Substitute.For<MarketplaceCreditsAPIClient>(null, null),
-                Substitute.For<IWeb3IdentityCache>());
+                Substitute.For<IWeb3IdentityCache>(),
+                null!);
 
             controller.RedirectedToStripe += (orderId, pack) => redirected.Add((orderId, pack));
             controller.BuyCreditsCompleted += (orderId, pack) => completed.Add((orderId, pack));
