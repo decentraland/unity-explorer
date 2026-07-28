@@ -66,6 +66,9 @@ namespace Global.AppArgs
             // POSITION — it only picks where inside an already-permitted realm/position navigation the user arrives,
             // with no capability, infra, or exec impact.
             AppArgsFlags.SPAWN_POINT,
+
+            AppArgsFlags.MCP,
+            AppArgsFlags.MCP_PORT,
         };
 
         // Local-development params Creator Hub / sdk-commands attach to preview deep links. Permitted ONLY when the
