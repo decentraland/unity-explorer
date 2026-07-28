@@ -107,8 +107,8 @@ namespace DCL.Browser.DecentralandUrls
             return mode switch
                    {
                        GatekeeperMode.Org => null,
-                       GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
-                       GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
+                       GatekeeperMode.Zone => "https://comms-gatekeeper." + IDecentralandUrlsSource.ZONE_DOMAIN,
+                       GatekeeperMode.Today => "https://comms-gatekeeper." + IDecentralandUrlsSource.TODAY_DOMAIN,
                        GatekeeperMode.Localhost => "http://localhost:3000",
                        GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
                        _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
@@ -252,7 +252,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.decentraland.{ENV}"),
                 DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}{SCENE_ADAPTER_PATH}",
-                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local.decentraland.org")}{SCENE_ADAPTER_PATH}",
+                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local." + IDecentralandUrlsSource.ORG_DOMAIN)}{SCENE_ADAPTER_PATH}",
                 DecentralandUrl.ChatAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.WhatsOnNewEventLink => $"https://decentraland.{ENV}/whats-on/new-event",

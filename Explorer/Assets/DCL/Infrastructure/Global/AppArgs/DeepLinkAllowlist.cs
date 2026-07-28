@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.Collections.Generic;
 
@@ -139,10 +140,34 @@ namespace Global.AppArgs
             if (string.IsNullOrEmpty(realm))
                 return false;
 
-            if (Uri.TryCreate(realm, UriKind.Absolute, out Uri? uri) && uri.IsLoopback)
-                return true;
+            if (Uri.TryCreate(realm, UriKind.Absolute, out Uri? uri))
+            {
+                if (uri.IsLoopback)
+                    return true;
+
+                // A world name only carries trust when a Decentraland-owned server hosts it. Without this check
+                // https://evil.example/world/<whitelisted-world>.dcl.eth would inherit that world's trust, because the
+                // name is read from the path — handing an attacker the dev params and (worse) a consent-free realm
+                // switch. Uri.Host is the parsed host, so userinfo ("https://x.decentraland.org@evil.example") and port
+                // tricks cannot spoof it.
+                if (!IsDecentralandHost(uri.Host))
+                    return false;
+            }
 
             return whitelistedWorlds.Count > 0 && whitelistedWorlds.Contains(ExtractWorldName(realm));
+        }
+
+        // A subdomain of a Decentraland domain (worlds-content-server.decentraland.org, ...). The '.' boundary check
+        // is what rejects lookalikes such as "decentraland.org.attacker.com" and "evil-decentraland.org".
+        private static bool IsDecentralandHost(string host)
+        {
+            foreach (string domain in IDecentralandUrlsSource.ALL_DOMAINS)
+                if (host.Length > domain.Length
+                    && host[host.Length - domain.Length - 1] == '.'
+                    && host.EndsWith(domain, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+            return false;
         }
 
         // A world realm is either the bare ENS name (e.g. "myworld.dcl.eth") or a worlds-content-server URL whose

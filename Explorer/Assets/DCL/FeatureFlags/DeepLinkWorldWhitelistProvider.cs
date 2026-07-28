@@ -33,8 +33,8 @@ namespace DCL.FeatureFlags
                 using UnityWebRequest request = UnityWebRequest.Get(fetchUrl);
                 request.SetRequestHeader("X-Debug", "false");
 
-                // A start-up path can't wait for long time
-                request.timeout = 5000;
+                // A start-up path can't wait for long time (UnityWebRequest.timeout is in seconds)
+                request.timeout = 5;
 
                 await request.SendWebRequest().WithCancellation(ct);
 

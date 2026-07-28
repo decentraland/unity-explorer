@@ -203,5 +203,39 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped for a world that is not whitelisted");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a world that is not whitelisted");
         }
+
+        // IsRealmWhitelisted gates BOTH the whitelisted-realm dev params and skipping the realm-change consent prompt
+        // (DeepLinkHandle), so its exact semantics are pinned here.
+        [TestCase("http://127.0.0.1:8000", true, TestName = "loopback ip")]
+        [TestCase("http://localhost:8000", true, TestName = "loopback name")]
+        [TestCase("test-world.dcl.eth", true, TestName = "whitelisted world, short form")]
+        [TestCase("TEST-WORLD.DCL.ETH", true, TestName = "whitelisted world, case insensitive")]
+        [TestCase("https://worlds-content-server.decentraland.org/world/test-world.dcl.eth", true, TestName = "whitelisted world, full form")]
+        [TestCase("other-world.dcl.eth", false, TestName = "world not whitelisted")]
+        [TestCase("https://peer.decentraland.org", false, TestName = "remote catalyst realm")]
+        [TestCase("https://evil.example/world/test-world.dcl.eth", false, TestName = "attacker host naming a whitelisted world must not inherit its trust")]
+        [TestCase("https://worlds-content-server.decentraland.org@evil.example/world/test-world.dcl.eth", false, TestName = "userinfo cannot spoof the host")]
+        [TestCase("https://decentraland.org.attacker.com/world/test-world.dcl.eth", false, TestName = "suffix-lookalike host is rejected")]
+        [TestCase("https://worlds-content-server.decentraland.zone/world/test-world.dcl.eth", true, TestName = "zone worlds server")]
+        [TestCase("", false, TestName = "empty")]
+        public void ClassifyRealmAsWhitelisted(string realm, bool expected)
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+
+            // Act & Assert
+            Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [Test]
+        public void NotWhitelistAnyWorldWithoutConfiguration()
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(null);
+
+            // Act & Assert
+            Assert.IsFalse(DeepLinkAllowlist.IsRealmWhitelisted("test-world.dcl.eth"), "no configured worlds must mean loopback-only");
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted("http://127.0.0.1:8000"), "loopback is always whitelisted");
+        }
     }
 }
