@@ -187,7 +187,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                 ElementDeleteButtonClicked?.Invoke(placeInfo);
             }

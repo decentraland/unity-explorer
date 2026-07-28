@@ -102,7 +102,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             elementClicked = true;
 
-            if (friendsConnectivityStatusTracker.GetFriendStatus(profile.Address) != OnlineStatus.OFFLINE)
+            if (friendsConnectivityStatusTracker.GetFriendStatus(profile.Address) != OnlineStatus.Offline)
                 OnlineFriendClicked?.Invoke(profile.Address);
 
             await UniTask.Delay(TimeSpan.FromSeconds(DELAY_BETWEEN_CLICKS), cancellationToken: ct);
@@ -116,14 +116,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             popupCts = popupCts.SafeRestart();
             elementView.CanUnHover = false;
 
-            bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.UserId) != OnlineStatus.OFFLINE;
+            bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.UserId) != OnlineStatus.Offline;
 
             if (isFriendOnline)
                 OnlineFriendClicked?.Invoke(friendProfile.UserId);
 
             ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.UserId),
                 buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: panelLifecycleTask!.Task, onHide: () => elementView.CanUnHover = true
-                ,anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
+                ,anchorPoint: MenuAnchorPoint.TopRight).Forget();
         }
 
         private void OnJumpInClicked(Profile.CompactInfo profile)

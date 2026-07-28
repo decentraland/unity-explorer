@@ -232,6 +232,9 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
+            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
+                cliOptimizedAssetsUrl = RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL;
+
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
                 realmData,
@@ -347,7 +350,7 @@ namespace Global.Dynamic
 
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
 
-                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CheckDiskSpace))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
@@ -400,7 +403,7 @@ namespace Global.Dynamic
                 try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
                         await LoadStartingRealmAsync(ct);
                     else
                         ExitUtils.Exit();
@@ -412,14 +415,14 @@ namespace Global.Dynamic
                 try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct); }
                 catch (TimeoutException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
                         await LoadUserFlowAsync(playerEntity, ct);
                     else
                         throw;
                 }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
                         await LoadUserFlowAsync(playerEntity, ct);
                     else
                         ExitUtils.Exit();
@@ -644,8 +647,8 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
-                InputMapComponent.Kind.EMOTE_WHEEL);
+            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FreeCamera,
+                InputMapComponent.Kind.EmoteWheel);
 
             DCLInput.Instance.UI.Enable();
         }
@@ -778,7 +781,7 @@ namespace Global.Dynamic
             var input = new ErrorPopupWithRetryController.Input(
                 title: "Load Error",
                 description: "A loading error was encountered. Please reload to try again.",
-                iconType: ErrorPopupWithRetryController.IconType.ERROR);
+                iconType: ErrorPopupWithRetryController.IconType.Error);
 
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
@@ -872,7 +875,7 @@ namespace Global.Dynamic
             var input = new ErrorPopupWithRetryController.Input(
                 title: "Time sync needed",
                 description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
-                iconType: ErrorPopupWithRetryController.IconType.CLOCK);
+                iconType: ErrorPopupWithRetryController.IconType.Clock);
 
             var ordering = new CanvasOrdering(controller.Layer, splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1);
 
@@ -884,14 +887,14 @@ namespace Global.Dynamic
 
             switch (input.SelectedOption)
             {
-                case ErrorPopupWithRetryController.Result.EXIT:
+                case ErrorPopupWithRetryController.Result.Exit:
                     // The error popup will automatically request application exit
-                    return EnsureClockSync.Result.CONTINUE;
-                case ErrorPopupWithRetryController.Result.RESTART:
-                    return EnsureClockSync.Result.RESTART;
+                    return EnsureClockSync.Result.Continue;
+                case ErrorPopupWithRetryController.Result.Restart:
+                    return EnsureClockSync.Result.Restart;
             }
 
-            return EnsureClockSync.Result.CONTINUE;
+            return EnsureClockSync.Result.Continue;
         }
 
         private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)

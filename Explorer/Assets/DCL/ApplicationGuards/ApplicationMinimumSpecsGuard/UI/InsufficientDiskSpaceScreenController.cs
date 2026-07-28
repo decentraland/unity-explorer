@@ -8,7 +8,7 @@ namespace DCL.ApplicationGuards
     public class InsufficientDiskSpaceScreenController : ControllerBase<InsufficientDiskSpaceScreenView>
     {
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public InsufficientDiskSpaceScreenController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 

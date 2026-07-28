@@ -22,7 +22,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///             <item><description><b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>.</description></item>
     ///             <item><description><b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns  <c>true</c> for the bound <c>walletId</c>.</description></item>
     ///             <item><description><b>Trigger #4 (scene-banned)</b> — <see cref="RoomMetadataCurrentScene.IsUserBanned"/> returns <c>true</c> for the bound <c>walletId</c>.</description></item>
-    ///             <item><description><b>Trigger #5 (listening gate)</b> — bulk removal when <see cref="NearbyVoiceChatStateModel"/> is in   <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;</description></item>
+    ///             <item><description><b>Trigger #5 (listening gate)</b> — bulk removal when <see cref="NearbyVoiceChatStateModel"/> is in   <see cref="NearbyVoiceChatState.Suppressed"/> or <see cref="NearbyVoiceChatState.Disabled"/>;</description></item>
     ///         </list>
     ///     </para>
     ///     <para>

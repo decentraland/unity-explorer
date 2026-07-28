@@ -51,22 +51,23 @@ namespace DCL.RuntimeDeepLink
                 // Guard: only consume a signin while a login here is waiting for one, and only if the link
                 // was minted for that login.
                 if (string.IsNullOrEmpty(awaitedRequestId) || deeplink.ValueOf(AppArgsFlags.AUTH_REQUEST_ID) != awaitedRequestId)
-                    return DeepLinkHandleResult.DEFERRED;
+                    return DeepLinkHandleResult.Deferred;
 
                 // The id persists in the property until it is overwritten or cleared.
                 deeplinkSigninIdentityId.Value = signin;
-                return DeepLinkHandleResult.CONSUMED;
+                return DeepLinkHandleResult.Consumed;
             }
 
             if (!routeNavigationDeepLinks)
             {
                 ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"navigation deep link routing is disabled, dropping: {deeplink}");
-                return DeepLinkHandleResult.CONSUMED;
+                return DeepLinkHandleResult.Consumed;
             }
 
-            Vector2Int? position = PositionFrom(deeplink);
-            URLDomain? realm = RealmFrom(deeplink);
-            string? communityId = CommunityFrom(deeplink);
+            Vector2Int? position = deeplink.Position();
+            URLDomain? realm = deeplink.Realm();
+            string? communityId = deeplink.Community();
+            string? spawnPointName = deeplink.SpawnPoint();
 
             var handled = false;
 
@@ -80,9 +81,9 @@ namespace DCL.RuntimeDeepLink
                 var parcel = position.Value;
 
                 if (startParcel.IsConsumed())
-                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token).Forget();
+                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token, spawnPointName).Forget();
                 else
-                    startParcel.Assign(parcel);
+                    startParcel.Assign(parcel, spawnPointName);
 
                 handled = true;
             }
@@ -99,7 +100,7 @@ namespace DCL.RuntimeDeepLink
                 handled = true;
             }
 
-            return handled ? DeepLinkHandleResult.CONSUMED : DeepLinkHandleResult.NO_MATCHES;
+            return handled ? DeepLinkHandleResult.Consumed : DeepLinkHandleResult.NoMatches;
         }
 
         private async UniTaskVoid ShowRealmChangePromptAsync(string realm, Vector2Int? position)
@@ -113,36 +114,6 @@ namespace DCL.RuntimeDeepLink
             var parameters = new ChangeRealmPromptController.Params(string.Empty, realm, position);
 
             await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(parameters), token);
-        }
-
-        private static URLDomain? RealmFrom(DeepLink deepLink)
-        {
-            string? rawRealm = deepLink.ValueOf(AppArgsFlags.REALM);
-
-            if (rawRealm == null)
-                return null;
-
-            return URLDomain.FromString(rawRealm);
-        }
-
-        private static Vector2Int? PositionFrom(DeepLink deeplink)
-        {
-            string? rawPosition = deeplink.ValueOf(AppArgsFlags.POSITION);
-            string[]? parts = rawPosition?.Split(',');
-
-            if (parts == null || parts.Length < 2)
-                return null;
-
-            if (int.TryParse(parts[0], out int x) == false) return null;
-            if (int.TryParse(parts[1], out int y) == false) return null;
-
-            return new Vector2Int(x, y);
-        }
-
-        private static string? CommunityFrom(DeepLink deepLink)
-        {
-            string? rawCommunity = deepLink.ValueOf(AppArgsFlags.COMMUNITY);
-            return rawCommunity ?? null;
         }
     }
 }

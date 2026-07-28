@@ -87,7 +87,7 @@ namespace ECS.SceneLifeCycle
             if (world.IsAlive(entity))
             {
                 SceneLoadingState sceneLoadingState = world.Get<SceneLoadingState>(entity);
-                sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
+                sceneLoadingState.VisualSceneState = VisualSceneState.Uninitialized;
                 sceneLoadingState.PromiseCreated = false;
             }
 

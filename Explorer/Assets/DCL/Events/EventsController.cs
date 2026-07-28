@@ -99,7 +99,7 @@ namespace DCL.Events
             isSectionActivated = true;
             view.SetViewActive(true);
             cursor.Unlock();
-            OpenSection(EventsSection.CALENDAR);
+            OpenSection(EventsSection.Calendar);
         }
 
         public void Deactivate()

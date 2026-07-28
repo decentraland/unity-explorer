@@ -42,7 +42,7 @@ namespace DCL.CharacterMotion.Systems
             inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
 
             if (inputToUpdate.Axes == Vector2.zero)
-                inputToUpdate.Kind = MovementKind.IDLE;
+                inputToUpdate.Kind = MovementKind.Idle;
             else
             {
                 bool runPressed = sprintAction.IsPressed();
@@ -58,28 +58,28 @@ namespace DCL.CharacterMotion.Systems
             if (runPressed)
             {
                 if (inputModifierComponent.DisableRun)
-                    return inputModifierComponent.DisableJog ? MovementKind.WALK : MovementKind.JOG;
+                    return inputModifierComponent.DisableJog ? MovementKind.Walk : MovementKind.Jog;
 
-                return MovementKind.RUN;
+                return MovementKind.Run;
             }
 
             if (walkPressed)
             {
                 if (inputModifierComponent.DisableWalk)
-                    return inputModifierComponent.DisableJog ? MovementKind.RUN : MovementKind.JOG;
+                    return inputModifierComponent.DisableJog ? MovementKind.Run : MovementKind.Jog;
 
-                return MovementKind.WALK;
+                return MovementKind.Walk;
             }
 
             if (inputModifierComponent.DisableJog)
             {
                 if (inputModifierComponent.DisableWalk)
-                    return MovementKind.RUN;
+                    return MovementKind.Run;
 
-                return MovementKind.WALK;
+                return MovementKind.Walk;
             }
 
-            return MovementKind.JOG;
+            return MovementKind.Jog;
         }
     }
 }

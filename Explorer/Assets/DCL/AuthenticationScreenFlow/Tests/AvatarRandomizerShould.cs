@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AuthenticationScreenFlow;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,9 +19,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
         private const string FACIAL_HAIR = "facial_hair";
         private const string HAT = "hat";
         private const string EYEWEAR = "eyewear";
-        private const string BODY_SHAPE = "body_shape";
 
-        private AvatarRandomizer randomizer;
+        private AvatarRandomizer randomizer = null!;
 
         [SetUp]
         public void SetUp()

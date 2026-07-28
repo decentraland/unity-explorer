@@ -14,8 +14,13 @@ namespace ECS.SceneLifeCycle.Systems
         private const string SCENE_JSON = "scene.json";
         private const string MAIN_CRDT = "main.crdt";
 
-        public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL)
-            : base(webRequestController, assetBundleURL) { }
+        private readonly bool localSceneDevelopment;
+
+        public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, bool localSceneDevelopment = false)
+            : base(webRequestController, assetBundleURL)
+        {
+            this.localSceneDevelopment = localSceneDevelopment;
+        }
 
         protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct)
         {
@@ -23,7 +28,10 @@ namespace ECS.SceneLifeCycle.Systems
 
             string? abVersion = definition.assetBundleManifestVersion?.GetAssetBundleManifestVersion();
 
-            if (string.IsNullOrEmpty(abVersion) || string.IsNullOrEmpty(definition.metadata?.main))
+            // In local scene development the scene's code must always come from the live preview
+            // server, never be overridden by CDN copies (the local AB server serves real manifests,
+            // so the version check alone no longer filters these scenes out).
+            if (localSceneDevelopment || string.IsNullOrEmpty(abVersion) || string.IsNullOrEmpty(definition.metadata?.main))
                 return hashedContent;
 
             await TryOverrideWithCDNAsync(hashedContent, definition, abVersion, reportCategory, ct);

@@ -9,7 +9,7 @@ namespace DCL.ChangeRealmPrompt
 {
     public partial class ChangeRealmPromptController : ControllerBase<ChangeRealmPromptView, ChangeRealmPromptController.Params>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private const string DEFAULT_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 

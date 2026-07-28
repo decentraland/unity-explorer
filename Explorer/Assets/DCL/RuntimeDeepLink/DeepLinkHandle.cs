@@ -2,8 +2,8 @@ namespace DCL.RuntimeDeepLink
 {
     public enum DeepLinkHandleResult
     {
-        CONSUMED,
-        NO_MATCHES,
+        Consumed,
+        NoMatches,
 
         /// <summary>
         ///     A signin deep link arrived that this instance must not consume: either no login here is waiting
@@ -12,7 +12,7 @@ namespace DCL.RuntimeDeepLink
         ///     concurrent or idle Explorer instance consuming and deleting it first. Kept until claimed by the
         ///     matching login (bounded by a timeout).
         /// </summary>
-        DEFERRED,
+        Deferred,
     }
 
     public interface IDeepLinkHandle
@@ -27,7 +27,7 @@ namespace DCL.RuntimeDeepLink
 
 
             public DeepLinkHandleResult HandleDeepLink(DeepLink deeplink) =>
-                DeepLinkHandleResult.CONSUMED;
+                DeepLinkHandleResult.Consumed;
         }
     }
 }

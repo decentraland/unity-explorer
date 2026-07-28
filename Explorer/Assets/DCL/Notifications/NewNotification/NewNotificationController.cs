@@ -40,7 +40,7 @@ namespace DCL.Notifications.NewNotification
         private ImageController communityThumbnailImageController;
         private ImageController giftToastImageController;
         private CancellationTokenSource cts;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
@@ -75,7 +75,7 @@ namespace DCL.Notifications.NewNotification
             giftToastImageController = imageControllerProvider.Create(viewInstance.GiftToastView.NotificationImage);
             viewInstance.GiftToastView.NotificationClicked += ClickedNotification;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
             {
                 communityThumbnailImageController = imageControllerProvider.Create(viewInstance.CommunityVoiceChatNotificationView.NotificationImage);
                 viewInstance.CommunityVoiceChatNotificationView.NotificationClicked += ClickedNotification;
@@ -126,7 +126,7 @@ namespace DCL.Notifications.NewNotification
                         await ProcessArrivedNotificationAsync(notification);
                         break;
                     case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
-                        if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+                        if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
                             await ProcessCommunityVoiceChatStartedNotificationAsync(notification);
 
                         break;
@@ -248,7 +248,7 @@ namespace DCL.Notifications.NewNotification
 
             if (!tipReceivedNotification.SenderProfile.HasValue)
             {
-                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET);
+                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
                 tipReceivedNotification.SenderProfile = profile;
             }
 

@@ -218,7 +218,7 @@ namespace DCL.Multiplayer.Movement
 
             bool useLinear = remotePlayerMovement.PastMessage.velocitySqrMagnitude < RemotePlayerUtils.ZERO_VELOCITY_SQR_THRESHOLD || remote.velocitySqrMagnitude < RemotePlayerUtils.ZERO_VELOCITY_SQR_THRESHOLD ||
                              remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.JumpCount != remote.animState.JumpCount
-                             || remotePlayerMovement.PastMessage.movementKind == MovementKind.IDLE || remote.movementKind == MovementKind.IDLE;
+                             || remotePlayerMovement.PastMessage.movementKind == MovementKind.Idle || remote.movementKind == MovementKind.Idle;
 
             // Interpolate linearly to/from zero velocities to avoid position overshooting
             InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
@@ -284,12 +284,12 @@ namespace DCL.Multiplayer.Movement
             if (intComp.TotalDuration < settings.AccelerationTimeThreshold) return;
             float distance = Vector3.Distance(intComp.Start.position, intComp.End.position);
 
-            MovementKind movementKind = MovementKind.RUN;
+            MovementKind movementKind = MovementKind.Run;
 
-            if (distance < settings.MoveKindByDistance[MovementKind.WALK])
-                movementKind = MovementKind.WALK;
-            else if (distance < settings.MoveKindByDistance[MovementKind.JOG])
-                movementKind = MovementKind.JOG;
+            if (distance < settings.MoveKindByDistance[MovementKind.Walk])
+                movementKind = MovementKind.Walk;
+            else if (distance < settings.MoveKindByDistance[MovementKind.Jog])
+                movementKind = MovementKind.Jog;
 
             float speed = MovementSpeedLimitHelper.GetMovementSpeedLimit(characterControllerSettings, movementKind);
 

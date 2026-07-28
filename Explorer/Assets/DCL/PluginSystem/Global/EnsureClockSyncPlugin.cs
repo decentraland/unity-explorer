@@ -58,20 +58,20 @@ namespace DCL.PluginSystem.Global
                 title: "Time sync needed",
                 description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
                 retryText: "Retry",
-                iconType: ErrorPopupWithRetryController.IconType.CLOCK);
+                iconType: ErrorPopupWithRetryController.IconType.Clock);
 
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
             switch (input.SelectedOption)
             {
-                case ErrorPopupWithRetryController.Result.EXIT:
+                case ErrorPopupWithRetryController.Result.Exit:
                     // The error popup will automatically request application exit
-                    return EnsureClockSync.Result.CONTINUE;
-                case ErrorPopupWithRetryController.Result.RESTART:
-                    return EnsureClockSync.Result.RESTART;
+                    return EnsureClockSync.Result.Continue;
+                case ErrorPopupWithRetryController.Result.Restart:
+                    return EnsureClockSync.Result.Restart;
             }
 
-            return EnsureClockSync.Result.CONTINUE;
+            return EnsureClockSync.Result.Continue;
         }
 
         [Serializable]

@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             Assert.IsTrue(inputModifier.DisableRun);
             Assert.IsFalse(inputModifier.DisableJump);
 
-            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
 
             // Check component was added to track removal
             Assert.IsTrue(world.Has<InputModifierComponent>(entity));
@@ -103,7 +103,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             Assert.IsTrue(inputModifier.DisableJump);
             Assert.IsTrue(inputModifier.DisableEmote);
 
-            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
         }
 
         [Test]
@@ -171,7 +171,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             Assert.IsFalse(inputModifier.DisableWalk);
 
             // Should receive REMOVED action
-            sceneRestrictionBusController.Received().PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.Received().PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Removed));
 
             // Should remove tracking component
             Assert.IsFalse(world.Has<InputModifierComponent>(entity));
@@ -198,7 +198,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
             Assert.IsFalse(inputModifier.DisableWalk);
 
-            sceneRestrictionBusController.Received().PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.Received().PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Removed));
         }
 
         [Test]
@@ -329,7 +329,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             Assert.IsTrue(inputModifier.DisableWalk);
             Assert.IsTrue(inputModifier.DisableJump);
 
-            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
         }
 
         [Test]
@@ -366,7 +366,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             Assert.IsFalse(inputModifier.DisableJump);
             Assert.IsFalse(inputModifier.DisableEmote);
 
-            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Removed));
         }
 
         [Test]
@@ -388,7 +388,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             system.Update(0);
 
             // Assert - Should only receive one APPLIED message (deduplicated)
-            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
         }
 
         [Test]

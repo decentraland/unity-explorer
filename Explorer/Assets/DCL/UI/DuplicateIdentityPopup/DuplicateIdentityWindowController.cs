@@ -21,7 +21,7 @@ namespace DCL.UI.DuplicateIdentityPopup
             ExitUtils.Exit();
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
     }

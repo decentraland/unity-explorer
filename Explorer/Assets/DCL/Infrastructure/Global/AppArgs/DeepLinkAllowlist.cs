@@ -14,17 +14,19 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Always permitted</b> — benign navigation / share / login intents whose worst case is already
     ///             gated elsewhere (a consent prompt, a matching login token, or a plain coordinate): realm,
-    ///             position, community, signin, authRequestId, force-open-backpack.
+    ///             position, community, signin, authRequestId, force-open-backpack, spawnpoint.
     ///         </item>
     ///         <item>
     ///             <b>Permitted only for a loopback realm</b> — the local-development params Creator Hub and the
     ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, dclenv, hub,
-    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance. They are gated on
+    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance, mcp, mcp-port. They are gated on
     ///             <c>Uri.IsLoopback</c> of the target realm (127.0.0.1 / localhost / [::1]) so a remote-realm deep
     ///             link from a web page can never enable them, while a legitimate local-dev launch (which always
-    ///             targets loopback) works. Each is individually low-harm — an analytics tag, a cosmetic toggle, an
-    ///             instance count, an env enum, or a screen skip that still forces auth when no valid identity is
-    ///             cached — and the loopback gate confines them to the dev context.
+    ///             targets loopback) works. All but the MCP pair are individually low-harm — an analytics tag, a
+    ///             cosmetic toggle, an instance count, an env enum, or a screen skip that still forces auth when no
+    ///             valid identity is cached; <c>mcp</c>/<c>mcp-port</c> start an unauthenticated loopback control
+    ///             port, so they lean on the gate plus the server's own 127.0.0.1 bind and Origin check — see the
+    ///             per-key comment for what the gate does and does not cover.
     ///         </item>
     ///         <item>
     ///             <b>Never permitted</b> — everything else, in particular params that launch code
@@ -32,8 +34,10 @@ namespace Global.AppArgs
     ///             attacker infrastructure (<c>comms-adapter</c>, <c>gatekeeper-url</c>, <c>friends-api-url</c> —
     ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>, <c>optimized-assets-url</c>,
     ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>); bypass a version/specs screen
-    ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable other dev/test modes
-    ///             (<c>debug</c>, <c>scene-console</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>).
+    ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable the remaining dev/test
+    ///             modes (<c>debug</c>, <c>scene-console</c>, <c>autopilot</c>, <c>alttester</c>,
+    ///             <c>simulate*</c>). A loopback realm does not unlock these: unlike the tier above, a key that is
+    ///             in neither set is dropped for every realm.
     ///         </item>
     ///     </list>
     ///     Both permitted sets are a product decision (SEC-019/020 "Design affected") — changing them requires sign-off.
@@ -61,6 +65,11 @@ namespace Global.AppArgs
 
             // Opens the user's own backpack panel on landing (shipped deep-link feature). Benign in-client navigation.
             AppArgsFlags.FORCE_OPEN_BACKPACK,
+
+            // Named spawn point within the destination scene (#9369). A landing refinement in the same class as
+            // POSITION — it only picks where inside an already-permitted realm/position navigation the user arrives,
+            // with no capability, infra, or exec impact.
+            AppArgsFlags.SPAWN_POINT,
         };
 
         // Local-development params Creator Hub / sdk-commands attach to preview deep links. Permitted ONLY when the
@@ -88,6 +97,19 @@ namespace Global.AppArgs
 
             // Allows multiple client instances (local multi-instance dev workflow).
             AppArgsFlags.MULTIPLE_RUNNING_INSTANCES,
+
+            // Starts the embedded MCP automation server so a coding agent can drive the client (#9339). The odd one
+            // out in this set: the listener binds 127.0.0.1 with no auth token, so any local process can screenshot
+            // the viewport, run chat commands as the signed-in user, and move the player. Loopback-gated because the
+            // only launch that needs it is the local dev loop — sdk-commands forwards --mcp into a deep link whose
+            // realm is the scene server it just started on 127.0.0.1. The gate drops the drive-by link that would
+            // enable it against a production realm; it does not make the flag unreachable, since a crafted link can
+            // supply a loopback realm of its own.
+            AppArgsFlags.MCP,
+
+            // Port the server above listens on. Presence alone also starts it (MCP_PORT implies MCP), so it carries
+            // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
+            AppArgsFlags.MCP_PORT,
         };
 
         public static bool IsPermitted(string key) =>

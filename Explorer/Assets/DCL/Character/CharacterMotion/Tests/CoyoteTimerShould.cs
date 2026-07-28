@@ -140,7 +140,7 @@ namespace DCL.Character.CharacterMotion.Tests
             jumpInputComponent = new JumpInputComponent();
             movementInputComponent = new MovementInputComponent()
             {
-                Kind = MovementKind.JOG
+                Kind = MovementKind.Jog
             };
         }
     }

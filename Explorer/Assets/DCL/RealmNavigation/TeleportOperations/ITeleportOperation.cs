@@ -23,7 +23,12 @@ namespace DCL.RealmNavigation.TeleportOperations
         /// </summary>
         public bool LandOnParcel { get; private set; }
 
-        public TeleportParams(URLDomain currentDestinationRealm, Vector2Int currentDestinationParcel, AsyncLoadProcessReport report, ILoadingStatus loadingStatus, bool allowsWorldPositionOverride, bool landOnParcel = false)
+        /// <summary>
+        ///     When set, land at the scene's spawn point with this name (case-insensitive); an unmatched name falls back to the default selection.
+        /// </summary>
+        public string? SpawnPointName { get; }
+
+        public TeleportParams(URLDomain currentDestinationRealm, Vector2Int currentDestinationParcel, AsyncLoadProcessReport report, ILoadingStatus loadingStatus, bool allowsWorldPositionOverride, bool landOnParcel = false, string? spawnPointName = null)
         {
             CurrentDestinationRealm = currentDestinationRealm;
             CurrentDestinationParcel = currentDestinationParcel;
@@ -31,6 +36,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             LoadingStatus = loadingStatus;
             AllowsWorldPositionOverride = allowsWorldPositionOverride;
             LandOnParcel = landOnParcel;
+            SpawnPointName = spawnPointName;
         }
 
         public void ChangeDestination(URLDomain newDestinationRealm, Vector2Int newDestinationParcel)

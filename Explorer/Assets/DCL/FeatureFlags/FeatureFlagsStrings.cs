@@ -41,6 +41,7 @@ namespace DCL.FeatureFlags
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
         public const string USER_CREDITS = "alfa-user-credits";
         public const string CREDITS_WEARABLE_PURCHASE = "alfa-credits-wearable-purchase";
+        public const string CREDITS_TOPUP = "alfa-credits-topup";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
@@ -50,6 +51,7 @@ namespace DCL.FeatureFlags
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
         public const string TEMPORAL_LOADING_SCREEN_TIPS = "alfa-temporal-loading-screen-tip";
+        public const string AUDIENCE_LOADING_SCREEN_TIPS = "alfa-audience-loading-screen-tips";
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
         public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
         public const string OUTFITS_ENABLED = "alfa-outfits";
@@ -96,6 +98,7 @@ namespace DCL.FeatureFlags
 
     public enum FeatureFlag
     {
+    
         None = 0,
         MultiplayerCompressionWin,
         MultiplayerCompressionMac,

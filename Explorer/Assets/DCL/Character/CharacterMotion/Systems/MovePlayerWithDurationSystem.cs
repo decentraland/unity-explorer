@@ -34,7 +34,7 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent, in JumpInputComponent jumpInputComponent, ref PlayerMoveToWithDurationIntent moveIntent, CharacterPlatformComponent platformComponent)
         {
-            bool hasMovementInput = movementInputComponent.Kind != MovementKind.IDLE && movementInputComponent.Axes != Vector2.zero;
+            bool hasMovementInput = movementInputComponent.Kind != MovementKind.Idle && movementInputComponent.Axes != Vector2.zero;
             bool hasJumpInput = jumpInputComponent.IsPressed;
 
             if (!hasMovementInput && !hasJumpInput)

@@ -483,7 +483,7 @@ namespace DCL.VoiceChat
             LocalParticipantState.IsRequestingToSpeak.Value = false;
             LocalParticipantState.IsSpeaker.Value = false;
             LocalParticipantState.IsMuted.Value = false;
-            LocalParticipantState.Role.Value = VoiceChatParticipantCommunityRole.NONE;
+            LocalParticipantState.Role.Value = VoiceChatParticipantCommunityRole.None;
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reset local participant state to defaults");
         }
 
@@ -504,14 +504,14 @@ namespace DCL.VoiceChat
             private static VoiceChatParticipantCommunityRole ParseRole(string? roleString)
             {
                 if (string.IsNullOrEmpty(roleString))
-                    return VoiceChatParticipantCommunityRole.NONE;
+                    return VoiceChatParticipantCommunityRole.None;
 
                 return roleString.ToLowerInvariant() switch
                        {
-                           "user" => VoiceChatParticipantCommunityRole.USER,
-                           "moderator" => VoiceChatParticipantCommunityRole.MODERATOR,
-                           "owner" => VoiceChatParticipantCommunityRole.OWNER,
-                           _ => VoiceChatParticipantCommunityRole.NONE,
+                           "user" => VoiceChatParticipantCommunityRole.User,
+                           "moderator" => VoiceChatParticipantCommunityRole.Moderator,
+                           "owner" => VoiceChatParticipantCommunityRole.Owner,
+                           _ => VoiceChatParticipantCommunityRole.None,
                        };
             }
 

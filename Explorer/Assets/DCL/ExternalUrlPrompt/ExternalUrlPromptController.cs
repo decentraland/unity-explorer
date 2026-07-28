@@ -10,7 +10,7 @@ namespace DCL.ExternalUrlPrompt
 {
     public partial class ExternalUrlPromptController : ControllerBase<ExternalUrlPromptView, ExternalUrlPromptController.Params>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly UnityAppWebBrowser webBrowser;
         private readonly ICursor cursor;

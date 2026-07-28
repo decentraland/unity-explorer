@@ -158,14 +158,14 @@ namespace DCL.VoiceChat
 
                 switch (status)
                 {
-                    case VoiceChatStatus.VOICE_CHAT_IN_CALL:
+                    case VoiceChatStatus.VoiceChatInCall:
                         world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, currentType));
                         OnActiveSpeakersUpdated();
                         break;
 
-                    case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
-                    case VoiceChatStatus.DISCONNECTED:
-                    case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
+                    case VoiceChatStatus.VoiceChatEndingCall:
+                    case VoiceChatStatus.Disconnected:
+                    case VoiceChatStatus.VoiceChatGenericError:
                         world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, currentType) { IsRemoving = true });
                         activeSpeakers.Clear();
 

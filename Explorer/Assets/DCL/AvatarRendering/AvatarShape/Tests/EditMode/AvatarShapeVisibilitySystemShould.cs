@@ -282,7 +282,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             // Assert
             Assert.IsTrue(world.Has<HiddenPlayerComponent>(avatarEntity));
             ref var hiddenComponent = ref world.Get<HiddenPlayerComponent>(avatarEntity);
-            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED));
+            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Blocked));
         }
 
         [Test]
@@ -449,11 +449,11 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             // Manually add banned reason to test combination
             ref var hiddenComponent = ref world.Get<HiddenPlayerComponent>(avatarEntity);
-            hiddenComponent.Reason |= HiddenPlayerComponent.HiddenReason.BANNED;
+            hiddenComponent.Reason |= HiddenPlayerComponent.HiddenReason.Banned;
 
             // Act - verify both reasons are present
-            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED));
-            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED));
+            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Blocked));
+            Assert.IsTrue(hiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Banned));
 
             // Unblock user
             userBlockingCache.UserIsBlocked(USER_ID).Returns(false);
@@ -462,8 +462,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             // Assert - Only banned reason should remain
             Assert.IsTrue(world.Has<HiddenPlayerComponent>(avatarEntity));
             ref var updatedHiddenComponent = ref world.Get<HiddenPlayerComponent>(avatarEntity);
-            Assert.IsFalse(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED));
-            Assert.IsTrue(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED));
+            Assert.IsFalse(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Blocked));
+            Assert.IsTrue(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.Banned));
         }
 
         [Test]

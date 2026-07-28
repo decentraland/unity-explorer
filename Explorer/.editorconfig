@@ -61,7 +61,6 @@ dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.symbols = inte
 dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.style = i_prefix_pascal_case_style
 dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.severity = warning
 
-
 #### CAPITALS_SNAKE_CASE ####
 dotnet_naming_style.capital_snake_case_style.capitalization = all_upper
 

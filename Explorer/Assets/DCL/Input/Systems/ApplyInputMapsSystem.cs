@@ -41,28 +41,28 @@ namespace DCL.Input.Systems
 
                     switch (value)
                     {
-                        case InputMapComponent.Kind.CAMERA:
+                        case InputMapComponent.Kind.Camera:
                             SetActionMapEnabled(isActive, DCLInput.Instance.Camera);
                             break;
-                        case InputMapComponent.Kind.FREE_CAMERA:
+                        case InputMapComponent.Kind.FreeCamera:
                             SetActionMapEnabled(isActive, DCLInput.Instance.FreeCamera);
                             break;
-                        case InputMapComponent.Kind.PLAYER:
+                        case InputMapComponent.Kind.Player:
                             SetActionMapEnabled(isActive, DCLInput.Instance.Player);
                             break;
-                        case InputMapComponent.Kind.EMOTE_WHEEL:
+                        case InputMapComponent.Kind.EmoteWheel:
                             SetActionMapEnabled(isActive, DCLInput.Instance.EmoteWheel);
                             break;
-                        case InputMapComponent.Kind.EMOTES:
+                        case InputMapComponent.Kind.Emotes:
                             SetActionMapEnabled(isActive, DCLInput.Instance.Emotes);
                             break;
-                        case InputMapComponent.Kind.SHORTCUTS:
+                        case InputMapComponent.Kind.Shortcuts:
                             SetActionMapEnabled(isActive, DCLInput.Instance.Shortcuts);
                             break;
-                        case InputMapComponent.Kind.IN_WORLD_CAMERA:
+                        case InputMapComponent.Kind.InWorldCamera:
                             SetActionMapEnabled(isActive, DCLInput.Instance.InWorldCamera);
                             break;
-                        case InputMapComponent.Kind.VOICE_CHAT:
+                        case InputMapComponent.Kind.VoiceChat:
                             SetActionMapEnabled(isActive, DCLInput.Instance.VoiceChat);
                             break;
                     }

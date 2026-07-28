@@ -74,10 +74,10 @@ namespace DCL.InWorldCamera.Systems
 
         protected override void Update(float t)
         {
-            if (recorder.State == RecordingState.CAPTURING || hudController.IsVfxInProgress)
+            if (recorder.State == RecordingState.Capturing || hudController.IsVfxInProgress)
                 return;
 
-            if (recorder.State == RecordingState.SCREENSHOT_READY && metadataBuilder.MetadataIsReady)
+            if (recorder.State == RecordingState.ScreenshotReady && metadataBuilder.MetadataIsReady)
             {
                 ProcessCapturedScreenshot();
                 return;
@@ -111,7 +111,7 @@ namespace DCL.InWorldCamera.Systems
 
         private bool ScreenshotIsRequested()
         {
-            if (recorder.State != RecordingState.IDLE) return false;
+            if (recorder.State != RecordingState.Idle) return false;
 
             if (World.TryGet(camera, out TakeScreenshotRequest request))
             {

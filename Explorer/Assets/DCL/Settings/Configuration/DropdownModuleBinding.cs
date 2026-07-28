@@ -30,22 +30,22 @@ namespace DCL.Settings.Configuration
         // Never renumber or reuse a value; new entries must pick the next unused integer.
         public enum DropdownFeatures
         {
-            GRAPHICS_QUALITY_FEATURE = 0,
-            CAMERA_LOCK_FEATURE = 1,
-            CAMERA_SHOULDER_FEATURE = 2,
-            RESOLUTION_FEATURE = 3,
-            WINDOW_MODE_FEATURE = 4,
-            FPS_LIMIT_FEATURE = 5,
-            MEMORY_LIMIT_FEATURE = 6,
-            CHAT_NEARBY_AUDIO_MODES_FEATURE = 7,
-            CHAT_DMS_AUDIO_MODES_FEATURE = 8,
-            CHAT_DMS_MODES_FEATURE = 9,
-            CHAT_BUBBLES_MODES_FEATURE = 10,
-            VOICECHAT_INPUT_DEVICE = 11,
-            CHAT_TRANSLATE_FEATURE = 12,
-            MSAA_FEATURE = 13,
-            SHADOWS_QUALITY_FEATURE = 14,
-            POINT_AT_MARKER_FEATURE = 15,
+            GraphicsQualityFeature = 0,
+            CameraLockFeature = 1,
+            CameraShoulderFeature = 2,
+            ResolutionFeature = 3,
+            WindowModeFeature = 4,
+            FpsLimitFeature = 5,
+            MemoryLimitFeature = 6,
+            ChatNearbyAudioModesFeature = 7,
+            ChatDmsAudioModesFeature = 8,
+            ChatDmsModesFeature = 9,
+            ChatBubblesModesFeature = 10,
+            VoicechatInputDevice = 11,
+            ChatTranslateFeature = 12,
+            MsaaFeature = 13,
+            ShadowsQualityFeature = 14,
+            PointAtMarkerFeature = 15,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
@@ -69,34 +69,34 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController(viewInstance, qualitySettingsController),
-                DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
-                DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
-                DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance, qualitySettingsController),
+                DropdownFeatures.GraphicsQualityFeature => new GraphicsPresetSettingsController(viewInstance, qualitySettingsController),
+                DropdownFeatures.CameraLockFeature => new CameraLockSettingsController(viewInstance),
+                DropdownFeatures.CameraShoulderFeature => new CameraShoulderSettingsController(viewInstance),
+                DropdownFeatures.ResolutionFeature => new ResolutionSettingsController(viewInstance),
+                DropdownFeatures.FpsLimitFeature => new FpsLimitSettingsController(viewInstance, qualitySettingsController),
 
-                DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance,
+                DropdownFeatures.MemoryLimitFeature => new MemoryLimitSettingController(viewInstance,
                     systemMemoryCap,
                     sceneLoadingLimit),
 
-                DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance,
+                DropdownFeatures.ChatNearbyAudioModesFeature => new ChatSoundsSettingsController(viewInstance,
                     generalAudioMixer,
                     chatSettingsAsset),
 
-                DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance,
+                DropdownFeatures.ChatDmsModesFeature => new ChatPrivacySettingsController(viewInstance,
                     chatSettingsAsset),
 
-                DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => CreateChatBubblesController(viewInstance, chatSettingsAsset, settingsEventListener),
+                DropdownFeatures.ChatBubblesModesFeature => CreateChatBubblesController(viewInstance, chatSettingsAsset, settingsEventListener),
 
-                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance),
+                DropdownFeatures.VoicechatInputDevice => new InputDeviceController(viewInstance),
 
-                DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,
+                DropdownFeatures.ChatTranslateFeature => new ChatTranslationSettingsController(viewInstance,
                     chatSettingsAsset,
                     eventBus),
-                DropdownFeatures.MSAA_FEATURE => CreateDropdownQualityController(viewInstance, qualitySettingsController, MSAA_LEVELS, qualitySettingsController.SetMsaa, x => x.Msaa),
-                DropdownFeatures.SHADOWS_QUALITY_FEATURE => CreateDropdownQualityController(viewInstance, qualitySettingsController, SHADOW_QUALITY_LEVELS, qualitySettingsController.SetShadowQuality, x => x.SceneShadowQuality),
+                DropdownFeatures.MsaaFeature => CreateDropdownQualityController(viewInstance, qualitySettingsController, MSAA_LEVELS, qualitySettingsController.SetMsaa, x => x.Msaa),
+                DropdownFeatures.ShadowsQualityFeature => CreateDropdownQualityController(viewInstance, qualitySettingsController, SHADOW_QUALITY_LEVELS, qualitySettingsController.SetShadowQuality, x => x.SceneShadowQuality),
 
-                DropdownFeatures.POINT_AT_MARKER_FEATURE => new PointAtMarkerVisibilityController(viewInstance, pointAtMarkerVisibilitySettings),
+                DropdownFeatures.PointAtMarkerFeature => new PointAtMarkerVisibilityController(viewInstance, pointAtMarkerVisibilitySettings),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
