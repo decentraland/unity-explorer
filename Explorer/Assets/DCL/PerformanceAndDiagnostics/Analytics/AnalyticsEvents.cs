@@ -36,8 +36,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string CHAT_CONVERSATION_OPENED = "chat_conversation_opened";
             public const string CHAT_CONVERSATION_CLOSED = "chat_conversation_closed";
             public const string OPEN_SUPPORT = "open_support";
+            public const string MINIMUM_REQUIREMENTS_SCREEN_SHOWN = "minimum_requirements_screen_shown";
             public const string SKIP_MINIMUM_REQUIREMENTS_SCREEN = "skip_minimum_requirements_screen";
-            public const string EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN = "exit_app_from_minimum_requirements_screen";
             public const string HOME_POSITION_SET = "home_position_set";
         }
 
