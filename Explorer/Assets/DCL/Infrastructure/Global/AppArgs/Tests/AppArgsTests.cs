@@ -217,6 +217,7 @@ namespace Global.AppArgs.Tests
         [TestCase("https://worlds-content-server.decentraland.org@evil.example/world/test-world.dcl.eth", false, TestName = "userinfo cannot spoof the host")]
         [TestCase("https://decentraland.org.attacker.com/world/test-world.dcl.eth", false, TestName = "suffix-lookalike host is rejected")]
         [TestCase("https://worlds-content-server.decentraland.zone/world/test-world.dcl.eth", true, TestName = "zone worlds server")]
+        [TestCase("file:///test-world.dcl.eth", false, TestName = "file:// reports IsLoopback but must not be trusted")]
         [TestCase("", false, TestName = "empty")]
         public void ClassifyRealmAsWhitelisted(string realm, bool expected)
         {
@@ -225,6 +226,36 @@ namespace Global.AppArgs.Tests
 
             // Act & Assert
             Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [Test]
+        public void DeferDeepLinkUntilInitializeDeepLinksIsCalled()
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(null);
+
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[]
+            {
+                "--feature-flags-url", "https://feature-flags.decentraland.zone",
+                "decentraland://?realm=http://127.0.0.1:8000&local-scene=true",
+            });
+
+            // Assert: CLI flags are available immediately, the deep link is not applied yet
+            Assert.IsTrue(args.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? url) && url == "https://feature-flags.decentraland.zone");
+            Assert.IsTrue(args.HasPendingDeepLink, "the deep link must stay pending until the whitelist is fetched");
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.REALM), "deep-link params must not be applied before InitializeDeepLinks");
+
+            // Act
+            args.InitializeDeepLinks();
+
+            // Assert
+            Assert.IsFalse(args.HasPendingDeepLink);
+            Assert.AreEqual("http://127.0.0.1:8000", args.TryGetValue(AppArgsFlags.REALM, out string? realm) ? realm : null);
+            Assert.AreEqual("true", args.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string? localScene) ? localScene : null, "loopback realm keeps the whitelisted-realm params");
+
+            // Act & Assert: idempotent
+            args.InitializeDeepLinks();
+            Assert.IsFalse(args.HasPendingDeepLink);
         }
 
         [Test]

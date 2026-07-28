@@ -140,7 +140,10 @@ namespace Global.AppArgs
             if (string.IsNullOrEmpty(realm))
                 return false;
 
-            if (Uri.TryCreate(realm, UriKind.Absolute, out Uri? uri))
+            // Only a web-scheme realm can be trusted here: Uri.IsLoopback is true for any file:/// URI (its host is
+            // empty), which would otherwise skip both the host check and the consent prompt.
+            if (Uri.TryCreate(realm, UriKind.Absolute, out Uri? uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
             {
                 if (uri.IsLoopback)
                     return true;

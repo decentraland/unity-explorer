@@ -20,6 +20,9 @@ namespace Global.AppArgs
         // or when the launch has no deep link.
         private string? pendingDeepLink;
 
+        // Guards InitializeDeepLinks so the merge and the argument log happen exactly once.
+        private bool deepLinksInitialized;
+
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
         {
             [AppArgsFlags.DEBUG] = string.Empty,
@@ -47,10 +50,9 @@ namespace Global.AppArgs
             if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();
 
+            // Deferred: InitializeDeepLinks() logs instead, so the log reports the merged deep-link params too.
             if (!deferDeepLinks)
                 InitializeDeepLinks();
-
-            LogArguments();
         }
 
         public bool HasFlag(string flagName) =>
@@ -111,19 +113,28 @@ namespace Global.AppArgs
 
         /// <summary>
         ///     Processes the deep link captured during construction (merging its allowlisted params), applying the
-        ///     current <see cref="DeepLinkAllowlist" /> whitelisted-realm gate. Idempotent; a no-op without a deep link.
+        ///     current <see cref="DeepLinkAllowlist" /> whitelisted-realm gate, then logs the complete argument set.
+        ///     Idempotent, and safe to call when the launch carries no deep link.
         /// </summary>
         public void InitializeDeepLinks()
         {
-            if (pendingDeepLink == null)
+            if (deepLinksInitialized)
                 return;
 
-            Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(pendingDeepLink);
+            deepLinksInitialized = true;
 
-            foreach ((string key, string value) in deepLinkParameters)
-                appParameters[key] = value;
+            if (pendingDeepLink != null)
+            {
+                Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(pendingDeepLink);
 
-            pendingDeepLink = null;
+                foreach ((string key, string value) in deepLinkParameters)
+                    appParameters[key] = value;
+
+                pendingDeepLink = null;
+            }
+
+            // Logged once the arguments are complete, so a deferred deep-link launch reports its params too.
+            LogArguments();
         }
 
         public static Dictionary<string, string> ProcessDeepLinkParameters(string deepLinkString)
