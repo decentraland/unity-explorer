@@ -164,11 +164,18 @@ namespace Global.AppArgs
         // is what rejects lookalikes such as "decentraland.org.attacker.com" and "evil-decentraland.org".
         private static bool IsDecentralandHost(string host)
         {
-            foreach (string domain in IDecentralandUrlsSource.ALL_DOMAINS)
+            // Indexed loop, not foreach: enumerating the IReadOnlyList would allocate an enumerator.
+            IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
+
+            for (var i = 0; i < domains.Count; i++)
+            {
+                string domain = domains[i];
+
                 if (host.Length > domain.Length
                     && host[host.Length - domain.Length - 1] == '.'
                     && host.EndsWith(domain, StringComparison.OrdinalIgnoreCase))
                     return true;
+            }
 
             return false;
         }

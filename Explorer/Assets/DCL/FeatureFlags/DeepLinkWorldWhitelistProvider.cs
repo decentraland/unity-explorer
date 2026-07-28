@@ -19,6 +19,9 @@ namespace DCL.FeatureFlags
     /// </summary>
     public static class DeepLinkWorldWhitelistProvider
     {
+        // A start-up path can't wait for long: UnityWebRequest.timeout is in seconds.
+        private const int FETCH_TIMEOUT_SECONDS = 5;
+
         private static readonly char[] SEPARATORS = { ',', '\n', '\r', ';' };
 
         /// <summary>
@@ -33,8 +36,7 @@ namespace DCL.FeatureFlags
                 using UnityWebRequest request = UnityWebRequest.Get(fetchUrl);
                 request.SetRequestHeader("X-Debug", "false");
 
-                // A start-up path can't wait for long time (UnityWebRequest.timeout is in seconds)
-                request.timeout = 5;
+                request.timeout = FETCH_TIMEOUT_SECONDS;
 
                 await request.SendWebRequest().WithCancellation(ct);
 

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace DCL.Multiplayer.Connections.DecentralandUrls
 {
     public interface IDecentralandUrlsSource
@@ -12,7 +14,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         const string ZONE_DOMAIN = "decentraland.zone";
         const string TODAY_DOMAIN = "decentraland.today";
 
-        static readonly string[] ALL_DOMAINS = { ORG_DOMAIN, ZONE_DOMAIN, TODAY_DOMAIN };
+        // IReadOnlyList, not string[]: the array contents would otherwise be writable by any caller, and these gate
+        // host-trust checks (SEC-019/020).
+        static readonly IReadOnlyList<string> ALL_DOMAINS = new[] { ORG_DOMAIN, ZONE_DOMAIN, TODAY_DOMAIN };
 
         const string EXPLORER_LATEST_RELEASE_URL = "https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/releases/latest.json";
         const string LAUNCHER_DOWNLOAD_URL = "https://explorer-artifacts.decentraland.org/launcher-rust";

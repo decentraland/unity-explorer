@@ -481,7 +481,7 @@ namespace Global.Dynamic
                 ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment)
                 : featureFlagsOverride.TrimEnd('/');
 
-            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/explorer.json", ct);
+            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);
             DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
         }
 
