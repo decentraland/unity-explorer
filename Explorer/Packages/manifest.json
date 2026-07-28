@@ -1,11 +1,10 @@
 {
   "dependencies": {
     "arch.systemgroups.visualiser": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
-    "com.alttester.sdk": "git@github.com:decentraland/unity-explorer-packages.git?path=/AltTester#fix/unity-6000.5.4-api-compat",
+    "com.alttester.sdk": "git@github.com:decentraland/unity-explorer-packages.git?path=/AltTester#vendor/alttester-2.3.0-entityid",
     "com.arch.systemgroups": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
     "com.atteneder.draco": "4.0.2",
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
-    "com.brunomikoski.animationsequencer": "git@github.com:decentraland/unity-explorer-packages.git?path=/AnimationSequencer#fix/unity-6000.5.4-api-compat",
     "com.coffee.softmask-for-ugui": "https://github.com/mob-sakai/SoftMaskForUGUI.git?path=Packages/src#3.6.2",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets#fix/unity-6000.5.4-api-compat",
@@ -19,7 +18,7 @@
     "com.decentraland.unity-shared-dependencies": "git@github.com:decentraland/unity-shared-dependencies.git#fix/unity-6000.5-shader-compat",
     "com.gurbu.gpui-pro": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#fix/unity-6000.5.4-api-compat",
     "com.gurbu.gpui-pro.terrain": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#fix/unity-6000.5.4-api-compat",
-    "com.mackysoft.serializereference-extensions": "git@github.com:decentraland/unity-explorer-packages.git?path=/SerializeReferenceExtensions#fix/unity-6000.5.4-api-compat",
+    "com.mackysoft.serializereference-extensions": "1.7.0",
     "com.nickkhalow.chrome-devtool-protocol-unity": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
     "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
     "com.renderheads.avpro.video-ultra": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo#fix/unity-6000.5.4-api-compat",

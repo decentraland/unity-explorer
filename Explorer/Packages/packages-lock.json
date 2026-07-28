@@ -8,7 +8,7 @@
       "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
     "com.alttester.sdk": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AltTester#fix/unity-6000.5.4-api-compat",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AltTester#vendor/alttester-2.3.0-entityid",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -22,7 +22,7 @@
         "com.unity.test-framework": "1.1.33",
         "com.unity.ugui": "2.0.0"
       },
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
+      "hash": "b6a3925c1f477231b25fcbc010be49dde4507028"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -52,13 +52,6 @@
       },
       "hash": "b9f9f75c3a0093c95a5b49420e7781c4f5d968b9"
     },
-    "com.brunomikoski.animationsequencer": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AnimationSequencer#fix/unity-6000.5.4-api-compat",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
-    },
     "com.coffee.softmask-for-ugui": {
       "version": "https://github.com/mob-sakai/SoftMaskForUGUI.git?path=Packages/src#3.6.2",
       "depth": 0,
@@ -80,14 +73,14 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
+      "hash": "72f99c525969d006faf15b0b55569e1a5e6458d9"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro#fix/unity-6000.5.4-api-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
+      "hash": "72f99c525969d006faf15b0b55569e1a5e6458d9"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git#222d67ccc289337dadb5e8d96ee5b633dfb905b6",
@@ -151,7 +144,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
+      "hash": "72f99c525969d006faf15b0b55569e1a5e6458d9"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#fix/unity-6000.5.4-api-compat",
@@ -160,14 +153,14 @@
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
+      "hash": "72f99c525969d006faf15b0b55569e1a5e6458d9"
     },
     "com.mackysoft.serializereference-extensions": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SerializeReferenceExtensions#fix/unity-6000.5.4-api-compat",
+      "version": "1.7.0",
       "depth": 0,
-      "source": "git",
+      "source": "registry",
       "dependencies": {},
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
+      "url": "https://package.openupm.com"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
       "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
@@ -191,7 +184,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
+      "hash": "72f99c525969d006faf15b0b55569e1a5e6458d9"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -523,7 +516,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
+      "hash": "72f99c525969d006faf15b0b55569e1a5e6458d9"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
