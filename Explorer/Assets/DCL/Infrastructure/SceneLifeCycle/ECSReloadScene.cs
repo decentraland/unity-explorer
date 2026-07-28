@@ -3,10 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.ResourcesUnloading;
 using ECS.LifeCycle.Components;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -93,8 +91,9 @@ namespace ECS.SceneLifeCycle
 
             if (localSceneDevelopment)
             {
-                world.Query(in new QueryDescription().WithAll<RealmComponent>(),
-                    (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
+                // No definition re-discovery here: the kept definition entity stays valid across
+                // file edits because LSD content hashes are path-derived. Added/removed files are
+                // not reflected until the realm is re-entered.
 
                 // Force-drain dereferenced caches on LSD reload. The local dev server derives hashes
                 // from the file path, not content, so an updated model keeps the same hash and cache

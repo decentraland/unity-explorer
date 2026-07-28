@@ -15,7 +15,7 @@ namespace DCL.SceneLifeCycle.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new UnloadSceneSystem(world, Substitute.For<IScenesCache>(), false);
+            system = new UnloadSceneSystem(world, Substitute.For<IScenesCache>());
         }
 
         [Test]
