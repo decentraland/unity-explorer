@@ -16,15 +16,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         private readonly IWebRequestController webRequestController;
         private readonly string realm;
 
-        /// <param name="realm">
-        ///     The local scene development realm the client was launched with (the `realm` deep link parameter).
-        ///     The scene server only listens on the port it was started with, so falling back to the default
-        ///     would make this source unreachable for any `sdk-commands start --port` other than the default one.
-        /// </param>
+        // realm is the local scene development realm the client was launched with (the `realm` deep link
+        // parameter). The scene server only listens on the port it was started with, so falling back to the
+        // default would make this source unreachable for any `sdk-commands start --port` but the default one.
         public LocalSceneDevelopmentSceneRoomMetaDataSource(IWebRequestController webRequestController, string? realm = null)
         {
             this.webRequestController = webRequestController;
-            this.realm = string.IsNullOrWhiteSpace(realm) ? IRealmNavigator.LOCALHOST : realm!;
+            this.realm = string.IsNullOrWhiteSpace(realm) ? IRealmNavigator.LOCALHOST : realm;
         }
 
         public bool ScenesCommunicationIsIsolated => false;
