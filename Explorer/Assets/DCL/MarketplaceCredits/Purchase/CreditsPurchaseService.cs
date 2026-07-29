@@ -95,16 +95,24 @@ namespace DCL.MarketplaceCredits.Purchase
             if (string.Equals(trade.signer, buyer, StringComparison.OrdinalIgnoreCase))
                 return Fail(CreditsPurchaseError.OwnListing);
 
-            if (trade.received.Length == 0 || trade.received[0].assetType != CreditsTradeEncoder.ASSET_TYPE_USD_PEGGED_MANA)
-                return Fail(CreditsPurchaseError.ListingNotAvailable, message: "Trade is not listed as credits");
+            if (trade.received.Length == 0)
+                return Fail(CreditsPurchaseError.ListingNotAvailable, message: "Trade has no received asset");
 
-            int usdCents = CreditsTradeEncoder.UsdWeiToCents(trade.received[0].amount);
+            TradeAssetDto price = trade.received[0];
+
+            if (price.assetType != CreditsTradeEncoder.ASSET_TYPE_USD_PEGGED_MANA
+                && price.assetType != CreditsTradeEncoder.ASSET_TYPE_ERC20)
+                return Fail(CreditsPurchaseError.ListingNotAvailable, message: $"Trade asset type {price.assetType} cannot be paid with credits");
+
+            bool isLegacyMana = price.assetType == CreditsTradeEncoder.ASSET_TYPE_ERC20;
+            int expectedCents = expectedPriceCredits * CENTS_PER_CREDIT;
+            int usdCents = isLegacyMana ? expectedCents : CreditsTradeEncoder.UsdWeiToCents(price.amount);
 
             if (usdCents <= 0)
                 return Fail(CreditsPurchaseError.ListingNotAvailable, message: "Trade has no price");
 
-            if (usdCents != expectedPriceCredits * CENTS_PER_CREDIT)
-                return Fail(CreditsPurchaseError.PriceChanged, message: $"Listed for {usdCents} cents, expected {expectedPriceCredits * CENTS_PER_CREDIT}");
+            if (!isLegacyMana && usdCents != expectedCents)
+                return Fail(CreditsPurchaseError.PriceChanged, message: $"Listed for {usdCents} cents, expected {expectedCents}");
 
             SetState(CreditsPurchaseState.Authorizing);
 
@@ -123,6 +131,15 @@ namespace DCL.MarketplaceCredits.Purchase
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
                 return Fail(CreditsPurchaseError.AuthorizationFailed, message: e.Message);
+            }
+
+            // The credits-server prices the trade at authorization time — for a legacy trade against the live
+            // MANA/USD oracle — and that is the amount the purchase settles for. Charging above what the buyer
+            // confirmed needs a fresh confirmation.
+            if (authorization.usdCents > usdCents)
+            {
+                await ReleaseIntentAsync(authorization.credit.id);
+                return Fail(CreditsPurchaseError.PriceChanged, message: $"Authorized for {authorization.usdCents} cents, buyer confirmed {usdCents}");
             }
 
             string useCreditsCalldata;

@@ -22,6 +22,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private const string CREDIT_ID = "intent-1";
         private const string TX_HASH = "0x1122";
         private const int PRICE_CREDITS = 25; // == 250 cents == 2.5 USD wei price below
+        private const int CENTS_PER_CREDIT = 10;
 
         private MarketplaceShopAPIClient shopAPIClient = null!;
         private MarketplaceCreditsAPIClient creditsAPIClient = null!;
@@ -103,6 +104,18 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                     },
                 },
             };
+
+        /// <summary>
+        ///     A legacy listing: the trade is denominated in MANA, not USD. The amount is far larger than the
+        ///     confirmed price so that any accidental client-side conversion shows up as a wrong authorization.
+        /// </summary>
+        private static TradeDto CreateLegacyManaTrade()
+        {
+            TradeDto trade = CreateTrade();
+            trade.received[0].assetType = CreditsTradeEncoder.ASSET_TYPE_ERC20;
+            trade.received[0].amount = "10000000000000000000000"; // 10 000 MANA
+            return trade;
+        }
 
         private static AuthorizeCreditResponse CreateAuthorization() =>
             new ()
@@ -301,11 +314,12 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
-        public async Task RejectTradesThatAreNotUsdPegged()
+        public async Task RejectTradesPricedInAnAssetCreditsCannotPay()
         {
             // Arrange
             TradeDto trade = CreateTrade();
-            trade.received[0].assetType = CreditsTradeEncoder.ASSET_TYPE_ERC20;
+            trade.received[0].assetType = CreditsTradeEncoder.ASSET_TYPE_ERC721;
+            trade.received[0].tokenId = "7";
             shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(trade));
 
             // Act
@@ -314,6 +328,61 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Assert
             Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, result.Error);
             await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task AuthorizeLegacyManaTradeAtTheConfirmedCataloguePrice()
+        {
+            // Arrange
+            shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(CreateLegacyManaTrade()));
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
+
+            // Assert: the MANA amount is never converted client-side — the catalogue price is authorized as-is.
+            Assert.IsTrue(result.Success);
+            await creditsAPIClient.Received(1).AuthorizeUsdCreditAsync(PRICE_CREDITS * CENTS_PER_CREDIT, TRADE_ID, Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task ReleaseReservationWhenAuthorizationPricesAboveTheConfirmedAmount()
+        {
+            // Arrange
+            AuthorizeCreditResponse authorization = CreateAuthorization();
+            authorization.usdCents = PRICE_CREDITS * CENTS_PER_CREDIT + 50;
+
+            shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(CreateLegacyManaTrade()));
+
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(authorization));
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.Error);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task CompletePurchaseWhenAuthorizationPricesBelowTheConfirmedAmount()
+        {
+            // Arrange
+            AuthorizeCreditResponse authorization = CreateAuthorization();
+            authorization.usdCents = PRICE_CREDITS * CENTS_PER_CREDIT - 50;
+
+            shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(CreateLegacyManaTrade()));
+
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(authorization));
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(TRADE_ID, PRICE_CREDITS, CancellationToken.None);
+
+            // Assert
+            Assert.IsTrue(result.Success);
+            await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
         }
     }
 }
