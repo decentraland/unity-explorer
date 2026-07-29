@@ -19,12 +19,14 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Permitted only for a loopback realm</b> — the local-development params Creator Hub and the
     ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, dclenv, hub,
-    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance, mcp, mcp-port. They are gated on
+    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance, mcp, mcp-port, local-ab,
+    ///             local-ab-port. They are gated on
     ///             <c>Uri.IsLoopback</c> of the target realm (127.0.0.1 / localhost / [::1]) so a remote-realm deep
     ///             link from a web page can never enable them, while a legitimate local-dev launch (which always
     ///             targets loopback) works. All but the MCP pair are individually low-harm — an analytics tag, a
-    ///             cosmetic toggle, an instance count, an env enum, or a screen skip that still forces auth when no
-    ///             valid identity is cached; <c>mcp</c>/<c>mcp-port</c> start an unauthenticated loopback control
+    ///             cosmetic toggle, an instance count, an env enum, a screen skip that still forces auth when no
+    ///             valid identity is cached, or an asset-server toggle/port whose host is pinned to 127.0.0.1;
+    ///             <c>mcp</c>/<c>mcp-port</c> start an unauthenticated loopback control
     ///             port, so they lean on the gate plus the server's own 127.0.0.1 bind and Origin check — see the
     ///             per-key comment for what the gate does and does not cover.
     ///         </item>
@@ -110,6 +112,19 @@ namespace Global.AppArgs
             // Port the server above listens on. Presence alone also starts it (MCP_PORT implies MCP), so it carries
             // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
             AppArgsFlags.MCP_PORT,
+
+            // Local-scene development only: load the scene's asset bundles from a locally running abgen instead of
+            // raw GLTFs. Redirects the optimized-assets endpoints to a fixed 127.0.0.1 URL, so the worst case for a
+            // crafted link is asset loading pointed at a dead (or squatted) local port — a hostile process on the
+            // victim's own loopback is already past this trust boundary.
+            AppArgsFlags.LOCAL_AB,
+
+            // Port the local asset-bundle server above listens on (implies LOCAL_AB). The host stays pinned to
+            // 127.0.0.1 — the value is parsed as an int and must fall in 1024-65535, else abgen's default port is
+            // used (RealmLaunchSettings.ResolveLocalAssetBundlesUrl), so a crafted link cannot smuggle a remote
+            // host or a path through it. The full-URL variant (optimized-assets-url) points AB/LOD/registry
+            // endpoints at arbitrary infrastructure and stays never-permitted.
+            AppArgsFlags.LOCAL_AB_PORT,
         };
 
         public static bool IsPermitted(string key) =>

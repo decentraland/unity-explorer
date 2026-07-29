@@ -126,9 +126,9 @@ namespace Global.AppArgs
             }
 
             // Tier 2 (SEC-019/020): the local-development params Creator Hub / sdk-commands attach to preview deep
-            // links (local-scene, dclenv, hub, skip-auth-screen, landscape-terrain-enabled, multi-instance) are
-            // permitted only when the target realm is loopback — a remote-realm deep link from a web page cannot
-            // enable them. Everything not in either tier is dropped.
+            // links (DeepLinkAllowlist.LOOPBACK_REALM_PERMITTED_KEYS, with per-key rationale) are permitted only
+            // when the target realm is loopback — a remote-realm deep link from a web page cannot enable them.
+            // Everything not in either tier is dropped.
             bool realmIsLoopback = output.TryGetValue(AppArgsFlags.REALM, out string? loopbackRealm)
                                    && Uri.TryCreate(loopbackRealm, UriKind.Absolute, out Uri? loopbackRealmUri)
                                    && loopbackRealmUri.IsLoopback;

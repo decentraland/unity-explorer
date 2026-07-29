@@ -25,6 +25,9 @@ namespace Global.Dynamic
         /// </summary>
         public const string DEFAULT_LOCAL_ASSET_BUNDLES_URL = "http://127.0.0.1:5147";
 
+        private const int MIN_LOCAL_AB_PORT = 1024;
+        private const int MAX_LOCAL_AB_PORT = 65535;
+
         [Serializable]
         public struct PredefinedScenes
         {
@@ -42,8 +45,8 @@ namespace Global.Dynamic
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles;
         [SerializeField] [Tooltip("Local scene development only: load the scene's asset bundles from a locally running abgen instead of loading "
-                                  + "raw GLTFs. The server URL comes from --optimized-assets-url, defaulting to " + DEFAULT_LOCAL_ASSET_BUNDLES_URL
-                                  + " (abgen's default port) when not provided")] internal bool useLocalAssetBundles;
+                                  + "raw GLTFs. The server URL comes from --optimized-assets-url, or 127.0.0.1 on the --local-ab-port port, defaulting to "
+                                  + DEFAULT_LOCAL_ASSET_BUNDLES_URL + " (abgen's default port) when neither is provided")] internal bool useLocalAssetBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
@@ -96,6 +99,19 @@ namespace Global.Dynamic
             return new HybridSceneParams();
         }
 
+        /// <summary>
+        ///     Base URL of the local asset-bundle server: always 127.0.0.1, on the port from
+        ///     <see cref="AppArgsFlags.LOCAL_AB_PORT" /> when it parses to a valid non-system port (1024-65535),
+        ///     otherwise abgen's default (<see cref="DEFAULT_LOCAL_ASSET_BUNDLES_URL" />). The host is deliberately
+        ///     not configurable here: this arg is deep-link reachable, so only the loopback port may vary.
+        /// </summary>
+        public static string ResolveLocalAssetBundlesUrl(IAppArgs appArgs) =>
+            appArgs.TryGetValue(AppArgsFlags.LOCAL_AB_PORT, out string? portValue)
+            && int.TryParse(portValue, out int parsedPort)
+            && parsedPort is >= MIN_LOCAL_AB_PORT and <= MAX_LOCAL_AB_PORT
+                ? $"http://127.0.0.1:{parsedPort}"
+                : DEFAULT_LOCAL_ASSET_BUNDLES_URL;
+
         public void ApplyConfig(IAppArgs applicationParameters)
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
@@ -121,7 +137,7 @@ namespace Global.Dynamic
                 // The serialized checkbox is an Editor convenience only: player builds opt in
                 // exclusively through the app arg, so a box ticked (and accidentally committed)
                 // in the scene asset cannot ship enabled.
-                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || (Application.isEditor && useLocalAssetBundles);
+                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || appParameters.HasFlag(AppArgsFlags.LOCAL_AB_PORT) || (Application.isEditor && useLocalAssetBundles);
                 bool useRemoteAB = appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles;
 
                 if (useLocalAB && useRemoteAB)

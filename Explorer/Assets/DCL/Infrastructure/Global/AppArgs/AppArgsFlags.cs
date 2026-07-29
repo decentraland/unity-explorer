@@ -132,6 +132,12 @@ namespace Global.AppArgs
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
         public const string LOCAL_AB = "local-ab";
 
+        /// <summary>
+        ///     Overrides the port of the local asset-bundle server (implies <see cref="LOCAL_AB" />). Only the port is
+        ///     configurable — the host is always 127.0.0.1; a full-URL override requires <see cref="OPTIMIZED_ASSETS_URL" />.
+        /// </summary>
+        public const string LOCAL_AB_PORT = "local-ab-port";
+
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
