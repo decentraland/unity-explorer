@@ -1,6 +1,4 @@
-#if AV_PRO_PRESENT
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
@@ -11,9 +9,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
 {
     public class UrlResolverServiceShould
     {
-        private IWebRequestController webRequestController;
-        private IYouTubeUrlResolver youTubeResolver;
-        private UrlResolverService service;
+        private IWebRequestController webRequestController = null!;
+        private IYouTubeUrlResolver youTubeResolver = null!;
+        private UrlResolverService service = null!;
 
         [SetUp]
         public void SetUp()
@@ -42,31 +40,31 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public async Task ResolveAsync_WhenYouTubeResolverReturnsNull_ReturnsUnreachable()
         {
-            const string url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+            const string URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
             youTubeResolver.ResolveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                            .Returns(UniTask.FromResult<ResolvedYouTubeUrl?>(null));
 
-            ResolvedMediaUrl result = await service.ResolveAsync(url, default, CancellationToken.None).AsTask();
+            ResolvedMediaUrl result = await service.ResolveAsync(URL, default, CancellationToken.None).AsTask();
 
-            Assert.That(result.DirectUrl, Is.EqualTo(url));
+            Assert.That(result.DirectUrl, Is.EqualTo(URL));
             Assert.That(result.IsReachable, Is.False);
         }
 
         [Test]
         public async Task ResolveAsync_WhenYouTubeResolverSucceeds_ReturnsDirectUrl()
         {
-            const string url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-            const string directUrl = "https://rr1---sn-example.googlevideo.com/videoplayback?id=xyz";
+            const string URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+            const string DIRECT_URL = "https://rr1---sn-example.googlevideo.com/videoplayback?id=xyz";
 
-            var resolved = new ResolvedYouTubeUrl(directUrl, isLiveStream: false, expiresAtRealtimeSinceStartup: 999f);
+            var resolved = new ResolvedYouTubeUrl(DIRECT_URL, isLiveStream: false, expiresAtRealtimeSinceStartup: 999f);
 
             youTubeResolver.ResolveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                            .Returns(UniTask.FromResult<ResolvedYouTubeUrl?>(resolved));
 
-            ResolvedMediaUrl result = await service.ResolveAsync(url, default, CancellationToken.None).AsTask();
+            ResolvedMediaUrl result = await service.ResolveAsync(URL, default, CancellationToken.None).AsTask();
 
-            Assert.That(result.DirectUrl, Is.EqualTo(directUrl));
+            Assert.That(result.DirectUrl, Is.EqualTo(DIRECT_URL));
             Assert.That(result.IsReachable, Is.True);
             Assert.That(result.IsLiveStream, Is.False);
             Assert.That(result.ExpiresAtRealtimeSinceStartup, Is.EqualTo(999f));
@@ -75,17 +73,17 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public async Task ResolveAsync_WhenYouTubeResolverSucceedsWithLiveStream_SetsLiveStreamFlag()
         {
-            const string url = "https://www.youtube.com/live/abc123def456";
-            const string hlsUrl = "https://manifest.googlevideo.com/api/manifest/hls_playlist/id=abc";
+            const string URL = "https://www.youtube.com/live/abc123def456";
+            const string HLS_URL = "https://manifest.googlevideo.com/api/manifest/hls_playlist/id=abc";
 
-            var resolved = new ResolvedYouTubeUrl(hlsUrl, isLiveStream: true, expiresAtRealtimeSinceStartup: 500f);
+            var resolved = new ResolvedYouTubeUrl(HLS_URL, isLiveStream: true, expiresAtRealtimeSinceStartup: 500f);
 
             youTubeResolver.ResolveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                            .Returns(UniTask.FromResult<ResolvedYouTubeUrl?>(resolved));
 
-            ResolvedMediaUrl result = await service.ResolveAsync(url, default, CancellationToken.None).AsTask();
+            ResolvedMediaUrl result = await service.ResolveAsync(URL, default, CancellationToken.None).AsTask();
 
-            Assert.That(result.DirectUrl, Is.EqualTo(hlsUrl));
+            Assert.That(result.DirectUrl, Is.EqualTo(HLS_URL));
             Assert.That(result.IsReachable, Is.True);
             Assert.That(result.IsLiveStream, Is.True);
         }
@@ -123,4 +121,3 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
     }
 }
-#endif

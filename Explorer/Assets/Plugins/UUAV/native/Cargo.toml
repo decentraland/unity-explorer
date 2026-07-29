@@ -1,0 +1,42 @@
+[package]
+name = "uuav"
+version = "0.2.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+arc-swap = "1.7.1"
+crossbeam-channel = "0.5.16"
+dashmap = "6.1.0"
+
+# NOTE: ffmpeg-next 8.1.0 does not compile against the bundled FFmpeg 8.1
+# headers (deprecated AVCodec fields removed, new side-data enum variants),
+# so the player is built directly on the sys bindings.
+ffmpeg-sys-next = "8.1.0"
+
+libc = "0.2"
+parking_lot = "0.12"
+ringbuf = "0.5"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi_Common",
+] }
+
+# objc2 over the old gfx-rs `metal` crate: actively maintained, and its
+# Retained<T> RAII with Option-returning constructors fits the crate's
+# no-panic rule (the metal crate panics internally).
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+# the objc2-io-surface feature unlocks the IOSurface bridging APIs
+# (newTextureWithDescriptor:iosurface:plane:, CVPixelBufferGetIOSurface)
+objc2-metal = { version = "0.3", features = ["objc2-io-surface"] }
+objc2-core-video = { version = "0.3", features = ["objc2-io-surface"] }
+objc2-io-surface = "0.3"
+
+[lib]
+name = "uuav"
+crate-type = ["cdylib"]

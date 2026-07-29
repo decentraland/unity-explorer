@@ -89,6 +89,7 @@ namespace DCL.FeatureFlags
         public const string HARDWARE_FINGERPRINT = "alfa-hardware-fingerprint";
         public const string OPTIMIZED_ASSETS = "optimized-assets";
         public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
+        public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
 
         public static class Endpoints
         {
