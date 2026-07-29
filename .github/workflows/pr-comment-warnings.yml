@@ -61,11 +61,11 @@ jobs:
           edit-mode: replace
           body: |-
             <!-- warning-ratchet -->
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            ![badge]
 
             Lint in progress, come back later!
 
-            [badge]: https://img.shields.io/badge/Lint-Pending!-ffff00?logo=github&style=for-the-badge
+            [badge]: https://img.shields.io/badge/Lint-Pending!-ffff00?logo=resharper&logoColor=white&style=for-the-badge
 
   comment:
     if: github.event.action == 'completed'
@@ -126,8 +126,7 @@ jobs:
           RUN_URL: ${{ github.event.workflow_run.html_url }}
         run: |
           DELIM="EOF_$(uuidgen)"
-          LOGO='<img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">'
-          BADGE_STYLE="?logo=github&style=for-the-badge"
+          BADGE_STYLE="?logo=resharper&logoColor=white&style=for-the-badge"
           DETAILS=""
 
           if [ "$FOUND" != "true" ]; then
@@ -181,7 +180,7 @@ jobs:
           {
             echo "body<<$DELIM"
             echo "<!-- warning-ratchet -->"
-            echo "![badge]  $LOGO"
+            echo "![badge]"
             echo ""
             echo "$MSG"
             [ -n "$DETAILS" ] && cat "$DETAILS"
