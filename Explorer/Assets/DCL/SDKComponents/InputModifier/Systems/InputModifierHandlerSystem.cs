@@ -24,6 +24,11 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         private SceneRestrictionsAction lastBusMessageAction = SceneRestrictionsAction.Removed;
 
+        // Tracks whether this scene currently asserts any input modifier on the shared global player.
+        // Kept separate from lastBusMessageAction because the movement-restriction bus intentionally
+        // ignores gliding/double-jump, but the global reset must still fire for them.
+        private bool sceneAssertedModifiers;
+
         public InputModifierHandlerSystem(World world, World globalWorld, Entity playerEntity, ISceneStateProvider sceneStateProvider, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
             this.playerEntity = playerEntity;
@@ -56,6 +61,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             inputModifier.RemoveAllModifiers();
+            sceneAssertedModifiers = false;
 
             SendBusMessage(inputModifier);
         }
@@ -84,6 +90,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 inputModifier.DisableGliding = pb.DisableGliding;
             }
 
+            sceneAssertedModifiers = !inputModifier.EverythingEnabled;
+
             SendBusMessage(inputModifier);
 
             // Mark scene Entity with component as well to know later when the PB component gets removed
@@ -109,14 +117,14 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 ApplyModifiersQuery(World, true);
 
             // Only reset the shared global modifier if this scene was the one actively asserting it.
-            else if (lastBusMessageAction == SceneRestrictionsAction.Applied)
+            else if (sceneAssertedModifiers)
                 ResetModifiers();
         }
 
         public void FinalizeComponents(in Query query)
         {
             // Only reset the shared global modifier if this scene was the one actively asserting it.
-            if (lastBusMessageAction == SceneRestrictionsAction.Applied)
+            if (sceneAssertedModifiers)
                 ResetModifiers();
         }
     }
