@@ -22,15 +22,19 @@ namespace DCL.Multiplayer.SDK.Tests
     public class PlayerCRDTEntitiesHandlerSystemShould : UnitySystemTestBase<PlayerCRDTEntitiesHandlerSystem>
     {
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
-        private readonly IEmoteStorage emoteStorage;
+
+        // `= null!` on the fixture fields: they are assigned in [SetUp], which the
+        // compiler cannot see, so each one otherwise raises CS8618 and the warning
+        // ratchet blocks the merge.
+        private readonly IEmoteStorage emoteStorage = null!;
 
         private Entity entity;
-        private Transform fakeCharacterUnityTransform;
-        private Transform fakeMainCharacterUnityTransform;
-        private World scene1World;
-        private World scene2World;
-        private ISceneFacade scene1Facade;
-        private ISceneFacade scene2Facade;
+        private Transform fakeCharacterUnityTransform = null!;
+        private Transform fakeMainCharacterUnityTransform = null!;
+        private World scene1World = null!;
+        private World scene2World = null!;
+        private ISceneFacade scene1Facade = null!;
+        private ISceneFacade scene2Facade = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
@@ -118,7 +122,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet<PlayerCRDTEntity>(entity, out PlayerCRDTEntity globalEntity));
+            Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity globalEntity));
             Assert.IsFalse(globalEntity.AssignedToScene);
         }
 
