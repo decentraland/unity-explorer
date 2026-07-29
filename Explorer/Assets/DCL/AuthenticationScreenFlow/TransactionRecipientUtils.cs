@@ -83,9 +83,19 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private static string Highlight(string value) =>
-            $"<color={HIGHLIGHT_COLOR}>{value}</color>";
+            $"<color={HIGHLIGHT_COLOR}>{EscapeRichText(value)}</color>";
 
         private static string HighlightLink(string id, string label) =>
-            $"<link=\"{id}\"><color={HIGHLIGHT_COLOR}><b>{label}</b></color></link>";
+            $"<link=\"{EscapeRichText(id)}\"><color={HIGHLIGHT_COLOR}><b>{EscapeRichText(label)}</b></color></link>";
+
+        /// <summary>
+        ///     Swaps the characters TMP reads as markup for lookalikes that it does not. The copy is
+        ///     rendered as rich text by design (the MANA sprite, the profile link), so a display name or
+        ///     scene name carrying "&lt;size=0&gt;" would otherwise hide the warning it appears inside.
+        /// </summary>
+        private static string EscapeRichText(string value) =>
+            value.Replace('<', '‹') // single left-pointing angle quotation mark
+                 .Replace('>', '›') // single right-pointing angle quotation mark
+                 .Replace('"', '”'); // right double quotation mark, closes the link attribute
     }
 }
