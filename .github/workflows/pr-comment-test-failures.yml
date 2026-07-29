@@ -116,9 +116,9 @@ jobs:
           done
 
           case "$status" in
-            incomplete) badge="https://img.shields.io/badge/Tests-Incomplete-d29922?logo=unity&logoColor=white&style=for-the-badge"; headline="$warnings" ;;
-            failed)     badge="https://img.shields.io/badge/Tests-Failed!-ff0000?logo=unity&logoColor=white&style=for-the-badge";     headline="Some Unity tests failed ❌" ;;
-            *)          badge="https://img.shields.io/badge/Tests-Passed!-3fb950?logo=unity&logoColor=white&style=for-the-badge";     headline="All Unity tests passed ✅" ;;
+            incomplete) badge="https://img.shields.io/badge/Tests-Incomplete-d29922?logo=codecov&logoColor=white&style=for-the-badge"; headline="$warnings" ;;
+            failed)     badge="https://img.shields.io/badge/Tests-Failed!-ff0000?logo=codecov&logoColor=white&style=for-the-badge";     headline="Some Unity tests failed ❌" ;;
+            *)          badge="https://img.shields.io/badge/Tests-Passed!-3fb950?logo=codecov&logoColor=white&style=for-the-badge";     headline="All Unity tests passed ✅" ;;
           esac
 
           DELIM="EOF_$(uuidgen)"
