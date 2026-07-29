@@ -289,6 +289,67 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
         }
 
+        [Test]
+        public void FreeReservedCRDTEntityIdWhenPlayerDisconnectsOutsideAnyScene()
+        {
+            // Remote entities are parked outside any scene until their first movement packet arrives,
+            // so disconnecting from there must still release the reserved id
+            fakeCharacterUnityTransform.position = Vector3.one * 100;
+
+            Entity remotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity));
+            Assert.IsFalse(playerCRDTEntity.AssignedToScene);
+            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
+
+            // "Disconnect" the player while it is still assigned to no scene
+            world.Add(remotePlayer, new DeleteEntityIntention());
+            system.Update(0);
+
+            Assert.IsFalse(world.Has<PlayerCRDTEntity>(remotePlayer));
+
+            // The id must have been given back to the pool, so the next player reuses it
+            Entity nextRemotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(nextRemotePlayer, out playerCRDTEntity));
+            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
+        }
+
+        [Test]
+        public void NotExhaustReservedCRDTEntityIdsOnRepeatedDisconnectsOutsideAnyScene()
+        {
+            const int RESERVED_IDS_COUNT = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM;
+
+            fakeCharacterUnityTransform.position = Vector3.one * 100;
+
+            // More connect/disconnect cycles than there are reserved ids: leaking one id per cycle
+            // would exhaust the pool and silently stop exposing players to scenes
+            for (var i = 0; i < RESERVED_IDS_COUNT + 8; i++)
+            {
+                Entity remotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                    new CharacterTransform(fakeCharacterUnityTransform));
+
+                system.Update(0);
+
+                Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity), $"No PlayerCRDTEntity assigned on cycle {i}");
+                Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id, $"Reserved id was not reused on cycle {i}");
+
+                world.Add(remotePlayer, new DeleteEntityIntention());
+                system.Update(0);
+
+                Assert.IsFalse(world.Has<PlayerCRDTEntity>(remotePlayer));
+
+                // Emulate DestroyEntitiesSystem, which destroys entities marked for deletion later in the frame
+                world.Destroy(remotePlayer);
+            }
+        }
+
         [TestCase(true)]
         [TestCase(false)]
         public void AssignPlayerWhenSceneIsStarting(bool isMainPlayer)
