@@ -372,7 +372,7 @@ namespace Global.Dynamic
 
                     // Consider it as the "main" realm which shares the comms with many catalysts
                     // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
-                    ? "realm-provider.decentraland.org"
+                    ? "realm-provider." + IDecentralandUrlsSource.ORG_DOMAIN
                     : new Uri(realm.Value).Host;
 
             return hostname;
