@@ -24,16 +24,14 @@ namespace DCL.Character.CharacterMotion
                 return;
             }
 
-            // Whether the character was descending before this impulse; captured before the impulse changes ExternalVelocity
-            bool wasDescending = characterPhysics.GravityVelocity.y + characterPhysics.ExternalVelocity.y < 0f;
-
             Vector3 deltaVelocity = characterPhysics.ExternalImpulse / settings.CharacterMass; // Δv = J / m (instant velocity change)
             characterPhysics.ExternalVelocity += deltaVelocity;
 
             if (characterPhysics.ExternalImpulse.y > 0f)
             {
                 bool onOrNearGround = characterPhysics.IsGrounded || characterPhysics.GroundDistance <= JUMP_RESET_GROUND_DISTANCE;
-                bool descendingReset = wasDescending && (physicsTick - jumpState.LastDescendingResetTick) * dt >= DESCENDING_RESET_COOLDOWN;
+                bool descendingReset = characterPhysics.GravityVelocity.y + characterPhysics.ExternalVelocity.y < 0f &&
+                                       (physicsTick - jumpState.LastDescendingResetTick) * dt >= DESCENDING_RESET_COOLDOWN;
 
                 if (onOrNearGround || descendingReset)
                 {
