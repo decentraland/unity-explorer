@@ -30,7 +30,7 @@ namespace DCL.Character.CharacterMotion
             if (characterPhysics.ExternalImpulse.y > 0f)
             {
                 bool onOrNearGround = characterPhysics.IsGrounded || characterPhysics.GroundDistance <= JUMP_RESET_GROUND_DISTANCE;
-                bool descendingReset = characterPhysics.GravityVelocity.y + characterPhysics.ExternalVelocity.y < 0f &&
+                bool descendingReset = (characterPhysics.GravityVelocity.y + characterPhysics.ExternalVelocity.y) < 0f &&
                                        (physicsTick - jumpState.LastDescendingResetTick) * dt >= DESCENDING_RESET_COOLDOWN;
 
                 if (onOrNearGround || descendingReset)
