@@ -487,11 +487,10 @@ namespace DCL.SDKComponents.InputModifier.Tests
         }
 
         [Test]
-        public void NotPushMovementBlockedBus_WhenOnlyGlidingDisabled()
+        public void PushMovementBlockedBus_WhenOnlyGlidingDisabled()
         {
-            // Gliding is deliberately excluded from the AvatarMovementsBlocked bus indicator.
-            // Pins that intended UX and guards against re-coupling the reset logic to the bus
-            // (which is exactly what caused the stale-glider bug).
+            // Disabling gliding is a movement restriction and must surface the minimap indicator,
+            // consistently with jump/emote/etc. Applied on entry, Removed on leave.
             var entity = world.Create();
             var pbInputModifier = new PBInputModifier
             {
@@ -501,12 +500,14 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
             system.Update(0);
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
 
-            sceneRestrictionBusController.DidNotReceiveWithAnyArgs().PushSceneRestriction(default);
+            system.OnSceneIsCurrentChanged(false);
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Removed));
         }
 
         [Test]
-        public void NotPushMovementBlockedBus_WhenOnlyDoubleJumpDisabled()
+        public void PushMovementBlockedBus_WhenOnlyDoubleJumpDisabled()
         {
             var entity = world.Create();
             var pbInputModifier = new PBInputModifier
@@ -517,8 +518,10 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
             system.Update(0);
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
 
-            sceneRestrictionBusController.DidNotReceiveWithAnyArgs().PushSceneRestriction(default);
+            system.OnSceneIsCurrentChanged(false);
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Removed));
         }
 
         [Test]
