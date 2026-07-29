@@ -7,12 +7,16 @@ namespace DCL.Character.CharacterMotion
 {
     public static class ApplyExternalImpulse
     {
-        // Ground proximity within which an upward impulse counts as a landing: the scene detects the touch
-        // on its own tick and can launch the character before our physics registers a grounded tick
-        private const float JUMP_RESET_GROUND_DISTANCE = 0.3f;
+        // Ground proximity within which an upward impulse still counts as a landing:
+        // the scene can launch the character before our physics registers a grounded tick
+        private const float JUMP_RESET_GROUND_DISTANCE = 1f;
+
+        // Minimum time between two jump-counter resets caused by a mid-air descending impulse,
+        // so a scene spamming impulses at a falling character can't restore jumps every tick
+        private const float DESCENDING_RESET_COOLDOWN = 1f;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, ref JumpState jumpState)
+        public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, ref JumpState jumpState, int physicsTick, float dt)
         {
             if (characterPhysics.ExternalImpulse.sqrMagnitude < float.Epsilon)
             {
@@ -20,17 +24,24 @@ namespace DCL.Character.CharacterMotion
                 return;
             }
 
+            // Whether the character was descending before this impulse; captured before the impulse changes ExternalVelocity
+            bool wasDescending = characterPhysics.GravityVelocity.y + characterPhysics.ExternalVelocity.y < 0f;
+
             Vector3 deltaVelocity = characterPhysics.ExternalImpulse / settings.CharacterMass; // Δv = J / m (instant velocity change)
             characterPhysics.ExternalVelocity += deltaVelocity;
 
             if (characterPhysics.ExternalImpulse.y > 0f)
             {
-                // An upward impulse taken on (or within centimeters of) the ground is a landing:
-                // reset the jump counter like ApplyJump does, since after the launch there may be no grounded tick at all
-                if (characterPhysics.IsGrounded || characterPhysics.GroundDistance <= JUMP_RESET_GROUND_DISTANCE)
+                bool onOrNearGround = characterPhysics.IsGrounded || characterPhysics.GroundDistance <= JUMP_RESET_GROUND_DISTANCE;
+                bool descendingReset = wasDescending && (physicsTick - jumpState.LastDescendingResetTick) * dt >= DESCENDING_RESET_COOLDOWN;
+
+                if (onOrNearGround || descendingReset)
                 {
                     jumpState.JumpCount = 0;
                     jumpState.AirJumpDelay = float.MinValue;
+
+                    if (descendingReset)
+                        jumpState.LastDescendingResetTick = physicsTick;
                 }
 
                 characterPhysics.IsGrounded = false;
