@@ -12,7 +12,7 @@ namespace DCL.Character.CharacterMotion
         private const float JUMP_RESET_GROUND_DISTANCE = 1f;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, ref JumpState jumpState, int physicsTick, float dt)
+        public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, ref JumpState jumpState)
         {
             if (characterPhysics.ExternalImpulse.sqrMagnitude < float.Epsilon)
             {

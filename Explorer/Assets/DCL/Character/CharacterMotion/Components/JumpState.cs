@@ -30,12 +30,6 @@
         /// </summary>
         public float AirJumpDelay;
 
-        /// <summary>
-        ///     Last tick at which a mid-air descending upward impulse reset the jump counter.
-        ///     Used to throttle that reset so rapidly repeated impulses don't grant jumps every tick.
-        /// </summary>
-        public int LastDescendingResetTick;
-
         public readonly bool IsCoyoteTimeActive(int currentTick, int coyoteTimeTickCount) =>
             currentTick - LastGroundedTick < coyoteTimeTickCount;
     }
