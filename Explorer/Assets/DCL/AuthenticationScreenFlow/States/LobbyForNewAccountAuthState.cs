@@ -309,7 +309,7 @@ namespace DCL.AuthenticationScreenFlow
                     // so the referral exists before the first LOGGED_IN event reaches the backend
                     // (whose finalize step drops events for referrals that don't exist yet). Best
                     // effort and time-boxed: a slow/failed call must not block or fail onboarding.
-                    await RegisterReferralAsync();
+                    await RegisterReferralAsync(ct);
 
                     // Mark the analytics-visible end of the onboarding step. Anything between
                     // LOGGED_IN (avatar customization shown) and PROFILE_FINALIZED is the user
@@ -347,12 +347,10 @@ namespace DCL.AuthenticationScreenFlow
         ///     the sum of a per-request timeout. The token is independent of the login-flow token
         ///     on purpose: attribution should survive login-flow cancellation, just not hang.
         /// </summary>
-        private async UniTask RegisterReferralAsync()
+        private async UniTask RegisterReferralAsync(CancellationToken ct)
         {
             if (referrer == null)
                 return;
-
-            using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(REFERRAL_REGISTRATION_TIMEOUT_SECONDS));
 
             try
             {
@@ -365,14 +363,14 @@ namespace DCL.AuthenticationScreenFlow
                                                new CommonArguments(URLAddress.FromString(url)),
                                                GenericPostArguments.CreateJson(jsonBody),
                                                string.Empty,
-                                               budget.Token)
+                                               ct)
                                           .WithNoOpAsync();
 
                 await webRequestController.SignedFetchPatchAsync(
                                                new CommonArguments(URLAddress.FromString(url)),
                                                GenericPostArguments.Empty,
                                                string.Empty,
-                                               budget.Token)
+                                               ct)
                                           .WithNoOpAsync();
             }
             catch (Exception e)
