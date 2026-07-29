@@ -43,8 +43,9 @@ namespace DCL.ECSComponents {
   }
   #region Messages
   /// <summary>
-  /// AvatarEmoteCommand is a grow only value set, used to signal the renderer about
-  /// avatar emotes playback.
+  /// AvatarEmoteCommand is a grow only value set, written by the explorer to report
+  /// avatar emote playback to the scene. It is appended to every player entity in the
+  /// scene (the local player and remote avatars alike).
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBAvatarEmoteCommand : pb::IMessage<PBAvatarEmoteCommand>
