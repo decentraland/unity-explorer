@@ -26,10 +26,7 @@ namespace DCL.Character.CharacterMotion
             if (characterPhysics.ExternalImpulse.y > 0f)
             {
                 if (characterPhysics.IsGrounded || characterPhysics.GroundDistance <= JUMP_RESET_GROUND_DISTANCE)
-                {
-                    jumpState.JumpCount = 0;
-                    jumpState.AirJumpDelay = float.MinValue;
-                }
+                    jumpState.ResetJumps();
 
                 characterPhysics.IsGrounded = false;
 
