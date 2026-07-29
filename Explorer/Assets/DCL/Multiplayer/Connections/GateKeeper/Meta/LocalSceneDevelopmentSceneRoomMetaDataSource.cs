@@ -9,6 +9,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 
+// ReSharper disable InconsistentNaming
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
     public class LocalSceneDevelopmentSceneRoomMetaDataSource : ISceneRoomMetaDataSource

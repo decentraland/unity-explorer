@@ -198,7 +198,7 @@ namespace Global.Dynamic
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
-            var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var nftInfoApiClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             UnityAppWebBrowser webBrowser = bootstrapContainer.WebBrowser;
 
@@ -426,15 +426,15 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
-            var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var badgesApiClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
-            var marketplaceShopAPIClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var marketplaceShopApiClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.Environment);
 
             ICreditsPurchaseService creditsPurchaseService = new CreditsPurchaseService(
-                marketplaceShopAPIClient,
-                marketplaceCreditsAPIClient,
+                marketplaceShopApiClient,
+                marketplaceCreditsApiClient,
                 new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig),
                 new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
                 creditsChainConfig,
@@ -674,7 +674,7 @@ namespace Global.Dynamic
                     springBoneSimulationSettings,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
                     profileContainer.PendingTransferService,
-                    marketplaceCreditsAPIClient
+                    marketplaceCreditsApiClient
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -707,7 +707,7 @@ namespace Global.Dynamic
                         else
                             chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RestrictedActionApi);
                     }),
-                new NftPromptPlugin(assetsProvisioner, webBrowser, uiShellContainer.MvcManager, nftInfoAPIClient, staticContainer.ImageControllerProvider, uiShellContainer.Cursor),
+                new NftPromptPlugin(assetsProvisioner, webBrowser, uiShellContainer.MvcManager, nftInfoApiClient, staticContainer.ImageControllerProvider, uiShellContainer.Cursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 multiplayerContainer.CreatePlugin(staticContainer, assetsProvisioner, debugBuilder, commsContainer, dynamicSettings.MultiplayerDebugSettings, appArgs),
@@ -731,7 +731,7 @@ namespace Global.Dynamic
                     profileContainer.SelfProfile,
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
-                    badgesAPIClient,
+                    badgesApiClient,
                     staticContainer.InputBlock,
                     commsContainer.RemoteMetadata,
                     cameraReelContainer.StorageService,
@@ -754,13 +754,13 @@ namespace Global.Dynamic
                     wearableContainer.ThumbnailProvider,
                     staticContainer.ImageControllerProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    marketplaceShopAPIClient
+                    marketplaceShopApiClient
                 ),
                 new CreditPurchasePlugin(
                     assetsProvisioner,
                     uiShellContainer.MvcManager,
                     creditsPurchaseService,
-                    marketplaceCreditsAPIClient,
+                    marketplaceCreditsApiClient,
                     identityCache,
                     webBrowser),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
@@ -945,7 +945,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     hyperlinkTextFormatter,
                     staticContainer.ImageControllerProvider,
-                    marketplaceCreditsAPIClient));
+                    marketplaceCreditsApiClient));
             }
 
             if (communitiesContainer.IncludeCommunities)
