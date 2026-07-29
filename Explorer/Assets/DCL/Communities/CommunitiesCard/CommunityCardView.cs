@@ -42,10 +42,10 @@ namespace DCL.Communities.CommunitiesCard
 
         public enum Sections
         {
-            PHOTOS,
-            MEMBERS,
-            PLACES,
-            ANNOUNCEMENTS,
+            Photos,
+            Members,
+            Places,
+            Announcements,
         }
 
         [Serializable]
@@ -170,30 +170,30 @@ namespace DCL.Communities.CommunitiesCard
                                                                                          false, false), ct)
                                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                     RejectInvite?.Invoke();
                 }
             });
 
-            photosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
-            membersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
-            membersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
-            placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
-            placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+            photosButton.onClick.AddListener(() => ToggleSection(Sections.Photos));
+            membersButton.onClick.AddListener(() => ToggleSection(Sections.Members));
+            membersTextButton.onClick.AddListener(() => ToggleSection(Sections.Members));
+            placesButton.onClick.AddListener(() => ToggleSection(Sections.Places));
+            placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.Places));
             placesShortcutButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
 
-            isAnnouncementsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS);
+            isAnnouncementsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunitiesAnnouncements);
 
             announcementsButton.gameObject.SetActive(isAnnouncementsFeatureEnabled);
             if (isAnnouncementsFeatureEnabled)
-                announcementsButton.onClick.AddListener(() => ToggleSection(Sections.ANNOUNCEMENTS));
+                announcementsButton.onClick.AddListener(() => ToggleSection(Sections.Announcements));
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth,
                               offsetFromTarget: contextMenuSettings.OffsetFromTarget,
                               verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
-                              anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
+                              anchorPoint: ContextMenuOpenDirection.BottomLeft)
                 .AddControl(communityNotificationsContextMenuElement = new GenericContextMenuElement(
                     communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, null, 10)))
                 .AddControl(communityNotificationsSeparatorContextMenuElement = new GenericContextMenuElement(
@@ -232,7 +232,7 @@ namespace DCL.Communities.CommunitiesCard
                                                                                      true, false), ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                 DeleteCommunityRequested?.Invoke();
             }
@@ -272,7 +272,7 @@ namespace DCL.Communities.CommunitiesCard
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                 LeaveCommunityRequested?.Invoke();
             }
@@ -299,7 +299,7 @@ namespace DCL.Communities.CommunitiesCard
         public void ResetToggle(bool invokeEvent)
         {
             currentSection = null;
-            ToggleSection(isAnnouncementsFeatureEnabled ? Sections.ANNOUNCEMENTS : Sections.MEMBERS, invokeEvent);
+            ToggleSection(isAnnouncementsFeatureEnabled ? Sections.Announcements : Sections.Members, invokeEvent);
         }
 
         public void ClearCurrentSection()
@@ -331,16 +331,16 @@ namespace DCL.Communities.CommunitiesCard
 
             currentSection = section;
 
-            photosSectionSelection.SetActive(section == Sections.PHOTOS);
-            membersSectionSelection.SetActive(section == Sections.MEMBERS);
-            placesSectionSelection.SetActive(section == Sections.PLACES);
-            placesWithSignSectionSelection.SetActive(section == Sections.PLACES);
-            announcementsSelection.SetActive(section == Sections.ANNOUNCEMENTS);
+            photosSectionSelection.SetActive(section == Sections.Photos);
+            membersSectionSelection.SetActive(section == Sections.Members);
+            placesSectionSelection.SetActive(section == Sections.Places);
+            placesWithSignSectionSelection.SetActive(section == Sections.Places);
+            announcementsSelection.SetActive(section == Sections.Announcements);
 
-            CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.PHOTOS);
-            MembersListView.SetActive(section == Sections.MEMBERS);
-            PlacesSectionView.SetActive(section == Sections.PLACES);
-            AnnouncementsSectionView.SetActive(section == Sections.ANNOUNCEMENTS);
+            CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.Photos);
+            MembersListView.SetActive(section == Sections.Members);
+            PlacesSectionView.SetActive(section == Sections.Places);
+            AnnouncementsSectionView.SetActive(section == Sections.Announcements);
 
             if (invokeEvent)
                 SectionChanged?.Invoke(section);

@@ -76,17 +76,17 @@ namespace DCL.Navmap
         {
             switch (section)
             {
-                case Section.SEARCH:
+                case Section.Search:
                     searchResultController.Show();
                     placeInfoPanelController.Hide();
                     eventInfoPanelController.Hide();
                     break;
-                case Section.PLACE:
+                case Section.Place:
                     searchResultController.Hide();
                     placeInfoPanelController.Show();
                     eventInfoPanelController.Hide();
                     break;
-                case Section.EVENT:
+                case Section.Event:
                     searchResultController.Hide();
                     placeInfoPanelController.Hide();
                     eventInfoPanelController.Show();
@@ -141,9 +141,9 @@ namespace DCL.Navmap
 
         public enum Section
         {
-            SEARCH,
-            PLACE,
-            EVENT,
+            Search,
+            Place,
+            Event,
         }
     }
 }

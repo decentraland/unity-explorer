@@ -111,7 +111,7 @@ namespace DCL.Web3.Authenticators
                 return thirdWebAuth.TryAutoLoginAsync(ct);
             }
 
-            bool OtpIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
+            bool OtpIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
         }
 
         // IEthereumApi

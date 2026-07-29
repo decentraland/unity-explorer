@@ -6,10 +6,10 @@ namespace DCL.AvatarRendering.Emotes
 {
     public enum TriggerSource
     {
-        PREVIEW,
-        SELF,
-        REMOTE,
-        SCENE,
+        Preview,
+        Self,
+        Remote,
+        Scene,
     }
 
     public struct CharacterEmoteIntent
@@ -25,7 +25,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             this.EmoteId = emoteId;
             this.Spatial = true;
-            this.TriggerSource = TriggerSource.REMOTE;
+            this.TriggerSource = TriggerSource.Remote;
         }
 
         public bool UpdatePlayTimeout(float dt)

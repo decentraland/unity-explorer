@@ -15,7 +15,7 @@ namespace DCL.ApplicationGuards
     {
         public static async UniTask<GetBanStatusData> IsUserBlocklistedAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, ModerationDataProvider moderationDataProvider, CancellationToken ct)
         {
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.ReportUser))
             {
                 var result = await moderationDataProvider.GetBanStatusAsync(userID, ct)
                                                          .SuppressToResultAsync(ReportCategory.STARTUP);

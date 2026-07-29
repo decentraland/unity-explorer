@@ -38,7 +38,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             set
             {
                 parentStatus = value;
-                if (value == FriendPanelStatus.SENT)
+                if (value == FriendPanelStatus.Sent)
                     InhibitInteractionButtons();
             }
         }

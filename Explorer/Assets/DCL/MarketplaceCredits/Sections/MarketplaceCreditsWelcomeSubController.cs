@@ -201,7 +201,7 @@ namespace DCL.MarketplaceCredits.Sections
             if (currentCreditsProgramProgress.IsProgramEnded())
             {
                 marketplaceCreditsProgramEndedSubController.Setup(currentCreditsProgramProgress);
-                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.ProgramEnded);
                 totalCreditsWidgetView.gameObject.SetActive(
                     currentCreditsProgramProgress.currentSeason.state != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
                 return;
@@ -225,7 +225,7 @@ namespace DCL.MarketplaceCredits.Sections
             if (!currentCreditsProgramProgress.IsUserEmailVerified())
             {
                 marketplaceCreditsVerifyEmailSubController.Setup(currentCreditsProgramProgress.user.email);
-                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.VERIFY_EMAIL);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.VerifyEmail);
                 return;
             }
 
@@ -233,12 +233,12 @@ namespace DCL.MarketplaceCredits.Sections
             if (currentCreditsProgramProgress.AreWeekGoalsCompleted())
             {
                 marketplaceCreditsWeekGoalsCompletedSubController.Setup(currentCreditsProgramProgress);
-                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WEEK_GOALS_COMPLETED);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.WeekGoalsCompleted);
             }
             else
             {
                 marketplaceCreditsGoalsOfTheWeekSubController.Setup(currentCreditsProgramProgress);
-                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GOALS_OF_THE_WEEK);
+                marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.GoalsOfTheWeek);
             }
         }
 

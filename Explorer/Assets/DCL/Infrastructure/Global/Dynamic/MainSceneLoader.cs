@@ -196,13 +196,23 @@ namespace Global.Dynamic
             canShutdown = true;
             ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
 
-            IAppArgs applicationParametersParser = new ApplicationParametersParser(
+            string[] rawApplicationParameters =
 #if UNITY_EDITOR
-                debugSettings.AppParameters
+                debugSettings.AppParameters;
 #else
-                Environment.GetCommandLineArgs()
+                Environment.GetCommandLineArgs();
 #endif
-            );
+
+            // Phase 1: parse CLI flags (incl. --feature-flags-url) but DEFER the deep link — its whitelisted-realm
+            // params must be gated against the world whitelist, which comes from feature flags. Feature flags aren't
+            // initialized until later in bootstrap, so for a deep-link launch we preemptively fetch just the whitelist
+            // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
+            IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
+
+            if (applicationParametersParser.HasPendingDeepLink)
+                await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
+
+            applicationParametersParser.InitializeDeepLinks();
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -231,6 +241,9 @@ namespace Global.Dynamic
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
+
+            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
+                cliOptimizedAssetsUrl = RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL;
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -297,6 +310,10 @@ namespace Global.Dynamic
                 bootstrap.InitializeFeaturesRegistry();
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
+                // Refresh the deep-link world whitelist from the now-fully-loaded feature flags — covers runtime
+                // (post-launch) deep links and the case where the preemptive cold-start fetch was unavailable.
+                DeepLinkAllowlist.SetWhitelistedWorlds(DeepLinkWorldWhitelistProvider.ReadWorlds(FeatureFlagsConfiguration.Instance));
+
                 DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
 
                 // Need to ensure clock sync ASAP due to some requests may fail due this problem.
@@ -347,7 +364,7 @@ namespace Global.Dynamic
 
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
 
-                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CheckDiskSpace))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
@@ -400,7 +417,7 @@ namespace Global.Dynamic
                 try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
                         await LoadStartingRealmAsync(ct);
                     else
                         ExitUtils.Exit();
@@ -412,14 +429,14 @@ namespace Global.Dynamic
                 try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct); }
                 catch (TimeoutException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
                         await LoadUserFlowAsync(playerEntity, ct);
                     else
                         throw;
                 }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.RESTART)
+                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
                         await LoadUserFlowAsync(playerEntity, ct);
                     else
                         ExitUtils.Exit();
@@ -454,6 +471,18 @@ namespace Global.Dynamic
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
 
             return false;
+        }
+
+        private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
+        {
+            appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
+
+            string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
+                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment)
+                : featureFlagsOverride.TrimEnd('/');
+
+            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);
+            DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
         }
 
         private async UniTask RegisterBlockedPopupAsync(UnityAppWebBrowser webBrowser, CancellationToken ct)
@@ -644,8 +673,8 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
-                InputMapComponent.Kind.EMOTE_WHEEL);
+            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FreeCamera,
+                InputMapComponent.Kind.EmoteWheel);
 
             DCLInput.Instance.UI.Enable();
         }
@@ -734,12 +763,12 @@ namespace Global.Dynamic
             var uri = new Uri(realm);
             if (uri.Host == "127.0.0.1") return true;
             if (uri.Host == "localhost") return true;
-            if (uri.Host == "sdk-team-cdn.decentraland.org") return true;
-            if (uri.Host == "sdk-test-scenes.decentraland.zone") return true;
-            if (uri.Host == "realm-provider-ea.decentraland.org") return true;
-            if (uri.Host == "realm-provider-ea.decentraland.zone") return true;
-            if (uri.Host == "worlds-content-server.decentraland.org") return true;
-            if (uri.Host == "worlds-content-server.decentraland.zone") return true;
+            if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
+            if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
+            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
+            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
+            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
+            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
@@ -778,7 +807,7 @@ namespace Global.Dynamic
             var input = new ErrorPopupWithRetryController.Input(
                 title: "Load Error",
                 description: "A loading error was encountered. Please reload to try again.",
-                iconType: ErrorPopupWithRetryController.IconType.ERROR);
+                iconType: ErrorPopupWithRetryController.IconType.Error);
 
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
@@ -872,7 +901,7 @@ namespace Global.Dynamic
             var input = new ErrorPopupWithRetryController.Input(
                 title: "Time sync needed",
                 description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
-                iconType: ErrorPopupWithRetryController.IconType.CLOCK);
+                iconType: ErrorPopupWithRetryController.IconType.Clock);
 
             var ordering = new CanvasOrdering(controller.Layer, splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1);
 
@@ -884,14 +913,14 @@ namespace Global.Dynamic
 
             switch (input.SelectedOption)
             {
-                case ErrorPopupWithRetryController.Result.EXIT:
+                case ErrorPopupWithRetryController.Result.Exit:
                     // The error popup will automatically request application exit
-                    return EnsureClockSync.Result.CONTINUE;
-                case ErrorPopupWithRetryController.Result.RESTART:
-                    return EnsureClockSync.Result.RESTART;
+                    return EnsureClockSync.Result.Continue;
+                case ErrorPopupWithRetryController.Result.Restart:
+                    return EnsureClockSync.Result.Restart;
             }
 
-            return EnsureClockSync.Result.CONTINUE;
+            return EnsureClockSync.Result.Continue;
         }
 
         private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)

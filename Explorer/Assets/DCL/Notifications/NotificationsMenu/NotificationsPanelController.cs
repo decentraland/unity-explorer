@@ -105,7 +105,7 @@ namespace DCL.Notifications.NotificationsMenu
                 InitialNotificationRequestAsync(lifeCycleCts.Token).SuppressCancellationThrow().Forget();
         }
 
-        public override CanvasOrdering.SortingLayer Layer { get; } = CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer { get; } = CanvasOrdering.SortingLayer.Popup;
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {

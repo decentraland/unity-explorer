@@ -90,8 +90,8 @@ namespace DCL.Chat.ChatViews
             buttonOpenMembers.gameObject.SetActive(shouldShowMembersButton);
             
             bool isUnresolvedPlaceholder = string.IsNullOrEmpty(model.Id)
-                                           && model.Thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.LOADING
-                                                                                       or ProfileThumbnailViewModel.State.NOT_BOUND;
+                                           && model.Thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.Loading
+                                                                                       or ProfileThumbnailViewModel.State.NotBound;
 
             if (isUnresolvedPlaceholder)
             {

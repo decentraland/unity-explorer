@@ -63,7 +63,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
         [Header("Listening Gate")]
         [Tooltip("Inspector-driven target state. Translated to the matching state-model transition every Update.")]
-        [SerializeField] private NearbyVoiceChatState forceState = NearbyVoiceChatState.IDLE;
+        [SerializeField] private NearbyVoiceChatState forceState = NearbyVoiceChatState.Idle;
 
         [Header("System Toggles (off = skip that stage in Update)")]
         [SerializeField] private bool runBinding = true;
@@ -88,7 +88,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
         // ── Avatar bookkeeping ──────────────────────────────────────
         private readonly List<AvatarHandle> avatars = new (256);
         private readonly List<Entity> deleteScratch = new (32);
-        private NearbyVoiceChatState lastSyncedState = NearbyVoiceChatState.IDLE;
+        private NearbyVoiceChatState lastSyncedState = NearbyVoiceChatState.Idle;
         private int nextAvatarOrdinal;
 
         private struct AvatarHandle
@@ -125,7 +125,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 
@@ -189,21 +189,21 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
             switch (forceState)
             {
-                case NearbyVoiceChatState.IDLE:
-                    if (lastSyncedState == NearbyVoiceChatState.SUPPRESSED)
-                        stateModel.Resume(SuppressionReason.CALL);
-                    else if (lastSyncedState == NearbyVoiceChatState.DISABLED)
+                case NearbyVoiceChatState.Idle:
+                    if (lastSyncedState == NearbyVoiceChatState.Suppressed)
+                        stateModel.Resume(SuppressionReason.Call);
+                    else if (lastSyncedState == NearbyVoiceChatState.Disabled)
                         stateModel.Enable();
-                    else if (lastSyncedState == NearbyVoiceChatState.OPEN_MIC)
+                    else if (lastSyncedState == NearbyVoiceChatState.OpenMic)
                         stateModel.StopSpeaking();
                     break;
-                case NearbyVoiceChatState.OPEN_MIC:
+                case NearbyVoiceChatState.OpenMic:
                     stateModel.StartSpeaking();
                     break;
-                case NearbyVoiceChatState.SUPPRESSED:
-                    stateModel.Suppress(SuppressionReason.CALL);
+                case NearbyVoiceChatState.Suppressed:
+                    stateModel.Suppress(SuppressionReason.Call);
                     break;
-                case NearbyVoiceChatState.DISABLED:
+                case NearbyVoiceChatState.Disabled:
                     stateModel.Disable();
                     break;
             }
@@ -305,10 +305,10 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
         private void Remove10Avatars() => targetAvatarCount = Mathf.Max(0, targetAvatarCount - 10);
 
         [ContextMenu("Suppress (CALL)")]
-        private void SuppressContext() => forceState = NearbyVoiceChatState.SUPPRESSED;
+        private void SuppressContext() => forceState = NearbyVoiceChatState.Suppressed;
 
         [ContextMenu("Resume to IDLE")]
-        private void ResumeContext() => forceState = NearbyVoiceChatState.IDLE;
+        private void ResumeContext() => forceState = NearbyVoiceChatState.Idle;
 
         [ContextMenu("Force mass cleanup (clear all sids)")]
         private void ForceMassCleanup() => registry?.ClearAll();

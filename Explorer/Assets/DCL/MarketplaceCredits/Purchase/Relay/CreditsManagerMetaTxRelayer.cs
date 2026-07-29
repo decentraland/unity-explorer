@@ -14,11 +14,11 @@ namespace DCL.MarketplaceCredits.Purchase
 {
     public enum RelayOutcome
     {
-        BROADCAST,
-        SIGNATURE_REJECTED,
-        SIGNING_FAILED,
-        RELAYER_REJECTED,
-        AMBIGUOUS_BROADCAST,
+        Broadcast,
+        SignatureRejected,
+        SigningFailed,
+        RelayerRejected,
+        AmbiguousBroadcast,
     }
 
     public readonly struct RelayResult
@@ -67,7 +67,7 @@ namespace DCL.MarketplaceCredits.Purchase
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                return new RelayResult(RelayOutcome.SIGNING_FAILED, message: $"Nonce read failed: {e.Message}");
+                return new RelayResult(RelayOutcome.SigningFailed, message: $"Nonce read failed: {e.Message}");
             }
 
             string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig, nonce, buyer, useCreditsCalldata);
@@ -86,7 +86,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 signature = signResponse.result?.ToString() ?? string.Empty;
 
                 if (string.IsNullOrEmpty(signature))
-                    return new RelayResult(RelayOutcome.SIGNATURE_REJECTED, message: "Empty signature returned");
+                    return new RelayResult(RelayOutcome.SignatureRejected, message: "Empty signature returned");
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
@@ -97,7 +97,7 @@ namespace DCL.MarketplaceCredits.Purchase
                 if (!userRejected)
                     ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
 
-                return new RelayResult(userRejected ? RelayOutcome.SIGNATURE_REJECTED : RelayOutcome.SIGNING_FAILED, message: e.Message);
+                return new RelayResult(userRejected ? RelayOutcome.SignatureRejected : RelayOutcome.SigningFailed, message: e.Message);
             }
 
             string txData = CreditsTradeEncoder.BuildExecuteMetaTxCalldata(buyer, useCreditsCalldata, signature);
@@ -122,25 +122,25 @@ namespace DCL.MarketplaceCredits.Purchase
                 string? txHash = response["txHash"]?.ToString();
 
                 if (string.IsNullOrEmpty(txHash))
-                    return new RelayResult(RelayOutcome.RELAYER_REJECTED, message: response["message"]?.ToString() ?? "Relayer returned no txHash");
+                    return new RelayResult(RelayOutcome.RelayerRejected, message: response["message"]?.ToString() ?? "Relayer returned no txHash");
 
-                return new RelayResult(RelayOutcome.BROADCAST, txHash);
+                return new RelayResult(RelayOutcome.Broadcast, txHash);
             }
             catch (OperationCanceledException)
             {
-                return new RelayResult(RelayOutcome.AMBIGUOUS_BROADCAST, message: "Cancelled while awaiting relayer response");
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "Cancelled while awaiting relayer response");
             }
             catch (UnityWebRequestException e)
             {
                 if (e.ResponseCode > 0)
-                    return new RelayResult(RelayOutcome.RELAYER_REJECTED, message: $"Relayer {e.ResponseCode}: {e.Text}");
+                    return new RelayResult(RelayOutcome.RelayerRejected, message: $"Relayer {e.ResponseCode}: {e.Text}");
 
-                return new RelayResult(RelayOutcome.AMBIGUOUS_BROADCAST, message: e.Message);
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message);
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                return new RelayResult(RelayOutcome.AMBIGUOUS_BROADCAST, message: e.Message);
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message);
             }
         }
 

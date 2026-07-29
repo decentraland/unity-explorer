@@ -35,12 +35,12 @@ namespace DCL.Navmap
 
         public async UniTask ExecuteAsync(AdditionalParams? additionalParams, CancellationToken ct)
         {
-            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.PLACE);
+            placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.Place);
             placesAndEventsPanelController.Expand();
 
             placeInfoPanelController.Set(placeInfo);
             placeInfoPanelController.SetOriginParcel(additionalParams?.OriginalParcel);
-            placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.OVERVIEW);
+            placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.Overview);
             placeInfoPanelController.HideLiveEvent();
             searchBarController.ToggleClearButton(true);
             searchBarController.SetInputText(placeInfo.title);

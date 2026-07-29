@@ -36,7 +36,7 @@ namespace DCL.PluginSystem.World
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
-            ConfigureSceneMaterial.forceBackfaceCullingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FORCE_BACKFACE_CULLING);
+            ConfigureSceneMaterial.forceBackfaceCullingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ForceBackfaceCulling);
 
             this.mediaFactory = mediaFactory;
         }

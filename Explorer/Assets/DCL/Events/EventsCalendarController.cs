@@ -99,7 +99,7 @@ namespace DCL.Events
 
         private void OnSectionOpened(EventsSection section, DateTime fromDate)
         {
-            if (section != EventsSection.CALENDAR)
+            if (section != EventsSection.Calendar)
                 return;
 
             loadEventsCts = loadEventsCts.SafeRestart();
@@ -110,7 +110,7 @@ namespace DCL.Events
             UnloadEvents();
 
         private void OnGoToTodayClicked() =>
-            eventsController.OpenSection(EventsSection.CALENDAR);
+            eventsController.OpenSection(EventsSection.Calendar);
 
         private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
         {
@@ -119,7 +119,7 @@ namespace DCL.Events
         }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>
-            eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
+            eventsController.OpenSection(EventsSection.EventsByDay, date);
 
         private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView)
         {

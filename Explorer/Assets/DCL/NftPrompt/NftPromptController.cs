@@ -19,7 +19,7 @@ namespace DCL.NftPrompt
         private const string MULTIPLE_OWNERS_FORMAT = "{0} owners";
         private const int ADDRESS_MAX_CHARS = 11;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly UnityAppWebBrowser webBrowser;
         private readonly ICursor cursor;

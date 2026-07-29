@@ -7,8 +7,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         [Flags]
         public enum HiddenReason : byte
         {
-            BLOCKED = 1 << 0,
-            BANNED  = 1 << 1,
+            Blocked = 1 << 0,
+            Banned  = 1 << 1,
         }
 
         public HiddenReason Reason;

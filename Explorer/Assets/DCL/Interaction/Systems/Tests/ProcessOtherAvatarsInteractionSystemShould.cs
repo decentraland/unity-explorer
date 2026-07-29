@@ -41,7 +41,7 @@ namespace DCL.Interaction.Systems.Tests
             base.Setup();
 
             EcsTestsUtils.SetUpFeaturesRegistry();
-            OverrideFeatureFlag(FeatureId.AVATAR_CONTEXT_MENU, enableContextMenu);
+            OverrideFeatureFlag(FeatureId.AvatarContextMenu, enableContextMenu);
 
             world = World.Create();
             mouse = InputSystem.AddDevice<Mouse>();

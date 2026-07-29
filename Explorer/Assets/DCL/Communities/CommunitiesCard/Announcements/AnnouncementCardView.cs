@@ -146,7 +146,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                                                                                          deleteSprite, false, false), ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel)
                     return;
 
                 DeleteAnnouncementButtonClicked?.Invoke(currentAnnouncementId);

@@ -25,8 +25,8 @@ namespace DCL.UI.Controls
 
         private enum CopyUserInfoSection
         {
-            NAME,
-            ADDRESS,
+            Name,
+            Address,
         }
 
         [field: SerializeField] public TMP_Text UserName { get; private set; }
@@ -108,8 +108,8 @@ namespace DCL.UI.Controls
 
             copyAnimationCts = copyAnimationCts.SafeRestart();
 
-            CopyNameButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.NAME));
-            CopyAddressButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.ADDRESS));
+            CopyNameButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.Name));
+            CopyAddressButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.Address));
         }
 
         private void LoadProfilePicture(Profile.CompactInfo userData)
@@ -126,12 +126,12 @@ namespace DCL.UI.Controls
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.Name : settings.userData.UserId);
+            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.Name ? settings.userData.Name : settings.userData.UserId);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)
             {
-                WarningNotificationView toast = section == CopyUserInfoSection.NAME ? CopyNameToast : CopyAddressToast;
+                WarningNotificationView toast = section == CopyUserInfoSection.Name ? CopyNameToast : CopyAddressToast;
                 toast.Show(ct);
                 await UniTask.Delay(COPY_ANIMATION_DURATION, cancellationToken: ct);
                 toast.Hide(ct: ct);
@@ -184,7 +184,7 @@ namespace DCL.UI.Controls
 
         private void ConfigureFriendshipButton(UserProfileContextMenuControlSettings settings)
         {
-            if (settings.friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED)
+            if (settings.friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.Disabled)
             {
                 FriendsButtonsContainer.gameObject.SetActive(false);
                 return;
@@ -199,10 +199,10 @@ namespace DCL.UI.Controls
 
             Button buttonToActivate = settings.friendshipStatus switch
                                       {
-                                          UserProfileContextMenuControlSettings.FriendshipStatus.NONE => AddFriendButton,
-                                          UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND => RemoveFriendButton,
-                                          UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT => CancelFriendButton,
-                                          UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED => AcceptFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.None => AddFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.Friend => RemoveFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent => CancelFriendButton,
+                                          UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived => AcceptFriendButton,
                                           _ => null,
                                       };
 

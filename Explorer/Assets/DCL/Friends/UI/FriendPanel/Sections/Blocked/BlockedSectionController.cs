@@ -63,14 +63,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         }
 
         private void UnblockUserClicked(BlockedProfile profile) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(profile.Address, profile.Profile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK))).Forget();
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(profile.Address, profile.Profile.Name, BlockUserPromptParams.UserBlockAction.Unblock))).Forget();
 
         private void ContextMenuClicked(BlockedProfile friendProfile, Vector2 buttonPosition, BlockedUserView elementView)
         {
             lastClickedProfileCtx = friendProfile;
 
             userProfileContextMenuControlSettings.SetInitialData(friendProfile,
-                UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+                UserProfileContextMenuControlSettings.FriendshipStatus.Disabled);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,

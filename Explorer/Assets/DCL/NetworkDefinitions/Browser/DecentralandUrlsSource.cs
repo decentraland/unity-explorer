@@ -18,21 +18,23 @@ namespace DCL.Browser.DecentralandUrls
             /// <summary>
             ///     URL is static and can be safely cached
             /// </summary>
-            STATIC = 0,
+            Static = 0,
 
             /// <summary>
             ///     URL should be invalidated upon realm change
             /// </summary>
-            REALM_DEPENDENT = 1,
+            RealmDependent = 1,
 
             /// <summary>
             ///     URL can't be cached if FF are not yet configured
             /// </summary>
-            FEATURE_FLAGS_DEPENDENT = 2,
+            FeatureFlagsDependent = 2,
         }
 
         protected const string ENV = "{ENV}";
         private const string SCENE_ADAPTER_PATH = "/get-scene-adapter";
+
+        private static readonly string FEATURE_FLAGS_RAW_URL = $"https://feature-flags.decentraland.{ENV}";
 
         private readonly Dictionary<DecentralandUrl, UrlData> cache = new ();
         private readonly IRealmData realmData;
@@ -55,9 +57,9 @@ namespace DCL.Browser.DecentralandUrls
             isTodayEnvironment = environment == DecentralandEnvironment.Today;
             this.realmData = realmData;
             this.launchMode = launchMode;
-            this.gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
+            gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
-            this.optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
+            optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
 
             if (isTodayEnvironment)
             {
@@ -103,14 +105,14 @@ namespace DCL.Browser.DecentralandUrls
             source = mode.ToString();
 
             return mode switch
-            {
-                GatekeeperMode.Org => null,
-                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
-                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
-                GatekeeperMode.Localhost => "http://localhost:3000",
-                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
-                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-            };
+                   {
+                       GatekeeperMode.Org => null,
+                       GatekeeperMode.Zone => "https://comms-gatekeeper." + IDecentralandUrlsSource.ZONE_DOMAIN,
+                       GatekeeperMode.Today => "https://comms-gatekeeper." + IDecentralandUrlsSource.TODAY_DOMAIN,
+                       GatekeeperMode.Localhost => "http://localhost:3000",
+                       GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
+                       _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+                   };
         }
 
         /// <summary>
@@ -129,8 +131,11 @@ namespace DCL.Browser.DecentralandUrls
 
             UrlData rawUrl = RawUrl(decentralandUrl);
 
-            return rawUrl.ToString().Replace(ENV, decentralandDomain);
+            return Probe(rawUrl.ToString(), decentralandDomain);
         }
+
+        private static string Probe(string rawUrl, string environment) =>
+            rawUrl.Replace(ENV, environment);
 
         public string Url(DecentralandUrl decentralandUrl)
         {
@@ -143,10 +148,10 @@ namespace DCL.Browser.DecentralandUrls
 
                 switch (urlData.Caching)
                 {
-                    case CacheBehaviour.REALM_DEPENDENT when !realmData.Configured:
+                    case CacheBehaviour.RealmDependent when !realmData.Configured:
                         return REALM_DEPENDENT;
 
-                    case CacheBehaviour.FEATURE_FLAGS_DEPENDENT when FeatureFlagsConfiguration.Instance.IsEmpty:
+                    case CacheBehaviour.FeatureFlagsDependent when FeatureFlagsConfiguration.Instance.IsEmpty:
                         return urlData.Url ?? FEATURE_FLAG_DEPENDENT;
 
                     default:
@@ -177,7 +182,7 @@ namespace DCL.Browser.DecentralandUrls
         {
             using PooledObject<List<DecentralandUrl>> _ = ListPool<DecentralandUrl>.Get(out List<DecentralandUrl>? realmDependentCachedUrls);
 
-            realmDependentCachedUrls.AddRange(cache.Where(kvp => kvp.Value.Caching == CacheBehaviour.REALM_DEPENDENT).Select(kvp => kvp.Key));
+            realmDependentCachedUrls.AddRange(cache.Where(kvp => kvp.Value.Caching == CacheBehaviour.RealmDependent).Select(kvp => kvp.Key));
 
             foreach (DecentralandUrl url in realmDependentCachedUrls)
                 cache.Remove(url);
@@ -188,32 +193,35 @@ namespace DCL.Browser.DecentralandUrls
 
         /// <summary>
         ///     The "--optimized-assets-url" arg or the flag variant payload override the base url, otherwise
-        ///     https://abcdn.decentraland.{ENV}. FEATURE_FLAGS_DEPENDENT means it is re-resolved (not cached) until flags load.
+        ///     https://abcdn.decentraland.{ENV}. FeatureFlagsDependent means it is re-resolved (not cached) until flags load.
         /// </summary>
         private UrlData ResolveOptimizedAssetsUrl(string dedicatedHostUrl)
         {
             if (optimizedAssetsBaseOverride is { Length: > 0 })
-                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, optimizedAssetsBaseOverride);
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, optimizedAssetsBaseOverride);
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
                 return isTodayEnvironment
-                    ? dedicatedHostUrl // STATIC — pinned on construction before the domain switches to org
-                    : new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, dedicatedHostUrl.Replace(ENV, decentralandDomain));
+                    ? dedicatedHostUrl // Static — pinned on construction before the domain switches to org
+                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHostUrl.Replace(ENV, decentralandDomain));
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
                 return dedicatedHostUrl;
 
             if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.OPTIMIZED_ASSETS, FeatureFlagsStrings.OPTIMIZED_ASSETS_BASE_URL_VARIANT, out string? customBaseUrl) && customBaseUrl is { Length: > 0 })
-                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, customBaseUrl.TrimEnd('/'));
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, customBaseUrl.TrimEnd('/'));
 
-            return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, $"https://abcdn.decentraland.{ENV}");
+            return new UrlData(CacheBehaviour.FeatureFlagsDependent, $"https://abcdn.decentraland.{ENV}");
         }
 
         /// <summary>Registry-composed endpoints inherit the registry base's caching so a flag-driven base is not cached early.</summary>
         private UrlData ComposeRegistryUrl(string path) =>
             new (RawUrl(DecentralandUrl.AssetBundleRegistry).Caching, $"{Url(DecentralandUrl.AssetBundleRegistry)}{path}");
+
+        public static string GetFeatureFlagsUrl(DecentralandEnvironment env) =>
+            Probe(FEATURE_FLAGS_RAW_URL, env.ToString().ToLower());
 
         protected virtual UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
@@ -244,7 +252,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.decentraland.{ENV}"),
                 DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}{SCENE_ADAPTER_PATH}",
-                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local.decentraland.org")}{SCENE_ADAPTER_PATH}",
+                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local." + IDecentralandUrlsSource.ORG_DOMAIN)}{SCENE_ADAPTER_PATH}",
                 DecentralandUrl.ChatAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.WhatsOnNewEventLink => $"https://decentraland.{ENV}/whats-on/new-event",
@@ -257,7 +265,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.{ENV}/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
-                DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
+                DecentralandUrl.FeatureFlags => FEATURE_FLAGS_RAW_URL,
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.Faqs => $"https://docs.decentraland.{ENV}/faqs/decentraland-101",
                 DecentralandUrl.Discord => $"https://decentraland.{ENV}/discord/",
@@ -344,10 +352,10 @@ namespace DCL.Browser.DecentralandUrls
             }
 
             public static UrlData RealmDependent(string? url) =>
-                new (CacheBehaviour.REALM_DEPENDENT, url);
+                new (CacheBehaviour.RealmDependent, url);
 
             public static implicit operator UrlData(string rawUrl) =>
-                new (CacheBehaviour.STATIC, rawUrl);
+                new (CacheBehaviour.Static, rawUrl);
 
             public override string ToString() =>
                 Url ?? "<NOT_CONFIGURED>";

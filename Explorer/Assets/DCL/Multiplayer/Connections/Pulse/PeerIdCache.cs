@@ -8,9 +8,9 @@ namespace DCL.Multiplayer.Connections.Pulse
     {
         public enum LookupResult : byte
         {
-            FOUND,
-            UNKNOWN_PEER,
-            REALM_MISMATCH,
+            Found,
+            UnknownPeer,
+            RealmMismatch,
         }
 
         private readonly object sync = new ();
@@ -73,17 +73,17 @@ namespace DCL.Multiplayer.Connections.Pulse
                 if (!peersByWallet.TryGetValue(peerId, out (Web3Address wallet, string realm) entry))
                 {
                     wallet = default(Web3Address);
-                    return LookupResult.UNKNOWN_PEER;
+                    return LookupResult.UnknownPeer;
                 }
 
                 if (entry.realm != realm)
                 {
                     wallet = default(Web3Address);
-                    return LookupResult.REALM_MISMATCH;
+                    return LookupResult.RealmMismatch;
                 }
 
                 wallet = entry.wallet;
-                return LookupResult.FOUND;
+                return LookupResult.Found;
             }
         }
 

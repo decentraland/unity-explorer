@@ -9,15 +9,15 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
         {
             switch (id)
             {
-                case AvatarLocomotionOverrides.OverrideID.WALK_SPEED: locomotionOverrides.WalkSpeed = value; break;
-                case AvatarLocomotionOverrides.OverrideID.JOG_SPEED: locomotionOverrides.JogSpeed = value; break;
-                case AvatarLocomotionOverrides.OverrideID.RUN_SPEED: locomotionOverrides.RunSpeed = value; break;
-                case AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT: locomotionOverrides.JumpHeight = value; break;
-                case AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT: locomotionOverrides.RunJumpHeight = value; break;
-                case AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN: locomotionOverrides.HardLandingCooldown = value; break;
-                case AvatarLocomotionOverrides.OverrideID.DOUBLE_JUMP_HEIGHT: locomotionOverrides.DoubleJumpHeight = value; break;
-                case AvatarLocomotionOverrides.OverrideID.GLIDE_SPEED: locomotionOverrides.GlidingSpeed = value; break;
-                case AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY: locomotionOverrides.GlidingMaxGravity = value; break;
+                case AvatarLocomotionOverrides.OverrideID.WalkSpeed: locomotionOverrides.WalkSpeed = value; break;
+                case AvatarLocomotionOverrides.OverrideID.JogSpeed: locomotionOverrides.JogSpeed = value; break;
+                case AvatarLocomotionOverrides.OverrideID.RunSpeed: locomotionOverrides.RunSpeed = value; break;
+                case AvatarLocomotionOverrides.OverrideID.JumpHeight: locomotionOverrides.JumpHeight = value; break;
+                case AvatarLocomotionOverrides.OverrideID.RunJumpHeight: locomotionOverrides.RunJumpHeight = value; break;
+                case AvatarLocomotionOverrides.OverrideID.HardLandingCooldown: locomotionOverrides.HardLandingCooldown = value; break;
+                case AvatarLocomotionOverrides.OverrideID.DoubleJumpHeight: locomotionOverrides.DoubleJumpHeight = value; break;
+                case AvatarLocomotionOverrides.OverrideID.GlideSpeed: locomotionOverrides.GlidingSpeed = value; break;
+                case AvatarLocomotionOverrides.OverrideID.GlideMaxGravity: locomotionOverrides.GlidingMaxGravity = value; break;
                 default: throw new ArgumentException();
             }
 
@@ -43,15 +43,15 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
         private static float GetValue(in AvatarLocomotionOverrides locomotionOverrides, AvatarLocomotionOverrides.OverrideID id) =>
             id switch
             {
-                AvatarLocomotionOverrides.OverrideID.WALK_SPEED => locomotionOverrides.WalkSpeed,
-                AvatarLocomotionOverrides.OverrideID.JOG_SPEED => locomotionOverrides.JogSpeed,
-                AvatarLocomotionOverrides.OverrideID.RUN_SPEED => locomotionOverrides.RunSpeed,
-                AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT => locomotionOverrides.JumpHeight,
-                AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT => locomotionOverrides.RunJumpHeight,
-                AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN => locomotionOverrides.HardLandingCooldown,
-                AvatarLocomotionOverrides.OverrideID.DOUBLE_JUMP_HEIGHT => locomotionOverrides.DoubleJumpHeight,
-                AvatarLocomotionOverrides.OverrideID.GLIDE_SPEED => locomotionOverrides.GlidingSpeed,
-                AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY => locomotionOverrides.GlidingMaxGravity,
+                AvatarLocomotionOverrides.OverrideID.WalkSpeed => locomotionOverrides.WalkSpeed,
+                AvatarLocomotionOverrides.OverrideID.JogSpeed => locomotionOverrides.JogSpeed,
+                AvatarLocomotionOverrides.OverrideID.RunSpeed => locomotionOverrides.RunSpeed,
+                AvatarLocomotionOverrides.OverrideID.JumpHeight => locomotionOverrides.JumpHeight,
+                AvatarLocomotionOverrides.OverrideID.RunJumpHeight => locomotionOverrides.RunJumpHeight,
+                AvatarLocomotionOverrides.OverrideID.HardLandingCooldown => locomotionOverrides.HardLandingCooldown,
+                AvatarLocomotionOverrides.OverrideID.DoubleJumpHeight => locomotionOverrides.DoubleJumpHeight,
+                AvatarLocomotionOverrides.OverrideID.GlideSpeed => locomotionOverrides.GlidingSpeed,
+                AvatarLocomotionOverrides.OverrideID.GlideMaxGravity => locomotionOverrides.GlidingMaxGravity,
                 _ => throw new ArgumentException(),
             };
     }

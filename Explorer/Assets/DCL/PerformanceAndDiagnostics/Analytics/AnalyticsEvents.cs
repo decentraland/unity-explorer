@@ -36,8 +36,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string CHAT_CONVERSATION_OPENED = "chat_conversation_opened";
             public const string CHAT_CONVERSATION_CLOSED = "chat_conversation_closed";
             public const string OPEN_SUPPORT = "open_support";
+            public const string MINIMUM_REQUIREMENTS_SCREEN_SHOWN = "minimum_requirements_screen_shown";
             public const string SKIP_MINIMUM_REQUIREMENTS_SCREEN = "skip_minimum_requirements_screen";
-            public const string EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN = "exit_app_from_minimum_requirements_screen";
             public const string HOME_POSITION_SET = "home_position_set";
         }
 
@@ -200,6 +200,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public static class MarketplaceCredits
         {
             public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
+
+            // Credits top-up funnel: event names and property keys are shared with the web shop so
+            // both clients land in one unified Segment funnel.
+            public const string SHOP_STARTED_BUY_CREDITS = "Shop Started Buy Credits";
+            public const string SHOP_REDIRECTED_TO_STRIPE = "Shop Redirected To Stripe";
+            public const string SHOP_COMPLETED_BUY_CREDITS = "Shop Completed Buy Credits";
+            public const string SHOP_BUY_CREDITS_PENDING = "Shop Buy Credits Pending";
+            public const string SHOP_BUY_CREDITS_FAILED = "Shop Buy Credits Failed";
         }
 
         public static class Settings

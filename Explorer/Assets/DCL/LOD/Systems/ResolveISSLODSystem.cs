@@ -49,7 +49,7 @@ namespace DCL.LOD.Systems
         {
             InitialSceneStateLOD initialSceneStateLOD = sceneLODInfo.InitialSceneStateLOD;
 
-            if (initialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.PROCESSING) return;
+            if (initialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.Processing) return;
 
             // Only the descriptor-mode path is owned by this query.
             if (issDescriptor.CurrentState != ISSDescriptorState.Descriptor) return;

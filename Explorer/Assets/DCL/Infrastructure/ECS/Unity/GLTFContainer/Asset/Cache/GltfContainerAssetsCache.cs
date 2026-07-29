@@ -90,6 +90,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         /// </summary>
         public void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false, bool handleAssetLoad = true)
         {
+            // A stale promise result can still reference an asset whose Root was already destroyed
+            // (e.g. drained by Unload). Comparing against Unity's overloaded null catches that destroyed
+            // GameObject; re-pooling it would crash DereferenceFinalOperation and hand a dead instance back out.
+            if (asset.Root == null)
+                return;
+
             if (handleAssetLoad && assetLoadCache != null && assetLoadCache.ContainsGltf(key))
             {
                 assetLoadCache.ReleaseGltfInstance(key, asset);

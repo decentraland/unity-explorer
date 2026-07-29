@@ -118,17 +118,17 @@ namespace DCL.Navmap
 
             view.EventsTabButton.onClick.AddListener(() =>
             {
-                if (Toggle(Section.EVENTS))
+                if (Toggle(Section.Events))
                     FetchAndShowEventsOfThePlace();
             });
 
             view.PhotosTabButton.onClick.AddListener(() =>
             {
-                if (Toggle(Section.PHOTOS))
+                if (Toggle(Section.Photos))
                     FetchPhotos();
             });
 
-            view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.OVERVIEW));
+            view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.Overview));
 
             dislikeButton = new MultiStateButtonController(view.DislikeButton, true);
             dislikeButton.OnButtonClicked += OnDislikeButtonClick;
@@ -187,13 +187,18 @@ namespace DCL.Navmap
             thumbnailImage.RequestImage(place.image);
             view.PlaceNameLabel.text = place.title;
             view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
-            view.LikeRateLabel.text = $"{(place.like_rate_as_float ?? 0) * 100:F0}%";
+            view.LikeRateLabel.text = $"{(place.LikeRateAsFloat ?? 0) * 100:F0}%";
             view.PlayerCountLabel.text = place.user_count.ToString();
             view.DescriptionLabel.text = string.IsNullOrEmpty(place.description) ? "No description" : place.description;
             view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
-            view.CoordinatesLabel.text = place.base_position;
+
+            bool isWorld = place.IsWorld;
+
+            view.CoordinatesLabel.text = isWorld ? place.world_name : place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
-            view.StartNavigationButton.gameObject.SetActive(true);
+
+            // Worlds are not on the Genesis map, so on-map navigation doesn't apply to them.
+            view.StartNavigationButton.gameObject.SetActive(!isWorld);
             view.StopNavigationButton.gameObject.SetActive(false);
             view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(place.creator_address));
 
@@ -249,18 +254,18 @@ namespace DCL.Navmap
             if (currentSection == section)
                 return false;
 
-            if (section != Section.PHOTOS)
+            if (section != Section.Photos)
             {
                 showPlaceGalleryCancellationToken?.SafeCancelAndDispose();
                 view.SetPhotoTabText(-1);
             }
 
-            view.EventsTabContainer.SetActive(section == Section.EVENTS);
-            view.EventsTabSelected.SetActive(section == Section.EVENTS);
-            view.OverviewTabContainer.SetActive(section == Section.OVERVIEW);
-            view.OverviewTabSelected.SetActive(section == Section.OVERVIEW);
-            view.PhotosTabContainer.SetActive(section == Section.PHOTOS);
-            view.PhotosTabSelected.SetActive(section == Section.PHOTOS);
+            view.EventsTabContainer.SetActive(section == Section.Events);
+            view.EventsTabSelected.SetActive(section == Section.Events);
+            view.OverviewTabContainer.SetActive(section == Section.Overview);
+            view.OverviewTabSelected.SetActive(section == Section.Overview);
+            view.PhotosTabContainer.SetActive(section == Section.Photos);
+            view.PhotosTabSelected.SetActive(section == Section.Photos);
 
             currentSection = section;
             return true;
@@ -304,7 +309,7 @@ namespace DCL.Navmap
 
             if (isHome)
             {
-                if (!string.IsNullOrEmpty(place.world_name))
+                if (place.IsWorld)
                 {
                     homePlaceEventBus.SetAsHome(place.world_name);
                 }
@@ -358,12 +363,23 @@ namespace DCL.Navmap
 
             navmapBus.JumpIn(place!);
 
-            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) && originParcel != null ? originParcel : currentBaseParcel;
+            // Worlds live on a separate realm; the goto command teleports there by world name.
+            if (place!.IsWorld)
+            {
+                chatMessagesBus
+                   .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
+                        $"/{ChatCommandsUtils.COMMAND_GOTO} {place.world_name}",
+                        ChatMessageOrigin.JumpIn);
+
+                return;
+            }
+
+            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place.title) && originParcel != null ? originParcel : currentBaseParcel;
 
             chatMessagesBus
                .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
                     $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}",
-                    ChatMessageOrigin.JUMP_IN);
+                    ChatMessageOrigin.JumpIn);
         }
 
         private void Share()
@@ -523,9 +539,9 @@ namespace DCL.Navmap
 
         public enum Section
         {
-            OVERVIEW,
-            PHOTOS,
-            EVENTS,
+            Overview,
+            Photos,
+            Events,
         }
     }
 }

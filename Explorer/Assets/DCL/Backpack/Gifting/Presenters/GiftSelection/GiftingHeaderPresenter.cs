@@ -16,10 +16,10 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         private static readonly InputMapComponent.Kind[] BLOCKED_INPUTS =
         {
-            InputMapComponent.Kind.PLAYER,
-            InputMapComponent.Kind.SHORTCUTS,
-            InputMapComponent.Kind.CAMERA,
-            InputMapComponent.Kind.IN_WORLD_CAMERA,
+            InputMapComponent.Kind.Player,
+            InputMapComponent.Kind.Shortcuts,
+            InputMapComponent.Kind.Camera,
+            InputMapComponent.Kind.InWorldCamera,
         };
 
         private const string TITLE_FORMAT = "Send a Gift to <color=#{0}>{1}</color>";

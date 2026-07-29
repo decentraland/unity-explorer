@@ -33,9 +33,9 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
-            Result response = Result.RESTART;
+            Result response = Result.Restart;
 
-            while (response == Result.RESTART)
+            while (response == Result.Restart)
             {
                 await TryProbeServerTimeAsync(ct);
 
@@ -75,8 +75,8 @@ namespace DCL.PluginSystem.Global
 
         public enum Result
         {
-            CONTINUE,
-            RESTART,
+            Continue,
+            Restart,
         }
     }
 }

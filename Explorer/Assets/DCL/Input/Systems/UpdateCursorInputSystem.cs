@@ -151,13 +151,13 @@ namespace DCL.Input.Systems
             {
                 if (intention.WithUI)
                 {
-                    if (cursorComponent.CursorState == CursorState.LockedWithUI)
+                    if (cursorComponent.CursorState == CursorState.LockedWithUi)
                     {
                         World.Remove<PointerLockIntention>(entity);
                         return;
                     }
 
-                    UpdateState(ref cursorComponent, CursorState.LockedWithUI);
+                    UpdateState(ref cursorComponent, CursorState.LockedWithUi);
                 }
                 else
                 {
@@ -226,13 +226,13 @@ namespace DCL.Input.Systems
                 case CursorState.Panning:
                     cursorStyle = CursorStyle.CameraPan;
                     break;
-                case CursorState.LockedWithUI:
+                case CursorState.LockedWithUi:
                     cursorStyle = CursorStyle.Interaction;
                     break;
             }
 
             cursor.SetStyle(cursorStyle);
-            crosshairCanvas.SetCursorStyle(cursorStyle, exposedCameraData.CameraMode == CameraMode.SDKCamera || exposedCameraData.CameraMode == CameraMode.InWorld);
+            crosshairCanvas.SetCursorStyle(cursorStyle, exposedCameraData.CameraMode == CameraMode.SdkCamera || exposedCameraData.CameraMode == CameraMode.InWorld);
         }
 
         // We check if the gameObject is interactable or not, at least once.
@@ -244,7 +244,7 @@ namespace DCL.Input.Systems
             CursorState nextState = cursorComponent.CursorState;
 
             // Opened a menu while locked
-            if (nextState == CursorState.LockedWithUI)
+            if (nextState == CursorState.LockedWithUi)
             {
                 UpdateState(ref cursorComponent, nextState);
 
@@ -279,7 +279,7 @@ namespace DCL.Input.Systems
             if (!cursor.IsLocked() && cursorComponent is { CursorState: CursorState.Locked })
                 nextState = CursorState.Free;
 
-            if (!isMouseOutOfBounds && isTemporalLock && exposedCameraData.CameraMode != CameraMode.SDKCamera && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
+            if (!isMouseOutOfBounds && isTemporalLock && exposedCameraData.CameraMode != CameraMode.SdkCamera && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
                 nextState = CursorState.Panning;
 
             if (!isTemporalLock && cursorComponent is { CursorState: CursorState.Panning })
@@ -321,7 +321,7 @@ namespace DCL.Input.Systems
                     cursor.SetVisibility(false);
                     break;
 
-                case CursorState.LockedWithUI:
+                case CursorState.LockedWithUi:
                     crosshairCanvas.SetDisplayed(false);
                     cursor.SetVisibility(true);
                     cursor.Unlock();

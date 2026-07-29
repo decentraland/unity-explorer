@@ -1,0 +1,138 @@
+using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.Character.Components;
+using DCL.CharacterCamera;
+using DCL.CharacterCamera.Components;
+using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
+using ECS.Abstract;
+using Newtonsoft.Json.Linq;
+using System.Threading;
+using UnityEngine;
+using Utility.Arch;
+
+namespace DCL.McpServer.Tools
+{
+    /// <summary>
+    ///     Places the free camera at an absolute world position, optionally aiming it and setting its FOV.
+    ///     Enters Free mode when needed (same scene-lock gates as <see cref="SetCameraModeTool" />) and waits
+    ///     for the Cinemachine blend to reach the target before reporting the actual pose.
+    /// </summary>
+    public class SetCameraPoseTool : McpTool
+    {
+        private const float DEFAULT_TIMEOUT_SEC = 5f;
+        private const float MIN_TIMEOUT_SEC = 0.5f;
+        private const float MAX_TIMEOUT_SEC = 15f;
+        private const float SETTLE_EPSILON = 0.1f;
+        private const int POLL_INTERVAL_MS = 100;
+        private const float MIN_FOV = 10f;
+        private const float MAX_FOV = 120f;
+        private const int CAMERA_APPLY_DELAY_FRAMES = 2;
+
+        private readonly World world;
+        private readonly Entity playerEntity;
+        private readonly ExposedCameraData exposedCameraData;
+
+        public override string Name => "set_camera_pose";
+
+        public override string Description =>
+            "Place the free camera at an absolute world position, optionally aiming it at a point and setting its field of view. "
+            + "Enters the free camera mode if needed (refuses with the reason when the scene locks the camera). The camera stays "
+            + "put while the player moves; restore a player-following view with set_camera_mode third_person.";
+
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Number("x", "Camera world position.", isRequired: true)
+                  .Number("y", isRequired: true)
+                  .Number("z", isRequired: true)
+                  .Number("lookAtX", "Optional world point to aim at (all three lookAt components required together).")
+                  .Number("lookAtY")
+                  .Number("lookAtZ")
+                  .Number("fov", "Optional vertical field of view in degrees (10-120).")
+                  .Number("timeoutSec", "Seconds to wait for the camera to settle at the target. Default 5, max 15.");
+
+        public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
+
+        public SetCameraPoseTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData)
+        {
+            this.world = world;
+            this.playerEntity = playerEntity;
+            this.exposedCameraData = exposedCameraData;
+        }
+
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        {
+            if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
+                return McpToolResult.Error("x, y and z world coordinates for the camera position are required.");
+
+            bool hasLookAtX = arguments.TryGetFloat("lookAtX", out float lookAtX);
+            bool hasLookAtY = arguments.TryGetFloat("lookAtY", out float lookAtY);
+            bool hasLookAtZ = arguments.TryGetFloat("lookAtZ", out float lookAtZ);
+            bool hasLookAt = hasLookAtX && hasLookAtY && hasLookAtZ;
+
+            if ((hasLookAtX || hasLookAtY || hasLookAtZ) && !hasLookAt)
+                return McpToolResult.Error("lookAtX, lookAtY and lookAtZ must be provided together.");
+
+            float? fov = null;
+
+            if (arguments.TryGetFloat("fov", out float fovValue))
+                fov = Mathf.Clamp(fovValue, MIN_FOV, MAX_FOV);
+
+            float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
+            var targetPosition = new Vector3(x, y, z);
+
+            SingleInstanceEntity cameraEntity = world.CacheCamera();
+
+            if (cameraEntity.GetCameraComponent(world).Mode != CameraMode.Free)
+            {
+                string? blockReason = SetCameraModeTool.TrySwitchMode(world, CameraMode.Free, out CameraMode _);
+
+                if (blockReason != null)
+                    return McpToolResult.Error(blockReason);
+
+                // Let ControlCinemachineVirtualCameraSystem activate the free vcam (and apply its default
+                // spawn position, which the pose below overrides).
+                await UniTask.DelayFrame(CAMERA_APPLY_DELAY_FRAMES, cancellationToken: ct);
+            }
+
+            if (!world.TryGet(cameraEntity, out ICinemachinePreset? cinemachinePreset) || cinemachinePreset == null)
+                return McpToolResult.Error("The camera rig is not initialized yet.");
+
+            cinemachinePreset.ForceFreeCameraPose(targetPosition, fov);
+
+            if (hasLookAt)
+            {
+                Vector3 playerPosition = world.Get<CharacterTransform>(playerEntity).Position;
+                world.AddOrSet(cameraEntity, new CameraLookAtIntent(new Vector3(lookAtX, lookAtY, lookAtZ), playerPosition));
+            }
+
+            // Entering Free blends the output camera toward the vcam over a couple of seconds; when the
+            // mode was already Free the pose applies instantly and the first poll succeeds.
+            var settled = false;
+            float deadline = UnityEngine.Time.realtimeSinceStartup + timeoutSec;
+
+            while (UnityEngine.Time.realtimeSinceStartup < deadline)
+            {
+                if (Vector3.Distance(exposedCameraData.WorldPosition.Value, targetPosition) <= SETTLE_EPSILON)
+                {
+                    settled = true;
+                    break;
+                }
+
+                await UniTask.Delay(POLL_INTERVAL_MS, cancellationToken: ct);
+            }
+
+            // Let the look-at intent apply before reading the rotation back.
+            await UniTask.DelayFrame(CAMERA_APPLY_DELAY_FRAMES, cancellationToken: ct);
+
+            var result = new JObject
+            {
+                ["position"] = exposedCameraData.WorldPosition.Value.ToVector(),
+                ["rotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector(),
+                ["mode"] = McpWireEnum<CameraMode>.ToWire(exposedCameraData.CameraMode),
+                ["settled"] = settled,
+            };
+
+            return McpToolResult.Json(result);
+        }
+    }
+}

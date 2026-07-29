@@ -71,7 +71,7 @@ namespace DCL.Chat.ChatReactions.Presenters
 
             if (playerMovementBlocked)
             {
-                inputBlock.Enable(InputMapComponent.Kind.PLAYER);
+                inputBlock.Enable(InputMapComponent.Kind.Player);
                 playerMovementBlocked = false;
             }
         }
@@ -107,7 +107,7 @@ namespace DCL.Chat.ChatReactions.Presenters
 
             if (!playerMovementBlocked)
             {
-                inputBlock.Disable(InputMapComponent.Kind.PLAYER);
+                inputBlock.Disable(InputMapComponent.Kind.Player);
                 playerMovementBlocked = true;
             }
         }
