@@ -11,6 +11,13 @@ namespace DCL.AuthenticationScreenFlow
     /// </summary>
     public static class TransactionRecipientUtils
     {
+        /// <summary>
+        ///     Copy for a request that matches no mapped shape, so neither the amount nor the recipient is
+        ///     known and the raw payload of the first step is all there is to go on.
+        /// </summary>
+        public const string UNKNOWN_REQUEST_DESCRIPTION =
+            "Are you sure you want to approve this request? Decentraland cannot tell what it does or who receives your assets.";
+
         // Link/highlight blue used for names and addresses in the confirmation copy.
         private const string HIGHLIGHT_COLOR = "#32CEFF";
 
