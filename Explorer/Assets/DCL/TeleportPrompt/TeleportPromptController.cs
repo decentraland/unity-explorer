@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;

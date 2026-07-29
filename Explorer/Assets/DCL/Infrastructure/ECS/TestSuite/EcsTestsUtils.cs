@@ -4,6 +4,7 @@ using DCL.FeatureFlags;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using Global.AppArgs;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -50,11 +51,16 @@ namespace ECS.TestSuite
 
         public static void SetUpFeaturesRegistry(params string[] flags)
         {
+            SetUpFeaturesRegistryWithAppArgs(Array.Empty<string>(), flags);
+        }
+
+        public static void SetUpFeaturesRegistryWithAppArgs(string[] appArgs, params string[] flags)
+        {
             var featureFlagsDto = new FeatureFlagsResultDto { flags = new Dictionary<string, bool>() };
             foreach (string flag in flags) featureFlagsDto.flags.Add(flag, true);
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(featureFlagsDto));
 
-            FeaturesRegistry.Initialize(new FeaturesRegistry(new ApplicationParametersParser(), false));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(new ApplicationParametersParser(appArgs), false));
         }
 
         public static void TearDownFeaturesRegistry()

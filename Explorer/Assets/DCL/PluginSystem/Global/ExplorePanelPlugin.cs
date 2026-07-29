@@ -621,7 +621,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(explorePanelController);
 
-            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true);
+            bool isCommunitiesFeatureEnabled = CommunitiesFeatureAccess.Instance.IsFeatureEnabled();
 
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;
