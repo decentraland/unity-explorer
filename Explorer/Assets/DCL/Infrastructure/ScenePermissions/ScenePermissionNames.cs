@@ -7,5 +7,6 @@ namespace SceneRuntime.ScenePermissions
         public const string USE_WEBSOCKET = "USE_WEBSOCKET";
         public const string USE_FETCH = "USE_FETCH";
         public const string USE_WEB3_API = "USE_WEB3_API";
+        public const string PORTABLE_EXPERIENCE = "PORTABLE_EXPERIENCE";
     }
 }

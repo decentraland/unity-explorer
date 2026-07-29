@@ -21,6 +21,7 @@ using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
 using DCL.Utility;
+using SceneRuntime.ScenePermissions;
 
 namespace PortableExperiences.Controller
 {
@@ -65,7 +66,10 @@ namespace PortableExperiences.Controller
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
+            ISceneFacade? parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
+
             if (!force)
+            {
                 switch (isGlobalPortableExperience)
                 {
                     //If it's not a Global PX and common PXs are disabled
@@ -76,6 +80,10 @@ namespace PortableExperiences.Controller
                     case true when !FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
                 }
+
+                if (parentScene != null && !parentScene.SceneData.SceneEntityDefinition.metadata.requiredPermissions.Contains(ScenePermissionNames.PORTABLE_EXPERIENCE))
+                    throw new Exception($"The parent scene {parentScene.Info.Name} is trying to spawn a portable experience but lacks the '{ScenePermissionNames.PORTABLE_EXPERIENCE}' permission.");
+            }
 
             var portableExperienceId = ens.ToString();
 
@@ -126,8 +134,7 @@ namespace PortableExperiences.Controller
                     WorldManifest.Empty
                 );
 
-                ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
-                string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
+                string parentSceneName = parentScene?.Info.Name ?? "main";
                 Entity portableExperienceEntity = world.Create();
                 world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
                 world.Add(portableExperienceEntity, new PortableExperienceMetadata
