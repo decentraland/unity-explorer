@@ -14,7 +14,7 @@ namespace DCL.Web3
         NativeTransfer,
 
         /// <summary>
-        ///     ERC-20 transfer(address,uint256) call.
+        ///     ERC-20 transfer(address,uint256) call, carrying no native value and no further arguments.
         /// </summary>
         Erc20Transfer,
 
@@ -87,8 +87,12 @@ namespace DCL.Web3
                     ? new DecodedTransaction(TransactionKind.NativeTransfer, toAddress, ParseHex(value), null)
                     : Unknown;
 
-            // ERC-20 transfer(address,uint256): recipient and amount come from the calldata.
-            if (cleanData.Length >= ERC20_TRANSFER_LENGTH
+            // ERC-20 transfer(address,uint256): recipient and amount come from the calldata. Only the
+            // exact shape counts. A summary of this call states the token amount and nothing else, so
+            // native value riding along with it, or arguments past the two it describes, would move
+            // assets the copy never mentions.
+            if (cleanData.Length == ERC20_TRANSFER_LENGTH
+                && ParseHex(value).IsZero
                 && cleanData.StartsWith(TRANSFER_SELECTOR, StringComparison.OrdinalIgnoreCase))
             {
                 string recipientWord = cleanData.Substring(SELECTOR_LENGTH, WORD_LENGTH);

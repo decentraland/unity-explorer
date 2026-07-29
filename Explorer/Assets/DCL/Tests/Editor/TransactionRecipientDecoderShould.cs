@@ -90,6 +90,46 @@ namespace DCL.EditModeTests
         }
 
         [Test]
+        public void TreatTransferCalldataCarryingNativeValueAsUnknown()
+        {
+            // A payable call whose data opens with the transfer selector. Summarizing it as an ERC-20
+            // transfer would state the token amount and never mention the native currency riding along.
+            string data = "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD;
+
+            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x4563918244f40000", data);
+
+            Assert.AreEqual(TransactionKind.Unknown, result.Kind);
+            Assert.IsEmpty(result.Recipient);
+        }
+
+        [Test]
+        public void TreatTransferCalldataWithTrailingArgumentsAsUnknown()
+        {
+            // The two words the copy describes, plus one it does not.
+            string data = "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD + RECIPIENT_WORD;
+
+            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x0", data);
+
+            Assert.AreEqual(TransactionKind.Unknown, result.Kind);
+        }
+
+        [Test]
+        public void StillDecodeATransferWhoseValueIsExplicitlyZero()
+        {
+            string data = "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD;
+
+            // A zero value reaches the decoder as "0x0" or as null depending on the caller; neither is
+            // native currency moving, so both must stay decodable.
+            foreach (string? zero in new[] { "0x0", "0x00", null })
+            {
+                DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, zero, data);
+
+                Assert.AreEqual(TransactionKind.Erc20Transfer, result.Kind, $"value {zero ?? "null"}");
+                Assert.AreEqual(RECIPIENT, result.Recipient);
+            }
+        }
+
+        [Test]
         public void TreatValueTransferWithoutDestinationAsUnknown()
         {
             DecodedTransaction result = TransactionRecipientDecoder.Decode(null, "0x4563918244f40000", null);
