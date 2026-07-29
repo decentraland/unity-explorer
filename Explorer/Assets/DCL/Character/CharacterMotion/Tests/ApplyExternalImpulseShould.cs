@@ -163,5 +163,80 @@ namespace DCL.Character.CharacterMotion.Tests
             Assert.AreEqual(2, jumpState.JumpCount, "Only an upward impulse counts as a launch");
             Assert.IsTrue(rigidTransform.IsGrounded, "A horizontal impulse does not unground the character");
         }
+
+        [Test]
+        public void ApplyImpulseToExternalVelocityScaledByMass()
+        {
+            settings.CharacterMass.Returns(2f);
+
+            var rigidTransform = new CharacterRigidTransform
+            {
+                IsGrounded = true,
+                ExternalImpulse = new Vector3(0f, 10f, 0f),
+            };
+
+            var jumpState = new JumpState { JumpCount = 2 };
+
+            ApplyExternalImpulse.Execute(settings, ref rigidTransform, ref jumpState, PHYSICS_TICK, DT);
+
+            Assert.AreEqual(5f, rigidTransform.ExternalVelocity.y, "Δv = J / m, so a mass of 2 halves the impulse velocity");
+            Assert.AreEqual(Vector3.zero, rigidTransform.ExternalImpulse, "The impulse is consumed after being applied");
+        }
+
+        [Test]
+        public void KeepStateOnDownwardImpulse()
+        {
+            var rigidTransform = new CharacterRigidTransform
+            {
+                IsGrounded = true,
+                ExternalImpulse = new Vector3(0f, -10f, 0f),
+            };
+
+            var jumpState = new JumpState { JumpCount = 2 };
+
+            ApplyExternalImpulse.Execute(settings, ref rigidTransform, ref jumpState, PHYSICS_TICK, DT);
+
+            Assert.AreEqual(-10f, rigidTransform.ExternalVelocity.y, "A downward impulse is still applied to the velocity");
+            Assert.AreEqual(2, jumpState.JumpCount, "A downward impulse is not a launch and does not restore jumps");
+            Assert.IsTrue(rigidTransform.IsGrounded, "A downward impulse does not unground the character");
+        }
+
+        [Test]
+        public void TreatCombinedVerticalVelocityAsRising()
+        {
+            // Gravity pulls down but a prior external upward velocity dominates: the net motion is upward, so an
+            // upward impulse here is a boost, not a bounce, and must not restore jumps.
+            var rigidTransform = new CharacterRigidTransform
+            {
+                IsGrounded = false,
+                GroundDistance = 10f,
+                GravityVelocity = new Vector3(0f, -5f, 0f),
+                ExternalVelocity = new Vector3(0f, 10f, 0f),
+                ExternalImpulse = Vector3.up * 10f,
+            };
+
+            var jumpState = new JumpState { JumpCount = 2 };
+
+            ApplyExternalImpulse.Execute(settings, ref rigidTransform, ref jumpState, PHYSICS_TICK, DT);
+
+            Assert.AreEqual(2, jumpState.JumpCount, "The descent check uses the combined vertical velocity, not gravity alone");
+        }
+
+        [Test]
+        public void DoNothingOnNegligibleImpulse()
+        {
+            var rigidTransform = new CharacterRigidTransform
+            {
+                IsGrounded = false,
+                ExternalImpulse = Vector3.zero,
+            };
+
+            var jumpState = new JumpState { JumpCount = 2 };
+
+            ApplyExternalImpulse.Execute(settings, ref rigidTransform, ref jumpState, PHYSICS_TICK, DT);
+
+            Assert.AreEqual(2, jumpState.JumpCount, "A negligible impulse leaves the jump state untouched");
+            Assert.AreEqual(Vector3.zero, rigidTransform.ExternalVelocity, "A negligible impulse adds no velocity");
+        }
     }
 }
