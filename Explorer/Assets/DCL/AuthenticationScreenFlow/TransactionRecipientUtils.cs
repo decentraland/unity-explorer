@@ -21,8 +21,9 @@ namespace DCL.AuthenticationScreenFlow
         // Link/highlight blue used for names and addresses in the confirmation copy.
         private const string HIGHLIGHT_COLOR = "#32CEFF";
 
-        // MANA renders as a sprite, which must exist in the description's TMP sprite asset.
-        private const string MANA_SPRITE = "<sprite name=\"MANA\">";
+        // MANA renders as a sprite. The name is matched case-sensitively against the character table of
+        // the description's sprite asset (PolygonManaIcon), which spells it "Mana"; anything else is tofu.
+        private const string MANA_SPRITE = "<sprite name=\"Mana\">";
 
         // The popup labels gas and balance in "ETH"; keep the native transfer symbol consistent.
         private const string NATIVE_SYMBOL = "ETH";
@@ -75,9 +76,18 @@ namespace DCL.AuthenticationScreenFlow
 
         private static string FormatUnits(BigInteger amount)
         {
+            if (amount.IsZero)
+                return "0";
+
             BigInteger divisor = BigInteger.Pow(10, TOKEN_DECIMALS);
             BigInteger whole = amount / divisor;
             string fraction = (amount % divisor).ToString().PadLeft(TOKEN_DECIMALS, '0')[..MAX_FRACTION_DIGITS].TrimEnd('0');
+
+            // Anything under 0.0001 rounds away at this precision, and "0" on a confirmation reads as
+            // sending nothing at all. Worded rather than written "<0.0001": the amount is placed into
+            // rich text unescaped so it can carry the MANA sprite, so it must not introduce a '<'.
+            if (whole.IsZero && fraction.Length == 0)
+                return "under 0.0001";
 
             return fraction.Length == 0 ? whole.ToString() : $"{whole}.{fraction}";
         }

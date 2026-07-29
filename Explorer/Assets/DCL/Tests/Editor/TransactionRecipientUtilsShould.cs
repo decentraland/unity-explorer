@@ -56,9 +56,48 @@ namespace DCL.EditModeTests
 
             string amount = TransactionRecipientUtils.Amount(decoded);
 
+            // Spelled the way the PolygonManaIcon character table spells it: TMP matches sprite names
+            // case-sensitively, and a mismatch renders as tofu rather than failing loudly.
+            Assert.AreEqual("5 <sprite name=\"Mana\">", amount);
             // The amount is built here, not supplied by a scene, so its markup must survive.
-            Assert.AreEqual("5 <sprite name=\"MANA\">", amount);
             StringAssert.Contains(amount, TransactionRecipientUtils.ExternalWalletDescription(amount, RECIPIENT));
+        }
+
+        [Test]
+        public void SayAnAmountIsSmallRatherThanCallItZero()
+        {
+            // A single wei: below the four fraction digits the copy shows.
+            var decoded = new DecodedTransaction(TransactionKind.NativeTransfer, RECIPIENT, BigInteger.One, null);
+
+            string amount = TransactionRecipientUtils.Amount(decoded);
+
+            Assert.AreEqual("under 0.0001 ETH", amount);
+        }
+
+        [Test]
+        public void CallAGenuineZeroZero()
+        {
+            var decoded = new DecodedTransaction(TransactionKind.NativeTransfer, RECIPIENT, BigInteger.Zero, null);
+
+            Assert.AreEqual("0 ETH", TransactionRecipientUtils.Amount(decoded));
+        }
+
+        [Test]
+        public void KeepMarkupOutOfTheDustAmount()
+        {
+            // The amount is interpolated into rich text unescaped, so it must never introduce a tag.
+            var decoded = new DecodedTransaction(TransactionKind.NativeTransfer, RECIPIENT, BigInteger.One, null);
+
+            StringAssert.DoesNotContain("<", TransactionRecipientUtils.Amount(decoded));
+        }
+
+        [Test]
+        public void KeepFourFractionDigits()
+        {
+            // 0.0001 exactly: the smallest amount that still renders as a number.
+            var decoded = new DecodedTransaction(TransactionKind.NativeTransfer, RECIPIENT, BigInteger.Pow(10, 14), null);
+
+            Assert.AreEqual("0.0001 ETH", TransactionRecipientUtils.Amount(decoded));
         }
 
         [Test]
