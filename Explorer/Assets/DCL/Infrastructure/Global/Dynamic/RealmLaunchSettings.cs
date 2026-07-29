@@ -21,12 +21,11 @@ namespace Global.Dynamic
     public class RealmLaunchSettings : ILaunchMode
     {
         /// <summary>
-        ///     abgen's default port; used for local asset bundles when no explicit --optimized-assets-url is given.
+        ///     Path under the local-scene-development realm where the preview server proxies its abgen sidecar
+        ///     (decentraland/js-sdk-toolchain#1504) — the client derives the optimized-assets base from the realm
+        ///     origin it already has instead of being told a second origin.
         /// </summary>
-        public const string DEFAULT_LOCAL_ASSET_BUNDLES_URL = "http://127.0.0.1:5147";
-
-        private const int MIN_LOCAL_AB_PORT = 1024;
-        private const int MAX_LOCAL_AB_PORT = 65535;
+        public const string OPTIMIZED_ASSETS_PATH = "/optimized-assets";
 
         [Serializable]
         public struct PredefinedScenes
@@ -44,9 +43,9 @@ namespace Global.Dynamic
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles;
-        [SerializeField] [Tooltip("Local scene development only: load the scene's asset bundles from a locally running abgen instead of loading "
-                                  + "raw GLTFs. The server URL comes from --optimized-assets-url, or 127.0.0.1 on the --local-ab-port port, defaulting to "
-                                  + DEFAULT_LOCAL_ASSET_BUNDLES_URL + " (abgen's default port) when neither is provided")] internal bool useLocalAssetBundles;
+        [SerializeField] [Tooltip("Local scene development only: load the scene's asset bundles from the preview server instead of loading "
+                                  + "raw GLTFs. The assets base is derived from the realm ({realm}" + OPTIMIZED_ASSETS_PATH + "); "
+                                  + "an explicit --optimized-assets-url overrides it")] internal bool useLocalAssetBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
@@ -100,17 +99,21 @@ namespace Global.Dynamic
         }
 
         /// <summary>
-        ///     Base URL of the local asset-bundle server: always 127.0.0.1, on the port from
-        ///     <see cref="AppArgsFlags.LOCAL_AB_PORT" /> when it parses to a valid non-system port (1024-65535),
-        ///     otherwise abgen's default (<see cref="DEFAULT_LOCAL_ASSET_BUNDLES_URL" />). The host is deliberately
-        ///     not configurable here: this arg is deep-link reachable, so only the loopback port may vary.
+        ///     Base URL for local asset bundles: the local-scene-development realm plus
+        ///     <see cref="OPTIMIZED_ASSETS_PATH" />. No value other than the realm itself — which the deep-link
+        ///     allowlist already gates on being loopback — feeds the result, so a deep link cannot point it
+        ///     anywhere the realm doesn't already reach. Null outside local scene development.
         /// </summary>
-        public static string ResolveLocalAssetBundlesUrl(IAppArgs appArgs) =>
-            appArgs.TryGetValue(AppArgsFlags.LOCAL_AB_PORT, out string? portValue)
-            && int.TryParse(portValue, out int parsedPort)
-            && parsedPort is >= MIN_LOCAL_AB_PORT and <= MAX_LOCAL_AB_PORT
-                ? $"http://127.0.0.1:{parsedPort}"
-                : DEFAULT_LOCAL_ASSET_BUNDLES_URL;
+        public string? LocalAssetBundlesBaseUrl()
+        {
+            if (isLocalSceneDevelopmentRealm)
+                return customRealm.TrimEnd('/') + OPTIMIZED_ASSETS_PATH;
+
+            if (initialRealm == InitialRealm.Localhost)
+                return IRealmNavigator.LOCALHOST + OPTIMIZED_ASSETS_PATH;
+
+            return null;
+        }
 
         public void ApplyConfig(IAppArgs applicationParameters)
         {
@@ -137,7 +140,7 @@ namespace Global.Dynamic
                 // The serialized checkbox is an Editor convenience only: player builds opt in
                 // exclusively through the app arg, so a box ticked (and accidentally committed)
                 // in the scene asset cannot ship enabled.
-                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || appParameters.HasFlag(AppArgsFlags.LOCAL_AB_PORT) || (Application.isEditor && useLocalAssetBundles);
+                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || (Application.isEditor && useLocalAssetBundles);
                 bool useRemoteAB = appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles;
 
                 if (useLocalAB && useRemoteAB)

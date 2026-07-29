@@ -183,44 +183,44 @@ namespace Global.Tests.EditMode
             Assert.AreEqual(world, realmLaunchSettings.TargetWorld);
         }
 
-        [TestCase("5200", "http://127.0.0.1:5200")]
-        [TestCase("80", RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL)] // below the non-system port range
-        [TestCase("70000", RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL)] // above the max port
-        [TestCase("evil.example", RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL)] // non-numeric: cannot smuggle a host
-        [TestCase("5147/path", RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL)] // non-numeric: cannot smuggle a path
-        public void ResolveLocalAssetBundlesUrlOnlyFromValidPort(string portValue, string expectedUrl)
-        {
-            //Arrange
-            ApplicationParametersParser applicationParametersParser = new (new[]
-            {
-                "--local-ab-port",
-                portValue,
-            });
-
-            //Act
-            string url = RealmLaunchSettings.ResolveLocalAssetBundlesUrl(applicationParametersParser);
-
-            //Assert
-            Assert.AreEqual(expectedUrl, url);
-        }
-
-        [Test]
-        public void EnableLocalAssetBundlesWhenLocalAbPortProvidedViaDeeplink()
+        [TestCase("http://127.0.0.1:8000", "http://127.0.0.1:8000/optimized-assets")]
+        [TestCase("http://127.0.0.1:8000/", "http://127.0.0.1:8000/optimized-assets")] // trailing slash must not double up
+        [TestCase("http://localhost:8001", "http://localhost:8001/optimized-assets")]
+        public void DeriveLocalAssetBundlesBaseUrlFromRealm(string realm, string expectedUrl)
         {
             //Arrange
             var realmLaunchSettings = new RealmLaunchSettings();
 
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
-                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true&local-ab-port=5200"
+                $"decentraland://?realm={realm}&position=100,100&local-scene=true&local-ab=true",
             });
 
             //Act
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             //Assert
-            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab-port must imply local-ab");
-            Assert.AreEqual("http://127.0.0.1:5200", RealmLaunchSettings.ResolveLocalAssetBundlesUrl(applicationParametersParser));
+            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab must enable local asset bundles");
+            Assert.AreEqual(expectedUrl, realmLaunchSettings.LocalAssetBundlesBaseUrl());
+        }
+
+        [Test]
+        public void NotDeriveLocalAssetBundlesBaseUrlOutsideLocalSceneDevelopment()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "--realm",
+                "https://peer.decentraland.org",
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.IsNull(realmLaunchSettings.LocalAssetBundlesBaseUrl());
         }
 
         [Test]

@@ -132,7 +132,7 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(output.ContainsKey("creator-hub-bin-path"), "creator-hub-bin-path must never be permitted (SEC-005), even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), "launch-cdp-monitor-on-start must never be permitted, even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.COMMS_ADAPTER), "comms-adapter must never be permitted, even for a loopback realm");
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.OPTIMIZED_ASSETS_URL), "optimized-assets-url must never be permitted, even for a loopback realm — it points the AB/LOD/registry endpoints at arbitrary infrastructure for the whole session; only the host-pinned local-ab-port variant is deep-link reachable");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.OPTIMIZED_ASSETS_URL), "optimized-assets-url must never be permitted, even for a loopback realm — it points the AB/LOD/registry endpoints at arbitrary infrastructure for the whole session; local-ab derives the base from the realm instead");
         }
 
         [Test]
@@ -168,20 +168,18 @@ namespace Global.AppArgs.Tests
         public void DeepLinkKeepsLocalAbForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=http://127.0.0.1:8000&local-scene=true&local-ab=true&local-ab-port=5200");
+                "decentraland://?realm=http://127.0.0.1:8000&local-scene=true&local-ab=true");
 
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_AB), "local-ab must survive for a loopback (local dev) realm — Creator Hub forwards it into the preview deep link");
-            Assert.AreEqual("5200", output.GetValueOrDefault(AppArgsFlags.LOCAL_AB_PORT), "local-ab-port must survive for a loopback (local dev) realm");
         }
 
         [Test]
         public void DeepLinkDropsLocalAbForRemoteRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=https://peer.decentraland.org&local-scene=true&local-ab=true&local-ab-port=5200");
+                "decentraland://?realm=https://peer.decentraland.org&local-scene=true&local-ab=true");
 
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_AB), "local-ab must be dropped for a non-loopback (remote) realm");
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_AB_PORT), "local-ab-port must be dropped for a non-loopback (remote) realm (it implies local-ab)");
         }
     }
 }

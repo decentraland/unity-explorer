@@ -130,13 +130,12 @@ namespace Global.AppArgs
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
-        public const string LOCAL_AB = "local-ab";
-
         /// <summary>
-        ///     Overrides the port of the local asset-bundle server (implies <see cref="LOCAL_AB" />). Only the port is
-        ///     configurable — the host is always 127.0.0.1; a full-URL override requires <see cref="OPTIMIZED_ASSETS_URL" />.
+        ///     Local scene development only: load assets as asset bundles served by the preview server at
+        ///     {realm}/optimized-assets instead of raw GLTFs. Carries no URL or port — the base is derived
+        ///     from the realm the client already has.
         /// </summary>
-        public const string LOCAL_AB_PORT = "local-ab-port";
+        public const string LOCAL_AB = "local-ab";
 
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 
