@@ -1,11 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using JetBrains.Annotations;
+using SceneRuntime;
+using SceneRuntime.Apis;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
+namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 {
     public class RestrictedActionsAPIWrapper : JsApiWrapper
     {
@@ -94,6 +96,10 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             api.TryOpenNftDialog(urn);
 
         [UsedImplicitly]
+        public int OpenExplorerUi(int ui) =>
+            api.TryOpenExplorerUi(ui);
+
+        [UsedImplicitly]
         public object StopEmote()
         {
             // Cancel any in-flight trigger operations so they don't fire after the stop
@@ -109,6 +115,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             }
         }
 
-        public override void Dispose() { }
+        public override void Dispose() =>
+            api.Dispose();
     }
 }
