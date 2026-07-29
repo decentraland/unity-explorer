@@ -38,6 +38,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private ModalState currentState;
         private bool settlementPending;
         private CancellationTokenSource? lifeCts;
+        private CreditsPurchaseQuote? quote;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -65,13 +66,14 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             disposalCts.SafeCancelAndDispose();
         }
 
-        private static bool CanAfford(ShopListingDto listing, in UserCreditsResponse credits) =>
-            credits.usd.credits >= listing.priceCredits;
+        private static bool CanAfford(in CreditsPurchaseQuote quote, in UserCreditsResponse credits) =>
+            credits.usd.credits >= quote.Credits;
 
         protected override void OnViewShow()
         {
             lifeCts = new CancellationTokenSource();
             settlementPending = false;
+            quote = null;
 
             if (viewInstance != null)
             {
@@ -79,7 +81,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.RarityLabel.text = inputData.RarityName;
                 viewInstance.RarityLabel.color = inputData.RarityColor;
                 viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
-                viewInstance.PriceCreditsText.text = inputData.Listing.priceCredits.ToString();
+                viewInstance.PriceCreditsText.text = string.Empty;
 
                 if (inputData.ItemThumbnail != null)
                 {
@@ -108,7 +110,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.OpenMarketplaceButton.onClick.AddListener(OnOpenMarketplaceClicked);
             }
 
-            LoadBalanceAndArmAsync(lifeCts.Token).Forget();
+            LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -137,7 +139,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.CloseBackground.OnClickAsync(ct));
         }
 
-        private async UniTask LoadBalanceAndArmAsync(CancellationToken ct)
+        private async UniTask LoadQuoteAndBalanceAsync(CancellationToken ct)
         {
             SetUiState(ModalState.LoadingBalance);
 
@@ -149,6 +151,24 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 return;
             }
 
+            CreditsQuoteResult quoteResult = await purchaseService.QuoteAsync(inputData.Listing.tradeId, ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!quoteResult.Success)
+            {
+                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Quote failed for trade {inputData.Listing.tradeId}: {quoteResult.Error} {quoteResult.Message}");
+                ShowError(quoteResult.Error);
+                return;
+            }
+
+            CreditsPurchaseQuote resolved = quoteResult.Quote;
+            quote = resolved;
+
+            if (viewInstance != null)
+                viewInstance.PriceCreditsText.text = resolved.IsLiveRatePrice ? $"≈{resolved.Credits}" : resolved.Credits.ToString();
+
             try
             {
                 UserCreditsResponse credits = await creditsAPIClient.GetUserCreditsAsync(identity.Address, ct);
@@ -159,7 +179,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 if (viewInstance != null)
                     viewInstance.BalanceCreditsText.text = credits.usd.credits.ToString();
 
-                SetUiState(CanAfford(inputData.Listing, credits) ? ModalState.ReadyToConfirm : ModalState.InsufficientCredits);
+                SetUiState(CanAfford(resolved, credits) ? ModalState.ReadyToConfirm : ModalState.InsufficientCredits);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -171,10 +191,10 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         private void OnConfirmClicked()
         {
-            if (currentState != ModalState.ReadyToConfirm || lifeCts == null || lifeCts.IsCancellationRequested)
+            if (currentState != ModalState.ReadyToConfirm || quote == null || lifeCts == null || lifeCts.IsCancellationRequested)
                 return;
 
-            PurchaseAsync(lifeCts.Token).Forget();
+            PurchaseAsync(quote.Value, lifeCts.Token).Forget();
         }
 
         private void OnRetryClicked()
@@ -182,7 +202,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             if (currentState != ModalState.Failed || settlementPending || lifeCts == null || lifeCts.IsCancellationRequested)
                 return;
 
-            LoadBalanceAndArmAsync(lifeCts.Token).Forget();
+            LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
         }
 
         private void OnGetCreditsClicked()
@@ -197,14 +217,14 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 webBrowser.OpenUrlMainThreadOnly(inputData.FallbackMarketplaceUrl);
         }
 
-        private async UniTask PurchaseAsync(CancellationToken ct)
+        private async UniTask PurchaseAsync(CreditsPurchaseQuote confirmedQuote, CancellationToken ct)
         {
             SetUiState(ModalState.Purchasing);
             NativeWindowManager.RequestTemporaryWindowMode();
 
             try
             {
-                CreditsPurchaseResult result = await purchaseService.PurchaseAsync(inputData.Listing.tradeId, inputData.Listing.priceCredits, ct);
+                CreditsPurchaseResult result = await purchaseService.PurchaseAsync(confirmedQuote, ct);
 
                 if (result.Success)
                 {
@@ -212,7 +232,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                     RefreshBalanceAsync(lifeCts?.Token ?? CancellationToken.None).Forget();
                 }
                 else
-                    ShowPurchaseError(result);
+                    ShowError(result.Error);
             }
             catch (Exception e)
             {
@@ -225,9 +245,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             }
         }
 
-        private void ShowPurchaseError(in CreditsPurchaseResult result)
+        private void ShowError(CreditsPurchaseError error)
         {
-            switch (result.Error)
+            switch (error)
             {
                 case CreditsPurchaseError.Cancelled:
                     SetUiState(ModalState.ReadyToConfirm);
@@ -244,6 +264,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                     break;
                 case CreditsPurchaseError.PriceChanged:
                     ShowFailure("The price of this item changed. Please reopen the item to see the new price.", allowRetry: false);
+                    break;
+                case CreditsPurchaseError.PriceUnavailable:
+                    ShowFailure("The price of this item is unavailable right now. Please try again later or open it in the marketplace.", allowRetry: true);
                     break;
                 case CreditsPurchaseError.ListingNotAvailable:
                     ShowFailure("This item is no longer available for purchase with credits.", allowRetry: false);
@@ -273,7 +296,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 CreditsPurchaseState.ResolvingListing => "Checking availability...",
                 CreditsPurchaseState.Authorizing => "Reserving your credits...",
                 CreditsPurchaseState.Signing => "Waiting for your signature...",
-                CreditsPurchaseState.Submitting => "Submitting the purchase...",
                 CreditsPurchaseState.WaitingSettlement => "Completing the purchase...",
                 _ => viewInstance.ProgressStatusText.text,
             };

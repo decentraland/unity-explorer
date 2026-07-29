@@ -2491,6 +2491,7 @@ MonoBehaviour:
   <BalanceContainer>k__BackingField: {fileID: 9067940953118947336}
   <BalanceCreditsText>k__BackingField: {fileID: 8515350686590867001}
   <BalanceLoadingSpinner>k__BackingField: {fileID: 4215158482690369467}
+  <BoughtCreditsAmount>k__BackingField: {fileID: 6977378130102478166}
   <CloseButton>k__BackingField: {fileID: 2581005873461023687}
   <PackSelectionContainer>k__BackingField: {fileID: 1290171705275615349}
   <WaitingForBrowserContainer>k__BackingField: {fileID: 2921428069285825940}
@@ -3613,9 +3614,17 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -35
       objectReference: {fileID: 0}
+    - target: {fileID: 7692247070351945666, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8209004636573500470, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
       propertyPath: m_Name
       value: CreditTopUpPack (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8814480739232333174, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9023810342695148834, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -3631,6 +3640,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 31830104734820138, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
   m_PrefabInstance: {fileID: 944364006716594191}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6977378130102478166 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7912734928840146265, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
+  m_PrefabInstance: {fileID: 944364006716594191}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &2941854203418918955
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -239,6 +239,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                         break;
                     case CreditsTopUpStage.Credited:
                         BuyCreditsCompleted?.Invoke(status.OrderId!, status.Pack);
+                        viewInstance!.BoughtCreditsAmount.text = status.Pack.Credits.ToString();
                         break;
                     case CreditsTopUpStage.Failed:
                         BuyCreditsFailed?.Invoke(
