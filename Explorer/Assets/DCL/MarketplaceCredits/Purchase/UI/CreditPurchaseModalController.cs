@@ -6,6 +6,7 @@ using MVC;
 using Plugins.NativeWindowManager;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.MarketplaceCredits.Purchase.UI
@@ -21,6 +22,11 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             Success,
             Failed,
         }
+
+        private const float NORMAL_HEIGHT = 491;
+        private const float PURCHASING_HEIGHT = 371;
+        private const float INSUFFICIENT_CREDITS_HEIGHT = 622;
+        private const float COMPLETED_HEIGHT = 571;
 
         private readonly ICreditsPurchaseService purchaseService;
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
@@ -72,18 +78,29 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.ItemName.text = inputData.ItemName;
                 viewInstance.RarityLabel.text = inputData.RarityName;
                 viewInstance.RarityLabel.color = inputData.RarityColor;
+                viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
                 viewInstance.PriceCreditsText.text = inputData.Listing.priceCredits.ToString();
 
                 if (inputData.ItemThumbnail != null)
+                {
                     viewInstance.ItemThumbnail.sprite = inputData.ItemThumbnail;
+                    viewInstance.ItemThumbnailCompleted.sprite = inputData.ItemThumbnail;
+                }
 
                 if (inputData.RarityBackground != null)
+                {
                     viewInstance.ItemBackground.sprite = inputData.RarityBackground;
+                    viewInstance.ItemBackgroundCompleted.sprite = inputData.RarityBackground;
+                }
 
                 if (inputData.CategoryIcon != null)
+                {
                     viewInstance.ItemCategory.sprite = inputData.CategoryIcon;
+                    viewInstance.ItemCategoryCompleted.sprite = inputData.CategoryIcon;
+                }
 
                 viewInstance.ItemCategoryBackground.color = inputData.RarityColor;
+                viewInstance.ItemCategoryBackgroundCompleted.color = inputData.RarityColor;
 
                 viewInstance.ConfirmButton.onClick.AddListener(OnConfirmClicked);
                 viewInstance.RetryButton.onClick.AddListener(OnRetryClicked);
@@ -115,7 +132,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             await UniTask.WhenAny(
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
-                viewInstance.DoneButton.OnClickAsync(ct));
+                viewInstance.InsufficientCancelButton.OnClickAsync(ct),
+                viewInstance.DoneButton.OnClickAsync(ct),
+                viewInstance.CloseBackground.OnClickAsync(ct));
         }
 
         private async UniTask LoadBalanceAndArmAsync(CancellationToken ct)
@@ -311,16 +330,30 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             bool purchasing = newState == ModalState.Purchasing;
 
-            viewInstance.ConfirmStateContainer.SetActive(newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits);
+            switch (newState)
+            {
+                case ModalState.Success:
+                    viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, COMPLETED_HEIGHT);
+                    break;
+                case ModalState.Purchasing:
+                    viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, PURCHASING_HEIGHT);
+                    break;
+                case ModalState.InsufficientCredits:
+                    viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, INSUFFICIENT_CREDITS_HEIGHT);
+                    break;
+                default:
+                    viewInstance.ContainerTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, NORMAL_HEIGHT);
+                    break;
+            }
+            viewInstance.ConfirmStateContainer.SetActive(newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm);
             viewInstance.ProgressStateContainer.SetActive(purchasing);
             viewInstance.SuccessStateContainer.SetActive(newState == ModalState.Success);
             viewInstance.FailedStateContainer.SetActive(newState == ModalState.Failed);
             viewInstance.InsufficientCreditsContainer.SetActive(newState == ModalState.InsufficientCredits);
             viewInstance.BalanceLoadingSpinner.SetActive(newState == ModalState.LoadingBalance);
+            viewInstance.Item.SetActive(newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits);
 
             viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
-            viewInstance.CloseButton.interactable = !purchasing;
-            viewInstance.CancelButton.interactable = !purchasing;
         }
 
         private void RequestClose() =>

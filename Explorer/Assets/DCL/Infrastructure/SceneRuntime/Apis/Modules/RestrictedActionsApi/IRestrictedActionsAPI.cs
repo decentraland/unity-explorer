@@ -1,11 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using System;
 using System.Threading;
 using UnityEngine;
 
-namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
+namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 {
-    public interface IRestrictedActionsAPI
+    public interface IRestrictedActionsAPI : IDisposable
     {
         bool TryOpenExternalUrl(string url);
 
@@ -20,6 +21,8 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, AvatarEmoteMask mask, CancellationToken ct);
 
         bool TryOpenNftDialog(string urn);
+
+        int TryOpenExplorerUi(int ui);
 
         void TryCopyToClipboard(string text);
 
