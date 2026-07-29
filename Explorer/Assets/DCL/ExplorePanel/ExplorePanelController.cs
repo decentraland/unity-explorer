@@ -45,7 +45,6 @@ namespace DCL.ExplorePanel
         private readonly bool includeDiscover;
         private readonly HttpEventsApiService eventsApiService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
-        private readonly ICreditsPanelController creditsPanelController;
         private bool includeCommunities;
 
         private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
@@ -61,7 +60,6 @@ namespace DCL.ExplorePanel
         private ExploreSections lastShownSection;
         private bool isControlClosing;
 
-        private CommunitiesBrowserController communitiesBrowserController { get; }
         public NavmapController NavmapController { get; }
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
@@ -70,8 +68,6 @@ namespace DCL.ExplorePanel
         public EventsController EventsController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
-
-        public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
 
         public event Action? PlacesOpenedFromStartMenu;
         public event Action? EventsOpenedFromStartMenu;
@@ -103,11 +99,9 @@ namespace DCL.ExplorePanel
             this.inputBlock = inputBlock;
             this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
             this.mvcManager = mvcManager;
-            this.communitiesBrowserController = communitiesBrowserController;
             this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
             this.eventsApiService = eventsApiService;
             this.communitiesLiveTracker = communitiesLiveTracker;
-            this.creditsPanelController = creditsPanelController;
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
 

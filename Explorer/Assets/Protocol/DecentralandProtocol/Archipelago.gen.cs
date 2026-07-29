@@ -64,8 +64,12 @@ namespace Decentraland.Kernel.Comms.V3 {
             "KA0SLQoGY2VudGVyGAQgASgLMh0uZGVjZW50cmFsYW5kLmNvbW1vbi5Qb3Np",
             "dGlvbhIOCgZyYWRpdXMYBSABKAEiTQoTSXNsYW5kU3RhdHVzTWVzc2FnZRI2",
             "CgRkYXRhGAEgAygLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5J",
-            "c2xhbmREYXRhKiIKDEtpY2tlZFJlYXNvbhISCg5LUl9ORVdfU0VTU0lPThAA",
-            "YgZwcm90bzM="));
+            "c2xhbmREYXRhImMKDVNlcnZpY2VTdGF0dXMSFAoMY3VycmVudF90aW1lGAEg",
+            "ASgEEhgKC2NvbW1pdF9oYXNoGAIgASgJSACIAQESEgoKdXNlcl9jb3VudBgD",
+            "IAEoDUIOCgxfY29tbWl0X2hhc2giawoXU2VydmljZURpc2NvdmVyeU1lc3Nh",
+            "Z2USEwoLc2VydmVyX25hbWUYASABKAkSOwoGc3RhdHVzGAIgASgLMisuZGVj",
+            "ZW50cmFsYW5kLmtlcm5lbC5jb21tcy52My5TZXJ2aWNlU3RhdHVzKiIKDEtp",
+            "Y2tlZFJlYXNvbhISCg5LUl9ORVdfU0VTU0lPThAAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Comms.V3.KickedReason), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -81,7 +85,9 @@ namespace Decentraland.Kernel.Comms.V3 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.Heartbeat), global::Decentraland.Kernel.Comms.V3.Heartbeat.Parser, new[]{ "Position", "DesiredRoom" }, new[]{ "DesiredRoom" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.ClientPacket), global::Decentraland.Kernel.Comms.V3.ClientPacket.Parser, new[]{ "ChallengeRequest", "SignedChallenge", "Heartbeat" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.IslandData), global::Decentraland.Kernel.Comms.V3.IslandData.Parser, new[]{ "Id", "Peers", "MaxPeers", "Center", "Radius" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.IslandStatusMessage), global::Decentraland.Kernel.Comms.V3.IslandStatusMessage.Parser, new[]{ "Data" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.IslandStatusMessage), global::Decentraland.Kernel.Comms.V3.IslandStatusMessage.Parser, new[]{ "Data" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.ServiceStatus), global::Decentraland.Kernel.Comms.V3.ServiceStatus.Parser, new[]{ "CurrentTime", "CommitHash", "UserCount" }, new[]{ "CommitHash" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.V3.ServiceDiscoveryMessage), global::Decentraland.Kernel.Comms.V3.ServiceDiscoveryMessage.Parser, new[]{ "ServerName", "Status" }, null, null, null, null)
           }));
     }
     #endregion
@@ -3546,6 +3552,536 @@ namespace Decentraland.Kernel.Comms.V3 {
             break;
           case 10: {
             data_.AddEntriesFrom(ref input, _repeated_data_codec);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class ServiceStatus : pb::IMessage<ServiceStatus>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<ServiceStatus> _parser = new pb::MessageParser<ServiceStatus>(() => new ServiceStatus());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<ServiceStatus> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[13]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ServiceStatus() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ServiceStatus(ServiceStatus other) : this() {
+      currentTime_ = other.currentTime_;
+      commitHash_ = other.commitHash_;
+      userCount_ = other.userCount_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ServiceStatus Clone() {
+      return new ServiceStatus(this);
+    }
+
+    /// <summary>Field number for the "current_time" field.</summary>
+    public const int CurrentTimeFieldNumber = 1;
+    private ulong currentTime_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong CurrentTime {
+      get { return currentTime_; }
+      set {
+        currentTime_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "commit_hash" field.</summary>
+    public const int CommitHashFieldNumber = 2;
+    private readonly static string CommitHashDefaultValue = "";
+
+    private string commitHash_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string CommitHash {
+      get { return commitHash_ ?? CommitHashDefaultValue; }
+      set {
+        commitHash_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "commit_hash" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasCommitHash {
+      get { return commitHash_ != null; }
+    }
+    /// <summary>Clears the value of the "commit_hash" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearCommitHash() {
+      commitHash_ = null;
+    }
+
+    /// <summary>Field number for the "user_count" field.</summary>
+    public const int UserCountFieldNumber = 3;
+    private uint userCount_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint UserCount {
+      get { return userCount_; }
+      set {
+        userCount_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as ServiceStatus);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(ServiceStatus other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (CurrentTime != other.CurrentTime) return false;
+      if (CommitHash != other.CommitHash) return false;
+      if (UserCount != other.UserCount) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (CurrentTime != 0UL) hash ^= CurrentTime.GetHashCode();
+      if (HasCommitHash) hash ^= CommitHash.GetHashCode();
+      if (UserCount != 0) hash ^= UserCount.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (CurrentTime != 0UL) {
+        output.WriteRawTag(8);
+        output.WriteUInt64(CurrentTime);
+      }
+      if (HasCommitHash) {
+        output.WriteRawTag(18);
+        output.WriteString(CommitHash);
+      }
+      if (UserCount != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(UserCount);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (CurrentTime != 0UL) {
+        output.WriteRawTag(8);
+        output.WriteUInt64(CurrentTime);
+      }
+      if (HasCommitHash) {
+        output.WriteRawTag(18);
+        output.WriteString(CommitHash);
+      }
+      if (UserCount != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(UserCount);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (CurrentTime != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(CurrentTime);
+      }
+      if (HasCommitHash) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(CommitHash);
+      }
+      if (UserCount != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(UserCount);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(ServiceStatus other) {
+      if (other == null) {
+        return;
+      }
+      if (other.CurrentTime != 0UL) {
+        CurrentTime = other.CurrentTime;
+      }
+      if (other.HasCommitHash) {
+        CommitHash = other.CommitHash;
+      }
+      if (other.UserCount != 0) {
+        UserCount = other.UserCount;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            CurrentTime = input.ReadUInt64();
+            break;
+          }
+          case 18: {
+            CommitHash = input.ReadString();
+            break;
+          }
+          case 24: {
+            UserCount = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            CurrentTime = input.ReadUInt64();
+            break;
+          }
+          case 18: {
+            CommitHash = input.ReadString();
+            break;
+          }
+          case 24: {
+            UserCount = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class ServiceDiscoveryMessage : pb::IMessage<ServiceDiscoveryMessage>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<ServiceDiscoveryMessage> _parser = new pb::MessageParser<ServiceDiscoveryMessage>(() => new ServiceDiscoveryMessage());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<ServiceDiscoveryMessage> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Comms.V3.ArchipelagoReflection.Descriptor.MessageTypes[14]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ServiceDiscoveryMessage() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ServiceDiscoveryMessage(ServiceDiscoveryMessage other) : this() {
+      serverName_ = other.serverName_;
+      status_ = other.status_ != null ? other.status_.Clone() : null;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ServiceDiscoveryMessage Clone() {
+      return new ServiceDiscoveryMessage(this);
+    }
+
+    /// <summary>Field number for the "server_name" field.</summary>
+    public const int ServerNameFieldNumber = 1;
+    private string serverName_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string ServerName {
+      get { return serverName_; }
+      set {
+        serverName_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "status" field.</summary>
+    public const int StatusFieldNumber = 2;
+    private global::Decentraland.Kernel.Comms.V3.ServiceStatus status_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Comms.V3.ServiceStatus Status {
+      get { return status_; }
+      set {
+        status_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as ServiceDiscoveryMessage);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(ServiceDiscoveryMessage other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ServerName != other.ServerName) return false;
+      if (!object.Equals(Status, other.Status)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ServerName.Length != 0) hash ^= ServerName.GetHashCode();
+      if (status_ != null) hash ^= Status.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (ServerName.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ServerName);
+      }
+      if (status_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(Status);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (ServerName.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ServerName);
+      }
+      if (status_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(Status);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (ServerName.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ServerName);
+      }
+      if (status_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Status);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(ServiceDiscoveryMessage other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ServerName.Length != 0) {
+        ServerName = other.ServerName;
+      }
+      if (other.status_ != null) {
+        if (status_ == null) {
+          Status = new global::Decentraland.Kernel.Comms.V3.ServiceStatus();
+        }
+        Status.MergeFrom(other.Status);
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            ServerName = input.ReadString();
+            break;
+          }
+          case 18: {
+            if (status_ == null) {
+              Status = new global::Decentraland.Kernel.Comms.V3.ServiceStatus();
+            }
+            input.ReadMessage(Status);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            ServerName = input.ReadString();
+            break;
+          }
+          case 18: {
+            if (status_ == null) {
+              Status = new global::Decentraland.Kernel.Comms.V3.ServiceStatus();
+            }
+            input.ReadMessage(Status);
             break;
           }
         }
