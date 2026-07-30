@@ -13,18 +13,19 @@ namespace Global.AppArgs
     ///     <list type="bullet">
     ///         <item>
     ///             <b>Always permitted</b> — benign navigation / share / login intents whose worst case is already
-    ///             gated elsewhere (a consent prompt, a matching login token, or a plain coordinate): realm,
-    ///             position, community, signin, authRequestId, force-open-backpack, spawnpoint.
+    ///             gated elsewhere (a consent prompt, a matching login token, a plain coordinate, or a closed
+    ///             Decentraland-owned enum): realm, position, community, signin, authRequestId, force-open-backpack,
+    ///             spawnpoint, dclenv.
     ///         </item>
     ///         <item>
     ///             <b>Permitted only for a loopback realm</b> — the local-development params Creator Hub and the
-    ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, dclenv, hub,
+    ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, hub,
     ///             skip-auth-screen, landscape-terrain-enabled, multi-instance, mcp, mcp-port, local-ab.
     ///             They are gated on
     ///             <c>Uri.IsLoopback</c> of the target realm (127.0.0.1 / localhost / [::1]) so a remote-realm deep
     ///             link from a web page can never enable them, while a legitimate local-dev launch (which always
     ///             targets loopback) works. All but the MCP pair are individually low-harm — an analytics tag, a
-    ///             cosmetic toggle, an instance count, an env enum, a screen skip that still forces auth when no
+    ///             cosmetic toggle, an instance count, a screen skip that still forces auth when no
     ///             valid identity is cached, or an asset-server toggle whose base URL derives from the realm this
     ///             gate already checked; <c>mcp</c>/<c>mcp-port</c> start an unauthenticated loopback control
     ///             port, so they lean on the gate plus the server's own 127.0.0.1 bind and Origin check — see the
@@ -72,6 +73,14 @@ namespace Global.AppArgs
             // POSITION — it only picks where inside an already-permitted realm/position navigation the user arrives,
             // with no capability, infra, or exec impact.
             AppArgsFlags.SPAWN_POINT,
+
+            // Target environment (org|zone|today). Not realm-gated: the login callbacks and jump-in links that carry
+            // it have no realm at all, so the loopback-realm condition below could never pass for them and the session
+            // would silently fall back to the default environment. Safe on its own — a closed Decentraland-owned enum,
+            // parsed with Enum.TryParse where it is consumed and ignored when it does not match, never a URL, so it
+            // cannot point the client at attacker infrastructure. Worst case is a session in a Decentraland-owned test
+            // environment, strictly less capable than the attacker-supplied REALM above.
+            AppArgsFlags.ENVIRONMENT,
         };
 
         // Local-development params Creator Hub / sdk-commands attach to preview deep links. Permitted ONLY when the
@@ -83,9 +92,6 @@ namespace Global.AppArgs
             // Enables local-scene-development mode (opens an LSD websocket to the realm). Only meaningful against a
             // local server; loopback-gated so an attacker can't point LSD at a remote realm (SEC-020).
             AppArgsFlags.LOCAL_SCENE,
-
-            // Target environment (org/zone/today). A DCL-owned enum, not a URL — cannot point at attacker infra.
-            AppArgsFlags.ENVIRONMENT,
 
             // Marks the session as launched from the Creator Hub (analytics trait only — no capability unlock).
             AppArgsFlags.DCL_EDITOR,

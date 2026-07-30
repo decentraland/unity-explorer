@@ -66,7 +66,7 @@ namespace Global.AppArgs.Tests
         public void DeepLinkKeepsAllowlistedParams()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=https://peer.decentraland.org&position=10,20&community=abc&signin=id1&authRequestId=req1&force-open-backpack=true&spawnpoint=lobby");
+                "decentraland://?realm=https://peer.decentraland.org&position=10,20&community=abc&signin=id1&authRequestId=req1&force-open-backpack=true&spawnpoint=lobby&dclenv=zone");
 
             Assert.AreEqual("https://peer.decentraland.org", output.GetValueOrDefault(AppArgsFlags.REALM));
             Assert.AreEqual("10,20", output.GetValueOrDefault(AppArgsFlags.POSITION));
@@ -75,6 +75,22 @@ namespace Global.AppArgs.Tests
             Assert.AreEqual("req1", output.GetValueOrDefault(AppArgsFlags.AUTH_REQUEST_ID));
             Assert.IsTrue(output.ContainsKey(AppArgsFlags.FORCE_OPEN_BACKPACK), "force-open-backpack must survive (shipped feature #9398)");
             Assert.AreEqual("lobby", output.GetValueOrDefault(AppArgsFlags.SPAWN_POINT), "spawnpoint must survive (named scene spawn point #9369)");
+            Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv must survive for any realm: it is the only channel that carries the environment into a launched client");
+        }
+
+        [Test]
+        public void DeepLinkKeepsEnvironmentForRealmlessLoginCallback()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://open?signin=id1&dclenv=zone&authRequestId=req1&local-scene=true&skip-auth-screen=true&multi-instance=true&scene-console=true");
+
+            Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv must survive a realm-less login callback, otherwise the client falls back to the default environment");
+            Assert.AreEqual("id1", output.GetValueOrDefault(AppArgsFlags.SIGNIN));
+            Assert.AreEqual("req1", output.GetValueOrDefault(AppArgsFlags.AUTH_REQUEST_ID));
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must still require a loopback realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen must still require a loopback realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES), "multi-instance must still require a loopback realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must stay dropped for every realm");
         }
 
         [Test]
@@ -99,10 +115,9 @@ namespace Global.AppArgs.Tests
         public void DeepLinkKeepsSdkAndCreatorHubDevParamsForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=http://127.0.0.1:8000&position=10,20&local-scene=true&dclenv=zone&hub=true&skip-auth-screen=true&landscape-terrain-enabled=true&multi-instance=true");
+                "decentraland://?realm=http://127.0.0.1:8000&position=10,20&local-scene=true&hub=true&skip-auth-screen=true&landscape-terrain-enabled=true&multi-instance=true");
 
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene");
-            Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv");
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.DCL_EDITOR), "hub");
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen");
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED), "landscape-terrain-enabled");
@@ -113,10 +128,9 @@ namespace Global.AppArgs.Tests
         public void DeepLinkDropsSdkAndCreatorHubDevParamsForRemoteRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=https://peer.decentraland.org&local-scene=true&dclenv=zone&hub=true&skip-auth-screen=true&landscape-terrain-enabled=true&multi-instance=true");
+                "decentraland://?realm=https://peer.decentraland.org&local-scene=true&hub=true&skip-auth-screen=true&landscape-terrain-enabled=true&multi-instance=true");
 
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped for a remote realm");
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.ENVIRONMENT), "dclenv must be dropped for a remote realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.DCL_EDITOR), "hub must be dropped for a remote realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen must be dropped for a remote realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED), "landscape-terrain-enabled must be dropped for a remote realm");
