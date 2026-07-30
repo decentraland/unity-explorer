@@ -20,17 +20,19 @@ namespace DCL.SDKComponents.InputModifier.Tests
     /// </summary>
     public class InputModifierHandlerSystemCrossSceneShould
     {
-        private World globalWorld;
+        private static readonly QueryDescription FINALIZE_QUERY = new QueryDescription().WithAll<CRDTEntity>();
+
+        private World globalWorld = null!;
         private Entity playerEntity;
-        private ISceneRestrictionBusController busController;
+        private ISceneRestrictionBusController busController = null!;
 
-        private World sceneWorldA;
-        private ISceneStateProvider sceneStateA;
-        private InputModifierHandlerSystem systemA;
+        private World sceneWorldA = null!;
+        private ISceneStateProvider sceneStateA = null!;
+        private InputModifierHandlerSystem systemA = null!;
 
-        private World sceneWorldB;
-        private ISceneStateProvider sceneStateB;
-        private InputModifierHandlerSystem systemB;
+        private World sceneWorldB = null!;
+        private ISceneStateProvider sceneStateB = null!;
+        private InputModifierHandlerSystem systemB = null!;
 
         [SetUp]
         public void Setup()
@@ -92,7 +94,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
 
             // Scene B unloads and transitions to non-current without ever asserting a modifier
             systemB.OnSceneIsCurrentChanged(false);
-            systemB.FinalizeComponents(default);
+            systemB.FinalizeComponents(sceneWorldB.Query(in FINALIZE_QUERY));
 
             Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableWalk);
         }
