@@ -11,6 +11,10 @@ namespace DCL.Web3
     /// </summary>
     public static class TransactionRawPayload
     {
+        // Re-serializing a payload that repeats a key would keep only one of the values; such a payload is
+        // left exactly as it arrived instead.
+        private static readonly JsonLoadSettings NO_DUPLICATE_KEYS = new () { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error };
+
         public static string Format(TransactionConfirmationRequest request)
         {
             var payload = new StringBuilder();
@@ -46,14 +50,15 @@ namespace DCL.Web3
         }
 
         /// <summary>
-        ///     Indents so a one-line EIP-712 payload is readable, leaving anything unparseable as it arrived.
+        ///     Indents so a one-line EIP-712 payload is readable, leaving anything unparseable or ambiguous
+        ///     as it arrived.
         /// </summary>
         private static string? WithIndent(string? json)
         {
             if (string.IsNullOrEmpty(json))
                 return json;
 
-            try { return JToken.Parse(json).ToString(Formatting.Indented); }
+            try { return JToken.Parse(json, NO_DUPLICATE_KEYS).ToString(Formatting.Indented); }
             catch (JsonException) { return json; }
         }
     }

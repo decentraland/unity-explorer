@@ -35,6 +35,11 @@ namespace DCL.Web3
 
         private static readonly DecodedTransaction UNKNOWN = new (TransactionKind.Unknown, string.Empty, BigInteger.Zero, null);
 
+        // A repeated key leaves the payload ambiguous: which of the values survives is a parser's own
+        // policy, and a summary of what is being authorized must not rest on one. Ambiguous payloads are
+        // refused here rather than summarized.
+        private static readonly JsonLoadSettings NO_DUPLICATE_KEYS = new () { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error };
+
         public readonly TransactionKind Kind;
 
         /// <summary>
@@ -99,7 +104,7 @@ namespace DCL.Web3
 
             try
             {
-                var typedData = JObject.Parse(typedDataJson);
+                var typedData = JObject.Parse(typedDataJson, NO_DUPLICATE_KEYS);
 
                 if (!string.Equals(typedData["primaryType"]?.ToString(), META_TRANSACTION_TYPE, StringComparison.Ordinal))
                     return false;
