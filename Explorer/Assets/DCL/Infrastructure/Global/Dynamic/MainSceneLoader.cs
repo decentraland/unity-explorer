@@ -233,7 +233,7 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
             if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
-                cliOptimizedAssetsUrl = RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL;
+                cliOptimizedAssetsUrl = launchSettings.LocalAssetBundlesBaseUrl();
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
