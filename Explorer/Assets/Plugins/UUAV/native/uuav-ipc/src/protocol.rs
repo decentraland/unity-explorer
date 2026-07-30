@@ -194,6 +194,14 @@ pub enum ToClient {
         generation: u32,
         slot: u8,
     },
+    /// Interleaved f32 samples at the negotiated output format, pulled from
+    /// the core by the helper's audio pump. Already media-clock aligned
+    /// (the core's drift correction runs at the pull); the client's jitter
+    /// ring only absorbs transport jitter and audio-clock skew.
+    AudioPacket {
+        id: PlayerId,
+        samples: Vec<f32>,
+    },
     /// Player-level failure surfaced through the core's error callback.
     PlayerError {
         id: Option<PlayerId>,

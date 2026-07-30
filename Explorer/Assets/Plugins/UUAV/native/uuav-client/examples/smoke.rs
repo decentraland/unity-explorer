@@ -166,6 +166,24 @@ fn main() {
     assert!(again.error_message.is_null() && y_again == y, "plane pointer churned");
     println!("plane pointers stable across frames");
 
+    // audio: pull like Unity's audio thread would (10ms chunks at the
+    // negotiated 48kHz stereo) and expect real, non-silent samples
+    let mut buffer = vec![0.0f32; 480 * 2];
+    let mut heard_signal = false;
+    let audio_deadline = Instant::now();
+    while audio_deadline.elapsed() < Duration::from_secs(10) {
+        let frames = unsafe {
+            uuav::uuav_player_read_audio(player, buffer.as_mut_ptr(), 480)
+        };
+        if frames > 0 && buffer.iter().any(|s| s.abs() > 1e-4) {
+            heard_signal = true;
+            println!("audio flowing: {frames} frames, peak {:.4}", buffer.iter().fold(0.0f32, |a, s| a.max(s.abs())));
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert!(heard_signal, "no audible samples arrived within 10s");
+
     let status = uuav::uuav_status();
     println!(
         "status: initialized={} players={}",

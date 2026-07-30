@@ -21,6 +21,13 @@ const PUMP_INTERVAL: Duration = Duration::from_millis(20);
 #[cfg(target_os = "macos")]
 const VIDEO_INTERVAL: Duration = Duration::from_millis(16);
 
+/// Audio pull cadence; each pull covers the wall-clock elapsed since the
+/// previous one so serve-loop stalls (video blits) don't starve the stream.
+const AUDIO_INTERVAL: Duration = Duration::from_millis(10);
+
+/// Upper bound on one pull's catch-up so a long stall can't burst-allocate.
+const AUDIO_MAX_PULL: Duration = Duration::from_millis(100);
+
 /// Socket poll granularity for the single-threaded serve loop.
 const POLL_TIMEOUT_MS: i64 = 5;
 
@@ -62,6 +69,10 @@ struct Serve {
     /// derived from the probe texture.
     probe: Option<device::ProbeDevice>,
     players: HashMap<PlayerId, PlayerTracking>,
+    /// The negotiated output format the audio pump sizes its pulls by.
+    audio: Option<uuav_ipc::protocol::AudioOptionsWire>,
+    /// Reused pull buffer (sized for [`AUDIO_MAX_PULL`]).
+    audio_scratch: Vec<f32>,
     #[cfg(target_os = "macos")]
     video: Option<crate::video::VideoPump>,
 }
@@ -76,10 +87,13 @@ pub fn run(
     let mut serve = Serve {
         probe: None,
         players: HashMap::new(),
+        audio: None,
+        audio_scratch: Vec::new(),
         #[cfg(target_os = "macos")]
         video: None,
     };
     let mut last_pump = Instant::now();
+    let mut last_audio = Instant::now();
     #[cfg(target_os = "macos")]
     let mut last_video = Instant::now();
 
@@ -104,6 +118,12 @@ pub fn run(
         if last_pump.elapsed() >= PUMP_INTERVAL {
             last_pump = Instant::now();
             pump_states(socket, &mut serve.players)?;
+        }
+
+        if last_audio.elapsed() >= AUDIO_INTERVAL {
+            let elapsed = last_audio.elapsed().min(AUDIO_MAX_PULL);
+            last_audio = Instant::now();
+            pump_audio(socket, &mut serve, elapsed)?;
         }
 
         #[cfg(target_os = "macos")]
@@ -133,6 +153,9 @@ fn dispatch(
             adapter,
         } => {
             let result = configure(&mut serve.probe, audio, &protocol_whitelist, log_level, adapter);
+            if result.is_ok() {
+                serve.audio = Some(audio);
+            }
             #[cfg(target_os = "macos")]
             let result = result.and_then(|()| {
                 let probe = serve.probe.as_ref().ok_or("probe device is missing")?;
@@ -151,6 +174,9 @@ fn dispatch(
                     channels: audio.channels,
                 },
             ));
+            if result.is_ok() {
+                serve.audio = Some(audio);
+            }
             reply(socket, corr, result.map(|()| ReplyBody::Unit))?;
         }
         ToServer::PlayerNew { corr } => {
@@ -298,6 +324,46 @@ fn reply(
 fn forward_logs(socket: &zmq::Socket, rx: &Receiver<(LogSink, String)>) -> anyhow::Result<()> {
     while let Ok((sink, line)) = rx.try_recv() {
         socket::send(socket, &ToClient::Log { sink, line }).context("send Log")?;
+    }
+    Ok(())
+}
+
+/// Pulls the elapsed wall-clock worth of samples from every player and
+/// forwards non-empty reads; the pull cadence stands in for Unity's audio
+/// thread, so the core's own drift correction keeps running unchanged.
+fn pump_audio(
+    socket: &zmq::Socket,
+    serve: &mut Serve,
+    elapsed: Duration,
+) -> anyhow::Result<()> {
+    let Some(audio) = serve.audio else {
+        return Ok(());
+    };
+    let frames = (f64::from(audio.sample_rate) * elapsed.as_secs_f64()) as i32;
+    if frames <= 0 {
+        return Ok(());
+    }
+    let samples = frames as usize * audio.channels.max(1) as usize;
+    serve.audio_scratch.resize(samples, 0.0);
+
+    for &id in serve.players.keys() {
+        let read = unsafe {
+            core::uuav_player_read_audio(id, serve.audio_scratch.as_mut_ptr(), frames)
+        };
+        if read <= 0 {
+            continue;
+        }
+        let filled = read as usize * audio.channels.max(1) as usize;
+        let Some(payload) = serve.audio_scratch.get(..filled) else {
+            continue;
+        };
+        socket::send(
+            socket,
+            &ToClient::AudioPacket {
+                id,
+                samples: payload.to_vec(),
+            },
+        )?;
     }
     Ok(())
 }

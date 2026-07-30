@@ -30,16 +30,30 @@ impl CachedState {
     }
 }
 
-#[derive(Default)]
 pub struct PlayerMirror {
     pub state: ArcSwapOption<CachedState>,
     pub media_info: ArcSwapOption<MediaInfoWire>,
     /// Throttles `assign_master_clock` forwarding (called every frame).
     pub last_master_clock: Mutex<Option<Instant>>,
+    /// Jitter ring between the helper's audio packets and Unity's audio thread.
+    pub audio: crate::audio_ring::AudioRing,
     /// Shared-texture state (assembly + presentation), M4 adds the
     /// Windows counterpart.
     #[cfg(target_os = "macos")]
     pub video: Mutex<crate::present::PlayerVideo>,
+}
+
+impl PlayerMirror {
+    pub fn new(sample_rate: i32, channels: i32) -> Self {
+        Self {
+            state: ArcSwapOption::const_empty(),
+            media_info: ArcSwapOption::const_empty(),
+            last_master_clock: Mutex::new(None),
+            audio: crate::audio_ring::AudioRing::new(sample_rate, channels),
+            #[cfg(target_os = "macos")]
+            video: Mutex::default(),
+        }
+    }
 }
 
 pub type Registry = dashmap::DashMap<PlayerId, Arc<PlayerMirror>>;
@@ -56,6 +70,12 @@ pub fn apply_state(registry: &Registry, update: StateUpdateWire) {
 pub fn apply_media_info(registry: &Registry, id: PlayerId, info: MediaInfoWire) {
     if let Some(mirror) = registry.get(&id) {
         mirror.media_info.store(Some(Arc::new(info)));
+    }
+}
+
+pub fn apply_audio(registry: &Registry, id: PlayerId, samples: &[f32]) {
+    if let Some(mirror) = registry.get(&id) {
+        mirror.audio.write(samples);
     }
 }
 

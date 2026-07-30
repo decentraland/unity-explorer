@@ -18,6 +18,7 @@
     clippy::uninlined_format_args,
     clippy::borrow_as_ptr,
     clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
     clippy::doc_markdown
 )]
 

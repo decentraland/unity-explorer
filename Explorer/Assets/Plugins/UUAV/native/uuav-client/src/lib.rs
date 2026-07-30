@@ -28,6 +28,7 @@
     clippy::doc_markdown
 )]
 
+mod audio_ring;
 mod connection;
 mod registry;
 mod spawn;
@@ -570,6 +571,10 @@ pub extern "C" fn uuav_update_audio_out(options: AudioOptionsRaw) -> ResultFFI {
     {
         Ok(_) => {
             client.audio_options.store(Arc::new(options));
+            // queued samples are in the old format; drop and re-prime
+            for mirror in client.registry.iter() {
+                mirror.audio.reset(options.sample_rate, options.channels);
+            }
             ResultFFI::ok()
         }
         Err(e) => ResultFFI::error(e),
@@ -602,7 +607,11 @@ pub extern "C" fn uuav_player_new() -> NewPlayerResult {
 
     match client.conn.request(|corr| ToServer::PlayerNew { corr }) {
         Ok(ReplyBody::PlayerId(id)) => {
-            client.registry.insert(id, Arc::new(PlayerMirror::default()));
+            let audio = **client.audio_options.load();
+            client.registry.insert(
+                id,
+                Arc::new(PlayerMirror::new(audio.sample_rate, audio.channels)),
+            );
             NewPlayerResult {
                 player_id: id,
                 error_message: ptr::null(),
@@ -1038,9 +1047,10 @@ pub unsafe extern "C" fn uuav_player_get_video_texture(
 
 // ---- audio -------------------------------------------------------------
 
-// [audio] M3 serves the shared jitter ring here; until then: silence
+// [audio] fills interleaved FLT from the jitter ring; pads silence on
+// underrun, never blocks; returns frames actually copied
 #[unsafe(no_mangle)]
-pub const unsafe extern "C" fn uuav_player_read_audio(
+pub unsafe extern "C" fn uuav_player_read_audio(
     player_id: PlayerId,
     dst: *mut f32,
     nb_frames: i32,
@@ -1048,6 +1058,17 @@ pub const unsafe extern "C" fn uuav_player_read_audio(
     if dst.is_null() || nb_frames <= 0 {
         return 0;
     }
-    let _ = player_id;
-    0
+
+    let state = CLIENT.load();
+    let Some(client) = state.as_ref() else {
+        return 0;
+    };
+    let Some(mirror) = client.mirror(player_id) else {
+        return 0;
+    };
+
+    let channels = client.audio_options.load().channels.max(1) as usize;
+    let samples = (nb_frames as usize).saturating_mul(channels);
+    let dst = unsafe { std::slice::from_raw_parts_mut(dst, samples) };
+    mirror.audio.read(dst).checked_div(channels).unwrap_or(0) as i32
 }

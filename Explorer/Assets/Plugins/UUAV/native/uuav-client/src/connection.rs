@@ -248,6 +248,7 @@ fn route(
         }
         ToClient::State(update) => registry::apply_state(registry, update),
         ToClient::MediaInfo { id, info } => registry::apply_media_info(registry, id, info),
+        ToClient::AudioPacket { id, samples } => registry::apply_audio(registry, id, &samples),
         #[cfg(target_os = "macos")]
         ToClient::TextureSet {
             id,
