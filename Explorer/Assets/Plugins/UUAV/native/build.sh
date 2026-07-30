@@ -17,14 +17,21 @@ Darwin)
         exit 1
     fi
 
-    cargo build --release --target aarch64-apple-darwin
-    cargo build --release --target x86_64-apple-darwin
+    cargo build --release --workspace --target aarch64-apple-darwin
+    cargo build --release --workspace --target x86_64-apple-darwin
 
     mkdir -p "$DEST_DIR"
+    # libuuav.dylib is the uuav-client middleware; uuav-helper hosts the
+    # decode core out of process and ships next to it so the FFmpeg dylibs
+    # resolve via the same @loader_path rpath
     lipo -create \
         ".target/aarch64-apple-darwin/release/libuuav.dylib" \
         ".target/x86_64-apple-darwin/release/libuuav.dylib" \
         -output "$DEST_DIR/libuuav.dylib"
+    lipo -create \
+        ".target/aarch64-apple-darwin/release/uuav-helper" \
+        ".target/x86_64-apple-darwin/release/uuav-helper" \
+        -output "$DEST_DIR/uuav-helper"
 
     # deploy each FFmpeg dylib under its major-version name (dereferencing
     # the libavutil.60.dylib -> libavutil.60.26.100.dylib symlink): that is
@@ -34,9 +41,18 @@ Darwin)
         cp -L "$major" "$DEST_DIR/"
     done
 
+    # shared libzmq (scripts/build-libzmq.sh), linked by both the client
+    # dylib and uuav-helper, resolved via the same @loader_path rpath
+    zmq_major=$(find ".third_party/libzmq/lib" -type f -name "libzmq.*.dylib" | grep -E "libzmq\.[0-9]+\.dylib$")
+    if [ -z "$zmq_major" ]; then
+        echo "error: .third_party/libzmq is missing; run scripts/build-libzmq.sh" >&2
+        exit 1
+    fi
+    cp "$zmq_major" "$DEST_DIR/"
+
     # ad-hoc code signing is mandatory on arm64; lipo and the copies above
     # invalidate whatever signature the build produced, so sign last
-    codesign -f -s - "$DEST_DIR"/*.dylib
+    codesign -f -s - "$DEST_DIR"/*.dylib "$DEST_DIR/uuav-helper"
 
     echo "Deployed to: $DEST_DIR"
 
@@ -47,10 +63,15 @@ Darwin)
     TARGET="x86_64-pc-windows-gnu" # linker configured in .cargo/config.toml
     DEST_DIR="../Packages/UUAV/Runtime/Plugins/x86_64"
 
-    cargo build --release --target "$TARGET"
+    cargo build --release --workspace --target "$TARGET"
 
     mkdir -p "$DEST_DIR"
     cp ".target/$TARGET/release/uuav.dll" "$DEST_DIR/"
+    # the helper ships next to uuav.dll so the FFmpeg DLLs resolve from its
+    # own directory
+    cp ".target/$TARGET/release/uuav-helper.exe" "$DEST_DIR/"
+    # shared libzmq (scripts/build-libzmq.sh), linked by both binaries
+    cp ".third_party/libzmq/bin/"libzmq*.dll "$DEST_DIR/"
 
     echo "Deployed to: $DEST_DIR"
     echo "Make sure to provied libwinpthread-1.dll and ffmpeg binaries mentioned in the readme file"

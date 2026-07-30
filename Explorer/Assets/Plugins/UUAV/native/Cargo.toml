@@ -1,5 +1,9 @@
+[workspace]
+members = ["uuav-ipc", "uuav-server", "uuav-client"]
+
+
 [package]
-name = "uuav"
+name = "uuav-core"
 version = "0.2.0"
 edition = "2024"
 
@@ -37,6 +41,8 @@ objc2-metal = { version = "0.3", features = ["objc2-io-surface"] }
 objc2-core-video = { version = "0.3", features = ["objc2-io-surface"] }
 objc2-io-surface = "0.3"
 
+# The shipped `uuav` cdylib is now produced by uuav-client; the core is
+# linked into the uuav-helper process as a plain Rust library.
 [lib]
-name = "uuav"
-crate-type = ["cdylib"]
+name = "uuav_core"
+crate-type = ["rlib"]
