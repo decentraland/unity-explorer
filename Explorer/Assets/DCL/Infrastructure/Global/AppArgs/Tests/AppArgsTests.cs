@@ -85,6 +85,18 @@ namespace Global.AppArgs.Tests
         }
 
         [Test]
+        public void DeepLinkKeepsSelfPreviewBuilderCollections()
+        {
+            // The documented creator flow carries no realm (docs/unreleased-wearables-emotes-preview.md), so this has
+            // to survive on the always-permitted tier rather than the whitelisted-realm one.
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?position=100,100&self-preview-builder-collections=a2041268-189e-4cef-902d-70272aed077c");
+
+            Assert.AreEqual("a2041268-189e-4cef-902d-70272aed077c", output.GetValueOrDefault(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS),
+                "self-preview-builder-collections must survive without a realm; ids are GUID-validated before reaching a URL");
+        }
+
+        [Test]
         public void DeepLinkKeepsLocalSceneForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(

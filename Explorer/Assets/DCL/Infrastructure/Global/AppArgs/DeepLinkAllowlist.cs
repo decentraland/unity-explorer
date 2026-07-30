@@ -16,7 +16,8 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Always permitted</b> — benign navigation / share / login intents whose worst case is already
     ///             gated elsewhere (a consent prompt, a matching login token, or a plain coordinate): realm,
-    ///             position, community, signin, authRequestId, force-open-backpack, spawnpoint.
+    ///             position, community, signin, authRequestId, force-open-backpack, spawnpoint,
+    ///             self-preview-builder-collections.
     ///         </item>
     ///         <item>
     ///             <b>Permitted only for a whitelisted realm</b> — the local-development params Creator Hub and the
@@ -76,6 +77,14 @@ namespace Global.AppArgs
             // POSITION — it only picks where inside an already-permitted realm/position navigation the user arrives,
             // with no capability, infra, or exec impact.
             AppArgsFlags.SPAWN_POINT,
+
+            // Builder collection ids to preview unreleased wearables/emotes with. This is the documented one-click
+            // creator flow (docs/unreleased-wearables-emotes-preview.md), and a deep link carries no realm, so the
+            // whitelisted-realm tier below could not serve it. Three properties keep it in this tier: every id must
+            // parse as a GUID before it reaches a URL (BuilderCollectionIds.IsValid), the Builder API itself only
+            // serves a collection to its owner or an authorized curator, and the preview is local — equipping does not
+            // publish a profile change.
+            AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS,
         };
 
         // Local-development params Creator Hub / sdk-commands attach to preview deep links. Permitted ONLY when the
