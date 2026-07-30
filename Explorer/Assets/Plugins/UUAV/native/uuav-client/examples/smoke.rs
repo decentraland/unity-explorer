@@ -14,6 +14,13 @@ use std::os::raw::c_char;
 use std::time::{Duration, Instant};
 use uuav::{AudioOptionsRaw, ResultFFI, UUAVState};
 
+/// The output format this smoke negotiates at init; every audio pull below
+/// derives its sizes from here.
+const AUDIO: AudioOptionsRaw = AudioOptionsRaw {
+    sample_rate: 48_000,
+    channels: 2,
+};
+
 extern "C" fn on_error(line: *const c_char) {
     eprintln!("[error] {}", to_str(line));
 }
@@ -65,10 +72,7 @@ fn main() {
     check("uuav_init", unsafe {
         uuav::uuav_init(
             objc2::rc::Retained::as_ptr(&probe).cast(),
-            AudioOptionsRaw {
-                sample_rate: 48_000,
-                channels: 2,
-            },
+            AUDIO,
             Some(on_error),
             Some(on_warning),
             Some(on_log),
@@ -167,13 +171,14 @@ fn main() {
     println!("plane pointers stable across frames");
 
     // audio: pull like Unity's audio thread would (10ms chunks at the
-    // negotiated 48kHz stereo) and expect real, non-silent samples
-    let mut buffer = vec![0.0f32; 480 * 2];
+    // format negotiated at init) and expect real, non-silent samples
+    let frames_per_pull = AUDIO.sample_rate / 100;
+    let mut buffer = vec![0.0f32; (frames_per_pull * AUDIO.channels) as usize];
     let mut heard_signal = false;
     let audio_deadline = Instant::now();
     while audio_deadline.elapsed() < Duration::from_secs(10) {
         let frames = unsafe {
-            uuav::uuav_player_read_audio(player, buffer.as_mut_ptr(), 480)
+            uuav::uuav_player_read_audio(player, buffer.as_mut_ptr(), frames_per_pull)
         };
         if frames > 0 && buffer.iter().any(|s| s.abs() > 1e-4) {
             heard_signal = true;
