@@ -34,3 +34,7 @@ windows = { version = "0.61", features = [
     "Win32_Graphics_Dxgi_Common",
     "Win32_System_LibraryLoader",
 ] }
+
+# the smoke example stands up its own D3D11 probe device (D3D_DRIVER_TYPE)
+[target.'cfg(windows)'.dev-dependencies]
+windows = { version = "0.61", features = ["Win32_Graphics_Direct3D"] }

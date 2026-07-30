@@ -43,6 +43,9 @@ mod platform;
 #[cfg(target_os = "macos")]
 #[path = "present_macos.rs"]
 mod present;
+#[cfg(target_os = "windows")]
+#[path = "present_windows.rs"]
+mod present;
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 compile_error!("uuav supports Windows (D3D11) and macOS (Metal) only");
@@ -222,8 +225,8 @@ struct Client {
     audio_options: ArcSwap<AudioOptionsRaw>,
     sinks: Arc<CallbackSinks>,
     child: Arc<Mutex<Child>>,
-    /// Unity's Metal device + the blit queue presentation copies run on.
-    #[cfg(target_os = "macos")]
+    /// Unity's GPU device + what presentation copies run on (Metal: a blit
+    /// queue; D3D11: the immediate context, render thread only).
     unity: Arc<platform::UnityDevice>,
 }
 
@@ -369,19 +372,14 @@ pub unsafe extern "C" fn uuav_init(
         return ResultFFI::error("Texture to capture the HwDevice from is not provided");
     }
 
-    #[cfg(target_os = "macos")]
     let unity = match unsafe { platform::capture_probe(texture) } {
         Ok(unity) => Arc::new(unity),
         Err(e) => return ResultFFI::error(e.to_string()),
     };
     #[cfg(target_os = "macos")]
     let adapter = unity.registry_id;
-
     #[cfg(target_os = "windows")]
-    let adapter = match unsafe { platform::adapter_of_probe(texture) } {
-        Ok(adapter) => adapter,
-        Err(e) => return ResultFFI::error(e.to_string()),
-    };
+    let adapter = unity.adapter_luid;
 
     let audio = match validate_audio(audio_options) {
         Ok(audio) => audio,
@@ -469,7 +467,6 @@ pub unsafe extern "C" fn uuav_init(
         audio_options: ArcSwap::new(Arc::new(audio_options)),
         sinks,
         child: Arc::new(Mutex::new(child)),
-        #[cfg(target_os = "macos")]
         unity,
     });
     spawn_child_monitor(&client);
@@ -689,10 +686,10 @@ pub unsafe extern "C" fn uuav_player_open_media_async(
     };
 
     // new media, new info: drop the cached one until the helper re-announces
-    if let Some(client) = CLIENT.load().as_ref() {
-        if let Some(mirror) = client.mirror(player_id) {
-            mirror.media_info.store(None);
-        }
+    if let Some(client) = CLIENT.load().as_ref()
+        && let Some(mirror) = client.mirror(player_id)
+    {
+        mirror.media_info.store(None);
     }
 
     command_result(with_player(player_id, || ToServer::OpenMedia {
@@ -956,9 +953,8 @@ pub extern "C" fn uuav_player_get_rate(player_id: PlayerId) -> f64 {
 pub type UUAVRenderEvent = extern "C" fn(event_id: i32);
 
 // [render] entry point issued via GL.IssuePluginEvent; copies the helper's
-// latest published shared slot into the presentation planes (and completes
-// any pending texture-set wrap, acking it to the helper)
-#[cfg(target_os = "macos")]
+// latest published shared slot into the presentation texture(s) (and
+// completes any pending texture-set wrap, acking it to the helper)
 extern "C" fn uuav_render_event(event_id: i32) {
     let Ok(player_id) = PlayerId::try_from(event_id) else {
         return;
@@ -994,10 +990,6 @@ extern "C" fn uuav_render_event(event_id: i32) {
     }
 }
 
-// M4 wires the Windows shared-texture presentation here
-#[cfg(target_os = "windows")]
-const extern "C" fn uuav_render_event(_event_id: i32) {}
-
 // pass to GL.IssuePluginEvent
 #[unsafe(no_mangle)]
 pub const extern "C" fn uuav_get_render_callback() -> UUAVRenderEvent {
@@ -1005,9 +997,9 @@ pub const extern "C" fn uuav_get_render_callback() -> UUAVRenderEvent {
 }
 
 // Valid from the first presented frame; the pointer is a client-owned
-// presentation plane on Unity's device, stable across frames and replaced
-// (with a one-poll retire grace) on resolution change.
-#[cfg(target_os = "macos")]
+// presentation texture on Unity's device (Metal: one per plane; D3D11: one
+// NV12 texture, `plane` unused as in-process), stable across frames and
+// replaced (with a one-poll retire grace) on resolution change.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_player_get_video_texture(
     player_id: PlayerId,
@@ -1024,25 +1016,6 @@ pub unsafe extern "C" fn uuav_player_get_video_texture(
                 .texture_ptr(plane)
         }),
     )
-}
-
-// M4 serves the Windows presentation texture here
-#[cfg(target_os = "windows")]
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn uuav_player_get_video_texture(
-    player_id: PlayerId,
-    _plane: i32,
-    out_texture: *mut *const c_void,
-) -> ResultFFI {
-    if out_texture.is_null() {
-        return ResultFFI::error("out pointer is null");
-    }
-    match with_mirror(player_id, |_| {
-        Err::<*const c_void, _>("video texture is not available yet".to_owned())
-    }) {
-        Ok(_) => ResultFFI::ok(),
-        Err(e) => ResultFFI::error(e),
-    }
 }
 
 // ---- audio -------------------------------------------------------------

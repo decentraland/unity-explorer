@@ -255,17 +255,21 @@ fn route(
             generation,
             width,
             height,
+            handles: _, // surfaces arrive as mach ports, not handles
         } => registry::apply_texture_set(registry, id, generation, width, height),
-        #[cfg(target_os = "macos")]
+        #[cfg(target_os = "windows")]
+        ToClient::TextureSet {
+            id,
+            generation,
+            width,
+            height,
+            handles,
+        } => registry::apply_texture_set(registry, id, generation, width, height, handles),
         ToClient::FramePublished {
             id,
             generation,
             slot,
         } => registry::apply_frame_published(registry, id, generation, slot),
-        #[cfg(target_os = "windows")]
-        ToClient::TextureSet { .. } | ToClient::FramePublished { .. } => {
-            // M4: Windows shared textures
-        }
         ToClient::PlayerError { id, message } => sinks.on_player_error(id, &message),
         ToClient::Log { sink, line } => sinks.on_log(sink, &line),
         ToClient::Hello { .. } => { /* handshake is over; ignore */ }

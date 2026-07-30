@@ -37,9 +37,7 @@ pub struct PlayerMirror {
     pub last_master_clock: Mutex<Option<Instant>>,
     /// Jitter ring between the helper's audio packets and Unity's audio thread.
     pub audio: crate::audio_ring::AudioRing,
-    /// Shared-texture state (assembly + presentation), M4 adds the
-    /// Windows counterpart.
-    #[cfg(target_os = "macos")]
+    /// Shared-texture state (assembly + presentation).
     pub video: Mutex<crate::present::PlayerVideo>,
 }
 
@@ -50,7 +48,6 @@ impl PlayerMirror {
             media_info: ArcSwapOption::const_empty(),
             last_master_clock: Mutex::new(None),
             audio: crate::audio_ring::AudioRing::new(sample_rate, channels),
-            #[cfg(target_os = "macos")]
             video: Mutex::default(),
         }
     }
@@ -88,12 +85,31 @@ pub fn apply_texture_set(registry: &Registry, id: PlayerId, generation: u32, wid
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(target_os = "windows")]
+pub fn apply_texture_set(
+    registry: &Registry,
+    id: PlayerId,
+    generation: u32,
+    width: u32,
+    height: u32,
+    handles: Vec<u64>,
+) {
+    if let Some(mirror) = registry.get(&id)
+        && let Ok(mut video) = mirror.video.lock()
+    {
+        video.store_texture_set(generation, width, height, handles);
+        return;
+    }
+    // no live mirror to own the duplicated handles: close them here or they
+    // leak in Unity's process (the player was freed mid-announcement)
+    crate::present::close_handles(&handles);
+}
+
 pub fn apply_frame_published(registry: &Registry, id: PlayerId, generation: u32, slot: u8) {
-    if let Some(mirror) = registry.get(&id) {
-        if let Ok(mut video) = mirror.video.lock() {
-            video.store_published(generation, slot);
-        }
+    if let Some(mirror) = registry.get(&id)
+        && let Ok(mut video) = mirror.video.lock()
+    {
+        video.store_published(generation, slot);
     }
 }
 

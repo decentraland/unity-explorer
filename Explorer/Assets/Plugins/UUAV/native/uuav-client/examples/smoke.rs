@@ -1,14 +1,13 @@
 //! Headless end-to-end smoke of the out-of-process pipeline, no Unity
-//! involved: creates a real Metal probe texture (standing in for Unity's),
+//! involved: creates a real GPU probe texture (standing in for Unity's),
 //! walks the C ABI exactly like `UUAVRuntime`/`UUAVPlayer` do, and expects
 //! the helper process to take a stream to PLAYING.
 //!
-//! Run: `cargo build --workspace && cp .target/debug/uuav-helper .target/debug/examples/`
-//! then `cargo run -p uuav-client --example smoke [media-url]`.
+//! Run: `cargo build --workspace` (add `--target x86_64-pc-windows-gnu` on
+//! Windows), copy `uuav-helper[.exe]` — plus, on Windows, the FFmpeg DLLs
+//! and `libzmq.dll` from the deployed plugin folder — next to the example
+//! binary, then `cargo run -p uuav-client --example smoke [media-url]`.
 
-#![cfg(target_os = "macos")]
-
-use objc2_metal::{MTLCreateSystemDefaultDevice, MTLDevice as _, MTLPixelFormat, MTLTextureDescriptor};
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::time::{Duration, Instant};
@@ -49,12 +48,14 @@ fn check(step: &str, result: ResultFFI) {
     println!("{step}: ok");
 }
 
-fn main() {
-    let url = std::env::args().nth(1).unwrap_or_else(|| {
-        "https://media.w3.org/2010/05/sintel/trailer.mp4".to_owned()
-    });
+/// Stands in for Unity's probe: any live `id<MTLTexture>` works, `uuav_init`
+/// only derives the device (and blit queue) from it.
+#[cfg(target_os = "macos")]
+fn with_probe<T>(init: impl FnOnce(*const std::ffi::c_void) -> T) -> T {
+    use objc2_metal::{
+        MTLCreateSystemDefaultDevice, MTLDevice as _, MTLPixelFormat, MTLTextureDescriptor,
+    };
 
-    // stands in for Unity's probe: any live id<MTLTexture> works
     let device = MTLCreateSystemDefaultDevice().expect("no Metal device");
     let descriptor = unsafe {
         MTLTextureDescriptor::texture2DDescriptorWithPixelFormat_width_height_mipmapped(
@@ -67,19 +68,82 @@ fn main() {
     let probe = device
         .newTextureWithDescriptor(&descriptor)
         .expect("no probe texture");
+    init(objc2::rc::Retained::as_ptr(&probe).cast())
+}
+
+/// Stands in for Unity's probe: any live `ID3D11Texture2D*` works,
+/// `uuav_init` only derives the device (and its adapter LUID) from it.
+#[cfg(target_os = "windows")]
+fn with_probe<T>(init: impl FnOnce(*const std::ffi::c_void) -> T) -> T {
+    use windows::Win32::Foundation::HMODULE;
+    use windows::Win32::Graphics::Direct3D::D3D_DRIVER_TYPE_HARDWARE;
+    use windows::Win32::Graphics::Direct3D11::{
+        D3D11_BIND_SHADER_RESOURCE, D3D11_CREATE_DEVICE_FLAG, D3D11_SDK_VERSION,
+        D3D11_TEXTURE2D_DESC, D3D11_USAGE_DEFAULT, D3D11CreateDevice, ID3D11Device,
+        ID3D11Texture2D,
+    };
+    use windows::Win32::Graphics::Dxgi::Common::{DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SAMPLE_DESC};
+    use windows::core::Interface as _;
+
+    let mut device: Option<ID3D11Device> = None;
+    unsafe {
+        D3D11CreateDevice(
+            None,
+            D3D_DRIVER_TYPE_HARDWARE,
+            HMODULE::default(),
+            D3D11_CREATE_DEVICE_FLAG(0),
+            None,
+            D3D11_SDK_VERSION,
+            Some(&mut device),
+            None,
+            None,
+        )
+    }
+    .expect("D3D11CreateDevice failed");
+    let device = device.expect("D3D11CreateDevice returned no device");
+
+    let desc = D3D11_TEXTURE2D_DESC {
+        Width: 1,
+        Height: 1,
+        MipLevels: 1,
+        ArraySize: 1,
+        Format: DXGI_FORMAT_R8G8B8A8_UNORM,
+        SampleDesc: DXGI_SAMPLE_DESC {
+            Count: 1,
+            Quality: 0,
+        },
+        Usage: D3D11_USAGE_DEFAULT,
+        BindFlags: D3D11_BIND_SHADER_RESOURCE.0 as u32,
+        CPUAccessFlags: 0,
+        MiscFlags: 0,
+    };
+    let mut probe: Option<ID3D11Texture2D> = None;
+    unsafe { device.CreateTexture2D(&desc, None, Some(&mut probe)) }
+        .expect("probe CreateTexture2D failed");
+    let probe = probe.expect("CreateTexture2D returned no texture");
+    init(probe.as_raw().cast_const())
+}
+
+fn main() {
+    let url = std::env::args().nth(1).unwrap_or_else(|| {
+        "https://media.w3.org/2010/05/sintel/trailer.mp4".to_owned()
+    });
 
     let whitelist = c"https,http,tls,tcp,crypto,data,file";
-    check("uuav_init", unsafe {
-        uuav::uuav_init(
-            objc2::rc::Retained::as_ptr(&probe).cast(),
-            AUDIO,
-            Some(on_error),
-            Some(on_warning),
-            Some(on_log),
-            whitelist.as_ptr(),
-            24, // AV_LOG_WARNING
-        )
-    });
+    check(
+        "uuav_init",
+        with_probe(|probe| unsafe {
+            uuav::uuav_init(
+                probe,
+                AUDIO,
+                Some(on_error),
+                Some(on_warning),
+                Some(on_log),
+                whitelist.as_ptr(),
+                24, // AV_LOG_WARNING
+            )
+        }),
+    );
 
     let created = uuav::uuav_player_new();
     assert!(
@@ -129,7 +193,7 @@ fn main() {
     assert!(reached_playing, "player never reached PLAYING");
 
     // video: drive the render callback like Unity's render thread would and
-    // expect the shared-texture pipeline to surface presentation planes
+    // expect the shared-texture pipeline to surface presentation textures
     let render = uuav::uuav_get_render_callback();
     let mut planes: Option<(*const std::ffi::c_void, *const std::ffi::c_void)> = None;
     let video_deadline = Instant::now();
@@ -151,7 +215,11 @@ fn main() {
         std::thread::sleep(Duration::from_millis(50));
     }
     let (y, uv) = planes.expect("video planes never became available");
+    #[cfg(target_os = "macos")]
     assert_ne!(y, uv, "Y and UV planes must be distinct textures");
+    // one NV12 texture covers both planes on D3D11
+    #[cfg(target_os = "windows")]
+    assert_eq!(y, uv, "both planes must be the same NV12 texture");
 
     let mut size = uuav::VideoSize {
         width: 0,
