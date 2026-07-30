@@ -12,12 +12,16 @@ use serde::{Serialize, de::DeserializeOwned};
 /// instead of unbounded queueing.
 const HIGH_WATER_MARK: i32 = 1000;
 
+/// Bounded flush window on close: long enough for the last queued frames
+/// (the client's Shutdown, the helper's final events) to reach the wire,
+/// short enough that teardown never hangs on a gone peer.
+const LINGER_MS: i32 = 200;
+
 pub fn dealer(context: &zmq::Context) -> anyhow::Result<zmq::Socket> {
     let socket = context.socket(zmq::DEALER)?;
     socket.set_sndhwm(HIGH_WATER_MARK)?;
     socket.set_rcvhwm(HIGH_WATER_MARK)?;
-    // never let a closing socket linger on unsent frames
-    socket.set_linger(0)?;
+    socket.set_linger(LINGER_MS)?;
     Ok(socket)
 }
 
