@@ -13,13 +13,20 @@ const HELPER_FILE: &str = "uuav-helper.exe";
 
 pub fn spawn_helper(endpoint: &str, token: &str) -> Result<Child> {
     let path = helper_path()?;
-    Command::new(&path)
+    let mut command = Command::new(&path);
+    command
         .arg("--endpoint")
         .arg(endpoint)
         .arg("--token")
         .arg(token)
         .arg("--parent-pid")
-        .arg(std::process::id().to_string())
+        .arg(std::process::id().to_string());
+    // the client-registered mach service the helper sends IOSurface ports to
+    #[cfg(target_os = "macos")]
+    command
+        .arg("--service")
+        .arg(uuav_ipc::mach_channel::service_name(token));
+    command
         .spawn()
         .with_context(|| format!("failed to spawn {}", path.display()))
 }

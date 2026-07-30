@@ -248,6 +248,23 @@ fn route(
         }
         ToClient::State(update) => registry::apply_state(registry, update),
         ToClient::MediaInfo { id, info } => registry::apply_media_info(registry, id, info),
+        #[cfg(target_os = "macos")]
+        ToClient::TextureSet {
+            id,
+            generation,
+            width,
+            height,
+        } => registry::apply_texture_set(registry, id, generation, width, height),
+        #[cfg(target_os = "macos")]
+        ToClient::FramePublished {
+            id,
+            generation,
+            slot,
+        } => registry::apply_frame_published(registry, id, generation, slot),
+        #[cfg(target_os = "windows")]
+        ToClient::TextureSet { .. } | ToClient::FramePublished { .. } => {
+            // M4: Windows shared textures
+        }
         ToClient::PlayerError { id, message } => sinks.on_player_error(id, &message),
         ToClient::Log { sink, line } => sinks.on_log(sink, &line),
         ToClient::Hello { .. } => { /* handshake is over; ignore */ }

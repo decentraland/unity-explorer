@@ -36,6 +36,10 @@ pub struct PlayerMirror {
     pub media_info: ArcSwapOption<MediaInfoWire>,
     /// Throttles `assign_master_clock` forwarding (called every frame).
     pub last_master_clock: Mutex<Option<Instant>>,
+    /// Shared-texture state (assembly + presentation), M4 adds the
+    /// Windows counterpart.
+    #[cfg(target_os = "macos")]
+    pub video: Mutex<crate::present::PlayerVideo>,
 }
 
 pub type Registry = dashmap::DashMap<PlayerId, Arc<PlayerMirror>>;
@@ -52,5 +56,36 @@ pub fn apply_state(registry: &Registry, update: StateUpdateWire) {
 pub fn apply_media_info(registry: &Registry, id: PlayerId, info: MediaInfoWire) {
     if let Some(mirror) = registry.get(&id) {
         mirror.media_info.store(Some(Arc::new(info)));
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn apply_texture_set(registry: &Registry, id: PlayerId, generation: u32, width: u32, height: u32) {
+    if let Some(mirror) = registry.get(&id) {
+        if let Ok(mut video) = mirror.video.lock() {
+            video.store_texture_set(generation, width, height);
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn apply_frame_published(registry: &Registry, id: PlayerId, generation: u32, slot: u8) {
+    if let Some(mirror) = registry.get(&id) {
+        if let Ok(mut video) = mirror.video.lock() {
+            video.store_published(generation, slot);
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn apply_surface(
+    registry: &Registry,
+    tag: &uuav_ipc::mach_channel::SurfaceTag,
+    surface: objc2_core_foundation::CFRetained<objc2_io_surface::IOSurfaceRef>,
+) {
+    if let Some(mirror) = registry.get(&tag.player) {
+        if let Ok(mut video) = mirror.video.lock() {
+            video.store_surface(tag, surface);
+        }
     }
 }

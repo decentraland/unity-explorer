@@ -39,6 +39,10 @@ mod platform;
 #[path = "platform_windows.rs"]
 mod platform;
 
+#[cfg(target_os = "macos")]
+#[path = "present_macos.rs"]
+mod present;
+
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 compile_error!("uuav supports Windows (D3D11) and macOS (Metal) only");
 
@@ -217,6 +221,9 @@ struct Client {
     audio_options: ArcSwap<AudioOptionsRaw>,
     sinks: Arc<CallbackSinks>,
     child: Arc<Mutex<Child>>,
+    /// Unity's Metal device + the blit queue presentation copies run on.
+    #[cfg(target_os = "macos")]
+    unity: Arc<platform::UnityDevice>,
 }
 
 impl Client {
@@ -331,6 +338,9 @@ pub const extern "C" fn uuav_abi_version() -> *const c_char {
     concat!(env!("CARGO_PKG_VERSION"), '\0').as_ptr().cast()
 }
 
+// linear init sequence (validate, capture device, spawn, handshake,
+// configure); splitting it would only scatter the order
+#[allow(clippy::too_many_lines)]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_init(
     texture: *const c_void,
@@ -358,6 +368,15 @@ pub unsafe extern "C" fn uuav_init(
         return ResultFFI::error("Texture to capture the HwDevice from is not provided");
     }
 
+    #[cfg(target_os = "macos")]
+    let unity = match unsafe { platform::capture_probe(texture) } {
+        Ok(unity) => Arc::new(unity),
+        Err(e) => return ResultFFI::error(e.to_string()),
+    };
+    #[cfg(target_os = "macos")]
+    let adapter = unity.registry_id;
+
+    #[cfg(target_os = "windows")]
     let adapter = match unsafe { platform::adapter_of_probe(texture) } {
         Ok(adapter) => adapter,
         Err(e) => return ResultFFI::error(e.to_string()),
@@ -386,6 +405,17 @@ pub unsafe extern "C" fn uuav_init(
     let registry: Arc<Registry> = Arc::new(Registry::new());
 
     let token = uuid::Uuid::new_v4().simple().to_string();
+
+    // the surface-port channel must exist before the helper looks it up
+    #[cfg(target_os = "macos")]
+    let mach_receiver = {
+        let service = uuav_ipc::mach_channel::service_name(&token);
+        match uuav_ipc::mach_channel::Receiver::register(&service) {
+            Ok(receiver) => receiver,
+            Err(e) => return ResultFFI::error(format!("mach channel: {e}")),
+        }
+    };
+
     let mut child: Option<Child> = None;
     let conn = Connection::establish(
         &token,
@@ -393,7 +423,7 @@ pub unsafe extern "C" fn uuav_init(
             child = Some(spawn::spawn_helper(endpoint, &token)?);
             Ok(())
         },
-        lifecycle,
+        Arc::clone(&lifecycle),
         Arc::clone(&registry),
         Arc::clone(&sinks) as Arc<dyn EventSinks>,
     );
@@ -429,17 +459,58 @@ pub unsafe extern "C" fn uuav_init(
         return ResultFFI::error(e);
     }
 
+    #[cfg(target_os = "macos")]
+    spawn_mach_receiver(mach_receiver, Arc::clone(&registry), Arc::clone(&lifecycle));
+
     let client = Arc::new(Client {
         conn,
         registry,
         audio_options: ArcSwap::new(Arc::new(audio_options)),
         sinks,
         child: Arc::new(Mutex::new(child)),
+        #[cfg(target_os = "macos")]
+        unity,
     });
     spawn_child_monitor(&client);
     CLIENT.store(Some(client));
 
     ResultFFI::ok()
+}
+
+/// Owns the mach receive right on a dedicated thread: every transferred
+/// surface lands in the matching player mirror. Exits (destroying the
+/// right) as soon as the lifecycle leaves Running.
+#[cfg(target_os = "macos")]
+fn spawn_mach_receiver(
+    receiver: uuav_ipc::mach_channel::Receiver,
+    registry: Arc<Registry>,
+    lifecycle: Arc<LifecycleCell>,
+) {
+    _ = std::thread::Builder::new()
+        .name("uuav-mach".into())
+        .spawn(move || {
+            while lifecycle.get() == Lifecycle::Running {
+                match receiver.recv(200) {
+                    Ok(Some((tag, port))) => {
+                        let surface =
+                            objc2_io_surface::IOSurfaceRef::lookup_from_mach_port(port);
+                        // the lookup retained the surface; the transferred
+                        // send right itself is no longer needed
+                        unsafe {
+                            mach2::mach_port::mach_port_deallocate(
+                                mach2::traps::mach_task_self(),
+                                port,
+                            );
+                        }
+                        if let Some(surface) = surface {
+                            registry::apply_surface(&registry, &tag, surface);
+                        }
+                    }
+                    Ok(None) => {}
+                    Err(_) => return,
+                }
+            }
+        });
 }
 
 #[unsafe(no_mangle)]
@@ -875,8 +946,47 @@ pub extern "C" fn uuav_player_get_rate(player_id: PlayerId) -> f64 {
 // Unity's UnityRenderingEvent signature
 pub type UUAVRenderEvent = extern "C" fn(event_id: i32);
 
-// [render] entry point issued via GL.IssuePluginEvent; M2 copies the
-// helper's published shared slot into the presentation texture here
+// [render] entry point issued via GL.IssuePluginEvent; copies the helper's
+// latest published shared slot into the presentation planes (and completes
+// any pending texture-set wrap, acking it to the helper)
+#[cfg(target_os = "macos")]
+extern "C" fn uuav_render_event(event_id: i32) {
+    let Ok(player_id) = PlayerId::try_from(event_id) else {
+        return;
+    };
+    let state = CLIENT.load();
+    let Some(client) = state.as_ref() else {
+        return;
+    };
+    let Some(mirror) = client.mirror(player_id) else {
+        return;
+    };
+
+    let ack = {
+        let Ok(mut video) = mirror.video.lock() else {
+            return;
+        };
+        match video.present(&client.unity) {
+            Ok(ack) => ack,
+            Err(e) => {
+                client
+                    .sinks
+                    .on_player_error(Some(player_id), &format!("present failed: {e}"));
+                return;
+            }
+        }
+    };
+
+    if let Some(generation) = ack {
+        _ = client.conn.send(ToServer::TextureSetAck {
+            id: player_id,
+            generation,
+        });
+    }
+}
+
+// M4 wires the Windows shared-texture presentation here
+#[cfg(target_os = "windows")]
 const extern "C" fn uuav_render_event(_event_id: i32) {}
 
 // pass to GL.IssuePluginEvent
@@ -885,7 +995,30 @@ pub const extern "C" fn uuav_get_render_callback() -> UUAVRenderEvent {
     uuav_render_event
 }
 
-// M2 returns the client-owned presentation texture on Unity's device here
+// Valid from the first presented frame; the pointer is a client-owned
+// presentation plane on Unity's device, stable across frames and replaced
+// (with a one-poll retire grace) on resolution change.
+#[cfg(target_os = "macos")]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn uuav_player_get_video_texture(
+    player_id: PlayerId,
+    plane: i32,
+    out_texture: *mut *const c_void,
+) -> ResultFFI {
+    write_out(
+        out_texture,
+        with_mirror(player_id, |mirror| {
+            mirror
+                .video
+                .lock()
+                .map_err(|_| "video state is poisoned".to_owned())?
+                .texture_ptr(plane)
+        }),
+    )
+}
+
+// M4 serves the Windows presentation texture here
+#[cfg(target_os = "windows")]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_player_get_video_texture(
     player_id: PlayerId,

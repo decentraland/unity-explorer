@@ -124,6 +124,48 @@ fn main() {
     }
     assert!(reached_playing, "player never reached PLAYING");
 
+    // video: drive the render callback like Unity's render thread would and
+    // expect the shared-texture pipeline to surface presentation planes
+    let render = uuav::uuav_get_render_callback();
+    let mut planes: Option<(*const std::ffi::c_void, *const std::ffi::c_void)> = None;
+    let video_deadline = Instant::now();
+    while video_deadline.elapsed() < Duration::from_secs(10) {
+        render(player as i32);
+        let mut y: *const std::ffi::c_void = std::ptr::null();
+        let mut uv: *const std::ffi::c_void = std::ptr::null();
+        let y_result = unsafe { uuav::uuav_player_get_video_texture(player, 0, &mut y) };
+        let uv_result = unsafe { uuav::uuav_player_get_video_texture(player, 1, &mut uv) };
+        for r in [y_result, uv_result] {
+            if !r.error_message.is_null() {
+                unsafe { uuav::uuav_string_free(r.error_message.cast_mut()) };
+            }
+        }
+        if !y.is_null() && !uv.is_null() {
+            planes = Some((y, uv));
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    let (y, uv) = planes.expect("video planes never became available");
+    assert_ne!(y, uv, "Y and UV planes must be distinct textures");
+
+    let mut size = uuav::VideoSize {
+        width: 0,
+        height: 0,
+    };
+    check("get_video_size", unsafe {
+        uuav::uuav_player_get_video_size(player, &mut size)
+    });
+    println!("video planes ready: {}x{} (y {y:?}, uv {uv:?})", size.width, size.height);
+
+    // pointer stability: the presentation planes must not churn per frame
+    std::thread::sleep(Duration::from_millis(300));
+    render(player as i32);
+    let mut y_again: *const std::ffi::c_void = std::ptr::null();
+    let again = unsafe { uuav::uuav_player_get_video_texture(player, 0, &mut y_again) };
+    assert!(again.error_message.is_null() && y_again == y, "plane pointer churned");
+    println!("plane pointers stable across frames");
+
     let status = uuav::uuav_status();
     println!(
         "status: initialized={} players={}",
