@@ -15,7 +15,9 @@ namespace UUAV.Example
         [SerializeField] private Toggle loopingToggle;
         [SerializeField] private TMP_InputField urlInput;
         [SerializeField] private TMP_Text statusText;
- 
+
+        [SerializeField] private Slider timelineSlider;
+        private bool isSeekIntentActive;
 
         [Header("Debug")]
         [SerializeField] private UUAVPlayer player;
@@ -30,6 +32,7 @@ namespace UUAV.Example
             Assert.IsNotNull(urlInput);
             Assert.IsNotNull(statusText);
             Assert.IsNotNull(loopingToggle);
+            Assert.IsNotNull(timelineSlider);
 
             player = UUAVPlayer.New();
 
@@ -46,7 +49,9 @@ namespace UUAV.Example
         {
             surface.texture = player.CurrentTexture;
             statusText.text = player.State.ToStringNoAlloc();
+
+            timelineSlider.maxValue = (float)player.Duration;
+            timelineSlider.value = (float)player.CurrentTime;
         }
     }
 }
-
