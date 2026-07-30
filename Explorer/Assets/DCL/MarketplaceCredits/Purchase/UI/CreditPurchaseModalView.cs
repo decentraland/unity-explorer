@@ -27,7 +27,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         [field: Header("Price and balance")]
         [field: SerializeField] public TMP_Text PriceCreditsText { get; private set; } = null!;
+        [field: SerializeField] public GameObject PriceLoadingSpinner { get; private set; } = null!;
         [field: SerializeField] public TMP_Text BalanceCreditsText { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text CannotAffortText { get; private set; } = null!;
         [field: SerializeField] public GameObject BalanceLoadingSpinner { get; private set; } = null!;
         [field: SerializeField] public GameObject InsufficientCreditsContainer { get; private set; } = null!;
         [field: SerializeField] public Button GetCreditsButton { get; private set; } = null!;

@@ -23,6 +23,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             Failed,
         }
 
+        private const string CANNOT_AFFORD_TEXT = "You will need to buy <b>{0}</b> Credits to purchase this item.";
         private const float NORMAL_HEIGHT = 491;
         private const float PURCHASING_HEIGHT = 371;
         private const float INSUFFICIENT_CREDITS_HEIGHT = 622;
@@ -85,6 +86,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.RarityLabel.color = inputData.RarityColor;
                 viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
                 viewInstance.PriceCreditsText.text = string.Empty;
+                viewInstance.PriceLoadingSpinner.SetActive(true);
 
                 if (inputData.ItemThumbnail != null)
                 {
@@ -171,7 +173,10 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             quote = resolved;
 
             if (viewInstance != null)
+            {
+                viewInstance.PriceLoadingSpinner.SetActive(false);
                 viewInstance.PriceCreditsText.text = resolved.IsLiveRatePrice ? $"≈{resolved.Credits}" : resolved.Credits.ToString();
+            }
 
             try
             {
@@ -180,10 +185,14 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 if (ct.IsCancellationRequested)
                     return;
 
-                if (viewInstance != null)
-                    viewInstance.BalanceCreditsText.text = credits.usd.credits.ToString();
+                bool canAfford = CanAfford(resolved, credits);
 
-                SetUiState(CanAfford(resolved, credits) ? ModalState.ReadyToConfirm : ModalState.InsufficientCredits);
+                if (viewInstance != null) {
+                    viewInstance.CannotAffortText.text = string.Format(CANNOT_AFFORD_TEXT, resolved.Credits - credits.usd.credits);
+                    viewInstance.BalanceCreditsText.text = credits.usd.credits.ToString();
+                }
+
+                SetUiState(canAfford ? ModalState.ReadyToConfirm : ModalState.InsufficientCredits);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -393,6 +402,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             viewInstance.FailedStateContainer.SetActive(newState == ModalState.Failed);
             viewInstance.InsufficientCreditsContainer.SetActive(newState == ModalState.InsufficientCredits);
             viewInstance.BalanceLoadingSpinner.SetActive(newState == ModalState.LoadingBalance);
+            viewInstance.BalanceCreditsText.gameObject.SetActive(newState != ModalState.LoadingBalance);
             viewInstance.Item.SetActive(newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits);
 
             viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
