@@ -41,6 +41,23 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void DeclareAnAnyFieldByOmittingItsTypeAndAnAnyArrayAsAnUnconstrainedArray()
+        {
+            JObject schema = McpJsonSchema.Object()
+                                           .Any("value", "anything")
+                                           .AnyArray("parameters")
+                                           .Build();
+
+            var properties = (JObject)schema["properties"]!;
+
+            // JSON Schema spells "any type" as the absence of "type", not as a type name.
+            Assert.That(((JObject)properties["value"]!).ContainsKey("type"), Is.False);
+            Assert.That(properties["value"]!["description"]!.Value<string>(), Is.EqualTo("anything"));
+            Assert.That(properties["parameters"]!["type"]!.Value<string>(), Is.EqualTo("array"));
+            Assert.That(((JObject)properties["parameters"]!).ContainsKey("items"), Is.False);
+        }
+
+        [Test]
         public void OmitDescriptionAndEnumWhenNotProvided()
         {
             JObject schema = McpJsonSchema.Object().String("name").Build();

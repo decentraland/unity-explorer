@@ -25,6 +25,8 @@ namespace DCL.WebRequests.Analytics
 
         private DebugMetricsAnalyticsHandler debugMetricsAnalyticsHandler;
 
+        private McpNetworkAnalyticsHandler mcpNetworkAnalyticsHandler;
+
         public IWebRequestController WebRequestController { get; private set; }
 
         public IWebRequestController SceneWebRequestController { get; private set; }
@@ -32,6 +34,14 @@ namespace DCL.WebRequests.Analytics
         public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; }
 
         public ChromeDevToolHandler ChromeDevToolHandler { get; private set; }
+
+        /// <summary>
+        ///     Ring buffer of recent HTTP activity for the MCP <c>get_network_log</c> tool, fed by
+        ///     <see cref="McpNetworkAnalyticsHandler" />. Null until <see cref="EnableMcpNetworkLog" /> creates it:
+        ///     capturing a request costs a lock, a timestamp and three string allocations, and retains its full URL,
+        ///     none of which a client without the MCP server — the buffer's only reader — has any use for.
+        /// </summary>
+        public McpNetworkLogBuffer? NetworkLogBuffer { get; private set; }
 
         private WebRequestsContainer() { }
 
@@ -123,7 +133,10 @@ namespace DCL.WebRequests.Analytics
 
                 WebRequestsDumper.Instance.AnalyticsHandler = dumpHandler;
 
-                var analyticsContainer = new WebRequestsAnalyticsContainer(sentryWebRequestHandler, dumpHandler, debugHandler, chromeDevtoolProtocolHandler);
+                var mcpNetworkHandler = new McpNetworkAnalyticsHandler();
+                container.mcpNetworkAnalyticsHandler = mcpNetworkHandler;
+
+                var analyticsContainer = new WebRequestsAnalyticsContainer(sentryWebRequestHandler, dumpHandler, debugHandler, chromeDevtoolProtocolHandler, mcpNetworkHandler);
 
                 var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
 
@@ -229,6 +242,18 @@ namespace DCL.WebRequests.Analytics
             });
 
             return container;
+        }
+
+        /// <summary>
+        ///     Creates <see cref="NetworkLogBuffer" /> and starts recording finished requests into it. Separate from
+        ///     <see cref="CreateAsync" /> because the feature registry that decides whether the MCP server runs is
+        ///     initialized after this container is built.
+        /// </summary>
+        public void EnableMcpNetworkLog()
+        {
+            var buffer = new McpNetworkLogBuffer();
+            NetworkLogBuffer = buffer;
+            mcpNetworkAnalyticsHandler.StartRecording(buffer);
         }
 
         public void SetKTXEnabled(bool enabled)

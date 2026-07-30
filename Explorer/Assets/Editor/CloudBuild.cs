@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEngine;
 
 namespace Editor
@@ -16,6 +17,12 @@ namespace Editor
     {
         [PublicAPI]
         public static Dictionary<string, object> Parameters { get; private set; }
+
+        /// <summary>
+        ///     Gates the MCP server's client-UI automation and reflection tools. On by default so local and QA
+        ///     builds have it; removed for release, where those tools have no consumer.
+        /// </summary>
+        private const string MCP_TEST_AUTOMATION_DEFINE = "MCP_TEST_AUTOMATION";
 
         private static string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
@@ -68,6 +75,12 @@ namespace Editor
             {
                 Debug.Log("[ALTTESTER]: Release build — removing AltTester scripting define");
                 AltBuilder.RemoveAltTesterFromScriptingDefineSymbols(BuildTargetGroup.Standalone);
+
+                // The MCP server itself stays in release builds — Creator Tools drives the installed client through
+                // it. Only the client-UI automation and reflection surface is removed: no creator flow uses it, and
+                // it must not be present if the server ever becomes reachable without a command line.
+                Debug.Log($"[MCP]: Release build — removing the {MCP_TEST_AUTOMATION_DEFINE} scripting define");
+                RemoveScriptingDefineSymbol(NamedBuildTarget.Standalone, MCP_TEST_AUTOMATION_DEFINE);
             }
 
             DesktopStandaloneSettings.CopyPDBFiles = true;
@@ -78,6 +91,35 @@ namespace Editor
         public static void PostExport()
         {
             Debug.Log($"~~ {nameof(CloudBuild)} PostExport ~~");
+        }
+
+        /// <summary>
+        ///     Drops <paramref name="symbol" /> from the player's scripting defines, then reads the defines back and
+        ///     fails the build if it survived. The write only mutates in-memory PlayerSettings, so a renamed symbol,
+        ///     the wrong build target or a settings reload leaves it defined and ships the code it gates.
+        /// </summary>
+        private static void RemoveScriptingDefineSymbol(NamedBuildTarget buildTarget, string symbol)
+        {
+            var kept = new List<string>();
+
+            foreach (string define in PlayerSettings.GetScriptingDefineSymbols(buildTarget).Split(';'))
+            {
+                string trimmed = define.Trim();
+
+                if (trimmed.Length > 0 && trimmed != symbol)
+                    kept.Add(trimmed);
+            }
+
+            PlayerSettings.SetScriptingDefineSymbols(buildTarget, string.Join(";", kept));
+
+            foreach (string define in PlayerSettings.GetScriptingDefineSymbols(buildTarget).Split(';'))
+            {
+                if (define.Trim() == symbol)
+                {
+                    Debug.LogError($"[DEFINES]: {symbol} is still defined for {buildTarget.TargetName} after removing it — failing the build instead of shipping the code it gates");
+                    throw new BuildFailedException($"Could not remove the {symbol} scripting define from {buildTarget.TargetName}");
+                }
+            }
         }
 
         private static void WriteReleaseStoreToBuildData(string installSource)
