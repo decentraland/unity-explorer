@@ -19,5 +19,8 @@
 pub mod protocol;
 pub mod socket;
 
+#[cfg(target_os = "macos")]
+pub mod mach_channel;
+
 // single place that pins the zmq version/features for every crate
 pub use zmq;

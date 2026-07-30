@@ -12,3 +12,8 @@ serde = { version = "1.0", features = ["derive"] }
 # Pinned to 0.9.2: the 0.10 line dropped external-lib linking (its zmq-sys
 # always builds a vendored static libzmq).
 zmq = { version = "=0.9.2", default-features = false }
+
+# mach message plumbing for the IOSurface port channel (zmq cannot carry
+# mach port rights)
+[target.'cfg(target_os = "macos")'.dependencies]
+mach2 = "0.4"

@@ -177,6 +177,23 @@ pub enum ToClient {
         id: PlayerId,
         info: MediaInfoWire,
     },
+    /// A new shared-texture generation for the player: 3 slots x 2 planes.
+    /// On macOS the actual IOSurface mach ports travel out-of-band on the
+    /// mach channel, tagged (id, generation, slot, plane); the client
+    /// assembles the set and answers with `TextureSetAck`.
+    TextureSet {
+        id: PlayerId,
+        generation: u32,
+        width: u32,
+        height: u32,
+    },
+    /// The helper finished writing a frame into `slot` (GPU work complete);
+    /// the client's next render event may consume it.
+    FramePublished {
+        id: PlayerId,
+        generation: u32,
+        slot: u8,
+    },
     /// Player-level failure surfaced through the core's error callback.
     PlayerError {
         id: Option<PlayerId>,
