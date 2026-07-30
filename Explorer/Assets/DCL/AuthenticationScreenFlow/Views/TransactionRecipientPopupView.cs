@@ -12,9 +12,9 @@ namespace DCL.AuthenticationScreenFlow
     /// </summary>
     public class TransactionRecipientPopupView : MonoBehaviour
     {
-        [SerializeField] private TMP_Text description;
-        [SerializeField] private Button cancelButton;
-        [SerializeField] private Button confirmButton;
+        [SerializeField] private TMP_Text description = null!;
+        [SerializeField] private Button cancelButton = null!;
+        [SerializeField] private Button confirmButton = null!;
 
         public async UniTask<bool> ShowAsync(string descriptionText, CancellationToken ct)
         {

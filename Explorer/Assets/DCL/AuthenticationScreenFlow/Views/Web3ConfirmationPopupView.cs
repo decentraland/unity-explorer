@@ -12,38 +12,38 @@ namespace DCL.AuthenticationScreenFlow
     [Serializable]
     public class Web3ConfirmationPopupConfig
     {
-        public string ConfirmButtonText;
-        public string Title;
+        public string ConfirmButtonText = null!;
+        public string Title = null!;
         [Multiline]
-        public string Description;
+        public string Description = null!;
     }
 
     public class Web3ConfirmationPopupView : ViewBase
     {
         [Space]
-        [SerializeField] private TMP_Text title;
-        [SerializeField] private TMP_Text description;
+        [SerializeField] private TMP_Text title = null!;
+        [SerializeField] private TMP_Text description = null!;
 
         [Space]
-        [SerializeField] private Button cancelButton;
-        [SerializeField] private Button continueButton;
-        [SerializeField] private TMP_Text continueButtonText;
+        [SerializeField] private Button cancelButton = null!;
+        [SerializeField] private Button continueButton = null!;
+        [SerializeField] private TMP_Text continueButtonText = null!;
 
         [Header("TRANSACTION")]
-        [SerializeField] private GameObject transactionInfoPanel;
+        [SerializeField] private GameObject transactionInfoPanel = null!;
         [Space]
-        [SerializeField] private TMP_Text balanceValue;
-        [SerializeField] private TMP_Text costValue;
-        [SerializeField] private TMP_Text estimatedGasFeeValue;
+        [SerializeField] private TMP_Text balanceValue = null!;
+        [SerializeField] private TMP_Text costValue = null!;
+        [SerializeField] private TMP_Text estimatedGasFeeValue = null!;
 
         [Header("RAW REQUEST")]
-        [SerializeField] private GameObject rawRequestPanel;
-        [SerializeField] private ScrollRect rawRequestScroll;
-        [SerializeField] private TMP_Text rawRequestText;
+        [SerializeField] private GameObject rawRequestPanel = null!;
+        [SerializeField] private ScrollRect rawRequestScroll = null!;
+        [SerializeField] private TMP_Text rawRequestText = null!;
 
         [Space]
-        [SerializeField] private Web3ConfirmationPopupConfig transactionConfig;
-        [SerializeField] private Web3ConfirmationPopupConfig signingConfig;
+        [SerializeField] private Web3ConfirmationPopupConfig transactionConfig = null!;
+        [SerializeField] private Web3ConfirmationPopupConfig signingConfig = null!;
 
         /// <summary>
         ///     Replaces the confirm label when a second step follows, so the button does not read as the
@@ -52,7 +52,7 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private string nextStepButtonText = "CONTINUE";
 
         [Header("RECIPIENT CONFIRMATION")]
-        [SerializeField] private TransactionRecipientPopupView recipientPopup;
+        [SerializeField] private TransactionRecipientPopupView recipientPopup = null!;
 
         /// <summary>
         ///     Asks for confirmation of the transaction or signature, followed by a confirmation of the

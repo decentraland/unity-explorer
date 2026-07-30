@@ -49,7 +49,7 @@ namespace DCL.AuthenticationScreenFlow
             $"Are you sure you want to send {amount} to {HighlightLink(address, "@" + name)}?";
 
         public static string SceneCreatorDescription(string amount, string? sceneName) =>
-            $"Are you sure you want to send {amount} to the creator of {Highlight(string.IsNullOrEmpty(sceneName) ? "this scene" : sceneName!)}?";
+            $"Are you sure you want to send {amount} to the creator of {Highlight(string.IsNullOrEmpty(sceneName) ? "this scene" : sceneName)}?";
 
         public static string ExternalWalletDescription(string amount, string address) =>
             $"Are you sure you want to send {amount} to a wallet outside of Decentraland: {Highlight(address)}?";
@@ -72,7 +72,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private static bool IsMana(string? tokenContract) =>
-            !string.IsNullOrEmpty(tokenContract) && MANA_CONTRACTS.Contains(tokenContract!);
+            !string.IsNullOrEmpty(tokenContract) && MANA_CONTRACTS.Contains(tokenContract);
 
         private static string FormatUnits(BigInteger amount)
         {

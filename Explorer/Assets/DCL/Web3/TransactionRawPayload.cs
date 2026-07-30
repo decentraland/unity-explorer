@@ -55,7 +55,7 @@ namespace DCL.Web3
             if (string.IsNullOrEmpty(json))
                 return json;
 
-            try { return JToken.Parse(json!).ToString(Formatting.Indented); }
+            try { return JToken.Parse(json).ToString(Formatting.Indented); }
             catch (JsonException) { return json; }
         }
     }

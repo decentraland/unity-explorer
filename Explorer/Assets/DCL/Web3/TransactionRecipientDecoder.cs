@@ -74,7 +74,7 @@ namespace DCL.Web3
         private const int ADDRESS_LENGTH = 40; // 20 bytes
         private const int ERC20_TRANSFER_LENGTH = SELECTOR_LENGTH + (WORD_LENGTH * 2);
 
-        private static DecodedTransaction Unknown => new (TransactionKind.Unknown, string.Empty, BigInteger.Zero, null);
+        private static readonly DecodedTransaction unknown = new (TransactionKind.Unknown, string.Empty, BigInteger.Zero, null);
 
         public static DecodedTransaction Decode(string? to, string? value, string? data)
         {
@@ -85,7 +85,7 @@ namespace DCL.Web3
             if (cleanData.Length == 0)
                 return toAddress.Length > 0
                     ? new DecodedTransaction(TransactionKind.NativeTransfer, toAddress, ParseHex(value), null)
-                    : Unknown;
+                    : unknown;
 
             // ERC-20 transfer(address,uint256): recipient and amount come from the calldata. Only the
             // exact shape counts. A summary of this call states the token amount and nothing else, so
@@ -102,7 +102,7 @@ namespace DCL.Web3
             }
 
             // Opaque contract call: the contract it targets is not a recipient.
-            return Unknown;
+            return unknown;
         }
 
         /// <summary>
@@ -112,14 +112,14 @@ namespace DCL.Web3
         /// </summary>
         public static bool TryDecodeMetaTransaction(string? typedDataJson, out DecodedTransaction decoded)
         {
-            decoded = Unknown;
+            decoded = unknown;
 
             if (string.IsNullOrEmpty(typedDataJson))
                 return false;
 
             try
             {
-                var typedData = JObject.Parse(typedDataJson!);
+                var typedData = JObject.Parse(typedDataJson);
 
                 if (!string.Equals(typedData["primaryType"]?.ToString(), META_TRANSACTION_TYPE, StringComparison.Ordinal))
                     return false;
@@ -145,7 +145,7 @@ namespace DCL.Web3
             if (string.IsNullOrEmpty(hex))
                 return string.Empty;
 
-            return hex!.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? hex[2..] : hex;
+            return hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? hex[2..] : hex;
         }
 
         private static BigInteger ParseHex(string? hexValue)
