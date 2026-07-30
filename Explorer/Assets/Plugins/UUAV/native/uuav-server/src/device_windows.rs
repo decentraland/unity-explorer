@@ -17,7 +17,6 @@ use windows::core::Interface as _;
 
 pub struct ProbeDevice {
     probe: ID3D11Texture2D,
-    #[allow(dead_code)] // retained so the device outlives the core's borrow of it
     device: ID3D11Device,
 }
 
@@ -54,6 +53,12 @@ impl ProbeDevice {
     /// The `ID3D11Texture2D*` pointer for the core's `uuav_init`.
     pub fn probe_ptr(&self) -> *const c_void {
         self.probe.as_raw().cast_const()
+    }
+
+    /// The helper's own device the core decodes and presents on; the video
+    /// pump creates its shared slots on the same device.
+    pub const fn device(&self) -> &ID3D11Device {
+        &self.device
     }
 }
 

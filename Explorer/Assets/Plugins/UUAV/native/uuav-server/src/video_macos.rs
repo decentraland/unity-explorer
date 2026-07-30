@@ -260,6 +260,8 @@ fn announce(
             generation,
             width,
             height,
+            // surfaces travel as mach ports, not handles
+            handles: Vec::new(),
         },
     )
 }

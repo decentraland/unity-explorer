@@ -27,5 +27,7 @@ windows = { version = "0.61", features = [
     "Win32_Graphics_Direct3D11",
     "Win32_Graphics_Dxgi",
     "Win32_Graphics_Dxgi_Common",
+    # SECURITY_ATTRIBUTES in CreateSharedHandle's signature
+    "Win32_Security",
     "Win32_System_Threading",
 ] }

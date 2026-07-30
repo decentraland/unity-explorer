@@ -35,6 +35,9 @@ mod device;
 #[cfg(target_os = "macos")]
 #[path = "video_macos.rs"]
 mod video;
+#[cfg(target_os = "windows")]
+#[path = "video_windows.rs"]
+mod video;
 
 #[cfg(target_os = "macos")]
 #[path = "watch_macos.rs"]
@@ -113,5 +116,7 @@ fn main() -> anyhow::Result<()> {
         &socket,
         #[cfg(target_os = "macos")]
         &args.service,
+        #[cfg(target_os = "windows")]
+        args.parent_pid,
     )
 }

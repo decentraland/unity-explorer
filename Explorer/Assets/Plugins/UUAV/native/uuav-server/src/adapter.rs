@@ -18,7 +18,6 @@ use uuav_ipc::{socket, zmq};
 const PUMP_INTERVAL: Duration = Duration::from_millis(20);
 
 /// Video tick cadence (~60 Hz): render event + slot copy + publish.
-#[cfg(target_os = "macos")]
 const VIDEO_INTERVAL: Duration = Duration::from_millis(16);
 
 /// Audio pull cadence; each pull covers the wall-clock elapsed since the
@@ -73,13 +72,13 @@ struct Serve {
     audio: Option<uuav_ipc::protocol::AudioOptionsWire>,
     /// Reused pull buffer (sized for [`AUDIO_MAX_PULL`]).
     audio_scratch: Vec<f32>,
-    #[cfg(target_os = "macos")]
     video: Option<crate::video::VideoPump>,
 }
 
 pub fn run(
     socket: &zmq::Socket,
     #[cfg(target_os = "macos")] service: &str,
+    #[cfg(target_os = "windows")] parent_pid: u32,
 ) -> anyhow::Result<()> {
     let (tx, rx) = unbounded();
     _ = FORWARD.set(tx);
@@ -89,12 +88,10 @@ pub fn run(
         players: HashMap::new(),
         audio: None,
         audio_scratch: Vec::new(),
-        #[cfg(target_os = "macos")]
         video: None,
     };
     let mut last_pump = Instant::now();
     let mut last_audio = Instant::now();
-    #[cfg(target_os = "macos")]
     let mut last_video = Instant::now();
 
     loop {
@@ -107,6 +104,8 @@ pub fn run(
                 &mut serve,
                 #[cfg(target_os = "macos")]
                 service,
+                #[cfg(target_os = "windows")]
+                parent_pid,
             )? {
                 core::uuav_deinit();
                 return Ok(());
@@ -126,7 +125,6 @@ pub fn run(
             pump_audio(socket, &mut serve, elapsed)?;
         }
 
-        #[cfg(target_os = "macos")]
         if last_video.elapsed() >= VIDEO_INTERVAL {
             last_video = Instant::now();
             if let Some(video) = serve.video.as_mut() {
@@ -142,6 +140,7 @@ fn dispatch(
     message: ToServer,
     serve: &mut Serve,
     #[cfg(target_os = "macos")] service: &str,
+    #[cfg(target_os = "windows")] parent_pid: u32,
 ) -> anyhow::Result<bool> {
     let players = &mut serve.players;
     match message {
@@ -156,12 +155,13 @@ fn dispatch(
             if result.is_ok() {
                 serve.audio = Some(audio);
             }
-            #[cfg(target_os = "macos")]
             let result = result.and_then(|()| {
                 let probe = serve.probe.as_ref().ok_or("probe device is missing")?;
-                serve.video = Some(
-                    crate::video::VideoPump::new(probe, service).map_err(|e| e.to_string())?,
-                );
+                #[cfg(target_os = "macos")]
+                let pump = crate::video::VideoPump::new(probe, service);
+                #[cfg(target_os = "windows")]
+                let pump = crate::video::VideoPump::new(probe, parent_pid);
+                serve.video = Some(pump.map_err(|e| e.to_string())?);
                 Ok(())
             });
             reply(socket, corr, result.map(|()| ReplyBody::Unit))?;
@@ -186,7 +186,6 @@ fn dispatch(
         ToServer::PlayerFree { id } => {
             core::uuav_player_free(id);
             players.remove(&id);
-            #[cfg(target_os = "macos")]
             if let Some(video) = serve.video.as_mut() {
                 video.remove_player(id);
             }
@@ -229,15 +228,10 @@ fn dispatch(
                 state::consume_result(core::uuav_player_assign_master_clock(id, time));
             report_command_error(socket, id, "assign master clock", outcome)?;
         }
-        #[cfg(target_os = "macos")]
         ToServer::TextureSetAck { id, generation } => {
             if let Some(video) = serve.video.as_mut() {
                 video.ack(id, generation);
             }
-        }
-        #[cfg(target_os = "windows")]
-        ToServer::TextureSetAck { .. } => {
-            // M4: Windows shared texture generations
         }
         ToServer::Shutdown => return Ok(true),
     }
@@ -375,12 +369,12 @@ fn pump_states(
     for (&id, tracking) in players.iter_mut() {
         socket::send(socket, &ToClient::State(state::snapshot(id))).context("send State")?;
 
-        if !tracking.media_info_sent {
-            if let Some(info) = state::media_info(id) {
-                tracking.media_info_sent = true;
-                socket::send(socket, &ToClient::MediaInfo { id, info })
-                    .context("send MediaInfo")?;
-            }
+        if !tracking.media_info_sent
+            && let Some(info) = state::media_info(id)
+        {
+            tracking.media_info_sent = true;
+            socket::send(socket, &ToClient::MediaInfo { id, info })
+                .context("send MediaInfo")?;
         }
     }
     Ok(())
