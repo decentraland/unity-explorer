@@ -238,7 +238,7 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = webRequestsContainer;
-            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, new LocalPortableExperienceCache(container.WebRequestsContainer.WebRequestController), launchMode, decentralandUrlsSource);
             container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
             container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 

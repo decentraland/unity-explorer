@@ -779,6 +779,7 @@ namespace Global.Dynamic
                     uiShellContainer.MvcManager,
                     wearableContainer.ThumbnailProvider,
                     identityCache),
+                new PortableExperienceAuthorizationPopupPlugin(assetsProvisioner, uiShellContainer.MvcManager),
                 new AvatarLocomotionOverridesGlobalPlugin(),
                 new JumpIndicatorPlugin(assetsProvisioner),
                 new SpringBonesPlugin(springBoneSimulationSettings),

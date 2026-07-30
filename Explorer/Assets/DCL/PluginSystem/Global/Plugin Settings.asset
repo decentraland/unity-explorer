@@ -70,6 +70,7 @@ MonoBehaviour:
   - rid: 4938242198007709791
   - rid: 2872862648882692098
   - rid: 3414978285727645698
+  - rid: 1410421217730756608
   - rid: 5034765029205082208
   - rid: 2008243996523495520
   - rid: 250124815058075745
@@ -465,6 +466,15 @@ MonoBehaviour:
           - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
             IconClass: sprite-interaction__icon-mouse-right
+    - rid: 1410421217730756608
+      type: {class: PortableExperienceAuthorizationPopupPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        AuthorizationPopup:
+          m_AssetGUID: 696c60f7fb34b41808f12ead4e67ea6c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

@@ -21,6 +21,7 @@ using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
 using DCL.Utility;
+using MVC;
 using SceneRuntime.ScenePermissions;
 
 namespace PortableExperiences.Controller
@@ -30,6 +31,7 @@ namespace PortableExperiences.Controller
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
+        private readonly LocalPortableExperienceCache localPortableExperienceCache;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly HashSet<string> loadingPortableExperiences = new ();
         private readonly ILaunchMode launchMode;
@@ -45,6 +47,8 @@ namespace PortableExperiences.Controller
             set => globalWorld = value;
         }
 
+        public IMVCManager? MvcManager { get; set; }
+
         private World world => globalWorld.EcsWorld;
 
         public event Action<string> PortableExperienceLoaded;
@@ -54,14 +58,19 @@ namespace PortableExperiences.Controller
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
+            LocalPortableExperienceCache localPortableExperienceCache,
             ILaunchMode launchMode,
             IDecentralandUrlsSource urlsSources)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
+            this.localPortableExperienceCache = localPortableExperienceCache;
             this.launchMode = launchMode;
             this.urlsSources = urlsSources;
+
+            // The controller lives for the whole application lifetime, so the subscription is never torn down.
+            web3IdentityCache.OnIdentityCleared += localPortableExperienceCache.Clear;
         }
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
@@ -69,7 +78,6 @@ namespace PortableExperiences.Controller
             ISceneFacade? parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
 
             if (!force)
-            {
                 switch (isGlobalPortableExperience)
                 {
                     //If it's not a Global PX and common PXs are disabled
@@ -79,11 +87,11 @@ namespace PortableExperiences.Controller
                     //If it IS a Global PX but Global PXs are disabled
                     case true when !FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
-                }
 
-                if (parentScene != null && !parentScene.SceneData.SceneEntityDefinition.metadata.requiredPermissions.Contains(ScenePermissionNames.PORTABLE_EXPERIENCE))
-                    throw new Exception($"The parent scene {parentScene.Info.Name} is trying to spawn a portable experience but lacks the '{ScenePermissionNames.PORTABLE_EXPERIENCE}' permission.");
-            }
+                    //If it's a local PX (not Global) but the requesting scene does not have permissions to spawn PXs
+                    case false when parentScene != null && !parentScene.SceneData.SceneEntityDefinition.metadata.requiredPermissions.Contains(ScenePermissionNames.PORTABLE_EXPERIENCE):
+                        throw new Exception($"The parent scene {parentScene.Info.Name} is trying to spawn a portable experience but lacks the '{ScenePermissionNames.PORTABLE_EXPERIENCE}' permission.");
+                }
 
             var portableExperienceId = ens.ToString();
 
@@ -120,11 +128,18 @@ namespace PortableExperiences.Controller
                     //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
                     throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
 
+                var ipfsRealm = new IpfsRealm(portableExperiencePath, result);
+
+                if (!force && !isGlobalPortableExperience)
+                {
+                    string portableExperienceName = string.IsNullOrEmpty(result.configurations.realmName) ? portableExperienceId : result.configurations.realmName;
+                    await EnsureAuthorizedByUserAsync(portableExperienceId, portableExperienceName, ipfsRealm, ct);
+                }
+
                 var realmData = new RealmData();
 
                 realmData.Reconfigure(
-                    new IpfsRealm(portableExperiencePath,
-                        result),
+                    ipfsRealm,
                     result.configurations.realmName.EnsureNotNull("Realm name not found"),
                     result.configurations.networkId,
                     result.comms?.adapter ?? string.Empty,
@@ -157,6 +172,42 @@ namespace PortableExperiences.Controller
             {
                 loadingPortableExperiences.Remove(portableExperienceId);
             }
+        }
+
+        private async UniTask EnsureAuthorizedByUserAsync(string portableExperienceId, string portableExperienceName, IIpfsRealm ipfsRealm, CancellationToken ct)
+        {
+            if (localPortableExperienceCache.AuthorizedPortableExperiences.Contains(portableExperienceId)) return;
+
+            if (localPortableExperienceCache.DeniedPortableExperiences.Contains(portableExperienceId))
+                throw new Exception($"The user has denied authorization for the portable experience '{portableExperienceId}' in this session.");
+
+            IReadOnlyList<string> permissions = await localPortableExperienceCache.GetPermissionsRequiringAuthorizationAsync(portableExperienceId, ipfsRealm, ct);
+
+            if (permissions.Count == 0)
+            {
+                localPortableExperienceCache.AuthorizedPortableExperiences.Add(portableExperienceId);
+                return;
+            }
+
+            // Fail closed: a portable experience that requires permissions must never spawn without explicit consent.
+            if (MvcManager == null)
+            {
+                ReportHub.LogError(ReportCategory.PORTABLE_EXPERIENCE, $"Cannot request authorization for portable experience '{portableExperienceId}': UI is not initialized yet.");
+                throw new Exception($"Portable experience '{portableExperienceId}' requires user authorization but the UI is not available yet.");
+            }
+
+            bool authorized = await PortableExperienceAuthorizationPopupController.RequestAuthorizationAsync(MvcManager, portableExperienceName, permissions, ct);
+
+            // A cancelled request must not be recorded as a user decision.
+            ct.ThrowIfCancellationRequested();
+
+            if (!authorized)
+            {
+                localPortableExperienceCache.DeniedPortableExperiences.Add(portableExperienceId);
+                throw new Exception($"The user denied the portable experience '{portableExperienceName}'.");
+            }
+
+            localPortableExperienceCache.AuthorizedPortableExperiences.Add(portableExperienceId);
         }
 
         public bool CanKillPortableExperience(string id)

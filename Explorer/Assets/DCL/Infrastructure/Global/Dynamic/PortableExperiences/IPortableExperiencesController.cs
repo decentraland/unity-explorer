@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using Global.Dynamic;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -18,6 +19,11 @@ namespace PortableExperiences.Controller
         Dictionary<string, Entity> PortableExperienceEntities { get; }
 
         GlobalWorld GlobalWorld { get; set; }
+
+        /// <summary>
+        ///     Assigned from the composition root once the UI shell exists. Null until then.
+        /// </summary>
+        IMVCManager? MvcManager { get; set; }
 
         bool CanKillPortableExperience(string id);
 

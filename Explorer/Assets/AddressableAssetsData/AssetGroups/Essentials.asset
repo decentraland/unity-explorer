@@ -170,6 +170,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 696c60f7fb34b41808f12ead4e67ea6c
+    m_Address: Assets/DCL/Infrastructure/Global/Dynamic/PortableExperiences/AuthorizationPopup/Assets/PortableExperienceAuthorizationPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6a252383173104e17acac54eb364afc4
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/PointAtMarker.prefab
     m_ReadOnly: 0
