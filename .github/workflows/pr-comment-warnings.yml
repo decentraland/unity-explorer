@@ -130,6 +130,13 @@ jobs:
           DETAILS=""
           BLOCKED=0
 
+          # COUNT/BASELINE come from the artifact produced by the untrusted pull_request job
+          # (fork-controlled). This step has no `set -e`, and bash's `[` errors out on a
+          # non-numeric operand and falls through - never let such a value reach a comparison
+          # or a bash arithmetic context ($(( )) evaluates its operands as expressions).
+          [[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=0
+          [[ "$BASELINE" =~ ^[0-9]+$ ]] || BASELINE=""
+
           if [ "$FOUND" != "true" ]; then
             if [ "$CONCLUSION" = "success" ]; then
               BADGE="https://img.shields.io/badge/Lint-Skipped-lightgrey${BADGE_STYLE}"
@@ -163,6 +170,7 @@ jobs:
             # (branch clean but still blocked): a general list of easy-to-remove warnings
             # from anywhere, so the dev has concrete targets to get under the baseline.
             total=$(jq -r '.pr_findings_total // 0' warning-result.json)
+            [[ "$total" =~ ^[0-9]+$ ]] || total=0
             if [ "$total" -gt 0 ]; then
               {
                 echo ""
