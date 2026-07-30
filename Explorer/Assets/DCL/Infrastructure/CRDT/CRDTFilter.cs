@@ -90,6 +90,22 @@ namespace CRDT
             componentId is VIDEO_CONTROL_STATE or PHYSICS_COMBINED_IMPULSE or PHYSICS_COMBINED_FORCE;
 
         /// <summary>
+        /// Whether a CRDT message is withheld from the scene: a component that must not be synced between clients,
+        /// or a video component asserted by a source that is neither the local participant nor a scene admin.
+        /// Exposed so observers of the same traffic (writer attribution) apply the rule the scene is actually subject to,
+        /// instead of a copy of it that can drift.
+        /// </summary>
+        public static bool ShouldDropIncoming(CRDTMessageType messageType, uint componentId, bool isTrustedSource)
+        {
+            if (messageType is CRDTMessageType.PUT_COMPONENT_NETWORK or CRDTMessageType.DELETE_COMPONENT_NETWORK
+                && IsNoSyncComponent(componentId))
+                return true;
+
+            // Drop video components from untrusted sources
+            return isTrustedSource == false && componentId == VIDEO_PLAYER_COMPONENT_ID;
+        }
+
+        /// <summary>
         /// Filters CRDT messages from a span, removing messages with no-sync component IDs.
         /// Handles PUT_COMPONENT_NETWORK, DELETE_COMPONENT_NETWORK, and APPEND_COMPONENT.
         /// This is the core filtering logic shared by both FilterSceneMessageBatch and FilterCRDTState.
@@ -117,16 +133,7 @@ namespace CRDT
                 uint componentId = ReadComponentId(crdtMessages);
                 uint bodyLength = CRDTMessageTypeUtils.TypeLengthBytes(messageType, crdtMessages);
 
-                bool shouldDrop = messageType is CRDTMessageType.PUT_COMPONENT_NETWORK or CRDTMessageType.DELETE_COMPONENT_NETWORK
-                    && IsNoSyncComponent(componentId);
-
-                // Drop video components from untrusted sources
-                if (isTrustedSource == false && componentId == VIDEO_PLAYER_COMPONENT_ID)
-                {
-                    shouldDrop = true;
-                }
-
-                if (!shouldDrop)
+                if (!ShouldDropIncoming(messageType, componentId, isTrustedSource))
                 {
                     output.Write(messageLength);
                     output.Write((uint)messageType);

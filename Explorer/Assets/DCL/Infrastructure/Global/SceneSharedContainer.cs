@@ -83,7 +83,7 @@ namespace Global
                     realmData,
                     staticContainer.PortableExperiencesController,
                     staticContainer.StaticSettings.SkyboxSettings,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()),
+                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom(), staticContainer.CrdtWriterLog),
                     remoteMetadata,
                     dclEnvironment,
                     systemClipboard,

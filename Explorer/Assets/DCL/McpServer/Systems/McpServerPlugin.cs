@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using CRDT.Attribution;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
@@ -50,6 +51,7 @@ namespace DCL.McpServer.Systems
         private readonly IScenesCache scenesCache;
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly ECSReloadScene reloadSceneController;
+        private readonly ICrdtWriterLog writerLog;
         private readonly bool localSceneDevelopment;
 
         private readonly SceneLogBuffer logBuffer;
@@ -74,6 +76,7 @@ namespace DCL.McpServer.Systems
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
+            ICrdtWriterLog writerLog,
             bool localSceneDevelopment)
         {
             port = appArgs.TryGetValue(AppArgsFlags.MCP_PORT, out string? portValue)
@@ -93,7 +96,11 @@ namespace DCL.McpServer.Systems
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
+            this.writerLog = writerLog;
             this.localSceneDevelopment = localSceneDevelopment;
+
+            // Attribution is only recorded while something asks for it, and the MCP server is that something.
+            writerLog.Enable();
 
             logBuffer = new SceneLogBuffer();
             logEntryBus = new DebugMenuConsoleLogEntryBus();
@@ -119,7 +126,7 @@ namespace DCL.McpServer.Systems
             var toolsRegistry = new McpToolsRegistry()
                           .Add(screenshotTool)
                           .Add(new GetPlayerStateTool(globalWorld, arguments.PlayerEntity, exposedCameraData, currentSceneInfo))
-                          .Add(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment))
+                          .Add(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, writerLog, localSceneDevelopment))
                           .Add(new GetSceneLogsTool(logBuffer))
                           .Add(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
                           .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity))
@@ -130,7 +137,7 @@ namespace DCL.McpServer.Systems
                           .Add(new SendChatTool(chatMessagesBus))
                           .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
                           .Add(new ListSceneEntitiesTool(worldInfoHub))
-                          .Add(new GetEntityDetailsTool(worldInfoHub))
+                          .Add(new GetEntityDetailsTool(worldInfoHub, scenesCache, writerLog))
                           .Add(new TriggerEmoteTool(globalWorldActions))
                           .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
                           .Build();

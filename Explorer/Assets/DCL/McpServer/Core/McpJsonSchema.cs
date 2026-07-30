@@ -72,6 +72,21 @@ namespace DCL.McpServer.Core
             return AddField(name, field, isRequired);
         }
 
+        /// <summary>Adds an array field whose items are all objects of the shape <paramref name="items" /> describes.</summary>
+        public McpJsonSchema ObjectArray(string name, McpJsonSchema items, string? description = null, bool isRequired = false)
+        {
+            var field = new JObject
+            {
+                ["type"] = "array",
+                ["items"] = items.Build(),
+            };
+
+            if (description != null)
+                field["description"] = description;
+
+            return AddField(name, field, isRequired);
+        }
+
         /// <summary>Materializes the accumulated fields into the JSON Schema object.</summary>
         public JObject Build()
         {

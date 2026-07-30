@@ -1,4 +1,5 @@
 ﻿using CRDT;
+using CRDT.Protocol;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using Microsoft.ClearScript;
@@ -15,14 +16,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public abstract class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
-        // Must be aligned with SDK runtime 1st-byte values at:
-        // https://github.com/decentraland/js-sdk-toolchain/blob/c8695cd9b94e87ad567520089969583d9d36637f/packages/@dcl/sdk/src/network/binary-message-bus.ts#L3-L7
-        protected enum CommsMessageType {
-          CRDT = 1,
-          ReqCRDTState = 2,   // Special signal to receive CRDT State from a peer
-          ResCRDTState = 3    // Special signal to send CRDT State to a peer
-        }
-
         private readonly List<PoolableByteArray> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
@@ -71,12 +64,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 {
                     byte firstByte = poolable.Span[0];
 
-                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = firstByte == (int)CommsMessageType.ReqCRDTState
+                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = firstByte == (int)SdkCommsMessageType.ReqCRDTState
                         ? ISceneCommunicationPipe.ConnectivityAssertiveness.DeliveryAsserted
                         : ISceneCommunicationPipe.ConnectivityAssertiveness.DropIfNotConnected;
 
                     // Filter CRDT messages before sending
-                    if (firstByte == (int)CommsMessageType.CRDT)
+                    if (firstByte == (int)SdkCommsMessageType.CRDT)
                     {
                         Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
                         int filteredLength = FilterCRDTMessage(poolable.Memory.Span, filtered, isTrustedSource: true);
@@ -85,7 +78,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                     }
 
                     // Filter RES_CRDT_STATE messages before sending
-                    if (firstByte == (int)CommsMessageType.ResCRDTState)
+                    if (firstByte == (int)SdkCommsMessageType.ResCRDTState)
                     {
                         Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
                         int filteredLength = FilterCRDTStateMessage(poolable.Memory.Span, filtered, isTrustedSource: true);

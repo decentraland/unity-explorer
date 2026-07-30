@@ -91,6 +91,8 @@ Repeat until **every requirement has proof**: a screenshot or state read demonst
 
 **Cross-examine** every conclusion: confirm each visual claim with a state read (ECS values via `get_entity_details`, logs, `get_player_state` position), and each state claim with pixels. One channel lies routinely — colliders exist that pixels don't show, entities render invisible while their state looks healthy, animations silently don't play. The reference files call out where cross-examination is mandatory.
 
+**For a networked scene, also ask who wrote the state you are reading.** `get_scene_state` → `scene.networkWriters` lists every address that has written to the scene, and `get_entity_details` → `networkWrites` names the address behind each component of an entity. When `scene.authoritativeMultiplayer` is true, a component whose last write has `isAuthoritativeServer: false` and `viaStateSync: false` was set by a peer the server did not authorise — the scene looking correct is not the same as the scene being driven correctly. Two readings are *not* evidence of a rogue client: a component absent from `networkWrites` was written locally by the scene's own code (the ordinary case for a single-player scene), and a row with `viaStateSync: true` was replayed to you in a peer's state dump when you joined, so it names who handed it over, not who wrote it.
+
 **MANDATORY — camera cleanup before finishing.** NEVER leave the camera in `free` mode when you stop working (end of task, handing back to the user, or pausing for their input): always restore it with `set_camera_mode third_person` as your last camera action, and confirm via `get_player_state` → `camera.mode` if anything in between could have failed.
 
 ## Screenshot frequency & cost

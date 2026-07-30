@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+﻿using CRDT.Protocol;
+using CrdtEcsBridge.PoolsProviders;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
@@ -40,7 +41,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             // At this point data is already without MsgType (Explorer routing is truncated a step above).
 
             // read first byte as SDK routing
-            CommsMessageType commsMessageType = (CommsMessageType)message.Data[0];
+            SdkCommsMessageType commsMessageType = (SdkCommsMessageType)message.Data[0];
             // Copy and filter batch
             ReadOnlySpan<byte> sourceData = message.Data;
             bool isTrustedSource = message.IsTrustedSource;
@@ -49,13 +50,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             // TODO This logic mostly duplicates CommunicationsControllerAPIImplementationBase.SendBinary we should standardise it later
             // Filter CRDT messages before receiving
-            if (commsMessageType == CommsMessageType.CRDT)
+            if (commsMessageType == SdkCommsMessageType.CRDT)
             {
                 int filteredLength = FilterCRDTMessage(sourceData, filteredUnbounded, isTrustedSource);
                 totalLength += filteredLength;
             }
             // Filter RES_CRDT_STATE messages before receiving
-            else if (commsMessageType == CommsMessageType.ResCRDTState)
+            else if (commsMessageType == SdkCommsMessageType.ResCRDTState)
             {
                 int filteredLength = FilterCRDTStateMessage(sourceData, filteredUnbounded, isTrustedSource);
                 totalLength += filteredLength;

@@ -865,6 +865,7 @@ namespace Global.Dynamic
                     staticContainer.EntityCollidersGlobalCache,
                     coroutineRunner,
                     globalWorld,
+                    staticContainer.CrdtWriterLog,
                     localSceneDevelopment));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
