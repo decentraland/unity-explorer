@@ -33,6 +33,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly IWeb3IdentityCache identityCache;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
+        private readonly Func<CancellationToken, UniTask> openBackpackAsync;
         private readonly CancellationTokenSource disposalCts = new ();
 
         private ModalState currentState;
@@ -48,7 +49,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             MarketplaceCreditsAPIClient creditsAPIClient,
             IWeb3IdentityCache identityCache,
             UnityAppWebBrowser webBrowser,
-            Func<CancellationToken, UniTask> openGetCreditsPanelAsync)
+            Func<CancellationToken, UniTask> openGetCreditsPanelAsync,
+            Func<CancellationToken, UniTask> openBackpackAsync)
             : base(viewFactory)
         {
             this.purchaseService = purchaseService;
@@ -56,6 +58,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             this.identityCache = identityCache;
             this.webBrowser = webBrowser;
             this.openGetCreditsPanelAsync = openGetCreditsPanelAsync;
+            this.openBackpackAsync = openBackpackAsync;
             purchaseService.StateChanged += OnPurchaseStateChanged;
         }
 
@@ -108,6 +111,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.RetryButton.onClick.AddListener(OnRetryClicked);
                 viewInstance.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
                 viewInstance.OpenMarketplaceButton.onClick.AddListener(OnOpenMarketplaceClicked);
+                viewInstance.ToBackpackButton.onClick.AddListener(OnToBackpackClicked);
             }
 
             LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
@@ -121,6 +125,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.RetryButton.onClick.RemoveListener(OnRetryClicked);
                 viewInstance.GetCreditsButton.onClick.RemoveListener(OnGetCreditsClicked);
                 viewInstance.OpenMarketplaceButton.onClick.RemoveListener(OnOpenMarketplaceClicked);
+                viewInstance.ToBackpackButton.onClick.RemoveListener(OnToBackpackClicked);
             }
 
             lifeCts.SafeCancelAndDispose();
@@ -135,7 +140,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
                 viewInstance.InsufficientCancelButton.OnClickAsync(ct),
-                viewInstance.DoneButton.OnClickAsync(ct),
                 viewInstance.CloseBackground.OnClickAsync(ct));
         }
 
@@ -209,6 +213,12 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         {
             RequestClose();
             OpenGetCreditsAfterCloseAsync(disposalCts.Token).Forget();
+        }
+
+        private void OnToBackpackClicked()
+        {
+            RequestClose();
+            OpenBackpackAfterCloseAsync(disposalCts.Token).Forget();
         }
 
         private void OnOpenMarketplaceClicked()
@@ -325,6 +335,16 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private async UniTask OpenGetCreditsAfterCloseAsync(CancellationToken ct)
         {
             try { await openGetCreditsPanelAsync(ct); }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+            }
+        }
+
+        private async UniTask OpenBackpackAfterCloseAsync(CancellationToken ct)
+        {
+            try { await openBackpackAsync(ct); }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {

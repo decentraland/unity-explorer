@@ -1712,7 +1712,7 @@ GameObject:
   - component: {fileID: 218609277696955016}
   - component: {fileID: 6793648395495502416}
   m_Layer: 5
-  m_Name: DoneButton
+  m_Name: GoToBackpack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5556,7 +5556,7 @@ MonoBehaviour:
   <FailedReasonText>k__BackingField: {fileID: 700895079608528011}
   <RetryButton>k__BackingField: {fileID: 566756525056964189}
   <OpenMarketplaceButton>k__BackingField: {fileID: 2801647614867380972}
-  <DoneButton>k__BackingField: {fileID: 218609277696955016}
+  <ToBackpackButton>k__BackingField: {fileID: 218609277696955016}
 --- !u!1 &7168514027167349400
 GameObject:
   m_ObjectHideFlags: 0

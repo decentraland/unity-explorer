@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
@@ -69,7 +70,8 @@ namespace DCL.PluginSystem.Global
                 marketplaceCreditsAPIClient,
                 web3IdentityCache,
                 webBrowser,
-                OpenGetCreditsPanelAsync);
+                OpenGetCreditsPanelAsync,
+                OpenBackpackPanelAsync);
 
             mvcManager.RegisterController(creditPurchaseModalController);
 
@@ -91,6 +93,9 @@ namespace DCL.PluginSystem.Global
             FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup)
                 ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_PURCHASE_MODAL)), ct)
                 : mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
+
+        private UniTask OpenBackpackPanelAsync(CancellationToken ct) =>
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar)), ct);
 
         [Serializable]
         public class CreditPurchaseSettings : IDCLPluginSettings

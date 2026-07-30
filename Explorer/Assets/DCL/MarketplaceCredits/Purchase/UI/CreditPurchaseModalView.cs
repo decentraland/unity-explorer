@@ -48,6 +48,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public TMP_Text FailedReasonText { get; private set; } = null!;
         [field: SerializeField] public Button RetryButton { get; private set; } = null!;
         [field: SerializeField] public Button OpenMarketplaceButton { get; private set; } = null!;
-        [field: SerializeField] public Button DoneButton { get; private set; } = null!;
+        [field: SerializeField] public Button ToBackpackButton { get; private set; } = null!;
     }
 }

@@ -71,6 +71,10 @@ namespace DCL.MarketplaceCredits.Purchase
         /// </summary>
         public virtual async UniTask<ManaUsdRate> ReadAsync(string marketplaceAddress, CancellationToken ct)
         {
+            const int RATE_INDEX = 1;
+            const int ROUND_ID_INDEX = 0;
+            const int ANSWERED_IN_ROUND_INDEX = 4;
+            const int UPDATED_AT_INDEX = 3;
             string aggregator = ToAddress(await CallAsync(marketplaceAddress, MANA_USD_AGGREGATOR_CALLDATA, ct));
 
             (string decimalsHex, string roundHex) = await UniTask.WhenAll(
@@ -80,18 +84,18 @@ namespace DCL.MarketplaceCredits.Purchase
             var decimals = (int)UnsignedWordAt(decimalsHex, 0);
 
             // answer is int256: parsed signed, so a negative rate surfaces as such instead of a huge positive.
-            BigInteger rate = SignedWordAt(roundHex, 1);
+            BigInteger rate = SignedWordAt(roundHex, RATE_INDEX);
 
             if (rate <= BigInteger.Zero)
                 throw new InvalidOperationException($"MANA/USD aggregator {aggregator} returned a non-positive rate");
 
-            BigInteger roundId = UnsignedWordAt(roundHex, 0);
-            BigInteger answeredInRound = UnsignedWordAt(roundHex, 4);
+            BigInteger roundId = UnsignedWordAt(roundHex, ROUND_ID_INDEX);
+            BigInteger answeredInRound = UnsignedWordAt(roundHex, ANSWERED_IN_ROUND_INDEX);
 
             if (answeredInRound < roundId)
                 throw new InvalidOperationException($"MANA/USD aggregator {aggregator} round is incomplete (answeredInRound {answeredInRound} < roundId {roundId})");
 
-            BigInteger updatedAt = UnsignedWordAt(roundHex, 3);
+            BigInteger updatedAt = UnsignedWordAt(roundHex, UPDATED_AT_INDEX);
             BigInteger age = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - updatedAt;
 
             if (updatedAt <= BigInteger.Zero || age > MAX_STALENESS_SECONDS)
