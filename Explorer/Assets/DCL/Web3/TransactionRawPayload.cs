@@ -6,8 +6,7 @@ using System.Text;
 namespace DCL.Web3
 {
     /// <summary>
-    ///     Renders a web3 request verbatim for the raw review panel, which is what the confirmation popup
-    ///     shows when <see cref="TransactionRecipientDecoder" /> maps the request to
+    ///     Renders a web3 request verbatim for the raw review panel, shown when the request maps to
     ///     <see cref="TransactionKind.Unknown" /> and there is nothing to summarize.
     /// </summary>
     public static class TransactionRawPayload
@@ -20,7 +19,7 @@ namespace DCL.Web3
             AppendField(payload, "Network", Network(request));
 
             if (request.IsTypedDataSignature)
-                AppendField(payload, "Typed data", Indent(request.TypedData));
+                AppendField(payload, "Typed data", WithIndent(request.TypedData));
             else
             {
                 AppendField(payload, "To", request.To);
@@ -47,10 +46,9 @@ namespace DCL.Web3
         }
 
         /// <summary>
-        ///     Re-serializes JSON with indentation so a one-line EIP-712 payload is readable, leaving
-        ///     anything unparseable exactly as it arrived.
+        ///     Indents so a one-line EIP-712 payload is readable, leaving anything unparseable as it arrived.
         /// </summary>
-        private static string? Indent(string? json)
+        private static string? WithIndent(string? json)
         {
             if (string.IsNullOrEmpty(json))
                 return json;

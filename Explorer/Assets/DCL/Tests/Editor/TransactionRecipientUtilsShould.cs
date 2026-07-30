@@ -27,7 +27,8 @@ namespace DCL.EditModeTests
             Assert.AreEqual(1, CountOccurrences(description, "<b>"));
             StringAssert.DoesNotContain("<size=0>", description);
             StringAssert.DoesNotContain("</b></color></link><", description);
-            // The name is still readable, just inert.
+
+            // Readable, just inert.
             StringAssert.Contains("drained", description);
         }
 
@@ -56,8 +57,7 @@ namespace DCL.EditModeTests
 
             string amount = TransactionRecipientUtils.Amount(decoded);
 
-            // Spelled the way the PolygonManaIcon character table spells it: TMP matches sprite names
-            // case-sensitively, and a mismatch renders as tofu rather than failing loudly.
+            // TMP matches sprite names case-sensitively; a mismatch renders as tofu, not an error.
             Assert.AreEqual("5 <sprite name=\"Mana\">", amount);
             // The amount is built here, not supplied by a scene, so its markup must survive.
             StringAssert.Contains(amount, TransactionRecipientUtils.ExternalWalletDescription(amount, RECIPIENT));
@@ -66,7 +66,7 @@ namespace DCL.EditModeTests
         [Test]
         public void SayAnAmountIsSmallRatherThanCallItZero()
         {
-            // A single wei: below the four fraction digits the copy shows.
+            // A single wei, below the four fraction digits the copy shows.
             var decoded = new DecodedTransaction(TransactionKind.NativeTransfer, RECIPIENT, BigInteger.One, null);
 
             string amount = TransactionRecipientUtils.Amount(decoded);
@@ -94,7 +94,7 @@ namespace DCL.EditModeTests
         [Test]
         public void KeepFourFractionDigits()
         {
-            // 0.0001 exactly: the smallest amount that still renders as a number.
+            // The smallest amount that still renders as a number.
             var decoded = new DecodedTransaction(TransactionKind.NativeTransfer, RECIPIENT, BigInteger.Pow(10, 14), null);
 
             Assert.AreEqual("0.0001 ETH", TransactionRecipientUtils.Amount(decoded));

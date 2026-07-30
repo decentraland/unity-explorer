@@ -7,8 +7,7 @@ using UnityEngine.UI;
 namespace DCL.AuthenticationScreenFlow
 {
     /// <summary>
-    ///     Second confirmation step of the Web3 confirmation popup, stating in plain language who receives
-    ///     the assets. Lives as its own prefab nested inside the Web3 confirmation popup.
+    ///     Second confirmation step of the Web3 confirmation popup, naming who receives the assets.
     /// </summary>
     public class TransactionRecipientPopupView : MonoBehaviour
     {
@@ -16,7 +15,7 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private Button cancelButton = null!;
         [SerializeField] private Button confirmButton = null!;
 
-        public async UniTask<bool> ShowAsync(string descriptionText, CancellationToken ct)
+        public async UniTask<bool> ShowForResultAsync(string descriptionText, CancellationToken ct)
         {
             description.text = descriptionText;
             gameObject.SetActive(true);

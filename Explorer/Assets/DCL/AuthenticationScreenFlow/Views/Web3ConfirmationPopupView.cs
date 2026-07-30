@@ -45,22 +45,19 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private Web3ConfirmationPopupConfig transactionConfig = null!;
         [SerializeField] private Web3ConfirmationPopupConfig signingConfig = null!;
 
-        /// <summary>
-        ///     Replaces the confirm label when a second step follows, so the button does not read as the
-        ///     last word on a request the user has not finished reviewing.
-        /// </summary>
+        // Not the confirm label: the button must not read as the last word on a request that still has a
+        // second step to review.
         [SerializeField] private string nextStepButtonText = "CONTINUE";
 
         [Header("RECIPIENT CONFIRMATION")]
         [SerializeField] private TransactionRecipientPopupView recipientPopup = null!;
 
         /// <summary>
-        ///     Asks for confirmation of the transaction or signature, followed by a confirmation of the
-        ///     recipient when <paramref name="recipientDescription" /> is given. A
-        ///     <paramref name="rawPayload" /> is the request rendered verbatim, shown for review when it
-        ///     matches no shape the client can summarize.
+        ///     Confirms the transaction or signature, then the recipient when
+        ///     <paramref name="recipientDescription" /> is given. <paramref name="rawPayload" /> is the
+        ///     request verbatim, shown when it matches no shape the client can summarize.
         /// </summary>
-        public async UniTask<bool> ShowAsync(TransactionConfirmationRequest request, string? recipientDescription, string? rawPayload, CancellationToken ct)
+        public async UniTask<bool> ShowForResultAsync(TransactionConfirmationRequest request, string? recipientDescription, string? rawPayload, CancellationToken ct)
         {
             gameObject.SetActive(true);
 
@@ -72,7 +69,7 @@ namespace DCL.AuthenticationScreenFlow
                 if (recipientDescription == null)
                     return true;
 
-                return await recipientPopup.ShowAsync(recipientDescription, ct);
+                return await recipientPopup.ShowForResultAsync(recipientDescription, ct);
             }
             finally { gameObject.SetActive(false); }
         }
@@ -100,7 +97,10 @@ namespace DCL.AuthenticationScreenFlow
                 balanceValue.text = $"{balanceEth} ETH";
             }
 
-            ShowRawPayload(rawPayload);
+            if (rawPayload == null)
+                rawRequestPanel.SetActive(false);
+            else
+                ShowRawPayload(rawPayload);
 
             // The button that was not clicked stays subscribed until its token is cancelled.
             using var clickCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -113,13 +113,9 @@ namespace DCL.AuthenticationScreenFlow
             finally { clickCts.Cancel(); }
         }
 
-        private void ShowRawPayload(string? rawPayload)
+        private void ShowRawPayload(string rawPayload)
         {
-            rawRequestPanel.SetActive(rawPayload != null);
-
-            if (rawPayload == null)
-                return;
-
+            rawRequestPanel.SetActive(true);
             rawRequestText.text = rawPayload;
 
             // The panel keeps the offset it was left at, so every request starts from the top of its own text.

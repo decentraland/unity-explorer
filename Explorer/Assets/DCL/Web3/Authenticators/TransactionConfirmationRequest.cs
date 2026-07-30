@@ -18,8 +18,7 @@ namespace DCL.Web3.Authenticators
         public bool IsTypedDataSignature => string.Equals(Method, ETH_SIGN_TYPED_DATA_V4, StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     The two methods that can move assets out of the wallet. Every other method that reaches the
-        ///     popup only proves ownership of the account, so it is confirmed once.
+        ///     The two methods that can move assets. Every other one only proves account ownership.
         /// </summary>
         public bool MovesAssets => IsTransaction || IsTypedDataSignature;
 
@@ -30,7 +29,7 @@ namespace DCL.Web3.Authenticators
         public object[]? Params { get; set; }
 
         /// <summary>
-        ///     The EIP-712 payload of an <see cref="IsTypedDataSignature" /> request; null for other methods.
+        ///     The EIP-712 payload of an <see cref="IsTypedDataSignature" /> request.
         /// </summary>
         public string? TypedData { get; set; }
 

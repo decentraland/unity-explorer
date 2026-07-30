@@ -142,7 +142,7 @@ namespace DCL.PluginSystem.Global
             view.gameObject.SetActive(false);
 
             var controller = new Web3ConfirmationPopupController(view, profileRepository, donationsService, storedIdentityProvider);
-            web3Authenticator.SetTransactionConfirmationCallback(controller.ShowAsync);
+            web3Authenticator.SetTransactionConfirmationCallback(controller.ShowForResultAsync);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

@@ -5,7 +5,7 @@ using System.Numerics;
 namespace DCL.EditModeTests
 {
     [TestFixture]
-    public class TransactionRecipientDecoderShould
+    public class DecodedTransactionShould
     {
         private const string RECIPIENT = "0x430637b3f9c6d36e25f8221b6531390f777e433f";
         private const string MANA_CONTRACT = "0xa1c57f48f0deb89f569dfbe6e2b7f46d33606fd4";
@@ -19,7 +19,7 @@ namespace DCL.EditModeTests
         [Test]
         public void DecodeNativeTransferWhenNoData()
         {
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(RECIPIENT, "0x4563918244f40000", null);
+            DecodedTransaction result = DecodedTransaction.From(RECIPIENT, "0x4563918244f40000", null);
 
             Assert.AreEqual(TransactionKind.NativeTransfer, result.Kind);
             Assert.AreEqual(RECIPIENT, result.Recipient);
@@ -30,7 +30,7 @@ namespace DCL.EditModeTests
         [Test]
         public void DecodeNativeTransferWhenDataIsEmptyHex()
         {
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(RECIPIENT, "0x0", "0x");
+            DecodedTransaction result = DecodedTransaction.From(RECIPIENT, "0x0", "0x");
 
             Assert.AreEqual(TransactionKind.NativeTransfer, result.Kind);
             Assert.AreEqual(RECIPIENT, result.Recipient);
@@ -42,7 +42,7 @@ namespace DCL.EditModeTests
         {
             string data = "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD;
 
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x0", data);
+            DecodedTransaction result = DecodedTransaction.From(MANA_CONTRACT, "0x0", data);
 
             Assert.AreEqual(TransactionKind.Erc20Transfer, result.Kind);
             // The recipient is the address encoded in the calldata, not the token contract in `to`.
@@ -56,7 +56,7 @@ namespace DCL.EditModeTests
         {
             string data = "0xA9059CBB" + RECIPIENT_WORD + FIVE_TOKENS_WORD;
 
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x0", data);
+            DecodedTransaction result = DecodedTransaction.From(MANA_CONTRACT, "0x0", data);
 
             Assert.AreEqual(TransactionKind.Erc20Transfer, result.Kind);
             Assert.AreEqual(RECIPIENT, result.Recipient);
@@ -65,13 +65,11 @@ namespace DCL.EditModeTests
         [Test]
         public void TreatUnknownSelectorAsUnknown()
         {
-            // A non-transfer selector with otherwise well-formed argument words.
             string data = "0x12345678" + RECIPIENT_WORD + FIVE_TOKENS_WORD;
 
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x0", data);
+            DecodedTransaction result = DecodedTransaction.From(MANA_CONTRACT, "0x0", data);
 
             Assert.AreEqual(TransactionKind.Unknown, result.Kind);
-            // The contract an opaque call targets is not a recipient.
             Assert.IsEmpty(result.Recipient);
             Assert.AreEqual(BigInteger.Zero, result.Amount);
             Assert.IsNull(result.TokenContract);
@@ -83,7 +81,7 @@ namespace DCL.EditModeTests
             // transfer selector but missing the amount word.
             string data = "0xa9059cbb" + RECIPIENT_WORD;
 
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x0", data);
+            DecodedTransaction result = DecodedTransaction.From(MANA_CONTRACT, "0x0", data);
 
             Assert.AreEqual(TransactionKind.Unknown, result.Kind);
             Assert.IsEmpty(result.Recipient);
@@ -92,11 +90,10 @@ namespace DCL.EditModeTests
         [Test]
         public void TreatTransferCalldataCarryingNativeValueAsUnknown()
         {
-            // A payable call whose data opens with the transfer selector. Summarizing it as an ERC-20
-            // transfer would state the token amount and never mention the native currency riding along.
+            // Summarizing this as an ERC-20 transfer would never mention the native currency riding along.
             string data = "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD;
 
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x4563918244f40000", data);
+            DecodedTransaction result = DecodedTransaction.From(MANA_CONTRACT, "0x4563918244f40000", data);
 
             Assert.AreEqual(TransactionKind.Unknown, result.Kind);
             Assert.IsEmpty(result.Recipient);
@@ -108,7 +105,7 @@ namespace DCL.EditModeTests
             // The two words the copy describes, plus one it does not.
             string data = "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD + RECIPIENT_WORD;
 
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x0", data);
+            DecodedTransaction result = DecodedTransaction.From(MANA_CONTRACT, "0x0", data);
 
             Assert.AreEqual(TransactionKind.Unknown, result.Kind);
         }
@@ -118,11 +115,10 @@ namespace DCL.EditModeTests
         {
             string data = "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD;
 
-            // A zero value reaches the decoder as "0x0" or as null depending on the caller; neither is
-            // native currency moving, so both must stay decodable.
+            // A zero value arrives as "0x0" or null depending on the caller; neither moves native currency.
             foreach (string? zero in new[] { "0x0", "0x00", null })
             {
-                DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, zero, data);
+                DecodedTransaction result = DecodedTransaction.From(MANA_CONTRACT, zero, data);
 
                 Assert.AreEqual(TransactionKind.Erc20Transfer, result.Kind, $"value {zero ?? "null"}");
                 Assert.AreEqual(RECIPIENT, result.Recipient);
@@ -132,7 +128,7 @@ namespace DCL.EditModeTests
         [Test]
         public void TreatValueTransferWithoutDestinationAsUnknown()
         {
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(null, "0x4563918244f40000", null);
+            DecodedTransaction result = DecodedTransaction.From(null, "0x4563918244f40000", null);
 
             Assert.AreEqual(TransactionKind.Unknown, result.Kind);
             Assert.IsEmpty(result.Recipient);
@@ -145,7 +141,7 @@ namespace DCL.EditModeTests
             string maxWord = new string('f', 64);
             string data = "0xa9059cbb" + RECIPIENT_WORD + maxWord;
 
-            DecodedTransaction result = TransactionRecipientDecoder.Decode(MANA_CONTRACT, "0x0", data);
+            DecodedTransaction result = DecodedTransaction.From(MANA_CONTRACT, "0x0", data);
 
             Assert.IsTrue(result.Amount > BigInteger.Zero);
         }
@@ -155,7 +151,7 @@ namespace DCL.EditModeTests
         {
             string typedData = MetaTransactionTypedData(MANA_CONTRACT, "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD);
 
-            Assert.IsTrue(TransactionRecipientDecoder.TryDecodeMetaTransaction(typedData, out DecodedTransaction result));
+            Assert.IsTrue(DecodedTransaction.TryFromMetaTransaction(typedData, out DecodedTransaction result));
             Assert.AreEqual(TransactionKind.Erc20Transfer, result.Kind);
             // The recipient is the address inside the authorized call, not the verifying contract.
             Assert.AreEqual(RECIPIENT, result.Recipient);
@@ -169,16 +165,15 @@ namespace DCL.EditModeTests
             string typedData = MetaTransactionTypedData(MANA_CONTRACT, "0xa9059cbb" + RECIPIENT_WORD + FIVE_TOKENS_WORD)
                 .Replace("MetaTransaction", "Permit");
 
-            Assert.IsFalse(TransactionRecipientDecoder.TryDecodeMetaTransaction(typedData, out DecodedTransaction _));
+            Assert.IsFalse(DecodedTransaction.TryFromMetaTransaction(typedData, out DecodedTransaction _));
         }
 
         [Test]
         public void RejectMetaTransactionAuthorizingAnOpaqueCall()
         {
-            // A non-transfer call names no recipient: the verifying contract is not one.
             string typedData = MetaTransactionTypedData(MANA_CONTRACT, "0x12345678" + RECIPIENT_WORD + FIVE_TOKENS_WORD);
 
-            Assert.IsFalse(TransactionRecipientDecoder.TryDecodeMetaTransaction(typedData, out DecodedTransaction _));
+            Assert.IsFalse(DecodedTransaction.TryFromMetaTransaction(typedData, out DecodedTransaction _));
         }
 
         [Test]
@@ -186,28 +181,28 @@ namespace DCL.EditModeTests
         {
             const string TYPED_DATA = "{\"primaryType\":\"MetaTransaction\",\"domain\":{\"verifyingContract\":\"" + MANA_CONTRACT + "\"},\"message\":{\"nonce\":0}}";
 
-            Assert.IsFalse(TransactionRecipientDecoder.TryDecodeMetaTransaction(TYPED_DATA, out DecodedTransaction _));
+            Assert.IsFalse(DecodedTransaction.TryFromMetaTransaction(TYPED_DATA, out DecodedTransaction _));
         }
 
         [Test]
         public void RejectMalformedTypedData()
         {
-            Assert.IsFalse(TransactionRecipientDecoder.TryDecodeMetaTransaction("not json", out DecodedTransaction _));
-            Assert.IsFalse(TransactionRecipientDecoder.TryDecodeMetaTransaction(null, out DecodedTransaction _));
+            Assert.IsFalse(DecodedTransaction.TryFromMetaTransaction("not json", out DecodedTransaction _));
+            Assert.IsFalse(DecodedTransaction.TryFromMetaTransaction(null, out DecodedTransaction _));
             // A message that is a string instead of an object must not throw.
-            Assert.IsFalse(TransactionRecipientDecoder.TryDecodeMetaTransaction("{\"primaryType\":\"MetaTransaction\",\"message\":\"nope\"}", out DecodedTransaction _));
+            Assert.IsFalse(DecodedTransaction.TryFromMetaTransaction("{\"primaryType\":\"MetaTransaction\",\"message\":\"nope\"}", out DecodedTransaction _));
         }
 
         [Test]
         public void ReportUnknownWhenMetaTransactionIsRejected()
         {
-            TransactionRecipientDecoder.TryDecodeMetaTransaction("not json", out DecodedTransaction result);
+            DecodedTransaction.TryFromMetaTransaction("not json", out DecodedTransaction result);
 
             Assert.AreEqual(TransactionKind.Unknown, result.Kind);
             Assert.IsEmpty(result.Recipient);
         }
 
-        // EIP-712 payload of a Polygon native meta-transaction, as a scene would send it.
+        // EIP-712 payload of a Polygon native meta-transaction, as a scene sends it.
         private static string MetaTransactionTypedData(string verifyingContract, string functionSignature) =>
             "{\"types\":{\"MetaTransaction\":[{\"name\":\"nonce\",\"type\":\"uint256\"},{\"name\":\"from\",\"type\":\"address\"},{\"name\":\"functionSignature\",\"type\":\"bytes\"}]},"
             + $"\"domain\":{{\"name\":\"Decentraland MANA\",\"version\":\"1\",\"verifyingContract\":\"{verifyingContract}\",\"salt\":\"0x0000000000000000000000000000000000000000000000000000000000013881\"}},"
