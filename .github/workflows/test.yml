@@ -371,7 +371,9 @@ jobs:
             echo "::warning::Warnings not reduced ($COUNT >= $BASELINE) but 'no-warning-ratchet' label present - bypassing."
             exit 0
           fi
-          echo "::error::Compilation warnings ($COUNT) must be strictly LESS than the baseline ($BASELINE). Remove at least one warning to merge (or apply the 'no-warning-ratchet' label)."
+          need=$((COUNT - BASELINE + 1))
+          if [ "$need" -eq 1 ]; then noun="warning"; else noun="warnings"; fi
+          echo "::error::Compilation warnings ($COUNT) must be strictly LESS than the baseline ($BASELINE). Remove at least $need $noun to merge (or apply the 'no-warning-ratchet' label)."
           exit 1
 
       # Lower the baseline on merge to dev. Only ever decreases it.
@@ -409,6 +411,7 @@ jobs:
         run: |
           set -euo pipefail
           echo '[]' > pr-findings.json
+          echo '[]' > droppable.json
           echo "total=0" >> "$GITHUB_OUTPUT"
           [ -f filtered.json ] || exit 0
 
@@ -436,6 +439,20 @@ jobs:
           echo "total=$total" >> "$GITHUB_OUTPUT"
           echo "PR-file findings: $total (listing up to $MAX_FINDINGS)"
 
+          # Also surface up to MAX_FINDINGS easy-to-remove warnings from anywhere in the
+          # codebase, so a blocked PR whose own files are already clean still has concrete
+          # targets. Redundant/unused findings are listed first (safest mechanical removals).
+          jq --argjson max "$MAX_FINDINGS" '
+            [ .[] | {
+                file:    (.locations[0].physicalLocation.artifactLocation.uri // ""),
+                line:    (.locations[0].physicalLocation.region.startLine // 0),
+                rule:    (.ruleId // ""),
+                message: (.message.text // "")
+              } ]
+            | sort_by(if (.rule | test("Redundant|Unused|Unaccessed")) then 0 else 1 end)
+            | .[:$max]
+          ' filtered.json > droppable.json
+
       # Hand the numbers to the trusted workflow_run companion that posts the PR comment.
       # Runs even when the gate above failed (!cancelled), so a failing run still refreshes the comment
       # instead of leaving a stale message.
@@ -457,7 +474,8 @@ jobs:
             --argjson allow_equal "$IS_RELEASE_OR_HOTFIX" \
             --slurpfile findings pr-findings.json \
             --argjson findings_total "$FINDINGS_TOTAL" \
-            '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end), allow_equal: $allow_equal, pr_findings: ($findings[0] // []), pr_findings_total: $findings_total}' \
+            --slurpfile droppable droppable.json \
+            '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end), allow_equal: $allow_equal, pr_findings: ($findings[0] // []), pr_findings_total: $findings_total, droppable: ($droppable[0] // [])}' \
             > warning-result.json
           cat warning-result.json
 

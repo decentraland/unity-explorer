@@ -13,7 +13,7 @@ The server is compiled into all builds but stays dormant unless explicitly enabl
 | `--mcp` | Starts the MCP server on the default port **8123** |
 | `--mcp-port <port>` | Starts the MCP server on a specific port (implies `--mcp`) |
 
-The flag is accepted from the command line or a deep link. The endpoint is `http://127.0.0.1:<port>/unity-explorer-mcp`.
+The flag is accepted from the command line, or from a deep link whose target realm is loopback (`decentraland://?realm=http://127.0.0.1:8000&mcp=true`) — a deep link pointing at a remote realm drops it, see [`DeepLinkAllowlist`](../Explorer/Assets/DCL/Infrastructure/Global/AppArgs/DeepLinkAllowlist.cs). The endpoint is `http://127.0.0.1:<port>/unity-explorer-mcp`.
 
 ```bash
 # macOS
@@ -32,6 +32,7 @@ From a scene folder, `@dcl/sdk-commands` can enable it at launch: `npm run start
 - The listener binds to **127.0.0.1 only** — it is never reachable from the network.
 - Browser-originated requests are rejected unless their `Origin` is localhost (defense against drive-by pages and DNS rebinding). Requests without an `Origin` header (CLI clients) are allowed.
 - The server only exists while the process runs with the flag; there is no persistence and no authentication token in v1.
+- A deep link can only turn it on when the link's `realm` is loopback (deep-link allowlist tier 2, SEC-019/020), so a link aimed at a production realm cannot start the server. That gate narrows the drive-by surface rather than closing it: a crafted link can supply a loopback realm of its own. Because there is no token, treat an open port as full local control of the client — screenshots, chat commands as the signed-in user, movement — and only enable it on a machine where every local process is trusted.
 
 ## Connecting a coding agent
 
