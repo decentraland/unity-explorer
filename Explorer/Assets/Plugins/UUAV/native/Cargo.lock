@@ -352,6 +352,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
+name = "mach2"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d640282b302c0bb0a2a8e0233ead9035e3bed871f0b7e81fe4a1ec829765db44"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -410,7 +419,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a180dd8642fa45cdb7dd721cd4c11b1cadd4929ce112ebd8b9f5803cc79d536"
 dependencies = [
  "bitflags 2.13.0",
+ "block2",
  "dispatch2",
+ "libc",
  "objc2",
 ]
 
@@ -793,7 +804,10 @@ dependencies = [
  "crossbeam-channel",
  "dashmap",
  "libc",
+ "mach2",
  "objc2",
+ "objc2-core-foundation",
+ "objc2-io-surface",
  "objc2-metal",
  "uuav-ipc",
  "uuid",
@@ -824,6 +838,7 @@ name = "uuav-ipc"
 version = "0.2.0"
 dependencies = [
  "anyhow",
+ "mach2",
  "postcard",
  "serde",
  "zmq",
@@ -837,6 +852,8 @@ dependencies = [
  "crossbeam-channel",
  "libc",
  "objc2",
+ "objc2-core-foundation",
+ "objc2-io-surface",
  "objc2-metal",
  "uuav-core",
  "uuav-ipc",
