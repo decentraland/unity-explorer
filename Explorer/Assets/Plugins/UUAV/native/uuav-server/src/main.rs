@@ -10,12 +10,15 @@
     clippy::todo,
     clippy::dbg_macro
 )]
-// borrow_as_ptr: C out-params (`&mut x` as `*mut x`) are pervasive at the
-// core's FFI boundary, same allowance as the core crate itself
+// borrow_as_ptr / cast truncation / doc_markdown: C out-params, fixed-width
+// FFI ids, and "IOSurface" in prose are pervasive at the core's boundary,
+// same allowances as the core crate itself
 #![allow(
     clippy::missing_errors_doc,
     clippy::uninlined_format_args,
-    clippy::borrow_as_ptr
+    clippy::borrow_as_ptr,
+    clippy::cast_possible_truncation,
+    clippy::doc_markdown
 )]
 
 mod adapter;
@@ -27,6 +30,10 @@ mod device;
 #[cfg(target_os = "windows")]
 #[path = "device_windows.rs"]
 mod device;
+
+#[cfg(target_os = "macos")]
+#[path = "video_macos.rs"]
+mod video;
 
 #[cfg(target_os = "macos")]
 #[path = "watch_macos.rs"]
@@ -45,12 +52,17 @@ struct Args {
     endpoint: String,
     token: String,
     parent_pid: u32,
+    /// The client's registered mach service for IOSurface port transfer.
+    #[cfg(target_os = "macos")]
+    service: String,
 }
 
 fn parse_args() -> anyhow::Result<Args> {
     let mut endpoint = None;
     let mut token = None;
     let mut parent_pid = None;
+    #[cfg(target_os = "macos")]
+    let mut service = None;
 
     let mut args = std::env::args().skip(1);
     while let Some(flag) = args.next() {
@@ -62,6 +74,8 @@ fn parse_args() -> anyhow::Result<Args> {
             "--endpoint" => endpoint = Some(value()?),
             "--token" => token = Some(value()?),
             "--parent-pid" => parent_pid = Some(value()?.parse::<u32>()?),
+            #[cfg(target_os = "macos")]
+            "--service" => service = Some(value()?),
             other => bail!("unknown argument: {other}"),
         }
     }
@@ -70,6 +84,8 @@ fn parse_args() -> anyhow::Result<Args> {
         endpoint: endpoint.context("--endpoint is required")?,
         token: token.context("--token is required")?,
         parent_pid: parent_pid.context("--parent-pid is required")?,
+        #[cfg(target_os = "macos")]
+        service: service.context("--service is required")?,
     })
 }
 
@@ -92,5 +108,9 @@ fn main() -> anyhow::Result<()> {
         },
     )?;
 
-    adapter::run(&socket)
+    adapter::run(
+        &socket,
+        #[cfg(target_os = "macos")]
+        &args.service,
+    )
 }

@@ -6,14 +6,16 @@ use anyhow::{Context as _, Result};
 use objc2::rc::Retained;
 use objc2::runtime::ProtocolObject;
 use objc2_metal::{
-    MTLCreateSystemDefaultDevice, MTLDevice, MTLPixelFormat, MTLTexture, MTLTextureDescriptor,
+    MTLCommandQueue, MTLCreateSystemDefaultDevice, MTLDevice, MTLPixelFormat, MTLTexture,
+    MTLTextureDescriptor,
 };
 use std::os::raw::c_void;
 
 pub struct ProbeDevice {
     // field order = drop order: the probe must not outlive its device
     probe: Retained<ProtocolObject<dyn MTLTexture>>,
-    #[allow(dead_code)] // retained so the device outlives the core's borrow of it
+    /// The blit queue the video pump copies core frames to shared slots on.
+    queue: Retained<ProtocolObject<dyn MTLCommandQueue>>,
     device: Retained<ProtocolObject<dyn MTLDevice>>,
 }
 
@@ -45,12 +47,23 @@ impl ProbeDevice {
         let probe = device
             .newTextureWithDescriptor(&descriptor)
             .context("failed to create probe texture")?;
+        let queue = device
+            .newCommandQueue()
+            .context("MTLDevice returned no command queue")?;
 
-        Ok(Self { probe, device })
+        Ok(Self { probe, queue, device })
     }
 
     /// The `id<MTLTexture>` pointer for the core's `uuav_init`.
     pub fn probe_ptr(&self) -> *const c_void {
         Retained::as_ptr(&self.probe).cast()
+    }
+
+    pub fn metal_device(&self) -> &ProtocolObject<dyn MTLDevice> {
+        &self.device
+    }
+
+    pub fn command_queue(&self) -> &ProtocolObject<dyn MTLCommandQueue> {
+        &self.queue
     }
 }

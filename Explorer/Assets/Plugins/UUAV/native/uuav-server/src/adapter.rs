@@ -17,6 +17,10 @@ use uuav_ipc::{socket, zmq};
 /// State-pump cadence; the client extrapolates media time between pushes.
 const PUMP_INTERVAL: Duration = Duration::from_millis(20);
 
+/// Video tick cadence (~60 Hz): render event + slot copy + publish.
+#[cfg(target_os = "macos")]
+const VIDEO_INTERVAL: Duration = Duration::from_millis(16);
+
 /// Socket poll granularity for the single-threaded serve loop.
 const POLL_TIMEOUT_MS: i64 = 5;
 
@@ -52,21 +56,44 @@ struct PlayerTracking {
     media_info_sent: bool,
 }
 
-pub fn run(socket: &zmq::Socket) -> anyhow::Result<()> {
+/// Everything the serve loop owns across iterations.
+struct Serve {
+    /// Kept alive for the whole process: the core borrows the device it
+    /// derived from the probe texture.
+    probe: Option<device::ProbeDevice>,
+    players: HashMap<PlayerId, PlayerTracking>,
+    #[cfg(target_os = "macos")]
+    video: Option<crate::video::VideoPump>,
+}
+
+pub fn run(
+    socket: &zmq::Socket,
+    #[cfg(target_os = "macos")] service: &str,
+) -> anyhow::Result<()> {
     let (tx, rx) = unbounded();
     _ = FORWARD.set(tx);
 
-    // kept alive for the whole process: the core borrows the device it
-    // derived from the probe texture
-    let mut probe: Option<device::ProbeDevice> = None;
-    let mut players: HashMap<PlayerId, PlayerTracking> = HashMap::new();
+    let mut serve = Serve {
+        probe: None,
+        players: HashMap::new(),
+        #[cfg(target_os = "macos")]
+        video: None,
+    };
     let mut last_pump = Instant::now();
+    #[cfg(target_os = "macos")]
+    let mut last_video = Instant::now();
 
     loop {
         socket::poll_readable(socket, POLL_TIMEOUT_MS)?;
 
         while let Some(message) = socket::try_recv::<ToServer>(socket)? {
-            if dispatch(socket, message, &mut probe, &mut players)? {
+            if dispatch(
+                socket,
+                message,
+                &mut serve,
+                #[cfg(target_os = "macos")]
+                service,
+            )? {
                 core::uuav_deinit();
                 return Ok(());
             }
@@ -76,7 +103,15 @@ pub fn run(socket: &zmq::Socket) -> anyhow::Result<()> {
 
         if last_pump.elapsed() >= PUMP_INTERVAL {
             last_pump = Instant::now();
-            pump_states(socket, &mut players)?;
+            pump_states(socket, &mut serve.players)?;
+        }
+
+        #[cfg(target_os = "macos")]
+        if last_video.elapsed() >= VIDEO_INTERVAL {
+            last_video = Instant::now();
+            if let Some(video) = serve.video.as_mut() {
+                video.tick(serve.players.keys().copied(), socket);
+            }
         }
     }
 }
@@ -85,9 +120,10 @@ pub fn run(socket: &zmq::Socket) -> anyhow::Result<()> {
 fn dispatch(
     socket: &zmq::Socket,
     message: ToServer,
-    probe: &mut Option<device::ProbeDevice>,
-    players: &mut HashMap<PlayerId, PlayerTracking>,
+    serve: &mut Serve,
+    #[cfg(target_os = "macos")] service: &str,
 ) -> anyhow::Result<bool> {
+    let players = &mut serve.players;
     match message {
         ToServer::Configure {
             corr,
@@ -96,7 +132,15 @@ fn dispatch(
             log_level,
             adapter,
         } => {
-            let result = configure(probe, audio, &protocol_whitelist, log_level, adapter);
+            let result = configure(&mut serve.probe, audio, &protocol_whitelist, log_level, adapter);
+            #[cfg(target_os = "macos")]
+            let result = result.and_then(|()| {
+                let probe = serve.probe.as_ref().ok_or("probe device is missing")?;
+                serve.video = Some(
+                    crate::video::VideoPump::new(probe, service).map_err(|e| e.to_string())?,
+                );
+                Ok(())
+            });
             reply(socket, corr, result.map(|()| ReplyBody::Unit))?;
         }
         ToServer::SetLogLevel { level } => core::uuav_set_log_level(level),
@@ -116,6 +160,10 @@ fn dispatch(
         ToServer::PlayerFree { id } => {
             core::uuav_player_free(id);
             players.remove(&id);
+            #[cfg(target_os = "macos")]
+            if let Some(video) = serve.video.as_mut() {
+                video.remove_player(id);
+            }
         }
         ToServer::OpenMedia { id, url } => {
             let outcome = open_media(id, &url);
@@ -155,8 +203,15 @@ fn dispatch(
                 state::consume_result(core::uuav_player_assign_master_clock(id, time));
             report_command_error(socket, id, "assign master clock", outcome)?;
         }
+        #[cfg(target_os = "macos")]
+        ToServer::TextureSetAck { id, generation } => {
+            if let Some(video) = serve.video.as_mut() {
+                video.ack(id, generation);
+            }
+        }
+        #[cfg(target_os = "windows")]
         ToServer::TextureSetAck { .. } => {
-            // M2: shared texture generations
+            // M4: Windows shared texture generations
         }
         ToServer::Shutdown => return Ok(true),
     }

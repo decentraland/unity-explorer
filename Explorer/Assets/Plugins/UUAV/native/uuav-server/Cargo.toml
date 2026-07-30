@@ -16,6 +16,8 @@ uuav-ipc = { path = "../uuav-ipc" }
 [target.'cfg(target_os = "macos")'.dependencies]
 libc = "0.2"
 objc2 = "0.6"
+objc2-core-foundation = "0.3"
+objc2-io-surface = { version = "0.3", features = ["libc", "objc2-core-foundation"] }
 objc2-metal = { version = "0.3", features = ["objc2-io-surface"] }
 
 [target.'cfg(windows)'.dependencies]
