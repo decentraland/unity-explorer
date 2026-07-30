@@ -128,6 +128,7 @@ jobs:
           DELIM="EOF_$(uuidgen)"
           BADGE_STYLE="?logo=jetbrains&logoColor=white&style=for-the-badge"
           DETAILS=""
+          BLOCKED=0
 
           if [ "$FOUND" != "true" ]; then
             if [ "$CONCLUSION" = "success" ]; then
@@ -151,11 +152,16 @@ jobs:
               MSG="**Warnings unchanged: $BASELINE => $COUNT** — allowed on release/hotfix branches."
               BADGE="https://img.shields.io/badge/Lint-Passed!-3fb950${BADGE_STYLE}"
             else
-              MSG="**Warnings not reduced: $BASELINE => $COUNT** — remove at least one warning to merge."
+              need=$((COUNT - BASELINE + 1))
+              if [ "$need" -eq 1 ]; then noun="warning"; else noun="warnings"; fi
+              MSG="**Warnings not reduced: $BASELINE => $COUNT** — remove at least $need $noun to merge."
               BADGE="https://img.shields.io/badge/Lint-Blocked!-ff0000${BADGE_STYLE}"
+              BLOCKED=1
             fi
 
-            # List the warnings/errors in files this PR changed, collapsed by default.
+            # One collapsible block. Primary: warnings in files this PR changed. Fallback
+            # (branch clean but still blocked): a general list of easy-to-remove warnings
+            # from anywhere, so the dev has concrete targets to get under the baseline.
             total=$(jq -r '.pr_findings_total // 0' warning-result.json)
             if [ "$total" -gt 0 ]; then
               {
@@ -174,6 +180,21 @@ jobs:
                 echo "</details>"
               } > details.md
               DETAILS="details.md"
+            elif [ "$BLOCKED" = 1 ]; then
+              dcount=$(jq -r '.droppable | length' warning-result.json)
+              if [ "$dcount" -gt 0 ]; then
+                {
+                  echo ""
+                  echo "<details><summary>No warnings in files changed by this PR — showing general ones you can remove to unblock ($dcount of $COUNT)</summary>"
+                  echo ""
+                  echo '```'
+                  jq -r '.droppable[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
+                  echo '```'
+                  echo ""
+                  echo "</details>"
+                } > details.md
+                DETAILS="details.md"
+              fi
             fi
           fi
 
