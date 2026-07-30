@@ -467,12 +467,31 @@ namespace Global.Dynamic
 
         /// <summary>
         ///     Shown before anything consumes the app-args (so the MVC manager is not available yet). On consent the
-        ///     denied params are merged into the args; returns false when the user chose to exit instead.
+        ///     denied params are merged into the args; returns false only when the user chose to exit.
         /// </summary>
         private async UniTask<bool> ShowDeniedDeepLinkParamsConfirmationAsync(AddressablesProvisioner assetsProvisioner, IAppArgs appArgs, CancellationToken ct)
         {
-            DeepLinkParamsWarningView prefab = (await assetsProvisioner.ProvideMainAssetAsync(deepLinkParamsWarningPopupPrefab, ct)).Value.GetComponent<DeepLinkParamsWarningView>();
-            DeepLinkParamsWarningView popup = Instantiate(prefab);
+            DeepLinkParamsWarningView popup;
+
+            try
+            {
+                DeepLinkParamsWarningView prefab = (await assetsProvisioner.ProvideMainAssetAsync(deepLinkParamsWarningPopupPrefab, ct)).Value.GetComponent<DeepLinkParamsWarningView>();
+                popup = Instantiate(prefab);
+            }
+            catch (OperationCanceledException)
+            {
+                // The launch is being torn down: InitializeFlowAsync already ignores it.
+                throw;
+            }
+            catch (Exception e)
+            {
+                // This runs before the splash screen exists, so a failure here would otherwise leave the launch on a
+                // black screen. Without the dialog there is no way to ask for consent: keep the params dropped (the
+                // behaviour before this dialog existed) and let the app start.
+                ReportHub.LogException(e, ReportCategory.STARTUP);
+                return true;
+            }
+
             popup.SetDeniedParams(appArgs.DeniedDeepLinkParams);
 
             var decision = new UniTaskCompletionSource<bool>();
