@@ -21,14 +21,17 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Permitted only for a whitelisted realm</b> — the local-development params Creator Hub and the
     ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, dclenv, hub,
-    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance, scene-console. A realm is
-    ///             "whitelisted" when it is loopback (127.0.0.1 / localhost / [::1]) OR its world matches the
+    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance, scene-console, mcp, mcp-port. A realm
+    ///             is "whitelisted" when it is loopback (127.0.0.1 / localhost / [::1]) OR its world matches the
     ///             <c>deeplink-whitelisted-worlds</c> feature flag (see <see cref="IsRealmWhitelisted" /> and
     ///             <see cref="SetWhitelistedWorlds" />). A remote-realm deep link from a web page can never enable
-    ///             them unless that exact world was explicitly whitelisted. Each is individually low-harm — an
-    ///             analytics tag, a cosmetic toggle, an instance count, an env enum, a screen skip that still forces
-    ///             auth when no valid identity is cached, or the per-scene JS console — and the whitelisted-realm gate
-    ///             confines them to the dev context.
+    ///             them unless that exact world was explicitly whitelisted. All but the MCP pair are individually
+    ///             low-harm — an analytics tag, a cosmetic toggle, an instance count, an env enum, a screen skip that
+    ///             still forces auth when no valid identity is cached, or the per-scene JS console — and the
+    ///             whitelisted-realm gate confines them to the dev context. <c>mcp</c>/<c>mcp-port</c> start an
+    ///             unauthenticated loopback control port and are the one non-low-harm pair in this set; they lean on
+    ///             the gate plus the server's own 127.0.0.1 bind and Origin check — see the per-key comment for what
+    ///             the gate does and does not cover.
     ///         </item>
     ///         <item>
     ///             <b>Never permitted</b> — everything else, in particular params that launch code
@@ -36,8 +39,10 @@ namespace Global.AppArgs
     ///             attacker infrastructure (<c>comms-adapter</c>, <c>gatekeeper-url</c>, <c>friends-api-url</c> —
     ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>, <c>optimized-assets-url</c>,
     ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>); bypass a version/specs screen
-    ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable other dev/test modes
-    ///             (<c>debug</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>).
+    ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable the remaining dev/test
+    ///             modes (<c>debug</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>). A whitelisted realm
+    ///             does not unlock these: unlike the tier above, a key that is in neither set is dropped for every
+    ///             realm.
     ///         </item>
     ///     </list>
     ///     Both permitted sets and the world whitelist are a product decision (SEC-019/020 "Design affected") —
@@ -100,6 +105,18 @@ namespace Global.AppArgs
             // Allows multiple client instances (local multi-instance dev workflow).
             AppArgsFlags.MULTIPLE_RUNNING_INSTANCES,
 
+            // Starts the embedded MCP automation server so a coding agent can drive the client (#9339). The odd one
+            // out in this set: the listener binds 127.0.0.1 with no auth token, so any local process can screenshot
+            // the viewport, run chat commands as the signed-in user, and move the player. Loopback-gated because the
+            // only launch that needs it is the local dev loop — sdk-commands forwards --mcp into a deep link whose
+            // realm is the scene server it just started on 127.0.0.1. The gate drops the drive-by link that would
+            // enable it against a production realm; it does not make the flag unreachable, since a crafted link can
+            // supply a loopback realm of its own.
+            AppArgsFlags.MCP,
+
+            // Port the server above listens on. Presence alone also starts it (MCP_PORT implies MCP), so it carries
+            // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
+            AppArgsFlags.MCP_PORT,
             // Opens the per-scene JS console (dev tooling for inspecting a scene under development).
             AppArgsFlags.SCENE_CONSOLE,
         };
