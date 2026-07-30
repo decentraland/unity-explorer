@@ -391,7 +391,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                         else
                         {
-                            uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+                            // The duration comes from the masked emote's own clip; a looping emote has no end to report.
+                            uint durationMs = !isLooping ? (uint)(masked.PlayingEmoteDuration * 1000) : 0;
                             World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
                     }
