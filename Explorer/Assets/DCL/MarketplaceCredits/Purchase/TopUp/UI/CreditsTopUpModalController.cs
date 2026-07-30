@@ -25,8 +25,6 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string ANALYTICS_STEP_CHECKOUT = "checkout";
         private const string ANALYTICS_STEP_GRANT = "grant";
         private const string ANALYTICS_ERROR_GRANT_FAILED = "grant_failed";
-        private const string SUCCESS_TEXT = "YOU SUCCESSFULLY BOUGHT {0} CREDITS, CURRENT BALANCE {1} CREDITS";
-        private const string AVAILABLE_CREDITS_TEXT = "You own {0} credits";
 
         private readonly ICreditsTopUpService topUpService;
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
@@ -239,7 +237,6 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                         break;
                     case CreditsTopUpStage.Credited:
                         BuyCreditsCompleted?.Invoke(status.OrderId!, status.Pack);
-                        viewInstance!.BoughtCreditsAmount.text = status.Pack.Credits.ToString();
                         break;
                     case CreditsTopUpStage.Failed:
                         BuyCreditsFailed?.Invoke(
@@ -267,6 +264,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             switch (status.Stage)
             {
                 case CreditsTopUpStage.Credited:
+                    viewInstance.BoughtCreditsAmount.text = status.Pack.Credits.ToString();
                     viewInstance.BalanceCreditsText.text = status.NewBalance.ToString();
                     break;
                 case CreditsTopUpStage.Failed:
