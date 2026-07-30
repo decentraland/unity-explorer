@@ -75,6 +75,10 @@ namespace MVC
             return info.PopupControllers.Count > 0 || info.FullscreenController != null;
         }
 
+        public bool IsShowing<TView, TInputData>() where TView: IView =>
+            controllers.TryGetValue(typeof(IController<TView, TInputData>), out IController controller)
+            && controller.State != ControllerState.ViewHidden;
+
         public void CloseAllNonPersistentViews(CancellationToken ct = default)
         {
             var info = windowsStackManager.GetNonPersistentControllersInfo();

@@ -19,19 +19,9 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
     {
         private readonly IMVCManager mvcManager;
 
-        private bool isExplorePanelOpen;
-
         public ExplorerUiActions(IMVCManager mvcManager)
         {
             this.mvcManager = mvcManager;
-            mvcManager.OnViewShowed += OnViewShowed;
-            mvcManager.OnViewClosed += OnViewClosed;
-        }
-
-        public void Dispose()
-        {
-            mvcManager.OnViewShowed -= OnViewShowed;
-            mvcManager.OnViewClosed -= OnViewClosed;
         }
 
         public OpenExplorerUiResult OpenSection(ExploreSections section)
@@ -44,7 +34,7 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
                 return OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
-            if (isExplorePanelOpen)
+            if (mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>())
                 return OpenExplorerUiResult.WasAlreadyOpen;
 
             OpenSectionAsync(section).Forget();
@@ -60,18 +50,6 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.RESTRICTED_ACTIONS); }
-        }
-
-        private void OnViewShowed(IController controller)
-        {
-            if (controller is ExplorePanelController)
-                isExplorePanelOpen = true;
-        }
-
-        private void OnViewClosed(IController controller)
-        {
-            if (controller is ExplorePanelController)
-                isExplorePanelOpen = false;
         }
     }
 }

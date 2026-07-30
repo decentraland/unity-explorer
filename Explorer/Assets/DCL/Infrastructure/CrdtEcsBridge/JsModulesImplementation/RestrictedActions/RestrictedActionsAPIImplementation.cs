@@ -239,10 +239,7 @@ namespace CrdtEcsBridge.RestrictedActions
             return (int)explorerUiActions.OpenSection(section);
         }
 
-        public void Dispose()
-        {
-            explorerUiActions.Dispose();
-        }
+        public void Dispose() { }
 
         public void TryCopyToClipboard(string text)
         {

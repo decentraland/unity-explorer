@@ -1,10 +1,9 @@
 using DCL.UI;
 using Decentraland.Kernel.Apis;
-using System;
 
 namespace DCL.CrdtEcsBridge.JsModulesImplementation
 {
-    public interface IExplorerUiActions : IDisposable
+    public interface IExplorerUiActions
     {
         OpenExplorerUiResult OpenSection(ExploreSections section);
     }
