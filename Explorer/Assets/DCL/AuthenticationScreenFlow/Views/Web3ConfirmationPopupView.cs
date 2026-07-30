@@ -102,8 +102,15 @@ namespace DCL.AuthenticationScreenFlow
 
             ShowRawPayload(rawPayload);
 
-            int clickedIndex = await UniTask.WhenAny(continueButton.OnClickAsync(ct), cancelButton.OnClickAsync(ct));
-            return clickedIndex == 0;
+            // The button that was not clicked stays subscribed until its token is cancelled.
+            using var clickCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+            try
+            {
+                int clickedIndex = await UniTask.WhenAny(continueButton.OnClickAsync(clickCts.Token), cancelButton.OnClickAsync(clickCts.Token));
+                return clickedIndex == 0;
+            }
+            finally { clickCts.Cancel(); }
         }
 
         private void ShowRawPayload(string? rawPayload)

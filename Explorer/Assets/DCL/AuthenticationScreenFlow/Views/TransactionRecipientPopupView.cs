@@ -21,12 +21,19 @@ namespace DCL.AuthenticationScreenFlow
             description.text = descriptionText;
             gameObject.SetActive(true);
 
+            // The button that was not clicked stays subscribed until its token is cancelled.
+            using var clickCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
             try
             {
-                int clickedIndex = await UniTask.WhenAny(confirmButton.OnClickAsync(ct), cancelButton.OnClickAsync(ct));
+                int clickedIndex = await UniTask.WhenAny(confirmButton.OnClickAsync(clickCts.Token), cancelButton.OnClickAsync(clickCts.Token));
                 return clickedIndex == 0;
             }
-            finally { gameObject.SetActive(false); }
+            finally
+            {
+                clickCts.Cancel();
+                gameObject.SetActive(false);
+            }
         }
     }
 }
