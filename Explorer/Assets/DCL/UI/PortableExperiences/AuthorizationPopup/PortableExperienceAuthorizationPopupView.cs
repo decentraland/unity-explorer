@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace PortableExperiences.Controller
+namespace DCL.UI.PortableExperiences
 {
     public class PortableExperienceAuthorizationPopupView : ViewBase, IView
     {

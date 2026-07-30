@@ -2,7 +2,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using Global.Dynamic;
-using MVC;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -23,7 +22,7 @@ namespace PortableExperiences.Controller
         /// <summary>
         ///     Assigned from the composition root once the UI shell exists. Null until then.
         /// </summary>
-        IMVCManager? MvcManager { get; set; }
+        IPortableExperienceAuthorizationHandler? AuthorizationHandler { get; set; }
 
         bool CanKillPortableExperience(string id);
 

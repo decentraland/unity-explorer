@@ -3,7 +3,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace PortableExperiences.Controller
+namespace DCL.UI.PortableExperiences
 {
     /// <summary>
     ///     Popup that discloses the capabilities requested by a scene-spawned Portable Experience

@@ -20,7 +20,6 @@ using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
-using MVC;
 using SceneRuntime.ScenePermissions;
 
 namespace PortableExperiences.Controller
@@ -51,7 +50,7 @@ namespace PortableExperiences.Controller
             set => globalWorld = value;
         }
 
-        public IMVCManager? MvcManager { get; set; }
+        public IPortableExperienceAuthorizationHandler? AuthorizationHandler { get; set; }
 
         private World world => GlobalWorld.EcsWorld;
 
@@ -204,16 +203,16 @@ namespace PortableExperiences.Controller
                 return;
             }
 
-            IMVCManager? mvcManager = MvcManager;
+            IPortableExperienceAuthorizationHandler? authorizationHandler = AuthorizationHandler;
 
             // Fail closed: a portable experience that requires permissions must never spawn without explicit consent.
-            if (mvcManager == null)
+            if (authorizationHandler == null)
             {
                 ReportHub.LogError(ReportCategory.PORTABLE_EXPERIENCE, $"Cannot request authorization for portable experience '{portableExperienceId}': UI is not initialized yet.");
                 throw new Exception($"Portable experience '{portableExperienceId}' requires user authorization but the UI is not available yet.");
             }
 
-            bool authorized = await PortableExperienceAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, portableExperienceName, permissions, ct);
+            bool authorized = await authorizationHandler.RequestAuthorizationAsync(portableExperienceName, permissions, ct);
 
             // A cancelled request must not be recorded as a user decision.
             ct.ThrowIfCancellationRequested();

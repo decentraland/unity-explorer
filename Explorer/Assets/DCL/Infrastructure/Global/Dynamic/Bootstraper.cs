@@ -270,7 +270,7 @@ namespace Global.Dynamic
 
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
-            staticContainer.PortableExperiencesController.MvcManager = dynamicWorldContainer.MvcManager;
+            staticContainer.PortableExperiencesController.AuthorizationHandler = new PortableExperienceAuthorizationPopupHandler(dynamicWorldContainer.MvcManager);
 
             InitializeDebugPanel(staticContainer.DebugContainerBuilder, debugUiRoot);
 
