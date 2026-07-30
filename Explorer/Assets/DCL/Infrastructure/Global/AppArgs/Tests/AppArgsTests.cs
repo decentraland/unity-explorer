@@ -142,6 +142,34 @@ namespace Global.AppArgs.Tests
         }
 
         [Test]
+        public void DeepLinkKeepsMcpForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&local-scene=true&mcp=true&mcp-port=8124");
+
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MCP), "mcp must survive for a loopback (local dev) realm — sdk-commands forwards it into the preview deep link");
+            Assert.AreEqual("8124", output.GetValueOrDefault(AppArgsFlags.MCP_PORT), "mcp-port must survive for a loopback (local dev) realm");
+        }
+
+        [Test]
+        public void DeepLinkDropsMcpForRemoteRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&mcp=true&mcp-port=8124");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP), "mcp must be dropped for a non-loopback (remote) realm — it starts an unauthenticated loopback control port");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP_PORT), "mcp-port must be dropped for a non-loopback (remote) realm (it implies mcp)");
+        }
+
+        [Test]
+        public void DeepLinkDropsMcpWithoutRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters("decentraland://?mcp=true&mcp-port=8124");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP), "mcp must be dropped when the link carries no realm at all (drive-by link against the default realm)");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP_PORT), "mcp-port must be dropped when the link carries no realm at all");
+        }
+      
         public void DeepLinkKeepsSceneConsoleForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
