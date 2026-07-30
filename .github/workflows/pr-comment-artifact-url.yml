@@ -82,7 +82,7 @@ jobs:
 
             Build skipped — no changes detected under `Explorer/`.
 
-            [badge]: https://img.shields.io/badge/Build-Skipped-yellow?logo=github&style=for-the-badge
+            [badge]: https://img.shields.io/badge/Build-Skipped-yellow?logo=unity&logoColor=white&style=for-the-badge
 
   comment-success:
     needs: [pre-validation, check-build-ran]
@@ -231,7 +231,7 @@ jobs:
 
             ${{ env.SIZE_REPORT }}
 
-            [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
+            [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=unity&logoColor=white&style=for-the-badge
 
       - name: Find latest release
         env:
@@ -278,4 +278,4 @@ jobs:
             Build failed! Check the logs to see what went wrong.
             If the error repeats please consider the `clean-build` tag.
 
-            [badge]: https://img.shields.io/badge/Build-Failed!-ff0000?logo=github&style=for-the-badge
+            [badge]: https://img.shields.io/badge/Build-Failed!-ff0000?logo=unity&logoColor=white&style=for-the-badge
