@@ -177,15 +177,19 @@ pub enum ToClient {
         id: PlayerId,
         info: MediaInfoWire,
     },
-    /// A new shared-texture generation for the player: 3 slots x 2 planes.
-    /// On macOS the actual IOSurface mach ports travel out-of-band on the
-    /// mach channel, tagged (id, generation, slot, plane); the client
-    /// assembles the set and answers with `TextureSetAck`.
+    /// A new shared-texture generation for the player. On macOS: 3 slots x
+    /// 2 planes whose IOSurface mach ports travel out-of-band on the mach
+    /// channel, tagged (id, generation, slot, plane), and `handles` is
+    /// empty. On Windows: `handles` carries one NT handle value per slot
+    /// (a shared keyed-mutex NV12 texture, already `DuplicateHandle`d into
+    /// the client's process, owned by the client from this message on).
+    /// The client assembles the set and answers with `TextureSetAck`.
     TextureSet {
         id: PlayerId,
         generation: u32,
         width: u32,
         height: u32,
+        handles: Vec<u64>,
     },
     /// The helper finished writing a frame into `slot` (GPU work complete);
     /// the client's next render event may consume it.
