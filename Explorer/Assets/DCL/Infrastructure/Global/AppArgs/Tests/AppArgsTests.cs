@@ -287,6 +287,63 @@ namespace Global.AppArgs.Tests
         }
 
         [Test]
+        public void CaptureDeniedDeepLinkParamsWithoutApplyingThem()
+        {
+            // Arrange
+            // Note: "debug" is unusable here — in the Editor the parser always injects it (ALWAYS_IN_EDITOR).
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[]
+            {
+                "decentraland://?realm=https://peer.decentraland.org&position=1,2&autopilot=true&comms-adapter=wss://evil.example/ws",
+            });
+
+            // Act
+            args.InitializeDeepLinks();
+
+            // Assert: permitted params applied, denied ones captured (key and value) but NOT applied
+            Assert.AreEqual("https://peer.decentraland.org", args.TryGetValue(AppArgsFlags.REALM, out string? realm) ? realm : null);
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.AUTOPILOT), "denied params must not reach the app args without consent");
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.COMMS_ADAPTER), "denied params must not reach the app args without consent");
+            Assert.AreEqual("true", args.DeniedDeepLinkParams.GetValueOrDefault(AppArgsFlags.AUTOPILOT));
+            Assert.AreEqual("wss://evil.example/ws", args.DeniedDeepLinkParams.GetValueOrDefault(AppArgsFlags.COMMS_ADAPTER));
+        }
+
+        [Test]
+        public void ApplyDeniedDeepLinkParamsOnConsent()
+        {
+            // Arrange
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[]
+            {
+                "decentraland://?realm=https://peer.decentraland.org&debug=true&skip-version-check=true",
+            });
+
+            args.InitializeDeepLinks();
+
+            // Act
+            args.ApplyDeniedDeepLinkParams();
+
+            // Assert
+            Assert.AreEqual("true", args.TryGetValue(AppArgsFlags.DEBUG, out string? debug) ? debug : null);
+            Assert.AreEqual("true", args.TryGetValue(AppArgsFlags.SKIP_VERSION_CHECK, out string? skip) ? skip : null);
+            Assert.IsEmpty(args.DeniedDeepLinkParams, "applied params must not stay pending");
+        }
+
+        [Test]
+        public void ReportNoDeniedParamsForFullyAllowlistedDeepLink()
+        {
+            // Arrange
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[]
+            {
+                "decentraland://?realm=http://127.0.0.1:8000&position=1,2&local-scene=true",
+            });
+
+            // Act
+            args.InitializeDeepLinks();
+
+            // Assert
+            Assert.IsEmpty(args.DeniedDeepLinkParams, "a fully allowlisted deep link must not trigger the warning dialog");
+        }
+
+        [Test]
         public void NotWhitelistAnyWorldWithoutConfiguration()
         {
             // Arrange

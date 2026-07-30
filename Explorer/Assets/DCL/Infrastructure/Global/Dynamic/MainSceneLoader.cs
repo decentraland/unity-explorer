@@ -81,6 +81,7 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
         [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private AssetReferenceGameObject deepLinkParamsWarningPopupPrefab = null!;
         [SerializeField] private ErrorPopupWithRetryRef clockDesyncPopupRef = null!;
         [SerializeField] private GameObject altTesterPrefab = null!;
 
@@ -94,11 +95,13 @@ namespace Global.Dynamic
 
         private bool canShutdown;
 
+        // ReSharper disable once UnusedMember.Local
         private void Awake()
         {
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
+        // ReSharper disable once UnusedMember.Local
         private void OnDestroy()
         {
             Shutdown();
@@ -165,9 +168,11 @@ namespace Global.Dynamic
             ReportHub.LogProductionInfo($"[MainSceneLoader] OnDestroy successfully finished in {stopwatch.ElapsedMilliseconds}ms");
         }
 
+        // ReSharper disable once UnusedMember.Local
         private void OnApplicationQuit()
         {
             // Dispose just in case, but if the process ends normally or by a crash, the lock should also be released due to how native OS works
+            // ReSharper disable once EmptyGeneralCatchClause
             try { singleInstanceLock?.Dispose(); }
             catch { }
 
@@ -214,17 +219,28 @@ namespace Global.Dynamic
 
             applicationParametersParser.InitializeDeepLinks();
 
+            var assetsProvisioner = new AddressablesProvisioner();
+
+            // The deep link carried params that failed the allowlist: surface them before anything consumes the
+            // app-args, so the user can either exit or explicitly accept the risk and continue with them applied
+            // (they are merged into the args only on consent).
+            if (applicationParametersParser.DeniedDeepLinkParams.Count > 0
+                && !await ShowDeniedDeepLinkParamsConfirmationAsync(assetsProvisioner, applicationParametersParser, ct))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
             // Memory limit
-            bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
-            int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+            applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string? simulatedMemory);
 
-            ISystemMemoryCap memoryCap = hasSimulatedMemory
-                ? new SystemMemoryCap(systemMemory)
+            ISystemMemoryCap memoryCap = simulatedMemory != null
+                ? new SystemMemoryCap(int.Parse(simulatedMemory))
                 : new SystemMemoryCap();
 
             ApplyConfig(applicationParametersParser);
@@ -255,9 +271,7 @@ namespace Global.Dynamic
                 cliOptimizedAssetsUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
-            var assetsProvisioner = new AddressablesProvisioner();
-
-            splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
+            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
 
             // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
             if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
@@ -412,32 +426,32 @@ namespace Global.Dynamic
 
             return;
 
-            async UniTask LoadStartingRealmAsync(CancellationToken ct)
+            async UniTask LoadStartingRealmAsync(CancellationToken cancellationToken)
             {
-                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct); }
+                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, cancellationToken); }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
-                        await LoadStartingRealmAsync(ct);
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadStartingRealmAsync(cancellationToken);
                     else
                         ExitUtils.Exit();
                 }
             }
 
-            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken ct)
+            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken cancellationToken)
             {
-                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, ct); }
+                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, cancellationToken); }
                 catch (TimeoutException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
-                        await LoadUserFlowAsync(playerEntity, ct);
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadUserFlowAsync(playerEntity, cancellationToken);
                     else
                         throw;
                 }
                 catch (RealmChangeException)
                 {
-                    if (await ShowLoadErrorPopupAsync(ct) == ErrorPopupWithRetryController.Result.Restart)
-                        await LoadUserFlowAsync(playerEntity, ct);
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadUserFlowAsync(playerEntity, cancellationToken);
                     else
                         ExitUtils.Exit();
                 }
@@ -451,13 +465,38 @@ namespace Global.Dynamic
             popup.OkButton.onClick.AddListener(ExitUtils.Exit);
         }
 
+        /// <summary>
+        ///     Shown before anything consumes the app-args (so the MVC manager is not available yet). On consent the
+        ///     denied params are merged into the args; returns false when the user chose to exit instead.
+        /// </summary>
+        private async UniTask<bool> ShowDeniedDeepLinkParamsConfirmationAsync(AddressablesProvisioner assetsProvisioner, IAppArgs appArgs, CancellationToken ct)
+        {
+            DeepLinkParamsWarningView prefab = (await assetsProvisioner.ProvideMainAssetAsync(deepLinkParamsWarningPopupPrefab, ct)).Value.GetComponent<DeepLinkParamsWarningView>();
+            DeepLinkParamsWarningView popup = Instantiate(prefab);
+            popup.SetDeniedParams(appArgs.DeniedDeepLinkParams);
+
+            var decision = new UniTaskCompletionSource<bool>();
+            popup.ContinueButton.onClick.AddListener(() => decision.TrySetResult(true));
+            popup.ExitButton.onClick.AddListener(() => decision.TrySetResult(false));
+
+            bool continueWithParams = await decision.Task.AttachExternalCancellation(ct);
+
+            if (continueWithParams)
+            {
+                appArgs.ApplyDeniedDeepLinkParams();
+                Destroy(popup.gameObject);
+            }
+
+            return continueWithParams;
+        }
+
         private bool ShouldForceSingleRunningInstance(IAppArgs appArgs)
         {
-#if UNITY_EDITOR
-            return false;
-#endif
             if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return false;
 
+#if UNITY_EDITOR
+            return false;
+#else
             try
             {
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
@@ -471,6 +510,7 @@ namespace Global.Dynamic
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
 
             return false;
+#endif
         }
 
         private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
@@ -510,7 +550,7 @@ namespace Global.Dynamic
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
-            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
+            bootstrapContainer!.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer!.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
             UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
 
             var specsProperties = new JObject
@@ -621,7 +661,7 @@ namespace Global.Dynamic
             return true;
         }
 
-        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splash, CancellationToken ct)
         {
             DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
@@ -640,7 +680,7 @@ namespace Global.Dynamic
             if (!currentVersion.Version.IsOlderThan(latestVersion))
                 return false;
 
-            splashScreen.Hide();
+            splash.Hide();
 
             var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
 
@@ -851,7 +891,7 @@ namespace Global.Dynamic
         private static void DisableAllSelectableTransitions()
         {
             DOTween.KillAll();
-            Selectable[] all = FindObjectsByType<Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None) ?? Array.Empty<Selectable>();
+            Selectable[] all = FindObjectsByType<Selectable>(FindObjectsInactive.Include) ?? Array.Empty<Selectable>();
 
             foreach (var s in all)
             {
@@ -869,6 +909,8 @@ namespace Global.Dynamic
         [Serializable]
         public struct TrustedRealmApiResponse
         {
+            // Deserialized DTO field: keeps the JSON key casing of the /servers endpoint.
+            // ReSharper disable once InconsistentNaming
             public string baseUrl;
         }
 
@@ -911,21 +953,15 @@ namespace Global.Dynamic
 
             Destroy(viewInstance.gameObject);
 
-            switch (input.SelectedOption)
-            {
-                case ErrorPopupWithRetryController.Result.Exit:
-                    // The error popup will automatically request application exit
-                    return EnsureClockSync.Result.Continue;
-                case ErrorPopupWithRetryController.Result.Restart:
-                    return EnsureClockSync.Result.Restart;
-            }
-
-            return EnsureClockSync.Result.Continue;
+            // On Exit the error popup will automatically request application exit, so Continue is returned for it too.
+            return input.SelectedOption == ErrorPopupWithRetryController.Result.Restart
+                ? EnsureClockSync.Result.Restart
+                : EnsureClockSync.Result.Continue;
         }
 
         private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
         {
-            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
+            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string? resolutionArg) || string.IsNullOrEmpty(resolutionArg))
                 return null;
 
             string[] parts = resolutionArg.Split('x');
