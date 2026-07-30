@@ -263,7 +263,72 @@ fn main() {
         status.initialized, status.players_count
     );
 
+    // resurrection: kill the helper out from under the client and expect
+    // playback to self-heal with zero API help — the recovery worker
+    // respawns the helper and rebuilds the player from its desired state
+    kill_helper();
+    println!("helper killed; waiting for automatic recovery");
+    let t_before_kill = {
+        let mut t = 0.0_f64;
+        let r = unsafe { uuav::uuav_player_current_time(player, &mut t) };
+        if !r.error_message.is_null() {
+            unsafe { uuav::uuav_string_free(r.error_message.cast_mut()) };
+        }
+        t
+    };
+    let recovery_deadline = Instant::now();
+    let mut recovered = false;
+    while recovery_deadline.elapsed() < Duration::from_secs(30) {
+        render(player as i32);
+        let state = uuav::uuav_player_state(player);
+        if matches!(state, UUAVState::UUAV_PLAYING) {
+            let mut t0 = 0.0_f64;
+            let mut t1 = 0.0_f64;
+            let r0 = unsafe { uuav::uuav_player_current_time(player, &mut t0) };
+            std::thread::sleep(Duration::from_millis(500));
+            let r1 = unsafe { uuav::uuav_player_current_time(player, &mut t1) };
+            if r0.error_message.is_null() && r1.error_message.is_null() && t1 > t0 {
+                println!(
+                    "recovered: PLAYING again, time advancing {t0:.3}s -> {t1:.3}s (was at {t_before_kill:.3}s when killed)"
+                );
+                assert!(
+                    t0 > t_before_kill - 2.0,
+                    "playback restarted far behind the resume point"
+                );
+                recovered = true;
+                break;
+            }
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    assert!(recovered, "player never self-recovered after the helper was killed");
+
+    // the presentation texture must have survived the outage (same pointer)
+    let mut y_recovered: *const std::ffi::c_void = std::ptr::null();
+    let r = unsafe { uuav::uuav_player_get_video_texture(player, 0, &mut y_recovered) };
+    assert!(
+        r.error_message.is_null() && y_recovered == y,
+        "presentation pointer churned across the recovery"
+    );
+    println!("presentation pointer survived the recovery");
+
     uuav::uuav_player_free(player);
     uuav::uuav_deinit();
     println!("deinit: ok (helper should be gone)");
+}
+
+/// SIGKILL/TerminateProcess on the helper — a real crash, not a clean exit.
+fn kill_helper() {
+    #[cfg(target_os = "windows")]
+    let status = std::process::Command::new("taskkill")
+        .args(["/F", "/IM", "uuav-helper.exe"])
+        .status();
+    #[cfg(target_os = "macos")]
+    let status = std::process::Command::new("pkill")
+        .args(["-9", "-x", "uuav-helper"])
+        .status();
+    assert!(
+        status.expect("kill command failed to run").success(),
+        "no uuav-helper process was there to kill"
+    );
 }

@@ -3,6 +3,13 @@
 //! in the spawned `uuav-helper` process and this dylib is the middleware:
 //! it spawns/monitors the helper, forwards commands over zmq, and serves
 //! every per-frame getter from locally cached state snapshots.
+//!
+//! Helper crashes self-heal here, with no involvement from C# or the ECS
+//! layer: every command keeps a per-player *desired state* current, and the
+//! recovery worker respawns the helper (with backoff) and rebuilds every
+//! player from its mirror — reopening the URL, seeking back to where the
+//! clock was, resuming playback. While the helper is down, players read as
+//! OPENING and commands are absorbed into desired state.
 
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 #![deny(
@@ -52,11 +59,12 @@ compile_error!("uuav supports Windows (D3D11) and macOS (Metal) only");
 
 use arc_swap::{ArcSwap, ArcSwapOption};
 use connection::{Connection, EventSinks, Lifecycle, LifecycleCell};
-use registry::{PlayerMirror, Registry};
+use registry::{Desired, PlayerMirror, Registry};
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_void};
 use std::process::Child;
 use std::ptr;
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use uuav_ipc::protocol::{
@@ -72,6 +80,21 @@ const DEFAULT_PLAYBACK_RATE: f64 = 1.0;
 
 /// `assign_master_clock` arrives every frame; forward at most this often.
 const MASTER_CLOCK_INTERVAL: Duration = Duration::from_millis(16);
+
+/// Child poll cadence of the recovery worker.
+const MONITOR_INTERVAL: Duration = Duration::from_millis(200);
+
+/// Backoff before each respawn attempt of one recovery round; after the
+/// last attempt fails the runtime parks in `Failed` until re-armed.
+const RESPAWN_DELAYS: [Duration; 3] = [
+    Duration::ZERO,
+    Duration::from_secs(1),
+    Duration::from_secs(3),
+];
+
+/// How long the recovery worker waits for restored players to leave
+/// OPENING before giving up on their resume seeks.
+const RESTORE_SEEK_WINDOW: Duration = Duration::from_secs(10);
 
 static CLIENT: ArcSwapOption<Client> = ArcSwapOption::const_empty();
 
@@ -182,7 +205,7 @@ fn string_to_c_bytes(s: impl AsRef<str>) -> *const c_char {
 
 /// The C# delegates registered at init. The shared lifecycle gates every
 /// invocation: after `uuav_deinit` (`ShutDown`) nothing calls into Unity;
-/// a crashed helper (`HelperDead`) still delivers its final error.
+/// helper deaths and recovery progress still reach Unity before that.
 struct CallbackSinks {
     error: RawCallback,
     warning: RawCallback,
@@ -220,50 +243,32 @@ impl EventSinks for CallbackSinks {
 }
 
 struct Client {
-    conn: Connection,
+    /// Current connection generation; swapped whole on helper resurrection.
+    conn: ArcSwap<Connection>,
     registry: Arc<Registry>,
     audio_options: ArcSwap<AudioOptionsRaw>,
     sinks: Arc<CallbackSinks>,
     child: Arc<Mutex<Child>>,
+    lifecycle: Arc<LifecycleCell>,
+    /// Init-time parameters replayed on every helper (re)configure.
+    protocol_whitelist: String,
+    log_level: AtomicI32,
+    adapter: u64,
+    /// Wakes the parked recovery worker after attempts capped out.
+    rearm: crossbeam_channel::Sender<()>,
     /// Unity's GPU device + what presentation copies run on (Metal: a blit
     /// queue; D3D11: the immediate context, render thread only).
     unity: Arc<platform::UnityDevice>,
 }
 
 impl Client {
-    fn mirror(&self, player_id: PlayerId) -> Option<Arc<PlayerMirror>> {
-        self.registry.get(&player_id).map(|m| Arc::clone(&m))
+    fn conn(&self) -> Arc<Connection> {
+        self.conn.load_full()
     }
-}
 
-/// Polls the child every 200 ms; when the helper dies unexpectedly the
-/// connection degrades and every live player reads as `UUAV_ERROR`.
-fn spawn_child_monitor(client: &Arc<Client>) {
-    let weak = Arc::downgrade(client);
-    _ = std::thread::Builder::new()
-        .name("uuav-child-monitor".into())
-        .spawn(move || {
-            loop {
-                std::thread::sleep(Duration::from_millis(200));
-                let Some(client) = weak.upgrade() else {
-                    return;
-                };
-                let exited = client
-                    .child
-                    .lock()
-                    .ok()
-                    .and_then(|mut child| child.try_wait().ok().flatten());
-                if let Some(status) = exited {
-                    client.conn.mark_helper_dead();
-                    // suppressed automatically after a planned shutdown:
-                    // the sinks gate on the same lifecycle
-                    client
-                        .sinks
-                        .on_player_error(None, &format!("uuav helper terminated ({status})"));
-                    return;
-                }
-            }
-        });
+    fn mirror(&self, public: PlayerId) -> Option<Arc<PlayerMirror>> {
+        self.registry.get(public)
+    }
 }
 
 fn validate_audio(options: AudioOptionsRaw) -> Result<AudioOptionsWire, String> {
@@ -325,6 +330,386 @@ fn media_info_to_c(info: &MediaInfoWire) -> MediaInfo {
     }
 }
 
+// ---- helper session (shared by init and the recovery worker) -----------
+
+/// One helper generation: spawn, handshake, configure. On success the
+/// helper is fully configured and the connection's IO thread is pumping.
+fn start_session(
+    lifecycle: &Arc<LifecycleCell>,
+    registry: &Arc<Registry>,
+    sinks: &Arc<CallbackSinks>,
+    audio: AudioOptionsWire,
+    protocol_whitelist: &str,
+    log_level: i32,
+    adapter: u64,
+) -> Result<(Connection, Child), String> {
+    let token = uuid::Uuid::new_v4().simple().to_string();
+
+    // the surface-port channel must exist before the helper looks it up
+    #[cfg(target_os = "macos")]
+    let mach_receiver = {
+        let service = uuav_ipc::mach_channel::service_name(&token);
+        uuav_ipc::mach_channel::Receiver::register(&service)
+            .map_err(|e| format!("mach channel: {e}"))?
+    };
+
+    let mut child: Option<Child> = None;
+    let conn = Connection::establish(
+        &token,
+        |endpoint| {
+            child = Some(spawn::spawn_helper(endpoint, &token)?);
+            Ok(())
+        },
+        Arc::clone(lifecycle),
+        Arc::clone(registry),
+        Arc::clone(sinks) as Arc<dyn EventSinks>,
+    );
+
+    let conn = match conn {
+        Ok(conn) => conn,
+        Err(e) => {
+            if let Some(mut child) = child {
+                _ = child.kill();
+                _ = child.wait();
+            }
+            return Err(format!("failed to start uuav helper: {e}"));
+        }
+    };
+    let Some(child) = child else {
+        return Err("uuav helper was not spawned".to_owned());
+    };
+
+    // the helper creates its device and runs the core init on Configure
+    let configured = conn.request(|corr| ToServer::Configure {
+        corr,
+        audio,
+        protocol_whitelist: protocol_whitelist.to_owned(),
+        log_level,
+        adapter,
+    });
+    if let Err(e) = configured {
+        conn.retire();
+        let mut child = child;
+        _ = child.kill();
+        _ = child.wait();
+        return Err(e);
+    }
+
+    #[cfg(target_os = "macos")]
+    spawn_mach_receiver(
+        mach_receiver,
+        Arc::clone(registry),
+        Arc::clone(lifecycle),
+        conn.alive_flag(),
+    );
+
+    Ok((conn, child))
+}
+
+/// Owns the mach receive right on a dedicated thread: every transferred
+/// surface lands in the matching player mirror. Exits (destroying the
+/// right) when its connection generation retires or the runtime shuts down.
+#[cfg(target_os = "macos")]
+fn spawn_mach_receiver(
+    receiver: uuav_ipc::mach_channel::Receiver,
+    registry: Arc<Registry>,
+    lifecycle: Arc<LifecycleCell>,
+    alive: Arc<std::sync::atomic::AtomicBool>,
+) {
+    _ = std::thread::Builder::new()
+        .name("uuav-mach".into())
+        .spawn(move || {
+            while alive.load(Ordering::Acquire) && lifecycle.get() != Lifecycle::ShutDown {
+                match receiver.recv(200) {
+                    Ok(Some((tag, port))) => {
+                        let surface =
+                            objc2_io_surface::IOSurfaceRef::lookup_from_mach_port(port);
+                        // the lookup retained the surface; the transferred
+                        // send right itself is no longer needed
+                        unsafe {
+                            mach2::mach_port::mach_port_deallocate(
+                                mach2::traps::mach_task_self(),
+                                port,
+                            );
+                        }
+                        if let Some(surface) = surface {
+                            registry::apply_surface(&registry, &tag, surface);
+                        }
+                    }
+                    Ok(None) => {}
+                    Err(_) => return,
+                }
+            }
+        });
+}
+
+// ---- recovery ------------------------------------------------------------
+
+/// Watches the helper process; on unexpected death, drives the automatic
+/// resurrection: retire the connection, freeze the mirrors, respawn with
+/// backoff, rebuild every player from its desired state. Parks in `Failed`
+/// after the attempts cap; an open/play re-arms it through `Client::rearm`.
+fn spawn_recovery_worker(client: &Arc<Client>, rearm: crossbeam_channel::Receiver<()>) {
+    let weak = Arc::downgrade(client);
+    _ = std::thread::Builder::new()
+        .name("uuav-recovery".into())
+        .spawn(move || {
+            loop {
+                std::thread::sleep(MONITOR_INTERVAL);
+                let Some(client) = weak.upgrade() else {
+                    return;
+                };
+                match client.lifecycle.get() {
+                    Lifecycle::ShutDown => return,
+                    // transient while this thread itself recovers; nothing
+                    // to do on a stray observation
+                    Lifecycle::Recovering => continue,
+                    Lifecycle::Failed => {
+                        // parked: wait for a re-arm (an open/play)
+                        match rearm.recv_timeout(MONITOR_INTERVAL) {
+                            Ok(()) => {
+                                client.lifecycle.transition(Lifecycle::Recovering);
+                                recover(&client);
+                                while rearm.try_recv().is_ok() { /* drain stale re-arms */ }
+                            }
+                            Err(crossbeam_channel::RecvTimeoutError::Timeout) => {}
+                            Err(crossbeam_channel::RecvTimeoutError::Disconnected) => return,
+                        }
+                        continue;
+                    }
+                    Lifecycle::Running => {}
+                }
+
+                let exited = client
+                    .child
+                    .lock()
+                    .ok()
+                    .and_then(|mut child| child.try_wait().ok().flatten());
+                if let Some(status) = exited {
+                    client.lifecycle.transition(Lifecycle::Recovering);
+                    client.conn().retire();
+                    // suppressed automatically after a planned shutdown:
+                    // the sinks gate on the same lifecycle
+                    client.sinks.on_player_error(
+                        None,
+                        &format!("uuav helper terminated ({status}); recovering"),
+                    );
+                    freeze_mirrors(&client);
+                    while rearm.try_recv().is_ok() { /* drain stale re-arms */ }
+                    recover(&client);
+                }
+            }
+        });
+}
+
+/// Captures where every player was and severs the helper bindings; getters
+/// serve OPENING + the frozen time until the new helper reports in.
+fn freeze_mirrors(client: &Client) {
+    let audio = **client.audio_options.load();
+    for (_, mirror) in client.registry.snapshot() {
+        let now = mirror.state.load().as_ref().and_then(|c| c.media_time_now());
+        if let Some(time) = now
+            && let Ok(mut desired) = mirror.desired.lock()
+        {
+            desired.resume_time = Some(time);
+        }
+        mirror.awaiting_snapshot.store(true, Ordering::Release);
+        if let Ok(mut video) = mirror.video.lock() {
+            video.reset_for_recovery();
+        }
+        mirror.audio.reset(audio.sample_rate, audio.channels);
+    }
+    client.registry.unbind_all();
+}
+
+/// One recovery round: respawn attempts with backoff, then either a running
+/// restored session or the parked `Failed` state.
+fn recover(client: &Arc<Client>) {
+    for (attempt, delay) in RESPAWN_DELAYS.iter().enumerate() {
+        if !sleep_unless_shutdown(client, *delay) {
+            return;
+        }
+        let raw = **client.audio_options.load();
+        let audio = AudioOptionsWire {
+            sample_rate: raw.sample_rate,
+            channels: raw.channels,
+        };
+        let session = start_session(
+            &client.lifecycle,
+            &client.registry,
+            &client.sinks,
+            audio,
+            &client.protocol_whitelist,
+            client.log_level.load(Ordering::Acquire),
+            client.adapter,
+        );
+        match session {
+            Ok((conn, child)) => {
+                if client.lifecycle.get() == Lifecycle::ShutDown {
+                    conn.retire();
+                    let mut child = child;
+                    _ = child.kill();
+                    _ = child.wait();
+                    return;
+                }
+                client.conn.store(Arc::new(conn));
+                if let Ok(mut slot) = client.child.lock() {
+                    *slot = child;
+                }
+                client.lifecycle.transition(Lifecycle::Running);
+                restore_players(client);
+                client
+                    .sinks
+                    .on_log(LogSink::Warning, "uuav helper restarted; players restored");
+                return;
+            }
+            Err(e) => client.sinks.on_log(
+                LogSink::Warning,
+                &format!("uuav helper restart attempt {} failed: {e}", attempt.saturating_add(1)),
+            ),
+        }
+    }
+    client.lifecycle.transition(Lifecycle::Failed);
+    client.sinks.on_player_error(
+        None,
+        "uuav helper could not be restarted; players halt until the next open or play",
+    );
+}
+
+/// `false` when the runtime shut down mid-sleep.
+fn sleep_unless_shutdown(client: &Client, delay: Duration) -> bool {
+    let started = Instant::now();
+    while started.elapsed() < delay {
+        if client.lifecycle.get() == Lifecycle::ShutDown {
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    client.lifecycle.get() != Lifecycle::ShutDown
+}
+
+/// Rebuilds every mirrored player on the fresh helper from desired state:
+/// bind, reopen, resume playback, then seek back once past OPENING.
+fn restore_players(client: &Arc<Client>) {
+    let conn = client.conn();
+    let players = client.registry.snapshot();
+
+    for (public, mirror) in &players {
+        if client.lifecycle.get() != Lifecycle::Running {
+            return;
+        }
+        if let Err(e) = bind_helper_player(client, &conn, *public, mirror) {
+            client
+                .sinks
+                .on_player_error(Some(*public), &format!("restore failed: {e}"));
+            continue;
+        }
+        let Some(helper) = mirror.helper_id() else {
+            continue;
+        };
+        let desired = match mirror.desired.lock() {
+            Ok(desired) => desired.clone(),
+            Err(_) => continue,
+        };
+        if let Some(url) = desired.url {
+            _ = conn.send(ToServer::OpenMedia { id: helper, url });
+            // play/looping/rate queue as pending controls while the media
+            // opens; only seek has no pending slot (handled below)
+            if desired.want_playing {
+                _ = conn.send(ToServer::Play { id: helper });
+            }
+        }
+    }
+
+    // resume seeks once each player is past OPENING
+    let started = Instant::now();
+    let mut waiting: Vec<&(PlayerId, Arc<PlayerMirror>)> = players
+        .iter()
+        .filter(|(_, mirror)| {
+            mirror
+                .desired
+                .lock()
+                .ok()
+                .is_some_and(|desired| desired.resume_time.is_some() && desired.url.is_some())
+        })
+        .collect();
+    while !waiting.is_empty()
+        && started.elapsed() < RESTORE_SEEK_WINDOW
+        && client.lifecycle.get() == Lifecycle::Running
+    {
+        std::thread::sleep(Duration::from_millis(100));
+        waiting.retain(|(_, mirror)| {
+            if mirror.awaiting_snapshot.load(Ordering::Acquire) {
+                return true;
+            }
+            let Some(cached) = mirror.state.load_full() else {
+                return true;
+            };
+            match cached.update.state {
+                PlayerStateWire::Ready | PlayerStateWire::Playing | PlayerStateWire::Paused => {
+                    let time = mirror
+                        .desired
+                        .lock()
+                        .ok()
+                        .and_then(|mut desired| desired.resume_time.take());
+                    if let (Some(time), Some(helper)) = (time, mirror.helper_id()) {
+                        _ = conn.send(ToServer::Seek { id: helper, time });
+                    }
+                    false
+                }
+                // the stream itself failed or ended; nothing to resume into
+                PlayerStateWire::Error | PlayerStateWire::Closed | PlayerStateWire::Ended => false,
+                PlayerStateWire::Opening | PlayerStateWire::Unknown => true,
+            }
+        });
+    }
+}
+
+/// Creates the helper-side player behind a public mirror and primes it with
+/// the desired looping/rate (both queue as pending controls even while a
+/// later open is still in flight). Serialized per mirror via `binding`.
+fn bind_helper_player(
+    client: &Client,
+    conn: &Connection,
+    public: PlayerId,
+    mirror: &PlayerMirror,
+) -> Result<PlayerId, String> {
+    let _guard = mirror
+        .binding
+        .lock()
+        .map_err(|_| "player binding lock is poisoned".to_owned())?;
+    if let Some(existing) = mirror.helper_id() {
+        return Ok(existing);
+    }
+
+    let helper = match conn.request(|corr| ToServer::PlayerNew { corr })? {
+        ReplyBody::PlayerId(id) => id,
+        ReplyBody::Unit => return Err("helper returned no player id".to_owned()),
+    };
+    if !client.registry.contains(public) {
+        // freed while the request was in flight; don't leak the helper player
+        _ = conn.send(ToServer::PlayerFree { id: helper });
+        return Err(ERR_NO_PLAYER.to_owned());
+    }
+    client.registry.bind_helper(public, mirror, helper);
+
+    let (looping, rate) = mirror
+        .desired
+        .lock()
+        .map(|desired| (desired.looping, desired.rate))
+        .unwrap_or((false, DEFAULT_PLAYBACK_RATE));
+    if looping {
+        _ = conn.send(ToServer::SetLooping {
+            id: helper,
+            looping: true,
+        });
+    }
+    if rate.is_finite() && rate > 0.0 {
+        _ = conn.send(ToServer::SetRate { id: helper, rate });
+    }
+    Ok(helper)
+}
+
 // ---- runtime lifecycle -------------------------------------------------
 
 /// releases an error message
@@ -342,9 +727,6 @@ pub const extern "C" fn uuav_abi_version() -> *const c_char {
     concat!(env!("CARGO_PKG_VERSION"), '\0').as_ptr().cast()
 }
 
-// linear init sequence (validate, capture device, spawn, handshake,
-// configure); splitting it would only scatter the order
-#[allow(clippy::too_many_lines)]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_init(
     texture: *const c_void,
@@ -403,112 +785,37 @@ pub unsafe extern "C" fn uuav_init(
     });
     let registry: Arc<Registry> = Arc::new(Registry::new());
 
-    let token = uuid::Uuid::new_v4().simple().to_string();
-
-    // the surface-port channel must exist before the helper looks it up
-    #[cfg(target_os = "macos")]
-    let mach_receiver = {
-        let service = uuav_ipc::mach_channel::service_name(&token);
-        match uuav_ipc::mach_channel::Receiver::register(&service) {
-            Ok(receiver) => receiver,
-            Err(e) => return ResultFFI::error(format!("mach channel: {e}")),
-        }
-    };
-
-    let mut child: Option<Child> = None;
-    let conn = Connection::establish(
-        &token,
-        |endpoint| {
-            child = Some(spawn::spawn_helper(endpoint, &token)?);
-            Ok(())
-        },
-        Arc::clone(&lifecycle),
-        Arc::clone(&registry),
-        Arc::clone(&sinks) as Arc<dyn EventSinks>,
-    );
-
-    let conn = match conn {
-        Ok(conn) => conn,
-        Err(e) => {
-            if let Some(mut child) = child {
-                _ = child.kill();
-                _ = child.wait();
-            }
-            return ResultFFI::error(format!("failed to start uuav helper: {e}"));
-        }
-    };
-    let Some(child) = child else {
-        return ResultFFI::error("uuav helper was not spawned");
-    };
-
-    // the helper creates its device and runs the core init on Configure
-    let configured = conn.request(|corr| ToServer::Configure {
-        corr,
+    let (conn, child) = match start_session(
+        &lifecycle,
+        &registry,
+        &sinks,
         audio,
-        protocol_whitelist: whitelist,
+        &whitelist,
         log_level,
         adapter,
-    });
-    if let Err(e) = configured {
-        // ShutDown also silences the sinks via the shared lifecycle
-        conn.shutdown();
-        let mut child = child;
-        _ = child.kill();
-        _ = child.wait();
-        return ResultFFI::error(e);
-    }
+    ) {
+        Ok(session) => session,
+        Err(e) => return ResultFFI::error(e),
+    };
 
-    #[cfg(target_os = "macos")]
-    spawn_mach_receiver(mach_receiver, Arc::clone(&registry), Arc::clone(&lifecycle));
-
+    let (rearm_tx, rearm_rx) = crossbeam_channel::unbounded();
     let client = Arc::new(Client {
-        conn,
+        conn: ArcSwap::from(Arc::new(conn)),
         registry,
         audio_options: ArcSwap::new(Arc::new(audio_options)),
         sinks,
         child: Arc::new(Mutex::new(child)),
+        lifecycle,
+        protocol_whitelist: whitelist,
+        log_level: AtomicI32::new(log_level),
+        adapter,
+        rearm: rearm_tx,
         unity,
     });
-    spawn_child_monitor(&client);
+    spawn_recovery_worker(&client, rearm_rx);
     CLIENT.store(Some(client));
 
     ResultFFI::ok()
-}
-
-/// Owns the mach receive right on a dedicated thread: every transferred
-/// surface lands in the matching player mirror. Exits (destroying the
-/// right) as soon as the lifecycle leaves Running.
-#[cfg(target_os = "macos")]
-fn spawn_mach_receiver(
-    receiver: uuav_ipc::mach_channel::Receiver,
-    registry: Arc<Registry>,
-    lifecycle: Arc<LifecycleCell>,
-) {
-    _ = std::thread::Builder::new()
-        .name("uuav-mach".into())
-        .spawn(move || {
-            while lifecycle.get() == Lifecycle::Running {
-                match receiver.recv(200) {
-                    Ok(Some((tag, port))) => {
-                        let surface =
-                            objc2_io_surface::IOSurfaceRef::lookup_from_mach_port(port);
-                        // the lookup retained the surface; the transferred
-                        // send right itself is no longer needed
-                        unsafe {
-                            mach2::mach_port::mach_port_deallocate(
-                                mach2::traps::mach_task_self(),
-                                port,
-                            );
-                        }
-                        if let Some(surface) = surface {
-                            registry::apply_surface(&registry, &tag, surface);
-                        }
-                    }
-                    Ok(None) => {}
-                    Err(_) => return,
-                }
-            }
-        });
 }
 
 #[unsafe(no_mangle)]
@@ -518,9 +825,10 @@ pub extern "C" fn uuav_deinit() {
     };
 
     // planned shutdown: the escalated lifecycle silences the sinks (no late
-    // callbacks into Unity, no "terminated" report from the monitor) and
+    // callbacks into Unity, no "terminated" report from the worker) and
     // tells the IO thread to flush the Shutdown frame and exit
-    client.conn.shutdown();
+    client.lifecycle.transition(Lifecycle::ShutDown);
+    client.conn().shutdown();
 
     let waiting_since = Instant::now();
     loop {
@@ -546,7 +854,10 @@ pub extern "C" fn uuav_deinit() {
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_set_log_level(level: c_int) {
     if let Some(client) = CLIENT.load().as_ref() {
-        _ = client.conn.send(ToServer::SetLogLevel { level });
+        client.log_level.store(level, Ordering::Release);
+        if client.lifecycle.get() == Lifecycle::Running {
+            _ = client.conn().send(ToServer::SetLogLevel { level });
+        }
     }
 }
 
@@ -562,19 +873,39 @@ pub extern "C" fn uuav_update_audio_out(options: AudioOptionsRaw) -> ResultFFI {
         Err(e) => return ResultFFI::error(e),
     };
 
-    match client
-        .conn
-        .request(|corr| ToServer::UpdateAudioOut { corr, audio })
-    {
-        Ok(_) => {
-            client.audio_options.store(Arc::new(options));
-            // queued samples are in the old format; drop and re-prime
-            for mirror in client.registry.iter() {
-                mirror.audio.reset(options.sample_rate, options.channels);
+    let apply_locally = |client: &Client| {
+        client.audio_options.store(Arc::new(options));
+        // queued samples are in the old format; drop and re-prime
+        for (_, mirror) in client.registry.snapshot() {
+            mirror.audio.reset(options.sample_rate, options.channels);
+        }
+    };
+
+    match client.lifecycle.get() {
+        Lifecycle::Running => {
+            match client
+                .conn()
+                .request(|corr| ToServer::UpdateAudioOut { corr, audio })
+            {
+                Ok(_) => {
+                    apply_locally(client);
+                    ResultFFI::ok()
+                }
+                Err(_) if client.lifecycle.get() != Lifecycle::Running => {
+                    // helper died mid-call; the re-Configure carries the
+                    // stored options
+                    apply_locally(client);
+                    ResultFFI::ok()
+                }
+                Err(e) => ResultFFI::error(e),
             }
+        }
+        // absorbed: the recovery worker re-Configures with the stored options
+        Lifecycle::Recovering => {
+            apply_locally(client);
             ResultFFI::ok()
         }
-        Err(e) => ResultFFI::error(e),
+        Lifecycle::Failed | Lifecycle::ShutDown => ResultFFI::error(ERR_HELPER_DEAD),
     }
 }
 
@@ -602,26 +933,38 @@ pub extern "C" fn uuav_player_new() -> NewPlayerResult {
         };
     };
 
-    match client.conn.request(|corr| ToServer::PlayerNew { corr }) {
-        Ok(ReplyBody::PlayerId(id)) => {
-            let audio = **client.audio_options.load();
-            client.registry.insert(
-                id,
-                Arc::new(PlayerMirror::new(audio.sample_rate, audio.channels)),
-            );
-            NewPlayerResult {
-                player_id: id,
-                error_message: ptr::null(),
+    let audio = **client.audio_options.load();
+    let (public, mirror) = client.registry.create(audio.sample_rate, audio.channels);
+    let ok = NewPlayerResult {
+        player_id: public,
+        error_message: ptr::null(),
+    };
+
+    match client.lifecycle.get() {
+        Lifecycle::Running => {
+            let conn = client.conn();
+            match bind_helper_player(client, &conn, public, &mirror) {
+                Ok(_) => ok,
+                // helper died mid-call: keep the mirror, recovery rebinds it
+                Err(_) if client.lifecycle.get() != Lifecycle::Running => ok,
+                Err(e) => {
+                    client.registry.remove(public);
+                    NewPlayerResult {
+                        player_id: 0,
+                        error_message: string_to_c_bytes(e),
+                    }
+                }
             }
         }
-        Ok(ReplyBody::Unit) => NewPlayerResult {
-            player_id: 0,
-            error_message: string_to_c_bytes("helper returned no player id"),
-        },
-        Err(e) => NewPlayerResult {
-            player_id: 0,
-            error_message: string_to_c_bytes(e),
-        },
+        // bound by the recovery worker (or lazily on the first command)
+        Lifecycle::Recovering => ok,
+        Lifecycle::Failed | Lifecycle::ShutDown => {
+            client.registry.remove(public);
+            NewPlayerResult {
+                player_id: 0,
+                error_message: string_to_c_bytes(ERR_HELPER_DEAD),
+            }
+        }
     }
 }
 
@@ -631,27 +974,73 @@ pub extern "C" fn uuav_player_free(player_id: PlayerId) {
     let Some(client) = state.as_ref() else {
         return;
     };
-    client.registry.remove(&player_id);
-    _ = client.conn.send(ToServer::PlayerFree { id: player_id });
+    if let Some(mirror) = client.registry.remove(player_id)
+        && let Some(helper) = mirror.helper_id()
+        && client.lifecycle.get() == Lifecycle::Running
+    {
+        _ = client.conn().send(ToServer::PlayerFree { id: helper });
+    }
 }
 
-/// Shared prologue of every per-player command: replicates the in-process
-/// synchronous errors (no runtime / unknown player / dead helper).
+/// How a command behaves while the runtime is parked in `Failed`.
+#[derive(Clone, Copy)]
+enum DownPolicy {
+    /// Absorb into desired state and report success (per-frame noise like
+    /// the master clock; erroring every frame would spam the console).
+    Absorb,
+    /// Absorb, and wake the parked recovery worker — reserved for commands
+    /// that express clear user intent to play something (open/play).
+    Rearm,
+    /// Report the helper-dead error.
+    Reject,
+}
+
+/// Shared prologue of every per-player command. The desired state is
+/// updated first — that is what makes the helper resurrectable — then the
+/// message is forwarded while the helper runs, or absorbed while it is
+/// being resurrected (the recovery worker replays desired state).
 fn with_player(
-    player_id: PlayerId,
-    build: impl FnOnce() -> ToServer,
+    public: PlayerId,
+    down_policy: DownPolicy,
+    desire: impl FnOnce(&mut Desired),
+    build: impl FnOnce(PlayerId) -> ToServer,
 ) -> Result<(), String> {
     let state = CLIENT.load();
     let Some(client) = state.as_ref() else {
         return Err(ERR_NO_RUNTIME.to_owned());
     };
-    if client.conn.lifecycle() != Lifecycle::Running {
-        return Err(ERR_HELPER_DEAD.to_owned());
-    }
-    if !client.registry.contains_key(&player_id) {
+    let Some(mirror) = client.mirror(public) else {
         return Err(ERR_NO_PLAYER.to_owned());
+    };
+
+    if let Ok(mut desired) = mirror.desired.lock() {
+        desire(&mut desired);
     }
-    client.conn.send(build()).map_err(|e| e.to_string())
+
+    match client.lifecycle.get() {
+        Lifecycle::Running => {
+            let conn = client.conn();
+            let outcome = bind_helper_player(client, &conn, public, &mirror)
+                .and_then(|helper| conn.send(build(helper)).map_err(|e| e.to_string()));
+            match outcome {
+                Ok(()) => Ok(()),
+                // helper died mid-call: the command is already absorbed in
+                // desired state and the recovery worker replays it
+                Err(_) if client.lifecycle.get() != Lifecycle::Running => Ok(()),
+                Err(e) => Err(e),
+            }
+        }
+        Lifecycle::Recovering => Ok(()),
+        Lifecycle::Failed => match down_policy {
+            DownPolicy::Absorb => Ok(()),
+            DownPolicy::Rearm => {
+                _ = client.rearm.send(());
+                Ok(())
+            }
+            DownPolicy::Reject => Err(ERR_HELPER_DEAD.to_owned()),
+        },
+        Lifecycle::ShutDown => Err(ERR_HELPER_DEAD.to_owned()),
+    }
 }
 
 fn command_result(outcome: Result<(), String>) -> ResultFFI {
@@ -663,12 +1052,22 @@ fn command_result(outcome: Result<(), String>) -> ResultFFI {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_play(player_id: PlayerId) -> ResultFFI {
-    command_result(with_player(player_id, || ToServer::Play { id: player_id }))
+    command_result(with_player(
+        player_id,
+        DownPolicy::Rearm,
+        |desired| desired.want_playing = true,
+        |id| ToServer::Play { id },
+    ))
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_pause(player_id: PlayerId) -> ResultFFI {
-    command_result(with_player(player_id, || ToServer::Pause { id: player_id }))
+    command_result(with_player(
+        player_id,
+        DownPolicy::Reject,
+        |desired| desired.want_playing = false,
+        |id| ToServer::Pause { id },
+    ))
 }
 
 // async! returns immediately
@@ -692,18 +1091,31 @@ pub unsafe extern "C" fn uuav_player_open_media_async(
         mirror.media_info.store(None);
     }
 
-    command_result(with_player(player_id, || ToServer::OpenMedia {
-        id: player_id,
-        url,
-    }))
+    let desired_url = url.clone();
+    command_result(with_player(
+        player_id,
+        DownPolicy::Rearm,
+        move |desired| {
+            desired.url = Some(desired_url);
+            desired.resume_time = None;
+        },
+        move |id| ToServer::OpenMedia { id, url },
+    ))
 }
 
 // back to CLOSED, player reusable
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_close_media(player_id: PlayerId) -> ResultFFI {
-    command_result(with_player(player_id, || ToServer::CloseMedia {
-        id: player_id,
-    }))
+    command_result(with_player(
+        player_id,
+        DownPolicy::Reject,
+        |desired| {
+            desired.url = None;
+            desired.want_playing = false;
+            desired.resume_time = None;
+        },
+        |id| ToServer::CloseMedia { id },
+    ))
 }
 
 // ---- state getters (served from the cached snapshots) ------------------
@@ -717,21 +1129,47 @@ pub extern "C" fn uuav_player_state(player_id: PlayerId) -> UUAVState {
     let Some(mirror) = client.mirror(player_id) else {
         return UUAVState::UUAV_UNKNOWN;
     };
-    if client.conn.lifecycle() != Lifecycle::Running {
-        return UUAVState::UUAV_ERROR;
+
+    let has_media = mirror
+        .desired
+        .lock()
+        .ok()
+        .is_some_and(|desired| desired.url.is_some());
+
+    match client.lifecycle.get() {
+        // resurrection in flight: a buffering-like blip, per owner decision
+        Lifecycle::Recovering => {
+            if has_media {
+                UUAVState::UUAV_OPENING
+            } else {
+                UUAVState::UUAV_CLOSED
+            }
+        }
+        Lifecycle::Failed | Lifecycle::ShutDown => UUAVState::UUAV_ERROR,
+        Lifecycle::Running => {
+            if mirror.awaiting_snapshot.load(Ordering::Acquire)
+                || (mirror.helper_id().is_none() && has_media)
+            {
+                // restored/created player the fresh helper has not
+                // reported on yet
+                UUAVState::UUAV_OPENING
+            } else {
+                // a fresh player has no snapshot yet; the core starts
+                // players CLOSED
+                mirror
+                    .state
+                    .load()
+                    .as_ref()
+                    .map_or(UUAVState::UUAV_CLOSED, |cached| map_state(cached.update.state))
+            }
+        }
     }
-    // a fresh player has no snapshot yet; the core starts players CLOSED
-    mirror
-        .state
-        .load()
-        .as_ref()
-        .map_or(UUAVState::UUAV_CLOSED, |cached| map_state(cached.update.state))
 }
 
 /// Shared prologue of the out-param getters.
 fn with_mirror<T>(
     player_id: PlayerId,
-    read: impl FnOnce(&PlayerMirror) -> Result<T, String>,
+    read: impl FnOnce(&Client, &PlayerMirror) -> Result<T, String>,
 ) -> Result<T, String> {
     let state = CLIENT.load();
     let Some(client) = state.as_ref() else {
@@ -740,7 +1178,7 @@ fn with_mirror<T>(
     let Some(mirror) = client.mirror(player_id) else {
         return Err(ERR_NO_PLAYER.to_owned());
     };
-    read(&mirror)
+    read(client, &mirror)
 }
 
 fn write_out<T>(out: *mut T, outcome: Result<T, String>) -> ResultFFI {
@@ -764,7 +1202,7 @@ pub unsafe extern "C" fn uuav_player_duration(
 ) -> ResultFFI {
     write_out(
         out_duration,
-        with_mirror(player_id, |mirror| {
+        with_mirror(player_id, |_, mirror| {
             mirror
                 .state
                 .load()
@@ -782,7 +1220,16 @@ pub unsafe extern "C" fn uuav_player_current_time(
 ) -> ResultFFI {
     write_out(
         out_time,
-        with_mirror(player_id, |mirror| {
+        with_mirror(player_id, |client, mirror| {
+            // while the helper is down (or freshly restored) the clock
+            // freezes at the resume point instead of extrapolating on
+            if client.lifecycle.get() != Lifecycle::Running
+                || mirror.awaiting_snapshot.load(Ordering::Acquire)
+            {
+                return mirror
+                    .frozen_time()
+                    .ok_or_else(|| "current time is not available".to_owned());
+            }
             mirror
                 .state
                 .load()
@@ -800,7 +1247,7 @@ pub unsafe extern "C" fn uuav_player_current_controls_state(
 ) -> ResultFFI {
     write_out(
         out_state,
-        with_mirror(player_id, |mirror| {
+        with_mirror(player_id, |_, mirror| {
             Ok(mirror.state.load().as_ref().map_or(
                 ControlsState {
                     rate: DEFAULT_PLAYBACK_RATE,
@@ -846,10 +1293,15 @@ pub extern "C" fn uuav_player_assign_master_clock(
         *last = Some(Instant::now());
     }
 
-    command_result(with_player(player_id, || ToServer::AssignMasterClock {
-        id: player_id,
-        time: current_time,
-    }))
+    command_result(with_player(
+        player_id,
+        DownPolicy::Absorb,
+        |_| {},
+        |id| ToServer::AssignMasterClock {
+            id,
+            time: current_time,
+        },
+    ))
 }
 
 #[unsafe(no_mangle)]
@@ -859,7 +1311,7 @@ pub unsafe extern "C" fn uuav_player_get_video_size(
 ) -> ResultFFI {
     write_out(
         out_size,
-        with_mirror(player_id, |mirror| {
+        with_mirror(player_id, |_, mirror| {
             mirror
                 .state
                 .load()
@@ -878,7 +1330,7 @@ pub unsafe extern "C" fn uuav_player_get_media_info(
 ) -> ResultFFI {
     write_out(
         out_info,
-        with_mirror(player_id, |mirror| {
+        with_mirror(player_id, |_, mirror| {
             mirror
                 .media_info
                 .load()
@@ -894,24 +1346,31 @@ pub unsafe extern "C" fn uuav_player_get_media_info(
 // async; coalesces repeated calls
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_seek_async(player_id: PlayerId, time: f64) -> ResultFFI {
-    command_result(with_player(player_id, || ToServer::Seek {
-        id: player_id,
-        time,
-    }))
+    command_result(with_player(
+        player_id,
+        DownPolicy::Reject,
+        |desired| desired.resume_time = Some(time),
+        |id| ToServer::Seek { id, time },
+    ))
 }
 
 // persists across url switches
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_set_looping(player_id: PlayerId, looping: u8) -> ResultFFI {
-    command_result(with_player(player_id, || ToServer::SetLooping {
-        id: player_id,
-        looping: looping != 0,
-    }))
+    command_result(with_player(
+        player_id,
+        DownPolicy::Reject,
+        |desired| desired.looping = looping != 0,
+        |id| ToServer::SetLooping {
+            id,
+            looping: looping != 0,
+        },
+    ))
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_get_looping(player_id: PlayerId) -> u8 {
-    with_mirror(player_id, |mirror| {
+    with_mirror(player_id, |_, mirror| {
         Ok(mirror
             .state
             .load()
@@ -929,15 +1388,17 @@ pub extern "C" fn uuav_player_set_rate(player_id: PlayerId, rate: f64) -> Result
             "playback rate must be finite and positive, got {rate}"
         ));
     }
-    command_result(with_player(player_id, || ToServer::SetRate {
-        id: player_id,
-        rate,
-    }))
+    command_result(with_player(
+        player_id,
+        DownPolicy::Reject,
+        |desired| desired.rate = rate,
+        |id| ToServer::SetRate { id, rate },
+    ))
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_get_rate(player_id: PlayerId) -> f64 {
-    with_mirror(player_id, |mirror| {
+    with_mirror(player_id, |_, mirror| {
         Ok(mirror
             .state
             .load()
@@ -982,9 +1443,9 @@ extern "C" fn uuav_render_event(event_id: i32) {
         }
     };
 
-    if let Some(generation) = ack {
-        _ = client.conn.send(ToServer::TextureSetAck {
-            id: player_id,
+    if let (Some(generation), Some(helper)) = (ack, mirror.helper_id()) {
+        _ = client.conn().send(ToServer::TextureSetAck {
+            id: helper,
             generation,
         });
     }
@@ -1008,7 +1469,7 @@ pub unsafe extern "C" fn uuav_player_get_video_texture(
 ) -> ResultFFI {
     write_out(
         out_texture,
-        with_mirror(player_id, |mirror| {
+        with_mirror(player_id, |_, mirror| {
             mirror
                 .video
                 .lock()

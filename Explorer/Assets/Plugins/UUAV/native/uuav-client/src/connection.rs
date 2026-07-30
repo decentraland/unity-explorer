@@ -8,7 +8,7 @@ use anyhow::{Context as _, Result, bail};
 use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
 use dashmap::DashMap;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU8, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, Ordering};
 use std::time::Duration;
 use uuav_ipc::protocol::{ABI_VERSION, Corr, LogSink, ReplyBody, ToClient, ToServer};
 use uuav_ipc::{socket, zmq};
@@ -17,26 +17,29 @@ const HANDSHAKE_TIMEOUT_MS: i32 = 5000;
 const REPLY_TIMEOUT: Duration = Duration::from_secs(5);
 const IO_POLL_TIMEOUT_MS: i64 = 5;
 
-/// The connection's single lifecycle state. Ordered: transitions only
-/// escalate (via [`LifecycleCell::escalate`]), so racing writers — the
-/// child monitor reaping a crash vs `uuav_deinit` — always resolve to the
-/// stricter state.
+/// The runtime's single lifecycle state, shared by the connection(s), the
+/// IO threads, the callback sinks, and the recovery worker. States move
+/// freely between `Running`/`Recovering`/`Failed` (a dead helper recovers,
+/// a parked runtime re-arms); only `ShutDown` is terminal.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Lifecycle {
     /// Helper alive: commands flow, callbacks reach Unity.
     Running = 0,
-    /// Helper process died unexpectedly: commands/getters degrade, the IO
-    /// thread exits, but callbacks still reach Unity (this state is what
-    /// delivers the "helper terminated" error).
-    HelperDead = 1,
+    /// Helper died and the recovery worker is resurrecting it: commands are
+    /// absorbed into desired state, players read as OPENING.
+    Recovering = 1,
+    /// Respawn attempts capped out: commands degrade, players read as
+    /// ERROR, until an open/play re-arms the worker.
+    Failed = 2,
     /// `uuav_deinit` ran: nothing may call into Unity anymore; the IO
     /// thread flushes the Shutdown frame and exits.
-    ShutDown = 2,
+    ShutDown = 3,
 }
 
-/// Shared, monotonically-escalating [`Lifecycle`] holder; one instance is
-/// shared by the connection, the IO thread, and the callback sinks.
+/// Shared [`Lifecycle`] holder. Any state may be set at any time except
+/// past `ShutDown`, which absorbs every later transition — racing writers
+/// (the recovery worker vs `uuav_deinit`) always resolve to shut down.
 pub struct LifecycleCell(AtomicU8);
 
 impl LifecycleCell {
@@ -47,14 +50,17 @@ impl LifecycleCell {
     pub fn get(&self) -> Lifecycle {
         match self.0.load(Ordering::Acquire) {
             0 => Lifecycle::Running,
-            1 => Lifecycle::HelperDead,
+            1 => Lifecycle::Recovering,
+            2 => Lifecycle::Failed,
             _ => Lifecycle::ShutDown,
         }
     }
 
-    /// Moves to `to` unless the current state is already stricter.
-    pub fn escalate(&self, to: Lifecycle) {
-        self.0.fetch_max(to as u8, Ordering::AcqRel);
+    /// Moves to `to` unless already shut down.
+    pub fn transition(&self, to: Lifecycle) {
+        _ = self.0.fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
+            (current != Lifecycle::ShutDown as u8).then_some(to as u8)
+        });
     }
 }
 
@@ -76,6 +82,10 @@ pub struct Connection {
     pending: Arc<DashMap<Corr, Sender<Result<ReplyBody, String>>>>,
     next_corr: AtomicU32,
     lifecycle: Arc<LifecycleCell>,
+    /// This connection generation's liveness: retired (and its IO thread
+    /// exits) when the helper behind it dies; a resurrected helper gets a
+    /// whole new `Connection`.
+    alive: Arc<AtomicBool>,
 }
 
 impl Connection {
@@ -113,12 +123,14 @@ impl Connection {
         let (outbound, outbound_rx) = unbounded::<ToServer>();
         let pending: Arc<DashMap<Corr, Sender<Result<ReplyBody, String>>>> =
             Arc::new(DashMap::new());
+        let alive = Arc::new(AtomicBool::new(true));
 
         io_thread(
             sock,
             outbound_rx,
             Arc::clone(&pending),
             Arc::clone(&lifecycle),
+            Arc::clone(&alive),
             registry,
             sinks,
         )?;
@@ -128,21 +140,31 @@ impl Connection {
             pending,
             next_corr: AtomicU32::new(1),
             lifecycle,
+            alive,
         })
     }
 
-    pub fn lifecycle(&self) -> Lifecycle {
-        self.lifecycle.get()
+    /// Called when the helper behind this connection was reaped: the IO
+    /// thread exits and every later send/request degrades. The lifecycle
+    /// itself is the recovery worker's to manage.
+    pub fn retire(&self) {
+        self.alive.store(false, Ordering::Release);
     }
 
-    /// Called by the child monitor when the helper process was reaped.
-    pub fn mark_helper_dead(&self) {
-        self.lifecycle.escalate(Lifecycle::HelperDead);
+    /// Handle for platform channel threads (macOS mach receiver) tied to
+    /// this connection generation.
+    #[cfg(target_os = "macos")]
+    pub fn alive_flag(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.alive)
+    }
+
+    fn usable(&self) -> bool {
+        self.alive.load(Ordering::Acquire) && self.lifecycle.get() != Lifecycle::ShutDown
     }
 
     /// Fire-and-forget command.
     pub fn send(&self, message: ToServer) -> Result<()> {
-        if self.lifecycle() != Lifecycle::Running {
+        if !self.usable() {
             bail!("uuav helper is not running");
         }
         self.outbound.send(message).context("uuav IO thread is gone")
@@ -153,7 +175,7 @@ impl Connection {
         &self,
         build: impl FnOnce(Corr) -> ToServer,
     ) -> Result<ReplyBody, String> {
-        if self.lifecycle() != Lifecycle::Running {
+        if !self.usable() {
             return Err("uuav helper is not running".to_owned());
         }
         let corr = self.next_corr.fetch_add(1, Ordering::Relaxed);
@@ -175,7 +197,7 @@ impl Connection {
     /// and the shared lifecycle silences the callback sinks.
     pub fn shutdown(&self) {
         _ = self.outbound.send(ToServer::Shutdown);
-        self.lifecycle.escalate(Lifecycle::ShutDown);
+        self.lifecycle.transition(Lifecycle::ShutDown);
     }
 }
 
@@ -184,6 +206,7 @@ fn io_thread(
     outbound: Receiver<ToServer>,
     pending: Arc<DashMap<Corr, Sender<Result<ReplyBody, String>>>>,
     lifecycle: Arc<LifecycleCell>,
+    alive: Arc<AtomicBool>,
     registry: Arc<Registry>,
     sinks: Arc<dyn EventSinks>,
 ) -> Result<()> {
@@ -191,20 +214,21 @@ fn io_thread(
         .name("uuav-io".into())
         .spawn(move || {
             loop {
-                match lifecycle.get() {
-                    Lifecycle::Running => {}
-                    // peer is gone; nothing left to flush to
-                    Lifecycle::HelperDead => return,
-                    // flush what was queued (incl. the Shutdown frame; the
-                    // socket's bounded linger covers the wire transmission)
-                    Lifecycle::ShutDown => {
-                        for message in outbound.try_iter() {
-                            if socket::send(&sock, &message).is_err() {
-                                break;
-                            }
+                // flush what was queued on planned shutdown (incl. the
+                // Shutdown frame; the socket's bounded linger covers the
+                // wire transmission)
+                if lifecycle.get() == Lifecycle::ShutDown {
+                    for message in outbound.try_iter() {
+                        if socket::send(&sock, &message).is_err() {
+                            break;
                         }
-                        return;
                     }
+                    return;
+                }
+                // retired: the helper behind this socket is gone; nothing
+                // left to flush to
+                if !alive.load(Ordering::Acquire) {
+                    return;
                 }
 
                 for message in outbound.try_iter() {
@@ -270,7 +294,12 @@ fn route(
             generation,
             slot,
         } => registry::apply_frame_published(registry, id, generation, slot),
-        ToClient::PlayerError { id, message } => sinks.on_player_error(id, &message),
+        ToClient::PlayerError { id, message } => {
+            // the wire carries the helper-side id; report the public one C#
+            // knows (a stale id from a previous helper resolves to None)
+            let public = id.and_then(|helper| registry.public_of(helper));
+            sinks.on_player_error(public, &message);
+        }
         ToClient::Log { sink, line } => sinks.on_log(sink, &line),
         ToClient::Hello { .. } => { /* handshake is over; ignore */ }
     }

@@ -100,6 +100,18 @@ impl PlayerVideo {
         self.published = Some((generation, slot));
     }
 
+    /// Drops all helper-side shared state after the helper died (a pending
+    /// set's Drop closes its unopened handles). The presentation texture
+    /// and its retire grace survive so the pointers C# wraps stay valid —
+    /// the last frame freezes until the resurrected helper publishes again.
+    pub fn reset_for_recovery(&mut self) {
+        self.pending = None;
+        self.active = None;
+        self.published = None;
+        self.presented = None;
+        self.ack_due = None;
+    }
+
     /// The stable presentation-texture pointer C# wraps, once the first
     /// frame was presented. One NV12 texture covers both planes; `plane` is
     /// part of the fixed C ABI but only Metal consumes it (same contract as

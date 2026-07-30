@@ -110,6 +110,18 @@ impl PlayerVideo {
         self.published = Some((generation, slot));
     }
 
+    /// Drops all helper-side shared state after the helper died (surface
+    /// retains release with it). The presentation planes and their retire
+    /// grace survive so the pointers C# wraps stay valid — the last frame
+    /// freezes until the resurrected helper publishes again.
+    pub fn reset_for_recovery(&mut self) {
+        self.pending = None;
+        self.active = None;
+        self.published = None;
+        self.presented = None;
+        self.ack_due = None;
+    }
+
     fn pending_for(&mut self, generation: u32) -> &mut PendingGen {
         let stale = self
             .pending
