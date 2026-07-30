@@ -172,6 +172,7 @@ namespace DCL.Web3.Authenticators
         }
 
         // Field names mirror the auth server's JSON payloads verbatim, so they intentionally break the naming rules.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         private struct IdentityAuthResponseDto
         {
@@ -193,5 +194,6 @@ namespace DCL.Web3.Authenticators
                 public string publicKey;
             }
         }
+        // ReSharper restore InconsistentNaming
     }
 }
