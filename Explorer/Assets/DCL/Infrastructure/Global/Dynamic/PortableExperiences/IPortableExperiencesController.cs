@@ -12,9 +12,9 @@ namespace PortableExperiences.Controller
 {
     public interface IPortableExperiencesController
     {
-        event Action<string> PortableExperienceLoaded;
+        event Action<string>? PortableExperienceLoaded;
 
-        event Action<string> PortableExperienceUnloaded;
+        event Action<string>? PortableExperienceUnloaded;
 
         Dictionary<string, Entity> PortableExperienceEntities { get; }
 

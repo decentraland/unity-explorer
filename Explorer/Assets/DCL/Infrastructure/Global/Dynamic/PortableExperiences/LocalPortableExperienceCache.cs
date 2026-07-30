@@ -46,7 +46,7 @@ namespace PortableExperiences.Controller
         /// </summary>
         public async UniTask<IReadOnlyList<string>> GetPermissionsRequiringAuthorizationAsync(string portableExperienceId, IIpfsRealm ipfsRealm, CancellationToken ct)
         {
-            if (permissionsCache.TryGetValue(portableExperienceId, out List<string> cachedPermissions))
+            if (permissionsCache.TryGetValue(portableExperienceId, out List<string>? cachedPermissions))
                 return cachedPermissions;
 
             var permissions = new List<string>();

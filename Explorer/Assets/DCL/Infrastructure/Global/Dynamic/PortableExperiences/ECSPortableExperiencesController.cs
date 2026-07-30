@@ -19,7 +19,6 @@ using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using ECS.SceneLifeCycle.Realm;
 using DCL.Utility;
 using MVC;
 using SceneRuntime.ScenePermissions;
@@ -28,15 +27,20 @@ namespace PortableExperiences.Controller
 {
     public class ECSPortableExperiencesController : IPortableExperiencesController
     {
-        private readonly IWeb3IdentityCache web3IdentityCache;
+        private const int MAX_PORTABLE_EXPERIENCES_PER_SCENE = 10;
+
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
         private readonly LocalPortableExperienceCache localPortableExperienceCache;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly HashSet<string> loadingPortableExperiences = new ();
+
+        // Live count of scene-spawned (Local) portable experiences per parent scene.
+        // Mirrors PortableExperienceEntities add/remove.
+        private readonly Dictionary<string, int> localPortableExperiencesPerScene = new ();
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource urlsSources;
-        private GlobalWorld globalWorld;
+        private GlobalWorld? globalWorld;
 
         public Dictionary<string, Entity> PortableExperienceEntities { get; } = new ();
 
@@ -49,10 +53,10 @@ namespace PortableExperiences.Controller
 
         public IMVCManager? MvcManager { get; set; }
 
-        private World world => globalWorld.EcsWorld;
+        private World world => GlobalWorld.EcsWorld;
 
-        public event Action<string> PortableExperienceLoaded;
-        public event Action<string> PortableExperienceUnloaded;
+        public event Action<string>? PortableExperienceLoaded;
+        public event Action<string>? PortableExperienceUnloaded;
 
         public ECSPortableExperiencesController(
             IWeb3IdentityCache web3IdentityCache,
@@ -62,7 +66,6 @@ namespace PortableExperiences.Controller
             ILaunchMode launchMode,
             IDecentralandUrlsSource urlsSources)
         {
-            this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
             this.localPortableExperienceCache = localPortableExperienceCache;
@@ -129,11 +132,18 @@ namespace PortableExperiences.Controller
                     throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
 
                 var ipfsRealm = new IpfsRealm(portableExperiencePath, result);
+                string parentSceneName = parentScene?.Info.Name ?? "main";
 
                 if (!force && !isGlobalPortableExperience)
                 {
+                    EnsureSceneSpawnCapacity(parentSceneName);
+
                     string portableExperienceName = string.IsNullOrEmpty(result.configurations.realmName) ? portableExperienceId : result.configurations.realmName;
                     await EnsureAuthorizedByUserAsync(portableExperienceId, portableExperienceName, ipfsRealm, ct);
+
+                    // Re-checked after awaiting: concurrent spawns of other portable experiences
+                    // may have consumed the remaining capacity in the meantime.
+                    EnsureSceneSpawnCapacity(parentSceneName);
                 }
 
                 var realmData = new RealmData();
@@ -149,7 +159,6 @@ namespace PortableExperiences.Controller
                     WorldManifest.Empty
                 );
 
-                string parentSceneName = parentScene?.Info.Name ?? "main";
                 Entity portableExperienceEntity = world.Create();
                 world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
                 world.Add(portableExperienceEntity, new PortableExperienceMetadata
@@ -162,6 +171,12 @@ namespace PortableExperiences.Controller
                 });
 
                 PortableExperienceEntities.Add(portableExperienceId, portableExperienceEntity);
+
+                if (!isGlobalPortableExperience)
+                {
+                    localPortableExperiencesPerScene.TryGetValue(parentSceneName, out int count);
+                    localPortableExperiencesPerScene[parentSceneName] = count + 1;
+                }
 
                 PortableExperienceLoaded?.Invoke(portableExperienceId);
 
@@ -189,14 +204,16 @@ namespace PortableExperiences.Controller
                 return;
             }
 
+            IMVCManager? mvcManager = MvcManager;
+
             // Fail closed: a portable experience that requires permissions must never spawn without explicit consent.
-            if (MvcManager == null)
+            if (mvcManager == null)
             {
                 ReportHub.LogError(ReportCategory.PORTABLE_EXPERIENCE, $"Cannot request authorization for portable experience '{portableExperienceId}': UI is not initialized yet.");
                 throw new Exception($"Portable experience '{portableExperienceId}' requires user authorization but the UI is not available yet.");
             }
 
-            bool authorized = await PortableExperienceAuthorizationPopupController.RequestAuthorizationAsync(MvcManager, portableExperienceName, permissions, ct);
+            bool authorized = await PortableExperienceAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, portableExperienceName, permissions, ct);
 
             // A cancelled request must not be recorded as a user decision.
             ct.ThrowIfCancellationRequested();
@@ -208,6 +225,12 @@ namespace PortableExperiences.Controller
             }
 
             localPortableExperienceCache.AuthorizedPortableExperiences.Add(portableExperienceId);
+        }
+
+        private void EnsureSceneSpawnCapacity(string parentSceneName)
+        {
+            if (localPortableExperiencesPerScene.TryGetValue(parentSceneName, out int count) && count >= MAX_PORTABLE_EXPERIENCES_PER_SCENE)
+                throw new Exception($"The scene '{parentSceneName}' has reached the maximum number of portable experiences it can spawn ({MAX_PORTABLE_EXPERIENCES_PER_SCENE}).");
         }
 
         public bool CanKillPortableExperience(string id)
@@ -271,6 +294,15 @@ namespace PortableExperiences.Controller
         {
             if (PortableExperienceEntities.TryGetValue(id, out Entity portableExperienceEntity))
             {
+                PortableExperienceMetadata metadata = world.Get<PortableExperienceMetadata>(portableExperienceEntity);
+
+                if (metadata.Type == PortableExperienceType.Local &&
+                    localPortableExperiencesPerScene.TryGetValue(metadata.ParentSceneId, out int count))
+                {
+                    if (count <= 1) localPortableExperiencesPerScene.Remove(metadata.ParentSceneId);
+                    else localPortableExperiencesPerScene[metadata.ParentSceneId] = count - 1;
+                }
+
                 world.Add<DeleteEntityIntention>(portableExperienceEntity);
 
                 PortableExperienceEntities.Remove(id);
