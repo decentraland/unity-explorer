@@ -138,12 +138,13 @@ namespace DCL.MarketplaceCredits.Purchase
 
         private static string WordAt(string hex, int index)
         {
-            int start = (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 2 : 0) + index * 64;
+            const int LENGTH = 64;
+            int start = (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 2 : 0) + index * LENGTH;
 
-            if (hex.Length < start + 64)
-                throw new InvalidOperationException($"eth_call returned {hex.Length} hex characters, expected at least {start + 64}");
+            if (hex.Length < start + LENGTH)
+                throw new InvalidOperationException($"eth_call returned {hex.Length} hex characters, expected at least {start + LENGTH}");
 
-            return hex.Substring(start, 64);
+            return hex.Substring(start, LENGTH);
         }
     }
 }
