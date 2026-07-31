@@ -85,8 +85,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.RarityLabel.text = inputData.RarityName;
                 viewInstance.RarityLabel.color = inputData.RarityColor;
                 viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
-                viewInstance.PriceCreditsText.text = string.Empty;
-                viewInstance.PriceLoadingSpinner.SetActive(true);
 
                 if (inputData.ItemThumbnail != null)
                 {
@@ -148,6 +146,12 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private async UniTask LoadQuoteAndBalanceAsync(CancellationToken ct)
         {
             SetUiState(ModalState.LoadingBalance);
+
+            if (viewInstance != null)
+            {
+                viewInstance.PriceCreditsText.text = string.Empty;
+                viewInstance.PriceLoadingSpinner.SetActive(true);
+            }
 
             IWeb3Identity? identity = identityCache.Identity;
 
@@ -368,6 +372,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             if (viewInstance == null)
                 return;
 
+            viewInstance.PriceLoadingSpinner.SetActive(false);
             viewInstance.FailedReasonText.text = reason;
             viewInstance.RetryButton.gameObject.SetActive(allowRetry);
         }

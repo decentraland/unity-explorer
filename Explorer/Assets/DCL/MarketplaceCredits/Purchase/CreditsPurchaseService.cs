@@ -120,29 +120,42 @@ namespace DCL.MarketplaceCredits.Purchase
                 && price.assetType != CreditsTradeEncoder.ASSET_TYPE_ERC20)
                 return new CreditsQuoteResult(CreditsPurchaseError.ListingNotAvailable, $"Trade asset type {price.assetType} cannot be paid with credits");
 
-            ManaUsdRate rate;
-
-            try { rate = await manaUsdRateReader.ReadAsync(trade.contract, ct); }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"MANA/USD rate unavailable for trade {tradeId}: {e.Message}");
-                return new CreditsQuoteResult(CreditsPurchaseError.PriceUnavailable, e.Message);
-            }
-
             bool isLegacyMana = price.assetType == CreditsTradeEncoder.ASSET_TYPE_ERC20;
 
-            int usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(
-                isLegacyMana
-                    ? CreditsTradeEncoder.ManaWeiToUsdCents(price.amount, rate)
-                    : CreditsTradeEncoder.UsdWeiToCents(price.amount),
-                CENTS_PER_CREDIT);
+            int usdCents;
+            BigInteger requiredManaWei;
 
-            BigInteger requiredManaWei = isLegacyMana
-                ? CreditsTradeEncoder.AmountOrZero(price.amount)
-                : CreditsTradeEncoder.UsdWeiToManaWei(price.amount, rate);
+            if (isLegacyMana)
+            {
+                // Only a MANA-denominated price needs the oracle to be displayed at all: its credit price
+                // exists only through the rate.
+                ManaUsdRate rate;
 
-            if (usdCents <= 0 || requiredManaWei <= BigInteger.Zero)
+                try { rate = await manaUsdRateReader.ReadAsync(trade.contract, ct); }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception e)
+                {
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"MANA/USD rate unavailable for trade {tradeId}: {e.Message}");
+                    return new CreditsQuoteResult(CreditsPurchaseError.PriceUnavailable, e.Message);
+                }
+
+                usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.ManaWeiToUsdCents(price.amount, rate), CENTS_PER_CREDIT);
+                requiredManaWei = CreditsTradeEncoder.AmountOrZero(price.amount);
+
+                if (requiredManaWei <= BigInteger.Zero)
+                    return new CreditsQuoteResult(CreditsPurchaseError.ListingNotAvailable, "Trade has no price");
+            }
+            else
+            {
+                // A USD-pegged price is exact without the oracle; the MANA the trade draws is resolved at
+                // purchase time, so only warm the rate cache for the confirm click.
+                usdCents = CreditsTradeEncoder.RoundUpToWholeCredit(CreditsTradeEncoder.UsdWeiToCents(price.amount), CENTS_PER_CREDIT);
+                requiredManaWei = BigInteger.Zero;
+
+                manaUsdRateReader.PrefetchAsync(trade.contract).Forget();
+            }
+
+            if (usdCents <= 0)
                 return new CreditsQuoteResult(CreditsPurchaseError.ListingNotAvailable, "Trade has no price");
 
             return CreditsQuoteResult.Ok(new CreditsPurchaseQuote(trade, usdCents, usdCents / CENTS_PER_CREDIT, requiredManaWei, isLegacyMana));
@@ -150,6 +163,28 @@ namespace DCL.MarketplaceCredits.Purchase
 
         private async UniTask<CreditsPurchaseResult> PurchaseInternalAsync(CreditsPurchaseQuote quote, string buyer, CancellationToken ct)
         {
+            BigInteger requiredManaWei = quote.RequiredManaWei;
+
+            if (!quote.IsLiveRatePrice)
+            {
+                SetState(CreditsPurchaseState.ResolvingListing);
+
+                ManaUsdRate rate;
+
+                try { rate = await manaUsdRateReader.ReadAsync(quote.Trade.contract, ct); }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception e)
+                {
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"MANA/USD rate unavailable at purchase for trade {quote.Trade.id}: {e.Message}");
+                    return Fail(CreditsPurchaseError.PriceUnavailable, message: e.Message);
+                }
+
+                requiredManaWei = CreditsTradeEncoder.UsdWeiToManaWei(quote.Trade.received[0].amount, rate);
+
+                if (requiredManaWei <= BigInteger.Zero)
+                    return Fail(CreditsPurchaseError.PriceUnavailable, message: "Trade draws no MANA");
+            }
+
             SetState(CreditsPurchaseState.Authorizing);
 
             AuthorizeCreditResponse authorization;
@@ -195,10 +230,10 @@ namespace DCL.MarketplaceCredits.Purchase
                 return Fail(CreditsPurchaseError.EncodingFailed, message: e.Message);
             }
 
-            if (authorizedCap < quote.RequiredManaWei)
+            if (authorizedCap < requiredManaWei)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE,
-                    $"Authorized cap {authorizedCap} wei cannot cover the {quote.RequiredManaWei} wei trade {quote.Trade.id} draws");
+                    $"Authorized cap {authorizedCap} wei cannot cover the {requiredManaWei} wei trade {quote.Trade.id} draws");
 
                 await ReleaseIntentAsync(authorization.credit.id);
                 return Fail(CreditsPurchaseError.PriceChanged, message: "The authorized credit cannot cover this trade");
