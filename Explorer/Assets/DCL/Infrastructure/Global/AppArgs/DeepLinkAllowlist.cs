@@ -15,8 +15,9 @@ namespace Global.AppArgs
     ///     <list type="bullet">
     ///         <item>
     ///             <b>Always permitted</b> — benign navigation / share / login intents whose worst case is already
-    ///             gated elsewhere (a consent prompt, a matching login token, or a plain coordinate): realm,
-    ///             position, community, signin, authRequestId, force-open-backpack, spawnpoint.
+    ///             gated elsewhere (a consent prompt, a matching login token, a plain coordinate, or a closed
+    ///             Decentraland-owned enum): realm, position, community, signin, authRequestId, force-open-backpack,
+    ///             spawnpoint, dclenv.
     ///         </item>
     ///         <item>
     ///             <b>Permitted only for a whitelisted realm</b> — the local-development params Creator Hub and the
@@ -76,6 +77,14 @@ namespace Global.AppArgs
             // POSITION — it only picks where inside an already-permitted realm/position navigation the user arrives,
             // with no capability, infra, or exec impact.
             AppArgsFlags.SPAWN_POINT,
+
+            // Target environment (org|zone|today). Not realm-gated: the login callbacks and jump-in links that carry
+            // it have no realm at all, so the loopback-realm condition below could never pass for them and the session
+            // would silently fall back to the default environment. Safe on its own — a closed Decentraland-owned enum,
+            // parsed with Enum.TryParse where it is consumed and ignored when it does not match, never a URL, so it
+            // cannot point the client at attacker infrastructure. Worst case is a session in a Decentraland-owned test
+            // environment, strictly less capable than the attacker-supplied REALM above.
+            AppArgsFlags.ENVIRONMENT,
         };
 
         // Local-development params Creator Hub / sdk-commands attach to preview deep links. Permitted ONLY when the
@@ -88,9 +97,6 @@ namespace Global.AppArgs
             // Enables local-scene-development mode (opens an LSD websocket to the realm). Only meaningful against a
             // local/dev server; whitelisted-realm-gated so an attacker can't point LSD at an arbitrary remote realm (SEC-020).
             AppArgsFlags.LOCAL_SCENE,
-
-            // Target environment (org/zone/today). A DCL-owned enum, not a URL — cannot point at attacker infra.
-            AppArgsFlags.ENVIRONMENT,
 
             // Marks the session as launched from the Creator Hub (analytics trait only — no capability unlock).
             AppArgsFlags.DCL_EDITOR,
@@ -117,8 +123,18 @@ namespace Global.AppArgs
             // Port the server above listens on. Presence alone also starts it (MCP_PORT implies MCP), so it carries
             // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
             AppArgsFlags.MCP_PORT,
+
             // Opens the per-scene JS console (dev tooling for inspecting a scene under development).
             AppArgsFlags.SCENE_CONSOLE,
+
+            // Local-scene development only: load the scene's asset bundles from the preview server instead of raw
+            // GLTFs. A pure boolean — the optimized-assets base is derived from the realm itself
+            // ({realm}/optimized-assets, see RealmLaunchSettings.LocalAssetBundlesBaseUrl), the same value this
+            // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
+            // point asset loading at the realm the link already targets. The full-URL variant
+            // (optimized-assets-url) points AB/LOD/registry endpoints at arbitrary infrastructure and stays
+            // never-permitted.
+            AppArgsFlags.LOCAL_AB,
         };
 
         // Canonical (lowercased world-name) whitelist, set from the deeplink-whitelisted-worlds feature flag. Empty
