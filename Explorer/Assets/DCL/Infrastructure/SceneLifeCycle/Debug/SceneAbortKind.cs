@@ -2,8 +2,8 @@
 {
     public enum SceneAbortKind : byte
     {
-        NONE = 0,
-        EXCEPTION = 1,
-        CANCEL = 2,
+        None = 0,
+        Exception = 1,
+        Cancel = 2,
     }
 }

@@ -30,7 +30,7 @@ namespace DCL.SkyBox
         public void Enter()
         {
             transition.Enter();
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.Applied));
         }
 
         public void Update(float dt)
@@ -41,7 +41,7 @@ namespace DCL.SkyBox
         public void Exit()
         {
             transition.Exit();
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.Removed));
         }
     }
 }

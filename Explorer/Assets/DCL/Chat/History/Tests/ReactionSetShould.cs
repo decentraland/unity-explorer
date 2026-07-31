@@ -7,7 +7,7 @@ namespace DCL.Chat.History.Tests
     [TestFixture]
     public class ReactionSetShould
     {
-        private ReactionSet reactionSet;
+        private ReactionSet reactionSet = null!;
         private readonly List<(int EmojiIndex, int Count)> countsBuffer = new ();
 
         [SetUp]
@@ -193,7 +193,7 @@ namespace DCL.Chat.History.Tests
 
             // Assert
             Assert.IsNotNull(reactors);
-            Assert.AreEqual(2, reactors.Count);
+            Assert.AreEqual(2, reactors!.Count);
             Assert.IsTrue(reactors.Contains("wallet_a"));
             Assert.IsTrue(reactors.Contains("wallet_b"));
         }
@@ -244,6 +244,93 @@ namespace DCL.Chat.History.Tests
             Assert.AreEqual(2, countsBuffer.Count);
             Assert.AreEqual(2, countsBuffer[0].EmojiIndex);
             Assert.AreEqual(1, countsBuffer[1].EmojiIndex);
+        }
+
+        [Test]
+        public void RejectNewDistinctEmojiBeyondHardCap()
+        {
+            // Arrange
+            for (int emoji = 0; emoji < ReactionSet.MAX_DISTINCT_EMOJIS; emoji++)
+                Assert.IsTrue(reactionSet.AddReaction(emoji, "wallet_a"));
+
+            // Act
+            bool result = reactionSet.AddReaction(ReactionSet.MAX_DISTINCT_EMOJIS, "wallet_a");
+
+            // Assert
+            Assert.IsFalse(result);
+            Assert.AreEqual(ReactionSet.MAX_DISTINCT_EMOJIS, reactionSet.DistinctEmojiCount);
+        }
+
+        [Test]
+        public void AcceptNewWalletOnExistingEmojiAtHardCap()
+        {
+            // Arrange
+            for (int emoji = 0; emoji < ReactionSet.MAX_DISTINCT_EMOJIS; emoji++)
+                reactionSet.AddReaction(emoji, "wallet_a");
+
+            // Act
+            bool result = reactionSet.AddReaction(0, "wallet_b");
+
+            // Assert
+            Assert.IsTrue(result);
+            Assert.AreEqual(2, reactionSet.GetReactors(0)!.Count);
+        }
+
+        [Test]
+        public void AcceptNewDistinctEmojiAfterRemovalFreesSlotAtHardCap()
+        {
+            // Arrange
+            for (int emoji = 0; emoji < ReactionSet.MAX_DISTINCT_EMOJIS; emoji++)
+                reactionSet.AddReaction(emoji, "wallet_a");
+
+            reactionSet.RemoveReaction(0, "wallet_a");
+
+            // Act
+            bool result = reactionSet.AddReaction(ReactionSet.MAX_DISTINCT_EMOJIS, "wallet_a");
+
+            // Assert
+            Assert.IsTrue(result);
+            Assert.AreEqual(ReactionSet.MAX_DISTINCT_EMOJIS, reactionSet.DistinctEmojiCount);
+        }
+
+        [Test]
+        public void RejectNewReactorBeyondPerEmojiHardCap()
+        {
+            // Arrange
+            for (int i = 0; i < ReactionSet.MAX_REACTORS_PER_EMOJI; i++)
+                Assert.IsTrue(reactionSet.AddReaction(1, $"wallet_{i}"));
+
+            // Act
+            bool result = reactionSet.AddReaction(1, $"wallet_{ReactionSet.MAX_REACTORS_PER_EMOJI}");
+
+            // Assert
+            Assert.IsFalse(result);
+            Assert.AreEqual(ReactionSet.MAX_REACTORS_PER_EMOJI, reactionSet.GetReactors(1)!.Count);
+        }
+
+        [Test]
+        public void AcceptExistingReactorAtCapAndPruneEmojiAfterFullRemoval()
+        {
+            // Arrange
+            for (int i = 0; i < ReactionSet.MAX_REACTORS_PER_EMOJI; i++)
+                reactionSet.AddReaction(1, $"wallet_{i}");
+
+            // Act
+            bool reAddResult = reactionSet.AddReaction(1, "wallet_0");
+            bool newWalletResult = reactionSet.AddReaction(1, "wallet_new");
+
+            // Assert: an already-present wallet is an unaffected no-op; a genuinely new wallet is still rejected
+            Assert.IsFalse(reAddResult);
+            Assert.IsFalse(newWalletResult);
+            Assert.AreEqual(ReactionSet.MAX_REACTORS_PER_EMOJI, reactionSet.GetReactors(1)!.Count);
+
+            // Act
+            for (int i = 0; i < ReactionSet.MAX_REACTORS_PER_EMOJI; i++)
+                Assert.IsTrue(reactionSet.RemoveReaction(1, $"wallet_{i}"));
+
+            // Assert: the emoji is fully pruned once its reactor set empties
+            Assert.IsTrue(reactionSet.IsEmpty);
+            Assert.IsNull(reactionSet.GetReactors(1));
         }
     }
 }

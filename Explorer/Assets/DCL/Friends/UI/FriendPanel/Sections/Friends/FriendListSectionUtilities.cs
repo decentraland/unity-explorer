@@ -71,7 +71,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         }
 
         public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.Block))).Forget();
 
         internal static void OpenProfilePassport(Profile.CompactInfo profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();

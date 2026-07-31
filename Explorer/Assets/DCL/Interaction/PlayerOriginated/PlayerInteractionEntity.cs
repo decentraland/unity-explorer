@@ -24,6 +24,7 @@ namespace DCL.Interaction.PlayerOriginated
         public ref PlayerOriginRaycastResultForSceneEntities PlayerOriginRaycastResultForSceneEntities => ref globalWorld.Get<PlayerOriginRaycastResultForSceneEntities>(Entity);
         public ref PlayerOriginRaycastResultForGlobalEntities PlayerOriginRaycastResultForGlobalEntities => ref globalWorld.Get<PlayerOriginRaycastResultForGlobalEntities>(Entity);
         public ref ProximityResultForSceneEntities ProximityResultForSceneEntities => ref globalWorld.Get<ProximityResultForSceneEntities>(Entity);
+        public ref SyntheticPointerInput SyntheticPointerInput => ref globalWorld.Get<SyntheticPointerInput>(Entity);
 
         public Vector3? PlayerPosition
         {

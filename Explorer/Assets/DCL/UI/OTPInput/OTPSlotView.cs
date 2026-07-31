@@ -8,10 +8,10 @@ namespace DCL.UI.OTPInput
     {
         public enum SlotState
         {
-            UNSELECTED,
-            SELECTED,
-            ERROR,
-            SUCCESS,
+            Unselected,
+            Selected,
+            Error,
+            Success,
         }
 
         [SerializeField] private TMP_Text text;
@@ -31,18 +31,18 @@ namespace DCL.UI.OTPInput
 
         private void Awake()
         {
-            SetState(SlotState.UNSELECTED);
+            SetState(SlotState.Unselected);
         }
 
         public void SetState(SlotState state)
         {
-            outline.gameObject.SetActive(state == SlotState.SELECTED);
+            outline.gameObject.SetActive(state == SlotState.Selected);
 
             background.color = state switch
                                {
-                                   SlotState.UNSELECTED or SlotState.SELECTED => normalColor,
-                                   SlotState.ERROR => errorColor,
-                                   SlotState.SUCCESS => successColor,
+                                   SlotState.Unselected or SlotState.Selected => normalColor,
+                                   SlotState.Error => errorColor,
+                                   SlotState.Success => successColor,
                                    _ => background.color,
                                };
         }

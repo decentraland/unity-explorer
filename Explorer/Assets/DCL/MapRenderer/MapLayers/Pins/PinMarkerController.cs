@@ -165,7 +165,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void ResetToBaseScale()
         {
             foreach (IPinMarker marker in markers.Values)
-                marker.ResetScale(IPinMarker.ScaleType.MINIMAP);
+                marker.ResetScale(IPinMarker.ScaleType.Minimap);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)

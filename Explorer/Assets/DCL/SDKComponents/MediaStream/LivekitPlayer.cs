@@ -89,7 +89,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void EnsureVideoIsPlaying()
         {
-            if (State != PlayerState.PLAYING) return;
+            if (State != PlayerState.Playing) return;
             if (playingAddress == null) return;
 
             // Consume the flag even when IsVideoOpened: prevents stale-flag pile-up while the stream is healthy.
@@ -117,7 +117,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void EnsureAudioIsPlaying()
         {
-            if (State != PlayerState.PLAYING) return;
+            if (State != PlayerState.Playing) return;
             if (playingAddress == null) return;
 
             bool forceRediscover = pendingAudioRediscovery;
@@ -150,7 +150,7 @@ namespace DCL.SDKComponents.MediaStream
 
             OpenVideoStream(livekitAddress);
             OpenMissingAudioStreams();
-            playerState = PlayerState.PLAYING;
+            playerState = PlayerState.Playing;
         }
 
         private void OpenVideoStream(LivekitAddress livekitAddress)
@@ -360,13 +360,13 @@ namespace DCL.SDKComponents.MediaStream
         {
             // Doesn't need to dispose the stream, because it's responsibility of the owning room.
             cvs = null;
-            playerState = PlayerState.STOPPED;
+            playerState = PlayerState.Stopped;
             ReleaseAllAudioSources();
         }
 
         public Texture? LastTexture()
         {
-            if (playerState is not PlayerState.PLAYING)
+            if (playerState is not PlayerState.Playing)
                 return null;
 
             if (!cvs.HasValue || !cvs.Value.videoStream.Resource.Has)
@@ -469,7 +469,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void Play()
         {
-            playerState = PlayerState.PLAYING;
+            playerState = PlayerState.Playing;
 
             foreach (var (source, _) in audioSources.Values)
                 source.Play();
@@ -477,7 +477,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void Pause()
         {
-            playerState = PlayerState.PAUSED;
+            playerState = PlayerState.Paused;
 
             // There is no "pause" for a streaming source.
             foreach (var (source, _) in audioSources.Values)
@@ -486,7 +486,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public void Stop()
         {
-            playerState = PlayerState.STOPPED;
+            playerState = PlayerState.Stopped;
 
             foreach (var (source, _) in audioSources.Values)
                 source.Stop();

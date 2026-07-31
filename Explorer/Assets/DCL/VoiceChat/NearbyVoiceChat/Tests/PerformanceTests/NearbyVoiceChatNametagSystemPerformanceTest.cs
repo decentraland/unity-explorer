@@ -42,7 +42,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
             registry = Substitute.For<INearbyAudioStreamRegistry>();
 
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             var muteService = new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>());
 
             Entity playerEntity = world.Create();
@@ -76,7 +76,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
                 if (i < half)
                 {
                     registry.IsActiveSpeaker(wallet).Returns(true);
-                    world.Add(e, new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY));
+                    world.Add(e, new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.Nearby));
                 }
             }
 

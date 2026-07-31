@@ -6,6 +6,6 @@ namespace DCL.VoiceChat
     public static class VoiceChatRoleHelper
     {
         public static bool IsModeratorOrOwner(VoiceChatParticipantCommunityRole role) =>
-            role is VoiceChatParticipantCommunityRole.MODERATOR or VoiceChatParticipantCommunityRole.OWNER;
+            role is VoiceChatParticipantCommunityRole.Moderator or VoiceChatParticipantCommunityRole.Owner;
     }
 }

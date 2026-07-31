@@ -254,10 +254,10 @@ namespace DCL.Places
 
             switch (section)
             {
-                case PlacesSection.FAVORITES:
+                case PlacesSection.Favorites:
                     favoritesResultsEmptyContainer.SetActive(isEmpty);
                     break;
-                case PlacesSection.MY_PLACES:
+                case PlacesSection.MyPlaces:
                     myPlacesResultsEmptyContainer.SetActive(isEmpty);
                     break;
                 default:

@@ -37,7 +37,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             INearbyMuteRepository repository = Substitute.For<INearbyMuteRepository>();
             muteService = new NearbyMuteService(muteCache, repository);
 
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.DISABLED);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Disabled);
             sut = new NearbyVoiceChatAnalytics(analytics, stateModel, muteService);
         }
 
@@ -58,7 +58,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             analytics.ClearReceivedCalls();
 
             // Act — user clicks the widget speak button
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
 
             // Assert
             AssertTrackedOnce(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON,
@@ -70,7 +70,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             // Arrange — user clicked Speak, now stops by clicking again
             stateModel.Enable();
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             analytics.ClearReceivedCalls();
 
             // Act
@@ -87,11 +87,11 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // Suppression by call/scene/loading internally calls StopSpeaking — system-driven, not user intent.
             // Arrange — user is mid-speak via button
             stateModel.Enable();
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             analytics.ClearReceivedCalls();
 
             // Act — incoming private call suppresses nearby
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             // Assert — no enabled:false fired (the SPEAKING→IDLE inside Suppress is system-driven)
             analytics.DidNotReceive().Track(
@@ -110,7 +110,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             analytics.ClearReceivedCalls();
 
             // Act — user holds [T]
-            stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
+            stateModel.StartSpeaking(NearbyVoiceActivation.PushToTalk);
 
             // Assert — fires once on press, no payload required
             analytics.Received(1).Track(
@@ -125,7 +125,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // SPEAKING→IDLE after a PTT press must not emit a button toggle-off event.
             // Arrange
             stateModel.Enable();
-            stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
+            stateModel.StartSpeaking(NearbyVoiceActivation.PushToTalk);
             analytics.ClearReceivedCalls();
 
             // Act — user releases [T]
@@ -147,7 +147,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             analytics.ClearReceivedCalls();
 
             // Act — application regained focus and the mic auto-resumed
-            stateModel.StartSpeaking(NearbyVoiceActivation.FOCUS_RESUMED);
+            stateModel.StartSpeaking(NearbyVoiceActivation.FocusResumed);
 
             // Assert — neither speak event variant fires
             analytics.DidNotReceive().Track(
@@ -168,9 +168,9 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             analytics.ClearReceivedCalls();
 
             // Act — button session (on/off), then a PTT press
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             stateModel.StopSpeaking();
-            stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
+            stateModel.StartSpeaking(NearbyVoiceActivation.PushToTalk);
 
             // Assert — button fires twice (on + off), PTT fires once on press
             analytics.Received(2).Track(
@@ -217,7 +217,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // SPEAKING → DISABLED happens if the user toggles the widget off mid-speak.
             // Arrange
             stateModel.Enable();
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             analytics.ClearReceivedCalls();
 
             // Act
@@ -237,7 +237,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             analytics.ClearReceivedCalls();
 
             // Act
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             // Assert
             AssertNoToggle();
@@ -250,11 +250,11 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // The intermediate IDLE is a forced stop, not a user-driven toggle.
             // Arrange
             stateModel.Enable();
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             analytics.ClearReceivedCalls();
 
             // Act
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             // Assert
             AssertNoToggle();
@@ -266,11 +266,11 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // Higher-priority call ended → nearby chat resumes to IDLE. Not a user toggle.
             // Arrange
             stateModel.Enable();
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             analytics.ClearReceivedCalls();
 
             // Act
-            stateModel.Resume(SuppressionReason.CALL);
+            stateModel.Resume(SuppressionReason.Call);
 
             // Assert
             AssertNoToggle();
@@ -282,13 +282,13 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // Loading stage suppresses the feature at startup while the user preference is DISABLED.
             // After load completes, Resume restores the preference — no toggle event should fire.
             // Arrange
-            using var disabledStart = new NearbyVoiceChatStateModel(NearbyVoiceChatState.DISABLED);
+            using var disabledStart = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Disabled);
             using var localAnalytics = new NearbyVoiceChatAnalytics(analytics, disabledStart, muteService);
-            disabledStart.Suppress(SuppressionReason.LOADING);
+            disabledStart.Suppress(SuppressionReason.Loading);
             analytics.ClearReceivedCalls();
 
             // Act
-            disabledStart.Resume(SuppressionReason.LOADING);
+            disabledStart.Resume(SuppressionReason.Loading);
 
             // Assert
             AssertNoToggle();
@@ -300,7 +300,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // SPEAKING → IDLE via StopSpeaking is mic-off, not a feature toggle.
             // Arrange
             stateModel.Enable();
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             analytics.ClearReceivedCalls();
 
             // Act
@@ -319,7 +319,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             analytics.ClearReceivedCalls();
 
             // Act
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
 
             // Assert
             AssertNoToggle();
@@ -333,7 +333,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // since the user was not actually using nearby at the moment.
             // Arrange
             stateModel.Enable();
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             analytics.ClearReceivedCalls();
 
             // Act
@@ -395,7 +395,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             sut.Dispose();
 
             // Act
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
 
             // Assert
             analytics.DidNotReceive().Track(

@@ -43,7 +43,7 @@ namespace DCL.VoiceChat.Services
             this.socialServiceEventBus = socialServiceEventBus;
             this.identityCache = identityCache;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
             {
                 socialServiceEventBus.TransportClosed += OnTransportClosed;
                 socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
@@ -54,7 +54,7 @@ namespace DCL.VoiceChat.Services
 
         public override void Dispose()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)) return;
 
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;

@@ -173,7 +173,7 @@ namespace DCL.Multiplayer.Movement.Tests
             using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
             {
                 CollectionAssert.AreEquivalent(
-                    new[] { new RemoveIntention(WALLET_1, RoomSource.PULSE), new RemoveIntention(WALLET_2, RoomSource.PULSE) },
+                    new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse), new RemoveIntention(WALLET_2, RoomSource.Pulse) },
                     bunch.Collection());
             }
 
@@ -235,7 +235,7 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
 
             using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
-                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.PULSE) }, bunch.Collection());
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
         }
 
         [Test]
@@ -287,7 +287,7 @@ namespace DCL.Multiplayer.Movement.Tests
             Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
 
             using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
-                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.PULSE) }, bunch.Collection());
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
 
             Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
         }
@@ -323,7 +323,7 @@ namespace DCL.Multiplayer.Movement.Tests
             participantTable.TryGet(wallet, out Arg.Any<IReadOnlyEntityParticipantTable.Entry>())
                             .Returns(ci =>
                              {
-                                 ci[1] = new IReadOnlyEntityParticipantTable.Entry(wallet, entity, RoomSource.PULSE);
+                                 ci[1] = new IReadOnlyEntityParticipantTable.Entry(wallet, entity, RoomSource.Pulse);
                                  return true;
                              });
 

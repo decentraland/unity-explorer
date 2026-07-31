@@ -17,7 +17,7 @@ namespace DCL.UI.Sidebar.HelpMenu
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource openControlsCts = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public HelpMenuController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, UnityAppWebBrowser webBrowser, SupportRequestService supportRequestService)
             : base(viewFactory)

@@ -7,7 +7,7 @@ namespace DCL.Web3.Authenticators
     ///     Delegate for transaction confirmation callback.
     ///     Returns true if user confirms, false if user rejects.
     /// </summary>
-    public delegate UniTask<bool> TransactionConfirmationDelegate(TransactionConfirmationRequest request);
+    public delegate UniTask<bool> TransactionConfirmationDelegate(TransactionConfirmationRequest request, CancellationToken ct);
 
     /// <summary>
     ///     Interface for composite authentication provider that supports multiple authentication methods.

@@ -17,8 +17,8 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
         public enum UserBlockAction
         {
-            BLOCK,
-            UNBLOCK
+            Block,
+            Unblock
         }
     }
 }

@@ -8,9 +8,9 @@ namespace DCL.SDKComponents.MediaStream
 {
     public enum PlayerState
     {
-        PAUSED,
-        PLAYING,
-        STOPPED,
+        Paused,
+        Playing,
+        Stopped,
     }
 
     public class AvProPlayer
@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.MediaStream
     {
         public bool IsPlaying => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsPlaying(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.PLAYING
+            static livekitPlayer => livekitPlayer.State is PlayerState.Playing
         );
 
         public float CurrentTime => Match(
@@ -57,12 +57,12 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsFinished => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsFinished(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.STOPPED
+            static livekitPlayer => livekitPlayer.State is PlayerState.Stopped
         );
 
         public bool IsPaused => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsPaused(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.PAUSED
+            static livekitPlayer => livekitPlayer.State is PlayerState.Paused
         );
 
         public bool IsSeeking => Match(

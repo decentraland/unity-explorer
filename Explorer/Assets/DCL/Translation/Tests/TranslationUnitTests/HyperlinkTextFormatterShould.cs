@@ -147,13 +147,13 @@ namespace DCL.Translation
             // Assert
             Assert.AreEqual(3, matchesResult.Count);
 
-            Assert.AreEqual(TextFormatMatchType.SCENE, matchesResult[0].Item1);
+            Assert.AreEqual(TextFormatMatchType.Scene, matchesResult[0].Item1);
             Assert.AreEqual("10,20", matchesResult[0].Item2.Value);
 
-            Assert.AreEqual(TextFormatMatchType.URL, matchesResult[1].Item1);
+            Assert.AreEqual(TextFormatMatchType.Url, matchesResult[1].Item1);
             Assert.AreEqual("https://decentraland.org", matchesResult[1].Item2.Value);
 
-            Assert.AreEqual(TextFormatMatchType.WORLD, matchesResult[2].Item1);
+            Assert.AreEqual(TextFormatMatchType.World, matchesResult[2].Item1);
             Assert.AreEqual("myworld.dcl.eth", matchesResult[2].Item2.Value);
         }
     }

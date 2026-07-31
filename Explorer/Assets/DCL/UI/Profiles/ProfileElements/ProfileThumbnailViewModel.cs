@@ -13,12 +13,12 @@ namespace DCL.UI.ProfileElements
             /// <summary>
             ///     If the view model is not bound the loading won't be started
             /// </summary>
-            NOT_BOUND,
-            LOADING,
-            LOADED_FROM_CACHE,
-            LOADED_REMOTELY,
-            FALLBACK,
-            ERROR,
+            NotBound,
+            Loading,
+            LoadedFromCache,
+            LoadedRemotely,
+            Fallback,
+            Error,
         }
 
         public readonly State ThumbnailState;
@@ -35,19 +35,19 @@ namespace DCL.UI.ProfileElements
         }
 
         public static ProfileThumbnailViewModel ReadyToLoad(Color? color = null) =>
-            new (State.LOADING, null, color);
+            new (State.Loading, null, color);
 
         public static ProfileThumbnailViewModel Default(Color? color = null) =>
-            new (State.NOT_BOUND, null, color);
+            new (State.NotBound, null, color);
 
         public static ProfileThumbnailViewModel FromFallback(Sprite sprite, Color? color = null) =>
-            new (State.FALLBACK, sprite, color);
+            new (State.Fallback, sprite, color);
 
         public static ProfileThumbnailViewModel Error(Color? color = null) =>
-            new (State.ERROR, null, color);
+            new (State.Error, null, color);
 
         public static ProfileThumbnailViewModel FromLoaded(Sprite sprite, bool fromCache, Color? color = null, bool fitAndCenter = false) =>
-            new (fromCache ? State.LOADED_FROM_CACHE : State.LOADED_REMOTELY, sprite, color, fitAndCenter);
+            new (fromCache ? State.LoadedFromCache : State.LoadedRemotely, sprite, color, fitAndCenter);
 
         [BurstDiscard]
         public bool Equals(ProfileThumbnailViewModel other) =>

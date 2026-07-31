@@ -34,7 +34,7 @@ namespace DCL.ChatArea
             this.dclInput = dclInput;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         protected override void OnViewInstantiated()
         {

@@ -60,7 +60,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 
@@ -157,7 +157,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
                 seeded.Add((audioEntity, source, $"wallet-{i}"));
             }
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             system.Update(0);
 

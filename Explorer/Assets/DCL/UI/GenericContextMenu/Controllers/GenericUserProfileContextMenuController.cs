@@ -131,12 +131,12 @@ namespace DCL.UI
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
             this.analytics = analytics;
-            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
+            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking);
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCache = friendOnlineStatusCache;
-            this.isVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
-            this.isNearbyVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
+            this.isVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat);
+            this.isNearbyVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat);
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.selfProfile = selfProfile;
@@ -163,7 +163,7 @@ namespace DCL.UI
 
             contextMenuMentionButton = new GenericContextMenuElement(mentionUserButtonControlSettings, false);
 
-            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BottomRight)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(contextMenuMentionButton)
@@ -195,7 +195,7 @@ namespace DCL.UI
 
             contextMenu.AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.ReportUser))
                 contextMenu.AddControl(reportButtonControlSettings);
 
             contextMenu.AddControl(contextMenuBlockUserButton);
@@ -203,13 +203,13 @@ namespace DCL.UI
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null,
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BottomRight, Action? onContextMenuShow = null,
             bool isOpenedOnWorldAvatar = false)
         {
             closeContextMenuTask.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
-            UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
+            UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.Disabled;
             targetProfile = profile;
 
             if (friendsService != null)
@@ -233,10 +233,10 @@ namespace DCL.UI
                     string? json = JsonUtility.ToJson(new GiftData(profile.UserId, profile.DisplayName));
                     giftButtonControlSettings.SetData(json);
 
-                    contextMenuBlockUserButton.Enabled = isUserBlockingFeatureEnabled && friendshipStatus != FriendshipStatus.BLOCKED;
-                    contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
+                    contextMenuBlockUserButton.Enabled = isUserBlockingFeatureEnabled && friendshipStatus != FriendshipStatus.Blocked;
+                    contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.Friend &&
                                                       friendOnlineStatusCache != null &&
-                                                      friendOnlineStatusCache.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
+                                                      friendOnlineStatusCache.GetFriendStatus(profile.UserId) != OnlineStatus.Offline;
                 }
             }
 
@@ -299,12 +299,12 @@ namespace DCL.UI
         {
             return friendshipStatus switch
                    {
-                       FriendshipStatus.NONE => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
-                       FriendshipStatus.FRIEND => UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
-                       FriendshipStatus.REQUEST_SENT => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
-                       FriendshipStatus.REQUEST_RECEIVED => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
-                       FriendshipStatus.BLOCKED => UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED,
-                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
+                       FriendshipStatus.None => UserProfileContextMenuControlSettings.FriendshipStatus.None,
+                       FriendshipStatus.Friend => UserProfileContextMenuControlSettings.FriendshipStatus.Friend,
+                       FriendshipStatus.RequestSent => UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent,
+                       FriendshipStatus.RequestReceived => UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived,
+                       FriendshipStatus.Blocked => UserProfileContextMenuControlSettings.FriendshipStatus.Blocked,
+                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.None,
                    };
         }
 
@@ -312,19 +312,19 @@ namespace DCL.UI
         {
             switch (friendshipStatus)
             {
-                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.None:
                     SendFriendRequest(userData.UserId);
                     break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.Friend:
                     RemoveFriend(userData.UserId);
                     break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent:
                     CancelFriendRequest(userData.UserId);
                     break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived:
                     AcceptFriendship(userData.UserId);
                     break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.Blocked: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
             }
         }
@@ -460,7 +460,7 @@ namespace DCL.UI
 
         private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)
         {
-            await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)));
+            await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.Block)));
         }
 
         private void OnJumpInClicked(string userId)

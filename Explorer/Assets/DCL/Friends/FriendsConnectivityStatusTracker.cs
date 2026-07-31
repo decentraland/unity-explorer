@@ -85,7 +85,7 @@ namespace DCL.Friends
         }
 
         public OnlineStatus GetFriendStatus(string friendAddress) =>
-            friendsOnlineStatus.GetValueOrDefault(friendAddress, OnlineStatus.OFFLINE);
+            friendsOnlineStatus.GetValueOrDefault(friendAddress, OnlineStatus.Offline);
 
         private bool FriendOnlineStatusChanged(Profile.CompactInfo friendProfile, OnlineStatus onlineStatus)
         {
@@ -97,13 +97,13 @@ namespace DCL.Friends
         }
 
         private void FriendBecameOnline(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.ONLINE, () => OnFriendBecameOnline?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Online, () => OnFriendBecameOnline?.Invoke(friendProfile));
 
         private void FriendBecameAway(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.AWAY, () => OnFriendBecameAway?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Away, () => OnFriendBecameAway?.Invoke(friendProfile));
 
         private void FriendBecameOffline(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.OFFLINE, () => OnFriendBecameOffline?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Offline, () => OnFriendBecameOffline?.Invoke(friendProfile));
 
         private void DebounceStatusChange(Profile.CompactInfo friendProfile, OnlineStatus newStatus, Action onStatusChange)
         {

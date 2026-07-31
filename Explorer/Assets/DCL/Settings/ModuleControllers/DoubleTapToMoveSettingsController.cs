@@ -12,7 +12,7 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.DOUBLE_CLICK_WALK))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.DoubleClickWalk))
             {
                 view.SetActive(false);
                 return;

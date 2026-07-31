@@ -2,9 +2,9 @@
 {
     public enum PlacesSection
     {
-        BROWSE,
-        RECENTLY_VISITED,
-        FAVORITES,
-        MY_PLACES,
+        Browse,
+        RecentlyVisited,
+        Favorites,
+        MyPlaces,
     }
 }

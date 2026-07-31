@@ -8,10 +8,10 @@ namespace DCL.InWorldCamera
 {
     public enum RecordingState
     {
-        UNKNOWN = 0,
-        IDLE = 1,
-        CAPTURING = 2,
-        SCREENSHOT_READY = 3,
+        Unknown = 0,
+        Idle = 1,
+        Capturing = 2,
+        ScreenshotReady = 3,
     }
 
     public sealed class ScreenRecorder : IDisposable
@@ -32,7 +32,7 @@ namespace DCL.InWorldCamera
 
         private ScreenFrameData debugTargetScreenFrame;
 
-        public RecordingState State { get; private set; } = RecordingState.IDLE;
+        public RecordingState State { get; private set; } = RecordingState.Idle;
 
         public ScreenRecorder(RectTransform canvasRectTransform)
         {
@@ -53,7 +53,7 @@ namespace DCL.InWorldCamera
 
         public IEnumerator CaptureScreenshot()
         {
-            State = RecordingState.CAPTURING;
+            State = RecordingState.Capturing;
 
             yield return GameObjectExtensions.WAIT_FOR_END_OF_FRAME; // for UI to appear on screenshot. Converting to UniTask didn't work :(
 
@@ -76,7 +76,7 @@ namespace DCL.InWorldCamera
             Object.Destroy(screenshotTexture);
             Object.Destroy(newScreenShot);
 
-            State = RecordingState.SCREENSHOT_READY;
+            State = RecordingState.ScreenshotReady;
         }
 
         private void UpscaleTexture2D(Texture2D sourceTexture, int upscaleFactor)
@@ -103,10 +103,10 @@ namespace DCL.InWorldCamera
 
         public Texture2D? GetScreenshotAndReset()
         {
-            if (State != RecordingState.SCREENSHOT_READY)
+            if (State != RecordingState.ScreenshotReady)
                 return null;
 
-            State = RecordingState.IDLE;
+            State = RecordingState.Idle;
             return screenshot;
         }
 

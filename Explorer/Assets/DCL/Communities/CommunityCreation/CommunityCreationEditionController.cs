@@ -71,7 +71,7 @@ namespace DCL.Communities.CommunityCreation
 
         private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private class CommunityPlace
         {
@@ -209,10 +209,10 @@ namespace DCL.Communities.CommunityCreation
             webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void RestoreInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void OnCancelAction() =>
             closeTaskCompletionSource.TrySetResult();

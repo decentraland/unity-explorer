@@ -11,8 +11,8 @@ namespace DCL.SDKEntityTriggerArea.Components
 {
     public enum SDKEntityTriggerAreaMeshType
     {
-        BOX,
-        SPHERE
+        Box,
+        Sphere
     }
 
     public struct SDKEntityTriggerAreaComponent : IDirtyMarker
@@ -46,7 +46,7 @@ namespace DCL.SDKEntityTriggerArea.Components
             Vector3 areaSize,
             bool targetOnlyMainPlayer = false,
             SDKEntityTriggerArea? monoBehaviour = null,
-            SDKEntityTriggerAreaMeshType meshType = SDKEntityTriggerAreaMeshType.BOX,
+            SDKEntityTriggerAreaMeshType meshType = SDKEntityTriggerAreaMeshType.Box,
             ColliderLayer layerMask = ColliderLayer.ClPlayer)
         {
             AreaSize = areaSize;
@@ -80,12 +80,12 @@ namespace DCL.SDKEntityTriggerArea.Components
 
             switch (MeshType)
             {
-                case SDKEntityTriggerAreaMeshType.BOX:
+                case SDKEntityTriggerAreaMeshType.Box:
                     monoBehaviour!.SphereCollider.enabled = false;
                     monoBehaviour.BoxCollider.enabled = true;
                     monoBehaviour.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
                     break;
-                case SDKEntityTriggerAreaMeshType.SPHERE:
+                case SDKEntityTriggerAreaMeshType.Sphere:
                     monoBehaviour!.BoxCollider.enabled = false;
                     monoBehaviour.SphereCollider.enabled = true;
                     monoBehaviour.SphereCollider.radius = useTransformScaleAsAreaSize ? 0.5f : AreaSize.magnitude / 2;

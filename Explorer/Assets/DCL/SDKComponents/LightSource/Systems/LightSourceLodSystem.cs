@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             if (lightSourceComponent.LOD < 0)
             {
-                lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.CULLED_BY_LOD;
+                lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.CulledByLod;
                 return;
             }
 
