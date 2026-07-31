@@ -82,6 +82,14 @@ namespace DCL.MarketplaceCredits
             return userCreditsResponse;
         }
 
+        public virtual async UniTask<CreditPacksResponse> GetCreditPacksAsync(CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/packs";
+
+            return await webRequestController.GetAsync(url, ct, ReportCategory.MARKETPLACE_CREDITS)
+                                             .CreateFromJson<CreditPacksResponse>(WRJsonParser.Unity);
+        }
+
         public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";

@@ -15,6 +15,14 @@ namespace Global.AppArgs
     {
         private readonly Dictionary<string, string> appParameters = new ();
 
+        // A decentraland:// deep link seen during parsing but not yet processed. Deferred so its whitelisted-realm
+        // params can be gated once the world whitelist is available (see InitializeDeepLinks). Null once processed
+        // or when the launch has no deep link.
+        private string? pendingDeepLink;
+
+        // Guards InitializeDeepLinks so the merge and the argument log happen exactly once.
+        private bool deepLinksInitialized;
+
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
         {
             [AppArgsFlags.DEBUG] = string.Empty,
@@ -25,13 +33,26 @@ namespace Global.AppArgs
         public ApplicationParametersParser(string[] args) : this(true, args) { }
 
         public ApplicationParametersParser(bool useInEditorFlags = true, params string[] args)
+            : this(useInEditorFlags, deferDeepLinks: false, args) { }
+
+        /// <summary>
+        ///     Parses CLI flags (e.g. <see cref="AppArgsFlags.FeatureFlags" />.URL) but leaves any deep link
+        ///     unprocessed, so its whitelisted-realm params can be gated once the world whitelist is fetched. Call
+        ///     <see cref="InitializeDeepLinks" /> afterwards to process it.
+        /// </summary>
+        public static ApplicationParametersParser CreateDeferringDeepLinks(string[] args) =>
+            new (true, deferDeepLinks: true, args);
+
+        private ApplicationParametersParser(bool useInEditorFlags, bool deferDeepLinks, params string[] args)
         {
             ParseApplicationParameters(args);
 
             if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();
 
-            LogArguments();
+            // Deferred: InitializeDeepLinks() logs instead, so the log reports the merged deep-link params too.
+            if (!deferDeepLinks)
+                InitializeDeepLinks();
         }
 
         public bool HasFlag(string flagName) =>
@@ -76,14 +97,44 @@ namespace Global.AppArgs
 
                     // Application parameters may come embedded in a deep link:
                     // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&local-scene=true&otherparam=blahblah"
-                    Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(arg);
-
-                    foreach ((string key, string value) in deepLinkParameters)
-                        appParameters[key] = value;
+                    // Stored, not processed here: the whitelisted-realm gate needs the world whitelist, which may not
+                    // be available yet. InitializeDeepLinks() processes it once it is.
+                    pendingDeepLink = arg;
                 }
                 else if (!string.IsNullOrEmpty(lastKeyStored))
                     appParameters[lastKeyStored] = arg;
             }
+        }
+
+        /// <summary>
+        ///     Whether a deep link was seen during parsing but not yet processed.
+        /// </summary>
+        public bool HasPendingDeepLink => pendingDeepLink != null;
+
+        /// <summary>
+        ///     Processes the deep link captured during construction (merging its allowlisted params), applying the
+        ///     current <see cref="DeepLinkAllowlist" /> whitelisted-realm gate, then logs the complete argument set.
+        ///     Idempotent, and safe to call when the launch carries no deep link.
+        /// </summary>
+        public void InitializeDeepLinks()
+        {
+            if (deepLinksInitialized)
+                return;
+
+            deepLinksInitialized = true;
+
+            if (pendingDeepLink != null)
+            {
+                Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(pendingDeepLink);
+
+                foreach ((string key, string value) in deepLinkParameters)
+                    appParameters[key] = value;
+
+                pendingDeepLink = null;
+            }
+
+            // Logged once the arguments are complete, so a deferred deep-link launch reports its params too.
+            LogArguments();
         }
 
         public static Dictionary<string, string> ProcessDeepLinkParameters(string deepLinkString)
@@ -126,18 +177,18 @@ namespace Global.AppArgs
             }
 
             // Tier 2 (SEC-019/020): the local-development params Creator Hub / sdk-commands attach to preview deep
-            // links (DeepLinkAllowlist.LOOPBACK_REALM_PERMITTED_KEYS, with per-key rationale) are permitted only
-            // when the target realm is loopback — a remote-realm deep link from a web page cannot enable them.
-            // Everything not in either tier is dropped.
-            bool realmIsLoopback = output.TryGetValue(AppArgsFlags.REALM, out string? loopbackRealm)
-                                   && Uri.TryCreate(loopbackRealm, UriKind.Absolute, out Uri? loopbackRealmUri)
-                                   && loopbackRealmUri.IsLoopback;
+            // links (local-scene, dclenv, hub, skip-auth-screen, landscape-terrain-enabled, multi-instance,
+            // scene-console) are permitted only when the target realm is whitelisted — loopback, or a world listed in
+            // the deeplink-whitelisted-worlds feature flag. A remote-realm deep link from a web page cannot enable
+            // them unless that exact world was explicitly whitelisted. Everything not in either tier is dropped.
+            bool realmIsWhitelisted = output.TryGetValue(AppArgsFlags.REALM, out string? whitelistRealm)
+                                      && DeepLinkAllowlist.IsRealmWhitelisted(whitelistRealm);
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
             {
                 if (uriQueryKey == null || output.ContainsKey(uriQueryKey)) continue;
 
-                if (realmIsLoopback && DeepLinkAllowlist.IsPermittedForLoopbackRealm(uriQueryKey))
+                if (realmIsWhitelisted && DeepLinkAllowlist.IsPermittedForWhitelistedRealm(uriQueryKey))
                     output[uriQueryKey] = uriQuery.Get(uriQueryKey);
                 else
                     droppedKeys.Add(uriQueryKey);

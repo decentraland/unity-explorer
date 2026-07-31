@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
@@ -31,18 +30,18 @@ namespace DCL.Communities
             IncludeCommunities = includeCommunities;
         }
 
-        public static async UniTask<CommunitiesContainer> CreateAsync(
+        public static CommunitiesContainer Create(
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IAppArgs appArgs,
-            CancellationToken ct)
+            CancellationToken warmUpCt)
         {
             var dataProvider = new CommunitiesDataProvider.CommunitiesDataProvider(webRequestController, urlsSource, identityCache, profileRepository);
 
-            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
-            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
+            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs, warmUpCt));
+            bool includeCommunities = CommunitiesFeatureAccess.Instance.IsFeatureEnabled();
 
             return new CommunitiesContainer(dataProvider, new CommunitiesEventBus(), includeCommunities);
         }

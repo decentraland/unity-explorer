@@ -15,10 +15,12 @@ namespace DCL.SDKComponents.InputModifier.Tests
 {
     public class InputModifierHandlerSystemShould : UnitySystemTestBase<InputModifierHandlerSystem>
     {
-        private World globalWorld;
+        private static readonly QueryDescription FINALIZE_QUERY = new QueryDescription().WithAll<CRDTEntity>();
+
+        private World globalWorld = null!;
         private Entity playerEntity;
-        private ISceneStateProvider sceneStateProvider;
-        private ISceneRestrictionBusController sceneRestrictionBusController;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private ISceneRestrictionBusController sceneRestrictionBusController = null!;
 
         [SetUp]
         public void Setup()
@@ -60,7 +62,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, crdtEntity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -92,7 +94,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, crdtEntity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert - All individual flags should be disabled when DisableAll is true
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -129,7 +131,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, crdtEntity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert - Individual flags should be applied
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -155,7 +157,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
                 IsDirty = true
             };
             world.Add(entity, pbInputModifier, crdtEntity);
-            system.Update(0);
+            system!.Update(0);
 
             // Pre-assert
             Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableWalk);
@@ -164,7 +166,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Remove<PBInputModifier>(entity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -189,10 +191,10 @@ namespace DCL.SDKComponents.InputModifier.Tests
                 IsDirty = true
             };
             world.Add(entity, pbInputModifier, crdtEntity);
-            system.Update(0); // Apply first
+            system!.Update(0); // Apply first
 
             // Act
-            system.OnSceneIsCurrentChanged(false);
+            system!.OnSceneIsCurrentChanged(false);
 
             // Assert
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -218,7 +220,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, crdtEntity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -242,7 +244,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, crdtEntity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -267,7 +269,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, crdtEntity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -291,7 +293,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, crdtEntity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -313,16 +315,16 @@ namespace DCL.SDKComponents.InputModifier.Tests
                 IsDirty = true
             };
             world.Add(entity, pbInputModifier, crdtEntity);
-            system.Update(0); // Apply first
+            system!.Update(0); // Apply first
 
             // Scene becomes not current
-            system.OnSceneIsCurrentChanged(false);
+            system!.OnSceneIsCurrentChanged(false);
             Assert.IsFalse(globalWorld.Get<InputModifierComponent>(playerEntity).DisableWalk);
 
             sceneRestrictionBusController.ClearReceivedCalls();
 
             // Act - Scene becomes current again
-            system.OnSceneIsCurrentChanged(true);
+            system!.OnSceneIsCurrentChanged(true);
 
             // Assert - Modifiers should be reapplied
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -347,7 +349,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
                 IsDirty = true
             };
             world.Add(entity, pbInputModifier, crdtEntity);
-            system.Update(0); // Apply first
+            system!.Update(0); // Apply first
 
             // Pre-assert
             Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableAll);
@@ -355,7 +357,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             sceneRestrictionBusController.ClearReceivedCalls();
 
             // Act
-            system.FinalizeComponents(default);
+            system!.FinalizeComponents(world.Query(in FINALIZE_QUERY));
 
             // Assert - All modifiers should be reset
             var inputModifier = globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -383,9 +385,9 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, pbInputModifier, crdtEntity);
 
             // Act - Apply twice
-            system.Update(0);
+            system!.Update(0);
             world.Get<PBInputModifier>(entity).IsDirty = true; // Mark dirty again
-            system.Update(0);
+            system!.Update(0);
 
             // Assert - Should only receive one APPLIED message (deduplicated)
             sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
@@ -400,7 +402,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             world.Add(entity, new InputModifierComponent(), crdtEntity);
 
             // Act
-            system.Update(0);
+            system!.Update(0);
 
             // Assert - Should not remove the component since it's not a player entity
             Assert.IsTrue(world.Has<InputModifierComponent>(entity));
@@ -416,7 +418,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
             inputModifier.DisableAll = true;
             sceneRestrictionBusController.ClearReceivedCalls();
 
-            system.FinalizeComponents(default);
+            system!.FinalizeComponents(world.Query(in FINALIZE_QUERY));
 
             Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableAll);
             sceneRestrictionBusController.DidNotReceiveWithAnyArgs().PushSceneRestriction(default);
@@ -431,10 +433,151 @@ namespace DCL.SDKComponents.InputModifier.Tests
             inputModifier.DisableAll = true;
             sceneRestrictionBusController.ClearReceivedCalls();
 
-            system.OnSceneIsCurrentChanged(false);
+            system!.OnSceneIsCurrentChanged(false);
 
             Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableAll);
             sceneRestrictionBusController.DidNotReceiveWithAnyArgs().PushSceneRestriction(default);
+        }
+
+        [Test]
+        public void ResetGliding_WhenLeavingScene_ThatOnlyDisabledGliding()
+        {
+            // Repro: a scene disables only gliding, then the player teleports away.
+            // The shared global flag must be cleared when the scene stops being current,
+            // otherwise the glider stays disabled in every subsequent scene until a client restart.
+            var entity = world.Create();
+            var crdtEntity = new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY);
+            var pbInputModifier = new PBInputModifier
+            {
+                Standard = new PBInputModifier.Types.StandardInput { DisableGliding = true },
+                IsDirty = true
+            };
+            world.Add(entity, pbInputModifier, crdtEntity);
+            system!.Update(0); // Apply first
+
+            Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableGliding);
+
+            // Act - scene stops being current (teleport to another scene)
+            system!.OnSceneIsCurrentChanged(false);
+
+            // Assert - global gliding restriction must be lifted
+            Assert.IsFalse(globalWorld.Get<InputModifierComponent>(playerEntity).DisableGliding);
+        }
+
+        [Test]
+        public void ResetDoubleJump_WhenLeavingScene_ThatOnlyDisabledDoubleJump()
+        {
+            // Same stale-state defect as gliding: a scene disabling only double jump
+            // must not leak that restriction into the next scene.
+            var entity = world.Create();
+            var crdtEntity = new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY);
+            var pbInputModifier = new PBInputModifier
+            {
+                Standard = new PBInputModifier.Types.StandardInput { DisableDoubleJump = true },
+                IsDirty = true
+            };
+            world.Add(entity, pbInputModifier, crdtEntity);
+            system!.Update(0); // Apply first
+
+            Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableDoubleJump);
+
+            // Act - scene stops being current (teleport to another scene)
+            system!.OnSceneIsCurrentChanged(false);
+
+            // Assert - global double-jump restriction must be lifted
+            Assert.IsFalse(globalWorld.Get<InputModifierComponent>(playerEntity).DisableDoubleJump);
+        }
+
+        [Test]
+        public void PushMovementBlockedBus_WhenOnlyGlidingDisabled()
+        {
+            // Disabling gliding is a movement restriction and must surface the minimap indicator,
+            // consistently with jump/emote/etc. Applied on entry, Removed on leave.
+            var entity = world.Create();
+            var pbInputModifier = new PBInputModifier
+            {
+                Standard = new PBInputModifier.Types.StandardInput { DisableGliding = true },
+                IsDirty = true
+            };
+            world.Add(entity, pbInputModifier, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+
+            system!.Update(0);
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
+
+            system!.OnSceneIsCurrentChanged(false);
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Removed));
+        }
+
+        [Test]
+        public void PushMovementBlockedBus_WhenOnlyDoubleJumpDisabled()
+        {
+            var entity = world.Create();
+            var pbInputModifier = new PBInputModifier
+            {
+                Standard = new PBInputModifier.Types.StandardInput { DisableDoubleJump = true },
+                IsDirty = true
+            };
+            world.Add(entity, pbInputModifier, new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+
+            system!.Update(0);
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Applied));
+
+            system!.OnSceneIsCurrentChanged(false);
+            sceneRestrictionBusController.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r => r.Action == SceneRestrictionsAction.Removed));
+        }
+
+        [Test]
+        public void ReapplyGliding_WhenSceneBecomesCurrentAgain()
+        {
+            // Symmetric to the reset-on-leave case: returning to the scene must re-assert its gliding block.
+            var entity = world.Create();
+            var crdtEntity = new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY);
+            var pbInputModifier = new PBInputModifier
+            {
+                Standard = new PBInputModifier.Types.StandardInput { DisableGliding = true },
+                IsDirty = true
+            };
+            world.Add(entity, pbInputModifier, crdtEntity);
+            system!.Update(0);
+
+            system!.OnSceneIsCurrentChanged(false);
+            Assert.IsFalse(globalWorld.Get<InputModifierComponent>(playerEntity).DisableGliding);
+
+            // Act - back to this scene
+            system!.OnSceneIsCurrentChanged(true);
+
+            // Assert
+            Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableGliding);
+        }
+
+        [Test]
+        public void ClearGate_WhenSceneReplacesRestrictionWithEmptyModifier()
+        {
+            // A scene that first disables gliding then updates itself to an empty modifier
+            // no longer asserts anything, so a later teardown must be a no-op.
+            var entity = world.Create();
+            var crdtEntity = new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY);
+            var pbInputModifier = new PBInputModifier
+            {
+                Standard = new PBInputModifier.Types.StandardInput { DisableGliding = true },
+                IsDirty = true
+            };
+            world.Add(entity, pbInputModifier, crdtEntity);
+            system!.Update(0);
+            Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableGliding);
+
+            // Scene clears its own modifier
+            PBInputModifier pb = world.Get<PBInputModifier>(entity);
+            pb.Standard.DisableGliding = false;
+            pb.IsDirty = true;
+            system!.Update(0);
+            Assert.IsFalse(globalWorld.Get<InputModifierComponent>(playerEntity).DisableGliding);
+
+            // Teardown must not touch the global anymore
+            var globalBefore = globalWorld.Get<InputModifierComponent>(playerEntity);
+            system!.FinalizeComponents(world.Query(in FINALIZE_QUERY));
+            Assert.AreEqual(globalBefore.EverythingEnabled, globalWorld.Get<InputModifierComponent>(playerEntity).EverythingEnabled);
+            Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).EverythingEnabled);
         }
     }
 }

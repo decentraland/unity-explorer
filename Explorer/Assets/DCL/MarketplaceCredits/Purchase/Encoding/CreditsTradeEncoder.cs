@@ -117,10 +117,7 @@ namespace DCL.MarketplaceCredits.Purchase
             (byte[] acceptSelector, byte[] acceptData) = BuildAcceptCall(trade, buyer);
 
             BigInteger maxCredited = BigInteger.Parse(maxCreditedValue);
-            BigInteger uncredited = maxCredited - BigInteger.Parse(credit.availableAmount);
-
-            if (uncredited < BigInteger.Zero)
-                uncredited = BigInteger.Zero;
+            BigInteger uncredited = UncreditedValue(maxCreditedValue, credit.availableAmount);
 
             var creditsTree = new object[]
             {
@@ -141,6 +138,17 @@ namespace DCL.MarketplaceCredits.Purchase
         }
 
         /// <summary>
+        ///     The MANA the buyer covers from their own balance: whatever the server's cap exceeds the credit's
+        ///     available amount by. Zero for the ephemeral credits this flow authorizes, which the credits-server
+        ///     sizes exactly to their trade.
+        /// </summary>
+        public static BigInteger UncreditedValue(string maxCreditedValue, string availableAmount)
+        {
+            BigInteger uncredited = BigInteger.Parse(maxCreditedValue) - BigInteger.Parse(availableAmount);
+            return uncredited < BigInteger.Zero ? BigInteger.Zero : uncredited;
+        }
+
+        /// <summary>
         ///     executeMetaTransaction(userAddress, functionData, signature) calldata — the 3-arg CreditsManager
         ///     variant that takes the whole 65-byte signature (not the legacy r/s/v split).
         /// </summary>
@@ -155,6 +163,12 @@ namespace DCL.MarketplaceCredits.Purchase
         /// </summary>
         public static string BuildGetNonceCalldata(string signer) =>
             FUNCTION_CALL_ENCODER.EncodeRequest(GET_NONCE_FUNCTION.Sha3Signature, GET_NONCE_FUNCTION.InputParameters, signer);
+
+        /// <summary>
+        ///     The prefixed 4-byte sighash of a single-function ABI — the entire calldata of a parameterless call.
+        /// </summary>
+        public static string SighashOf(string abiJson) =>
+            $"0x{DeserialiseFunction(abiJson).Sha3Signature}";
 
         /// <summary>
         ///     eth_signTypedData_v4 payload for the Decentraland/Polygon native meta-transaction: domain
@@ -209,9 +223,48 @@ namespace DCL.MarketplaceCredits.Purchase
                 return 0;
 
             BigInteger wei = BigInteger.Parse(amount);
-            BigInteger centWei = BigInteger.Pow(10, 16);
-            return (int)((wei + centWei - BigInteger.One) / centWei);
+            return CeilToCents(wei);
         }
+
+        /// <summary>
+        ///     A trade asset's raw wei amount, zero when the asset carries none.
+        /// </summary>
+        public static BigInteger AmountOrZero(string? amount) =>
+            string.IsNullOrEmpty(amount) ? BigInteger.Zero : BigInteger.Parse(amount);
+
+        /// <summary>
+        ///     MANA wei to USD cents at the given oracle rate, rounded up. Port of the shop web app's
+        ///     mana-rate.ts manaWeiToUsdCents: a legacy listing is priced in MANA, so its USD price only exists
+        ///     through the rate — and it has to be the rate settlement uses, never a catalogue snapshot.
+        /// </summary>
+        public static int ManaWeiToUsdCents(string? manaWei, in ManaUsdRate rate)
+        {
+            if (string.IsNullOrEmpty(manaWei))
+                return 0;
+
+            return CeilToCents(BigInteger.Parse(manaWei) * rate.Rate / BigInteger.Pow(10, rate.Decimals));
+        }
+
+        /// <summary>
+        ///     USD-pegged amount (USD wei) to the MANA wei the marketplace transfers for it — the conversion
+        ///     the on-chain accept performs for USD_PEGGED_MANA assets, so the CreditsManager's MANA cap can be
+        ///     checked against what the trade will actually draw.
+        /// </summary>
+        public static BigInteger UsdWeiToManaWei(string? usdWei, in ManaUsdRate rate)
+        {
+            if (string.IsNullOrEmpty(usdWei))
+                return BigInteger.Zero;
+
+            return BigInteger.Parse(usdWei) * BigInteger.Pow(10, rate.Decimals) / rate.Rate;
+        }
+
+        /// <summary>
+        ///     Cents rounded up to a whole credit. The credits-server charges whole credits
+        ///     (authorize-usd-credit.ts rounds the request up itself), so quoting the rounded amount is what
+        ///     keeps the price the buyer confirms equal to the price that gets locked.
+        /// </summary>
+        public static int RoundUpToWholeCredit(int cents, int centsPerCredit) =>
+            (cents + centsPerCredit - 1) / centsPerCredit * centsPerCredit;
 
         /// <summary>
         ///     bytes32(chainId) — the DCL meta-tx domain salt.
@@ -240,6 +293,12 @@ namespace DCL.MarketplaceCredits.Purchase
                 : Encoding.UTF8.GetBytes(id);
 
             return LeftPad32(raw);
+        }
+
+        private static int CeilToCents(BigInteger usdWei)
+        {
+            BigInteger centWei = BigInteger.Pow(10, 16);
+            return (int)((usdWei + centWei - BigInteger.One) / centWei);
         }
 
         private static object[] BuildOnChainTradeTree(TradeDto trade, string buyer)
