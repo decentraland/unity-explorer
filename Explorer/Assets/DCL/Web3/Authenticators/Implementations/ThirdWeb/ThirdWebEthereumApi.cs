@@ -206,7 +206,7 @@ namespace DCL.Web3.Authenticators
                     confirmationRequest.HideDetailsPanel = true;
                 }
 
-                bool confirmed = await TransactionConfirmationCallback(confirmationRequest);
+                bool confirmed = await TransactionConfirmationCallback(confirmationRequest, ct);
 
                 if (!confirmed)
                     throw new Web3Exception("Transaction rejected by user");
@@ -264,6 +264,10 @@ namespace DCL.Web3.Authenticators
                 NetworkName = ChainUtils.GetNetworkNameById((int)chainId),
             };
 
+            // eth_signTypedData_v4 params: [address, typedData]
+            if (string.Equals(request.method, "eth_signTypedData_v4") && request.@params?.Length > 1)
+                confirmationRequest.TypedData = request.@params[1]?.ToString();
+
             // Extract additional details for eth_sendTransaction
             if (string.Equals(request.method, "eth_sendTransaction") && request.@params?.Length > 0)
             {
@@ -271,7 +275,7 @@ namespace DCL.Web3.Authenticators
 
                 confirmationRequest.To = to;
                 confirmationRequest.Value = value != "0x0" ? value : null;
-                confirmationRequest.Data = data != "0x" ? value : null;
+                confirmationRequest.Data = data != "0x" ? data : null;
 
                 try
                 {
