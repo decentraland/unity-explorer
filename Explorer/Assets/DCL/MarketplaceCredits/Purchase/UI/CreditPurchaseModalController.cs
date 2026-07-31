@@ -23,7 +23,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             Failed,
         }
 
-        private const string CANNOT_AFFORD_TEXT = "You will need to buy <b>{0}</b> Credits to purchase this item.";
+        private const string CANNOT_AFFORD_TEXT = "Add <b>{0} Credits</b> to complete your purchase.";
         private const float NORMAL_HEIGHT = 491;
         private const float PURCHASING_HEIGHT = 371;
         private const float INSUFFICIENT_CREDITS_HEIGHT = 622;
