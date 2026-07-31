@@ -39,6 +39,10 @@ namespace DCL.Ipfs
         [JsonProperty("versions")]
         public AssetBundleManifestVersion? assetBundleManifestVersion;
 
+        /// <summary>The manifest version, or the failed sentinel when none was resolved — AB intentions require a manifest, and the sentinel is the same dead end the pipeline already handles.</summary>
+        [JsonIgnore]
+        public AssetBundleManifestVersion AssetBundleManifestVersionOrFailed => assetBundleManifestVersion ?? AssetBundleManifestVersion.FAILED;
+
         [JsonProperty("status")]
         public AssetBundleRegistryEnum assetBundleRegistryEnum;
     }
