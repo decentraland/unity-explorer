@@ -217,7 +217,12 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 webRequestController,
                 deeplinkSigninIdentityId,
-                deeplinkLoginAwaitingSigninRequestId
+                deeplinkLoginAwaitingSigninRequestId,
+#if UNITY_EDITOR
+                true
+#else
+                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY)
+#endif
             );
 
             var dappAuth = new DappWeb3EthereumApi(
