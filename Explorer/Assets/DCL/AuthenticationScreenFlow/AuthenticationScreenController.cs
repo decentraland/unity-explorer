@@ -149,7 +149,7 @@ namespace DCL.AuthenticationScreenFlow
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
-            bool isEpicBuild = installSource == EPIC_STORE_INSTALL_SOURCE;
+            bool isEpicBuild = string.Equals(installSource, EPIC_STORE_INSTALL_SOURCE, StringComparison.OrdinalIgnoreCase);
             // Epic builds only support emailOTP due to deeplink limitations
             // See: https://github.com/decentraland/unity-explorer/issues/9554
             bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth) || isEpicBuild;
