@@ -32,6 +32,10 @@ namespace DCL.ApplicationGuards
 
         private const int MAX_SHOWN_VALUE_LENGTH = 40;
 
+        // Keys come from the link too, so they are capped as well: the longest real flag is 33 chars
+        // (AppArgsFlags), so this only ever trims a crafted key padded to bury the warning below the buttons.
+        private const int MAX_SHOWN_KEY_LENGTH = 40;
+
         // A link can carry any number of params; enumerating all of them would push the warning text over the
         // buttons and bury the message. The count of the rest is still reported.
         private const int MAX_SHOWN_PARAMS = 6;
@@ -68,7 +72,7 @@ namespace DCL.ApplicationGuards
                 shown++;
 
                 sb.Append("- ");
-                AppendSingleLine(sb, key, key.Length);
+                AppendSingleLine(sb, key, MAX_SHOWN_KEY_LENGTH);
 
                 if (!string.IsNullOrEmpty(value))
                 {
