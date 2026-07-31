@@ -1,6 +1,12 @@
 [workspace]
 members = ["uuav-ipc", "uuav-server", "uuav-client"]
 
+# symbols are dead weight in the shipped artifacts (-32% on the dll and the
+# helper); panic backtraces still resolve through the module+offset Sentry
+# captures
+[profile.release]
+strip = "symbols"
+
 
 [package]
 name = "uuav-core"

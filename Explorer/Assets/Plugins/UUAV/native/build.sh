@@ -62,6 +62,14 @@ Darwin)
 *)
     TARGET="x86_64-pc-windows-gnu" # linker configured in .cargo/config.toml
     DEST_DIR="../Packages/UUAV/Runtime/Plugins/x86_64"
+    FFMPEG_BIN=".third_party/ffmpeg/bin"
+
+    # deploying runtime DLLs from a different FFmpeg build than the import
+    # libs the helper just linked is exactly the mismatch this guard catches
+    if [ ! -d "$FFMPEG_BIN" ]; then
+        echo "error: $FFMPEG_BIN is missing; drop the BtbN LGPL shared build into .third_party/ffmpeg (README)" >&2
+        exit 1
+    fi
 
     cargo build --release --workspace --target "$TARGET"
 
@@ -70,10 +78,18 @@ Darwin)
     # the helper ships next to uuav.dll so the FFmpeg DLLs resolve from its
     # own directory
     cp ".target/$TARGET/release/uuav-helper.exe" "$DEST_DIR/"
-    # shared libzmq (scripts/build-libzmq.sh), linked by both binaries
+    # shared libzmq (scripts/build-libzmq.sh), linked by both binaries;
+    # built self-contained (static gcc/stdc++/winpthread runtimes)
     cp ".third_party/libzmq/bin/"libzmq*.dll "$DEST_DIR/"
 
+    # FFmpeg runtime DLLs from the exact build the helper linked against.
+    # The helper's import closure is these four: avfilter/avdevice/swscale
+    # are never imported (NV12-only pipeline), and the BtbN shared build
+    # links its support libs (bz2/iconv/lzma/zlib/winpthread) statically.
+    for lib in avcodec avformat avutil swresample; do
+        cp "$FFMPEG_BIN/$lib"-*.dll "$DEST_DIR/"
+    done
+
     echo "Deployed to: $DEST_DIR"
-    echo "Make sure to provied libwinpthread-1.dll and ffmpeg binaries mentioned in the readme file"
     ;;
 esac

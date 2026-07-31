@@ -7,6 +7,10 @@
 
 set -e
 
+# zeromq 4.3.x declares a cmake_minimum_required older than CMake 4
+# accepts; this floor lets modern CMake configure it unchanged
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 ZMQ_VERSION="4.3.5"
 ZMQ_SHA256="6653ef5910f17954861fe72332e68b03ca6e4d9c7160eb3a8de5a5a913bfab43"
 ZMQ_URL="https://github.com/zeromq/libzmq/releases/download/v$ZMQ_VERSION/zeromq-$ZMQ_VERSION.tar.gz"
@@ -79,10 +83,13 @@ Darwin)
     # build.sh already requires). ZMQ_HAVE_IPC is force-disabled: libzmq
     # 4.3.x gates afunix.h on _MSC_VER, breaking mingw builds, and ipc://
     # is unused on Windows (the uuav transport is loopback TCP there).
+    # The gcc/stdc++ runtimes are linked statically so the shipped
+    # libzmq.dll resolves on machines without MSYS2 on PATH.
     cmake -S "$SRC" -B "$WORK/build" \
         "${COMMON_FLAGS[@]}" \
         -G "MinGW Makefiles" \
         -DZMQ_HAVE_IPC=OFF \
+        -DCMAKE_SHARED_LINKER_FLAGS="-static-libstdc++ -static-libgcc -static -lpthread" \
         -DCMAKE_INSTALL_PREFIX="$WORK/out" \
         -DCMAKE_INSTALL_LIBDIR=lib > /dev/null
     cmake --build "$WORK/build" --target install --parallel > /dev/null
@@ -90,6 +97,8 @@ Darwin)
     mkdir -p "$PREFIX/lib" "$PREFIX/include" "$PREFIX/bin"
     cp "$WORK/out/lib/"libzmq*.dll.a "$PREFIX/lib/"
     cp "$WORK/out/bin/"libzmq*.dll "$PREFIX/bin/"
+    # symbols are dead weight in the shipped DLL (-40%)
+    strip "$PREFIX/bin/"libzmq*.dll
     cp "$WORK/out/include/zmq.h" "$WORK/out/include/zmq_utils.h" "$PREFIX/include/"
     cp "$SRC/LICENSE" "$PREFIX/LICENSE.txt"
 
