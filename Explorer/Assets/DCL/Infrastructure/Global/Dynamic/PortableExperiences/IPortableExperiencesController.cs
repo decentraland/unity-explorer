@@ -20,7 +20,7 @@ namespace PortableExperiences.Controller
         GlobalWorld GlobalWorld { get; set; }
 
         /// <summary>
-        ///     Assigned from the composition root once the UI shell exists. Null until then.
+        ///     Assigned from the composition root once the UI shell exists.
         /// </summary>
         IPortableExperienceAuthorizationHandler? AuthorizationHandler { get; set; }
 

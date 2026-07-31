@@ -6,8 +6,7 @@ using System.Threading;
 namespace DCL.UI.PortableExperiences
 {
     /// <summary>
-    ///     Popup that discloses the capabilities requested by a scene-spawned Portable Experience
-    ///     and awaits explicit user approval before the Portable Experience is allowed to run.
+    ///     Asks the user to approve the capabilities a scene-spawned Portable Experience requests.
     /// </summary>
     public class PortableExperienceAuthorizationPopupController : ControllerBase<PortableExperienceAuthorizationPopupView, PortableExperienceAuthorizationPopupController.Params>
     {

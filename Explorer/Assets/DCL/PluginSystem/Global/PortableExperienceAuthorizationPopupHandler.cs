@@ -8,8 +8,7 @@ using System.Threading;
 namespace DCL.PluginSystem.Global
 {
     /// <summary>
-    ///     Fulfils Portable Experience authorization requests with the MVC popup.
-    ///     Bridges the UI assembly into the scene life-cycle without the latter referencing MVC.
+    ///     Lets the scene life-cycle reach the MVC popup without referencing MVC itself.
     /// </summary>
     public class PortableExperienceAuthorizationPopupHandler : IPortableExperienceAuthorizationHandler
     {

@@ -11,11 +11,8 @@ using System.Threading;
 namespace PortableExperiences.Controller
 {
     /// <summary>
-    ///     Stores per-session authorization state for local (scene-spawned) Portable Experiences,
-    ///     mirroring what SmartWearableCache does for Smart Wearables.
-    ///
-    ///     It also caches the permissions requiring user authorization computed from each Portable Experience's
-    ///     scene definitions, so the definitions are fetched only once per session.
+    ///     Per-session authorization state for local (scene-spawned) Portable Experiences, the counterpart of
+    ///     SmartWearableCache for Smart Wearables.
     /// </summary>
     public class LocalPortableExperienceCache
     {
@@ -28,21 +25,13 @@ namespace PortableExperiences.Controller
             this.webRequestController = webRequestController;
         }
 
-        /// <summary>
-        ///     Portable Experiences authorized during the current session.
-        ///     The user won't be asked again for authorization of those Portable Experiences.
-        /// </summary>
         public HashSet<string> AuthorizedPortableExperiences { get; } = new (StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>
-        ///     Portable Experiences the user denied during the current session.
-        ///     Spawn attempts for those fail without prompting again.
-        /// </summary>
         public HashSet<string> DeniedPortableExperiences { get; } = new (StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Fetches the scene definitions of the Portable Experience and returns the subset of its
-        ///     required permissions that need explicit user authorization. Results are cached per session.
+        ///     Fetches the Portable Experience's scene definitions to compute the permissions that need explicit
+        ///     user authorization; cached for the whole session, so the definitions are fetched only once.
         /// </summary>
         public async UniTask<IReadOnlyList<string>> GetPermissionsRequiringAuthorizationAsync(string portableExperienceId, IIpfsRealm ipfsRealm, CancellationToken ct)
         {
@@ -51,8 +40,6 @@ namespace PortableExperiences.Controller
 
             var permissions = new List<string>();
 
-            // The scene pointers pipeline re-fetches these definitions later through its own (non-cached) promise,
-            // so the first spawn of a Portable Experience costs one extra GET per scene definition.
             foreach (string urn in ipfsRealm.SceneUrns)
             {
                 IpfsPath ipfsPath = IpfsHelper.ParseUrn(urn);

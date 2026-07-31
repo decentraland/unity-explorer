@@ -33,9 +33,6 @@ namespace PortableExperiences.Controller
         private readonly LocalPortableExperienceCache localPortableExperienceCache;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly HashSet<string> loadingPortableExperiences = new ();
-
-        // Live count of scene-spawned (Local) portable experiences per parent scene.
-        // Mirrors PortableExperienceEntities add/remove.
         private readonly Dictionary<string, int> localPortableExperiencesPerScene = new ();
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource urlsSources;
@@ -140,8 +137,7 @@ namespace PortableExperiences.Controller
                     string portableExperienceName = string.IsNullOrEmpty(result.configurations.realmName) ? portableExperienceId : result.configurations.realmName;
                     await EnsureAuthorizedByUserAsync(portableExperienceId, portableExperienceName, ipfsRealm, ct);
 
-                    // Re-checked after awaiting: concurrent spawns of other portable experiences
-                    // may have consumed the remaining capacity in the meantime.
+                    // Re-checked: concurrent spawns may have consumed the remaining capacity while awaiting.
                     EnsureSceneSpawnCapacity(parentSceneName);
                 }
 
@@ -247,7 +243,7 @@ namespace PortableExperiences.Controller
                 case PortableExperienceType.Local:
                     if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
 
-                    ISceneFacade currentSceneFacade = scenesCache.CurrentScene.Value;
+                    ISceneFacade? currentSceneFacade = scenesCache.CurrentScene.Value;
                     return currentSceneFacade != null && metadata.ParentSceneId == currentSceneFacade.Info.Name;
 
                 case PortableExperienceType.SmartWearable:

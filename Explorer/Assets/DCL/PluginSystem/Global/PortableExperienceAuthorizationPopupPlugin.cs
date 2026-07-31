@@ -11,8 +11,7 @@ using UnityEngine.AddressableAssets;
 namespace DCL.PluginSystem.Global
 {
     /// <summary>
-    ///     Registers the popup that asks the user to authorize the capabilities requested
-    ///     by a scene-spawned Portable Experience.
+    ///     Registers the Portable Experience authorization popup with the MVC manager.
     /// </summary>
     public class PortableExperienceAuthorizationPopupPlugin : IDCLGlobalPlugin<PortableExperienceAuthorizationPopupPlugin.Settings>
     {

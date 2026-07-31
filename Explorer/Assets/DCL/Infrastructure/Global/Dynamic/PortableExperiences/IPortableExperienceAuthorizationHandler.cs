@@ -10,9 +10,6 @@ namespace PortableExperiences.Controller
     /// </summary>
     public interface IPortableExperienceAuthorizationHandler
     {
-        /// <summary>
-        ///     Discloses the requested capabilities to the user and awaits an explicit decision.
-        /// </summary>
         UniTask<bool> RequestAuthorizationAsync(string portableExperienceName, IReadOnlyList<string> permissions, CancellationToken ct);
     }
 }
