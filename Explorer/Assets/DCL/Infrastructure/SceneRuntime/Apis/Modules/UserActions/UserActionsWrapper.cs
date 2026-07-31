@@ -1,6 +1,6 @@
 using DCL.Diagnostics;
+using DCL.SceneRuntime.Apis.RestrictedActionsApi;
 using JetBrains.Annotations;
-using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using System;
 using System.Threading;
 using UnityEngine;

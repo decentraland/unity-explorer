@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using System;
+using System.Globalization;
 using System.Numerics;
 
 namespace DCL.MarketplaceCredits.Purchase.Tests
@@ -237,6 +238,36 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(EXPECTED_EXECUTE_META_TX, calldata);
         }
 
+        /// <summary>
+        ///     The relayed meta-transaction reverts with no reason when the head offset of _signature is written
+        ///     from the unpadded length of _functionData: the contract then decodes an empty signature and no
+        ///     recovery can match the buyer. useCredits calldata is never a multiple of 32 bytes, so this always
+        ///     matters — assert the padding rather than trusting the encoder.
+        /// </summary>
+        [Test]
+        public void PadTheFunctionDataBeforeTheSignatureOffset()
+        {
+            // Arrange
+            string useCredits = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                CreateTradeFixture(), BUYER, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            // Act
+            string calldata = CreditsTradeEncoder.BuildExecuteMetaTxCalldata(BUYER, useCredits, "0x" + new string('c', 130));
+
+            // Assert
+            string args = calldata.Substring("0x".Length + 8);
+            int functionDataOffset = HeadWord(args, 1);
+            int signatureOffset = HeadWord(args, 2);
+            int functionDataLength = WordAt(args, functionDataOffset);
+            int paddedLength = (functionDataLength + 31) / 32 * 32;
+
+            Assert.AreEqual((useCredits.Length - "0x".Length) / 2, functionDataLength);
+            Assert.AreNotEqual(0, functionDataLength % 32, "The fixture must exercise a functionData length that needs padding");
+            Assert.AreEqual(96 + 32 + paddedLength, signatureOffset);
+            Assert.AreEqual(65, WordAt(args, signatureOffset), "The contract must decode the whole 65-byte signature");
+            Assert.AreEqual(96, functionDataOffset);
+        }
+
         [Test]
         public void CeilUsdWeiToCents()
         {
@@ -245,6 +276,55 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(1, CreditsTradeEncoder.UsdWeiToCents("1"));
             Assert.AreEqual(0, CreditsTradeEncoder.UsdWeiToCents(null));
             Assert.AreEqual(0, CreditsTradeEncoder.UsdWeiToCents(string.Empty));
+        }
+
+        [Test]
+        public void CeilManaWeiToUsdCentsAtTheOracleRate()
+        {
+            // $0.25 per MANA on an 8-decimal feed: 5 MANA is $1.25.
+            var quarterDollar = new ManaUsdRate(25_000_000, 8);
+            Assert.AreEqual(125, CreditsTradeEncoder.ManaWeiToUsdCents("5000000000000000000", quarterDollar));
+
+            // The rate conversion floors to USD wei first, so a fraction of a cent has to survive that step to
+            // round the price up — 4 MANA wei is the first amount worth a wei more than $1.25 here.
+            Assert.AreEqual(125, CreditsTradeEncoder.ManaWeiToUsdCents("5000000000000000001", quarterDollar));
+            Assert.AreEqual(126, CreditsTradeEncoder.ManaWeiToUsdCents("5000000000000000004", quarterDollar));
+
+            // The failing purchase: 7 MANA at $0.1348 is 95 cents, not the single credit that was authorized.
+            Assert.AreEqual(95, CreditsTradeEncoder.ManaWeiToUsdCents("7000000000000000000", new ManaUsdRate(13_480_500, 8)));
+
+            // Feeds with other precisions are read from the aggregator, never assumed.
+            Assert.AreEqual(125, CreditsTradeEncoder.ManaWeiToUsdCents("5000000000000000000", new ManaUsdRate(BigInteger.Parse("250000000000000000"), 18)));
+
+            Assert.AreEqual(0, CreditsTradeEncoder.ManaWeiToUsdCents(null, quarterDollar));
+            Assert.AreEqual(0, CreditsTradeEncoder.ManaWeiToUsdCents(string.Empty, quarterDollar));
+        }
+
+        [Test]
+        public void ConvertUsdWeiToTheManaTheMarketplaceDraws()
+        {
+            // $2.50 at $0.25 per MANA is the 10 MANA the accept() call transfers.
+            var quarterDollar = new ManaUsdRate(25_000_000, 8);
+            Assert.AreEqual(BigInteger.Parse("10000000000000000000"), CreditsTradeEncoder.UsdWeiToManaWei("2500000000000000000", quarterDollar));
+            Assert.AreEqual(BigInteger.Zero, CreditsTradeEncoder.UsdWeiToManaWei(null, quarterDollar));
+        }
+
+        [Test]
+        public void RoundCentsUpToWholeCredits()
+        {
+            Assert.AreEqual(130, CreditsTradeEncoder.RoundUpToWholeCredit(125, 10));
+            Assert.AreEqual(130, CreditsTradeEncoder.RoundUpToWholeCredit(130, 10));
+            Assert.AreEqual(10, CreditsTradeEncoder.RoundUpToWholeCredit(1, 10));
+            Assert.AreEqual(0, CreditsTradeEncoder.RoundUpToWholeCredit(0, 10));
+        }
+
+        [Test]
+        public void ClampTheUncreditedValueAtZero()
+        {
+            // The ephemeral credits this flow authorizes are sized exactly to their trade, so nothing is uncredited.
+            Assert.AreEqual(BigInteger.Zero, CreditsTradeEncoder.UncreditedValue("7000000000000000000", "7000000000000000000"));
+            Assert.AreEqual(BigInteger.Zero, CreditsTradeEncoder.UncreditedValue("6000000000000000000", "7000000000000000000"));
+            Assert.AreEqual(BigInteger.Parse("1000000000000000000"), CreditsTradeEncoder.UncreditedValue("7000000000000000000", "6000000000000000000"));
         }
 
         [Test]
@@ -296,6 +376,18 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(3, ((Newtonsoft.Json.Linq.JArray)typedData["types"]!["MetaTransaction"]!).Count);
             Assert.AreEqual(4, ((Newtonsoft.Json.Linq.JArray)typedData["types"]!["EIP712Domain"]!).Count);
         }
+
+        /// <summary>
+        ///     The value of the ABI head word at the given parameter index, as a byte count.
+        /// </summary>
+        private static int HeadWord(string argsHex, int index) =>
+            WordAt(argsHex, index * 32);
+
+        /// <summary>
+        ///     The 32-byte ABI word starting at the given byte offset into the argument block.
+        /// </summary>
+        private static int WordAt(string argsHex, int byteOffset) =>
+            (int)BigInteger.Parse($"0{argsHex.Substring(byteOffset * 2, 64)}", NumberStyles.HexNumber);
 
         private static string ToHex(byte[] bytes) =>
             "0x" + BitConverter.ToString(bytes).Replace("-", string.Empty).ToLowerInvariant();

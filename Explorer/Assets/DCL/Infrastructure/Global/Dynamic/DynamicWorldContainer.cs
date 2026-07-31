@@ -288,7 +288,7 @@ namespace Global.Dynamic
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
 
-            CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
+            CommunitiesContainer communitiesContainer = CommunitiesContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
@@ -436,9 +436,8 @@ namespace Global.Dynamic
                 marketplaceCreditsAPIClient,
                 new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig),
                 new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
-                creditsChainConfig,
+                new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
                 identityCache,
-                dynamicWorldDependencies.CompositeWeb3Provider,
                 FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits));
             var cameraReelContainer = CameraReelContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache.Identity?.Address);
 
@@ -678,7 +677,7 @@ namespace Global.Dynamic
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearableContainer.WearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearableContainer.WearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus, profilesRepository, donationsService),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
                 new LoadingScreenPlugin(assetsProvisioner, uiShellContainer.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
@@ -761,7 +760,8 @@ namespace Global.Dynamic
                     creditsPurchaseService,
                     marketplaceCreditsAPIClient,
                     identityCache,
-                    webBrowser),
+                    webBrowser,
+                    staticContainer.ImageControllerProvider),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
