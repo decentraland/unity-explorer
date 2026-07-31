@@ -495,6 +495,9 @@ namespace Global.Dynamic
             popup.SetDeniedParams(appArgs.DeniedDeepLinkParams);
 
             var decision = new UniTaskCompletionSource<bool>();
+
+            // Continuing is two-step on purpose: Advanced only reveals the confirmation, it does not consent.
+            popup.AdvancedButton.onClick.AddListener(popup.RevealContinueOption);
             popup.ContinueButton.onClick.AddListener(() => decision.TrySetResult(true));
             popup.ExitButton.onClick.AddListener(() => decision.TrySetResult(false));
 
