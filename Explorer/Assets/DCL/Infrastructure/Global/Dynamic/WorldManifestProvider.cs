@@ -29,15 +29,20 @@ namespace Global.Dynamic
         private WorldManifest? cachedMainManifest;
         private UniTask<WorldManifest>? inFlightMainManifest;
 
-        // Genesis manifest URLs are compile-time constants, so this runs concurrently with
-        // the realm /about request instead of waiting on realmName. Idempotent; Preserve()
-        // lets the Genesis branch await this same task rather than issue a second request.
-        public void PrefetchGenesisManifest(DecentralandEnvironment environment, CancellationToken ct) =>
-            inFlightMainManifest ??= FetchGenesisManifestAsync(environment, ct).Preserve();
-
         public WorldManifestProvider(IWebRequestController webRequestController)
         {
             this.webRequestController = webRequestController;
+        }
+
+        // Idempotent while a fetch is pending; Preserve()d for multi-await. A completed task
+        // may hold WorldManifest.Empty from a cancelled or failed fetch, so it is replaced
+        // rather than reused.
+        public void PrefetchGenesisManifest(DecentralandEnvironment environment, CancellationToken ct)
+        {
+            if (cachedMainManifest.HasValue) return;
+            if (inFlightMainManifest is { Status: UniTaskStatus.Pending }) return;
+
+            inFlightMainManifest = FetchGenesisManifestAsync(environment, ct).Preserve();
         }
 
         public async UniTask<WorldManifest> FetchWorldManifestAsync(URLDomain assetBundleRegistry, string realmName, DecentralandEnvironment environment, CancellationToken ct)
@@ -47,7 +52,7 @@ namespace Global.Dynamic
                 if(MAIN_REALM_NAMES.Contains(realmName))
                 {
                     PrefetchGenesisManifest(environment, ct);
-                    return await inFlightMainManifest!.Value;
+                    return await inFlightMainManifest!.Value; // set by PrefetchGenesisManifest above
                 }
 
                 if(realmName.EndsWith(dclWorldName))
