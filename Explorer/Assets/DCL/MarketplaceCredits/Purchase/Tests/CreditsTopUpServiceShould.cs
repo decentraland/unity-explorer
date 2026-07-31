@@ -20,7 +20,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private const string ORDER_ID = "order-1";
         private const string CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_123";
 
-        private static readonly CreditPack PACK = CreditPackCatalog.PACKS[0];
+        private static readonly CreditPack PACK = new ("pack_5", 4.99f, 45, false, string.Empty);
         private static readonly TimeSpan WAIT_TIMEOUT = TimeSpan.FromSeconds(10);
 
         private MarketplaceCreditsAPIClient creditsAPIClient = null!;

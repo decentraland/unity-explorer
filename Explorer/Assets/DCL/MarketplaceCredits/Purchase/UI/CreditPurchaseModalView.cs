@@ -27,7 +27,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         [field: Header("Price and balance")]
         [field: SerializeField] public TMP_Text PriceCreditsText { get; private set; } = null!;
+        [field: SerializeField] public GameObject PriceLoadingSpinner { get; private set; } = null!;
         [field: SerializeField] public TMP_Text BalanceCreditsText { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text CannotAffortText { get; private set; } = null!;
         [field: SerializeField] public GameObject BalanceLoadingSpinner { get; private set; } = null!;
         [field: SerializeField] public GameObject InsufficientCreditsContainer { get; private set; } = null!;
         [field: SerializeField] public Button GetCreditsButton { get; private set; } = null!;
@@ -48,6 +50,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public TMP_Text FailedReasonText { get; private set; } = null!;
         [field: SerializeField] public Button RetryButton { get; private set; } = null!;
         [field: SerializeField] public Button OpenMarketplaceButton { get; private set; } = null!;
-        [field: SerializeField] public Button DoneButton { get; private set; } = null!;
+        [field: SerializeField] public Button ToBackpackButton { get; private set; } = null!;
     }
 }
