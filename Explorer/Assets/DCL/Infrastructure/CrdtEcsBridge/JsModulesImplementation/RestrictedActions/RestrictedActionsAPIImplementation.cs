@@ -236,7 +236,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
-            return (int)explorerUiActions.OpenSection(section);
+            return (int)explorerUiActions.OpenSection((ExplorerUi)ui, section);
         }
 
         public void Dispose() { }

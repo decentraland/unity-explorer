@@ -2,11 +2,14 @@ using Cysharp.Threading.Tasks;
 using DCL.Communities;
 using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.ExplorePanel;
 using DCL.UI;
 using Decentraland.Kernel.Apis;
+using ECS.Unity.ExplorerUiEvents;
 using MVC;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions
 {
@@ -18,13 +21,15 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
     public class ExplorerUiActions : IExplorerUiActions
     {
         private readonly IMVCManager mvcManager;
+        private readonly Queue<ExplorerUiEvent> events;
 
-        public ExplorerUiActions(IMVCManager mvcManager)
+        public ExplorerUiActions(IMVCManager mvcManager, Queue<ExplorerUiEvent> events)
         {
             this.mvcManager = mvcManager;
+            this.events = events;
         }
 
-        public OpenExplorerUiResult OpenSection(ExploreSections section)
+        public OpenExplorerUiResult OpenSection(ExplorerUi ui, ExploreSections section)
         {
             // Communities availability depends on the user identity (feature flag + wallets allowlist),
             // so it cannot be gated through FeaturesRegistry like the other sections.
@@ -37,16 +42,28 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
             if (mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>())
                 return OpenExplorerUiResult.WasAlreadyOpen;
 
-            OpenSectionAsync(section).Forget();
+            OpenSectionAsync(ui, section).Forget();
             return OpenExplorerUiResult.Opened;
         }
 
-        private async UniTask OpenSectionAsync(ExploreSections section)
+        private async UniTask OpenSectionAsync(ExplorerUi ui, ExploreSections section)
         {
             try
             {
                 await UniTask.SwitchToMainThread();
-                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section)));
+
+                // The answer given to the scene was decided on its JS thread; by now the user may have opened
+                // the panel themselves, and ShowAsync does nothing for a controller that is not hidden.
+                if (mvcManager.IsShowing<ExplorePanelView, ExplorePanelParameter>())
+                    return;
+
+                // ShowAsync resolves when the panel closes, so the pair brackets its whole life cycle. The
+                // opened event goes out before the await because there is no later moment that still means
+                // "shown".
+                events.Enqueue(new ExplorerUiEvent(ui, ExplorerUiEventKind.Opened));
+
+                try { await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section))); }
+                finally { events.Enqueue(new ExplorerUiEvent(ui, ExplorerUiEventKind.Closed)); }
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.RESTRICTED_ACTIONS); }

@@ -58,7 +58,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             });
             systemClipboard = Substitute.For<ISystemClipboard>();
             explorerUiActions = Substitute.For<IExplorerUiActions>();
-            explorerUiActions.OpenSection(Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.Opened);
+            explorerUiActions.OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.Opened);
             sceneWorld = World.Create();
             Entity scenePlayerEntity = sceneWorld.Create();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
@@ -169,7 +169,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.Opened, result);
-            explorerUiActions.Received(1).OpenSection(ExploreSections.Navmap);
+            explorerUiActions.Received(1).OpenSection(ExplorerUi.EuMap, ExploreSections.Navmap);
         }
 
         [Test]
@@ -183,7 +183,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedNotCurrentScene, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
         }
 
         [Test]
@@ -200,14 +200,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedNoUserGesture, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
         }
 
         [Test]
         public void OpenExplorerUi_AlreadyOpen_ReturnsWasAlreadyOpen()
         {
             // Arrange
-            explorerUiActions.OpenSection(Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.WasAlreadyOpen);
+            explorerUiActions.OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.WasAlreadyOpen);
 
             // Act
             int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuMap);
@@ -224,7 +224,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
         }
 
         [Test]
@@ -241,7 +241,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
         }
 
         [Test]
@@ -250,7 +250,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Arrange
             // Communities availability is identity-dependent, so its gate lives inside the
             // IExplorerUiActions implementation; the API must return that rejection to the scene.
-            explorerUiActions.OpenSection(ExploreSections.Communities).Returns(OpenExplorerUiResult.RejectedFeatureDisabled);
+            explorerUiActions.OpenSection(ExplorerUi.EuCommunities, ExploreSections.Communities).Returns(OpenExplorerUiResult.RejectedFeatureDisabled);
 
             // Act
             int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuCommunities);
