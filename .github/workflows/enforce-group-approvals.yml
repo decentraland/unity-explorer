@@ -56,10 +56,10 @@ jobs:
             echo "🔍 main→dev sync PR detected — requiring an approval from a repository admin."
 
             APPROVERS=$(gh pr view "$PR_NUMBER" --repo "$REPO_OWNER/$REPO_NAME" --json reviews \
-              --jq '.reviews[] | select(.state == "APPROVED") | .author.login')
+              --jq '.reviews[] | select(.state == "APPROVED") | .author.login' 2>/dev/null || echo "")
 
             for reviewer in $APPROVERS; do
-              PERMISSION=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/collaborators/$reviewer/permission" --jq '.permission')
+              PERMISSION=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/collaborators/$reviewer/permission" --jq '.permission' 2>/dev/null || echo "none")
               if [ "$PERMISSION" == "admin" ]; then
                 echo "✅ Admin approval found: $reviewer."
                 echo "APPROVAL_CHECK=passed" >> $GITHUB_ENV
@@ -69,7 +69,7 @@ jobs:
               echo "🔸 $reviewer approved but is not an admin (permission: $PERMISSION)."
             done
 
-            echo "❌ The sync PR requires an approval from a repository admin, who must merge it as a merge commit (never squash)."
+            echo "❌ The sync PR requires an approval from a repository admin. Once approved, the auto-merge-sync-pr workflow merges it as a merge commit — never merge it manually."
             echo "APPROVAL_CHECK=failed" >> $GITHUB_ENV
             echo "MISSING_MSG=Waiting on: admin approval (sync PR)" >> $GITHUB_ENV
             exit 1
