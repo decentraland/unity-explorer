@@ -1,0 +1,70 @@
+name: Auto-merge main→dev sync PR
+
+# When a repository admin approves the chore/sync PR, this workflow merges it
+# as a merge commit (never squash) once the required checks pass. Squashing the
+# sync PR rewrites the synced commits, which makes main and dev diverge and
+# breaks future auto-syncs — so humans should only approve, never merge.
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: auto-merge-sync-pr-${{ github.event.pull_request.number }}
+
+jobs:
+  auto-merge:
+    if: >
+      github.event.review.state == 'approved' &&
+      github.event.pull_request.merged == false &&
+      github.event.pull_request.base.ref == 'dev' &&
+      github.event.pull_request.head.ref == 'chore/sync' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    env:
+      GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+      REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REVIEWER: ${{ github.event.review.user.login }}
+
+    steps:
+      - name: Check the approver is a repository admin
+        id: admin
+        run: |
+          PERMISSION=$(gh api "/repos/$REPO/collaborators/$REVIEWER/permission" --jq '.permission' 2>/dev/null || echo "none")
+          if [ "$PERMISSION" == "admin" ]; then
+            echo "✅ $REVIEWER is a repository admin — proceeding to auto-merge."
+            echo "is_admin=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "🔸 $REVIEWER approved but is not an admin (permission: $PERMISSION) — waiting for an admin approval."
+            echo "is_admin=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wait for required checks to pass
+        if: steps.admin.outputs.is_admin == 'true'
+        id: checks
+        run: |
+          echo "⏳ Waiting for the required checks on PR #$PR_NUMBER..."
+          if gh pr checks "$PR_NUMBER" --repo "$REPO" --required --watch --fail-fast; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment when required checks failed
+        if: steps.admin.outputs.is_admin == 'true' && steps.checks.outputs.passed != 'true'
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body $'🤖 Auto-merge stopped: a **required check failed**, so the sync was not merged.\n\nOnce the checks are green, an admin must **approve the PR again** (dismiss the previous review or submit a new approval) to re-trigger the auto-merge.\n\n> [!IMPORTANT]\n> Do **not** merge this PR manually — squashing it makes `main` and `dev` diverge.'
+          exit 1
+
+      - name: Merge as a merge commit
+        if: steps.admin.outputs.is_admin == 'true' && steps.checks.outputs.passed == 'true'
+        run: |
+          if gh pr merge "$PR_NUMBER" --repo "$REPO" --merge --admin; then
+            echo "✅ Sync PR #$PR_NUMBER merged as a merge commit."
+          else
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body $'🤖 Auto-merge failed: the merge was rejected — most likely `chore/sync` **conflicts with `dev`**.\n\nTo recover:\n1. `git checkout chore/sync && git merge dev` and resolve the conflicts (never rebase or squash).\n2. Push, wait for the checks to pass.\n3. An admin approves again — the auto-merge re-runs and merges it as a merge commit.\n\n> [!IMPORTANT]\n> Do **not** merge this PR manually — squashing it makes `main` and `dev` diverge.'
+            exit 1
+          fi

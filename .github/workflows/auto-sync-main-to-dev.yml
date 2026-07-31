@@ -22,10 +22,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          OPEN_PRS=$(gh pr list --base dev --head chore/sync --state open --json number --jq 'length')
+          if [ "$OPEN_PRS" -ne 0 ]; then
+            echo "Sync PR already exists — branch was updated, the open PR now points at the new commits."
+            exit 0
+          fi
           gh pr create \
             --base dev \
             --head chore/sync \
             --title "chore: sync main to dev" \
-            --body $':crown: *An automated PR*\n\n> [!IMPORTANT]\n> This PR must be merged **by an admin, as a merge commit** ("Merge pull request", bypassing the linear-history rule) — never squash or rebase it.\n> Squashing rewrites the synced commits, which makes `main` and `dev` diverge and breaks future auto-syncs.\n> The `enforce-approvals` required check stays red until an admin approves this PR.' \
-            --label auto-pr \
-            || echo "Sync PR already exists — branch was updated, existing PR now points at the new commits."
+            --body $':crown: *An automated PR*\n\n> [!IMPORTANT]\n> **Do not merge this PR manually — do not touch the merge button at all, not even "Merge pull request".**\n>\n> An admin only needs to **approve** it. The `auto-merge-sync-pr` workflow then waits for the required checks and merges it **as a merge commit** automatically.\n\n**Why approving is enough (and manual merging is dangerous):** squashing — or any merge that rewrites the synced commits — makes `main` and `dev` diverge silently. The damage is invisible until the next release, where it surfaces as merge conflicts. The bot always uses a true merge commit, which keeps every `main` commit an ancestor of `dev`.\n\n**What to expect:**\n- The `enforce-approvals` required check stays red until an admin approves.\n- After an admin approval, the bot waits for the required checks and merges within minutes.\n- If a check fails or the branch conflicts with `dev`, the bot comments here with recovery steps — after resolving, an admin approves again to re-trigger the merge.' \
+            --label auto-pr
