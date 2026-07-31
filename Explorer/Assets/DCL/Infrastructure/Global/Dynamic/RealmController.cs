@@ -135,7 +135,11 @@ namespace Global.Dynamic
             try
             {
                 serverAbout.Clear();
-                worldManifestProvider.PrefetchGenesisManifest(environment, ct);
+
+                // Local scene development runs against a local realm and must not reach out to
+                // the Genesis manifest host.
+                if (!isLocalSceneDevelopment)
+                    worldManifestProvider.PrefetchGenesisManifest(environment, ct);
 
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
