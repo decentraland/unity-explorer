@@ -35,20 +35,46 @@ jobs:
           REPO_OWNER=$(jq -r '.repository.owner.login' <<< "$EVENT_PAYLOAD")
           REPO_NAME=$(jq -r '.repository.name' <<< "$EVENT_PAYLOAD")
           HEAD_SHA=$(jq -r '.pull_request.head.sha' <<< "$EVENT_PAYLOAD")
+          HEAD_REF=$(jq -r '.pull_request.head.ref' <<< "$EVENT_PAYLOAD")
 
           echo "✅ PR Number: $PR_NUMBER"
           echo "✅ Repository: $REPO_OWNER/$REPO_NAME"
           echo "✅ Head SHA: $HEAD_SHA"
+          echo "✅ Head Ref: $HEAD_REF"
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "REPO_OWNER=$REPO_OWNER" >> $GITHUB_ENV
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
           echo "HEAD_SHA=$HEAD_SHA" >> $GITHUB_ENV
+          echo "HEAD_REF=$HEAD_REF" >> $GITHUB_ENV
 
       - name: Validate Group Approvals
         env:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         run: |
+          if [ "$HEAD_REF" == "chore/sync" ]; then
+            echo "🔍 main→dev sync PR detected — requiring an approval from a repository admin."
+
+            APPROVERS=$(gh pr view "$PR_NUMBER" --repo "$REPO_OWNER/$REPO_NAME" --json reviews \
+              --jq '.reviews[] | select(.state == "APPROVED") | .author.login')
+
+            for reviewer in $APPROVERS; do
+              PERMISSION=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/collaborators/$reviewer/permission" --jq '.permission')
+              if [ "$PERMISSION" == "admin" ]; then
+                echo "✅ Admin approval found: $reviewer."
+                echo "APPROVAL_CHECK=passed" >> $GITHUB_ENV
+                echo "MISSING_MSG=" >> $GITHUB_ENV
+                exit 0
+              fi
+              echo "🔸 $reviewer approved but is not an admin (permission: $PERMISSION)."
+            done
+
+            echo "❌ The sync PR requires an approval from a repository admin, who must merge it as a merge commit (never squash)."
+            echo "APPROVAL_CHECK=failed" >> $GITHUB_ENV
+            echo "MISSING_MSG=Waiting on: admin approval (sync PR)" >> $GITHUB_ENV
+            exit 1
+          fi
+
           echo "🔍 Checking PR labels..."
           LABELS_JSON=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/issues/$PR_NUMBER/labels" --jq '.')
 

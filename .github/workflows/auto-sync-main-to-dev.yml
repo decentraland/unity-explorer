@@ -26,10 +26,6 @@ jobs:
             --base dev \
             --head chore/sync \
             --title "chore: sync main to dev" \
-            --body $':crown: *An automated PR*\n\n> [!IMPORTANT]\n> This PR will be merged automatically **as a merge commit** once it is approved and all required checks pass — do NOT squash or rebase.\n> Squashing rewrites the synced commits, which makes `main` and `dev` diverge and breaks future auto-syncs.' \
-            --label auto-pr
-
-      - name: Enable auto-merge as a merge commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr merge chore/sync --merge --auto
+            --body $':crown: *An automated PR*\n\n> [!IMPORTANT]\n> This PR must be merged **by an admin, as a merge commit** ("Merge pull request", bypassing the linear-history rule) — never squash or rebase it.\n> Squashing rewrites the synced commits, which makes `main` and `dev` diverge and breaks future auto-syncs.\n> The `enforce-approvals` required check stays red until an admin approves this PR.' \
+            --label auto-pr \
+            || echo "Sync PR already exists — branch was updated, existing PR now points at the new commits."
