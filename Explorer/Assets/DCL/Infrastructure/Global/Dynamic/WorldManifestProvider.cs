@@ -27,6 +27,13 @@ namespace Global.Dynamic
         private const string dclWorldName = "dcl.eth";
 
         private WorldManifest? cachedMainManifest;
+        private UniTask<WorldManifest>? inFlightMainManifest;
+
+        // Genesis manifest URLs are compile-time constants, so this runs concurrently with
+        // the realm /about request instead of waiting on realmName. Idempotent; Preserve()
+        // lets the Genesis branch await this same task rather than issue a second request.
+        public void PrefetchGenesisManifest(DecentralandEnvironment environment, CancellationToken ct) =>
+            inFlightMainManifest ??= FetchGenesisManifestAsync(environment, ct).Preserve();
 
         public WorldManifestProvider(IWebRequestController webRequestController)
         {
@@ -38,7 +45,10 @@ namespace Global.Dynamic
             try
             {
                 if(MAIN_REALM_NAMES.Contains(realmName))
-                    return await FetchGenesisManifestAsync(environment, ct);
+                {
+                    PrefetchGenesisManifest(environment, ct);
+                    return await inFlightMainManifest!.Value;
+                }
 
                 if(realmName.EndsWith(dclWorldName))
                     return await FetchNonGenesisManifestAsync(assetBundleRegistry, realmName, ct);
