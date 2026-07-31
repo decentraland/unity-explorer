@@ -8,6 +8,12 @@ using System.Collections.Generic;
 
 namespace DCL.Interaction.PlayerOriginated.Systems
 {
+    /// <summary>
+    ///     Refills <see cref="GlobalInputEvents" /> from scratch each frame, for the scene worlds to drain in
+    ///     their PreRendering group later in the same frame. Anything else that adds an entry — an automation
+    ///     driver such as McpInputActionSystem — must therefore run after this system and within the same frame;
+    ///     moving the clear, or this system's group, silently drops those entries.
+    /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
     public partial class PrepareGlobalInputEventsSystem : BaseUnityLoopSystem

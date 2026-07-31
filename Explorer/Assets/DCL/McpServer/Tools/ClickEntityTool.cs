@@ -20,14 +20,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class ClickEntityTool : McpTool
     {
-        /// <summary>Wire-facing subset of <see cref="InputAction" />: only the three pointer buttons make sense for a click.</summary>
-        private enum PointerButton : byte
-        {
-            POINTER,
-            PRIMARY,
-            SECONDARY,
-        }
-
         /// <summary>Wire-facing gesture kinds: a full click, or a single press/release leg.</summary>
         private enum ClickKind : byte
         {
@@ -44,6 +36,22 @@ namespace DCL.McpServer.Tools
         private const float MIN_TIMEOUT_SEC = 0.5f;
         private const float MAX_TIMEOUT_SEC = 15f;
 
+        /// <summary>
+        ///     The actions a click can carry: the three pointer buttons plus the four action buttons, because a
+        ///     PointerEvents entry may name any of them as its button. The movement actions and IA_ANY are left
+        ///     out — they are not buttons a cursor clicks with; press_input_action sends those with no target.
+        /// </summary>
+        private static readonly McpInputAction[] ALLOWED_BUTTONS =
+        {
+            McpInputAction.POINTER,
+            McpInputAction.PRIMARY,
+            McpInputAction.SECONDARY,
+            McpInputAction.ACTION_3,
+            McpInputAction.ACTION_4,
+            McpInputAction.ACTION_5,
+            McpInputAction.ACTION_6,
+        };
+
         private readonly World world;
         private readonly Entity playerEntity;
 
@@ -53,7 +61,8 @@ namespace DCL.McpServer.Tools
             "Press and release a pointer button on a scene entity so its PointerEvents fire exactly like a real click. "
             + "The click runs through the real reticle pipeline: occluders and the entity's maxDistance apply, and a miss "
             + "returns hit:false with the blocking entity. Ids come from list_scene_entities. For entities whose collider "
-            + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at.";
+            + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at. Every path "
+            + "here needs a collider to land on: to drive a scene that polls input globally, use press_input_action.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Integer("entityId", "Target entity id in the current scene world (from list_scene_entities). Omit only when x/y/z are given, then the ray decides the target.")
@@ -61,7 +70,7 @@ namespace DCL.McpServer.Tools
                   .Number("y")
                   .Number("z")
                   .String("sceneId", "Pin the click to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.")
-                  .Enum<PointerButton>("button", "Which input action to press. Default pointer (left click / IA_POINTER).")
+                  .Enum("button", "Which input action to press on the entity. Default pointer (left click / IA_POINTER).", ALLOWED_BUTTONS)
                   .Enum<ClickKind>("eventType", "click = down, then up on the next scene tick. Default click.")
                   .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.");
 
@@ -84,15 +93,10 @@ namespace DCL.McpServer.Tools
             if (!hasEntityId && !hasAimPoint)
                 return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both.");
 
-            if (!arguments.TryGetEnum("button", PointerButton.POINTER, out PointerButton pointerButton))
-                return McpToolResult.Error("button must be one of: pointer, primary, secondary.");
+            if (!arguments.TryGetEnum("button", McpInputAction.POINTER, out McpInputAction wireButton, ALLOWED_BUTTONS))
+                return McpToolResult.Error($"button must be one of: {string.Join(", ", McpWireEnum<McpInputAction>.WireNamesOf(ALLOWED_BUTTONS))}.");
 
-            InputAction button = pointerButton switch
-                                 {
-                                     PointerButton.PRIMARY => InputAction.IaPrimary,
-                                     PointerButton.SECONDARY => InputAction.IaSecondary,
-                                     _ => InputAction.IaPointer,
-                                 };
+            InputAction button = wireButton.ToInputAction();
 
             if (!arguments.TryGetEnum("eventType", ClickKind.CLICK, out ClickKind kind))
                 return McpToolResult.Error("eventType must be one of: click, down, up.");

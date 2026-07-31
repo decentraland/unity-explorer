@@ -863,6 +863,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DiagnosticsContainer,
                     exposedGlobalDataContainer.ExposedCameraData,
                     staticContainer.EntityCollidersGlobalCache,
+                    exposedGlobalDataContainer.GlobalInputEvents,
                     coroutineRunner,
                     globalWorld,
                     localSceneDevelopment));

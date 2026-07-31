@@ -1,6 +1,6 @@
 # MCP Automation Server
 
-The Explorer can host an embedded [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server so coding agents (e.g. Claude Code) can **see** the running client (screenshots, player/scene state, scene console logs) and **control** it (teleport, move, walk, look, chat commands, scene reload) — closing the edit → reload → verify loop for SDK7 scene development without a human in the middle.
+The Explorer can host an embedded [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server so coding agents (e.g. Claude Code) can **see** the running client (screenshots, player/scene state, scene console logs) and **control** it (teleport, move, walk, look, click, press input actions, chat commands, scene reload) — closing the edit → reload → verify loop for SDK7 scene development without a human in the middle.
 
 The server is compiled into all builds but stays dormant unless explicitly enabled at launch.
 
@@ -80,7 +80,8 @@ The tables below are a human-readable overview. The authoritative argument contr
 | `send_chat` | `message` | Sends to Nearby chat; `/commands` run through the chat command pipeline |
 | `reload_scene` | `timeoutSec?` | Reloads the current scene (motion + skybox frozen during reload) |
 | `trigger_emote` | `urn` or `stop: true`, `loop?` | Plays or stops an avatar emote |
-| `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?`, `eventType?`, `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. Returns `hit`, hover text, hit point/distance, or the blocking entity |
+| `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?`, `eventType?`, `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. `button` accepts the three pointer buttons plus `action_3`…`action_6`. Returns `hit`, hover text, hit point/distance, or the blocking entity |
+| `press_input_action` | `action`, `eventType?`, `holdSec?`, `sceneId?`, `timeoutSec?` | Sends an `InputAction` edge with **no target** — the shape a scene reads with `inputSystem.isTriggered` / `isPressed` and no entity argument, which no other tool can reach. `press` (default) holds the button for `holdSec` and releases it on a later scene tick; `down`/`up` send a single leg. Returns `delivered`, the scene it landed in and the measured `heldSec` |
 
 ## Structured output
 
@@ -114,15 +115,17 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 - **Verbose logs** — enabling the server registers a scene-console log handler, which turns on unconditional verbose logging for the session (same behavior as `--scene-console`).
 - **Scene entity dumps** — `list_scene_entities`/`get_entity_details` read the scene world without acquiring its sync lock (same as the existing `WorldInfoTool` debug tooling); treat results as a diagnostic snapshot.
 - **`click_entity` returns `hit:false` with `blockedBy*`** — another collider sits on the camera→target line; `move_to`/`look_at` to a clear vantage and retry. If the reason is "out of range", close within the entity's `maxDistance` (default 10 m) first. Entities whose collider sits away from the pivot (GLTF meshes) may need an explicit `x/y/z` aim point.
+- **A scene ignores `click_entity` but is clearly input-driven** — it reads input globally instead of registering `PointerEvents` on an entity. Use `press_input_action`, which needs no target at all.
+- **`press_input_action` reports `releaseMissed`** — the press reached the scene but its release did not, so the scene still believes the button is held: send the same `action` again with `eventType: "up"`. It happens when the scene stopped being current or stopped running mid-hold, or when a second call preempted the held press (only one input action is in flight at a time).
 
 ## Implementation map
 
 - `Explorer/Assets/DCL/McpServer/` — feature root, its own `DCL.McpServer` assembly. Two folders are folded into other assemblies via `.asmref` so they can reach code that assembly doesn't reference:
-  - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `McpTool` (abstract tool base), `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpJsonSchema` (typed schema builder).
-  - `Tools/` — one class per tool (16).
-  - `Components/` — ECS components for the input-driving tools: `McpMovementOverride`, `McpPointerEventIntent`.
-  - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`), `McpInputOverrideSystem` (held movement), `McpPointerEventSystem` (synthetic pointer press/release delivery; `ClickEntityTool` composes a click from two intents).
+  - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `McpTool` (abstract tool base), `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpJsonSchema` (typed schema builder), `McpInputAction` (wire spelling of the protobuf `InputAction`, shared by the two input tools).
+  - `Tools/` — one class per tool (17).
+  - `Components/` — ECS components for the input-driving tools: `McpMovementOverride`, `McpPointerEventIntent`, `McpInputActionIntent`.
+  - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`), `McpInputOverrideSystem` (held movement), `McpPointerEventSystem` (synthetic pointer press/release delivery; `ClickEntityTool` composes a click from two intents), `McpInputActionSystem` (targetless input actions, published into the same `GlobalInputEvents` buffer the key bindings feed so the current scene's `WritePointerEventResultsSystem` writes them to its root entity).
   - `Utils/` — `SceneLogBuffer`, `JObjectExtensions`.
-  - `Tests/` — EditMode tests **folded into `DCL.EditMode.Tests`** via `.asmref`: dispatcher / registry / result routing and the pointer-click system.
+  - `Tests/` — EditMode tests **folded into `DCL.EditMode.Tests`** via `.asmref`: dispatcher / registry / result routing, the pointer-click system and the input-action system.
 - Gating: `FeatureId.MCP_SERVER` in `FeaturesRegistry` (resolved as `appArgs.HasFlag(MCP) || appArgs.HasFlag(MCP_PORT)`); `DynamicWorldContainer.CreateAsync` reads `FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER)` and adds `McpServerPlugin`.
 - Flags: `AppArgsFlags.MCP` / `AppArgsFlags.MCP_PORT`; log category: `ReportCategory.MCP`.

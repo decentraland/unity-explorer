@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
+using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.Utility;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
@@ -45,6 +46,7 @@ namespace DCL.McpServer.Systems
         private readonly Arch.Core.World globalWorld;
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
+        private readonly GlobalInputEvents globalInputEvents;
         private readonly IWorldInfoHub worldInfoHub;
 
         private readonly IScenesCache scenesCache;
@@ -72,6 +74,7 @@ namespace DCL.McpServer.Systems
             DiagnosticsContainer diagnosticsContainer,
             ExposedCameraData exposedCameraData,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
+            GlobalInputEvents globalInputEvents,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
             bool localSceneDevelopment)
@@ -91,6 +94,7 @@ namespace DCL.McpServer.Systems
             this.reloadSceneController = reloadSceneController;
             this.exposedCameraData = exposedCameraData;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
+            this.globalInputEvents = globalInputEvents;
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
             this.localSceneDevelopment = localSceneDevelopment;
@@ -113,6 +117,7 @@ namespace DCL.McpServer.Systems
         {
             McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
             McpPointerEventSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
+            McpInputActionSystem.InjectToWorld(ref builder, scenesCache, globalInputEvents, arguments.PlayerEntity);
 
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
 
@@ -133,6 +138,7 @@ namespace DCL.McpServer.Systems
                           .Add(new GetEntityDetailsTool(worldInfoHub))
                           .Add(new TriggerEmoteTool(globalWorldActions))
                           .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new PressInputActionTool(globalWorld, arguments.PlayerEntity))
                           .Build();
 
             server = new McpHttpServer(toolsRegistry, port);
