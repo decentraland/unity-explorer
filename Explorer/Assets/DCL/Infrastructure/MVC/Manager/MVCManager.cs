@@ -128,13 +128,16 @@ namespace MVC
                         await ShowOverlayAsync(command, controller, ct);
                         break;
                 }
-
-                OnViewClosed?.Invoke(controller);
             }
             catch (OperationCanceledException)
             {
                 // TODO (Vit) : handle revert of command. Proposal - extend WizardCommands interface with Revert method and call it in case of cancellation.
                 ReportHub.LogWarning(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
+            }
+            finally
+            {
+                // Raised here so that every OnViewShowed is followed by exactly one OnViewClosed
+                OnViewClosed?.Invoke(controller);
             }
         }
 
