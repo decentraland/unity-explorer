@@ -113,7 +113,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             RaycastHit raycastHit = raycastHitPool.Get();
             raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
             AppendMessage(sdkEntity, raycastHit, button, eventType);
-            return eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
+
+            bool isNonHover = eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
+
+            if (isNonHover)
+                sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
+
+            return isNonHover;
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
