@@ -135,6 +135,7 @@ namespace Global.Dynamic
             try
             {
                 serverAbout.Clear();
+                worldManifestProvider.PrefetchGenesisManifest(environment, ct);
 
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
