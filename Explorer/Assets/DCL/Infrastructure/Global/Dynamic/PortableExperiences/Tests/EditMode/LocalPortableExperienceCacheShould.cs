@@ -19,7 +19,7 @@ namespace PortableExperiences.Tests
         [TestCase(ScenePermissionNames.USE_WEB3_API)]
         [TestCase(ScenePermissionNames.OPEN_EXTERNAL_LINK)]
         [TestCase(ScenePermissionNames.USE_WEBSOCKET)]
-        [TestCase(ScenePermissionNames.PORTABLE_EXPERIENCE)]
+        [TestCase(ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE)]
         [TestCase(ScenePermissionNames.USE_FETCH)]
         public void RequireAuthorizationForGatedPermissions(string permission)
         {

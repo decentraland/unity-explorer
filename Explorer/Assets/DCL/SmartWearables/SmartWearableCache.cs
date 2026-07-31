@@ -150,7 +150,7 @@ namespace Runtime.Wearables
                 item.RequiresAuthorization = item.RequiresWeb3API ||
                                              permissions.Contains(ScenePermissionNames.OPEN_EXTERNAL_LINK) ||
                                              permissions.Contains(ScenePermissionNames.USE_WEBSOCKET) ||
-                                             permissions.Contains(ScenePermissionNames.PORTABLE_EXPERIENCE) ||
+                                             permissions.Contains(ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE) ||
                                              permissions.Contains(ScenePermissionNames.USE_FETCH);
             }
 

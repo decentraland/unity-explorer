@@ -91,8 +91,8 @@ namespace PortableExperiences.Controller
                         throw new Exception("Global Portable Experiences are disabled");
 
                     //If it's a local PX (not Global) but the requesting scene does not have permissions to spawn PXs
-                    case false when parentScene != null && !parentScene.SceneData.SceneEntityDefinition.metadata.requiredPermissions.Contains(ScenePermissionNames.PORTABLE_EXPERIENCE):
-                        throw new Exception($"The parent scene {parentScene.Info.Name} is trying to spawn a portable experience but lacks the '{ScenePermissionNames.PORTABLE_EXPERIENCE}' permission.");
+                    case false when parentScene != null && !parentScene.SceneData.SceneEntityDefinition.metadata.requiredPermissions.Contains(ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE):
+                        throw new Exception($"The parent scene {parentScene.Info.Name} is trying to spawn a portable experience but lacks the '{ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE}' permission.");
                 }
 
             var portableExperienceId = ens.ToString();

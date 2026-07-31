@@ -86,7 +86,7 @@ namespace PortableExperiences.Controller
             permission is ScenePermissionNames.USE_WEB3_API
                 or ScenePermissionNames.OPEN_EXTERNAL_LINK
                 or ScenePermissionNames.USE_WEBSOCKET
-                or ScenePermissionNames.PORTABLE_EXPERIENCE
+                or ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE
                 or ScenePermissionNames.USE_FETCH;
     }
 }

@@ -52,7 +52,7 @@ namespace DCL.UI.PortableExperiences
             OpenExternalUrlPermissionContent.SetActive(Contains(permissions, ScenePermissionNames.OPEN_EXTERNAL_LINK));
             WebSocketPermissionContent.SetActive(Contains(permissions, ScenePermissionNames.USE_WEBSOCKET));
             FetchAPIPermissionContent.SetActive(Contains(permissions, ScenePermissionNames.USE_FETCH));
-            SpawnPortableExperiencePermissionContent.SetActive(Contains(permissions, ScenePermissionNames.PORTABLE_EXPERIENCE));
+            SpawnPortableExperiencePermissionContent.SetActive(Contains(permissions, ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE));
         }
 
         private static bool Contains(IReadOnlyList<string> permissions, string permission)

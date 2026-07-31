@@ -71,7 +71,7 @@ namespace Runtime.Wearables
             OpenExternalUrlPermissionContent.SetActive(permissions.Contains(ScenePermissionNames.OPEN_EXTERNAL_LINK));
             WebSocketPermissionContent.SetActive(permissions.Contains(ScenePermissionNames.USE_WEBSOCKET));
             FetchAPIPermissionContent.SetActive(permissions.Contains(ScenePermissionNames.USE_FETCH));
-            SpawnPortableExperiencePermissionContent.SetActive(permissions.Contains(ScenePermissionNames.PORTABLE_EXPERIENCE));
+            SpawnPortableExperiencePermissionContent.SetActive(permissions.Contains(ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE));
         }
     }
 }
