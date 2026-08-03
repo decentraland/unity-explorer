@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 else
                 {
                     assetBundleManifest.TryLogException();
-                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
+                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
                 }
             }
         }

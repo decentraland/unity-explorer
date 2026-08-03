@@ -24,6 +24,12 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("SECONDARY LOGINS")]
         [field: SerializeField]
+        public GameObject OtherLoginContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject ContinueWithTextContainer { get; private set; } = null!;
+
+        [field: SerializeField]
         public Button LoginMetamaskButton { get; private set; } = null!;
 
         [field: SerializeField]
@@ -103,13 +109,15 @@ namespace DCL.AuthenticationScreenFlow
             moreOptionsPanel.SetActive(isExpanded);
         }
 
-        public void Show(int animHash, bool moreOptionsExpanded)
+        public void Show(int animHash, bool moreOptionsExpanded, bool otherLoginMethodsEnabled)
         {
             showAnimHash = animHash;
             ShowAsync(CancellationToken.None).Forget();
 
             areOptionsExpanded = moreOptionsExpanded;
-            SetOptionsPanelVisibility(areOptionsExpanded);
+            OtherLoginContainer.SetActive(otherLoginMethodsEnabled);
+            ContinueWithTextContainer.SetActive(otherLoginMethodsEnabled && !moreOptionsExpanded);
+            SetOptionsPanelVisibility(areOptionsExpanded && otherLoginMethodsEnabled);
 
             SetLoadingSpinnerVisibility(false);
         }
