@@ -57,7 +57,7 @@ namespace DCL.SDKComponents.MediaStream
             GatherVideoPlayerQuery(World);
             GatherAudioStreamQuery(World);
 
-            registry.Update(sceneData.SceneShortInfo.ToString(), videoPlayerCount, audioStreamCount, rowsBuffer, Time.frameCount);
+            registry.Update(sceneData.SceneShortInfo.ToString(), videoPlayerCount, audioStreamCount, rowsBuffer, UnityEngine.Time.frameCount);
         }
 
         [Query]
