@@ -5,6 +5,7 @@ using DCL.Utility.Types;
 using DCL.WebRequests;
 using System;
 using System.Threading;
+using Utility.Times;
 
 namespace DCL.BugReporting
 {
@@ -34,11 +35,14 @@ namespace DCL.BugReporting
         {
             string url = urlsSource.Url(DecentralandUrl.IntercomTickets);
             string json = IntercomTicketPayload.BuildCreateTicketJson(in ticket);
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             try
             {
                 IntercomTicketResponse response = await webRequestController
-                                                       .SignedFetchPostAsync(url, GenericPostArguments.CreateJson(json), SIGNATURE_METADATA, new WebRequestHeadersInfo().Add(ORIGIN_HEADER, ORIGIN), ct)
+                                                       .PostAsync(url, GenericPostArguments.CreateJson(json), ct, ReportCategory.GENERIC_WEB_REQUEST,
+                                                            headersInfo: new WebRequestHeadersInfo().Add(ORIGIN_HEADER, ORIGIN).WithSign(SIGNATURE_METADATA, unixTimestamp),
+                                                            signInfo: WebRequestSignInfo.NewFromRaw(SIGNATURE_METADATA, urlsSource.GetOriginalUrl(url), unixTimestamp, "post"))
                                                        .CreateFromJson<IntercomTicketResponse>(WRJsonParser.Unity);
 
                 return Result<string>.SuccessResult(response.id);

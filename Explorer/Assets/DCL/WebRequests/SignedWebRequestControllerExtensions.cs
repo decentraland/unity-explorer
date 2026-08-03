@@ -76,30 +76,6 @@ namespace DCL.WebRequests
             );
         }
 
-        public static GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> SignedFetchPostAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            GenericPostArguments postArguments,
-            string jsonMetaData,
-            WebRequestHeadersInfo headersInfo,
-            CancellationToken ct
-        )
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return new GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments>(
-                controller,
-                commonArguments,
-                postArguments,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
-                headersInfo.WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, controller.RequestHub.UrlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "post"),
-                null,
-                false
-            );
-        }
-
         public static GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> SignedFetchGetAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,

@@ -17,7 +17,7 @@ namespace DCL.BugReporting
         // The "Bug Report" ticket type in the Decentraland Intercom workspace.
         private const long BUG_REPORT_TICKET_TYPE_ID = 4557778;
         private const string TITLE_PREFIX = "Bug Report: ";
-        private const string DIAGNOSTICS_LABEL = "Internal diagnostics (Sentry, dev team only): ";
+        private const string DIAGNOSTICS_LABEL = "Internal diagnostics: ";
         private const string DIAGNOSTICS_UNAVAILABLE = "unavailable";
         private const string COORDINATES_LABEL = "Coordinates: ";
 
@@ -44,11 +44,13 @@ namespace DCL.BugReporting
             // A Sentry failure never blocks the ticket: the description degrades to a note instead.
             Result<string> feedbackLink = await feedbackService.SubmitAsync(feedbackReport, ct);
 
-            if (!feedbackLink.Success)
-                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Bug report proceeds without Sentry diagnostics: {feedbackLink.ErrorMessage}");
-
+            // The feedback service is exception-free and reports cancellation through its result,
+            // so it is checked here rather than caught.
             if (ct.IsCancellationRequested)
                 return Result<string>.CancelledResult();
+
+            if (!feedbackLink.Success)
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Bug report proceeds without Sentry diagnostics: {feedbackLink.ErrorMessage}");
 
             var ticket = new IntercomTicketData
             {
