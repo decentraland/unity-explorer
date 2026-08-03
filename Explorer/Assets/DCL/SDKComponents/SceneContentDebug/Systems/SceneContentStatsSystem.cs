@@ -49,17 +49,18 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
         private readonly SceneContentStats stats;
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
 
+        private const string PRIMITIVES_SOURCE = "(primitive meshes)";
+
         private readonly HashSet<Mesh> uniqueMeshes = new ();
         private readonly HashSet<Material> uniqueMaterials = new ();
         private readonly HashSet<Texture> uniqueTextures = new ();
         private readonly List<Material> materialsScratch = new ();
         private readonly Dictionary<string, SceneContentBreakdownEntry> breakdownScratch = new ();
+        private readonly Dictionary<string, HashSet<Material>> breakdownMaterialsScratch = new ();
 
         private int framesSinceCollection = COLLECTION_COOLDOWN_FRAMES;
 
         private bool collectBreakdown;
-        private int primitiveInstances;
-        private long primitiveTriangles;
 
         private long triangles;
         private int bodies;
@@ -88,6 +89,8 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                     uniqueMeshes.Clear();
                     uniqueMaterials.Clear();
                     uniqueTextures.Clear();
+                    breakdownScratch.Clear();
+                    breakdownMaterialsScratch.Clear();
                 }
 
                 return;
@@ -118,8 +121,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             if (collectBreakdown)
             {
                 breakdownScratch.Clear();
-                primitiveInstances = 0;
-                primitiveTriangles = 0;
+                breakdownMaterialsScratch.Clear();
             }
 
             CountPrimitiveMeshesQuery(World);
@@ -153,13 +155,10 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
 
             bodies++;
             long meshTriangles = AccountMesh(mesh);
-            AccountRendererMaterials(component.MeshRenderer);
+            int materialSlots = AccountRendererMaterials(component.MeshRenderer, collectBreakdown ? GetBreakdownMaterials(PRIMITIVES_SOURCE) : null);
 
             if (collectBreakdown)
-            {
-                primitiveInstances++;
-                primitiveTriangles += meshTriangles;
-            }
+                AccountBreakdown(PRIMITIVES_SOURCE, meshTriangles, rendererCount: 1, materialSlots);
         }
 
         [Query]
@@ -176,7 +175,9 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             colliders += asset.InvisibleColliders.Count + (asset.DecodedVisibleSDKColliders?.Count ?? 0);
 
             List<Renderer> renderers = asset.Renderers;
+            HashSet<Material>? sourceMaterials = collectBreakdown ? GetBreakdownMaterials(sdkComponent.Src) : null;
             long containerTriangles = 0;
+            var containerMaterialSlots = 0;
 
             for (var i = 0; i < renderers.Count; i++)
             {
@@ -193,11 +194,11 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                 if (mesh != null)
                     containerTriangles += AccountMesh(mesh);
 
-                AccountRendererMaterials(renderer);
+                containerMaterialSlots += AccountRendererMaterials(renderer, sourceMaterials);
             }
 
             if (collectBreakdown)
-                AccountBreakdown(sdkComponent.Src, containerTriangles, renderers.Count);
+                AccountBreakdown(sdkComponent.Src, containerTriangles, renderers.Count, containerMaterialSlots);
         }
 
         [Query]
@@ -239,14 +240,27 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             return meshTriangles;
         }
 
-        private void AccountBreakdown(string source, long containerTriangles, int rendererCount)
+        private void AccountBreakdown(string source, long containerTriangles, int rendererCount, int materialSlots)
         {
             breakdownScratch.TryGetValue(source, out SceneContentBreakdownEntry entry);
             entry.Source = source;
             entry.Instances++;
             entry.Renderers += rendererCount;
             entry.Triangles += containerTriangles;
+            entry.DrawCalls += materialSlots;
             breakdownScratch[source] = entry;
+        }
+
+        // Allocates one set per source; only reached during explicitly requested breakdown passes
+        private HashSet<Material> GetBreakdownMaterials(string source)
+        {
+            if (!breakdownMaterialsScratch.TryGetValue(source, out HashSet<Material>? materials))
+            {
+                materials = new HashSet<Material>();
+                breakdownMaterialsScratch[source] = materials;
+            }
+
+            return materials;
         }
 
         private void FlushBreakdown()
@@ -254,21 +268,16 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             stats.BreakdownEntries.Clear();
 
             foreach (KeyValuePair<string, SceneContentBreakdownEntry> pair in breakdownScratch)
-                stats.BreakdownEntries.Add(pair.Value);
-
-            if (primitiveInstances > 0)
-                stats.BreakdownEntries.Add(new SceneContentBreakdownEntry
-                {
-                    Source = "(primitive meshes)",
-                    Instances = primitiveInstances,
-                    Renderers = primitiveInstances,
-                    Triangles = primitiveTriangles,
-                });
+            {
+                SceneContentBreakdownEntry entry = pair.Value;
+                entry.Materials = breakdownMaterialsScratch.TryGetValue(pair.Key, out HashSet<Material>? materials) ? materials.Count : 0;
+                stats.BreakdownEntries.Add(entry);
+            }
 
             stats.BreakdownRequested = false;
         }
 
-        private void AccountRendererMaterials(Renderer renderer)
+        private int AccountRendererMaterials(Renderer renderer, HashSet<Material>? breakdownMaterials = null)
         {
             renderer.GetSharedMaterials(materialsScratch);
 
@@ -277,8 +286,13 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                 Material material = materialsScratch[i];
 
                 if (material != null)
+                {
                     AccountMaterial(material);
+                    breakdownMaterials?.Add(material);
+                }
             }
+
+            return materialsScratch.Count;
         }
 
         private void AccountMaterial(Material material)

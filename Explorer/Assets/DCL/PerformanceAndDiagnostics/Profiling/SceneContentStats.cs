@@ -12,6 +12,18 @@ namespace DCL.Profiling
         public int Instances;
         public int Renderers;
         public long Triangles;
+
+        /// <summary>
+        ///     Unique materials used by this source's renderers. A material shared between two
+        ///     sources counts once per source, so entries can sum above the scene-wide unique total.
+        /// </summary>
+        public int Materials;
+
+        /// <summary>
+        ///     Material slots summed across this source's renderers — approximates the draw calls
+        ///     the source costs before SRP batching and instancing.
+        /// </summary>
+        public int DrawCalls;
     }
 
     /// <summary>

@@ -5,6 +5,7 @@ using DCL.Profiling;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -31,14 +32,16 @@ namespace DCL.McpServer.Tools
         public override string Name => "get_scene_content_breakdown";
 
         public override string Description =>
-            "Rank the current scene's rendered content by triangle count, grouped by source model: for each GLTF the summed triangles, "
-            + "instance count and renderer count, plus one aggregate row for primitive meshes. Use it after get_scene_content_stats shows "
-            + "a metric near its cap to find which assets to optimize. Triggers a fresh counting pass over the currently rendered content.";
+            "Rank the current scene's rendered content grouped by source model: for each GLTF the summed triangles, instance count, renderer "
+            + "count, unique materials (a material shared by two sources counts once per source) and a draw-call estimate (material slots "
+            + "across renderers, before batching), plus one aggregate row for primitive meshes. Use it after get_scene_content_stats shows a "
+            + "metric near its cap to find which assets to optimize. Triggers a fresh counting pass over the currently rendered content.";
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Integer("limit", "Maximum entries to return, heaviest first. Default 10.");
+            schema.Integer("limit", "Maximum entries to return, heaviest first. Default 10.")
+                  .String("sortBy", "Metric to rank by. Default triangles.", enumValues: new[] { "triangles", "materials", "drawCalls" });
 
         public GetSceneContentBreakdownTool(IScenesCache scenesCache, int collectionTimeoutMs = DEFAULT_COLLECTION_TIMEOUT_MS)
         {
@@ -49,6 +52,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             int limit = Mathf.Clamp(arguments.GetInt("limit", DEFAULT_LIMIT), 1, MAX_LIMIT);
+            string sortBy = arguments.GetString("sortBy", "triangles");
 
             ISceneFacade? scene = scenesCache.CurrentScene.Value;
 
@@ -83,15 +87,29 @@ namespace DCL.McpServer.Tools
                 return McpToolResult.Error("The scene world did not produce a content breakdown in time. Is the scene running?");
 
             var sorted = new List<SceneContentBreakdownEntry>(stats.BreakdownEntries);
-            sorted.Sort(static (a, b) => b.Triangles.CompareTo(a.Triangles));
+
+            Comparison<SceneContentBreakdownEntry> comparison = sortBy switch
+                                                                {
+                                                                    "materials" => static (a, b) => b.Materials.CompareTo(a.Materials),
+                                                                    "drawCalls" => static (a, b) => b.DrawCalls.CompareTo(a.DrawCalls),
+                                                                    _ => static (a, b) => b.Triangles.CompareTo(a.Triangles),
+                                                                };
+
+            sorted.Sort(comparison);
 
             int returned = Mathf.Min(limit, sorted.Count);
             long sceneTriangles = stats.Triangles;
+            var sceneDrawCalls = 0;
+
+            for (var i = 0; i < sorted.Count; i++)
+                sceneDrawCalls += sorted[i].DrawCalls;
 
             var entries = new JArray();
             var text = new StringBuilder();
-            text.Append("Heaviest content of ").Append(sorted.Count).Append(" sources (scene total ")
-                .Append(sceneTriangles.ToString("N0", CultureInfo.InvariantCulture)).AppendLine(" triangles):");
+            text.Append("Heaviest content of ").Append(sorted.Count).Append(" sources by ").Append(sortBy)
+                .Append(" (scene totals: ").Append(sceneTriangles.ToString("N0", CultureInfo.InvariantCulture)).Append(" triangles, ")
+                .Append(stats.Materials.ToString("N0", CultureInfo.InvariantCulture)).Append(" unique materials, ~")
+                .Append(sceneDrawCalls.ToString("N0", CultureInfo.InvariantCulture)).AppendLine(" draw calls):");
 
             for (var i = 0; i < returned; i++)
             {
@@ -105,13 +123,17 @@ namespace DCL.McpServer.Tools
                     ["trianglesSharePercent"] = Mathf.Round(share * 10f) / 10f,
                     ["instances"] = entry.Instances,
                     ["renderers"] = entry.Renderers,
+                    ["materials"] = entry.Materials,
+                    ["drawCallsEstimate"] = entry.DrawCalls,
                 });
 
                 text.Append(i + 1).Append(". ").Append(entry.Source)
                     .Append(" — ").Append(entry.Triangles.ToString("N0", CultureInfo.InvariantCulture))
-                    .Append(" tris (").Append(share.ToString("F1", CultureInfo.InvariantCulture)).Append("% of scene, ")
+                    .Append(" tris (").Append(share.ToString("F1", CultureInfo.InvariantCulture)).Append("% of scene), ")
+                    .Append(entry.Materials).Append(" materials, ~")
+                    .Append(entry.DrawCalls).Append(" draw calls, ")
                     .Append(entry.Instances).Append(entry.Instances == 1 ? " instance, " : " instances, ")
-                    .Append(entry.Renderers).AppendLine(" renderers)");
+                    .Append(entry.Renderers).AppendLine(" renderers");
             }
 
             if (returned < sorted.Count)
@@ -120,6 +142,9 @@ namespace DCL.McpServer.Tools
             var structured = new JObject
             {
                 ["sceneTriangles"] = sceneTriangles,
+                ["sceneMaterials"] = stats.Materials,
+                ["sceneDrawCallsEstimate"] = sceneDrawCalls,
+                ["sortedBy"] = sortBy,
                 ["totalSources"] = sorted.Count,
                 ["returned"] = returned,
                 ["entries"] = entries,

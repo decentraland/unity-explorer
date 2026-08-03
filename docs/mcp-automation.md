@@ -64,7 +64,7 @@ The tables below are a human-readable overview. The authoritative argument contr
 | `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode + wallet address |
 | `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage |
 | `get_scene_content_stats` | — | Current scene's content stats (entities, triangles, bodies, geometries, materials, textures, colliders, external content) with the documented soft-limit caps for its parcel count; triggers a fresh counting pass |
-| `get_scene_content_breakdown` | `limit?` (default 10) | Rendered content ranked by triangles, grouped by source model (GLTF `src` + one primitives row): triangles, share of scene, instances, renderers |
+| `get_scene_content_breakdown` | `limit?` (default 10), `sortBy?` (`triangles`/`materials`/`drawCalls`) | Rendered content grouped by source model (GLTF `src` + one primitives row): triangles + share of scene, unique materials, draw-call estimate, instances, renderers |
 | `get_scene_logs` | `limit?`, `severity?`, `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
 | `list_scene_entities` | `limit?` | Entity ids of the current scene's ECS world |
 | `get_entity_details` | `entityId` | All components of one scene entity |
