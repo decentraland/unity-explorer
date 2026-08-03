@@ -66,12 +66,12 @@ namespace Global.Dynamic.Landscapes
                     ? await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct)
                     : await GenerateFixedScenesTerrainAsync(realmController.RealmData.WorldManifest, landscapeLoadReport, ct);
 
-                if (result != WorldsTerrainResult.GENERATED)
+                if (result != WorldsTerrainResult.Generated)
                 {
                     worldsTerrain.Hide();
                     landscapeLoadReport.SetProgress(1f);
 
-                    return result == WorldsTerrainResult.DISABLED
+                    return result == WorldsTerrainResult.Disabled
                         ? EnumResult<LandscapeError>.SuccessResult()
                         : EnumResult<LandscapeError>.ErrorResult(LandscapeError.TerrainDataUnavailable);
                 }
@@ -104,20 +104,20 @@ namespace Global.Dynamic.Landscapes
         private async UniTask<WorldsTerrainResult> GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized)
-                return WorldsTerrainResult.DISABLED;
+                return WorldsTerrainResult.Disabled;
 
             SceneDefinitions? staticScenesEntityDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
 
             if (!staticScenesEntityDefinitions.HasValue)
             {
                 ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Static scenes definitions are unavailable, worlds terrain generation skipped");
-                return WorldsTerrainResult.UNAVAILABLE;
+                return WorldsTerrainResult.Unavailable;
             }
 
             List<SceneEntityDefinition> sceneDefinitions = staticScenesEntityDefinitions.Value.Value;
 
             if (IsLandscapeTerrainDisabledByScene(sceneDefinitions))
-                return WorldsTerrainResult.DISABLED;
+                return WorldsTerrainResult.Disabled;
 
             int parcelsAmount = sceneDefinitions.Count;
 
@@ -131,22 +131,22 @@ namespace Global.Dynamic.Landscapes
                 worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
 
-            return WorldsTerrainResult.GENERATED;
+            return WorldsTerrainResult.Generated;
         }
 
         private async UniTask<WorldsTerrainResult> GenerateFixedScenesTerrainAsync(WorldManifest worldManifest, AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized)
-                return WorldsTerrainResult.DISABLED;
+                return WorldsTerrainResult.Disabled;
 
             List<SceneEntityDefinition> sceneEntityDefinitions = await realmController.WaitForFixedScenePromisesAsync(ct);
             if (IsLandscapeTerrainDisabledByScene(sceneEntityDefinitions))
-                return WorldsTerrainResult.DISABLED;
+                return WorldsTerrainResult.Disabled;
 
             if (!worldManifest.IsEmpty)
             {
                 worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels(), landscapeLoadReport);
-                return WorldsTerrainResult.GENERATED;
+                return WorldsTerrainResult.Generated;
             }
 
             var parcelsAmount = 0;
@@ -165,7 +165,7 @@ namespace Global.Dynamic.Landscapes
                 worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
 
-            return WorldsTerrainResult.GENERATED;
+            return WorldsTerrainResult.Generated;
         }
 
         private static bool IsLandscapeTerrainDisabledByScene(IReadOnlyList<SceneEntityDefinition> sceneDefinitions) =>
@@ -174,13 +174,13 @@ namespace Global.Dynamic.Landscapes
         private enum WorldsTerrainResult
         {
             /// <summary>Terrain was generated and is shown.</summary>
-            GENERATED,
+            Generated,
 
             /// <summary>Terrain is intentionally off: generator not initialized or the scene opted out via scene.json.</summary>
-            DISABLED,
+            Disabled,
 
             /// <summary>Scene definitions required to build the terrain could not be loaded.</summary>
-            UNAVAILABLE,
+            Unavailable,
         }
     }
 }

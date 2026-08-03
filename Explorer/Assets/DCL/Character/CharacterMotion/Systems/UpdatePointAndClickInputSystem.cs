@@ -217,7 +217,7 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings)
         {
             // Cancel when the player takes manual control
-            bool hasManualMovement = movementInput.Kind != MovementKind.IDLE
+            bool hasManualMovement = movementInput.Kind != MovementKind.Idle
                                      || movementInput.Axes != Vector2.zero;
 
             if (hasManualMovement)
@@ -235,7 +235,7 @@ namespace DCL.CharacterMotion.Systems
             if (xzDistance <= settings.PointAndClickArrivalDistance)
             {
                 movementInput.Axes = Vector2.zero;
-                movementInput.Kind = MovementKind.IDLE;
+                movementInput.Kind = MovementKind.Idle;
                 entitiesToCancelNavigation.Add(entity);
                 return;
             }
@@ -252,7 +252,7 @@ namespace DCL.CharacterMotion.Systems
                 if (xzMoved < settings.PointAndClickStuckMinMovement)
                 {
                     movementInput.Axes = Vector2.zero;
-                    movementInput.Kind = MovementKind.IDLE;
+                    movementInput.Kind = MovementKind.Idle;
                     entitiesToCancelNavigation.Add(entity);
                     return;
                 }
@@ -271,11 +271,11 @@ namespace DCL.CharacterMotion.Systems
 
             // Honour sprint/walk modifier keys the same way UpdateInputMovementSystem does
             if (sprintAction.IsPressed())
-                movementInput.Kind = MovementKind.RUN;
+                movementInput.Kind = MovementKind.Run;
             else if (walkAction.IsPressed())
-                movementInput.Kind = MovementKind.WALK;
+                movementInput.Kind = MovementKind.Walk;
             else
-                movementInput.Kind = MovementKind.JOG;
+                movementInput.Kind = MovementKind.Jog;
         }
     }
 }

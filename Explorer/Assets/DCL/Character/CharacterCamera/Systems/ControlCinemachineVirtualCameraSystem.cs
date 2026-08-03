@@ -59,7 +59,7 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(CameraBlockerComponent), typeof(InWorldCameraComponent))]
         private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
         {
-            if (cameraComponent.Mode == CameraMode.SDKCamera) return;
+            if (cameraComponent.Mode == CameraMode.SdkCamera) return;
 
             // this blocks the user of changing the current camera, but the SDK still can do it
             if (!cameraComponent.CameraInputChangeEnabled) return;
@@ -107,7 +107,7 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(InWorldCameraComponent))]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
-            if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson) || cursorComponent.CursorState == CursorState.LockedWithUI)
+            if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson) || cursorComponent.CursorState == CursorState.LockedWithUi)
                 return;
 
             ICinemachineThirdPersonCameraData cameraData = cameraComponent.Mode == CameraMode.ThirdPerson ? cinemachinePreset.ThirdPersonCameraData : cinemachinePreset.DroneViewCameraData;
@@ -148,7 +148,7 @@ namespace DCL.Character.CharacterCamera.Systems
         [None(typeof(InWorldCameraComponent))]
         private void UpdateCameraState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
-            if (cameraComponent.Mode == CameraMode.SDKCamera) return;
+            if (cameraComponent.Mode == CameraMode.SdkCamera) return;
 
             if (cameraComponent.Mode == CameraMode.FirstPerson)
                 cameraComponent.IsTransitioningToFirstPerson = cinemachinePreset.Brain.IsBlending;
@@ -158,7 +158,7 @@ namespace DCL.Character.CharacterCamera.Systems
 
         private void SwitchCamera(CameraMode targetCameraMode, ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
-            if (camera.PreviousMode != CameraMode.SDKCamera && IsCorrectCameraEnabled(targetCameraMode, cinemachinePreset))
+            if (camera.PreviousMode != CameraMode.SdkCamera && IsCorrectCameraEnabled(targetCameraMode, cinemachinePreset))
                 return;
 
             ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
@@ -194,7 +194,7 @@ namespace DCL.Character.CharacterCamera.Systems
                     SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
                     break;
                 case CameraMode.ThirdPerson:
-                    cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode != CameraMode.FirstPerson && camera.PreviousMode != CameraMode.SDKCamera;
+                    cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode != CameraMode.FirstPerson && camera.PreviousMode != CameraMode.SdkCamera;
                     if (camera.PreviousMode == CameraMode.FirstPerson)
                     {
                         cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
@@ -239,14 +239,14 @@ namespace DCL.Character.CharacterCamera.Systems
             if (targetCameraMode == CameraMode.Free)
             {
                 ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                inputMapComponent.UnblockInput(InputMapComponent.Kind.FREE_CAMERA);
-                inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
+                inputMapComponent.UnblockInput(InputMapComponent.Kind.FreeCamera);
+                inputMapComponent.BlockInput(InputMapComponent.Kind.Player);
             }
             else if (currentCameraMode == CameraMode.Free)
             {
                 ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
-                inputMapComponent.BlockInput(InputMapComponent.Kind.FREE_CAMERA);
+                inputMapComponent.UnblockInput(InputMapComponent.Kind.Player);
+                inputMapComponent.BlockInput(InputMapComponent.Kind.FreeCamera);
             }
         }
 

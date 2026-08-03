@@ -177,7 +177,7 @@ namespace DCL.Communities.CommunitiesBrowser
             var isStreaming = false;
             var hasJoined = false;
 
-            if (activeViewSection == ActiveViewSection.STREAMING)
+            if (activeViewSection == ActiveViewSection.Streaming)
             {
                 isStreaming = true;
                 hasJoined = browserStateService.CurrentCommunityId.Value == communityData.id;
@@ -251,10 +251,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public enum ActiveViewSection
         {
-            STREAMING,
-            ALL_COMMUNITIES,
-            SEARCH_COMMUNITIES,
-            MY_COMMUNITIES
+            Streaming,
+            AllCommunities,
+            SearchCommunities,
+            MyCommunities
         }
     }
 }

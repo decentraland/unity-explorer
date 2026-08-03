@@ -231,7 +231,7 @@ namespace DCL.Multiplayer.Movement
         {
             // Single session-wide source of truth for whether Pulse is the active transport.
             // Shared with the Pulse container, the LiveKit broadcaster, and the start-up operation that may deactivate it on fallback.
-            var pulseActivation = new PulseActivation(FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE));
+            var pulseActivation = new PulseActivation(FeaturesRegistry.Instance.IsEnabled(FeatureId.Pulse));
 
             PulseContainer pulseContainer = await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, realmData, pulseActivation, ct);
             var liveKitContainer = new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings, pulseActivation);

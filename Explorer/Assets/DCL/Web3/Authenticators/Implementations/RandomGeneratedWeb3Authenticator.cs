@@ -45,7 +45,7 @@ namespace DCL.Web3.Authenticators
                 ephemeralAccount,
                 expiration,
                 authChain,
-                IWeb3Identity.Web3IdentitySource.NONE
+                IWeb3Identity.Web3IdentitySource.None
             ).AsUniTaskResult<IWeb3Identity>();
         }
 

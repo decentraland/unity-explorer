@@ -28,8 +28,7 @@ namespace DCL.CharacterMotion
             if (isGrounded)
             {
                 jumpState.LastGroundedTick = physicsTick;
-                jumpState.JumpCount = 0;
-                jumpState.AirJumpDelay = float.MinValue;
+                jumpState.ResetJumps();
             }
 
             // Handle the air jumps delay first, in that state we can't do other jumps, we need to wait it out
@@ -130,10 +129,10 @@ namespace DCL.CharacterMotion
             float minJumpHeight = settings.JogJumpHeight;
             float maxJumpHeight = movementInput.Kind switch
                                   {
-                                      MovementKind.WALK => settings.JogJumpHeight,
-                                      MovementKind.JOG => settings.JogJumpHeight,
-                                      MovementKind.IDLE => settings.JogJumpHeight,
-                                      MovementKind.RUN => settings.RunJumpHeight,
+                                      MovementKind.Walk => settings.JogJumpHeight,
+                                      MovementKind.Jog => settings.JogJumpHeight,
+                                      MovementKind.Idle => settings.JogJumpHeight,
+                                      MovementKind.Run => settings.RunJumpHeight,
                                       _ => throw new ArgumentOutOfRangeException(),
                                   };
 

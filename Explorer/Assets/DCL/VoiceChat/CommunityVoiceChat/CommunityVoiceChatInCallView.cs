@@ -129,7 +129,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                                                                                          false, false), ct)
                                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                     EndStreamButtonCLicked?.Invoke();
                 }
@@ -184,8 +184,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void SetButtonsVisibility(bool isVisible, VoiceChatPanelSize size)
         {
-            bool showExpanded = isVisible && size is VoiceChatPanelSize.EXPANDED;
-            bool showCollapsed = isVisible && size is VoiceChatPanelSize.COLLAPSED;
+            bool showExpanded = isVisible && size is VoiceChatPanelSize.Expanded;
+            bool showCollapsed = isVisible && size is VoiceChatPanelSize.Collapsed;
 
             FooterPanel.SetActive(showExpanded);
             ExpandedPanelRightLayoutContainer.SetActive(showExpanded);

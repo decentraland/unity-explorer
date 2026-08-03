@@ -238,7 +238,7 @@ namespace Global.Dynamic
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
 
-            IUserBlockingCache userBlockingCache = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING)
+            IUserBlockingCache userBlockingCache = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking)
                 ? new UserBlockingCache(friendsEventBus)
                 : new NullUserBlockingCache();
 
@@ -288,7 +288,7 @@ namespace Global.Dynamic
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
 
-            CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
+            CommunitiesContainer communitiesContainer = CommunitiesContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
@@ -320,10 +320,10 @@ namespace Global.Dynamic
             // Deferred: CommunityDataService needs chat history (only available now) but is owned by CommunitiesContainer.
             CommunityDataService communitiesDataService = communitiesContainer.CreateDataService(chatContainer.ChatHistory, uiShellContainer.MvcManager, identityCache);
 
-            bool includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
-            bool includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            bool includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
-            bool includeBannedUsersFromScene = FeaturesRegistry.Instance.IsEnabled(FeatureId.BANNED_USERS_FROM_SCENE);
+            bool includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
+            bool includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends);
+            bool includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MarketplaceCredits);
+            bool includeBannedUsersFromScene = FeaturesRegistry.Instance.IsEnabled(FeatureId.BannedUsersFromScene);
 
             var moderationDataProvider = new ModerationDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
@@ -436,10 +436,9 @@ namespace Global.Dynamic
                 marketplaceCreditsAPIClient,
                 new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig),
                 new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
-                creditsChainConfig,
+                new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
                 identityCache,
-                dynamicWorldDependencies.CompositeWeb3Provider,
-                FeaturesRegistry.Instance.IsEnabled(FeatureId.CREDITS_WEARABLE_PURCHASE) && FeaturesRegistry.Instance.IsEnabled(FeatureId.USER_CREDITS));
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits));
             var cameraReelContainer = CameraReelContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache.Identity?.Address);
 
             var userCalendar = new GoogleUserCalendar(webBrowser);
@@ -678,7 +677,7 @@ namespace Global.Dynamic
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearableContainer.WearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, uiShellContainer.MvcManager, profileContainer.SelfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearableContainer.WearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileContainer.ProfileChangesBus, profilesRepository, donationsService),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
                 new LoadingScreenPlugin(assetsProvisioner, uiShellContainer.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
@@ -695,7 +694,17 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     uiShellContainer.MvcManager,
                     uiShellContainer.Cursor,
-                    realmUrl => chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API)),
+                    (realmUrl, position) =>
+                    {
+                        // With a target parcel: teleport with the typed position (works for URL realms too).
+                        // Without one: keep the existing chat-command route so the switch surfaces in nearby chat.
+                        if (position.HasValue)
+                            // TODO: surface the teleport result (chat bus / notification) like the no-position path below,
+                            // and plumb a real cancellation token instead of None (composition-root fire-and-forget for now).
+                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, CancellationToken.None).Forget();
+                        else
+                            chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RestrictedActionApi);
+                    }),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, uiShellContainer.MvcManager, nftInfoAPIClient, staticContainer.ImageControllerProvider, uiShellContainer.Cursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
@@ -751,7 +760,8 @@ namespace Global.Dynamic
                     creditsPurchaseService,
                     marketplaceCreditsAPIClient,
                     identityCache,
-                    webBrowser),
+                    webBrowser,
+                    staticContainer.ImageControllerProvider),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
@@ -789,7 +799,7 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.CompositeWeb3Provider));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.StopOnDuplicateIdentity))
                 globalPlugins.Add(new DuplicateIdentityPlugin(commsContainer.RoomHub, uiShellContainer.MvcManager, assetsProvisioner));
 
             // No comms/internet popup while developing against a local scene.
@@ -802,7 +812,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
                 globalPlugins.Add(
                     new VoiceChatPlugin(
                         commsContainer.RoomHub,
@@ -840,10 +850,10 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
                 globalPlugins.Add(new McpServerPlugin(
                     appArgs,
-                    new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS)),
+                    new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
                     chatContainer.ChatMessagesBus,
                     staticContainer.ScenesCache,
                     commsContainer.CurrentSceneInfo,
@@ -857,7 +867,7 @@ namespace Global.Dynamic
                     globalWorld,
                     localSceneDevelopment));
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -1015,6 +1025,7 @@ namespace Global.Dynamic
                 staticContainer.SceneReadinessReportQueue,
                 profilesRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
+                bootstrapContainer.UseLocalAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 bootstrapContainer.Analytics.EntitiesAnalytics,

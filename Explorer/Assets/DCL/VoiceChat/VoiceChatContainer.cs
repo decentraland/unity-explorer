@@ -48,14 +48,14 @@ namespace DCL.VoiceChat
             ICommunityDataService communityDataService)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus, identityCache);
-            privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)
+            privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)
                 ? new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService) : new PrivateVoiceChatCallStatusServiceNull();
 
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
 
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController, urlsSource, identityCache);
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(scenesCache, realmNavigator, realmData);
-            communityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)
+            communityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat)
                 ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
             VoiceChatOrchestrator = new VoiceChatOrchestrator(
                 privateVoiceChatCallStatusService,
@@ -67,17 +67,17 @@ namespace DCL.VoiceChat
 
             JoinedCommunitiesVoiceLiveTracker = new JoinedCommunitiesVoiceLiveTracker(VoiceChatOrchestrator, communityDataService);
 
-            NearbyMuteService = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
+            NearbyMuteService = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat)
                 ? new NearbyMuteService(
                     new NearbyMuteCache(),
                     new RestNearbyMuteRepository(webRequestController, urlsSource))
                 : null;
 
-            NearbyStateModel = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
+            NearbyStateModel = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat)
                 ? new NearbyVoiceChatStateModel(
                     DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
-                        ? NearbyVoiceChatState.DISABLED
-                        : NearbyVoiceChatState.IDLE)
+                        ? NearbyVoiceChatState.Disabled
+                        : NearbyVoiceChatState.Idle)
                 : null;
         }
 

@@ -334,7 +334,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new RandomAvatar());
 
                 if (hasEmote)
-                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.SELF });
+                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.Self });
             }
             else
             {
@@ -366,7 +366,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 );
 
                 if (hasEmote)
-                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.SELF });
+                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.Self });
             }
         }
 

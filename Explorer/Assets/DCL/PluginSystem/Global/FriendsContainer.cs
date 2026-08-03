@@ -99,7 +99,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
-            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
+            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking);
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
             this.injectedUserBlockingCache = injectedUserBlockingCache;
@@ -113,8 +113,8 @@ namespace DCL.PluginSystem.Global
             friendsConnectivityStatusTracker = friendsServices.ConnectivityStatusTracker;
 
             this.socialServiceEventBus.TransportClosed += OnTransportClosed;
-            this.isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS);
-            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
+            this.isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsConnectivityStatus);
+            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking);
 
             friendsPanelController = new FriendsPanelController(() =>
                 {

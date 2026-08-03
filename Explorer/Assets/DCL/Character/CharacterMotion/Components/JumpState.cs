@@ -32,5 +32,14 @@
 
         public readonly bool IsCoyoteTimeActive(int currentTick, int coyoteTimeTickCount) =>
             currentTick - LastGroundedTick < coyoteTimeTickCount;
+
+        /// <summary>
+        ///     Restores the jump budget: clears the jump counter and cancels any pending air jump.
+        /// </summary>
+        public void ResetJumps()
+        {
+            JumpCount = 0;
+            AirJumpDelay = float.MinValue;
+        }
     }
 }

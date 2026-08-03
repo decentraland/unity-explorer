@@ -64,7 +64,7 @@ namespace DCL.UI.Profiles
             systemSectionPresenter.OnClosed += OnClose;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override void OnViewShow()
         {

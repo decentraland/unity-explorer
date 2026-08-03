@@ -186,6 +186,18 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `login-bridge-only`
+**Description:** Forces the dapp deep-link login to complete through the deep-link bridge only, by appending `&bridgeOnly` to the auth website URL. Without it, confirming the login on the website can make the launcher spawn a second Explorer instance. See [issue #9524](https://github.com/decentraland/unity-explorer/issues/9524).
+
+Only affects player builds — the Editor always behaves as if the flag were set.
+
+**Usage:**
+```bash
+--login-bridge-only
+```
+
+---
+
 ## Avatar & Profile Flags
 
 ### `self-force-emotes`
@@ -354,17 +366,6 @@ decentraland://?force-open-backpack=true
 **Usage:**
 ```bash
 --launch-cdp-monitor-on-start
-```
-
----
-
-### `creator-hub-bin-path`
-**Type:** String (file path)
-**Description:** Specifies a custom path to the Creator Hub binary. Used when the Creator Hub needs to be launched from a non-standard location.
-
-**Usage:**
-```bash
---creator-hub-bin-path /path/to/creator-hub
 ```
 
 ---

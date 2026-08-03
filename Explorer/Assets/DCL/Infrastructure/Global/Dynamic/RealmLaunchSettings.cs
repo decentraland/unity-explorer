@@ -1,4 +1,6 @@
+using DCL.Browser;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System;
@@ -18,6 +20,13 @@ namespace Global.Dynamic
     [Serializable]
     public class RealmLaunchSettings : ILaunchMode
     {
+        /// <summary>
+        ///     Path under the local-scene-development realm where the preview server proxies its abgen sidecar
+        ///     (decentraland/js-sdk-toolchain#1504) — the client derives the optimized-assets base from the realm
+        ///     origin it already has instead of being told a second origin.
+        /// </summary>
+        public const string OPTIMIZED_ASSETS_PATH = "/optimized-assets";
+
         [Serializable]
         public struct PredefinedScenes
         {
@@ -34,6 +43,9 @@ namespace Global.Dynamic
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles;
+        [SerializeField] [Tooltip("Local scene development only: load the scene's asset bundles from the preview server instead of loading "
+                                  + "raw GLTFs. The assets base is derived from the realm ({realm}" + OPTIMIZED_ASSETS_PATH + "); "
+                                  + "an explicit --optimized-assets-url overrides it")] internal bool useLocalAssetBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
@@ -75,7 +87,7 @@ namespace Global.Dynamic
             {
                 return new HybridSceneParams
                 {
-                    EnableHybridScene = useRemoteAssetsBundles,
+                    EnableHybridScene = useRemoteAssetsBundles && !useLocalAssetBundles,
                     HybridSceneContentServer = remoteHybridSceneContentServer,
                     World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World)
                         ? remoteHibridWorld
@@ -84,6 +96,23 @@ namespace Global.Dynamic
             }
 
             return new HybridSceneParams();
+        }
+
+        /// <summary>
+        ///     Base URL for local asset bundles: the local-scene-development realm plus
+        ///     <see cref="OPTIMIZED_ASSETS_PATH" />. No value other than the realm itself — which the deep-link
+        ///     allowlist already gates on being loopback — feeds the result, so a deep link cannot point it
+        ///     anywhere the realm doesn't already reach. Null outside local scene development.
+        /// </summary>
+        public string? LocalAssetBundlesBaseUrl()
+        {
+            if (isLocalSceneDevelopmentRealm)
+                return customRealm.TrimEnd('/') + OPTIMIZED_ASSETS_PATH;
+
+            if (initialRealm == InitialRealm.Localhost)
+                return IRealmNavigator.LOCALHOST + OPTIMIZED_ASSETS_PATH;
+
+            return null;
         }
 
         public void ApplyConfig(IAppArgs applicationParameters)
@@ -104,11 +133,24 @@ namespace Global.Dynamic
 
             bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string? localSceneParamValue)
                                            && ParseLocalSceneParameter(localSceneParamValue!)
-                                           && IsRealmAValidUrl(realmParamValue);
+                                           && ExternalUrlPolicy.IsWebScheme(realmParamValue);
 
             if (isLocalSceneDevelopment)
             {
-                SetLocalSceneDevelopmentRealm(realmParamValue, appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles);
+                // The serialized checkbox is an Editor convenience only: player builds opt in
+                // exclusively through the app arg, so a box ticked (and accidentally committed)
+                // in the scene asset cannot ship enabled.
+                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || (Application.isEditor && useLocalAssetBundles);
+                bool useRemoteAB = appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles;
+
+                if (useLocalAB && useRemoteAB)
+                {
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"Both '{AppArgsFlags.LOCAL_AB}' and '{AppArgsFlags.LSD_USE_REMOTE_AB}' were provided: local asset bundles take precedence");
+                    useRemoteAB = false;
+                }
+
+                useLocalAssetBundles = useLocalAB;
+                SetLocalSceneDevelopmentRealm(realmParamValue, useRemoteAB);
 
                 if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_SERVER, out string? serverValue))
                     ParseLsdRemoteABServer(serverValue!);
@@ -173,10 +215,6 @@ namespace Global.Dynamic
 
         private bool IsRealmAWorld(string realmParam) =>
             realmParam.IsEns();
-
-        private bool IsRealmAValidUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
-            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {

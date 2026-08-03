@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public bool IsSceneRoomSettled(string sceneId)
             {
                 // States in which the room will never connect must not hold callers waiting
-                if (!Activated || origin.options.IsCommsOffline || AttemptToConnectState is AttemptToConnectState.FORBIDDEN_ACCESS)
+                if (!Activated || origin.options.IsCommsOffline || AttemptToConnectState is AttemptToConnectState.ForbiddenAccess)
                     return true;
 
                 return IsSceneConnected(sceneId);
@@ -116,7 +116,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         }
 
         protected override RoomSelection SelectValidRoom() =>
-            options.SceneRoomMetaDataSource.GetMetadataInput().Equals(currentMetaData.GetValueOrDefault()) ? RoomSelection.PREVIOUS : RoomSelection.NEW;
+            options.SceneRoomMetaDataSource.GetMetadataInput().Equals(currentMetaData.GetValueOrDefault()) ? RoomSelection.Previous : RoomSelection.New;
 
         protected override UniTask PrewarmAsync(CancellationToken token) =>
             UniTask.CompletedTask;
@@ -125,7 +125,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         {
             if (options.IsCommsOffline)
             {
-                if (AttemptToConnectState is not AttemptToConnectState.NO_CONNECTION_REQUIRED)
+                if (AttemptToConnectState is not AttemptToConnectState.NoConnectionRequired)
                     SetNoConnectionRequired();
                 return;
             }
@@ -179,7 +179,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
                         CurrentSceneRoomConnected?.Invoke();
 
-                        if (roomSelection == RoomSelection.NEW)
+                        if (roomSelection == RoomSelection.New)
                             currentMetaData = meta;
                     }
 

@@ -154,7 +154,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void ResetScale(IPinMarker.ScaleType type)
         {
-            currentTargetScale = type == IPinMarker.ScaleType.MINIMAP ? MINIMAP_PIN_MIN_SCALE : NAVMAP_PIN_MIN_SCALE;
+            currentTargetScale = type == IPinMarker.ScaleType.Minimap ? MINIMAP_PIN_MIN_SCALE : NAVMAP_PIN_MIN_SCALE;
             poolablePin.instance?.SetScale(currentTargetScale);
         }
 

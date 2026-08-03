@@ -5,25 +5,25 @@ namespace DCL.VoiceChat
 {
     public enum VoiceChatType
     {
-        NONE,
-        PRIVATE,
-        COMMUNITY,
-        NEARBY,
+        None,
+        Private,
+        Community,
+        Nearby,
     }
 
     public enum VoiceChatPanelSize
     {
-        COLLAPSED,
-        EXPANDED,
+        Collapsed,
+        Expanded,
     }
 
     public enum VoiceChatPanelState
     {
-        SELECTED, //When the user clicked on the panel
-        FOCUSED, //When the user hovers over the panel/chat or clicks on the chat
-        UNFOCUSED, //When the user deselects the panel AND unhovers from the panel/chat
-        HIDDEN,
-        NONE,
+        Selected, //When the user clicked on the panel
+        Focused, //When the user hovers over the panel/chat or clicks on the chat
+        Unfocused, //When the user deselects the panel AND unhovers from the panel/chat
+        Hidden,
+        None,
     }
 
     /// <summary>

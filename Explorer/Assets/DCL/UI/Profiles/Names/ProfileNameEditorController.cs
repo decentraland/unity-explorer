@@ -26,7 +26,7 @@ namespace DCL.UI.ProfileNames
         private CancellationTokenSource? saveCancellationToken;
         private CancellationTokenSource? setupCancellationToken;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action? NameChanged;
         public event Action? NameClaimRequested;

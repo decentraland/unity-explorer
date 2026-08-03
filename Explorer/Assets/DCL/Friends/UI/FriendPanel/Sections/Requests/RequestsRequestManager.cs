@@ -33,7 +33,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             ProfileRepositoryWrapper profileDataProvider,
             int pageSize,
             LoopListView2 loopListView)
-            : base(friendsService, friendEventBus, profileDataProvider, loopListView, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
+            : base(friendsService, friendEventBus, profileDataProvider, loopListView, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.Received, FriendPanelStatus.Sent, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
         {
             this.loopListView = loopListView;
 
@@ -135,7 +135,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             elementView.ParentStatus = section;
 
-            if (section != FriendPanelStatus.SENT)
+            if (section != FriendPanelStatus.Sent)
             {
                 elementView.DeleteButton.onClick.RemoveAllListeners();
                 elementView.DeleteButton.onClick.AddListener(() => DeleteRequestClicked?.Invoke(receivedRequests[collectionIndex]));
@@ -150,13 +150,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             }
 
             elementView.SafelyResetMainButtonListeners();
-            elementView.MainButton.onClick.AddListener(() => RequestClicked?.Invoke(section == FriendPanelStatus.SENT ? sentRequests[collectionIndex] : receivedRequests[collectionIndex]));
+            elementView.MainButton.onClick.AddListener(() => RequestClicked?.Invoke(section == FriendPanelStatus.Sent ? sentRequests[collectionIndex] : receivedRequests[collectionIndex]));
 
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
             thumbnailContextMenuActions[elementView.UserProfile.Address.ToString()] = () => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView);
 
-            FriendRequest request = section == FriendPanelStatus.RECEIVED ? receivedRequests[collectionIndex] : sentRequests[collectionIndex];
+            FriendRequest request = section == FriendPanelStatus.Received ? receivedRequests[collectionIndex] : sentRequests[collectionIndex];
             elementView.RequestDate = request.Timestamp;
             elementView.HasMessageIndicator.SetActive(!string.IsNullOrEmpty(request.MessageBody));
         }

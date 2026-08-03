@@ -59,8 +59,8 @@ namespace DCL.Landscape.Config
 
     public enum NoiseType
     {
-        PERLIN,
-        SIMPLEX,
-        CELLULAR,
+        Perlin,
+        Simplex,
+        Cellular,
     }
 }

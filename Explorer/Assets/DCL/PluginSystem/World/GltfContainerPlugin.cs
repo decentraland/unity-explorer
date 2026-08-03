@@ -41,6 +41,7 @@ namespace DCL.PluginSystem.World
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILaunchMode launchMode;
         private readonly bool useRemoteAssetBundles;
+        private readonly bool useLocalAssetBundles;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
@@ -56,6 +57,7 @@ namespace DCL.PluginSystem.World
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILaunchMode launchMode,
             bool useRemoteAssetBundles,
+            bool useLocalAssetBundles,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
@@ -66,6 +68,7 @@ namespace DCL.PluginSystem.World
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.launchMode = launchMode;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
+            this.useLocalAssetBundles = useLocalAssetBundles;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
@@ -107,6 +110,7 @@ namespace DCL.PluginSystem.World
                 {
                     LocalSceneDevelopment = localSceneDevelopment,
                     UseRemoteAssetBundles = useRemoteAssetBundles,
+                    UseLocalAssetBundles = useLocalAssetBundles,
                     PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                 });
 
@@ -120,10 +124,10 @@ namespace DCL.PluginSystem.World
 
             // GLTF Container
             // Bridge GLTF cache keying to the AB layer without leaking AB symbols into LoadGltfContainerSystem:
-            // when the scene's manifest has a deps digest for the hash, the key becomes "hash@digest", else the bare hash.
+            // when the scene's manifest knows the hash, the key becomes the canonical CDN file name, else the bare hash.
             var sceneData = sharedDependencies.SceneData;
             LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sceneData, sharedDependencies.EntityCollidersSceneCache,
-                hash => sceneData.SceneEntityDefinition.assetBundleManifestVersion.ComposeCacheKey(hash));
+                hash => sceneData.SceneEntityDefinition.AssetBundleManifestVersionOrFailed.ComposeCacheKey(hash));
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 

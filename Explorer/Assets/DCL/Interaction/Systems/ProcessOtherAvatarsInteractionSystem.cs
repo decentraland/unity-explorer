@@ -60,7 +60,7 @@ namespace DCL.Interaction.Systems
             this.mvcManager = mvcManager;
             this.cameraEntityProxy = cameraEntityProxy;
 
-            useContextMenu = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_CONTEXT_MENU);
+            useContextMenu = FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarContextMenu);
 
             if (useContextMenu)
             {
@@ -168,7 +168,7 @@ namespace DCL.Interaction.Systems
                 new Vector2(50, 0),
                 disposeCts.Token,
                 contextMenuTask.Task,
-                anchorPoint: MenuAnchorPoint.CENTER_RIGHT,
+                anchorPoint: MenuAnchorPoint.CenterRight,
                 isOpenedOnWorldAvatar: true,
                 onHide: OnContextMenuClosed).Forget();
         }

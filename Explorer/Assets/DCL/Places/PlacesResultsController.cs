@@ -56,7 +56,7 @@ namespace DCL.Places
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
-        private PlacesSection sectionOpenedBeforeSearching = PlacesSection.BROWSE;
+        private PlacesSection sectionOpenedBeforeSearching = PlacesSection.Browse;
         private bool allFriendsLoaded;
         private bool liveEventsLoaded;
 
@@ -137,7 +137,7 @@ namespace DCL.Places
             placesController.OpenSection(sectionOpenedBeforeSearching, force: true);
 
         private void OnExplorePlacesClicked() =>
-            placesController.OpenSection(PlacesSection.BROWSE, force: true, resetCategory: true);
+            placesController.OpenSection(PlacesSection.Browse, force: true, resetCategory: true);
 
         private void GetANameClicked() =>
             webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
@@ -203,8 +203,8 @@ namespace DCL.Places
             if (!string.IsNullOrEmpty(currentFilters.SearchText))
             {
                 sectionOpenedBeforeSearching = currentFilters.Section!.Value;
-                placesController.OpenSection(PlacesSection.BROWSE, invokeEvent: false, cleanSearch: false);
-                sectionToLoad = PlacesSection.BROWSE;
+                placesController.OpenSection(PlacesSection.Browse, invokeEvent: false, cleanSearch: false);
+                sectionToLoad = PlacesSection.Browse;
             }
 
             loadPlacesCts = loadPlacesCts.SafeRestart();
@@ -220,20 +220,20 @@ namespace DCL.Places
                 placesStateService.ClearPlaces();
                 view.ClearPlacesResults(currentFilters.Section);
                 view.SetPlacesGridAsLoading(true);
-                view.SetPlacesCounterActive(currentFilters.Section != PlacesSection.BROWSE || !string.IsNullOrEmpty(currentFilters.SearchText));
+                view.SetPlacesCounterActive(currentFilters.Section != PlacesSection.Browse || !string.IsNullOrEmpty(currentFilters.SearchText));
 
                 if (!string.IsNullOrEmpty(currentFilters.SearchText))
                     view.SetPlacesCounter(string.Format(SEARCH_COUNTER_TITLE, currentFilters.SearchText, string.Empty), showBackButton: true);
                 else
                     switch (currentFilters.Section)
                     {
-                        case PlacesSection.RECENTLY_VISITED:
+                        case PlacesSection.RecentlyVisited:
                             view.SetPlacesCounter(string.Format(RECENT_VISITED_COUNTER_TITLE, string.Empty));
                             break;
-                        case PlacesSection.FAVORITES:
+                        case PlacesSection.Favorites:
                             view.SetPlacesCounter(string.Format(FAVORITES_COUNTER_TITLE, string.Empty));
                             break;
-                        case PlacesSection.MY_PLACES:
+                        case PlacesSection.MyPlaces:
                             view.SetPlacesCounter(string.Format(MY_PLACES_COUNTER_TITLE, string.Empty));
                             break;
                     }
@@ -286,11 +286,11 @@ namespace DCL.Places
 
             switch (section)
             {
-                case PlacesSection.BROWSE:
+                case PlacesSection.Browse:
                     placesResult = await placesAPIService.SearchDestinationsAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
-                                                              sortBy: currentFilters.Section == PlacesSection.BROWSE ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
+                                                              sortBy: currentFilters.Section == PlacesSection.Browse ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                               category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
                                                               withConnectedUsers: true,
@@ -298,7 +298,7 @@ namespace DCL.Places
                                                               withLiveEvents: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
-                case PlacesSection.FAVORITES:
+                case PlacesSection.Favorites:
                     placesResult = await placesAPIService.GetFavoritesDestinationsAsync(
                                                               ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
                                                               sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
@@ -307,7 +307,7 @@ namespace DCL.Places
                                                               withLiveEvents: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
-                case PlacesSection.MY_PLACES:
+                case PlacesSection.MyPlaces:
                     Profile? ownProfile = await selfProfile.ProfileAsync(ct);
                     if (ownProfile == null) return;
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
@@ -318,7 +318,7 @@ namespace DCL.Places
                                                               withLiveEvents: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
-                case PlacesSection.RECENTLY_VISITED:
+                case PlacesSection.RecentlyVisited:
                     var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
                     var placesByIdResult = await placesAPIService.GetDestinationsByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
@@ -362,13 +362,13 @@ namespace DCL.Places
             {
                 switch (currentFilters.Section)
                 {
-                    case PlacesSection.RECENTLY_VISITED:
+                    case PlacesSection.RecentlyVisited:
                         view.SetPlacesCounter(string.Format(RECENT_VISITED_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
-                    case PlacesSection.FAVORITES:
+                    case PlacesSection.Favorites:
                         view.SetPlacesCounter(string.Format(FAVORITES_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
-                    case PlacesSection.MY_PLACES:
+                    case PlacesSection.MyPlaces:
                         view.SetPlacesCounter(string.Format(MY_PLACES_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
                 }

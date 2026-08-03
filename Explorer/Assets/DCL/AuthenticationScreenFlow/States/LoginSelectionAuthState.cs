@@ -24,11 +24,14 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly bool enableEmailOTP;
+        private readonly bool otherLoginMethodsEnabled;
 
         public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState, SplashScreen splashScreen,
-            ICompositeWeb3Provider compositeWeb3Provider, UnityAppWebBrowser webBrowser, bool enableEmailOTP) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider, UnityAppWebBrowser webBrowser,
+            bool enableEmailOTP,
+            bool otherLoginMethodsEnabled) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionAuthView;
 
@@ -39,6 +42,7 @@ namespace DCL.AuthenticationScreenFlow
             this.compositeWeb3Provider = compositeWeb3Provider;
             this.webBrowser = webBrowser;
             this.enableEmailOTP = enableEmailOTP;
+            this.otherLoginMethodsEnabled = otherLoginMethodsEnabled;
 
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
@@ -114,14 +118,14 @@ namespace DCL.AuthenticationScreenFlow
         {
             switch (errorType)
             {
-                case ErrorType.NONE: break;
-                case ErrorType.CONNECTION_ERROR:
+                case ErrorType.None: break;
+                case ErrorType.ConnectionError:
                     view.ErrorPopupRoot.SetActive(true);
                     break;
-                case ErrorType.RESTRICTED_USER:
+                case ErrorType.RestrictedUser:
                     view.RestrictedUserContainer.SetActive(true);
                     break;
-                case ErrorType.INVALID_EMAIL:
+                case ErrorType.InvalidEmail:
                     view.SetEmailInputFieldErrorState(true);
                     Enter();
                     return;
@@ -136,7 +140,7 @@ namespace DCL.AuthenticationScreenFlow
             if (splashScreen != null) // it can be destroyed after first login
                 splashScreen.FadeOutAndHide();
 
-            view.Show(animHash, moreOptionsExpanded: !enableEmailOTP);
+            view.Show(animHash, moreOptionsExpanded: !enableEmailOTP, otherLoginMethodsEnabled);
             Enter();
         }
 
@@ -207,9 +211,9 @@ namespace DCL.AuthenticationScreenFlow
 
     public enum ErrorType
     {
-        NONE = 0,
-        CONNECTION_ERROR = 1,
-        RESTRICTED_USER = 2,
-        INVALID_EMAIL = 3,
+        None = 0,
+        ConnectionError = 1,
+        RestrictedUser = 2,
+        InvalidEmail = 3,
     }
 }

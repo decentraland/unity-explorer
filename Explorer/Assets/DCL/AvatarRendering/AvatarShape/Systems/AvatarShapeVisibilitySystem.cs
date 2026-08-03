@@ -145,7 +145,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             bool isBlocked = userBlockingCache.UserIsBlocked(avatarShapeComponent.ID);
 
-            SetHiddenComponent(entity, isBlocked, HiddenPlayerComponent.HiddenReason.BLOCKED);
+            SetHiddenComponent(entity, isBlocked, HiddenPlayerComponent.HiddenReason.Blocked);
         }
 
         [Query]
@@ -156,7 +156,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             bool isBanned = RoomMetadataCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
 
-            SetHiddenComponent(entity, isBanned, HiddenPlayerComponent.HiddenReason.BANNED);
+            SetHiddenComponent(entity, isBanned, HiddenPlayerComponent.HiddenReason.Banned);
         }
 
         private void SetHiddenComponent(Entity entity, bool hiddenValue, HiddenPlayerComponent.HiddenReason hiddenReason)

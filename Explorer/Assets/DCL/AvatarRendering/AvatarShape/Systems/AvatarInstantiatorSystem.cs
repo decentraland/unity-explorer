@@ -85,8 +85,8 @@ namespace DCL.AvatarRendering.AvatarShape
             for (var i = 0; i < facialFeaturesTexturesByBodyShapeCopy.Length; i++)
                 facialFeaturesTexturesByBodyShapeCopy[i] = new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>());
 
-            pointAtFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
-            headSyncFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
+            pointAtFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PointAt);
+            headSyncFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HeadSync);
         }
 
         protected override void OnDispose()

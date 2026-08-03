@@ -198,7 +198,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var intent = world.Get<CharacterEmoteIntent>(playerEntity);
             Assert.AreEqual(emoteUrn, intent.EmoteId);
             Assert.IsTrue(intent.Spatial);
-            Assert.AreEqual(TriggerSource.SCENE, intent.TriggerSource);
+            Assert.AreEqual(TriggerSource.Scene, intent.TriggerSource);
         }
 
         [Test]

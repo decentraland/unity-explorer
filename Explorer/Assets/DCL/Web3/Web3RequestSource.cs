@@ -8,7 +8,7 @@ namespace DCL.Web3
         /// <summary>
         ///     Request comes from an SDK scene (external).
         /// </summary>
-        SDKScene,
+        SdkScene,
 
         /// <summary>
         ///     Request comes from internal Explorer features (Gifting, Donations, etc.).

@@ -367,10 +367,10 @@ namespace DCL.PluginSystem.Global
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover))
                 dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel))
                 dclInput.Shortcuts.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
 
             var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider, selfProfile);
@@ -584,12 +584,12 @@ namespace DCL.PluginSystem.Global
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
 
-            bool userCreditsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.USER_CREDITS);
+            bool userCreditsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
             explorePanelView.CreditsPanelView.gameObject.SetActive(userCreditsEnabled);
 
             if (userCreditsEnabled)
                 creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
-                    topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CREDITS_TOPUP),
+                    topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
                     openTopUpPanel: () => mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD))).Forget());
 
             explorePanelController = new
@@ -621,7 +621,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(explorePanelController);
 
-            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true);
+            bool isCommunitiesFeatureEnabled = CommunitiesFeatureAccess.Instance.IsFeatureEnabled();
 
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;

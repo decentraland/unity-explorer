@@ -71,7 +71,7 @@ namespace DCL.McpServer.Systems
                 if (hasMovement)
                 {
                     movement.Axes = Vector2.zero;
-                    movement.Kind = MovementKind.IDLE;
+                    movement.Kind = MovementKind.Idle;
                 }
 
                 // The override is copied out before the structural removal; no component refs are touched afterwards.

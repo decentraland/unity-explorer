@@ -24,10 +24,10 @@ namespace DCL.Donations.UI
         private static readonly URN EMOTE_MONEY_URN = new ("money");
         private static readonly InputMapComponent.Kind[] BLOCKED_INPUTS =
         {
-            InputMapComponent.Kind.PLAYER,
-            InputMapComponent.Kind.SHORTCUTS,
-            InputMapComponent.Kind.CAMERA,
-            InputMapComponent.Kind.IN_WORLD_CAMERA,
+            InputMapComponent.Kind.Player,
+            InputMapComponent.Kind.Shortcuts,
+            InputMapComponent.Kind.Camera,
+            InputMapComponent.Kind.InWorldCamera,
         };
 
         private readonly IDonationsService donationsService;
@@ -43,7 +43,7 @@ namespace DCL.Donations.UI
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public DonationsPanelController(ViewFactoryMethod viewFactory,
             IDonationsService donationsService,
@@ -134,7 +134,7 @@ namespace DCL.Donations.UI
             {
                 EmoteId = emoteUrn,
                 Spatial = true,
-                TriggerSource = TriggerSource.SELF
+                TriggerSource = TriggerSource.Self
             });
         }
 
@@ -165,7 +165,7 @@ namespace DCL.Donations.UI
                 }
 
                 (Profile.CompactInfo? creatorProfile, decimal currentBalance, decimal manaPriceUsd, string sceneName) =
-                    await UniTask.WhenAll(profileRepository.GetCompactAsync(creatorAddress, ct, batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET),
+                    await UniTask.WhenAll(profileRepository.GetCompactAsync(creatorAddress, ct, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet),
                         donationsService.GetCurrentBalanceAsync(ct),
                         donationsService.GetCurrentManaConversionAsync(ct),
                         donationsService.GetSceneNameAsync(baseParcel, ct));

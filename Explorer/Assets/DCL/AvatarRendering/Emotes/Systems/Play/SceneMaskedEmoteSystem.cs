@@ -198,7 +198,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                                      && ec.CurrentEmoteReference != null;
 
             bool isGliding = globalWorld.TryGet(globalPlayerEntity, out GlideState glideState)
-                             && glideState.Value is GlideStateValue.OPENING_PROP or GlideStateValue.GLIDING;
+                             && glideState.Value is GlideStateValue.OpeningProp or GlideStateValue.Gliding;
 
             bool shouldPlay = isInScene && !fullBodyIsPlaying && !isGliding;
 

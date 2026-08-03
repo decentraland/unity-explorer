@@ -50,8 +50,8 @@ namespace DCL.CharacterMotion.Systems
             bool isNormalJump = jumpState.JumpCount == 0;
 
             bool disableJump = inputModifierComponent.DisableJump;
-            bool disableDoubleJump = inputModifierComponent.DisableDoubleJump || !FeaturesRegistry.Instance.IsEnabled(FeatureId.DOUBLE_JUMP);
-            bool disableGliding = inputModifierComponent.DisableGliding || !FeaturesRegistry.Instance.IsEnabled(FeatureId.GLIDING);
+            bool disableDoubleJump = inputModifierComponent.DisableDoubleJump || !FeaturesRegistry.Instance.IsEnabled(FeatureId.DoubleJump);
+            bool disableGliding = inputModifierComponent.DisableGliding || !FeaturesRegistry.Instance.IsEnabled(FeatureId.Gliding);
 
             if (disableJump && isNormalJump)
                 // Trying to do a normal (ground) jump but jumping is disabled.

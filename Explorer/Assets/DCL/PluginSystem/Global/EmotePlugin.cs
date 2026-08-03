@@ -114,7 +114,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
-            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
             this.entitiesAnalytics = entitiesAnalytics;

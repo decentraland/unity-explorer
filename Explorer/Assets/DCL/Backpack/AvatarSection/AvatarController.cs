@@ -65,7 +65,7 @@ namespace DCL.Backpack
                 outfitsPresenter,
                 (RectTransform) view.transform);
 
-            bool isOutfitsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BACKPACK_OUTFITS);
+            bool isOutfitsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BackpackOutfits);
             if (!isOutfitsEnabled)
                 tabsManager.SetTabEnabled(AvatarSubSection.Outfits, false);
 

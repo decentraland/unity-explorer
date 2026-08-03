@@ -145,15 +145,15 @@ namespace DCL.Browser
             if (!enabled || serviceUrl.Url == null || !SUPPORTED_URLS.Contains(decentralandUrl))
                 return serviceUrl;
 
-            // FEATURE_FLAGS_DEPENDENT from base.RawUrl() signals a consolidated / optimized-assets URL that
+            // FeatureFlagsDependent from base.RawUrl() signals a consolidated / optimized-assets URL that
             // must NOT be gateway-rewritten (it resolves to its own origin). If a future URL legitimately
-            // needs FEATURE_FLAGS_DEPENDENT caching AND gateway routing, give UrlData a dedicated skipGateway
+            // needs FeatureFlagsDependent caching AND gateway routing, give UrlData a dedicated skipGateway
             // field instead of widening this guard. Custom hosts also pass through untouched.
-            if (serviceUrl.Caching == CacheBehaviour.FEATURE_FLAGS_DEPENDENT || !IsGatewayTransformable(serviceUrl.Url))
+            if (serviceUrl.Caching == CacheBehaviour.FeatureFlagsDependent || !IsGatewayTransformable(serviceUrl.Url))
                 return serviceUrl;
 
             // it is called only once and then cached in the base class
-            return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, TransformToGateway(serviceUrl.Url));
+            return new UrlData(CacheBehaviour.FeatureFlagsDependent, TransformToGateway(serviceUrl.Url));
         }
 
         /// <summary>

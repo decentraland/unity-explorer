@@ -37,9 +37,11 @@ namespace Global.AppArgs
 
         // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
         public const string SIGNIN = "signin";
-
         // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
         public const string AUTH_REQUEST_ID = "authRequestId";
+        // See: https://github.com/decentraland/unity-explorer/issues/9524
+        // ReSharper disable once UnusedMember.Global (used on non-editor build only)
+        public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
 
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
@@ -65,7 +67,6 @@ namespace Global.AppArgs
         public const string SIMULATE_MEMORY = "simulateMemory";
 
         public const string LAUNCH_CDP_MONITOR_ON_START = "launch-cdp-monitor-on-start";
-        public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
         public const string GRAPHICS = "graphics";
@@ -131,6 +132,12 @@ namespace Global.AppArgs
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+        /// <summary>
+        ///     Local scene development only: load assets as asset bundles served by the preview server at
+        ///     {realm}/optimized-assets instead of raw GLTFs. Carries no URL or port — the base is derived
+        ///     from the realm the client already has.
+        /// </summary>
+        public const string LOCAL_AB = "local-ab";
 
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 

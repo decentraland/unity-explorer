@@ -35,7 +35,7 @@ namespace DCL.SkyBox
         public void Enter()
         {
             sceneRestrictionController.PushSceneRestriction(
-                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
+                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.Applied));
 
             settings.IsDayCycleEnabled = false;
             settings.TransitionMode = SceneMetadata.TransitionMode.FORWARD;
@@ -52,7 +52,7 @@ namespace DCL.SkyBox
         public void Exit()
         {
             sceneRestrictionController.PushSceneRestriction(
-                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
+                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.Removed));
 
             transition.Exit();
         }

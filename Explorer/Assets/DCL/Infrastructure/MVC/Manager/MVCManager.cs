@@ -111,16 +111,16 @@ namespace MVC
 
                 switch (controller.Layer)
                 {
-                    case CanvasOrdering.SortingLayer.POPUP:
+                    case CanvasOrdering.SortingLayer.Popup:
                         await ShowPopupAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.FULLSCREEN:
+                    case CanvasOrdering.SortingLayer.Fullscreen:
                         await ShowFullScreenAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.PERSISTENT:
+                    case CanvasOrdering.SortingLayer.Persistent:
                         await ShowPersistentAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.OVERLAY:
+                    case CanvasOrdering.SortingLayer.Overlay:
                         await ShowOverlayAsync(command, controller, ct);
                         break;
                 }

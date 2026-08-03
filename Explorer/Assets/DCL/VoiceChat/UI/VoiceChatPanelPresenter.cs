@@ -67,26 +67,26 @@ namespace DCL.VoiceChat
 
         private void OnMVCViewOpened(ChatSharedAreaEvents.MVCViewOpenEvent evt)
         {
-            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.Fullscreen) return;
 
             stateBeforeFullscreen ??= voiceChatPanelState.Value;
 
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.Hidden, force: true);
             clickDetectionHandler.Pause();
         }
 
         private void OnMVCViewClosed(ChatSharedAreaEvents.MVCViewClosedEvent evt)
         {
-            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.Fullscreen) return;
             if (stateBeforeFullscreen is null) return;
 
             VoiceChatPanelState previous = stateBeforeFullscreen.Value;
             stateBeforeFullscreen = null;
 
             // Never restore to HIDDEN; NONE re-activates the panel container without focus side-effects
-            VoiceChatPanelState restoreTo = previous is VoiceChatPanelState.NONE or VoiceChatPanelState.HIDDEN
-                ? VoiceChatPanelState.NONE
-                : VoiceChatPanelState.UNFOCUSED;
+            VoiceChatPanelState restoreTo = previous is VoiceChatPanelState.None or VoiceChatPanelState.Hidden
+                ? VoiceChatPanelState.None
+                : VoiceChatPanelState.Unfocused;
 
             voiceChatOrchestrator.ChangePanelState(restoreTo, force: true);
             clickDetectionHandler.Resume();
@@ -102,37 +102,37 @@ namespace DCL.VoiceChat
 
         private void HandleChatPanelToggle(ChatSharedAreaEvents.ToggleChatPanelEvent evt)
         {
-            if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.HIDDEN)
+            if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.Hidden)
             {
-                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED, force: true);
+                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.Focused, force: true);
                 clickDetectionHandler.Resume();
             }
         }
 
         private void OnPointerExit()
         {
-            if (voiceChatPanelState.Value == VoiceChatPanelState.FOCUSED)
-                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
+            if (voiceChatPanelState.Value == VoiceChatPanelState.Focused)
+                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.Unfocused);
         }
 
         private void OnPointerEnter()
         {
-            if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED)
-                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
+            if (voiceChatPanelState.Value == VoiceChatPanelState.Unfocused)
+                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.Focused);
         }
 
         private void HandleClickInside()
         {
-            if (voiceChatPanelState.Value == VoiceChatPanelState.SELECTED) return;
+            if (voiceChatPanelState.Value == VoiceChatPanelState.Selected) return;
 
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.Selected);
         }
 
         private void HandleClickOutside()
         {
-            if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED) return;
+            if (voiceChatPanelState.Value == VoiceChatPanelState.Unfocused) return;
 
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.Unfocused);
         }
 
         public void Dispose()

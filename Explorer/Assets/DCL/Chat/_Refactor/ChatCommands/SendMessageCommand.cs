@@ -37,13 +37,13 @@ namespace DCL.Chat.ChatCommands
 
             //TODO: This logic needs to discriminate which notifications to play depending on the type of message (if private or not)
             //depending on user's settings for notifications.
-            if (chatSettings.chatAudioSettings == ChatAudioSettings.ALL)
+            if (chatSettings.chatAudioSettings == ChatAudioSettings.All)
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(sound);
 
             chatMessageBus.SendWithUtcNowTimestamp(
                 currentChannelService.CurrentChannel,
                 commandPayload.Body,
-                ChatMessageOrigin.CHAT);
+                ChatMessageOrigin.Chat);
         }
     }
 }

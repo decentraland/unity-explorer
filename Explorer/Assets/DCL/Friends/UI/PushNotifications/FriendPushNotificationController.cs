@@ -73,7 +73,7 @@ namespace DCL.Friends.UI.PushNotifications
             }
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
