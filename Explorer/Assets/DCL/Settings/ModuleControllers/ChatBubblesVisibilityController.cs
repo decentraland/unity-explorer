@@ -18,33 +18,41 @@ namespace DCL.Settings.ModuleControllers
             this.settingsEventListener = settingsEventListener;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY);
+            {
+                int storedIndex = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY);
+                view.DropdownView.Dropdown.SetValueWithoutNotify(storedIndex);
+                TrySetBubblesVisibility(storedIndex);
+            }
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetSettings);
         }
 
         private void SetSettings(int index)
         {
+            if (!TrySetBubblesVisibility(index))
+                return;
+
+            settingsEventListener.NotifyChatBubblesVisibilityChanged(chatSettingsAsset.chatBubblesVisibilitySettings);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, index, save: true);
+        }
+
+        private bool TrySetBubblesVisibility(int index)
+        {
             switch (index)
             {
                 case (int)ChatBubbleVisibilitySettings.All:
                     chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.All);
-                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.All);
-                    break;
+                    return true;
                 case (int)ChatBubbleVisibilitySettings.NearbyOnly:
                     chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.NearbyOnly);
-                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.NearbyOnly);
-                    break;
+                    return true;
                 case (int)ChatBubbleVisibilitySettings.None:
                     chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.None);
-                    settingsEventListener.NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings.None);
-                    break;
+                    return true;
                 default:
-                    ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatPrivacySettingsController: {index}");
-                    return;
+                    ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatBubblesVisibilityController: {index}");
+                    return false;
             }
-
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, index, save: true);
         }
 
         public override void Dispose()
