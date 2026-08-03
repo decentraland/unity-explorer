@@ -3,8 +3,8 @@ using UnityEngine;
 namespace DCL.AvProSwitch
 {
     // Runtime switch between the two media player backends: the in-house UUAV
-    // player (behind the UUAV.Compat facade) and RenderHeads AVPro. The backend
-    // is attached once per instance at Awake, driven by
+    // player and RenderHeads AVPro. The backend is attached once per instance
+    // at Awake, driven by
     // MediaPlayerBackendSelection, which the composition root sets from the
     // "use-custom-media-player" feature flag before any player is provisioned.
     [RequireComponent(typeof(AudioSource))]

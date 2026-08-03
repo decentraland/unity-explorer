@@ -92,6 +92,9 @@ namespace DCL.FeatureFlags
         public const string USE_CUSTOM_MEDIA_PLAYER_WINDOWS = "use-custom-media-player-windows";
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON = "use-custom-media-player-mac-silicon";
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL = "use-custom-media-player-mac-intel";
+        public const string ENFORCE_MEDIA_HOSTNAME_ALLOWLIST = "enforce-media-hostname-allowlist";
+        // Kill switch (default off): a remote enable here turns OFF plaintext http media fleet-wide.
+        public const string DISABLE_PLAINTEXT_MEDIA = "disable-plaintext-media";
 
         public static class Endpoints
         {

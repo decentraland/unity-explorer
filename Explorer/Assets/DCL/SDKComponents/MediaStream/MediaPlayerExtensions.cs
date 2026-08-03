@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.AvProSwitch;
 using System;
@@ -72,19 +73,34 @@ namespace DCL.SDKComponents.MediaStream
                 sdkVideoPlayer is { HasPlaying: true, Playing: true },
                 isLiveStream);
 
+        private const float LOAD_WAIT_SECONDS = 1f;
+        private const int LOAD_ATTEMPTS = 3;
+
         internal static async UniTask SetPlaybackPropertiesAsync(MediaPlayerBackend control, float position, bool loop, float rate, bool isPlaying, bool isLiveStream = false)
         {
-            // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
-            await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
+            // configuring or seeking before the media loads is rejected by UUAV and
+            // can make AVPro restart from the start
+            var loaded = false;
 
-            // The only way found to make the video initialization consistent and reliable even after a scene reload
-            await UniTask.Delay(TimeSpan.FromSeconds(1f));
+            for (var attempt = 1; attempt <= LOAD_ATTEMPTS && !loaded; attempt++)
+            {
+                loaded = await WaitUntilLoadedAsync(control, LOAD_WAIT_SECONDS);
+
+                if (!loaded)
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
+                        $"Media not loaded within {LOAD_WAIT_SECONDS:0.#}s (attempt {attempt}/{LOAD_ATTEMPTS}); retrying");
+            }
+
+            if (!loaded)
+            {
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, "Media failed to load; skipping playback setup");
+                return;
+            }
 
             control.SetLooping(loop);
             control.SetPlaybackRate(rate);
 
-            // For live streams, seeking to a position would move to the beginning of the DVR window.
-            // Skip the seek entirely to let AVPro start at the live edge.
+            // seeking a live stream moves to the beginning of the DVR window
             if (!isLiveStream)
                 control.Seek(position);
 
@@ -92,9 +108,27 @@ namespace DCL.SDKComponents.MediaStream
                 control.Play();
         }
 
+        // Loaded = seekable (not still Opening) AND holding buffered data, so a seek
+        // lands instead of being dropped.
+        private static async UniTask<bool> WaitUntilLoadedAsync(MediaPlayerBackend control, float timeoutSeconds)
+        {
+            // bare `Time` binds to the DCL.Time namespace in this assembly
+            float deadline = UnityEngine.Time.realtimeSinceStartup + timeoutSeconds;
+
+            while (UnityEngine.Time.realtimeSinceStartup < deadline)
+            {
+                if (control.IsReady && control.GetBufferedTimes().Count > 0)
+                    return true;
+
+                await UniTask.Yield();
+            }
+
+            return control.IsReady && control.GetBufferedTimes().Count > 0;
+        }
+
         public static void UpdatePlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)
         {
-            if (!mediaPlayer.MediaOpened) return;
+            if (!mediaPlayer.MediaOpened || !mediaPlayer.IsReady) return;
 
             MediaPlayerBackend control = mediaPlayer.Control;
 

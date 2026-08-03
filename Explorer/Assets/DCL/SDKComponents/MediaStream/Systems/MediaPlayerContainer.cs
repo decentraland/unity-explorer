@@ -14,6 +14,7 @@ using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
 using DCL.AvProSwitch;
 using DCL.Platforms;
+using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -56,6 +57,14 @@ namespace DCL.SDKComponents.MediaStream
             // selection, so it must be installed before the first player is created.
             MediaPlayerBackendSelection.Install(FeaturesRegistry.Instance.IsEnabled(CurrentPlatformMediaPlayerFeature()));
             ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Media player backend: {(MediaPlayerBackendSelection.UseCustomPlayer ? "UUAV" : "AVPro")}");
+
+            // scenes resolve media urls through ISceneData, so install this
+            // before the first scene runs
+            MediaHostnamePolicy.Install(FeaturesRegistry.Instance.IsEnabled(FeatureId.EnforceMediaHostnameAllowlist));
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Media hostname allowlist enforced: {MediaHostnamePolicy.Enforced}");
+
+            MediaProtocolPolicy.Install(FeaturesRegistry.Instance.IsEnabled(FeatureId.AllowPlaintextMedia));
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Plaintext http media allowed: {MediaProtocolPolicy.AllowPlaintextHttp}");
 
             MediaPlayer mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(containerSettings.MediaPlayerPrefab, ct: ct)).Value;
 

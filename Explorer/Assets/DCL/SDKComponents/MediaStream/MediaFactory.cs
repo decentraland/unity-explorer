@@ -152,14 +152,21 @@ namespace DCL.SDKComponents.MediaStream
 
                 // if it is not valid, we try get it as a scene local video
             {
-                isValidStreamUrl = url.IsValidUrl();
-
-                if (!isValidStreamUrl)
+                // rejected outright rather than retried as a local url, which
+                // would re-admit it
+                if (!MediaProtocolPolicy.AllowPlaintextHttp && url.IsPlaintextHttpUrl())
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Plaintext http media is disabled; rejecting {url}");
+                else
                 {
-                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                    isValidStreamUrl = url.IsValidUrl();
 
-                    if (isValidLocalPath)
-                        url = mediaUrl;
+                    if (!isValidStreamUrl)
+                    {
+                        isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+
+                        if (isValidLocalPath)
+                            url = mediaUrl;
+                    }
                 }
             }
 

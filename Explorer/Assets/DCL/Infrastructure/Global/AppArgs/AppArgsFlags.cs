@@ -100,6 +100,11 @@ namespace Global.AppArgs
 
         public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
 
+        public const string ENFORCE_MEDIA_HOSTNAME_ALLOWLIST = "enforce-media-hostname-allowlist";
+
+        // Force plaintext http media on/off (default on): --allow-plaintext-media=false hardens a build.
+        public const string ALLOW_PLAINTEXT_MEDIA = "allow-plaintext-media";
+
         public const string GLIDING = "gliding";
         public const string POINT_AT = "point-at";
 

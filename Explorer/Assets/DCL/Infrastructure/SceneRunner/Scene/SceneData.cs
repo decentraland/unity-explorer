@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.SceneRunner.Scene;
+using DCL.Utilities.Extensions;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
@@ -13,16 +14,6 @@ namespace SceneRunner.Scene
 {
     public class SceneData : ISceneData
     {
-        /// <summary>
-        ///     https://github.com/decentraland/unity-renderer/pull/5844
-        /// </summary>
-        private const bool CHECK_ALLOWED_MEDIA_HOSTNAMES =
-#if CHECK_ALLOWED_MEDIA_HOSTNAMES
-            true;
-#else
-            false;
-#endif
-
         public ISceneContent SceneContent { get; }
         public SceneEntityDefinition SceneEntityDefinition { get; }
         public StaticSceneMessages StaticSceneMessages { get; }
@@ -86,10 +77,17 @@ namespace SceneRunner.Scene
             if (TryGetContentUrl(url, out result))
                 return true;
 
-            bool isAllowed = CHECK_ALLOWED_MEDIA_HOSTNAMES
-                ? HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) // permission gate
-                  && IsUrlDomainAllowed(url) // whitelist
-                : Uri.TryCreate(url, UriKind.Absolute, out _); // general syntax check
+            // applies in both modes: an allowlisted host reached over file: or
+            // rtsp: is still a scheme no player opens
+            if (!url.HasAllowedMediaScheme())
+            {
+                result = URLAddress.EMPTY;
+                return false;
+            }
+
+            bool isAllowed = !MediaHostnamePolicy.Enforced
+                             || (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES)
+                                 && IsUrlDomainAllowed(url));
 
             if (isAllowed)
             {

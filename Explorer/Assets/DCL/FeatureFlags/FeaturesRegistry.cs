@@ -76,6 +76,9 @@ namespace DCL.FeatureFlags
                 [FeatureId.UseCustomMediaPlayerWindows] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_WINDOWS), requireDebug: false),
                 [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
                 [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
+                [FeatureId.EnforceMediaHostnameAllowlist] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.ENFORCE_MEDIA_HOSTNAME_ALLOWLIST, featureFlags.IsEnabled(FeatureFlagsStrings.ENFORCE_MEDIA_HOSTNAME_ALLOWLIST), requireDebug: false),
+                // Default on; the remote DISABLE_PLAINTEXT_MEDIA kill switch or --allow-plaintext-media=false turns it off.
+                [FeatureId.AllowPlaintextMedia] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.ALLOW_PLAINTEXT_MEDIA, !featureFlags.IsEnabled(FeatureFlagsStrings.DISABLE_PLAINTEXT_MEDIA), requireDebug: false),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -217,5 +220,7 @@ namespace DCL.FeatureFlags
         UseCustomMediaPlayerWindows = 71,
         UseCustomMediaPlayerMacSilicon = 72,
         UseCustomMediaPlayerMacIntel = 73,
+        EnforceMediaHostnameAllowlist = 74,
+        AllowPlaintextMedia = 75,
     }
 }
