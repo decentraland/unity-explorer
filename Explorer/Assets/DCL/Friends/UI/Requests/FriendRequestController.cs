@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.Utilities.Extensions;
@@ -189,7 +190,9 @@ namespace DCL.Friends.UI.Requests
             viewConfig.CancelButton.gameObject.SetActive(false);
             viewConfig.TimestampText.text = fr.Timestamp.ToString(DATE_FORMAT).ToUpper();
             viewConfig.MessageInputContainer.SetActive(!string.IsNullOrEmpty(fr.MessageBody));
-            viewConfig.MessageInput.text = $"<b>You:</b> {fr.MessageBody}";
+            // The label's copy is a <b> run, so it stays rich text and the body is escaped instead. This one is
+            // the local user's own message, but it round-trips through the service like any other.
+            viewConfig.MessageInput.text = $"<b>You:</b> {RichTextSanitizer.EscapeAndTruncate(fr.MessageBody, RichTextSanitizer.DEFAULT_BODY_LENGTH)}";
             viewConfig.MessageInput.interactable = false;
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
@@ -204,7 +207,7 @@ namespace DCL.Friends.UI.Requests
             FriendRequestView.ReceivedConfig viewConfig = viewInstance!.received;
 
             viewConfig.MessageInputContainer.SetActive(!string.IsNullOrEmpty(fr.MessageBody));
-            viewConfig.MessageInput.text = fr.MessageBody;
+            viewConfig.MessageInput.text = RichTextSanitizer.EscapeAndTruncate(fr.MessageBody, RichTextSanitizer.DEFAULT_BODY_LENGTH);
             viewConfig.TimestampText.text = fr.Timestamp.ToString(DATE_FORMAT).ToUpper();
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
@@ -217,7 +220,12 @@ namespace DCL.Friends.UI.Requests
                     fr.From,
                     ct);
 
-                viewConfig.MessageInput.text = $"<b>{fr.From.Name}:</b> {fr.MessageBody}";
+                // Both the sender's name and their message body are theirs to choose, and both land inside a
+                // rich-text <b> template — the one sink here where an injected tag would be read as markup.
+                string senderName = RichTextSanitizer.EscapeAndTruncate(fr.From.Name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
+                string body = RichTextSanitizer.EscapeAndTruncate(fr.MessageBody, RichTextSanitizer.DEFAULT_BODY_LENGTH);
+
+                viewConfig.MessageInput.text = $"<b>{senderName}:</b> {body}";
                 viewConfig.MessageInput.interactable = false;
             }
         }

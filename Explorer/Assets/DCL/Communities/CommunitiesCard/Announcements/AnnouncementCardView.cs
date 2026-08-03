@@ -27,9 +27,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private const string DELETE_ANNOUNCEMENT_CANCEL_TEXT = "CANCEL";
         private const float MIN_CARD_HEIGHT = 87f;
 
-        // Twice the 500 characters the announcement input accepts, so a body authored elsewhere is not cut,
-        // while a deliberately oversized one still costs a bounded layout pass.
-        private const int MAX_CONTENT_LENGTH = 1000;
 
         [SerializeField] private TMP_Text announcementContent = null!;
         [SerializeField] private TMP_Text authorName = null!;
@@ -89,7 +86,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             // Capped but not escaped: this label's richText is off in the prefab, so markup in the body is
             // already inert and escaping would only mangle honest prose like "5 < 10".
-            announcementContent.text = RichTextSanitizer.Truncate(announcementInfo.content, MAX_CONTENT_LENGTH);
+            announcementContent.text = RichTextSanitizer.Truncate(announcementInfo.content, RichTextSanitizer.DEFAULT_BODY_LENGTH);
 
             // The author name renders through a label shared with other panels that has to stay rich text, so
             // escaping is what keeps an author-chosen name from being read as markup. ValidatedName rather than

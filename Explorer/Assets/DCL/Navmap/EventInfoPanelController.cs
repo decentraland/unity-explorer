@@ -74,7 +74,7 @@ namespace DCL.Navmap
         {
             this.place = place;
             this.@event = @event;
-            view.EventNameLabel.text = @event.name;
+            view.EventNameLabel.text = RichTextSanitizer.EscapeAndTruncate(@event.name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             view.LiveContainer.SetActive(@event.live);
             view.InterestedButton.gameObject.SetActive(!@event.live);
             view.JumpInButton.gameObject.SetActive(@event.live);
@@ -111,7 +111,12 @@ namespace DCL.Navmap
 
             view.AttendingUserCountLabel.text = @event.total_attendees.ToString();
             interestedButtonController.SetButtonState(@event.attending);
-            view.HostAndPlaceLabel.text = $"hosted by <b>{@event.user_name}</b> - at <b>{place.title} ({@event.x}, {@event.y})</b>";
+            // The host name and place title are author-supplied and sit inside <b> runs this label has to keep
+            // interpreting, so they are escaped rather than the label being turned plain.
+            string hostName = RichTextSanitizer.EscapeAndTruncate(@event.user_name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
+            string placeTitle = RichTextSanitizer.EscapeAndTruncate(place.title, RichTextSanitizer.DEFAULT_NAME_LENGTH);
+
+            view.HostAndPlaceLabel.text = $"hosted by <b>{hostName}</b> - at <b>{placeTitle} ({@event.x}, {@event.y})</b>";
 
             // The description is written by the event's owner, who can edit it after approval: it reaches the label
             // escaped, and a link in it opens only through the external-URL consent prompt.

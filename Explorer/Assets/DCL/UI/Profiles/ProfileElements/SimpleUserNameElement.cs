@@ -29,18 +29,6 @@ namespace DCL.UI.ProfileElements
             verifiedMark.SetActive(profile.HasClaimedName);
         }
 
-        public void Setup(string username, string walletId, bool hasClaimedName, Color userColor)
-        {
-            SetUserName(username);
-            userNameText.color = userColor;
-            userNameHashtagText.gameObject.SetActive(!hasClaimedName);
-
-            if (!hasClaimedName)
-                userNameHashtagText.text = $"#{walletId.Substring(walletId.Length - 4)}";
-
-            verifiedMark.SetActive(hasClaimedName);
-        }
-
         /// <summary>
         ///     The name belongs to another user, so it reaches the label escaped and capped: nothing it carries can
         ///     be read as a TMP tag, and its length cannot grow the layout without bound.

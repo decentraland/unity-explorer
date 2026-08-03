@@ -1,5 +1,6 @@
 using DCL.FeatureFlags;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using System;
@@ -71,7 +72,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
             Color userColor = friendProfile.UserNameColor;
 
-            UserName.text = friendProfile.Name;
+            // ValidatedName is the profile's own alphanumeric filter of the name; it leaves nothing of a name
+            // written entirely in emoji, so fall back to the raw one there and let the escape make it safe.
+            UserName.text = RichTextSanitizer.EscapeAndTruncate(
+                string.IsNullOrEmpty(friendProfile.ValidatedName) ? friendProfile.Name : friendProfile.ValidatedName,
+                RichTextSanitizer.DEFAULT_NAME_LENGTH);
             UserName.color = userColor;
             UserNameTag.text = friendProfile.WalletId;
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);

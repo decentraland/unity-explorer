@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.FeatureFlags;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
@@ -43,7 +44,11 @@ namespace DCL.Friends.UI.PushNotifications
         {
             Color userColor = friendProfile.UserNameColor;
             UserNameText.color = userColor;
-            UserNameText.text = friendProfile.Name;
+            // ValidatedName is the profile's own alphanumeric filter of the name; it leaves nothing of a name
+            // written entirely in emoji, so fall back to the raw one there and let the escape make it safe.
+            UserNameText.text = RichTextSanitizer.EscapeAndTruncate(
+                string.IsNullOrEmpty(friendProfile.ValidatedName) ? friendProfile.Name : friendProfile.ValidatedName,
+                RichTextSanitizer.DEFAULT_NAME_LENGTH);
             UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);

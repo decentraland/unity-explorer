@@ -16,6 +16,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 using DCL.Passport;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using Utility;
@@ -76,7 +77,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             loadWearablesCts = loadWearablesCts.SafeRestart();
             Color userColor = NameColorHelper.GetNameColor(visiblePerson.userName);
 
-            view.userName.text = visiblePerson.userName;
+            view.userName.text = RichTextSanitizer.EscapeAndTruncate(visiblePerson.userName, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             view.userName.color = userColor;
             string address = visiblePerson.userAddress;
             view.userNameTag.text = $"#{address[^Math.Min(4, address.Length)..]}";

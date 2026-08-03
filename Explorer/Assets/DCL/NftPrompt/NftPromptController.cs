@@ -171,7 +171,9 @@ namespace DCL.NftPrompt
             bool hasDescription = !string.IsNullOrEmpty(info.description);
 
             if (hasDescription)
-                viewInstance.TextDescription.text = info.description;
+                // The description comes from NFT metadata anyone can mint. The label's richText is off in the
+                // prefab, so it only needs bounding.
+                viewInstance.TextDescription.text = RichTextSanitizer.Truncate(info.description, RichTextSanitizer.DEFAULT_BODY_LENGTH);
 
             viewInstance.ContainerDescription.SetActive(hasDescription);
 

@@ -25,6 +25,15 @@ namespace DCL.UI
         /// </summary>
         public const int DEFAULT_NAME_LENGTH = 64;
 
+        /// <summary>
+        ///     Default cap for a multi-line body authored by another user — a description, an announcement, a
+        ///     request message. Twice the 500 characters the announcement composer accepts, so a body written
+        ///     through another client is not clipped, while a deliberately oversized one still costs a bounded
+        ///     layout pass. Like <see cref="DEFAULT_NAME_LENGTH"/> this is a display-side limit; the services
+        ///     that carry these fields do not agree on one.
+        /// </summary>
+        public const int DEFAULT_BODY_LENGTH = 1000;
+
         private const char LEFT_ANGLE_LOOKALIKE = '‹'; // Single left-pointing angle quotation mark.
         private const char RIGHT_ANGLE_LOOKALIKE = '›'; // Single right-pointing angle quotation mark.
         private const char QUOTE_LOOKALIKE = '”'; // Right double quotation mark.
