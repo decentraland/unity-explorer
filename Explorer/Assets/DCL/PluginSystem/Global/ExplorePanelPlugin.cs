@@ -355,7 +355,8 @@ namespace DCL.PluginSystem.Global
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
             dclInput.Shortcuts.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
-            dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
+            dclInput.Shortcuts.Places.performed -= OnInputShortcutsPlacesPerformed;
+            dclInput.Shortcuts.Communities.performed -= OnInputShortcutsCommunitiesPerformed;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -667,26 +668,55 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
+        {
+            // While the panel is open its own hotkey handlers (RegisterHotkeys) own section switching and closing.
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
+        }
 
-        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings)));
+        }
 
-        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
+        }
 
-        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(default(ExplorePanelParameter)));
+        }
 
-        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
+        }
 
-        private void OnInputShortcutsCommunitiesPerformed(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsCommunitiesPerformed(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Communities)));
+        }
 
-        private void OnInputShortcutsPlacesPerformed(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsPlacesPerformed(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Places)));
+        }
 
         private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPoolAsync(EventInfoPanelView view, CancellationToken ct)
         {
