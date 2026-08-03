@@ -231,7 +231,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 foreach (EventDTO eventDto in events)
                 {
                     if (eventDto.world)
-                        return;
+                        continue;
                     
                     Vector2Int coords = new Vector2Int(eventDto.x, eventDto.y);
                     if (markers.ContainsKey(coords))
