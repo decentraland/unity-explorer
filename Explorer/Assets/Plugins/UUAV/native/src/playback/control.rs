@@ -1,17 +1,9 @@
-//! Single-slot control channel: the push control overwrites the latest value, the
-//! consume control either takes the pending update once or peeks the
-//! current value at any time - the value survives consumption.
 
 use parking_lot::Mutex;
 use std::sync::{Arc, Weak};
 
-/// The value and its update flag, mutated together in one critical
-/// section: a consumer can never observe a half-pushed pair, and each
-/// push is delivered exactly once.
 struct State<T> {
-    /// Latest pushed value; survives consumption.
     value: T,
-    /// A push not consumed yet.
     pending: bool,
 }
 
@@ -27,28 +19,21 @@ impl<T: Clone> ControlPush<T> {
         })))
     }
 
-    /// Overwrites the value and marks it pending, as one atomic pair;
-    /// the latest push wins.
     pub(crate) fn push(&self, value: T) {
         let mut state = self.0.lock();
         state.value = value;
         state.pending = true;
     }
 
-    /// Current value, pending or not.
     pub(crate) fn latest(&self) -> T {
         self.0.lock().value.clone()
     }
 
-    /// Current value plus whether the latest push is still awaiting
-    /// consumption, as one atomic pair.
     pub(crate) fn snapshot(&self) -> (T, bool) {
         let state = self.0.lock();
         (state.value.clone(), state.pending)
     }
 
-    /// A consumer half on the same slot. Weak, so a consumer neither
-    /// keeps a freed player's control state alive nor obeys it.
     pub(crate) fn consumer(&self) -> ControlConsume<T> {
         ControlConsume(Arc::downgrade(&self.0))
     }
@@ -63,9 +48,6 @@ impl<T> Clone for ControlConsume<T> {
 }
 
 impl<T: Clone> ControlConsume<T> {
-    /// Takes the pending update: the current value once per push, `None`
-    /// while nothing new was pushed (the value itself persists — see
-    /// [`Self::peek`]) or when the push half is gone.
     pub(crate) fn consume(&self) -> Option<T> {
         let slot = self.0.upgrade()?;
         let mut state = slot.lock();
@@ -77,8 +59,6 @@ impl<T: Clone> ControlConsume<T> {
         }
     }
 
-    /// Current value regardless of pending; `None` when the push half is
-    /// gone.
     pub(crate) fn peek(&self) -> Option<T> {
         Some(self.0.upgrade()?.lock().value.clone())
     }

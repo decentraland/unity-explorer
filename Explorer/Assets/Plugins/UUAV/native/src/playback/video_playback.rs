@@ -5,33 +5,25 @@ use std::os::raw::c_int;
 use std::ptr;
 use std::sync::Arc;
 use std::thread;
+use std::time::Instant;
 
 use super::util::{AtomicSeekSlot, PLAYBACK_POLL, ReadOnlyCancelToken};
 use crate::ffutil::{Decoded, OwnedPacket, Stream};
 use crate::hw_device::HwDeviceContext;
 use crate::video_decoder::{VideoDecoder, VideoFrame};
 
-/// Decoded frames buffered ahead of the clock. Each entry pins a decoder
-/// surface, so it must stay below [`VideoDecoder::EXTRA_HW_FRAMES`].
 const VIDEO_QUEUE_CAP: usize = 4;
 
-/// The frame the render thread popped but whose time has not come yet.
 type HeldFrame = Arc<Mutex<Option<VideoFrame>>>;
 
-/// Worker half of the presentation queue: the sender it fills, plus a
-/// second receiver and the reader's held-frame slot so a seek can discard
-/// everything buffered.
 #[derive(Clone)]
 pub(super) struct VideoQueue {
     tx: Sender<VideoFrame>,
-    /// Drains the channel on seek; frames dropped here release their
-    /// decoder surfaces immediately.
     drain: Receiver<VideoFrame>,
     held: HeldFrame,
 }
 
 impl VideoQueue {
-    /// Creates the bounded queue and the render-thread reader draining it.
     pub(super) fn channel() -> (Self, VideoReader) {
         let (tx, rx) = bounded(VIDEO_QUEUE_CAP);
         let held = Arc::new(Mutex::new(None));
@@ -45,37 +37,27 @@ impl VideoQueue {
         )
     }
 
-    /// Queues a frame for presentation; gives it back when the queue is
-    /// full.
     fn try_push(&self, frame: VideoFrame) -> Result<(), VideoFrame> {
         self.tx.try_send(frame).map_err(TrySendError::into_inner)
     }
 
-    /// Discards every buffered frame, including the one the reader holds.
-    /// Keeping the slot locked across the drain stops the reader from
-    /// picking up a pre-flush frame halfway through.
     fn flush(&self) {
         let mut held = self.held.lock();
         held.take();
         while self.drain.try_recv().is_ok() {}
     }
 
-    /// Whether the render thread has consumed every queued frame.
     fn is_drained(&self) -> bool {
         self.tx.is_empty() && self.held.lock().is_none()
     }
 }
 
-/// Render-thread half of the presentation queue.
 pub(super) struct VideoReader {
     rx: Receiver<VideoFrame>,
     held: HeldFrame,
 }
 
 impl VideoReader {
-    /// [render thread] The frame to present at `now`: drops frames whose
-    /// time already passed, returns the most recent due one, and keeps an
-    /// undue frame held for a later call.
     pub(super) fn next_due(&self, now: f64) -> Option<VideoFrame> {
         let mut held = self.held.lock();
         let mut due = None;
@@ -97,12 +79,12 @@ impl VideoReader {
     }
 }
 
-/// The video half of a playback: decodes the video stream and fills the
-/// presentation queue the render thread consumes.
 pub(super) struct VideoPlayback {
     decoder: VideoDecoder,
     queue: VideoQueue,
     stream_index: c_int,
+    decoded_count: u64,
+    first_decode: Option<Instant>,
 }
 
 impl VideoPlayback {
@@ -116,6 +98,8 @@ impl VideoPlayback {
             decoder: VideoDecoder::new(stream, hw)?,
             queue,
             stream_index,
+            decoded_count: 0,
+            first_decode: None,
         })
     }
 
@@ -123,7 +107,6 @@ impl VideoPlayback {
         self.stream_index == stream_index
     }
 
-    /// Sends the packet and moves every ready frame into the queue.
     pub(super) fn handle_packet(
         &mut self,
         packet: &mut OwnedPacket,
@@ -136,7 +119,6 @@ impl VideoPlayback {
         self.pump(start_offset, cancel, seek, poll_controls)
     }
 
-    /// Sends end-of-stream and moves the remaining frames into the queue.
     pub(super) fn drain(
         &mut self,
         start_offset: f64,
@@ -148,21 +130,15 @@ impl VideoPlayback {
         self.pump(start_offset, cancel, seek, poll_controls)
     }
 
-    /// Discards everything belonging to the pre-seek position.
     pub(super) fn flush_for_seek(&mut self) {
         self.decoder.flush();
         self.queue.flush();
     }
 
-    /// Whether the render thread has consumed every queued frame.
     pub(super) fn is_drained(&self) -> bool {
         self.queue.is_drained()
     }
 
-    /// Moves every frame the decoder has ready into the presentation queue,
-    /// waiting for space while staying responsive to stop/seek commands.
-    /// The wait also keeps `poll_controls` applied: while not playing the
-    /// queue does not drain, so a queued play would otherwise never land.
     fn pump(
         &mut self,
         start_offset: f64,
@@ -173,15 +149,26 @@ impl VideoPlayback {
         loop {
             match self.decoder.receive()? {
                 Decoded::Frame(mut frame) => {
+                    let now = Instant::now();
+                    let start = *self.first_decode.get_or_insert(now);
+                    self.decoded_count = self.decoded_count.wrapping_add(1);
+                    if self.decoded_count.is_multiple_of(8) {
+                        let elapsed = now.duration_since(start).as_secs_f64();
+                        let rate = if elapsed > 0.0 {
+                            self.decoded_count as f64 / elapsed
+                        } else {
+                            0.0
+                        };
+                        crate::diag_log(&format!(
+                            "uuav-core: decoded={} in {:.2}s = {:.1}/s",
+                            self.decoded_count, elapsed, rate
+                        ));
+                    }
                     frame.shift_pts(start_offset);
                     loop {
                         if cancel.is_cancelled() || seek.is_pending() {
-                            // the frame is obsolete: the queue is about to
-                            // be flushed
                             return Ok(());
                         }
-                        // after the cancel check: a retired unit must not
-                        // consume a command meant for its successor
                         poll_controls();
                         match self.queue.try_push(frame) {
                             Ok(()) => break,

@@ -6,6 +6,7 @@ use std::thread::{self};
 use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
 
 use crate::ffutil::StreamingProtocol;
+use crate::frame_info::FrameInfo;
 use crate::hw_device::HwDevice;
 use crate::playback::{
     CancelToken, ControlPush, DEFAULT_PLAYBACK_RATE, PlaybackUnit, ReadOnlyCancelToken,
@@ -14,16 +15,10 @@ use crate::playback::{
 use crate::video_output::VideoTextureView;
 use crate::{AudioOptionsView, ControlsState, ErrorCallback, MediaInfo, UUAVState, VideoSize};
 
-/// Lifecycle of the player's playback, shared with the playback thread.
 enum Playback {
-    /// Nothing: no media, no thread.
     Closed,
-    /// The playback thread exists but has not opened the media yet.
     Opening,
-    /// The open or the playback failed; the error already went through
-    /// the callback and the unit is gone.
     Failed,
-    /// The media is open; the playback thread runs this unit.
     Active(Arc<PlaybackUnit>),
 }
 
@@ -31,9 +26,6 @@ type Url = String;
 
 type OpenIntent = (Url, ReadOnlyCancelToken);
 
-/// Engine-facing player: manages url switching by spawning a fresh
-/// playback thread per opened url and delegates everything else to the
-/// [`PlaybackUnit`] that thread publishes.
 pub(crate) struct UUAVPlayer {
     audio_out: AudioOptionsView,
     playback: Arc<ArcSwap<Playback>>,
@@ -116,7 +108,6 @@ impl UUAVPlayer {
             });
 
         match spawned {
-            // Safe to do not join the handle on drop
             Ok(_handle) => Ok(Self {
                 audio_out,
                 playback,
@@ -131,8 +122,6 @@ impl UUAVPlayer {
         }
     }
 
-    // not blocking
-    // async, returns immediately
     pub(crate) fn open_media_intent(&mut self, url: String) -> Result<()> {
         const ATTEMPTS: u32 = 100;
 
@@ -143,7 +132,6 @@ impl UUAVPlayer {
 
         let mut payload: OpenIntent = (url, cancel.into());
 
-        // Send, discard the oldest one if exists
         for _ in 0..ATTEMPTS {
             match self.sender_open_intent.try_send(payload) {
                 Ok(()) => return Ok(()),
@@ -163,7 +151,6 @@ impl UUAVPlayer {
     }
 
     pub(crate) fn close_media(&mut self) {
-        // Prevent unrequired autoplay on open_media
         self.play_control.push(false);
 
         if let Some(cancel_token) = self.last_cancel_token.take() {
@@ -222,8 +209,6 @@ impl UUAVPlayer {
         }
     }
 
-    /// Varispeed rate in media seconds per wall second; persists across
-    /// url switches. Realtime streams keep playing at 1x regardless.
     pub(crate) fn set_rate(&self, rate: f64) {
         self.rate_control.push(rate);
     }
@@ -232,7 +217,6 @@ impl UUAVPlayer {
         self.rate_control.latest()
     }
 
-    // not blocking
     pub(crate) fn seek_intent(&self, time: f64) -> Result<()> {
         self.active_unit()?.seek_intent(time);
         Ok(())
@@ -255,7 +239,6 @@ impl UUAVPlayer {
         Some(self.unit()?.current_time())
     }
 
-    // the player slaves its playback to the externally provided master clock
     pub(crate) fn assign_master_clock(&self, current_time: f64) -> Result<()> {
         self.active_unit()?.assign_master_clock(current_time);
         Ok(())
@@ -279,15 +262,16 @@ impl UUAVPlayer {
         )
     }
 
-    // [render thread] presents the frame that is due per the clock
+    pub(crate) fn frame_info(&self) -> Option<FrameInfo> {
+        self.unit()?.frame_info()
+    }
+
     pub(crate) fn on_render_event(&self) {
         if let Some(unit) = self.unit() {
             unit.on_render_event();
         }
     }
 
-    // [audio thread] fills interleaved FLT; pads silence on underrun,
-    // never blocks; returns frames actually copied
     pub(crate) fn read_audio(&self, dst: *mut f32, nb_frames: i32) -> i32 {
         let Ok(frames) = usize::try_from(nb_frames) else {
             return 0;
@@ -295,7 +279,6 @@ impl UUAVPlayer {
         match self.unit() {
             Some(unit) => unit.read_audio(dst, frames),
             None => {
-                // no media (or still opening): silence in the engine's layout
                 fill_silence(dst, frames, self.audio_out.current().channels_usize());
                 0
             }

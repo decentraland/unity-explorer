@@ -1,4 +1,3 @@
-//! Thin RAII wrappers and error helpers over `ffmpeg-sys-next`.
 
 use anyhow::{Result, anyhow, ensure};
 use ffmpeg_sys_next as ff;
@@ -6,21 +5,14 @@ use std::ffi::{CStr, CString};
 use std::num::NonZeroI32;
 use std::os::raw::{c_char, c_int};
 
-/// "Decoder needs more input" return code. FFmpeg has no named define for
-/// it: the C API spells it `AVERROR(EAGAIN)`, with `EAGAIN` coming from the
-/// platform's errno, so the bindings can only offer the same composition.
 pub(crate) const AVERROR_EAGAIN: c_int = ff::AVERROR(libc::EAGAIN);
 
-/// Outcome of a receive call on a decoder.
 pub(crate) enum Decoded<T> {
     Frame(T),
-    /// Decoder needs more input.
     Again,
-    /// Decoder is fully drained.
     Eof,
 }
 
-/// Formats an FFmpeg error code into an [`anyhow::Error`] with context.
 pub(crate) fn av_err(context: &str, code: c_int) -> anyhow::Error {
     let mut buf = [0 as c_char; 64];
     let message = unsafe {
@@ -33,7 +25,6 @@ pub(crate) fn av_err(context: &str, code: c_int) -> anyhow::Error {
     anyhow!("{context}: {message}")
 }
 
-/// Returns the code unchanged for non-negative FFmpeg return codes.
 pub(crate) fn check(context: &str, code: c_int) -> Result<c_int> {
     if code < 0 {
         Err(av_err(context, code))
@@ -50,8 +41,6 @@ pub(crate) const fn q2d(r: ff::AVRational) -> f64 {
     }
 }
 
-/// Copies a NUL-terminated C string into a fixed name buffer, truncating
-/// to leave room for the terminator; a null `src` yields an empty string.
 pub(crate) fn copy_c_name<const N: usize>(dst: &mut [c_char; N], src: *const c_char) {
     let bytes: &[u8] = if src.is_null() {
         &[]
@@ -64,8 +53,6 @@ pub(crate) fn copy_c_name<const N: usize>(dst: &mut [c_char; N], src: *const c_c
         *d = c_char::from_ne_bytes([s]);
     }
 
-    // terminate right after the copied bytes: dst may hold a longer
-    // previous name, and position `len` always exists for N > 0
     if let Some(terminator) = dst.get_mut(len) {
         *terminator = 0;
     }
@@ -74,8 +61,6 @@ pub(crate) fn copy_c_name<const N: usize>(dst: &mut [c_char; N], src: *const c_c
 pub(crate) struct StreamingProtocol(CString);
 
 impl StreamingProtocol {
-    /// Safety
-    /// `raw` must be null or point to a NUL-terminated C string.
     pub(crate) unsafe fn new(raw: *const c_char) -> Result<Self> {
         ensure!(!raw.is_null(), "protocol_whitelist is null");
         let value = unsafe { CStr::from_ptr(raw) };
@@ -84,32 +69,82 @@ impl StreamingProtocol {
     }
 }
 
-/// Owning wrapper around an `AVDictionary`.
-pub(crate) struct AvDict(*mut ff::AVDictionary);
+pub(crate) const FORMAT_WHITELIST: &CStr =
+    c"mov,mp4,matroska,webm,hls,dash,mpegts,mp3,wav,ogg,flac,aac";
 
-impl AvDict {
-    #[allow(clippy::needless_pass_by_ref_mut)] // hands out a mutable alias
-    pub(crate) const fn as_mut_ptr(&mut self) -> *mut *mut ff::AVDictionary {
-        &raw mut self.0
+pub(crate) const CODEC_WHITELIST: &CStr =
+    c"h264,hevc,vp9,av1,aac,mp3,mp3float,opus,vorbis,flac,pcm_s16le,pcm_s16be,pcm_f32le";
+
+pub(crate) const HLS_ALLOWED_EXTENSIONS: &CStr = c"3gp,aac,avi,ac3,eac3,flac,mkv,m3u8,m4a,m4s,m4v,mpg,mov,mp2,mp3,mp4,mpeg,mpegts,ogg,ogv,oga,ts,vob,vtt,wav,webm,webvtt,cmfv,cmfa,ec3,fmp4,key";
+
+const READ_TIMEOUT_MICROSECONDS: &CStr = c"15000000";
+
+const HTTP_PERSISTENT: &CStr = c"0";
+
+const RECONNECT_DELAY_MAX_SECONDS: &CStr = c"4";
+
+const MAX_DECODED_PIXELS: i64 = 33_177_600;
+
+const DECODE_THREAD_COUNT: c_int = 2;
+
+pub(crate) unsafe fn apply_decode_limits(ctx: *mut ff::AVCodecContext) {
+    unsafe {
+        (*ctx).max_pixels = MAX_DECODED_PIXELS;
+        (*ctx).thread_count = DECODE_THREAD_COUNT;
     }
 }
 
-impl From<&StreamingProtocol> for AvDict {
-    fn from(protocol: &StreamingProtocol) -> Self {
+fn codec_allowed(name: &str) -> bool {
+    CODEC_WHITELIST
+        .to_bytes()
+        .split(|&byte| byte == b',')
+        .any(|allowed| allowed == name.as_bytes())
+}
+
+pub(crate) struct AvDict(*mut ff::AVDictionary);
+
+const GATE_KEYS: [&CStr; 3] = [
+    c"protocol_whitelist",
+    c"format_whitelist",
+    c"codec_whitelist",
+];
+
+impl AvDict {
+    pub(crate) fn open_options(protocol: &StreamingProtocol) -> Self {
         let mut dict: *mut ff::AVDictionary = std::ptr::null_mut();
 
-        // Only fails on allocation failure, which leaves `dict` null and
-        // surfaces later as an open error.
-        // Copies the protocol value
-        unsafe {
-            ff::av_dict_set(
-                &mut dict,
-                c"protocol_whitelist".as_ptr(),
-                protocol.0.as_ptr(),
-                0,
+        for (key, value) in [
+            (c"protocol_whitelist", protocol.0.as_c_str()),
+            (c"format_whitelist", FORMAT_WHITELIST),
+            (c"codec_whitelist", CODEC_WHITELIST),
+            (c"allowed_extensions", HLS_ALLOWED_EXTENSIONS),
+            (c"rw_timeout", READ_TIMEOUT_MICROSECONDS),
+            (c"http_persistent", HTTP_PERSISTENT),
+            (c"reconnect", c"1"),
+            (c"reconnect_streamed", c"1"),
+            (c"reconnect_delay_max", RECONNECT_DELAY_MAX_SECONDS),
+        ] {
+            unsafe { ff::av_dict_set(&mut dict, key.as_ptr(), value.as_ptr(), 0) };
+        }
+
+        Self(dict)
+    }
+
+    #[allow(clippy::needless_pass_by_ref_mut)]
+    pub(crate) const fn as_mut_ptr(&mut self) -> *mut *mut ff::AVDictionary {
+        &raw mut self.0
+    }
+
+    pub(crate) fn ensure_gates_applied(&self) -> Result<()> {
+        for key in GATE_KEYS {
+            let entry = unsafe { ff::av_dict_get(self.0, key.as_ptr(), std::ptr::null(), 0) };
+            ensure!(
+                entry.is_null(),
+                "FFmpeg ignored the {} option, so the media was opened ungated",
+                key.to_string_lossy()
             );
         }
-        Self(dict)
+        Ok(())
     }
 }
 
@@ -119,14 +154,10 @@ impl Drop for AvDict {
     }
 }
 
-/// Non-owning view of an `AVStream` belonging to a live format context.
 #[derive(Clone, Copy)]
 pub(crate) struct Stream(*mut ff::AVStream);
 
 impl Stream {
-    /// # Safety
-    /// `ptr` must point to a stream of a live `AVFormatContext`, and the
-    /// view must not outlive that context.
     pub(crate) const unsafe fn from_raw(ptr: *mut ff::AVStream) -> Self {
         Self(ptr)
     }
@@ -148,6 +179,14 @@ impl Stream {
     }
 
     pub(crate) fn find_decoder(self) -> Result<*const ff::AVCodec> {
+        let name =
+            unsafe { CStr::from_ptr(ff::avcodec_get_name(self.codec_id())) }.to_string_lossy();
+        ensure!(
+            codec_allowed(&name),
+            "codec {name} is not in the allowed set ({})",
+            CODEC_WHITELIST.to_string_lossy()
+        );
+
         let codec = unsafe { ff::avcodec_find_decoder(self.codec_id()) };
         if codec.is_null() {
             return Err(anyhow!("no decoder for codec id {:?}", self.codec_id()));
@@ -156,7 +195,6 @@ impl Stream {
     }
 }
 
-/// Owning wrapper around an `AVCodecContext`.
 pub(crate) struct OwnedDecoder(*mut ff::AVCodecContext);
 
 impl OwnedDecoder {
@@ -168,7 +206,7 @@ impl OwnedDecoder {
         Ok(Self(ptr))
     }
 
-    #[allow(clippy::needless_pass_by_ref_mut)] // hands out a mutable alias
+    #[allow(clippy::needless_pass_by_ref_mut)]
     pub(crate) const fn as_mut_ptr(&mut self) -> *mut ff::AVCodecContext {
         self.0
     }
@@ -180,10 +218,6 @@ impl Drop for OwnedDecoder {
     }
 }
 
-/// Owning wrapper around an `AVFrame`.
-///
-/// The frame's data buffers are reference counted by FFmpeg, so moving the
-/// wrapper across threads (decoder thread to render thread) is safe.
 pub(crate) struct OwnedFrame(*mut ff::AVFrame);
 
 unsafe impl Send for OwnedFrame {}
@@ -197,12 +231,11 @@ impl OwnedFrame {
         Ok(Self(ptr))
     }
 
-    #[allow(clippy::needless_pass_by_ref_mut)] // hands out a mutable alias
+    #[allow(clippy::needless_pass_by_ref_mut)]
     pub(crate) const fn as_mut_ptr(&mut self) -> *mut ff::AVFrame {
         self.0
     }
 
-    /// Pixel format for video frames, sample format for audio frames.
     pub(crate) fn format(&self) -> c_int {
         unsafe { (*self.0).format }
     }
@@ -219,6 +252,37 @@ impl OwnedFrame {
         unsafe { (*self.0).best_effort_timestamp }
     }
 
+    pub(crate) fn colorspace(&self) -> ff::AVColorSpace {
+        unsafe { (*self.0).colorspace }
+    }
+
+    pub(crate) fn color_range(&self) -> ff::AVColorRange {
+        unsafe { (*self.0).color_range }
+    }
+
+    pub(crate) fn color_primaries(&self) -> ff::AVColorPrimaries {
+        unsafe { (*self.0).color_primaries }
+    }
+
+    pub(crate) fn display_rotation(&self) -> i32 {
+        let side = unsafe {
+            ff::av_frame_get_side_data(
+                self.0,
+                ff::AVFrameSideDataType::AV_FRAME_DATA_DISPLAYMATRIX,
+            )
+        };
+        if side.is_null() || unsafe { (*side).size } < size_of::<[i32; 9]>() {
+            return 0;
+        }
+        let degrees = unsafe { ff::av_display_rotation_get((*side).data.cast::<i32>()) };
+        if !degrees.is_finite() {
+            return 0;
+        }
+        ((-degrees / 90.0).round() as i32)
+            .rem_euclid(4)
+            .saturating_mul(90)
+    }
+
     pub(crate) fn sample_rate(&self) -> c_int {
         unsafe { (*self.0).sample_rate }
     }
@@ -227,29 +291,28 @@ impl OwnedFrame {
         unsafe { (*self.0).nb_samples }
     }
 
-    /// Channel layout of an audio frame.
     pub(crate) fn ch_layout(&self) -> &ff::AVChannelLayout {
         unsafe { &(*self.0).ch_layout }
     }
 
-    /// Plane pointers of an audio frame, in the shape `swr_convert` takes.
     pub(crate) fn extended_data(&self) -> *const *const u8 {
         unsafe { (*self.0).extended_data.cast::<*const u8>().cast_const() }
     }
 
-    /// Data pointer of one plane; null for planes past
-    /// `AV_NUM_DATA_POINTERS`. Hardware frames repurpose the planes (for
-    /// D3D11: 0 is the texture, 1 the array slice index).
     pub(crate) fn data(&self, plane: usize) -> *mut u8 {
-        // copies only the 8-byte plane pointer, never the plane contents
         match unsafe { (*self.0).data.get(plane) } {
             Some(&pointer) => pointer,
             None => std::ptr::null_mut(),
         }
     }
 
-    /// Hardware frames context of a frame holding hardware surfaces; fails
-    /// on software frames, which carry none.
+    pub(crate) fn linesize(&self, plane: usize) -> c_int {
+        match unsafe { (*self.0).linesize.get(plane) } {
+            Some(&stride) => stride,
+            None => 0,
+        }
+    }
+
     pub(crate) fn hw_frames_ctx(&self) -> Result<&ff::AVHWFramesContext> {
         unsafe {
             let buffer = (*self.0).hw_frames_ctx;
@@ -267,18 +330,15 @@ impl Drop for OwnedFrame {
     }
 }
 
-/// Owning wrapper around an `AVChannelLayout`.
 pub(crate) struct OwnedChannelLayout(ff::AVChannelLayout);
 
 impl OwnedChannelLayout {
-    /// Native layout for the given channel count.
     pub(crate) fn default_for(channels: NonZeroI32) -> Self {
         let mut layout: ff::AVChannelLayout = unsafe { std::mem::zeroed() };
         unsafe { ff::av_channel_layout_default(&mut layout, channels.get()) };
         Self(layout)
     }
 
-    /// Deep copy of an existing layout.
     pub(crate) fn copied_from(layout: &ff::AVChannelLayout) -> Result<Self> {
         let mut owned = Self(unsafe { std::mem::zeroed() });
         check("av_channel_layout_copy", unsafe {
@@ -304,12 +364,9 @@ impl Drop for OwnedChannelLayout {
     }
 }
 
-/// Owning wrapper around an `SwrContext`.
 pub(crate) struct OwnedSwr(*mut ff::SwrContext);
 
 impl OwnedSwr {
-    /// Allocates and initializes a resampling context converting between
-    /// the given formats.
     pub(crate) fn new(
         out_layout: &ff::AVChannelLayout,
         out_format: ff::AVSampleFormat,
@@ -318,8 +375,6 @@ impl OwnedSwr {
         in_format: ff::AVSampleFormat,
         in_rate: c_int,
     ) -> Result<Self> {
-        // wrapped from the first moment, so a failed init still frees
-        // whatever swr_alloc_set_opts2 allocated
         let mut swr = Self(std::ptr::null_mut());
         check("swr_alloc_set_opts2", unsafe {
             ff::swr_alloc_set_opts2(
@@ -338,16 +393,10 @@ impl OwnedSwr {
         Ok(swr)
     }
 
-    /// Upper bound on the samples buffered inside the resampler, in units
-    /// of `1 / base` (pass the input rate to count input samples).
     pub(crate) fn apply_delay_and_modify(&self, base: i64) -> i64 {
         unsafe { ff::swr_get_delay(self.0, base) }
     }
 
-    /// # Safety
-    /// `out` must point to writable planes with room for `out_count`
-    /// samples in the output format; `input` must point to readable planes
-    /// holding `in_count` samples in the input format.
     pub(crate) unsafe fn convert(
         &mut self,
         out: *const *mut u8,
@@ -367,7 +416,6 @@ impl Drop for OwnedSwr {
     }
 }
 
-/// Owning wrapper around an `AVPacket`.
 pub(crate) struct OwnedPacket(*mut ff::AVPacket);
 
 impl OwnedPacket {
@@ -379,13 +427,17 @@ impl OwnedPacket {
         Ok(Self(ptr))
     }
 
-    #[allow(clippy::needless_pass_by_ref_mut)] // hands out a mutable alias
+    #[allow(clippy::needless_pass_by_ref_mut)]
     pub(crate) const fn as_mut_ptr(&mut self) -> *mut ff::AVPacket {
         self.0
     }
 
     pub(crate) fn stream_index(&self) -> c_int {
         unsafe { (*self.0).stream_index }
+    }
+
+    pub(crate) fn pts(&self) -> i64 {
+        unsafe { (*self.0).pts }
     }
 
     pub(crate) fn unref(&mut self) {

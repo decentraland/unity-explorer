@@ -17,9 +17,6 @@
     clippy::future_not_send,
     clippy::enum_glob_use
 )]
-// FFI-heavy crate: raw-pointer borrows, numeric casts between C and media
-// timestamp domains, and crate-private modules are pervasive by nature
-// (doc_markdown: insists on backticks around the word "FFmpeg" in prose)
 #![allow(
     clippy::borrow_as_ptr,
     clippy::redundant_pub_crate,
@@ -33,11 +30,10 @@
 
 mod audio_decoder;
 mod ffutil;
+mod frame_info;
 mod playback;
 mod player;
 
-// Per-platform sibling modules: same names, same cross-platform-consumed
-// surface, selected by target. Consumers stay platform-agnostic.
 #[cfg(target_os = "windows")]
 #[path = "hw_device_windows.rs"]
 mod hw_device;
@@ -67,6 +63,7 @@ use arc_swap::{ArcSwap, ArcSwapOption};
 use dashmap::DashMap;
 use ffmpeg_sys_next as ff;
 use ffutil::StreamingProtocol;
+use frame_info::FrameInfo;
 use hw_device::HwDevice;
 use playback::DEFAULT_PLAYBACK_RATE;
 use player::UUAVPlayer;
@@ -85,15 +82,11 @@ const ERR_NO_PLAYER: &str = "player with specific id not found";
 static INIT_STATE: ArcSwapOption<Runtime> = ArcSwapOption::const_empty();
 static NEXT_STREAM_ID: AtomicU64 = AtomicU64::new(1);
 
-// installs the FFmpeg log trampoline exactly once, process-wide
 static LOG_INIT: Once = Once::new();
 
-// FFmpeg `lavu_log_constants`; local copies avoid depending on binding names.
-// Messages at or below these levels route to the matching Unity sink.
 const AV_LOG_ERROR: c_int = 16;
 const AV_LOG_WARNING: c_int = 24;
 
-// Stack buffer for one formatted FFmpeg log line (prefix + message).
 const LOG_LINE_CAP: c_int = 1024;
 
 struct Runtime {
@@ -108,11 +101,8 @@ struct Runtime {
 
 type RawErrorCallback = extern "C" fn(*const c_char);
 
-// FFmpeg log sinks share the error-callback shape: a single NUL-terminated,
-// already-formatted line. Level selects which sink native routes to.
 type RawLogCallback = extern "C" fn(*const c_char);
 
-// no-op when the raw callback is dropped on deinit
 #[derive(Clone)]
 struct ErrorCallback {
     callback: Weak<RawErrorCallback>,
@@ -157,8 +147,6 @@ pub struct Status {
     pub device_remove_reason: *const c_char,
 }
 
-/// Untrusted external input, must never be used for internals.
-/// Always convert to AudioOptions to sanitize.
 #[repr(C)]
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct AudioOptionsRaw {
@@ -166,7 +154,6 @@ pub struct AudioOptionsRaw {
     pub channels: i32,
 }
 
-/// Sanitized input, guarantees to have values greater than zero
 #[repr(C)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct AudioOptions {
@@ -175,9 +162,7 @@ pub struct AudioOptions {
 }
 
 impl AudioOptions {
-    // AudioOptions is sanitized at the FFI boundary: always positive
     const fn channels_usize(self) -> NonZeroUsize {
-        // SAFETY the channels value is checked at the construction
         unsafe { NonZeroUsize::new_unchecked(self.channels.get() as usize) }
     }
 
@@ -221,8 +206,6 @@ impl From<AudioOptions> for AudioOptionsRaw {
     }
 }
 
-/// Read-only view of the engine's audio output configuration
-/// For internal look-ups
 #[derive(Clone)]
 pub(crate) struct AudioOptionsView(Arc<ArcSwap<AudioOptions>>);
 
@@ -239,12 +222,6 @@ pub struct VideoSize {
     pub height: u32,
 }
 
-/// Snapshot of the open media's source stream parameters.
-///
-/// Name fields are NUL-terminated UTF-8; =
-/// unknown values are 0 / empty, `duration` is -1.0 for realtime streams.
-/// Video fields are zero when `has_video` is 0,
-/// audio fields when `has_audio` is 0.
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct MediaInfo {
@@ -287,12 +264,6 @@ impl MediaInfo {
     }
 }
 
-/// Snapshot of the user-facing control values: the latest pushed
-/// intents, which the playback thread applies asynchronously.
-///
-/// A `*_pending` flag of 1 means that control's latest push has not
-/// been consumed by the playback thread yet. Each value/pending pair
-/// is consistent; the controls are sampled independently of each other.
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct ControlsState {
@@ -365,8 +336,6 @@ fn string_to_c_bytes(s: impl AsRef<str>) -> *const c_char {
 }
 
 impl Runtime {
-    /// Shared-access guard over a registered player; the player stays
-    /// solely owned by the registry, so the guard cannot outlive it.
     fn player_by_id(
         &self,
         player_id: PlayerId,
@@ -374,7 +343,6 @@ impl Runtime {
         self.registry.get(&player_id).context(ERR_NO_PLAYER)
     }
 
-    /// Exclusive-access counterpart of [`Self::player_by_id`].
     fn player_by_id_mut(
         &self,
         player_id: PlayerId,
@@ -383,8 +351,6 @@ impl Runtime {
     }
 }
 
-/// releases an error message
-/// must be called exactly once per non-null message
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_string_free(string: *mut c_char) {
     if string.is_null() {
@@ -399,22 +365,11 @@ pub const extern "C" fn uuav_abi_version() -> *const c_char {
     concat!(env!("CARGO_PKG_VERSION"), '\0').as_ptr().cast()
 }
 
-/// This target's `va_list` as it appears in the bindgen signatures of
-/// `av_log_set_callback`/`av_log_format_line2`: a plain `char*` on
-/// `x86_64-pc-windows-gnu` and `aarch64-apple-darwin`, a pointer to the
-/// SysV `__va_list_tag` on `x86_64-apple-darwin`.
 #[cfg(all(target_arch = "x86_64", target_os = "macos"))]
 type FfmpegVaList = *mut ff::__va_list_tag;
 #[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
 type FfmpegVaList = *mut c_char;
 
-/// Process-global FFmpeg log callback installed via `av_log_set_callback`.
-///
-/// Fires from arbitrary (possibly concurrent) FFmpeg threads. It no-ops once
-/// the runtime is torn down, applies the configured verbosity threshold itself
-/// (FFmpeg leaves that to the callback), formats the line — including the
-/// `AVClass`-derived `[component @ 0x..]` prefix — via `av_log_format_line2`,
-/// then routes to the Unity sink matching the severity.
 unsafe extern "C" fn uuav_ffmpeg_log(
     avcl: *mut c_void,
     level: c_int,
@@ -426,7 +381,6 @@ unsafe extern "C" fn uuav_ffmpeg_log(
         return;
     };
 
-    // FFmpeg only stores the threshold; filtering is the callback's job.
     if level > unsafe { ff::av_log_get_level() } {
         return;
     }
@@ -452,27 +406,26 @@ unsafe extern "C" fn uuav_ffmpeg_log(
     } else {
         &s.log_callback
     };
-    // av_log_format_line2 always NUL-terminates within the buffer.
     callback(line.as_ptr());
 }
 
-/// Sets the FFmpeg verbosity threshold (an `AV_LOG_*` constant). Messages above
-/// this level are dropped before reaching any Unity sink.
+pub(crate) fn diag_log(message: &str) {
+    let state = INIT_STATE.load();
+    let Some(s) = state.as_ref() else {
+        return;
+    };
+    let Ok(line) = CString::new(message) else {
+        return;
+    };
+    let callback = *s.log_callback;
+    callback(line.as_ptr());
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_set_log_level(level: c_int) {
     unsafe { ff::av_log_set_level(level) };
 }
 
-/// Initializes the global runtime.
-///
-/// `protocol_whitelist` is a NUL-terminated, comma-separated FFmpeg protocol
-/// list; init fails if it is null or empty. Recommended baseline is
-/// `https,http,tls,tcp,crypto,data,udp,rtp,rtcp,rtsp`, adding `file` only for
-/// editor/local playback.
-///
-/// `warning_callback` and `log_callback` receive FFmpeg's own diagnostics
-/// (already formatted, one line per call); `log_level` is the initial
-/// `AV_LOG_*` verbosity threshold. All three callbacks must be non-null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_init(
     texture: *const c_void,
@@ -530,9 +483,6 @@ pub unsafe extern "C" fn uuav_init(
 
     INIT_STATE.store(Some(Arc::new(new_runtime)));
 
-    // Register the trampoline once; the sinks live in INIT_STATE, so it no-ops
-    // after deinit and picks up fresh callbacks on re-init. The level store is
-    // process-global, so re-apply it every init.
     LOG_INIT.call_once(|| unsafe { ff::av_log_set_callback(Some(uuav_ffmpeg_log)) });
     unsafe { ff::av_log_set_level(log_level) };
 
@@ -567,8 +517,6 @@ pub extern "C" fn uuav_status() -> Status {
         let audio_options = (**s.audio_options.load()).into();
         let players_count = s.registry.len() as u64;
 
-        // D3D11 devices can be removed (driver reset, GPU hang)
-        // Metal has no such concept
         #[cfg(target_os = "windows")]
         let device_remove_reason = match unsafe { s.device.device().GetDeviceRemovedReason() } {
             Ok(()) => ptr::null(),
@@ -621,7 +569,6 @@ pub extern "C" fn uuav_player_free(player_id: PlayerId) {
     s.registry.remove(&player_id);
 }
 
-// ---- lifecycle -------------------------------------------------------
 
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_play(player_id: PlayerId) -> ResultFFI {
@@ -645,7 +592,6 @@ fn uuav_player_pause_internal(player_id: PlayerId) -> anyhow::Result<()> {
     runtime.player_by_id(player_id)?.pause()
 }
 
-// async! returns immediately
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_player_open_media_async(
     player_id: PlayerId,
@@ -668,7 +614,6 @@ unsafe fn uuav_player_open_media_async_internal(
     runtime.player_by_id_mut(player_id)?.open_media_intent(url)
 }
 
-// back to CLOSED, player reusable
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_close_media(player_id: PlayerId) -> ResultFFI {
     uuav_player_close_media_internal(player_id).into()
@@ -693,7 +638,6 @@ pub extern "C" fn uuav_player_state(player_id: PlayerId) -> UUAVState {
         .map_or(UUAVState::UUAV_UNKNOWN, |player| player.state())
 }
 
-// may be unavailable for realtime streams
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_player_duration(
     player_id: PlayerId,
@@ -760,7 +704,6 @@ unsafe fn uuav_player_current_time_internal(
     Ok(())
 }
 
-// the player slaves its playback to the externally provided master clock
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_assign_master_clock(
     player_id: PlayerId,
@@ -804,6 +747,29 @@ unsafe fn uuav_player_get_video_size_internal(
 }
 
 #[unsafe(no_mangle)]
+pub unsafe extern "C" fn uuav_player_get_frame_info(
+    player_id: PlayerId,
+    out_info: *mut FrameInfo,
+) -> ResultFFI {
+    unsafe { uuav_player_get_frame_info_internal(player_id, out_info) }.into()
+}
+
+unsafe fn uuav_player_get_frame_info_internal(
+    player_id: PlayerId,
+    out_info: *mut FrameInfo,
+) -> anyhow::Result<()> {
+    ensure!(!out_info.is_null(), "out pointer is null");
+    let state = INIT_STATE.load();
+    let runtime = state.as_ref().context(ERR_NO_RUNTIME)?;
+    let info = runtime
+        .player_by_id(player_id)?
+        .frame_info()
+        .context("no frame has been presented yet")?;
+    unsafe { out_info.write(info) };
+    Ok(())
+}
+
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_player_get_media_info(
     player_id: PlayerId,
     out_info: *mut MediaInfo,
@@ -826,9 +792,7 @@ unsafe fn uuav_player_get_media_info_internal(
     Ok(())
 }
 
-// ---- transport (commands: set flags, decoder thread obeys) ----------
 
-// async; coalesces repeated calls
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_seek_async(player_id: PlayerId, time: f64) -> ResultFFI {
     uuav_player_seek_async_internal(player_id, time).into()
@@ -840,7 +804,6 @@ fn uuav_player_seek_async_internal(player_id: PlayerId, time: f64) -> anyhow::Re
     runtime.player_by_id(player_id)?.seek_intent(time)
 }
 
-// persists across url switches
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_set_looping(player_id: PlayerId, looping: u8) -> ResultFFI {
     uuav_player_set_looping_internal(player_id, looping != 0).into()
@@ -864,7 +827,6 @@ pub extern "C" fn uuav_player_get_looping(player_id: PlayerId) -> u8 {
         .map_or(0, |player| u8::from(player.looping()))
 }
 
-// Expect: realtime streams (no duration) keep playing at 1x
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_set_rate(player_id: PlayerId, rate: f64) -> ResultFFI {
     uuav_player_set_rate_internal(player_id, rate).into()
@@ -892,13 +854,9 @@ pub extern "C" fn uuav_player_get_rate(player_id: PlayerId) -> f64 {
         .map_or(DEFAULT_PLAYBACK_RATE, |player| player.rate())
 }
 
-// ---- video -----------------------------------------------------------
 
-// Unity's UnityRenderingEvent signature
 pub type UUAVRenderEvent = extern "C" fn(event_id: i32);
 
-// [render] entry point issued via GL.IssuePluginEvent;
-// `event_id` routes to the player with the matching id
 extern "C" fn uuav_render_event(event_id: i32) {
     let Ok(player_id) = PlayerId::try_from(event_id) else {
         return;
@@ -914,15 +872,11 @@ extern "C" fn uuav_render_event(event_id: i32) {
     }
 }
 
-// pass to GL.IssuePluginEvent
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_get_render_callback() -> UUAVRenderEvent {
     uuav_render_event
 }
 
-// Valid from the first presented frame; what the pointer is per platform
-// and when it invalidates is documented on `video_output::VideoTextureView`.
-// `plane` is part of the fixed C ABI; only Metal consumes it.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_player_get_video_texture(
     player_id: PlayerId,
@@ -959,10 +913,7 @@ unsafe fn uuav_player_get_video_texture_internal(
     Ok(())
 }
 
-// ---- audio -----------------------------------------------------------
 
-// [audio] fills interleaved FLT; pads silence on underrun,
-// never blocks; returns frames actually copied
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn uuav_player_read_audio(
     player_id: PlayerId,

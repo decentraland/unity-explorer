@@ -4,66 +4,41 @@ use objc2::rc::Retained;
 use objc2::runtime::ProtocolObject;
 use objc2_core_video::{CVPixelBuffer, CVPixelBufferGetIOSurface};
 use objc2_io_surface::IOSurfaceRef;
-use objc2_metal::{
-    MTLBlitCommandEncoder, MTLCommandBuffer, MTLCommandEncoder, MTLCommandQueue, MTLDevice,
-    MTLOrigin, MTLPixelFormat, MTLSize, MTLStorageMode, MTLTexture, MTLTextureDescriptor,
-    MTLTextureUsage,
-};
+use objc2_metal::{MTLDevice, MTLPixelFormat, MTLStorageMode, MTLTexture, MTLTextureDescriptor};
+use std::collections::{HashMap, VecDeque, hash_map::Entry};
+use std::mem;
 use std::os::raw::c_void;
 
+use crate::frame_info::FrameInfo;
 use crate::hw_device::HwDevice;
 use crate::video_decoder::VideoFrame;
 
 type Texture = Retained<ProtocolObject<dyn MTLTexture>>;
+type Planes = [Texture; 2];
 
-/// Non-owning view of one of [`VideoOutput`]'s presentation planes: one
-/// `MTLTexture` per plane (0 = Y `R8Unorm`, 1 = UV `RG8Unorm`). The retain
-/// held here only pins the texture while the view lives; `VideoOutput`
-/// stays the owner and recreates both planes together on a resolution
-/// change, after which consumers re-query both (contract of
-/// `uuav_player_get_video_texture`).
+const RETAINED_FRAMES: usize = 4;
+
 pub(crate) struct VideoTextureView {
     texture: Texture,
 }
 
 impl VideoTextureView {
     pub(crate) fn raw_ptr_mut(&self) -> *mut c_void {
-        Retained::as_ptr(&self.texture).cast_mut().cast::<c_void>()
+        texture_ptr(&self.texture)
     }
 }
 
-/// Presentation target: two owned per-plane textures (Y `R8Unorm`, UV
-/// `RG8Unorm`) on the engine-provided device that decoded frames are blitted
-/// into on the render thread. The engine consumes the raw `id<MTLTexture>`
-/// pointers directly - unlike D3D11 there is no multi-plane resource to
-/// create views over, so each plane is its own texture.
 pub(crate) struct VideoOutput {
     device: Retained<ProtocolObject<dyn MTLDevice>>,
-    queue: Retained<ProtocolObject<dyn MTLCommandQueue>>,
-    planes: Option<SizedPlanes>,
-    /// Previous plane generation, kept alive for one resolution change so
-    /// the pointers the engine still wraps stay valid until its next poll
-    /// notices the new plane-0 pointer.
-    retired: Option<SizedPlanes>,
+    planes: HashMap<usize, Planes>,
+    retired: HashMap<usize, Planes>,
+    published: Option<Planes>,
+    retained: VecDeque<VideoFrame>,
+    info: Option<FrameInfo>,
+    frames: u64,
+    generation: u64,
 }
 
-/// The plane textures together with the dimensions they were created for.
-struct SizedPlanes {
-    y: Texture,
-    uv: Texture,
-    width: u32,
-    height: u32,
-}
-
-impl SizedPlanes {
-    const fn matches(&self, width: u32, height: u32) -> bool {
-        self.width == width && self.height == height
-    }
-}
-
-// The Metal objects are only used behind the player's mutex and Metal
-// devices/queues/textures are free-threaded; Retained<ProtocolObject<..>>
-// merely lacks the marker because ObjC protocols leave it undeclared.
 #[allow(clippy::non_send_fields_in_send_ty)]
 unsafe impl Send for VideoOutput {}
 
@@ -71,38 +46,37 @@ impl VideoOutput {
     pub(crate) fn new(device: &HwDevice) -> Self {
         Self {
             device: device.metal_device().retain(),
-            queue: device.command_queue().retain(),
-            planes: None,
-            retired: None,
+            planes: HashMap::new(),
+            retired: HashMap::new(),
+            published: None,
+            retained: VecDeque::new(),
+            info: None,
+            frames: 0,
+            generation: 0,
         }
     }
 
-    /// One plane texture, once the first frame has been presented.
     pub(crate) fn texture(&self, plane: i32) -> Option<VideoTextureView> {
-        let planes = self.planes.as_ref()?;
-        let texture = match plane {
-            0 => planes.y.clone(),
-            1 => planes.uv.clone(),
-            _ => return None,
-        };
+        let index = usize::try_from(plane).ok()?;
+        let texture = self.published.as_ref()?.get(index)?.clone();
         Some(VideoTextureView { texture })
     }
 
-    /// Takes no decode context on purpose (the D3D11 sibling needs one for
-    /// its immediate-context lock): the blit runs on the plugin's own queue
-    /// against an immutable decoded surface.
-    pub(crate) fn present(&mut self, frame: &VideoFrame) -> Result<()> {
-        // NV12 requires even dimensions; negative decoder sizes fold to 0
-        let width = u32::try_from(frame.width()).unwrap_or(0) & !1;
-        let height = u32::try_from(frame.height()).unwrap_or(0) & !1;
-        if width == 0 || height == 0 {
+    pub(crate) fn state(&self) -> Option<FrameInfo> {
+        let planes = self.published.as_ref()?;
+        let mut info = self.info?;
+        info.planes = [
+            texture_ptr(&planes[0]) as usize,
+            texture_ptr(&planes[1]) as usize,
+        ];
+        Some(info)
+    }
+
+    pub(crate) fn present(&mut self, frame: VideoFrame) -> Result<()> {
+        let mut info = frame.info();
+        if info.visible_width == 0 || info.visible_height == 0 {
             return Err(anyhow!("frame has no presentable size"));
         }
-        self.ensure_planes(width, height)?;
-        let planes = self
-            .planes
-            .as_ref()
-            .ok_or_else(|| anyhow!("presentation planes are missing"))?;
 
         let pixel_buffer = frame.pixel_buffer();
         if pixel_buffer.is_null() {
@@ -110,133 +84,78 @@ impl VideoOutput {
         }
         let pixel_buffer: &CVPixelBuffer = unsafe { &*pixel_buffer.cast::<CVPixelBuffer>() };
 
-        // FFmpeg's VideoToolbox hwcontext requests IOSurface backing, so a
-        // missing surface is a broken frame, not a fallback case
         let surface = CVPixelBufferGetIOSurface(Some(pixel_buffer))
             .ok_or_else(|| anyhow!("CVPixelBuffer is not IOSurface-backed"))?;
+        let surface: &IOSurfaceRef = &surface;
+        info.fit_planes([plane_size(surface, 0), plane_size(surface, 1)]);
 
-        // zero-copy views over the decoder surface planes, at the padded
-        // (coded-size) dimensions the IOSurface actually has
-        let src_y = self.wrap_surface_plane(&surface, 0, MTLPixelFormat::R8Unorm)?;
-        let src_uv = self.wrap_surface_plane(&surface, 1, MTLPixelFormat::RG8Unorm)?;
-
-        let buffer = self
-            .queue
-            .commandBuffer()
-            .ok_or_else(|| anyhow!("command queue returned no command buffer"))?;
-        let encoder = buffer
-            .blitCommandEncoder()
-            .ok_or_else(|| anyhow!("command buffer returned no blit encoder"))?;
-
-        // the visible box only (Metal analog of the D3D11_BOX copy): the
-        // IOSurface planes can be padded past the visible size
-        let origin = MTLOrigin { x: 0, y: 0, z: 0 };
-        unsafe {
-            encoder.copyFromTexture_sourceSlice_sourceLevel_sourceOrigin_sourceSize_toTexture_destinationSlice_destinationLevel_destinationOrigin(
-                &src_y,
-                0,
-                0,
-                origin,
-                MTLSize {
-                    width: width as usize,
-                    height: height as usize,
-                    depth: 1,
-                },
-                &planes.y,
-                0,
-                0,
-                origin,
-            );
-            encoder.copyFromTexture_sourceSlice_sourceLevel_sourceOrigin_sourceSize_toTexture_destinationSlice_destinationLevel_destinationOrigin(
-                &src_uv,
-                0,
-                0,
-                origin,
-                MTLSize {
-                    width: (width / 2) as usize,
-                    height: (height / 2) as usize,
-                    depth: 1,
-                },
-                &planes.uv,
-                0,
-                0,
-                origin,
-            );
-        }
-        encoder.endEncoding();
-        buffer.commit();
-        // synchronous on purpose: orders the copy against Unity's own queue
-        // and proves the borrowed frame/IOSurface outlives the GPU reads.
-        // Optimization headroom (MTLSharedEvent, IUnityGraphicsMetal) is
-        // deliberately deferred.
-        buffer.waitUntilCompleted();
-        Ok(())
-    }
-
-    /// Ensures the owned plane textures match the size, recreating them on
-    /// change and retiring the previous generation for one more poll cycle.
-    fn ensure_planes(&mut self, width: u32, height: u32) -> Result<()> {
-        if self
-            .planes
-            .as_ref()
-            .is_some_and(|planes| planes.matches(width, height))
-        {
-            return Ok(());
+        if self.info.is_some_and(|previous| {
+            previous.plane_width != info.plane_width || previous.plane_height != info.plane_height
+        }) {
+            self.retired = mem::take(&mut self.planes);
+            self.generation = self.generation.wrapping_add(1);
+        } else {
+            self.retired.clear();
         }
 
-        let y = self.new_plane(MTLPixelFormat::R8Unorm, width, height)?;
-        let uv = self.new_plane(MTLPixelFormat::RG8Unorm, width / 2, height / 2)?;
-        // the generation before last dies here; the engine has had a full
-        // poll cycle to stop wrapping it
-        let _previous = self.retired.take();
-        self.retired = self.planes.take();
-        self.planes = Some(SizedPlanes {
-            y,
-            uv,
-            width,
-            height,
-        });
+        let formats = if info.bit_depth > 8 {
+            [MTLPixelFormat::R16Unorm, MTLPixelFormat::RG16Unorm]
+        } else {
+            [MTLPixelFormat::R8Unorm, MTLPixelFormat::RG8Unorm]
+        };
+        let published = match self.planes.entry(std::ptr::from_ref(surface) as usize) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => {
+                let [y, uv] = formats;
+                entry.insert([
+                    wrap_plane(&self.device, surface, 0, y)?,
+                    wrap_plane(&self.device, surface, 1, uv)?,
+                ])
+            }
+        }
+        .clone();
+
+        self.frames = self.frames.wrapping_add(1);
+        info.frame_index = self.frames;
+        info.surface_generation = self.generation;
+        self.published = Some(published);
+        self.info = Some(info);
+
+        self.retained.push_back(frame);
+        while self.retained.len() > RETAINED_FRAMES {
+            self.retained.pop_front();
+        }
         Ok(())
     }
+}
 
-    /// One owned destination plane the engine samples from.
-    fn new_plane(&self, format: MTLPixelFormat, width: u32, height: u32) -> Result<Texture> {
-        let descriptor = unsafe {
-            MTLTextureDescriptor::texture2DDescriptorWithPixelFormat_width_height_mipmapped(
-                format,
-                width as usize,
-                height as usize,
-                false,
-            )
-        };
-        descriptor.setUsage(MTLTextureUsage::ShaderRead);
-        descriptor.setStorageMode(MTLStorageMode::Private);
-        self.device
-            .newTextureWithDescriptor(&descriptor)
-            .ok_or_else(|| anyhow!("newTexture({format:?} {width}x{height}) returned no texture"))
-    }
+fn texture_ptr(texture: &Texture) -> *mut c_void {
+    Retained::as_ptr(texture).cast_mut().cast::<c_void>()
+}
 
-    /// Zero-copy `MTLTexture` view over one IOSurface plane of the decoded
-    /// frame. Chosen over `CVMetalTextureCache`: no cache object to own and
-    /// flush, no `CVMetalTextureRef` lifetime to manage.
-    fn wrap_surface_plane(
-        &self,
-        surface: &IOSurfaceRef,
-        plane: usize,
-        format: MTLPixelFormat,
-    ) -> Result<Texture> {
-        let width = surface.width_of_plane(plane);
-        let height = surface.height_of_plane(plane);
-        let descriptor = unsafe {
-            MTLTextureDescriptor::texture2DDescriptorWithPixelFormat_width_height_mipmapped(
-                format, width, height, false,
-            )
-        };
-        // IOSurface-backed textures must be Shared (they alias CPU-visible
-        // memory); the default usage (ShaderRead) is fine for a blit source
-        descriptor.setStorageMode(MTLStorageMode::Shared);
-        self.device
-            .newTextureWithDescriptor_iosurface_plane(&descriptor, surface, plane)
-            .ok_or_else(|| anyhow!("wrapping IOSurface plane {plane} as {format:?} failed"))
-    }
+fn plane_size(surface: &IOSurfaceRef, plane: usize) -> (u32, u32) {
+    (
+        surface.width_of_plane(plane) as u32,
+        surface.height_of_plane(plane) as u32,
+    )
+}
+
+fn wrap_plane(
+    device: &ProtocolObject<dyn MTLDevice>,
+    surface: &IOSurfaceRef,
+    plane: usize,
+    format: MTLPixelFormat,
+) -> Result<Texture> {
+    let descriptor = unsafe {
+        MTLTextureDescriptor::texture2DDescriptorWithPixelFormat_width_height_mipmapped(
+            format,
+            surface.width_of_plane(plane),
+            surface.height_of_plane(plane),
+            false,
+        )
+    };
+    descriptor.setStorageMode(MTLStorageMode::Shared);
+    device
+        .newTextureWithDescriptor_iosurface_plane(&descriptor, surface, plane)
+        .ok_or_else(|| anyhow!("wrapping IOSurface plane {plane} as {format:?} failed"))
 }

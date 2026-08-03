@@ -1,4 +1,3 @@
-//! Lock-free SPSC audio ring
 
 use parking_lot::Mutex;
 use ringbuf::traits::{Consumer, Observer, Producer, Split};
@@ -8,51 +7,29 @@ use std::sync::Arc;
 
 use crate::AudioOptions;
 
-/// Decoded audio buffered ahead of the clock, in seconds; the fixed
-/// capacity of the sample ring.
 const AUDIO_BUFFER_SECONDS: f64 = 1.0;
-/// Audio drift beyond this is corrected by padding silence / dropping samples.
 const AUDIO_DRIFT_TOLERANCE: f64 = 0.15;
-/// Decoded audio frames are ~10 ms or longer, so one second of buffered
-/// audio carries well under this many timestamps.
 const PTS_MARKERS_CAP: usize = 256;
 
-/// Media time anchor: ties a media timestamp to a position in the sample
-/// stream.
 #[derive(Clone, Copy)]
 struct PtsMarker {
-    /// Stream position, in interleaved samples since the ring pair was
-    /// created.
     position: u64,
-    /// Media time of the sample at `position`, in seconds.
     pts: f64,
 }
 
-/// What the audio callback must do after drift correction.
 pub(super) enum ClockSync {
-    /// Audio is aligned with the master clock (late samples were already
-    /// dropped): consume normally.
     Consume,
-    /// Audio is ahead of the master clock: emit silence to hold it back.
     EmitSilence,
 }
 
-/// Slot through which the receiver half is handed to the audio thread.
 pub(super) type SharedAudioReceiver = Arc<Mutex<Option<AudioReceiver>>>;
 
-/// The worker's grip on the whole ring: the sender half it fills, paired
-/// with the slot its receiver half was published into. Both halves are
-/// created and replaced together, so they always originate from the same
-/// ring.
 pub(super) struct AudioRing {
     tx: AudioSender,
     rx_slot: SharedAudioReceiver,
 }
 
 impl AudioRing {
-    /// Creates a ring for `audio_options` and publishes its receiver into
-    /// `rx_slot`. `playback_rate` is the varispeed the buffered samples
-    /// were converted for; it scales the receiver's media-time math.
     pub(super) fn new(
         audio_options: AudioOptions,
         playback_rate: f64,
@@ -63,21 +40,16 @@ impl AudioRing {
         Self { tx, rx_slot }
     }
 
-    /// Replaces both halves with a fresh ring for `audio_options` at
-    /// `playback_rate`, discarding whatever the old ring still buffered.
     pub(super) fn replace(&mut self, audio_options: AudioOptions, playback_rate: f64) {
         let (tx, rx) = split(audio_options, playback_rate);
         self.tx = tx;
         *self.rx_slot.lock() = Some(rx);
     }
 
-    /// Appends a decoded frame when the ring has room. An empty ring always
-    /// accepts, so an oversized frame cannot deadlock the pipeline.
     pub(super) fn try_extend(&mut self, pts: Option<f64>, samples: &[f32]) -> bool {
         self.tx.try_extend(pts, samples)
     }
 
-    /// Whether the receiver has consumed everything pushed so far.
     pub(super) fn is_drained(&self) -> bool {
         self.tx.is_drained()
     }
@@ -109,12 +81,9 @@ fn split(audio_options: AudioOptions, playback_rate: f64) -> (AudioSender, Audio
     )
 }
 
-/// Worker-side half: pushes decoded samples and their timestamps.
 struct AudioSender {
     samples: HeapProd<f32>,
     markers: HeapProd<PtsMarker>,
-    /// Interleaved samples pushed since creation; stream position of the
-    /// next pushed sample.
     written: u64,
 }
 
@@ -124,15 +93,11 @@ impl AudioSender {
             return false;
         }
         if let Some(pts) = pts {
-            // a full marker ring only costs one re-anchor: harmless
             let _ = self.markers.try_push(PtsMarker {
                 position: self.written,
                 pts,
             });
         }
-        // when accepted into an empty ring, a frame larger than the whole
-        // ring is truncated (the VecDeque predecessor grew unboundedly);
-        // sane decoder output is orders of magnitude below the capacity
         let pushed = self.samples.push_slice(samples);
         self.written = self.written.saturating_add(pushed as u64);
         true
@@ -143,22 +108,13 @@ impl AudioSender {
     }
 }
 
-/// Audio-thread half: pops samples wait-free and tracks their media time.
 pub(super) struct AudioReceiver {
     samples: HeapCons<f32>,
     markers: HeapCons<PtsMarker>,
-    /// Interleaved samples consumed since creation; stream position of the
-    /// sample at the ring head.
     read: u64,
-    /// Newest marker at or before `read`; media time is extrapolated from
-    /// it, `None` until timed samples arrive (drift correction disabled).
     anchor: Option<PtsMarker>,
-    /// A marker taken off the ring that still lies ahead of `read`.
     pending: Option<PtsMarker>,
     audio_options: AudioOptions,
-    /// Varispeed the samples were converted for: one output frame covers
-    /// `playback_rate / sample_rate` media seconds. Constant per ring —
-    /// a rate change replaces the whole ring.
     playback_rate: f64,
 }
 
@@ -171,8 +127,6 @@ impl AudioReceiver {
         self.audio_options.sample_rate_f64()
     }
 
-    /// Media time of the sample at the ring head: the newest marker at or
-    /// before `read`, extrapolated by the frames consumed past it.
     fn next_pts(&mut self) -> Option<f64> {
         loop {
             let marker = match self.pending.take() {
@@ -197,7 +151,6 @@ impl AudioReceiver {
         })
     }
 
-    /// Applies master-clock drift correction.
     pub(super) fn sync_to_clock(&mut self, now: f64) -> ClockSync {
         let Some(pts) = self.next_pts() else {
             return ClockSync::Consume;
@@ -208,7 +161,6 @@ impl AudioReceiver {
         }
         if drift < -AUDIO_DRIFT_TOLERANCE {
             let channels_nz = self.channel_count();
-            // a late media span occupies span / rate output frames
             let late_frames = (-drift * self.rate_f64() / self.playback_rate) as usize;
             let buffered_frames = self.samples.occupied_len() / channels_nz;
             let drop_samples = late_frames
@@ -220,8 +172,6 @@ impl AudioReceiver {
         ClockSync::Consume
     }
 
-    /// Copies whole frames into `out`, zero-fills the rest, and advances
-    /// the stream position; returns the number of frames copied.
     pub(super) fn read_into(&mut self, out: &mut [f32]) -> usize {
         let channels_nz = self.channel_count();
         let requested_frames = out.len() / channels_nz;

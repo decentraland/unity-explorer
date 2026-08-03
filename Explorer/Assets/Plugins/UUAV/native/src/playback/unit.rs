@@ -3,6 +3,7 @@ use ffmpeg_sys_next as ff;
 use parking_lot::Mutex;
 use std::sync::Once;
 use std::thread;
+use std::time::Instant;
 
 use super::audio_playback::{AudioPlayback, AudioReader};
 use super::control::ControlConsume;
@@ -11,6 +12,7 @@ use super::transport::{AtomicTransport, PlaybackState};
 use super::util::{AtomicSeekSlot, PLAYBACK_POLL, ReadOnlyCancelToken};
 use super::video_playback::{VideoPlayback, VideoQueue, VideoReader};
 use crate::ffutil::{OwnedPacket, Stream, StreamingProtocol, av_err, check, copy_c_name, q2d};
+use crate::frame_info::FrameInfo;
 use crate::hw_device::{HwDevice, HwDeviceContext};
 use crate::video_output::{VideoOutput, VideoTextureView};
 use crate::{AudioOptionsView, ErrorCallback, MediaInfo, UUAVState, VideoSize};
@@ -19,75 +21,47 @@ use std::os::raw::c_int;
 
 static NETWORK_INIT: Once = Once::new();
 
-/// A video frame is presented once the clock is within this of its pts.
 const VIDEO_PRESENT_BIAS: f64 = 0.005;
 
 pub const DEFAULT_PLAYBACK_RATE: f64 = 1.0;
 
-/// The demux/decode half of a playback: everything [`PlaybackUnit::run_blocking`]
-/// needs mutable and exclusive on the playback thread.
 pub(crate) struct Pipeline {
     input: Input,
     video: Option<VideoPlayback>,
     audio: Option<AudioPlayback>,
-    /// Timestamp of the first frame; the media timeline is normalized so
-    /// playback starts at 0.
     start_offset: f64,
 }
 
 pub(crate) struct UnitControls {
-    /// `true` = a play queued while no unit was live, `false` = a pause
     pub(crate) play_or_pause: ControlConsume<bool>,
-    /// Wrap at EOF on the playback thread instead of settling into ENDED.
     pub(crate) looping: ControlConsume<bool>,
-    /// Desired playback rate, in media seconds per wall second.
     pub(crate) rate: ControlConsume<f64>,
 }
 
-/// Playback of a single url: the shared state the engine-facing threads
-/// (control, render, audio) and the playback thread work against.
-///
-/// A unit that exists is fully open — [`PlaybackUnit::open`] builds it
-/// from an already-opened media, so every field here is plain data.
 pub(crate) struct PlaybackUnit {
     url: String,
     cancel: ReadOnlyCancelToken,
-    /// Coalescing seek command; the playback thread services it.
     seek: AtomicSeekSlot,
     controls: UnitControls,
-    /// Playback state and media clock, as one atomic snapshot.
     transport: AtomicTransport,
-    /// Audio-thread half of the playback's audio; the pipeline's
-    /// [`AudioPlayback`] feeds it.
     audio: AudioReader,
-    /// Render-thread half of the presentation queue; the pipeline's
-    /// [`VideoPlayback`] feeds it.
     video: VideoReader,
-    /// Windows-Only D3D11VA device context frames decode through; `None` for
-    /// audio-only media.
     #[cfg(target_os = "windows")]
     hw_ctx: Option<HwDeviceContext>,
-    /// Total duration in seconds, `None` for realtime streams.
     duration: Option<f64>,
     video_size: Option<VideoSize>,
-    /// Source stream parameters, captured while probing in [`Self::open`].
     media_info: MediaInfo,
-    /// Presentation target; created lazily on the render thread.
     output: Mutex<Option<VideoOutput>>,
-    /// Engine device the presentation output is created on.
     device: HwDevice,
     error_callback: ErrorCallback,
 }
 
-/// Fills the video half of `info` from the probed stream's parameters.
 fn probe_video_info(info: &mut MediaInfo, stream: Stream) {
     let par = stream.codecpar();
     info.has_video = 1;
     copy_c_name(&mut info.video_codec, unsafe {
         ff::avcodec_get_name(stream.codec_id())
     });
-    // SAFETY: the value was probed by FFmpeg itself, so it is a valid
-    // AVPixelFormat (or -1 = NONE, for which the name lookup returns null)
     let pix_fmt = unsafe { mem::transmute::<c_int, ff::AVPixelFormat>((*par).format) };
     copy_c_name(&mut info.pixel_format, unsafe {
         ff::av_get_pix_fmt_name(pix_fmt)
@@ -100,15 +74,12 @@ fn probe_video_info(info: &mut MediaInfo, stream: Stream) {
     info.framerate = q2d(stream.avg_frame_rate());
 }
 
-/// Fills the audio half of `info` from the probed stream's parameters.
 fn probe_audio_info(info: &mut MediaInfo, stream: Stream) {
     let par = stream.codecpar();
     info.has_audio = 1;
     copy_c_name(&mut info.audio_codec, unsafe {
         ff::avcodec_get_name(stream.codec_id())
     });
-    // SAFETY: the value was probed by FFmpeg itself, so it is a valid
-    // AVSampleFormat (or -1 = NONE, for which the name lookup returns null)
     let sample_fmt = unsafe { mem::transmute::<c_int, ff::AVSampleFormat>((*par).format) };
     copy_c_name(&mut info.sample_format, unsafe {
         ff::av_get_sample_fmt_name(sample_fmt)
@@ -121,9 +92,6 @@ fn probe_audio_info(info: &mut MediaInfo, stream: Stream) {
 }
 
 impl PlaybackUnit {
-    /// [playback thread] Opens the media at `url`, blocking until its
-    /// streams are probed and the decoders are built. Aborted through
-    /// `cancel` while blocked on demuxer I/O.
     pub(crate) fn open(
         url: String,
         device: HwDevice,
@@ -187,6 +155,7 @@ impl PlaybackUnit {
                 audio_index,
                 audio_out,
                 audio_reader.rx_slot(),
+                video.is_some(),
             )?)
         } else {
             None
@@ -221,9 +190,6 @@ impl PlaybackUnit {
         Ok((unit, pipeline))
     }
 
-    /// [playback thread] Demuxes and decodes until the player cancels.
-    /// A cancelled run is a clean exit; a runtime error propagates to the
-    /// player, which retires this unit.
     pub(crate) fn run_blocking(&self, pipeline: Pipeline) -> Result<()> {
         match self.run(pipeline) {
             Err(e) if !self.cancel.is_cancelled() => Err(e),
@@ -240,25 +206,35 @@ impl PlaybackUnit {
         } = pipeline;
 
         let mut packet = OwnedPacket::new()?;
-        // whether the demuxer ran out of input; playback then drains the sinks
         let mut eof = false;
-        // varispeed this unit currently runs at; fresh units start at 1x
         let mut applied_rate = 1.0_f64;
-        // the sinks poll this while waiting for queue space: not playing
-        // means nothing drains, so a blocked pump is the only place a
-        // queued play can be noticed
         let poll_controls = || self.apply_play_or_pause();
+
+        let mut vpkt_total: u64 = 0;
+        let mut vpkt_win: u64 = 0;
+        let mut apkt_win: u64 = 0;
+        let mut eagain_win: u64 = 0;
+        let mut last_vpkt_at: Option<Instant> = None;
+        let mut window_start = Instant::now();
 
         loop {
             if self.cancel.is_cancelled() {
                 return Ok(());
             }
 
+            if window_start.elapsed().as_secs_f64() >= 2.0 {
+                let over = window_start.elapsed().as_secs_f64();
+                crate::diag_log(&format!(
+                    "uuav-core: video_pkts={vpkt_win} audio_pkts={apkt_win} eagain={eagain_win} over {over:.1}s"
+                ));
+                vpkt_win = 0;
+                apkt_win = 0;
+                eagain_win = 0;
+                window_start = Instant::now();
+            }
+
             self.apply_play_or_pause();
 
-            // peek, not consume: a fresh unit picks up the standing rate
-            // even though a previous unit already took the update.
-            // realtime streams (no duration) stay at 1x
             let rate = if self.duration.is_some() {
                 self.controls.rate.peek().unwrap_or(DEFAULT_PLAYBACK_RATE)
             } else {
@@ -273,7 +249,6 @@ impl PlaybackUnit {
             }
 
             if let Some(target) = self.seek.take() {
-                // non-fatal: an unseekable (e.g. realtime) stream keeps playing
                 if let Err(e) = self.apply_seek(
                     &input,
                     video.as_mut(),
@@ -309,12 +284,19 @@ impl PlaybackUnit {
                     video.drain(start_offset, &self.cancel, &self.seek, &poll_controls)?;
                 }
                 if let Some(audio) = audio.as_mut() {
-                    audio.drain(start_offset, &self.cancel, &self.seek, &poll_controls)?;
+                    audio.drain(
+                        start_offset,
+                        &self.cancel,
+                        &self.seek,
+                        &self.transport,
+                        &poll_controls,
+                    )?;
                 }
                 eof = true;
                 continue;
             }
             if ret == ff::AVERROR(libc::EAGAIN) {
+                eagain_win = eagain_win.wrapping_add(1);
                 thread::sleep(PLAYBACK_POLL);
                 continue;
             }
@@ -326,6 +308,20 @@ impl PlaybackUnit {
             if let Some(video) = video.as_mut()
                 && video.handles(stream_index)
             {
+                let arrived = Instant::now();
+                let arr_ms = last_vpkt_at
+                    .map_or(0.0, |prev| arrived.duration_since(prev).as_secs_f64() * 1000.0);
+                last_vpkt_at = Some(arrived);
+                vpkt_total = vpkt_total.wrapping_add(1);
+                vpkt_win = vpkt_win.wrapping_add(1);
+                if vpkt_total <= 120 {
+                    crate::diag_log(&format!(
+                        "uuav-core: vpkt n={} pts={} arr_ms={:.1}",
+                        vpkt_total,
+                        packet.pts(),
+                        arr_ms
+                    ));
+                }
                 video.handle_packet(
                     &mut packet,
                     start_offset,
@@ -336,11 +332,13 @@ impl PlaybackUnit {
             } else if let Some(audio) = audio.as_mut()
                 && audio.handles(stream_index)
             {
+                apkt_win = apkt_win.wrapping_add(1);
                 audio.handle_packet(
                     &mut packet,
                     start_offset,
                     &self.cancel,
                     &self.seek,
+                    &self.transport,
                     &poll_controls,
                 )?;
             }
@@ -348,10 +346,6 @@ impl PlaybackUnit {
         }
     }
 
-    /// [playback thread] At EOF with looping on: once the sinks have
-    /// played the tail out, wraps back to the start right here — the
-    /// input and the decoders stay warm, and no ENDED/seek round-trip is
-    /// exposed to the engine. Returns whether the wrap happened.
     fn loop_wrap(
         &self,
         input: &Input,
@@ -370,8 +364,6 @@ impl PlaybackUnit {
             return false;
         }
 
-        // non-fatal, like a user seek; falling through settles into ENDED,
-        // where is_playing turns false, so a failed wrap does not retry
         if let Err(e) = self.apply_seek(input, video, audio, eof, 0.0, start_offset) {
             self.error_callback
                 .report(format!("loop restart failed: {e}"));
@@ -380,8 +372,6 @@ impl PlaybackUnit {
         true
     }
 
-    /// Fully decoded; once the sinks have drained, holds the clock and
-    /// flags ENDED.
     fn settle_ended(&self, video: Option<&VideoPlayback>, audio: Option<&AudioPlayback>) {
         let drained = video.is_none_or(VideoPlayback::is_drained)
             && audio.is_none_or(AudioPlayback::is_drained);
@@ -419,7 +409,6 @@ impl PlaybackUnit {
         self.transport.state().into()
     }
 
-    /// Applies a queued play/pause command, if any.
     fn apply_play_or_pause(&self) {
         if let Some(play) = self.controls.play_or_pause.consume() {
             if play {
@@ -435,7 +424,6 @@ impl PlaybackUnit {
             PlaybackState::Ready | PlaybackState::Paused => {}
             PlaybackState::Playing => return,
             PlaybackState::Ended => {
-                // restart from the beginning
                 self.seek.request(0.0);
             }
         }
@@ -455,7 +443,6 @@ impl PlaybackUnit {
         self.duration.map_or(now, |d| now.clamp(0.0, d))
     }
 
-    /// The playback slaves itself to the externally provided master clock.
     pub(crate) fn assign_master_clock(&self, current_time: f64) {
         self.transport.sync_to_master(current_time);
     }
@@ -484,11 +471,13 @@ impl PlaybackUnit {
         texture
     }
 
-    /// [render thread] Presents the frame that is due per the clock.
+    pub(crate) fn frame_info(&self) -> Option<FrameInfo> {
+        self.output.lock().as_ref().and_then(VideoOutput::state)
+    }
+
     pub(crate) fn on_render_event(&self) {
         let now = self.transport.now() + VIDEO_PRESENT_BIAS;
 
-        // audio-only media never queues frames, so this also gates on video
         let Some(frame) = self.video.next_due(now) else {
             return;
         };
@@ -496,27 +485,21 @@ impl PlaybackUnit {
         let mut output = self.output.lock();
         let out = output.get_or_insert_with(|| VideoOutput::new(&self.device));
 
-        // D3D11 copies through the decode context (the immediate context
-        // under the FFmpeg device lock); Metal blits on the plugin's own
-        // queue and takes nothing from the decode context
         #[cfg(target_os = "windows")]
         let presented = match self.hw_ctx.as_ref() {
             Some(hw) => out.present(hw, &frame),
             None => return,
         };
         #[cfg(target_os = "macos")]
-        let presented = out.present(&frame);
+        let presented = out.present(frame);
 
         if let Err(e) = presented {
             let message = format!("video present failed for {}: {e}", self.url);
-            // Exit the guard scope before calling external FFI function
             drop(output);
             self.error_callback.report(message);
         }
     }
 
-    /// [audio thread] Fills interleaved FLT; pads silence on underrun,
-    /// never blocks; returns frames actually copied.
     pub(crate) fn read_audio(&self, dst: *mut f32, frames: usize) -> i32 {
         self.audio.read(&self.transport, dst, frames)
     }
