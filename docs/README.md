@@ -40,6 +40,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Multiplayer](multiplayer.md)** — Transport-agnostic multiplayer hub: shared interfaces, movement pipeline, entity/profile tables, SDK propagation, dual-transport wiring
 - **[LiveKit Networking](livekit-networking.md)** — LiveKit transport: dual-room architecture, messaging pipes, Archipelago/GateKeeper, voice and chat rooms
 - **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
+- **[UUAV](uuav.md)** — Native media: out-of-process, sandboxed decode with a network-less child, and the decisions behind it
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
 - **[Performance Analytics](performance-analytics.md)** — `performance_report` telemetry: hiccup/frame-time metrics, measurement window, and target-relative threshold
 

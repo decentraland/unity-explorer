@@ -39,18 +39,23 @@ The other reason is reusability. The output is a plain C-ABI DLL with nothing en
 
 Prerequisites:
 
-- Rust toolchain with the GNU target: `rustup target add x86_64-pc-windows-gnu`
-- MSYS2 with the mingw64 toolchain at `C:\msys64` (the linker is pinned to `C:\msys64\mingw64\bin\gcc.exe` in `native/.cargo/config.toml`)
-- FFmpeg **8.1** development files (headers + import libs) in `native/.third_party/ffmpeg/`. Use the [BtbN](https://github.com/BtbN/FFmpeg-Builds/releases) **LGPL shared** win64 build. `FFMPEG_DIR` already points there via `native/.cargo/config.toml`.
+- Rust toolchain with the MSVC target: `rustup target add x86_64-pc-windows-msvc`
+- Visual Studio Build Tools with the x64 toolchain, from a shell that has entered `vcvars64.bat`. `native/.cargo/config.toml` builds with `-C control-flow-guard=yes -C target-feature=+crt-static`, and the GNU toolchain cannot emit Control Flow Guard - which is why this target is MSVC. `build.sh` refuses to start outside an MSVC environment, because MSYS coreutils ships a `link` that shadows MSVC's `link.exe`.
+- LLVM, with `LIBCLANG_PATH` pointing at its `bin` (bindgen, via `ffmpeg-sys-next`)
+- MSYS2 for the FFmpeg build only - `make`, `nasm`, `diffutils`, `pkgconf`. The compiler is clang-cl from the VS toolchain; mingw is not involved.
+- FFmpeg **8.1** development files (headers + import libs) in `native/.third_party/ffmpeg/`. `FFMPEG_DIR` already points there via `native/.cargo/config.toml`.
 
-Then:
+FFmpeg is built from source once, the same way as on macOS:
 
 ```bash
 cd native
+./scripts/build-ffmpeg-windows.cmd   # clones FFmpeg n8.1, clang-cl -guard:cf static-CRT build into .third_party/ffmpeg
 ./build.sh
 ```
 
-This runs `cargo build --release --target x86_64-pc-windows-gnu` and copies `uuav.dll` into `Packages/UUAV/Runtime/Plugins/x86_64/`.
+`build.sh` runs `cargo build --release --target x86_64-pc-windows-msvc -p uuav-client` and copies `uuav.dll` into `Packages/UUAV/Runtime/Plugins/x86_64/`.
+
+CFG only holds if every module in the process is instrumented, so the FFmpeg chain is built with `-guard:cf` too - a downloaded build cannot satisfy that, which is why there is no fetch step.
 
 ### macOS (universal: Apple Silicon + Intel)
 
@@ -62,7 +67,7 @@ Prerequisites:
 - Rust toolchain with both targets: `rustup target add aarch64-apple-darwin x86_64-apple-darwin`
 - `brew install nasm` (assembles the x86_64 SIMD kernels; the FFmpeg build fails fast without it)
 
-FFmpeg is built from source once (the macOS analog of dropping the BtbN build into `.third_party/ffmpeg`):
+FFmpeg is built from source once, as on Windows:
 
 ```bash
 cd native
@@ -76,31 +81,26 @@ Dylib loading needs no `install_name_tool` post-processing: FFmpeg is configured
 
 ## Runtime deployment
 
-`uuav.dll` dynamically links FFmpeg, so the FFmpeg runtime DLLs must sit next to `uuav.dll` (`Packages/UUAV/Runtime/Plugins/x86_64/` in-project, or the plugins folder of a built player). The exact set, taken from the FFmpeg **8.1** BtbN LGPL shared build:
+`uuav.dll` dynamically links FFmpeg, so the FFmpeg runtime DLLs must sit next to `uuav.dll` (`Packages/UUAV/Runtime/Plugins/x86_64/` in-project, or the plugins folder of a built player). The exact set, from the pinned from-source build:
 
 ```
-avcodec-63.dll
-avdevice-63.dll
-avfilter-12.dll
-avformat-63.dll
-avutil-61.dll
-libbz2-1.dll
-libiconv-2.dll
-liblzma-5.dll
-libwinpthread-1.dll
-swresample-7.dll
-swscale-10.dll
-zlib1.dll
+avcodec-62.dll
+avdevice-62.dll
+avfilter-11.dll
+avformat-62.dll
+avutil-60.dll
+swresample-6.dll
+swscale-9.dll
 ```
 
-The library major versions (avcodec **63**, avformat **63**, avutil **61**, swresample **7**, swscale **10**, avfilter **12**, avdevice **63**) are tied to the FFmpeg 8.1 release. A different FFmpeg version ships differently-named DLLs (`avcodec-62.dll`, …) that `uuav.dll` won't load - keep the DLL set and `ffmpeg-sys-next = "8.1.0"` in `native/Cargo.toml` in lockstep.
+The library major versions (avcodec **62**, avformat **62**, avutil **60**, swresample **6**, swscale **9**, avfilter **11**, avdevice **62**) are tied to the FFmpeg n8.1 source this builds from. A different FFmpeg version ships differently-named DLLs that `uuav.dll` won't load - keep the DLL set and `ffmpeg-sys-next = "8.1.0"` in `native/Cargo.toml` in lockstep.
 
 A few notes:
 
-- `libwinpthread-1.dll` is mandatory. The FFmpeg chain links against it; if it isn't next to the plugin, the loader falls back to `PATH` (which may hold an incompatible copy, e.g. Git's older mingw64) and `LoadLibrary` fails with `ERROR_PROC_NOT_FOUND (127)`.
-- FFmpeg is used under LGPL as a dynamically-linked shared library; see the license shipped with the BtbN build.
+- There are no mingw runtime DLLs in the set. The chain is static-CRT clang-cl, and bz2, iconv, lzma, zlib and libxml2 are linked statically into the FFmpeg DLLs rather than shipped beside them.
+- FFmpeg is used under LGPL-2.1-or-later as dynamically-linked shared libraries; the build recipe and its license are in `native/scripts/build-ffmpeg-windows.sh`.
 
-On macOS the equivalent set lives in `Packages/UUAV/Runtime/Plugins/macOS/` (deployed by `build.sh`; the majors are from the FFmpeg n8.1 source build and differ from the BtbN win64 numbering):
+On macOS the equivalent set lives in `Packages/UUAV/Runtime/Plugins/macOS/` (deployed by `build.sh`; both platforms build from the same pinned n8.1 source, so the majors match):
 
 ```
 libuuav.dylib
