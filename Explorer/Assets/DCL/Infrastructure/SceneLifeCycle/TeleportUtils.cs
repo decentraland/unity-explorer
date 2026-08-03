@@ -273,6 +273,11 @@ namespace ECS.SceneLifeCycle
 
         private static Vector3 GetSpawnPositionOffset(SceneMetadata.SpawnPoint spawnPoint, in LocalBounds bounds)
         {
+            return new Vector3(
+                GetSpawnComponentClamped(spawnPoint.position.x, bounds.MinX, bounds.MaxX) ?? ParcelMathHelper.HALF_PARCEL_SIZE,
+                GetSpawnComponentClamped(spawnPoint.position.y, 0f, float.PositiveInfinity) ?? 0,
+                GetSpawnComponentClamped(spawnPoint.position.z, bounds.MinZ, bounds.MaxZ) ?? ParcelMathHelper.HALF_PARCEL_SIZE);
+
             // Scatter the players over the whole span the creator declared instead of stacking them on one point
             static float? GetSpawnComponentClamped(SceneMetadata.SpawnPoint.Coordinate coordinate, float axisMin, float axisMax)
             {
@@ -284,11 +289,6 @@ namespace ECS.SceneLifeCycle
 
                 return (float)((RANDOM.NextDouble() * (max - min)) + min);
             }
-
-            return new Vector3(
-                GetSpawnComponentClamped(spawnPoint.position.x, bounds.MinX, bounds.MaxX) ?? ParcelMathHelper.HALF_PARCEL_SIZE,
-                GetSpawnComponentClamped(spawnPoint.position.y, 0f, float.PositiveInfinity) ?? 0,
-                GetSpawnComponentClamped(spawnPoint.position.z, bounds.MinZ, bounds.MaxZ) ?? ParcelMathHelper.HALF_PARCEL_SIZE);
         }
 
         private static LocalBounds CalculateLocalBounds(IReadOnlyList<Vector2Int> sceneParcels, Vector2Int referenceParcel)
