@@ -11,12 +11,16 @@ namespace DCL.Ipfs
             return span.Length >= 2 && span[0] == 'Q' && span[1] == 'm';
         }
 
-        public static string SanitizeEntityHash(string inputHash)
+        public static string SanitizeEntityHash(string inputHash, AssetBundleManifestVersion? manifest = null)
         {
-            if (IsQmEntity(inputHash) && IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
-                return inputHash.ToLowerInvariant();
+            if (!IsQmEntity(inputHash) || !IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
+                return inputHash;
 
-            return inputHash;
+            // Pre-v49 conversions stored Qm files lowercased; v49+ preserves the published casing (see AssetBundleManifestVersion.InjectContent).
+            if (manifest != null && manifest.PreservesOriginalCasing())
+                return inputHash;
+
+            return inputHash.ToLowerInvariant();
         }
     }
 }

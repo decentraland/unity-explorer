@@ -16,6 +16,9 @@ public class AssetBundleManifestVersion
         //From v49 the manifest exposes a per-file deps digest we can key the cache by
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST = 49;
 
+        //From v49 the converter preserves the published Qm casing on the CDN; older output stored the files lowercased
+        private const int ASSET_BUNDLE_VERSION_PRESERVES_CASING = 49;
+
         //ISS (Initial Scene State) descriptors are only baked starting from v49 — older
         //manifests can't have an ISS, so the descriptor lookup is short-circuited.
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 49;
@@ -29,6 +32,7 @@ public class AssetBundleManifestVersion
         private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
 
         private bool? HasHashInPathValue;
+        private bool? PreservesOriginalCasingValue;
 
         private bool? SupportsDepsDigestsValue;
         private bool? SupportsISSValue;
@@ -46,6 +50,13 @@ public class AssetBundleManifestVersion
         {
             HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
             return HasHashInPathValue.Value;
+        }
+
+        /// <summary>True when the CDN objects for this manifest keep the published Qm casing (v49+ converter); older conversions stored them lowercased.</summary>
+        public bool PreservesOriginalCasing()
+        {
+            PreservesOriginalCasingValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_PRESERVES_CASING;
+            return PreservesOriginalCasingValue.Value;
         }
 
         /// <summary>True when the manifest's version is v49 or newer — a pure version check; individual files may still carry no digest.</summary>
@@ -251,8 +262,8 @@ public class AssetBundleManifestVersion
             if (assetBundleManifestRequestFailed) return;
 
             // TODO (JUANI): hack, for older Qm. Doesnt happen with bafk because they are all lowercase
-            // This has a long due capitalization problem. The hash in Mac which is requested should always be lower case, since the output files are lowercase and the
-            // request to S3 is case sensitive.
+            // This has a long due capitalization problem. The hash requested on Mac must be lowercased only for pre-v49 conversions: their
+            // output files are lowercase and the request to S3 is case sensitive. v49+ output preserves the published casing, so lowercasing there 404s.
             // IE: This works: https://ab-cdn.decentraland.org/v35/Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk/qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_mac
             //     This doesnt: https://ab-cdn.decentraland.org/v35/Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk/QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV_mac
             // This was previously fixes using this extension (https://github.com/decentraland/unity-explorer/blob/7dd332562143e406fecf7006ac86586add0b0c71/Explorer/Assets/DCL/Infrastructure/SceneRunner/Scene/SceneAssetBundleManifestExtensions.cs#L5)
@@ -263,7 +274,7 @@ public class AssetBundleManifestVersion
 
             cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
             string platformSuffix = PlatformUtils.GetCurrentPlatform();
-            bool lowerCase = IPlatform.DEFAULT.Is(IPlatform.Kind.Mac);
+            bool lowerCase = IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && !PreservesOriginalCasing();
 
             // TryAdd keeps the first entry for each key; a digest-bearing name already stored by InjectDepsDigests is never overwritten.
             for (var i = 0; i < entityDefinitionContent.Length; i++)

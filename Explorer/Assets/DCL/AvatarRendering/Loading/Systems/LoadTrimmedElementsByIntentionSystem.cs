@@ -209,9 +209,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             var elementDTO = element.Entity;
 
-            if (elementDTO.thumbnail != null)
-                elementDTO.thumbnail = AssetBundleManifestHelper.SanitizeEntityHash(elementDTO.thumbnail);
-
             var wearable = trimmedAvatarElementStorage.GetOrAddByDTO(elementDTO);
 
             // Run the asset bundle fallback check in parallel
@@ -219,6 +216,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version, wearableVersions.windows.buildDate);
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
+
+            // Sanitize with the resolved manifest: whether the CDN name is lowercased depends on the conversion's casing era
+            if (elementDTO.thumbnail != null)
+                elementDTO.thumbnail = AssetBundleManifestHelper.SanitizeEntityHash(elementDTO.thumbnail, wearable.TrimmedDTO.assetBundleManifestVersion);
 
             if (element.IndividualData != null)
                 // Process individual data (this part needs to remain sequential per element for thread safety)
