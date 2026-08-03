@@ -947,6 +947,17 @@ pub extern "C" fn uuav_status() -> Status {
     })
 }
 
+/// Diagnostics-only lifecycle probe: -1 when the runtime is not
+/// initialized, else the client [`Lifecycle`] as its discriminant
+/// Refer to Lifecycle definition
+#[unsafe(no_mangle)]
+pub extern "C" fn uuav_lifecycle() -> i32 {
+    CLIENT
+        .load()
+        .as_ref()
+        .map_or(-1, |client| client.lifecycle.get() as i32)
+}
+
 // ---- player lifecycle --------------------------------------------------
 
 #[unsafe(no_mangle)]

@@ -277,6 +277,12 @@ namespace UUAV
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Status uuav_status();
 
+        // For the return values please refer to the rust counterpart:
+        // uuav_lifecycle in uuav-client/src/lib.rs. Absent from older
+        // binaries: guard call sites for EntryPointNotFoundException.
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int uuav_lifecycle();
+
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern NewPlayerResult uuav_player_new();
 

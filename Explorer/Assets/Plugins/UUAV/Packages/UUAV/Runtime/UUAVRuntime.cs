@@ -117,7 +117,9 @@ namespace UUAV
         [MonoPInvokeCallback(typeof(ErrorCallback))]
         private static void OnNativeError(IntPtr message)
         {
-            Debug.LogError($"[UUAV] {Utf8.PtrToString(message)}");
+            var text = Utf8.PtrToString(message);
+            Debug.LogError($"[UUAV] {text}");
+            UUAVDebug.Push($"E: {text}");
         }
 
         // FFmpeg diagnostics, routed by native by severity. Same threading
@@ -125,7 +127,9 @@ namespace UUAV
         [MonoPInvokeCallback(typeof(LogCallback))]
         private static void OnNativeWarning(IntPtr message)
         {
-            Debug.LogWarning($"[UUAV] {Utf8.PtrToString(message)}");
+            var text = Utf8.PtrToString(message);
+            Debug.LogWarning($"[UUAV] {text}");
+            UUAVDebug.Push($"W: {text}");
         }
 
         [MonoPInvokeCallback(typeof(LogCallback))]

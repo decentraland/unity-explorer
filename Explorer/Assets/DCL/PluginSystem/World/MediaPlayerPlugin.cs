@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
+using DCL.DebugUtilities;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -18,21 +19,26 @@ namespace DCL.PluginSystem.World
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly ExposedCameraData exposedCameraData;
         private readonly MediaFactoryBuilder mediaFactory;
+        private readonly IDebugContainerBuilder debugBuilder;
         private MediaPlayerPluginWrapper mediaPlayerPluginWrapper = null!;
+        private MediaPlayerDebugContainer? mediaPlayerDebugContainer;
 
         public MediaPlayerPlugin(
             IPerformanceBudget frameTimeBudget,
             ExposedCameraData exposedCameraData,
-            MediaFactoryBuilder mediaFactory)
+            MediaFactoryBuilder mediaFactory,
+            IDebugContainerBuilder debugBuilder)
         {
             this.frameTimeBudget = frameTimeBudget;
             this.exposedCameraData = exposedCameraData;
             this.mediaFactory = mediaFactory;
+            this.debugBuilder = debugBuilder;
         }
 
         public void Dispose()
         {
             mediaPlayerPluginWrapper.Dispose();
+            mediaPlayerDebugContainer?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
@@ -48,6 +54,9 @@ namespace DCL.PluginSystem.World
             AvatarPlaceHolderTextureSource? placeholderSource = null;
 #endif
 
+            var debugRegistry = new MediaPlayerDebugRegistry();
+            mediaPlayerDebugContainer = new MediaPlayerDebugContainer(debugBuilder, debugRegistry);
+
             mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(
                 frameTimeBudget,
                 exposedCameraData,
@@ -55,7 +64,8 @@ namespace DCL.PluginSystem.World
                 settings.VideoPrioritizationSettings,
                 mediaFactory,
                 settings.FlipMaterial,
-                placeholderSource
+                placeholderSource,
+                debugRegistry
             );
 
             return UniTask.CompletedTask;

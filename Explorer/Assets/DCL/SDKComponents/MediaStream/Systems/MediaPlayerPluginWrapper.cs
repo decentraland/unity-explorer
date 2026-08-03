@@ -23,6 +23,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly MediaFactoryBuilder mediaFactory;
         private readonly Material flipMaterial;
+        private readonly MediaPlayerDebugRegistry debugRegistry;
         // ReSharper restore NotAccessedField.Local
 
         // Null on platforms where the LiveKit media feature is compiled out (see InjectToWorld guard).
@@ -35,7 +36,8 @@ namespace DCL.SDKComponents.MediaStream
             VideoPrioritizationSettings videoPrioritizationSettings,
             MediaFactoryBuilder mediaFactory,
             Material flipMaterial,
-            AvatarPlaceHolderTextureSource? placeholderSource)
+            AvatarPlaceHolderTextureSource? placeholderSource,
+            MediaPlayerDebugRegistry debugRegistry)
         {
             this.frameTimeBudget = frameTimeBudget;
             this.exposedCameraData = exposedCameraData;
@@ -44,6 +46,7 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaFactory = mediaFactory;
             this.flipMaterial = flipMaterial;
             this.placeholderSource = placeholderSource;
+            this.debugRegistry = debugRegistry;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, List<IFinalizeWorldSystem> finalizeWorldSystems,
@@ -61,6 +64,7 @@ namespace DCL.SDKComponents.MediaStream
                 UpdateMediaPlayerPrioritizationSystem.InjectToWorld(ref builder, exposedCameraData, videoPrioritizationSettings);
 
             VideoEventsSystem.InjectToWorld(ref builder, sceneDeps.EcsToCRDTWriter, sceneDeps.SceneStateProvider, frameTimeBudget);
+            GatherMediaStreamDebugSystem.InjectToWorld(ref builder, debugRegistry, sceneDeps.SceneStateProvider, sceneDeps.SceneData);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
 #else

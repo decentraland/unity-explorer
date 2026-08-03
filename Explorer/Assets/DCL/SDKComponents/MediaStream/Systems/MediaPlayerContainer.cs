@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -47,8 +48,8 @@ namespace DCL.SDKComponents.MediaStream
 
         internal MediaFactoryBuilder mediaFactoryBuilder { get; private set; } = null!;
 
-        public MediaPlayerPlugin CreatePlugin(ExposedCameraData exposedCameraData) =>
-            new (frameBudget, exposedCameraData, mediaFactoryBuilder);
+        public MediaPlayerPlugin CreatePlugin(ExposedCameraData exposedCameraData, IDebugContainerBuilder debugBuilder) =>
+            new (frameBudget, exposedCameraData, mediaFactoryBuilder, debugBuilder);
 
         protected override async UniTask InitializeInternalAsync(Settings containerSettings, CancellationToken ct)
         {
