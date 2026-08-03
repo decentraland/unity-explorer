@@ -46,7 +46,7 @@ namespace DCL.Web3.Authenticators
 
             chainId = ChainUtils.GetChainIdAsInt(environment);
 
-            metaTxService = new ThirdWebMetaTxService(client, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.MetaTransactionServer)), SendRpcRequestAsync);
+            metaTxService = new ThirdWebMetaTxService(client, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.MetaTransactionServer)), (request, targetChainId) => SendRpcRequestAsync(request, targetChainId, CancellationToken.None));
         }
 
         private string GetRpcUrl(int chainId)
@@ -142,11 +142,11 @@ namespace DCL.Web3.Authenticators
             }
 
             // Use targetChainId which respects readonlyNetwork for cross-chain queries (e.g., Polygon balance check)
-            return await SendRpcRequestAsync(request, targetChainId);
+            return await SendRpcRequestAsync(request, targetChainId, ct);
         }
 
         // low-level calls
-        private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request, int targetChainId)
+        private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request, int targetChainId, CancellationToken ct)
         {
             string rpcUrl = GetRpcUrl(targetChainId);
 
@@ -168,7 +168,7 @@ namespace DCL.Web3.Authenticators
                 "application/json"
             );
 
-            ThirdwebHttpResponseMessage? httpResponse = await httpClient.PostAsync(rpcUrl, content, CancellationToken.None);
+            ThirdwebHttpResponseMessage? httpResponse = await httpClient.PostAsync(rpcUrl, content, ct);
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb HTTP Response status: {httpResponse.StatusCode}, IsSuccess={httpResponse.IsSuccessStatusCode}");
 
             if (!httpResponse.IsSuccessStatusCode)
@@ -179,6 +179,9 @@ namespace DCL.Web3.Authenticators
 
             string responseJson = await httpResponse.Content.ReadAsStringAsync();
             EthApiResponse rpcResponse = JsonConvert.DeserializeObject<EthApiResponse>(responseJson);
+
+            if (rpcResponse.error != null)
+                throw new Web3Exception($"RPC {request.method} failed: code {rpcResponse.error.code} {rpcResponse.error.message}");
 
             return new EthApiResponse
             {
@@ -196,7 +199,7 @@ namespace DCL.Web3.Authenticators
             // Request user confirmation before proceeding
             if (TransactionConfirmationCallback != null)
             {
-                TransactionConfirmationRequest confirmationRequest = await CreateConfirmationRequestAsync(wallet, request);
+                TransactionConfirmationRequest confirmationRequest = await CreateConfirmationRequestAsync(wallet, request, ct);
 
                 // For Internal requests (Gifting, Donations, etc.), hide description and details panel
                 // since they are already displayed in the feature-specific UI
@@ -254,7 +257,7 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         ///     Creates a confirmation request object with transaction details for the UI
         /// </summary>
-        private async UniTask<TransactionConfirmationRequest> CreateConfirmationRequestAsync(IThirdwebWallet wallet, EthApiRequest request)
+        private async UniTask<TransactionConfirmationRequest> CreateConfirmationRequestAsync(IThirdwebWallet wallet, EthApiRequest request, CancellationToken ct)
         {
             var confirmationRequest = new TransactionConfirmationRequest
             {
@@ -301,7 +304,7 @@ namespace DCL.Web3.Authenticators
                         @params = new object[] { txObject },
                     };
 
-                    EthApiResponse estimateGasResponse = await SendRpcRequestAsync(estimateGasRequest, (int)chainId);
+                    EthApiResponse estimateGasResponse = await SendRpcRequestAsync(estimateGasRequest, (int)chainId, ct);
                     string gasLimitHex = estimateGasResponse.result?.ToString() ?? "0x0";
                     BigInteger gasLimit = gasLimitHex.HexToNumber();
 
@@ -313,7 +316,7 @@ namespace DCL.Web3.Authenticators
                         @params = Array.Empty<object>(),
                     };
 
-                    EthApiResponse gasPriceResponse = await SendRpcRequestAsync(gasPriceRequest, (int)chainId);
+                    EthApiResponse gasPriceResponse = await SendRpcRequestAsync(gasPriceRequest, (int)chainId, ct);
                     string gasPriceHex = gasPriceResponse.result?.ToString() ?? "0x0";
                     BigInteger gasPriceWei = gasPriceHex.HexToNumber();
 
