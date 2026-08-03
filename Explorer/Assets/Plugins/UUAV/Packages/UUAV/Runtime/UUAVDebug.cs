@@ -52,7 +52,30 @@ namespace UUAV
             }
         }
 
+        /// <summary>
+        /// One alive player, snapshotted for display: the native id (0 when
+        /// native creation failed), the native state, and the last opened
+        /// url (empty when none was ever opened).
+        /// </summary>
+        public readonly struct PlayerInfo
+        {
+            public readonly ulong PlayerId;
+            public readonly UUAVState State;
+            public readonly string Url;
+
+            public PlayerInfo(ulong playerId, UUAVState state, string url)
+            {
+                PlayerId = playerId;
+                State = state;
+                Url = url;
+            }
+        }
+
         private const int RecentCapacity = 10;
+
+        // registered by UUAVPlayer.Awake/OnDestroy and read by the debug UI:
+        // all on the main thread (Unity lifecycle), so no lock
+        private static readonly List<UUAVPlayer> players = new List<UUAVPlayer>();
 
         // pushed from native playback threads (UUAVRuntime callbacks), read
         // from the main thread: the lock covers both sides
@@ -92,6 +115,29 @@ namespace UUAV
                 AbiVersion(),
                 status.ConsumeDeviceRemoveReason()
             );
+        }
+
+        /// <summary>
+        /// Snapshots every alive player with its native state. Clears and
+        /// refills <paramref name="target"/>.
+        /// </summary>
+        public static void CopyPlayers(List<PlayerInfo> target)
+        {
+            target.Clear();
+            foreach (var player in players)
+            {
+                target.Add(new PlayerInfo(player.PlayerId, player.State, player.CurrentUrl));
+            }
+        }
+
+        internal static void Register(UUAVPlayer player)
+        {
+            players.Add(player);
+        }
+
+        internal static void Unregister(UUAVPlayer player)
+        {
+            players.Remove(player);
         }
 
         /// <summary>

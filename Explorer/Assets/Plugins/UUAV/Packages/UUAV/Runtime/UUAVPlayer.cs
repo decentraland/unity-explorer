@@ -216,8 +216,14 @@ namespace UUAV
             return instance;
         }
 
+        internal ulong PlayerId => playerId;
+
         private void Awake()
         {
+            // registered before the early returns below: an instance whose
+            // native player failed to create still shows up in diagnostics
+            UUAVDebug.Register(this);
+
             audioSource = GetComponent<AudioSource>();
 
             var shader = Shader.Find("Hidden/UUAV/NV12ToRGB");
@@ -302,6 +308,8 @@ namespace UUAV
 
         private void OnDestroy()
         {
+            UUAVDebug.Unregister(this);
+
             audioSource.Stop();
 
             if (playerId != 0)

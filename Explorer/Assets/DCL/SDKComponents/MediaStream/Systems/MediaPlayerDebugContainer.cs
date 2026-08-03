@@ -28,6 +28,7 @@ namespace DCL.SDKComponents.MediaStream
             var uuavPlayers = new ElementBinding<ulong>(0);
             var uuavLifecycle = new ElementBinding<string>(string.Empty);
             var uuavAbi = new ElementBinding<string>(string.Empty);
+            var uuavPlayersList = new ElementBinding<IReadOnlyList<(string name, string value)>>(Array.Empty<(string name, string value)>());
             var uuavMessages = new ElementBinding<IReadOnlyList<(string name, string value)>>(Array.Empty<(string name, string value)>());
 
             var sceneLabel = new ElementBinding<string>(string.Empty);
@@ -36,12 +37,15 @@ namespace DCL.SDKComponents.MediaStream
 
             List<string> messagesBuffer = new ();
             List<(string name, string value)> messageRowsBuffer = new ();
+            List<UUAVDebug.PlayerInfo> uuavPlayersBuffer = new ();
+            List<(string name, string value)> uuavPlayerRowsBuffer = new ();
             List<(string name, string value)> playersBuffer = new ();
 
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MEDIA_PLAYER)
                          ?.AddCustomMarker("Backend", backendMarker)
                           .AddCustomMarker("UUAV Initialized", uuavInitialized)
                           .AddMarker("UUAV Native Players", uuavPlayers, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddList("UUAV Players", uuavPlayersList)
                           .AddCustomMarker("UUAV Lifecycle", uuavLifecycle)
                           .AddCustomMarker("UUAV ABI", uuavAbi)
                           .AddList("UUAV Recent Errors", uuavMessages)
@@ -97,6 +101,20 @@ namespace DCL.SDKComponents.MediaStream
                                               ? "<color=grey>Unavailable (stale native binary?)</color>"
                                               : "<color=grey>Unavailable</color>",
                                       };
+
+                UUAVDebug.CopyPlayers(uuavPlayersBuffer);
+                uuavPlayerRowsBuffer.Clear();
+
+                foreach (UUAVDebug.PlayerInfo player in uuavPlayersBuffer)
+                {
+                    string detail = player.PlayerId == 0
+                        ? "invalid (native creation failed)"
+                        : $"{player.State.ToStringNoAlloc()} {(player.Url.Length > 0 ? player.Url : "none")}";
+
+                    uuavPlayerRowsBuffer.Add(($"id {player.PlayerId}", detail));
+                }
+
+                uuavPlayersList.SetAndUpdate(uuavPlayerRowsBuffer);
 
                 UUAVDebug.CopyRecentMessages(messagesBuffer);
                 messageRowsBuffer.Clear();
