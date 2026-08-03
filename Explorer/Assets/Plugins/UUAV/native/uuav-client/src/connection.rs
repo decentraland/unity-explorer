@@ -286,7 +286,7 @@ fn route(
             width,
             height,
             handles,
-        } => registry::apply_texture_set(registry, id, generation, width, height, handles),
+        } => registry::apply_texture_set(registry, id, generation, width, height, &handles),
         ToClient::FramePublished {
             id,
             generation,

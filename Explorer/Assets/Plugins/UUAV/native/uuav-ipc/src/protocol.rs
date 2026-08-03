@@ -181,9 +181,12 @@ pub enum ToClient {
     /// 2 planes whose IOSurface mach ports travel out-of-band on the mach
     /// channel, tagged (id, generation, slot, plane), and `handles` is
     /// empty. On Windows: `handles` carries one NT handle value per slot
-    /// (a shared keyed-mutex NV12 texture, already `DuplicateHandle`d into
-    /// the client's process, owned by the client from this message on).
-    /// The client assembles the set and answers with `TextureSetAck`.
+    /// (a shared keyed-mutex NV12 texture), valid in the *helper's*
+    /// process — the sandboxed helper cannot duplicate into Unity, so the
+    /// client pulls copies out with `DuplicateHandle`, and the helper
+    /// keeps the originals open until an ack proves the announcement was
+    /// consumed. The client assembles the set and answers with
+    /// `TextureSetAck`.
     TextureSet {
         id: PlayerId,
         generation: u32,

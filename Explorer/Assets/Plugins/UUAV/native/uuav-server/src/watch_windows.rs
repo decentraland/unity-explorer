@@ -9,15 +9,23 @@ use windows::Win32::System::Threading::{
 };
 
 /// Blocks a dedicated thread on the parent process handle and exits the
-/// whole helper when it is signaled. Open failure (parent already gone)
-/// exits immediately.
-pub fn exit_when_parent_dies(parent_pid: u32) -> anyhow::Result<()> {
-    let handle = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, false, parent_pid) }
-        .context("parent process is not observable (already exited?)")?;
+/// whole helper when it is signaled. The client passes a wait-only handle
+/// by inheritance (`--parent-handle`) because this sandboxed low-integrity
+/// process may not `OpenProcess` its medium-integrity parent; the pid
+/// fallback keeps hand-run helpers working. Open failure (parent already
+/// gone) exits immediately.
+pub fn exit_when_parent_dies(parent_pid: u32, inherited: Option<u64>) -> anyhow::Result<()> {
+    let raw = if let Some(value) = inherited {
+        anyhow::ensure!(value != 0, "--parent-handle is a null handle");
+        value as usize
+    } else {
+        let handle = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, false, parent_pid) }
+            .context("parent process is not observable (already exited?)")?;
+        handle.0 as usize
+    };
 
     // HANDLE is a raw kernel handle; moving the numeric value into the
     // thread is sound, the thread is its only user until process exit.
-    let raw = handle.0 as isize;
     thread::Builder::new()
         .name("uuav-parent-watch".into())
         .spawn(move || {

@@ -79,7 +79,6 @@ struct Serve {
 pub fn run(
     channel: &mut Channel,
     #[cfg(target_os = "macos")] service: &str,
-    #[cfg(target_os = "windows")] parent_pid: u32,
 ) -> anyhow::Result<()> {
     let (tx, rx) = unbounded();
     _ = FORWARD.set(tx);
@@ -105,8 +104,6 @@ pub fn run(
                 &mut serve,
                 #[cfg(target_os = "macos")]
                 service,
-                #[cfg(target_os = "windows")]
-                parent_pid,
             )? {
                 core::uuav_deinit();
                 return Ok(());
@@ -141,7 +138,6 @@ fn dispatch(
     message: ToServer,
     serve: &mut Serve,
     #[cfg(target_os = "macos")] service: &str,
-    #[cfg(target_os = "windows")] parent_pid: u32,
 ) -> anyhow::Result<bool> {
     let players = &mut serve.players;
     match message {
@@ -161,7 +157,7 @@ fn dispatch(
                 #[cfg(target_os = "macos")]
                 let pump = crate::video::VideoPump::new(probe, service);
                 #[cfg(target_os = "windows")]
-                let pump = crate::video::VideoPump::new(probe, parent_pid);
+                let pump = crate::video::VideoPump::new(probe);
                 serve.video = Some(pump.map_err(|e| e.to_string())?);
                 Ok(())
             });

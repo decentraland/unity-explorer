@@ -123,6 +123,12 @@ pub struct Registry {
     /// Helper-side id -> public id, rebuilt on every helper (re)start.
     by_helper: dashmap::DashMap<PlayerId, PlayerId>,
     next_public: AtomicU64,
+    /// `PROCESS_DUP_HANDLE` view of the current helper: texture-set
+    /// announcements carry helper-local handle values that are pulled out
+    /// of its process through this. Swapped whole on every helper
+    /// (re)spawn; a stale one (helper died) just fails the pull.
+    #[cfg(target_os = "windows")]
+    helper_process: ArcSwapOption<crate::sandbox::OwnedHandle>,
 }
 
 impl Registry {
@@ -131,7 +137,14 @@ impl Registry {
             players: dashmap::DashMap::new(),
             by_helper: dashmap::DashMap::new(),
             next_public: AtomicU64::new(1),
+            #[cfg(target_os = "windows")]
+            helper_process: ArcSwapOption::const_empty(),
         }
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn set_helper_process(&self, source: crate::sandbox::OwnedHandle) {
+        self.helper_process.store(Some(Arc::new(source)));
     }
 
     pub fn create(&self, sample_rate: i32, channels: i32) -> (PlayerId, Arc<PlayerMirror>) {
@@ -240,15 +253,26 @@ pub fn apply_texture_set(
     generation: u32,
     width: u32,
     height: u32,
-    handles: Vec<u64>,
+    handles: &[u64],
 ) {
+    // the values are helper-local; pull them into this process first. A
+    // failed pull means the helper died or already retired the generation
+    // — dropping the announcement is safe either way: the missing ack
+    // keeps the helper on its previous generation, and a live helper
+    // re-announces on the next resolution change or respawn.
+    let Some(source) = registry.helper_process.load_full() else {
+        return;
+    };
+    let Ok(handles) = crate::sandbox::pull_handles(&source, handles) else {
+        return;
+    };
     if let Some(mirror) = registry.by_helper(id)
         && let Ok(mut video) = mirror.video.lock()
     {
         video.store_texture_set(generation, width, height, handles);
         return;
     }
-    // no live mirror to own the duplicated handles: close them here or they
+    // no live mirror to own the pulled handles: close them here or they
     // leak in Unity's process (the player was freed mid-announcement)
     crate::present::close_handles(&handles);
 }

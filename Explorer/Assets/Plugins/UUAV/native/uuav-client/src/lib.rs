@@ -41,6 +41,10 @@ mod connection;
 mod registry;
 mod spawn;
 
+#[cfg(target_os = "windows")]
+#[path = "sandbox_windows.rs"]
+mod sandbox;
+
 #[cfg(target_os = "macos")]
 #[path = "platform_macos.rs"]
 mod platform;
@@ -358,7 +362,13 @@ fn start_session(
     let conn = Connection::establish(
         &token,
         |handoff| {
-            child = Some(spawn::spawn_helper(handoff, &token)?);
+            let spawned = spawn::spawn_helper(handoff, &token)?;
+            // the registry pulls announced texture handles out of the
+            // helper's process; arm it before any announcement can arrive
+            // (the helper decodes nothing until Configure)
+            #[cfg(target_os = "windows")]
+            registry.set_helper_process(spawned.dup_source()?);
+            child = Some(spawned);
             Ok(())
         },
         Arc::clone(lifecycle),

@@ -32,6 +32,8 @@ windows = { version = "0.61", features = [
     "Win32_Graphics_Direct3D11",
     "Win32_Graphics_Dxgi",
     "Win32_Graphics_Dxgi_Common",
+    "Win32_Security",
+    "Win32_System_JobObjects",
     "Win32_System_LibraryLoader",
     "Win32_System_Threading",
 ] }

@@ -1,7 +1,10 @@
 //! `uuav-helper`: hosts the unchanged uuav core in its own process and
 //! adapts the IPC protocol onto the core's C API. Spawned by the `uuav`
 //! client dylib with `--channel <inherited handle/fd> --token <uuid>
-//! --parent-pid <pid>`.
+//! --parent-pid <pid>` (plus, on Windows, `--parent-handle <inherited
+//! wait-only handle>`; the process itself runs sandboxed — restricted
+//! low-integrity token, single-process job, mitigation policy — see the
+//! client's `sandbox` module).
 
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 #![deny(
@@ -58,6 +61,11 @@ struct Args {
     channel: String,
     token: String,
     parent_pid: u32,
+    /// Inherited wait-only handle to the parent, for the orphan watch —
+    /// the sandboxed helper cannot `OpenProcess` its higher-integrity
+    /// parent. Absent when the helper is run by hand.
+    #[cfg(target_os = "windows")]
+    parent_handle: Option<u64>,
     /// The client's registered mach service for IOSurface port transfer.
     #[cfg(target_os = "macos")]
     service: String,
@@ -67,6 +75,8 @@ fn parse_args() -> anyhow::Result<Args> {
     let mut channel = None;
     let mut token = None;
     let mut parent_pid = None;
+    #[cfg(target_os = "windows")]
+    let mut parent_handle = None;
     #[cfg(target_os = "macos")]
     let mut service = None;
 
@@ -80,6 +90,8 @@ fn parse_args() -> anyhow::Result<Args> {
             "--channel" => channel = Some(value()?),
             "--token" => token = Some(value()?),
             "--parent-pid" => parent_pid = Some(value()?.parse::<u32>()?),
+            #[cfg(target_os = "windows")]
+            "--parent-handle" => parent_handle = Some(value()?.parse::<u64>()?),
             #[cfg(target_os = "macos")]
             "--service" => service = Some(value()?),
             other => bail!("unknown argument: {other}"),
@@ -90,6 +102,8 @@ fn parse_args() -> anyhow::Result<Args> {
         channel: channel.context("--channel is required")?,
         token: token.context("--token is required")?,
         parent_pid: parent_pid.context("--parent-pid is required")?,
+        #[cfg(target_os = "windows")]
+        parent_handle,
         #[cfg(target_os = "macos")]
         service: service.context("--service is required")?,
     })
@@ -98,7 +112,12 @@ fn parse_args() -> anyhow::Result<Args> {
 fn main() -> anyhow::Result<()> {
     let args = parse_args()?;
 
-    // If the parent dies for any reason (crash, force-quit), never outlive it.
+    // If the parent dies for any reason (crash, force-quit), never outlive
+    // it. Defense-in-depth on Windows: the client's kill-on-close job
+    // object already terminates this process with the parent.
+    #[cfg(target_os = "windows")]
+    watch::exit_when_parent_dies(args.parent_pid, args.parent_handle)?;
+    #[cfg(target_os = "macos")]
     watch::exit_when_parent_dies(args.parent_pid)?;
 
     let mut channel =
@@ -114,7 +133,5 @@ fn main() -> anyhow::Result<()> {
         &mut channel,
         #[cfg(target_os = "macos")]
         &args.service,
-        #[cfg(target_os = "windows")]
-        args.parent_pid,
     )
 }

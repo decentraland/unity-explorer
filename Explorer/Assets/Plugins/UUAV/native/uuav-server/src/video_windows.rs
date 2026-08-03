@@ -4,9 +4,11 @@
 //!
 //! Per player: a generation of 3 shared NV12 slot textures created with
 //! `SHARED_NTHANDLE | SHARED_KEYEDMUTEX` on the helper's device (the same
-//! device the core presents on). Each slot's NT handle is `DuplicateHandle`d
-//! into Unity's process and announced inline in `TextureSet`; a generation
-//! becomes active on `TextureSetAck`, and until then the previous one keeps
+//! device the core presents on). Each slot's NT handle stays open in this
+//! process and its value is announced inline in `TextureSet`; the client
+//! pulls the handles out of this process with `DuplicateHandle` (the
+//! sandboxed helper cannot push them into Unity's). A generation becomes
+//! active on `TextureSetAck`, and until then the previous one keeps
 //! publishing, mirroring the core's own retire-grace on resolution change.
 
 use crate::device::ProbeDevice;
@@ -17,7 +19,7 @@ use std::os::raw::c_void;
 use uuav_core as core;
 use uuav_ipc::channel::Channel;
 use uuav_ipc::protocol::{PlayerId, ToClient};
-use windows::Win32::Foundation::{CloseHandle, DUPLICATE_SAME_ACCESS, DuplicateHandle, HANDLE};
+use windows::Win32::Foundation::{CloseHandle, HANDLE};
 use windows::Win32::Graphics::Direct3D11::{
     D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
     D3D11_RESOURCE_MISC_SHARED_NTHANDLE, D3D11_TEXTURE2D_DESC, D3D11_USAGE_DEFAULT, ID3D11Device,
@@ -27,7 +29,6 @@ use windows::Win32::Graphics::Dxgi::Common::{DXGI_FORMAT_NV12, DXGI_SAMPLE_DESC}
 use windows::Win32::Graphics::Dxgi::{
     DXGI_SHARED_RESOURCE_READ, DXGI_SHARED_RESOURCE_WRITE, IDXGIKeyedMutex, IDXGIResource1,
 };
-use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcess, PROCESS_DUP_HANDLE};
 use windows::core::{Interface as _, PCWSTR};
 
 const SLOTS: usize = 3;
@@ -40,6 +41,16 @@ const ACQUIRE_TIMEOUT_MS: u32 = 2;
 struct Slot {
     texture: ID3D11Texture2D,
     mutex: IDXGIKeyedMutex,
+    /// The shared NT handle whose value was announced to the client; must
+    /// stay open here until the client pulled it (see the graveyard in
+    /// [`PlayerVideo`] for the un-acked retire path).
+    shared: HANDLE,
+}
+
+impl Drop for Slot {
+    fn drop(&mut self) {
+        unsafe { _ = CloseHandle(self.shared) };
+    }
 }
 
 struct GenSlots {
@@ -63,14 +74,16 @@ struct PlayerVideo {
     active: Option<GenSlots>,
     /// Announced, awaiting `TextureSetAck`; `active` keeps publishing.
     pending: Option<GenSlots>,
+    /// Announced-then-superseded generations whose shared handles the
+    /// client may not have pulled yet; cleared once an ack proves the
+    /// client consumed every earlier announcement (the channel is
+    /// in-order). Bounded by resolution changes between acks.
+    superseded: Vec<GenSlots>,
 }
 
 pub struct VideoPump {
     device: ID3D11Device,
     context: ID3D11DeviceContext,
-    /// Unity's process, opened for `PROCESS_DUP_HANDLE`: the slot handles
-    /// are duplicated straight into it.
-    parent: HANDLE,
     render_event: core::UUAVRenderEvent,
     players: HashMap<PlayerId, PlayerVideo>,
 }
@@ -80,25 +93,14 @@ pub struct VideoPump {
 #[allow(clippy::non_send_fields_in_send_ty)]
 unsafe impl Send for VideoPump {}
 
-impl Drop for VideoPump {
-    fn drop(&mut self) {
-        unsafe {
-            _ = CloseHandle(self.parent);
-        }
-    }
-}
-
 impl VideoPump {
-    pub fn new(device: &ProbeDevice, parent_pid: u32) -> Result<Self> {
+    pub fn new(device: &ProbeDevice) -> Result<Self> {
         let device = device.device().clone();
         let context = unsafe { device.GetImmediateContext() }
             .context("device has no immediate context")?;
-        let parent = unsafe { OpenProcess(PROCESS_DUP_HANDLE, false, parent_pid) }
-            .context("open parent process for handle duplication")?;
         Ok(Self {
             device,
             context,
-            parent,
             render_event: core::uuav_get_render_callback(),
             players: HashMap::new(),
         })
@@ -125,8 +127,11 @@ impl VideoPump {
         {
             // the client opened the new set; switch over (the old slot
             // textures stay alive through the client's own COM refs
-            // until it drops them)
+            // until it drops them). This ack also proves the client
+            // consumed every earlier announcement, so the superseded
+            // generations' shared handles can finally close.
             player.active = player.pending.take();
+            player.superseded.clear();
         }
     }
 
@@ -151,8 +156,7 @@ impl VideoPump {
         {
             player.next_generation += 1;
             let generation = player.next_generation;
-            let (slots, handles) =
-                create_generation(&self.device, self.parent, width, height)?;
+            let (slots, handles) = create_generation(&self.device, width, height)?;
             channel.send(&ToClient::TextureSet {
                 id,
                 generation,
@@ -172,6 +176,12 @@ impl VideoPump {
                 // publishes are ignored by the client until it opens and acks
                 player.active = Some(created);
             } else {
+                // an un-acked pending set was announced but possibly not
+                // pulled by the client yet; park it so its shared handles
+                // survive until an ack proves the announcement was consumed
+                if let Some(replaced) = player.pending.take() {
+                    player.superseded.push(replaced);
+                }
                 player.pending = Some(created);
             }
         }
@@ -227,19 +237,17 @@ fn query_core_texture(id: PlayerId) -> Option<(*const c_void, u32, u32)> {
     Some((texture, width, height))
 }
 
-/// One generation of shared slots plus their NT handle values, already
-/// duplicated into Unity's process (owned by the client from here on; if
-/// this errors partway, handles already duplicated leak in Unity until it
-/// exits — an accepted cost of the rare error path).
+/// One generation of shared slots plus their NT handle values in *this*
+/// process (the slots own the handles; the client pulls copies with
+/// `DuplicateHandle` when the announcement arrives).
 fn create_generation(
     device: &ID3D11Device,
-    parent: HANDLE,
     width: u32,
     height: u32,
 ) -> Result<([Slot; SLOTS], Vec<u64>)> {
     let mut handles = Vec::with_capacity(SLOTS);
     let mut make = || -> Result<Slot> {
-        let (slot, handle) = create_slot(device, parent, width, height)?;
+        let (slot, handle) = create_slot(device, width, height)?;
         handles.push(handle);
         Ok(slot)
     };
@@ -248,13 +256,8 @@ fn create_generation(
 }
 
 /// One shared keyed-mutex NV12 slot texture; returns it together with its
-/// NT handle value in Unity's process.
-fn create_slot(
-    device: &ID3D11Device,
-    parent: HANDLE,
-    width: u32,
-    height: u32,
-) -> Result<(Slot, u64)> {
+/// NT handle value in this process.
+fn create_slot(device: &ID3D11Device, width: u32, height: u32) -> Result<(Slot, u64)> {
     let desc = D3D11_TEXTURE2D_DESC {
         Width: width,
         Height: height,
@@ -284,7 +287,7 @@ fn create_slot(
         .context("shared texture exposes no IDXGIResource1")?;
 
     // keyed-mutex resources must be opened with both read and write access
-    let local = unsafe {
+    let shared = unsafe {
         resource.CreateSharedHandle(
             None,
             (DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE).0,
@@ -293,24 +296,15 @@ fn create_slot(
     }
     .context("CreateSharedHandle failed")?;
 
-    let mut duplicated = HANDLE::default();
-    let result = unsafe {
-        DuplicateHandle(
-            GetCurrentProcess(),
-            local,
-            parent,
-            &mut duplicated,
-            0,
-            false,
-            DUPLICATE_SAME_ACCESS,
-        )
-    };
-    unsafe {
-        _ = CloseHandle(local);
-    }
-    result.context("DuplicateHandle into Unity's process failed")?;
-
-    Ok((Slot { texture, mutex }, duplicated.0 as usize as u64))
+    let value = shared.0 as usize as u64;
+    Ok((
+        Slot {
+            texture,
+            mutex,
+            shared,
+        },
+        value,
+    ))
 }
 
 /// Copies the core's presentation texture into one shared slot under its
