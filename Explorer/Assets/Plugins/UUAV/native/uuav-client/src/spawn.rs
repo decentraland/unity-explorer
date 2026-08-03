@@ -12,7 +12,11 @@
 //!
 //! On Windows the helper is sandboxed at spawn — restricted low-integrity
 //! token, single-process kill-on-close job object, process mitigation
-//! policy — see [`crate::sandbox`].
+//! policy — see [`crate::sandbox`]. On macOS the helper locks itself down
+//! under a deny-by-default Seatbelt profile as the first act of its main
+//! (the server's `sandbox` module); `allow_file_read` is the only
+//! sandbox-relevant spawn input, opening broad file reads for the
+//! Editor's `file:` protocol.
 
 use anyhow::{Context as _, Result};
 use std::path::PathBuf;
@@ -24,9 +28,14 @@ const HELPER_FILE: &str = "uuav-helper";
 const HELPER_FILE: &str = "uuav-helper.exe";
 
 #[cfg(target_os = "macos")]
-pub fn spawn_helper(handoff: ChildHandoff, token: &str) -> Result<HelperChild> {
+pub fn spawn_helper(
+    handoff: ChildHandoff,
+    token: &str,
+    allow_file_read: bool,
+) -> Result<HelperChild> {
     let path = helper_path()?;
-    let child = std::process::Command::new(&path)
+    let mut command = std::process::Command::new(&path);
+    command
         .arg("--channel")
         .arg(handoff.arg())
         .arg("--token")
@@ -36,7 +45,11 @@ pub fn spawn_helper(handoff: ChildHandoff, token: &str) -> Result<HelperChild> {
         // the client-registered mach service the helper sends IOSurface
         // ports to
         .arg("--service")
-        .arg(uuav_ipc::mach_channel::service_name(token))
+        .arg(uuav_ipc::mach_channel::service_name(token));
+    if allow_file_read {
+        command.arg("--allow-file-read");
+    }
+    let child = command
         .spawn()
         .with_context(|| format!("failed to spawn {}", path.display()))?;
     drop(handoff);

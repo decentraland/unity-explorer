@@ -358,11 +358,21 @@ fn start_session(
             .map_err(|e| format!("mach channel: {e}"))?
     };
 
+    #[cfg(target_os = "macos")]
+    let allow_file_read = protocol_whitelist
+        .split(',')
+        .any(|p| p.trim().eq_ignore_ascii_case("file"));
+
     let mut child: Option<HelperChild> = None;
     let conn = Connection::establish(
         &token,
         |handoff| {
-            let spawned = spawn::spawn_helper(handoff, &token)?;
+            let spawned = spawn::spawn_helper(
+                handoff,
+                &token,
+                #[cfg(target_os = "macos")]
+                allow_file_read,
+            )?;
             // the registry pulls announced texture handles out of the
             // helper's process; arm it before any announcement can arrive
             // (the helper decodes nothing until Configure)

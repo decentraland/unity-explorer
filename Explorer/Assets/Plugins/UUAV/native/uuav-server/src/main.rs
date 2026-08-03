@@ -2,9 +2,12 @@
 //! adapts the IPC protocol onto the core's C API. Spawned by the `uuav`
 //! client dylib with `--channel <inherited handle/fd> --token <uuid>
 //! --parent-pid <pid>` (plus, on Windows, `--parent-handle <inherited
-//! wait-only handle>`; the process itself runs sandboxed — restricted
-//! low-integrity token, single-process job, mitigation policy — see the
-//! client's `sandbox` module).
+//! wait-only handle>`). The process runs sandboxed on both platforms:
+//! on Windows the client spawns it under a restricted low-integrity
+//! token, single-process job and mitigation policy (the client's
+//! `sandbox` module); on macOS it locks itself down under a
+//! deny-by-default Seatbelt profile as the first act of `main` (this
+//! crate's `sandbox` module).
 
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 #![deny(
@@ -46,6 +49,10 @@ mod video;
 #[cfg(target_os = "macos")]
 #[path = "watch_macos.rs"]
 mod watch;
+
+#[cfg(target_os = "macos")]
+#[path = "sandbox_macos.rs"]
+mod sandbox;
 #[cfg(target_os = "windows")]
 #[path = "watch_windows.rs"]
 mod watch;
@@ -69,6 +76,10 @@ struct Args {
     /// The client's registered mach service for IOSurface port transfer.
     #[cfg(target_os = "macos")]
     service: String,
+    /// Opens broad file reads in the Seatbelt profile for the Editor's
+    /// `file:` protocol. Never passed by player builds.
+    #[cfg(target_os = "macos")]
+    allow_file_read: bool,
 }
 
 fn parse_args() -> anyhow::Result<Args> {
@@ -79,6 +90,8 @@ fn parse_args() -> anyhow::Result<Args> {
     let mut parent_handle = None;
     #[cfg(target_os = "macos")]
     let mut service = None;
+    #[cfg(target_os = "macos")]
+    let mut allow_file_read = false;
 
     let mut args = std::env::args().skip(1);
     while let Some(flag) = args.next() {
@@ -94,6 +107,8 @@ fn parse_args() -> anyhow::Result<Args> {
             "--parent-handle" => parent_handle = Some(value()?.parse::<u64>()?),
             #[cfg(target_os = "macos")]
             "--service" => service = Some(value()?),
+            #[cfg(target_os = "macos")]
+            "--allow-file-read" => allow_file_read = true,
             other => bail!("unknown argument: {other}"),
         }
     }
@@ -106,11 +121,18 @@ fn parse_args() -> anyhow::Result<Args> {
         parent_handle,
         #[cfg(target_os = "macos")]
         service: service.context("--service is required")?,
+        #[cfg(target_os = "macos")]
+        allow_file_read,
     })
 }
 
 fn main() -> anyhow::Result<()> {
     let args = parse_args()?;
+
+    // Lock down before adopting the channel or parsing any input. Fail
+    // closed: on error the helper exits and the client sees channel EOF.
+    #[cfg(target_os = "macos")]
+    sandbox::apply(&args.service, args.allow_file_read)?;
 
     // If the parent dies for any reason (crash, force-quit), never outlive
     // it. Defense-in-depth on Windows: the client's kill-on-close job
@@ -127,6 +149,13 @@ fn main() -> anyhow::Result<()> {
         token: args.token,
         abi: protocol::ABI_VERSION.to_owned(),
         pid: std::process::id(),
+    })?;
+
+    // reaching this point proves sandbox::apply succeeded (fail-closed)
+    #[cfg(target_os = "macos")]
+    channel.send(&protocol::ToClient::Log {
+        sink: protocol::LogSink::Log,
+        line: "uuav-helper: seatbelt sandbox active".to_owned(),
     })?;
 
     adapter::run(
