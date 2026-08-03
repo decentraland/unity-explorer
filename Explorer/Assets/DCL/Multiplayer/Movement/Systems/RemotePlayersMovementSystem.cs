@@ -46,8 +46,19 @@ namespace DCL.Multiplayer.Movement
 
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.UpdateHeadIK(firstRemote);
-            remotePlayerMovement.UpdatePointAtIK(firstRemote);
+            UpdatePointAtIK(ref remotePlayerMovement, ref handPointAt, firstRemote);
             remotePlayerMovement.Initialized = true;
+        }
+
+        private void UpdatePointAtIK(ref RemotePlayerMovementComponent remotePlayerMovement, ref HandPointAtComponent handPointAt, in NetworkMovementMessage message)
+        {
+            remotePlayerMovement.UpdatePointAtIK(message);
+
+            // A point-at assertion aims at an absolute world point and is only as fresh as the
+            // message that carried it: rearm the same expiry the local gesture uses, so a
+            // snapshot-replayed point-at cannot outlive the gesture it mirrors.
+            if (message.isPointingAt)
+                handPointAt.RefreshDuration(characterControllerSettings.PointAtDuration);
         }
 
         [Query]
@@ -87,6 +98,13 @@ namespace DCL.Multiplayer.Movement
             if (remotePlayerMovement.IsPointingAt) pointAtWorldHitPoint = Interpolation.InterpolatePointAtIK(handPointAt, remotePlayerMovement.PointAtWorldHitPoint, settings.InterpolationSettings.PointAtIKInterpolationFactor);
             ApplyPointAtIK(ref handPointAt, remotePlayerMovement.IsPointingAt, pointAtWorldHitPoint);
 
+            // Mirrors the local PointAtDuration timer (HandPointAtSystem): unless a newer message
+            // rearms it, remote pointing self-expires instead of pinning the arm at a stale
+            // absolute world point forever when no contradicting message ever arrives.
+            handPointAt.TickDuration(deltaTime);
+            if (remotePlayerMovement.IsPointingAt && !handPointAt.IsPointing)
+                remotePlayerMovement.IsPointingAt = false;
+
             if (intComp.Enabled)
             {
                 deltaTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
@@ -114,15 +132,15 @@ namespace DCL.Multiplayer.Movement
             }
 
             if (playerInbox.Count > 0)
-                HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
+                HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, ref handPointAt, playerInbox);
         }
 
         private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp,
-            SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
+            ref HandPointAtComponent handPointAt, SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
             remotePlayerMovement.UpdateHeadIK(remote);
-            remotePlayerMovement.UpdatePointAtIK(remote);
+            UpdatePointAtIK(ref remotePlayerMovement, ref handPointAt, remote);
 
             var isBlend = false;
 
@@ -143,7 +161,7 @@ namespace DCL.Multiplayer.Movement
 
                 remote = playerInbox.Dequeue();
                 remotePlayerMovement.UpdateHeadIK(remote);
-                remotePlayerMovement.UpdatePointAtIK(remote);
+                UpdatePointAtIK(ref remotePlayerMovement, ref handPointAt, remote);
             }
 
             StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
