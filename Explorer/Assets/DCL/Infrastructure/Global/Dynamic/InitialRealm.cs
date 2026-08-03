@@ -6,8 +6,7 @@ namespace Global.Dynamic
         Sdk,
         Goerli,
         StreamingWorld,
-        TestScenes,
-        World,
+        World = 5,
         Localhost,
         Custom,
     }
