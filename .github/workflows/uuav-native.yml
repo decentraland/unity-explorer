@@ -1,0 +1,283 @@
+name: UUAV Native Build
+
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLUGIN_LFS_GLOB: 'Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/**'
+  LOCK: scripts/uuav/uuav-binaries.lock.json
+
+jobs:
+  gate:
+    name: Should this run
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - id: decide
+        env:
+          LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'build-uuav-native') }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$LABELLED" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  macos:
+    name: Build macos-universal
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - run: git lfs pull --include "$PLUGIN_LFS_GLOB"
+
+      - name: Read pins from the lock
+        id: pins
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          target = json.load(open(os.environ["LOCK"]))["targets"]["macos-universal"]
+          print(f"ffmpeg_tag={target['ffmpeg']['tag']}")
+          print(f"ffmpeg_commit={target['ffmpeg']['commit']}")
+          print(f"builder={target['ffmpeg']['builder']}")
+          PY
+
+      - name: Install nasm and both Rust slices
+        run: |
+          set -euo pipefail
+          brew install nasm
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          # The x86_64 slice is the leg that dies when a rustc without that std
+          # is first on PATH, and it dies inside cargo talking about a missing
+          # crate rather than about the toolchain. Say so here instead.
+          sysroot="$(rustc --print sysroot)"
+          for slice in aarch64-apple-darwin x86_64-apple-darwin; do
+            if [ ! -d "$sysroot/lib/rustlib/$slice/lib" ]; then
+              echo "::error::the rustc first on PATH ($(command -v rustc), sysroot $sysroot) has no $slice std; the universal build cannot work"
+              exit 1
+            fi
+          done
+
+      - name: Record the toolchain actually used
+        run: |
+          set -uo pipefail
+          {
+            echo "rustc: $(rustc --version)"
+            echo "cargo: $(cargo --version)"
+            echo "clang: $(clang --version | head -1)"
+            echo "xcode: $(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')"
+            echo "sdk: macosx$(xcrun --sdk macosx --show-sdk-version) ($(xcrun --sdk macosx --show-sdk-build-version))"
+            echo "ld: $(ld -v 2>&1 | head -1 || true)"
+          } | tee toolchain-macos.txt
+
+      - name: Build FFmpeg from the pinned source
+        working-directory: Explorer/Assets/Plugins/UUAV/native
+        run: |
+          set -euo pipefail
+          bash "scripts/$(basename "${{ steps.pins.outputs.builder }}")"
+          actual=$(git -C .ffmpeg-src rev-parse HEAD)
+          expected="${{ steps.pins.outputs.ffmpeg_commit }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::FFmpeg tag ${{ steps.pins.outputs.ffmpeg_tag }} resolved to $actual but the lock pins $expected"
+            exit 1
+          fi
+          echo "FFmpeg source commit $actual matches the lock."
+
+      - name: Gate A - the same runner must build the same bytes twice
+        run: bash scripts/uuav/repro-gate.sh macos-universal
+
+      - name: Freeze guard (edits the core, requires the adapter build to fail)
+        run: bash scripts/uuav/abi-freeze-check.sh
+
+      - name: Gate B - reproduce the committed binaries, toolchain permitting
+        run: python3 scripts/uuav/reproduces-lock.py macos-universal --toolchain toolchain-macos.txt
+
+      - name: Compare the fresh build against the lock
+        run: python3 scripts/uuav/verify-binaries.py --report macos-universal
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uuav-macos-universal
+          path: |
+            Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/*.dylib
+            Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-adapter*
+            toolchain-macos.txt
+            uuav-macos-universal.sha256
+          if-no-files-found: error
+
+  windows:
+    name: Build windows-x86_64
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - run: git lfs pull --include "$PLUGIN_LFS_GLOB"
+
+      - name: Read pins from the lock
+        id: pins
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          target = json.load(open(os.environ["LOCK"]))["targets"]["windows-x86_64"]
+          print(f"rust_target={target['rust']['target']}")
+          print(f"provenance={target['ffmpeg']['provenance']}")
+          print(f"ffmpeg_tag={target['ffmpeg']['tag']}")
+          print(f"ffmpeg_commit={target['ffmpeg']['commit']}")
+          print(f"builder={target['ffmpeg']['builder']}")
+          PY
+
+      - name: Install the MSYS2 prerequisites the builder checks for
+        shell: cmd
+        run: C:\msys64\usr\bin\pacman.exe -S --noconfirm --needed make nasm diffutils pkgconf
+
+      - name: Build FFmpeg from the pinned source
+        working-directory: Explorer/Assets/Plugins/UUAV/native
+        run: |
+          set -euo pipefail
+          provenance="${{ steps.pins.outputs.provenance }}"
+          if [ "$provenance" != "built-from-source" ]; then
+            echo "::error::the lock records windows-x86_64 FFmpeg as '$provenance', not a from-source build; use scripts/uuav/fetch-ffmpeg-windows.sh instead. See docs/uuav.md."
+            exit 1
+          fi
+          cmd //c "scripts\\$(basename "${{ steps.pins.outputs.builder }}" .sh).cmd"
+          actual=$(git -C .ffmpeg-src rev-parse HEAD)
+          expected="${{ steps.pins.outputs.ffmpeg_commit }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::FFmpeg tag ${{ steps.pins.outputs.ffmpeg_tag }} resolved to $actual but the lock pins $expected"
+            exit 1
+          fi
+          echo "FFmpeg source commit $actual matches the lock."
+
+      - name: Install the Rust target
+        run: |
+          set -euo pipefail
+          rustup target add "${{ steps.pins.outputs.rust_target }}"
+          # native/build.sh hardcodes the triple (the Control Flow Guard and
+          # /Brepro rustflags hang off it in .cargo/config.toml), and the build
+          # no longer takes it from the lock, so the two have to be checked
+          # against each other rather than assumed equal.
+          if [ "${{ steps.pins.outputs.rust_target }}" != "x86_64-pc-windows-msvc" ]; then
+            echo "::error::the lock pins rust target '${{ steps.pins.outputs.rust_target }}' but native/build.sh builds x86_64-pc-windows-msvc"
+            exit 1
+          fi
+
+      - name: Enter the VS x64 developer environment
+        shell: cmd
+        run: |
+          set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+          for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSPATH=%%i"
+          if not defined VSPATH (
+              echo ::error::no Visual Studio installation with the C++ x64 tools
+              exit /b 1
+          )
+          call "%VSPATH%\VC\Auxiliary\Build\vcvars64.bat" || exit /b 1
+          >>"%GITHUB_ENV%" echo VCINSTALLDIR=%VCINSTALLDIR%
+          >>"%GITHUB_ENV%" echo VCToolsInstallDir=%VCToolsInstallDir%
+          >>"%GITHUB_ENV%" echo WindowsSdkDir=%WindowsSdkDir%
+          >>"%GITHUB_ENV%" echo WindowsSDKVersion=%WindowsSDKVersion%
+          >>"%GITHUB_ENV%" echo INCLUDE=%INCLUDE%
+          >>"%GITHUB_ENV%" echo LIB=%LIB%
+          >>"%GITHUB_ENV%" echo LIBPATH=%LIBPATH%
+
+      - name: Record the toolchain actually used
+        run: |
+          set -uo pipefail
+          export PATH="$(cygpath -u "$VCToolsInstallDir")bin/Hostx64/x64:$PATH"
+          case "$(command -v link)" in
+            /usr/bin/link* | /bin/link*)
+              echo "::error::MSVC's link.exe is not first on PATH (found $(command -v link)); cargo would fail with 'link: missing operand'"
+              exit 1
+              ;;
+          esac
+          {
+            echo "rustc: $(rustc --version)"
+            echo "cargo: $(cargo --version)"
+            echo "cl: $(cl 2>&1 | head -1 || true)"
+            echo "link: $(link 2>&1 | head -1 || true)"
+            echo "windows_sdk: ${WindowsSDKVersion%\\}"
+          } | tee toolchain-windows.txt
+
+      - name: Gate A - the same runner must build the same bytes twice
+        run: |
+          set -euo pipefail
+          export PATH="$(cygpath -u "$VCToolsInstallDir")bin/Hostx64/x64:$PATH"
+          bash scripts/uuav/repro-gate.sh windows-x86_64
+
+      - name: Gate B - reproduce the committed binaries, toolchain permitting
+        run: python scripts/uuav/reproduces-lock.py windows-x86_64 --toolchain toolchain-windows.txt
+
+      - name: Compare the fresh build against the lock
+        run: python scripts/uuav/verify-binaries.py --report windows-x86_64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uuav-windows-x86_64
+          path: |
+            Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/*.dll
+            Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-adapter*
+            toolchain-windows.txt
+            uuav-windows-x86_64.sha256
+          if-no-files-found: error
+
+  publish:
+    name: Publish manifest
+    needs: [macos, windows]
+    if: always() && needs.macos.result == 'success' && needs.windows.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: built
+
+      - name: Assemble the release manifest
+        run: |
+          set -euo pipefail
+          mkdir -p manifest
+          cp "$LOCK" manifest/uuav-binaries.lock.json
+          cat built/*/*.sha256 > manifest/SHA256SUMS
+          cat built/*/toolchain-*.txt > manifest/TOOLCHAINS.txt
+          {
+            echo "### UUAV native build"
+            echo
+            echo '```'
+            cat manifest/SHA256SUMS
+            echo '```'
+            echo
+            echo '```'
+            cat manifest/TOOLCHAINS.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uuav-manifest
+          path: manifest
+          if-no-files-found: error

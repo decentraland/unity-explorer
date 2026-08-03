@@ -1,0 +1,162 @@
+name: UUAV Binary Verification
+
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'Explorer/Assets/Plugins/UUAV/**'
+      - 'scripts/uuav/**'
+      - 'nix/uuav/**'
+      - '.gitattributes'
+      - '.github/workflows/uuav-verify.yml'
+  merge_group: {}
+  push:
+    branches: [dev]
+    paths:
+      - 'Explorer/Assets/Plugins/UUAV/**'
+      - 'scripts/uuav/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLUGIN_LFS_GLOB: 'Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/**'
+
+jobs:
+  verify:
+    name: Verify committed binaries against the lock
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          lfs: false
+
+      - name: Fetch the plugin binaries from LFS
+        run: git lfs pull --include "$PLUGIN_LFS_GLOB"
+
+      - name: Verify hashes, provenance and build inputs
+        run: python3 scripts/uuav/verify-binaries.py
+
+      - name: Require new native binaries to be stored in LFS
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")
+          # The adapter is the one shipped binary no extension rule catches: on
+          # macOS it has none, and *.exe was not in this list either. Named
+          # explicitly so the first committed child cannot land as a plain blob.
+          changed=$(git diff --name-only --diff-filter=AM "$base" "$HEAD_SHA" \
+            -- '*.dll' '*.dylib' '*.so' '*.exe' '*/uuav-adapter' || true)
+
+          if [ -z "$changed" ]; then
+            echo "No native binaries added or modified."
+            exit 0
+          fi
+
+          status=0
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            # A file stored in LFS has an ~130 byte pointer as its git blob;
+            # a plain blob is the whole binary.
+            if git cat-file blob "$HEAD_SHA:$path" 2>/dev/null \
+                 | head -c 41 | grep -q '^version https://git-lfs.github.com/spec/v1'; then
+              echo "  ok (lfs)    $path"
+            else
+              echo "::error file=$path::$path was committed as a plain git blob, not Git LFS. Re-add it with the *.dylib / *.so / *.dll rules in .gitattributes in effect - see docs/uuav.md."
+              status=1
+            fi
+          done <<< "$changed"
+          exit $status
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### UUAV binary verification"
+            echo
+            echo "Lock: \`scripts/uuav/uuav-binaries.lock.json\`"
+            echo
+            echo '```'
+            python3 scripts/uuav/verify-binaries.py 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  rust:
+    name: Linux checks for the out-of-process crates
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Explorer/Assets/Plugins/UUAV/native
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - name: Record the toolchain
+        run: |
+          rustc --version
+          cargo --version
+          cargo clippy --version
+
+      - name: The shipping build still selects only the core
+        run: |
+          set -euo pipefail
+          cargo metadata --no-deps --format-version 1 > "$RUNNER_TEMP/metadata.json"
+          python3 - <<'PY'
+          import json, os, sys
+          meta = json.load(open(os.environ["RUNNER_TEMP"] + "/metadata.json"))
+          default = sorted(m.rsplit("#", 1)[-1].split("@")[0]
+                           for m in meta["workspace_default_members"])
+          if default != ["uuav"]:
+              print(f"::error::`cargo build --release` from native/ would now build "
+                    f"{default}, not just the core. build.sh and "
+                    f".github/workflows/uuav-native.yml both rely on it building "
+                    f"only `uuav`; see the [workspace] comment in native/Cargo.toml.")
+              sys.exit(1)
+          print("workspace_default_members == [uuav]")
+          PY
+
+      - name: Nothing depends on uuav-client
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, sys
+          meta = json.load(open(os.environ["RUNNER_TEMP"] + "/metadata.json"))
+          offenders = [p["name"] for p in meta["packages"]
+                       if p["name"] != "uuav-client"
+                       and any(d["name"] == "uuav-client" for d in p["dependencies"])]
+          if offenders:
+              print(f"::error::{', '.join(offenders)} depend(s) on uuav-client. Its "
+                    f"rlib carries every uuav_* export the frozen core does and "
+                    f"more; nothing may link both. See docs/uuav.md.")
+              sys.exit(1)
+          print("no package depends on uuav-client")
+          PY
+
+      - name: Check and test uuav-abi
+        run: |
+          cargo check -p uuav-abi --all-targets
+          cargo test -p uuav-abi
+
+      - name: Check and test uuav-ipc
+        run: |
+          cargo check -p uuav-ipc --all-targets
+          cargo test -p uuav-ipc
+
+      - name: Clippy
+        run: cargo clippy -p uuav-abi -p uuav-ipc --all-targets -- -D warnings
+
+      - name: FrameInfo declaration digest
+        working-directory: ${{ github.workspace }}
+        run: python3 scripts/uuav/frame-info-digest.py
