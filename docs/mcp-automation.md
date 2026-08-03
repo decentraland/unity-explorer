@@ -63,6 +63,7 @@ The tables below are a human-readable overview. The authoritative argument contr
 | `screenshot` | `maxWidth?` (default 1280), `quality?`, `worldOnly?` (exclude UI; post-processing still applied) | Downscaled image of the current view (UI included by default) + caption |
 | `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode + wallet address |
 | `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage |
+| `get_scene_content_stats` | — | Current scene's content stats (entities, triangles, bodies, geometries, materials, textures, colliders, external content) with the documented soft-limit caps for its parcel count; triggers a fresh counting pass |
 | `get_scene_logs` | `limit?`, `severity?`, `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
 | `list_scene_entities` | `limit?` | Entity ids of the current scene's ECS world |
 | `get_entity_details` | `entityId` | All components of one scene entity |
@@ -84,7 +85,7 @@ The tables below are a human-readable overview. The authoritative argument contr
 
 ## Structured output
 
-`get_player_state`, `get_scene_state` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
+`get_player_state`, `get_scene_state`, `get_scene_content_stats` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
 
 ## The scene-iteration loop
 
