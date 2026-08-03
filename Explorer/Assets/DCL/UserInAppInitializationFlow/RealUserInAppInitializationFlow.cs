@@ -127,14 +127,15 @@ namespace DCL.UserInAppInitializationFlow
 
                 bool shouldShowAuthentication = parameters.ShowAuthentication &&
                                                 !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN) &&
-                                                !appArgs.HasFlag(AppArgsFlags.AUTOPILOT);
+                                                !appArgs.HasFlag(AppArgsFlags.AUTOPILOT) &&
+                                                !appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME);
 
                 // Force show authentication if there's no valid identity in the cache
                 if (!shouldShowAuthentication)
                     shouldShowAuthentication = identityCache.Identity == null || identityCache.Identity.IsExpired;
 
                 // Only a human user can authenticate currently.
-                if (shouldShowAuthentication && appArgs.HasFlag(AppArgsFlags.AUTOPILOT))
+                if (shouldShowAuthentication && (appArgs.HasFlag(AppArgsFlags.AUTOPILOT) || appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME)))
                     Application.Quit(1);
 
                 if (shouldShowAuthentication)
