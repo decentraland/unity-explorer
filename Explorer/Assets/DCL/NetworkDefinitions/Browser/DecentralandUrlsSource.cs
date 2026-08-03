@@ -328,6 +328,8 @@ namespace DCL.Browser.DecentralandUrls
 
                 DecentralandUrl.SocialServiceMutes => $"https://social-api.decentraland.{ENV}/v1/mutes",
 
+                DecentralandUrl.IntercomTickets => $"https://intercom-proxy.decentraland.{ENV}/intercom/tickets",
+
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
 
