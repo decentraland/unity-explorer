@@ -25,6 +25,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         private World globalWorld = null!;
         private Entity globalPlayerEntity;
         private IEmoteStorage emoteStorage = null!;
+        private EmoteMaskCatalog emoteMaskCatalog = null!;
         private GameObject poolRoot = null!;
         private GameObject audioSourcePrefab = null!;
         private GameObject avatarBaseGameObject = null!;
@@ -32,10 +33,14 @@ namespace DCL.AvatarRendering.Emotes.Tests
         [SetUp]
         public void SetUp()
         {
+            // EmotePlayer resolves its pool parent with GameObject.Find("ROOT_POOL_CONTAINER") and
+            // throws without it, so the object has to exist before the constructor runs.
             poolRoot = new GameObject("ROOT_POOL_CONTAINER");
+
             audioSourcePrefab = new GameObject("EmoteAudioSource");
             AudioSource audioSource = audioSourcePrefab.AddComponent<AudioSource>();
-            var emotePlayer = new EmotePlayer(audioSource, ScriptableObject.CreateInstance<EmoteMaskCatalog>(), legacyAnimationsEnabled: true);
+            emoteMaskCatalog = ScriptableObject.CreateInstance<EmoteMaskCatalog>();
+            var emotePlayer = new EmotePlayer(audioSource, emoteMaskCatalog, legacyAnimationsEnabled: true);
 
             globalWorld = World.Create();
             globalPlayerEntity = globalWorld.Create(new AvatarShapeComponent { BodyShape = BodyShape.MALE });
@@ -57,6 +62,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         protected override void OnTearDown()
         {
             globalWorld.Dispose();
+            Object.DestroyImmediate(emoteMaskCatalog);
             Object.DestroyImmediate(avatarBaseGameObject);
             Object.DestroyImmediate(audioSourcePrefab);
             Object.DestroyImmediate(poolRoot);
