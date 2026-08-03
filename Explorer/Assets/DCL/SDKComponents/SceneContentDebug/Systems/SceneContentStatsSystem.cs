@@ -53,8 +53,13 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
         private readonly HashSet<Material> uniqueMaterials = new ();
         private readonly HashSet<Texture> uniqueTextures = new ();
         private readonly List<Material> materialsScratch = new ();
+        private readonly Dictionary<string, SceneContentBreakdownEntry> breakdownScratch = new ();
 
         private int framesSinceCollection = COLLECTION_COOLDOWN_FRAMES;
+
+        private bool collectBreakdown;
+        private int primitiveInstances;
+        private long primitiveTriangles;
 
         private long triangles;
         private int bodies;
@@ -108,12 +113,24 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             uniqueMaterials.Clear();
             uniqueTextures.Clear();
 
+            collectBreakdown = stats.BreakdownRequested;
+
+            if (collectBreakdown)
+            {
+                breakdownScratch.Clear();
+                primitiveInstances = 0;
+                primitiveTriangles = 0;
+            }
+
             CountPrimitiveMeshesQuery(World);
             CountGltfContainersQuery(World);
             CountSdkMaterialsQuery(World);
             CountPrimitiveCollidersQuery(World);
             CountMediaStreamsQuery(World);
             externalContent += World.CountEntities(in NFT_SHAPES_QUERY);
+
+            if (collectBreakdown)
+                FlushBreakdown();
 
             stats.Entities = entitiesMap.Count;
             stats.Triangles = triangles;
@@ -135,13 +152,19 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             if (mesh == null) return;
 
             bodies++;
-            AccountMesh(mesh);
+            long meshTriangles = AccountMesh(mesh);
             AccountRendererMaterials(component.MeshRenderer);
+
+            if (collectBreakdown)
+            {
+                primitiveInstances++;
+                primitiveTriangles += meshTriangles;
+            }
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CountGltfContainers(in GltfContainerComponent component)
+        private void CountGltfContainers(in GltfContainerComponent component, in PBGltfContainer sdkComponent)
         {
             if (component.State != LoadingState.Finished) return;
 
@@ -153,6 +176,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             colliders += asset.InvisibleColliders.Count + (asset.DecodedVisibleSDKColliders?.Count ?? 0);
 
             List<Renderer> renderers = asset.Renderers;
+            long containerTriangles = 0;
 
             for (var i = 0; i < renderers.Count; i++)
             {
@@ -167,10 +191,13 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                 bodies++;
 
                 if (mesh != null)
-                    AccountMesh(mesh);
+                    containerTriangles += AccountMesh(mesh);
 
                 AccountRendererMaterials(renderer);
             }
+
+            if (collectBreakdown)
+                AccountBreakdown(sdkComponent.Src, containerTriangles, renderers.Count);
         }
 
         [Query]
@@ -197,13 +224,48 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                 externalContent++;
         }
 
-        private void AccountMesh(Mesh mesh)
+        private long AccountMesh(Mesh mesh)
         {
+            long meshTriangles = 0;
+
             for (var i = 0; i < mesh.subMeshCount; i++)
-                triangles += mesh.GetIndexCount(i) / 3;
+                meshTriangles += mesh.GetIndexCount(i) / 3;
+
+            triangles += meshTriangles;
 
             if (uniqueMeshes.Add(mesh))
                 geometries++;
+
+            return meshTriangles;
+        }
+
+        private void AccountBreakdown(string source, long containerTriangles, int rendererCount)
+        {
+            breakdownScratch.TryGetValue(source, out SceneContentBreakdownEntry entry);
+            entry.Source = source;
+            entry.Instances++;
+            entry.Renderers += rendererCount;
+            entry.Triangles += containerTriangles;
+            breakdownScratch[source] = entry;
+        }
+
+        private void FlushBreakdown()
+        {
+            stats.BreakdownEntries.Clear();
+
+            foreach (KeyValuePair<string, SceneContentBreakdownEntry> pair in breakdownScratch)
+                stats.BreakdownEntries.Add(pair.Value);
+
+            if (primitiveInstances > 0)
+                stats.BreakdownEntries.Add(new SceneContentBreakdownEntry
+                {
+                    Source = "(primitive meshes)",
+                    Instances = primitiveInstances,
+                    Renderers = primitiveInstances,
+                    Triangles = primitiveTriangles,
+                });
+
+            stats.BreakdownRequested = false;
         }
 
         private void AccountRendererMaterials(Renderer renderer)

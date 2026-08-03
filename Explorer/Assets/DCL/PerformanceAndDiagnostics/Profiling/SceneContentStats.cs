@@ -1,5 +1,19 @@
+using System.Collections.Generic;
+
 namespace DCL.Profiling
 {
+    /// <summary>
+    ///     One scene model's share of the rendered content, grouped by source. Produced on demand by
+    ///     <c>SceneContentStatsSystem</c> when <see cref="SceneContentStats.BreakdownRequested" /> is set.
+    /// </summary>
+    public struct SceneContentBreakdownEntry
+    {
+        public string Source;
+        public int Instances;
+        public int Renderers;
+        public long Triangles;
+    }
+
     /// <summary>
     ///     Per-scene content statistics for the "Current scene" debug widget. Written by
     ///     <c>SceneContentStatsSystem</c> in the scene world and read by <c>DebugViewCurrentSceneSystem</c>
@@ -23,6 +37,12 @@ namespace DCL.Profiling
         public bool RequestedByMcp;
 
         /// <summary>
+        ///     One-shot: when set, the next collection pass also fills <see cref="BreakdownEntries" />
+        ///     and clears the flag. Collection must also be requested by a consumer flag.
+        /// </summary>
+        public bool BreakdownRequested;
+
+        /// <summary>
         ///     False until the first collection pass completes for this scene.
         /// </summary>
         public bool HasData;
@@ -31,6 +51,12 @@ namespace DCL.Profiling
         ///     Incremented on every completed collection pass, letting consumers detect fresh data.
         /// </summary>
         public long CollectionCount;
+
+        /// <summary>
+        ///     Rendered content grouped by source model, unsorted. Only refreshed by passes that ran
+        ///     with <see cref="BreakdownRequested" /> set.
+        /// </summary>
+        public readonly List<SceneContentBreakdownEntry> BreakdownEntries = new ();
 
         /// <summary>
         ///     While false the scene world skips collection entirely, so the counters cost nothing
