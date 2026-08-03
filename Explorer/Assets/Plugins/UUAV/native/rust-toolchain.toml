@@ -1,0 +1,15 @@
+# The compiler is an input to the shipped bytes, so it is pinned rather than
+# inherited. rustup honours this file automatically, which is what lets the
+# reproduction gate in .github/workflows/uuav-native.yml compare a CI rebuild
+# against the committed binaries at all - a hosted runner otherwise brings
+# whatever rustc its image happens to carry.
+#
+# Bumping this is a rebuild-and-relock event for both targets, not a routine
+# edit: scripts/uuav/uuav-binaries.lock.json hashes it as a build input.
+[toolchain]
+channel = "1.97.1"
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+]

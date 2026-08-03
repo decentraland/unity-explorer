@@ -1,0 +1,29 @@
+[package]
+name = "uuav-client"
+version.workspace = true
+edition = "2024"
+
+[lib]
+name = "uuav"
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+uuav-abi = { path = "../uuav-abi" }
+uuav-ipc = { path = "../uuav-ipc" }
+arc-swap = "1"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-metal = { version = "0.3", features = ["objc2-io-surface"] }
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+libc = "0.2"

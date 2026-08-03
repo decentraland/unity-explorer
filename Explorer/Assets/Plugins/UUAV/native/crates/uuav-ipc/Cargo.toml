@@ -1,0 +1,49 @@
+[package]
+name = "uuav-ipc"
+version.workspace = true
+edition = "2024"
+
+[lib]
+name = "uuav_ipc"
+crate-type = ["lib"]
+
+[dependencies]
+anyhow = "1.0.98"
+libc = "0.2"
+uuav-abi = { path = "../uuav-abi" }
+dashmap = "6"
+arc-swap = "1"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.60", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_Security_Cryptography",
+    "Win32_Storage_FileSystem",
+    "Win32_System_IO",
+    "Win32_System_JobObjects",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Memory",
+    "Win32_System_Performance",
+    "Win32_System_Pipes",
+    "Win32_System_SystemServices",
+    "Win32_System_Threading",
+] }
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mach2 = "0.4"
+objc2 = "0.6"
+objc2-metal = { version = "0.3", features = ["objc2-io-surface"] }
+objc2-core-video = { version = "0.3", features = ["objc2-io-surface"] }
+objc2-core-foundation = "0.3"
+objc2-io-surface = "0.3"
+objc2-foundation = { version = "0.3", default-features = false, features = ["alloc", "NSString"] }

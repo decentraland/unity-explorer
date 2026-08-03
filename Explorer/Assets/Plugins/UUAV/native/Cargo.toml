@@ -3,6 +3,24 @@ name = "uuav"
 version = "0.2.0"
 edition = "2024"
 
+# Root-package workspace: `cargo build --release` from this directory still
+# builds only `uuav`, so build.sh and .github/workflows/uuav-native.yml keep
+# producing the shipped artifacts with today's command. The root cannot move
+# higher - a member's .cargo/config.toml is silently ignored when cargo runs
+# from a root above it, which would drop FFMPEG_DIR, target-dir, control-flow-
+# guard, +crt-static and the @loader_path rpath.
+[workspace]
+members = [
+    "crates/uuav-abi",
+    "crates/uuav-adapter",
+    "crates/uuav-client",
+    "crates/uuav-ipc",
+]
+exclude = [".target", ".third_party"]
+
+[workspace.package]
+version = "0.2.0"
+
 [dependencies]
 anyhow = "1.0.98"
 arc-swap = "1.7.1"
@@ -39,4 +57,24 @@ objc2-io-surface = "0.3"
 
 [lib]
 name = "uuav"
-crate-type = ["cdylib"]
+# `rlib` only: uuav-adapter links it, and since the M6 cutover the shipped
+# `uuav` cdylib is produced by uuav-client instead.
+crate-type = ["rlib"]
+
+# A workspace ignores `[profile]` in a non-root member, so the debug info
+# uuav-ipc used to ask for itself is expressed here. It is deliberately not a
+# plain `[profile.release]`: that would put debug info in the shipped core
+# cdylib and push it toward the CI size caps.
+[profile.release.package.uuav-ipc]
+debug = 1
+
+# The shipped client cdylib - the artifact Unity loads. Same reasoning: a crash
+# inside it is only actionable with line tables.
+[profile.release.package.uuav-client]
+debug = 1
+
+# The adapter is a shipped executable that runs untrusted media; a crash report
+# from it is only actionable with line tables. Same reasoning, same reason it is
+# not a plain `[profile.release]`.
+[profile.release.package.uuav-adapter]
+debug = 1

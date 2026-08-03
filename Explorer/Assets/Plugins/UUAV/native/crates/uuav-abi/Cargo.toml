@@ -1,0 +1,6 @@
+[package]
+name = "uuav-abi"
+version.workspace = true
+edition = "2024"
+
+[dependencies]

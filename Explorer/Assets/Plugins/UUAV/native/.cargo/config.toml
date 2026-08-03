@@ -1,14 +1,32 @@
 [env]
-# LGPL shared build of FFmpeg 8.1 (BtbN); see .third_party/ffmpeg/LICENSE.txt
+# LGPL shared build of FFmpeg 8.1. Windows: scripts/build-ffmpeg-windows.cmd,
+# macOS: scripts/build-ffmpeg-macos.sh - both install into this prefix.
 FFMPEG_DIR = { value = ".third_party/ffmpeg", relative = true }
 
 [build]
 target-dir = ".target"
 
-
-# TODO why exactly this linker?
-[target.x86_64-pc-windows-gnu]
-linker = "C:\\msys64\\mingw64\\bin\\gcc.exe"
+# MSVC rather than mingw, because Control Flow Guard is what this build
+# targets and the GNU toolchain cannot emit it. CFG only holds if every
+# module in the process is instrumented, so the FFmpeg chain is built with
+# clang-cl -guard:cf by scripts/build-ffmpeg-windows.sh and uuav.dll by
+# control-flow-guard here - rustc also passes /guard:cf to link.exe, which is
+# what writes the guard tables into the load config directory.
+#
+# crt-static drops the VCRUNTIME140.dll / api-ms-win-crt-* imports an MSVC
+# build otherwise carries. UnityPlayer.dll links the CRT statically and a
+# built player ships no VC++ redistributable, so a dynamically-linked
+# uuav.dll would be the only thing in the process demanding one. Safe here:
+# every allocation this crate hands to C# comes back through
+# uuav_string_free, so no heap crosses the DLL boundary. The FFmpeg DLLs are
+# static-CRT for the same reason (clang-cl's default).
+#
+# /Brepro derives the PE TimeDateStamp, the three debug directory timestamps
+# and the PDB GUID from content rather than the clock. Without it the same
+# source in the same directory differs by 23 bytes between runs, so the hashes
+# in scripts/uuav/uuav-binaries.lock.json cannot be reproduced at all.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "control-flow-guard=yes", "-C", "target-feature=+crt-static", "-C", "link-arg=/Brepro"]
 
 # @loader_path rpath: libuuav.dylib resolves the @rpath/... FFmpeg dylibs
 # from its own folder, in-editor and in a built player alike

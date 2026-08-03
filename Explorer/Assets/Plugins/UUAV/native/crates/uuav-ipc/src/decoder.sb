@@ -1,0 +1,106 @@
+;; UUAV out-of-process decoder seatbelt.
+;;
+;; Applied by helper/sandbox.rs::enter() with sandbox_init_with_parameters
+;; (flags 0 = inline SBPL). Two parameters:
+;;   SANDBOX_WORKDIR  the read-allow root (the FFmpeg dylib install dir)
+;;   HOST_BOOTSTRAP   the host's exact bootstrap service name
+;;
+;; The read grant and the network grant are one decision, not two. Egress plus a
+;; global read grant would make every file the user account can read -- the
+;; client's own session state included -- exfiltrable by a compromised demuxer.
+;; Egress is therefore granted only alongside a read allow-list that excludes
+;; $HOME. Never widen one of the two without re-reading the other.
+
+(version 1)
+;; deny-default returns EPERM rather than signalling the process, so a denied
+;; syscall is a contained -1/errno the helper's error paths cope with.
+(deny default)
+(allow signal (target self))
+
+;; The roots below are measured, not guessed: a missing entry surfaces as a
+;; confusing media failure much later, never as a crash.
+(allow file-read* file-map-executable
+  (subpath "/System")
+  (subpath "/usr/lib")
+  (subpath "/usr/share")
+  (subpath "/Library/Preferences")
+  (subpath "/Library/Managed Preferences")
+  (subpath "/Library/GPUBundles")
+  (subpath "/Library/Video/Plug-Ins")
+  ;; SecureTransport is FFmpeg's TLS backend here (--enable-securetransport),
+  ;; so https validates chains against the system root store.
+  (subpath "/Library/Keychains")
+  (subpath "/private/var/db/timezone")
+  (literal "/private/etc/localtime")
+  ;; /etc/resolv.conf is a symlink into /private/var/run, which the sandbox
+  ;; resolves before matching.
+  (literal "/private/etc/hosts")
+  (literal "/private/etc/resolv.conf")
+  (literal "/private/var/run/resolv.conf")
+  ;; The only non-system path the child can read.
+  (subpath (param "SANDBOX_WORKDIR")))
+(allow file-read* (literal "/dev/null") (literal "/dev/random") (literal "/dev/urandom"))
+;; Deliberately wider than measured: path resolution inside CoreFoundation and
+;; dyld stats ancestors of paths it is allowed to open, and a deny there fails
+;; silently and late. It leaks names, never contents -- `file-read-data` is what
+;; the roots above gate.
+(allow file-read-metadata)
+
+(allow ipc-posix-shm* (ipc-posix-name-regex #"^/uuav\."))
+
+(allow process-info* (target self))
+(allow sysctl-read)
+
+(allow iokit-open
+  (iokit-user-client-class "IOSurfaceRootUserClient")
+  (iokit-user-client-class "IOSurfaceSendRight")
+  (iokit-user-client-class "AGXDeviceUserClient")
+  (iokit-user-client-class "IOAccelDevice2")
+  (iokit-user-client-class "IOAccelDeviceShmemAllocator2")
+  (iokit-user-client-class "IOAccelSharedUserClient2")
+  (iokit-user-client-class "IOAccelContext2")
+  (iokit-user-client-class "IOAccelCommandQueue2")
+  (iokit-user-client-class "IOGPUDeviceUserClient")
+  (iokit-user-client-class "IOGPUResourceUserClient")
+  (iokit-user-client-class "RootDomainUserClient"))
+(allow iokit-get-properties)
+
+;; The host's inbox by exact name, the helper-family regex, and the CoreMedia /
+;; Metal / logging services VideoToolbox and the Metal runtime look up.
+(allow mach-lookup
+  (global-name (param "HOST_BOOTSTRAP"))
+  (global-name-regex #"^com\.decentraland\.uuav\.helper\.")
+  (global-name "com.apple.coremedia.videodecoder")
+  (global-name "com.apple.coremedia.videodecoder.xpc")
+  (global-name "com.apple.coremedia.decompressionsession.xpc")
+  (global-name "com.apple.coremedia.endpoint.xpc")
+  (global-name "com.apple.coremedia.routediscoverer.xpc")
+  (global-name "com.apple.coremedia.videoqueue")
+  (global-name "com.apple.cvmsServ")
+  (global-name "com.apple.mtlcompilerservice")
+  (global-name "com.apple.MTLCompilerService")
+  (global-name "com.apple.gpumemd.source")
+  (global-name "com.apple.GPUWrangler")
+  (global-name "com.apple.logd")
+  (global-name "com.apple.logd.events")
+  (global-name "com.apple.diagnosticd")
+  (global-name "com.apple.system.notification_center")
+  (global-name "com.apple.system.opendirectoryd.libinfo")
+  (global-name "com.apple.trustd.agent")
+  (global-name "com.apple.SecurityServer")
+  (global-name "com.apple.system.logger")
+  (global-name "com.apple.CoreServices.coreservicesd"))
+(allow mach-per-user-lookup)
+
+;; Two ports, not "outbound": 443 and 80 are what the client's own protocol
+;; whitelist can produce. Everything else -- SSH, databases, admin ports,
+;; link-local metadata services -- stays EPERM, so a compromised demuxer cannot
+;; sweep the machine's own network. The cost is that media served from a
+;; non-standard port (`https://host:8443/...`) is refused at connect with EPERM.
+;;
+;; The literal is mDNSResponder's UNIX socket, which `getaddrinfo` connects to:
+;; a local socket to a system daemon, not egress. Without it nothing resolves.
+(allow network-outbound
+  (remote tcp "*:443")
+  (remote tcp "*:80")
+  (literal "/private/var/run/mDNSResponder"))

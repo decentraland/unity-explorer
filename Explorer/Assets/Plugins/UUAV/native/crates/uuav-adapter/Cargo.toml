@@ -1,0 +1,34 @@
+[package]
+name = "uuav-adapter"
+version.workspace = true
+edition = "2024"
+build = "build.rs"
+
+[[bin]]
+name = "uuav-adapter"
+path = "src/main.rs"
+
+[dependencies]
+uuav = { path = "../.." }
+uuav-abi = { path = "../uuav-abi" }
+uuav-ipc = { path = "../uuav-ipc" }
+
+anyhow = "1.0.98"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2"
+objc2 = "0.6"
+objc2-metal = { version = "0.3", features = ["objc2-io-surface"] }
+objc2-core-video = { version = "0.3", features = ["objc2-io-surface"] }
+objc2-core-foundation = "0.3"
+objc2-io-surface = "0.3"
+block2 = "0.6"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+] }
