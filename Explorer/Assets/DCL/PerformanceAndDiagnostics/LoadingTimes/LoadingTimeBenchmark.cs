@@ -6,7 +6,9 @@ using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.LoadingTimes
 {
@@ -28,6 +30,7 @@ namespace DCL.LoadingTimes
         private static readonly TimeSpan ANALYTICS_DELIVERY_GRACE = TimeSpan.FromSeconds(5);
 
         private readonly List<StageMeasure> measures = new ((int)LoadingStatus.LoadingStage.Completed + 1);
+        private readonly CancellationTokenSource cts = new ();
 
         private readonly ILoadingStatus loadingStatus;
         private readonly IAnalyticsController analytics;
@@ -55,6 +58,7 @@ namespace DCL.LoadingTimes
         public void Dispose()
         {
             loadingStatus.CurrentStageMut.OnUpdate -= OnStageUpdated;
+            cts.SafeCancelAndDispose();
         }
 
         private void OnStageUpdated(LoadingStatus.LoadingStage stage)
@@ -66,7 +70,7 @@ namespace DCL.LoadingTimes
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
             reported = true;
-            ReportAndQuitAsync().Forget();
+            ReportAndQuitAsync(scenesCache.CurrentScene.Value?.Info.Name).Forget();
         }
 
         private void Sample(LoadingStatus.LoadingStage stage)
@@ -108,28 +112,30 @@ namespace DCL.LoadingTimes
             return payload;
         }
 
-        private async UniTaskVoid ReportAndQuitAsync()
+        private async UniTaskVoid ReportAndQuitAsync(string? sceneHash)
         {
             try
             {
-                JObject payload = BuildPayload(scenesCache.CurrentScene.Value?.Info.Name);
+                JObject payload = BuildPayload(sceneHash);
 
                 analytics.Track(AnalyticsEvents.Profiling.LOADING_TIMES, payload, true);
 #if UNITY_EDITOR
                 ReportHub.LogProductionInfo(payload.ToString());
 #endif
 
-                await UniTask.Delay(ANALYTICS_DELIVERY_GRACE);
+                await UniTask.Delay(ANALYTICS_DELIVERY_GRACE, cancellationToken: cts.Token);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+                // Disposal means the shutdown is already under way, quitting again would be redundant.
+                return;
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.ANALYTICS);
             }
-            finally
-            {
-                Application.Quit();
-            }
+
+            Application.Quit();
         }
 
         private struct StageMeasure
