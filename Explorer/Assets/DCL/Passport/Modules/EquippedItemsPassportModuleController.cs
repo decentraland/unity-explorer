@@ -356,7 +356,7 @@ namespace DCL.Passport.Modules
 
         private string GetMarketplaceLink(string id)
         {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
+            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{{0}}/{{1}}";
             ReadOnlySpan<char> idSpan = id.AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 
