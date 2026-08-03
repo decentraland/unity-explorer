@@ -25,6 +25,7 @@ namespace DCL.MarketplaceCredits.Purchase
         private readonly PolygonSettlementPoller settlementPoller;
         private readonly ManaUsdRateReader manaUsdRateReader;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly CreditsFeatureAccess creditsFeatureAccess;
         private readonly bool isFeatureEnabled;
 
         public event Action<CreditsPurchaseState>? StateChanged;
@@ -36,6 +37,7 @@ namespace DCL.MarketplaceCredits.Purchase
             PolygonSettlementPoller settlementPoller,
             ManaUsdRateReader manaUsdRateReader,
             IWeb3IdentityCache identityCache,
+            CreditsFeatureAccess creditsFeatureAccess,
             bool isFeatureEnabled)
         {
             this.shopAPIClient = shopAPIClient;
@@ -44,12 +46,13 @@ namespace DCL.MarketplaceCredits.Purchase
             this.settlementPoller = settlementPoller;
             this.manaUsdRateReader = manaUsdRateReader;
             this.identityCache = identityCache;
+            this.creditsFeatureAccess = creditsFeatureAccess;
             this.isFeatureEnabled = isFeatureEnabled;
         }
 
         public async UniTask<CreditsQuoteResult> QuoteAsync(string tradeId, CancellationToken ct)
         {
-            if (!isFeatureEnabled)
+            if (!isFeatureEnabled || !creditsFeatureAccess.IsUserAllowed())
                 return new CreditsQuoteResult(CreditsPurchaseError.FeatureDisabled);
 
             IWeb3Identity? identity = identityCache.Identity;
@@ -73,7 +76,7 @@ namespace DCL.MarketplaceCredits.Purchase
 
         public async UniTask<CreditsPurchaseResult> PurchaseAsync(CreditsPurchaseQuote quote, CancellationToken ct)
         {
-            if (!isFeatureEnabled)
+            if (!isFeatureEnabled || !creditsFeatureAccess.IsUserAllowed())
                 return new CreditsPurchaseResult(CreditsPurchaseError.FeatureDisabled);
 
             IWeb3Identity? identity = identityCache.Identity;

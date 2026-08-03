@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.FeatureFlags;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using NSubstitute;
@@ -42,6 +43,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private PolygonSettlementPoller settlementPoller = null!;
         private ManaUsdRateReader manaUsdRateReader = null!;
         private IWeb3IdentityCache identityCache = null!;
+        private CreditsFeatureAccess creditsFeatureAccess = null!;
+        private CancellationTokenSource warmUpCts = null!;
         private CreditsPurchaseService service = null!;
         private List<CreditsPurchaseState> recordedStates = null!;
 
@@ -74,14 +77,30 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(SettlementOutcome.Confirmed));
 
+            // The wallets restriction flag is absent by default, so every wallet is allowed.
+            FeatureFlagsConfiguration.Reset();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+
+            warmUpCts = new CancellationTokenSource();
+            creditsFeatureAccess = new CreditsFeatureAccess(identityCache, warmUpCts.Token);
+
             service = CreateService(isFeatureEnabled: true);
 
             recordedStates = new List<CreditsPurchaseState>();
             service.StateChanged += state => recordedStates.Add(state);
         }
 
-        private CreditsPurchaseService CreateService(bool isFeatureEnabled) =>
-            new (shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller, manaUsdRateReader, identityCache, isFeatureEnabled);
+        [TearDown]
+        public void TearDown()
+        {
+            warmUpCts.Cancel();
+            warmUpCts.Dispose();
+
+            FeatureFlagsConfiguration.Reset();
+        }
+
+        private CreditsPurchaseService CreateService(bool isFeatureEnabled, CreditsFeatureAccess? featureAccess = null) =>
+            new (shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller, manaUsdRateReader, identityCache, featureAccess ?? creditsFeatureAccess, isFeatureEnabled);
 
         private static TradeDto CreateTrade() =>
             new ()
@@ -289,6 +308,33 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             CreditsQuoteResult result = await disabledService.QuoteAsync(TRADE_ID, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.FeatureDisabled, result.Error);
+            await shopAPIClient.DidNotReceive().GetTradeAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task FailWhenWalletIsOutsideTheAllowlist()
+        {
+            // Arrange: the wallets restriction flag is on and the buyer is not listed
+            FeatureFlagsResultDto dto = FeatureFlagsResultDto.Empty;
+            dto.flags[FeatureFlagsStrings.CREDITS_WALLETS] = true;
+
+            dto.variants[FeatureFlagsStrings.CREDITS_WALLETS] = new FeatureFlagVariantDto
+            {
+                name = FeatureFlagsStrings.WALLETS_VARIANT,
+                enabled = true,
+                payload = new FeatureFlagPayload { type = "string", value = SELLER },
+            };
+
+            FeatureFlagsConfiguration.Reset();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(dto));
+
+            CreditsPurchaseService restrictedService = CreateService(isFeatureEnabled: true, new CreditsFeatureAccess(identityCache, warmUpCts.Token));
+
+            // Act
+            CreditsQuoteResult result = await restrictedService.QuoteAsync(TRADE_ID, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.FeatureDisabled, result.Error);

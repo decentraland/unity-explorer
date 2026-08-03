@@ -320,7 +320,8 @@ namespace DCL.Passport
                 passportProfileInfoController));
 
             bool isCreditPurchaseEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase)
-                                           && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
+                                           && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits)
+                                           && CreditsFeatureAccess.Instance.IsUserAllowed();
 
             var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopApiClient, webBrowser, isCreditPurchaseEnabled);
             creditPurchaseBuyHandler.FellBackToWeb += OnCreditsBuyFellBackToWeb;
