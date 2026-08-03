@@ -8,16 +8,16 @@ namespace DCL.Profiling.ECS
     public partial class DebugViewCurrentSceneSystem
     {
         // Hardcoded scene limits derived from the parcel count (n), matching the documented
-        // Decentraland scene limitations; colliders and external content have no documented
-        // limit, so they use project-chosen caps.
+        // Decentraland scene limitations
+        // (https://docs.decentraland.org/creator/scenes-sdk7/optimizing/scene-limitations/).
+        // The docs define these as soft limits, so exceeding one renders yellow, never red.
+        // Geometries, colliders and external content have no documented limit and are shown
+        // as plain counts.
         private const int MAX_TRIANGLES_PER_PARCEL = 10_000;
         private const int MAX_ENTITIES_PER_PARCEL = 200;
         private const int MAX_BODIES_PER_PARCEL = 300;
-        private const int MAX_COLLIDERS_PER_PARCEL = 300;
         private const int MAX_MATERIALS_LOG2_MULTIPLIER = 20;
         private const int MAX_TEXTURES_LOG2_MULTIPLIER = 10;
-        private const int MAX_GEOMETRIES_LOG2_MULTIPLIER = 200;
-        private const int MAX_EXTERNAL_CONTENT = 10;
 
         private const float CAP_WARNING_PERCENT = 80f;
 
@@ -26,22 +26,16 @@ namespace DCL.Profiling.ECS
             public readonly int Entities;
             public readonly long Triangles;
             public readonly int Bodies;
-            public readonly int Geometries;
             public readonly int Materials;
             public readonly int Textures;
-            public readonly int Colliders;
-            public readonly int ExternalContent;
 
-            private SceneContentCaps(int entities, long triangles, int bodies, int geometries, int materials, int textures, int colliders, int externalContent)
+            private SceneContentCaps(int entities, long triangles, int bodies, int materials, int textures)
             {
                 Entities = entities;
                 Triangles = triangles;
                 Bodies = bodies;
-                Geometries = geometries;
                 Materials = materials;
                 Textures = textures;
-                Colliders = colliders;
-                ExternalContent = externalContent;
             }
 
             public static SceneContentCaps ForParcelCount(int parcelCount)
@@ -52,11 +46,8 @@ namespace DCL.Profiling.ECS
                     entities: parcelCount * MAX_ENTITIES_PER_PARCEL,
                     triangles: (long)parcelCount * MAX_TRIANGLES_PER_PARCEL,
                     bodies: parcelCount * MAX_BODIES_PER_PARCEL,
-                    geometries: Mathf.FloorToInt(log2 * MAX_GEOMETRIES_LOG2_MULTIPLIER),
                     materials: Mathf.FloorToInt(log2 * MAX_MATERIALS_LOG2_MULTIPLIER),
-                    textures: Mathf.FloorToInt(log2 * MAX_TEXTURES_LOG2_MULTIPLIER),
-                    colliders: parcelCount * MAX_COLLIDERS_PER_PARCEL,
-                    externalContent: MAX_EXTERNAL_CONTENT);
+                    textures: Mathf.FloorToInt(log2 * MAX_TEXTURES_LOG2_MULTIPLIER));
             }
         }
 
@@ -121,29 +112,27 @@ namespace DCL.Profiling.ECS
             bindings.Entities.Value = FormatCapped(stats.Entities, caps.Entities);
             bindings.Triangles.Value = FormatCapped(stats.Triangles, caps.Triangles);
             bindings.Bodies.Value = FormatCapped(stats.Bodies, caps.Bodies);
-            bindings.Geometries.Value = FormatCapped(stats.Geometries, caps.Geometries);
+            bindings.Geometries.Value = FormatCount(stats.Geometries);
             bindings.Materials.Value = FormatCapped(stats.Materials, caps.Materials);
             bindings.Textures.Value = FormatCapped(stats.Textures, caps.Textures);
-            bindings.Colliders.Value = FormatCapped(stats.Colliders, caps.Colliders);
-            bindings.ExternalContent.Value = FormatCapped(stats.ExternalContent, caps.ExternalContent);
+            bindings.Colliders.Value = FormatCount(stats.Colliders);
+            bindings.ExternalContent.Value = FormatCount(stats.ExternalContent);
         }
 
         private static string FormatCapped(long current, long cap)
         {
             if (cap <= 0)
-                return current.ToString("N0", CultureInfo.InvariantCulture);
+                return FormatCount(current);
 
             float percent = current * 100f / cap;
-            return $"<color={CapColor(percent)}>{current.ToString("N0", CultureInfo.InvariantCulture)} / {cap.ToString("N0", CultureInfo.InvariantCulture)} ({percent:F0}%)</color>";
+            return $"<color={CapColor(percent)}>{FormatCount(current)} / {FormatCount(cap)} ({percent:F0}%)</color>";
         }
 
+        private static string FormatCount(long current) =>
+            current.ToString("N0", CultureInfo.InvariantCulture);
+
         private static string CapColor(float percent) =>
-            percent switch
-            {
-                >= 100f => "red",
-                >= CAP_WARNING_PERCENT => "yellow",
-                _ => "green",
-            };
+            percent >= CAP_WARNING_PERCENT ? "yellow" : "green";
 
         private readonly struct StringBindings
         {
