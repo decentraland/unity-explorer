@@ -34,7 +34,7 @@ namespace Global.Editor
             { "Restricted Actions", new Vector2Int(80, -4) },
         };
 
-        private static readonly InitialRealm[] TEST_REALMS = { InitialRealm.Sdk, InitialRealm.Goerli, InitialRealm.StreamingWorld, InitialRealm.TestScenes };
+        private static readonly InitialRealm[] TEST_REALMS = { InitialRealm.Sdk, InitialRealm.Goerli, InitialRealm.StreamingWorld };
 
         private static float singleLineHeight => EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
@@ -116,7 +116,7 @@ namespace Global.Editor
 
         private static Rect DrawIsolateSceneCommunication(Rect position, SerializedProperty parent, InitialRealm initialRealm)
         {
-            if (initialRealm is InitialRealm.World or InitialRealm.Goerli or InitialRealm.StreamingWorld or InitialRealm.TestScenes)
+            if (initialRealm is InitialRealm.World or InitialRealm.Goerli or InitialRealm.StreamingWorld)
             {
                 SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.isolateSceneCommunication));
 
@@ -280,7 +280,7 @@ namespace Global.Editor
             }
 
             // Add height for IsolateSceneCommunication field when it's drawn
-            if (initialRealmValue is InitialRealm.World or InitialRealm.Goerli or InitialRealm.StreamingWorld or InitialRealm.TestScenes)
+            if (initialRealmValue is InitialRealm.World or InitialRealm.Goerli or InitialRealm.StreamingWorld)
                 fieldsCount += 1;
 
             // Add height for PredefinedScenes enabled checkbox (always drawn)
