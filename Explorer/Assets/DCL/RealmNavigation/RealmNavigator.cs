@@ -129,7 +129,9 @@ namespace DCL.RealmNavigation
                 }
             }
 
-            var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport, allowsWorldPositionOverride, landOnParcel, spawnPointName);
+            URLDomain? previousRealm = realmController.CurrentDomain;
+
+            var operation = DoChangeRealmAsync(realm, previousRealm, parcelToTeleport, allowsWorldPositionOverride, landOnParcel, spawnPointName);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
 
             if (!loadResult.Success)
@@ -140,12 +142,31 @@ namespace DCL.RealmNavigation
                 ReportHub.LogError(ReportCategory.REALM,
                     $"Error trying to teleport to a realm {realm}: {loadResult.Error!.Value.Message}");
 
+                // A cancellation (e.g. the loading screen timeout) can interrupt the chain after the previous realm
+                // was torn down; the in-chain fallback shares the cancelled token, so recovery needs a fresh one
+                if (!realmController.RealmData.Configured && !ct.IsCancellationRequested)
+                    await RecoverUnconfiguredRealmAsync(previousRealm);
+
                 return loadResult.As(ChangeRealmErrors.AsChangeRealmError);
             }
 
             NavigationExecuted?.Invoke(parcelToTeleport);
 
             return EnumResult<ChangeRealmError>.SuccessResult();
+        }
+
+        private async UniTask RecoverUnconfiguredRealmAsync(URLDomain? previousRealm)
+        {
+            URLDomain recoveryRealm = previousRealm ?? URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+
+            ReportHub.LogWarning(ReportCategory.REALM, $"Realm is left unconfigured after a failed change, recovering to {recoveryRealm}");
+
+            var recoveryOperation = DoChangeRealmAsync(recoveryRealm, null, currentParcel, false);
+            EnumResult<TaskError> recoveryResult = await loadingScreen.ShowWhileExecuteTaskAsync(recoveryOperation, CancellationToken.None);
+
+            if (!recoveryResult.Success)
+                ReportHub.LogError(ReportCategory.REALM,
+                    $"Error trying to recover to realm {recoveryRealm}: {recoveryResult.Error!.Value.Message}");
         }
 
         private async UniTask<WorldAccessResult> CheckWorldAccessAsync(string worldName, CancellationToken ct)
@@ -247,6 +268,11 @@ namespace DCL.RealmNavigation
                     ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. No fallback realm is provided.");
                     return opResult;
                 }
+
+                // On a cancelled token the fallback can only produce a second round of teardown side effects:
+                // its own SetRealmAsync would rethrow the cancellation immediately
+                if (ct.IsCancellationRequested)
+                    return opResult;
 
                 // All retries failed, try with the previous realm and parcel
                 ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. Trying with previous realm and parcel.");

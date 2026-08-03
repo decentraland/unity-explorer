@@ -183,7 +183,9 @@ namespace Global.Dynamic
                 realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
                     result.content.publicUrl);
             }
-            catch (OperationCanceledException) { }
+            // The previous realm is already unloaded at this point: cancellation must propagate
+            // so callers don't treat a half-configured realm as a successful change
+            catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
                 ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
