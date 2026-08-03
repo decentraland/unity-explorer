@@ -1,6 +1,6 @@
 # UUAV (Ultimately United Audio/Video)
 
-A video/audio player for Unity built on a native Rust core and FFmpeg, with hardware-accelerated video decoding: D3D11VA on Windows, VideoToolbox on macOS (Apple Silicon + Metal). Decoding runs **out of process** — FFmpeg never shares Unity's address space or GPU device, so a decoder crash cannot take the engine down.
+A video/audio player for Unity built on a native Rust core and FFmpeg, with hardware-accelerated video decoding: D3D11VA on Windows, VideoToolbox on macOS (Apple Silicon + Metal). Decoding runs **out of process** — FFmpeg never shares Unity's address space or GPU device, so a decoder crash cannot take the engine down. The decode process is also **sandboxed** on both platforms, so a decoder exploit lands in a process that cannot launch anything or write to disk (see [Sandboxing](#sandboxing)).
 
 - `native/` - Rust workspace:
   - `src/` (**uuav-core**) - the decode/playback core, linked into the helper
@@ -25,6 +25,15 @@ Under the hood the `uuav` library Unity loads is a client. At init it creates a 
 The helper is watched by a recovery worker inside the client. If it dies, playback self-heals with **no C#/ECS involvement**: every command keeps a per-player *desired state* (url, play/pause, looping, rate, resume position) current, so the worker respawns the helper (backoff 0 s/1 s/3 s), re-runs the init handshake, and rebuilds every player — reopen, resume playback, seek back to where the clock was. During the outage players read `UUAV_OPENING`, commands are absorbed into desired state, the video freezes on the last presented frame (the presentation textures C# wraps are client-owned and never die), and audio pads silence. Public player ids are allocated by the client and stay stable across helper generations. After three failed respawns the runtime parks (`UUAV_ERROR`) until the next open/play re-arms it. Every death still reports once through the error callback, so crashes stay visible in logs/Sentry.
 
 The helper never outlives Unity: it watches the parent PID and exits when Unity goes away for any reason; `uuav_deinit` shuts it down gracefully (≤1 s, then kill).
+
+### Sandboxing
+
+FFmpeg demuxes attacker-controlled media (URLs come from untrusted scenes), so the helper runs with the least authority that still allows GPU decoding and outbound network access. On both platforms a compromised decoder cannot launch another process or persist files on disk; the enforcement mechanism is the native one for each OS, so the two implementations are deliberately different shapes:
+
+- **Windows: restricted at spawn, by the client** (`uuav-client/src/sandbox_windows.rs`). The helper is created suspended under a restricted **low-integrity token** (elevation dropped, every privilege stripped but `SeChangeNotifyPrivilege`), assigned to a **single-process kill-on-close job object** (no children; the client holds the only job handle, so kernel cleanup kills the helper on any Unity exit), given a **process mitigation policy** (DEP, mandatory/bottom-up/high-entropy ASLR, control-flow guard, strict handle checks, heap terminate-on-corruption), and only then resumed - the limits bind before its first instruction. Winsock is unaffected by integrity level, so playback keeps its network access. One consequence: the low-IL helper cannot duplicate texture handles into Unity, so the client pulls them out instead.
+- **macOS: self-lockdown under Seatbelt** (`uuav-server/src/sandbox_macos.rs` + `uuav-server/helper.sb`). As the first act of `main`, before the IPC channel is adopted and before any untrusted byte is parsed, the helper applies a **deny-by-default profile** via `sandbox_init_with_parameters` (the Chromium/Firefox mechanism; the profile is embedded at compile time, per-session values enter as sandbox parameters). Allowed: system library reads, Metal/IOSurface/VideoToolbox user clients, outbound TCP/UDP plus the DNS and trustd brokers (FFmpeg fetches media itself; TLS trust includes user-installed root CAs, so corporate TLS interception keeps working), and `mach-lookup` of exactly the one per-session `uuav.<token>` service the client registered for IOSurface transfer. `process-exec`, `process-fork` and every file write are denied. **Fail-closed**: if the profile fails to apply the helper exits and the client's recovery surfaces `UUAV_ERROR`; there is no bypass switch. The Editor's `file:` playback works because the client passes `--allow-file-read` when the protocol whitelist contains `file`, which opens broad *reads* only - player builds never pass it, and writes/exec stay denied regardless.
+
+Debugging a macOS denial: run `log stream --style compact --predicate 'sender == "Sandbox"'` next to the Editor and look for `uuav-helper(pid) deny(1) <operation> <name>` lines, then extend `helper.sb` with a comment tying the new allowance to its need.
 
 ### Basic usage
 
@@ -127,6 +136,7 @@ No extra support libraries are needed: https uses SecureTransport (an OS framewo
 macOS notes:
 
 - **Universal binaries** (arm64 + x86_64), **Metal only**: `UUAVRuntime` refuses to initialize on any other graphics API, because native has no way to validate that the probe texture pointer is an `id<MTLTexture>`. Verify the slices with `lipo -archs <dylib>` or by running `doctor-libs.sh` in the plugins folder.
+- The Seatbelt profile (`native/uuav-server/helper.sb`) is embedded into `uuav-helper` at compile time - nothing extra ships, and sandboxing needs no entitlements, so ad-hoc signing stays sufficient.
 - CI does not notarize; the helper inherits the ad-hoc signing from `build.sh`. If notarization lands later, add `uuav-helper` to the signed inventory.
 
 ## GPU device separation
