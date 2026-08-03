@@ -15,11 +15,11 @@ namespace DCL.Roads.Settings
     [CreateAssetMenu(fileName = "Road Settings", menuName = "DCL/Various/Road Settings")]
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
-        public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups;
-        public List<CombinedLODGroupData> PropsAndTiles;
+        public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups = new ();
+        public List<CombinedLODGroupData> PropsAndTiles = new ();
 
-        [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
-        [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
+        [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; } = new ();
+        [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; } = new ();
 
         IReadOnlyList<RoadDescription> IRoadSettingsAsset.RoadDescriptions => RoadDescriptions;
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
@@ -146,13 +146,13 @@ namespace DCL.Roads.Settings
             }
         }
 
-        private CombinedLODGroupData roadTileCachedCombinedLODGroupData;
+        private CombinedLODGroupData? roadTileCachedCombinedLODGroupData;
 
         private GPUInstancingLODGroupWithBuffer HandleRoadTileCase(GPUInstancingLODGroupWithBuffer myCandidate)
         {
             if (myCandidate.Name.StartsWith("RoadTile"))
             {
-                if (roadTileCachedCombinedLODGroupData == null) roadTileCachedCombinedLODGroupData = myCandidate.combinedLODGroupData;
+                roadTileCachedCombinedLODGroupData ??= myCandidate.combinedLODGroupData;
                 return new GPUInstancingLODGroupWithBuffer(roadTileCachedCombinedLODGroupData, myCandidate.InstancesBuffer);
             }
 
