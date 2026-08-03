@@ -9,7 +9,6 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace DCL.BugReporting.Tests
