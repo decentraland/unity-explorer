@@ -438,9 +438,15 @@ namespace DCL.Navmap
 
                 view.EmptyEventsContainer.SetActive(events.Count == 0);
 
-                foreach (EventDTO @event in events)
+                // Deterministic order: live events first, then by next occurrence (the field the backend sorts by).
+                List<EventDTO> sortedEvents = new (events);
+                sortedEvents.Sort((a, b) => a.live != b.live ? (a.live ? -1 : 1) : a.NextStartAtProcessed.CompareTo(b.NextStartAtProcessed));
+
+                foreach (EventDTO @event in sortedEvents)
                 {
                     EventElementView element = eventElementPool.Get();
+                    // Pooled views keep their previous sibling slot; re-append so the on-screen order matches the data order.
+                    element.transform.SetAsLastSibling();
                     element.Init(imageControllerProvider);
                     eventElements.Add(element);
 
@@ -489,6 +495,7 @@ namespace DCL.Navmap
                 for (var i = 0; i < 8; i++)
                 {
                     EventElementView element = eventElementPool.Get();
+                    element.transform.SetAsLastSibling();
                     eventElements.Add(element);
                 }
             }
