@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
+using DCL.LoadingTimes;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -28,7 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly IAppArgs appArgs;
         private readonly ILoadingStatus loadingStatus;
-        private readonly LoadingTimes.LoadingTimes? loadingTimes;
+        private readonly LoadingTimeBenchmark? loadingTimeBenchmark;
 
         public ProfilingPlugin(IProfiler profiler, IRealmData realmData, MemoryBudget memoryBudget,
             IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache, DCLVersion dclVersion,
@@ -47,13 +48,13 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
 
             if (appArgs.HasFlag(AppArgsFlags.MEASURE_LOADING_TIME))
-                loadingTimes = new LoadingTimes.LoadingTimes(loadingStatus, analytics, scenesCache);
+                loadingTimeBenchmark = new LoadingTimeBenchmark(loadingStatus, analytics, scenesCache);
         }
 
         public void Dispose()
         {
             profiler.Dispose();
-            loadingTimes?.Dispose();
+            loadingTimeBenchmark?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

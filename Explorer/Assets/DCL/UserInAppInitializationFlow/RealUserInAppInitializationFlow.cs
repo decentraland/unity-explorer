@@ -231,14 +231,14 @@ namespace DCL.UserInAppInitializationFlow
 
                 result = loadingResult;
 
-                if (result.Success == false)
+                if (!result.Success)
                 {
                     //Fail straight away
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
                 }
             }
-            while (result.Success == false && parameters.ShowAuthentication);
+            while (!result.Success && parameters.ShowAuthentication);
         }
 
         private async UniTask VerifyWorldAccessAndFallbackIfNeededAsync(CancellationToken ct)
