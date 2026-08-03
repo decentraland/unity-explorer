@@ -145,6 +145,18 @@ namespace DCL.Profiles
             public string ValidatedName { get; private set; }
 
             /// <summary>
+            ///     <see cref="ValidatedName"/>, or the raw <see cref="Name"/> when validation left nothing of it —
+            ///     which happens whenever a name is written entirely in emoji or punctuation, since the filter keeps
+            ///     only alphanumerics. Use this wherever a name is rendered, so such a user does not show up blank.
+            /// </summary>
+            /// <remarks>
+            ///     Deliberately not called "safe": the fallback value is exactly what its owner typed, so a label
+            ///     rendering this still needs <c>richText</c> off or the value escaped. It removes empty names, not
+            ///     markup.
+            /// </remarks>
+            public string ValidatedNameOrRaw => string.IsNullOrEmpty(ValidatedName) ? Name : ValidatedName;
+
+            /// <summary>
             ///     The # part of the name for users without claimed name, will be null for users with a claimed name, includes the # character at the beginning
             /// </summary>
             public string? WalletId { get; private set; }

@@ -724,7 +724,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; } = null!;
 
             [field: SerializeField]
-            public PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings { get; private set; }
+            public PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings { get; private set; } = null!;
 
             [field: Header("Camera Reel")]
             [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]
@@ -736,10 +736,10 @@ namespace DCL.PluginSystem.Global
             [field: Header("Place Reel")] [field: SerializeField] public int PlaceGridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int PlaceThumbnailHeight { get; private set; }
             [field: SerializeField] public int PlaceThumbnailWidth { get; private set; }
-            [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
-            [field: Header("Place Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
-            [field: Header("Event Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
-            [field: Header("Quality Settings")] [field: SerializeField] internal QualityPresetsAsset QualityPresets { get; private set; }
+            [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; } = null!;
+            [field: Header("Place Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; } = null!;
+            [field: Header("Event Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; } = null!;
+            [field: Header("Quality Settings")] [field: SerializeField] internal QualityPresetsAsset QualityPresets { get; private set; } = null!;
         }
     }
 }

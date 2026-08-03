@@ -21,6 +21,7 @@ namespace DCL.Tests.Editor
     {
         private const string PLACES_AND_EVENTS = "Assets/DCL/Navmap/Assets/PlacesAndEventsPanel.prefab";
         private const string PLACE_TOAST = "Assets/DCL/Navmap/Assets/PlaceToast.prefab";
+        private const string CONFIRMATION_DIALOG = "Assets/DCL/UI/ConfirmationDialog/Prefabs/ConfirmationDialog.prefab";
 
         [TestCase(PLACES_AND_EVENTS, nameof(PlaceInfoPanelView), "<PlaceNameLabel>k__BackingField")]
         [TestCase(PLACES_AND_EVENTS, nameof(PlaceInfoPanelView), "<CoordinatesLabel>k__BackingField")]
@@ -31,6 +32,10 @@ namespace DCL.Tests.Editor
         [TestCase("Assets/DCL/Communities/CommunitiesBrowser/Prefabs/CommunityResultCard.prefab", nameof(CommunityResultCardView), "communityDescription")]
         [TestCase("Assets/DCL/NftPrompt/Assets/NftPrompt.prefab", nameof(NftPromptView), "<TextDescription>k__BackingField")]
         [TestCase("Assets/DCL/Chat/Assets/ChatEntries/ChatEntryUsernameElement.prefab", nameof(ChatEntryUsernameElement), "<userName>k__BackingField")]
+        // Sixteen call sites format community, member and place names into this dialog's copy, so one flag here is
+        // what keeps a crafted name from being read as markup in all of them.
+        [TestCase(CONFIRMATION_DIALOG, "ConfirmationDialogView", "<mainText>k__BackingField")]
+        [TestCase(CONFIRMATION_DIALOG, "ConfirmationDialogView", "<subText>k__BackingField")]
         public void RenderUntrustedTextAsPlainText(string prefabPath, string componentType, string fieldName)
         {
             // Arrange
@@ -51,6 +56,8 @@ namespace DCL.Tests.Editor
         [TestCase(PLACES_AND_EVENTS, nameof(PlaceInfoPanelView), "<DescriptionLabel>k__BackingField")]
         [TestCase(PLACES_AND_EVENTS, nameof(PlaceInfoPanelView), "<CreatorNameLabel>k__BackingField")]
         [TestCase(PLACE_TOAST, nameof(PlaceInfoPanelView), "<DescriptionLabel>k__BackingField")]
+        // This one carries the linkified URL the dialog can show, so it is the one label there that must stay rich.
+        [TestCase(CONFIRMATION_DIALOG, "ConfirmationDialogView", "<additonalUrlText>k__BackingField")]
         public void KeepRichTextOnLabelsWhoseOwnCopyIsMarkup(string prefabPath, string componentType, string fieldName)
         {
             // Arrange

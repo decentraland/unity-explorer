@@ -195,7 +195,7 @@ namespace DCL.Communities.CommunitiesCard
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BottomLeft)
                 .AddControl(communityNotificationsContextMenuElement = new GenericContextMenuElement(
-                    communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, null, 10)))
+                    communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, horizontalLayoutSpacing: 10)))
                 .AddControl(communityNotificationsSeparatorContextMenuElement = new GenericContextMenuElement(
                     new SeparatorContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
                          .AddControl(copyLinkContextMenuElement = new GenericContextMenuElement(

@@ -29,40 +29,40 @@ namespace DCL.Notifications.NotificationEntry
         public Color HoveredColor { get; private set; }
 
         [field: SerializeField]
-        public Image Background { get; private set; }
+        public Image Background { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject UnreadImage { get; set; }
+        public GameObject UnreadImage { get; set; } = null!;
 
         [field: SerializeField]
-        public Button MainButton { get; private set; }
+        public Button MainButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CloseButton { get; set; }
+        public Button CloseButton { get; set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text HeaderText { get; set; }
+        public TMP_Text HeaderText { get; set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text TitleText { get; set; }
+        public TMP_Text TitleText { get; set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text TimeText { get; set; }
+        public TMP_Text TimeText { get; set; } = null!;
 
         [field: SerializeField]
-        public ImageView NotificationImage { get; set; }
+        public ImageView NotificationImage { get; set; } = null!;
 
         [field: SerializeField]
-        public Image NotificationImageBackground { get; set; }
+        public Image NotificationImageBackground { get; set; } = null!;
 
         [field: SerializeField]
-        public Image NotificationTypeImage { get; set; }
+        public Image NotificationTypeImage { get; set; } = null!;
 
         [field: SerializeField]
-        public AudioClipConfig RequestNotificationAudio { get; private set; }
+        public AudioClipConfig RequestNotificationAudio { get; private set; } = null!;
 
         [field: SerializeField]
-        public AudioClipConfig AcceptedNotificationAudio { get; private set; }
+        public AudioClipConfig AcceptedNotificationAudio { get; private set; } = null!;
 
         public void PlayRequestNotificationAudio() =>
             UIAudioEventsBus.Instance.SendPlayAudioEvent(RequestNotificationAudio);
@@ -88,13 +88,8 @@ namespace DCL.Notifications.NotificationEntry
 
             if (notification.SenderProfile.HasValue)
             {
-                // ValidatedName is the profile's own alphanumeric filter of the name, and is what the rest of
-                // the UI displays; it carries no # part, which the unclaimed template appends separately. That
-                // filter leaves nothing of a name written entirely in emoji or punctuation, so fall back to the
-                // raw name there rather than showing a blank one — escaping below is what makes it safe.
-                userName = string.IsNullOrEmpty(notification.SenderProfile.Value.ValidatedName)
-                    ? notification.SenderProfile.Value.Name
-                    : notification.SenderProfile.Value.ValidatedName;
+                // The filtered name carries no # part, which the unclaimed template appends separately.
+                userName = notification.SenderProfile.Value.ValidatedNameOrRaw;
                 userAddress = notification.SenderProfile.Value.Address;
                 userColor = notification.SenderProfile.Value.UserNameColor;
                 hasClaimedName = notification.SenderProfile.Value.HasClaimedName;

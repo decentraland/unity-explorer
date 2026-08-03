@@ -25,12 +25,12 @@ namespace DCL.NftPrompt
         private readonly ICursor cursor;
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly ImageControllerProvider imageControllerProvider;
-        private Action<NftPromptResultType> resultCallback;
+        private Action<NftPromptResultType>? resultCallback;
 
         private NftInfo? lastNftInfo;
-        private string marketUrl;
+        private string? marketUrl;
         private ImageController placeImageController;
-        private CancellationTokenSource cts;
+        private CancellationTokenSource? cts;
 
         public NftPromptController(
             ViewFactoryMethod viewFactory,

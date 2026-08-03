@@ -43,7 +43,7 @@ namespace DCL.Navmap
         private readonly IMVCManager mvcManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
-        private readonly ImageController? thumbnailImage;
+        private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
         private readonly MultiStateButtonController homeButton;
@@ -153,7 +153,7 @@ namespace DCL.Navmap
 
         public void Dispose()
         {
-            thumbnailImage?.Dispose();
+            thumbnailImage.Dispose();
             cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
             cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
         }

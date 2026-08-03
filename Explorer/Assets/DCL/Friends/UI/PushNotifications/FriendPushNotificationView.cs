@@ -15,12 +15,12 @@ namespace DCL.Friends.UI.PushNotifications
 {
     public class FriendPushNotificationView : ViewBase, IView
     {
-        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
-        [field: SerializeField] public TMP_Text UserNameText { get; private set; }
-        [field: SerializeField] public TMP_Text UserAddressText { get; private set; }
-        [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
-        [field: SerializeField] public GameObject OfficialIcon { get; private set; }
-        [field: SerializeField] public CanvasGroup PanelCanvasGroup { get; private set; }
+        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserNameText { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserAddressText { get; private set; } = null!;
+        [field: SerializeField] public GameObject VerifiedIcon { get; private set; } = null!;
+        [field: SerializeField] public GameObject OfficialIcon { get; private set; } = null!;
+        [field: SerializeField] public CanvasGroup PanelCanvasGroup { get; private set; } = null!;
 
         [field:Header("Toast Animation")]
         [field: SerializeField] public float toastFadeInDuration = 0.3f;
@@ -44,11 +44,7 @@ namespace DCL.Friends.UI.PushNotifications
         {
             Color userColor = friendProfile.UserNameColor;
             UserNameText.color = userColor;
-            // ValidatedName is the profile's own alphanumeric filter of the name; it leaves nothing of a name
-            // written entirely in emoji, so fall back to the raw one there and let the escape make it safe.
-            UserNameText.text = RichTextSanitizer.EscapeAndTruncate(
-                string.IsNullOrEmpty(friendProfile.ValidatedName) ? friendProfile.Name : friendProfile.ValidatedName,
-                RichTextSanitizer.DEFAULT_NAME_LENGTH);
+            UserNameText.text = RichTextSanitizer.EscapeAndTruncate(friendProfile.ValidatedNameOrRaw, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);

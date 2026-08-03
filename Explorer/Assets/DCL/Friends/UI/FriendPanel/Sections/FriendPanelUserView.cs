@@ -16,17 +16,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     {
         protected readonly List<Button> buttons = new ();
 
-        [field: SerializeField] public Image Background { get; private set; }
+        [field: SerializeField] public Image Background { get; private set; } = null!;
         [field: SerializeField] public Color NormalColor { get; private set; }
         [field: SerializeField] public Color HoveredColor { get; private set; }
-        [field: SerializeField] public Button MainButton { get; private set; }
+        [field: SerializeField] public Button MainButton { get; private set; } = null!;
 
         [field: Header("User")]
-        [field: SerializeField] public TMP_Text UserName { get; private set; }
-        [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
-        [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
-        [field: SerializeField] public GameObject OfficialIcon { get; private set; }
-        [field: SerializeField] public ProfilePictureView ProfilePicture { get; private set; }
+        [field: SerializeField] public TMP_Text UserName { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text UserNameTag { get; private set; } = null!;
+        [field: SerializeField] public GameObject VerifiedIcon { get; private set; } = null!;
+        [field: SerializeField] public GameObject OfficialIcon { get; private set; } = null!;
+        [field: SerializeField] public ProfilePictureView ProfilePicture { get; private set; } = null!;
 
         private bool canUnHover = true;
 
@@ -72,11 +72,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
             Color userColor = friendProfile.UserNameColor;
 
-            // ValidatedName is the profile's own alphanumeric filter of the name; it leaves nothing of a name
-            // written entirely in emoji, so fall back to the raw one there and let the escape make it safe.
-            UserName.text = RichTextSanitizer.EscapeAndTruncate(
-                string.IsNullOrEmpty(friendProfile.ValidatedName) ? friendProfile.Name : friendProfile.ValidatedName,
-                RichTextSanitizer.DEFAULT_NAME_LENGTH);
+            UserName.text = RichTextSanitizer.EscapeAndTruncate(friendProfile.ValidatedNameOrRaw, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             UserName.color = userColor;
             UserNameTag.text = friendProfile.WalletId;
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);

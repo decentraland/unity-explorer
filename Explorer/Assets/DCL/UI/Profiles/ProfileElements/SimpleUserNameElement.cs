@@ -6,9 +6,9 @@ namespace DCL.UI.ProfileElements
 {
     public class SimpleUserNameElement : MonoBehaviour
     {
-        [field: SerializeField] private TMP_Text userNameText;
-        [field: SerializeField] private TMP_Text userNameHashtagText;
-        [field: SerializeField] private GameObject verifiedMark;
+        [field: SerializeField] private TMP_Text userNameText = null!;
+        [field: SerializeField] private TMP_Text userNameHashtagText = null!;
+        [field: SerializeField] private GameObject verifiedMark = null!;
 
         public void Setup(Profile.CompactInfo profile)
         {
@@ -16,10 +16,7 @@ namespace DCL.UI.ProfileElements
             // setter derives ValidatedName from it by keeping only alphanumeric characters. DisplayName is that same
             // value with the #XXXX suffix already appended, which userNameHashtagText renders on its own below, so
             // using it here would print the suffix twice.
-            // Keeping only alphanumerics leaves nothing at all of a name written entirely in emoji or punctuation,
-            // so fall back to what the owner wrote rather than showing a blank label. Escaping is what makes that
-            // safe to render.
-            SetUserName(string.IsNullOrEmpty(profile.ValidatedName) ? profile.Name : profile.ValidatedName);
+            SetUserName(profile.ValidatedNameOrRaw);
             userNameText.color = profile.UserNameColor;
             userNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
 

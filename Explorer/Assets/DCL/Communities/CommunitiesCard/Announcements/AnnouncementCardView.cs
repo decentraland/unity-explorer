@@ -27,7 +27,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private const string DELETE_ANNOUNCEMENT_CANCEL_TEXT = "CANCEL";
         private const float MIN_CARD_HEIGHT = 87f;
 
-
         [SerializeField] private TMP_Text announcementContent = null!;
         [SerializeField] private TMP_Text authorName = null!;
         [SerializeField] private TMP_Text profileTag = null!;
