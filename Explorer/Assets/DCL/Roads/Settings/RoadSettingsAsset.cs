@@ -84,6 +84,9 @@ namespace DCL.Roads.Settings
 
             ExtractSameRenderers();
 
+            // Undo.RecordObject defers the dirty flag to end-of-frame, so SaveAssetIfDirty in this
+            // same call stack sees a clean object and skips the write; mark it dirty explicitly.
+            UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
             return;
 
