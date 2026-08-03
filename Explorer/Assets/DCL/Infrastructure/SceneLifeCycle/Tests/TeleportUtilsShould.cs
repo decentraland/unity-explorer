@@ -247,6 +247,93 @@ namespace DCL.SceneLifeCycle.Tests
             Assert.Greater(distinctLandings.Count, 1, "Players must scatter within the range, not stack on one point");
         }
 
+        /// <summary>
+        ///     The "BBQ Sauce Recipe" event at -148,141: the event parcel is the very parcel holding the
+        ///     scene's spawn point, so a teleport aimed at it must land on that spawn point instead of the
+        ///     parcel centre, where the scene's centrepiece asset stands.
+        /// </summary>
+        [Test]
+        public void PickTheSpawnPointStandingInTheRequestedParcel()
+        {
+            var baseParcel = new Vector2Int(-148, 141);
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                new[] { new Vector2Int(-148, 142), new Vector2Int(-147, 142), baseParcel, new Vector2Int(-147, 141) },
+                MakeSpawnPoint(
+                    xRange: new[] { 0f, 3f },
+                    yRange: new[] { 0f, 0f },
+                    zRange: new[] { 0f, 3f },
+                    cameraTarget: new Vector3(8f, 1f, 8f),
+                    isDefault: true,
+                    name: "SpawnArea1"));
+
+            Assert.That(TeleportUtils.TryPickSpawnPointNameInParcel(sceneDef, baseParcel, out string spawnPointName), Is.True);
+            Assert.That(spawnPointName, Is.EqualTo("SpawnArea1"));
+        }
+
+        /// <summary>
+        ///     The original land-on-parcel motivation: an event at a parcel that holds no spawn point of its
+        ///     own (e.g. the Theatre at 0,5 inside Genesis Plaza) must keep landing on that parcel.
+        /// </summary>
+        [Test]
+        public void PickNoSpawnPointForParcelThatHoldsNone()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+            var farParcel = new Vector2Int(0, 5);
+
+            var parcels = new List<Vector2Int>();
+
+            for (int y = baseParcel.y; y <= farParcel.y; y++)
+                parcels.Add(new Vector2Int(0, y));
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                parcels,
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"));
+
+            Assert.That(TeleportUtils.TryPickSpawnPointNameInParcel(sceneDef, farParcel, out _), Is.False);
+            Assert.That(TeleportUtils.TryPickSpawnPointNameInParcel(sceneDef, baseParcel, out _), Is.True);
+        }
+
+        /// <summary>
+        ///     A spawn point designated for the requested parcel wins over a default standing elsewhere: the
+        ///     request names a parcel, and honouring the default instead would drop the player even further
+        ///     from the spot he asked for.
+        /// </summary>
+        [Test]
+        public void PreferTheSpawnPointInTheParcelOverACloserDefault()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+            var farParcel = new Vector2Int(0, 3);
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                new[] { baseParcel, new Vector2Int(0, 1), new Vector2Int(0, 2), farParcel },
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "entrance"),
+                MakeSpawnPoint(xSingle: 8f, ySingle: 0f, zSingle: 50f, name: "stage"));
+
+            Assert.That(TeleportUtils.TryPickSpawnPointNameInParcel(sceneDef, farParcel, out string spawnPointName), Is.True);
+            Assert.That(spawnPointName, Is.EqualTo("stage"));
+        }
+
+        /// <summary>
+        ///     A nameless spawn point cannot be addressed through <see cref="TeleportUtils.PickTargetWithOffset" />,
+        ///     so it must not suppress the land-on-parcel fallback.
+        /// </summary>
+        [Test]
+        public void PickNoSpawnPointWhenTheOneInTheParcelIsNameless()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                new[] { baseParcel },
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: ""));
+
+            Assert.That(TeleportUtils.TryPickSpawnPointNameInParcel(sceneDef, baseParcel, out _), Is.False);
+        }
+
         private static SceneEntityDefinition BuildSceneDef(Vector2Int baseParcel, IReadOnlyList<Vector2Int> parcels, params SceneMetadata.SpawnPoint[] spawnPoints)
         {
             var sceneSection = new SceneMetadataScene

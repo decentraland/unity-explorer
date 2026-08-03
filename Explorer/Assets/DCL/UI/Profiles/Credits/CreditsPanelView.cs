@@ -11,5 +11,8 @@ namespace DCL.UI.Credits
 
         [field: SerializeField]
         public Button GetCreditsButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button GetCreditsButton2 { get; private set; } = null!;
     }
 }

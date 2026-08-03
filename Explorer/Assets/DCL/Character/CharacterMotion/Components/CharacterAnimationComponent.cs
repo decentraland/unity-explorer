@@ -25,7 +25,7 @@ namespace DCL.CharacterMotion.Components
         public GlideStateValue GlideState;
         public float GlideBlendValue;
 
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is AnimationStates states && Equals(states);
 
         public bool Equals(AnimationStates other) =>
