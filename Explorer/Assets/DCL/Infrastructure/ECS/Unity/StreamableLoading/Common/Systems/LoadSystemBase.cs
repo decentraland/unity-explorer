@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utility.Types;
+using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -398,10 +399,27 @@ namespace ECS.StreamableLoading.Common.Systems
             StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition,
                 cachedInternalFlowDelegate, GetReportData(), ct);
 
-            return result is { Succeeded: false, IsInitialized: true }
+            return result is { Succeeded: false, IsInitialized: true } && IsIrrecoverableFailure(result.Value)
                 ? SetIrrecoverableFailure(intention,
                     intentionId, result.Value)
                 : result;
+        }
+
+        /// <summary>
+        ///     Only failures that are guaranteed to repeat — a definitive HTTP client error such as 404 —
+        ///     may be cached for the rest of the session; transient failures (aborted requests, timeouts,
+        ///     connection errors, general exceptions) must stay uncached so a later request for the same
+        ///     intention can succeed
+        /// </summary>
+        private static bool IsIrrecoverableFailure(in StreamableLoadingResult<TAsset> failure)
+        {
+            for (Exception? exception = failure.Exception; exception != null; exception = exception.InnerException)
+            {
+                if (exception is UnityWebRequestException unityWebRequestException)
+                    return unityWebRequestException.ResponseCode is >= 400 and < 500 && unityWebRequestException.IsIrrecoverableError();
+            }
+
+            return false;
         }
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention,
