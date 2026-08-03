@@ -25,6 +25,10 @@ namespace Global.AppArgs
         // or when the launch has no deep link.
         private string? pendingDeepLink;
 
+        // The raw decentraland:// argument of this launch, kept verbatim for the lifetime of the parser (unlike
+        // pendingDeepLink, which is nulled once processed). Null when the launch carries no deep link.
+        private string? rawDeepLink;
+
         // Guards InitializeDeepLinks so the merge and the argument log happen exactly once.
         private bool deepLinksInitialized;
 
@@ -105,6 +109,7 @@ namespace Global.AppArgs
                     // Stored, not processed here: the whitelisted-realm gate needs the world whitelist, which may not
                     // be available yet. InitializeDeepLinks() processes it once it is.
                     pendingDeepLink = arg;
+                    rawDeepLink = arg;
                 }
                 else if (!string.IsNullOrEmpty(lastKeyStored))
                     appParameters[lastKeyStored] = arg;
@@ -115,6 +120,13 @@ namespace Global.AppArgs
         ///     Whether a deep link was seen during parsing but not yet processed.
         /// </summary>
         public bool HasPendingDeepLink => pendingDeepLink != null;
+
+        /// <summary>
+        ///     The raw decentraland:// argument this launch was started with, or null when there is none. Unlike
+        ///     <see cref="HasPendingDeepLink" /> it survives <see cref="InitializeDeepLinks" />, so a launch that
+        ///     must hand its deep link to another instance (e.g. when the single-instance guard trips) still has it.
+        /// </summary>
+        public string? RawDeepLink => rawDeepLink;
 
         /// <summary>
         ///     Params the launch deep link carried that failed the <c>DeepLinkAllowlist</c>. They are NOT part

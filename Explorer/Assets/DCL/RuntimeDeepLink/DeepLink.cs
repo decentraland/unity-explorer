@@ -35,6 +35,12 @@ namespace DCL.RuntimeDeepLink
             return FromRaw(raw);
         }
 
+        /// <summary>
+        ///     Serializes a raw deeplink into the exact bridge-file shape <see cref="FromJson" /> parses.
+        /// </summary>
+        public static string ToJson(string rawDeepLink) =>
+            JsonUtility.ToJson(new DeepLinkDTO { deeplink = rawDeepLink });
+
         public string? ValueOf(string key)
         {
             map.TryGetValue(key, out string? value);

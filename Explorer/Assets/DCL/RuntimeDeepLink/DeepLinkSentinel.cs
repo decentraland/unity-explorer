@@ -105,6 +105,34 @@ namespace DCL.RuntimeDeepLink
             }
         }
 
+        /// <summary>
+        ///     Publishes a raw deeplink to the bridge file the running instance polls — the client-side counterpart
+        ///     of the launcher's bridge write, for a second instance that holds a deeplink the first one is awaiting.
+        ///     Returns false when a bridge file is already pending (never clobber an unconsumed launcher write) or
+        ///     the write fails, so the caller can fall back to its default behaviour.
+        /// </summary>
+        public static bool TryPublishToBridge(string rawDeepLink)
+        {
+            try
+            {
+                if (File.Exists(DEEP_LINK_BRIDGE_PATH))
+                    return false;
+
+                Directory.CreateDirectory(Path.GetDirectoryName(DEEP_LINK_BRIDGE_PATH)!);
+
+                // Write-then-rename so the polling instance can never observe a half-written file.
+                string tempPath = DEEP_LINK_BRIDGE_PATH + ".tmp";
+                File.WriteAllText(tempPath, DeepLink.ToJson(rawDeepLink));
+                File.Move(tempPath, DEEP_LINK_BRIDGE_PATH);
+                return true;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Failed to publish deeplink to bridge file: {e.Message}");
+                return false;
+            }
+        }
+
         private static void TryDeleteBridgeFile()
         {
             try

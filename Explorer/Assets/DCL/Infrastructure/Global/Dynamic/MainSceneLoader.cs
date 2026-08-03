@@ -25,6 +25,7 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.Prefs;
 using DCL.Quality.Runtime;
+using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.ErrorPopup;
 using DCL.Utilities;
@@ -312,6 +313,19 @@ namespace Global.Dynamic
 
                 if (ShouldForceSingleRunningInstance(applicationParametersParser))
                 {
+                    // Standard single-instance activation: a launch that carries a deeplink (e.g. the browser's
+                    // signin callback re-launching the app) forwards it through the bridge file the running
+                    // instance's DeepLinkSentinel polls, then exits silently. The popup remains for launches
+                    // without a deeplink, where a second window is a deliberate user action that deserves an
+                    // explanation.
+                    string? rawDeepLink = applicationParametersParser.RawDeepLink;
+
+                    if (!string.IsNullOrEmpty(rawDeepLink) && DeepLinkSentinel.TryPublishToBridge(rawDeepLink!))
+                    {
+                        ExitUtils.Exit();
+                        return;
+                    }
+
                     await ShowSingleRunningInstancePopupAsync(assetsProvisioner, ct);
                     return;
                 }
