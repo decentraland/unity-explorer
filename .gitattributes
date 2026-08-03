@@ -14,7 +14,25 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 *.glb filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
 *.dll filter=lfs diff=lfs merge=lfs -text
+# Native plugin binaries. *.dll was already tracked; the macOS and Linux
+# equivalents were not. Adding a pattern only affects files written from now
+# on, so blobs already in history stay plain until they are rewritten.
+#
+# Only the two unambiguous native shared-object extensions are listed. *.lib is
+# deliberately excluded: Explorer/Assets/Scenes/TestJsScenes/sdk6-basic-scene/
+# bin/game.js.lib is JavaScript, and an LFS rule would rewrite it as a pointer.
 *.dylib filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
+
+# The out-of-process decode child, shipped beside the client library. It is the
+# one native binary that no extension rule catches: on macOS it has none at all,
+# and *.exe is unmatched. uuav-verify.yml's LFS enforcement only diffs
+# *.dll|*.dylib|*.so, so without these two lines the first committed adapter
+# would land as a plain ~1 MB blob and grow the pack on every rebuild. Landed
+# before any binary does, because an attribute added afterwards does not
+# retroactively convert.
+uuav-adapter filter=lfs diff=lfs merge=lfs -text
+uuav-adapter.exe filter=lfs diff=lfs merge=lfs -text
 
 
 ##############################################################################

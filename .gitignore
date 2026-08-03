@@ -64,6 +64,8 @@ Explorer/UserSettings
 # OS generated
 .DS_Store
 .DS_Store?
+# AppleDouble resource forks, written when a tarball round-trips through macOS.
+._*
 
 # Cursor Rules
 **/.cursor/
@@ -84,3 +86,8 @@ Explorer/.cursorignore
 # ReSharper CLI download for local linting (scripts/lint/download-resharper.sh)
 /rsharp/
 rsharp.zip
+
+# Byte-cache left behind whenever a helper under scripts/ is imported as a
+# module rather than run as one (verify-binaries.py, frame-info-digest.py)
+__pycache__/
+*.pyc
