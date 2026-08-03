@@ -58,7 +58,7 @@ namespace DCL.Backpack.Gifting
             "Just now.";
         
         public const string GiftOpenedTitle =
-            "ITEM OPENED";
+            "ON ITS WAY TO YOUR BACKPACK";
 
         public const string GiftLoading =
             "Loading...";

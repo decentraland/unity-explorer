@@ -8,7 +8,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class GiftReceivedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Gift received";
-        private const string NOTIFICATION_TITLE = "sent you a gift!";
+        private const string NOTIFICATION_TITLE = "sent you a gift! It's on its way to your Backpack.";
 
         [JsonProperty("metadata")]
         public GiftReceivedNotificationMetadata Metadata { get; set; }
