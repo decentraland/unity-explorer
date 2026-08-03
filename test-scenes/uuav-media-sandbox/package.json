@@ -1,0 +1,24 @@
+{
+  "name": "uuav-media-sandbox-test-scene",
+  "version": "1.0.0",
+  "description": "Every media format and protocol case the UUAV native plugin can encounter, one video player each, labelled PLAYS or REFUSED",
+  "scripts": {
+    "start": "sdk-commands start",
+    "build": "sdk-commands build",
+    "deploy": "sdk-commands deploy",
+    "upgrade-sdk": "npm install --save-dev @dcl/sdk@latest"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=6.0.0"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 120,
+    "trailingComma": "none"
+  },
+  "devDependencies": {
+    "@dcl/sdk": "^7.24.5"
+  }
+}

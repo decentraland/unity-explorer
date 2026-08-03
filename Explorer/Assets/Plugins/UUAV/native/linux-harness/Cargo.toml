@@ -1,0 +1,15 @@
+[package]
+name = "uuav-linux-harness"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# Detached from ../Cargo.toml's root-package workspace on purpose: this crate
+# compiles the platform-neutral core sources against a host FFmpeg on Linux,
+# where the core itself (compile_error!'d to Windows/macOS) cannot build.
+[workspace]
+
+[dependencies]
+anyhow = "1.0.98"
+libc = "0.2"
+ffmpeg-sys-next = "8.1.0"

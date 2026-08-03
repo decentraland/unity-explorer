@@ -1,0 +1,9 @@
+{
+    "name": "UUAV.SmokeTests",
+    "references": ["UUAVClient", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "allowUnsafeCode": true,
+    "includePlatforms": []
+}

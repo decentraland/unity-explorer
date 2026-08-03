@@ -1,0 +1,42 @@
+{
+  "ecs7": true,
+  "runtimeVersion": "7",
+  "display": {
+    "title": "UUAV Media Sandbox Test Scene",
+    "description": "One video player per media format and protocol case the UUAV plugin can encounter, each labelled with the outcome its sandbox is supposed to produce"
+  },
+  "owner": "",
+  "contact": {
+    "name": "",
+    "email": ""
+  },
+  "main": "bin/index.js",
+  "tags": ["uuav", "video", "sandbox", "regression"],
+  "scene": {
+    "parcels": ["0,0", "1,0", "0,1", "1,1"],
+    "base": "0,0"
+  },
+  "spawnPoints": [
+    {
+      "name": "In front of the wall",
+      "default": true,
+      "position": {
+        "x": [16, 16],
+        "y": [0, 0],
+        "z": [26, 26]
+      },
+      "cameraTarget": {
+        "x": 16,
+        "y": 8,
+        "z": 4
+      }
+    }
+  ],
+  "requiredPermissions": ["ALLOW_MEDIA_HOSTNAMES"],
+  "allowedMediaHostnames": ["media.uuav.test", "localhost", "127.0.0.1"],
+  "featureToggles": {
+    "voiceChat": "disabled",
+    "portableExperiences": "disabled"
+  },
+  "rating": "T"
+}
