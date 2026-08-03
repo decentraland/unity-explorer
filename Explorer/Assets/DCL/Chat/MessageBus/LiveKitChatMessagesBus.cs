@@ -12,10 +12,10 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.SceneBannedUsers;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.Rfc4;
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
 using System.Threading;
@@ -92,6 +92,9 @@ namespace DCL.Chat.MessageBus
                                    _ => "local",
                                };
 
+            // Must match the participant identity that comms-message-sfu joins the room under: it is the
+            // only signal that authenticates a relayed message's ForwardedFrom stamp. If the two ever
+            // diverge, relayed community messages are attributed to the router instead of their sender.
             routingUser = $"message-router-{serverEnv}-0";
 
             ConfigureMessagePipesHubAsync(setupExploreSectionsCts.Token).Forget();
@@ -126,9 +129,11 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
-                string walletId = receivedMessage.Payload.HasForwardedFrom
-                    ? receivedMessage.Payload.ForwardedFrom
-                    : receivedMessage.FromWalletId;
+                // The island and scene pipes are peer-to-peer, so the message router is never in their
+                // path and a populated ForwardedFrom can only have been set by the publishing peer.
+                // Keying on it would let any peer publish under an arbitrary wallet and rotate the
+                // value to get a fresh slot for each of the checks below.
+                string walletId = receivedMessage.FromWalletId;
 
                 // If the user that sends the message is banned from the current scene, we ignore it
                 if (RoomMetadataCurrentScene.Instance.IsUserBanned(walletId)) return;
@@ -136,7 +141,7 @@ namespace DCL.Chat.MessageBus
                 // If the message was already received through the scene or island pipe, we ignore it
                 if (messageDeduplication.TryPass(walletId, receivedMessage.Payload.Timestamp) == false) return;
 
-                if (!TryCreateMessage(receivedMessage, out ChatMessage message)) return;
+                if (!TryCreateMessage(receivedMessage, walletId, out ChatMessage message)) return;
 
                 if (!isNearbyChannelBufferEnabled)
                 {
@@ -178,26 +183,43 @@ namespace DCL.Chat.MessageBus
                     return;
                 }
 
-                if (TryCreateMessage(receivedMessage, out ChatMessage newMessage))
+                string walletId = ResolveChatPipeSenderWalletId(receivedMessage);
+
+                if (TryCreateMessage(receivedMessage, walletId, out ChatMessage newMessage))
                     MessageAdded?.Invoke(parsedChannelId, channelType, newMessage);
             }
         }
 
-        private bool TryCreateMessage(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, out ChatMessage newMessage)
+        /// <summary>
+        /// Resolves the author of a message received on the chat pipe.
+        /// </summary>
+        /// <remarks>
+        /// ForwardedFrom is stamped only by the trusted message router, which relays community messages
+        /// under the <see cref="routingUser"/> identity. Honoring it from any other sender would let a
+        /// peer publish under an arbitrary wallet, since the field is an ordinary payload string while
+        /// FromWalletId is the LiveKit-authenticated participant identity.
+        /// </remarks>
+        private string ResolveChatPipeSenderWalletId(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
+        {
+            if (receivedMessage.Payload.HasForwardedFrom
+                && string.Equals(receivedMessage.FromWalletId, routingUser, StringComparison.OrdinalIgnoreCase)
+                && Web3Address.IsValidWalletAddress(receivedMessage.Payload.ForwardedFrom))
+                return receivedMessage.Payload.ForwardedFrom;
+
+            return receivedMessage.FromWalletId;
+        }
+
+        private bool TryCreateMessage(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, string senderWalletId, out ChatMessage newMessage)
         {
             newMessage = default(ChatMessage);
 
-            string walletId = receivedMessage.Payload.HasForwardedFrom
-                ? receivedMessage.Payload.ForwardedFrom
-                : receivedMessage.FromWalletId;
+            if (IsUserBlockedAndMessagesHidden(senderWalletId)) return false;
 
-            if (IsUserBlockedAndMessagesHidden(walletId)) return false;
+            if (isChatMessageRateLimiterEnabled && !messageRateLimiter!.TryAllow(senderWalletId)) return false;
 
-            if (isChatMessageRateLimiterEnabled && !messageRateLimiter!.TryAllow(walletId)) return false;
+            newMessage = messageFactory.CreateChatMessage(senderWalletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
 
-            newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
-
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] RECEIVED message: protoTimestamp={receivedMessage.Payload.Timestamp} messageId={newMessage.MessageId} from={walletId}");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] RECEIVED message: protoTimestamp={receivedMessage.Payload.Timestamp} messageId={newMessage.MessageId} from={senderWalletId}");
 
             return true;
         }
