@@ -352,7 +352,7 @@ fn start_session(
 
     // the surface-port channel must exist before the helper looks it up
     #[cfg(target_os = "macos")]
-    let mach_receiver = {
+    let mut mach_receiver = {
         let service = uuav_ipc::mach_channel::service_name(&token);
         uuav_ipc::mach_channel::Receiver::register(&service)
             .map_err(|e| format!("mach channel: {e}"))?
@@ -417,12 +417,17 @@ fn start_session(
     }
 
     #[cfg(target_os = "macos")]
-    spawn_mach_receiver(
-        mach_receiver,
-        Arc::clone(registry),
-        Arc::clone(lifecycle),
-        conn.alive_flag(),
-    );
+    {
+        // messages queued while the helper configured are still verified:
+        // the receive thread starts only now, armed
+        mach_receiver.expect_sender(child.id());
+        spawn_mach_receiver(
+            mach_receiver,
+            Arc::clone(registry),
+            Arc::clone(lifecycle),
+            conn.alive_flag(),
+        );
+    }
 
     Ok((conn, child))
 }

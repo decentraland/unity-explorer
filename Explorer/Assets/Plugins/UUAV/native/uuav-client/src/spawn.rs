@@ -64,6 +64,12 @@ pub struct HelperChild(std::process::Child);
 
 #[cfg(target_os = "macos")]
 impl HelperChild {
+    /// Kernel-truth pid of the spawned helper; the mach surface receiver
+    /// authenticates senders against it.
+    pub fn id(&self) -> u32 {
+        self.0.id()
+    }
+
     pub fn try_wait(&mut self) -> Result<Option<HelperExitStatus>> {
         Ok(self
             .0

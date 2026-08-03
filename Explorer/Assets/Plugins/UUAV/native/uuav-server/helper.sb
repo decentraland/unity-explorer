@@ -65,13 +65,14 @@
 
 ;; stdio hygiene: eprintln to a terminal during dev runs; a tty write
 ;; grants nothing durable. Writes to the inherited pipes/sockets of the
-;; normal Unity case are not path-checked at all.
+;; normal Unity case are not path-checked at all. ioctl on ttys stays
+;; denied: plain writes never need it, and TIOCSTI on a tty injects
+;; keystrokes into the owning shell, a route around the process-exec
+;; denial above.
 (allow file-write-data
     (literal "/dev/null")
     (regex #"^/dev/ttys[0-9]+$"))
-(allow file-ioctl
-    (literal "/dev/null")
-    (regex #"^/dev/ttys[0-9]+$"))
+(allow file-ioctl (literal "/dev/null"))
 
 ;; ---- IPC with the client --------------------------------------------------
 
@@ -99,6 +100,11 @@
 
 ;; ---- network: FFmpeg fetches media directly --------------------------------
 
+;; Loopback is deliberately NOT carved out of this allowance: local-realm
+;; preview (Creator Hub / `dcl start`) serves scene content - media
+;; included - from 127.0.0.1, and this process is what fetches it, so a
+;; localhost deny would silently kill video in every locally previewed
+;; scene.
 (allow network-outbound (remote tcp) (remote udp))
 ;; DNS: unix-domain socket on older systems, XPC service on newer ones
 (allow network-outbound (literal "/private/var/run/mDNSResponder"))
