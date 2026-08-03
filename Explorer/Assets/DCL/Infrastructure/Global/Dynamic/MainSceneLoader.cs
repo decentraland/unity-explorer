@@ -196,13 +196,23 @@ namespace Global.Dynamic
             canShutdown = true;
             ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
 
-            IAppArgs applicationParametersParser = new ApplicationParametersParser(
+            string[] rawApplicationParameters =
 #if UNITY_EDITOR
-                debugSettings.AppParameters
+                debugSettings.AppParameters;
 #else
-                Environment.GetCommandLineArgs()
+                Environment.GetCommandLineArgs();
 #endif
-            );
+
+            // Phase 1: parse CLI flags (incl. --feature-flags-url) but DEFER the deep link — its whitelisted-realm
+            // params must be gated against the world whitelist, which comes from feature flags. Feature flags aren't
+            // initialized until later in bootstrap, so for a deep-link launch we preemptively fetch just the whitelist
+            // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
+            IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
+
+            if (applicationParametersParser.HasPendingDeepLink)
+                await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
+
+            applicationParametersParser.InitializeDeepLinks();
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -233,7 +243,7 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
             if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
-                cliOptimizedAssetsUrl = RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL;
+                cliOptimizedAssetsUrl = launchSettings.LocalAssetBundlesBaseUrl();
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -299,6 +309,10 @@ namespace Global.Dynamic
 
                 bootstrap.InitializeFeaturesRegistry();
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+
+                // Refresh the deep-link world whitelist from the now-fully-loaded feature flags — covers runtime
+                // (post-launch) deep links and the case where the preemptive cold-start fetch was unavailable.
+                DeepLinkAllowlist.SetWhitelistedWorlds(DeepLinkWorldWhitelistProvider.ReadWorlds(FeatureFlagsConfiguration.Instance));
 
                 DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
 
@@ -457,6 +471,18 @@ namespace Global.Dynamic
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
 
             return false;
+        }
+
+        private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
+        {
+            appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
+
+            string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
+                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment)
+                : featureFlagsOverride.TrimEnd('/');
+
+            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);
+            DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
         }
 
         private async UniTask RegisterBlockedPopupAsync(UnityAppWebBrowser webBrowser, CancellationToken ct)
@@ -737,12 +763,12 @@ namespace Global.Dynamic
             var uri = new Uri(realm);
             if (uri.Host == "127.0.0.1") return true;
             if (uri.Host == "localhost") return true;
-            if (uri.Host == "sdk-team-cdn.decentraland.org") return true;
-            if (uri.Host == "sdk-test-scenes.decentraland.zone") return true;
-            if (uri.Host == "realm-provider-ea.decentraland.org") return true;
-            if (uri.Host == "realm-provider-ea.decentraland.zone") return true;
-            if (uri.Host == "worlds-content-server.decentraland.org") return true;
-            if (uri.Host == "worlds-content-server.decentraland.zone") return true;
+            if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
+            if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
+            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
+            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
+            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
+            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 

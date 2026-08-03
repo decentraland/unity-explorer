@@ -25,14 +25,17 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjZkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX2Vtb3RlX2Nv",
-            "bW1hbmQucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyJKChRQ",
-            "QkF2YXRhckVtb3RlQ29tbWFuZBIRCgllbW90ZV91cm4YASABKAkSDAoEbG9v",
-            "cBgCIAEoCBIRCgl0aW1lc3RhbXAYAyABKA1CFKoCEURDTC5FQ1NDb21wb25l",
-            "bnRzYgZwcm90bzM="));
+            "bW1hbmQucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo0ZGVj",
+            "ZW50cmFsYW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9hdmF0YXJfbWFzay5w",
+            "cm90byKWAQoUUEJBdmF0YXJFbW90ZUNvbW1hbmQSEQoJZW1vdGVfdXJuGAEg",
+            "ASgJEgwKBGxvb3AYAiABKAgSEQoJdGltZXN0YW1wGAMgASgNEkEKBG1hc2sY",
+            "BCABKA4yLi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9uLkF2",
+            "YXRhck1hc2tIAIgBAUIHCgVfbWFza0IUqgIRRENMLkVDU0NvbXBvbmVudHNi",
+            "BnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { },
+          new pbr::FileDescriptor[] { global::DCL.ECSComponents.AvatarMaskReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarEmoteCommand), global::DCL.ECSComponents.PBAvatarEmoteCommand.Parser, new[]{ "EmoteUrn", "Loop", "Timestamp" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarEmoteCommand), global::DCL.ECSComponents.PBAvatarEmoteCommand.Parser, new[]{ "EmoteUrn", "Loop", "Timestamp", "Mask" }, new[]{ "Mask" }, null, null, null)
           }));
     }
     #endregion
@@ -40,8 +43,9 @@ namespace DCL.ECSComponents {
   }
   #region Messages
   /// <summary>
-  /// AvatarEmoteCommand is a grow only value set, used to signal the renderer about
-  /// avatar emotes playback.
+  /// AvatarEmoteCommand is a grow only value set, written by the explorer to report
+  /// avatar emote playback to the scene. It is appended to every player entity in the
+  /// scene (the local player and remote avatars alike).
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBAvatarEmoteCommand : pb::IMessage<PBAvatarEmoteCommand>
@@ -51,6 +55,7 @@ namespace DCL.ECSComponents {
   {
     private static readonly pb::MessageParser<PBAvatarEmoteCommand> _parser = new pb::MessageParser<PBAvatarEmoteCommand>(() => new PBAvatarEmoteCommand());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PBAvatarEmoteCommand> Parser { get { return _parser; } }
@@ -78,9 +83,11 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBAvatarEmoteCommand(PBAvatarEmoteCommand other) : this() {
+      _hasBits0 = other._hasBits0;
       emoteUrn_ = other.emoteUrn_;
       loop_ = other.loop_;
       timestamp_ = other.timestamp_;
+      mask_ = other.mask_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -129,6 +136,33 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "mask" field.</summary>
+    public const int MaskFieldNumber = 4;
+    private readonly static global::DCL.ECSComponents.AvatarMask MaskDefaultValue = global::DCL.ECSComponents.AvatarMask.AmUpperBody;
+
+    private global::DCL.ECSComponents.AvatarMask mask_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.AvatarMask Mask {
+      get { if ((_hasBits0 & 1) != 0) { return mask_; } else { return MaskDefaultValue; } }
+      set {
+        _hasBits0 |= 1;
+        mask_ = value;
+      }
+    }
+    /// <summary>Gets whether the "mask" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasMask {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "mask" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearMask() {
+      _hasBits0 &= ~1;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -147,6 +181,7 @@ namespace DCL.ECSComponents {
       if (EmoteUrn != other.EmoteUrn) return false;
       if (Loop != other.Loop) return false;
       if (Timestamp != other.Timestamp) return false;
+      if (Mask != other.Mask) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -157,6 +192,7 @@ namespace DCL.ECSComponents {
       if (EmoteUrn.Length != 0) hash ^= EmoteUrn.GetHashCode();
       if (Loop != false) hash ^= Loop.GetHashCode();
       if (Timestamp != 0) hash ^= Timestamp.GetHashCode();
+      if (HasMask) hash ^= Mask.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -187,6 +223,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(24);
         output.WriteUInt32(Timestamp);
       }
+      if (HasMask) {
+        output.WriteRawTag(32);
+        output.WriteEnum((int) Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -209,6 +249,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(24);
         output.WriteUInt32(Timestamp);
       }
+      if (HasMask) {
+        output.WriteRawTag(32);
+        output.WriteEnum((int) Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -227,6 +271,9 @@ namespace DCL.ECSComponents {
       }
       if (Timestamp != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Timestamp);
+      }
+      if (HasMask) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -248,6 +295,9 @@ namespace DCL.ECSComponents {
       }
       if (other.Timestamp != 0) {
         Timestamp = other.Timestamp;
+      }
+      if (other.HasMask) {
+        Mask = other.Mask;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -280,6 +330,10 @@ namespace DCL.ECSComponents {
             Timestamp = input.ReadUInt32();
             break;
           }
+          case 32: {
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
+            break;
+          }
         }
       }
     #endif
@@ -309,6 +363,10 @@ namespace DCL.ECSComponents {
           }
           case 24: {
             Timestamp = input.ReadUInt32();
+            break;
+          }
+          case 32: {
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }
