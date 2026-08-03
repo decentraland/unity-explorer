@@ -17,13 +17,12 @@ using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityProfiler = UnityEngine.Profiling.Profiler;
 
 namespace DCL.SDKComponents.SceneContentDebug.Systems
 {
     /// <summary>
     ///     Counts the scene's content (entities, triangles, meshes, geometries, materials, textures,
-    ///     colliders, runtime content size and external content) into <see cref="SceneContentStats" />.
+    ///     colliders and external content) into <see cref="SceneContentStats" />.
     ///     Collection is throttled and runs only while <see cref="SceneContentStats.CollectionRequested" />
     ///     is set, so the system is idle unless the "Current scene" debug widget is open on this scene.
     /// </summary>
@@ -63,7 +62,6 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
         private int textures;
         private int colliders;
         private int externalContent;
-        private long contentSizeBytes;
 
         internal SceneContentStatsSystem(World world, SceneRuntimeMetrics runtimeMetrics, Dictionary<CRDTEntity, Entity> entitiesMap) : base(world)
         {
@@ -104,7 +102,6 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             textures = 0;
             colliders = 0;
             externalContent = 0;
-            contentSizeBytes = 0;
 
             uniqueMeshes.Clear();
             uniqueMaterials.Clear();
@@ -125,7 +122,6 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             stats.Textures = textures;
             stats.Colliders = colliders;
             stats.ExternalContent = externalContent;
-            stats.ContentSizeBytes = contentSizeBytes;
             stats.HasData = true;
         }
 
@@ -205,10 +201,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                 triangles += mesh.GetIndexCount(i) / 3;
 
             if (uniqueMeshes.Add(mesh))
-            {
                 geometries++;
-                contentSizeBytes += UnityProfiler.GetRuntimeMemorySizeLong(mesh);
-            }
         }
 
         private void AccountRendererMaterials(Renderer renderer)
@@ -239,10 +232,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                 if (texture == null) continue;
 
                 if (uniqueTextures.Add(texture))
-                {
                     textures++;
-                    contentSizeBytes += UnityProfiler.GetRuntimeMemorySizeLong(texture);
-                }
             }
         }
     }

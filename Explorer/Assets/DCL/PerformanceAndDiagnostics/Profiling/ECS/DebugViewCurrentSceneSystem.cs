@@ -93,7 +93,6 @@ namespace DCL.Profiling.ECS
                          .AddCustomMarker("Materials:", contentStatsBindings.Materials)
                          .AddCustomMarker("Textures:", contentStatsBindings.Textures)
                          .AddCustomMarker("Colliders:", contentStatsBindings.Colliders)
-                         .AddCustomMarker("Content size:", contentStatsBindings.ContentSize)
                          .AddCustomMarker("External content:", contentStatsBindings.ExternalContent)
                          .AddCustomMarker("Real tick FPS:", stringBindings.RealFps)
                          .AddCustomMarker("Min FPS (last 256 ticks):", stringBindings.MinFps)

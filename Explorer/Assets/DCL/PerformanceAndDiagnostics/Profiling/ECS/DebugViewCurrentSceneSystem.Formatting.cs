@@ -1,6 +1,5 @@
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using System;
 using System.Globalization;
 using UnityEngine;
 
@@ -18,7 +17,6 @@ namespace DCL.Profiling.ECS
         private const int MAX_MATERIALS_LOG2_MULTIPLIER = 20;
         private const int MAX_TEXTURES_LOG2_MULTIPLIER = 10;
         private const int MAX_GEOMETRIES_LOG2_MULTIPLIER = 200;
-        private const long MAX_CONTENT_BYTES_PER_PARCEL = 15L * 1024 * 1024;
         private const int MAX_EXTERNAL_CONTENT = 10;
 
         private const float CAP_WARNING_PERCENT = 80f;
@@ -32,10 +30,9 @@ namespace DCL.Profiling.ECS
             public readonly int Materials;
             public readonly int Textures;
             public readonly int Colliders;
-            public readonly long ContentSizeBytes;
             public readonly int ExternalContent;
 
-            private SceneContentCaps(int entities, long triangles, int bodies, int geometries, int materials, int textures, int colliders, long contentSizeBytes, int externalContent)
+            private SceneContentCaps(int entities, long triangles, int bodies, int geometries, int materials, int textures, int colliders, int externalContent)
             {
                 Entities = entities;
                 Triangles = triangles;
@@ -44,7 +41,6 @@ namespace DCL.Profiling.ECS
                 Materials = materials;
                 Textures = textures;
                 Colliders = colliders;
-                ContentSizeBytes = contentSizeBytes;
                 ExternalContent = externalContent;
             }
 
@@ -60,7 +56,6 @@ namespace DCL.Profiling.ECS
                     materials: Mathf.FloorToInt(log2 * MAX_MATERIALS_LOG2_MULTIPLIER),
                     textures: Mathf.FloorToInt(log2 * MAX_TEXTURES_LOG2_MULTIPLIER),
                     colliders: parcelCount * MAX_COLLIDERS_PER_PARCEL,
-                    contentSizeBytes: parcelCount * MAX_CONTENT_BYTES_PER_PARCEL,
                     externalContent: MAX_EXTERNAL_CONTENT);
             }
         }
@@ -74,7 +69,6 @@ namespace DCL.Profiling.ECS
             public readonly ElementBinding<string> Materials;
             public readonly ElementBinding<string> Textures;
             public readonly ElementBinding<string> Colliders;
-            public readonly ElementBinding<string> ContentSize;
             public readonly ElementBinding<string> ExternalContent;
 
             private ContentStatsBindings(
@@ -85,7 +79,6 @@ namespace DCL.Profiling.ECS
                 ElementBinding<string> materials,
                 ElementBinding<string> textures,
                 ElementBinding<string> colliders,
-                ElementBinding<string> contentSize,
                 ElementBinding<string> externalContent)
             {
                 Entities = entities;
@@ -95,13 +88,11 @@ namespace DCL.Profiling.ECS
                 Materials = materials;
                 Textures = textures;
                 Colliders = colliders;
-                ContentSize = contentSize;
                 ExternalContent = externalContent;
             }
 
             public static ContentStatsBindings Create() =>
                 new (
-                    new ElementBinding<string>(string.Empty),
                     new ElementBinding<string>(string.Empty),
                     new ElementBinding<string>(string.Empty),
                     new ElementBinding<string>(string.Empty),
@@ -123,7 +114,6 @@ namespace DCL.Profiling.ECS
                 bindings.Materials.Value = "—";
                 bindings.Textures.Value = "—";
                 bindings.Colliders.Value = "—";
-                bindings.ContentSize.Value = "—";
                 bindings.ExternalContent.Value = "—";
                 return;
             }
@@ -135,7 +125,6 @@ namespace DCL.Profiling.ECS
             bindings.Materials.Value = FormatCapped(stats.Materials, caps.Materials);
             bindings.Textures.Value = FormatCapped(stats.Textures, caps.Textures);
             bindings.Colliders.Value = FormatCapped(stats.Colliders, caps.Colliders);
-            bindings.ContentSize.Value = FormatCappedBytes(stats.ContentSizeBytes, caps.ContentSizeBytes);
             bindings.ExternalContent.Value = FormatCapped(stats.ExternalContent, caps.ExternalContent);
         }
 
@@ -146,17 +135,6 @@ namespace DCL.Profiling.ECS
 
             float percent = current * 100f / cap;
             return $"<color={CapColor(percent)}>{current.ToString("N0", CultureInfo.InvariantCulture)} / {cap.ToString("N0", CultureInfo.InvariantCulture)} ({percent:F0}%)</color>";
-        }
-
-        private static string FormatCappedBytes(long current, long cap)
-        {
-            string currentNormalized = BytesFormatter.Normalize((ulong)Math.Max(0L, current), false);
-
-            if (cap <= 0)
-                return currentNormalized;
-
-            float percent = current * 100f / cap;
-            return $"<color={CapColor(percent)}>{currentNormalized} / {BytesFormatter.Normalize((ulong)cap, false)} ({percent:F0}%)</color>";
         }
 
         private static string CapColor(float percent) =>

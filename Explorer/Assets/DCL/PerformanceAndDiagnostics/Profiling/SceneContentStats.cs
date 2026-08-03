@@ -25,7 +25,6 @@ namespace DCL.Profiling
         public int Materials;
         public int Textures;
         public int Colliders;
-        public long ContentSizeBytes;
         public int ExternalContent;
     }
 }
