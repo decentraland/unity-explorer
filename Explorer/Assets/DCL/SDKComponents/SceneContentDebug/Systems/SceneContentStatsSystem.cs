@@ -24,7 +24,8 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
     ///     Counts the scene's content (entities, triangles, meshes, geometries, materials, textures,
     ///     colliders and external content) into <see cref="SceneContentStats" />.
     ///     Collection is throttled and runs only while <see cref="SceneContentStats.CollectionRequested" />
-    ///     is set, so the system is idle unless the "Current scene" debug widget is open on this scene.
+    ///     is set, so the system is idle unless a consumer (the "Current scene" debug widget or the
+    ///     scene debug menu metrics panel) is showing the stats for this scene.
     /// </summary>
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     public partial class SceneContentStatsSystem : BaseUnityLoopSystem

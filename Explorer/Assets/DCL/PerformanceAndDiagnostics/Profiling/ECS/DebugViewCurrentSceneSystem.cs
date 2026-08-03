@@ -124,7 +124,7 @@ namespace DCL.Profiling.ECS
             if (currentScene == null) return;
 
             SceneRuntimeMetrics metrics = currentScene.RuntimeMetrics;
-            metrics.ContentStats.CollectionRequested = visibility.IsConnectedAndExpanded;
+            metrics.ContentStats.RequestedByDebugWidget = visibility.IsConnectedAndExpanded;
 
             if (!visibility.IsConnectedAndExpanded) return;
 
@@ -176,7 +176,7 @@ namespace DCL.Profiling.ECS
         private void OnCurrentSceneChanged(ISceneFacade? scene)
         {
             if (currentScene != null)
-                currentScene.RuntimeMetrics.ContentStats.CollectionRequested = false;
+                currentScene.RuntimeMetrics.ContentStats.RequestedByDebugWidget = false;
 
             currentScene = scene;
             contentCaps = scene != null ? SceneContentCaps.ForParcelCount(scene.SceneData.Parcels.Count) : default(SceneContentCaps);

@@ -8,15 +8,25 @@ namespace DCL.Profiling
     public sealed class SceneContentStats
     {
         /// <summary>
-        ///     While false the scene world skips collection entirely, so the counters cost nothing
-        ///     when the debug panel is disabled or the widget is collapsed.
+        ///     Set by the "Current scene" debug widget while it is expanded on this scene.
         /// </summary>
-        public bool CollectionRequested;
+        public bool RequestedByDebugWidget;
+
+        /// <summary>
+        ///     Set by the scene debug menu metrics panel while it is open on this scene.
+        /// </summary>
+        public bool RequestedByMetricsPanel;
 
         /// <summary>
         ///     False until the first collection pass completes for this scene.
         /// </summary>
         public bool HasData;
+
+        /// <summary>
+        ///     While false the scene world skips collection entirely, so the counters cost nothing
+        ///     when no consumer is showing them.
+        /// </summary>
+        public bool CollectionRequested => RequestedByDebugWidget || RequestedByMetricsPanel;
 
         public int Entities;
         public long Triangles;

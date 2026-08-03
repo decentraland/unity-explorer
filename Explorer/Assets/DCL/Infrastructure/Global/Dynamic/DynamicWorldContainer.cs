@@ -1001,7 +1001,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DiagnosticsContainer,
                     staticContainer.InputBlock,
                     assetsProvisioner,
-                    debugBuilder
+                    debugBuilder,
+                    staticContainer.ScenesCache
                 ));
 
             if (!localSceneDevelopment)

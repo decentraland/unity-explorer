@@ -340,8 +340,40 @@
     background-image: var(--sprite-common__icon-console);
 }
 
+.sidebar__button--metrics {
+    background-image: var(--sprite-common__icon-connection);
+}
+
 .sidebar__button--debug {
     background-image: var(--sprite-common__icon-debug);
+}
+
+.metrics-panel {
+    width: 420px;
+}
+
+.metrics-panel__rows {
+    padding-top: 12px;
+    padding-right: 20px;
+    padding-bottom: 12px;
+    padding-left: 20px;
+}
+
+.metrics-panel__row {
+    flex-direction: row;
+    justify-content: space-between;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.metrics-panel__row-label {
+    color: rgb(180, 180, 180);
+    font-size: 12px;
+}
+
+.metrics-panel__row-value {
+    color: rgb(255, 255, 255);
+    font-size: 12px;
 }
 
 .debug-panel__header-spacer {
