@@ -23,7 +23,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISelfProfile selfProfile;
-        private readonly World globalWorld;
+        private readonly Arch.Core.World globalWorld;
         private readonly Entity playerEntity;
 
         private BugReportController? bugReportController;
@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISelfProfile selfProfile,
-            World globalWorld,
+            Arch.Core.World globalWorld,
             Entity playerEntity)
         {
             this.assetsProvisioner = assetsProvisioner;
