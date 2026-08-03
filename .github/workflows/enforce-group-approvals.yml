@@ -69,7 +69,7 @@ jobs:
               echo "🔸 $reviewer approved but is not an admin (permission: $PERMISSION)."
             done
 
-            echo "❌ The sync PR requires an approval from a repository admin. Once approved, the auto-merge-sync-pr workflow merges it as a merge commit — never merge it manually."
+            echo "❌ The sync PR requires an approval from a repository admin, who must merge it as a merge commit (never squash)."
             echo "APPROVAL_CHECK=failed" >> $GITHUB_ENV
             echo "MISSING_MSG=Waiting on: admin approval (sync PR)" >> $GITHUB_ENV
             exit 1
