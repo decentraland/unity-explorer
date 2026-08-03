@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -41,7 +40,6 @@ namespace DCL.Navmap
         private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
-        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
@@ -73,7 +71,6 @@ namespace DCL.Navmap
             HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             HomePlaceEventBus homePlaceEventBus,
             IDonationsService donationsService,
@@ -92,7 +89,6 @@ namespace DCL.Navmap
             this.eventsApiService = eventsApiService;
             this.eventElementPool = eventElementPool;
             this.shareContextMenu = shareContextMenu;
-            this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
             this.galleryEventBus = galleryEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
@@ -189,8 +185,10 @@ namespace DCL.Navmap
             view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
             view.LikeRateLabel.text = $"{(place.LikeRateAsFloat ?? 0) * 100:F0}%";
             view.PlayerCountLabel.text = place.user_count.ToString();
-            view.DescriptionLabel.text = string.IsNullOrEmpty(place.description) ? "No description" : place.description;
-            view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
+
+            // The description is copied verbatim from the deployed scene's manifest: it reaches the label escaped, and
+            // a link in it opens only through the external-URL consent prompt.
+            view.DescriptionLabel.SetAuthorTextWithClickeableLinks(string.IsNullOrEmpty(place.description) ? "No description" : place.description);
 
             bool isWorld = place.IsWorld;
 
@@ -387,9 +385,6 @@ namespace DCL.Navmap
             shareContextMenu.Set(place!);
             shareContextMenu.Show(view.SharePivot);
         }
-
-        private void OpenUrl(string url) =>
-            webBrowser.OpenUrlMainThreadOnly(url);
 
         private void OnLikeButtonClick(bool isEnabled)
         {

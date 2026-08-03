@@ -88,7 +88,13 @@ namespace DCL.Notifications.NotificationEntry
 
             if (notification.SenderProfile.HasValue)
             {
-                userName = notification.SenderProfile.Value.Name;
+                // ValidatedName is the profile's own alphanumeric filter of the name, and is what the rest of
+                // the UI displays; it carries no # part, which the unclaimed template appends separately. That
+                // filter leaves nothing of a name written entirely in emoji or punctuation, so fall back to the
+                // raw name there rather than showing a blank one — escaping below is what makes it safe.
+                userName = string.IsNullOrEmpty(notification.SenderProfile.Value.ValidatedName)
+                    ? notification.SenderProfile.Value.Name
+                    : notification.SenderProfile.Value.ValidatedName;
                 userAddress = notification.SenderProfile.Value.Address;
                 userColor = notification.SenderProfile.Value.UserNameColor;
                 hasClaimedName = notification.SenderProfile.Value.HasClaimedName;
@@ -102,6 +108,10 @@ namespace DCL.Notifications.NotificationEntry
             }
 
             NotificationImageBackground.color = userColor;
+
+            // The templates are markup, so the label stays rich text and the sender-chosen name is
+            // neutralized and bounded before it is interpolated into them.
+            userName = RichTextSanitizer.EscapeAndTruncate(userName, RichTextSanitizer.DEFAULT_NAME_LENGTH);
 
             TitleText.SetText(hasClaimedName
                 ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), userName,
@@ -124,9 +134,13 @@ namespace DCL.Notifications.NotificationEntry
 
         private void SetTitleText(NotificationBase notification, FriendRequestProfile sender, Color userColor)
         {
+            // FriendRequestProfile is the raw notification payload and exposes no filtered name, so escaping
+            // is what keeps a sender-chosen name from being read as markup once inside the templates.
+            string senderName = RichTextSanitizer.EscapeAndTruncate(sender.Name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
+
             TitleText.SetText(sender.HasClaimedName
-                ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), sender.Name, notification.GetTitle())
-                : string.Format(FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), sender.Name, sender.Address[^4..], notification.GetTitle()));
+                ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), senderName, notification.GetTitle())
+                : string.Format(FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), senderName, sender.Address[^4..], notification.GetTitle()));
         }
 
         private void Start()

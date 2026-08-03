@@ -12,7 +12,14 @@ namespace DCL.UI.ProfileElements
 
         public void Setup(Profile.CompactInfo profile)
         {
-            userNameText.text = profile.Name;
+            // ValidatedName, not Name: the Name getter hands back exactly what the profile owner wrote, while its
+            // setter derives ValidatedName from it by keeping only alphanumeric characters. DisplayName is that same
+            // value with the #XXXX suffix already appended, which userNameHashtagText renders on its own below, so
+            // using it here would print the suffix twice.
+            // Keeping only alphanumerics leaves nothing at all of a name written entirely in emoji or punctuation,
+            // so fall back to what the owner wrote rather than showing a blank label. Escaping is what makes that
+            // safe to render.
+            SetUserName(string.IsNullOrEmpty(profile.ValidatedName) ? profile.Name : profile.ValidatedName);
             userNameText.color = profile.UserNameColor;
             userNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
 
@@ -24,14 +31,21 @@ namespace DCL.UI.ProfileElements
 
         public void Setup(string username, string walletId, bool hasClaimedName, Color userColor)
         {
-            userNameText.text = username;
+            SetUserName(username);
             userNameText.color = userColor;
             userNameHashtagText.gameObject.SetActive(!hasClaimedName);
 
             if (!hasClaimedName)
-                userNameHashtagText.text = string.Format($"#{walletId.Substring(walletId.Length - 4)}");
+                userNameHashtagText.text = $"#{walletId.Substring(walletId.Length - 4)}";
 
             verifiedMark.SetActive(hasClaimedName);
         }
+
+        /// <summary>
+        ///     The name belongs to another user, so it reaches the label escaped and capped: nothing it carries can
+        ///     be read as a TMP tag, and its length cannot grow the layout without bound.
+        /// </summary>
+        private void SetUserName(string username) =>
+            userNameText.text = RichTextSanitizer.EscapeAndTruncate(username, RichTextSanitizer.DEFAULT_NAME_LENGTH);
     }
 }

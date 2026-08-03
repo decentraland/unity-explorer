@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -26,7 +25,6 @@ namespace DCL.Navmap
         private readonly ObjectPool<EventScheduleElementView> scheduleElementPool;
         private readonly GoogleUserCalendar userCalendar;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
-        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ImageController thumbnailController;
         private readonly MultiStateButtonController interestedButtonController;
@@ -43,7 +41,6 @@ namespace DCL.Navmap
             ObjectPool<EventScheduleElementView> scheduleElementPool,
             GoogleUserCalendar userCalendar,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             ImageControllerProvider imageControllerProvider)
         {
@@ -54,7 +51,6 @@ namespace DCL.Navmap
             this.scheduleElementPool = scheduleElementPool;
             this.userCalendar = userCalendar;
             this.shareContextMenu = shareContextMenu;
-            this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             thumbnailController = imageControllerProvider.Create(view.Thumbnail);
             interestedButtonController = new MultiStateButtonController(view.InterestedButton, true);
@@ -116,8 +112,11 @@ namespace DCL.Navmap
             view.AttendingUserCountLabel.text = @event.total_attendees.ToString();
             interestedButtonController.SetButtonState(@event.attending);
             view.HostAndPlaceLabel.text = $"hosted by <b>{@event.user_name}</b> - at <b>{place.title} ({@event.x}, {@event.y})</b>";
-            view.DescriptionLabel.text = @event.description;
-            view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
+
+            // The description is written by the event's owner, who can edit it after approval: it reaches the label
+            // escaped, and a link in it opens only through the external-URL consent prompt.
+            view.DescriptionLabel.SetAuthorTextWithClickeableLinks(@event.description);
+
             thumbnailController.RequestImage(@event.image);
 
             updateLayoutCancellationToken = updateLayoutCancellationToken.SafeRestart();
@@ -126,9 +125,6 @@ namespace DCL.Navmap
             ClearScheduleElements();
             AddRecurrentEvents(@event);
         }
-
-        private void OpenUrl(string url) =>
-            webBrowser.OpenUrlMainThreadOnly(url);
 
         private void AddRecurrentEvents(EventDTO @event)
         {
