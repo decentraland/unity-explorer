@@ -142,7 +142,7 @@ namespace ECS.SceneLifeCycle
         }
 
         /// <summary>
-        ///     True when the span <paramref name="spawnPoint" /> can resolve to reaches into the parcel whose
+        ///     True when the span that <paramref name="spawnPoint" /> can resolve to reaches into the parcel whose
         ///     scene-local minimum corner is <paramref name="parcelMin" />. Spawn point coordinates are
         ///     scene-local, so clamp them to the scene bounds exactly as <see cref="PickTargetWithOffset" /> does.
         ///     Borders belong to both neighbours: a spawn point sitting on a parcel edge counts as inside it.
