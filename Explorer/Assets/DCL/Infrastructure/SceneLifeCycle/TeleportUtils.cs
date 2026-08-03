@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -112,10 +111,9 @@ namespace ECS.SceneLifeCycle
         }
 
         /// <summary>
-        ///     Names the spawn point the creator placed in <paramref name="parcel" />, so a teleport aimed at that
-        ///     parcel can address it through <see cref="PickTargetWithOffset" /> instead of guessing a spot itself.
-        ///     Several spawn points reaching into the parcel are narrowed down by the ordinary rules of
-        ///     <see cref="PickSpawnPoint" />. A nameless spawn point is not addressable and counts as absent.
+        ///     Names the first spawn point the creator placed in <paramref name="parcel" />, so a teleport aimed at
+        ///     that parcel can address it through <see cref="PickTargetWithOffset" /> instead of guessing a spot
+        ///     itself. A nameless spawn point cannot be addressed and counts as absent.
         /// </summary>
         public static bool TryPickSpawnPointNameInParcel(SceneEntityDefinition sceneDef, Vector2Int parcel, out string spawnPointName)
         {
@@ -130,25 +128,17 @@ namespace ECS.SceneLifeCycle
             LocalBounds bounds = CalculateLocalBounds(sceneDef.metadata.scene.DecodedParcels, baseParcel);
 
             // The parcel expressed in the same scene-local space as the spawn point coordinates
-            Vector2 parcelMin = new Vector2((parcel.x - baseParcel.x) * ParcelMathHelper.PARCEL_SIZE,
-                                            (parcel.y - baseParcel.y) * ParcelMathHelper.PARCEL_SIZE);
-
-            List<SceneMetadata.SpawnPoint> inParcel = ListPool<SceneMetadata.SpawnPoint>.Get();
+            var parcelMin = new Vector2((parcel.x - baseParcel.x) * ParcelMathHelper.PARCEL_SIZE,
+                (parcel.y - baseParcel.y) * ParcelMathHelper.PARCEL_SIZE);
 
             foreach (SceneMetadata.SpawnPoint spawnPoint in spawnPoints)
-                if (CoversParcel(spawnPoint, in bounds, parcelMin))
-                    inParcel.Add(spawnPoint);
+                if (!string.IsNullOrEmpty(spawnPoint.name) && CoversParcel(spawnPoint, in bounds, parcelMin))
+                {
+                    spawnPointName = spawnPoint.name;
+                    return true;
+                }
 
-            if (inParcel.Count > 0)
-            {
-                Vector3 baseWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(baseParcel).WithErrorCompensation();
-                Vector3 parcelWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
-                spawnPointName = PickSpawnPoint(inParcel, parcelWorldPosition, baseWorldPosition, in bounds).name;
-            }
-
-            ListPool<SceneMetadata.SpawnPoint>.Release(inParcel);
-
-            return !string.IsNullOrEmpty(spawnPointName);
+            return false;
         }
 
         /// <summary>
@@ -248,7 +238,10 @@ namespace ECS.SceneLifeCycle
         private static SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition, in LocalBounds bounds)
         {
             List<SceneMetadata.SpawnPoint> defaults = ListPool<SceneMetadata.SpawnPoint>.Get();
-            defaults.AddRange(spawnPoints.Where(sp => sp.@default));
+
+            for (var i = 0; i < spawnPoints.Count; i++)
+                if (spawnPoints[i].@default)
+                    defaults.Add(spawnPoints[i]);
 
             IReadOnlyList<SceneMetadata.SpawnPoint> elegibleSpawnPoints = defaults.Count > 0 ? defaults : spawnPoints;
             var closestIndex = 0;
@@ -339,7 +332,6 @@ namespace ECS.SceneLifeCycle
                 MaxZ = maxZ;
             }
         }
-
 
         public struct PlayerTeleportingState
         {
