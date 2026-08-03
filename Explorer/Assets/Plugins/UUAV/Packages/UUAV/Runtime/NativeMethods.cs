@@ -8,11 +8,44 @@ namespace UUAV
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void ErrorCallback(IntPtr message);
 
-    // FFmpeg log sinks: one already-formatted, NUL-terminated line per call.
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void LogCallback(IntPtr message);
 
-    // Mirrors FFmpeg's lavu_log_constants; cast to int at the FFI boundary.
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FetchProvider(IntPtr exchange);
+
+    public static class FetchOp
+    {
+        public const uint Open = 1;
+        public const uint Read = 2;
+        public const uint Close = 3;
+    }
+
+    public static class FetchStatus
+    {
+        public const uint Ok = 0;
+        public const uint Eof = 1;
+        public const uint Err = 2;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FetchExchange
+    {
+        public uint Op;
+        public uint Handle;
+        public ulong Offset;
+        public uint Len;
+        public uint Flags;
+        public IntPtr Url;
+        public uint UrlLen;
+        public IntPtr Buf;
+        public uint BufCap;
+        public uint Status;
+        public uint N;
+        public long Size;
+        public uint OutHandle;
+    }
+
     public enum UUAVLogLevel
     {
         Quiet = -8,
@@ -36,6 +69,13 @@ namespace UUAV
         Ended,
         Error,
         Unknown,
+    }
+
+    public enum UUAVError
+    {
+        None = 0,
+        OpenFailed = 1,
+        DecodeFailed = 4,
     }
 
     public static class UUAVStateExtensions
@@ -88,17 +128,66 @@ namespace UUAV
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    [Serializable]
-    public struct VideoSize
+    public unsafe struct FrameInfo
     {
-        public uint Width;
-        public uint Height;
+        private fixed float yuvToRgb[12];
+        private fixed float uvTransform[6];
+
+        public uint VisibleWidth;
+        public uint VisibleHeight;
+        private fixed uint planeWidth[2];
+        private fixed uint planeHeight[2];
+
+        public int Colorspace;
+        public int ColorRange;
+        public int ColorPrimaries;
+
+        public int Rotation;
+
+        public uint BitDepth;
+
+        public ulong FrameIndex;
+
+        public ulong SurfaceGeneration;
+
+        private fixed long planes[2];
+
+        public Vector4 YuvRow(int row)
+        {
+            fixed (float* m = yuvToRgb)
+            {
+                return new Vector4(m[row * 4], m[row * 4 + 1], m[row * 4 + 2], m[row * 4 + 3]);
+            }
+        }
+
+        public Vector4 UvRow(int row)
+        {
+            fixed (float* t = uvTransform)
+            {
+                return new Vector4(t[row * 3], t[row * 3 + 1], t[row * 3 + 2], 0f);
+            }
+        }
+
+        public IntPtr Plane(int plane)
+        {
+            fixed (long* p = planes)
+            {
+                return new IntPtr(p[plane]);
+            }
+        }
+
+        public Vector2Int PlaneSize(int plane)
+        {
+            fixed (uint* w = planeWidth)
+            fixed (uint* h = planeHeight)
+            {
+                return new Vector2Int((int)w[plane], (int)h[plane]);
+            }
+        }
+
+        public bool IsRotatedQuarterTurn => Rotation == 90 || Rotation == 270;
     }
 
-    // Snapshot of the open media's source stream parameters, captured at
-    // open time. Name fields are NUL-terminated UTF-8; unknown values are
-    // 0 / empty, Duration is -1 for realtime streams. Video fields are
-    // zero when HasVideo is false, audio fields when HasAudio is false.
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct MediaInfo
     {
@@ -123,7 +212,6 @@ namespace UUAV
 
         public bool HasAudio => hasAudio != 0;
 
-        // e.g. "h264"
         public string VideoCodec
         {
             get
@@ -135,7 +223,6 @@ namespace UUAV
             }
         }
 
-        // e.g. "yuv420p"
         public string PixelFormat
         {
             get
@@ -147,7 +234,6 @@ namespace UUAV
             }
         }
 
-        // e.g. "aac"
         public string AudioCodec
         {
             get
@@ -159,7 +245,6 @@ namespace UUAV
             }
         }
 
-        // e.g. "fltp"
         public string SampleFormat
         {
             get
@@ -172,10 +257,6 @@ namespace UUAV
         }
     }
 
-    // Snapshot of the user-facing control values: the latest pushed
-    // intents, which the playback thread applies asynchronously. A
-    // *Pending flag means that control's latest push has not been
-    // consumed by the playback thread yet.
     [StructLayout(LayoutKind.Sequential)]
     public struct ControlsState
     {
@@ -194,13 +275,28 @@ namespace UUAV
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    public struct AudioSync
+    {
+        public double MediaTime;
+        public double BasePts;
+        public double Rate;
+        public ulong Generation;
+        public ulong FramesConsumed;
+        public ulong BaseFrames;
+        public ulong SilenceCalls;
+        public uint SampleRate;
+        public uint Priming;
+        public uint HasBasis;
+        public uint Reserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     public struct Status
     {
         public ulong PlayersCount;
         private readonly byte initialized;
         public AudioOptions AudioOptions;
 
-        // allocated by the native side; release via ConsumeError
         public IntPtr DeviceRemoveReason;
 
         public bool Initialized => initialized != 0;
@@ -216,12 +312,10 @@ namespace UUAV
     {
         public ulong PlayerId;
 
-        // allocated by the native side; release via ConsumeError
         public IntPtr ErrorMessage;
 
         public bool IsOk => ErrorMessage == IntPtr.Zero;
 
-        // reads the message and frees it on the native side; call at most once
         public string? ConsumeError()
         {
             return Utf8.ConsumeCString(ref ErrorMessage);
@@ -231,12 +325,10 @@ namespace UUAV
     [StructLayout(LayoutKind.Sequential)]
     public struct ResultFFI
     {
-        // allocated by the native side; release via ConsumeError
         public IntPtr ErrorMessage;
 
         public bool IsOk => ErrorMessage == IntPtr.Zero;
 
-        // reads the message and frees it on the native side; call at most once
         public string? ConsumeError()
         {
             return Utf8.ConsumeCString(ref ErrorMessage);
@@ -247,7 +339,6 @@ namespace UUAV
     {
         private const string Lib = "uuav";
 
-        // must be called exactly once per non-null message
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void uuav_string_free(IntPtr str);
 
@@ -269,6 +360,9 @@ namespace UUAV
         public static extern void uuav_set_log_level(int level);
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void uuav_set_fetch_provider(FetchProvider? provider);
+
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void uuav_deinit();
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -283,7 +377,6 @@ namespace UUAV
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void uuav_player_free(ulong playerId);
 
-        // ---- lifecycle -------------------------------------------------
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_play(ulong playerId);
@@ -291,7 +384,6 @@ namespace UUAV
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_pause(ulong playerId);
 
-        // async! returns immediately
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern ResultFFI uuav_player_open_media_async(ulong playerId, IntPtr url);
 
@@ -308,33 +400,35 @@ namespace UUAV
             }
         }
 
-        // back to CLOSED, player reusable
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_close_media(ulong playerId);
 
-        // ---- state -----------------------------------------------------
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern UUAVState uuav_player_state(ulong playerId);
 
-        // valid from READY; may be unavailable for realtime streams
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ulong uuav_player_get_last_error(ulong playerId);
+
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_duration(ulong playerId, out double duration);
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_current_time(ulong playerId, out double time);
 
-        // the player slaves its playback to the externally provided master clock
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern byte uuav_player_audio_sync(ulong playerId, out AudioSync sync);
+
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern byte uuav_player_set_presentation_clock(
+            ulong playerId,
+            double mediaTime
+        );
+
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_assign_master_clock(
             ulong playerId,
             double currentTime
-        );
-
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern ResultFFI uuav_player_get_video_size(
-            ulong playerId,
-            out VideoSize size
         );
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -344,18 +438,21 @@ namespace UUAV
         );
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ResultFFI uuav_player_get_frame_info(
+            ulong playerId,
+            out FrameInfo info
+        );
+
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_current_controls_state(
             ulong playerId,
             out ControlsState state
         );
 
-        // ---- transport (commands: set flags, decoder thread obeys) ------
 
-        // async; coalesces repeated calls
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_seek_async(ulong playerId, double time);
 
-        // persists across url switches
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_set_looping(
             ulong playerId,
@@ -366,32 +463,17 @@ namespace UUAV
         [return: MarshalAs(UnmanagedType.U1)]
         public static extern bool uuav_player_get_looping(ulong playerId);
 
-        // Not applicable for realtime streams
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ResultFFI uuav_player_set_rate(ulong playerId, double rate);
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern double uuav_player_get_rate(ulong playerId);
 
-        // ---- video -------------------------------------------------------
 
-        // pass to GL.IssuePluginEvent / CommandBuffer.IssuePluginEvent
-        // with the player id as the event id
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr uuav_get_render_callback();
 
-        // SRV: plane 0 = Y, 1 = UV; valid from READY; recreated on resolution change
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern ResultFFI uuav_player_get_video_texture(
-            ulong playerId,
-            int plane,
-            out IntPtr texture
-        );
 
-        // ---- audio -------------------------------------------------------
-
-        // [audio] fills interleaved FLT; pads silence on underrun,
-        // never blocks; returns frames actually copied
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int uuav_player_read_audio(
             ulong playerId,
@@ -419,7 +501,6 @@ namespace UUAV
             return Encoding.UTF8.GetString(bytes, length);
         }
 
-        // reads a NUL-terminated UTF-8 string from a fixed-size buffer
         public static unsafe string FixedToString(byte* buffer, int capacity)
         {
             var length = 0;

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace UUAV
@@ -8,7 +10,6 @@ namespace UUAV
     {
         private delegate ResultFFI TimeQuery(ulong playerId, out double value);
 
-        // Cache to avoid per-call allocs
         private static readonly TimeQuery currentTimeQuery = NativeMethods.uuav_player_current_time;
         private static readonly TimeQuery durationQuery = NativeMethods.uuav_player_duration;
 
@@ -30,16 +31,12 @@ namespace UUAV
 
             public bool HasAudio;
 
-            // e.g. "h264"
             public string VideoCodec;
 
-            // e.g. "yuv420p"
             public string PixelFormat;
 
-            // e.g. "aac"
             public string AudioCodec;
 
-            // e.g. "fltp"
             public string SampleFormat;
 
             public static MediaInfo_M From(MediaInfo mediaInfo)
@@ -67,23 +64,36 @@ namespace UUAV
         private static readonly int YTexId = Shader.PropertyToID("_YTex");
         private static readonly int UVTexId = Shader.PropertyToID("_UVTex");
 
+        private static readonly int[] YuvRowIds =
+        {
+            Shader.PropertyToID("_YuvR"),
+            Shader.PropertyToID("_YuvG"),
+            Shader.PropertyToID("_YuvB"),
+        };
+
+        private static readonly int[] UvRowIds =
+        {
+            Shader.PropertyToID("_UvX"),
+            Shader.PropertyToID("_UvY"),
+        };
+
         [SerializeField] private string url = "";
         [SerializeField] private bool playOnStart;
 
-        // optional user-provided surface; auto-allocated at video size when null
         [SerializeField] private RenderTexture? targetTexture;
 
         [Header("Debug View")]
-        // immutable after Awake; 0 means creation failed and the component is inert
         [SerializeField]
         private ulong playerId;
 
         [SerializeField] private int nativeChannels;
-        [SerializeField] private VideoSize videoSize;
 
         [SerializeField] private bool enableDebugGather;
         [SerializeField] private double currentTimeDebug;
         [SerializeField] private double durationDebug;
+
+        [SerializeField] private double audioClockDebug;
+        [SerializeField] private double avOffsetDebug;
         [SerializeField] private string? nativeState;
         [SerializeField] private MediaInfo_M mediaInfo;
 
@@ -92,13 +102,43 @@ namespace UUAV
         [SerializeField] private Texture2D? yPlane;
         [SerializeField] private Texture2D? uvPlane;
         [SerializeField] private RenderTexture? runtimeSurface;
-        [SerializeField] private IntPtr nativeTexture;
+
+        private readonly Dictionary<(IntPtr Texture, int Plane), Texture2D> planeViews = new();
+
+        private FrameInfo frameInfo;
+        private ulong drawnFrame;
+        private ulong wrappedGeneration;
+
+        private long audioFramesConsumed;
+        private ulong masterClockGeneration;
+        private double masterClockBasePts;
+        private long masterClockBaseFrames;
+        private int masterClockSampleRate;
+        private bool masterClockActive;
+        private float avSyncLogAt;
+
+        private static bool audioSyncUnavailable;
 
         private static ulong playerIncrementalID;
 
         public string CurrentUrl => url;
 
         public UUAVState State => NativeMethods.uuav_player_state(playerId);
+
+        public UUAVError LastError
+        {
+            get
+            {
+                ulong code = NativeMethods.uuav_player_get_last_error(playerId);
+
+                return code switch
+                {
+                    0 => UUAVError.None,
+                    (ulong)UUAVError.DecodeFailed => UUAVError.DecodeFailed,
+                    _ => UUAVError.OpenFailed,
+                };
+            }
+        }
 
         public double CurrentTime => ReadTime(currentTimeQuery);
 
@@ -123,7 +163,14 @@ namespace UUAV
 
         public void OpenMedia(string mediaUrl)
         {
+            if (url.Length > 0)
+            {
+                UUAVFetchService.CancelUrl(url);
+            }
+
             url = mediaUrl;
+            ReleasePlaneViews();
+            masterClockActive = false;
             Check(NativeMethods.uuav_player_open_media_async(playerId, mediaUrl), "open media");
         }
 
@@ -159,6 +206,13 @@ namespace UUAV
         [ContextMenu(nameof(CloseMedia))]
         public void CloseMedia()
         {
+            if (url.Length > 0)
+            {
+                UUAVFetchService.CancelUrl(url);
+            }
+
+            ReleasePlaneViews();
+            masterClockActive = false;
             Check(NativeMethods.uuav_player_close_media(playerId), "close media");
         }
 
@@ -176,6 +230,7 @@ namespace UUAV
 
         public void Seek(double time)
         {
+            masterClockActive = false;
             Check(NativeMethods.uuav_player_seek_async(playerId, time), "seek");
         }
 
@@ -195,17 +250,6 @@ namespace UUAV
             var result = NativeMethods.uuav_player_get_media_info(playerId, out info);
             Check(result, "uuav_player_get_media_info");
             return result.IsOk;
-        }
-
-        // NOTE if long-session drift corrections become audible, derive media
-        // time from frames consumed in OnAudioFilterRead and feed that here
-        // instead of the caller's clock
-        public void AssignMasterClock(double mediaTime)
-        {
-            Check(
-                NativeMethods.uuav_player_assign_master_clock(playerId, mediaTime),
-                "assign master clock"
-            );
         }
 
         public static UUAVPlayer New()
@@ -262,6 +306,7 @@ namespace UUAV
             {
                 durationDebug = Duration;
                 currentTimeDebug = CurrentTime;
+                avOffsetDebug = currentTimeDebug - audioClockDebug;
                 nativeState = NativeMethods.uuav_player_state(playerId).ToStringNoAlloc();
 
                 if (TryGetMediaInfo(out MediaInfo m))
@@ -270,7 +315,8 @@ namespace UUAV
                 }
             }
 
-            switch (NativeMethods.uuav_player_state(playerId))
+            var state = NativeMethods.uuav_player_state(playerId);
+            switch (state)
             {
                 case UUAVState.Ready:
                 case UUAVState.Playing:
@@ -281,14 +327,17 @@ namespace UUAV
                     return;
             }
 
-            // presents the due frame into the native NV12 texture on the render
-            // thread; the blit below is enqueued after it in submission order,
-            // so it samples the freshly presented frame in the same frame
+            if (state == UUAVState.Playing)
+            {
+                FeedMasterClock();
+            }
+
             GL.IssuePluginEvent(UUAVRuntime.RenderCallback, (int)playerId);
 
-            if (RefreshVideoTexture())
+            if (RefreshVideoTexture() && frameInfo.FrameIndex != drawnFrame)
             {
                 BlitToSurface();
+                drawnFrame = frameInfo.FrameIndex;
             }
         }
 
@@ -303,6 +352,11 @@ namespace UUAV
         private void OnDestroy()
         {
             audioSource.Stop();
+
+            if (url.Length > 0)
+            {
+                UUAVFetchService.CancelUrl(url);
+            }
 
             if (playerId != 0)
             {
@@ -326,15 +380,10 @@ namespace UUAV
         }
 
 
-        // audio mixer thread. playerId is immutable, safe to read directly;
-        // a stale id after uuav_player_free is a native no-op returning 0
         private void OnAudioFilterRead(float[] data, int channels)
         {
             if (playerId == 0 || channels != nativeChannels)
             {
-                // a channel mismatch means the engine's audio config changed;
-                // renegotiation is runtime-wide, not per player,
-                // emit silence rather than misinterleaved audio
                 Array.Clear(data, 0, data.Length);
                 return;
             }
@@ -342,112 +391,165 @@ namespace UUAV
             var read = NativeMethods.uuav_player_read_audio(playerId, data, data.Length / channels);
             if (read == 0)
             {
-                // missing/freed player leaves the buffer untouched
                 Array.Clear(data, 0, data.Length);
+                return;
+            }
+
+            Interlocked.Add(ref audioFramesConsumed, read);
+        }
+
+        /// <summary>
+        /// [main thread] Feeds the audio-consumed clock to the native side as
+        /// the master: media time = basis pts + frames consumed since the
+        /// basis, at the transport rate. Holds off while no basis belongs to
+        /// the live ring generation - during open/seek/loop-wrap priming -
+        /// which is exactly when a stale value would drag the new stream's
+        /// clock back to the old stream's time.
+        /// </summary>
+        private void FeedMasterClock()
+        {
+            if (audioSyncUnavailable)
+            {
+                return;
+            }
+
+            AudioSync sync;
+            try
+            {
+                if (NativeMethods.uuav_player_audio_sync(playerId, out sync) == 0)
+                {
+                    masterClockActive = false;
+                    return;
+                }
+            }
+            catch (EntryPointNotFoundException)
+            {
+                audioSyncUnavailable = true;
+                Debug.LogWarning("[UUAV] uuav_player_audio_sync is missing; audio-master clock disabled");
+                return;
+            }
+
+            if (sync.Priming != 0 || sync.HasBasis == 0)
+            {
+                masterClockActive = false;
+                return;
+            }
+
+            if (!masterClockActive || sync.Generation != masterClockGeneration)
+            {
+                masterClockGeneration = sync.Generation;
+                masterClockBasePts = sync.BasePts;
+                masterClockBaseFrames = (long)sync.BaseFrames;
+                masterClockSampleRate = (int)sync.SampleRate;
+                masterClockActive = true;
+            }
+
+            double mediaTime = AudioMasterClock.MediaTime(
+                masterClockBasePts,
+                Interlocked.Read(ref audioFramesConsumed),
+                masterClockBaseFrames,
+                sync.Rate,
+                masterClockSampleRate
+            );
+            audioClockDebug = mediaTime;
+            NativeMethods.uuav_player_set_presentation_clock(playerId, mediaTime);
+
+            if (Time.unscaledTime >= avSyncLogAt)
+            {
+                avSyncLogAt = Time.unscaledTime + 2f;
+                double transport = CurrentTime;
+                Debug.Log(
+                    $"[UUAV] avsync player={playerId} audio={mediaTime:F3} transport={transport:F3} "
+                    + $"residual_ms={(transport - mediaTime) * 1000.0:F1} "
+                    + $"frames={Interlocked.Read(ref audioFramesConsumed)} gen={sync.Generation} sr={masterClockSampleRate}");
             }
         }
 
         private bool RefreshVideoTexture()
         {
-            var textureResult = NativeMethods.uuav_player_get_video_texture(
-                playerId,
-                0,
-                out var yTexture
-            );
-            if (textureResult.IsOk == false)
+            var infoResult = NativeMethods.uuav_player_get_frame_info(playerId, out var info);
+            if (infoResult.IsOk == false)
             {
-                // expected until the first frame is presented
-                textureResult.ConsumeError();
+                infoResult.ConsumeError();
                 return false;
             }
 
-            var uvTexture = yTexture;
-
-            // on Metal each plane is its own texture; both pointers change
-            // together on resolution change, so polling plane 0 covers both.
-            // on D3D11 native ignores the plane and returns the one resource
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            var uvResult = NativeMethods.uuav_player_get_video_texture(
-                    playerId,
-                    1,
-                    out uvTexture
-                    );
-            if (uvResult.IsOk == false)
+            if (info.SurfaceGeneration != wrappedGeneration)
             {
-                uvResult.ConsumeError();
-                return false;
-            }
-#endif
-
-            var sizeResult = NativeMethods.uuav_player_get_video_size(playerId, out var size);
-            if (sizeResult.IsOk == false)
-            {
-                sizeResult.ConsumeError();
-                return false;
+                ReleasePlaneViews();
+                wrappedGeneration = info.SurfaceGeneration;
             }
 
-            // the native texture is recreated on every resolution change,
-            // including mid-play adaptive/IDR switches, so pointer + size
-            // comparison catches first frame, re-open and mid-stream changes
-            if (
-                yTexture != nativeTexture
-                || size.Width != videoSize.Width
-                || size.Height != videoSize.Height
-            )
-            {
-                RecreatePlaneViews(yTexture, uvTexture, size);
-            }
-
-            return yPlane != null;
+            frameInfo = info;
+            yPlane = PlaneView(0, info);
+            uvPlane = PlaneView(1, info);
+            EnsureSurface(info);
+            return yPlane != null && uvPlane != null;
         }
 
-        private void RecreatePlaneViews(IntPtr yTexture, IntPtr uvTexture, VideoSize size)
+        /// <summary>
+        /// The external-texture wrapper for one published plane, created on first
+        /// sight of that native pointer and reused afterwards.
+        /// </summary>
+        private Texture2D? PlaneView(int plane, in FrameInfo info)
         {
-            ReleasePlaneViews();
-
-            var width = (int)size.Width;
-            var height = (int)size.Height;
-
-            // D3D11: one NV12 resource passed for both planes, Unity selects
-            // the plane from the view format (R8 -> Y, R8G8 -> UV).
-            // Metal: two distinct MTLTextures, wrapped as-is
-            yPlane = Texture2D.CreateExternalTexture(
-                width,
-                height,
-                TextureFormat.R8,
-                mipChain: false,
-                linear: true,
-                yTexture
-            );
-            uvPlane = Texture2D.CreateExternalTexture(
-                width / 2,
-                height / 2,
-                TextureFormat.RG16,
-                mipChain: false,
-                linear: true,
-                uvTexture
-            );
-            ConfigurePlane(yPlane);
-            ConfigurePlane(uvPlane);
-
-            if (targetTexture == null)
+            var native = info.Plane(plane);
+            if (native == IntPtr.Zero)
             {
-                if (runtimeSurface != null)
-                {
-                    runtimeSurface.Release();
-                    Destroy(runtimeSurface);
-                }
-
-                // BGRA8 group so the surface is Graphics.CopyTexture-compatible with
-                // BGRA render targets (the D3D11 output format of most video pipelines).
-                // Default read/write leaves the surface sRGB-flagged in Linear projects;
-                // CopyTexture destinations must be sRGB-flagged too, or the raw bit copy
-                // transplants gamma bytes that get sampled as linear (too bright)
-                runtimeSurface = new RenderTexture(width, height, 0, RenderTextureFormat.BGRA32);
+                return null;
             }
 
-            nativeTexture = yTexture;
-            videoSize = size;
+            var key = (native, plane);
+            if (planeViews.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var size = info.PlaneSize(plane);
+            var format = plane == 0
+                ? info.BitDepth > 8 ? TextureFormat.R16 : TextureFormat.R8
+                : info.BitDepth > 8 ? TextureFormat.RG32 : TextureFormat.RG16;
+            var view = Texture2D.CreateExternalTexture(
+                size.x,
+                size.y,
+                format,
+                mipChain: false,
+                linear: true,
+                native
+            );
+            ConfigurePlane(view);
+            planeViews[key] = view;
+            return view;
+        }
+
+        /// <summary>
+        /// Keeps the auto-allocated surface at the displayed size, which is
+        /// transposed for a quarter-turn rotation.
+        /// </summary>
+        private void EnsureSurface(in FrameInfo info)
+        {
+            if (targetTexture != null)
+            {
+                return;
+            }
+
+            var quarter = info.IsRotatedQuarterTurn;
+            var width = (int)(quarter ? info.VisibleHeight : info.VisibleWidth);
+            var height = (int)(quarter ? info.VisibleWidth : info.VisibleHeight);
+            if (runtimeSurface != null
+                && runtimeSurface.width == width
+                && runtimeSurface.height == height)
+            {
+                return;
+            }
+
+            if (runtimeSurface != null)
+            {
+                runtimeSurface.Release();
+                Destroy(runtimeSurface);
+            }
+
+            runtimeSurface = new RenderTexture(width, height, 0, RenderTextureFormat.BGRA32);
         }
 
         private void BlitToSurface()
@@ -460,33 +562,38 @@ namespace UUAV
 
             nv12Material.SetTexture(YTexId, yPlane);
             nv12Material.SetTexture(UVTexId, uvPlane);
+            for (var row = 0; row < YuvRowIds.Length; row++)
+            {
+                nv12Material.SetVector(YuvRowIds[row], frameInfo.YuvRow(row));
+            }
 
-            // script-context blits inherit whatever sRGB-write state the last
-            // render left behind; without the encode the shader's linear output
-            // lands raw in the sRGB surface and decodes too dark
+            for (var row = 0; row < UvRowIds.Length; row++)
+            {
+                nv12Material.SetVector(UvRowIds[row], frameInfo.UvRow(row));
+            }
+
             bool previousSRGBWrite = GL.sRGBWrite;
             GL.sRGBWrite = QualitySettings.activeColorSpace == ColorSpace.Linear;
             Graphics.Blit(null, surface, nv12Material);
             GL.sRGBWrite = previousSRGBWrite;
         }
 
+        /// <summary>
+        /// The wrappers are views only: Unity drops its SRVs, the native resource
+        /// is untouched.
+        /// </summary>
         private void ReleasePlaneViews()
         {
-            // wrappers only: Unity drops its SRVs, the native resource is untouched
-            if (yPlane != null)
+            foreach (var view in planeViews.Values)
             {
-                Destroy(yPlane);
-                yPlane = null;
+                Destroy(view);
             }
 
-            if (uvPlane != null)
-            {
-                Destroy(uvPlane);
-                uvPlane = null;
-            }
-
-            nativeTexture = IntPtr.Zero;
-            videoSize = default;
+            planeViews.Clear();
+            yPlane = null;
+            uvPlane = null;
+            wrappedGeneration = 0;
+            drawnFrame = 0;
         }
 
         private double ReadTime(TimeQuery query)
@@ -502,7 +609,6 @@ namespace UUAV
                 return value;
             }
 
-            // unavailable is expected (no media open / realtime stream)
             result.ConsumeError();
             return 0;
         }

@@ -1,10 +1,10 @@
 {
-    "name": "UUAV.AVProCompat",
-    "rootNamespace": "UUAV.Compat",
-    "references": [
-        "GUID:d9709898aa920584a8d1613950e6a7f5"
+    "name": "UUAV.Editor",
+    "rootNamespace": "UUAV.Editor",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
     ],
-    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
