@@ -56,6 +56,7 @@ namespace Global.AppArgs
         public const string VOICE_CHAT = "voice-chat";
         public const string NEARBY_VOICE_CHAT = "nearby-voice-chat";
         public const string DONATIONS_UI = "donations-ui";
+        public const string BUG_REPORT = "bug-report";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";

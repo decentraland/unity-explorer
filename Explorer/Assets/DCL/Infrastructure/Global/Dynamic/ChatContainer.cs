@@ -9,6 +9,7 @@ using DCL.ChatArea;
 using DCL.Communities;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Nametags;
@@ -141,6 +142,9 @@ namespace Global.Dynamic
                 new AnrDumpChatCommand(),
 #endif
             };
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport))
+                chatCommands.Add(new BugReportChatCommand(uiShellContainer.MvcManager));
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
