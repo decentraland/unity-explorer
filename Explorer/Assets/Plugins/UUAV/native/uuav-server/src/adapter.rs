@@ -1,6 +1,6 @@
 //! The IPC -> core dispatch loop. Owns the core's lifetime inside the
 //! helper: `Configure` runs `uuav_init` against the helper's own device,
-//! `Shutdown` (or a dead socket) tears everything down.
+//! `Shutdown` (or a dead channel) tears everything down.
 
 use crate::{device, state};
 use anyhow::Context as _;
@@ -11,8 +11,8 @@ use std::os::raw::c_char;
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 use uuav_core as core;
+use uuav_ipc::channel::Channel;
 use uuav_ipc::protocol::{LogSink, PlayerId, ReplyBody, ToClient, ToServer};
-use uuav_ipc::{socket, zmq};
 
 /// State-pump cadence; the client extrapolates media time between pushes.
 const PUMP_INTERVAL: Duration = Duration::from_millis(20);
@@ -27,11 +27,12 @@ const AUDIO_INTERVAL: Duration = Duration::from_millis(10);
 /// Upper bound on one pull's catch-up so a long stall can't burst-allocate.
 const AUDIO_MAX_PULL: Duration = Duration::from_millis(100);
 
-/// Socket poll granularity for the single-threaded serve loop.
-const POLL_TIMEOUT_MS: i64 = 5;
+/// Channel poll granularity for the single-threaded serve loop.
+const POLL_TIMEOUT_MS: u32 = 5;
 
 /// The core's callbacks fire from arbitrary FFmpeg/player threads; they
-/// funnel into this channel and the serve loop forwards them on the socket.
+/// funnel into this in-proc channel and the serve loop forwards them on
+/// the IPC channel.
 static FORWARD: OnceLock<Sender<(LogSink, String)>> = OnceLock::new();
 
 extern "C" fn error_sink(line: *const c_char) {
@@ -76,7 +77,7 @@ struct Serve {
 }
 
 pub fn run(
-    socket: &zmq::Socket,
+    channel: &mut Channel,
     #[cfg(target_os = "macos")] service: &str,
     #[cfg(target_os = "windows")] parent_pid: u32,
 ) -> anyhow::Result<()> {
@@ -95,11 +96,11 @@ pub fn run(
     let mut last_video = Instant::now();
 
     loop {
-        socket::poll_readable(socket, POLL_TIMEOUT_MS)?;
+        channel.poll_readable(POLL_TIMEOUT_MS)?;
 
-        while let Some(message) = socket::try_recv::<ToServer>(socket)? {
+        while let Some(message) = channel.try_recv::<ToServer>()? {
             if dispatch(
-                socket,
+                channel,
                 message,
                 &mut serve,
                 #[cfg(target_os = "macos")]
@@ -112,23 +113,23 @@ pub fn run(
             }
         }
 
-        forward_logs(socket, &rx)?;
+        forward_logs(channel, &rx)?;
 
         if last_pump.elapsed() >= PUMP_INTERVAL {
             last_pump = Instant::now();
-            pump_states(socket, &mut serve.players)?;
+            pump_states(channel, &mut serve.players)?;
         }
 
         if last_audio.elapsed() >= AUDIO_INTERVAL {
             let elapsed = last_audio.elapsed().min(AUDIO_MAX_PULL);
             last_audio = Instant::now();
-            pump_audio(socket, &mut serve, elapsed)?;
+            pump_audio(channel, &mut serve, elapsed)?;
         }
 
         if last_video.elapsed() >= VIDEO_INTERVAL {
             last_video = Instant::now();
             if let Some(video) = serve.video.as_mut() {
-                video.tick(serve.players.keys().copied(), socket);
+                video.tick(serve.players.keys().copied(), channel);
             }
         }
     }
@@ -136,7 +137,7 @@ pub fn run(
 
 /// Returns `true` on `Shutdown`.
 fn dispatch(
-    socket: &zmq::Socket,
+    channel: &mut Channel,
     message: ToServer,
     serve: &mut Serve,
     #[cfg(target_os = "macos")] service: &str,
@@ -164,7 +165,7 @@ fn dispatch(
                 serve.video = Some(pump.map_err(|e| e.to_string())?);
                 Ok(())
             });
-            reply(socket, corr, result.map(|()| ReplyBody::Unit))?;
+            reply(channel, corr, result.map(|()| ReplyBody::Unit))?;
         }
         ToServer::SetLogLevel { level } => core::uuav_set_log_level(level),
         ToServer::UpdateAudioOut { corr, audio } => {
@@ -177,11 +178,11 @@ fn dispatch(
             if result.is_ok() {
                 serve.audio = Some(audio);
             }
-            reply(socket, corr, result.map(|()| ReplyBody::Unit))?;
+            reply(channel, corr, result.map(|()| ReplyBody::Unit))?;
         }
         ToServer::PlayerNew { corr } => {
             let result = player_new(players);
-            reply(socket, corr, result.map(ReplyBody::PlayerId))?;
+            reply(channel, corr, result.map(ReplyBody::PlayerId))?;
         }
         ToServer::PlayerFree { id } => {
             core::uuav_player_free(id);
@@ -196,37 +197,37 @@ fn dispatch(
                 // new media, new info: re-announce once the core has it
                 tracking.media_info_sent = false;
             }
-            report_command_error(socket, id, "open media", outcome)?;
+            report_command_error(channel, id, "open media", outcome)?;
         }
         ToServer::CloseMedia { id } => {
             let outcome = state::consume_result(core::uuav_player_close_media(id));
-            report_command_error(socket, id, "close media", outcome)?;
+            report_command_error(channel, id, "close media", outcome)?;
         }
         ToServer::Play { id } => {
             let outcome = state::consume_result(core::uuav_player_play(id));
-            report_command_error(socket, id, "play", outcome)?;
+            report_command_error(channel, id, "play", outcome)?;
         }
         ToServer::Pause { id } => {
             let outcome = state::consume_result(core::uuav_player_pause(id));
-            report_command_error(socket, id, "pause", outcome)?;
+            report_command_error(channel, id, "pause", outcome)?;
         }
         ToServer::Seek { id, time } => {
             let outcome = state::consume_result(core::uuav_player_seek_async(id, time));
-            report_command_error(socket, id, "seek", outcome)?;
+            report_command_error(channel, id, "seek", outcome)?;
         }
         ToServer::SetLooping { id, looping } => {
             let outcome =
                 state::consume_result(core::uuav_player_set_looping(id, u8::from(looping)));
-            report_command_error(socket, id, "set looping", outcome)?;
+            report_command_error(channel, id, "set looping", outcome)?;
         }
         ToServer::SetRate { id, rate } => {
             let outcome = state::consume_result(core::uuav_player_set_rate(id, rate));
-            report_command_error(socket, id, "set rate", outcome)?;
+            report_command_error(channel, id, "set rate", outcome)?;
         }
         ToServer::AssignMasterClock { id, time } => {
             let outcome =
                 state::consume_result(core::uuav_player_assign_master_clock(id, time));
-            report_command_error(socket, id, "assign master clock", outcome)?;
+            report_command_error(channel, id, "assign master clock", outcome)?;
         }
         ToServer::TextureSetAck { id, generation } => {
             if let Some(video) = serve.video.as_mut() {
@@ -289,35 +290,37 @@ fn open_media(id: PlayerId, url: &str) -> Result<(), String> {
 /// Fire-and-forget commands report failures through the player error event
 /// (the client routes it into the same C# error callback as today).
 fn report_command_error(
-    socket: &zmq::Socket,
+    channel: &mut Channel,
     id: PlayerId,
     command: &str,
     outcome: Result<(), String>,
 ) -> anyhow::Result<()> {
     if let Err(message) = outcome {
-        socket::send(
-            socket,
-            &ToClient::PlayerError {
+        channel
+            .send(&ToClient::PlayerError {
                 id: Some(id),
                 message: format!("uuav {command} failed: {message}"),
-            },
-        )
-        .context("send PlayerError")?;
+            })
+            .context("send PlayerError")?;
     }
     Ok(())
 }
 
 fn reply(
-    socket: &zmq::Socket,
+    channel: &mut Channel,
     corr: u32,
     result: Result<ReplyBody, String>,
 ) -> anyhow::Result<()> {
-    socket::send(socket, &ToClient::Reply { corr, result }).context("send Reply")
+    channel
+        .send(&ToClient::Reply { corr, result })
+        .context("send Reply")
 }
 
-fn forward_logs(socket: &zmq::Socket, rx: &Receiver<(LogSink, String)>) -> anyhow::Result<()> {
+fn forward_logs(channel: &mut Channel, rx: &Receiver<(LogSink, String)>) -> anyhow::Result<()> {
     while let Ok((sink, line)) = rx.try_recv() {
-        socket::send(socket, &ToClient::Log { sink, line }).context("send Log")?;
+        channel
+            .send(&ToClient::Log { sink, line })
+            .context("send Log")?;
     }
     Ok(())
 }
@@ -326,7 +329,7 @@ fn forward_logs(socket: &zmq::Socket, rx: &Receiver<(LogSink, String)>) -> anyho
 /// forwards non-empty reads; the pull cadence stands in for Unity's audio
 /// thread, so the core's own drift correction keeps running unchanged.
 fn pump_audio(
-    socket: &zmq::Socket,
+    channel: &mut Channel,
     serve: &mut Serve,
     elapsed: Duration,
 ) -> anyhow::Result<()> {
@@ -351,29 +354,29 @@ fn pump_audio(
         let Some(payload) = serve.audio_scratch.get(..filled) else {
             continue;
         };
-        socket::send(
-            socket,
-            &ToClient::AudioPacket {
-                id,
-                samples: payload.to_vec(),
-            },
-        )?;
+        channel.send(&ToClient::AudioPacket {
+            id,
+            samples: payload.to_vec(),
+        })?;
     }
     Ok(())
 }
 
 fn pump_states(
-    socket: &zmq::Socket,
+    channel: &mut Channel,
     players: &mut HashMap<PlayerId, PlayerTracking>,
 ) -> anyhow::Result<()> {
     for (&id, tracking) in players.iter_mut() {
-        socket::send(socket, &ToClient::State(state::snapshot(id))).context("send State")?;
+        channel
+            .send(&ToClient::State(state::snapshot(id)))
+            .context("send State")?;
 
         if !tracking.media_info_sent
             && let Some(info) = state::media_info(id)
         {
             tracking.media_info_sent = true;
-            socket::send(socket, &ToClient::MediaInfo { id, info })
+            channel
+                .send(&ToClient::MediaInfo { id, info })
                 .context("send MediaInfo")?;
         }
     }

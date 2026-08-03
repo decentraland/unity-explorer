@@ -1,7 +1,7 @@
 //! The channel to the helper: synchronous handshake on the init thread,
-//! then a single IO thread owning the zmq socket — inbound messages route
+//! then a single IO thread owning the OS channel — inbound messages route
 //! to the registry/callbacks, outbound messages arrive over an in-proc
-//! channel (zmq sockets must not be shared across threads).
+//! channel (the channel is single-owner).
 
 use crate::registry::{self, Registry};
 use anyhow::{Context as _, Result, bail};
@@ -10,12 +10,12 @@ use dashmap::DashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, Ordering};
 use std::time::Duration;
+use uuav_ipc::channel::{Channel, ChildHandoff};
 use uuav_ipc::protocol::{ABI_VERSION, Corr, LogSink, ReplyBody, ToClient, ToServer};
-use uuav_ipc::{socket, zmq};
 
-const HANDSHAKE_TIMEOUT_MS: i32 = 5000;
+const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 const REPLY_TIMEOUT: Duration = Duration::from_secs(5);
-const IO_POLL_TIMEOUT_MS: i64 = 5;
+const IO_POLL_TIMEOUT_MS: u32 = 5;
 
 /// The runtime's single lifecycle state, shared by the connection(s), the
 /// IO threads, the callback sinks, and the recovery worker. States move
@@ -89,26 +89,25 @@ pub struct Connection {
 }
 
 impl Connection {
-    /// Binds, waits for the helper's `Hello`, verifies token + ABI, then
-    /// hands the socket to the IO thread. `spawn_after_bind` is called with
-    /// the resolved endpoint (the helper is spawned between bind and recv).
+    /// Creates both channel ends, waits for the helper's `Hello`, verifies
+    /// token + ABI, then hands the channel to the IO thread. `spawn` is
+    /// called with the helper's end (the helper is spawned between pair
+    /// and recv); a helper that dies before Hello fails the handshake
+    /// immediately via EOF rather than burning the full timeout.
     pub fn establish(
         token: &str,
-        spawn_after_bind: impl FnOnce(&str) -> Result<()>,
+        spawn: impl FnOnce(ChildHandoff) -> Result<()>,
         lifecycle: Arc<LifecycleCell>,
         registry: Arc<Registry>,
         sinks: Arc<dyn EventSinks>,
     ) -> Result<Self> {
-        let context = zmq::Context::new();
-        let sock = socket::dealer(&context)?;
-        sock.bind(&socket::bind_endpoint(token))
-            .context("bind uuav endpoint")?;
-        let endpoint = socket::bound_endpoint(&sock)?;
+        let (mut channel, handoff) = Channel::pair(token).context("create uuav channel")?;
 
-        spawn_after_bind(&endpoint)?;
+        spawn(handoff)?;
 
-        sock.set_rcvtimeo(HANDSHAKE_TIMEOUT_MS)?;
-        let hello: ToClient = socket::recv(&sock).context("helper did not say Hello")?;
+        let hello: ToClient = channel
+            .recv_timeout(HANDSHAKE_TIMEOUT)
+            .context("helper did not say Hello")?;
         let ToClient::Hello { token: got, abi, pid: _ } = hello else {
             bail!("unexpected first message from helper");
         };
@@ -118,7 +117,6 @@ impl Connection {
         if abi != ABI_VERSION {
             bail!("helper ABI {abi} does not match client {ABI_VERSION} (stale uuav-helper?)");
         }
-        sock.set_rcvtimeo(-1)?;
 
         let (outbound, outbound_rx) = unbounded::<ToServer>();
         let pending: Arc<DashMap<Corr, Sender<Result<ReplyBody, String>>>> =
@@ -126,7 +124,7 @@ impl Connection {
         let alive = Arc::new(AtomicBool::new(true));
 
         io_thread(
-            sock,
+            channel,
             outbound_rx,
             Arc::clone(&pending),
             Arc::clone(&lifecycle),
@@ -202,7 +200,7 @@ impl Connection {
 }
 
 fn io_thread(
-    sock: zmq::Socket,
+    mut channel: Channel,
     outbound: Receiver<ToServer>,
     pending: Arc<DashMap<Corr, Sender<Result<ReplyBody, String>>>>,
     lifecycle: Arc<LifecycleCell>,
@@ -215,36 +213,36 @@ fn io_thread(
         .spawn(move || {
             loop {
                 // flush what was queued on planned shutdown (incl. the
-                // Shutdown frame; the socket's bounded linger covers the
-                // wire transmission)
+                // Shutdown frame; completed sends sit in the kernel
+                // buffer, which outlives our end of the channel)
                 if lifecycle.get() == Lifecycle::ShutDown {
                     for message in outbound.try_iter() {
-                        if socket::send(&sock, &message).is_err() {
+                        if channel.send(&message).is_err() {
                             break;
                         }
                     }
                     return;
                 }
-                // retired: the helper behind this socket is gone; nothing
+                // retired: the helper behind this channel is gone; nothing
                 // left to flush to
                 if !alive.load(Ordering::Acquire) {
                     return;
                 }
 
                 for message in outbound.try_iter() {
-                    if socket::send(&sock, &message).is_err() {
+                    if channel.send(&message).is_err() {
                         return;
                     }
                 }
 
-                match socket::poll_readable(&sock, IO_POLL_TIMEOUT_MS) {
+                match channel.poll_readable(IO_POLL_TIMEOUT_MS) {
                     Ok(true) => {}
                     Ok(false) => continue,
                     Err(_) => return,
                 }
 
                 loop {
-                    match socket::try_recv::<ToClient>(&sock) {
+                    match channel.try_recv::<ToClient>() {
                         Ok(Some(message)) => {
                             route(message, &pending, &registry, sinks.as_ref());
                         }

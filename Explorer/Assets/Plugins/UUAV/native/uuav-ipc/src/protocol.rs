@@ -1,6 +1,6 @@
 //! Wire protocol between the `uuav` client dylib (inside Unity) and the
 //! `uuav-helper` process. Messages are postcard-serialized enums, one
-//! message per zmq frame.
+//! message per channel frame.
 
 use serde::{Deserialize, Serialize};
 

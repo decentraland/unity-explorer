@@ -1,4 +1,5 @@
-//! Out-of-band mach channel for IOSurface port transfer (zmq cannot carry
+//! Out-of-band mach channel for IOSurface port transfer (the socketpair
+//! control channel cannot carry
 //! mach port rights).
 //!
 //! The client (Unity side) owns the receive right and registers it in the
@@ -46,7 +47,7 @@ unsafe extern "C" {
 }
 
 /// Identifies which shared-texture cell a transferred surface belongs to;
-/// pairs with the zmq `TextureSet` announcement.
+/// pairs with the control-channel `TextureSet` announcement.
 #[derive(Clone, Copy, Debug)]
 pub struct SurfaceTag {
     pub player: u64,

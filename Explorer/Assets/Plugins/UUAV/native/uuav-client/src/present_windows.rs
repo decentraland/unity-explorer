@@ -78,7 +78,7 @@ pub struct PlayerVideo {
 unsafe impl Send for PlayerVideo {}
 
 impl PlayerVideo {
-    /// The zmq `TextureSet` announcement for a generation.
+    /// The control-channel `TextureSet` announcement for a generation.
     pub fn store_texture_set(
         &mut self,
         generation: u32,

@@ -1,6 +1,7 @@
 //! `uuav-helper`: hosts the unchanged uuav core in its own process and
 //! adapts the IPC protocol onto the core's C API. Spawned by the `uuav`
-//! client dylib with `--endpoint <zmq> --token <uuid> --parent-pid <pid>`.
+//! client dylib with `--channel <inherited handle/fd> --token <uuid>
+//! --parent-pid <pid>`.
 
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 #![deny(
@@ -50,10 +51,11 @@ mod watch;
 compile_error!("uuav-helper supports Windows (D3D11) and macOS (Metal) only");
 
 use anyhow::{Context as _, bail};
-use uuav_ipc::{protocol, socket, zmq};
+use uuav_ipc::protocol;
 
 struct Args {
-    endpoint: String,
+    /// The inherited channel end: handle value (Windows) / fd (macOS).
+    channel: String,
     token: String,
     parent_pid: u32,
     /// The client's registered mach service for IOSurface port transfer.
@@ -62,7 +64,7 @@ struct Args {
 }
 
 fn parse_args() -> anyhow::Result<Args> {
-    let mut endpoint = None;
+    let mut channel = None;
     let mut token = None;
     let mut parent_pid = None;
     #[cfg(target_os = "macos")]
@@ -75,7 +77,7 @@ fn parse_args() -> anyhow::Result<Args> {
                 .with_context(|| format!("missing value for {flag}"))
         };
         match flag.as_str() {
-            "--endpoint" => endpoint = Some(value()?),
+            "--channel" => channel = Some(value()?),
             "--token" => token = Some(value()?),
             "--parent-pid" => parent_pid = Some(value()?.parse::<u32>()?),
             #[cfg(target_os = "macos")]
@@ -85,7 +87,7 @@ fn parse_args() -> anyhow::Result<Args> {
     }
 
     Ok(Args {
-        endpoint: endpoint.context("--endpoint is required")?,
+        channel: channel.context("--channel is required")?,
         token: token.context("--token is required")?,
         parent_pid: parent_pid.context("--parent-pid is required")?,
         #[cfg(target_os = "macos")]
@@ -99,21 +101,17 @@ fn main() -> anyhow::Result<()> {
     // If the parent dies for any reason (crash, force-quit), never outlive it.
     watch::exit_when_parent_dies(args.parent_pid)?;
 
-    let context = zmq::Context::new();
-    let socket = socket::dealer(&context)?;
-    socket.connect(&args.endpoint).context("connect endpoint")?;
+    let mut channel =
+        uuav_ipc::channel::Channel::from_arg(&args.channel).context("adopt inherited channel")?;
 
-    socket::send(
-        &socket,
-        &protocol::ToClient::Hello {
-            token: args.token,
-            abi: protocol::ABI_VERSION.to_owned(),
-            pid: std::process::id(),
-        },
-    )?;
+    channel.send(&protocol::ToClient::Hello {
+        token: args.token,
+        abi: protocol::ABI_VERSION.to_owned(),
+        pid: std::process::id(),
+    })?;
 
     adapter::run(
-        &socket,
+        &mut channel,
         #[cfg(target_os = "macos")]
         &args.service,
         #[cfg(target_os = "windows")]

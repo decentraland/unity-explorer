@@ -6,14 +6,14 @@ A video/audio player for Unity built on a native Rust core and FFmpeg, with hard
   - `src/` (**uuav-core**) - the decode/playback core, linked into the helper
   - `uuav-client/` - compiled to `uuav.dll` / `libuuav.dylib` (`cdylib`, C ABI) - the middleware Unity loads
   - `uuav-server/` - compiled to `uuav-helper(.exe)` - the process that hosts the core
-  - `uuav-ipc/` - the wire protocol + zmq/mach channel plumbing shared by both
+  - `uuav-ipc/` - the wire protocol + native channel/mach plumbing shared by both
 - `Packages/UUAV/` - Unity package (`com.nickkhalow.uuav`) with the C# bindings and the `UUAVPlayer` component
 
 ## How it works
 
 The C# side is a thin binding layer and is identical to the old in-process design. `UUAVRuntime` initializes the runtime once at startup: it passes a probe texture (that's how the client captures Unity's graphics device - D3D11 or Metal), the audio output format and error/log callbacks. Everything else goes through `UUAVPlayer`, a MonoBehaviour that talks to a player by id.
 
-Under the hood the `uuav` library Unity loads is a client. At init it binds a zmq DEALER socket (loopback TCP on Windows, a Unix socket on macOS), spawns `uuav-helper` from its own folder, and hands it the endpoint plus a session token. The helper creates its **own** GPU device on the same adapter (matched by LUID on Windows / registry id on macOS), initializes the unchanged uuav core against it, and from then on adapts IPC messages onto the core's C API:
+Under the hood the `uuav` library Unity loads is a client. At init it creates a duplex OS channel — a message-mode named pipe on Windows (overlapped I/O), an `AF_UNIX` socketpair on macOS — spawns `uuav-helper` from its own folder, and hands it its end of the channel by inheritance: on Windows the pipe handle is the only handle passed, via an explicit `PROC_THREAD_ATTRIBUTE_HANDLE_LIST`; on macOS the fd number rides argv. A session token in the first message guards against a stale helper generation. The helper creates its **own** GPU device on the same adapter (matched by LUID on Windows / registry id on macOS), initializes the unchanged uuav core against it, and from then on adapts IPC messages onto the core's C API:
 
 - **Commands** (open/play/pause/seek/...) are forwarded as fire-and-forget messages; only init-time calls block on replies.
 - **State** is pushed back at ~50 Hz per player; every per-frame C# getter is served from that local cache (`current_time` extrapolates between snapshots), so getters never touch the wire.
@@ -40,7 +40,7 @@ See `Packages/UUAV/Example/UIExamplePlayer.cs` for a working example.
 
 ### Headless smoke test
 
-`native/uuav-client/examples/smoke.rs` exercises the whole pipeline without Unity: it creates a real GPU probe texture, walks the C ABI like `UUAVRuntime`/`UUAVPlayer` do, expects a stream to reach PLAYING with video pointers and audible audio, then **kills the helper and asserts playback self-recovers**. Build the workspace, copy `uuav-helper(.exe)` (and on Windows the FFmpeg DLLs + `libzmq.dll` from the deployed plugin folder) next to the example binary, and `cargo run -p uuav-client --example smoke [media-url]`.
+`native/uuav-client/examples/smoke.rs` exercises the whole pipeline without Unity: it creates a real GPU probe texture, walks the C ABI like `UUAVRuntime`/`UUAVPlayer` do, expects a stream to reach PLAYING with video pointers and audible audio, then **kills the helper and asserts playback self-recovers**. Build the workspace, copy `uuav-helper(.exe)` (and on Windows the FFmpeg DLLs from the deployed plugin folder) next to the example binary, and `cargo run -p uuav-client --example smoke [media-url]`.
 
 ## Why Rust
 
@@ -55,18 +55,17 @@ The other reason is reusability. The output is a plain C-ABI DLL with nothing en
 Prerequisites:
 
 - Rust toolchain with the GNU target: `rustup target add x86_64-pc-windows-gnu`
-- MSYS2 with the mingw64 toolchain at `C:\msys64` (the linker is pinned to `C:\msys64\mingw64\bin\gcc.exe` in `native/.cargo/config.toml`); libzmq additionally needs `pacman -S mingw-w64-x86_64-cmake`
+- MSYS2 with the mingw64 toolchain at `C:\msys64` (the linker is pinned to `C:\msys64\mingw64\bin\gcc.exe` in `native/.cargo/config.toml`)
 - FFmpeg **8.1** development files (headers + import libs + runtime DLLs) in `native/.third_party/ffmpeg/`. Use the [BtbN](https://github.com/BtbN/FFmpeg-Builds/releases) **LGPL shared** win64 build for release 8.1 — the DLL majors must be avcodec **62** / avutil **60** (see Runtime deployment). `FFMPEG_DIR` already points there via `native/.cargo/config.toml`.
 
 Then:
 
 ```bash
 cd native
-./scripts/build-libzmq.sh   # once: shared libzmq into .third_party/libzmq (self-contained, static gcc/stdc++ runtimes)
 ./build.sh
 ```
 
-`build.sh` builds the workspace for `x86_64-pc-windows-gnu` and deploys `uuav.dll`, `uuav-helper.exe`, `libzmq.dll` and the four FFmpeg runtime DLLs the helper links into `Packages/UUAV/Runtime/Plugins/x86_64/` — the runtime DLLs come from the same `.third_party/ffmpeg` the build linked against, so the majors can never drift apart.
+`build.sh` builds the workspace for `x86_64-pc-windows-gnu` and deploys `uuav.dll`, `uuav-helper.exe` and the four FFmpeg runtime DLLs the helper links into `Packages/UUAV/Runtime/Plugins/x86_64/` — the runtime DLLs come from the same `.third_party/ffmpeg` the build linked against, so the majors can never drift apart.
 
 ### macOS (universal: Apple Silicon + Intel)
 
@@ -76,18 +75,17 @@ Prerequisites:
 
 - Xcode (or the Command Line Tools) for clang, Metal frameworks and `codesign`
 - Rust toolchain with both targets: `rustup target add aarch64-apple-darwin x86_64-apple-darwin`
-- `brew install nasm cmake` (nasm assembles the x86_64 SIMD kernels; cmake builds libzmq)
+- `brew install nasm` (nasm assembles the x86_64 SIMD kernels)
 
-FFmpeg and libzmq are built from source once:
+FFmpeg is built from source once:
 
 ```bash
 cd native
 ./scripts/build-ffmpeg-macos.sh   # clones FFmpeg n8.1, LGPL shared universal build into .third_party/ffmpeg
-./scripts/build-libzmq.sh         # universal shared libzmq into .third_party/libzmq
 ./build.sh
 ```
 
-All scripts produce fat binaries merged with `lipo`. `build.sh` copies `libuuav.dylib`, `uuav-helper`, `libzmq.5.dylib` and the seven FFmpeg dylibs into `Packages/UUAV/Runtime/Plugins/macOS/`, ad-hoc code-signs everything (mandatory on arm64) and ends by running `doctor-libs.sh`, which fails the build if any deployed dylib is not universal.
+All scripts produce fat binaries merged with `lipo`. `build.sh` copies `libuuav.dylib`, `uuav-helper` and the seven FFmpeg dylibs into `Packages/UUAV/Runtime/Plugins/macOS/`, ad-hoc code-signs everything (mandatory on arm64) and ends by running `doctor-libs.sh`, which fails the build if any deployed dylib is not universal.
 
 Dylib loading needs no `install_name_tool` post-processing: FFmpeg is configured with `--install-name-dir='@rpath'`, and both `libuuav.dylib` and `uuav-helper` carry an `LC_RPATH @loader_path` entry (set in `native/.cargo/config.toml`), so the whole set resolves from the plugin folder - in the editor and in a built player (`Contents/PlugIns/`). Verify with `otool -L`.
 
@@ -98,7 +96,6 @@ Everything ships in one folder — `Packages/UUAV/Runtime/Plugins/x86_64/` in-pr
 ```
 uuav.dll            # the client Unity loads (C ABI)
 uuav-helper.exe     # the decode process, spawned by uuav.dll from its own folder
-libzmq.dll          # IPC transport, linked by both (self-contained build)
 avcodec-62.dll      # FFmpeg 8.1 runtime, linked by the helper
 avformat-62.dll
 avutil-60.dll
@@ -108,7 +105,7 @@ swresample-6.dll
 Notes:
 
 - The FFmpeg majors (avcodec **62**, avformat **62**, avutil **60**, swresample **6**) are tied to the FFmpeg 8.1 release and must match what the helper linked — `build.sh` deploys them from `.third_party/ffmpeg/bin` for exactly that reason. A different FFmpeg line ships differently-named DLLs that the helper won't load; keep `.third_party/ffmpeg` and `ffmpeg-sys-next = "8.1.0"` in `native/Cargo.toml` in lockstep.
-- avfilter/avdevice/swscale and the old support-DLL set (bz2/iconv/lzma/zlib/winpthread) are gone on purpose: the helper's import closure is exactly the four DLLs above (NV12-only pipeline), the BtbN shared build links its support libs statically, and both Rust binaries and the libzmq build are self-contained. If a DLL is ever missing on a user machine the helper dies at load — watch for the "uuav helper terminated" error with a loader exit code.
+- avfilter/avdevice/swscale and the old support-DLL set (bz2/iconv/lzma/zlib/winpthread) are gone on purpose: the helper's import closure is exactly the four DLLs above (NV12-only pipeline), the BtbN shared build links its support libs statically, and both Rust binaries are self-contained (IPC uses OS primitives — no transport library ships at all). If a DLL is ever missing on a user machine the helper dies at load — watch for the "uuav helper terminated" error with a loader exit code.
 - FFmpeg is used under LGPL as a dynamically-linked shared library; see the license shipped with the BtbN build.
 
 On macOS the equivalent set lives in `Packages/UUAV/Runtime/Plugins/macOS/` (deployed by `build.sh`; majors from the FFmpeg n8.1 source build):
@@ -116,7 +113,6 @@ On macOS the equivalent set lives in `Packages/UUAV/Runtime/Plugins/macOS/` (dep
 ```
 libuuav.dylib
 uuav-helper
-libzmq.5.dylib
 libavcodec.62.dylib
 libavdevice.62.dylib
 libavfilter.11.dylib

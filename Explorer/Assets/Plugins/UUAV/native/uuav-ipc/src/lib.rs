@@ -8,19 +8,18 @@
     clippy::todo,
     clippy::dbg_macro
 )]
-// doc_markdown: insists on backticks around the word "FFmpeg" in prose,
-// same allowance as the core crate
+// doc_markdown: insists on backticks around the word "FFmpeg" in prose;
+// borrow_as_ptr: OS out-params are pervasive in the channel FFI — same
+// allowances as the core and server crates
 #![allow(
     clippy::missing_errors_doc,
     clippy::must_use_candidate,
-    clippy::doc_markdown
+    clippy::doc_markdown,
+    clippy::borrow_as_ptr
 )]
 
+pub mod channel;
 pub mod protocol;
-pub mod socket;
 
 #[cfg(target_os = "macos")]
 pub mod mach_channel;
-
-// single place that pins the zmq version/features for every crate
-pub use zmq;

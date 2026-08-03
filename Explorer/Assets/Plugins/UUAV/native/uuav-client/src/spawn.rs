@@ -1,34 +1,231 @@
 //! Locates and spawns the `uuav-helper` executable that ships next to this
 //! dylib (same directory: that is also how the FFmpeg libraries resolve for
 //! the helper, via `@loader_path` rpath on macOS / DLL search on Windows).
+//!
+//! The helper's channel end travels by inheritance: on Windows a raw
+//! `CreateProcessW` with a `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` restricts
+//! inheritance to exactly the pipe handle; on macOS the socketpair fd is
+//! simply left non-cloexec. Either way the parent's copy closes right
+//! after the spawn (the [`ChildHandoff`] drop), so helper death is
+//! observable as EOF on the channel.
 
 use anyhow::{Context as _, Result};
 use std::path::PathBuf;
-use std::process::{Child, Command};
+use uuav_ipc::channel::ChildHandoff;
 
 #[cfg(target_os = "macos")]
 const HELPER_FILE: &str = "uuav-helper";
 #[cfg(target_os = "windows")]
 const HELPER_FILE: &str = "uuav-helper.exe";
 
-pub fn spawn_helper(endpoint: &str, token: &str) -> Result<Child> {
+#[cfg(target_os = "macos")]
+pub fn spawn_helper(handoff: ChildHandoff, token: &str) -> Result<HelperChild> {
     let path = helper_path()?;
-    let mut command = Command::new(&path);
-    command
-        .arg("--endpoint")
-        .arg(endpoint)
+    let child = std::process::Command::new(&path)
+        .arg("--channel")
+        .arg(handoff.arg())
         .arg("--token")
         .arg(token)
         .arg("--parent-pid")
-        .arg(std::process::id().to_string());
-    // the client-registered mach service the helper sends IOSurface ports to
-    #[cfg(target_os = "macos")]
-    command
+        .arg(std::process::id().to_string())
+        // the client-registered mach service the helper sends IOSurface
+        // ports to
         .arg("--service")
-        .arg(uuav_ipc::mach_channel::service_name(token));
-    command
+        .arg(uuav_ipc::mach_channel::service_name(token))
         .spawn()
-        .with_context(|| format!("failed to spawn {}", path.display()))
+        .with_context(|| format!("failed to spawn {}", path.display()))?;
+    drop(handoff);
+    Ok(HelperChild(child))
+}
+
+/// The spawned helper process. Same trio the recovery worker and deinit
+/// used on `std::process::Child`; on Windows it wraps the raw process
+/// handle because the spawn itself is a raw `CreateProcessW`.
+#[cfg(target_os = "macos")]
+pub struct HelperChild(std::process::Child);
+
+#[cfg(target_os = "macos")]
+impl HelperChild {
+    pub fn try_wait(&mut self) -> Result<Option<HelperExitStatus>> {
+        Ok(self
+            .0
+            .try_wait()
+            .context("poll helper process")?
+            .map(HelperExitStatus))
+    }
+
+    pub fn kill(&mut self) {
+        _ = self.0.kill();
+    }
+
+    pub fn wait(&mut self) {
+        _ = self.0.wait();
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub struct HelperExitStatus(std::process::ExitStatus);
+
+#[cfg(target_os = "macos")]
+impl std::fmt::Display for HelperExitStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn spawn_helper(handoff: ChildHandoff, token: &str) -> Result<HelperChild> {
+    use std::os::windows::ffi::OsStrExt as _;
+    use windows::Win32::System::Threading::{
+        CREATE_NO_WINDOW, CreateProcessW, DeleteProcThreadAttributeList,
+        EXTENDED_STARTUPINFO_PRESENT, InitializeProcThreadAttributeList,
+        LPPROC_THREAD_ATTRIBUTE_LIST, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, PROCESS_INFORMATION,
+        STARTUPINFOEXW, UpdateProcThreadAttribute,
+    };
+    use windows::core::{PCWSTR, PWSTR};
+
+    let path = helper_path()?;
+
+    // all values are decimal digits / uuid hex, so only the exe path
+    // needs quoting
+    let command_line = format!(
+        "\"{}\" --channel {} --token {token} --parent-pid {}",
+        path.display(),
+        handoff.arg(),
+        std::process::id(),
+    );
+    let application: Vec<u16> = path
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let mut command_line: Vec<u16> = command_line
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
+
+    // attribute list restricting inheritance to exactly the pipe handle
+    // (bInheritHandles must be TRUE for the list to apply, and the list
+    // keeps every other inheritable handle out of the helper)
+    let mut size = 0usize;
+    _ = unsafe { InitializeProcThreadAttributeList(None, 1, None, &mut size) };
+    anyhow::ensure!(size > 0, "proc-thread attribute list size query failed");
+    let mut backing = vec![0u8; size];
+    let list = LPPROC_THREAD_ATTRIBUTE_LIST(backing.as_mut_ptr().cast());
+    unsafe { InitializeProcThreadAttributeList(Some(list), 1, None, &mut size) }
+        .context("initialize proc-thread attribute list")?;
+
+    let inherited = [handoff.raw_handle()];
+    let spawned = unsafe {
+        UpdateProcThreadAttribute(
+            list,
+            0,
+            PROC_THREAD_ATTRIBUTE_HANDLE_LIST as usize,
+            Some(inherited.as_ptr().cast()),
+            std::mem::size_of_val(&inherited),
+            None,
+            None,
+        )
+        .context("set inherited handle list")
+        .and_then(|()| {
+            let startup = STARTUPINFOEXW {
+                StartupInfo: windows::Win32::System::Threading::STARTUPINFOW {
+                    cb: u32::try_from(std::mem::size_of::<STARTUPINFOEXW>())
+                        .context("STARTUPINFOEXW size")?,
+                    ..Default::default()
+                },
+                lpAttributeList: list,
+            };
+            let mut process_info = PROCESS_INFORMATION::default();
+            CreateProcessW(
+                PCWSTR(application.as_ptr()),
+                Some(PWSTR(command_line.as_mut_ptr())),
+                None,
+                None,
+                true,
+                EXTENDED_STARTUPINFO_PRESENT | CREATE_NO_WINDOW,
+                None,
+                PCWSTR::null(),
+                &startup.StartupInfo,
+                &mut process_info,
+            )
+            .with_context(|| format!("failed to spawn {}", path.display()))?;
+            Ok(process_info)
+        })
+    };
+    unsafe { DeleteProcThreadAttributeList(list) };
+    // parent's copy of the helper's pipe end closes here (also on the
+    // error path): helper death is observable as a broken pipe
+    drop(handoff);
+
+    let process_info = spawned?;
+    unsafe { _ = windows::Win32::Foundation::CloseHandle(process_info.hThread) };
+    Ok(HelperChild {
+        process: process_info.hProcess,
+    })
+}
+
+#[cfg(target_os = "windows")]
+pub struct HelperChild {
+    process: windows::Win32::Foundation::HANDLE,
+}
+
+// a process handle is a raw kernel handle; the child is single-owner
+// (Client.child behind a mutex)
+#[cfg(target_os = "windows")]
+#[allow(clippy::non_send_fields_in_send_ty)]
+unsafe impl Send for HelperChild {}
+
+#[cfg(target_os = "windows")]
+impl HelperChild {
+    pub fn try_wait(&mut self) -> Result<Option<HelperExitStatus>> {
+        use windows::Win32::Foundation::{WAIT_OBJECT_0, WAIT_TIMEOUT};
+        use windows::Win32::System::Threading::{GetExitCodeProcess, WaitForSingleObject};
+
+        match unsafe { WaitForSingleObject(self.process, 0) } {
+            WAIT_OBJECT_0 => {
+                let mut code = 0u32;
+                unsafe { GetExitCodeProcess(self.process, &mut code) }
+                    .context("read helper exit code")?;
+                Ok(Some(HelperExitStatus(code)))
+            }
+            WAIT_TIMEOUT => Ok(None),
+            _ => Err(windows::core::Error::from_win32()).context("poll helper process"),
+        }
+    }
+
+    pub fn kill(&mut self) {
+        // already-dead processes report access errors; either way the
+        // subsequent wait() observes termination
+        unsafe { _ = windows::Win32::System::Threading::TerminateProcess(self.process, 1) };
+    }
+
+    pub fn wait(&mut self) {
+        use windows::Win32::System::Threading::{INFINITE, WaitForSingleObject};
+        unsafe { WaitForSingleObject(self.process, INFINITE) };
+    }
+}
+
+#[cfg(target_os = "windows")]
+impl Drop for HelperChild {
+    fn drop(&mut self) {
+        unsafe { _ = windows::Win32::Foundation::CloseHandle(self.process) };
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub struct HelperExitStatus(u32);
+
+#[cfg(target_os = "windows")]
+impl std::fmt::Display for HelperExitStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // NTSTATUS-looking codes (crashes) read better in hex
+        if self.0 > 0xFFFF {
+            write!(f, "exit code {:#010x}", self.0)
+        } else {
+            write!(f, "exit code {}", self.0)
+        }
+    }
 }
 
 fn helper_path() -> Result<PathBuf> {

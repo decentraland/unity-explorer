@@ -41,15 +41,6 @@ Darwin)
         cp -L "$major" "$DEST_DIR/"
     done
 
-    # shared libzmq (scripts/build-libzmq.sh), linked by both the client
-    # dylib and uuav-helper, resolved via the same @loader_path rpath
-    zmq_major=$(find ".third_party/libzmq/lib" -type f -name "libzmq.*.dylib" | grep -E "libzmq\.[0-9]+\.dylib$")
-    if [ -z "$zmq_major" ]; then
-        echo "error: .third_party/libzmq is missing; run scripts/build-libzmq.sh" >&2
-        exit 1
-    fi
-    cp "$zmq_major" "$DEST_DIR/"
-
     # ad-hoc code signing is mandatory on arm64; lipo and the copies above
     # invalidate whatever signature the build produced, so sign last
     codesign -f -s - "$DEST_DIR"/*.dylib "$DEST_DIR/uuav-helper"
@@ -78,9 +69,6 @@ Darwin)
     # the helper ships next to uuav.dll so the FFmpeg DLLs resolve from its
     # own directory
     cp ".target/$TARGET/release/uuav-helper.exe" "$DEST_DIR/"
-    # shared libzmq (scripts/build-libzmq.sh), linked by both binaries;
-    # built self-contained (static gcc/stdc++/winpthread runtimes)
-    cp ".third_party/libzmq/bin/"libzmq*.dll "$DEST_DIR/"
 
     # FFmpeg runtime DLLs from the exact build the helper linked against.
     # The helper's import closure is these four: avfilter/avdevice/swscale

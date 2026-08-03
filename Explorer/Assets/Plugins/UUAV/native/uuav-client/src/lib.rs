@@ -1,7 +1,8 @@
 //! The `uuav` plugin Unity loads. Same C ABI as the old in-process plugin
 //! (`DllImport("uuav")` in C# is untouched); the decode pipeline now lives
 //! in the spawned `uuav-helper` process and this dylib is the middleware:
-//! it spawns/monitors the helper, forwards commands over zmq, and serves
+//! it spawns/monitors the helper, forwards commands over the OS channel
+//! (named pipe / socketpair), and serves
 //! every per-frame getter from locally cached state snapshots.
 //!
 //! Helper crashes self-heal here, with no involvement from C# or the ECS
@@ -60,9 +61,9 @@ compile_error!("uuav supports Windows (D3D11) and macOS (Metal) only");
 use arc_swap::{ArcSwap, ArcSwapOption};
 use connection::{Connection, EventSinks, Lifecycle, LifecycleCell};
 use registry::{Desired, PlayerMirror, Registry};
+use spawn::HelperChild;
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_void};
-use std::process::Child;
 use std::ptr;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex};
@@ -248,7 +249,7 @@ struct Client {
     registry: Arc<Registry>,
     audio_options: ArcSwap<AudioOptionsRaw>,
     sinks: Arc<CallbackSinks>,
-    child: Arc<Mutex<Child>>,
+    child: Arc<Mutex<HelperChild>>,
     lifecycle: Arc<LifecycleCell>,
     /// Init-time parameters replayed on every helper (re)configure.
     protocol_whitelist: String,
@@ -342,7 +343,7 @@ fn start_session(
     protocol_whitelist: &str,
     log_level: i32,
     adapter: u64,
-) -> Result<(Connection, Child), String> {
+) -> Result<(Connection, HelperChild), String> {
     let token = uuid::Uuid::new_v4().simple().to_string();
 
     // the surface-port channel must exist before the helper looks it up
@@ -353,11 +354,11 @@ fn start_session(
             .map_err(|e| format!("mach channel: {e}"))?
     };
 
-    let mut child: Option<Child> = None;
+    let mut child: Option<HelperChild> = None;
     let conn = Connection::establish(
         &token,
-        |endpoint| {
-            child = Some(spawn::spawn_helper(endpoint, &token)?);
+        |handoff| {
+            child = Some(spawn::spawn_helper(handoff, &token)?);
             Ok(())
         },
         Arc::clone(lifecycle),
@@ -369,8 +370,8 @@ fn start_session(
         Ok(conn) => conn,
         Err(e) => {
             if let Some(mut child) = child {
-                _ = child.kill();
-                _ = child.wait();
+                child.kill();
+                child.wait();
             }
             return Err(format!("failed to start uuav helper: {e}"));
         }
@@ -390,8 +391,8 @@ fn start_session(
     if let Err(e) = configured {
         conn.retire();
         let mut child = child;
-        _ = child.kill();
-        _ = child.wait();
+        child.kill();
+        child.wait();
         return Err(e);
     }
 
@@ -548,8 +549,8 @@ fn recover(client: &Arc<Client>) {
                 if client.lifecycle.get() == Lifecycle::ShutDown {
                     conn.retire();
                     let mut child = child;
-                    _ = child.kill();
-                    _ = child.wait();
+                    child.kill();
+                    child.wait();
                     return;
                 }
                 client.conn.store(Arc::new(conn));
@@ -842,8 +843,8 @@ pub extern "C" fn uuav_deinit() {
         }
         if waiting_since.elapsed() >= Duration::from_secs(1) {
             if let Ok(mut child) = client.child.lock() {
-                _ = child.kill();
-                _ = child.wait();
+                child.kill();
+                child.wait();
             }
             return;
         }

@@ -5,7 +5,7 @@
 //!
 //! Run: `cargo build --workspace` (add `--target x86_64-pc-windows-gnu` on
 //! Windows), copy `uuav-helper[.exe]` — plus, on Windows, the FFmpeg DLLs
-//! and `libzmq.dll` from the deployed plugin folder — next to the example
+//! from the deployed plugin folder — next to the example
 //! binary, then `cargo run -p uuav-client --example smoke [media-url]`.
 
 use std::ffi::CStr;

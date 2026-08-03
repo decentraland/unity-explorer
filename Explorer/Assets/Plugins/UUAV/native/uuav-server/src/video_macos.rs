@@ -4,7 +4,8 @@
 //!
 //! Per player: a generation of 3 slots x 2 single-plane IOSurfaces (Y
 //! `R8Unorm` at w x h, UV `RG8Unorm` at w/2 x h/2). A generation is
-//! announced once (ports over the mach channel + `TextureSet` over zmq) and
+//! announced once (ports over the mach channel + `TextureSet` over the
+//! control channel) and
 //! becomes active on `TextureSetAck`; until then the previous generation
 //! keeps publishing, mirroring the core's own retire-grace on resolution
 //! change.
@@ -28,7 +29,8 @@ use std::collections::HashMap;
 use std::os::raw::c_void;
 use uuav_core as core;
 use uuav_ipc::protocol::{PlayerId, ToClient};
-use uuav_ipc::{mach_channel, socket, zmq};
+use uuav_ipc::channel::Channel;
+use uuav_ipc::mach_channel;
 
 type Texture = Retained<ProtocolObject<dyn MTLTexture>>;
 
@@ -90,9 +92,9 @@ impl VideoPump {
 
     /// One video tick over all live players: render event, generation
     /// management, slot copy, publish.
-    pub fn tick(&mut self, ids: impl Iterator<Item = PlayerId>, sock: &zmq::Socket) {
+    pub fn tick(&mut self, ids: impl Iterator<Item = PlayerId>, channel: &mut Channel) {
         for id in ids {
-            if let Err(e) = self.tick_player(id, sock) {
+            if let Err(e) = self.tick_player(id, channel) {
                 // per-player video hiccups are not protocol failures; the
                 // helper's own logs are the diagnostic channel
                 eprintln!("uuav-helper: video tick for player {id}: {e}");
@@ -119,7 +121,7 @@ impl VideoPump {
         self.players.remove(&id);
     }
 
-    fn tick_player(&mut self, id: PlayerId, sock: &zmq::Socket) -> Result<()> {
+    fn tick_player(&mut self, id: PlayerId, channel: &mut Channel) -> Result<()> {
         // the core presents the due frame into its presentation planes,
         // exactly as it would for Unity's render thread
         (self.render_event)(id as i32);
@@ -137,7 +139,7 @@ impl VideoPump {
             player.next_generation += 1;
             let generation = player.next_generation;
             let slots = create_generation(&self.device, width, height)?;
-            announce(&self.mach, sock, id, generation, width, height, &slots)?;
+            announce(&self.mach, channel, id, generation, width, height, &slots)?;
             let created = GenSlots {
                 generation,
                 width,
@@ -180,14 +182,11 @@ impl VideoPump {
             height,
         )?;
 
-        socket::send(
-            sock,
-            &ToClient::FramePublished {
-                id,
-                generation: active.generation,
-                slot: slot_index as u8,
-            },
-        )
+        channel.send(&ToClient::FramePublished {
+            id,
+            generation: active.generation,
+            slot: slot_index as u8,
+        })
     }
 }
 
@@ -232,7 +231,7 @@ fn create_generation(
 
 fn announce(
     mach: &mach_channel::Sender,
-    sock: &zmq::Socket,
+    channel: &mut Channel,
     id: PlayerId,
     generation: u32,
     width: u32,
@@ -253,17 +252,14 @@ fn announce(
             )?;
         }
     }
-    socket::send(
-        sock,
-        &ToClient::TextureSet {
-            id,
-            generation,
-            width,
-            height,
-            // surfaces travel as mach ports, not handles
-            handles: Vec::new(),
-        },
-    )
+    channel.send(&ToClient::TextureSet {
+        id,
+        generation,
+        width,
+        height,
+        // surfaces travel as mach ports, not handles
+        handles: Vec::new(),
+    })
 }
 
 /// One single-plane shared surface (R8 or RG8 by `bytes_per_element`).

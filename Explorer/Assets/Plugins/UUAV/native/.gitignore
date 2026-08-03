@@ -24,11 +24,10 @@ rustc-ice-*.txt
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# machine-built FFmpeg (see scripts/build-ffmpeg-macos.sh / README) and
-# libzmq (scripts/build-libzmq.sh); not committed
+# machine-built FFmpeg (see scripts/build-ffmpeg-macos.sh / README);
+# not committed
 .third_party
 .ffmpeg-src
 .ffmpeg-build
-.libzmq-build
 
 **/*.meta

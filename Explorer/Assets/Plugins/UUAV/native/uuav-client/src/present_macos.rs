@@ -25,7 +25,7 @@ const SLOTS: usize = 3;
 const PLANES: usize = 2;
 
 /// A generation being assembled: surfaces arrive over the mach channel,
-/// dimensions over zmq (`TextureSet`), in either order.
+/// dimensions over the control channel (`TextureSet`), in either order.
 struct PendingGen {
     generation: u32,
     dims: Option<(u32, u32)>,
@@ -101,7 +101,7 @@ impl PlayerVideo {
         }
     }
 
-    /// The zmq `TextureSet` announcement for a generation.
+    /// The control-channel `TextureSet` announcement for a generation.
     pub fn store_texture_set(&mut self, generation: u32, width: u32, height: u32) {
         self.pending_for(generation).dims = Some((width, height));
     }

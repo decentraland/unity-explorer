@@ -2,11 +2,6 @@
 # LGPL shared build of FFmpeg 8.1 (BtbN); see .third_party/ffmpeg/LICENSE.txt
 FFMPEG_DIR = { value = ".third_party/ffmpeg", relative = true }
 
-# machine-built shared libzmq (scripts/build-libzmq.sh), linked dynamically
-# by the uuav client dylib and uuav-helper; deployed next to them by build.sh
-LIBZMQ_LIB_DIR = { value = ".third_party/libzmq/lib", relative = true }
-LIBZMQ_INCLUDE_DIR = { value = ".third_party/libzmq/include", relative = true }
-
 [build]
 target-dir = ".target"
 
