@@ -78,6 +78,11 @@ namespace DCL.RealmNavigation
 
             if (sceneDef != null && !TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
+                // Landing on the scene's base parcel has no sub-parcel to target, so take the
+                // spawn-point path: the landing then matches map/chat teleports to the same scene.
+                if (landOnParcel && parcel == sceneDef.metadata.scene.DecodedBase)
+                    landOnParcel = false;
+
                 // When landing on the exact parcel, keep the requested parcel; otherwise snap to the
                 // scene base so the spawn point is used.
                 if (!landOnParcel)
