@@ -422,7 +422,14 @@ namespace DCL.Backpack
                 SetGridElements(currentPageWearables);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK));
+
+                // A failed fetch must not leave the loading placeholders animating forever:
+                // release them so the grid shows its empty state (results is empty on this path)
+                SetGridElements(results);
+            }
         }
 
         private async UniTaskVoid InitializeItemViewAsync(ITrimmedWearable itemWearable, BackpackItemView itemView, CancellationToken ct)

@@ -67,62 +67,69 @@ namespace DCL.AvatarRendering.Wearables
 
                 results ??= new List<ITrimmedWearable>();
                 var localBuffer = ListPool<ITrimmedWearable>.Get();
-                for (var i = 0; i < collections.Length; i++)
+
+                try
                 {
-                    // localBuffer accumulates the loaded wearables
-                    await source.GetTrimmedByParamsAsync(
-                        parameters,
-                        ct,
-                        localBuffer,
-                        loadingArguments: new CommonLoadingArguments(
-                            builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
-                            cancellationTokenSource: new CancellationTokenSource()
-                        ),
-                        needsBuilderAPISigning: true
-                    );
+                    for (var i = 0; i < collections.Length; i++)
+                    {
+                        // localBuffer accumulates the loaded wearables
+                        await source.GetTrimmedByParamsAsync(
+                            parameters,
+                            ct,
+                            localBuffer,
+                            loadingArguments: new CommonLoadingArguments(
+                                builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
+                                cancellationTokenSource: new CancellationTokenSource()
+                            ),
+                            needsBuilderAPISigning: true
+                        );
+                    }
+
+                    // Include ALL user's available wearables (loop pages)
+                    // Higher page size to do a lot less requests.
+                    const int OWNED_PAGE_SIZE = 200;
+                    IWearablesProvider.Params subParameters = parameters;
+                    subParameters.PageSize = OWNED_PAGE_SIZE;
+                    subParameters.PageNumber = 1;
+                    int ownedTotal = int.MaxValue;
+                    using var ownedPageBufferScope = ListPool<ITrimmedWearable>.Get(out var ownedPageBuffer);
+
+                    while (localBuffer.Count < ownedTotal)
+                    {
+                        ownedPageBuffer.Clear();
+                        (var ownedPageResults, int ownedPageTotal) = await source.GetTrimmedByParamsAsync(
+                            subParameters,
+                            ct,
+                            results: ownedPageBuffer
+                        );
+
+                        ownedTotal = ownedPageTotal;
+
+                        if (ownedPageResults.Count == 0)
+                            break;
+
+                        localBuffer.AddRange(ownedPageResults);
+                        subParameters.PageNumber++;
+                    }
+
+                    // De-duplicate by URN and paginate the unified list
+                    var unified = localBuffer
+                        .GroupBy(w => w.GetUrn())
+                        .Select(g => g.First())
+                        .ToList();
+
+                    int pageIndex = parameters.PageNumber - 1;
+                    results.AddRange(unified.Skip(pageIndex * parameters.PageSize).Take(parameters.PageSize));
+
+                    int count = unified.Count;
+
+                    return (results, count);
                 }
-
-                // Include ALL user's available wearables (loop pages)
-                // Higher page size to do a lot less requests.
-                const int OWNED_PAGE_SIZE = 200;
-                IWearablesProvider.Params subParameters = parameters;
-                subParameters.PageSize = OWNED_PAGE_SIZE;
-                subParameters.PageNumber = 1;
-                int ownedTotal = int.MaxValue;
-                using var ownedPageBufferScope = ListPool<ITrimmedWearable>.Get(out var ownedPageBuffer);
-
-                while (localBuffer.Count < ownedTotal)
+                finally
                 {
-                    ownedPageBuffer.Clear();
-                    (var ownedPageResults, int ownedPageTotal) = await source.GetTrimmedByParamsAsync(
-                        subParameters,
-                        ct,
-                        results: ownedPageBuffer
-                    );
-
-                    ownedTotal = ownedPageTotal;
-
-                    if (ownedPageResults.Count == 0)
-                        break;
-
-                    localBuffer.AddRange(ownedPageResults);
-                    subParameters.PageNumber++;
+                    // The fetches above can throw: the pooled buffer must be released on every path
+                    ListPool<ITrimmedWearable>.Release(localBuffer);
                 }
-
-                // De-duplicate by URN and paginate the unified list
-                var unified = localBuffer
-                    .GroupBy(w => w.GetUrn())
-                    .Select(g => g.First())
-                    .ToList();
-
-                int pageIndex = parameters.PageNumber - 1;
-                results.AddRange(unified.Skip(pageIndex * parameters.PageSize).Take(parameters.PageSize));
-
-                int count = unified.Count;
-
-                ListPool<ITrimmedWearable>.Release(localBuffer);
-
-                return (results, count);
             }
 
             return await source.GetTrimmedByParamsAsync(

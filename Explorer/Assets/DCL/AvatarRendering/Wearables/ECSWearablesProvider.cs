@@ -6,11 +6,13 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Runtime.Wearables;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -100,7 +102,14 @@ namespace DCL.AvatarRendering.Wearables
 
             if (wearablesPromise.Result == null) return (results, 0);
             if (!wearablesPromise.Result.HasValue) return (results, 0);
-            if (!wearablesPromise.Result!.Value.Succeeded) return (results, 0);
+
+            if (!wearablesPromise.Result!.Value.Succeeded)
+            {
+                // A failed fetch is not an empty inventory: propagate so callers can distinguish the two
+                Exception exception = wearablesPromise.Result.Value.Exception ?? new Exception("Owned wearables request failed without exception details");
+                ReportHub.LogError(ReportCategory.WEARABLE, $"Owned wearables request failed: {exception.Message}");
+                throw exception;
+            }
 
             results.AddRange(wearablesPromise.Result.Value.Asset.Wearables);
             return (results, wearablesPromise.Result.Value.Asset.TotalAmount);

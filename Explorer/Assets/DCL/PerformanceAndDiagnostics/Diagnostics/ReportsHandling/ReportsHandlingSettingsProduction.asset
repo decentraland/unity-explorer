@@ -464,6 +464,10 @@ MonoBehaviour:
       Severity: 2
     - Category: AUTHENTICATION
       Severity: 0
+    - Category: BACKPACK
+      Severity: 0
+    - Category: WEARABLE
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
