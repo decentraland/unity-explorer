@@ -2,9 +2,9 @@ using DCL.Platforms;
 using DCL.Utility;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
 public class AssetBundleManifestVersion
@@ -23,13 +23,10 @@ public class AssetBundleManifestVersion
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
-        private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
+        //Shared sentinel for paths that require a manifest but have none; injections no-op on failed manifests, so the instance stays immutable.
+        public static readonly AssetBundleManifestVersion FAILED = CreateFailed();
 
-        // Global kill-switch for the v49 deps-digest cache-keying scheme. Default off so the build is byte-identical
-        // to legacy behavior until the feature flag is rolled out. Flipped from bootstrap based on FeaturesRegistry.
-        // When false: SupportsDepsDigests reports false for every manifest, TryGetDepsDigest never returns a digest,
-        // and every downstream call site (cache dispatch, GLTF key compose, digest fetch) falls back to legacy.
-        public static bool DepsDigestKeyingEnabled;
+        private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
 
         private bool? HasHashInPathValue;
 
@@ -39,23 +36,21 @@ public class AssetBundleManifestVersion
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
 
-        private HashSet<string>? convertedFiles;
-        private IReadOnlyDictionary<string, string>? depsDigests;
+        //Bare hash → CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
+        private Dictionary<string, string>? cdnFiles;
 
-        public bool HasHashInPath()
+        //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.
+        private bool hasReusableAssets;
+
+        private bool HasHashInPath()
         {
             HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
             return HasHashInPathValue.Value;
         }
 
-        /// <summary>
-        ///     True when the manifest's version is v49 or newer — i.e. when the per-file deps-digest scheme is
-        ///     in use for cache keying. This is purely a version check; an individual asset may still have an
-        ///     empty digest (leaf ABs that aren't listed in the manifest's deps map).
-        /// </summary>
+        /// <summary>True when the manifest's version is v49 or newer — a pure version check; individual files may still carry no digest.</summary>
         public bool SupportsDepsDigests()
         {
-            if (!DepsDigestKeyingEnabled) return false;
             SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             return SupportsDepsDigestsValue.Value;
         }
@@ -82,53 +77,103 @@ public class AssetBundleManifestVersion
         }
 
         /// <summary>
-        ///     Parses the manifest's <c>files[]</c> entries and stores the per-file deps digest map.
-        ///     Expects v49+ filenames in the form <c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>;
-        ///     legacy 2-part filenames split into fewer parts and are skipped.
+        ///     Stores the manifest's <c>files[]</c> — the verbatim names bundles live under on the CDN's shared
+        ///     <c>assets/</c> prefix — keyed by the bare hash. Callers gate on <see cref="SupportsDepsDigests" />:
+        ///     pre-v49 bundles are entity-scoped and must not be flagged reusable.
         /// </summary>
         public void InjectDepsDigests(string[]? files)
         {
-            if (!DepsDigestKeyingEnabled || files == null || files.Length == 0)
-            {
-                depsDigests = null;
-                return;
-            }
-
-            Dictionary<string, string>? map = null;
+            if (files == null || files.Length == 0) return;
+            hasReusableAssets = true;
 
             foreach (string file in files)
             {
                 if (string.IsNullOrEmpty(file)) continue;
 
-                string[] parts = file.Split(FILE_NAME_SEPARATOR, 3);
-                if (parts.Length < 3) continue;
+                // Non-suffixed entries (build logs, folders) carry no hash to key by.
+                string[] parts = file.Split(FILE_NAME_SEPARATOR, 2);
+                if (parts.Length < 2) continue;
 
-                map ??= new Dictionary<string, string>(new UrlHashComparer());
-                map[parts[0]] = parts[1];
+                cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
+                cdnFiles[parts[0]] = file;
             }
-
-            depsDigests = map;
         }
 
-        public bool TryGetDepsDigest(string hash, out string digest)
+        /// <summary>Translates a bare hash to the hash requested from the CDN: the canonical manifest file name when known (digest-bearing, correctly cased), otherwise the platform-suffixed bare hash.</summary>
+        public string GetCdnRequestHash(string bareHash) =>
+            TryGetCdnFileName(bareHash, out string fileName) ? fileName : $"{bareHash}{PlatformUtils.GetCurrentPlatform()}";
+
+        /// <summary>Composes the upper-layer cache key (GLTF container, etc.): the canonical CDN file name when known, otherwise the bare hash.</summary>
+        public string ComposeCacheKey(string hash) =>
+            TryGetCdnFileName(hash, out string fileName) ? fileName : hash;
+
+        /// <summary>Computes the Unity-cache key for a CDN request hash: reusable bundles key on version+hash — the digest travels inside the hash, so the cache is shareable across republishes — while wearables/emotes keep buildDate keying, as their bundles are republished in place.</summary>
+        public Hash128 ComputeCacheHash(string hash) =>
+            hasReusableAssets
+                ? ComputeHashV49(hash, GetAssetBundleManifestVersion())
+                : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate());
+
+        /// <summary>Builds the CDN-relative path for a request hash: reusable bundles live under the shared <c>assets/</c> prefix (no entity segment), entity-scoped bundles (wearables/emotes, pre-v49 scenes) keep the legacy shapes.</summary>
+        public string GetCdnRequestPath(string hash, string sceneID)
         {
-            if (DepsDigestKeyingEnabled && depsDigests != null && depsDigests.TryGetValue(hash, out digest!))
+            string version = GetAssetBundleManifestVersion();
+
+            if (hasReusableAssets)
+                return $"{version}/assets/{hash}";
+
+            if (HasHashInPath())
+                return $"{version}/{sceneID}/{hash}";
+
+            return $"{version}/{hash}";
+        }
+
+        private static unsafe Hash128 ComputeHashV49(string hash, string version)
+        {
+            // The digest embedded in the hash replaces buildDate-based invalidation, keeping the cache shareable across CDN republishes; the delimiter prevents version/hash boundary collisions.
+            ReadOnlySpan<char> hashSpan = hash.AsSpan();
+            ReadOnlySpan<char> versionSpan = version.AsSpan();
+
+            Span<char> builder = stackalloc char[versionSpan.Length + 1 + hashSpan.Length];
+            versionSpan.CopyTo(builder);
+            builder[versionSpan.Length] = '|';
+            hashSpan.CopyTo(builder[(versionSpan.Length + 1)..]);
+
+            fixed (char* ptr = builder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * builder.Length)); }
+        }
+
+        private static unsafe Hash128 ComputeHashLegacy(string hash, string buildDate)
+        {
+            // Byte-identical to the pre-v49 cache key so existing Unity-AB-cache entries keep hitting after upgrade.
+            // The lack of a delimiter is a known theoretical collision risk (e.g. buildDate ending in 'X' vs. hash
+            // starting with 'X') — accepted here, will be addressed when v49 adoption lets us retire this path.
+            Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
+            buildDate.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
+
+            fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
+        }
+
+        private bool TryGetCdnFileName(string bareHash, out string fileName)
+        {
+            if (cdnFiles != null && cdnFiles.TryGetValue(bareHash, out fileName!))
                 return true;
 
-            digest = string.Empty;
+            fileName = string.Empty;
             return false;
         }
 
-        public string? GetAssetBundleManifestVersion() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.version : assets?.mac!.version;
+        //! safe: every factory (CreateFromFallback, CreateFailed, CreateManualManifest, CreateForLOD) sets the current platform's info, and deserialized manifests carry both platforms.
+        public string GetAssetBundleManifestVersion() =>
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.version! : assets?.mac!.version!;
 
-        public string? GetAssetBundleManifestBuildDate() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.buildDate : assets?.mac!.buildDate;
+        //! safe: same factory invariant as GetAssetBundleManifestVersion.
+        private string GetAssetBundleManifestBuildDate() =>
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.buildDate! : assets?.mac!.buildDate!;
 
         public bool IsEmpty() =>
             assets?.IsEmpty() ?? true;
 
-        public static AssetBundleManifestVersion CreateFailed()
+        private static AssetBundleManifestVersion CreateFailed()
         {
             //All AB requests will fail when this occurs; its a dead end
             var failedAssets = new AssetBundleManifestVersionPerPlatform();
@@ -200,19 +245,11 @@ public class AssetBundleManifestVersion
             return assetBundleManifestVersion;
         }
 
-        public string CheckCasing(string inputHash)
-        {
-            if (convertedFiles == null || convertedFiles.Count == 0)
-                return inputHash;
-
-            if (convertedFiles.TryGetValue(inputHash, out string convertedFile))
-                return convertedFile;
-
-            return inputHash;
-        }
-
         public void InjectContent(string entityID, ContentDefinition[] entityDefinitionContent)
         {
+            // A failed manifest serves no file names — and it can be the shared FAILED sentinel, which must never be mutated.
+            if (assetBundleManifestRequestFailed) return;
+
             // TODO (JUANI): hack, for older Qm. Doesnt happen with bafk because they are all lowercase
             // This has a long due capitalization problem. The hash in Mac which is requested should always be lower case, since the output files are lowercase and the
             // request to S3 is case sensitive.
@@ -224,15 +261,16 @@ public class AssetBundleManifestVersion
             // Maybe one day, when `Qm` deployments dont exist anymore, this method can be removed
             if (!AssetBundleManifestHelper.IsQmEntity(entityID)) return;
 
-            convertedFiles = new HashSet<string>(new UrlHashComparer());
+            cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
+            string platformSuffix = PlatformUtils.GetCurrentPlatform();
+            bool lowerCase = IPlatform.DEFAULT.Is(IPlatform.Kind.Mac);
 
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
-                for (var i = 0; i < entityDefinitionContent.Length; i++)
-                    convertedFiles.Add($"{entityDefinitionContent[i].hash.ToLowerInvariant()}" + PlatformUtils.GetCurrentPlatform());
-
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                for (var i = 0; i < entityDefinitionContent.Length; i++)
-                    convertedFiles.Add($"{entityDefinitionContent[i].hash}" + PlatformUtils.GetCurrentPlatform());
+            // TryAdd keeps the first entry for each key; a digest-bearing name already stored by InjectDepsDigests is never overwritten.
+            for (var i = 0; i < entityDefinitionContent.Length; i++)
+            {
+                string hash = entityDefinitionContent[i].hash;
+                cdnFiles.TryAdd(hash, (lowerCase ? hash.ToLowerInvariant() : hash) + platformSuffix);
+            }
         }
     }
 

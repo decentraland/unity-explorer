@@ -86,14 +86,14 @@ namespace DCL.LOD.Systems
                 // descriptor in None state — no ISS for this scene; fall through to legacy LOD.
             }
 
-            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
+            AssetBundleManifestVersion lodManifest = AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate");
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(
-                platformLODKey,
+                lodManifest.GetCdnRequestHash($"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}"),
+                lodManifest,
                 typeof(GameObject),
                 permittedSources: AssetSource.All,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                assetBundleManifestVersion: AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate"),
                 lookForDependencies: true
                 );
 

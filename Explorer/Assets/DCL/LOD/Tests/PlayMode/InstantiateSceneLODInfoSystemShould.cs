@@ -136,7 +136,7 @@ namespace DCL.LOD.Tests
         private Promise GenerateFailedPromise()
         {
             var promise = Promise.Create(world,
-                GetAssetBundleIntention.FromHash("Cube", typeof(GameObject)),
+                GetAssetBundleIntention.FromHash("Cube", AssetBundleManifestVersion.CreateForLOD("LOD/0", "dummyDate"), typeof(GameObject)),
                 new PartitionComponent());
 
             world.Add(promise.Entity,
@@ -148,7 +148,7 @@ namespace DCL.LOD.Tests
         private (AssetBundleData, Promise) GenerateSuccessfullPromise()
         {
             var promise = Promise.Create(world,
-                GetAssetBundleIntention.FromHash("Cube", typeof(GameObject)),
+                GetAssetBundleIntention.FromHash("Cube", AssetBundleManifestVersion.CreateForLOD("LOD/0", "dummyDate"), typeof(GameObject)),
                 new PartitionComponent());
 
             var fakeAssetBundleData = new AssetBundleData(null, new []{GameObject.CreatePrimitive(PrimitiveType.Cube)},
