@@ -39,5 +39,18 @@ namespace DCL.BugReporting.Tests
             // Assert
             StringAssert.Contains("Coordinates: 121,-34", composed);
         }
+
+        [Test]
+        public void IncludeSystemContext()
+        {
+            // Act
+            string composed = BugReportService.ComposeTicketDescription(DESCRIPTION, null, LINK);
+
+            // Assert - the machine context rides in the body because the ticket type rejects extra attributes.
+            StringAssert.Contains("OS: ", composed);
+            StringAssert.Contains("GPU: ", composed);
+            StringAssert.Contains("RAM: ", composed);
+            StringAssert.Contains("Client version: ", composed);
+        }
     }
 }

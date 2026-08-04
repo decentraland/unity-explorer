@@ -20,6 +20,10 @@ namespace DCL.BugReporting
         private const string DIAGNOSTICS_LABEL = "Internal diagnostics: ";
         private const string DIAGNOSTICS_UNAVAILABLE = "unavailable";
         private const string COORDINATES_LABEL = "Coordinates: ";
+        private const string OS_LABEL = "OS: ";
+        private const string GPU_LABEL = "GPU: ";
+        private const string RAM_LABEL = "RAM: ";
+        private const string CLIENT_VERSION_LABEL = "Client version: ";
 
         private readonly SentryUserFeedbackService feedbackService;
         private readonly IntercomTicketClient ticketClient;
@@ -57,19 +61,14 @@ namespace DCL.BugReporting
                 TicketTypeId = BUG_REPORT_TICKET_TYPE_ID,
                 Title = $"{TITLE_PREFIX}{input.IssueType.Label}",
                 Description = ComposeTicketDescription(input.Description, input.Coordinates, feedbackLink.Success ? feedbackLink.Value : null),
-                IssueTypeOptionId = input.IssueType.OptionId,
-                OperatingSystem = SystemInfo.operatingSystem,
-                GraphicCard = SystemInfo.graphicsDeviceName,
-                Ram = $"{SystemInfo.systemMemorySize} MB",
-                ClientVersion = Application.version,
             };
 
             return await ticketClient.CreateTicketAsync(ticket, ct);
         }
 
         /// <summary>
-        ///     The Sentry link rides in the ticket body because the type's files attributes
-        ///     (Evidence, Player Logs) reject API writes.
+        ///     All context rides in the ticket body: the proxy's workspace rejects attribute names
+        ///     beyond the _default_title_/_default_description_ pseudo-attributes every type has.
         /// </summary>
         public static string ComposeTicketDescription(string description, Vector2Int? coordinates, string? feedbackLink)
         {
@@ -80,6 +79,10 @@ namespace DCL.BugReporting
                 builder.Append('\n').Append(COORDINATES_LABEL).Append(coordinates.Value.x).Append(',').Append(coordinates.Value.y);
 
             builder.Append('\n').Append(DIAGNOSTICS_LABEL).Append(feedbackLink ?? DIAGNOSTICS_UNAVAILABLE);
+            builder.Append('\n').Append(OS_LABEL).Append(SystemInfo.operatingSystem);
+            builder.Append('\n').Append(GPU_LABEL).Append(SystemInfo.graphicsDeviceName);
+            builder.Append('\n').Append(RAM_LABEL).Append(SystemInfo.systemMemorySize).Append(" MB");
+            builder.Append('\n').Append(CLIENT_VERSION_LABEL).Append(Application.version);
 
             return builder.ToString();
         }
