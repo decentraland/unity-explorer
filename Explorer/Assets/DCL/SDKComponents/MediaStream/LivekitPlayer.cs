@@ -122,11 +122,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 pendingVideoReset = false;
 
-                // The connection changed under us: a stream held across the transition will never
-                // produce frames again, yet its Weak handle can stay alive (IsVideoOpened == true), so
-                // no other path would re-open it. Evict it from the room's stream cache as well —
-                // Streams caches instances by StreamKey, so without Release the same dead instance
-                // would be handed right back on re-open.
+                // Evict the stale stream from the room's cache so re-open gets a fresh instance.
                 if (cvs.HasValue)
                 {
                     room.VideoStreams.Release(cvs.Value.key);
