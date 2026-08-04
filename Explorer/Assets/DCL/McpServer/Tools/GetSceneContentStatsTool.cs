@@ -28,10 +28,12 @@ namespace DCL.McpServer.Tools
         public override string Name => "get_scene_content_stats";
 
         public override string Description =>
-            "Read the current scene's content statistics: entities, triangles, meshes (bodies), geometries, materials, textures, colliders and "
-            + "external content (media streamed from outside the content server + NFT shapes). Metrics with a documented soft limit "
+            "Read the current scene's content statistics: entities, triangles, meshes (bodies), geometries, materials, textures, shader variants, "
+            + "colliders and external content (media streamed from outside the content server + NFT shapes). Metrics with a documented soft limit "
             + "(https://docs.decentraland.org/creator/scenes-sdk7/optimizing/scene-limitations/) also report the cap for the scene's parcel count; "
-            + "exceeding a cap degrades performance but is not enforced. Triggers a fresh counting pass, so values reflect the currently rendered content.";
+            + "exceeding a cap degrades performance but is not enforced. Interpretation: URP's SRP Batcher bins draws by shader variant, so "
+            + "per-frame draw-call cost tracks shaderVariants, not materials — a high material count with few variants mainly costs memory and "
+            + "texture budget, not frame time. Triggers a fresh counting pass, so values reflect the currently rendered content.";
 
         public override JObject OutputSchema =>
             McpJsonSchema.Object()
@@ -48,6 +50,7 @@ namespace DCL.McpServer.Tools
                           .Integer("materialsCap")
                           .Integer("textures", "Unique textures probed from common shader properties.")
                           .Integer("texturesCap")
+                          .Integer("shaderVariants", "Unique shader variants (shader + enabled keywords) across all materials — the SRP Batcher bins draws by variant, so draw-call cost tracks this, not the material count. No documented cap.")
                           .Integer("colliders", "Primitive + GLTF colliders. No documented cap.")
                           .Integer("externalContent", "Media streamed from outside the content server + NFT shapes. No documented cap.")
                           .Build();
@@ -111,6 +114,7 @@ namespace DCL.McpServer.Tools
                 ["materialsCap"] = caps.Materials,
                 ["textures"] = stats.Textures,
                 ["texturesCap"] = caps.Textures,
+                ["shaderVariants"] = stats.ShaderVariants,
                 ["colliders"] = stats.Colliders,
                 ["externalContent"] = stats.ExternalContent,
             };
@@ -123,6 +127,7 @@ namespace DCL.McpServer.Tools
             AppendCount(text, "Geometries", stats.Geometries);
             AppendCapped(text, "Materials", stats.Materials, caps.Materials);
             AppendCapped(text, "Textures", stats.Textures, caps.Textures);
+            AppendCount(text, "Shader variants", stats.ShaderVariants);
             AppendCount(text, "Colliders", stats.Colliders);
             AppendCount(text, "External content", stats.ExternalContent);
 

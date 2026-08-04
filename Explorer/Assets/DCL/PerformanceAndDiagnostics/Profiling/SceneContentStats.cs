@@ -26,6 +26,13 @@ namespace DCL.Profiling
         public int DrawCalls;
 
         /// <summary>
+        ///     Unique shader variants (shader + enabled local keywords) across this source's materials —
+        ///     the bins the SRP Batcher batches draws by. Few variants across many materials means the
+        ///     materials render cheaply despite their count.
+        /// </summary>
+        public int ShaderVariants;
+
+        /// <summary>
         ///     Subset of <see cref="Renderers" /> that passed culling for at least one active camera
         ///     (including shadow casting) during the collection pass, per <c>Renderer.isVisible</c>.
         /// </summary>
@@ -100,5 +107,12 @@ namespace DCL.Profiling
         public int Textures;
         public int Colliders;
         public int ExternalContent;
+
+        /// <summary>
+        ///     Unique shader variants (shader + enabled local keywords) across all counted materials —
+        ///     the bins the SRP Batcher batches draws by, so per-frame draw-call cost tracks this
+        ///     number rather than <see cref="Materials" />.
+        /// </summary>
+        public int ShaderVariants;
     }
 }

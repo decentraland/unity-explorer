@@ -75,6 +75,7 @@ namespace DCL.McpServer.Tests
             stats.Geometries = 7;
             stats.Materials = 5;
             stats.Textures = 3;
+            stats.ShaderVariants = 2;
             stats.Colliders = 2;
             stats.ExternalContent = 1;
 
@@ -92,6 +93,7 @@ namespace DCL.McpServer.Tests
             Assert.That(structured["triangles"]!.Value<long>(), Is.EqualTo(5200));
             Assert.That(structured["trianglesCap"]!.Value<long>(), Is.EqualTo(20000));
             Assert.That(structured["geometries"]!.Value<int>(), Is.EqualTo(7));
+            Assert.That(structured["shaderVariants"]!.Value<int>(), Is.EqualTo(2));
             Assert.That(structured["externalContent"]!.Value<int>(), Is.EqualTo(1));
         }
 

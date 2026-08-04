@@ -35,18 +35,20 @@ namespace DCL.McpServer.Tools
 
         public override string Description =>
             "Rank the current scene's rendered content grouped by source model: for each GLTF the summed triangles, instance count, renderer "
-            + "count, unique materials (a material shared by two sources counts once per source) and a draw-call estimate (material slots "
-            + "across renderers, before batching), plus one aggregate row for primitive meshes. Each entry also reports its visible subset — "
-            + "renderers that passed culling for the current point of view (per Renderer.isVisible, shadow casters included) with their "
-            + "triangles and draw calls — so sortBy=visibleTriangles answers what THIS viewpoint pays for; position the camera first "
+            + "count, unique materials (a material shared by two sources counts once per source), shader variants and a draw-call estimate "
+            + "(material slots across renderers, before batching), plus one aggregate row for primitive meshes. Each entry also reports its "
+            + "visible subset — renderers that passed culling for the current point of view (per Renderer.isVisible, shadow casters included) "
+            + "with their triangles and draw calls — so sortBy=visibleTriangles answers what THIS viewpoint pays for; position the camera first "
             + "(move_to/set_camera_pose). Use it after get_scene_content_stats shows a metric near its cap to find which assets to optimize. "
-            + "Triggers a fresh counting pass over the currently rendered content.";
+            + "Interpretation: URP's SRP Batcher bins draws by shader variant, so many materials sharing few shaderVariants render cheaply — "
+            + "a high material count mainly costs memory, textures and lost instancing opportunities. Check shaderVariants before recommending "
+            + "material dedup as a frame-time optimization. Triggers a fresh counting pass over the currently rendered content.";
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Integer("limit", "Maximum entries to return, heaviest first. Default 10.")
-                  .String("sortBy", "Metric to rank by. Default triangles.", enumValues: new[] { "triangles", "materials", "drawCalls", "visibleTriangles" });
+                  .String("sortBy", "Metric to rank by. Default triangles.", enumValues: new[] { "triangles", "materials", "shaderVariants", "drawCalls", "visibleTriangles" });
 
         public GetSceneContentBreakdownTool(IScenesCache scenesCache, int collectionTimeoutMs = DEFAULT_COLLECTION_TIMEOUT_MS)
         {
@@ -96,6 +98,7 @@ namespace DCL.McpServer.Tools
             Comparison<SceneContentBreakdownEntry> comparison = sortBy switch
                                                                 {
                                                                     "materials" => static (a, b) => b.Materials.CompareTo(a.Materials),
+                                                                    "shaderVariants" => static (a, b) => b.ShaderVariants.CompareTo(a.ShaderVariants),
                                                                     "drawCalls" => static (a, b) => b.DrawCalls.CompareTo(a.DrawCalls),
                                                                     "visibleTriangles" => static (a, b) => b.VisibleTriangles.CompareTo(a.VisibleTriangles),
                                                                     _ => static (a, b) => b.Triangles.CompareTo(a.Triangles),
@@ -120,7 +123,8 @@ namespace DCL.McpServer.Tools
             var text = new StringBuilder();
             text.Append("Heaviest content of ").Append(sorted.Count).Append(" sources by ").Append(sortBy)
                 .Append(" (scene totals: ").Append(sceneTriangles.ToString("N0", CultureInfo.InvariantCulture)).Append(" triangles, ")
-                .Append(stats.Materials.ToString("N0", CultureInfo.InvariantCulture)).Append(" unique materials, ~")
+                .Append(stats.Materials.ToString("N0", CultureInfo.InvariantCulture)).Append(" unique materials across ")
+                .Append(stats.ShaderVariants.ToString("N0", CultureInfo.InvariantCulture)).Append(" shader variants, ~")
                 .Append(sceneDrawCalls.ToString("N0", CultureInfo.InvariantCulture)).Append(" draw calls; visible from this POV: ")
                 .Append(visibleTriangles.ToString("N0", CultureInfo.InvariantCulture)).Append(" triangles, ~")
                 .Append(visibleDrawCalls.ToString("N0", CultureInfo.InvariantCulture)).AppendLine(" draw calls):");
@@ -139,6 +143,7 @@ namespace DCL.McpServer.Tools
                     ["instances"] = entry.Instances,
                     ["renderers"] = entry.Renderers,
                     ["materials"] = entry.Materials,
+                    ["shaderVariants"] = entry.ShaderVariants,
                     ["drawCallsEstimate"] = entry.DrawCalls,
                     ["visibleTriangles"] = entry.VisibleTriangles,
                     ["visibleTrianglesSharePercent"] = Mathf.Round(visibleShare * 10f) / 10f,
@@ -149,7 +154,7 @@ namespace DCL.McpServer.Tools
                 text.Append(i + 1).Append(". ").Append(entry.Source)
                     .Append(" — ").Append(entry.Triangles.ToString("N0", CultureInfo.InvariantCulture))
                     .Append(" tris (").Append(share.ToString("F1", CultureInfo.InvariantCulture)).Append("% of scene), ")
-                    .Append(entry.Materials).Append(" materials, ~")
+                    .Append(entry.Materials).Append(" materials (").Append(entry.ShaderVariants).Append(entry.ShaderVariants == 1 ? " shader variant), ~" : " shader variants), ~")
                     .Append(entry.DrawCalls).Append(" draw calls, ")
                     .Append(entry.Instances).Append(entry.Instances == 1 ? " instance, " : " instances, ")
                     .Append(entry.Renderers).Append(" renderers; visible: ")
@@ -166,6 +171,7 @@ namespace DCL.McpServer.Tools
             {
                 ["sceneTriangles"] = sceneTriangles,
                 ["sceneMaterials"] = stats.Materials,
+                ["sceneShaderVariants"] = stats.ShaderVariants,
                 ["sceneDrawCallsEstimate"] = sceneDrawCalls,
                 ["visibleTriangles"] = visibleTriangles,
                 ["visibleDrawCallsEstimate"] = visibleDrawCalls,
