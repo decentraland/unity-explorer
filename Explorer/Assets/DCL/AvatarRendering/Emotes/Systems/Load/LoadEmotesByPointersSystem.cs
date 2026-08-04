@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
@@ -44,9 +45,10 @@ namespace DCL.AvatarRendering.Emotes.Load
             IDecentralandUrlsSource urlsSource,
             URLSubdirectory customStreamingSubdirectory,
             EntitiesAnalytics entitiesAnalytics,
+            IRealmData realmData,
             bool localSceneDevelopment
         )
-            : base(world, cache, webRequestController, entitiesAnalytics)
+            : base(world, cache, webRequestController, realmData, entitiesAnalytics)
         {
             this.emoteStorage = emoteStorage;
             this.urlsSource = urlsSource;
@@ -147,6 +149,12 @@ namespace DCL.AvatarRendering.Emotes.Load
                 // creating an AssetBundle promise for them would NRE in PrepareCommonArguments.
                 bool skipAssetBundle = emote.DTO.assetBundleManifestVersion is { IsLSDAsset: true };
                 if (!skipAssetBundle && CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
+
+                // Emotes stamped with a raw content source (untrusted catalysts) have no other loader:
+                // create their raw GLTF promises here. Builder-preview emotes were already requested at
+                // DTO-load time, so the factory no-ops on them.
+                if (skipAssetBundle && !string.IsNullOrEmpty(emote.DTO.ContentDownloadUrl) &&
+                    BuilderEmoteAssetPromiseFactory.TryCreate(World!, emote, partitionComponent, emoteStorage, urlBuilder)) continue;
 
                 if (emote.AssetResults[intention.BodyShape] != null)
 

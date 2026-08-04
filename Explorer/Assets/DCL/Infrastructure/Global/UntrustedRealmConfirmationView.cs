@@ -14,5 +14,7 @@ namespace DCL.Infrastructure.Global
         public UnityEngine.UI.Button QuitButton { get; set; }
         [field: SerializeField]
         public TMP_Text RealmLabel { get; set; }
+        [field: SerializeField]
+        public TMP_InputField CatalystNameInput { get; set; }
     }
 }

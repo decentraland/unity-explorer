@@ -1,4 +1,5 @@
 ﻿using DCL.Ipfs;
+using ECS;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
@@ -25,7 +26,7 @@ namespace DCL.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, TestWebRequestController.INSTANCE, false, false, cache);
+            new (world, TestWebRequestController.INSTANCE, new IRealmData.Fake(), false, false, cache);
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {

@@ -322,13 +322,16 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ProfilesMetadata => ComposeRegistryUrl("/profiles/metadata"),
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/scenes/{{1}}/comms",
 
-                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
+                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment && !realmData.IsUntrustedCatalyst ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
-                // Meant for Wearables and Emotes since they always must be solved by the AB-Registry
-                DecentralandUrl.EntitiesActiveElements => ComposeRegistryUrl("/entities/active"),
+                // Meant for Wearables and Emotes since they always must be solved by the AB-Registry,
+                // except on untrusted catalysts where all content resolves through the realm itself
+                DecentralandUrl.EntitiesActiveElements => realmData.IsUntrustedCatalyst
+                    ? UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null)
+                    : ComposeRegistryUrl("/entities/active"),
 
-                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
+                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment && !realmData.IsUntrustedCatalyst ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),

@@ -252,6 +252,7 @@ namespace Global.Dynamic
                               settingsContainer,
                               assetsProvisioner,
                               appArgs,
+                              staticContainer.RealmData,
                               cancellationToken
                           )
                          .ThrowOnFail();
@@ -871,7 +872,8 @@ namespace Global.Dynamic
                     globalWorld,
                     localSceneDevelopment));
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
+            // Untrusted catalysts load every wearable/emote as a raw GLTF, so the global GLTF loader must run there too.
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections) || staticContainer.RealmData.IsUntrustedCatalyst)
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

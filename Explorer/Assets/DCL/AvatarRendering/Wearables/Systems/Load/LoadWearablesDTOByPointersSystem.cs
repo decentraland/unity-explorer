@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests;
+using ECS;
 using ECS.Groups;
 using ECS.StreamableLoading.Cache;
 
@@ -20,8 +21,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
             World world,
             IWebRequestController webRequestController,
             IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache,
+            IRealmData realmData,
             EntitiesAnalytics entitiesAnalytics
-        ) : base(world, cache, webRequestController, entitiesAnalytics)
+        ) : base(world, cache, webRequestController, realmData, entitiesAnalytics)
         {
         }
 

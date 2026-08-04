@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             audioSourcePrefab = new GameObject("EmoteAudioSource");
             AudioSource audioSource = audioSourcePrefab.AddComponent<AudioSource>();
             emoteMaskCatalog = ScriptableObject.CreateInstance<EmoteMaskCatalog>();
-            var emotePlayer = new EmotePlayer(audioSource, emoteMaskCatalog, legacyAnimationsEnabled: true);
+            var emotePlayer = new EmotePlayer(audioSource, emoteMaskCatalog, new ECS.IRealmData.Fake(), legacyAnimationsEnabled: true);
 
             globalWorld = World.Create();
             globalPlayerEntity = globalWorld.Create(new AvatarShapeComponent { BodyShape = BodyShape.MALE });

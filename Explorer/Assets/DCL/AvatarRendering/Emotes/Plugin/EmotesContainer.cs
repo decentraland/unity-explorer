@@ -4,6 +4,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes.Play;
 using DCL.FeatureFlags;
 using DCL.PluginSystem;
+using ECS;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -20,12 +21,14 @@ namespace DCL.AvatarRendering.Emotes
     public class EmotesContainer : DCLGlobalContainer<EmotesContainer.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IRealmData realmData;
 
         public EmotePlayer EmotePlayer { get; private set; } = null!;
 
-        public EmotesContainer(IAssetsProvisioner assetsProvisioner)
+        public EmotesContainer(IAssetsProvisioner assetsProvisioner, IRealmData realmData)
         {
             this.assetsProvisioner = assetsProvisioner;
+            this.realmData = realmData;
         }
 
         protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
@@ -39,7 +42,7 @@ namespace DCL.AvatarRendering.Emotes
 
             bool forceBackfaceCulling = FeaturesRegistry.Instance.IsEnabled(FeatureId.ForceBackfaceCulling);
 
-            EmotePlayer = new EmotePlayer(audioSource, emoteMaskCatalog, legacyAnimationsEnabled, forceBackfaceCulling);
+            EmotePlayer = new EmotePlayer(audioSource, emoteMaskCatalog, realmData, legacyAnimationsEnabled, forceBackfaceCulling);
         }
 
         [Serializable]

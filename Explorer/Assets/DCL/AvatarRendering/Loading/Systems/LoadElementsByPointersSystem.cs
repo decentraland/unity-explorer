@@ -2,11 +2,13 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
@@ -22,7 +24,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
     public abstract class LoadElementsByPointersSystem<TAsset, TIntention, TDTO> : LoadSystemBase<TAsset, TIntention>
         where TIntention: struct, IPointersLoadingIntention, IEquatable<TIntention>
-        where TDTO: EntityDefinitionBase
+        where TDTO: AvatarAttachmentDTO
     {
         // When the number of wearables to request is greater than MAX_WEARABLES_PER_REQUEST, we split the request into several smaller ones.
         // In this way we avoid to send a very long url string that would fail due to the web request size limitations.
@@ -31,16 +33,19 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         protected static readonly ThreadSafeListPool<TDTO> DTO_POOL = new (MAX_WEARABLES_PER_REQUEST, 50);
 
         private readonly IWebRequestController webRequestController;
+        private readonly IRealmData realmData;
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly StringBuilder bodyBuilder = new ();
 
         protected LoadElementsByPointersSystem(World world,
             IStreamableCache<TAsset, TIntention> cache,
             IWebRequestController webRequestController,
+            IRealmData realmData,
             EntitiesAnalytics entitiesAnalytics)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.realmData = realmData;
             this.entitiesAnalytics = entitiesAnalytics;
         }
 
@@ -101,11 +106,19 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             analytics.OnRequestFinished(dtoPooledList.Value.Count);
 
-            foreach (TDTO entityDefinitionBase in dtoPooledList.Value)
+            foreach (TDTO elementDto in dtoPooledList.Value)
             {
+                // Untrusted catalysts never use asset bundles: assets resolve as raw content
+                // from the realm itself and no registry/manifest request is ever issued.
+                if (realmData.IsUntrustedCatalyst)
+                {
+                    elementDto.SetRawContentSource(realmData.Ipfs.ContentBaseUrl.Value);
+                    continue;
+                }
+
                 // Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
                 // Could be removed when the asset bundle manifest registry is battle tested
-                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, entityDefinitionBase, partitionComponent, ct);
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, elementDto, partitionComponent, ct);
             }
 
             lock (results) { results.AddRange(dtoPooledList.Value); }

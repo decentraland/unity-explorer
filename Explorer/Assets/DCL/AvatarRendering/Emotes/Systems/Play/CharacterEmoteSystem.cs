@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
         private readonly URN[] loadEmoteBuffer = new URN[1];
-        private readonly bool localSceneDevelopment;
+        private readonly bool sceneEmotesAsRawGltf;
 
         public CharacterEmoteSystem(
             World world,
@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             IEmotesMessageBus messageBus,
             EmotePlayer emotePlayer,
             IDebugContainerBuilder debugContainerBuilder,
-            bool localSceneDevelopment,
+            bool sceneEmotesAsRawGltf,
             IScenesCache scenesCache) : base(world)
         {
             this.messageBus = messageBus;
@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             this.emotePlayer = emotePlayer;
             this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
-            this.localSceneDevelopment = localSceneDevelopment;
+            this.sceneEmotesAsRawGltf = sceneEmotesAsRawGltf;
         }
 
         protected override void Update(float t)
@@ -506,8 +506,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (scene == null)
                     return;
 
-                // Local scene preview path, this is needed if a remote client plays a scene emote this client has not yet played
-                if (localSceneDevelopment && TryResolveLocalSceneEmotePath(scene, emoteHash, out string emotePath))
+                // Raw GLTF path: local scene preview (needed if a remote client plays a scene emote this client
+                // has not yet played) and untrusted catalysts, where asset bundles are never used.
+                if (sceneEmotesAsRawGltf && TryResolveLocalSceneEmotePath(scene, emoteHash, out string emotePath))
                 {
                     SceneEmoteFromLocalPromise.Create(World,
                         new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop, mask),

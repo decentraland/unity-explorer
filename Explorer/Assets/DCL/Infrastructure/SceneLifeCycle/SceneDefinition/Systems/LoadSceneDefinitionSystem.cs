@@ -24,13 +24,15 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     public partial class LoadSceneDefinitionSystem : LoadSystemBase<SceneEntityDefinition, GetSceneDefinition>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IRealmData realmData;
         private readonly bool isLocalSceneDevelopment;
         private readonly bool useLocalAssetBundles;
 
-        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, bool useLocalAssetBundles, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
+        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, IRealmData realmData, bool isLocalSceneDevelopment, bool useLocalAssetBundles, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.realmData = realmData;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.useLocalAssetBundles = useLocalAssetBundles;
         }
@@ -43,6 +45,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 
+            // Untrusted catalysts never use asset bundles: the failed sentinel dead-ends every AB path
+            // without issuing a single registry or manifest request, and scenes load as raw GLTFs.
+            if (realmData.IsUntrustedCatalyst)
+            {
+                sceneEntityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+                return new StreamableLoadingResult<SceneEntityDefinition>(sceneEntityDefinition);
+            }
 
             //These are fetched from catalyst, meaning they never have a manifest (fallback + no exception).
             //With local asset bundles the manual LSD manifest is skipped so the real manifest is fetched

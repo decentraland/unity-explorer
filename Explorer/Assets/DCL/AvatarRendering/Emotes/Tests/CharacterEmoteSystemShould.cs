@@ -34,13 +34,13 @@ namespace DCL.AvatarRendering.Emotes.Tests
             poolRoot = new GameObject("ROOT_POOL_CONTAINER");
             audioSourcePrefab = new GameObject("EmoteAudioSource");
             AudioSource audioSource = audioSourcePrefab.AddComponent<AudioSource>();
-            var emotePlayer = new EmotePlayer(audioSource, ScriptableObject.CreateInstance<EmoteMaskCatalog>(), legacyAnimationsEnabled: true);
+            var emotePlayer = new EmotePlayer(audioSource, ScriptableObject.CreateInstance<EmoteMaskCatalog>(), new ECS.IRealmData.Fake(), legacyAnimationsEnabled: true);
 
             scenesCache = new ScenesCache();
             messageBus = Substitute.For<IEmotesMessageBus>();
 
             system = new CharacterEmoteSystem(world, Substitute.For<IEmoteStorage>(), messageBus, emotePlayer,
-                Substitute.For<IDebugContainerBuilder>(), localSceneDevelopment: false, scenesCache);
+                Substitute.For<IDebugContainerBuilder>(), sceneEmotesAsRawGltf: false, scenesCache);
 
             avatarView = Substitute.For<IAvatarView>();
             avatarView.IsLegacyAnimationPlaying.Returns(true);
