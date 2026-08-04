@@ -32,7 +32,14 @@
     </ui:VisualElement>
     <ui:VisualElement name="Sidebar" class="sidebar">
         <ui:Button name="ConsoleButton" class="sidebar__button sidebar__button--console dcl-clickable" />
-        <ui:Button name="MetricsButton" class="sidebar__button sidebar__button--metrics dcl-clickable" />
+        <ui:Button name="MetricsButton" class="sidebar__button sidebar__button--metrics dcl-clickable">
+            <ui:VisualElement name="GridIcon" picking-mode="Ignore" class="sidebar__grid-icon">
+                <ui:VisualElement picking-mode="Ignore" class="sidebar__grid-cell" />
+                <ui:VisualElement picking-mode="Ignore" class="sidebar__grid-cell" />
+                <ui:VisualElement picking-mode="Ignore" class="sidebar__grid-cell" />
+                <ui:VisualElement picking-mode="Ignore" class="sidebar__grid-cell" />
+            </ui:VisualElement>
+        </ui:Button>
         <ui:Button name="DebugPanelButton" class="sidebar__button sidebar__button--debug dcl-clickable" style="display: none;" />
     </ui:VisualElement>
 </ui:UXML>
