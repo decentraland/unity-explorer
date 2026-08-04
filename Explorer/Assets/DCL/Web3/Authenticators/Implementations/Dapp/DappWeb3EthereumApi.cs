@@ -239,7 +239,8 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(request.readonlyNetwork ?? ChainUtils.GetNetworkId(environment), ct);
+                await ConnectToRpcAsync(request.readonlyNetwork ?? ChainUtils.GetNetworkId(environment), ct)
+                   .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -309,6 +310,11 @@ namespace DCL.Web3.Authenticators
                 {
                     string resJson = Encoding.UTF8.GetString(rpcByteBuffer, 0, result.Count);
                     EthApiResponse response = JsonConvert.DeserializeObject<EthApiResponse>(resJson);
+
+                    // An error frame is ours even when its id is missing (servers echo null for requests they
+                    // could not parse, which lands as 0): the mutex guarantees one in-flight request per socket.
+                    if (response.error != null && (response.id == request.id || response.id == 0))
+                        throw new Web3Exception($"RPC {request.method} failed: code {response.error.code} {response.error.message}");
 
                     if (response.id == request.id)
                         return response;

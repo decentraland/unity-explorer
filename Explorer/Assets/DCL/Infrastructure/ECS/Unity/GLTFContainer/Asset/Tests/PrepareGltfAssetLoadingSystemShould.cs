@@ -147,7 +147,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             //Arrange
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition
             {
-                assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed(),
+                assetBundleManifestVersion = AssetBundleManifestVersion.FAILED,
             });
 
             BuildSystem(new PrepareGltfAssetLoadingSystem.Options

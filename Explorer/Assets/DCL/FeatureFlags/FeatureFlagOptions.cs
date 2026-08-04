@@ -6,6 +6,8 @@ namespace DCL.FeatureFlags
 {
     public struct FeatureFlagOptions
     {
+        public const string APP_NAME = "explorer";
+
         public Web3Address? UserId { get; set; }
         public bool Debug { get; set; }
         public URLDomain URL { get; set; }
@@ -23,7 +25,7 @@ namespace DCL.FeatureFlags
         public static FeatureFlagOptions NewFeatureFlagOptions(IDecentralandUrlsSource decentralandUrlsSource) =>
             new()
             {
-                AppName = "explorer",
+                AppName = APP_NAME,
                 URL = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.FeatureFlags)),
                 Debug = false,
                 Hostname = decentralandUrlsSource.GetHostnameForFeatureFlag()

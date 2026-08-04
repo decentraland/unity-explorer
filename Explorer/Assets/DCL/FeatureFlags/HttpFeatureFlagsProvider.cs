@@ -49,21 +49,32 @@ namespace DCL.FeatureFlags
             return config;
         }
 
-        private static FeatureFlagsResultDto StripAppNameFromKeys(string name, FeatureFlagsResultDto response)
+        /// <summary>
+        ///     Drops the app-name prefix (e.g. "explorer-") from flag and variant keys so they match the codebase
+        ///     flag constants. Shared by the regular fetch and any standalone fetch (e.g.
+        ///     <see cref="DeepLinkWorldWhitelistProvider" />). Null-safe against a partially populated document.
+        /// </summary>
+        public static FeatureFlagsResultDto StripAppNameFromKeys(string name, FeatureFlagsResultDto response)
         {
-            Dictionary<string, bool> flags = new ();
+            if (response.flags != null)
+            {
+                Dictionary<string, bool> flags = new ();
 
-            foreach ((string key, bool value) in response.flags)
-                flags[key.Replace($"{name}-", "", StringComparison.OrdinalIgnoreCase)] = value;
+                foreach ((string key, bool value) in response.flags)
+                    flags[key.Replace($"{name}-", "", StringComparison.OrdinalIgnoreCase)] = value;
 
-            response.flags = flags;
+                response.flags = flags;
+            }
 
-            Dictionary<string, FeatureFlagVariantDto> variants = new ();
+            if (response.variants != null)
+            {
+                Dictionary<string, FeatureFlagVariantDto> variants = new ();
 
-            foreach ((string key, FeatureFlagVariantDto value) in response.variants)
-                variants[key.Replace($"{name}-", "")] = value;
+                foreach ((string key, FeatureFlagVariantDto value) in response.variants)
+                    variants[key.Replace($"{name}-", "", StringComparison.OrdinalIgnoreCase)] = value;
 
-            response.variants = variants;
+                response.variants = variants;
+            }
 
             return response;
         }

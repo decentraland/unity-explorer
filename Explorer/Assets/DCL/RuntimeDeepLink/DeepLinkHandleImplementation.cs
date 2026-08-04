@@ -73,7 +73,20 @@ namespace DCL.RuntimeDeepLink
 
             if (realm.HasValue)
             {
-                ShowRealmChangePromptAsync(realm.Value.Value, position).Forget();
+                // A whitelisted realm — loopback, or a world configured in the deeplink-whitelisted-worlds feature
+                // flag — is already trusted, so the switch is applied directly. Every other realm is attacker-craftable
+                // and needs explicit consent (SEC-003/004). The direct path also honours the spawn point, which the
+                // consent prompt does not carry.
+                if (DeepLinkAllowlist.IsRealmWhitelisted(realm.Value.Value))
+                {
+                    if (position.HasValue)
+                        chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token, spawnPointName).Forget();
+                    else
+                        chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token, spawnPointName).Forget();
+                }
+                else
+                    ShowRealmChangePromptAsync(realm.Value.Value, position).Forget();
+
                 handled = true;
             }
             else if (position.HasValue)
