@@ -70,13 +70,13 @@ namespace DCL.McpServer.Tools
             float maxFrameMs = 0f;
             var hiccupFrames = 0;
 
-            float start = Time.realtimeSinceStartup;
+            float start = UnityEngine.Time.realtimeSinceStartup;
 
-            while (Time.realtimeSinceStartup - start < sampleSeconds)
+            while (UnityEngine.Time.realtimeSinceStartup - start < sampleSeconds)
             {
                 await UniTask.NextFrame(ct);
 
-                float frameMs = Time.unscaledDeltaTime * 1000f;
+                float frameMs = UnityEngine.Time.unscaledDeltaTime * 1000f;
                 framesSampled++;
                 totalMs += frameMs;
                 if (frameMs < minFrameMs) minFrameMs = frameMs;
