@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private LivekitAddress? playingAddress;
 
-        private CurrentVideoStreamInfo? cvs = null;
+        private CurrentVideoStreamInfo? cvs;
 
         private readonly Dictionary<StreamKey, (LivekitAudioSource source, Weak<AudioStream> stream)> audioSources = new ();
         private Vector3 audioPosition;
@@ -85,7 +85,7 @@ namespace DCL.SDKComponents.MediaStream
         // Both checks needed: connective state catches synchronous teardown start,
         // FFI connection state catches the async disconnect completion.
         // (Delegate, not the connective room type: ECS.Unity -> DCL.Multiplayer is an asmdef cycle.)
-        private bool CanOpenStreams =>
+        private bool canOpenStreams =>
             isRoomRunning()
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
 
@@ -108,7 +108,7 @@ namespace DCL.SDKComponents.MediaStream
 
             // Room is tearing down — skip to avoid opening streams with invalid FFI handles,
             // which would poison the reusable stream cache. Pending flags stay set for reconnect.
-            if (!CanOpenStreams)
+            if (!canOpenStreams)
             {
                 EnsureAudioIsPlaying(); // still releases audio sources whose streams died with the room
                 return;
@@ -190,7 +190,7 @@ namespace DCL.SDKComponents.MediaStream
         private void OpenVideoStream(LivekitAddress livekitAddress)
         {
             // Room not ready — defer the open; EnsureVideoIsPlaying will retry once connected.
-            if (!CanOpenStreams)
+            if (!canOpenStreams)
             {
                 cvs = null;
                 playingAddress = livekitAddress;
@@ -218,7 +218,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private void OpenMissingAudioStreams()
         {
-            if (!CanOpenStreams) return;
+            if (!canOpenStreams) return;
 
             foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
             {
