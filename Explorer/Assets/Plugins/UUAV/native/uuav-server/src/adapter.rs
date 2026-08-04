@@ -32,6 +32,12 @@ const AUDIO_MAX_PULL: Duration = Duration::from_millis(100);
 /// steady state.
 const AUDIO_TARGET: Duration = Duration::from_millis(80);
 
+/// Consumption reports are throttled (~50 ms) and age further in transit;
+/// pacing on the raw value sags the cushion by that age and underruns the
+/// ring. Project the consumption that happened since the report, capped so
+/// a consumer that actually stopped only overshoots by a bounded amount.
+const FEEDBACK_PROJECTION_CAP: Duration = Duration::from_millis(100);
+
 /// Feedback older than this means the client stopped consuming (engine
 /// audio paused/stalled): stop slaving the clock so it free-runs, matching
 /// the pre-feedback behavior of video continuing without audio.
@@ -434,14 +440,20 @@ fn pump_audio(
     let target_frames = (sample_rate * AUDIO_TARGET.as_secs_f64()) as u64;
 
     for (&id, tracking) in players.iter_mut() {
-        let frames = if tracking.feedback_at.is_some() {
-            tracking
-                .removed_frames
+        // consumption continued while the report was in flight; project it
+        // forward or the cushion sags by the report age and the client
+        // ring underruns on every sag below its prime level
+        let projected_removed = tracking.feedback_at.map(|at| {
+            let age = at.elapsed().min(FEEDBACK_PROJECTION_CAP);
+            let progressed = (sample_rate * age.as_secs_f64()) as u64;
+            tracking.removed_frames.saturating_add(progressed)
+        });
+        let frames = match projected_removed {
+            Some(removed) => removed
                 .saturating_add(target_frames)
                 .saturating_sub(tracking.sent_frames)
-                .min(max_pull_frames)
-        } else {
-            wall_frames.max(0) as u64
+                .min(max_pull_frames),
+            None => wall_frames.max(0) as u64,
         };
         let Ok(frames) = i32::try_from(frames) else {
             continue;
@@ -462,8 +474,10 @@ fn pump_audio(
 
         // consumption-slaved master clock: the sample the speaker plays now
         // sits `sent - removed` frames behind this pull's head
-        if tracking.feedback_fresh() && head_pts.is_finite() {
-            let outstanding = tracking.sent_frames.saturating_sub(tracking.removed_frames);
+        if let Some(removed) = projected_removed.filter(|_| tracking.feedback_fresh())
+            && head_pts.is_finite()
+        {
+            let outstanding = tracking.sent_frames.saturating_sub(removed);
             let rate = core::uuav_player_get_rate(id);
             // bounded by the in-flight window (target + max pull), far
             // below f64's 2^52 mantissa
