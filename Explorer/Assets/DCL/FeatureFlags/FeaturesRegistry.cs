@@ -73,7 +73,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.ByteWeightedLoadingProgress] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HardwareFingerprint] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 [FeatureId.McpServer] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
-                [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT)),
+                [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
