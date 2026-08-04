@@ -5,7 +5,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Utility;
 using ECS.Abstract;
 using System.Collections.Generic;
 using ECS.Prioritization.Components;
@@ -71,13 +70,13 @@ namespace DCL.LOD.Systems
         /// </summary>
         private void SpawnAssetPromises(InitialSceneStateLOD initialSceneStateLOD, IReadOnlyList<ISSDescriptorAsset> assets, SceneDefinitionComponent sceneDefinition, ISSDescriptor issDescriptor)
         {
-            AssetBundleManifestVersion? manifest = sceneDefinition.Definition.assetBundleManifestVersion;
+            AssetBundleManifestVersion manifest = sceneDefinition.Definition.AssetBundleManifestVersionOrFailed;
 
             for (var i = 0; i < assets.Count; i++)
             {
                 ISSDescriptorAsset entry = assets[i];
 
-                // The GLTF container cache is keyed by "hash@digest" (see AssetBundleManifestVersionExtensions.ComposeCacheKey).
+                // The GLTF container cache is keyed by the canonical CDN file name (see AssetBundleManifestVersion.ComposeCacheKey).
                 // Looking up by bare hash misses any bridged entry the SDK runtime left behind, so the LOD spawns a
                 // second instance of an asset that's already resident — that's the visible "double" overlap.
                 string cacheKey = manifest.ComposeCacheKey(entry.hash);
@@ -92,19 +91,10 @@ namespace DCL.LOD.Systems
                     continue;
                 }
 
-                // Descriptor mode: fetch each asset's own bundle — must include the platform suffix to match the deployed AB filename.
-                string promiseHash = $"{entry.hash}{PlatformUtils.GetCurrentPlatform()}";
-
-                var intent = GetAssetBundleIntention.FromHash(promiseHash,
+                // Resolving through the manifest lands this promise in the same AssetBundleCache slot as the SDK runtime — a diverging Hash races two loads of the same bundle ("asset bundle already loaded").
+                var intent = GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(entry.hash),
                     assetBundleManifestVersion: manifest,
                     parentEntityID: sceneDefinition.Definition.id);
-
-                // Mirror the digest populated by PrepareGltfAssetLoadingSystem so this promise lands in the same
-                // AssetBundleCache slot as the SDK runtime would. Without it the (Hash, DepsDigest) key diverges
-                // and two parallel LoadAssetBundleSystem flows race for the same physical bundle, which Unity
-                // refuses with "asset bundle already loaded". The digest map is keyed by bare CID.
-                if (manifest != null && manifest.TryGetDepsDigest(entry.hash, out string digest))
-                    intent.DepsDigest = digest;
 
                 AssetBundlePromise promise = AssetBundlePromise.Create(World, intent, PartitionComponent.TOP_PRIORITY);
 

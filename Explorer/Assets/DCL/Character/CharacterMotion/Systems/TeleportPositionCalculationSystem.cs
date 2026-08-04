@@ -58,9 +58,8 @@ namespace DCL.Character.CharacterMotion.Systems
                 // Aim at the parcel center: its base corner lies on the parcel boundary, where settling
                 // tips the avatar into the neighbouring parcel. The exact landing XZ is refined later by
                 // TeleportCharacterSystem, which probes the parcel for its actual walkable floor.
-                const float HALF_PARCEL_SIZE = ParcelMathHelper.PARCEL_SIZE / 2f;
                 Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel)
-                                              + new Vector3(HALF_PARCEL_SIZE, 0f, HALF_PARCEL_SIZE);
+                                              + new Vector3(ParcelMathHelper.HALF_PARCEL_SIZE, 0f, ParcelMathHelper.HALF_PARCEL_SIZE);
 
                 // Keep the landing inside the scene's parcels; if it falls outside, ValidateTeleportPosition
                 // clamps it to the requested parcel's base position.

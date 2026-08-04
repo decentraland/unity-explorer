@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Fields;
 using DCL.Profiles;
@@ -295,6 +296,7 @@ namespace DCL.Passport.Modules.Creations
 
             creditPurchaseBuyHandler.HandleBuyClickAsync(
                                          urn, marketplaceLink, visuals,
+                                         CreditPurchaseModalControllerParams.SOURCE_PASSPORT_CREATIONS,
                                          resolving => itemView.BuyButton.interactable = !resolving,
                                          loadCreationsCts.Token)
                                     .Forget();
