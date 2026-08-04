@@ -46,6 +46,7 @@ using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.EventInfo;
 using DCL.Credits;
+using DCL.Diagnostics;
 using DCL.Donations;
 using DCL.Events;
 using DCL.EventsApi;
@@ -60,6 +61,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
@@ -74,9 +76,11 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.SkyBox;
 using DCL.UI;
+using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -355,7 +359,8 @@ namespace DCL.PluginSystem.Global
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
             dclInput.Shortcuts.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
-            dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
+            dclInput.Shortcuts.Places.performed -= OnInputShortcutsPlacesPerformed;
+            dclInput.Shortcuts.Communities.performed -= OnInputShortcutsCommunitiesPerformed;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -584,13 +589,12 @@ namespace DCL.PluginSystem.Global
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
 
-            bool userCreditsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
-            explorePanelView.CreditsPanelView.gameObject.SetActive(userCreditsEnabled);
+            explorePanelView.CreditsPanelView.gameObject.SetActive(false);
 
-            if (userCreditsEnabled)
-                creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
-                    topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
-                    openTopUpPanel: () => mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD))).Forget());
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits))
+                EnableCreditsPanelIfUserAllowedAsync(explorePanelView.CreditsPanelView, ct)
+                   .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
+                   .Forget();
 
             explorePanelController = new
                 ExplorePanelController(
@@ -621,13 +625,25 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(explorePanelController);
 
-            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true);
+            bool isCommunitiesFeatureEnabled = CommunitiesFeatureAccess.Instance.IsFeatureEnabled();
 
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;
 
             if (appArgs.HasFlag(AppArgsFlags.FORCE_OPEN_BACKPACK))
                 BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, ct).Forget();
+        }
+
+        private async UniTask EnableCreditsPanelIfUserAllowedAsync(CreditsPanelView view, CancellationToken ct)
+        {
+            if (!await CreditsFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct))
+                return;
+
+            creditsPanelController = new CreditsPanelController(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
+                topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
+                openTopUpPanel: () => mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD))).Forget());
+
+            view.gameObject.SetActive(true);
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
@@ -667,26 +683,55 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
+        {
+            // While the panel is open its own hotkey handlers (RegisterHotkeys) own section switching and closing.
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
+        }
 
-        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings)));
+        }
 
-        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
+        }
 
-        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(default(ExplorePanelParameter)));
+        }
 
-        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
+        }
 
-        private void OnInputShortcutsCommunitiesPerformed(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsCommunitiesPerformed(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Communities)));
+        }
 
-        private void OnInputShortcutsPlacesPerformed(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsPlacesPerformed(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Places)));
+        }
 
         private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPoolAsync(EventInfoPanelView view, CancellationToken ct)
         {

@@ -31,19 +31,22 @@ namespace DCL.Chat.ChatReactions.Core
             public readonly ChatMessageReactionService MessageReactionService;
             public readonly ChatReactionDebugState DebugState;
             public readonly SituationalReactionDebugController DebugController;
+            public readonly IReactionStreamControl StreamControl;
 
             internal Result(
                 SituationalReactionFacade facade,
                 ISituationalReactionSimulation simulation,
                 ChatMessageReactionService messageReactionService,
                 ChatReactionDebugState debugState,
-                SituationalReactionDebugController debugController)
+                SituationalReactionDebugController debugController,
+                IReactionStreamControl streamControl)
             {
                 Facade = facade;
                 Simulation = simulation;
                 MessageReactionService = messageReactionService;
                 DebugState = debugState;
                 DebugController = debugController;
+                StreamControl = streamControl;
             }
         }
 
@@ -63,7 +66,9 @@ namespace DCL.Chat.ChatReactions.Core
             IReactionMessageBus reactionBus = CreateReactionBus(messagePipesHub,
                 userBlockingCache,
                 web3IdentityCache,
-                environment);
+                environment,
+                reactionsConfig,
+                reactionsConfig.SafeTotalTiles);
             
             var messageReactionService = new ChatMessageReactionService(reactionBus,
                 chatHistory,
@@ -139,14 +144,16 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(debugView);
 #endif
 
-            return new Result(situationalReactionFacade, simulationLoop, messageReactionService, debugState, debugController);
+            return new Result(situationalReactionFacade, simulationLoop, messageReactionService, debugState, debugController, streamEmitter);
         }
 
         private static IReactionMessageBus CreateReactionBus(
             IMessagePipesHub messagePipesHub,
             IUserBlockingCache userBlockingCache,
             IWeb3IdentityCache web3IdentityCache,
-            DecentralandEnvironment environment)
+            DecentralandEnvironment environment,
+            ChatReactionsConfig reactionsConfig,
+            int maxValidEmojiIndex)
         {
             string serverEnv = environment switch
             {
@@ -159,7 +166,7 @@ namespace DCL.Chat.ChatReactions.Core
             string routingUser = $"message-router-{serverEnv}-0";
 
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatPlugin] Using MultiplayerReactionMessageBus (routingUser={routingUser})");
-            return new MultiplayerReactionMessageBus(messagePipesHub, userBlockingCache, web3IdentityCache, routingUser);
+            return new MultiplayerReactionMessageBus(messagePipesHub, userBlockingCache, web3IdentityCache, routingUser, reactionsConfig, maxValidEmojiIndex);
         }
 
         private sealed class SettingsUnsubscriber : IDisposable

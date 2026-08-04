@@ -226,8 +226,10 @@ mod tests {
 
         let mut dst = [1.0_f32; 64];
         assert_eq!(ring.read(&mut dst), 0);
-        // priming does not touch dst: the FFI caller silences on 0
-        assert!(dst.iter().all(|&s| s == 1.0));
+        // priming does not touch dst: the FFI caller silences on 0. Compared
+        // by bits, because the sentinel is the literal this test just wrote
+        // and never a computed value
+        assert!(dst.iter().all(|&s| s.to_bits() == 1.0_f32.to_bits()));
         assert_eq!(ring.stats().underruns, 0);
         assert!(!ring.stats().primed);
     }
@@ -241,7 +243,7 @@ mod tests {
         // over-read: partial fill, one underrun, back to priming
         let mut dst = vec![1.0_f32; fill + 64];
         assert_eq!(ring.read(&mut dst), fill);
-        assert!(dst[fill..].iter().all(|&s| s == 0.0));
+        assert!(dst.get(fill..).is_some_and(|tail| tail.iter().all(|&s| s == 0.0)));
         assert_eq!(ring.stats().underruns, 1);
         assert!(!ring.stats().primed);
 

@@ -8,6 +8,7 @@ namespace Utility
     public static class ParcelMathHelper
     {
         public const int PARCEL_SIZE = 16;
+        public const float HALF_PARCEL_SIZE = PARCEL_SIZE / 2f;
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
         private const float BOUNDS_OFFSET_EPSILON = 0.3f;
 

@@ -5,8 +5,8 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
-using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Fields;
 using DCL.Profiles;
@@ -37,7 +37,6 @@ namespace DCL.Passport.Modules
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<EquippedItemPassportFieldView> loadingItemsPool;
@@ -58,7 +57,6 @@ namespace DCL.Passport.Modules
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             IThumbnailProvider thumbnailProvider,
-            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             PassportErrorsController passportErrorsController,
             CreditPurchaseBuyHandler creditPurchaseBuyHandler)
@@ -69,7 +67,6 @@ namespace DCL.Passport.Modules
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.thumbnailProvider = thumbnailProvider;
-            this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
             this.creditPurchaseBuyHandler = creditPurchaseBuyHandler;
@@ -349,6 +346,7 @@ namespace DCL.Passport.Modules
 
             creditPurchaseBuyHandler.HandleBuyClickAsync(
                                          urn, marketplaceLink, visuals,
+                                         CreditPurchaseModalControllerParams.SOURCE_PASSPORT_EQUIPPED,
                                          resolving => itemView.BuyButton.interactable = !resolving,
                                          getEquippedItemsCts.Token)
                                     .Forget();
@@ -356,7 +354,7 @@ namespace DCL.Passport.Modules
 
         private string GetMarketplaceLink(string id)
         {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
+            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{{0}}/{{1}}";
             ReadOnlySpan<char> idSpan = id.AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 

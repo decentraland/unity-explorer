@@ -154,21 +154,34 @@ namespace UUAV
         public static void CopyPlayers(List<PlayerInfo> target)
         {
             target.Clear();
-            foreach (var player in players)
+            try
             {
-                player.CopyDspStats(out long requested, out long returned, out long silenced);
-                bool hasAudioStats = TryGetAudioStats(player.PlayerId, out AudioStats audio);
-                target.Add(new PlayerInfo(
-                    player.PlayerId,
-                    player.State,
-                    player.CurrentUrl,
-                    player.NativeChannels,
-                    requested,
-                    returned,
-                    silenced,
-                    hasAudioStats,
-                    audio
-                ));
+                foreach (var player in players)
+                {
+                    player.CopyDspStats(out long requested, out long returned, out long silenced);
+
+                    // a player whose native creation failed registers with id 0;
+                    // querying its state would P/Invoke with an invalid handle
+                    var state = player.PlayerId == 0 ? UUAVState.Unknown : player.State;
+                    bool hasAudioStats = TryGetAudioStats(player.PlayerId, out AudioStats audio);
+
+                    target.Add(new PlayerInfo(
+                        player.PlayerId,
+                        state,
+                        player.CurrentUrl,
+                        player.NativeChannels,
+                        requested,
+                        returned,
+                        silenced,
+                        hasAudioStats,
+                        audio
+                    ));
+                }
+            }
+            catch (DllNotFoundException)
+            {
+                // no native library at all: keep whatever was snapshotted so
+                // the debug UI still renders instead of unwinding its caller
             }
         }
 
