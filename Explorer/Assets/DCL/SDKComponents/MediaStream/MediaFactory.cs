@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -13,7 +14,6 @@ using ECS.Unity.AssetLoad.Cache;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
-using LiveKit.Rooms;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -31,7 +31,10 @@ namespace DCL.SDKComponents.MediaStream
         private const string CONTENT_SERVER_PREFIX = "/content/contents";
 
         private readonly ISceneData sceneData;
-        private readonly IRoom streamingRoom;
+
+        // The connective handle (not just IRoom) is required so LivekitPlayer can synchronously detect
+        // that the room is stopping (realm change) before the FFI teardown invalidates track handles.
+        private readonly IConnectiveRoom streamingRoom;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -44,7 +47,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly IUrlResolverService urlResolverService;
 
-        public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
+        public MediaFactory(ISceneData sceneData, IConnectiveRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
             AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, AvatarPlaceHolderTextureSource? placeholderSource)
         {

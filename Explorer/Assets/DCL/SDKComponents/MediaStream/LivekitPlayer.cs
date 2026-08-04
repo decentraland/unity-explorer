@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.LiveKit.Public;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Optimization.ThreadSafePool;
 using DCL.SDKComponents.MediaStream;
 using LiveKit.Proto;
@@ -37,6 +38,7 @@ namespace DCL.SDKComponents.MediaStream
         private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
         private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
 
+        private readonly IConnectiveRoom connectiveRoom;
         private readonly IRoom room;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private PlayerState playerState;
@@ -58,6 +60,11 @@ namespace DCL.SDKComponents.MediaStream
         private volatile bool pendingVideoRediscovery;
         private volatile bool pendingAudioRediscovery;
 
+        // Set on Connected/Reconnected (FFI thread), consumed on the main thread: any video stream held
+        // across a connection change belongs to the torn-down connection and must be dropped AND evicted
+        // from the room's stream cache (see EnsureVideoIsPlaying).
+        private volatile bool pendingVideoReset;
+
         public bool MediaOpened =>
             // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
             IsVideoOpened || isAudioOpened;
@@ -76,9 +83,18 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool isAudioOpened => audioSources.Count > 0;
 
-        public LivekitPlayer(IRoom streamingRoom, AvatarPlaceHolderTextureSource? placeholderSource)
+        // ConnectiveRoom flips its state to Stopping on the main thread BEFORE the FFI disconnect request
+        // is issued (StopAsync / DisconnectCurrentRoomAsync), while Info.ConnectionState only updates when
+        // the asynchronous FFI event arrives. Checking both closes the teardown window synchronously and
+        // still covers mid-cycle room swaps once the disconnect event lands.
+        private bool CanOpenStreams =>
+            connectiveRoom.CurrentState() == IConnectiveRoom.State.Running
+            && room.Info.ConnectionState == LKConnectionState.ConnConnected;
+
+        public LivekitPlayer(IConnectiveRoom streamingRoom, AvatarPlaceHolderTextureSource? placeholderSource)
         {
-            room = streamingRoom;
+            connectiveRoom = streamingRoom;
+            room = streamingRoom.Room();
             this.placeholderSource = placeholderSource;
 
             room.ConnectionUpdated += OnRoomConnectionUpdated;
@@ -91,6 +107,35 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (State != PlayerState.Playing) return;
             if (playingAddress == null) return;
+
+            // While the room is stopping/switching (e.g. LiveKitStopping during a realm change) the FFI-side
+            // track handles are already invalid: opening a stream is rejected natively
+            // ("handle is not a livekit_ffi::server::room::FfiTrack") and can poison the per-room stream
+            // cache with an instance that never produces a frame. Rooms (and their stream caches) are pooled
+            // and reused, and StreamKey (identity + sid) is stable across a reconnect to the same stream
+            // room, so a poisoned entry keeps being returned after the transition — permanent black screen.
+            // Skip and leave the pending flags set: rediscovery runs once the room is connected again.
+            if (!CanOpenStreams)
+            {
+                EnsureAudioIsPlaying(); // still releases audio sources whose streams died with the room
+                return;
+            }
+
+            if (pendingVideoReset)
+            {
+                pendingVideoReset = false;
+
+                // The connection changed under us: a stream held across the transition will never
+                // produce frames again, yet its Weak handle can stay alive (IsVideoOpened == true), so
+                // no other path would re-open it. Evict it from the room's stream cache as well —
+                // Streams caches instances by StreamKey, so without Release the same dead instance
+                // would be handed right back on re-open.
+                if (cvs.HasValue)
+                {
+                    room.VideoStreams.Release(cvs.Value.key);
+                    cvs = null;
+                }
+            }
 
             // Consume the flag even when IsVideoOpened: prevents stale-flag pile-up while the stream is healthy.
             // We deliberately do NOT re-open an established stream here — TryFollowVideoStreamToActiveSpeaker
@@ -155,6 +200,16 @@ namespace DCL.SDKComponents.MediaStream
 
         private void OpenVideoStream(LivekitAddress livekitAddress)
         {
+            // OpenMedia can be called at any point of the room lifecycle (e.g. while scenes are being
+            // torn down for a realm change). Opening now would consume an FFI track handle that is
+            // already invalid; keep the address so EnsureVideoIsPlaying opens once the room reconnects.
+            if (!CanOpenStreams)
+            {
+                cvs = null;
+                playingAddress = livekitAddress;
+                return;
+            }
+
             StreamKey? streamKey = livekitAddress.Match(
                 this,
                 onUserStream: static (self, userStream) => new StreamKey(userStream.Identity, userStream.Sid),
@@ -176,6 +231,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private void OpenMissingAudioStreams()
         {
+            if (!CanOpenStreams) return;
+
             foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
             {
                 var participant = room.Participants.RemoteParticipant(identity);
@@ -423,6 +480,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (update is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
             {
+                pendingVideoReset = true;
                 pendingVideoRediscovery = true;
                 pendingAudioRediscovery = true;
             }
