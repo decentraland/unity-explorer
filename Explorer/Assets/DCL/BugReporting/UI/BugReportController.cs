@@ -16,7 +16,7 @@ namespace DCL.BugReporting.UI
 {
     /// <summary>
     ///     Drives the bug report form: validates the input, submits it through
-    ///     <see cref="BugReportService" /> and reflects the outcome as view states.
+    ///     <see cref="BugReportService" /> in the background and confirms with a success popup.
     /// </summary>
     public class BugReportController : ControllerBase<BugReportView, BugReportParams>
     {
@@ -33,6 +33,9 @@ namespace DCL.BugReporting.UI
         private BugReportImage? attachedImage;
         private UniTaskCompletionSource? closeIntent;
         private CancellationTokenSource operationsCts = new ();
+
+        // Submissions run detached from the view lifecycle: closing the success popup must not abort the upload.
+        private readonly CancellationTokenSource submissionsCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -55,6 +58,7 @@ namespace DCL.BugReporting.UI
         {
             base.Dispose();
             operationsCts.SafeCancelAndDispose();
+            submissionsCts.SafeCancelAndDispose();
         }
 
         internal static bool CanSubmit(int issueTypeIndex, string description) =>
@@ -72,11 +76,9 @@ namespace DCL.BugReporting.UI
             viewInstance.IssueTypeDropdown.onValueChanged.AddListener(OnFormChanged);
             viewInstance.DescriptionInput.onValueChanged.AddListener(OnFormChanged);
             viewInstance.SubmitButton.onClick.AddListener(OnSubmitClicked);
-            viewInstance.RetryButton.onClick.AddListener(OnSubmitClicked);
             viewInstance.CancelButton.onClick.AddListener(RequestClose);
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
             viewInstance.SuccessDoneButton.onClick.AddListener(RequestClose);
-            viewInstance.ErrorDismissButton.onClick.AddListener(RequestClose);
             viewInstance.AttachScreenshotButton.onClick.AddListener(OnAttachScreenshotClicked);
             viewInstance.RemoveScreenshotButton.onClick.AddListener(OnRemoveScreenshotClicked);
 
@@ -125,25 +127,22 @@ namespace DCL.BugReporting.UI
             if (!CanSubmit(viewInstance!.IssueTypeDropdown.value, viewInstance.DescriptionInput.text))
                 return;
 
-            SubmitFromViewAsync(operationsCts.Token).Forget();
-        }
-
-        private async UniTaskVoid SubmitFromViewAsync(CancellationToken ct)
-        {
             var draft = new BugReportDraft(
-                viewInstance!.IssueTypeDropdown.value,
+                viewInstance.IssueTypeDropdown.value,
                 viewInstance.DescriptionInput.text,
                 attachedImage,
                 viewInstance.ShareLogsToggle.isOn);
 
-            viewInstance.ShowState(BugReportViewState.Submitting);
+            viewInstance.ShowState(BugReportViewState.Success);
+            SubmitDetachedAsync(draft, submissionsCts.Token).Forget();
+        }
 
+        private async UniTaskVoid SubmitDetachedAsync(BugReportDraft draft, CancellationToken ct)
+        {
             Result<string> result = await SubmitDraftAsync(draft, ct);
 
-            if (ct.IsCancellationRequested)
-                return;
-
-            viewInstance.ShowState(result.Success ? BugReportViewState.Success : BugReportViewState.Error);
+            if (!result.Success && !ct.IsCancellationRequested)
+                ReportHub.LogError(ReportCategory.UNSPECIFIED, $"Bug report submission failed: {result.ErrorMessage}");
         }
 
         /// <summary>Exception-free: every outcome, including cancellation, arrives as a result.</summary>

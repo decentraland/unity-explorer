@@ -8,9 +8,7 @@ namespace DCL.BugReporting.UI
     public enum BugReportViewState
     {
         Form,
-        Submitting,
         Success,
-        Error,
     }
 
     public class BugReportView : ViewBase, IView
@@ -31,19 +29,13 @@ namespace DCL.BugReporting.UI
 
         [field: Header("States")]
         [field: SerializeField] internal GameObject FormPanel { get; private set; } = null!;
-        [field: SerializeField] internal GameObject SubmittingPanel { get; private set; } = null!;
         [field: SerializeField] internal GameObject SuccessPanel { get; private set; } = null!;
-        [field: SerializeField] internal GameObject ErrorPanel { get; private set; } = null!;
         [field: SerializeField] internal Button SuccessDoneButton { get; private set; } = null!;
-        [field: SerializeField] internal Button RetryButton { get; private set; } = null!;
-        [field: SerializeField] internal Button ErrorDismissButton { get; private set; } = null!;
 
         public void ShowState(BugReportViewState state)
         {
             FormPanel.SetActive(state == BugReportViewState.Form);
-            SubmittingPanel.SetActive(state == BugReportViewState.Submitting);
             SuccessPanel.SetActive(state == BugReportViewState.Success);
-            ErrorPanel.SetActive(state == BugReportViewState.Error);
         }
 
         public void SetScreenshot(Texture2D? texture)
