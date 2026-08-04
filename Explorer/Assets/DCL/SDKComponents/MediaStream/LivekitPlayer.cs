@@ -188,8 +188,8 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         private void OpenVideoStream(LivekitAddress livekitAddress)
+        {
             // Room not ready — defer the open; EnsureVideoIsPlaying will retry once connected.
-            // already invalid; keep the address so EnsureVideoIsPlaying opens once the room reconnects.
             if (!CanOpenStreams)
             {
                 cvs = null;
