@@ -12,12 +12,14 @@ mod audio_ring;
 mod clock;
 mod control;
 mod input;
+mod telemetry;
 mod transport;
 mod unit;
 mod util;
 mod video_playback;
 
 pub(crate) use control::ControlPush;
+pub(crate) use telemetry::{AudioTelemetry, SharedAudioTelemetry};
 pub(crate) use unit::{DEFAULT_PLAYBACK_RATE, PlaybackUnit, UnitControls};
 pub(crate) use util::CancelToken;
 pub(crate) use util::ReadOnlyCancelToken;

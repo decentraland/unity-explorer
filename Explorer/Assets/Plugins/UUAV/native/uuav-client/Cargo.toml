@@ -1,6 +1,6 @@
 [package]
 name = "uuav-client"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 
 # ships under the same artifact name as the old in-process plugin so the

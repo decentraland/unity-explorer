@@ -31,8 +31,8 @@ struct PtsMarker {
 /// What the audio callback must do after drift correction.
 pub(super) enum ClockSync {
     /// Audio is aligned with the master clock (late samples were already
-    /// dropped): consume normally.
-    Consume,
+    /// dropped, `dropped_samples` of them): consume normally.
+    Consume { dropped_samples: usize },
     /// Audio is ahead of the master clock: emit silence to hold it back.
     EmitSilence,
 }
@@ -197,15 +197,27 @@ impl AudioReceiver {
         })
     }
 
+    /// Interleaved samples currently buffered.
+    pub(super) fn buffered_samples(&self) -> usize {
+        self.samples.occupied_len()
+    }
+
+    /// Media time of the sample at the ring head; `None` until timed
+    /// samples arrived.
+    pub(super) fn head_pts(&mut self) -> Option<f64> {
+        self.next_pts()
+    }
+
     /// Applies master-clock drift correction.
     pub(super) fn sync_to_clock(&mut self, now: f64) -> ClockSync {
         let Some(pts) = self.next_pts() else {
-            return ClockSync::Consume;
+            return ClockSync::Consume { dropped_samples: 0 };
         };
         let drift = pts - now;
         if drift > AUDIO_DRIFT_TOLERANCE {
             return ClockSync::EmitSilence;
         }
+        let mut dropped_samples = 0;
         if drift < -AUDIO_DRIFT_TOLERANCE {
             let channels_nz = self.channel_count();
             // a late media span occupies span / rate output frames
@@ -214,10 +226,10 @@ impl AudioReceiver {
             let drop_samples = late_frames
                 .min(buffered_frames)
                 .saturating_mul(channels_nz.get());
-            let dropped = self.samples.skip(drop_samples);
-            self.read = self.read.saturating_add(dropped as u64);
+            dropped_samples = self.samples.skip(drop_samples);
+            self.read = self.read.saturating_add(dropped_samples as u64);
         }
-        ClockSync::Consume
+        ClockSync::Consume { dropped_samples }
     }
 
     /// Copies whole frames into `out`, zero-fills the rest, and advances
@@ -240,5 +252,109 @@ impl AudioReceiver {
 
         self.read = self.read.saturating_add(copied as u64);
         copied / channels_nz
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::num::NonZeroI32;
+
+    const RATE: i32 = 48_000;
+    const CHANNELS: i32 = 2;
+
+    fn options() -> AudioOptions {
+        AudioOptions {
+            sample_rate: NonZeroI32::new(RATE).unwrap(),
+            channels: NonZeroI32::new(CHANNELS).unwrap(),
+        }
+    }
+
+    fn ring_pair() -> (AudioSender, AudioReceiver) {
+        split(options(), 1.0)
+    }
+
+    /// Interleaved samples covering `seconds` of output.
+    fn samples_for(seconds: f64) -> Vec<f32> {
+        vec![0.5; (seconds * f64::from(RATE)) as usize * CHANNELS as usize]
+    }
+
+    #[test]
+    fn sync_within_tolerance_consumes_without_drops() {
+        let (mut tx, mut rx) = ring_pair();
+        assert!(tx.try_extend(Some(0.0), &samples_for(0.5)));
+
+        match rx.sync_to_clock(0.1) {
+            ClockSync::Consume { dropped_samples } => assert_eq!(dropped_samples, 0),
+            ClockSync::EmitSilence => panic!("expected Consume within tolerance"),
+        }
+    }
+
+    #[test]
+    fn sync_ahead_of_clock_emits_silence() {
+        let (mut tx, mut rx) = ring_pair();
+        assert!(tx.try_extend(Some(0.0), &samples_for(0.5)));
+
+        assert!(matches!(rx.sync_to_clock(-0.2), ClockSync::EmitSilence));
+    }
+
+    #[test]
+    fn sync_late_drops_the_exact_late_span() {
+        let (mut tx, mut rx) = ring_pair();
+        assert!(tx.try_extend(Some(0.0), &samples_for(0.5)));
+
+        // 0.3 s late at 48 kHz stereo: 14400 frames = 28800 samples
+        match rx.sync_to_clock(0.3) {
+            ClockSync::Consume { dropped_samples } => {
+                assert_eq!(dropped_samples, 28_800);
+                assert_eq!(rx.buffered_samples(), samples_for(0.5).len() - 28_800);
+            }
+            ClockSync::EmitSilence => panic!("expected Consume with drops"),
+        }
+    }
+
+    #[test]
+    fn sync_late_drop_is_capped_by_buffered_samples() {
+        let (mut tx, mut rx) = ring_pair();
+        let pushed = samples_for(0.1);
+        assert!(tx.try_extend(Some(0.0), &pushed));
+
+        // 1.0 s late, but only 0.1 s is buffered
+        match rx.sync_to_clock(1.0) {
+            ClockSync::Consume { dropped_samples } => {
+                assert_eq!(dropped_samples, pushed.len());
+                assert_eq!(rx.buffered_samples(), 0);
+            }
+            ClockSync::EmitSilence => panic!("expected Consume with drops"),
+        }
+    }
+
+    #[test]
+    fn sync_without_markers_disables_drift_correction() {
+        let (mut tx, mut rx) = ring_pair();
+        assert!(tx.try_extend(None, &samples_for(0.5)));
+
+        match rx.sync_to_clock(10.0) {
+            ClockSync::Consume { dropped_samples } => {
+                assert_eq!(dropped_samples, 0);
+                assert_eq!(rx.buffered_samples(), samples_for(0.5).len());
+            }
+            ClockSync::EmitSilence => panic!("expected Consume without markers"),
+        }
+    }
+
+    #[test]
+    fn read_into_zero_fills_past_the_buffered_frames() {
+        let (mut tx, mut rx) = ring_pair();
+        assert!(tx.try_extend(Some(0.0), &samples_for(0.001)));
+        let buffered = rx.buffered_samples();
+
+        let mut out = vec![1.0_f32; buffered + 4 * CHANNELS as usize];
+        let frames = rx.read_into(&mut out);
+
+        assert_eq!(frames, buffered / CHANNELS as usize);
+        assert!(out[..buffered].iter().all(|&s| s == 0.5));
+        assert!(out[buffered..].iter().all(|&s| s == 0.0));
+        assert_eq!(rx.buffered_samples(), 0);
     }
 }

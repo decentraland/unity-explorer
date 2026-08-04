@@ -29,6 +29,28 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 Assert.That(messages[i], Is.EqualTo($"m{i + 15 - CAPACITY}"));
         }
 
+        // Whether or not the native library is present, the stats getters
+        // must degrade to false: missing/stale binary is caught and cached,
+        // and a loaded binary without an initialized runtime reports an
+        // error consumed internally.
+        [Test]
+        public void ReportAudioStatsUnavailableWithoutThrowing()
+        {
+            Assert.That(() => UUAVDebug.TryGetAudioStats(playerId: 12345, out AudioStats stats), Throws.Nothing);
+            Assert.That(UUAVDebug.TryGetAudioStats(playerId: 12345, out AudioStats _), Is.False);
+
+            // id 0 = native creation failed; short-circuits before the FFI
+            Assert.That(UUAVDebug.TryGetAudioStats(playerId: 0, out AudioStats zeroed), Is.False);
+            Assert.That(zeroed.JitterUnderruns, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ReportEngineAudioStatsUnavailableWithoutThrowing()
+        {
+            Assert.That(() => UUAVDebug.TryGetEngineAudioStats(out EngineAudioStats _), Throws.Nothing);
+            Assert.That(UUAVDebug.TryGetEngineAudioStats(out EngineAudioStats _), Is.False);
+        }
+
         [Test]
         public void SurviveConcurrentPushes()
         {

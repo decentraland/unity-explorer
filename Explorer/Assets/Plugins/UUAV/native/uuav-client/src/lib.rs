@@ -86,6 +86,11 @@ const DEFAULT_PLAYBACK_RATE: f64 = 1.0;
 /// `assign_master_clock` arrives every frame; forward at most this often.
 const MASTER_CLOCK_INTERVAL: Duration = Duration::from_millis(16);
 
+/// The audio thread reports jitter-ring consumption every DSP callback
+/// (~21 ms); forward at most this often. The helper treats reports older
+/// than its freshness window (250 ms) as a stalled consumer.
+const AUDIO_FEEDBACK_INTERVAL: Duration = Duration::from_millis(50);
+
 /// Child poll cadence of the recovery worker.
 const MONITOR_INTERVAL: Duration = Duration::from_millis(200);
 
@@ -1128,6 +1133,8 @@ pub unsafe extern "C" fn uuav_player_open_media_async(
     {
         mirror.media_info.store(None);
     }
+    // buffered audio belongs to the previous media
+    clear_jitter_ring(player_id);
 
     let desired_url = url.clone();
     command_result(with_player(
@@ -1144,6 +1151,8 @@ pub unsafe extern "C" fn uuav_player_open_media_async(
 // back to CLOSED, player reusable
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_close_media(player_id: PlayerId) -> ResultFFI {
+    // buffered audio belongs to the closed media
+    clear_jitter_ring(player_id);
     command_result(with_player(
         player_id,
         DownPolicy::Reject,
@@ -1384,12 +1393,26 @@ pub unsafe extern "C" fn uuav_player_get_media_info(
 // async; coalesces repeated calls
 #[unsafe(no_mangle)]
 pub extern "C" fn uuav_player_seek_async(player_id: PlayerId, time: f64) -> ResultFFI {
+    // the buffered audio belongs to the pre-seek position; flush it now
+    // instead of playing up to 150 ms of stale sound over the jump (the
+    // few ms of pre-seek packets still in flight are accepted)
+    clear_jitter_ring(player_id);
     command_result(with_player(
         player_id,
         DownPolicy::Reject,
         |desired| desired.resume_time = Some(time),
         |id| ToServer::Seek { id, time },
     ))
+}
+
+/// Flushes a player's jitter ring around a content discontinuity
+/// (seek / open / close); a no-op for unknown players.
+fn clear_jitter_ring(player_id: PlayerId) {
+    if let Some(client) = CLIENT.load().as_ref()
+        && let Some(mirror) = client.mirror(player_id)
+    {
+        mirror.audio.clear();
+    }
 }
 
 // persists across url switches
@@ -1542,5 +1565,122 @@ pub unsafe extern "C" fn uuav_player_read_audio(
     let channels = client.audio_options.load().channels.max(1) as usize;
     let samples = (nb_frames as usize).saturating_mul(channels);
     let dst = unsafe { std::slice::from_raw_parts_mut(dst, samples) };
-    mirror.audio.read(dst).checked_div(channels).unwrap_or(0) as i32
+    let read = mirror.audio.read(dst).checked_div(channels).unwrap_or(0) as i32;
+    send_audio_feedback(client, &mirror);
+    read
+}
+
+/// [audio thread] Throttled, fire-and-forget consumption report: the pull
+/// pacing on the helper sizes its pulls by it. The outbound queue is an
+/// unbounded in-proc channel — no blocking, no syscall on this thread.
+fn send_audio_feedback(client: &Client, mirror: &registry::PlayerMirror) {
+    if client.lifecycle.get() != Lifecycle::Running {
+        return;
+    }
+    let Some(helper) = mirror.helper_id() else {
+        return;
+    };
+    // try_lock: skipping a report under contention beats stalling the DSP
+    // callback; the next callback (~21 ms) retries
+    let Ok(mut last) = mirror.last_audio_feedback.try_lock() else {
+        return;
+    };
+    if last.is_some_and(|at| at.elapsed() < AUDIO_FEEDBACK_INTERVAL) {
+        return;
+    }
+    *last = Some(Instant::now());
+    _ = client.conn().send(ToServer::AudioFeedback {
+        id: helper,
+        removed_frames: mirror.audio.removed_frames(),
+    });
+}
+
+/// Snapshot of a player's audio path health: the client-side jitter ring
+/// live, the core-side pipeline from the last ~20 Hz state snapshot
+/// (zeros until one arrives).
+#[repr(C)]
+#[derive(Default, Clone, Copy)]
+pub struct AudioStats {
+    pub jitter_fill_samples: u64,
+    pub jitter_samples_per_second: u64,
+    /// Primed -> unprimed transitions: one per audible gap.
+    pub jitter_underruns: u64,
+    /// Samples dropped at the ring's high watermark.
+    pub jitter_watermark_dropped: u64,
+    pub jitter_written: u64,
+    pub jitter_read: u64,
+    /// Interleaved samples deleted by the core's drift correction.
+    pub core_drift_dropped_samples: u64,
+    /// Core reads answered with silence (audio ahead of the clock).
+    pub core_silence_pulls: u64,
+    /// Core decoded-ring-full waits; normal in steady state.
+    pub core_ring_stalls: u64,
+    /// Core decoded-ring occupancy, interleaved samples.
+    pub core_ring_fill_samples: u64,
+    /// 1 while the jitter ring is primed (delivering).
+    pub jitter_primed: u8,
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn uuav_player_audio_stats(
+    player_id: PlayerId,
+    out_stats: *mut AudioStats,
+) -> ResultFFI {
+    write_out(
+        out_stats,
+        with_mirror(player_id, |_, mirror| {
+            let ring = mirror.audio.stats();
+            let core = mirror
+                .state
+                .load()
+                .as_ref()
+                .map_or_else(Default::default, |cached| cached.update.audio);
+            Ok(AudioStats {
+                jitter_fill_samples: ring.fill_samples,
+                jitter_samples_per_second: ring.samples_per_second,
+                jitter_underruns: ring.underruns,
+                jitter_watermark_dropped: ring.watermark_dropped,
+                jitter_written: ring.written,
+                jitter_read: ring.read,
+                core_drift_dropped_samples: core.drift_dropped_samples,
+                core_silence_pulls: core.silence_pulls,
+                core_ring_stalls: core.ring_stalls,
+                core_ring_fill_samples: core.ring_fill_samples,
+                jitter_primed: u8::from(ring.primed),
+            })
+        }),
+    )
+}
+
+/// Engine-wide audio delivery health, from the helper's ~1 Hz serve-loop
+/// report (zeros until the first one).
+#[repr(C)]
+#[derive(Default, Clone, Copy)]
+pub struct EngineAudioStats {
+    /// Worst serve-loop iteration in the last report window, µs.
+    pub serve_max_iter_us: u64,
+    /// Audio pulls clamped at the helper's catch-up bound (cumulative for
+    /// the current helper's lifetime).
+    pub audio_pull_clamps: u64,
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn uuav_audio_engine_stats(out_stats: *mut EngineAudioStats) -> ResultFFI {
+    let state = CLIENT.load();
+    let Some(client) = state.as_ref() else {
+        return ResultFFI::error(ERR_NO_RUNTIME);
+    };
+    write_out(
+        out_stats,
+        Ok(EngineAudioStats {
+            serve_max_iter_us: client
+                .registry
+                .serve_max_iter_us
+                .load(Ordering::Relaxed),
+            audio_pull_clamps: client
+                .registry
+                .audio_pull_clamps
+                .load(Ordering::Relaxed),
+        }),
+    )
 }

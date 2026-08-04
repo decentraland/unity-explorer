@@ -7,6 +7,7 @@ use std::thread;
 
 use super::audio_ring::{AudioRing, ClockSync, SharedAudioReceiver};
 use super::fill_silence;
+use super::telemetry::SharedAudioTelemetry;
 use super::transport::AtomicTransport;
 use super::util::{AtomicSeekSlot, PLAYBACK_POLL, ReadOnlyCancelToken};
 use crate::AudioOptionsView;
@@ -23,13 +24,16 @@ pub(super) struct AudioReader {
     /// Engine audio configuration; the silence layout when no decoded
     /// format exists yet.
     audio_out: AudioOptionsView,
+    /// Cumulative drift/silence/fill diagnostics, owned by the player.
+    telemetry: SharedAudioTelemetry,
 }
 
 impl AudioReader {
-    pub(super) fn new(audio_out: AudioOptionsView) -> Self {
+    pub(super) fn new(audio_out: AudioOptionsView, telemetry: SharedAudioTelemetry) -> Self {
         Self {
             rx: Arc::new(Mutex::new(None)),
             audio_out,
+            telemetry,
         }
     }
 
@@ -39,8 +43,31 @@ impl AudioReader {
     }
 
     /// [audio thread] Fills interleaved FLT; pads silence on underrun,
-    /// never blocks; returns frames actually copied.
-    pub(super) fn read(&self, transport: &AtomicTransport, dst: *mut f32, frames: usize) -> i32 {
+    /// never blocks; returns frames actually copied. When `out_pts` is
+    /// given it receives the media time of the first copied sample
+    /// (post drift correction), or NaN while it is unknown.
+    pub(super) fn read(
+        &self,
+        transport: &AtomicTransport,
+        dst: *mut f32,
+        frames: usize,
+        out_pts: Option<&mut f64>,
+    ) -> i32 {
+        let mut head_pts = f64::NAN;
+        let copied = self.read_internal(transport, dst, frames, &mut head_pts);
+        if let Some(out) = out_pts {
+            *out = head_pts;
+        }
+        copied
+    }
+
+    fn read_internal(
+        &self,
+        transport: &AtomicTransport,
+        dst: *mut f32,
+        frames: usize,
+        head_pts: &mut f64,
+    ) -> i32 {
         let mut guard = self.rx.lock();
         let Some(ring) = guard.as_mut() else {
             // no decoded format yet: silence in the engine's configured layout
@@ -61,10 +88,21 @@ impl AudioReader {
 
         match ring.sync_to_clock(transport.now()) {
             ClockSync::EmitSilence => {
+                self.telemetry.count_silence_pull();
                 out.fill(0.0);
                 0
             }
-            ClockSync::Consume => i32::try_from(ring.read_into(out)).unwrap_or(0),
+            ClockSync::Consume { dropped_samples } => {
+                if dropped_samples > 0 {
+                    self.telemetry.add_drift_dropped(dropped_samples);
+                }
+                // post-correction head: the media time of the first copied
+                // sample, for consumers deriving a speaker-position clock
+                *head_pts = ring.head_pts().unwrap_or(f64::NAN);
+                let frames = ring.read_into(out);
+                self.telemetry.store_ring_fill(ring.buffered_samples());
+                i32::try_from(frames).unwrap_or(0)
+            }
         }
     }
 }
@@ -79,6 +117,8 @@ pub(super) struct AudioPlayback {
     /// Varispeed currently applied; new rings must carry it so their
     /// media-time math matches the converted samples.
     playback_rate: f64,
+    /// Cumulative drift/silence/fill diagnostics, owned by the player.
+    telemetry: SharedAudioTelemetry,
 }
 
 impl AudioPlayback {
@@ -87,6 +127,7 @@ impl AudioPlayback {
         stream_index: c_int,
         audio_out: AudioOptionsView,
         rx_slot: SharedAudioReceiver,
+        telemetry: SharedAudioTelemetry,
     ) -> Result<Self> {
         let decoder = AudioDecoder::new(stream, audio_out.current())?;
         let playback_rate = super::unit::DEFAULT_PLAYBACK_RATE;
@@ -97,6 +138,7 @@ impl AudioPlayback {
             audio_out,
             stream_index,
             playback_rate,
+            telemetry,
         })
     }
 
@@ -170,6 +212,7 @@ impl AudioPlayback {
             match self.decoder.receive()? {
                 Decoded::Frame(frame) => {
                     let pts = frame.pts().map(|pts| pts - start_offset);
+                    let mut stalled = false;
                     loop {
                         if cancel.is_cancelled() || seek.is_pending() {
                             // the frame is obsolete: the ring is about to
@@ -181,6 +224,11 @@ impl AudioPlayback {
                         poll_controls();
                         if self.ring.try_extend(pts, frame.samples()) {
                             break;
+                        }
+                        if !stalled {
+                            // once per frame, not per poll retry
+                            stalled = true;
+                            self.telemetry.count_ring_stall();
                         }
                         thread::sleep(PLAYBACK_POLL);
                     }

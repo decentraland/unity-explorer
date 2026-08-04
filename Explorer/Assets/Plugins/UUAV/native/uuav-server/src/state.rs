@@ -4,7 +4,8 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use uuav_core as core;
 use uuav_ipc::protocol::{
-    ControlsWire, MediaInfoWire, PlayerId, PlayerStateWire, StateUpdateWire,
+    AudioPipelineStatsWire, ControlsWire, MediaInfoWire, PlayerId, PlayerStateWire,
+    StateUpdateWire,
 };
 
 /// Converts a core `ResultFFI` into a plain `Result`, freeing the native
@@ -60,6 +61,19 @@ pub fn snapshot(id: PlayerId) -> StateUpdateWire {
         .ok()
         .map(|()| (size.width, size.height));
 
+    let mut audio_stats = core::AudioPipelineStats::default();
+    let audio =
+        consume_result(unsafe { core::uuav_player_audio_pipeline_stats(id, &mut audio_stats) })
+            .ok()
+            .map_or_else(AudioPipelineStatsWire::default, |()| {
+                AudioPipelineStatsWire {
+                    drift_dropped_samples: audio_stats.drift_dropped_samples,
+                    silence_pulls: audio_stats.silence_pulls,
+                    ring_stalls: audio_stats.ring_stalls,
+                    ring_fill_samples: audio_stats.ring_fill_samples,
+                }
+            });
+
     StateUpdateWire {
         id,
         state: map_state(core::uuav_player_state(id)),
@@ -69,6 +83,7 @@ pub fn snapshot(id: PlayerId) -> StateUpdateWire {
         video_size,
         looping: core::uuav_player_get_looping(id) != 0,
         rate: core::uuav_player_get_rate(id),
+        audio,
     }
 }
 

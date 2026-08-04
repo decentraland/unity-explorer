@@ -70,6 +70,9 @@ pub struct PlayerMirror {
     pub media_info: ArcSwapOption<MediaInfoWire>,
     /// Throttles `assign_master_clock` forwarding (called every frame).
     pub last_master_clock: Mutex<Option<Instant>>,
+    /// Throttles `AudioFeedback` forwarding (the audio thread reports its
+    /// jitter-ring consumption on every DSP callback).
+    pub last_audio_feedback: Mutex<Option<Instant>>,
     /// Jitter ring between the helper's audio packets and Unity's audio thread.
     pub audio: crate::audio_ring::AudioRing,
     /// Shared-texture state (assembly + presentation).
@@ -92,6 +95,7 @@ impl PlayerMirror {
             state: ArcSwapOption::const_empty(),
             media_info: ArcSwapOption::const_empty(),
             last_master_clock: Mutex::new(None),
+            last_audio_feedback: Mutex::new(None),
             audio: crate::audio_ring::AudioRing::new(sample_rate, channels),
             video: Mutex::default(),
             helper_id: AtomicU64::new(0),
@@ -123,6 +127,11 @@ pub struct Registry {
     /// Helper-side id -> public id, rebuilt on every helper (re)start.
     by_helper: dashmap::DashMap<PlayerId, PlayerId>,
     next_public: AtomicU64,
+    /// Worst serve-loop iteration in the helper's last report window, µs.
+    pub serve_max_iter_us: AtomicU64,
+    /// Audio pulls clamped at the helper's catch-up bound (cumulative for
+    /// the current helper's lifetime).
+    pub audio_pull_clamps: AtomicU64,
     /// `PROCESS_DUP_HANDLE` view of the current helper: texture-set
     /// announcements carry helper-local handle values that are pulled out
     /// of its process through this. Swapped whole on every helper
@@ -137,6 +146,8 @@ impl Registry {
             players: dashmap::DashMap::new(),
             by_helper: dashmap::DashMap::new(),
             next_public: AtomicU64::new(1),
+            serve_max_iter_us: AtomicU64::new(0),
+            audio_pull_clamps: AtomicU64::new(0),
             #[cfg(target_os = "windows")]
             helper_process: ArcSwapOption::const_empty(),
         }
@@ -235,6 +246,15 @@ pub fn apply_audio(registry: &Registry, id: PlayerId, samples: &[f32]) {
     if let Some(mirror) = registry.by_helper(id) {
         mirror.audio.write(samples);
     }
+}
+
+pub fn apply_serve_stats(registry: &Registry, max_iter_us: u64, audio_pull_clamps: u64) {
+    registry
+        .serve_max_iter_us
+        .store(max_iter_us, Ordering::Relaxed);
+    registry
+        .audio_pull_clamps
+        .store(audio_pull_clamps, Ordering::Relaxed);
 }
 
 #[cfg(target_os = "macos")]

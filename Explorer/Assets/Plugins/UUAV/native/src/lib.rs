@@ -287,6 +287,27 @@ impl MediaInfo {
     }
 }
 
+/// Snapshot of the player's cumulative audio pipeline counters.
+///
+/// Counters accumulate across url switches and only reset with the
+/// player; `ring_fill_samples` is a gauge (occupancy after the last
+/// read). `ring_stalls` grows in normal steady state — the decoded ring
+/// runs full by design — and signals starvation only together with a
+/// low `ring_fill_samples`.
+#[repr(C)]
+#[derive(Default, Clone, Copy)]
+pub struct AudioPipelineStats {
+    /// Interleaved samples deleted by drift correction (audio ran late
+    /// against the master clock).
+    pub drift_dropped_samples: u64,
+    /// Reads answered with silence because audio ran ahead of the clock.
+    pub silence_pulls: u64,
+    /// Decoded frames that waited for ring space at least once.
+    pub ring_stalls: u64,
+    /// Decoded-ring occupancy after the last read, interleaved samples.
+    pub ring_fill_samples: u64,
+}
+
 /// Snapshot of the user-facing control values: the latest pushed
 /// intents, which the playback thread applies asynchronously.
 ///
@@ -981,4 +1002,55 @@ pub unsafe extern "C" fn uuav_player_read_audio(
     runtime
         .player_by_id(player_id)
         .map_or(0, |player| player.read_audio(dst, nb_frames))
+}
+
+// [audio] like uuav_player_read_audio, additionally writing the media time
+// of the first copied sample to out_pts (NaN while unknown)
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn uuav_player_read_audio_pts(
+    player_id: PlayerId,
+    dst: *mut f32,
+    nb_frames: i32,
+    out_pts: *mut f64,
+) -> i32 {
+    if dst.is_null() || nb_frames <= 0 {
+        return 0;
+    }
+    if out_pts.is_null() {
+        return unsafe { uuav_player_read_audio(player_id, dst, nb_frames) };
+    }
+
+    let state = INIT_STATE.load();
+    let Some(runtime) = state.as_ref() else {
+        unsafe { out_pts.write(f64::NAN) };
+        return 0;
+    };
+
+    let mut pts = f64::NAN;
+    let read = runtime
+        .player_by_id(player_id)
+        .map_or(0, |player| player.read_audio_pts(dst, nb_frames, &mut pts));
+    unsafe { out_pts.write(pts) };
+    read
+}
+
+// cumulative audio pipeline counters; accumulate across url switches
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn uuav_player_audio_pipeline_stats(
+    player_id: PlayerId,
+    out_stats: *mut AudioPipelineStats,
+) -> ResultFFI {
+    unsafe { uuav_player_audio_pipeline_stats_internal(player_id, out_stats) }.into()
+}
+
+unsafe fn uuav_player_audio_pipeline_stats_internal(
+    player_id: PlayerId,
+    out_stats: *mut AudioPipelineStats,
+) -> anyhow::Result<()> {
+    ensure!(!out_stats.is_null(), "out pointer is null");
+    let state = INIT_STATE.load();
+    let runtime = state.as_ref().context(ERR_NO_RUNTIME)?;
+    let snapshot = runtime.player_by_id(player_id)?.audio_pipeline_stats();
+    unsafe { out_stats.write(snapshot) };
+    Ok(())
 }

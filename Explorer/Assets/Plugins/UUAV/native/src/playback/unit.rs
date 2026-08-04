@@ -7,6 +7,7 @@ use std::thread;
 use super::audio_playback::{AudioPlayback, AudioReader};
 use super::control::ControlConsume;
 use super::input::Input;
+use super::telemetry::SharedAudioTelemetry;
 use super::transport::{AtomicTransport, PlaybackState};
 use super::util::{AtomicSeekSlot, PLAYBACK_POLL, ReadOnlyCancelToken};
 use super::video_playback::{VideoPlayback, VideoQueue, VideoReader};
@@ -124,6 +125,7 @@ impl PlaybackUnit {
     /// [playback thread] Opens the media at `url`, blocking until its
     /// streams are probed and the decoders are built. Aborted through
     /// `cancel` while blocked on demuxer I/O.
+    #[allow(clippy::too_many_arguments)] // aggregates the playback's fixed dependencies
     pub(crate) fn open(
         url: String,
         device: HwDevice,
@@ -132,6 +134,7 @@ impl PlaybackUnit {
         error_callback: ErrorCallback,
         protocol_whitelist: &StreamingProtocol,
         controls: UnitControls,
+        telemetry: SharedAudioTelemetry,
     ) -> Result<(Self, Pipeline)> {
         NETWORK_INIT.call_once(|| {
             unsafe { ff::avformat_network_init() };
@@ -158,7 +161,7 @@ impl PlaybackUnit {
             media_info
         };
 
-        let audio_reader = AudioReader::new(audio_out.clone());
+        let audio_reader = AudioReader::new(audio_out.clone(), telemetry.clone());
         let (video_queue, video_reader) = VideoQueue::channel();
 
         let (hw_ctx, video, video_size) = if video_index >= 0 {
@@ -187,6 +190,7 @@ impl PlaybackUnit {
                 audio_index,
                 audio_out,
                 audio_reader.rx_slot(),
+                telemetry,
             )?)
         } else {
             None
@@ -518,6 +522,12 @@ impl PlaybackUnit {
     /// [audio thread] Fills interleaved FLT; pads silence on underrun,
     /// never blocks; returns frames actually copied.
     pub(crate) fn read_audio(&self, dst: *mut f32, frames: usize) -> i32 {
-        self.audio.read(&self.transport, dst, frames)
+        self.audio.read(&self.transport, dst, frames, None)
+    }
+
+    /// [audio thread] Like [`Self::read_audio`], additionally reporting the
+    /// media time of the first copied sample (NaN while unknown).
+    pub(crate) fn read_audio_pts(&self, dst: *mut f32, frames: usize, out_pts: &mut f64) -> i32 {
+        self.audio.read(&self.transport, dst, frames, Some(out_pts))
     }
 }

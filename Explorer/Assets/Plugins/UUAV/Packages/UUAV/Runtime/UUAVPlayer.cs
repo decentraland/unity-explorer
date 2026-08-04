@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace UUAV
@@ -96,7 +97,17 @@ namespace UUAV
 
         private static ulong playerIncrementalID;
 
+        // written on the audio mixer thread via Interlocked, read on the
+        // main thread through CopyDspStats
+        private long dspFramesRequested;
+        private long dspFramesReturned;
+        private long dspSilencedCallbacks;
+
         public string CurrentUrl => url;
+
+        // 0 = the runtime never negotiated an output format: every DSP
+        // callback silences and the player is permanently mute
+        public int NativeChannels => nativeChannels;
 
         public UUAVState State => NativeMethods.uuav_player_state(playerId);
 
@@ -197,9 +208,9 @@ namespace UUAV
             return result.IsOk;
         }
 
-        // NOTE if long-session drift corrections become audible, derive media
-        // time from frames consumed in OnAudioFilterRead and feed that here
-        // instead of the caller's clock
+        // NOTE the native side already slaves the media clock to actual
+        // audio consumption (helper-side AudioFeedback pacing); this hook
+        // remains for callers that need a different external master
         public void AssignMasterClock(double mediaTime)
         {
             Check(
@@ -344,15 +355,28 @@ namespace UUAV
                 // renegotiation is runtime-wide, not per player,
                 // emit silence rather than misinterleaved audio
                 Array.Clear(data, 0, data.Length);
+                Interlocked.Increment(ref dspSilencedCallbacks);
                 return;
             }
 
-            var read = NativeMethods.uuav_player_read_audio(playerId, data, data.Length / channels);
+            int frames = data.Length / channels;
+            var read = NativeMethods.uuav_player_read_audio(playerId, data, frames);
+            Interlocked.Add(ref dspFramesRequested, frames);
+            Interlocked.Add(ref dspFramesReturned, read);
             if (read == 0)
             {
                 // missing/freed player leaves the buffer untouched
                 Array.Clear(data, 0, data.Length);
             }
+        }
+
+        // main-thread view of the audio-thread counters; cumulative for the
+        // component's lifetime
+        public void CopyDspStats(out long framesRequested, out long framesReturned, out long silencedCallbacks)
+        {
+            framesRequested = Interlocked.Read(ref dspFramesRequested);
+            framesReturned = Interlocked.Read(ref dspFramesReturned);
+            silencedCallbacks = Interlocked.Read(ref dspSilencedCallbacks);
         }
 
         private bool RefreshVideoTexture()

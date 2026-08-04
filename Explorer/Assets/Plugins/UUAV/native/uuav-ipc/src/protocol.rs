@@ -59,6 +59,22 @@ pub struct MediaInfoWire {
     pub has_audio: bool,
 }
 
+/// Mirror of the core's `AudioPipelineStats`: cumulative per-player audio
+/// counters (`ring_fill_samples` is a gauge), riding the state pump.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default)]
+pub struct AudioPipelineStatsWire {
+    /// Interleaved samples deleted by drift correction (audio ran late
+    /// against the master clock).
+    pub drift_dropped_samples: u64,
+    /// Reads answered with silence because audio ran ahead of the clock.
+    pub silence_pulls: u64,
+    /// Decoded frames that waited for ring space at least once; grows in
+    /// normal steady state (the decoded ring runs full by design).
+    pub ring_stalls: u64,
+    /// Decoded-ring occupancy after the last read, interleaved samples.
+    pub ring_fill_samples: u64,
+}
+
 /// Per-player snapshot pushed by the helper's state pump (~50 Hz per live
 /// player).
 ///
@@ -78,6 +94,8 @@ pub struct StateUpdateWire {
     pub video_size: Option<(u32, u32)>,
     pub looping: bool,
     pub rate: f64,
+    /// Cumulative core-side audio pipeline counters.
+    pub audio: AudioPipelineStatsWire,
 }
 
 /// FFmpeg log severity bucket, matching the three Unity sinks.
@@ -149,6 +167,16 @@ pub enum ToServer {
         id: PlayerId,
         time: f64,
     },
+    /// Consumption report for the pull pacing: cumulative frames removed
+    /// from the player's client-side jitter ring (read by the engine's
+    /// audio thread, dropped at the watermark, or flushed by a seek) since
+    /// the ring was bound to this helper. The helper sizes its audio pulls
+    /// so `sent - removed` hovers at a fixed cushion. Fire-and-forget,
+    /// throttled by the client.
+    AudioFeedback {
+        id: PlayerId,
+        removed_frames: u64,
+    },
     /// M2: the client opened (or failed to open) a texture-set generation.
     TextureSetAck {
         id: PlayerId,
@@ -218,6 +246,13 @@ pub enum ToClient {
     Log {
         sink: LogSink,
         line: String,
+    },
+    /// Serve-loop health, ~1 Hz. `max_iter_us` is the worst loop iteration
+    /// in the elapsed window; `audio_pull_clamps` counts pulls that hit
+    /// `AUDIO_MAX_PULL` (cumulative for this helper's lifetime).
+    ServeStats {
+        max_iter_us: u64,
+        audio_pull_clamps: u64,
     },
 }
 

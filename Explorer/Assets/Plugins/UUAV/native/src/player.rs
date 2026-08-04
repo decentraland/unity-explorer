@@ -8,11 +8,14 @@ use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
 use crate::ffutil::StreamingProtocol;
 use crate::hw_device::HwDevice;
 use crate::playback::{
-    CancelToken, ControlPush, DEFAULT_PLAYBACK_RATE, PlaybackUnit, ReadOnlyCancelToken,
-    UnitControls, fill_silence,
+    AudioTelemetry, CancelToken, ControlPush, DEFAULT_PLAYBACK_RATE, PlaybackUnit,
+    ReadOnlyCancelToken, SharedAudioTelemetry, UnitControls, fill_silence,
 };
 use crate::video_output::VideoTextureView;
-use crate::{AudioOptionsView, ControlsState, ErrorCallback, MediaInfo, UUAVState, VideoSize};
+use crate::{
+    AudioOptionsView, AudioPipelineStats, ControlsState, ErrorCallback, MediaInfo, UUAVState,
+    VideoSize,
+};
 
 /// Lifecycle of the player's playback, shared with the playback thread.
 enum Playback {
@@ -43,6 +46,9 @@ pub(crate) struct UUAVPlayer {
     sender_open_intent: Sender<OpenIntent>,
     receiver_open_intent: Receiver<OpenIntent>,
     last_cancel_token: Option<CancelToken>,
+    /// Cumulative audio diagnostics; outlives the playback units so the
+    /// counters accumulate across url switches.
+    audio_telemetry: SharedAudioTelemetry,
 }
 
 impl Drop for UUAVPlayer {
@@ -64,6 +70,7 @@ impl UUAVPlayer {
         let play_control = ControlPush::new(false);
         let looping_control = ControlPush::new(false);
         let rate_control = ControlPush::new(DEFAULT_PLAYBACK_RATE);
+        let audio_telemetry: SharedAudioTelemetry = Arc::new(AudioTelemetry::default());
 
         let spawned = thread::Builder::new()
             .name(format!("uuav-player-{id}"))
@@ -74,6 +81,7 @@ impl UUAVPlayer {
                 let play_or_pause = play_control.consumer();
                 let looping = looping_control.consumer();
                 let rate = rate_control.consumer();
+                let audio_telemetry = audio_telemetry.clone();
 
                 move || {
                     while let Ok((url, cancel_token)) = receiver.recv() {
@@ -91,6 +99,7 @@ impl UUAVPlayer {
                                 looping: looping.clone(),
                                 rate: rate.clone(),
                             },
+                            audio_telemetry.clone(),
                         ) {
                             Ok((unit, pipeline)) => {
                                 let unit = Arc::new(unit);
@@ -126,6 +135,7 @@ impl UUAVPlayer {
                 sender_open_intent,
                 receiver_open_intent,
                 last_cancel_token: None,
+                audio_telemetry,
             }),
             Err(e) => Err(anyhow!("failed to spawn playback thread: {e}")),
         }
@@ -269,6 +279,11 @@ impl UUAVPlayer {
         Some(self.unit()?.media_info())
     }
 
+    /// Cumulative audio pipeline counters; accumulate across url switches.
+    pub(crate) fn audio_pipeline_stats(&self) -> AudioPipelineStats {
+        self.audio_telemetry.snapshot()
+    }
+
     pub(crate) fn video_texture(
         &self,
         #[cfg(target_os = "macos")] plane: i32,
@@ -294,6 +309,23 @@ impl UUAVPlayer {
         };
         match self.unit() {
             Some(unit) => unit.read_audio(dst, frames),
+            None => {
+                // no media (or still opening): silence in the engine's layout
+                fill_silence(dst, frames, self.audio_out.current().channels_usize());
+                0
+            }
+        }
+    }
+
+    // [audio thread] like read_audio, additionally reporting the media time
+    // of the first copied sample (NaN while unknown)
+    pub(crate) fn read_audio_pts(&self, dst: *mut f32, nb_frames: i32, out_pts: &mut f64) -> i32 {
+        *out_pts = f64::NAN;
+        let Ok(frames) = usize::try_from(nb_frames) else {
+            return 0;
+        };
+        match self.unit() {
+            Some(unit) => unit.read_audio_pts(dst, frames, out_pts),
             None => {
                 // no media (or still opening): silence in the engine's layout
                 fill_silence(dst, frames, self.audio_out.current().channels_usize());

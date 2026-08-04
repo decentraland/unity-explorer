@@ -211,6 +211,68 @@ namespace UUAV
         }
     }
 
+    // Snapshot of a player's audio path health: the client-side jitter
+    // ring live, the core-side pipeline from the last ~20 Hz state
+    // snapshot (zeros until one arrives). Counters are cumulative for the
+    // player's lifetime; fill fields are gauges.
+    [StructLayout(LayoutKind.Sequential)]
+    public struct AudioStats
+    {
+        public ulong JitterFillSamples;
+        public ulong JitterSamplesPerSecond;
+
+        // primed -> unprimed transitions: one per audible gap
+        public ulong JitterUnderruns;
+
+        // samples dropped at the jitter ring's high watermark
+        public ulong JitterWatermarkDropped;
+        public ulong JitterWritten;
+        public ulong JitterRead;
+
+        // interleaved samples deleted by the core's drift correction
+        public ulong CoreDriftDroppedSamples;
+
+        // core reads answered with silence (audio ahead of the clock)
+        public ulong CoreSilencePulls;
+
+        // core decoded-ring-full waits; grows in normal steady state (the
+        // ring runs full by design) - a starvation signal only together
+        // with a low CoreRingFillSamples
+        public ulong CoreRingStalls;
+
+        // core decoded-ring occupancy, interleaved samples
+        public ulong CoreRingFillSamples;
+        private readonly byte jitterPrimed;
+
+        public bool JitterPrimed => jitterPrimed != 0;
+
+        public double JitterFillMs => SamplesToMs(JitterFillSamples);
+
+        public double JitterWatermarkDroppedMs => SamplesToMs(JitterWatermarkDropped);
+
+        public double CoreDriftDroppedMs => SamplesToMs(CoreDriftDroppedSamples);
+
+        public double CoreRingFillMs => SamplesToMs(CoreRingFillSamples);
+
+        private double SamplesToMs(ulong samples)
+        {
+            return JitterSamplesPerSecond == 0 ? 0 : samples * 1000.0 / JitterSamplesPerSecond;
+        }
+    }
+
+    // Engine-wide audio delivery health, from the helper's ~1 Hz
+    // serve-loop report (zeros until the first one).
+    [StructLayout(LayoutKind.Sequential)]
+    public struct EngineAudioStats
+    {
+        // worst serve-loop iteration in the last report window, microseconds
+        public ulong ServeMaxIterUs;
+
+        // audio pulls clamped at the helper's catch-up bound (cumulative
+        // for the current helper's lifetime)
+        public ulong AudioPullClamps;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct NewPlayerResult
     {
@@ -404,6 +466,19 @@ namespace UUAV
             [Out] float[] dst,
             int nbFrames
         );
+
+        // Absent from older binaries: guard call sites for
+        // EntryPointNotFoundException.
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ResultFFI uuav_player_audio_stats(
+            ulong playerId,
+            out AudioStats stats
+        );
+
+        // Absent from older binaries: guard call sites for
+        // EntryPointNotFoundException.
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern ResultFFI uuav_audio_engine_stats(out EngineAudioStats stats);
     }
 
     internal static class Utf8
@@ -452,7 +527,7 @@ namespace UUAV
             {
                 return null;
             }
-            
+
             var message = Utf8.PtrToString(ptr);
             NativeMethods.uuav_string_free(ptr);
             ptr = IntPtr.Zero;

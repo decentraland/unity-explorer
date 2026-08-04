@@ -299,6 +299,10 @@ fn route(
             sinks.on_player_error(public, &message);
         }
         ToClient::Log { sink, line } => sinks.on_log(sink, &line),
+        ToClient::ServeStats {
+            max_iter_us,
+            audio_pull_clamps,
+        } => registry::apply_serve_stats(registry, max_iter_us, audio_pull_clamps),
         ToClient::Hello { .. } => { /* handshake is over; ignore */ }
     }
 }

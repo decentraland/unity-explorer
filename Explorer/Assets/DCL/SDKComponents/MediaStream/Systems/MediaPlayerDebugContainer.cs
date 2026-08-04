@@ -28,6 +28,7 @@ namespace DCL.SDKComponents.MediaStream
             var uuavPlayers = new ElementBinding<ulong>(0);
             var uuavLifecycle = new ElementBinding<string>(string.Empty);
             var uuavAbi = new ElementBinding<string>(string.Empty);
+            var uuavAudioEngine = new ElementBinding<string>(string.Empty);
             var uuavPlayersList = new ElementBinding<IReadOnlyList<(string name, string value)>>(Array.Empty<(string name, string value)>());
             var uuavMessages = new ElementBinding<IReadOnlyList<(string name, string value)>>(Array.Empty<(string name, string value)>());
 
@@ -41,10 +42,18 @@ namespace DCL.SDKComponents.MediaStream
             List<(string name, string value)> uuavPlayerRowsBuffer = new ();
             List<(string name, string value)> playersBuffer = new ();
 
+            // previous audio counters per native player id, to paint the ones
+            // that grew since the last refresh; pruned against alive players
+            Dictionary<ulong, (ulong underruns, ulong wmDropped, ulong driftDropped)> prevAudioCounters = new ();
+            HashSet<ulong> aliveAudioIds = new ();
+            List<ulong> staleAudioIds = new ();
+            ulong prevPullClamps = 0;
+
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MEDIA_PLAYER)
                          ?.AddCustomMarker("Backend", backendMarker)
                           .AddCustomMarker("UUAV Initialized", uuavInitialized)
                           .AddMarker("UUAV Native Players", uuavPlayers, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddCustomMarker("UUAV Audio Engine", uuavAudioEngine)
                           .AddList("UUAV Players", uuavPlayersList)
                           .AddCustomMarker("UUAV Lifecycle", uuavLifecycle)
                           .AddCustomMarker("UUAV ABI", uuavAbi)
@@ -102,8 +111,14 @@ namespace DCL.SDKComponents.MediaStream
                                               : "<color=grey>Unavailable</color>",
                                       };
 
+                bool engineStatsAvailable = UUAVDebug.TryGetEngineAudioStats(out EngineAudioStats engineStats);
+                bool clampsGrew = engineStatsAvailable && engineStats.AudioPullClamps > prevPullClamps;
+                prevPullClamps = engineStatsAvailable ? engineStats.AudioPullClamps : prevPullClamps;
+                uuavAudioEngine.Value = MediaPlayerAudioDebugFormatter.EngineRow(engineStats, engineStatsAvailable, clampsGrew);
+
                 UUAVDebug.CopyPlayers(uuavPlayersBuffer);
                 uuavPlayerRowsBuffer.Clear();
+                aliveAudioIds.Clear();
 
                 foreach (UUAVDebug.PlayerInfo player in uuavPlayersBuffer)
                 {
@@ -112,7 +127,37 @@ namespace DCL.SDKComponents.MediaStream
                         : $"{player.State.ToStringNoAlloc()} {(player.Url.Length > 0 ? player.Url : "none")}";
 
                     uuavPlayerRowsBuffer.Add(($"id {player.PlayerId}", detail));
+
+                    if (player.PlayerId == 0)
+                        continue;
+
+                    aliveAudioIds.Add(player.PlayerId);
+
+                    if (player.HasAudioStats)
+                    {
+                        prevAudioCounters.TryGetValue(player.PlayerId, out (ulong underruns, ulong wmDropped, ulong driftDropped) prev);
+                        bool underrunsGrew = player.Audio.JitterUnderruns > prev.underruns;
+                        bool watermarkGrew = player.Audio.JitterWatermarkDropped > prev.wmDropped;
+                        bool driftGrew = player.Audio.CoreDriftDroppedSamples > prev.driftDropped;
+                        prevAudioCounters[player.PlayerId] = (player.Audio.JitterUnderruns, player.Audio.JitterWatermarkDropped, player.Audio.CoreDriftDroppedSamples);
+
+                        bool isPlaying = player.State == UUAVState.Playing;
+                        uuavPlayerRowsBuffer.Add(("  jitter", MediaPlayerAudioDebugFormatter.JitterRow(player.Audio, isPlaying, underrunsGrew, watermarkGrew)));
+                        uuavPlayerRowsBuffer.Add(("  core", MediaPlayerAudioDebugFormatter.CoreRow(player.Audio, driftGrew)));
+                    }
+
+                    uuavPlayerRowsBuffer.Add(("  dsp", MediaPlayerAudioDebugFormatter.DspRow(player)));
                 }
+
+                // forget counters of freed players so their ids can be reused cleanly
+                staleAudioIds.Clear();
+
+                foreach (ulong id in prevAudioCounters.Keys)
+                    if (!aliveAudioIds.Contains(id))
+                        staleAudioIds.Add(id);
+
+                foreach (ulong id in staleAudioIds)
+                    prevAudioCounters.Remove(id);
 
                 uuavPlayersList.SetAndUpdate(uuavPlayerRowsBuffer);
 

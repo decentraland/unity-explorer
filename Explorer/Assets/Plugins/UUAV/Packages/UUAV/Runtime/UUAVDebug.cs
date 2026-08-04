@@ -54,20 +54,45 @@ namespace UUAV
 
         /// <summary>
         /// One alive player, snapshotted for display: the native id (0 when
-        /// native creation failed), the native state, and the last opened
-        /// url (empty when none was ever opened).
+        /// native creation failed), the native state, the last opened url
+        /// (empty when none was ever opened), plus the audio-path health:
+        /// the negotiated channel count (0 = permanently silent), the DSP
+        /// callback counters, and the native audio stats when the binary
+        /// exports them.
         /// </summary>
         public readonly struct PlayerInfo
         {
             public readonly ulong PlayerId;
             public readonly UUAVState State;
             public readonly string Url;
+            public readonly int NativeChannels;
+            public readonly long DspFramesRequested;
+            public readonly long DspFramesReturned;
+            public readonly long DspSilencedCallbacks;
+            public readonly bool HasAudioStats;
+            public readonly AudioStats Audio;
 
-            public PlayerInfo(ulong playerId, UUAVState state, string url)
+            public PlayerInfo(
+                ulong playerId,
+                UUAVState state,
+                string url,
+                int nativeChannels,
+                long dspFramesRequested,
+                long dspFramesReturned,
+                long dspSilencedCallbacks,
+                bool hasAudioStats,
+                AudioStats audio
+            )
             {
                 PlayerId = playerId;
                 State = state;
                 Url = url;
+                NativeChannels = nativeChannels;
+                DspFramesRequested = dspFramesRequested;
+                DspFramesReturned = dspFramesReturned;
+                DspSilencedCallbacks = dspSilencedCallbacks;
+                HasAudioStats = hasAudioStats;
+                Audio = audio;
             }
         }
 
@@ -87,6 +112,11 @@ namespace UUAV
         // the native side returns a pointer into static storage; constant per
         // loaded binary
         private static string? cachedAbiVersion;
+
+        // a missing library / stale binary never grows the exports back:
+        // cache the failure so per-frame polling doesn't pay exception cost
+        private static bool audioStatsUnavailable;
+        private static bool engineStatsUnavailable;
 
         public static Info Query()
         {
@@ -118,26 +148,90 @@ namespace UUAV
         }
 
         /// <summary>
-        /// Snapshots every alive player with its native state. Clears and
-        /// refills <paramref name="target"/>.
+        /// Snapshots every alive player with its native state and audio
+        /// health. Clears and refills <paramref name="target"/>.
         /// </summary>
         public static void CopyPlayers(List<PlayerInfo> target)
         {
             target.Clear();
+            foreach (var player in players)
+            {
+                player.CopyDspStats(out long requested, out long returned, out long silenced);
+                bool hasAudioStats = TryGetAudioStats(player.PlayerId, out AudioStats audio);
+                target.Add(new PlayerInfo(
+                    player.PlayerId,
+                    player.State,
+                    player.CurrentUrl,
+                    player.NativeChannels,
+                    requested,
+                    returned,
+                    silenced,
+                    hasAudioStats,
+                    audio
+                ));
+            }
+        }
+
+        /// <summary>
+        /// Audio-path counters for one player: jitter ring live, core
+        /// pipeline from the last state snapshot. False (with zeroed stats)
+        /// for unknown players and when the native library is missing or
+        /// predates the export.
+        /// </summary>
+        public static bool TryGetAudioStats(ulong playerId, out AudioStats stats)
+        {
+            stats = default;
+            if (audioStatsUnavailable || playerId == 0)
+            {
+                return false;
+            }
+
             try
             {
-                foreach (var player in players)
+                var result = NativeMethods.uuav_player_audio_stats(playerId, out stats);
+                if (result.IsOk)
                 {
-                    // a player whose native creation failed registers with id 0;
-                    // querying its state would P/Invoke with an invalid handle
-                    var state = player.PlayerId == 0 ? UUAVState.Unknown : player.State;
-                    target.Add(new PlayerInfo(player.PlayerId, state, player.CurrentUrl));
+                    return true;
                 }
+
+                result.ConsumeError();
+                return false;
             }
-            catch (DllNotFoundException)
+            catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
             {
-                // no native library at all: keep whatever was snapshotted so
-                // the debug UI still renders instead of unwinding its caller
+                audioStatsUnavailable = true;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Engine-wide audio delivery health (serve-loop worst iteration,
+        /// clamped pulls). False (with zeroed stats) when the runtime is
+        /// down or the binary predates the export.
+        /// </summary>
+        public static bool TryGetEngineAudioStats(out EngineAudioStats stats)
+        {
+            stats = default;
+            if (engineStatsUnavailable)
+            {
+                return false;
+            }
+
+            try
+            {
+                var result = NativeMethods.uuav_audio_engine_stats(out stats);
+                if (result.IsOk)
+                {
+                    return true;
+                }
+
+                result.ConsumeError();
+                return false;
+            }
+            catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
+            {
+                engineStatsUnavailable = true;
+                return false;
             }
         }
 
