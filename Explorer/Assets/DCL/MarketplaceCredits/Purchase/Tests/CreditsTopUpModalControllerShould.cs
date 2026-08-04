@@ -23,6 +23,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private readonly List<(string orderId, CreditPack pack)> completed = new ();
         private readonly List<CreditPack> pending = new ();
         private readonly List<(string step, string errorCode, CreditPack pack)> failed = new ();
+        private readonly List<(string orderId, CreditPack pack)> cancelled = new ();
+        private readonly List<CreditPack> retried = new ();
+        private readonly List<string> packsLoadFailed = new ();
 
         [SetUp]
         public void SetUp()
@@ -31,6 +34,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             completed.Clear();
             pending.Clear();
             failed.Clear();
+            cancelled.Clear();
+            retried.Clear();
+            packsLoadFailed.Clear();
 
             topUpService = Substitute.For<ICreditsTopUpService>();
 
@@ -45,6 +51,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             controller.BuyCreditsCompleted += (orderId, pack) => completed.Add((orderId, pack));
             controller.BuyCreditsPending += pack => pending.Add(pack);
             controller.BuyCreditsFailed += (step, errorCode, pack) => failed.Add((step, errorCode, pack));
+            controller.BuyCreditsCancelled += (orderId, pack) => cancelled.Add((orderId, pack));
+            controller.RetryClicked += pack => retried.Add(pack);
+            controller.PacksLoadFailed += reason => packsLoadFailed.Add(reason);
         }
 
         [TearDown]
@@ -68,6 +77,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(1, completed.Count);
             Assert.AreEqual(ORDER_ID, completed[0].orderId);
             Assert.AreEqual(0, failed.Count);
+
+            // The user-action relays must not fire from service stage transitions alone.
+            Assert.AreEqual(0, cancelled.Count);
+            Assert.AreEqual(0, retried.Count);
+            Assert.AreEqual(0, packsLoadFailed.Count);
         }
 
         [Test]
