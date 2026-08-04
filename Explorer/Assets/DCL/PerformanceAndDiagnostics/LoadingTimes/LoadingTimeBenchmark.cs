@@ -22,6 +22,13 @@ namespace DCL.LoadingTimes
         private const string STOP_LABEL = "stop_time_s";
         private const string DURATION_LABEL = "duration_s";
         private const string SCENE_HASH_LABEL = "scene_hash";
+        private const string PLATFORM_LABEL = "platform";
+
+#if UNITY_STANDALONE_OSX
+        private const string PLATFORM_VALUE = "mac";
+#else
+        private const string PLATFORM_VALUE = "pc";
+#endif
 
         // The loading begins with the process, where realtimeSinceStartup is 0.
         private const float APP_START_TIME = 0f;
@@ -96,6 +103,7 @@ namespace DCL.LoadingTimes
             var payload = new JObject
             {
                 { SCENE_HASH_LABEL, sceneHash },
+                { PLATFORM_LABEL, PLATFORM_VALUE },
                 { START_LABEL, APP_START_TIME },
                 { STOP_LABEL, stopTime },
                 { DURATION_LABEL, stopTime - APP_START_TIME },
