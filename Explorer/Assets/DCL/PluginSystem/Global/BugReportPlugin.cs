@@ -67,7 +67,8 @@ namespace DCL.PluginSystem.Global
                 bugReportService,
                 selfProfile,
                 globalWorld,
-                playerEntity);
+                playerEntity,
+                new OsFileBrowserBugReportImageProvider());
 
             mvcManager.RegisterController(bugReportController);
         }

@@ -59,6 +59,7 @@ namespace DCL.BugReporting.UI
             base.Dispose();
             operationsCts.SafeCancelAndDispose();
             submissionsCts.SafeCancelAndDispose();
+            ClearAttachedImage();
         }
 
         internal static bool CanSubmit(int issueTypeIndex, string description) =>
@@ -89,7 +90,7 @@ namespace DCL.BugReporting.UI
         protected override void OnBeforeViewShow()
         {
             operationsCts = operationsCts.SafeRestart();
-            attachedImage = null;
+            ClearAttachedImage();
 
             viewInstance!.IssueTypeDropdown.SetValueWithoutNotify(-1);
             viewInstance.DescriptionInput.SetTextWithoutNotify(inputData.PrefilledDescription ?? string.Empty);
@@ -102,6 +103,7 @@ namespace DCL.BugReporting.UI
         protected override void OnViewClose()
         {
             operationsCts = operationsCts.SafeRestart();
+            ClearAttachedImage();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -195,17 +197,34 @@ namespace DCL.BugReporting.UI
         {
             Result<BugReportImage> picked = await imageProvider!.PickAsync(ct);
 
-            if (ct.IsCancellationRequested || !picked.Success)
+            if (ct.IsCancellationRequested)
                 return;
 
+            if (!picked.Success)
+            {
+                if (picked.ErrorMessage != nameof(OperationCanceledException))
+                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Bug report screenshot rejected: {picked.ErrorMessage}");
+
+                return;
+            }
+
+            ClearAttachedImage();
             attachedImage = picked.Value;
             viewInstance!.SetScreenshot(picked.Value.Preview);
         }
 
         private void OnRemoveScreenshotClicked()
         {
-            attachedImage = null;
+            ClearAttachedImage();
             viewInstance!.SetScreenshot(null);
+        }
+
+        private void ClearAttachedImage()
+        {
+            if (attachedImage.HasValue)
+                UnityEngine.Object.Destroy(attachedImage.Value.Preview);
+
+            attachedImage = null;
         }
     }
 
