@@ -36,14 +36,17 @@ namespace DCL.McpServer.Tools
         public override string Description =>
             "Rank the current scene's rendered content grouped by source model: for each GLTF the summed triangles, instance count, renderer "
             + "count, unique materials (a material shared by two sources counts once per source) and a draw-call estimate (material slots "
-            + "across renderers, before batching), plus one aggregate row for primitive meshes. Use it after get_scene_content_stats shows a "
-            + "metric near its cap to find which assets to optimize. Triggers a fresh counting pass over the currently rendered content.";
+            + "across renderers, before batching), plus one aggregate row for primitive meshes. Each entry also reports its visible subset — "
+            + "renderers that passed culling for the current point of view (per Renderer.isVisible, shadow casters included) with their "
+            + "triangles and draw calls — so sortBy=visibleTriangles answers what THIS viewpoint pays for; position the camera first "
+            + "(move_to/set_camera_pose). Use it after get_scene_content_stats shows a metric near its cap to find which assets to optimize. "
+            + "Triggers a fresh counting pass over the currently rendered content.";
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Integer("limit", "Maximum entries to return, heaviest first. Default 10.")
-                  .String("sortBy", "Metric to rank by. Default triangles.", enumValues: new[] { "triangles", "materials", "drawCalls" });
+                  .String("sortBy", "Metric to rank by. Default triangles.", enumValues: new[] { "triangles", "materials", "drawCalls", "visibleTriangles" });
 
         public GetSceneContentBreakdownTool(IScenesCache scenesCache, int collectionTimeoutMs = DEFAULT_COLLECTION_TIMEOUT_MS)
         {
@@ -94,6 +97,7 @@ namespace DCL.McpServer.Tools
                                                                 {
                                                                     "materials" => static (a, b) => b.Materials.CompareTo(a.Materials),
                                                                     "drawCalls" => static (a, b) => b.DrawCalls.CompareTo(a.DrawCalls),
+                                                                    "visibleTriangles" => static (a, b) => b.VisibleTriangles.CompareTo(a.VisibleTriangles),
                                                                     _ => static (a, b) => b.Triangles.CompareTo(a.Triangles),
                                                                 };
 
@@ -102,21 +106,30 @@ namespace DCL.McpServer.Tools
             int returned = Mathf.Min(limit, sorted.Count);
             long sceneTriangles = stats.Triangles;
             var sceneDrawCalls = 0;
+            long visibleTriangles = 0;
+            var visibleDrawCalls = 0;
 
             for (var i = 0; i < sorted.Count; i++)
+            {
                 sceneDrawCalls += sorted[i].DrawCalls;
+                visibleTriangles += sorted[i].VisibleTriangles;
+                visibleDrawCalls += sorted[i].VisibleDrawCalls;
+            }
 
             var entries = new JArray();
             var text = new StringBuilder();
             text.Append("Heaviest content of ").Append(sorted.Count).Append(" sources by ").Append(sortBy)
                 .Append(" (scene totals: ").Append(sceneTriangles.ToString("N0", CultureInfo.InvariantCulture)).Append(" triangles, ")
                 .Append(stats.Materials.ToString("N0", CultureInfo.InvariantCulture)).Append(" unique materials, ~")
-                .Append(sceneDrawCalls.ToString("N0", CultureInfo.InvariantCulture)).AppendLine(" draw calls):");
+                .Append(sceneDrawCalls.ToString("N0", CultureInfo.InvariantCulture)).Append(" draw calls; visible from this POV: ")
+                .Append(visibleTriangles.ToString("N0", CultureInfo.InvariantCulture)).Append(" triangles, ~")
+                .Append(visibleDrawCalls.ToString("N0", CultureInfo.InvariantCulture)).AppendLine(" draw calls):");
 
             for (var i = 0; i < returned; i++)
             {
                 SceneContentBreakdownEntry entry = sorted[i];
                 float share = sceneTriangles > 0 ? entry.Triangles * 100f / sceneTriangles : 0f;
+                float visibleShare = visibleTriangles > 0 ? entry.VisibleTriangles * 100f / visibleTriangles : 0f;
 
                 entries.Add(new JObject
                 {
@@ -127,6 +140,10 @@ namespace DCL.McpServer.Tools
                     ["renderers"] = entry.Renderers,
                     ["materials"] = entry.Materials,
                     ["drawCallsEstimate"] = entry.DrawCalls,
+                    ["visibleTriangles"] = entry.VisibleTriangles,
+                    ["visibleTrianglesSharePercent"] = Mathf.Round(visibleShare * 10f) / 10f,
+                    ["visibleRenderers"] = entry.VisibleRenderers,
+                    ["visibleDrawCallsEstimate"] = entry.VisibleDrawCalls,
                 });
 
                 text.Append(i + 1).Append(". ").Append(entry.Source)
@@ -135,7 +152,11 @@ namespace DCL.McpServer.Tools
                     .Append(entry.Materials).Append(" materials, ~")
                     .Append(entry.DrawCalls).Append(" draw calls, ")
                     .Append(entry.Instances).Append(entry.Instances == 1 ? " instance, " : " instances, ")
-                    .Append(entry.Renderers).AppendLine(" renderers");
+                    .Append(entry.Renderers).Append(" renderers; visible: ")
+                    .Append(entry.VisibleTriangles.ToString("N0", CultureInfo.InvariantCulture)).Append(" tris (")
+                    .Append(visibleShare.ToString("F1", CultureInfo.InvariantCulture)).Append("% of view) in ")
+                    .Append(entry.VisibleRenderers).Append(" renderers, ~")
+                    .Append(entry.VisibleDrawCalls).AppendLine(" draw calls");
             }
 
             if (returned < sorted.Count)
@@ -146,6 +167,8 @@ namespace DCL.McpServer.Tools
                 ["sceneTriangles"] = sceneTriangles,
                 ["sceneMaterials"] = stats.Materials,
                 ["sceneDrawCallsEstimate"] = sceneDrawCalls,
+                ["visibleTriangles"] = visibleTriangles,
+                ["visibleDrawCallsEstimate"] = visibleDrawCalls,
                 ["sortedBy"] = sortBy,
                 ["totalSources"] = sorted.Count,
                 ["returned"] = returned,

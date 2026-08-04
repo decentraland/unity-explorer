@@ -158,7 +158,12 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             int materialSlots = AccountRendererMaterials(component.MeshRenderer, collectBreakdown ? GetBreakdownMaterials(PRIMITIVES_SOURCE) : null);
 
             if (collectBreakdown)
-                AccountBreakdown(PRIMITIVES_SOURCE, meshTriangles, rendererCount: 1, materialSlots);
+            {
+                bool visible = component.MeshRenderer.isVisible;
+
+                AccountBreakdown(PRIMITIVES_SOURCE, meshTriangles, rendererCount: 1, materialSlots,
+                    visible ? meshTriangles : 0, visible ? 1 : 0, visible ? materialSlots : 0);
+            }
         }
 
         [Query]
@@ -178,6 +183,9 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             HashSet<Material>? sourceMaterials = collectBreakdown ? GetBreakdownMaterials(sdkComponent.Src) : null;
             long containerTriangles = 0;
             var containerMaterialSlots = 0;
+            long visibleTriangles = 0;
+            var visibleRenderers = 0;
+            var visibleMaterialSlots = 0;
 
             for (var i = 0; i < renderers.Count; i++)
             {
@@ -191,14 +199,23 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
 
                 bodies++;
 
-                if (mesh != null)
-                    containerTriangles += AccountMesh(mesh);
+                long rendererTriangles = mesh != null ? AccountMesh(mesh) : 0;
+                containerTriangles += rendererTriangles;
 
-                containerMaterialSlots += AccountRendererMaterials(renderer, sourceMaterials);
+                int materialSlots = AccountRendererMaterials(renderer, sourceMaterials);
+                containerMaterialSlots += materialSlots;
+
+                if (collectBreakdown && renderer.isVisible)
+                {
+                    visibleRenderers++;
+                    visibleTriangles += rendererTriangles;
+                    visibleMaterialSlots += materialSlots;
+                }
             }
 
             if (collectBreakdown)
-                AccountBreakdown(sdkComponent.Src, containerTriangles, renderers.Count, containerMaterialSlots);
+                AccountBreakdown(sdkComponent.Src, containerTriangles, renderers.Count, containerMaterialSlots,
+                    visibleTriangles, visibleRenderers, visibleMaterialSlots);
         }
 
         [Query]
@@ -240,7 +257,8 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             return meshTriangles;
         }
 
-        private void AccountBreakdown(string source, long containerTriangles, int rendererCount, int materialSlots)
+        private void AccountBreakdown(string source, long containerTriangles, int rendererCount, int materialSlots,
+            long visibleTriangles, int visibleRenderers, int visibleMaterialSlots)
         {
             breakdownScratch.TryGetValue(source, out SceneContentBreakdownEntry entry);
             entry.Source = source;
@@ -248,6 +266,9 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             entry.Renderers += rendererCount;
             entry.Triangles += containerTriangles;
             entry.DrawCalls += materialSlots;
+            entry.VisibleRenderers += visibleRenderers;
+            entry.VisibleTriangles += visibleTriangles;
+            entry.VisibleDrawCalls += visibleMaterialSlots;
             breakdownScratch[source] = entry;
         }
 

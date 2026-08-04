@@ -24,6 +24,22 @@ namespace DCL.Profiling
         ///     the source costs before SRP batching and instancing.
         /// </summary>
         public int DrawCalls;
+
+        /// <summary>
+        ///     Subset of <see cref="Renderers" /> that passed culling for at least one active camera
+        ///     (including shadow casting) during the collection pass, per <c>Renderer.isVisible</c>.
+        /// </summary>
+        public int VisibleRenderers;
+
+        /// <summary>
+        ///     Triangles of the visible renderers only — what the current point of view pays for.
+        /// </summary>
+        public long VisibleTriangles;
+
+        /// <summary>
+        ///     Material slots of the visible renderers only.
+        /// </summary>
+        public int VisibleDrawCalls;
     }
 
     /// <summary>
