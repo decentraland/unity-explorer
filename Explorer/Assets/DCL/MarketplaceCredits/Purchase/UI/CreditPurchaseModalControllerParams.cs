@@ -4,6 +4,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 {
     public readonly struct CreditPurchaseModalControllerParams
     {
+        public const string SOURCE_PASSPORT_EQUIPPED = "passport_equipped";
+        public const string SOURCE_PASSPORT_CREATIONS = "passport_creations";
+
         public readonly ShopListingDto Listing;
         public readonly string ItemName;
         public readonly string RarityName;
@@ -14,6 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         public readonly Sprite? CategoryIcon;
 
         public readonly string FallbackMarketplaceUrl;
+        public readonly string Source;
 
         public CreditPurchaseModalControllerParams(
             ShopListingDto listing,
@@ -23,7 +27,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             Sprite? rarityBackground,
             Color rarityColor,
             Sprite? categoryIcon,
-            string fallbackMarketplaceUrl)
+            string fallbackMarketplaceUrl,
+            string source)
         {
             Listing = listing;
             ItemName = itemName;
@@ -33,6 +38,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             RarityColor = rarityColor;
             CategoryIcon = categoryIcon;
             FallbackMarketplaceUrl = fallbackMarketplaceUrl;
+            Source = source;
         }
     }
 }

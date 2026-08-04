@@ -33,16 +33,22 @@ namespace DCL.Passport.Modules
             }
         }
 
+        public const string FALLBACK_FEATURE_DISABLED = "feature_disabled";
+        public const string FALLBACK_RESOLUTION_FAILED = "resolution_failed";
+        public const string FALLBACK_NO_CREDITS_LISTING = "no_credits_listing";
+
         private readonly IMVCManager mvcManager;
-        private readonly MarketplaceShopAPIClient shopAPIClient;
+        private readonly MarketplaceShopAPIClient shopApiClient;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly bool isEnabled;
         private readonly Dictionary<string, ShopListingDto?> listingCache = new ();
 
-        public CreditPurchaseBuyHandler(IMVCManager mvcManager, MarketplaceShopAPIClient shopAPIClient, UnityAppWebBrowser webBrowser, bool isEnabled)
+        public event Action<string, string, string>? FellBackToWeb;
+
+        public CreditPurchaseBuyHandler(IMVCManager mvcManager, MarketplaceShopAPIClient shopApiClient, UnityAppWebBrowser webBrowser, bool isEnabled)
         {
             this.mvcManager = mvcManager;
-            this.shopAPIClient = shopAPIClient;
+            this.shopApiClient = shopApiClient;
             this.webBrowser = webBrowser;
             this.isEnabled = isEnabled;
         }
@@ -74,10 +80,11 @@ namespace DCL.Passport.Modules
         public void ClearCache() =>
             listingCache.Clear();
 
-        public async UniTask HandleBuyClickAsync(string itemUrn, string marketplaceUrl, ItemVisuals visuals, Action<bool> setResolving, CancellationToken ct)
+        public async UniTask HandleBuyClickAsync(string itemUrn, string marketplaceUrl, ItemVisuals visuals, string source, Action<bool> setResolving, CancellationToken ct)
         {
             if (!isEnabled)
             {
+                FellBackToWeb?.Invoke(FALLBACK_FEATURE_DISABLED, itemUrn, source);
                 webBrowser.OpenUrlMainThreadOnly(marketplaceUrl);
                 return;
             }
@@ -96,6 +103,7 @@ namespace DCL.Passport.Modules
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Listing resolution failed for {itemUrn}: {e.Message}");
+                FellBackToWeb?.Invoke(FALLBACK_RESOLUTION_FAILED, itemUrn, source);
                 webBrowser.OpenUrlMainThreadOnly(marketplaceUrl);
                 return;
             }
@@ -109,6 +117,7 @@ namespace DCL.Passport.Modules
 
             if (listing == null)
             {
+                FellBackToWeb?.Invoke(FALLBACK_NO_CREDITS_LISTING, itemUrn, source);
                 webBrowser.OpenUrlMainThreadOnly(marketplaceUrl);
                 return;
             }
@@ -121,7 +130,8 @@ namespace DCL.Passport.Modules
                 visuals.RarityBackground,
                 visuals.RarityColor,
                 visuals.CategoryIcon,
-                marketplaceUrl);
+                marketplaceUrl,
+                source);
 
             try { await mvcManager.ShowAsync(CreditPurchaseModalController.IssueCommand(modalParams), ct); }
             catch (OperationCanceledException) { }
@@ -142,7 +152,7 @@ namespace DCL.Passport.Modules
                 return null;
             }
 
-            ShopListingDto? listing = await shopAPIClient.GetShopListingForItemAsync(contractAddress, itemId, ct);
+            ShopListingDto? listing = await shopApiClient.GetShopListingForItemAsync(contractAddress, itemId, ct);
             listingCache[itemUrn] = listing;
             return listing;
         }

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.FeatureFlags;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using NSubstitute;
@@ -25,10 +26,10 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private const int ORACLE_DECIMALS = 8;
         private const int MANA_USD_RATE = 25_000_000;
 
-        // The native fixture is USD-pegged at $2.50, so the rate only decides how much MANA it draws: 10 MANA.
+        // The native fixture is USD-pegged at $2.50, so the rate only decides how much MANA it draws at
+        // purchase time: 10 MANA.
         private const int NATIVE_PRICE_CENTS = 250;
         private const int NATIVE_PRICE_CREDITS = 25;
-        private const string NATIVE_REQUIRED_MANA_WEI = "10000000000000000000";
 
         // The legacy fixture is denominated in MANA: 5 MANA is $1.25 at the fixture rate, which the credits-server
         // charges as 13 whole credits.
@@ -42,6 +43,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private PolygonSettlementPoller settlementPoller = null!;
         private ManaUsdRateReader manaUsdRateReader = null!;
         private IWeb3IdentityCache identityCache = null!;
+        private CreditsFeatureAccess creditsFeatureAccess = null!;
+        private CancellationTokenSource warmUpCts = null!;
         private CreditsPurchaseService service = null!;
         private List<CreditsPurchaseState> recordedStates = null!;
 
@@ -74,14 +77,30 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             settlementPoller.WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(SettlementOutcome.Confirmed));
 
+            // The wallets restriction flag is absent by default, so every wallet is allowed.
+            FeatureFlagsConfiguration.Reset();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+
+            warmUpCts = new CancellationTokenSource();
+            creditsFeatureAccess = new CreditsFeatureAccess(identityCache, warmUpCts.Token);
+
             service = CreateService(isFeatureEnabled: true);
 
             recordedStates = new List<CreditsPurchaseState>();
             service.StateChanged += state => recordedStates.Add(state);
         }
 
-        private CreditsPurchaseService CreateService(bool isFeatureEnabled) =>
-            new (shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller, manaUsdRateReader, identityCache, isFeatureEnabled);
+        [TearDown]
+        public void TearDown()
+        {
+            warmUpCts.Cancel();
+            warmUpCts.Dispose();
+
+            FeatureFlagsConfiguration.Reset();
+        }
+
+        private CreditsPurchaseService CreateService(bool isFeatureEnabled, CreditsFeatureAccess? featureAccess = null) =>
+            new (shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller, manaUsdRateReader, identityCache, featureAccess ?? creditsFeatureAccess, isFeatureEnabled);
 
         private static TradeDto CreateTrade() =>
             new ()
@@ -176,23 +195,30 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.IsTrue(result.Success);
             Assert.AreEqual(TX_HASH, result.TxHash);
             CollectionAssert.AreEqual(
-                new[] { CreditsPurchaseState.ResolvingListing, CreditsPurchaseState.Authorizing, CreditsPurchaseState.Signing, CreditsPurchaseState.WaitingSettlement, CreditsPurchaseState.Success },
+                new[] { CreditsPurchaseState.ResolvingListing, CreditsPurchaseState.ResolvingListing, CreditsPurchaseState.Authorizing, CreditsPurchaseState.Signing, CreditsPurchaseState.WaitingSettlement, CreditsPurchaseState.Success },
                 recordedStates);
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
-        public async Task QuoteNativeTradeFromItsUsdPeggedAmount()
+        public async Task QuoteNativeTradeFromItsUsdPeggedAmountWithoutTheOracle()
         {
+            // Arrange: a dead oracle must not stop a USD-pegged quote — its price needs no rate. Thrown lazily
+            // so the never-consumed exception task cannot surface as an unobserved UniTask error.
+            manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                             .Returns<UniTask<ManaUsdRate>>(_ => throw new InvalidOperationException("stale"));
+
             // Act
             CreditsQuoteResult result = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
 
-            // Assert
+            // Assert: the settlement wei is left for purchase time, and only the cache warm-up touches the reader.
             Assert.IsTrue(result.Success);
             Assert.AreEqual(NATIVE_PRICE_CENTS, result.Quote.UsdCents);
             Assert.AreEqual(NATIVE_PRICE_CREDITS, result.Quote.Credits);
-            Assert.AreEqual(BigInteger.Parse(NATIVE_REQUIRED_MANA_WEI), result.Quote.RequiredManaWei);
+            Assert.AreEqual(BigInteger.Zero, result.Quote.RequiredManaWei);
             Assert.IsFalse(result.Quote.IsLiveRatePrice);
+            await manaUsdRateReader.DidNotReceive().ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await manaUsdRateReader.Received(1).PrefetchAsync(Arg.Any<string>());
         }
 
         [Test]
@@ -219,9 +245,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
-        public async Task RejectQuoteWhenTheOracleRateIsUnavailable()
+        public async Task RejectLegacyQuoteWhenTheOracleRateIsUnavailable()
         {
-            // Arrange
+            // Arrange: a MANA-denominated price cannot be displayed without the rate.
+            shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(CreateLegacyManaTrade()));
+
             manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                              .Returns(UniTask.FromException<ManaUsdRate>(new InvalidOperationException("stale")));
 
@@ -234,6 +262,45 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task RejectPurchaseWithoutChargingWhenTheRateIsUnavailableAtConfirm()
+        {
+            // Arrange: the USD-pegged quote succeeds, then the oracle dies before the confirm click.
+            CreditsQuoteResult quote = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            Assert.IsTrue(quote.Success);
+
+            manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                             .Returns(UniTask.FromException<ManaUsdRate>(new InvalidOperationException("stale")));
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(quote.Quote, CancellationToken.None);
+
+            // Assert: the rate failed before any credit intent existed, so there is nothing to release.
+            Assert.AreEqual(CreditsPurchaseError.PriceUnavailable, result.Error);
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task ReleaseReservationWhenThePurchaseTimeRateCannotCoverTheTrade()
+        {
+            // Arrange: MANA halves between authorization sizing and the purchase-time read, so the trade draws
+            // 20 MANA against a cap sized for ~10.
+            CreditsQuoteResult quote = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            Assert.IsTrue(quote.Success);
+
+            manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                             .Returns(UniTask.FromResult(new ManaUsdRate(MANA_USD_RATE / 2, ORACLE_DECIMALS)));
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(quote.Quote, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.Error);
+            await creditsAPIClient.Received(1).ReleaseUsdIntentsAsync(Arg.Is<string[]>(salts => salts[0] == CREDIT_ID), Arg.Any<CancellationToken>());
+            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public async Task FailWhenFeatureIsDisabled()
         {
             // Arrange
@@ -241,6 +308,33 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Act
             CreditsQuoteResult result = await disabledService.QuoteAsync(TRADE_ID, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.FeatureDisabled, result.Error);
+            await shopAPIClient.DidNotReceive().GetTradeAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task FailWhenWalletIsOutsideTheAllowlist()
+        {
+            // Arrange: the wallets restriction flag is on and the buyer is not listed
+            FeatureFlagsResultDto dto = FeatureFlagsResultDto.Empty;
+            dto.flags[FeatureFlagsStrings.CREDITS_WALLETS] = true;
+
+            dto.variants[FeatureFlagsStrings.CREDITS_WALLETS] = new FeatureFlagVariantDto
+            {
+                name = FeatureFlagsStrings.WALLETS_VARIANT,
+                enabled = true,
+                payload = new FeatureFlagPayload { type = "string", value = SELLER },
+            };
+
+            FeatureFlagsConfiguration.Reset();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(dto));
+
+            CreditsPurchaseService restrictedService = CreateService(isFeatureEnabled: true, new CreditsFeatureAccess(identityCache, warmUpCts.Token));
+
+            // Act
+            CreditsQuoteResult result = await restrictedService.QuoteAsync(TRADE_ID, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.FeatureDisabled, result.Error);
