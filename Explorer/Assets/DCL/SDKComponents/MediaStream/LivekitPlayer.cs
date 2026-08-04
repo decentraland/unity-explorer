@@ -1,6 +1,5 @@
 using DCL.Diagnostics;
 using DCL.LiveKit.Public;
-using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Optimization.ThreadSafePool;
 using DCL.SDKComponents.MediaStream;
 using LiveKit.Proto;
@@ -38,7 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
         private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
 
-        private readonly IConnectiveRoom connectiveRoom;
+        private readonly Func<bool> isRoomRunning;
         private readonly IRoom room;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private PlayerState playerState;
@@ -83,18 +82,21 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool isAudioOpened => audioSources.Count > 0;
 
-        // ConnectiveRoom flips its state to Stopping on the main thread BEFORE the FFI disconnect request
-        // is issued (StopAsync / DisconnectCurrentRoomAsync), while Info.ConnectionState only updates when
-        // the asynchronous FFI event arrives. Checking both closes the teardown window synchronously and
-        // still covers mid-cycle room swaps once the disconnect event lands.
+        // The connective room flips its state away from Running on the main thread BEFORE the FFI
+        // disconnect request is issued (StopAsync / DisconnectCurrentRoomAsync), while Info.ConnectionState
+        // only updates when the asynchronous FFI event arrives. Checking both closes the teardown window
+        // synchronously and still covers mid-cycle room swaps once the disconnect event lands.
+        // isRoomRunning is a delegate rather than the connective room itself: this code compiles into
+        // ECS.Unity, which cannot reference DCL.Multiplayer without an asmdef cycle, so
+        // MediaFactoryBuilder supplies the probe from the room hub.
         private bool CanOpenStreams =>
-            connectiveRoom.CurrentState() == IConnectiveRoom.State.Running
+            isRoomRunning()
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
 
-        public LivekitPlayer(IConnectiveRoom streamingRoom, AvatarPlaceHolderTextureSource? placeholderSource)
+        public LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource)
         {
-            connectiveRoom = streamingRoom;
-            room = streamingRoom.Room();
+            this.isRoomRunning = isRoomRunning;
+            room = streamingRoom;
             this.placeholderSource = placeholderSource;
 
             room.ConnectionUpdated += OnRoomConnectionUpdated;
