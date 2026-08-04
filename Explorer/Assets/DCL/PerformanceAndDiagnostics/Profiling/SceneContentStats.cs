@@ -27,14 +27,14 @@ namespace DCL.Profiling
     }
 
     /// <summary>
-    ///     Per-scene content statistics for the "Current scene" debug widget. Written by
+    ///     Per-scene content statistics for the "Scene content" debug widget. Written by
     ///     <c>SceneContentStatsSystem</c> in the scene world and read by <c>DebugViewCurrentSceneSystem</c>
     ///     in the global world; both run on the Unity main thread.
     /// </summary>
     public sealed class SceneContentStats
     {
         /// <summary>
-        ///     Set by the "Current scene" debug widget while it is expanded on this scene.
+        ///     Set by the "Scene content" debug widget while it is expanded on this scene.
         /// </summary>
         public bool RequestedByDebugWidget;
 

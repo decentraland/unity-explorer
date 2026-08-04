@@ -39,6 +39,7 @@ namespace DCL.UI.DebugMenu
         private ISceneFacade? metricsScene;
         private SceneContentCaps metricsCaps;
         private int framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
+        private long lastMetricsCollectionCount = -1;
 
         private void OnEnable()
         {
@@ -151,6 +152,7 @@ namespace DCL.UI.DebugMenu
 
                 // Prime the counter so the new scene's values show on the very next refresh check
                 framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
+                lastMetricsCollectionCount = -1;
 
                 SceneContentStatsFormatter.FormatEmpty(out SceneContentStatsText emptyText);
                 metricsPanelView.UpdateValues(in emptyText);
@@ -165,6 +167,10 @@ namespace DCL.UI.DebugMenu
             if (++framesSinceMetricsRefresh < METRICS_REFRESH_COOLDOWN_FRAMES) return;
 
             framesSinceMetricsRefresh = 0;
+
+            if (stats.CollectionCount == lastMetricsCollectionCount) return;
+
+            lastMetricsCollectionCount = stats.CollectionCount;
             SceneContentStatsFormatter.Format(stats, in metricsCaps, out SceneContentStatsText text);
             metricsPanelView.UpdateValues(in text);
         }

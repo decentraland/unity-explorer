@@ -25,9 +25,11 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
 
-        private readonly bool widgetEnabled;
+        private readonly bool perfWidgetEnabled;
+        private readonly bool contentWidgetEnabled;
 
         private readonly DebugWidgetVisibilityBinding visibility;
+        private readonly DebugWidgetVisibilityBinding contentVisibility;
 
         private readonly StringBindings stringBindings;
         private readonly ContentStatsBindings contentStatsBindings;
@@ -52,6 +54,7 @@ namespace DCL.Profiling.ECS
 
         private ISceneFacade? currentScene;
         private SceneContentCaps contentCaps;
+        private long lastContentCollectionCount = -1;
         private long lastBytesFromScene;
         private long lastBytesToScene;
         private long lastMessagesFromScene;
@@ -65,6 +68,7 @@ namespace DCL.Profiling.ECS
             this.scenesCache = scenesCache;
 
             visibility = new DebugWidgetVisibilityBinding(true);
+            contentVisibility = new DebugWidgetVisibilityBinding(true);
             stringBindings = StringBindings.Create();
             contentStatsBindings = ContentStatsBindings.Create();
 
@@ -75,25 +79,29 @@ namespace DCL.Profiling.ECS
             messagesToChart = new ElementBinding<LineChartBuffer>(new LineChartBuffer(messagesToRing, 0, 0, 0));
 
             DebugWidgetBuilder? widgetBuilder = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE);
+            DebugWidgetBuilder? contentWidgetBuilder = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.SCENE_CONTENT);
 
-            if (widgetBuilder == null)
+            if (widgetBuilder == null && contentWidgetBuilder == null)
                 return;
 
-            widgetEnabled = true;
+            perfWidgetEnabled = widgetBuilder != null;
+            contentWidgetEnabled = contentWidgetBuilder != null;
 
             onCurrentSceneChanged = OnCurrentSceneChanged;
             scenesCache.CurrentScene.OnUpdate += onCurrentSceneChanged;
             OnCurrentSceneChanged(scenesCache.CurrentScene.Value);
 
-            widgetBuilder.SetVisibilityBinding(visibility)
-                         .AddCustomMarker("Entities:", contentStatsBindings.Entities)
-                         .AddCustomMarker("Triangles:", contentStatsBindings.Triangles)
-                         .AddCustomMarker("Meshes (bodies):", contentStatsBindings.Bodies)
-                         .AddCustomMarker("Geometries:", contentStatsBindings.Geometries)
-                         .AddCustomMarker("Materials:", contentStatsBindings.Materials)
-                         .AddCustomMarker("Textures:", contentStatsBindings.Textures)
-                         .AddCustomMarker("Colliders:", contentStatsBindings.Colliders)
-                         .AddCustomMarker("External content:", contentStatsBindings.ExternalContent)
+            contentWidgetBuilder?.SetVisibilityBinding(contentVisibility)
+                                 .AddCustomMarker("Entities:", contentStatsBindings.Entities)
+                                 .AddCustomMarker("Triangles:", contentStatsBindings.Triangles)
+                                 .AddCustomMarker("Meshes (bodies):", contentStatsBindings.Bodies)
+                                 .AddCustomMarker("Geometries:", contentStatsBindings.Geometries)
+                                 .AddCustomMarker("Materials:", contentStatsBindings.Materials)
+                                 .AddCustomMarker("Textures:", contentStatsBindings.Textures)
+                                 .AddCustomMarker("Colliders:", contentStatsBindings.Colliders)
+                                 .AddCustomMarker("External content:", contentStatsBindings.ExternalContent);
+
+            widgetBuilder?.SetVisibilityBinding(visibility)
                          .AddCustomMarker("Real tick FPS:", stringBindings.RealFps)
                          .AddCustomMarker("Min FPS (last 256 ticks):", stringBindings.MinFps)
                          .AddCustomMarker("Max FPS (last 256 ticks):", stringBindings.MaxFps)
@@ -119,14 +127,22 @@ namespace DCL.Profiling.ECS
 
         protected override void Update(float t)
         {
-            if (!widgetEnabled) return;
+            if (!perfWidgetEnabled && !contentWidgetEnabled) return;
             if (!realmData.Configured) return;
             if (currentScene == null) return;
 
             SceneRuntimeMetrics metrics = currentScene.RuntimeMetrics;
-            metrics.ContentStats.RequestedByDebugWidget = visibility.IsConnectedAndExpanded;
 
-            if (!visibility.IsConnectedAndExpanded) return;
+            bool contentExpanded = contentWidgetEnabled && contentVisibility.IsConnectedAndExpanded;
+            metrics.ContentStats.RequestedByDebugWidget = contentExpanded;
+
+            if (contentExpanded && metrics.ContentStats.CollectionCount != lastContentCollectionCount)
+            {
+                lastContentCollectionCount = metrics.ContentStats.CollectionCount;
+                UpdateContentStatsBindings(in contentStatsBindings, metrics.ContentStats, in contentCaps);
+            }
+
+            if (!perfWidgetEnabled || !visibility.IsConnectedAndExpanded) return;
 
             long bytesFrom = metrics.BytesFromScene.Total;
             long bytesTo = metrics.BytesToScene.Total;
@@ -163,7 +179,6 @@ namespace DCL.Profiling.ECS
                 framesSinceMetricsUpdate = 0;
                 UpdateStringBindings(in stringBindings, metrics, currentFpsValue, minFpsValue, maxFpsValue, hiccupCount,
                     deltaBytesFrom, deltaBytesTo, deltaMessagesFrom, deltaMessagesTo, dt);
-                UpdateContentStatsBindings(in contentStatsBindings, metrics.ContentStats, in contentCaps);
             }
         }
 
@@ -199,6 +214,7 @@ namespace DCL.Profiling.ECS
             fpsRingIndex = fpsRingCount = 0;
             lastBytesFromScene = lastBytesToScene = lastMessagesFromScene = lastMessagesToScene = 0;
             framesSinceMetricsUpdate = 0;
+            lastContentCollectionCount = -1;
 
             // Stage the cleared buffer; flush happens via SetAndUpdate in Update once the binding is connected.
             fpsChart.Value = new LineChartBuffer(fpsRing, 0, 0, 0);

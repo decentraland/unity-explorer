@@ -21,8 +21,10 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class GetSceneContentBreakdownTool : McpTool
     {
+        // Generous: with another consumer already collecting, the next pass can be a full
+        // 60-frame cooldown away, which stretches to seconds when the scene runs at low FPS
         private const int POLL_INTERVAL_MS = 100;
-        private const int DEFAULT_COLLECTION_TIMEOUT_MS = 3000;
+        private const int DEFAULT_COLLECTION_TIMEOUT_MS = 10_000;
         private const int DEFAULT_LIMIT = 10;
         private const int MAX_LIMIT = 50;
 

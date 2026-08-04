@@ -64,7 +64,7 @@ namespace DCL.Profiling
     ///     rich-text strings. Capped rows render as "current / cap (pct%)" colored green below
     ///     <see cref="CAP_WARNING_PERCENT" /> and yellow above it — the documented limits are soft,
     ///     so exceeding one never renders red. Uncapped rows render as plain counts. Shared by the
-    ///     "Current scene" debug widget and the scene debug menu metrics panel.
+    ///     "Scene content" debug widget and the scene debug menu metrics panel.
     /// </summary>
     public static class SceneContentStatsFormatter
     {
