@@ -571,6 +571,8 @@ namespace Global.Dynamic
                     chatContainer.ChatEventBus,
                     placesAndEventsContainer.EventsApiService,
                     staticContainer.SmartWearableCache,
+                    staticContainer.LocalPortableExperienceCache,
+                    staticContainer.GlobalPortableExperienceCache,
                     uiShellContainer.SupportRequestService,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),

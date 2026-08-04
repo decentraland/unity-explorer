@@ -31,6 +31,11 @@ namespace PortableExperiences.Controller
 
         ExitResponse UnloadPortableExperienceById(string id);
 
+        /// <summary>
+        ///     Unloads the Portable Experience and records it as killed in the status tracker matching its type.
+        /// </summary>
+        ExitResponse KillPortableExperienceById(string id);
+
         List<SpawnResponse> GetAllPortableExperiences();
 
         void UnloadAllPortableExperiences();

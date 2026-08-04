@@ -8,7 +8,7 @@ namespace PortableExperiences.Tests
 {
     public class LocalPortableExperienceCacheShould
     {
-        private LocalPortableExperienceCache cache;
+        private LocalPortableExperienceCache cache = null!;
 
         [SetUp]
         public void Setup()
@@ -34,11 +34,13 @@ namespace PortableExperiences.Tests
         }
 
         [Test]
-        public void EmptyAuthorizationSetsWhenCleared()
+        public void EmptyAllSetsWhenCleared()
         {
             // Arrange
             cache.AuthorizedPortableExperiences.Add("authorized.dcl.eth");
             cache.DeniedPortableExperiences.Add("denied.dcl.eth");
+            cache.RunningPortableExperiences.Add("running.dcl.eth");
+            cache.KilledPortableExperiences.Add("killed.dcl.eth");
 
             // Act
             cache.Clear();
@@ -46,6 +48,8 @@ namespace PortableExperiences.Tests
             // Assert
             Assert.IsEmpty(cache.AuthorizedPortableExperiences);
             Assert.IsEmpty(cache.DeniedPortableExperiences);
+            Assert.IsEmpty(cache.RunningPortableExperiences);
+            Assert.IsEmpty(cache.KilledPortableExperiences);
         }
 
         [Test]
@@ -53,9 +57,13 @@ namespace PortableExperiences.Tests
         {
             // Arrange
             cache.AuthorizedPortableExperiences.Add("SomePx.dcl.eth");
+            cache.RunningPortableExperiences.Add("RunningPx.dcl.eth");
+            cache.KilledPortableExperiences.Add("KilledPx.dcl.eth");
 
             // Assert
             Assert.IsTrue(cache.AuthorizedPortableExperiences.Contains("somepx.dcl.eth"));
+            Assert.IsTrue(cache.RunningPortableExperiences.Contains("runningpx.dcl.eth"));
+            Assert.IsTrue(cache.KilledPortableExperiences.Contains("killedpx.dcl.eth"));
         }
     }
 }

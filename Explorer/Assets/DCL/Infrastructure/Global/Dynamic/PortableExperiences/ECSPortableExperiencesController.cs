@@ -20,6 +20,7 @@ using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
+using Runtime.Wearables;
 using SceneRuntime.ScenePermissions;
 
 namespace PortableExperiences.Controller
@@ -31,6 +32,8 @@ namespace PortableExperiences.Controller
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
         private readonly LocalPortableExperienceCache localPortableExperienceCache;
+        private readonly GlobalPortableExperienceCache globalPortableExperienceCache;
+        private readonly SmartWearableCache smartWearableCache;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly HashSet<string> loadingPortableExperiences = new ();
         private readonly Dictionary<string, int> localPortableExperiencesPerScene = new ();
@@ -59,17 +62,22 @@ namespace PortableExperiences.Controller
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
             LocalPortableExperienceCache localPortableExperienceCache,
+            GlobalPortableExperienceCache globalPortableExperienceCache,
+            SmartWearableCache smartWearableCache,
             ILaunchMode launchMode,
             IDecentralandUrlsSource urlsSources)
         {
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
             this.localPortableExperienceCache = localPortableExperienceCache;
+            this.globalPortableExperienceCache = globalPortableExperienceCache;
+            this.smartWearableCache = smartWearableCache;
             this.launchMode = launchMode;
             this.urlsSources = urlsSources;
 
-            // The controller lives for the whole application lifetime, so the subscription is never torn down.
+            // The controller lives for the whole application lifetime, so the subscriptions are never torn down.
             web3IdentityCache.OnIdentityCleared += localPortableExperienceCache.Clear;
+            web3IdentityCache.OnIdentityCleared += globalPortableExperienceCache.Clear;
         }
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false, bool requireUserAuthorization = false)
@@ -87,7 +95,6 @@ namespace PortableExperiences.Controller
                     case true when !FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
 
-                    //If it's a local PX (not Global) but the requesting scene does not have permissions to spawn PXs
                     case false when parentScene != null && !parentScene.SceneData.SceneEntityDefinition.metadata.requiredPermissions.Contains(ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE):
                         throw new Exception($"The parent scene {parentScene.Info.Name} is trying to spawn a portable experience but lacks the '{ScenePermissionNames.SPAWN_PORTABLE_EXPERIENCE}' permission.");
                 }
@@ -171,8 +178,17 @@ namespace PortableExperiences.Controller
 
                 PortableExperienceEntities.Add(portableExperienceId, portableExperienceEntity);
 
-                if (!isGlobalPortableExperience)
+                if (isGlobalPortableExperience)
                 {
+                    // A re-spawned Portable Experience must not stay marked as killed.
+                    globalPortableExperienceCache.KilledPortableExperiences.Remove(portableExperienceId);
+                    globalPortableExperienceCache.RunningPortableExperiences.Add(portableExperienceId);
+                }
+                else
+                {
+                    localPortableExperienceCache.KilledPortableExperiences.Remove(portableExperienceId);
+                    localPortableExperienceCache.RunningPortableExperiences.Add(portableExperienceId);
+
                     localPortableExperiencesPerScene.TryGetValue(parentSceneName, out int count);
                     localPortableExperiencesPerScene[parentSceneName] = count + 1;
                 }
@@ -295,6 +311,17 @@ namespace PortableExperiences.Controller
             {
                 PortableExperienceMetadata metadata = world.Get<PortableExperienceMetadata>(portableExperienceEntity);
 
+                switch (metadata.Type)
+                {
+                    // No SmartWearable case: its running state lives in SmartWearableCache, updated through the PortableExperienceUnloaded event raised below.
+                    case PortableExperienceType.Local:
+                        localPortableExperienceCache.RunningPortableExperiences.Remove(id);
+                        break;
+                    case PortableExperienceType.Global:
+                        globalPortableExperienceCache.RunningPortableExperiences.Remove(id);
+                        break;
+                }
+
                 if (metadata.Type == PortableExperienceType.Local &&
                     localPortableExperiencesPerScene.TryGetValue(metadata.ParentSceneId, out int count))
                 {
@@ -312,6 +339,32 @@ namespace PortableExperiences.Controller
             }
 
             return new IPortableExperiencesController.ExitResponse { status = false };
+        }
+
+        public IPortableExperiencesController.ExitResponse KillPortableExperienceById(string id)
+        {
+            if (!PortableExperienceEntities.TryGetValue(id, out Entity portableExperienceEntity))
+                return new IPortableExperiencesController.ExitResponse { status = false };
+
+            PortableExperienceType type = world.Get<PortableExperienceMetadata>(portableExperienceEntity).Type;
+
+            IPortableExperiencesController.ExitResponse response = UnloadPortableExperienceById(id);
+
+            if (response.status)
+                switch (type)
+                {
+                    case PortableExperienceType.SmartWearable:
+                        smartWearableCache.KilledPortableExperiences.Add(id);
+                        break;
+                    case PortableExperienceType.Local:
+                        localPortableExperienceCache.KilledPortableExperiences.Add(id);
+                        break;
+                    case PortableExperienceType.Global:
+                        globalPortableExperienceCache.KilledPortableExperiences.Add(id);
+                        break;
+                }
+
+            return response;
         }
     }
 }

@@ -38,6 +38,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.InputSystem;
 using Utility;
+using Utility.PortableExperiences;
 
 namespace DCL.PluginSystem.Global
 {
@@ -66,6 +67,8 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly ILocalPortableExperiencesStatus localPortableExperiencesStatus;
+        private readonly IPortableExperiencesStatus globalPortableExperiencesStatus;
         private readonly HttpEventsApiService eventsApiService;
         private readonly SupportRequestService supportRequestService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
@@ -108,6 +111,8 @@ namespace DCL.PluginSystem.Global
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
             SmartWearableCache smartWearableCache,
+            ILocalPortableExperiencesStatus localPortableExperiencesStatus,
+            IPortableExperiencesStatus globalPortableExperiencesStatus,
             SupportRequestService supportRequestService,
             JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
         {
@@ -133,6 +138,8 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrls = decentralandUrls;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.localPortableExperiencesStatus = localPortableExperiencesStatus;
+            this.globalPortableExperiencesStatus = globalPortableExperiencesStatus;
             this.chatEventBus = chatEventBus;
             this.eventsApiService = eventsApiService;
             this.supportRequestService = supportRequestService;
@@ -174,7 +181,7 @@ namespace DCL.PluginSystem.Global
             profileButtonPresenter = new SidebarProfileButtonPresenter( mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
             profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
-            smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
+            smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache, localPortableExperiencesStatus, globalPortableExperiencesStatus);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
             helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);

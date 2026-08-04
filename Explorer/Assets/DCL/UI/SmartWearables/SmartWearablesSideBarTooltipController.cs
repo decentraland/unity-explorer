@@ -1,20 +1,28 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using MVC;
 using Runtime.Wearables;
 using System.Threading;
 using Utility;
+using Utility.PortableExperiences;
 
 namespace DCL.UI.Skybox
 {
     public class SmartWearablesSideBarTooltipController : ControllerBase<SmartWearablesSideBarTooltipView>
     {
         private readonly SmartWearableCache smartWearableCache;
+        private readonly ILocalPortableExperiencesStatus localPortableExperiencesStatus;
+        private readonly IPortableExperiencesStatus globalPortableExperiencesStatus;
 
         private CancellationTokenSource? cancellationTokenSource;
 
-        public SmartWearablesSideBarTooltipController(ViewFactoryMethod viewFactory, SmartWearableCache smartWearableCache) : base(viewFactory)
+        public SmartWearablesSideBarTooltipController(ViewFactoryMethod viewFactory,
+            SmartWearableCache smartWearableCache,
+            ILocalPortableExperiencesStatus localPortableExperiencesStatus,
+            IPortableExperiencesStatus globalPortableExperiencesStatus) : base(viewFactory)
         {
             this.smartWearableCache = smartWearableCache;
+            this.localPortableExperiencesStatus = localPortableExperiencesStatus;
+            this.globalPortableExperiencesStatus = globalPortableExperiencesStatus;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -33,10 +41,14 @@ namespace DCL.UI.Skybox
 
         private void SetupView()
         {
-            bool smartWearablesAllowed = smartWearableCache.CurrentSceneAllowsSmartWearables;
-            int smartWearableCount = smartWearableCache.RunningSmartWearables.Count;
-            int killedCount = smartWearableCache.KilledPortableExperiences.Count;
-            viewInstance?.Setup(smartWearablesAllowed, smartWearableCount, killedCount);
+            viewInstance?.Setup(
+                smartWearableCache.AuthorizedSmartWearables.Count,
+                smartWearableCache.RunningSmartWearables.Count,
+                smartWearableCache.KilledPortableExperiences.Count,
+                globalPortableExperiencesStatus.RunningPortableExperiences.Count,
+                localPortableExperiencesStatus.AuthorizedPortableExperiences.Count,
+                localPortableExperiencesStatus.RunningPortableExperiences.Count,
+                localPortableExperiencesStatus.KilledPortableExperiences.Count);
         }
 
         public void Close()

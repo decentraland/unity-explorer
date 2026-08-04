@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using PortableExperiences.Controller;
-using Runtime.Wearables;
 using System;
 using System.Threading;
 
@@ -22,12 +21,10 @@ namespace DCL.Chat.Commands
         public bool DebugOnly => true;
 
         private readonly IPortableExperiencesController portableExperiencesController;
-        private readonly SmartWearableCache smartWearableCache;
 
-        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController, SmartWearableCache smartWearableCache)
+        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController)
         {
             this.portableExperiencesController = portableExperiencesController;
-            this.smartWearableCache = smartWearableCache;
         }
 
         public bool ValidateParameters(string[] parameters) =>
@@ -44,17 +41,14 @@ namespace DCL.Chat.Commands
 
             string portableExperienceId = parameters[0];
 
-            // Try killing a px with the given ID as it is
-            var response = portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
+            var response = portableExperiencesController.KillPortableExperienceById(portableExperienceId);
 
-            // In case of failure, try appending the ENS suffix and retrying
+            // Users usually type the bare name without the ENS suffix.
             if (!response.status && !portableExperienceId.EndsWith(ENS_SUFFIX, StringComparison.OrdinalIgnoreCase))
             {
                 portableExperienceId += ENS_SUFFIX;
-                response = portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
+                response = portableExperiencesController.KillPortableExperienceById(portableExperienceId);
             }
-
-            if (response.status) smartWearableCache.KilledPortableExperiences.Add(portableExperienceId);
 
             return response.status ? $"🟢 The Portable Experience {portableExperienceId} has been Killed" : $"🔴 Error. Could not Kill the Portable Experience {portableExperienceId}";
         }

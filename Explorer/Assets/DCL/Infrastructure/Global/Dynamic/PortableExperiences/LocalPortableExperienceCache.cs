@@ -7,6 +7,7 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.PortableExperiences;
 
 namespace PortableExperiences.Controller
 {
@@ -14,7 +15,7 @@ namespace PortableExperiences.Controller
     ///     Per-session authorization state for local (scene-spawned) Portable Experiences, the counterpart of
     ///     SmartWearableCache for Smart Wearables.
     /// </summary>
-    public class LocalPortableExperienceCache
+    public class LocalPortableExperienceCache : ILocalPortableExperiencesStatus
     {
         private readonly IWebRequestController webRequestController;
 
@@ -28,6 +29,16 @@ namespace PortableExperiences.Controller
         public HashSet<string> AuthorizedPortableExperiences { get; } = new (StringComparer.OrdinalIgnoreCase);
 
         public HashSet<string> DeniedPortableExperiences { get; } = new (StringComparer.OrdinalIgnoreCase);
+
+        public HashSet<string> RunningPortableExperiences { get; } = new (StringComparer.OrdinalIgnoreCase);
+
+        public HashSet<string> KilledPortableExperiences { get; } = new (StringComparer.OrdinalIgnoreCase);
+
+        IReadOnlyCollection<string> ILocalPortableExperiencesStatus.AuthorizedPortableExperiences => AuthorizedPortableExperiences;
+
+        IReadOnlyCollection<string> IPortableExperiencesStatus.RunningPortableExperiences => RunningPortableExperiences;
+
+        IReadOnlyCollection<string> IPortableExperiencesStatus.KilledPortableExperiences => KilledPortableExperiences;
 
         /// <summary>
         ///     Fetches the Portable Experience's scene definitions to compute the permissions that need explicit
@@ -66,6 +77,8 @@ namespace PortableExperiences.Controller
             permissionsCache.Clear();
             AuthorizedPortableExperiences.Clear();
             DeniedPortableExperiences.Clear();
+            RunningPortableExperiences.Clear();
+            KilledPortableExperiences.Clear();
         }
 
         // Mirrors the permission set gated by SmartWearableCache.CacheWearableInternalAsync.
