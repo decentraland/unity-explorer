@@ -82,13 +82,9 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool isAudioOpened => audioSources.Count > 0;
 
-        // The connective room flips its state away from Running on the main thread BEFORE the FFI
-        // disconnect request is issued (StopAsync / DisconnectCurrentRoomAsync), while Info.ConnectionState
-        // only updates when the asynchronous FFI event arrives. Checking both closes the teardown window
-        // synchronously and still covers mid-cycle room swaps once the disconnect event lands.
-        // isRoomRunning is a delegate rather than the connective room itself: this code compiles into
-        // ECS.Unity, which cannot reference DCL.Multiplayer without an asmdef cycle, so
-        // MediaFactoryBuilder supplies the probe from the room hub.
+        // Both checks needed: connective state catches synchronous teardown start,
+        // FFI connection state catches the async disconnect completion.
+        // (Delegate, not the connective room type: ECS.Unity -> DCL.Multiplayer is an asmdef cycle.)
         private bool CanOpenStreams =>
             isRoomRunning()
             && room.Info.ConnectionState == LKConnectionState.ConnConnected;
