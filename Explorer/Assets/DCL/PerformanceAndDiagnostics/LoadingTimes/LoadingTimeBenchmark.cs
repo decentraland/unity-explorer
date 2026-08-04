@@ -27,7 +27,7 @@ namespace DCL.LoadingTimes
 #if UNITY_STANDALONE_OSX
         private const string PLATFORM_VALUE = "mac";
 #else
-        private const string PLATFORM_VALUE = "pc";
+        private const string PLATFORM_VALUE = "win";
 #endif
 
         // The loading begins with the process, where realtimeSinceStartup is 0.
