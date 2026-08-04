@@ -1,0 +1,7 @@
+# Statically link the MSVC CRT so the produced cdylib does not import VCRUNTIME140.dll,
+# which ships only with the VC++ Redistributable and is absent on a clean Windows install.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

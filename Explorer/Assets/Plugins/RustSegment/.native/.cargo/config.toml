@@ -2,3 +2,19 @@
 rustflags = [
   "-Dwarnings",         # treat all warnings as errors
 ]
+
+# Statically link the MSVC CRT so the produced cdylib does not import VCRUNTIME140.dll,
+# which ships only with the VC++ Redistributable and is absent on a clean Windows install.
+# Cargo picks exactly one rustflags source, so `-Dwarnings` is repeated here: a
+# `target.<triple>.rustflags` entry replaces `build.rustflags` instead of appending to it.
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+  "-Dwarnings",
+  "-C", "target-feature=+crt-static",
+]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = [
+  "-Dwarnings",
+  "-C", "target-feature=+crt-static",
+]
