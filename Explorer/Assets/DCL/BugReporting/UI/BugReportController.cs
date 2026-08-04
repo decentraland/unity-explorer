@@ -2,6 +2,8 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utility.Types;
@@ -26,6 +28,7 @@ namespace DCL.BugReporting.UI
 
         private readonly BugReportService bugReportService;
         private readonly ISelfProfile selfProfile;
+        private readonly IInputBlock inputBlock;
         private readonly World globalWorld;
         private readonly Entity playerEntity;
         private readonly IBugReportImageProvider? imageProvider;
@@ -43,12 +46,14 @@ namespace DCL.BugReporting.UI
             ViewFactoryMethod viewFactory,
             BugReportService bugReportService,
             ISelfProfile selfProfile,
+            IInputBlock inputBlock,
             World globalWorld,
             Entity playerEntity,
             IBugReportImageProvider? imageProvider = null) : base(viewFactory)
         {
             this.bugReportService = bugReportService;
             this.selfProfile = selfProfile;
+            this.inputBlock = inputBlock;
             this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
             this.imageProvider = imageProvider;
@@ -100,10 +105,14 @@ namespace DCL.BugReporting.UI
             RefreshSubmitInteractable();
         }
 
+        protected override void OnViewShow() =>
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+
         protected override void OnViewClose()
         {
             operationsCts = operationsCts.SafeRestart();
             ClearAttachedImage();
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

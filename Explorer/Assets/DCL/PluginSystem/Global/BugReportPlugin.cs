@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.BugReporting;
 using DCL.BugReporting.UI;
 using DCL.Diagnostics.Sentry;
+using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
@@ -23,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISelfProfile selfProfile;
+        private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World globalWorld;
         private readonly Entity playerEntity;
 
@@ -34,6 +36,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISelfProfile selfProfile,
+            IInputBlock inputBlock,
             Arch.Core.World globalWorld,
             Entity playerEntity)
         {
@@ -42,6 +45,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.selfProfile = selfProfile;
+            this.inputBlock = inputBlock;
             this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
         }
@@ -66,6 +70,7 @@ namespace DCL.PluginSystem.Global
                 BugReportController.CreateLazily(bugReportViewPrefab, null),
                 bugReportService,
                 selfProfile,
+                inputBlock,
                 globalWorld,
                 playerEntity,
                 new OsFileBrowserBugReportImageProvider());

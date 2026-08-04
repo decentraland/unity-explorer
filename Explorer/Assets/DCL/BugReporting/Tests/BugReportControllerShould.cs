@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.BugReporting.UI;
+using DCL.Input;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utility.Types;
@@ -39,7 +40,7 @@ namespace DCL.BugReporting.Tests
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<Profile?>(null));
 
             world = World.Create();
-            controller = new BugReportController(() => null!, bugReportService, selfProfile, world, world.Create());
+            controller = new BugReportController(() => null!, bugReportService, selfProfile, Substitute.For<IInputBlock>(), world, world.Create());
         }
 
         [TearDown]

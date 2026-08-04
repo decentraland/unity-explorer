@@ -936,6 +936,7 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
                     profileContainer.SelfProfile,
+                    staticContainer.InputBlock,
                     globalWorld,
                     playerEntity));
 
