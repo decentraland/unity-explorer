@@ -196,9 +196,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         private void OpenVideoStream(LivekitAddress livekitAddress)
-        {
-            // OpenMedia can be called at any point of the room lifecycle (e.g. while scenes are being
-            // torn down for a realm change). Opening now would consume an FFI track handle that is
+            // Room not ready — defer the open; EnsureVideoIsPlaying will retry once connected.
             // already invalid; keep the address so EnsureVideoIsPlaying opens once the room reconnects.
             if (!CanOpenStreams)
             {
