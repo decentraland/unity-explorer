@@ -213,8 +213,8 @@ namespace Global.AppArgs
             }
 
             // Tier 2 (SEC-019/020): the local-development params Creator Hub / sdk-commands attach to preview deep
-            // links (local-scene, dclenv, hub, skip-auth-screen, landscape-terrain-enabled, multi-instance,
-            // scene-console) are permitted only when the target realm is whitelisted — loopback, or a world listed in
+            // links (local-scene, hub, skip-auth-screen, landscape-terrain-enabled, multi-instance, local-ab, mcp,
+            // mcp-port) are permitted only when the target realm is whitelisted — loopback, or a world listed in
             // the deeplink-whitelisted-worlds feature flag. A remote-realm deep link from a web page cannot enable
             // them unless that exact world was explicitly whitelisted. Everything not in either tier is dropped.
             bool realmIsWhitelisted = output.TryGetValue(AppArgsFlags.REALM, out string? whitelistRealm)
