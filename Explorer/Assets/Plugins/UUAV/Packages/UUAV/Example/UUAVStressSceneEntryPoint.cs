@@ -9,20 +9,22 @@ using UnityEngine.UI;
 namespace UUAV.Example
 {
     /// <summary>
-    /// Stress-test harness for UUAV: spawns any number of players against a URL and
-    /// shows each one as a cell in a scrollable 2D grid with per-player
-    /// Stop / Mute / Remove controls. All UI is built in code; the scene only needs
-    /// a Canvas, an EventSystem and this component.
+    /// Stress-test harness for UUAV: spawns any number of players and shows each one
+    /// as a cell in a scrollable 2D grid with per-player Stop / Mute / Remove controls.
+    /// Each new player opens a random URL from <see cref="testUrls"/> unless a custom
+    /// URL is typed into the input field. All UI is built in code; the scene only
+    /// needs a Canvas, an EventSystem and this component.
     /// </summary>
-    public sealed class UUAVStressTestController : MonoBehaviour
+    public sealed class UUAVStressSceneEntryPoint : MonoBehaviour
     {
         private const float TOP_BAR_HEIGHT = 64f;
         private static readonly Color PANEL_COLOR = new Color(0.10f, 0.10f, 0.12f, 0.95f);
         private static readonly Color BUTTON_COLOR = new Color(0.25f, 0.27f, 0.32f, 1f);
         private static readonly Color CELL_COLOR = new Color(0.14f, 0.14f, 0.17f, 1f);
 
-        [SerializeField] private string defaultUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        [SerializeField] private TextAsset testUrls;
 
+        private readonly List<string> urls = new List<string>();
         private readonly List<PlayerCell> cells = new List<PlayerCell>();
         private int nextId;
 
@@ -33,7 +35,11 @@ namespace UUAV.Example
         private void Awake()
         {
             var canvas = FindAnyObjectByType<Canvas>();
-            Assert.IsNotNull(canvas, "UUAVStressTestController requires a Canvas in the scene");
+            Assert.IsNotNull(canvas, "EntryPoint requires a Canvas in the scene");
+
+            Assert.IsNotNull(testUrls, "EntryPoint requires the test_urls asset");
+            ParseUrls();
+            Assert.IsTrue(urls.Count > 0, "the test_urls asset contains no urls");
 
             BuildTopBar(canvas.transform);
             BuildGrid(canvas.transform);
@@ -53,13 +59,10 @@ namespace UUAV.Example
 
         private void AddPlayer()
         {
-            string url = urlInput.text;
-
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                infoLabel.text = "Enter a URL first";
-                return;
-            }
+            string custom = urlInput.text;
+            string url = string.IsNullOrWhiteSpace(custom)
+                ? urls[UnityEngine.Random.Range(0, urls.Count)]
+                : custom;
 
             var player = UUAVPlayer.New();
             player.OpenMedia(url);
@@ -93,6 +96,19 @@ namespace UUAV.Example
             infoLabel.text = $"Players: {cells.Count}";
         }
 
+        private void ParseUrls()
+        {
+            foreach (string line in testUrls.text.Split('\n'))
+            {
+                string url = line.Trim();
+
+                if (url.Length == 0 || url.StartsWith("#"))
+                    continue;
+
+                urls.Add(url);
+            }
+        }
+
         private void BuildTopBar(Transform canvasRoot)
         {
             RectTransform bar = CreatePanel("TopBar", canvasRoot, PANEL_COLOR);
@@ -111,7 +127,6 @@ namespace UUAV.Example
             layout.childForceExpandHeight = true;
 
             urlInput = CreateUrlInput(bar);
-            urlInput.text = defaultUrl;
 
             CreateButton(bar, "Add Player", 120f, AddPlayer);
             CreateButton(bar, "Add 5", 80f, () => AddPlayers(5));
@@ -230,7 +245,7 @@ namespace UUAV.Example
 
             var input = go.GetComponent<TMP_InputField>();
             input.lineType = TMP_InputField.LineType.SingleLine;
-            ((TMP_Text)input.placeholder).text = "Media URL (http/https)";
+            ((TMP_Text)input.placeholder).text = "Custom URL (empty = random from test_urls)";
             return input;
         }
 
