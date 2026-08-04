@@ -41,8 +41,10 @@ tag (`native/scripts/build-ffmpeg-macos.sh`), Windows consumes a hash-pinned
 BtbN LGPL shared release asset (`scripts/uuav/fetch-ffmpeg-windows.sh`). The
 compiled binaries are committed to Git LFS and pinned to their inputs by
 `scripts/uuav/uuav-binaries.lock.json`; `uuav-verify.yml` re-asserts the pins
-on every PR, and `uuav-native.yml` (label `build-uuav-native`) rebuilds both
-targets and checks that the build is repeatable. See the CI section of
+on every PR, and `uuav-native.yml` is the on-demand rebuild (label
+`build-uuav-native`): when run, it rebuilds both targets from the pinned
+inputs and fails unless two builds produce identical bytes. See the CI
+section of
 [`Explorer/Assets/Plugins/UUAV/README.md`](../Explorer/Assets/Plugins/UUAV/README.md)
 for the relock workflow.
 
@@ -65,9 +67,10 @@ third-party transport library at all.
 not need a Rust and FFmpeg build environment to build the Explorer, and
 everyone runs the same bytes. Those bytes are pinned to their inputs so they
 cannot quietly diverge from the sources in the tree. The pin is only worth as
-much as the build is repeatable, so the build workflow proves repeatability
-(two builds from two source trees through one canonical path must produce
-identical bytes) before comparing anything against the lock.
+much as the build is repeatable, so the on-demand build workflow is gated on
+repeatability: when it runs, two builds from two source trees through one
+canonical path must produce identical bytes before its comparison against the
+lock means anything.
 
 **The exports live in the client library, and nothing else may link it.**
 `uuav-client` ships the whole `uuav_*` C ABI; the helper links the core as a
@@ -82,13 +85,16 @@ in the client watches the connection, respawns the helper and restores every
 player's state — URL, position, rate, looping — so a decoder crash degrades to
 a stutter rather than a session loss.
 
-**The AVPro-shaped surface exists once, on the Explorer side.** Scene code
-still talks to an AVPro-shaped player, and a runtime switch picks the backend
-behind it (`Explorer/Assets/DCL/AvProSwitch/`: `MediaPlayer`, `AvProBackend`,
-`UuavBackend`). That shape is mirrored in the Explorer, next to the switch —
-not a second time inside the UUAV package, which presents only its own player.
-A facade per backend reads as symmetry but buys nothing: it duplicates every
-enum, adds a conversion at each boundary, and gives a bug two places to hide.
+**The AVPro-shaped surface belongs once, on the Explorer side — today it
+exists twice.** Scene code talks to an AVPro-shaped player, and a runtime
+switch picks the backend behind it (`Explorer/Assets/DCL/AvProSwitch/`:
+`MediaPlayer`, `AvProBackend`, `UuavBackend`). The UUAV package still carries
+a second copy of that shape (`Packages/UUAV/AVProCompat/`), and `UuavBackend`
+currently drives it, so the UUAV path runs two facades deep and the enums are
+duplicated. A facade per backend reads as symmetry but buys nothing: it
+duplicates every enum, adds a conversion at each boundary, and gives a bug two
+places to hide — which is why the package-side copy is slated to be collapsed
+into `UuavBackend`, leaving the shape defined once next to the switch.
 
 ## Where to look
 

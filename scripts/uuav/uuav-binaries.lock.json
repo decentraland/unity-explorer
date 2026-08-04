@@ -54,7 +54,7 @@
       "pending": "the committed binaries predate the pin (built with rustc 1.88.0); enforce at the first rebuild-and-relock on the pinned toolchain",
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/rust-toolchain.toml",
-      "sha256": "c7163d520a3ba118c14f197a1498a9a5a7290335932dd4f7c4feaded0b5446f0"
+      "sha256": "2d9f13db1ad0cda305e163d91c9484eaf22ab2d9004f0b64138bd65993108f10"
     },
     "client_manifest": {
       "kind": "file",

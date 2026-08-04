@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Tests for verify-binaries.py's --update toolchain handling.
+"""Tests for verify-binaries.py: the detection path and --update toolchain handling.
 
 Run: python3 scripts/uuav/test-verify-binaries.py
 
 Each test drives the real script as a subprocess against a synthetic
-repository, because the property under test is end-to-end: a relock must
-either move targets.<t>.rust.toolchain or refuse, and must never write a lock
-whose other pins were refreshed around a stale toolchain identity.
+repository, because the properties under test are end-to-end: corrupting a
+committed artifact or a build input must turn the exit status non-zero
+(DetectionTests - the property the lock exists for), and a relock must either
+move targets.<t>.rust.toolchain or refuse, never writing a lock whose other
+pins were refreshed around a stale toolchain identity (UpdateToolchainTests).
 """
 
 from __future__ import annotations
@@ -77,6 +79,124 @@ def host_identity(tool: str, cwd: str) -> str | None:
         return None
     output = (result.stdout + result.stderr).strip()
     return output.splitlines()[0].strip() if output else None
+
+
+def make_detection_repo() -> str:
+    """A repo with one cargo artifact, one enforced and one pending input.
+
+    Digests start empty and are filled by a real `--update` run, so the tests
+    exercise the same write-then-verify cycle the lock lives through.
+    """
+    root = tempfile.mkdtemp(prefix="uuav-lock-test-")
+    os.makedirs(os.path.join(root, "scripts", "uuav"))
+    os.makedirs(os.path.join(root, "native", "src"))
+    os.makedirs(os.path.join(root, "native", "out"))
+    with open(os.path.join(root, "native", "src", "lib.rs"), "w",
+              encoding="utf-8") as handle:
+        handle.write("pub fn probe() {}\n")
+    with open(os.path.join(root, "native", "out", "plugin.bin"), "wb") as handle:
+        handle.write(bytes(range(256)) * 16)
+    with open(os.path.join(root, "native", "config.toml"), "w",
+              encoding="utf-8") as handle:
+        handle.write("[build]\ntarget-dir = \".target\"\n")
+    with open(os.path.join(root, "native", "notes.toml"), "w",
+              encoding="utf-8") as handle:
+        handle.write("tracked = true\n")
+
+    lock = {
+        "schema": 1,
+        "rust_source": {"path": "native/src", "suffix": ".rs"},
+        "build_inputs": {
+            "cargo_config": {"kind": "file", "path": "native/config.toml",
+                             "sha256": ""},
+            "notes": {"kind": "file", "path": "native/notes.toml",
+                      "sha256": "",
+                      "pending": "tracked from birth, pinned at first relock"},
+        },
+        "targets": {TARGET: {
+            "runtime_dir": "native/out",
+            "rust": {"target": "x86_64-pc-windows-gnu",
+                     "rustc": "rustc 0.0.0-test",
+                     "source_digest": "", "source_files": 0},
+            "ffmpeg": {"configure_expected": []},
+            "artifacts": [{"path": "native/out/plugin.bin", "sha256": "",
+                           "bytes": 0, "produced_by": "cargo"}],
+        }},
+    }
+    with open(os.path.join(root, LOCK_REL), "w", encoding="utf-8") as handle:
+        json.dump(lock, handle, indent=2)
+        handle.write("\n")
+    return root
+
+
+class DetectionTests(unittest.TestCase):
+    """Flipping a byte anywhere the lock covers must turn the exit non-zero."""
+
+    def setUp(self):
+        self.root = make_detection_repo()
+        result = run(self.root, "--update")
+        self.assertEqual(result.returncode, 0,
+                         "the baseline relock must succeed: "
+                         + result.stdout + result.stderr)
+        verify = run(self.root)
+        self.assertEqual(verify.returncode, 0,
+                         "a freshly relocked repo must verify clean: "
+                         + verify.stdout + verify.stderr)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def artifact(self) -> str:
+        return os.path.join(self.root, "native", "out", "plugin.bin")
+
+    def test_flipped_artifact_byte_fails_and_names_the_artifact(self):
+        with open(self.artifact(), "r+b") as handle:
+            handle.seek(100)
+            original = handle.read(1)
+            handle.seek(100)
+            handle.write(bytes([original[0] ^ 0xFF]))
+        result = run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("plugin.bin", result.stdout)
+        self.assertIn("sha256", result.stdout)
+
+    def test_size_changing_corruption_fails(self):
+        with open(self.artifact(), "ab") as handle:
+            handle.write(b"\x00")
+        result = run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("plugin.bin", result.stdout)
+
+    def test_missing_artifact_fails(self):
+        os.remove(self.artifact())
+        result = run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("missing shipped binary", result.stdout)
+
+    def test_edited_build_input_fails_without_a_relock(self):
+        with open(os.path.join(self.root, "native", "config.toml"), "a",
+                  encoding="utf-8") as handle:
+            handle.write("rustflags = [\"-C\", \"opt-level=3\"]\n")
+        result = run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("changed but the binaries were not relocked",
+                      result.stdout)
+
+    def test_edited_rust_source_fails_without_a_relock(self):
+        with open(os.path.join(self.root, "native", "src", "lib.rs"), "a",
+                  encoding="utf-8") as handle:
+            handle.write("pub fn extra() {}\n")
+        result = run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("native/src", result.stdout)
+
+    def test_pending_input_is_reported_but_never_fails(self):
+        with open(os.path.join(self.root, "native", "notes.toml"), "a",
+                  encoding="utf-8") as handle:
+            handle.write("edited = true\n")
+        result = run(self.root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("PENDING", result.stdout)
 
 
 class UpdateToolchainTests(unittest.TestCase):

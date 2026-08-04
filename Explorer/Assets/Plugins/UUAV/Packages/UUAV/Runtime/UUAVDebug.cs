@@ -124,9 +124,20 @@ namespace UUAV
         public static void CopyPlayers(List<PlayerInfo> target)
         {
             target.Clear();
-            foreach (var player in players)
+            try
             {
-                target.Add(new PlayerInfo(player.PlayerId, player.State, player.CurrentUrl));
+                foreach (var player in players)
+                {
+                    // a player whose native creation failed registers with id 0;
+                    // querying its state would P/Invoke with an invalid handle
+                    var state = player.PlayerId == 0 ? UUAVState.Unknown : player.State;
+                    target.Add(new PlayerInfo(player.PlayerId, state, player.CurrentUrl));
+                }
+            }
+            catch (DllNotFoundException)
+            {
+                // no native library at all: keep whatever was snapshotted so
+                // the debug UI still renders instead of unwinding its caller
             }
         }
 

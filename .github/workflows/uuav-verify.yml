@@ -68,13 +68,15 @@ jobs:
           status=0
           while IFS= read -r path; do
             [ -n "$path" ] || continue
-            # A file stored in LFS has an ~130 byte pointer as its git blob;
-            # a plain blob is the whole binary.
+            # A file stored in LFS has an ~130 byte pointer as its git blob
+            # whose first line is the spec URL; a plain blob is the whole
+            # binary. Match the whole first line, not a byte-count prefix -
+            # a truncated prefix can never match the anchored pattern.
             if git cat-file blob "$HEAD_SHA:$path" 2>/dev/null \
-                 | head -c 41 | grep -q '^version https://git-lfs.github.com/spec/v1'; then
+                 | head -n1 | grep -q '^version https://git-lfs.github.com/spec/v1'; then
               echo "  ok (lfs)    $path"
             else
-              echo "::error file=$path::$path was committed as a plain git blob, not Git LFS. Re-add it with the *.dylib / *.so / *.dll rules in .gitattributes in effect - see Explorer/Assets/Plugins/UUAV/README.md."
+              echo "::error file=$path::$path was committed as a plain git blob, not Git LFS. Re-add it with an LFS rule in .gitattributes in effect: *.dll and *.dylib are covered by globs; anything else needs an explicit entry like the uuav-helper ones. See Explorer/Assets/Plugins/UUAV/README.md."
               status=1
             fi
           done <<< "$changed"

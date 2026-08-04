@@ -8,6 +8,10 @@
 # edit: scripts/uuav/uuav-binaries.lock.json hashes it as a build input.
 [toolchain]
 channel = "1.97.1"
+# clippy is a component, not part of the bare toolchain: without this line
+# rustup installs rustc/cargo only and the uuav-verify.yml rust job dies at
+# `cargo clippy --version` before checking anything.
+components = ["clippy"]
 targets = [
     "aarch64-apple-darwin",
     "x86_64-apple-darwin",
