@@ -122,6 +122,7 @@ namespace DCL.McpServer.Systems
                           .Add(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment))
                           .Add(new GetSceneContentStatsTool(scenesCache))
                           .Add(new GetSceneContentBreakdownTool(scenesCache))
+                          .Add(new GetPerformanceStatsTool(scenesCache))
                           .Add(new GetSceneLogsTool(logBuffer))
                           .Add(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
                           .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity))
