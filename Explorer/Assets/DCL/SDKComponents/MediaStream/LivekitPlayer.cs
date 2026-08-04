@@ -110,13 +110,8 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.Playing) return;
             if (playingAddress == null) return;
 
-            // While the room is stopping/switching (e.g. LiveKitStopping during a realm change) the FFI-side
-            // track handles are already invalid: opening a stream is rejected natively
-            // ("handle is not a livekit_ffi::server::room::FfiTrack") and can poison the per-room stream
-            // cache with an instance that never produces a frame. Rooms (and their stream caches) are pooled
-            // and reused, and StreamKey (identity + sid) is stable across a reconnect to the same stream
-            // room, so a poisoned entry keeps being returned after the transition — permanent black screen.
-            // Skip and leave the pending flags set: rediscovery runs once the room is connected again.
+            // Room is tearing down — skip to avoid opening streams with invalid FFI handles,
+            // which would poison the reusable stream cache. Pending flags stay set for reconnect.
             if (!CanOpenStreams)
             {
                 EnsureAudioIsPlaying(); // still releases audio sources whose streams died with the room
