@@ -2,6 +2,3 @@
 # which ships only with the VC++ Redistributable and is absent on a clean Windows install.
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-Dwarnings", "-C", "target-feature=+crt-static"]
-
-[target.aarch64-pc-windows-msvc]
-rustflags = ["-Dwarnings", "-C", "target-feature=+crt-static"]
