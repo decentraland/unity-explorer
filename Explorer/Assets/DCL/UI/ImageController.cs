@@ -76,7 +76,7 @@ namespace DCL.UI
                         PIXELS_PER_UNIT,
                         0,
                         SpriteMeshType.FullRect,
-                        Vector4.one,
+                        Vector4.zero,
                         false
                     );
                 }
@@ -86,6 +86,7 @@ namespace DCL.UI
                     view.SetImage(sprite, fitAndCenterImage);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
+                    view.Image.DOKill();
                     view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
                 }
                 else if (defaultSprite != null)
@@ -122,6 +123,7 @@ namespace DCL.UI
 
             SetImage(defaultSprite, fitAndCenterImage);
             view.Image.enabled = true;
+            view.Image.DOKill();
             view.Image.DOColor(defaultColor, view.imageLoadingFadeDuration);
         }
 
@@ -135,6 +137,7 @@ namespace DCL.UI
         {
             cts.SafeCancelAndDispose();
             DisposeCurrentTexture();
+            view.Image.DOKill();
             view.IsLoading = false;
         }
 
