@@ -341,7 +341,7 @@
 }
 
 .sidebar__button--metrics {
-    background-image: url("project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/info.png?fileID=21300000&guid=b4bc39df09b8ec24eb8dedf59c9d93f4&type=3#info");
+    background-image: url("project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/SceneStats.png?fileID=21300000&guid=fcd1d51dc2b1041c28fd34c53130197a&type=3#SceneStats");
 }
 
 .sidebar__button--debug {
