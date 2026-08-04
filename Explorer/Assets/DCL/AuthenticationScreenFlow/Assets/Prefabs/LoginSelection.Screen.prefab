@@ -3216,6 +3216,8 @@ MonoBehaviour:
   <CancelLoginButton>k__BackingField: {fileID: 9108319191272288200}
   <EmailOTPContainer>k__BackingField: {fileID: 5285033395635913484}
   <EmailInputField>k__BackingField: {fileID: 2001940849056367380}
+  <OtherLoginContainer>k__BackingField: {fileID: 5887702060069110797}
+  <ContinueWithTextContainer>k__BackingField: {fileID: 3844889584895123327}
   <LoginMetamaskButton>k__BackingField: {fileID: 4481630630708771614}
   <LoginGoogleButton>k__BackingField: {fileID: 9078712830092277137}
   <LoginDiscordButton>k__BackingField: {fileID: 8034867738283704265}
