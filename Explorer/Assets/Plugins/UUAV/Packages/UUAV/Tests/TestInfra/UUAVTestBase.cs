@@ -30,6 +30,15 @@ namespace UUAV.Tests
         [OneTimeSetUp]
         public void UUAVBaseOneTimeSetUp()
         {
+#if UNITY_EDITOR_LINUX || UNITY_STANDALONE_LINUX
+            // UUAV ships native binaries for Windows and macOS only
+            // (Runtime/Plugins/{x86_64,macOS}). The asmdef's platform list
+            // cannot exclude this case: "Editor" covers the Linux editor
+            // too, and hosted CI runs the PlayMode suite inside it. Skip
+            // explicitly instead of failing all fixtures on a missing dll.
+            Assert.Ignore("UUAV has no Linux native binaries; the PlayMode suite runs on Windows/macOS only. Implement Linux support in next iteration");
+#endif
+
             UUAVDebug.Info info = UUAVDebug.Query();
             if (info.NativeLibLoaded == false || info.Initialized == false)
             {
