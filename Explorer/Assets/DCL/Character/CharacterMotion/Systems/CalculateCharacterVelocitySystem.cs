@@ -131,7 +131,7 @@ namespace DCL.Character.CharacterMotion.Systems
             ApplyGliding.Execute(settings, in rigidTransform, jumpState, in jumpInput, ref glideState, physicsTick, dt);
 
             // External impulses must run after gravity so it nullify gravity velocity.y
-            ApplyExternalImpulse.Execute(settings, ref rigidTransform);
+            ApplyExternalImpulse.Execute(settings, ref rigidTransform, ref jumpState);
 
             // Drag
             ApplyHorizontalAirDrag.Execute(settings, ref rigidTransform, dt);

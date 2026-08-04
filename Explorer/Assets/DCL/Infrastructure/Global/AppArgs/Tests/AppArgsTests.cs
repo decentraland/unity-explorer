@@ -5,6 +5,13 @@ namespace Global.AppArgs.Tests
 {
     public class AppArgsTest
     {
+        [TearDown]
+        public void TearDown()
+        {
+            // Reset the cached/overridden world whitelist so tests don't leak state into one another.
+            DeepLinkAllowlist.SetWhitelistedWorlds(null);
+        }
+
         [Test]
         public void DeepLinkSigninWithHostSegmentParsesSignin()
         {
@@ -94,6 +101,18 @@ namespace Global.AppArgs.Tests
         }
 
         [Test]
+        public void DeepLinkKeepsSelfPreviewBuilderCollections()
+        {
+            // The documented creator flow carries no realm (docs/unreleased-wearables-emotes-preview.md), so this has
+            // to survive on the always-permitted tier rather than the whitelisted-realm one.
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?position=100,100&self-preview-builder-collections=a2041268-189e-4cef-902d-70272aed077c");
+
+            Assert.AreEqual("a2041268-189e-4cef-902d-70272aed077c", output.GetValueOrDefault(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS),
+                "self-preview-builder-collections must survive without a realm; ids are GUID-validated before reaching a URL");
+        }
+
+        [Test]
         public void DeepLinkKeepsLocalSceneForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
@@ -176,6 +195,190 @@ namespace Global.AppArgs.Tests
 
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP), "mcp must be dropped when the link carries no realm at all (drive-by link against the default realm)");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP_PORT), "mcp-port must be dropped when the link carries no realm at all");
+        }
+
+        public void DeepLinkKeepsSceneConsoleForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&scene-console=true");
+
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for a loopback (local dev) realm");
+        }
+
+        [Test]
+        public void DeepLinkDropsSceneConsoleForRemoteRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&scene-console=true");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a non-whitelisted remote realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsDevParamsForWhitelistedWorldRealm()
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+
+            // Act
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&scene-console=true");
+
+            // Assert
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene must survive for a whitelisted world realm");
+            Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv must survive for a whitelisted world realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for a whitelisted world realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsDevParamsForWhitelistedWorldContentServerUrlRealm()
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+
+            // Act
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://worlds-content-server.decentraland.org/world/test-world.dcl.eth&local-scene=true");
+
+            // Assert
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene must survive when the realm URL resolves to a whitelisted world");
+        }
+
+        [Test]
+        public void DeepLinkDropsDevParamsForNonWhitelistedWorldRealm()
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+
+            // Act
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=other-world.dcl.eth&local-scene=true&scene-console=true");
+
+            // Assert
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped for a world that is not whitelisted");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a world that is not whitelisted");
+        }
+
+        // IsRealmWhitelisted gates BOTH the whitelisted-realm dev params and skipping the realm-change consent prompt
+        // (DeepLinkHandle), so its exact semantics are pinned here.
+        [TestCase("http://127.0.0.1:8000", true, TestName = "loopback ip")]
+        [TestCase("http://localhost:8000", true, TestName = "loopback name")]
+        [TestCase("test-world.dcl.eth", true, TestName = "whitelisted world, short form")]
+        [TestCase("TEST-WORLD.DCL.ETH", true, TestName = "whitelisted world, case insensitive")]
+        [TestCase("https://worlds-content-server.decentraland.org/world/test-world.dcl.eth", true, TestName = "whitelisted world, full form")]
+        [TestCase("other-world.dcl.eth", false, TestName = "world not whitelisted")]
+        [TestCase("https://peer.decentraland.org", false, TestName = "remote catalyst realm")]
+        [TestCase("https://evil.example/world/test-world.dcl.eth", false, TestName = "attacker host naming a whitelisted world must not inherit its trust")]
+        [TestCase("https://worlds-content-server.decentraland.org@evil.example/world/test-world.dcl.eth", false, TestName = "userinfo cannot spoof the host")]
+        [TestCase("https://decentraland.org.attacker.com/world/test-world.dcl.eth", false, TestName = "suffix-lookalike host is rejected")]
+        [TestCase("https://worlds-content-server.decentraland.zone/world/test-world.dcl.eth", true, TestName = "zone worlds server")]
+        [TestCase("file:///test-world.dcl.eth", false, TestName = "file:// reports IsLoopback but must not be trusted")]
+        [TestCase("", false, TestName = "empty")]
+        public void ClassifyRealmAsWhitelisted(string realm, bool expected)
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+
+            // Act & Assert
+            Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [Test]
+        public void DeferDeepLinkUntilInitializeDeepLinksIsCalled()
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(null);
+
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[]
+            {
+                "--feature-flags-url", "https://feature-flags.decentraland.zone",
+                "decentraland://?realm=http://127.0.0.1:8000&local-scene=true",
+            });
+
+            // Assert: CLI flags are available immediately, the deep link is not applied yet
+            Assert.IsTrue(args.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? url) && url == "https://feature-flags.decentraland.zone");
+            Assert.IsTrue(args.HasPendingDeepLink, "the deep link must stay pending until the whitelist is fetched");
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.REALM), "deep-link params must not be applied before InitializeDeepLinks");
+
+            // Act
+            args.InitializeDeepLinks();
+
+            // Assert
+            Assert.IsFalse(args.HasPendingDeepLink);
+            Assert.AreEqual("http://127.0.0.1:8000", args.TryGetValue(AppArgsFlags.REALM, out string? realm) ? realm : null);
+            Assert.AreEqual("true", args.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string? localScene) ? localScene : null, "loopback realm keeps the whitelisted-realm params");
+
+            // Act & Assert: idempotent
+            args.InitializeDeepLinks();
+            Assert.IsFalse(args.HasPendingDeepLink);
+        }
+
+        [Test]
+        public void CaptureDeniedDeepLinkParamsWithoutApplyingThem()
+        {
+            // Arrange
+            // Note: "debug" is unusable here — in the Editor the parser always injects it (ALWAYS_IN_EDITOR).
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[]
+            {
+                "decentraland://?realm=https://peer.decentraland.org&position=1,2&autopilot=true&comms-adapter=wss://evil.example/ws",
+            });
+
+            // Act
+            args.InitializeDeepLinks();
+
+            // Assert: permitted params applied, denied ones captured (key and value) but NOT applied
+            Assert.AreEqual("https://peer.decentraland.org", args.TryGetValue(AppArgsFlags.REALM, out string? realm) ? realm : null);
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.AUTOPILOT), "denied params must not reach the app args without consent");
+            Assert.IsFalse(args.HasFlag(AppArgsFlags.COMMS_ADAPTER), "denied params must not reach the app args without consent");
+            Assert.AreEqual("true", args.DeniedDeepLinkParams.GetValueOrDefault(AppArgsFlags.AUTOPILOT));
+            Assert.AreEqual("wss://evil.example/ws", args.DeniedDeepLinkParams.GetValueOrDefault(AppArgsFlags.COMMS_ADAPTER));
+        }
+
+        [Test]
+        public void ApplyDeniedDeepLinkParamsOnConsent()
+        {
+            // Arrange
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[]
+            {
+                "decentraland://?realm=https://peer.decentraland.org&debug=true&skip-version-check=true",
+            });
+
+            args.InitializeDeepLinks();
+
+            // Act
+            args.ApplyDeniedDeepLinkParams();
+
+            // Assert
+            Assert.AreEqual("true", args.TryGetValue(AppArgsFlags.DEBUG, out string? debug) ? debug : null);
+            Assert.AreEqual("true", args.TryGetValue(AppArgsFlags.SKIP_VERSION_CHECK, out string? skip) ? skip : null);
+            Assert.IsEmpty(args.DeniedDeepLinkParams, "applied params must not stay pending");
+        }
+
+        [Test]
+        public void ReportNoDeniedParamsForFullyAllowlistedDeepLink()
+        {
+            // Arrange
+            var args = ApplicationParametersParser.CreateDeferringDeepLinks(new[]
+            {
+                "decentraland://?realm=http://127.0.0.1:8000&position=1,2&local-scene=true",
+            });
+
+            // Act
+            args.InitializeDeepLinks();
+
+            // Assert
+            Assert.IsEmpty(args.DeniedDeepLinkParams, "a fully allowlisted deep link must not trigger the warning dialog");
+        }
+
+        [Test]
+        public void NotWhitelistAnyWorldWithoutConfiguration()
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(null);
+
+            // Act & Assert
+            Assert.IsFalse(DeepLinkAllowlist.IsRealmWhitelisted("test-world.dcl.eth"), "no configured worlds must mean loopback-only");
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted("http://127.0.0.1:8000"), "loopback is always whitelisted");
         }
 
         [Test]

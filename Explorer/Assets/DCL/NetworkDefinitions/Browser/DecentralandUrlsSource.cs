@@ -34,6 +34,8 @@ namespace DCL.Browser.DecentralandUrls
         protected const string ENV = "{ENV}";
         private const string SCENE_ADAPTER_PATH = "/get-scene-adapter";
 
+        private static readonly string FEATURE_FLAGS_RAW_URL = $"https://feature-flags.decentraland.{ENV}";
+
         private readonly Dictionary<DecentralandUrl, UrlData> cache = new ();
         private readonly IRealmData realmData;
         private readonly ILaunchMode launchMode;
@@ -55,9 +57,9 @@ namespace DCL.Browser.DecentralandUrls
             isTodayEnvironment = environment == DecentralandEnvironment.Today;
             this.realmData = realmData;
             this.launchMode = launchMode;
-            this.gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
+            gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
-            this.optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
+            optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
 
             if (isTodayEnvironment)
             {
@@ -103,14 +105,14 @@ namespace DCL.Browser.DecentralandUrls
             source = mode.ToString();
 
             return mode switch
-            {
-                GatekeeperMode.Org => null,
-                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
-                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
-                GatekeeperMode.Localhost => "http://localhost:3000",
-                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
-                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-            };
+                   {
+                       GatekeeperMode.Org => null,
+                       GatekeeperMode.Zone => "https://comms-gatekeeper." + IDecentralandUrlsSource.ZONE_DOMAIN,
+                       GatekeeperMode.Today => "https://comms-gatekeeper." + IDecentralandUrlsSource.TODAY_DOMAIN,
+                       GatekeeperMode.Localhost => "http://localhost:3000",
+                       GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
+                       _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+                   };
         }
 
         /// <summary>
@@ -129,8 +131,11 @@ namespace DCL.Browser.DecentralandUrls
 
             UrlData rawUrl = RawUrl(decentralandUrl);
 
-            return rawUrl.ToString().Replace(ENV, decentralandDomain);
+            return Probe(rawUrl.ToString(), decentralandDomain);
         }
+
+        private static string Probe(string rawUrl, string environment) =>
+            rawUrl.Replace(ENV, environment);
 
         public string Url(DecentralandUrl decentralandUrl)
         {
@@ -215,6 +220,9 @@ namespace DCL.Browser.DecentralandUrls
         private UrlData ComposeRegistryUrl(string path) =>
             new (RawUrl(DecentralandUrl.AssetBundleRegistry).Caching, $"{Url(DecentralandUrl.AssetBundleRegistry)}{path}");
 
+        public static string GetFeatureFlagsUrl(DecentralandEnvironment env) =>
+            Probe(FEATURE_FLAGS_RAW_URL, env.ToString().ToLower());
+
         protected virtual UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
@@ -224,6 +232,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
+                DecentralandUrl.ShopLink => $"https://decentraland.{ENV}/shop",
                 DecentralandUrl.MarketplaceServer => $"https://marketplace-api.decentraland.{ENV}",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
@@ -244,7 +253,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.decentraland.{ENV}"),
                 DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}{SCENE_ADAPTER_PATH}",
-                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local.decentraland.org")}{SCENE_ADAPTER_PATH}",
+                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local." + IDecentralandUrlsSource.ORG_DOMAIN)}{SCENE_ADAPTER_PATH}",
                 DecentralandUrl.ChatAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.WhatsOnNewEventLink => $"https://decentraland.{ENV}/whats-on/new-event",
@@ -257,7 +266,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.{ENV}/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
-                DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
+                DecentralandUrl.FeatureFlags => FEATURE_FLAGS_RAW_URL,
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.Faqs => $"https://docs.decentraland.{ENV}/faqs/decentraland-101",
                 DecentralandUrl.Discord => $"https://decentraland.{ENV}/discord/",
