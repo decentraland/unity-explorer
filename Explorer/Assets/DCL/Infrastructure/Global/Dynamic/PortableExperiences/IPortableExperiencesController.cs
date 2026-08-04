@@ -26,7 +26,8 @@ namespace PortableExperiences.Controller
 
         bool CanKillPortableExperience(string id);
 
-        UniTask<SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false);
+        /// <param name="requireUserAuthorization">Gates the spawn behind user consent even when it is global or forced; scene-spawned local Portable Experiences are always gated.</param>
+        UniTask<SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false, bool requireUserAuthorization = false);
 
         ExitResponse UnloadPortableExperienceById(string id);
 

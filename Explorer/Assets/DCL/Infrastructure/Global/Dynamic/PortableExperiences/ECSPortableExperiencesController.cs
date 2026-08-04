@@ -72,7 +72,7 @@ namespace PortableExperiences.Controller
             web3IdentityCache.OnIdentityCleared += localPortableExperienceCache.Clear;
         }
 
-        public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
+        public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false, bool requireUserAuthorization = false)
         {
             ISceneFacade? parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
 
@@ -130,15 +130,19 @@ namespace PortableExperiences.Controller
                 var ipfsRealm = new IpfsRealm(portableExperiencePath, result);
                 string parentSceneName = parentScene?.Info.Name ?? "main";
 
-                if (!force && !isGlobalPortableExperience)
+                bool isSceneSpawned = !force && !isGlobalPortableExperience;
+
+                if (isSceneSpawned || requireUserAuthorization)
                 {
-                    EnsureSceneSpawnCapacity(parentSceneName);
+                    if (isSceneSpawned)
+                        EnsureSceneSpawnCapacity(parentSceneName);
 
                     string portableExperienceName = string.IsNullOrEmpty(result.configurations.realmName) ? portableExperienceId : result.configurations.realmName;
                     await EnsureAuthorizedByUserAsync(portableExperienceId, portableExperienceName, ipfsRealm, ct);
 
                     // Re-checked: concurrent spawns may have consumed the remaining capacity while awaiting.
-                    EnsureSceneSpawnCapacity(parentSceneName);
+                    if (isSceneSpawned)
+                        EnsureSceneSpawnCapacity(parentSceneName);
                 }
 
                 var realmData = new RealmData();
@@ -189,7 +193,7 @@ namespace PortableExperiences.Controller
             if (localPortableExperienceCache.AuthorizedPortableExperiences.Contains(portableExperienceId)) return;
 
             if (localPortableExperienceCache.DeniedPortableExperiences.Contains(portableExperienceId))
-                throw new Exception($"The user has denied authorization for the portable experience '{portableExperienceId}' in this session.");
+                throw new PortableExperienceAuthorizationDeniedException($"The user has denied authorization for the portable experience '{portableExperienceId}' in this session.");
 
             IReadOnlyList<string> permissions = await localPortableExperienceCache.GetPermissionsRequiringAuthorizationAsync(portableExperienceId, ipfsRealm, ct);
 
@@ -216,7 +220,7 @@ namespace PortableExperiences.Controller
             if (!authorized)
             {
                 localPortableExperienceCache.DeniedPortableExperiences.Add(portableExperienceId);
-                throw new Exception($"The user denied the portable experience '{portableExperienceName}'.");
+                throw new PortableExperienceAuthorizationDeniedException($"The user denied the portable experience '{portableExperienceName}'.");
             }
 
             localPortableExperienceCache.AuthorizedPortableExperiences.Add(portableExperienceId);
