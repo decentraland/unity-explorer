@@ -22,10 +22,11 @@
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="MetricsPanel" usage-hints="DynamicTransform" class="metrics-panel debug-panel debug-panel--hidden">
-        <ui:VisualElement name="Header" class="debug-panel__header">
-            <ui:Label text="SCENE METRICS" name="TitleLabel" class="debug-panel__title" />
-            <ui:VisualElement name="Spacer" class="debug-panel__header-spacer" />
-            <ui:Button name="CloseButton" class="dcl-clickable debug-panel__close-button" />
+        <ui:Button name="CloseButton" class="dcl-clickable metrics-panel__close-button" />
+        <ui:VisualElement name="Header" class="metrics-panel__header">
+            <ui:Label text="Scene Stats" name="TitleLabel" class="metrics-panel__title" />
+            <ui:Label text="Suggested Specs per Parcel" class="metrics-panel__subtitle" />
+            <ui:Label text="—" name="ParcelSummary" class="metrics-panel__subtitle metrics-panel__parcel-summary" />
         </ui:VisualElement>
         <ui:VisualElement name="MetricsRows" class="metrics-panel__rows" />
     </ui:VisualElement>

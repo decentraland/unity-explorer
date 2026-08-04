@@ -148,7 +148,18 @@ namespace DCL.UI.DebugMenu
                     metricsScene.RuntimeMetrics.ContentStats.RequestedByMetricsPanel = false;
 
                 metricsScene = currentScene;
-                metricsCaps = currentScene != null ? SceneContentCaps.ForParcelCount(currentScene.SceneData.Parcels.Count) : default(SceneContentCaps);
+
+                if (currentScene != null)
+                {
+                    int parcelCount = currentScene.SceneData.Parcels.Count;
+                    metricsCaps = SceneContentCaps.ForParcelCount(parcelCount);
+                    metricsPanelView.SetSceneContext(parcelCount);
+                }
+                else
+                {
+                    metricsCaps = default(SceneContentCaps);
+                    metricsPanelView.ClearSceneContext();
+                }
 
                 // Prime the counter so the new scene's values show on the very next refresh check
                 framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
