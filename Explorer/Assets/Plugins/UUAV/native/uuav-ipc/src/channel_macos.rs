@@ -93,7 +93,7 @@ impl Channel {
         self.write_all(bytes)
     }
 
-    pub fn poll_readable(&mut self, timeout_ms: u32) -> anyhow::Result<bool> {
+    pub fn poll_readable(&self, timeout_ms: u32) -> anyhow::Result<bool> {
         // a frame may already be fully buffered from a previous read
         // burst; a kernel poll would sleep right past it
         if self.buffered_frame_len()?.is_some() {

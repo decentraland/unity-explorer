@@ -1,0 +1,312 @@
+{
+  "schema": 1,
+  "comment": [
+    "Hash lock for the prebuilt UUAV native binaries committed under",
+    "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/.",
+    "Verified by scripts/uuav/verify-binaries.py; regenerate with --update.",
+    "See Explorer/Assets/Plugins/UUAV/README.md."
+  ],
+  "rust_source": {
+    "comment": "The core decode library (uuav-core) has no upstream repository - it is built from this repo's own native/ tree. source_digest below is what ties each target's shipped binaries to the exact native/src state that produced them.",
+    "path": "Explorer/Assets/Plugins/UUAV/native/src",
+    "suffix": ".rs"
+  },
+  "build_inputs": {
+    "cargo_manifest": {
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/UUAV/native/Cargo.toml",
+      "sha256": "f6ab0419132af68bb741a9a7babff53a52d11a7cb2af4df0b38614b8e60e25ce"
+    },
+    "cargo_lock": {
+      "comment": [
+        "Narrowed to the dependency closure of the packages that actually",
+        "produce a shipped artifact: uuav-client (the `uuav` cdylib Unity",
+        "loads) and uuav-server (the uuav-helper child process). uuav-core",
+        "and uuav-ipc are path dependencies of those roots and enter the",
+        "closure through them. A dependency added to something that ships",
+        "nothing must not demand a two-platform rebuild of byte-identical",
+        "binaries."
+      ],
+      "kind": "cargo-lock-closure",
+      "path": "Explorer/Assets/Plugins/UUAV/native/Cargo.lock",
+      "roots": [
+        "uuav-client",
+        "uuav-server"
+      ],
+      "sha256": "47d29424232ef619702d337b88fb9c8516c88a4e6829c6d25b9baace233125f9",
+      "entries": 118
+    },
+    "cargo_config": {
+      "comment": [
+        "FFMPEG_DIR, the windows-gnu linker and the @loader_path rpath",
+        "flags all live here; each one changes the shipped bytes."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/UUAV/native/.cargo/config.toml",
+      "sha256": "52f27062704ef20f8fbb3fd7eccc45f02aa3bbd9f4a0ac5fbbfa2fa24691a88f"
+    },
+    "client_manifest": {
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/UUAV/native/uuav-client/Cargo.toml",
+      "sha256": "c60a02f126ee76f18661214666c2373d7d2d5a147428d21add48d082803a7f89"
+    },
+    "server_manifest": {
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/UUAV/native/uuav-server/Cargo.toml",
+      "sha256": "3fade0c92082feecc6084f5ce6280f222d83a3db9a178274067bd10d56af487a"
+    },
+    "ipc_manifest": {
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/UUAV/native/uuav-ipc/Cargo.toml",
+      "sha256": "af29aafdfd2a740de158f29605b350b02a477652f282c2fd0ae912f6da302d76"
+    },
+    "client_source": {
+      "comment": [
+        "The source of the shipped `uuav` cdylib. examples/ (the headless",
+        "smoke harness) is outside this tree on purpose: nothing in it",
+        "reaches a shipped binary."
+      ],
+      "kind": "tree",
+      "path": "Explorer/Assets/Plugins/UUAV/native/uuav-client/src",
+      "suffix": [
+        ".rs"
+      ],
+      "sha256": "3666dd8285353941d93ba29963b74e3ceb4b0eff689b3eb7ba648b4236d34a7f",
+      "entries": 10
+    },
+    "server_source": {
+      "comment": [
+        "The source of the shipped uuav-helper executable. helper.sb is in",
+        "here too: the seatbelt profile is a runtime input to the child and",
+        "a silent edit to it weakens the sandbox without changing any .rs",
+        "file."
+      ],
+      "kind": "tree",
+      "path": "Explorer/Assets/Plugins/UUAV/native/uuav-server",
+      "suffix": [
+        ".rs",
+        ".sb"
+      ],
+      "prune": [
+        "target",
+        ".target"
+      ],
+      "sha256": "052aeb59a8b269737e479f83f27fedb9a62af6096a3347c69aa7590428d5682e",
+      "entries": 11
+    },
+    "ipc_source": {
+      "comment": [
+        "Transport, spawn and framing - linked as an rlib into both the",
+        "shipped client and the shipped helper."
+      ],
+      "kind": "tree",
+      "path": "Explorer/Assets/Plugins/UUAV/native/uuav-ipc/src",
+      "suffix": [
+        ".rs"
+      ],
+      "sha256": "3732c1320dafbfe8bbda49af1902c9790e4f4e025e17164c7873c5142fcab606",
+      "entries": 6
+    }
+  },
+  "targets": {
+    "macos-universal": {
+      "runtime_dir": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS",
+      "rust": {
+        "target": "universal (aarch64-apple-darwin + x86_64-apple-darwin)",
+        "profile": "release",
+        "crate_version": "0.2.0",
+        "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+        "toolchain": {
+          "comment": [
+            "The identities of the host toolchain that produced the committed",
+            "binaries, recorded with the same commands the build workflow's",
+            "'Record the toolchain actually used' step runs. Gate B",
+            "(reproduces-lock.py) hard-checks byte reproduction only on a",
+            "runner matching every component here; anything else skips."
+          ],
+          "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+          "cargo": "cargo 1.88.0 (873a06493 2025-05-10)",
+          "clang": "Apple clang version 17.0.0 (clang-1700.4.4.1)",
+          "xcode": "Xcode 26.1.1 Build version 17B100",
+          "sdk": "macosx26.1 (25B74)"
+        },
+        "link_args": [
+          "-C",
+          "link-arg=-Wl,-rpath,@loader_path"
+        ],
+        "source_digest": "773ee1d1559b172d5df2d8dd846eb0ab091fb084f95f486e9e710f845a3d0e6c",
+        "source_files": 20,
+        "repo_commit": "711bf22a75ae368e0d5d1a6624057c1d816109d1"
+      },
+      "ffmpeg": {
+        "provenance": "built-from-source",
+        "repo": "https://github.com/FFmpeg/FFmpeg.git",
+        "tag": "n8.1",
+        "commit": "9047fa1b084f76b1b4d065af2d743df1b40dfb56",
+        "license": "LGPL-2.1-or-later",
+        "macosx_deployment_target": "11.0",
+        "builder": "Explorer/Assets/Plugins/UUAV/native/scripts/build-ffmpeg-macos.sh",
+        "builder_sha256_comment": [
+          "Digest over the build script's SUBSTANCE, not its text: comments",
+          "are stripped (quote- and backtick-aware) and each line's",
+          "whitespace is collapsed. Nothing a shell comment can do reaches",
+          "the compiled FFmpeg, so reflowing one must not demand a",
+          "15-minute rebuild.",
+          "Recompute with verify-binaries.py's build_script_sha256()."
+        ],
+        "builder_sha256": "b2019c9bb82fecc2295b08ad94720bd8926ce4927f55745f57e0a8b43e43d498",
+        "configure_expected": [
+          "--disable-doc --disable-programs --disable-static --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
+        ],
+        "configure_observed": [
+          "--disable-doc --disable-programs --disable-static --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
+        ],
+        "drift_acknowledged": false,
+        "drift_note": "Universal (arm64 + x86_64) from-source LGPL shared build; the shipped dylibs match the recipe."
+      },
+      "artifacts": [
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavcodec.62.dylib",
+          "sha256": "3aed72f86bf327b40ab688239b699d548f6f1276676886056d9fbb6ab5259a67",
+          "bytes": 29020960,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavdevice.62.dylib",
+          "sha256": "489c28d04a3bdb0f2ba4894f0e36e0412144b585de3ecb55eb84b771e5e4013d",
+          "bytes": 219776,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavfilter.11.dylib",
+          "sha256": "6635664fd261589de7a5499f5348314ccfc3c49f4b2302dfd91a2b6cc5adcbd1",
+          "bytes": 8502256,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavformat.62.dylib",
+          "sha256": "73ef0c41a129d771515978e7b5eca3bc5ed60d85737924862adb478d22725df6",
+          "bytes": 5149328,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavutil.60.dylib",
+          "sha256": "1e6bae3f577ef5814797ec4bb7c81facc8fa846aadd1f4cd54068740ad1c0cbe",
+          "bytes": 1643040,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libswresample.6.dylib",
+          "sha256": "0d15cbdec0fdad17fbb49c217218a56cd95160448ab4c06e807869d10e090050",
+          "bytes": 317904,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libswscale.9.dylib",
+          "sha256": "7561f535767d2fe16f17c74819e86e3e1075dfadc418e3a08d333ac89b25472b",
+          "bytes": 2718048,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libuuav.dylib",
+          "sha256": "09f56f60159d1fff1cfdc3fe6e09d8d186d7a36a611d14ea111812347a07cc81",
+          "bytes": 1524304,
+          "produced_by": "cargo"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper",
+          "sha256": "002898164832f6ab8dd19aa11f4dfdd172f40dc31633d66c059793a37656cb4c",
+          "bytes": 1736976,
+          "produced_by": "cargo"
+        }
+      ]
+    },
+    "windows-x86_64": {
+      "runtime_dir": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64",
+      "rust": {
+        "target": "x86_64-pc-windows-gnu",
+        "profile": "release",
+        "crate_version": "0.2.0",
+        "rustc": "unknown - not recorded when the committed binaries were built",
+        "toolchain_comment": [
+          "No toolchain pin yet: the committed Windows binaries were built",
+          "on a developer machine whose identities were never recorded, so",
+          "Gate B (reproduces-lock.py) skips byte reproduction for this",
+          "target. Pin it at the next Windows rebuild with",
+          "  python3 scripts/uuav/verify-binaries.py --update --only",
+          "  windows-x86_64 --toolchain toolchain-windows.txt",
+          "using the file the build workflow's 'Record the toolchain",
+          "actually used' step writes."
+        ],
+        "source_digest": "773ee1d1559b172d5df2d8dd846eb0ab091fb084f95f486e9e710f845a3d0e6c",
+        "source_files": 20,
+        "repo_commit": "ad82db6e231d24e10d05d70fb6967a1e73ce966e"
+      },
+      "ffmpeg": {
+        "provenance": "third-party-release-asset",
+        "repo": "https://github.com/BtbN/FFmpeg-Builds",
+        "release_tag": "autobuild-2026-07-23-14-16",
+        "asset": "ffmpeg-n8.1.2-30-g45f1910444-win64-lgpl-shared-8.1.zip",
+        "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-07-23-14-16/ffmpeg-n8.1.2-30-g45f1910444-win64-lgpl-shared-8.1.zip",
+        "asset_sha256": "ec64d69734b534777cb3e0e433a319ab22eeb1cf06adf63430712e401a9c0c3f",
+        "upstream_describe": "n8.1.2-30-g45f1910444-20260723",
+        "license": "LGPL-3.0-or-later (BtbN lgpl-shared variant, --enable-version3)",
+        "provenance_comment": [
+          "The four committed av*/sw* DLLs were verified byte-identical to",
+          "the bin/ contents of this release asset when the pin was first",
+          "recorded (2026-08-04). Fetch and unpack it with",
+          "scripts/uuav/fetch-ffmpeg-windows.sh, which refuses an archive",
+          "whose sha256 does not match asset_sha256 above.",
+          "configure_expected mirrors configure_observed by definition here:",
+          "for a fetched asset the asset IS the recipe."
+        ],
+        "configure_expected": [
+          "--ar=x86_64-w64-mingw32-gcc-ar --cross-prefix=x86_64-w64-mingw32- --cxx=x86_64-w64-mingw32-g++ --disable-avisynth --disable-debug --disable-frei0r --disable-libdavs2 --disable-libdrm --disable-libdvdnav --disable-libdvdread --disable-libfdk-aac --disable-libpulse --disable-librubberband --disable-libvidstab --disable-libx264 --disable-libx265 --disable-libxavs2 --disable-libxcb --disable-libxvid --disable-static --disable-w32threads --disable-whisper --disable-xlib --enable-amf --enable-chromaprint --enable-cuda-llvm --enable-ffnvcodec --enable-fontconfig --enable-gmp --enable-iconv --enable-libaom --enable-libaribb24 --enable-libaribcaption --enable-libass --enable-libbluray --enable-libdav1d --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libharfbuzz --enable-libjxl --enable-libkvazaar --enable-liblcevc-dec --enable-libmp3lame --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libplacebo --enable-librav1e --enable-librist --enable-libshaderc --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libuavs3d --enable-libvmaf --enable-libvorbis --enable-libvpl --enable-libvpx --enable-libvvenc --enable-libwebp --enable-libxml2 --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-lzma --enable-openal --enable-opencl --enable-pthreads --enable-schannel --enable-sdl2 --enable-shared --enable-vaapi --enable-version3 --enable-vulkan --enable-zlib --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-ldexeflags= --extra-ldflags=-pthread --extra-libs=-lgomp --extra-version=20260723 --nm=x86_64-w64-mingw32-gcc-nm --pkg-config-flags=--static --pkg-config=pkg-config --ranlib=x86_64-w64-mingw32-gcc-ranlib"
+        ],
+        "configure_observed": [
+          "--ar=x86_64-w64-mingw32-gcc-ar --cross-prefix=x86_64-w64-mingw32- --cxx=x86_64-w64-mingw32-g++ --disable-avisynth --disable-debug --disable-frei0r --disable-libdavs2 --disable-libdrm --disable-libdvdnav --disable-libdvdread --disable-libfdk-aac --disable-libpulse --disable-librubberband --disable-libvidstab --disable-libx264 --disable-libx265 --disable-libxavs2 --disable-libxcb --disable-libxvid --disable-static --disable-w32threads --disable-whisper --disable-xlib --enable-amf --enable-chromaprint --enable-cuda-llvm --enable-ffnvcodec --enable-fontconfig --enable-gmp --enable-iconv --enable-libaom --enable-libaribb24 --enable-libaribcaption --enable-libass --enable-libbluray --enable-libdav1d --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libharfbuzz --enable-libjxl --enable-libkvazaar --enable-liblcevc-dec --enable-libmp3lame --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libplacebo --enable-librav1e --enable-librist --enable-libshaderc --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libuavs3d --enable-libvmaf --enable-libvorbis --enable-libvpl --enable-libvpx --enable-libvvenc --enable-libwebp --enable-libxml2 --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-lzma --enable-openal --enable-opencl --enable-pthreads --enable-schannel --enable-sdl2 --enable-shared --enable-vaapi --enable-version3 --enable-vulkan --enable-zlib --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-ldexeflags= --extra-ldflags=-pthread --extra-libs=-lgomp --extra-version=20260723 --nm=x86_64-w64-mingw32-gcc-nm --pkg-config-flags=--static --pkg-config=pkg-config --ranlib=x86_64-w64-mingw32-gcc-ranlib"
+        ],
+        "drift_acknowledged": false,
+        "drift_note": "Stock BtbN win64 lgpl-shared 8.1 build, consumed as-is; only the four DLLs in uuav-helper's import closure ship."
+      },
+      "artifacts": [
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/avcodec-62.dll",
+          "sha256": "1b6ed0fec123e7e6aa80cb9ff0c10846b776c12af563da9ac8672224642250ff",
+          "bytes": 70875136,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/avformat-62.dll",
+          "sha256": "74eb3e5e5d027cb7f45d4397a141718290393bcaba174490a3bfc1db0e9e5f8f",
+          "bytes": 22070784,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/avutil-60.dll",
+          "sha256": "b54823377aa5b422d3ae2360816e44c493203b5569b18ba6272968266b4463b4",
+          "bytes": 2937856,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/swresample-6.dll",
+          "sha256": "60bd370d2e80c777d8cac6383726fced7b8a3d11591502c1f30813c91af02efa",
+          "bytes": 723968,
+          "produced_by": "ffmpeg"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav.dll",
+          "sha256": "2d42d91058da05bf26c945c2359a360ec2c5e676585b325e2b48a9fa66b672b4",
+          "bytes": 1347584,
+          "produced_by": "cargo"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe",
+          "sha256": "1cb357c934daabde32e9c42b903f8f6ba4ab6f8613b6519b188d2f45503f3ed9",
+          "bytes": 1411072,
+          "produced_by": "cargo"
+        }
+      ]
+    }
+  }
+}

@@ -141,6 +141,21 @@ macOS notes:
 - The Seatbelt profile (`native/uuav-server/helper.sb`) is embedded into `uuav-helper` at compile time - nothing extra ships, and sandboxing needs no entitlements, so ad-hoc signing stays sufficient.
 - CI does not notarize; the helper inherits the ad-hoc signing from `build.sh`. If notarization lands later, add `uuav-helper` to the signed inventory.
 
+## CI verification of the shipped binaries
+
+The committed binaries are pinned by a hash lock, `scripts/uuav/uuav-binaries.lock.json`, and two workflows enforce it:
+
+- **`uuav-verify.yml`** runs on every PR touching this plugin or `scripts/uuav/`. It re-hashes every shipped binary and every build input that feeds one (Rust source trees, manifests, `Cargo.lock` closure of the shipping roots, `.cargo/config.toml`, the FFmpeg builder script) against the lock, reads the FFmpeg configure line embedded in each shipped library and compares it with the recorded provenance, and requires new native binaries to be stored in Git LFS. It also `cargo check`/`test`/`clippy`s the FFmpeg-free crates (`uuav-ipc`, `uuav-client`) on a macOS runner and asserts nothing links `uuav-client`'s rlib.
+- **`uuav-native.yml`** runs on demand (`workflow_dispatch`, or the `build-uuav-native` PR label). It rebuilds both targets from pinned inputs — macOS FFmpeg from the source commit in the lock, Windows FFmpeg fetched as the hash-pinned BtbN release asset via `scripts/uuav/fetch-ffmpeg-windows.sh` — then runs two gates: Gate A (`scripts/uuav/repro-gate.sh`) builds twice from two source trees through one canonical path (`scripts/uuav/build-canonical.sh`) and requires byte-identical cargo artifacts; Gate B (`scripts/uuav/reproduces-lock.py`) compares the fresh build against the committed hashes, hard-failing only when the runner's toolchain matches the one pinned in the lock.
+
+After rebuilding binaries on purpose, relock the target you rebuilt:
+
+```
+python3 scripts/uuav/verify-binaries.py --update --only macos-universal   # or windows-x86_64
+```
+
+`--update` rewrites only the machine-derived fields; the upstream pins (FFmpeg tag/commit, the BtbN release asset and its sha256) are edited by hand when the pin deliberately moves. The Windows target has no toolchain pin yet, so Gate B skips it; pin it at the next Windows rebuild by passing `--toolchain toolchain-windows.txt` (the file the workflow's "Record the toolchain actually used" step writes).
+
 ## GPU device separation
 
 Unity's device and the decode device are different devices in different processes. The helper creates its own D3D11 device / `MTLDevice` on the same adapter as Unity (that's why the client sends the adapter LUID / registry id at init — shared textures cannot cross adapters) and hands the core a probe texture from it, exactly the way Unity used to in-process; the core is unchanged and still enables `SetMultithreadProtected` on its immediate context so FFmpeg's decoder threads coexist with the helper's video pump.
