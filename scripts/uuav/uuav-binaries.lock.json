@@ -45,6 +45,17 @@
       "path": "Explorer/Assets/Plugins/UUAV/native/.cargo/config.toml",
       "sha256": "52f27062704ef20f8fbb3fd7eccc45f02aa3bbd9f4a0ac5fbbfa2fa24691a88f"
     },
+    "rust_toolchain": {
+      "comment": [
+        "The pinned compiler is an input to the shipped bytes. Bumping the",
+        "channel is a rebuild-and-relock event for both targets, not a",
+        "routine edit."
+      ],
+      "pending": "the committed binaries predate the pin (built with rustc 1.88.0); enforce at the first rebuild-and-relock on the pinned toolchain",
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/UUAV/native/rust-toolchain.toml",
+      "sha256": "c7163d520a3ba118c14f197a1498a9a5a7290335932dd4f7c4feaded0b5446f0"
+    },
     "client_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-client/Cargo.toml",
@@ -71,7 +82,7 @@
       "suffix": [
         ".rs"
       ],
-      "sha256": "3666dd8285353941d93ba29963b74e3ceb4b0eff689b3eb7ba648b4236d34a7f",
+      "sha256": "811cbb76b7f77b2d6ee442dc5ff17ad37a202d7c00cac0fe2c0615ee708a0ca5",
       "entries": 10
     },
     "server_source": {

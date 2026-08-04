@@ -291,9 +291,9 @@ pub fn apply_surface(
     tag: &uuav_ipc::mach_channel::SurfaceTag,
     surface: objc2_core_foundation::CFRetained<objc2_io_surface::IOSurfaceRef>,
 ) {
-    if let Some(mirror) = registry.by_helper(tag.player) {
-        if let Ok(mut video) = mirror.video.lock() {
-            video.store_surface(tag, surface);
-        }
+    if let Some(mirror) = registry.by_helper(tag.player)
+        && let Ok(mut video) = mirror.video.lock()
+    {
+        video.store_surface(tag, surface);
     }
 }

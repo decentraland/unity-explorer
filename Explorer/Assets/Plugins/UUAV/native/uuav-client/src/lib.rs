@@ -722,8 +722,9 @@ fn bind_helper_player(
     let (looping, rate) = mirror
         .desired
         .lock()
-        .map(|desired| (desired.looping, desired.rate))
-        .unwrap_or((false, DEFAULT_PLAYBACK_RATE));
+        .map_or((false, DEFAULT_PLAYBACK_RATE), |desired| {
+            (desired.looping, desired.rate)
+        });
     if looping {
         _ = conn.send(ToServer::SetLooping {
             id: helper,

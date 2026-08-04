@@ -155,11 +155,11 @@ impl PlayerVideo {
     /// Returns the generation to ack, if one was just wrapped.
     pub fn present(&mut self, unity: &UnityDevice) -> Result<Option<u32>> {
         let mut ack = None;
-        if self.pending.as_ref().is_some_and(PendingGen::complete) {
-            if let Some(pending) = self.pending.take() {
-                self.active = Some(wrap_generation(unity, &pending)?);
-                self.ack_due = Some(pending.generation);
-            }
+        if self.pending.as_ref().is_some_and(PendingGen::complete)
+            && let Some(pending) = self.pending.take()
+        {
+            self.active = Some(wrap_generation(unity, &pending)?);
+            self.ack_due = Some(pending.generation);
         }
         if self.ack_due.is_some() {
             ack = self.ack_due.take();

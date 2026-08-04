@@ -40,6 +40,9 @@ jobs:
       - name: Fetch the plugin binaries from LFS
         run: git lfs pull --include "$PLUGIN_LFS_GLOB"
 
+      - name: Test the verifier itself
+        run: python3 scripts/uuav/test-verify-binaries.py
+
       - name: Verify hashes, provenance and build inputs
         run: python3 scripts/uuav/verify-binaries.py
 
