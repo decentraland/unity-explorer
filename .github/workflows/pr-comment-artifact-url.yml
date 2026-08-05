@@ -2,9 +2,17 @@
 ---
 name: Comment Artifact URL on PR
 
+# Writes only the "build" section of the unified CI status comment via the
+# ci-status-comment composite action (build / lint / tests live in one comment).
+#
+# 'requested' -> reset the build section to "pending" the moment a new build
+#                starts, so last build's download links never linger as stale.
+# 'completed' -> fill the section back in: Success (with artifact links) /
+#                Failed / Skipped (no changes under Explorer/).
 on:
   workflow_run:
     types:
+      - "requested"
       - "completed"
     workflows:
       - "Unity Cloud Build"
@@ -34,9 +42,31 @@ jobs:
           fi
           echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
+  comment-pending:
+    needs: pre-validation
+    if: github.event.action == 'requested' && needs.pre-validation.outputs.pr-number != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+
+      - name: Reset build section to pending
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
+          body: |-
+            ![Build](https://img.shields.io/badge/Build-Pending!-ffff00?logo=github&style=for-the-badge)  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+
+            New build in progress, come back later!
+
   check-build-ran:
     needs: pre-validation
-    if: needs.pre-validation.outputs.pr-number != ''
+    if: github.event.action == 'completed' && needs.pre-validation.outputs.pr-number != ''
     runs-on: ubuntu-latest
     outputs:
       build-ran: ${{ steps.check.outputs.build-ran }}
