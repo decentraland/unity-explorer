@@ -1,12 +1,11 @@
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
 use parking_lot::Mutex;
+use std::collections::VecDeque;
 use std::os::raw::c_int;
 use std::ptr;
 use std::sync::Arc;
-use std::thread;
 
-use super::util::{AtomicSeekSlot, PLAYBACK_POLL, ReadOnlyCancelToken};
 use crate::ffutil::{Decoded, OwnedPacket, Stream};
 use crate::hw_device::HwDeviceContext;
 use crate::video_decoder::{VideoDecoder, VideoFrame};
@@ -14,6 +13,15 @@ use crate::video_decoder::{VideoDecoder, VideoFrame};
 /// Decoded frames buffered ahead of the clock. Each entry pins a decoder
 /// surface, so it must stay below [`VideoDecoder::EXTRA_HW_FRAMES`].
 const VIDEO_QUEUE_CAP: usize = 4;
+
+/// Bounds of the compressed-packet buffer held in front of the decoder.
+/// Chunk-interleaved files (e.g. Vimeo progressive mp4s mux ~0.5 s of video
+/// packets, then ~0.5 s of audio packets) would otherwise head-of-line block
+/// audio demuxing behind the presentation-paced frame queue, starving the
+/// audio ring once per chunk. Compressed packets are cheap, so the bounds are
+/// backstops: in steady state the buffer holds at most one interleave chunk.
+const MAX_PENDING_PACKETS: usize = 256;
+const MAX_PENDING_BYTES: usize = 16 * 1024 * 1024;
 
 /// The frame the render thread popped but whose time has not come yet.
 type HeldFrame = Arc<Mutex<Option<VideoFrame>>>;
@@ -99,10 +107,27 @@ impl VideoReader {
 
 /// The video half of a playback: decodes the video stream and fills the
 /// presentation queue the render thread consumes.
+///
+/// Nothing here blocks: packets wait compressed in `pending`, decoded frames
+/// wait in the frame queue (plus one `held` overflow slot), and the playback
+/// thread's [`Self::service`] calls move whatever fits. Demuxing therefore
+/// never stalls behind presentation-paced video while the audio ring runs dry.
 pub(super) struct VideoPlayback {
     decoder: VideoDecoder,
     queue: VideoQueue,
     stream_index: c_int,
+    /// Compressed packets waiting for the decoder, in demux order.
+    pending: VecDeque<OwnedPacket>,
+    /// Payload bytes buffered in `pending`.
+    pending_bytes: usize,
+    /// A decoded frame the full frame queue could not take. At most one, so
+    /// the pinned-surface envelope stays at `VIDEO_QUEUE_CAP + 1`, matching
+    /// the headroom [`VideoDecoder::EXTRA_HW_FRAMES`] provides.
+    held: Option<VideoFrame>,
+    /// End-of-stream was sent to the decoder.
+    eos_sent: bool,
+    /// The decoder returned its last frame after end-of-stream.
+    finished: bool,
 }
 
 impl VideoPlayback {
@@ -116,6 +141,11 @@ impl VideoPlayback {
             decoder: VideoDecoder::new(stream, hw)?,
             queue,
             stream_index,
+            pending: VecDeque::new(),
+            pending_bytes: 0,
+            held: None,
+            eos_sent: false,
+            finished: false,
         })
     }
 
@@ -123,77 +153,80 @@ impl VideoPlayback {
         self.stream_index == stream_index
     }
 
-    /// Sends the packet and moves every ready frame into the queue.
-    pub(super) fn handle_packet(
-        &mut self,
-        packet: &mut OwnedPacket,
-        start_offset: f64,
-        cancel: &ReadOnlyCancelToken,
-        seek: &AtomicSeekSlot,
-        poll_controls: &dyn Fn(),
-    ) -> Result<()> {
-        self.decoder.send(packet.as_mut_ptr())?;
-        self.pump(start_offset, cancel, seek, poll_controls)
+    /// Takes the packet into the pending buffer; declines when the buffer
+    /// is at capacity (the caller retries after servicing the sinks).
+    pub(super) fn try_enqueue(&mut self, packet: &mut OwnedPacket) -> Result<bool> {
+        if self.pending.len() >= MAX_PENDING_PACKETS || self.pending_bytes >= MAX_PENDING_BYTES {
+            return Ok(false);
+        }
+        let owned = OwnedPacket::stolen_from(packet)?;
+        self.pending_bytes = self.pending_bytes.saturating_add(owned.size());
+        self.pending.push_back(owned);
+        Ok(true)
     }
 
-    /// Sends end-of-stream and moves the remaining frames into the queue.
-    pub(super) fn drain(
-        &mut self,
-        start_offset: f64,
-        cancel: &ReadOnlyCancelToken,
-        seek: &AtomicSeekSlot,
-        poll_controls: &dyn Fn(),
-    ) -> Result<()> {
-        self.decoder.send(ptr::null())?;
-        self.pump(start_offset, cancel, seek, poll_controls)
+    /// Moves whatever fits without waiting: held/decoded frames into the
+    /// presentation queue, then pending packets into the decoder. With `eos`
+    /// set and the pending buffer empty, signals end-of-stream and drains the
+    /// decoder's tail. Returns whether anything moved.
+    pub(super) fn service(&mut self, start_offset: f64, eos: bool) -> Result<bool> {
+        let mut progress = false;
+        loop {
+            if let Some(frame) = self.held.take() {
+                match self.queue.try_push(frame) {
+                    Ok(()) => progress = true,
+                    Err(frame) => {
+                        // frame queue full: presentation sets the pace
+                        self.held = Some(frame);
+                        return Ok(progress);
+                    }
+                }
+            }
+            if self.finished {
+                return Ok(progress);
+            }
+            match self.decoder.receive()? {
+                Decoded::Frame(mut frame) => {
+                    frame.shift_pts(start_offset);
+                    self.held = Some(frame);
+                }
+                Decoded::Again => {
+                    if let Some(mut packet) = self.pending.pop_front() {
+                        self.pending_bytes = self.pending_bytes.saturating_sub(packet.size());
+                        self.decoder.send(packet.as_mut_ptr())?;
+                        progress = true;
+                        continue;
+                    }
+                    if eos && !self.eos_sent {
+                        self.decoder.send(ptr::null())?;
+                        self.eos_sent = true;
+                        progress = true;
+                        continue;
+                    }
+                    return Ok(progress);
+                }
+                Decoded::Eof => {
+                    self.finished = true;
+                    return Ok(progress);
+                }
+            }
+        }
     }
 
     /// Discards everything belonging to the pre-seek position.
     pub(super) fn flush_for_seek(&mut self) {
         self.decoder.flush();
         self.queue.flush();
+        self.pending.clear();
+        self.pending_bytes = 0;
+        self.held = None;
+        self.eos_sent = false;
+        self.finished = false;
     }
 
-    /// Whether the render thread has consumed every queued frame.
+    /// Whether the stream was decoded to its end and the render thread has
+    /// consumed every queued frame.
     pub(super) fn is_drained(&self) -> bool {
-        self.queue.is_drained()
-    }
-
-    /// Moves every frame the decoder has ready into the presentation queue,
-    /// waiting for space while staying responsive to stop/seek commands.
-    /// The wait also keeps `poll_controls` applied: while not playing the
-    /// queue does not drain, so a queued play would otherwise never land.
-    fn pump(
-        &mut self,
-        start_offset: f64,
-        cancel: &ReadOnlyCancelToken,
-        seek: &AtomicSeekSlot,
-        poll_controls: &dyn Fn(),
-    ) -> Result<()> {
-        loop {
-            match self.decoder.receive()? {
-                Decoded::Frame(mut frame) => {
-                    frame.shift_pts(start_offset);
-                    loop {
-                        if cancel.is_cancelled() || seek.is_pending() {
-                            // the frame is obsolete: the queue is about to
-                            // be flushed
-                            return Ok(());
-                        }
-                        // after the cancel check: a retired unit must not
-                        // consume a command meant for its successor
-                        poll_controls();
-                        match self.queue.try_push(frame) {
-                            Ok(()) => break,
-                            Err(returned) => {
-                                frame = returned;
-                                thread::sleep(PLAYBACK_POLL);
-                            }
-                        }
-                    }
-                }
-                Decoded::Again | Decoded::Eof => return Ok(()),
-            }
-        }
+        self.finished && self.pending.is_empty() && self.held.is_none() && self.queue.is_drained()
     }
 }

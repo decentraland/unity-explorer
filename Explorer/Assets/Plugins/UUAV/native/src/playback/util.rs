@@ -75,9 +75,4 @@ impl AtomicSeekSlot {
     pub(super) fn take(&self) -> Option<f64> {
         self.0.swap(None).map(|target| *target)
     }
-
-    /// Whether a request is waiting to be serviced.
-    pub(super) fn is_pending(&self) -> bool {
-        self.0.load().is_some()
-    }
 }

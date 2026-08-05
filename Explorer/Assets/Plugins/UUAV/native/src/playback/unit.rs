@@ -244,14 +244,13 @@ impl PlaybackUnit {
         } = pipeline;
 
         let mut packet = OwnedPacket::new()?;
+        // `packet` carries a demuxed payload whose sink was saturated;
+        // routing retries once the sinks made room
+        let mut unrouted = false;
         // whether the demuxer ran out of input; playback then drains the sinks
         let mut eof = false;
         // varispeed this unit currently runs at; fresh units start at 1x
         let mut applied_rate = 1.0_f64;
-        // the sinks poll this while waiting for queue space: not playing
-        // means nothing drains, so a blocked pump is the only place a
-        // queued play can be noticed
-        let poll_controls = || self.apply_play_or_pause();
 
         loop {
             if self.cancel.is_cancelled() {
@@ -277,6 +276,11 @@ impl PlaybackUnit {
             }
 
             if let Some(target) = self.seek.take() {
+                if unrouted {
+                    // belongs to the pre-seek position
+                    packet.unref();
+                    unrouted = false;
+                }
                 // non-fatal: an unseekable (e.g. realtime) stream keeps playing
                 if let Err(e) = self.apply_seek(
                     &input,
@@ -292,6 +296,17 @@ impl PlaybackUnit {
                 continue;
             }
 
+            // move what fits, never wait: with chunk-interleaved input one
+            // sink saturates while the other still needs feeding, so a
+            // blocking pump would starve it (audible as periodic silence)
+            let mut progress = false;
+            if let Some(video) = video.as_mut() {
+                progress |= video.service(start_offset, eof)?;
+            }
+            if let Some(audio) = audio.as_mut() {
+                progress |= audio.service(start_offset, eof)?;
+            }
+
             if eof {
                 if self.loop_wrap(
                     &input,
@@ -303,53 +318,61 @@ impl PlaybackUnit {
                     continue;
                 }
                 self.settle_ended(video.as_ref(), audio.as_ref());
-                thread::sleep(PLAYBACK_POLL);
+                if !progress {
+                    thread::sleep(PLAYBACK_POLL);
+                }
                 continue;
             }
 
-            let ret = unsafe { ff::av_read_frame(input.as_ptr(), packet.as_mut_ptr()) };
-            if ret == ff::AVERROR_EOF {
-                if let Some(video) = video.as_mut() {
-                    video.drain(start_offset, &self.cancel, &self.seek, &poll_controls)?;
+            if unrouted {
+                unrouted = !Self::route(&mut packet, video.as_mut(), audio.as_mut(), start_offset)?;
+                progress |= !unrouted;
+            } else {
+                let ret = unsafe { ff::av_read_frame(input.as_ptr(), packet.as_mut_ptr()) };
+                if ret == ff::AVERROR_EOF {
+                    eof = true;
+                    continue;
                 }
-                if let Some(audio) = audio.as_mut() {
-                    audio.drain(start_offset, &self.cancel, &self.seek, &poll_controls)?;
+                if ret == ff::AVERROR(libc::EAGAIN) {
+                    thread::sleep(PLAYBACK_POLL);
+                    continue;
                 }
-                eof = true;
-                continue;
-            }
-            if ret == ff::AVERROR(libc::EAGAIN) {
-                thread::sleep(PLAYBACK_POLL);
-                continue;
-            }
-            if ret < 0 {
-                return Err(av_err("av_read_frame", ret));
+                if ret < 0 {
+                    return Err(av_err("av_read_frame", ret));
+                }
+                unrouted = !Self::route(&mut packet, video.as_mut(), audio.as_mut(), start_offset)?;
+                // a successful read is progress even when routing must wait
+                progress = true;
             }
 
-            let stream_index = packet.stream_index();
-            if let Some(video) = video.as_mut()
-                && video.handles(stream_index)
-            {
-                video.handle_packet(
-                    &mut packet,
-                    start_offset,
-                    &self.cancel,
-                    &self.seek,
-                    &poll_controls,
-                )?;
-            } else if let Some(audio) = audio.as_mut()
-                && audio.handles(stream_index)
-            {
-                audio.handle_packet(
-                    &mut packet,
-                    start_offset,
-                    &self.cancel,
-                    &self.seek,
-                    &poll_controls,
-                )?;
+            if !progress {
+                thread::sleep(PLAYBACK_POLL);
             }
-            packet.unref();
         }
+    }
+
+    /// Hands the packet to the sink of its stream. Returns whether it was
+    /// taken; a declined packet stays in `packet` for a later retry, anything
+    /// without a sink is dropped (and counts as routed).
+    fn route(
+        packet: &mut OwnedPacket,
+        video: Option<&mut VideoPlayback>,
+        audio: Option<&mut AudioPlayback>,
+        start_offset: f64,
+    ) -> Result<bool> {
+        let stream_index = packet.stream_index();
+        if let Some(video) = video
+            && video.handles(stream_index)
+        {
+            return video.try_enqueue(packet);
+        }
+        if let Some(audio) = audio
+            && audio.handles(stream_index)
+        {
+            return audio.try_enqueue(packet, start_offset);
+        }
+        packet.unref();
+        Ok(true)
     }
 
     /// [playback thread] At EOF with looping on: once the sinks have

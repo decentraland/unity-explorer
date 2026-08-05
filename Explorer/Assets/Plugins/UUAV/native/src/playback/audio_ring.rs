@@ -9,12 +9,14 @@ use std::sync::Arc;
 use crate::AudioOptions;
 
 /// Decoded audio buffered ahead of the clock, in seconds; the fixed
-/// capacity of the sample ring.
-const AUDIO_BUFFER_SECONDS: f64 = 1.0;
+/// capacity of the sample ring. Must cover the interleave chunk size of
+/// chunked containers (commonly up to ~1 s), since no audio is demuxed
+/// while a whole video chunk passes through.
+const AUDIO_BUFFER_SECONDS: f64 = 2.0;
 /// Audio drift beyond this is corrected by padding silence / dropping samples.
 const AUDIO_DRIFT_TOLERANCE: f64 = 0.15;
-/// Decoded audio frames are ~10 ms or longer, so one second of buffered
-/// audio carries well under this many timestamps.
+/// Decoded audio frames are ~10 ms or longer, so the buffered audio
+/// carries well under this many timestamps.
 const PTS_MARKERS_CAP: usize = 256;
 
 /// Media time anchor: ties a media timestamp to a position in the sample

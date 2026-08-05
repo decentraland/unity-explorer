@@ -384,8 +384,21 @@ impl OwnedPacket {
         self.0
     }
 
+    /// Takes over `src`'s payload (`av_packet_move_ref`), leaving `src`
+    /// blank and reusable.
+    pub(crate) fn stolen_from(src: &mut Self) -> Result<Self> {
+        let dst = Self::new()?;
+        unsafe { ff::av_packet_move_ref(dst.0, src.0) };
+        Ok(dst)
+    }
+
     pub(crate) fn stream_index(&self) -> c_int {
         unsafe { (*self.0).stream_index }
+    }
+
+    /// Payload size in bytes.
+    pub(crate) fn size(&self) -> usize {
+        usize::try_from(unsafe { (*self.0).size }).unwrap_or(0)
     }
 
     pub(crate) fn unref(&mut self) {

@@ -3,15 +3,13 @@ use parking_lot::Mutex;
 use std::os::raw::c_int;
 use std::ptr;
 use std::sync::Arc;
-use std::thread;
 
 use super::audio_ring::{AudioRing, ClockSync, SharedAudioReceiver};
 use super::fill_silence;
 use super::telemetry::SharedAudioTelemetry;
 use super::transport::AtomicTransport;
-use super::util::{AtomicSeekSlot, PLAYBACK_POLL, ReadOnlyCancelToken};
 use crate::AudioOptionsView;
-use crate::audio_decoder::AudioDecoder;
+use crate::audio_decoder::{AudioDecoder, AudioFrame};
 use crate::ffutil::{Decoded, OwnedPacket, Stream};
 
 /// The audio-thread half of a playback's audio: drains the ring
@@ -109,6 +107,10 @@ impl AudioReader {
 
 /// The worker-thread half of a playback's audio: decodes the audio stream
 /// and feeds the ring the engine's audio thread drains.
+///
+/// Nothing here blocks: a frame the full ring cannot take waits in the `held`
+/// slot, and [`Self::try_enqueue`] declines further packets until it clears.
+/// The playback thread keeps servicing the other sink in the meantime.
 pub(super) struct AudioPlayback {
     decoder: AudioDecoder,
     ring: AudioRing,
@@ -119,6 +121,12 @@ pub(super) struct AudioPlayback {
     playback_rate: f64,
     /// Cumulative drift/silence/fill diagnostics, owned by the player.
     telemetry: SharedAudioTelemetry,
+    /// A decoded frame the full ring could not take; ring back-pressure.
+    held: Option<AudioFrame>,
+    /// End-of-stream was sent to the decoder.
+    eos_sent: bool,
+    /// The decoder returned its last frame after end-of-stream.
+    finished: bool,
 }
 
 impl AudioPlayback {
@@ -139,6 +147,9 @@ impl AudioPlayback {
             stream_index,
             playback_rate,
             telemetry,
+            held: None,
+            eos_sent: false,
+            finished: false,
         })
     }
 
@@ -148,6 +159,8 @@ impl AudioPlayback {
         if self.decoder.set_rate(rate) {
             self.playback_rate = rate;
             self.ring.replace(self.decoder.audio_options(), rate);
+            // converted at the old rate: its media-time math no longer holds
+            self.held = None;
         }
     }
 
@@ -155,34 +168,69 @@ impl AudioPlayback {
         self.stream_index == stream_index
     }
 
-    /// Sends the packet and moves every ready frame into the ring,
-    /// following engine audio reconfiguration (`uuav_update_audio_out`).
-    pub(super) fn handle_packet(
-        &mut self,
-        packet: &mut OwnedPacket,
-        start_offset: f64,
-        cancel: &ReadOnlyCancelToken,
-        seek: &AtomicSeekSlot,
-        poll_controls: &dyn Fn(),
-    ) -> Result<()> {
+    /// Sends the packet and moves every ready frame into the ring, following
+    /// engine audio reconfiguration (`uuav_update_audio_out`). Declines while
+    /// a held frame waits for ring space (the caller retries after servicing
+    /// the sinks).
+    pub(super) fn try_enqueue(&mut self, packet: &mut OwnedPacket, start_offset: f64) -> Result<bool> {
+        if self.held.is_some() {
+            return Ok(false);
+        }
         let options = self.audio_out.current();
         if self.decoder.set_output(options) {
             self.ring.replace(options, self.playback_rate);
         }
         self.decoder.send(packet.as_mut_ptr())?;
-        self.pump(start_offset, cancel, seek, poll_controls)
+        packet.unref();
+        self.service(start_offset, false)?;
+        Ok(true)
     }
 
-    /// Sends end-of-stream and moves the remaining samples into the ring.
-    pub(super) fn drain(
-        &mut self,
-        start_offset: f64,
-        cancel: &ReadOnlyCancelToken,
-        seek: &AtomicSeekSlot,
-        poll_controls: &dyn Fn(),
-    ) -> Result<()> {
-        self.decoder.send(ptr::null())?;
-        self.pump(start_offset, cancel, seek, poll_controls)
+    /// Moves whatever fits into the ring without waiting. With `eos` set,
+    /// signals end-of-stream and drains the decoder's tail. Returns whether
+    /// anything moved.
+    pub(super) fn service(&mut self, start_offset: f64, eos: bool) -> Result<bool> {
+        let mut progress = false;
+        loop {
+            if let Some(frame) = self.held.take() {
+                let pts = frame.pts().map(|pts| pts - start_offset);
+                if self.ring.try_extend(pts, frame.samples()) {
+                    progress = true;
+                } else {
+                    self.held = Some(frame);
+                    return Ok(progress);
+                }
+            }
+            if self.finished {
+                return Ok(progress);
+            }
+            match self.decoder.receive()? {
+                Decoded::Frame(frame) => {
+                    let pts = frame.pts().map(|pts| pts - start_offset);
+                    if self.ring.try_extend(pts, frame.samples()) {
+                        progress = true;
+                    } else {
+                        // once per frame, not per service retry
+                        self.telemetry.count_ring_stall();
+                        self.held = Some(frame);
+                        return Ok(progress);
+                    }
+                }
+                Decoded::Again => {
+                    if eos && !self.eos_sent {
+                        self.decoder.send(ptr::null())?;
+                        self.eos_sent = true;
+                        progress = true;
+                        continue;
+                    }
+                    return Ok(progress);
+                }
+                Decoded::Eof => {
+                    self.finished = true;
+                    return Ok(progress);
+                }
+            }
+        }
     }
 
     /// Discards everything belonging to the pre-seek position.
@@ -190,51 +238,14 @@ impl AudioPlayback {
         self.decoder.flush();
         self.ring
             .replace(self.decoder.audio_options(), self.playback_rate);
+        self.held = None;
+        self.eos_sent = false;
+        self.finished = false;
     }
 
-    /// Whether the audio thread has consumed every pushed sample.
+    /// Whether the stream was decoded to its end and the audio thread has
+    /// consumed every pushed sample.
     pub(super) fn is_drained(&self) -> bool {
-        self.ring.is_drained()
-    }
-
-    /// Moves every frame the decoder has ready into the ring, waiting for
-    /// room while staying responsive to stop/seek commands.
-    /// The wait also keeps `poll_controls` applied: while not playing the
-    /// ring does not drain, so a queued play would otherwise never land.
-    fn pump(
-        &mut self,
-        start_offset: f64,
-        cancel: &ReadOnlyCancelToken,
-        seek: &AtomicSeekSlot,
-        poll_controls: &dyn Fn(),
-    ) -> Result<()> {
-        loop {
-            match self.decoder.receive()? {
-                Decoded::Frame(frame) => {
-                    let pts = frame.pts().map(|pts| pts - start_offset);
-                    let mut stalled = false;
-                    loop {
-                        if cancel.is_cancelled() || seek.is_pending() {
-                            // the frame is obsolete: the ring is about to
-                            // be flushed
-                            return Ok(());
-                        }
-                        // after the cancel check: a retired unit must not
-                        // consume a command meant for its successor
-                        poll_controls();
-                        if self.ring.try_extend(pts, frame.samples()) {
-                            break;
-                        }
-                        if !stalled {
-                            // once per frame, not per poll retry
-                            stalled = true;
-                            self.telemetry.count_ring_stall();
-                        }
-                        thread::sleep(PLAYBACK_POLL);
-                    }
-                }
-                Decoded::Again | Decoded::Eof => return Ok(()),
-            }
-        }
+        self.finished && self.held.is_none() && self.ring.is_drained()
     }
 }
