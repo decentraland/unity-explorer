@@ -90,14 +90,6 @@ namespace DCL.MarketplaceCredits
                                              .CreateFromJson<CreditPacksResponse>(WRJsonParser.Unity);
         }
 
-        /// <summary>
-        ///     Reserves the dollars and signs the credit for ONE purchase.
-        ///     <para>
-        ///         `tradeId` is empty for a CollectionStore mint, which is identified by the
-        ///         (contractAddress, itemId) pair instead — the server accepts either, and signs neither: what it
-        ///         signs is a voucher for an amount, and the caps the CreditsManager enforces on-chain.
-        ///     </para>
-        /// </summary>
         public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, string contractAddress, string itemId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
