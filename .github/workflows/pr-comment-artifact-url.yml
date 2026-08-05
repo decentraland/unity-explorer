@@ -264,13 +264,17 @@ jobs:
           repository: decentraland/performance-testing
           event-type: unity-explorer
           token: ${{ secrets.PERFORMANCE_TESTING_PAT }}
+          # Fork-controlled fields (display_title, and the branch name inside
+          # ARTIFACT_S3_DESTINATION_PATH) are wrapped in toJSON so they are JSON-escaped
+          # rather than spliced raw into the payload — a title/branch containing a quote
+          # can't break out of its string and inject or override other fields.
           client-payload: |-
             {
-              "run_name": "${{ github.event.workflow_run.display_title }}",
+              "run_name": ${{ toJSON(github.event.workflow_run.display_title) }},
               "pr_number": "${{ needs.pre-validation.outputs.pr-number }}",
-              "win_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_windows64.zip",
+              "win_change_build_url": ${{ toJSON(format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH)) }},
               "win_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_windows64.zip",
-              "mac_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_macos.zip",
+              "mac_change_build_url": ${{ toJSON(format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH)) }},
               "mac_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip"
             }
 
