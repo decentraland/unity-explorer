@@ -38,7 +38,7 @@ namespace DCL.UI.DebugMenu
             textures = AddRow(rows, "TEXTURES");
             geometries = AddRow(rows, "GEOMETRIES");
             colliders = AddRow(rows, "COLLIDERS");
-            videos = AddRow(rows, "VIDEOS");
+            videos = AddRow(rows, "EXTERNAL VIDEOS/AUDIOS");
         }
 
         public void UpdateValues(in SceneContentStatsText text)
