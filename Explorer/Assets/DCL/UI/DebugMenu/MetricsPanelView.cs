@@ -23,7 +23,6 @@ namespace DCL.UI.DebugMenu
         private const string USS_TOOLTIP = "metrics-panel__tooltip";
         private const string USS_TOOLTIP_TEXT = "metrics-panel__tooltip-text";
 
-        private const string INFO_GLYPH = "i";
         private const float TOOLTIP_GAP = 12f;
 
         // Capped metrics carry Decentraland's documented per-parcel scene limit; the value renders
@@ -110,7 +109,7 @@ namespace DCL.UI.DebugMenu
             titleLabel.AddToClassList(USS_ROW_LABEL);
             row.Add(titleLabel);
 
-            var info = new Label(INFO_GLYPH);
+            var info = new VisualElement();
             info.AddToClassList(USS_ROW_INFO);
             info.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(row, tooltipText));
             info.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
