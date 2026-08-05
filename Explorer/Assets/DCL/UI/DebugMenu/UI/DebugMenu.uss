@@ -350,7 +350,7 @@
 
 .metrics-panel {
     width: 440px;
-    background-color: rgba(15, 15, 17, 0.98);
+    background-color: rgba(15, 15, 17, 0.9);
 }
 
 .metrics-panel__header {
