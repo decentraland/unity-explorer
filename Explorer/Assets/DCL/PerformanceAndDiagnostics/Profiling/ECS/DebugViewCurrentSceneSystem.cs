@@ -99,7 +99,7 @@ namespace DCL.Profiling.ECS
                                  .AddCustomMarker("Materials:", contentStatsBindings.Materials)
                                  .AddCustomMarker("Textures:", contentStatsBindings.Textures)
                                  .AddCustomMarker("Colliders:", contentStatsBindings.Colliders)
-                                 .AddCustomMarker("External content:", contentStatsBindings.ExternalContent);
+                                 .AddCustomMarker("Videos:", contentStatsBindings.ExternalContent);
 
             widgetBuilder?.SetVisibilityBinding(visibility)
                          .AddCustomMarker("Real tick FPS:", stringBindings.RealFps)
