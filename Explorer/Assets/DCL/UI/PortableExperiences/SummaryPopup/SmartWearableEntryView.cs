@@ -8,7 +8,6 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.UI.PortableExperiences.SummaryPopup
 {
@@ -36,16 +35,11 @@ namespace DCL.UI.PortableExperiences.SummaryPopup
 
         private string currentId = string.Empty;
 
-        private CancellationTokenSource? thumbnailCts;
-
         public void Configure(string id, string wearableName, Sprite rarityBackgroundSprite, Color rarityColor, Sprite categoryIconSprite)
         {
-            // A recycled cell may still have the previous binding's thumbnail load in flight.
-            thumbnailCts.SafeCancelAndDispose();
-            thumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
-
             currentId = id;
             pxName.text = wearableName;
+            thumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
             rarityBackground.sprite = rarityBackgroundSprite;
             flap.color = rarityColor;
             categoryIcon.sprite = categoryIconSprite;
@@ -53,16 +47,21 @@ namespace DCL.UI.PortableExperiences.SummaryPopup
 
         public void LoadThumbnail(IThumbnailProvider thumbnailProvider, IWearable wearable, CancellationToken panelCt)
         {
-            thumbnailCts = thumbnailCts.SafeRestartLinked(panelCt);
-            LoadThumbnailAsync(thumbnailProvider, wearable, thumbnailCts.Token).Forget();
+            // Panel-scoped token only: cancelling on rebind poisons ECSThumbnailProvider's shared in-flight slot for any other waiter.
+            LoadThumbnailAsync(thumbnailProvider, wearable, panelCt).Forget();
         }
 
         private async UniTaskVoid LoadThumbnailAsync(IThumbnailProvider thumbnailProvider, IWearable wearable, CancellationToken ct)
         {
+            string boundId = currentId;
+
             try
             {
                 Sprite sprite = await thumbnailProvider.GetAsync(wearable, ct);
                 if (ct.IsCancellationRequested) return;
+
+                // The cell may have been recycled to another wearable while the load was in flight.
+                if (!string.Equals(currentId, boundId, StringComparison.OrdinalIgnoreCase)) return;
 
                 thumbnail.sprite = sprite;
             }
@@ -73,11 +72,6 @@ namespace DCL.UI.PortableExperiences.SummaryPopup
         private void Awake()
         {
             removeButton.onClick.AddListener(() => RemoveRequested?.Invoke(currentId));
-        }
-
-        private void OnDestroy()
-        {
-            thumbnailCts.SafeCancelAndDispose();
         }
     }
 }
