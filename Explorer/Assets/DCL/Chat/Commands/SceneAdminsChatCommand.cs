@@ -18,13 +18,13 @@ namespace DCL.Chat.Commands
 
         public string Description => $"<b>/{Command}</b>\n  Shows the list of admins of the scene";
 
-        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             Result<IEnumerable<string>> result = RoomMetadataCurrentScene.Instance.CurrentAdmins();
 
             if (result.Success == false)
             {
-                return result.ErrorMessage;
+                return UniTask.FromResult(result.ErrorMessage);
             }
 
             StringBuilder sb = new StringBuilder();
@@ -37,7 +37,7 @@ namespace DCL.Chat.Commands
                 sb.AppendLine();
             }
 
-            return sb.ToString();
+            return UniTask.FromResult(sb.ToString());
         }
     }
 }

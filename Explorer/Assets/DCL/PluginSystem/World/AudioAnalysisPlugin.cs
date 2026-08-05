@@ -41,9 +41,8 @@ namespace DCL.PluginSystem.World
         {
         }
 
-        public async UniTask InitializeAsync(CancellationToken ct)
-        {
-        }
+        public UniTask InitializeAsync(CancellationToken ct) =>
+            UniTask.CompletedTask;
     }
 }
 

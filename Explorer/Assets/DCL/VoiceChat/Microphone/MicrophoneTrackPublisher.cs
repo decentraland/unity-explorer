@@ -196,6 +196,10 @@ namespace DCL.VoiceChat
             microphoneTrack = null;
         }
 
+        // suppress CS1998 on other platforms.
+#if !UNITY_STANDALONE_OSX
+#pragma warning disable CS1998
+#endif
         private static async UniTask<MicrophoneRtcAudioSource> CreateMicrophoneSourceAsync(VoiceChatConfiguration configuration, CancellationToken ct)
         {
             if (Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor)
@@ -223,5 +227,8 @@ namespace DCL.VoiceChat
 
             return result.Value;
         }
+#if !UNITY_STANDALONE_OSX
+#pragma warning restore CS1998
+#endif
     }
 }

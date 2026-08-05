@@ -46,7 +46,7 @@ namespace DCL.SceneLoadingScreens
             fallbackTips = Get(tipsTable, imagesTable, ct);
         }
 
-        public async UniTask<SceneTips> GetAsync(CancellationToken ct) =>
+        public UniTask<SceneTips> GetAsync(CancellationToken ct) =>
 
             // TODO: we will need specific scene tips in the future, but its disabled at the moment
             /*StringTable tipsTable = await tipsDatabase.GetTableAsync($"LoadingSceneTips-{parcelCoord.x},{parcelCoord.y}").Task
@@ -60,7 +60,7 @@ namespace DCL.SceneLoadingScreens
             ct.ThrowIfCancellationRequested();
 
             return await Get(tipsTable, imagesTable, ct);*/
-            fallbackTips;
+            UniTask.FromResult(fallbackTips);
 
         private SceneTips Get(StringTable tipsTable, AssetTable? imagesTable, CancellationToken ct)
         {
