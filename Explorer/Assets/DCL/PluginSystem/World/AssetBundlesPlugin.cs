@@ -70,7 +70,7 @@ namespace DCL.PluginSystem.World
             bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress, sharedDependencies.SceneData.SceneContent);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

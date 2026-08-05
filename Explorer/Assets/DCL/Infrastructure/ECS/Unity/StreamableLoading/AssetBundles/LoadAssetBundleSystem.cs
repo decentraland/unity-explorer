@@ -20,6 +20,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using SceneRunner.Scene;
 using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -37,6 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly AssetBundleLoadingMutex loadingMutex;
         private readonly IWebRequestController webRequestController;
         private readonly bool byteWeightedProgress;
+        private readonly ISceneContent? sceneContent;
 
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
@@ -44,11 +46,13 @@ namespace ECS.StreamableLoading.AssetBundles
             ArrayPool<byte> buffersPool,
             AssetBundleLoadingMutex loadingMutex,
             IDiskCache<PartialLoadingState> partialDiskCache,
-            bool byteWeightedProgress) : base(world, cache)
+            bool byteWeightedProgress,
+            ISceneContent? sceneContent) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
             this.webRequestController = webRequestController;
             this.byteWeightedProgress = byteWeightedProgress;
+            this.sceneContent = sceneContent;
         }
 
         private async UniTask<AssetBundleData[]> LoadDependenciesAsync(GetAssetBundleIntention parentIntent, IPartitionComponent partition, AssetBundleMetadata assetBundleMetadata, CancellationToken ct)
@@ -103,8 +107,13 @@ namespace ECS.StreamableLoading.AssetBundles
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
             {
-                string error = assetBundleResult?.DataProcessingError ?? "unknown";
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {error}");
+                assetBundle = await AbgenAssetBundleFallback.TryBuildAsync(intention.Name, sceneContent, webRequestController, GetReportData(), ct);
+
+                if (assetBundle == null)
+                {
+                    string error = assetBundleResult?.DataProcessingError ?? "unknown";
+                    throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {error}");
+                }
             }
 
             try
