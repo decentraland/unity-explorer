@@ -926,6 +926,24 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <PxRarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PxRarityColorsMapping>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PxCategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 3821626543930605662
       type: {class: SmartWearablesGlobalPlugin/Settings, ns: DCL.PluginSystem.SmartWearables, asm: DCL.Plugins}
       data:

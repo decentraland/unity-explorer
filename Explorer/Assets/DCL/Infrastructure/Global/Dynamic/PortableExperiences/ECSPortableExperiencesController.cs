@@ -302,7 +302,8 @@ namespace PortableExperiences.Controller
 
         public void AddPortableExperience(string id, Entity portableExperience)
         {
-            PortableExperienceEntities.TryAdd(id, portableExperience);
+            if (PortableExperienceEntities.TryAdd(id, portableExperience))
+                PortableExperienceLoaded?.Invoke(id);
         }
 
         public IPortableExperiencesController.ExitResponse UnloadPortableExperienceById(string id)
@@ -366,5 +367,11 @@ namespace PortableExperiences.Controller
 
             return response;
         }
+
+        public void KillPortableExperience(string id) =>
+            KillPortableExperienceById(id);
+
+        public void UnloadPortableExperience(string id) =>
+            UnloadPortableExperienceById(id);
     }
 }

@@ -2,19 +2,15 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using Global.Dynamic;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using Utility.PortableExperiences;
 
 namespace PortableExperiences.Controller
 {
-    public interface IPortableExperiencesController
+    public interface IPortableExperiencesController : IPortableExperiencesLifecycle
     {
-        event Action<string>? PortableExperienceLoaded;
-
-        event Action<string>? PortableExperienceUnloaded;
-
         Dictionary<string, Entity> PortableExperienceEntities { get; }
 
         GlobalWorld GlobalWorld { get; set; }
@@ -24,8 +20,10 @@ namespace PortableExperiences.Controller
         /// </summary>
         IPortableExperienceAuthorizationHandler? AuthorizationHandler { get; set; }
 
-        bool CanKillPortableExperience(string id);
-
+        /// <param name="ens">ENS name that resolves to the world hosting the Portable Experience.</param>
+        /// <param name="ct">Cancels the spawn flow.</param>
+        /// <param name="isGlobalPortableExperience">Marks the Portable Experience as global instead of scene-spawned.</param>
+        /// <param name="force">Bypasses the feature-flag and parent-scene permission checks.</param>
         /// <param name="requireUserAuthorization">Gates the spawn behind user consent even when it is global or forced; scene-spawned local Portable Experiences are always gated.</param>
         UniTask<SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false, bool requireUserAuthorization = false);
 

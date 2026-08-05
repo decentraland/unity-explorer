@@ -575,7 +575,10 @@ namespace Global.Dynamic
                     staticContainer.GlobalPortableExperienceCache,
                     uiShellContainer.SupportRequestService,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
-                    staticContainer.InputBlock),
+                    staticContainer.InputBlock,
+                    staticContainer.PortableExperiencesController,
+                    wearableContainer.WearableCatalog,
+                    wearableContainer.ThumbnailProvider),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),
                 new PrivateWorldsPlugin(
                     uiShellContainer.MvcManager,

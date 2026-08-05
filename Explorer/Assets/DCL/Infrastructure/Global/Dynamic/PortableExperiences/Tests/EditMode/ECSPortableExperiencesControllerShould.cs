@@ -147,6 +147,36 @@ namespace PortableExperiences.Tests
         }
 
         [Test]
+        public void RaiseLoadedEventWhenAddingPortableExperience()
+        {
+            // Arrange
+            string? loadedId = null;
+            controller.PortableExperienceLoaded += id => loadedId = id;
+
+            // Act
+            SeedPortableExperience(SMART_WEARABLE_PX_ID, PortableExperienceType.SmartWearable);
+
+            // Assert
+            Assert.AreEqual(SMART_WEARABLE_PX_ID, loadedId);
+        }
+
+        [Test]
+        public void NotRaiseLoadedEventWhenAddingDuplicatePortableExperience()
+        {
+            // Arrange
+            SeedPortableExperience(SMART_WEARABLE_PX_ID, PortableExperienceType.SmartWearable);
+
+            var loadedCount = 0;
+            controller.PortableExperienceLoaded += _ => loadedCount++;
+
+            // Act
+            SeedPortableExperience(SMART_WEARABLE_PX_ID, PortableExperienceType.SmartWearable);
+
+            // Assert
+            Assert.AreEqual(0, loadedCount);
+        }
+
+        [Test]
         public void FailToKillUnknownPortableExperienceWithoutMutatingAnyCache()
         {
             // Act

@@ -259,6 +259,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: UI::DCL.UI.PortableExperiences.SummaryPopup.SmartWearableEntryView
   pxName: {fileID: 8592862840869134396}
   removeButton: {fileID: 3640638966474854400}
+  rarityBackground: {fileID: 8198107069834422904}
+  flap: {fileID: 5053186512386596756}
+  categoryIcon: {fileID: 6813977961614871172}
+  thumbnail: {fileID: 4637375365706592290}
 --- !u!1001 &4144479598865597420
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -576,6 +580,28 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 6181396384302990319}
   m_SourcePrefab: {fileID: 100100000, guid: 37e9014a41ddacf4fbee8c370baf7737, type: 3}
+--- !u!114 &4637375365706592290 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3650771503568278903, guid: 37e9014a41ddacf4fbee8c370baf7737, type: 3}
+  m_PrefabInstance: {fileID: 8282507860615161173}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5053186512386596756 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3806077527122901697, guid: 37e9014a41ddacf4fbee8c370baf7737, type: 3}
+  m_PrefabInstance: {fileID: 8282507860615161173}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6310382368369244579 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2694166673821375734, guid: 37e9014a41ddacf4fbee8c370baf7737, type: 3}
@@ -606,3 +632,25 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3228579555214621054, guid: 37e9014a41ddacf4fbee8c370baf7737, type: 3}
   m_PrefabInstance: {fileID: 8282507860615161173}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6813977961614871172 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3197975606675238865, guid: 37e9014a41ddacf4fbee8c370baf7737, type: 3}
+  m_PrefabInstance: {fileID: 8282507860615161173}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8198107069834422904 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 231064522792734509, guid: 37e9014a41ddacf4fbee8c370baf7737, type: 3}
+  m_PrefabInstance: {fileID: 8282507860615161173}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6310382368369244579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
