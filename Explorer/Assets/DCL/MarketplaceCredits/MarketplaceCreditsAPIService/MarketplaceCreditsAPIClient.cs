@@ -93,17 +93,28 @@ namespace DCL.MarketplaceCredits
         public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, string contractAddress, string itemId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
-
-            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdCreditBody
-            {
-                usdPriceCents = usdPriceCents,
-                tradeId = tradeId,
-                contractAddress = contractAddress,
-                itemId = itemId,
-            });
+            string jsonBody = BuildAuthorizeBody(usdPriceCents, tradeId, contractAddress, itemId);
 
             return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                              .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);
+        }
+
+        private static string BuildAuthorizeBody(int usdPriceCents, string? tradeId, string? contractAddress, string? itemId)
+        {
+            bool hasItem = !string.IsNullOrEmpty(contractAddress) && !string.IsNullOrEmpty(itemId);
+
+            return hasItem
+                ? JsonUtility.ToJson(new AuthorizeUsdMintCreditBody
+                {
+                    usdPriceCents = usdPriceCents,
+                    contractAddress = contractAddress,
+                    itemId = itemId,
+                })
+                : JsonUtility.ToJson(new AuthorizeUsdCreditBody
+                {
+                    usdPriceCents = usdPriceCents,
+                    tradeId = tradeId ?? string.Empty,
+                });
         }
 
         public virtual async UniTask ReleaseUsdIntentsAsync(string[] salts, CancellationToken ct)

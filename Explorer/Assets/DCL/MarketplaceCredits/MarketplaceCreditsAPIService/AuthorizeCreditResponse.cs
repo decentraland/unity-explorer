@@ -30,9 +30,13 @@ namespace DCL.MarketplaceCredits
     public struct AuthorizeUsdCreditBody
     {
         public int usdPriceCents;
-        // Trade id will be empty for a CollectionStore mint, for regular trades it will be the trade id.
-        // when empty the item is identified by (contractAddress, itemId) pair instead as the server accepts either
         public string tradeId;
+    }
+
+    [Serializable]
+    public struct AuthorizeUsdMintCreditBody
+    {
+        public int usdPriceCents;
         public string contractAddress;
         public string itemId;
     }
