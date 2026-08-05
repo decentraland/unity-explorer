@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 6
+    initialRealm: 0
     targetScene: {x: 0, y: 0}
     EditorSceneStartPosition: 1
     predefinedScenes:
@@ -398,8 +398,8 @@ MonoBehaviour:
     portableExperiencesEnsToLoadAtGameStart: []
   decentralandEnvironment: 0
   debugSettings:
-    showSplash: 0
-    showAuthentication: 0
+    showSplash: 1
+    showAuthentication: 1
     showLoading: 1
     enableLandscape: 0
     enableLOD: 0
@@ -412,8 +412,7 @@ MonoBehaviour:
     connectionQuality: 2
     gatekeeperMode: 0
     customGatekeeperUrl: 
-    appParameters:
-    - --mcp
+    appParameters: []
   pluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   settings: {fileID: 11400000, guid: 2e1d2c350e04ac3428300d032c5ee567, type: 2}
   splashScreenRef:
