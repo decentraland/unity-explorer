@@ -8,7 +8,7 @@ namespace DCL.UI.PortableExperiences.SummaryPopup
 {
     public class PortableExperiencesSummaryController : ControllerBase<PortableExperiencesSummaryView>
     {
-        private static readonly InputMapComponent.Kind[] BLOCKED_INPUTS = { InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera };
+        private static readonly InputMapComponent.Kind[] BLOCKED_INPUTS = { InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Player };
 
         private readonly IInputBlock inputBlock;
 
@@ -23,6 +23,12 @@ namespace DCL.UI.PortableExperiences.SummaryPopup
         }
 
         public override void Dispose() { }
+
+        protected override void OnBeforeViewShow() =>
+            DisableShortcutsInput();
+
+        protected override void OnViewClose() =>
+            RestoreInput();
 
         private void DisableShortcutsInput() =>
             inputBlock.Disable(BLOCKED_INPUTS);
