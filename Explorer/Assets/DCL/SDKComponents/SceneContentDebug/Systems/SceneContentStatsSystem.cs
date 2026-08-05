@@ -5,7 +5,6 @@ using CRDT;
 using DCL.ECSComponents;
 using DCL.Profiling;
 using DCL.SDKComponents.MediaStream;
-using DCL.SDKComponents.NFTShape.Component;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -23,7 +22,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
 {
     /// <summary>
     ///     Counts the scene's content (entities, triangles, meshes, geometries, materials, textures,
-    ///     shader variants, colliders and external content) into <see cref="SceneContentStats" />.
+    ///     shader variants, colliders and videos) into <see cref="SceneContentStats" />.
     ///     Collection is throttled and runs only while <see cref="SceneContentStats.CollectionRequested" />
     ///     is set, so the system is idle unless a consumer (the "Scene content" debug widget, the
     ///     scene debug menu metrics panel or the MCP get_scene_content_stats tool) requests the stats.
@@ -43,9 +42,9 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             Shader.PropertyToID("_OcclusionMap"),
         };
 
-        private static readonly QueryDescription NFT_SHAPES_QUERY = new QueryDescription()
-                                                                   .WithAll<NftShapeRendererComponent>()
-                                                                   .WithNone<DeleteEntityIntention>();
+        private static readonly QueryDescription MEDIA_PLAYERS_QUERY = new QueryDescription()
+                                                                     .WithAll<MediaPlayerComponent>()
+                                                                     .WithNone<DeleteEntityIntention>();
 
         private readonly SceneContentStats stats;
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
@@ -73,7 +72,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
         private int textures;
         private int shaderVariants;
         private int colliders;
-        private int externalContent;
+        private int videos;
 
         internal SceneContentStatsSystem(World world, SceneRuntimeMetrics runtimeMetrics, Dictionary<CRDTEntity, Entity> entitiesMap) : base(world)
         {
@@ -118,7 +117,6 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             textures = 0;
             shaderVariants = 0;
             colliders = 0;
-            externalContent = 0;
 
             uniqueMeshes.Clear();
             uniqueMaterials.Clear();
@@ -137,8 +135,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             CountGltfContainersQuery(World);
             CountSdkMaterialsQuery(World);
             CountPrimitiveCollidersQuery(World);
-            CountMediaStreamsQuery(World);
-            externalContent += World.CountEntities(in NFT_SHAPES_QUERY);
+            videos = World.CountEntities(in MEDIA_PLAYERS_QUERY);
 
             if (collectBreakdown)
                 FlushBreakdown();
@@ -151,7 +148,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             stats.Textures = textures;
             stats.ShaderVariants = shaderVariants;
             stats.Colliders = colliders;
-            stats.ExternalContent = externalContent;
+            stats.Videos = videos;
             stats.HasData = true;
             stats.CollectionCount++;
         }
@@ -242,14 +239,6 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
         {
             if (component.Collider != null)
                 colliders++;
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void CountMediaStreams(in MediaPlayerComponent component)
-        {
-            if (!component.IsFromContentServer)
-                externalContent++;
         }
 
         private long AccountMesh(Mesh mesh)

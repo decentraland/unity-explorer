@@ -6,7 +6,7 @@ namespace DCL.Profiling
     /// <summary>
     ///     Per-scene soft caps derived from the parcel count (n), matching the documented Decentraland
     ///     scene limitations (https://docs.decentraland.org/creator/scenes-sdk7/optimizing/scene-limitations/).
-    ///     Geometries, colliders and external content have no documented limit and carry no cap.
+    ///     Geometries, colliders and videos have no documented limit and carry no cap.
     /// </summary>
     public readonly struct SceneContentCaps
     {
@@ -56,7 +56,7 @@ namespace DCL.Profiling
         public string Materials;
         public string Textures;
         public string Colliders;
-        public string ExternalContent;
+        public string Videos;
     }
 
     /// <summary>
@@ -91,7 +91,7 @@ namespace DCL.Profiling
                 Materials = FormatCapped(stats.Materials, caps.Materials),
                 Textures = FormatCapped(stats.Textures, caps.Textures),
                 Colliders = FormatCount(stats.Colliders),
-                ExternalContent = FormatCount(stats.ExternalContent),
+                Videos = FormatCount(stats.Videos),
             };
         }
 
@@ -106,7 +106,7 @@ namespace DCL.Profiling
                 Materials = EMPTY_VALUE,
                 Textures = EMPTY_VALUE,
                 Colliders = EMPTY_VALUE,
-                ExternalContent = EMPTY_VALUE,
+                Videos = EMPTY_VALUE,
             };
         }
 

@@ -29,7 +29,7 @@ namespace DCL.McpServer.Tools
 
         public override string Description =>
             "Read the current scene's content statistics: entities, triangles, meshes (bodies), geometries, materials, textures, shader variants, "
-            + "colliders and external content (media streamed from outside the content server + NFT shapes). Metrics with a documented soft limit "
+            + "colliders and videos (media players — one per VideoPlayer/AudioStream component). Metrics with a documented soft limit "
             + "(https://docs.decentraland.org/creator/scenes-sdk7/optimizing/scene-limitations/) also report the cap for the scene's parcel count; "
             + "exceeding a cap degrades performance but is not enforced. Interpretation: URP's SRP Batcher bins draws by shader variant, so "
             + "per-frame draw-call cost tracks shaderVariants, not materials — a high material count with few variants mainly costs memory and "
@@ -52,7 +52,7 @@ namespace DCL.McpServer.Tools
                           .Integer("texturesCap")
                           .Integer("shaderVariants", "Unique shader variants (shader + enabled keywords) across all materials — the SRP Batcher bins draws by variant, so draw-call cost tracks this, not the material count. No documented cap.")
                           .Integer("colliders", "Primitive + GLTF colliders. No documented cap.")
-                          .Integer("externalContent", "Media streamed from outside the content server + NFT shapes. No documented cap.")
+                          .Integer("videos", "Media players in the scene — one per VideoPlayer/AudioStream component. No documented cap.")
                           .Build();
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
@@ -116,7 +116,7 @@ namespace DCL.McpServer.Tools
                 ["texturesCap"] = caps.Textures,
                 ["shaderVariants"] = stats.ShaderVariants,
                 ["colliders"] = stats.Colliders,
-                ["externalContent"] = stats.ExternalContent,
+                ["videos"] = stats.Videos,
             };
 
             var text = new StringBuilder();
@@ -129,7 +129,7 @@ namespace DCL.McpServer.Tools
             AppendCapped(text, "Textures", stats.Textures, caps.Textures);
             AppendCount(text, "Shader variants", stats.ShaderVariants);
             AppendCount(text, "Colliders", stats.Colliders);
-            AppendCount(text, "External content", stats.ExternalContent);
+            AppendCount(text, "Videos", stats.Videos);
 
             return McpToolResult.TextWithStructured(text.ToString(), structured);
         }

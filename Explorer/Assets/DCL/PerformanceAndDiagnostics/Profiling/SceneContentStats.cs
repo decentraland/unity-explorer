@@ -106,7 +106,12 @@ namespace DCL.Profiling
         public int Materials;
         public int Textures;
         public int Colliders;
-        public int ExternalContent;
+
+        /// <summary>
+        ///     Media players in the scene — one per <c>VideoPlayer</c> / <c>AudioStream</c> component,
+        ///     regardless of source. No documented cap.
+        /// </summary>
+        public int Videos;
 
         /// <summary>
         ///     Unique shader variants (shader + enabled local keywords) across all counted materials —

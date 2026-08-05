@@ -25,7 +25,7 @@ namespace DCL.UI.DebugMenu
         private readonly Label textures;
         private readonly Label geometries;
         private readonly Label colliders;
-        private readonly Label externalContent;
+        private readonly Label videos;
 
         public MetricsPanelView(VisualElement root, Button sidebarButton, Action closeClicked) : base(root, sidebarButton, closeClicked)
         {
@@ -38,7 +38,7 @@ namespace DCL.UI.DebugMenu
             textures = AddRow(rows, "TEXTURES");
             geometries = AddRow(rows, "GEOMETRIES");
             colliders = AddRow(rows, "COLLIDERS");
-            externalContent = AddRow(rows, "VIDEOS");
+            videos = AddRow(rows, "VIDEOS");
         }
 
         public void UpdateValues(in SceneContentStatsText text)
@@ -50,7 +50,7 @@ namespace DCL.UI.DebugMenu
             textures.text = text.Textures;
             geometries.text = text.Geometries;
             colliders.text = text.Colliders;
-            externalContent.text = text.ExternalContent;
+            videos.text = text.Videos;
         }
 
         private static Label AddRow(VisualElement container, string title)

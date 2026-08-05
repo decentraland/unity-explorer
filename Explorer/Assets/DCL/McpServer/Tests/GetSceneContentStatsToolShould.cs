@@ -77,7 +77,7 @@ namespace DCL.McpServer.Tests
             stats.Textures = 3;
             stats.ShaderVariants = 2;
             stats.Colliders = 2;
-            stats.ExternalContent = 1;
+            stats.Videos = 1;
 
             var tool = new GetSceneContentStatsTool(scenesCache, collectionTimeoutMs: 0);
 
@@ -94,7 +94,7 @@ namespace DCL.McpServer.Tests
             Assert.That(structured["trianglesCap"]!.Value<long>(), Is.EqualTo(20000));
             Assert.That(structured["geometries"]!.Value<int>(), Is.EqualTo(7));
             Assert.That(structured["shaderVariants"]!.Value<int>(), Is.EqualTo(2));
-            Assert.That(structured["externalContent"]!.Value<int>(), Is.EqualTo(1));
+            Assert.That(structured["videos"]!.Value<int>(), Is.EqualTo(1));
         }
 
         [Test]

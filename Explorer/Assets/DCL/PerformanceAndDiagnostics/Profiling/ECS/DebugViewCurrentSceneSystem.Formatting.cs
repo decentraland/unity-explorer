@@ -16,7 +16,7 @@ namespace DCL.Profiling.ECS
             public readonly ElementBinding<string> Materials;
             public readonly ElementBinding<string> Textures;
             public readonly ElementBinding<string> Colliders;
-            public readonly ElementBinding<string> ExternalContent;
+            public readonly ElementBinding<string> Videos;
 
             private ContentStatsBindings(
                 ElementBinding<string> entities,
@@ -26,7 +26,7 @@ namespace DCL.Profiling.ECS
                 ElementBinding<string> materials,
                 ElementBinding<string> textures,
                 ElementBinding<string> colliders,
-                ElementBinding<string> externalContent)
+                ElementBinding<string> videos)
             {
                 Entities = entities;
                 Triangles = triangles;
@@ -35,7 +35,7 @@ namespace DCL.Profiling.ECS
                 Materials = materials;
                 Textures = textures;
                 Colliders = colliders;
-                ExternalContent = externalContent;
+                Videos = videos;
             }
 
             public static ContentStatsBindings Create() =>
@@ -61,7 +61,7 @@ namespace DCL.Profiling.ECS
             bindings.Materials.Value = text.Materials;
             bindings.Textures.Value = text.Textures;
             bindings.Colliders.Value = text.Colliders;
-            bindings.ExternalContent.Value = text.ExternalContent;
+            bindings.Videos.Value = text.Videos;
         }
 
         private readonly struct StringBindings
