@@ -33,6 +33,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWebRequestController webRequestController;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
+        private readonly bool forceBridgeOnly;
         private readonly Web3Address? referrer;
         private readonly URLBuilder urlBuilder = new ();
         private readonly DCLSemaphoreSlim loginMutex = new ();
@@ -45,6 +46,7 @@ namespace DCL.Web3.Authenticators
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
             ReactiveProperty<string?> loginAwaitingSigninRequestId,
+            bool forceBridgeOnly,
             string? referrer = null)
         {
             this.webBrowser = webBrowser;
@@ -54,6 +56,8 @@ namespace DCL.Web3.Authenticators
             this.webRequestController = webRequestController;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
             this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
+            this.forceBridgeOnly = forceBridgeOnly;
+
             // Normalized/validated once at construction so the field is always canonical;
             // an invalid launch-argument value degrades to "no referrer".
             this.referrer = Web3Address.FromUntrusted(referrer);
@@ -78,15 +82,9 @@ namespace DCL.Web3.Authenticators
 
                 // Client-generated id embedded in the browser URL; no server round-trip needed before opening the browser.
                 var authRequestId = Guid.NewGuid().ToString();
-#if UNITY_EDITOR
-
-                // Without this flag the auth website also launches a standalone Explorer build,
-                // which would steal the signin from the editor.
-                const bool BRIDGE_ONLY = true;
-#else
-                const bool BRIDGE_ONLY = false;
-#endif
-                string url = DeepLinkSignInUrl.Build(signatureWebAppUrl, authRequestId, payload.Method.ToString(), BRIDGE_ONLY, referrer);
+                // `forceBridgeOnly` keeps the login in the deeplink bridge so the launcher does not
+                // spawn a new explorer instance during the confirmation from the website.
+                string url = DeepLinkSignInUrl.Build(signatureWebAppUrl, authRequestId, payload.Method.ToString(), forceBridgeOnly, referrer);
 
                 webBrowser.OpenUrlMainThreadOnly(url);
 
@@ -177,6 +175,7 @@ namespace DCL.Web3.Authenticators
         }
 
         // Field names mirror the auth server's JSON payloads verbatim, so they intentionally break the naming rules.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         private struct IdentityAuthResponseDto
         {
@@ -198,5 +197,6 @@ namespace DCL.Web3.Authenticators
                 public string publicKey;
             }
         }
+        // ReSharper restore InconsistentNaming
     }
 }

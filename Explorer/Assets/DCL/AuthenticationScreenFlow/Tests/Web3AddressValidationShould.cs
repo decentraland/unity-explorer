@@ -3,15 +3,19 @@ using NUnit.Framework;
 
 namespace DCL.AuthenticationScreenFlow.Tests
 {
+    /// <summary>
+    ///     Covers <see cref="Web3Address.FromUntrusted" /> only — the wrapping/normalizing helper.
+    ///     The underlying <see cref="Web3Address.IsValidWalletAddress" /> validation is covered by
+    ///     <c>DCL.Web3.Tests.Web3AddressShould</c>.
+    /// </summary>
     [TestFixture]
     public class Web3AddressValidationShould
     {
         private const string VALID_REFERRER = "0x24e5f44999c151f08609f8e27b2238c773c4d020";
 
         [Test]
-        public void AcceptValidLowercaseAddress()
+        public void WrapValidAddress()
         {
-            Assert.IsTrue(Web3Address.IsValid(VALID_REFERRER));
             Assert.AreEqual(VALID_REFERRER, Web3Address.FromUntrusted(VALID_REFERRER)!.Value.ToString());
         }
 
@@ -29,9 +33,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
         [TestCase("0xZZZ5f44999c151f08609f8e27b2238c773c4d020")]
         [TestCase(" 0x24e5f44999c151f08609f8e27b2238c773c4d020")]
         [TestCase("0x24e5f44999c151f08609f8e27b2238c773c4d0201")]
-        public void RejectInvalidValues(string? value)
+        public void DegradeInvalidValuesToNull(string? value)
         {
-            Assert.IsFalse(Web3Address.IsValid(value));
             Assert.IsNull(Web3Address.FromUntrusted(value));
         }
     }

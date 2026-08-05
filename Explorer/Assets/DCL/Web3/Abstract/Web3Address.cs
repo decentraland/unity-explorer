@@ -23,25 +23,18 @@ namespace DCL.Web3
         }
 
         /// <summary>
-        ///     Whether the value is a strictly valid Ethereum address ("0x" + 40 hex chars).
-        ///     Meant for untrusted inputs (launch arguments, deep links, query params) before
-        ///     wrapping them in a <see cref="Web3Address" /> — the constructor itself accepts
-        ///     any string and only lowercases it.
+        /// Checks that a value is shaped like an Ethereum wallet address: "0x" followed by 40 hex digits.
         /// </summary>
-        public static bool IsValid(string? address)
+        /// <param name="walletAddress">The value to check. Null and malformed values return false.</param>
+        public static bool IsValidWalletAddress(string? walletAddress)
         {
-            if (address == null || address.Length != ETH_ADDRESS_LENGTH)
-                return false;
+            if (walletAddress == null || walletAddress.Length != ETH_ADDRESS_LENGTH) return false;
 
-            if (address[0] != '0' || address[1] != 'x')
-                return false;
+            if (walletAddress[0] != '0' || (walletAddress[1] != 'x' && walletAddress[1] != 'X')) return false;
 
-            for (var i = 2; i < address.Length; i++)
+            for (int i = 2; i < walletAddress.Length; i++)
             {
-                char c = address[i];
-                bool isHexDigit = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-
-                if (!isHexDigit)
+                if (walletAddress[i] is not (>= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F'))
                     return false;
             }
 
@@ -49,11 +42,13 @@ namespace DCL.Web3
         }
 
         /// <summary>
-        ///     Returns the value as a lowercased <see cref="Web3Address" /> when it is strictly
-        ///     valid (see <see cref="IsValid" />), null otherwise.
+        ///     Returns the value as a lowercased <see cref="Web3Address" /> when it is a well-formed
+        ///     wallet address (see <see cref="IsValidWalletAddress" />), null otherwise. Meant for
+        ///     untrusted inputs (launch arguments, deep links, query params), since the constructor
+        ///     itself accepts any string and only lowercases it.
         /// </summary>
         public static Web3Address? FromUntrusted(string? address) =>
-            IsValid(address) ? new Web3Address(address) : (Web3Address?)null;
+            IsValidWalletAddress(address) ? new Web3Address(address) : (Web3Address?)null;
 
         public override string ToString() =>
             address;

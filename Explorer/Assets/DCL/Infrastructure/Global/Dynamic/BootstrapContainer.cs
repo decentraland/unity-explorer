@@ -220,6 +220,11 @@ namespace Global.Dynamic
                 webRequestController,
                 deeplinkSigninIdentityId,
                 deeplinkLoginAwaitingSigninRequestId,
+#if UNITY_EDITOR
+                true,
+#else
+                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY),
+#endif
                 referrer
             );
 

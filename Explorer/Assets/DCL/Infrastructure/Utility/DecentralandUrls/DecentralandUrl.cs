@@ -163,7 +163,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Pulse = 100,
 
         MarketplaceServer = 101,
+        ShopLink = 102,
 
-        ReferralProgress = 102,
+        ReferralProgress = 103,
     }
 }

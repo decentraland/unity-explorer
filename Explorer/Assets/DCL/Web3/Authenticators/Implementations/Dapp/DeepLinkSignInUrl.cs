@@ -22,7 +22,7 @@ namespace DCL.Web3.Authenticators
 
             // Defense-in-depth: Web3Address lowercases but does not validate on construction,
             // so re-check here — the last point before the value reaches the URL.
-            if (referrer is { } address && Web3Address.IsValid(address))
+            if (referrer is { } address && Web3Address.IsValidWalletAddress(address))
                 url += $"&referrer={address}";
 
             return url;

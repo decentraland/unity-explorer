@@ -15,6 +15,11 @@ namespace Global.AppArgs
     {
         private readonly Dictionary<string, string> appParameters = new ();
 
+        // Params the launch deep link carried that failed the allowlist. Held aside (never part of appParameters)
+        // so bootstrap can enumerate them in the startup warning dialog; ApplyDeniedDeepLinkParams merges them only
+        // if the user explicitly accepts the risk.
+        private readonly Dictionary<string, string> deniedDeepLinkParams = new ();
+
         // A decentraland:// deep link seen during parsing but not yet processed. Deferred so its whitelisted-realm
         // params can be gated once the world whitelist is available (see InitializeDeepLinks). Null once processed
         // or when the launch has no deep link.
@@ -112,8 +117,31 @@ namespace Global.AppArgs
         public bool HasPendingDeepLink => pendingDeepLink != null;
 
         /// <summary>
+        ///     Params the launch deep link carried that failed the <c>DeepLinkAllowlist</c>. They are NOT part
+        ///     of <see cref="Args" /> unless the user consents via <see cref="ApplyDeniedDeepLinkParams" />. Empty
+        ///     before <see cref="InitializeDeepLinks" /> runs and for launches without a deep link.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> DeniedDeepLinkParams => deniedDeepLinkParams;
+
+        /// <summary>
+        ///     Merges <see cref="DeniedDeepLinkParams" /> into the app args. Call only after the user explicitly
+        ///     accepted the risk in the startup warning dialog; logs the resulting argument set.
+        /// </summary>
+        public void ApplyDeniedDeepLinkParams()
+        {
+            if (deniedDeepLinkParams.Count == 0)
+                return;
+
+            foreach ((string key, string value) in deniedDeepLinkParams)
+                appParameters[key] = value;
+
+            deniedDeepLinkParams.Clear();
+            LogArguments();
+        }
+
+        /// <summary>
         ///     Processes the deep link captured during construction (merging its allowlisted params), applying the
-        ///     current <see cref="DeepLinkAllowlist" /> whitelisted-realm gate, then logs the complete argument set.
+        ///     current <c>DeepLinkAllowlist</c> whitelisted-realm gate, then logs the complete argument set.
         ///     Idempotent, and safe to call when the launch carries no deep link.
         /// </summary>
         public void InitializeDeepLinks()
@@ -125,7 +153,7 @@ namespace Global.AppArgs
 
             if (pendingDeepLink != null)
             {
-                Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(pendingDeepLink);
+                Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(pendingDeepLink, deniedDeepLinkParams);
 
                 foreach ((string key, string value) in deepLinkParameters)
                     appParameters[key] = value;
@@ -137,7 +165,15 @@ namespace Global.AppArgs
             LogArguments();
         }
 
-        public static Dictionary<string, string> ProcessDeepLinkParameters(string deepLinkString)
+        public static Dictionary<string, string> ProcessDeepLinkParameters(string deepLinkString) =>
+            ProcessDeepLinkParameters(deepLinkString, null);
+
+        /// <summary>
+        ///     Parses the deep link and returns only the allowlisted params. When <paramref name="deniedParams" /> is
+        ///     provided, params that failed the allowlist are collected into it (key and value) instead of being lost,
+        ///     so the startup warning dialog can enumerate them and apply them on user consent.
+        /// </summary>
+        public static Dictionary<string, string> ProcessDeepLinkParameters(string deepLinkString, Dictionary<string, string>? deniedParams)
         {
             var output = new Dictionary<string, string>();
 
@@ -177,8 +213,8 @@ namespace Global.AppArgs
             }
 
             // Tier 2 (SEC-019/020): the local-development params Creator Hub / sdk-commands attach to preview deep
-            // links (local-scene, dclenv, hub, skip-auth-screen, landscape-terrain-enabled, multi-instance,
-            // scene-console) are permitted only when the target realm is whitelisted — loopback, or a world listed in
+            // links (local-scene, hub, skip-auth-screen, landscape-terrain-enabled, multi-instance, local-ab, mcp,
+            // mcp-port) are permitted only when the target realm is whitelisted — loopback, or a world listed in
             // the deeplink-whitelisted-worlds feature flag. A remote-realm deep link from a web page cannot enable
             // them unless that exact world was explicitly whitelisted. Everything not in either tier is dropped.
             bool realmIsWhitelisted = output.TryGetValue(AppArgsFlags.REALM, out string? whitelistRealm)
@@ -191,7 +227,12 @@ namespace Global.AppArgs
                 if (realmIsWhitelisted && DeepLinkAllowlist.IsPermittedForWhitelistedRealm(uriQueryKey))
                     output[uriQueryKey] = uriQuery.Get(uriQueryKey);
                 else
+                {
                     droppedKeys.Add(uriQueryKey);
+
+                    if (deniedParams != null)
+                        deniedParams[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                }
             }
 
             if (droppedKeys.Count > 0)
