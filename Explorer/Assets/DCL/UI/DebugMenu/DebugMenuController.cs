@@ -110,6 +110,7 @@ namespace DCL.UI.DebugMenu
         private void OnDisable()
         {
             logsHistory.LogsUpdated -= OnLogsUpdated;
+            metricsButton.clicked -= OnMetricsButtonClicked;
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
 
             if (metricsScene != null)
