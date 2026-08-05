@@ -148,13 +148,27 @@ The committed binaries are pinned by a hash lock, `scripts/uuav/uuav-binaries.lo
 - **`uuav-verify.yml`** runs on every PR touching this plugin or `scripts/uuav/`. It re-hashes every shipped binary and every build input that feeds one (Rust source trees, manifests, `Cargo.lock` closure of the shipping roots, `.cargo/config.toml`, the FFmpeg builder script) against the lock, reads the FFmpeg configure line embedded in each shipped library and compares it with the recorded provenance, and requires new native binaries to be stored in Git LFS. It also `cargo check`/`test`/`clippy`s the FFmpeg-free crates (`uuav-ipc`, `uuav-client`) on a macOS runner and asserts nothing links `uuav-client`'s rlib.
 - **`uuav-native.yml`** runs on demand (`workflow_dispatch`, or the `build-uuav-native` PR label). It rebuilds both targets from pinned inputs — macOS FFmpeg from the source commit in the lock, Windows FFmpeg fetched as the hash-pinned BtbN release asset via `scripts/uuav/fetch-ffmpeg-windows.sh` — then runs two gates: Gate A (`scripts/uuav/repro-gate.sh`) builds twice from two source trees through one canonical path (`scripts/uuav/build-canonical.sh`) and requires byte-identical cargo artifacts; Gate B (`scripts/uuav/reproduces-lock.py`) compares the fresh build against the committed hashes, hard-failing only when the runner's toolchain matches the one pinned in the lock.
 
-After rebuilding binaries on purpose, relock the target you rebuilt:
+### Relocking after a deliberate rebuild
+
+`uuav-native.yml` does not relock — it has `contents: read` and only ever reads the lock. It hands back, per target, the rebuilt binaries and the `toolchain-<os>.txt` its "Record the toolchain actually used" step wrote. Relocking is the human step that commits both:
+
+1. Commit the rebuilt binaries from that run's artifact into `Packages/UUAV/Runtime/Plugins/<macOS|x86_64>/`. On macOS the FFmpeg dylibs are rebuilt too; committing only the two cargo-produced files is fine, and `--update` re-records the FFmpeg hashes unchanged.
+2. Relock that target, passing the toolchain the build recorded:
 
 ```
-python3 scripts/uuav/verify-binaries.py --update --only macos-universal   # or windows-x86_64
+python3 scripts/uuav/verify-binaries.py --update --only macos-universal --toolchain toolchain-macos.txt
 ```
 
-`--update` rewrites only the machine-derived fields; the upstream pins (FFmpeg tag/commit, the BtbN release asset and its sha256) are edited by hand when the pin deliberately moves. The Windows target has no toolchain pin yet, so Gate B skips it; pin it at the next Windows rebuild by passing `--toolchain toolchain-windows.txt` (the file the workflow's "Record the toolchain actually used" step writes).
+`--toolchain` is what makes the relock honest about who built the bytes. Without it, `--update` refuses on any host whose pinned components differ from `targets.<t>.rust.toolchain` — including the host that just bumped `rust-toolchain.toml`, which by definition no longer matches the pin the previous binaries carry. For a target with no pin yet, the same flag gives it its first one, taken from the recorded components the script can probe again later (`ld` is recorded and deliberately not pinned; nothing can re-probe it).
+
+`--update` rewrites only machine-derived fields. It re-derives `crate_version` and `repo_commit` as a description of the relock — nothing compares them — and it never touches the upstream pins (FFmpeg tag/commit, the BtbN release asset and its sha256) or a build input's `pending` key: both are deliberate human moves. A relock that first ships a binary built from a `pending` input is the commit that deletes that key, which is what the script's closing "still PENDING" line is asking for.
+
+Two things about the round trip are easy to get wrong:
+
+- **Gate B needs a second run.** The round that produces the binaries compares them against the lock as it stands *before* the relock, so it still skips. It becomes a real byte comparison on the next run, after the relocked lock and the new binaries are pushed — the label stays live across pushes, so that run happens on its own.
+- **`native/` must not move between the build and the relock.** The binaries come from the commit CI built; `source_digest` is taken from the working tree at relock time. One more source edit in between and the two disagree again.
+
+The lock digests these files as raw bytes, so `.gitattributes` forces `eol=lf` across the native tree. Without that a checkout with `core.autocrlf=true` would relock to digests no other host reproduces.
 
 ## GPU device separation
 

@@ -44,6 +44,14 @@ hash - those are edited by a human when the pin deliberately moves, and it
 never clears a build input's "pending" key, because promoting an input from
 tracked to enforced is exactly that kind of deliberate move.
 
+targets.<t>.rust.crate_version and .repo_commit are re-derived by --update too,
+from native/Cargo.toml and `git rev-parse HEAD`, but no check compares them.
+They describe the relock rather than pin it: a crate version bump already
+reaches the lock through cargo_manifest's digest, and repo_commit is false one
+commit after it is written, so failing on either would fail correct runs. They
+are derived rather than hand-copied only so they cannot quietly contradict the
+binaries beside them.
+
 targets.<t>.rust.toolchain - the host identities Gate B (reproduces-lock.py)
 pins byte reproduction against - moves with the relock, not silently: relocking
 leaves it as it is only when every pinned component matches this host, verified
@@ -54,6 +62,12 @@ forever or claiming a reproduction the relock itself just invalidated. To
 relock a target built elsewhere (or on a changed toolchain), pass
 `--toolchain toolchain-<os>.txt` - the file that workflow step records - and
 the pin is rewritten from it along with everything else.
+
+A target with no toolchain pin at all is the same instruction seen from the
+start: `--toolchain` gives it its first one, taken from every component of the
+record probe_toolchain_component() knows how to check again later, and drops any
+"toolchain_comment" saying it has none. Without the flag it relocks unpinned and
+Gate B goes on skipping it, which is what an unpinned target means.
 
 `--update --only TARGET` relocks one target and leaves every other target's
 pins alone. The two platforms are built on two different machines, so the
@@ -179,6 +193,60 @@ def parse_cargo_lock(path: str) -> dict:
                     current[key] = line.split("=", 1)[1].strip().strip('"')
     flush()
     return packages
+
+
+def package_version(path: str) -> str | None:
+    """The `[package] version` of one Cargo.toml, or None if it has none.
+
+    Hand-parsed for the same reason parse_cargo_lock is: no tomllib, no pip.
+    Only the [package] table is read, so a [dependencies] entry pinning some
+    crate's version cannot be mistaken for this manifest's own.
+    """
+    in_package = False
+    try:
+        with open(path, encoding="utf-8") as handle:
+            for raw in handle:
+                line = raw.strip()
+                if line.startswith("["):
+                    in_package = line == "[package]"
+                    continue
+                if in_package and line.startswith("version = "):
+                    return line.split("=", 1)[1].strip().strip('"')
+    except OSError:
+        return None
+    return None
+
+
+def head_commit(repo: str) -> str | None:
+    """The commit a relock is being recorded at, or None outside a checkout."""
+    try:
+        result = subprocess.run(["git", "-C", repo, "rev-parse", "HEAD"],
+                                capture_output=True, text=True)
+    except OSError:
+        return None
+    commit = result.stdout.strip()
+    return commit if result.returncode == 0 and commit else None
+
+
+def refresh_provenance_notes(repo: str, lock: dict, spec: dict) -> None:
+    """Re-derive the two fields that describe, rather than pin, this relock.
+
+    crate_version and repo_commit are documentation: nothing compares them, and
+    nothing should. A version bump already reaches the lock through
+    cargo_manifest's digest, and repo_commit is false one commit after it is
+    written, so checking either would fail runs that are correct. What they must
+    not do is contradict the relock that wrote them - the pair drifting apart
+    from the binaries beside them (crate_version 0.2.0 against a 0.3.0
+    workspace) is what made them worth deriving instead of hand-copying.
+    """
+    manifest = os.path.dirname(os.path.join(repo, lock["rust_source"]["path"]))
+    version = package_version(os.path.join(manifest, "Cargo.toml"))
+    if version:
+        spec["rust"]["crate_version"] = version
+
+    commit = head_commit(repo)
+    if commit:
+        spec["rust"]["repo_commit"] = commit
 
 
 def cargo_lock_closure(path: str, roots) -> tuple[str, int]:
@@ -316,6 +384,10 @@ def _first_line(argv, cwd) -> str | None:
     return output.splitlines()[0].strip() if output else None
 
 
+PROBEABLE_COMPONENTS = ("rustc", "cargo", "clang", "gcc", "windows_sdk",
+                        "xcode", "sdk")
+
+
 def probe_toolchain_component(component: str, native_dir: str) -> str | None:
     """This host's identity for one pinned component, or None if unprobeable.
 
@@ -346,6 +418,28 @@ def probe_toolchain_component(component: str, native_dir: str) -> str | None:
     return None
 
 
+def seed_toolchain_pin(spec: dict, toolchain_file: str) -> None:
+    """Give a target its first targets.<target>.rust.toolchain, from the build.
+
+    A target with no pin is one Gate B has never been able to check: it skips,
+    naming the file whose identities would let it. Every recorded component the
+    build reached is worth pinning - for x86_64-pc-windows-gnu the mingw gcc
+    reached the bytes as directly as rustc did, which is why
+    .cargo/config.toml pins its path - so the pin starts as wide as the record.
+
+    Only components probe_toolchain_component() knows, though: a pinned
+    component no host can probe makes every later relock that does not carry a
+    toolchain file refuse with 'cannot probe', so seeding one would trap the
+    next rebuild. macOS records `ld` for that reason and does not pin it.
+    """
+    recorded = read_toolchain_file(toolchain_file)
+    spec["rust"]["toolchain"] = {component: identity
+                                 for component, identity in recorded.items()
+                                 if component in PROBEABLE_COMPONENTS}
+    # Whatever this said, it said the target had no pin.
+    spec["rust"].pop("toolchain_comment", None)
+
+
 def resolve_toolchain_pin(target: str, spec: dict, toolchain_file: str | None,
                           native_dir: str) -> list[str]:
     """Move or hold targets.<target>.rust.toolchain for a relock; never stale it.
@@ -359,7 +453,16 @@ def resolve_toolchain_pin(target: str, spec: dict, toolchain_file: str | None,
     pinned = spec["rust"].get("toolchain")
     components = {key: value for key, value in pinned.items() if key != "comment"} \
         if isinstance(pinned, dict) else {}
+
     if not components:
+        # No pin to move. With a recorded build to take one from, this relock is
+        # the moment the target gets its first; without one it relocks unpinned,
+        # exactly as before, and Gate B keeps skipping.
+        if toolchain_file:
+            seed_toolchain_pin(spec, toolchain_file)
+            seeded = spec["rust"]["toolchain"]
+            if "rustc" in seeded:
+                spec["rust"]["rustc"] = seeded["rustc"]
         return []
 
     if toolchain_file:
@@ -873,11 +976,15 @@ def main() -> int:
         problems += check_rust_source(repo, lock, target, spec, update_target)
         problems += check_ffmpeg_builder(repo, target, spec, update_target)
         problems += check_provenance(repo, target, spec, update_target)
+        if update_target:
+            refresh_provenance_notes(repo, lock, spec)
         if not args.update:
             problems += check_drift(target, spec)
 
     if args.update:
-        with open(lock_path, "w", encoding="utf-8") as handle:
+        # newline="\n": the lock is read on every platform and its diff should
+        # not depend on which one rewrote it.
+        with open(lock_path, "w", encoding="utf-8", newline="\n") as handle:
             json.dump(lock, handle, indent=2)
             handle.write("\n")
         print(f"Updated {LOCK_REL} from the working tree.")

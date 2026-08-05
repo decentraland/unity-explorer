@@ -58,10 +58,20 @@ jobs:
           print(f"builder={target['ffmpeg']['builder']}")
           PY
 
-      - name: Install nasm and both Rust slices
+      - name: Install nasm
+        run: brew install nasm
+
+      # In native/, always: rustup reads native/rust-toolchain.toml there, and
+      # nowhere else in this checkout. At the repo root every rustc/cargo/rustup
+      # command below would address the runner image's default toolchain instead
+      # of the pinned one the build compiles with, so the slices would be added
+      # to the wrong toolchain and the recorded identities would name a compiler
+      # that produced none of the bytes - the identities Gate B then pins
+      # reproduction against.
+      - name: Install both Rust slices
+        working-directory: Explorer/Assets/Plugins/UUAV/native
         run: |
           set -euo pipefail
-          brew install nasm
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
           # The x86_64 slice is the leg that dies when a rustc without that std
           # is first on PATH, and it dies inside cargo talking about a missing
@@ -69,17 +79,21 @@ jobs:
           sysroot="$(rustc --print sysroot)"
           for slice in aarch64-apple-darwin x86_64-apple-darwin; do
             if [ ! -d "$sysroot/lib/rustlib/$slice/lib" ]; then
-              echo "::error::the rustc first on PATH ($(command -v rustc), sysroot $sysroot) has no $slice std; the universal build cannot work"
+              echo "::error::the pinned rustc ($(rustc --version), sysroot $sysroot) has no $slice std; the universal build cannot work"
               exit 1
             fi
           done
 
+      # rustc and cargo are asked from native/ for the reason above; the file
+      # itself is written at the repo root, where Gate B and the upload expect
+      # it. Nothing else here is toolchain-file sensitive.
       - name: Record the toolchain actually used
         run: |
           set -uo pipefail
+          native=Explorer/Assets/Plugins/UUAV/native
           {
-            echo "rustc: $(rustc --version)"
-            echo "cargo: $(cargo --version)"
+            echo "rustc: $(cd "$native" && rustc --version)"
+            echo "cargo: $(cd "$native" && cargo --version)"
             echo "clang: $(clang --version | head -1)"
             echo "xcode: $(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')"
             echo "sdk: macosx$(xcrun --sdk macosx --show-sdk-version) ($(xcrun --sdk macosx --show-sdk-build-version))"
@@ -108,7 +122,11 @@ jobs:
       - name: Compare the fresh build against the lock
         run: python3 scripts/uuav/verify-binaries.py --report macos-universal
 
+      # always(): a round that fails a gate is exactly the round whose fresh
+      # hashes and recorded toolchain someone needs to read. Without this the
+      # job that found the problem hands back nothing to diagnose it with.
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: uuav-macos-universal
           path: |
@@ -160,7 +178,12 @@ jobs:
         shell: cmd
         run: C:\msys64\usr\bin\pacman.exe -S --noconfirm --needed mingw-w64-x86_64-gcc
 
+      # In native/, always - see the macOS job's note: rustup honours
+      # native/rust-toolchain.toml only there, so at the repo root this would
+      # target the runner image's default toolchain and record a compiler that
+      # built none of the shipped bytes.
       - name: Install the Rust target
+        working-directory: Explorer/Assets/Plugins/UUAV/native
         run: |
           set -euo pipefail
           rustup target add "${{ steps.pins.outputs.rust_target }}"
@@ -173,12 +196,16 @@ jobs:
             exit 1
           fi
 
+      # rustc and cargo are asked from native/ - see the macOS job's note; gcc
+      # is an absolute path and the file lands at the repo root, where Gate B
+      # and the upload expect it.
       - name: Record the toolchain actually used
         run: |
           set -uo pipefail
+          native=Explorer/Assets/Plugins/UUAV/native
           {
-            echo "rustc: $(rustc --version)"
-            echo "cargo: $(cargo --version)"
+            echo "rustc: $(cd "$native" && rustc --version)"
+            echo "cargo: $(cd "$native" && cargo --version)"
             echo "gcc: $(/c/msys64/mingw64/bin/gcc --version | head -1)"
           } | tee toolchain-windows.txt
 
@@ -191,7 +218,9 @@ jobs:
       - name: Compare the fresh build against the lock
         run: python scripts/uuav/verify-binaries.py --report windows-x86_64
 
+      # always(): see the macOS job's note.
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: uuav-windows-x86_64
           path: |

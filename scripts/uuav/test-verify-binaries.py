@@ -27,7 +27,8 @@ LOCK_REL = os.path.join("scripts", "uuav", "uuav-binaries.lock.json")
 TARGET = "windows-x86_64"
 
 
-def make_repo(toolchain: dict | None) -> str:
+def make_repo(toolchain: dict | None, manifest_version: str | None = None,
+              toolchain_comment: list | None = None) -> str:
     root = tempfile.mkdtemp(prefix="uuav-lock-test-")
     os.makedirs(os.path.join(root, "scripts", "uuav"))
     os.makedirs(os.path.join(root, "native", "src"))
@@ -35,14 +36,28 @@ def make_repo(toolchain: dict | None) -> str:
               encoding="utf-8") as handle:
         handle.write("pub fn probe() {}\n")
 
+    if manifest_version is not None:
+        # A [dependencies] version after the [package] table: the scanner must
+        # read this manifest's own version, not the first one in the file.
+        with open(os.path.join(root, "native", "Cargo.toml"), "w",
+                  encoding="utf-8") as handle:
+            handle.write(f'[package]\nname = "uuav-core"\n'
+                         f'version = "{manifest_version}"\n\n'
+                         f'[dependencies]\nlibc = "0.2"\n'
+                         f'anyhow = {{ version = "9.9.9" }}\n')
+
     rust = {
         "target": "x86_64-pc-windows-gnu",
         "rustc": "rustc 0.0.0-previous",
+        "crate_version": "0.0.0-previous",
+        "repo_commit": "0" * 40,
         "source_digest": "0" * 64,
         "source_files": 1,
     }
     if toolchain is not None:
         rust["toolchain"] = toolchain
+    if toolchain_comment is not None:
+        rust["toolchain_comment"] = toolchain_comment
     lock = {
         "schema": 1,
         "rust_source": {"path": "native/src", "suffix": ".rs"},
@@ -207,8 +222,8 @@ class UpdateToolchainTests(unittest.TestCase):
         for root in self.roots:
             shutil.rmtree(root, ignore_errors=True)
 
-    def repo(self, toolchain):
-        root = make_repo(toolchain)
+    def repo(self, toolchain, **kwargs):
+        root = make_repo(toolchain, **kwargs)
         self.roots.append(root)
         return root
 
@@ -300,6 +315,87 @@ class UpdateToolchainTests(unittest.TestCase):
         self.assertNotEqual(
             read_lock(root)["targets"][TARGET]["rust"]["source_digest"],
             "0" * 64)
+
+    def test_update_with_toolchain_file_seeds_a_missing_pin(self):
+        """A target that has never been pinned gets its first pin from the
+        recorded build, not silently nothing.
+
+        This is the path the lock's own instructions describe for
+        windows-x86_64. It used to return early on 'no components to move',
+        so the relock rewrote every other pin and left rust.rustc reading
+        'unknown - not recorded ...' - Gate B skipping forever, with the
+        command that was supposed to fix it reporting success."""
+        root = self.repo(None, toolchain_comment=["no toolchain pin yet"])
+        path = self.write_toolchain_file(root, [
+            "rustc: rustc 9.9.9-test (aaaaaaa 2026-01-01)",
+            "cargo: cargo 9.9.9-test (bbbbbbb 2026-01-01)",
+            "gcc: gcc (test) 99.9.0",
+        ])
+        result = run(root, "--update", "--only", TARGET, "--toolchain", path)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        rust = read_lock(root)["targets"][TARGET]["rust"]
+        self.assertEqual(rust["toolchain"], {
+            "rustc": "rustc 9.9.9-test (aaaaaaa 2026-01-01)",
+            "cargo": "cargo 9.9.9-test (bbbbbbb 2026-01-01)",
+            "gcc": "gcc (test) 99.9.0",
+        }, "a first pin is as wide as the record, gcc included")
+        self.assertEqual(rust["rustc"], "rustc 9.9.9-test (aaaaaaa 2026-01-01)")
+        self.assertNotIn("toolchain_comment", rust,
+                         "the note saying there is no pin outlived the pin")
+
+    def test_seeded_pin_skips_components_no_host_can_probe(self):
+        """`ld` is recorded by the macOS build and pinned by nobody: pinning a
+        component probe_toolchain_component() cannot check would make every
+        later relock without a toolchain file refuse with 'cannot probe'."""
+        root = self.repo(None)
+        path = self.write_toolchain_file(root, [
+            "rustc: rustc 9.9.9-test",
+            "ld: @(#)PROGRAM:ld PROJECT:ld-1234",
+        ])
+        result = run(root, "--update", "--only", TARGET, "--toolchain", path)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        toolchain = read_lock(root)["targets"][TARGET]["rust"]["toolchain"]
+        self.assertEqual(toolchain, {"rustc": "rustc 9.9.9-test"})
+
+    def test_update_records_the_crate_version(self):
+        root = self.repo(None, manifest_version="0.3.0")
+        result = run(root, "--update", "--only", TARGET)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            read_lock(root)["targets"][TARGET]["rust"]["crate_version"],
+            "0.3.0", "the version is read from [package], not [dependencies]")
+
+    def test_update_leaves_crate_version_alone_without_a_manifest(self):
+        """Derived, never invented: no manifest to read means no rewrite."""
+        root = self.repo(None)
+        result = run(root, "--update", "--only", TARGET)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            read_lock(root)["targets"][TARGET]["rust"]["crate_version"],
+            "0.0.0-previous")
+
+    def test_update_records_the_head_commit(self):
+        root = self.repo(None)
+        git = ("git", "-C", root, "-c", "user.name=t", "-c", "user.email=t@t")
+        for argv in ((*git, "init", "--quiet"),
+                     (*git, "add", "-A"),
+                     (*git, "commit", "--quiet", "--no-gpg-sign", "-m", "fixture")):
+            done = subprocess.run(argv, capture_output=True, text=True)
+            if done.returncode != 0:
+                self.skipTest(f"git fixture unavailable: {done.stderr.strip()}")
+        head = subprocess.run((*git, "rev-parse", "HEAD"), capture_output=True,
+                              text=True).stdout.strip()
+        result = run(root, "--update", "--only", TARGET)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            read_lock(root)["targets"][TARGET]["rust"]["repo_commit"], head)
+
+    def test_update_leaves_repo_commit_alone_outside_a_checkout(self):
+        root = self.repo(None)
+        result = run(root, "--update", "--only", TARGET)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            read_lock(root)["targets"][TARGET]["rust"]["repo_commit"], "0" * 40)
 
     def test_toolchain_flag_requires_update_and_only(self):
         root = self.repo(None)

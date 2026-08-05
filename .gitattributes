@@ -18,6 +18,25 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe filter=lfs diff=lfs merge=lfs -text
 Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper filter=lfs diff=lfs merge=lfs -text
 
+##############################################################################
+# UUAV native - hashed bytes, so the line endings are part of the content
+#
+# scripts/uuav/uuav-binaries.lock.json digests these files as raw bytes, and
+# scripts/uuav/build-canonical.sh compiles them with LF forced
+# (-c core.autocrlf=false -c core.eol=lf). Without eol=lf a checkout on a host
+# with core.autocrlf=true holds CRLF copies, so `verify-binaries.py --update`
+# there records digests no other host can reproduce. The shell scripts are here
+# too: bash on the Windows runner does not accept CRLF.
+##############################################################################
+Explorer/Assets/Plugins/UUAV/native/**/*.rs text eol=lf
+Explorer/Assets/Plugins/UUAV/native/**/*.toml text eol=lf
+Explorer/Assets/Plugins/UUAV/native/**/*.lock text eol=lf
+Explorer/Assets/Plugins/UUAV/native/**/*.sb text eol=lf
+Explorer/Assets/Plugins/UUAV/**/*.sh text eol=lf
+scripts/uuav/*.sh text eol=lf
+# --update rewrites the lock, so its own newlines must not depend on the host
+scripts/uuav/uuav-binaries.lock.json text eol=lf
+
 
 ##############################################################################
 # unity specifics
