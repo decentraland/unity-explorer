@@ -6,28 +6,27 @@ namespace DCL.Profiling
     /// <summary>
     ///     Per-scene soft caps derived from the parcel count (n), matching the documented Decentraland
     ///     scene limitations (https://docs.decentraland.org/creator/scenes-sdk7/optimizing/scene-limitations/).
-    ///     Geometries, colliders and videos have no documented limit and carry no cap.
+    ///     Geometries, colliders and videos have no documented limit. Materials has one, but is shown
+    ///     uncapped: URP's SRP Batcher bins draws by shader variant, so per-frame cost tracks shader
+    ///     variants, not the raw material count — a cap on materials would mislead more than it informs.
     /// </summary>
     public readonly struct SceneContentCaps
     {
         private const int MAX_TRIANGLES_PER_PARCEL = 10_000;
         private const int MAX_ENTITIES_PER_PARCEL = 200;
         private const int MAX_BODIES_PER_PARCEL = 300;
-        private const int MAX_MATERIALS_LOG2_MULTIPLIER = 20;
         private const int MAX_TEXTURES_LOG2_MULTIPLIER = 10;
 
         public readonly int Entities;
         public readonly long Triangles;
         public readonly int Bodies;
-        public readonly int Materials;
         public readonly int Textures;
 
-        private SceneContentCaps(int entities, long triangles, int bodies, int materials, int textures)
+        private SceneContentCaps(int entities, long triangles, int bodies, int textures)
         {
             Entities = entities;
             Triangles = triangles;
             Bodies = bodies;
-            Materials = materials;
             Textures = textures;
         }
 
@@ -39,7 +38,6 @@ namespace DCL.Profiling
                 entities: parcelCount * MAX_ENTITIES_PER_PARCEL,
                 triangles: (long)parcelCount * MAX_TRIANGLES_PER_PARCEL,
                 bodies: parcelCount * MAX_BODIES_PER_PARCEL,
-                materials: Mathf.FloorToInt(log2 * MAX_MATERIALS_LOG2_MULTIPLIER),
                 textures: Mathf.FloorToInt(log2 * MAX_TEXTURES_LOG2_MULTIPLIER));
         }
     }
@@ -88,7 +86,7 @@ namespace DCL.Profiling
                 Triangles = FormatCapped(stats.Triangles, caps.Triangles),
                 Bodies = FormatCapped(stats.Bodies, caps.Bodies),
                 Geometries = FormatCount(stats.Geometries),
-                Materials = FormatCapped(stats.Materials, caps.Materials),
+                Materials = FormatCount(stats.Materials),
                 Textures = FormatCapped(stats.Textures, caps.Textures),
                 Colliders = FormatCount(stats.Colliders),
                 Videos = FormatCount(stats.Videos),
