@@ -315,7 +315,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     // emote failed to load? remove intent
-                    if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } and { IsLSDAsset: false })
+                    if (emote.DTO is { assetBundleManifestVersion: { assetBundleManifestRequestFailed: true, IsLSDAsset: false } })
                     {
                         ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
@@ -334,12 +334,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
+                    StreamableLoadingResult<AttachmentRegularAsset>? assetResult = emote.AssetResults[bodyShape];
 
                     // Loading not complete
-                    if (emote.AssetResults[bodyShape] == null)
+                    if (assetResult == null)
                         return;
 
-                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
+                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = assetResult.Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
@@ -436,7 +437,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                                 IsSet = true,
                             };
 
-                            uint durationMs = !isLooping ? (uint)(freshEmoteComponent.PlayingEmoteDuration * 1000) : 0;
+                            // The duration comes from the masked emote's own clip; a looping emote has no end to report.
+                            uint durationMs = !isLooping ? (uint)(masked.PlayingEmoteDuration * 1000) : 0;
                             World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
                     }
