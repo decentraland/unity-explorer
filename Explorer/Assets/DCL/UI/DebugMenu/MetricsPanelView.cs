@@ -44,8 +44,8 @@ namespace DCL.UI.DebugMenu
         private readonly Label triangles;
         private readonly Label entities;
         private readonly Label bodies;
-        private readonly Label materials;
         private readonly Label textures;
+        private readonly Label materials;
         private readonly Label geometries;
         private readonly Label colliders;
         private readonly Label videos;
@@ -67,11 +67,12 @@ namespace DCL.UI.DebugMenu
 
             VisualElement rows = root.Q("MetricsRows");
 
+            // Capped metrics (documented per-parcel limits) grouped on top; uncapped counts below.
             triangles = AddRow(rows, "TRIANGLES", TOOLTIP_TRIANGLES);
             entities = AddRow(rows, "ENTITIES", TOOLTIP_ENTITIES);
             bodies = AddRow(rows, "BODIES", TOOLTIP_BODIES);
-            materials = AddRow(rows, "MATERIALS", TOOLTIP_MATERIALS);
             textures = AddRow(rows, "TEXTURES", TOOLTIP_TEXTURES);
+            materials = AddRow(rows, "MATERIALS", TOOLTIP_MATERIALS);
             geometries = AddRow(rows, "GEOMETRIES", TOOLTIP_GEOMETRIES);
             colliders = AddRow(rows, "COLLIDERS", TOOLTIP_COLLIDERS);
             videos = AddRow(rows, "EXTERNAL VIDEOS/AUDIOS", TOOLTIP_VIDEOS);
@@ -90,8 +91,8 @@ namespace DCL.UI.DebugMenu
             triangles.text = text.Triangles;
             entities.text = text.Entities;
             bodies.text = text.Bodies;
-            materials.text = text.Materials;
             textures.text = text.Textures;
+            materials.text = text.Materials;
             geometries.text = text.Geometries;
             colliders.text = text.Colliders;
             videos.text = text.Videos;

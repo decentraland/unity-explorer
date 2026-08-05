@@ -95,9 +95,9 @@ namespace DCL.Profiling.ECS
                                  .AddCustomMarker("Entities:", contentStatsBindings.Entities)
                                  .AddCustomMarker("Triangles:", contentStatsBindings.Triangles)
                                  .AddCustomMarker("Meshes (bodies):", contentStatsBindings.Bodies)
+                                 .AddCustomMarker("Textures:", contentStatsBindings.Textures)
                                  .AddCustomMarker("Geometries:", contentStatsBindings.Geometries)
                                  .AddCustomMarker("Materials:", contentStatsBindings.Materials)
-                                 .AddCustomMarker("Textures:", contentStatsBindings.Textures)
                                  .AddCustomMarker("Colliders:", contentStatsBindings.Colliders)
                                  .AddCustomMarker("External videos/audios:", contentStatsBindings.Videos);
 
