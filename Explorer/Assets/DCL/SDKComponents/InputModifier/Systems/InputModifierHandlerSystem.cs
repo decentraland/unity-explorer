@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         private void SendBusMessage(in InputModifierComponent inputModifier)
         {
-            SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false } ? SceneRestrictionsAction.Removed : SceneRestrictionsAction.Applied;
+            SceneRestrictionsAction currentAction = inputModifier.EverythingEnabled ? SceneRestrictionsAction.Removed : SceneRestrictionsAction.Applied;
 
             if (currentAction == lastBusMessageAction) return;
 

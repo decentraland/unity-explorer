@@ -33,7 +33,7 @@ using Utility;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>
     {
         private readonly BackpackController backpackController;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
@@ -45,7 +45,6 @@ namespace DCL.ExplorePanel
         private readonly bool includeDiscover;
         private readonly HttpEventsApiService eventsApiService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
-        private readonly ICreditsPanelController creditsPanelController;
         private bool includeCommunities;
 
         private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
@@ -61,7 +60,6 @@ namespace DCL.ExplorePanel
         private ExploreSections lastShownSection;
         private bool isControlClosing;
 
-        private CommunitiesBrowserController communitiesBrowserController { get; }
         public NavmapController NavmapController { get; }
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
@@ -70,8 +68,6 @@ namespace DCL.ExplorePanel
         public EventsController EventsController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
-
-        public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
 
         public event Action? PlacesOpenedFromStartMenu;
         public event Action? EventsOpenedFromStartMenu;
@@ -103,11 +99,9 @@ namespace DCL.ExplorePanel
             this.inputBlock = inputBlock;
             this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
             this.mvcManager = mvcManager;
-            this.communitiesBrowserController = communitiesBrowserController;
             this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
             this.eventsApiService = eventsApiService;
             this.communitiesLiveTracker = communitiesLiveTracker;
-            this.creditsPanelController = creditsPanelController;
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
 
@@ -127,13 +121,27 @@ namespace DCL.ExplorePanel
             communitiesLiveBadgeSubscription?.Dispose();
         }
 
-        private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
+        public void OnReshowWhileVisible(ExplorePanelParameter parameter)
         {
-            if (State == ControllerState.ViewHidden)
-                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(sectionToShow)));
-            else
-                ShowSection(sectionToShow);
+            ExploreSections sectionToShow = parameter.IsSectionProvided ? parameter.Section : lastShownSection;
+
+            if (sectionToShow != lastShownSection)
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+
+            ShowSection(sectionToShow);
+
+            if (parameter.BackpackSection != null)
+                backpackController.Toggle(parameter.BackpackSection.Value);
+
+            if (parameter.SettingsSection != null)
+                SettingsController.Toggle(parameter.SettingsSection.Value);
+
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
         }
+
+        private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow) =>
+            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(sectionToShow)));
 
         protected override void OnViewInstantiated()
         {

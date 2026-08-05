@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PassportAdditionalFieldEdition_LanguageConfiguration
   m_EditorClassIdentifier: 
   values:
-  - "Afrikanns\r"
+  - "Afrikaans\r"
   - "Albanian\r"
   - "Arabic\r"
   - "Armenian\r"

@@ -24,11 +24,14 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly bool enableEmailOTP;
+        private readonly bool otherLoginMethodsEnabled;
 
         public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState, SplashScreen splashScreen,
-            ICompositeWeb3Provider compositeWeb3Provider, UnityAppWebBrowser webBrowser, bool enableEmailOTP) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider, UnityAppWebBrowser webBrowser,
+            bool enableEmailOTP,
+            bool otherLoginMethodsEnabled) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionAuthView;
 
@@ -39,6 +42,7 @@ namespace DCL.AuthenticationScreenFlow
             this.compositeWeb3Provider = compositeWeb3Provider;
             this.webBrowser = webBrowser;
             this.enableEmailOTP = enableEmailOTP;
+            this.otherLoginMethodsEnabled = otherLoginMethodsEnabled;
 
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
@@ -136,7 +140,7 @@ namespace DCL.AuthenticationScreenFlow
             if (splashScreen != null) // it can be destroyed after first login
                 splashScreen.FadeOutAndHide();
 
-            view.Show(animHash, moreOptionsExpanded: !enableEmailOTP);
+            view.Show(animHash, moreOptionsExpanded: !enableEmailOTP, otherLoginMethodsEnabled);
             Enter();
         }
 
