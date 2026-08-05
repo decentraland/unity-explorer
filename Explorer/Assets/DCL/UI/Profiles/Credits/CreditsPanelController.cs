@@ -42,7 +42,9 @@ namespace DCL.Credits
             view.GetCreditsButton.gameObject.SetActive(topUpEnabled);
 
             if (topUpEnabled)
+            {
                 view.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
+            }
 
             if (identityCache.Identity != null)
                 LoadCreditsWithRestart();

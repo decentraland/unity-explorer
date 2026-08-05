@@ -55,20 +55,21 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public void ParseNativeAndLegacyRowsFromOneFeed()
         {
             // Act
-            var response = JsonConvert.DeserializeObject<ShopListingsResponse>(UNIFIED_PAYLOAD);
+            ShopListingsResponse response = JsonConvert.DeserializeObject<ShopListingsResponse>(UNIFIED_PAYLOAD)!;
 
             // Assert
             Assert.IsNotNull(response.data);
-            Assert.AreEqual(2, response.data.Length);
+            ShopListingDto[] data = response.data!;
+            Assert.AreEqual(2, data.Length);
             Assert.AreEqual(58, response.total);
 
-            ShopListingDto native = response.data[0];
+            ShopListingDto native = data[0];
             Assert.AreEqual("native", native.source);
             Assert.IsNull(native.manaWei);
             Assert.AreEqual("trade-native", native.tradeId);
             Assert.AreEqual(25, native.priceCredits);
 
-            ShopListingDto legacy = response.data[1];
+            ShopListingDto legacy = data[1];
             Assert.AreEqual("legacy", legacy.source);
             Assert.AreEqual("1000000000000000000", legacy.manaWei);
             Assert.AreEqual("trade-legacy", legacy.tradeId);
@@ -88,12 +89,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             }";
 
             // Act
-            var response = JsonConvert.DeserializeObject<ShopListingsResponse>(HUGE_MANA_PAYLOAD);
+            ShopListingsResponse response = JsonConvert.DeserializeObject<ShopListingsResponse>(HUGE_MANA_PAYLOAD)!;
 
             // Assert
             Assert.IsNotNull(response.data);
-            Assert.AreEqual("10000000000000000000000", response.data[0].manaWei);
-            Assert.AreEqual(4200, response.data[0].priceCredits);
+            ShopListingDto[] data = response.data!;
+            Assert.AreEqual("10000000000000000000000", data[0].manaWei);
+            Assert.AreEqual(4200, data[0].priceCredits);
         }
     }
 }
