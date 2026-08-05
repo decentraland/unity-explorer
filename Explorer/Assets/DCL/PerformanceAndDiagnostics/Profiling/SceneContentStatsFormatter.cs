@@ -61,18 +61,18 @@ namespace DCL.Profiling
 
     /// <summary>
     ///     Formats <see cref="SceneContentStats" /> rows against <see cref="SceneContentCaps" /> as
-    ///     rich-text strings. Capped rows render as "current / cap" with the current value colored
-    ///     green below <see cref="CAP_WARNING_PERCENT" /> and yellow above it — the documented limits
-    ///     are soft, so exceeding one never renders red — and the "/ cap" part greyed. Uncapped rows
-    ///     render as plain counts. Shared by the "Scene content" debug widget and the scene debug
-    ///     menu Scene Stats panel.
+    ///     rich-text strings. Capped rows render as "current / cap (percent%)", the whole value white
+    ///     below <see cref="CAP_WARNING_PERCENT" /> and orange at or above it — the documented limits
+    ///     are soft, so exceeding one warns but never renders red. Uncapped rows render as plain
+    ///     counts. Shared by the "Scene content" debug widget and the scene debug menu Scene Stats panel.
     /// </summary>
     public static class SceneContentStatsFormatter
     {
         public const string EMPTY_VALUE = "—";
 
         private const float CAP_WARNING_PERCENT = 80f;
-        private const string CAP_COLOR = "#8C8C8C";
+        private const string WITHIN_BUDGET_COLOR = "#FFFFFF";
+        private const string OVER_BUDGET_COLOR = "#FF7439";
 
         public static void Format(SceneContentStats stats, in SceneContentCaps caps, out SceneContentStatsText text)
         {
@@ -116,13 +116,14 @@ namespace DCL.Profiling
                 return FormatCount(current);
 
             float percent = current * 100f / cap;
-            return $"<color={CapColor(percent)}>{FormatCount(current)}</color> <color={CAP_COLOR}>/ {FormatCount(cap)}</color>";
+            string percentText = percent.ToString("F0", CultureInfo.InvariantCulture);
+            return $"<color={CapColor(percent)}>{FormatCount(current)} / {FormatCount(cap)} ({percentText}%)</color>";
         }
 
         private static string FormatCount(long current) =>
             current.ToString("N0", CultureInfo.InvariantCulture);
 
         private static string CapColor(float percent) =>
-            percent >= CAP_WARNING_PERCENT ? "yellow" : "green";
+            percent >= CAP_WARNING_PERCENT ? OVER_BUDGET_COLOR : WITHIN_BUDGET_COLOR;
     }
 }
