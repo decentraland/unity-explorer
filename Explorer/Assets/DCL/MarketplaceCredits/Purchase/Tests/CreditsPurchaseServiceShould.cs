@@ -640,6 +640,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             shopAPIClient.GetShopListingForItemAsync(COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>())
                          .Returns(UniTask.FromResult<ShopListingDto?>(MintListing()));
 
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(CreateAuthorization(LEGACY_PRICE_CENTS)));
+
             CreditsQuoteResult quote = await service.QuoteAsync(MintListing(), CancellationToken.None);
 
             // Act
@@ -712,6 +715,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Arrange
             shopAPIClient.GetShopListingForItemAsync(COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>())
                          .Returns(UniTask.FromResult<ShopListingDto?>(MintListing()));
+
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(CreateAuthorization(LEGACY_PRICE_CENTS)));
 
             CreditsQuoteResult quote = await service.QuoteAsync(MintListing(), CancellationToken.None);
 
