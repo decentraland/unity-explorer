@@ -573,6 +573,7 @@ jobs:
           POLL_TIME: 60
           QUEUE_POLL_TIME: 120
           STALE_POLL_THRESHOLD: 600
+          LOG_STALL_THRESHOLD: 900
           QUEUE_TIMEOUT: 14400
           BUILD_TIMEOUT: 10800
           TARGET: t_${{ matrix.target }}

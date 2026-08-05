@@ -44,6 +44,10 @@ HEADERS = utils.create_headers(os.getenv('API_KEY'))
 POLL_TIME = int(os.getenv('POLL_TIME', '60'))
 QUEUE_POLL_TIME = int(os.getenv('QUEUE_POLL_TIME', '120'))
 STALE_THRESHOLD = int(os.getenv('STALE_POLL_THRESHOLD', '600'))
+# If the build log has not grown for this many seconds while the build is active,
+# the build is presumed deadlocked and is cancelled so the retry lands on a fresh
+# builder VM.  15 min is generous enough to survive silent IL2CPP / shader phases.
+LOG_STALL_THRESHOLD = int(os.getenv('LOG_STALL_THRESHOLD', '900'))
 
 # Queue time and active build time use separate budgets so a long Unity Cloud
 # queue does not eat into the actual build window.
@@ -467,6 +471,39 @@ def download_log(id):
 
     print('Build log ready!')
 
+def get_log_byte_count(id):
+    """Return the current byte length of the build log, or None on any error.
+
+    Uses a HEAD request first (zero-body, cheapest).  If the server does not
+    honour HEAD, falls back to a single-byte Range request and reads the total
+    from the Content-Range response header.  Never downloads the full log.
+    """
+    url = f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}/log'
+    try:
+        resp = requests.head(url, headers=HEADERS, timeout=30)
+        if resp.status_code == 200 and 'Content-Length' in resp.headers:
+            return int(resp.headers['Content-Length'])
+        # Range fallback: fetch exactly one byte; read the total from Content-Range.
+        resp = requests.get(
+            url,
+            headers={**HEADERS, 'Range': 'bytes=0-0'},
+            timeout=30,
+            stream=True,
+        )
+        resp.close()
+        if resp.status_code in (200, 206):
+            content_range = resp.headers.get('Content-Range', '')
+            m = re.search(r'/(\d+)$', content_range)
+            if m:
+                return int(m.group(1))
+            # Server returned 200 without Content-Range → use Content-Length.
+            if 'Content-Length' in resp.headers:
+                return int(resp.headers['Content-Length'])
+    except requests.exceptions.RequestException as e:
+        print(f'Warning: log size probe failed ({e})')
+    return None
+
+
 def delete_build(id):
     response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/artifacts', headers=HEADERS)
 
@@ -618,6 +655,10 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
     attempt can reattach via try_resume_build and keep the queue position.
     BUILD_TIMEOUT still cancels — a runaway active build should not keep
     holding a Unity Cloud slot.
+    LOG_STALL_THRESHOLD: if the build log has not grown for this many seconds
+    while the build is active, the build is cancelled and retried on a fresh
+    builder VM (exit 99).  This catches deadlocked builders that keep reporting
+    status=started while producing no output.
 
     Returns (final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed).
     """
@@ -630,6 +671,8 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
     last_status = None
     last_status_change = now
     last_poll = now
+    last_log_byte_count = None  # most recently observed log size in bytes
+    last_log_growth = None      # wall-clock time of the last log-size increase
 
     while True:
         now = time.time()
@@ -663,7 +706,31 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
 
         if build_start is None and status in ACTIVE_STATUSES:
             build_start = now
+            last_log_growth = now  # start the stall clock from when the build went active
             print(f'Build picked up by builder after {datetime.timedelta(seconds=int(now - queue_start))} in queue.')
+
+        # Log-stall watchdog: probe log size on every poll tick while the build
+        # is active.  A deadlocked builder keeps status=started but its log stops
+        # growing.  Cancel and retry (exit 99 → fresh builder VM) after the
+        # configured threshold.  If the probe itself fails we skip rather than
+        # false-positive cancel.
+        if status in ACTIVE_STATUSES:
+            log_bytes = get_log_byte_count(id)
+            if log_bytes is not None:
+                if last_log_byte_count is None or log_bytes > last_log_byte_count:
+                    last_log_byte_count = log_bytes
+                    last_log_growth = now
+                elif last_log_growth is not None and (now - last_log_growth) > LOG_STALL_THRESHOLD:
+                    stall_duration = datetime.timedelta(seconds=int(now - last_log_growth))
+                    print(
+                        f'Build log has not grown for {stall_duration} '
+                        f'(threshold {datetime.timedelta(seconds=LOG_STALL_THRESHOLD)}). '
+                        f'Builder appears deadlocked — cancelling and retrying on a fresh VM.'
+                    )
+                    cancel_build(id)
+                    queue_elapsed = (build_start or now) - queue_start
+                    build_elapsed = now - (build_start or now)
+                    return 'log_stall', phase_durations, queue_reasons, queue_elapsed, build_elapsed
 
         if status != last_status:
             queue_elapsed = (build_start or now) - queue_start
@@ -766,14 +833,15 @@ final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = ru
 )
 write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed)
 
-if final_outcome in ('queue_timeout', 'build_timeout'):
-    if final_outcome == 'build_timeout':
+if final_outcome in ('queue_timeout', 'build_timeout', 'log_stall'):
+    if final_outcome in ('build_timeout', 'log_stall'):
         # Build was cancelled; the persisted info points to a dead build.
+        # Delete it so the next retry creates a fresh build on a different VM.
         utils.delete_build_info()
         try:
             download_log(id)
         except Exception as e:
-            print(f'Warning: could not download log after timeout: {e}')
+            print(f'Warning: could not download log after {final_outcome}: {e}')
     sys.exit(RETRYABLE_EXIT_CODE)
 
 utils.delete_build_info()
