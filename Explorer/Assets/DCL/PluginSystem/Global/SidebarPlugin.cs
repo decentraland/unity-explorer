@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
         private ProfileMenuController? profileMenuController;
         private SkyboxMenuController? skyboxMenuController;
         private ControlsPanelController? controlsPanelController;
-        private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
+        private PortableExperiencesSideBarTooltipController? portableExperiencesSideBarTooltipController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
         private NearbyVoicePanelController? nearbyVoicePanelController;
         private HelpMenuController? helpMenuController;
@@ -158,7 +158,7 @@ namespace DCL.PluginSystem.Global
             profileMenuController?.Dispose();
             skyboxMenuController?.Dispose();
             controlsPanelController?.Dispose();
-            smartWearablesSideBarTooltipController?.Dispose();
+            portableExperiencesSideBarTooltipController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
             nearbyVoicePanelController?.Dispose();
             helpMenuController?.Dispose();
@@ -181,7 +181,7 @@ namespace DCL.PluginSystem.Global
             profileButtonPresenter = new SidebarProfileButtonPresenter( mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
             profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
-            smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache, localPortableExperiencesStatus, globalPortableExperiencesStatus);
+            portableExperiencesSideBarTooltipController = new PortableExperiencesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache, localPortableExperiencesStatus, globalPortableExperiencesStatus);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
             helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
@@ -194,7 +194,7 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 profileButtonPresenter,
-                smartWearablesSideBarTooltipController,
+                portableExperiencesSideBarTooltipController,
                 webBrowser,
                 chatHistory,
                 selfProfile,
@@ -211,7 +211,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(notificationsPanelController);
             mvcManager.RegisterController(profileMenuController);
             mvcManager.RegisterController(skyboxMenuController);
-            mvcManager.RegisterController(smartWearablesSideBarTooltipController);
+            mvcManager.RegisterController(portableExperiencesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
             mvcManager.RegisterController(nearbyVoicePanelController);
             mvcManager.RegisterController(helpMenuController);

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DCL.UI.Skybox
 {
-    public class SmartWearablesSideBarTooltipView : ViewBase, IView
+    public class PortableExperiencesSideBarTooltipView : ViewBase, IView
     {
         [Serializable]
         public struct PXSummary

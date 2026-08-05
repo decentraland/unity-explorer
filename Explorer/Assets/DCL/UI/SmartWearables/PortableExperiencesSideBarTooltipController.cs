@@ -7,7 +7,7 @@ using Utility.PortableExperiences;
 
 namespace DCL.UI.Skybox
 {
-    public class SmartWearablesSideBarTooltipController : ControllerBase<SmartWearablesSideBarTooltipView>
+    public class PortableExperiencesSideBarTooltipController : ControllerBase<PortableExperiencesSideBarTooltipView>
     {
         private readonly SmartWearableCache smartWearableCache;
         private readonly ILocalPortableExperiencesStatus localPortableExperiencesStatus;
@@ -15,7 +15,7 @@ namespace DCL.UI.Skybox
 
         private CancellationTokenSource? cancellationTokenSource;
 
-        public SmartWearablesSideBarTooltipController(ViewFactoryMethod viewFactory,
+        public PortableExperiencesSideBarTooltipController(ViewFactoryMethod viewFactory,
             SmartWearableCache smartWearableCache,
             ILocalPortableExperiencesStatus localPortableExperiencesStatus,
             IPortableExperiencesStatus globalPortableExperiencesStatus) : base(viewFactory)
