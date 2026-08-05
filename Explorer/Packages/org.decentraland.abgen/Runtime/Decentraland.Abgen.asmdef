@@ -1,0 +1,14 @@
+{
+    "name": "Decentraland.Abgen",
+    "rootNamespace": "Decentraland.Abgen",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
