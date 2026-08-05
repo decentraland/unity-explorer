@@ -30,7 +30,22 @@ namespace DCL.MarketplaceCredits
     public struct AuthorizeUsdCreditBody
     {
         public int usdPriceCents;
+
+        /// <summary>
+        ///     Empty for a CollectionStore mint, which has no trade.
+        ///     <para>
+        ///         Neither this nor the item pair below is part of what the server SIGNS: the authorization is a
+        ///         voucher for an AMOUNT (value + expiry + salt + signature) and the caps the CreditsManager
+        ///         enforces on-chain against whatever MANA the external call actually moves. These fields are
+        ///         recorded on the intent so the buyer's purchase history can name what was bought — and for a
+        ///         mint they are the only identity it has, since there is no trade to resolve a name from.
+        ///     </para>
+        /// </summary>
         public string tradeId;
+
+        public string contractAddress;
+
+        public string itemId;
     }
 
     [Serializable]
