@@ -16,7 +16,9 @@ if [[ ! -d "$assets_path" ]]; then
     exit 1
 fi
 
-# Write suppressions to each .rsp file
+# Write suppressions to each .rsp file, but only on content drift: the rsp files are
+# timestamp inputs to Bee's build graph, and an unconditional rewrite forces a DAG
+# rebuild (IL2CPP + Usym rerun, ~267s) on every otherwise-no-change build.
 for file_name in "${rsp_files[@]}"; do
     file_path="$assets_path/$file_name"
 
@@ -24,7 +26,8 @@ for file_name in "${rsp_files[@]}"; do
         for warning in "${warnings_to_ignore[@]}"; do
             echo "-nowarn:$warning"
         done
-    } > "$file_path"
+    } > "$file_path.tmp"
+    if cmp -s "$file_path.tmp" "$file_path" 2>/dev/null; then rm -f "$file_path.tmp"; else mv "$file_path.tmp" "$file_path"; fi
 
     if [[ $? -eq 0 ]]; then
         echo "Successfully generated $file_name with ${#warnings_to_ignore[@]} warning suppressions."

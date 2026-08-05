@@ -29,3 +29,8 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 *.asset binary
 *.controller binary
 *.asset text diff=yaml merge=yaml
+
+# Root-level compiler rsp files must check out byte-identical to what
+# scripts/generate-ignore-warnings.sh writes (LF), or its drift check rewrites
+# them on CRLF-converting builders and re-triggers a Bee DAG rebuild.
+Explorer/Assets/*.rsp text eol=lf
