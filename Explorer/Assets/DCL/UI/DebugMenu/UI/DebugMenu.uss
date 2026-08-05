@@ -355,9 +355,8 @@
 .metrics-panel__header {
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
     padding-top: 18px;
-    padding-right: 18px;
+    padding-right: 24px;
     padding-bottom: 18px;
     padding-left: 24px;
     background-color: rgba(0, 0, 0, 0.35);
@@ -368,23 +367,6 @@
     font-size: 20px;
     letter-spacing: 1px;
     -unity-font-definition: var(--dcl-font-inter-semibold);
-}
-
-.metrics-panel__close-button {
-    width: 44px;
-    height: 44px;
-    padding-top: 0;
-    padding-right: 0;
-    padding-bottom: 0;
-    padding-left: 0;
-    border-top-width: 0;
-    border-right-width: 0;
-    border-bottom-width: 0;
-    border-left-width: 0;
-    border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.06);
-    background-image: var(--sprite-common__icon-close);
-    background-size: 40% 40%;
 }
 
 .metrics-panel__rows {

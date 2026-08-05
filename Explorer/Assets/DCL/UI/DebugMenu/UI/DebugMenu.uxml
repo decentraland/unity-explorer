@@ -24,7 +24,6 @@
     <ui:VisualElement name="MetricsPanel" usage-hints="DynamicTransform" class="metrics-panel debug-panel debug-panel--hidden">
         <ui:VisualElement name="Header" class="metrics-panel__header">
             <ui:Label text="SCENE STATS" name="TitleLabel" class="metrics-panel__title" />
-            <ui:Button name="CloseButton" class="dcl-clickable metrics-panel__close-button" />
         </ui:VisualElement>
         <ui:VisualElement name="MetricsRows" class="metrics-panel__rows" />
     </ui:VisualElement>
