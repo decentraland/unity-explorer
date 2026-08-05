@@ -7,6 +7,7 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.EventsApi;
+using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -17,6 +18,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
+using DCL.UI.PortableExperiences.SummaryPopup;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -72,6 +74,7 @@ namespace DCL.PluginSystem.Global
         private readonly HttpEventsApiService eventsApiService;
         private readonly SupportRequestService supportRequestService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
+        private readonly IInputBlock inputBlock;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -80,6 +83,7 @@ namespace DCL.PluginSystem.Global
         private SkyboxMenuController? skyboxMenuController;
         private ControlsPanelController? controlsPanelController;
         private PortableExperiencesSideBarTooltipController? portableExperiencesSideBarTooltipController;
+        private PortableExperiencesSummaryController? portableExperiencesSummaryController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
         private NearbyVoicePanelController? nearbyVoicePanelController;
         private HelpMenuController? helpMenuController;
@@ -114,7 +118,8 @@ namespace DCL.PluginSystem.Global
             ILocalPortableExperiencesStatus localPortableExperiencesStatus,
             IPortableExperiencesStatus globalPortableExperiencesStatus,
             SupportRequestService supportRequestService,
-            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
+            IInputBlock inputBlock)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -144,6 +149,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.supportRequestService = supportRequestService;
             this.communitiesLiveTracker = communitiesLiveTracker;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose()
@@ -159,6 +165,7 @@ namespace DCL.PluginSystem.Global
             skyboxMenuController?.Dispose();
             controlsPanelController?.Dispose();
             portableExperiencesSideBarTooltipController?.Dispose();
+            portableExperiencesSummaryController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
             nearbyVoicePanelController?.Dispose();
             helpMenuController?.Dispose();
@@ -176,12 +183,16 @@ namespace DCL.PluginSystem.Global
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
+            PortableExperiencesSummaryView pxSummaryAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PXSummaryPanelPrefab, ct)).GetComponent<PortableExperiencesSummaryView>();
+            PortableExperiencesSummaryController.Preallocate(pxSummaryAsset, null!, out PortableExperiencesSummaryView pxSummaryView);
+
             controlsPanelController = new ControlsPanelController(() => controlsPanelView);
             notificationsPanelController = new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper, mvcManager);
             profileButtonPresenter = new SidebarProfileButtonPresenter( mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
             profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
             portableExperiencesSideBarTooltipController = new PortableExperiencesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache, localPortableExperiencesStatus, globalPortableExperiencesStatus);
+            portableExperiencesSummaryController = new PortableExperiencesSummaryController(() => pxSummaryView, inputBlock);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
             helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
@@ -216,6 +227,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(nearbyVoicePanelController);
             mvcManager.RegisterController(helpMenuController);
             mvcManager.RegisterController(sidebarController);
+            mvcManager.RegisterController(portableExperiencesSummaryController);
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
             DCLInput.Instance.Shortcuts.Support.performed += OnSupportShortcutPerformed;
@@ -229,6 +241,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; } = null!;
             [field: SerializeField] public SkyboxSettingsAsset SettingsAsset { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject ControlsPanelPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject PXSummaryPanelPrefab { get; private set; } = null!;
         }
 
         private void OnControlsShortcutPerformed(InputAction.CallbackContext _)

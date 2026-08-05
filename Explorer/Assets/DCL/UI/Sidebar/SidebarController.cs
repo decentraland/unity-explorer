@@ -18,7 +18,6 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
@@ -30,6 +29,7 @@ using DCL.CharacterCamera;
 using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
+using DCL.UI.PortableExperiences.SummaryPopup;
 using DCL.UI.Sidebar.HelpMenu;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -151,6 +151,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
                 viewInstance.smartWearablesButton.OnButtonHover -= OnPXsButtonHover;
                 viewInstance.smartWearablesButton.OnButtonUnhover -= OnPXsButtonUnhover;
+                viewInstance.smartWearablesButton.onClick.RemoveListener(OnPXsButtonClick);
                 if (isNearbyVoiceChatEnabled)
                     viewInstance.NearbyVoiceChatButton.Button.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
 
@@ -238,6 +239,7 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
             viewInstance.smartWearablesButton.OnButtonHover += OnPXsButtonHover;
             viewInstance.smartWearablesButton.OnButtonUnhover += OnPXsButtonUnhover;
+            viewInstance.smartWearablesButton.onClick.AddListener(OnPXsButtonClick);
             if (isNearbyVoiceChatEnabled)
                 viewInstance.NearbyVoiceChatButton.Button.onClick.AddListener(OnNearbyVoiceButtonClicked);
 
@@ -434,6 +436,7 @@ namespace DCL.UI.Sidebar
 
         private void OnPXsButtonHover() => OpenPanelAsync(viewInstance!.smartWearablesButton, PortableExperiencesSideBarTooltipController.IssueCommand()).Forget();
         private void OnPXsButtonUnhover() => portableExperiencesTooltipController.Close();
+        private void OnPXsButtonClick() => mvcManager.ShowAndForget(PortableExperiencesSummaryController.IssueCommand());
 
         private void OnNearbyVoiceButtonClicked()
         {
