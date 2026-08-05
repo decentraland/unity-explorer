@@ -34,3 +34,8 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 # scripts/generate-ignore-warnings.sh writes (LF), or its drift check rewrites
 # them on CRLF-converting builders and re-triggers a Bee DAG rebuild.
 Explorer/Assets/*.rsp text eol=lf
+
+# Shell scripts must check out LF everywhere: CRLF-converting Windows builders
+# fail them with "$'\r': command not found" (seen on every Windows cloud build
+# running the UBA preBuildScript).
+*.sh text eol=lf
