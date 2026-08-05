@@ -41,5 +41,15 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(StyleKeyword.Null, uiTransformComponent.Transform.style.overflow.keyword);
             Assert.AreEqual(StyleKeyword.Null, uiTransformComponent.Transform.style.backgroundColor.keyword);
         }
+
+        [Test]
+        public void NewlyInstantiatedUITransformIsHiddenUntilParented()
+        {
+            // Assert - a freshly instantiated element is added straight to the fullscreen
+            // canvas root (parenting is deferred to UITransformParentingSystem), so until it is
+            // actually parented it must stay invisible instead of floating over the world.
+            UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
+            Assert.AreEqual(Visibility.Hidden, uiTransformComponent.Transform.style.visibility.value);
+        }
     }
 }

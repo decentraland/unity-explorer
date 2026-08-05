@@ -11,6 +11,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using System.Collections.Generic;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -33,6 +34,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             OrphanChildrenOfDeletedEntityQuery(World);
             DoUITransformParentingQuery(World);
+            RetryUnresolvedParentingQuery(World);
         }
 
         [Query]
@@ -81,6 +83,19 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
                 SetNewChild(ref uiTransformComponent, sdkEntity, parentReference);
             }
+            else
+                ReportHub.LogWarning(GetReportData(), $"Trying to parent entity {sdkEntity} to a parent {sdkModel.Parent} that is not resolvable yet, parenting will be retried");
+        }
+
+        [Query]
+        [None(typeof(SceneRootComponent), typeof(DeleteEntityIntention))]
+        private void RetryUnresolvedParenting(CRDTEntity sdkEntity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        {
+            if (uiTransformComponent.RelationData.parent != Entity.Null)
+                return;
+
+            if (entitiesMap.TryGetValue(sdkModel.Parent, out Entity newParentEntity))
+                SetNewChild(ref uiTransformComponent, sdkEntity, newParentEntity);
         }
 
         private void SetNewChild(ref UITransformComponent childComponent, CRDTEntity childEntity, Entity parentEntity)
@@ -106,6 +121,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             parentComponent.RelationData.AddChild(parentEntity, childEntity, ref childComponent.RelationData);
             parentComponent.ContentContainer.Add(childComponent.Transform);
+            childComponent.Transform.style.visibility = StyleKeyword.Null;
         }
 
         private void RemoveFromParent(UITransformComponent childComponent, CRDTEntity child)

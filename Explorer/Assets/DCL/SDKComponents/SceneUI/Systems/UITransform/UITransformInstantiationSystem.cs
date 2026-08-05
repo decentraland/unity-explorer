@@ -45,6 +45,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             newTransform.InitializeAsChild(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
 
+            newTransform.Transform.style.visibility = Visibility.Hidden;
+
             canvas.rootVisualElement.Add(newTransform.Transform);
 
             UiElementUtils.ClearDefaultInteractiveStyles(newTransform.Transform);
