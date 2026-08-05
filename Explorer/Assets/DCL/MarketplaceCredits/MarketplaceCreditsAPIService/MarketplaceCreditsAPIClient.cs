@@ -90,10 +90,25 @@ namespace DCL.MarketplaceCredits
                                              .CreateFromJson<CreditPacksResponse>(WRJsonParser.Unity);
         }
 
-        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, CancellationToken ct)
+        /// <summary>
+        ///     Reserves the dollars and signs the credit for ONE purchase.
+        ///     <para>
+        ///         `tradeId` is empty for a CollectionStore mint, which is identified by the
+        ///         (contractAddress, itemId) pair instead — the server accepts either, and signs neither: what it
+        ///         signs is a voucher for an amount, and the caps the CreditsManager enforces on-chain.
+        ///     </para>
+        /// </summary>
+        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, string contractAddress, string itemId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
-            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdCreditBody { usdPriceCents = usdPriceCents, tradeId = tradeId });
+
+            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdCreditBody
+            {
+                usdPriceCents = usdPriceCents,
+                tradeId = tradeId,
+                contractAddress = contractAddress,
+                itemId = itemId,
+            });
 
             return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                              .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);

@@ -19,6 +19,48 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private const string EXPECTED_ACCEPT_SELECTOR = "0x961a547e";
 
+        // The CollectionStore rail. Generated from the same reference implementation, against the REAL
+        // CollectionStore ABI shipped in decentraland-transactions — never a hand-written signature, which is how
+        // a wrong selector gets shipped. Fixture: collection 0x2222…2222, item 3, 20 MANA, the buyer below.
+        private const string EXPECTED_STORE_BUY_SELECTOR = "0xa4fdc78a";
+        private const string EXPECTED_COLLECTION = "0x2222222222222222222222222222222222222222";
+        private const string EXPECTED_STORE_ADDRESS = "0x214ffc0f0103735728dc66b61a22e4f163e275ae";
+        private const string MINT_ITEM_ID = "3";
+        private const string MINT_PRICE_WEI = "20000000000000000000";
+
+        private const string EXPECTED_STORE_BUY_DATA =
+            "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000" +
+            "0000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000022222222222222222222" +
+            "2222222222222222222200000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000" +
+            "0000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000" +
+            "0000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000" +
+            "00000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000001158e460913d000000000" +
+            "00000000000000000000000000000000000000000000000000000000000100000000000000000000000099995f38fc9d786eab5c3a1b1c4e6ae5f4" +
+            "e99999";
+
+        private const string EXPECTED_STORE_USE_CREDITS =
+            "0x1863572d00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000" +
+            "0000000000000000c00000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000" +
+            "0000000000000000000000000200000000000000000000000000000000000000000000000000000000000000046000000000000000000000000000" +
+            "00000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000006124fee993bc00000000000000000000" +
+            "00000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000053444835ec580000000000" +
+            "000000000000000000000000000000000000000000000000006955b900696e74656e742d6162632d31323300000000000000000000000000000000" +
+            "0000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000" +
+            "000000000000200000000000000000000000000000000000000000000000000000000000000041bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" +
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0000000000000000000000000000" +
+            "0000000000000000000000000000000000000000000000000000000000214ffc0f0103735728dc66b61a22e4f163e275aea4fdc78a000000000000" +
+            "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a00000000000" +
+            "00000000000000000000000000000000000000000000006b49d200cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd" +
+            "00000000000000000000000000000000000000000000000000000000000001a0000000000000000000000000000000000000000000000000000000" +
+            "0000000020000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000" +
+            "0000000000000000002000000000000000000000000022222222222222222222222222222222222222220000000000000000000000000000000000" +
+            "00000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000" +
+            "0000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000100000000000000" +
+            "0000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010000" +
+            "00000000000000000000000000000000000000000001158e460913d000000000000000000000000000000000000000000000000000000000000000" +
+            "00000100000000000000000000000099995f38fc9d786eab5c3a1b1c4e6ae5f4e99999000000000000000000000000000000000000000000000000" +
+            "0000000000000000";
+
         private const string EXPECTED_ACCEPT_DATA =
             "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000" +
             "0000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000024e5f44999c151f08609f8" +
@@ -221,6 +263,72 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Assert
             Assert.AreEqual(EXPECTED_USE_CREDITS, calldata);
+        }
+
+        /// <summary>
+        ///     A CollectionStore MINT is bought with the same envelope as a trade — only the external call
+        ///     differs. There is no trade and no order to fetch: nothing was ever signed or listed, so the item is
+        ///     minted straight from the store contract.
+        /// </summary>
+        [Test]
+        public void EncodeStoreBuyCallMatchingReferenceImplementation()
+        {
+            // Act
+            (byte[] selector, byte[] data) = CreditsTradeEncoder.BuildStoreBuyCall(EXPECTED_COLLECTION, MINT_ITEM_ID, MINT_PRICE_WEI, BUYER);
+
+            // Assert
+            Assert.AreEqual(EXPECTED_STORE_BUY_SELECTOR, ToHex(selector));
+            Assert.AreEqual(EXPECTED_STORE_BUY_DATA, ToHex(data));
+        }
+
+        [Test]
+        public void EncodeStoreMintUseCreditsCalldataMatchingReferenceImplementation()
+        {
+            // Act
+            string calldata = CreditsTradeEncoder.BuildStoreMintUseCreditsCalldata(
+                EXPECTED_STORE_ADDRESS, EXPECTED_COLLECTION, MINT_ITEM_ID, MINT_PRICE_WEI,
+                BUYER, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            // Assert
+            Assert.AreEqual(EXPECTED_STORE_USE_CREDITS, calldata);
+        }
+
+        /// <summary>
+        ///     The buyer must be named as the beneficiary in the calldata itself. The store never sees them as
+        ///     msg.sender on either rail — the CreditsManager is the caller — so if the beneficiary came from the
+        ///     sender the relayed mint would send the item to the relayer.
+        /// </summary>
+        [Test]
+        public void NameTheBuyerAsTheMintBeneficiary()
+        {
+            // Act
+            (byte[] _, byte[] data) = CreditsTradeEncoder.BuildStoreBuyCall(EXPECTED_COLLECTION, MINT_ITEM_ID, MINT_PRICE_WEI, BUYER);
+
+            // Assert
+            StringAssert.Contains(BUYER.Substring(2).ToLowerInvariant(), ToHex(data));
+        }
+
+        /// <summary>
+        ///     The two rails share the envelope and differ only in the external call, so the mint's calldata must
+        ///     point at the STORE while the trade's points at the marketplace. Getting this backwards would send
+        ///     an accept() to the store (or a buy() to the marketplace) and revert.
+        /// </summary>
+        [Test]
+        public void TargetTheStoreForAMintAndTheMarketplaceForATrade()
+        {
+            // Act
+            string mint = CreditsTradeEncoder.BuildStoreMintUseCreditsCalldata(
+                EXPECTED_STORE_ADDRESS, EXPECTED_COLLECTION, MINT_ITEM_ID, MINT_PRICE_WEI,
+                BUYER, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            string trade = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                CreateTradeFixture(), BUYER, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            // Assert
+            StringAssert.Contains(EXPECTED_STORE_ADDRESS.Substring(2), mint);
+            StringAssert.Contains(EXPECTED_STORE_BUY_SELECTOR.Substring(2), mint);
+            StringAssert.DoesNotContain(EXPECTED_STORE_BUY_SELECTOR.Substring(2), trade);
+            StringAssert.Contains(EXPECTED_ACCEPT_SELECTOR.Substring(2), trade);
         }
 
         [Test]
