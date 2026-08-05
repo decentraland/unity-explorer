@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -14,7 +15,7 @@ using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Benchmarks <see cref="NearbyVoiceChatNametagSystem.Update"/> on a mixed steady-state
@@ -41,7 +42,7 @@ namespace DCL.VoiceChat.Nearby
 
             registry = Substitute.For<INearbyAudioStreamRegistry>();
 
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             var muteService = new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>());
 
             Entity playerEntity = world.Create();
@@ -75,7 +76,7 @@ namespace DCL.VoiceChat.Nearby
                 if (i < half)
                 {
                     registry.IsActiveSpeaker(wallet).Returns(true);
-                    world.Add(e, new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY));
+                    world.Add(e, new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.Nearby));
                 }
             }
 

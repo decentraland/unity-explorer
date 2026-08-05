@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly MainUIView mainUIView;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.Global
         public MarketplaceCreditsPlugin(
             MainUIView mainUIView,
             IAssetsProvisioner assetsProvisioner,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
@@ -52,7 +52,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter,
-            ImageControllerProvider imageControllerProvider)
+            ImageControllerProvider imageControllerProvider,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -67,7 +68,7 @@ namespace DCL.PluginSystem.Global
             this.textFormatter = textFormatter;
             this.imageControllerProvider = imageControllerProvider;
 
-            marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

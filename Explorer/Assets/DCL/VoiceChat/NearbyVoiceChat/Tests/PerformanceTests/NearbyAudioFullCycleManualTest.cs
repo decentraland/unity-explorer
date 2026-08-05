@@ -1,10 +1,11 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterCamera;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.SceneBannedUsers;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -22,7 +23,7 @@ using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     ///     Profiler-attachable PlayMode testbed for the full Nearby audio ECS chain.
@@ -62,7 +63,7 @@ namespace DCL.VoiceChat.Nearby
 
         [Header("Listening Gate")]
         [Tooltip("Inspector-driven target state. Translated to the matching state-model transition every Update.")]
-        [SerializeField] private NearbyVoiceChatState forceState = NearbyVoiceChatState.IDLE;
+        [SerializeField] private NearbyVoiceChatState forceState = NearbyVoiceChatState.Idle;
 
         [Header("System Toggles (off = skip that stage in Update)")]
         [SerializeField] private bool runBinding = true;
@@ -87,7 +88,7 @@ namespace DCL.VoiceChat.Nearby
         // ── Avatar bookkeeping ──────────────────────────────────────
         private readonly List<AvatarHandle> avatars = new (256);
         private readonly List<Entity> deleteScratch = new (32);
-        private NearbyVoiceChatState lastSyncedState = NearbyVoiceChatState.IDLE;
+        private NearbyVoiceChatState lastSyncedState = NearbyVoiceChatState.Idle;
         private int nextAvatarOrdinal;
 
         private struct AvatarHandle
@@ -124,7 +125,7 @@ namespace DCL.VoiceChat.Nearby
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 
@@ -188,21 +189,21 @@ namespace DCL.VoiceChat.Nearby
 
             switch (forceState)
             {
-                case NearbyVoiceChatState.IDLE:
-                    if (lastSyncedState == NearbyVoiceChatState.SUPPRESSED)
-                        stateModel.Resume(SuppressionReason.CALL);
-                    else if (lastSyncedState == NearbyVoiceChatState.DISABLED)
+                case NearbyVoiceChatState.Idle:
+                    if (lastSyncedState == NearbyVoiceChatState.Suppressed)
+                        stateModel.Resume(SuppressionReason.Call);
+                    else if (lastSyncedState == NearbyVoiceChatState.Disabled)
                         stateModel.Enable();
-                    else if (lastSyncedState == NearbyVoiceChatState.OPEN_MIC)
+                    else if (lastSyncedState == NearbyVoiceChatState.OpenMic)
                         stateModel.StopSpeaking();
                     break;
-                case NearbyVoiceChatState.OPEN_MIC:
+                case NearbyVoiceChatState.OpenMic:
                     stateModel.StartSpeaking();
                     break;
-                case NearbyVoiceChatState.SUPPRESSED:
-                    stateModel.Suppress(SuppressionReason.CALL);
+                case NearbyVoiceChatState.Suppressed:
+                    stateModel.Suppress(SuppressionReason.Call);
                     break;
-                case NearbyVoiceChatState.DISABLED:
+                case NearbyVoiceChatState.Disabled:
                     stateModel.Disable();
                     break;
             }
@@ -304,10 +305,10 @@ namespace DCL.VoiceChat.Nearby
         private void Remove10Avatars() => targetAvatarCount = Mathf.Max(0, targetAvatarCount - 10);
 
         [ContextMenu("Suppress (CALL)")]
-        private void SuppressContext() => forceState = NearbyVoiceChatState.SUPPRESSED;
+        private void SuppressContext() => forceState = NearbyVoiceChatState.Suppressed;
 
         [ContextMenu("Resume to IDLE")]
-        private void ResumeContext() => forceState = NearbyVoiceChatState.IDLE;
+        private void ResumeContext() => forceState = NearbyVoiceChatState.Idle;
 
         [ContextMenu("Force mass cleanup (clear all sids)")]
         private void ForceMassCleanup() => registry?.ClearAll();

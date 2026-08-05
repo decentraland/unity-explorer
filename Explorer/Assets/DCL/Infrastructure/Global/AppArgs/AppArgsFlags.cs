@@ -1,3 +1,4 @@
+// ReSharper disable once CheckNamespace
 namespace Global.AppArgs
 {
     public static class AppArgsFlags
@@ -22,6 +23,7 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
+        public const string SPAWN_POINT = "spawnpoint";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
         public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
@@ -30,6 +32,16 @@ namespace Global.AppArgs
         /// The community received here (by its ID) will be shown through a notification inviting the user to click on it and open that community card.
         /// </summary>
         public const string COMMUNITY = "community";
+
+        public const string FORCE_OPEN_BACKPACK = "force-open-backpack";
+
+        // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
+        public const string SIGNIN = "signin";
+        // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
+        public const string AUTH_REQUEST_ID = "authRequestId";
+        // See: https://github.com/decentraland/unity-explorer/issues/9524
+        // ReSharper disable once UnusedMember.Global (used on non-editor build only)
+        public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
 
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
@@ -55,7 +67,6 @@ namespace Global.AppArgs
         public const string SIMULATE_MEMORY = "simulateMemory";
 
         public const string LAUNCH_CDP_MONITOR_ON_START = "launch-cdp-monitor-on-start";
-        public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
         public const string GRAPHICS = "graphics";
@@ -97,6 +108,16 @@ namespace Global.AppArgs
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
         public const string ALTTESTER = "alttester";
 
+        /// <summary>
+        ///     Starts the embedded MCP (Model Context Protocol) server on 127.0.0.1 so coding agents can drive the client.
+        /// </summary>
+        public const string MCP = "mcp";
+
+        /// <summary>
+        ///     Overrides the port the embedded MCP server listens on (implies <see cref="MCP" />).
+        /// </summary>
+        public const string MCP_PORT = "mcp-port";
+
         public const string REPORT_USER = "report-user";
 
         public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
@@ -106,9 +127,19 @@ namespace Global.AppArgs
 
         public const string BYTE_WEIGHTED_LOADING_PROGRESS = "byte-weighted-loading-progress";
 
+        public const string HARDWARE_FINGERPRINT = "hardware-fingerprint";
+
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+        /// <summary>
+        ///     Local scene development only: load assets as asset bundles served by the preview server at
+        ///     {realm}/optimized-assets instead of raw GLTFs. Carries no URL or port — the base is derived
+        ///     from the realm the client already has.
+        /// </summary>
+        public const string LOCAL_AB = "local-ab";
+
+        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 

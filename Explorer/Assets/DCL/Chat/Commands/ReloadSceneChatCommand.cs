@@ -74,6 +74,8 @@ namespace DCL.Chat.Commands
 
         private static void ResetExternalPhysics(CharacterRigidTransform rigidTransform)
         {
+            rigidTransform.ExternalForceContributions.Clear();
+
             rigidTransform.ExternalForce =
             rigidTransform.ExternalAcceleration =
             rigidTransform.ExternalImpulse =

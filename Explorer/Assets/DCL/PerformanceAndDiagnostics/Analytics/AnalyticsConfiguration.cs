@@ -6,9 +6,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public enum AnalyticsMode
     {
-        DEBUG_LOG,
-        SEGMENT,
-        DISABLED,
+        DebugLog,
+        Segment,
+        Disabled,
     }
 
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/Diagnostics/Analytics Configuration")]
@@ -38,7 +38,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public float PerformanceReportInterval { get; private set; } = 1.0f;
 
         [field: SerializeField]
-        public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
+        public AnalyticsMode Mode { get; private set; } = AnalyticsMode.Segment;
 
         private Configuration segmentConfiguration;
 

@@ -6,7 +6,7 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarSettingsWidgetController : ControllerBase<SidebarConfigPanelView>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private UniTaskCompletionSource? closeViewTask;
 

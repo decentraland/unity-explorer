@@ -190,7 +190,7 @@ namespace DCL.Places
             creatorNameText.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
             creatorWalletText.text = !string.IsNullOrEmpty(placeInfo.owner) && placeInfo.owner.Length >= 10 ? $"{placeInfo.owner[..5]}...{placeInfo.owner[^5..]}" : "Unknown";
             creatorWalletText.gameObject.SetActive(string.IsNullOrEmpty(placeInfo.contact_name));
-            likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
+            likeRateText.text = $"{(placeInfo.LikeRateAsFloat ?? 0) * 100:F0}%";
             visitsText.text = UIUtils.NumberToCompactString(placeInfo.user_visits);
             SilentlySetLikeToggle(placeInfo.user_like);
             SilentlySetDislikeToggle(placeInfo.user_dislike);

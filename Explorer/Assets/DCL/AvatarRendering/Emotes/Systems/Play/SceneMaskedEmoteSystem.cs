@@ -89,10 +89,14 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             AvatarBase view = mainPlayerAvatarBaseProxy.Object!;
 
+            // Both branches below tear down an emote that stopped by itself. A non-looping clip ran to its
+            // end and has nothing left to resume, so its urn is cleared too; a looping one lost its animator
+            // state to something else and keeps the urn to be resumed.
+
             // Legacy-blender path: tear down once the blender signals natural completion.
             if (view.HasMaskedLegacyEmoteFinished)
             {
-                TryStopMaskedEmote(ref masked);
+                TryStopMaskedEmote(ref masked, permanent: !masked.EmoteLoop);
                 return;
             }
 
@@ -105,7 +109,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
 
             if (isOnAnotherTag)
-                TryStopMaskedEmote(ref masked);
+                TryStopMaskedEmote(ref masked, permanent: !masked.EmoteLoop);
         }
 
         [Query]
@@ -180,7 +184,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                 ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
             else
             {
-                uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+                // The duration comes from the masked emote's own clip; a looping emote has no end to report.
+                uint durationMs = !isLooping ? (uint)(masked.PlayingEmoteDuration * 1000) : 0;
                 globalWorld.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = emoteIntent.Mask });
             }
 
@@ -198,20 +203,29 @@ namespace DCL.AvatarRendering.Emotes.Play
                                      && ec.CurrentEmoteReference != null;
 
             bool isGliding = globalWorld.TryGet(globalPlayerEntity, out GlideState glideState)
-                             && glideState.Value is GlideStateValue.OPENING_PROP or GlideStateValue.GLIDING;
+                             && glideState.Value is GlideStateValue.OpeningProp or GlideStateValue.Gliding;
 
             bool shouldPlay = isInScene && !fullBodyIsPlaying && !isGliding;
 
             if (shouldPlay && masked.CurrentEmoteReference == null)
-                ReplayMaskedEmote(ref masked, ec);
+                ReplayMaskedEmote(ref masked);
             else if (!shouldPlay && masked.CurrentEmoteReference != null)
                 TryStopMaskedEmote(ref masked);
         }
 
-        private void ReplayMaskedEmote(ref CharacterMaskedEmoteComponent masked, CharacterEmoteComponent emoteComponent)
+        private void ReplayMaskedEmote(ref CharacterMaskedEmoteComponent masked)
         {
             if (!emoteStorage.TryGetElement(masked.EmoteUrn.Shorten(), out IEmote emote)) return;
             if (emote.IsLoading) return;
+
+            // Replaying resumes a looping emote that was suspended. A non-looping emote has already
+            // delivered its single playback, so drop the urn instead of restarting it on every frame
+            // that the play conditions hold.
+            if (!emote.IsLooping())
+            {
+                masked.Reset();
+                return;
+            }
 
             if (!globalWorld.TryGet(globalPlayerEntity, out AvatarShapeComponent avatarShape)) return;
 
@@ -231,17 +245,15 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             IAvatarView avatarBase = mainPlayerAvatarBaseProxy.Object!;
 
-            bool isLooping = emote.IsLooping();
-
-            if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping, true, in avatarBase, ref masked))
+            if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping: true, isSpatial: true, in avatarBase, ref masked))
                 return;
 
             // Reset stored tag so CancelMaskedEmotes doesn't fire on the next frame
             // before UpdateMaskedEmoteTags has a chance to set the real animator state.
             masked.SetAnimationTag(0);
 
-            uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
-            globalWorld.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = masked.EmoteUrn, DurationMs = durationMs, Mask = masked.Mask });
+            // Only looping emotes are replayed, and a looping emote has no end to report.
+            globalWorld.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = masked.EmoteUrn, Mask = masked.Mask });
         }
 
         /// <summary>

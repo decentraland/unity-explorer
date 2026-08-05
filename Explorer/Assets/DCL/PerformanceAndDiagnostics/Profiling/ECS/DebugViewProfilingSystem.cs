@@ -53,6 +53,7 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> bottleneck;
 
         private ElementBinding<string> usedMemory;
+        private ElementBinding<string> profilerMemory;
         private ElementBinding<string> gcUsedMemory;
         private ElementBinding<string> isInAbundance;
 
@@ -125,12 +126,13 @@ namespace DCL.Profiling.ECS
                             .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
                             .AddSingleButton("GC.Collect", GC.Collect)
                             .AddCustomMarker("System Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Profiler Used | Reserved [MB]:", profilerMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Is In Abundances:", isInAbundance = new ElementBinding<string>("YES"))
-                            .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.NORMAL)
-                            .AddSingleButton("Memory WARNING", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.WARNING)
-                            .AddSingleButton("Memory FULL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.FULL)
+                            .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
+                            .AddSingleButton("Memory WARNING", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
+                            .AddSingleButton("Memory FULL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Full)
                             .AddSingleButton("Toggle Abundance", () => this.memoryBudget.SimulateLackOfAbundance = !this.memoryBudget.SimulateLackOfAbundance)
                             .AddToggleField("Enable Scene Metrics", evt => sceneMetricsEnabled = evt.newValue, sceneMetricsEnabled)
                             .AddCustomMarker("Js-Heap Total [MB]:", jsHeapTotalSize = new ElementBinding<string>(string.Empty))
@@ -172,13 +174,13 @@ namespace DCL.Profiling.ECS
                     if (Enum.TryParse(evt.value, out PhysSimulationMode mode))
                         switch (mode)
                         {
-                            case PhysSimulationMode.DEFAULT:
-                            case PhysSimulationMode.ADAPTIVE:
+                            case PhysSimulationMode.Default:
+                            case PhysSimulationMode.Adaptive:
                                 adpativePhysicsSettings.Mode = mode;
                                 Physics.simulationMode = SimulationMode.FixedUpdate;
                                 UnityEngine.Time.fixedDeltaTime = UNITY_DEFAULT_FIXED_DELTA_TIME;
                                 break;
-                            case PhysSimulationMode.MANUAL:
+                            case PhysSimulationMode.Manual:
                                 adpativePhysicsSettings.Mode = mode;
                                 Physics.simulationMode = SimulationMode.Script;
                                 break;
@@ -294,6 +296,9 @@ namespace DCL.Profiling.ECS
         {
             usedMemory.Value =
                 $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
+            double profilerUsedMb = BytesFormatter.Convert((ulong)memoryProfiler.ProfilerUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            double profilerReservedMb = BytesFormatter.Convert((ulong)memoryProfiler.ProfilerReservedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            profilerMemory.Value = $"{profilerUsedMb.ToString("F0", CultureInfo.InvariantCulture)} | {profilerReservedMb.ToString("F0", CultureInfo.InvariantCulture)}";
             gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
 
             jsEnginesCount.Value = profiler.ActiveEngines.ToString();

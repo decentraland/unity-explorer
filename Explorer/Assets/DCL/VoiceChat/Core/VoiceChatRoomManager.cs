@@ -125,15 +125,15 @@ namespace DCL.VoiceChat
 
             switch (newStatus)
             {
-                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                case VoiceChatStatus.VoiceChatEndingCall:
                         isClientInitiatedDisconnection = true;
                         DisconnectFromRoomAsync().Forget();
                     break;
-                case VoiceChatStatus.DISCONNECTED:
-                case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
+                case VoiceChatStatus.Disconnected:
+                case VoiceChatStatus.VoiceChatGenericError:
                     //We ignore these states as they are final states. If we reach these we should be already disconnected from the room altogether.
                     break;
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL:
+                case VoiceChatStatus.VoiceChatInCall:
                     ConnectToRoomAsync().Forget();
                     break;
             }
@@ -143,7 +143,7 @@ namespace DCL.VoiceChat
 
         private void OnLocalParticipantIsSpeakerUpdated(bool isSpeaker)
         {
-            if (isSpeaker && voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL && roomHub.VoiceChatRoom().Activated)
+            if (isSpeaker && voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VoiceChatInCall && roomHub.VoiceChatRoom().Activated)
             {
                 voiceChatMicrophoneStateManager.OnRoomConnectionChangedMuted(true);
                 microphonePublisher.PublishAsync(micAutoStart: voiceChatMicrophoneHandler.IsMicrophoneEnabled.Value, CancellationToken.None).Forget();
@@ -167,9 +167,10 @@ namespace DCL.VoiceChat
                                                         voiceChatOrchestrator.CurrentConnectionUrl)
                                                    .SuppressToResultAsync();
 
-                if (!result.Success)
+                // A failed connect (e.g. revoked token → 401) returns false without throwing, so Success (exception-only) must be paired with Value.
+                if (!result.Success || !result.Value)
                 {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectionUrl}: {result.ErrorMessage}");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Initial connection failed: {(result.Success ? "room did not reach a connected state" : result.ErrorMessage)}");
                     roomHub.VoiceChatRoom().DeactivateAsync().Forget();
                     voiceChatOrchestrator.HandleConnectionError();
                 }
@@ -234,7 +235,7 @@ namespace DCL.VoiceChat
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnected successfully");
 
                         bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value ||
-                                        voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE;
+                                        voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.Private;
                         if (canSpeak)
                             voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                         break;
@@ -280,7 +281,7 @@ namespace DCL.VoiceChat
 
                 // If it's a community chat but local participant is not a speaker, we don't publish the track.
                 bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value ||
-                                voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE;
+                                voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.Private;
 
                 if (canSpeak)
                 {

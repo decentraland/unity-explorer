@@ -16,7 +16,7 @@ namespace DCL.Web3
         }
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
-            SendAsync(request, Web3RequestSource.SDKScene, ct);
+            SendAsync(request, Web3RequestSource.SdkScene, ct);
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {

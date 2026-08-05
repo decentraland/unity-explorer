@@ -41,6 +41,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[LiveKit Networking](livekit-networking.md)** — LiveKit transport: dual-room architecture, messaging pipes, Archipelago/GateKeeper, voice and chat rooms
 - **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
+- **[Performance Analytics](performance-analytics.md)** — `performance_report` telemetry: hiccup/frame-time metrics, measurement window, and target-relative threshold
 
 ## Avatar System
 - **[Avatar Rendering](avatar-rendering.md)** — GPU skinning, compute shaders, and cel-shading
@@ -72,6 +73,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Debug Container & Widgets](debug-container-and-widgets.md)** — Runtime debug panel architecture, widget builder API, bindings, and integration patterns
 - **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
 - **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, running against instrumented builds and in-Editor, triggering visual regression on PRs via `/visual-tests`
+- **[MCP Automation](mcp-automation.md)** — Embedded MCP server for coding agents: screenshots, player/scene state, scene logs, and player control via `--mcp`
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides

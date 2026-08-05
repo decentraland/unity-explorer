@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
@@ -18,12 +17,13 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 using Avatar = DCL.Profiles.Avatar;
 
-namespace DCL.Character.Tests
+namespace DCL.Character.CharacterObject.Tests
 {
     public class CharacterTransformDirtyFlagShould : UnitySystemTestBase<PartitionGlobalAssetEntitiesSystem>
     {
@@ -371,7 +371,7 @@ namespace DCL.Character.Tests
                 rotationY = 45f,
                 velocity = Vector3.zero,
                 velocitySqrMagnitude = 0f,
-                movementKind = MovementKind.IDLE,
+                movementKind = MovementKind.Idle,
                 isInstant = false
             };
 
@@ -443,7 +443,7 @@ namespace DCL.Character.Tests
                 rotationY = 90f,
                 velocity = Vector3.zero,
                 velocitySqrMagnitude = 0f,
-                movementKind = MovementKind.IDLE,
+                movementKind = MovementKind.Idle,
                 isInstant = false
             };
 

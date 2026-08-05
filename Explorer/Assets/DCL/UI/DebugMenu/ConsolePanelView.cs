@@ -66,8 +66,8 @@ namespace DCL.UI.DebugMenu
             showErrorsToggle.RegisterValueChangedCallback(_ => RefreshFilters());
 
             // Input blocking
-            searchField.RegisterCallback<FocusInEvent, ConsolePanelView>(static (_, c) => c.inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER), this);
-            searchField.RegisterCallback<FocusOutEvent, ConsolePanelView>(static (_, c) => c.inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER), this);
+            searchField.RegisterCallback<FocusInEvent, ConsolePanelView>(static (_, c) => c.inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player), this);
+            searchField.RegisterCallback<FocusOutEvent, ConsolePanelView>(static (_, c) => c.inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player), this);
         }
 
         public override void Toggle()

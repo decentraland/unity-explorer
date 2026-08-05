@@ -1,7 +1,7 @@
 ﻿using DCL.Ipfs;
 using NUnit.Framework;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class IpfsHelperShould
     {

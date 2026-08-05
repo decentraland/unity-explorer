@@ -4,10 +4,11 @@ namespace DCL.Prefs
     {
         public const string NEW_BADGES = "NewBadges";
 
-        public const string CRASH_DETECTOR_FLAG = "CrashDetector.flag";
-        public const string CRASH_DETECTOR_SESSION_ID = "CrashDetector.sessionID";
-
         public const string LAUNCH_COUNT = "LaunchCount";
+
+        // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
+        // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
+        public const string CREATOR_HUB_BIN_PATH = "CreatorHub.BinPath";
 
         public const string PREVIOUS_SEARCHES = "previous_searches";
 

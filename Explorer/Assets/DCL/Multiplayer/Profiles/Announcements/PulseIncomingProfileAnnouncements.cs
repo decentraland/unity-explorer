@@ -10,13 +10,16 @@ namespace DCL.Multiplayer.Profiles.Announcements
         private readonly DCLConcurrentQueue<RemoteAnnouncement> queue = new ();
 
         public void Enqueue(string userId, int version) =>
-            queue.Enqueue(new RemoteAnnouncement(version, userId, RoomSource.PULSE));
+            queue.Enqueue(new RemoteAnnouncement(version, userId, RoomSource.Pulse));
 
         public void Fill(List<RemoteAnnouncement> announcements)
         {
             while (queue.TryDequeue(out RemoteAnnouncement item))
                 announcements.Add(item);
         }
+
+        public void Clear() =>
+            queue.Clear();
 
         public void Remove(IReadOnlyCollection<RemoveIntention> removeIntentions) { }
     }

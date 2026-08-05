@@ -26,16 +26,17 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private TMP_Text characterCounterText = null!;
 
         [Header("Emoji Panel Configuration")]
-        [SerializeField] internal EmojiButtonView emojiButton = null!;
-        [SerializeField] internal EmojiPanelView emojiPanel = null!;
-        [SerializeField] internal EmojiPanelConfigurationSO emojiPanelConfiguration = null!;
-        [SerializeField] internal AudioClipConfig addEmojiAudio = null!;
-        [SerializeField] internal AudioClipConfig openEmojiPanelAudio = null!;
-        [SerializeField] internal InputSuggestionPanelView suggestionPanel = null!;
-        [SerializeField] internal Transform suggestionPanelParent = null!;
-        [SerializeField] internal ViewEventBus inputEventBus = null!;
+        [SerializeField] private EmojiButtonView emojiButton = null!;
+        [SerializeField] private EmojiPanelView emojiPanel = null!;
+        [SerializeField] private EmojiPanelConfigurationSO emojiPanelConfiguration = null!;
+        [SerializeField] private AudioClipConfig addEmojiAudio = null!;
+        [SerializeField] private AudioClipConfig openEmojiPanelAudio = null!;
+        [SerializeField] private InputSuggestionPanelView suggestionPanel = null!;
+        [SerializeField] private Transform suggestionPanelParent = null!;
+        [SerializeField] private ViewEventBus inputEventBus = null!;
 
         public event Action<string>? CreateAnnouncementButtonClicked;
+        public event Action<bool>? InputFocusChanged;
 
         private string currentProfileThumbnailUrl = null!;
         private AnnouncementEmojiController? announcementEmojiController;
@@ -104,11 +105,17 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             createAnnouncementButtonLoadingSpinner.SetActive(isLoading);
         }
 
-        private void OnAnnouncementInputSelected(string _) =>
+        private void OnAnnouncementInputSelected(string _)
+        {
             createAnnouncementInputOutline.SetActive(true);
+            InputFocusChanged?.Invoke(true);
+        }
 
-        private void OnAnnouncementInputDeselected(string _) =>
+        private void OnAnnouncementInputDeselected(string _)
+        {
             createAnnouncementInputOutline.SetActive(false);
+            InputFocusChanged?.Invoke(false);
+        }
 
         private void OnAnnouncementInputValueChanged(string text)
         {

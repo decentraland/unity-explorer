@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -14,7 +15,7 @@ using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents the contract of <see cref="NearbyVoiceChatNametagSystem"/>:
@@ -41,7 +42,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             registry = Substitute.For<INearbyAudioStreamRegistry>();
 
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
 
             muteCache = Substitute.For<INearbyMuteCache>();
             muteService = new NearbyMuteService(muteCache, Substitute.For<INearbyMuteRepository>());
@@ -67,11 +68,11 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void SuppressedStateFlagsAllNearbyComponentsForRemoval()
         {
-            Entity a = CreateNametaggedAvatarEntity("wallet-a", new VoiceChatNametagComponent(true, VoiceChatType.NEARBY));
-            Entity b = CreateNametaggedAvatarEntity("wallet-b", new VoiceChatNametagComponent(true, VoiceChatType.NEARBY));
-            Entity c = CreateNametaggedAvatarEntity("wallet-c", new VoiceChatNametagComponent(false, VoiceChatType.NEARBY));
+            Entity a = CreateNametaggedAvatarEntity("wallet-a", new VoiceChatNametagComponent(true, VoiceChatType.Nearby));
+            Entity b = CreateNametaggedAvatarEntity("wallet-b", new VoiceChatNametagComponent(true, VoiceChatType.Nearby));
+            Entity c = CreateNametaggedAvatarEntity("wallet-c", new VoiceChatNametagComponent(false, VoiceChatType.Nearby));
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             system.Update(0);
 
             AssertIsRemoving(a);
@@ -82,7 +83,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void DisabledStateFlagsAllNearbyComponentsForRemoval()
         {
-            Entity a = CreateNametaggedAvatarEntity("wallet-a", new VoiceChatNametagComponent(true, VoiceChatType.NEARBY));
+            Entity a = CreateNametaggedAvatarEntity("wallet-a", new VoiceChatNametagComponent(true, VoiceChatType.Nearby));
 
             stateModel.Disable();
             system.Update(0);
@@ -94,13 +95,13 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SuppressedStateLeavesNonNearbyComponentsAlone()
         {
             Entity community = CreateNametaggedAvatarEntity("wallet-community",
-                new VoiceChatNametagComponent(true, VoiceChatType.COMMUNITY));
+                new VoiceChatNametagComponent(true, VoiceChatType.Community));
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             system.Update(0);
 
             ref var c = ref world.Get<VoiceChatNametagComponent>(community);
-            Assert.That(c.Type, Is.EqualTo(VoiceChatType.COMMUNITY));
+            Assert.That(c.Type, Is.EqualTo(VoiceChatType.Community));
             Assert.That(c.IsRemoving, Is.False, "community/private components belong to a different handler");
         }
 
@@ -113,7 +114,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             CreateAvatarEntity("wallet-a");
             registry.IsActiveSpeaker("wallet-a").Returns(true);
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             system.Update(0);
 
             int count = 0;
@@ -128,7 +129,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-a";
             Entity e = CreateNametaggedAvatarEntity(WALLET,
-                new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY));
+                new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.Nearby));
             // ActiveSpeakers does NOT contain WALLET → predicate flips to "should not show".
 
             system.Update(0);
@@ -141,7 +142,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-a";
             Entity e = CreateNametaggedAvatarEntity(WALLET,
-                new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY, isHushed: false)
+                new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.Nearby, isHushed: false)
                     { IsDirty = false });
             registry.IsActiveSpeaker(WALLET).Returns(true);
             muteCache.IsMuted(WALLET).Returns(true);
@@ -162,7 +163,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Replace the empty playerEntity with a full avatar entity, and re-create the system to capture it.
             world.Destroy(playerEntity);
             playerEntity = CreateAvatarEntity(LOCAL);
-            world.Add(playerEntity, new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY)
+            world.Add(playerEntity, new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.Nearby)
                 { IsDirty = false });
 
             system = new NearbyVoiceChatNametagSystem(world, playerEntity, registry, stateModel, muteService);
@@ -183,7 +184,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-a";
             Entity e = CreateNametaggedAvatarEntity(WALLET,
-                new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY, isHushed: false)
+                new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.Nearby, isHushed: false)
                     { IsDirty = false });
             registry.IsActiveSpeaker(WALLET).Returns(true);
             muteCache.IsMuted(WALLET).Returns(false);
@@ -205,7 +206,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-community";
             Entity e = CreateNametaggedAvatarEntity(WALLET,
-                new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.COMMUNITY)
+                new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.Community)
                     { IsDirty = false });
             registry.IsActiveSpeaker(WALLET).Returns(true);
             muteCache.IsMuted(WALLET).Returns(true); // would otherwise flip IsHushed
@@ -213,7 +214,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             ref var c = ref world.Get<VoiceChatNametagComponent>(e);
-            Assert.That(c.Type, Is.EqualTo(VoiceChatType.COMMUNITY));
+            Assert.That(c.Type, Is.EqualTo(VoiceChatType.Community));
             Assert.That(c.IsHushed, Is.False, "non-nearby component must not be touched by this system");
             Assert.That(c.IsDirty, Is.False);
             Assert.That(c.IsRemoving, Is.False);
@@ -231,7 +232,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             ref var c = ref world.Get<VoiceChatNametagComponent>(e);
-            Assert.That(c.Type, Is.EqualTo(VoiceChatType.NEARBY));
+            Assert.That(c.Type, Is.EqualTo(VoiceChatType.Nearby));
             Assert.That(c.IsSpeaking, Is.True);
             Assert.That(c.IsHushed, Is.False);
             Assert.That(c.IsRemoving, Is.False);
@@ -277,7 +278,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             ref var c = ref world.Get<VoiceChatNametagComponent>(playerEntity);
-            Assert.That(c.Type, Is.EqualTo(VoiceChatType.NEARBY));
+            Assert.That(c.Type, Is.EqualTo(VoiceChatType.Nearby));
             Assert.That(c.IsSpeaking, Is.False);
         }
 
@@ -367,12 +368,12 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // 1. Tick under SUPPRESSED — bulk teardown runs but there's nothing to teardown yet
             //    (component was never created since suppressed gate skips add-missing).
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             system.Update(0);
             Assert.That(world.Has<VoiceChatNametagComponent>(e), Is.False);
 
             // 2. Resume → IDLE, tick again — add-missing must rehydrate.
-            stateModel.Resume(SuppressionReason.CALL);
+            stateModel.Resume(SuppressionReason.Call);
             system.Update(0);
 
             Assert.That(world.Has<VoiceChatNametagComponent>(e), Is.True);

@@ -59,7 +59,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             URLSubdirectory customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
 
-            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(hash, parentIntent.AssetBundleManifestVersion!, parentIntent.ParentEntityID, customEmbeddedSubdirectory, partition, ct)));
+            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(hash, parentIntent.AssetBundleManifest, parentIntent.ParentEntityID, customEmbeddedSubdirectory, partition, ct)));
         }
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -96,7 +96,9 @@ namespace ECS.StreamableLoading.AssetBundles
             }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            state.AcquiredBudget!.Release();
+            // Null-safe: the pooled state can be recycled (budget disposed and nulled) if the promise is
+            // forgotten/cancelled while this detached flow is mid-await
+            state.AcquiredBudget?.Release();
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
@@ -142,7 +144,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 // if the type was not specified don't load any assets
                 StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
-                    intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
+                    intention.AssetBundleManifest.GetAssetBundleManifestVersion(),
                     source, intention.IsDependency, intention.LookForDependencies, ct);
                 return result;
             }
@@ -218,7 +220,6 @@ namespace ECS.StreamableLoading.AssetBundles
             IPartitionComponent partition, CancellationToken ct)
         {
             // Inherit partition from the parent promise
-            // we don't know the type of the dependency
             var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory, isDependency : true), partition);
 
             try

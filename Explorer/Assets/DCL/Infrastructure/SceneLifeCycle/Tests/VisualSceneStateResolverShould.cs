@@ -7,7 +7,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class VisualSceneStateResolverShould
     {
@@ -31,63 +31,63 @@ namespace ECS.SceneLifeCycle.Tests
         public void ShowLODInWorldWhenDescriptorResolvedAndOverThreshold()
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(SDK7_LOD_THRESHOLD), CreateSceneDefinition(SDK7_RUNTIME),
-                VisualSceneState.UNINITIALIZED, true, CreateResolvedDescriptor());
+                VisualSceneState.Uninitialized, true, CreateResolvedDescriptor());
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_LOD));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingLod));
         }
 
         [Test]
         public void ShowSceneInWorldWhenDescriptorResolvedAndUnderThreshold()
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(SDK7_LOD_THRESHOLD - 1), CreateSceneDefinition(SDK7_RUNTIME),
-                VisualSceneState.UNINITIALIZED, true, CreateResolvedDescriptor());
+                VisualSceneState.Uninitialized, true, CreateResolvedDescriptor());
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_SCENE));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingScene));
         }
 
         [Test]
         public void ShowSceneInWorldWhenDescriptorIsNone()
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(byte.MaxValue), CreateSceneDefinition(SDK7_RUNTIME),
-                VisualSceneState.UNINITIALIZED, true, ISSDescriptor.NONE);
+                VisualSceneState.Uninitialized, true, ISSDescriptor.NONE);
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_SCENE));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingScene));
         }
 
         [Test]
         public void ShowSceneInWorldWhenDescriptorIsUninitialized()
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(byte.MaxValue), CreateSceneDefinition(SDK7_RUNTIME),
-                VisualSceneState.UNINITIALIZED, true, ISSDescriptor.CreateUninitialized());
+                VisualSceneState.Uninitialized, true, ISSDescriptor.CreateUninitialized());
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_SCENE));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingScene));
         }
 
         [Test]
         public void ShowSceneInWorldForSDK6EvenWithResolvedDescriptor()
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(byte.MaxValue), CreateSceneDefinition(null),
-                VisualSceneState.UNINITIALIZED, true, CreateResolvedDescriptor());
+                VisualSceneState.Uninitialized, true, CreateResolvedDescriptor());
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_SCENE));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingScene));
         }
 
         [Test]
         public void ShowLODInVolatileRealmForSDK6()
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(0), CreateSceneDefinition(null),
-                VisualSceneState.UNINITIALIZED, false, ISSDescriptor.NONE);
+                VisualSceneState.Uninitialized, false, ISSDescriptor.NONE);
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_LOD));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingLod));
         }
 
         [Test]
         public void ShowLODInVolatileRealmWhenOverThreshold()
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(SDK7_LOD_THRESHOLD), CreateSceneDefinition(SDK7_RUNTIME),
-                VisualSceneState.UNINITIALIZED, false, ISSDescriptor.NONE);
+                VisualSceneState.Uninitialized, false, ISSDescriptor.NONE);
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_LOD));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingLod));
         }
 
         [Test]
@@ -95,18 +95,18 @@ namespace ECS.SceneLifeCycle.Tests
         {
             //Bucket is over the threshold, but the scene is already shown and within the unload tolerance
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(SDK7_LOD_THRESHOLD), CreateSceneDefinition(SDK7_RUNTIME),
-                VisualSceneState.SHOWING_SCENE, false, ISSDescriptor.NONE);
+                VisualSceneState.ShowingScene, false, ISSDescriptor.NONE);
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_SCENE));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingScene));
         }
 
         [Test]
         public void KeepSceneShownInWorldWithinUnloadTolerance()
         {
             VisualSceneState result = resolver.ResolveVisualSceneState(CreatePartition(SDK7_LOD_THRESHOLD), CreateSceneDefinition(SDK7_RUNTIME),
-                VisualSceneState.SHOWING_SCENE, true, CreateResolvedDescriptor());
+                VisualSceneState.ShowingScene, true, CreateResolvedDescriptor());
 
-            Assert.That(result, Is.EqualTo(VisualSceneState.SHOWING_SCENE));
+            Assert.That(result, Is.EqualTo(VisualSceneState.ShowingScene));
         }
 
         private static PartitionComponent CreatePartition(byte bucket) =>

@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationGuards;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Character;
@@ -349,7 +349,7 @@ namespace DCL.UserInAppInitializationFlow
                 return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(
                     title: "Connection Error",
                     description: "We were unable to connect to Decentraland. Please verify your connection and retry.",
-                    iconType: ErrorPopupWithRetryController.IconType.CONNECTION_LOST,
+                    iconType: ErrorPopupWithRetryController.IconType.ConnectionLost,
                     retryText: "Continue")), ct);
 
             var message = $"{ToMessage(result)}\nPlease try again";

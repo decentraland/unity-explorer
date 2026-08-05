@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
@@ -9,14 +10,13 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
-using Utility.Multithreading;
 using System.Collections.Generic;
 using System.Reflection;
-using Avatar = DCL.Profiles.Avatar;
 using Unity.PerformanceTesting;
 using UnityEngine;
+using Avatar = DCL.Profiles.Avatar;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Benchmarks <see cref="NearbyAudioPositionSystem.Update"/> with varying participant counts.

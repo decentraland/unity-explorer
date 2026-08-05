@@ -5,6 +5,8 @@ using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCredits.Purchase.TopUp.UI;
+using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Passport;
 using DCL.Browser;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
@@ -45,6 +47,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new ExplorePanelAnalytics(analytics, c)) },
                 { typeof(ProfileNameEditorController), CreateAnalytics<ProfileNameEditorController>(c => new ProfileNameEditorAnalytics(analytics, c)) },
                 { typeof(MarketplaceCreditsMenuController), CreateAnalytics<MarketplaceCreditsMenuController>(c => new MarketplaceCreditsAnalytics(analytics, c)) },
+                { typeof(CreditsTopUpModalController), CreateAnalytics<CreditsTopUpModalController>(c => new CreditsTopUpAnalytics(analytics, c)) },
+                { typeof(CreditPurchaseModalController), CreateAnalytics<CreditPurchaseModalController>(c => new CreditPurchaseAnalytics(analytics, c)) },
             };
 
             Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T: IController =>
@@ -80,5 +84,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void CloseAllNonPersistentViews(CancellationToken ct = default) =>
             core.CloseAllNonPersistentViews(ct);
+
+        public bool IsAnyModalViewShowing() =>
+            core.IsAnyModalViewShowing();
     }
 }

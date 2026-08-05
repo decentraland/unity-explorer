@@ -49,7 +49,7 @@ namespace DCL.UI.Sidebar
         private readonly IMVCManager mvcManager;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IChatHistory chatHistory;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
@@ -78,7 +78,7 @@ namespace DCL.UI.Sidebar
         private SingleInstanceEntity? cameraInternal;
         private bool isMarketplaceCreditsFeatureEnabled;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
 
@@ -89,7 +89,7 @@ namespace DCL.UI.Sidebar
             IMVCManager mvcManager,
             SidebarProfileButtonPresenter profileButtonPresenter,
             SmartWearablesSideBarTooltipController smartWearablesTooltipController,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IChatHistory chatHistory,
             ISelfProfile selfProfile,
             IRealmData realmData,
@@ -114,11 +114,11 @@ namespace DCL.UI.Sidebar
             this.eventsApiService = eventsApiService;
             this.helpMenuController = helpMenuController;
             this.communitiesLiveTracker = communitiesLiveTracker;
-            isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
-            isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
-            isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
-            isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
+            isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
+            isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends);
+            isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MarketplaceCredits);
+            isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
+            isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat);
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -304,7 +304,7 @@ namespace DCL.UI.Sidebar
                                                .AppendPath(URLPath.FromString($"profile/accounts/{myProfile.UserId}/referral"))
                                                .Build();
 
-                    webBrowser.OpenUrl(url);
+                    webBrowser.OpenUrlMainThreadOnly(url);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
@@ -416,7 +416,7 @@ namespace DCL.UI.Sidebar
         private void OnUnreadMessagesButtonClicked() => chatEventBus.RaiseToggleChatEvent();
         private void OnEmotesWheelButtonClicked() => OpenPanelAsync(viewInstance!.emotesWheelButton, EmotesWheelController.IssueCommand()).Forget();
         private void OnFriendsButtonClicked() =>
-            OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS))).Forget();
+            OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
 
         private void OnMarketplaceCreditsButtonClicked() =>
             OpenPanelAsync(viewInstance!.marketplaceCreditsButton,
@@ -451,7 +451,7 @@ namespace DCL.UI.Sidebar
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));
             urlBuilder.AppendParameter(marketplaceSourceParam);
-            webBrowser.OpenUrl(urlBuilder.Build());
+            webBrowser.OpenUrlMainThreadOnly(urlBuilder.Build());
         }
 
         private async UniTaskVoid OpenPanelAsync<TView, TInputData>(

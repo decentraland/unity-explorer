@@ -45,7 +45,7 @@ namespace DCL.UI.ConfirmationDialog.Opener
 
     public enum ConfirmationResult
     {
-        CONFIRM,
-        CANCEL,
+        Confirm,
+        Cancel,
     }
 }

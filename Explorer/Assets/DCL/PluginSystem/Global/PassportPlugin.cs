@@ -12,6 +12,7 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.MarketplaceCredits.Purchase;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
@@ -20,7 +21,6 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
@@ -69,6 +69,8 @@ namespace DCL.PluginSystem.Global
         private readonly bool isCommunitiesFeatureEnabled;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IWebRequestController webRequestController;
+        private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -79,7 +81,7 @@ namespace DCL.PluginSystem.Global
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IInputBlock inputBlock,
@@ -102,7 +104,9 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
             IThumbnailProvider thumbnailProvider,
-            ImageControllerProvider imageControllerProvider)
+            ImageControllerProvider imageControllerProvider,
+            IWebRequestController webRequestController,
+            MarketplaceShopAPIClient marketplaceShopAPIClient)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -135,6 +139,8 @@ namespace DCL.PluginSystem.Global
             this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.communitiesDataProvider = communitiesDataProvider;
             this.imageControllerProvider = imageControllerProvider;
+            this.webRequestController = webRequestController;
+            this.marketplaceShopAPIClient = marketplaceShopAPIClient;
         }
 
         public void Dispose()
@@ -195,7 +201,9 @@ namespace DCL.PluginSystem.Global
                 passportSettings.CameraReelGalleryMessages,
                 communitiesDataProvider,
                 imageControllerProvider,
-                nameColors
+                nameColors,
+                webRequestController,
+                marketplaceShopAPIClient
             );
 
             mvcManager.RegisterController(passportController);
@@ -211,15 +219,15 @@ namespace DCL.PluginSystem.Global
         public class PassportSettings : IDCLPluginSettings
         {
             [field: Space]
-            [field: SerializeField] public AssetReferenceGameObject PassportPrefab;
-            [field: SerializeField] public AssetReferenceGameObject Badges3DCamera;
+            [field: SerializeField] public AssetReferenceGameObject PassportPrefab = null!;
+            [field: SerializeField] public AssetReferenceGameObject Badges3DCamera = null!;
             [field: SerializeField] public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; } = null!;
             [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int ThumbnailHeight { get; private set; }
             [field: SerializeField] public int ThumbnailWidth { get; private set; }
-            [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab;
+            [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab = null!;
             [field: SerializeField] public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; } = null!;
             [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
         }

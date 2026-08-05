@@ -19,7 +19,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     /// </summary>
     public class AnalyticsContainer : DCLGlobalContainer<AnalyticsContainer.Settings>
     {
-        public bool Enabled => settings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
+        public bool Enabled => settings.AnalyticsConfig.Mode != AnalyticsMode.Disabled;
 
         public IAnalyticsController Controller { get; private set; } = null!;
 
@@ -51,7 +51,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                         ct);
 
                     var analyticsController = new AnalyticsController(service, appArgs, container.settings.AnalyticsConfig, launcherTraits, installSource, dclVersion, identityCache?.Identity);
-                    CrashDetector.Initialize(analyticsController);
                     LaunchCounter.Increment();
 
                     container.Controller = analyticsController;
@@ -76,9 +75,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             return analyticsConfig.Mode switch
                    {
-                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token),
-                       AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
-                       AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
+                       AnalyticsMode.Segment => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token),
+                       AnalyticsMode.DebugLog => new DebugAnalyticsService(),
+                       AnalyticsMode.Disabled => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }

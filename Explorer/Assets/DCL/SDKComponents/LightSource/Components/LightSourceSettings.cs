@@ -21,12 +21,10 @@ namespace DCL.SDKComponents.LightSource
         public float PointLightIntensityScale = 1;
 
         [Tooltip("Default values used when a property isn't defined in a protocol object.")]
-        public DefaultValuesSettings DefaultValues = new();
+        public DefaultValuesSettings DefaultValues;
 
-        [NonSerialized] public SceneLimitationsSettings SceneLimitations = new();
-
+        [NonSerialized] public SceneLimitationsSettings SceneLimitations;
         [NonSerialized] public List<LodSettings> SpotLightsLods = new();
-
         [NonSerialized] public List<LodSettings> PointLightsLods = new();
 
         public void ApplyQualitySettings(in SceneLimitationsSettings sceneLimitations, List<LodSettings> spotLightsLods, List<LodSettings> pointLightsLods)
@@ -45,18 +43,13 @@ namespace DCL.SDKComponents.LightSource
         {
             [Header("Common")]
             public bool Active;
-
             public Color Color;
-
             public float Intensity;
-
             public float Range;
-
             public bool Shadows;
 
             [Header("Spot Lights")]
             public float InnerAngle;
-
             public float OuterAngle;
         }
 
@@ -79,14 +72,10 @@ namespace DCL.SDKComponents.LightSource
         [Serializable]
         public struct LodSettings
         {
+            [Tooltip("Distance up to which this LOD applies. Beyond the distance of the last LOD the light is culled.")]
             public float Distance;
-
-            public bool IsCulled;
-
             public LightShadows Shadows;
-
             public bool OverrideShadowMapResolution;
-
             public int ShadowMapResolution;
         }
     }

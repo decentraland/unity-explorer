@@ -1,0 +1,39 @@
+{
+    "name": "DCL.MarketplaceCredits.Purchase.Tests",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "GUID:3c1a9be47d0f42e2a5b8c6d4e9f01a27",
+        "GUID:0e1edbec885c4350bb2ef81c6a413df5",
+        "GUID:f56000518aba31544aa96f4739e50a64",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:e25ef972de004615a22937e739de2def",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:2bafac87e7f4b9b418d9448d219b01ab",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:e169fa6683c924c7e99a85981a91d953"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "NSubstitute.dll",
+        "Newtonsoft.Json.dll",
+        "Nethereum.ABI.dll",
+        "Nethereum.Hex.dll",
+        "Nethereum.Util.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

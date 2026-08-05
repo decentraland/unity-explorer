@@ -4,8 +4,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Ipfs;
-using DCL.Utility;
 using DCL.WebRequests;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -24,10 +22,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     ///     (pre-v49 manifest or missing descriptor JSON) yield a *failed* result — that way the framework
     ///     never persists the "no ISS" outcome to disk (PutAsync is gated on success), and the consumer
     ///     in <c>ResolveISSDescriptorSystem</c> calls <c>ISSDescriptor.MarkAsNone</c>.
-    ///     <para>
-    ///     The HEAD probe that chooses between Bundle and Descriptor modes is temporarily disabled — see
-    ///     <see cref="IsBundleReachableAsync"/>. A later PR will re-enable Bundle mode.
-    ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.SCENE_LOADING)]
@@ -36,16 +30,14 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         private const string DESCRIPTOR_PATH_PREFIX = "lods-unity/manifests/";
 
         private readonly IWebRequestController webRequestController;
-        private readonly URLDomain assetBundleURL;
         private readonly URLDomain descriptorBaseUrl;
 
-        internal LoadISSDescriptorSystem(World world, IWebRequestController webRequestController, URLDomain assetBundleURL,
+        internal LoadISSDescriptorSystem(World world, IWebRequestController webRequestController,
             URLDomain descriptorBaseUrl,
             IStreamableCache<ISSDescriptorMetadata, GetISSDescriptorIntention> cache, DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>? diskCacheOptions = null)
             : base(world, cache, diskCacheOptions)
         {
             this.webRequestController = webRequestController;
-            this.assetBundleURL = assetBundleURL;
             this.descriptorBaseUrl = descriptorBaseUrl;
         }
 
@@ -67,11 +59,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             ISSDescriptorMetadata? metadata = await TryLoadDescriptorAsync(intention.SceneId, ct);
             if (!metadata.HasValue)
                 return new StreamableLoadingResult<ISSDescriptorMetadata>(GetReportData(), new Exception("No ISS descriptor JSON for this scene"));
-
-            // Bundle-mode HEAD probe is temporarily disabled — every ISS-capable scene goes through
-            // Descriptor mode for now. Kept the IsBundleReachableAsync helper below so re-enabling is
-            // a one-line restore in a later PR; see PR description for rationale.
-            // bool bundleReachable = await IsBundleReachableAsync(intention.SceneId, intention.ManifestVersion!, ct);
 
             return new StreamableLoadingResult<ISSDescriptorMetadata>(metadata.Value);
         }
@@ -95,23 +82,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 // No descriptor at the expected path — treat as no ISS.
                 return null;
             }
-        }
-
-        // TODO (Juani): Currently unused: FlowInternalAsync forces Descriptor mode. Kept for the follow-up PR that
-        // re-enables Bundle-mode selection.
-        private async UniTask<bool> IsBundleReachableAsync(string sceneId, AssetBundleManifestVersion manifestVersion, CancellationToken ct)
-        {
-            if (manifestVersion == null || manifestVersion.assetBundleManifestRequestFailed) return false;
-
-            string version = manifestVersion.GetAssetBundleManifestVersion();
-            if (string.IsNullOrEmpty(version)) return false;
-
-            string bundleHash = $"staticscene_{sceneId}{PlatformUtils.GetCurrentPlatform()}";
-            URLAddress bundleUrl = manifestVersion.HasHashInPath()
-                ? assetBundleURL.Append(new URLPath($"{version}/{sceneId}/{bundleHash}"))
-                : assetBundleURL.Append(new URLPath($"{version}/{bundleHash}"));
-
-            return await webRequestController.IsHeadReachableAsync(GetReportData(), bundleUrl, ct, suppressErrors: true);
         }
     }
 }

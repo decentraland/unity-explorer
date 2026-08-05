@@ -1,6 +1,35 @@
 // Responses should always correspond to the protocol definitions at
 // https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/restricted_actions.proto
 
+// Protocol enums exposed to scenes as runtime values (mirroring the generated
+// ts-proto enums: both forward name->value and reverse value->name mappings).
+// Scenes import these from `~system/RestrictedActions` and use them at runtime,
+// e.g. `openExplorerUi({ ui: ExplorerUi.EU_MAP })` and `OpenExplorerUiResult[openResult]`.
+function makeEnum(entries) {
+    const e = {};
+    for (const [name, value] of entries) { e[name] = value; e[value] = name; }
+    return e;
+}
+
+module.exports.ExplorerUi = makeEnum([
+    ['EU_SETTINGS', 0],
+    ['EU_MAP', 1],
+    ['EU_BACKPACK', 2],
+    ['EU_CAMERA_REEL', 3],
+    ['EU_COMMUNITIES', 4],
+    ['EU_PLACES', 5],
+    ['EU_EVENTS', 6],
+]);
+
+module.exports.OpenExplorerUiResult = makeEnum([
+    ['UNSPECIFIED', 0],
+    ['OPENED', 1],
+    ['WAS_ALREADY_OPEN', 2],
+    ['REJECTED_NOT_CURRENT_SCENE', 3],
+    ['REJECTED_FEATURE_DISABLED', 4],
+    ['REJECTED_NO_USER_GESTURE', 5],
+]);
+
 module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
@@ -31,10 +60,10 @@ module.exports.teleportTo = async function(message) {
 }
 
 module.exports.triggerEmote = async function(message) {
-    if (message.mask == undefined) {
-        message.mask = 0
-    }
-    await UnityRestrictedActionsApi.TriggerEmote(message.predefinedEmote, message.mask);
+    // mask is an optional AvatarMask enum: absent means full-body
+    await UnityRestrictedActionsApi.TriggerEmote(
+        message.predefinedEmote,
+        message.mask != undefined ? message.mask : null);
     return {};
 }
 
@@ -62,6 +91,11 @@ module.exports.openNftDialog = async function(message) {
     };
 }
 
+module.exports.openExplorerUi = async function(message) {
+    const openResult = UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
+    return { openResult };
+}
+
 module.exports.setCommunicationsAdapter = async function(message) {
     console.log('JSMODULE: setCommunicationsAdapter')
     return {
@@ -73,10 +107,11 @@ module.exports.triggerSceneEmote = async function(message) {
     if (message.loop == undefined) {
         message.loop = false
     }
-    if (message.mask == undefined) {
-        message.mask = 0
-    }
-    const isSuccess = await UnityRestrictedActionsApi.TriggerSceneEmote(message.src, message.loop, message.mask);
+    // mask is an optional AvatarMask enum: absent means full-body
+    const isSuccess = await UnityRestrictedActionsApi.TriggerSceneEmote(
+        message.src,
+        message.loop,
+        message.mask != undefined ? message.mask : null);
     return {
         success: isSuccess
     };

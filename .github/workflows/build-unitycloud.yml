@@ -954,6 +954,14 @@ jobs:
           should_build='${{ needs.prebuild.outputs.should_build }}'
           prebuild_result='${{ needs.prebuild.result }}'
 
+          # Legit no-op: prebuild was skipped entirely (its 'if' was false — e.g. a labeled/unlabeled
+          # event, a draft without 'force-build', or the 'perf_test' label). That's a deliberate
+          # "don't build this event" decision, not a failure, so there is nothing to gate.
+          if [ "$prebuild_result" = "skipped" ]; then
+            echo "Gate not applicable (prebuild skipped — no build for this event). Passing."
+            exit 0
+          fi
+
           # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ changes).
           # The Prebuild job's "Skip build and test checks" step already posts per-target success
           # statuses for this case, so the gate can safely pass.
@@ -962,8 +970,8 @@ jobs:
             exit 0
           fi
 
-          # Any other prebuild outcome (skipped/cancelled/failure) means no real build happened.
-          # Fail closed so an incidental PR event can't silently produce a green Build Gate.
+          # cancelled/failure => a build was expected but never completed. Fail closed so a real
+          # problem can't silently produce a green Build Gate.
           if [ "$prebuild_result" != "success" ]; then
             echo "::error::Prebuild did not succeed (result: $prebuild_result). No build produced for this commit; re-trigger the workflow (e.g. push a new commit or add the 'force-build' label)."
             exit 1

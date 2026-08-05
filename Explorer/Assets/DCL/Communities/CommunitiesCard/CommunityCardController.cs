@@ -30,7 +30,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
@@ -65,7 +64,7 @@ namespace DCL.Communities.CommunitiesCard
         private const string CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error unsubscribing notifications for this community. Please try again.";
         private const string DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error subscribing notifications for this community. Please try again.";
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
@@ -74,10 +73,10 @@ namespace DCL.Communities.CommunitiesCard
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IPlacesAPIService placesAPIService;
+        private readonly IPlacesAPIService placesApiService;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ChatEventBus chatEventBus;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -118,10 +117,10 @@ namespace DCL.Communities.CommunitiesCard
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileDataProvider,
-            IPlacesAPIService placesAPIService,
+            IPlacesAPIService placesApiService,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
             ChatEventBus chatEventBus,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -144,7 +143,7 @@ namespace DCL.Communities.CommunitiesCard
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.placesAPIService = placesAPIService;
+            this.placesApiService = placesApiService;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
@@ -387,7 +386,7 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,
                 communitiesDataProvider,
-                placesAPIService,
+                placesApiService,
                 realmNavigator,
                 mvcManager,
                 clipboard,
@@ -399,7 +398,7 @@ namespace DCL.Communities.CommunitiesCard
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
-                placesAPIService,
+                placesApiService,
                 thumbnailLoader,
                 mvcManager,
                 clipboard,
@@ -407,15 +406,14 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
-            {
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunitiesAnnouncements))
                 announcementsSectionController = new AnnouncementsSectionController(
                     viewInstance.AnnouncementsSectionView,
                     communitiesDataProvider,
                     profileRepositoryWrapper,
                     web3IdentityCache,
-                    profileRepository);
-            }
+                    profileRepository,
+                    inputBlock);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
@@ -445,7 +443,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
-                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunitiesAnnouncements))
                     viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
                 else
                     viewInstance.MembersListView.SetLoadingStateActive(true);
@@ -481,10 +479,8 @@ namespace DCL.Communities.CommunitiesCard
                 if (!communityData.IsAccessAllowed())
                 {
                     if (!existsInvitation)
-                    {
                         // Check if we have a pending request to join the community
                         await CheckUserInviteOrRequestAsync(InviteRequestAction.request_to_join, ct);
-                    }
                 }
                 else
                     communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(communityId, ct)).ToArray();
@@ -584,17 +580,17 @@ namespace DCL.Communities.CommunitiesCard
             sectionCancellationTokenSource = sectionCancellationTokenSource.SafeRestart();
             switch (section)
             {
-                case CommunityCardView.Sections.PHOTOS:
+                case CommunityCardView.Sections.Photos:
                     viewInstance!.CameraReelGalleryConfigs.PhotosView.SetAdminEmptyTextActive(communityData.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
                     cameraReelGalleryController!.ShowPlacesGalleryAsync(communityPlaceIds, sectionCancellationTokenSource.Token).Forget();
                     break;
-                case CommunityCardView.Sections.MEMBERS:
+                case CommunityCardView.Sections.Members:
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
                     break;
-                case CommunityCardView.Sections.PLACES:
+                case CommunityCardView.Sections.Places:
                     placesSectionController!.ShowPlaces(communityData, communityPlaceIds, sectionCancellationTokenSource.Token);
                     break;
-                case CommunityCardView.Sections.ANNOUNCEMENTS:
+                case CommunityCardView.Sections.Announcements:
                     announcementsSectionController!.ShowAnnouncements(communityData, sectionCancellationTokenSource.Token);
                     break;
             }
@@ -677,16 +673,13 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
             {
-                var result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, web3IdentityCache.Identity?.Address, InviteRequestAction.request_to_join, ct)
-                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Result<string> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, web3IdentityCache.Identity?.Address, InviteRequestAction.request_to_join, ct);
 
                 if (ct.IsCancellationRequested)
                     return;
 
                 if (!result.Success)
-                {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
-                }
 
                 communityData.SetPendingInviteOrRequestId(result.Value);
                 communityData.SetPendingAction(InviteRequestAction.request_to_join);
@@ -709,9 +702,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
-                }
 
                 communityData.SetPendingInviteOrRequestId(null);
                 communityData.SetPendingAction(InviteRequestAction.none);
@@ -734,9 +725,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE));
-                }
 
                 if (communityData.privacy == CommunityPrivacy.@public)
                 {
@@ -768,9 +757,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
-                }
 
                 CloseController();
             }
@@ -815,10 +802,10 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void RestoreInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));

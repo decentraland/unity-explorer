@@ -7,21 +7,21 @@
 
         public bool ShouldUpdateDitherState(float newDistance, float startFadeDithering, float endFadeDithering)
         {
-            if (newDistance >= startFadeDithering && currentDitherState != DITHER_STATE.OPAQUE)
+            if (newDistance >= startFadeDithering && currentDitherState != DITHER_STATE.Opaque)
             {
-                currentDitherState = DITHER_STATE.OPAQUE;
+                currentDitherState = DITHER_STATE.Opaque;
                 return true;
             }
 
-            if (newDistance <= endFadeDithering && currentDitherState != DITHER_STATE.TRANSPARENT)
+            if (newDistance <= endFadeDithering && currentDitherState != DITHER_STATE.Transparent)
             {
-                currentDitherState = DITHER_STATE.TRANSPARENT;
+                currentDitherState = DITHER_STATE.Transparent;
                 return true;
             }
 
             if (newDistance > endFadeDithering && newDistance < startFadeDithering)
             {
-                currentDitherState = DITHER_STATE.DITHERING;
+                currentDitherState = DITHER_STATE.Dithering;
                 return true;
             }
 
@@ -30,15 +30,15 @@
 
         public void ResetDitherState()
         {
-            currentDitherState = DITHER_STATE.UNINITIALIZED;
+            currentDitherState = DITHER_STATE.Uninitialized;
         }
     }
 
     public enum DITHER_STATE
     {
-        UNINITIALIZED,
-        TRANSPARENT,
-        DITHERING,
-        OPAQUE,
+        Uninitialized,
+        Transparent,
+        Dithering,
+        Opaque,
     }
 }

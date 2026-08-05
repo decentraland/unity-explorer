@@ -8,9 +8,9 @@ namespace DCL.SDKComponents.MediaStream
 {
     public enum PlayerState
     {
-        PAUSED,
-        PLAYING,
-        STOPPED,
+        Paused,
+        Playing,
+        Stopped,
     }
 
     public class AvProPlayer
@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.MediaStream
     {
         public bool IsPlaying => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsPlaying(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.PLAYING
+            static livekitPlayer => livekitPlayer.State is PlayerState.Playing
         );
 
         public float CurrentTime => Match(
@@ -57,12 +57,12 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsFinished => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsFinished(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.STOPPED
+            static livekitPlayer => livekitPlayer.State is PlayerState.Stopped
         );
 
         public bool IsPaused => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsPaused(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.PAUSED
+            static livekitPlayer => livekitPlayer.State is PlayerState.Paused
         );
 
         public bool IsSeeking => Match(
@@ -80,6 +80,12 @@ namespace DCL.SDKComponents.MediaStream
             static _ => false
         );
 
+        // False when the AVPro MediaPlayer GameObject was destroyed (pool eviction / scene teardown). LiveKit is always valid.
+        public bool IsValid => Match(
+            static avPro => avPro.AvProMediaPlayer != null,
+            static _ => true
+        );
+
         public bool IsReady => Match(
             static avPro => avPro.AvProMediaPlayer.TextureProducer != null,
             static _ => true
@@ -95,7 +101,7 @@ namespace DCL.SDKComponents.MediaStream
                 float vScale = avPro.AvProMediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
                 return new Vector2(1, vScale);
             },
-            static _ => new Vector2(1, -1)
+            static livekitPlayer => livekitPlayer.CurrentTextureScale
         );
 
         public bool IsSpatial => Match(static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f),

@@ -2,6 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
 using DCL.Utility.Types;
@@ -26,23 +28,25 @@ namespace DCL.RealmNavigation.TeleportOperations
         private readonly CameraSamplingData cameraSamplingData;
         private readonly string reportCategory;
         private readonly ITeleportController teleportController;
+        private readonly IRoomHub roomHub;
 
         protected TeleportToSpawnPointOperationBase(ILoadingStatus loadingStatus, IGlobalRealmController realmController, ObjectProxy<Entity> cameraEntity, ITeleportController teleportController, CameraSamplingData cameraSamplingData,
-            string reportCategory = ReportCategory.SCENE_LOADING)
+            IRoomHub roomHub, string reportCategory = ReportCategory.SCENE_LOADING)
         {
             this.loadingStatus = loadingStatus;
             this.realmController = realmController;
             this.cameraEntity = cameraEntity;
             this.teleportController = teleportController;
             this.cameraSamplingData = cameraSamplingData;
+            this.roomHub = roomHub;
             this.reportCategory = reportCategory;
         }
 
-        protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct, bool allowsPositionOverride = false, bool landOnParcel = false)
+        protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct, bool allowsPositionOverride = false, bool landOnParcel = false, string? spawnPointName = null)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = args.Report.CreateChildReport(finalizationProgress);
-            EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel, allowsPositionOverride, landOnParcel);
+            EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel, allowsPositionOverride, landOnParcel, spawnPointName);
             args.Report.SetProgress(finalizationProgress);
 
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
@@ -62,7 +66,8 @@ namespace DCL.RealmNavigation.TeleportOperations
             CancellationToken ct,
             Vector2Int parcelToTeleport,
             bool allowsPositionOverride = false,
-            bool landOnParcel = false
+            bool landOnParcel = false,
+            string? spawnPointName = null
         )
         {
             bool isWorld = realmController.RealmData.IsWorld();
@@ -71,9 +76,9 @@ namespace DCL.RealmNavigation.TeleportOperations
             try
             {
                 if (isWorld)
-                    waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, allowsPositionOverride, ct);
+                    waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, allowsPositionOverride, spawnPointName, ct);
                 else
-                    waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct, landOnParcel);
+                    waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct, landOnParcel, spawnPointName);
             }
             catch (OperationCanceledException) { return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled); }
             catch (TimeoutException e)
@@ -90,13 +95,32 @@ namespace DCL.RealmNavigation.TeleportOperations
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             realmController.GlobalWorld.EcsWorld.Add(cameraEntity.Object, cameraSamplingData);
+
+            // Detached: connecting can take seconds and must not delay enqueueing the readiness report below
+            if (isWorld)
+                StartSceneRoomAsync().Forget();
+
             return await waitForSceneReadiness.ToUniTask();
+        }
+
+        private async UniTaskVoid StartSceneRoomAsync()
+        {
+            try
+            {
+                bool started = await roomHub.SceneRoom().StartIfNotAsync();
+
+                if (!started)
+                    ReportHub.LogWarning(reportCategory, "Scene room connection attempt failed on world teleport");
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, reportCategory); }
         }
 
         private async UniTask<WaitForSceneReadiness?> TeleportToWorldSpawnPointAsync(
             Vector2Int parcelToTeleport,
             AsyncLoadProcessReport processReport,
             bool allowsPositionOverride,
+            string? spawnPointName,
             CancellationToken ct
         )
         {
@@ -119,16 +143,14 @@ namespace DCL.RealmNavigation.TeleportOperations
             }
             else
             {
-                bool isSceneContained = false;
+                var isSceneContained = false;
                 // Check if result contains the requested parcel.
                 foreach (var sceneEntityDefinition in scenes)
-                {
                     if (sceneEntityDefinition.Contains(parcelToTeleport))
                     {
                         isSceneContained = true;
                         break;
                     }
-                }
 
                 // If no parcel is present on any scene, teleport to the first Decoded Base
                 if (!isSceneContained)
@@ -136,7 +158,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             }
 
             WaitForSceneReadiness? waitForSceneReadiness =
-                await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
+                await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct, spawnPointName: spawnPointName);
 
             return waitForSceneReadiness;
         }

@@ -29,6 +29,7 @@ namespace ECS.Unity.AssetLoad.Cache
 
         private readonly IGltfContainerAssetsCache gltfCache;
         private readonly Dictionary<string, object> cache = new ();
+        private readonly Dictionary<string, VideoTemplateData> videoCache = new ();
 
         public AssetPreLoadCache(IGltfContainerAssetsCache gltfCache)
         {
@@ -63,6 +64,12 @@ namespace ECS.Unity.AssetLoad.Cache
             instance.Dispose();
         }
 
+        public bool TryAddVideo(string key, in VideoTemplateData data) =>
+            videoCache.TryAdd(key, data);
+
+        public bool TryGetVideoTemplate(string key, out VideoTemplateData data) =>
+            videoCache.TryGetValue(key, out data);
+
         public bool TryAdd<T>(string key, T asset)
         {
             if (cache.TryAdd(key, asset))
@@ -70,7 +77,7 @@ namespace ECS.Unity.AssetLoad.Cache
                 switch (asset)
                 {
                     // AudioClipData and TextureData are reference counted, so we need to acquire a reference when adding them to the cache so that they are not disposed while cached and not being used.
-                    // GltfContainerAsset and MediaPlayerComponent are handled differently as they are not ref counted
+                    // GltfContainerAsset is handled differently as it is not ref counted
                     case AudioClipData audioClipData:
                         audioClipData.AcquireRef();
                         break;
@@ -117,12 +124,10 @@ namespace ECS.Unity.AssetLoad.Cache
                     case TextureData textureData:
                         textureData.Dereference();
                         break;
-                    case MediaPlayerComponent mediaPlayerComponent:
-                        mediaPlayerComponent.Dispose();
-                        break;
                 }
 
             cache.Clear();
+            videoCache.Clear();
         }
     }
 }

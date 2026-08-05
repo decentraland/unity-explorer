@@ -12,23 +12,16 @@ namespace DCL.SDKComponents.LightSource
         public readonly Light LightSourceInstance;
 
         public float MaxIntensity;
-
         public float IntensityScale;
-
         public float CurrentIntensityNormalized;
-
         public float DistanceToPlayerSq;
 
         public int Index;
-
         public int Rank;
-
         public int TypeRank;
-
         public int LOD;
 
         public CullingFlags Culling;
-
         public CookieInfo Cookie;
 
         public bool IsCulled => Culling != CullingFlags.None;
@@ -42,21 +35,16 @@ namespace DCL.SDKComponents.LightSource
         public enum CullingFlags
         {
             None = 0,
-
             TooManyLightSources = 1,
-
-            CulledByLOD = 1 << 1
+            CulledByLod = 1 << 1
         }
 
         public struct CookieInfo
         {
             public GetTextureIntention LoadingIntention;
-
             public AssetPromise<TextureData, GetTextureIntention>? LoadingPromise;
-
-            public TextureData SourceTextureData;
-
-            public Cubemap PointLightCubemap;
+            public TextureData? SourceTextureData;
+            public Cubemap? PointLightCubemap;
 
             public void CleanUp(in World world)
             {

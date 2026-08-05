@@ -17,6 +17,7 @@ namespace DCL.MarketplaceCredits
         private const string NO_DATA_STATE = "NO_DATA";
         private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
+        public event Action<UserCreditsResponse> OnUserCreditsFetched;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -68,6 +69,43 @@ namespace DCL.MarketplaceCredits
 
             OnProgramProgressUpdated?.Invoke(creditsProgramProgressResponse);
             return creditsProgramProgressResponse;
+        }
+
+        public virtual async UniTask<UserCreditsResponse> GetUserCreditsAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/credits";
+
+            UserCreditsResponse userCreditsResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                .CreateFromJson<UserCreditsResponse>(WRJsonParser.Unity);
+
+            OnUserCreditsFetched?.Invoke(userCreditsResponse);
+            return userCreditsResponse;
+        }
+
+        public virtual async UniTask<CreditPacksResponse> GetCreditPacksAsync(CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/packs";
+
+            return await webRequestController.GetAsync(url, ct, ReportCategory.MARKETPLACE_CREDITS)
+                                             .CreateFromJson<CreditPacksResponse>(WRJsonParser.Unity);
+        }
+
+        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
+            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdCreditBody { usdPriceCents = usdPriceCents, tradeId = tradeId });
+
+            return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                             .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);
+        }
+
+        public virtual async UniTask ReleaseUsdIntentsAsync(string[] salts, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize/cancel";
+            string jsonBody = JsonUtility.ToJson(new ReleaseUsdIntentsBody { salts = salts });
+
+            await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                      .WithNoOpAsync();
         }
 
         private async UniTask<SeasonsData> UpdateProgramSeasonsAsync(CancellationToken ct)
@@ -165,6 +203,92 @@ namespace DCL.MarketplaceCredits
             catch (Exception e)
             {
                 return EnumResult<EmailSubscriptionError>.ErrorResult(EmailSubscriptionError.EmptyError, e.Message);
+            }
+        }
+
+        public virtual async UniTask<EnumResult<CheckoutResponse, CreditsCheckoutError>> CreateCheckoutAsync(string packId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/checkout";
+            string jsonBody = JsonUtility.ToJson(new CheckoutRequestBody { packId = packId });
+
+            try
+            {
+                CheckoutResponse checkoutResponse = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                                              .CreateFromJson<CheckoutResponse>(WRJsonParser.Unity);
+
+                return EnumResult<CheckoutResponse, CreditsCheckoutError>.SuccessResult(checkoutResponse);
+            }
+            catch (OperationCanceledException)
+            {
+                return EnumResult<CheckoutResponse, CreditsCheckoutError>.ErrorResult(CreditsCheckoutError.Cancelled, "Operation was cancelled");
+            }
+            catch (UnityWebRequestException webRequestException)
+            {
+                return EnumResult<CheckoutResponse, CreditsCheckoutError>.ErrorResult(
+                    MapCheckoutStatusCode(webRequestException.ResponseCode),
+                    ParseErrorMessage(webRequestException.Text, nameof(CreateCheckoutAsync)));
+            }
+            catch (Exception e)
+            {
+                return EnumResult<CheckoutResponse, CreditsCheckoutError>.ErrorResult(CreditsCheckoutError.NetworkError, e.Message);
+            }
+        }
+
+        public virtual async UniTask<EnumResult<CreditsOrderStatusResponse, CreditsOrderPollError>> GetCheckoutOrderAsync(string orderId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/orders/{orderId}";
+
+            try
+            {
+                CreditsOrderStatusResponse orderStatusResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                           .CreateFromJson<CreditsOrderStatusResponse>(WRJsonParser.Unity);
+
+                return EnumResult<CreditsOrderStatusResponse, CreditsOrderPollError>.SuccessResult(orderStatusResponse);
+            }
+            catch (OperationCanceledException)
+            {
+                return EnumResult<CreditsOrderStatusResponse, CreditsOrderPollError>.ErrorResult(CreditsOrderPollError.Cancelled, "Operation was cancelled");
+            }
+            catch (UnityWebRequestException webRequestException)
+            {
+                CreditsOrderPollError pollError = webRequestException.ResponseCode == (long)HttpStatusCode.NotFound
+                    ? CreditsOrderPollError.NotFound
+                    : CreditsOrderPollError.NetworkError;
+
+                return EnumResult<CreditsOrderStatusResponse, CreditsOrderPollError>.ErrorResult(
+                    pollError,
+                    ParseErrorMessage(webRequestException.Text, nameof(GetCheckoutOrderAsync)));
+            }
+            catch (Exception e)
+            {
+                return EnumResult<CreditsOrderStatusResponse, CreditsOrderPollError>.ErrorResult(CreditsOrderPollError.NetworkError, e.Message);
+            }
+        }
+
+        internal static CreditsCheckoutError MapCheckoutStatusCode(long responseCode) =>
+            responseCode switch
+            {
+                (long)HttpStatusCode.NotFound => CreditsCheckoutError.FeatureDisabled,
+                (long)HttpStatusCode.ServiceUnavailable => CreditsCheckoutError.PaymentsUnavailable,
+                (long)HttpStatusCode.BadRequest => CreditsCheckoutError.UnknownPack,
+                (long)HttpStatusCode.BadGateway => CreditsCheckoutError.ProviderError,
+                _ => CreditsCheckoutError.NetworkError,
+            };
+
+        internal static string ParseErrorMessage(string responseText, string caller)
+        {
+            if (string.IsNullOrEmpty(responseText))
+                return string.Empty;
+
+            try
+            {
+                var errorResponse = JsonUtility.FromJson<CreditsErrorResponse>(responseText);
+                return errorResponse?.error ?? string.Empty;
+            }
+            catch (ArgumentException e)
+            {
+                ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{caller} - Backend error message failed to be parsed from json, falling back to an empty message. \n{e.Message}");
+                return string.Empty;
             }
         }
 

@@ -72,28 +72,28 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.ForgetAllLoadings(World);
 
-            if (level == 0 && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
+            if (level == 0 && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.Failed)
             {
                 // ResolveSceneStateByIncreasingRadiusSystem gates SHOWING_LOD/SHOWING_SCENE transitions on
                 // descriptor resolution, so by the time we reach this point the descriptor is guaranteed to
                 // be either None (no ISS for this scene) or a resolved Bundle/Descriptor.
                 if (issDescriptor.SupportsDescriptor())
                 {
-                    sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
+                    sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.Processing;
                     sceneLODInfo.CurrentLODLevelPromise = level;
                     return;
                 }
                 // descriptor in None state — no ISS for this scene; fall through to legacy LOD.
             }
 
-            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
+            AssetBundleManifestVersion lodManifest = AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate");
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(
-                platformLODKey,
+                lodManifest.GetCdnRequestHash($"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}"),
+                lodManifest,
                 typeof(GameObject),
-                permittedSources: AssetSource.ALL,
+                permittedSources: AssetSource.All,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                assetBundleManifestVersion: AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate"),
                 lookForDependencies: true
                 );
 

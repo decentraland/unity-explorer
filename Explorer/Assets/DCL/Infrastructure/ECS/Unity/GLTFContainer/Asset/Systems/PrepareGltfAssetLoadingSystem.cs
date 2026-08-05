@@ -2,7 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.Utility;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -62,6 +62,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             {
                 if (options.UseRemoteAssetBundles)
                     loadRawGltf |= sceneData.SceneContent.IsRawAsset(intention.Name);
+                else if (options.UseLocalAssetBundles)
+
+                    // Whole-scene degrade: when the manifest could not be fetched from the local
+                    // asset-bundle server every AB request would dead-end, so load raw GLTFs instead.
+                    loadRawGltf |= sceneData.SceneEntityDefinition.assetBundleManifestVersion is not { assetBundleManifestRequestFailed: false };
                 else
                     loadRawGltf = true;
             }
@@ -70,14 +75,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
             {
-                var abIntention = GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name);
-                // Pre-populate so PrepareAssetBundleLoadingParametersSystem doesn't have to look it up by the
-                // platform-suffixed hash (the digest map is keyed by bare hashes).
-                //This will go away when the urls include the depsDigest
-                if (sceneData.SceneEntityDefinition.assetBundleManifestVersion is { } manifest
-                    && manifest.TryGetDepsDigest(intention.Hash, out string digest))
-                    abIntention.DepsDigest = digest;
-                World.Add(entity, abIntention);
+                AssetBundleManifestVersion abManifest = sceneData.SceneEntityDefinition.AssetBundleManifestVersionOrFailed;
+
+                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject),
+                    abManifest.GetCdnRequestHash(intention.Hash),
+                    intention.Name,
+                    abManifest,
+                    sceneData.SceneEntityDefinition.id ?? string.Empty));
             }
         }
 
@@ -85,6 +89,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         {
             public bool LocalSceneDevelopment;
             public bool UseRemoteAssetBundles;
+            public bool UseLocalAssetBundles;
             public bool PreviewingBuilderCollection;
         }
     }

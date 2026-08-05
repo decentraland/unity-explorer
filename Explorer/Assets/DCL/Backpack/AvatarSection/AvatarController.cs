@@ -15,7 +15,7 @@ namespace DCL.Backpack
     {
         private readonly AvatarView view;
         private readonly RectTransform rectTransform;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly BackpackSlotsController slotsController;
         private readonly CategoriesPresenter categoriesPresenter;
         private readonly OutfitsPresenter outfitsPresenter;
@@ -28,7 +28,7 @@ namespace DCL.Backpack
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "backpack");
 
         public AvatarController(AvatarView view,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             AvatarSlotView[] slotViews,
             NftTypeIconSO rarityBackgrounds,
             BackpackCommandBus backpackCommandBus,
@@ -65,7 +65,7 @@ namespace DCL.Backpack
                 outfitsPresenter,
                 (RectTransform) view.transform);
 
-            bool isOutfitsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BACKPACK_OUTFITS);
+            bool isOutfitsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BackpackOutfits);
             if (!isOutfitsEnabled)
                 tabsManager.SetTabEnabled(AvatarSubSection.Outfits, false);
 
@@ -77,7 +77,7 @@ namespace DCL.Backpack
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));
             urlBuilder.AppendParameter(marketplaceSourceParam);
-            webBrowser.OpenUrl(urlBuilder.Build());
+            webBrowser.OpenUrlMainThreadOnly(urlBuilder.Build());
         }
 
         public void Dispose()

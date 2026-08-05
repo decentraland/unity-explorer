@@ -114,7 +114,7 @@ namespace ECS.StreamableLoading.Tests
         public async Task RemoveCurrentSourceFromPermittedSources()
         {
             TIntention intent = CreateSuccessIntention();
-            intent.SetSources(AssetSource.EMBEDDED, AssetSource.EMBEDDED);
+            intent.SetSources(AssetSource.Embedded, AssetSource.Embedded);
 
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
             ForceAllowed();
@@ -123,7 +123,7 @@ namespace ECS.StreamableLoading.Tests
             system.Update(0);
 
             await promise.ToUniTaskWithoutDestroyAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
-            Assert.AreEqual(AssetSource.NONE, world.Get<TIntention>(promise.Entity).CommonArguments.PermittedSources);
+            Assert.AreEqual(AssetSource.None, world.Get<TIntention>(promise.Entity).CommonArguments.PermittedSources);
         }
 
         [Test]

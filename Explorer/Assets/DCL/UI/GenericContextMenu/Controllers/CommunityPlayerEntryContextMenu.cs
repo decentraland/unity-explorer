@@ -116,7 +116,7 @@ namespace DCL.UI
             viewProfileButton = new GenericContextMenuElement(openUserProfileButtonControlSettings, false);
             chatButton = new GenericContextMenuElement(openConversationControlSettings, false);
 
-            contextMenu = new GenericContextMenu(voiceChatContextMenuSettings.ContextMenuWidth, CONTEXT_MENU_OFFSET, voiceChatContextMenuSettings.VerticalPadding, voiceChatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
+            contextMenu = new GenericContextMenu(voiceChatContextMenuSettings.ContextMenuWidth, CONTEXT_MENU_OFFSET, voiceChatContextMenuSettings.VerticalPadding, voiceChatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.BottomRight)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right))
                          .AddControl(demoteSpeakerButton)
@@ -132,19 +132,19 @@ namespace DCL.UI
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo targetProfile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT,
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BottomRight,
             bool targetIsSpeaker = false)
         {
 
             var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
 
             bool targetIsLocalParticipant = targetProfile.UserId.Equals(localParticipant.WalletId, StringComparison.InvariantCultureIgnoreCase);
-            bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantCommunityRole.MODERATOR or VoiceChatParticipantCommunityRole.OWNER;
+            bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantCommunityRole.Moderator or VoiceChatParticipantCommunityRole.Owner;
 
             closeContextMenuTask.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
-            UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
+            UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.Disabled;
 
             if (!targetIsLocalParticipant && friendsService != null)
             {
@@ -152,8 +152,8 @@ namespace DCL.UI
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
                 jumpInButtonControlSettings.SetData(targetProfile.UserId);
 
-                jumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND && friendOnlineStatusCache != null &&
-                                                  friendOnlineStatusCache.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
+                jumpInButton.Enabled = friendshipStatus == FriendshipStatus.Friend && friendOnlineStatusCache != null &&
+                                                  friendOnlineStatusCache.GetFriendStatus(targetProfile.UserId) != OnlineStatus.Offline;
             }
 
             userProfileControlSettings.SetInitialData(targetProfile, contextMenuFriendshipStatus);
@@ -188,12 +188,12 @@ namespace DCL.UI
         {
             return friendshipStatus switch
                    {
-                       FriendshipStatus.NONE => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
-                       FriendshipStatus.FRIEND => UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
-                       FriendshipStatus.REQUEST_SENT => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
-                       FriendshipStatus.REQUEST_RECEIVED => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
-                       FriendshipStatus.BLOCKED => UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED,
-                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
+                       FriendshipStatus.None => UserProfileContextMenuControlSettings.FriendshipStatus.None,
+                       FriendshipStatus.Friend => UserProfileContextMenuControlSettings.FriendshipStatus.Friend,
+                       FriendshipStatus.RequestSent => UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent,
+                       FriendshipStatus.RequestReceived => UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived,
+                       FriendshipStatus.Blocked => UserProfileContextMenuControlSettings.FriendshipStatus.Blocked,
+                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.None,
                    };
         }
 
@@ -201,19 +201,19 @@ namespace DCL.UI
         {
             switch (friendshipStatus)
             {
-                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.None:
                     SendFriendRequest(userData.UserId);
                     break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.Friend:
                     RemoveFriend(userData.UserId);
                     break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent:
                     CancelFriendRequest(userData.UserId);
                     break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived:
                     AcceptFriendship(userData.UserId);
                     break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.Blocked: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
             }
         }
@@ -356,7 +356,7 @@ namespace DCL.UI
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.Cancel) return;
 
                 BanUser(walletId, currentCommunityId);
             }

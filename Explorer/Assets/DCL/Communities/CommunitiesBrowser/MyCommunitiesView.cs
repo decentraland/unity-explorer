@@ -75,7 +75,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             cardView.SetRequestsReceived(communityData.requestsReceived);
 
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token, true).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(communityData.ThumbnailUrl, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token, true).Forget();
 
             cardView.MainButtonClicked -= CommunityProfileOpened;
             cardView.MainButtonClicked += CommunityProfileOpened;

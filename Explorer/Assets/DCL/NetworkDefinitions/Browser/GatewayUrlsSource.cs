@@ -8,11 +8,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Utility;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Browser
 {
     public class GatewayUrlsSource : DecentralandUrlsSource
     {
         private const string GATEWAY_SUBDOMAIN = "gateway";
+        private const string TRANSFORMABLE_DOMAIN_MARKER = ".decentraland.";
         private const int HTTPS_PREFIX_LENGTH = 8; // "https://".Length
 
         private static readonly DecentralandEnvironment[] SUPPORTED_ENVS = { DecentralandEnvironment.Org, DecentralandEnvironment.Zone };
@@ -65,7 +67,9 @@ namespace DCL.Browser
 
             // The following requires signed fetch
             DecentralandUrl.Communities,
+            DecentralandUrl.CommunitiesV2,
             DecentralandUrl.Members,
+            DecentralandUrl.MembersV2,
             DecentralandUrl.ActiveCommunityVoiceChats,
         };
 
@@ -90,8 +94,9 @@ namespace DCL.Browser
             ILaunchMode launchMode,
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
-            string? cliGatekeeperUrl = null)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl)
+            string? cliGatekeeperUrl = null,
+            string? cliOptimizedAssetsUrl = null)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
@@ -140,8 +145,39 @@ namespace DCL.Browser
             if (!enabled || serviceUrl.Url == null || !SUPPORTED_URLS.Contains(decentralandUrl))
                 return serviceUrl;
 
+            // FeatureFlagsDependent from base.RawUrl() signals a consolidated / optimized-assets URL that
+            // must NOT be gateway-rewritten (it resolves to its own origin). If a future URL legitimately
+            // needs FeatureFlagsDependent caching AND gateway routing, give UrlData a dedicated skipGateway
+            // field instead of widening this guard. Custom hosts also pass through untouched.
+            if (serviceUrl.Caching == CacheBehaviour.FeatureFlagsDependent || !IsGatewayTransformable(serviceUrl.Url))
+                return serviceUrl;
+
             // it is called only once and then cached in the base class
-            return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, TransformToGateway(serviceUrl.Url));
+            return new UrlData(CacheBehaviour.FeatureFlagsDependent, TransformToGateway(serviceUrl.Url));
+        }
+
+        /// <summary>
+        ///     True only for a bare https://{subdomain}.decentraland.{tld} authority (single-label sub + tld, no port or
+        ///     userinfo); any custom host passes through untouched.
+        /// </summary>
+        private static bool IsGatewayTransformable(string url)
+        {
+            if (!url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            int hostEnd = url.IndexOf('/', HTTPS_PREFIX_LENGTH);
+            ReadOnlySpan<char> authority = url.AsSpan(HTTPS_PREFIX_LENGTH, (hostEnd < 0 ? url.Length : hostEnd) - HTTPS_PREFIX_LENGTH);
+
+            if (authority.IndexOfAny(':', '@') >= 0)
+                return false;
+
+            int marker = authority.IndexOf(TRANSFORMABLE_DOMAIN_MARKER.AsSpan(), StringComparison.OrdinalIgnoreCase);
+
+            if (marker <= 0 || authority.Slice(0, marker).IndexOf('.') >= 0)
+                return false;
+
+            ReadOnlySpan<char> tld = authority.Slice(marker + TRANSFORMABLE_DOMAIN_MARKER.Length);
+            return tld.Length > 0 && tld.IndexOf('.') < 0;
         }
 
         public override string GetOriginalUrl(string url)

@@ -1,10 +1,11 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterCamera;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.SceneBannedUsers;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -23,7 +24,7 @@ using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Benchmarks the full Nearby audio per-frame chain — Binding → Position → Cleanup —
@@ -71,7 +72,7 @@ namespace DCL.VoiceChat.Nearby
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
             IUserBlockingCache userBlockingCache = Substitute.For<IUserBlockingCache>();
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 

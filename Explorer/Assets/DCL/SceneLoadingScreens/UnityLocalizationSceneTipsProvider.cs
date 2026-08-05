@@ -86,7 +86,7 @@ namespace DCL.SceneLoadingScreens
                 string title = tipsTable.GetEntry($"TITLE-{i}").Value;
                 string body = tipsTable.GetEntry($"BODY-{i}").Value;
 
-                tips[i] = new SceneTips.Tip(title, body, sprite);
+                tips[i] = new SceneTips.Tip(title, title, body, sprite);
             }
 
             return new SceneTips(defaultDuration, random: false, tips);

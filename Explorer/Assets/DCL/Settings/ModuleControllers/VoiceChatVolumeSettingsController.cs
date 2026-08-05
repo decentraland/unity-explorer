@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
 
             volumeBus.OnVoiceChatVolumeChanged += OnVoiceChatVolumeChangedExternally;
 
-            bool isVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
+            bool isVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat);
             view.SetActive(isVoiceChatEnabled);
         }
 

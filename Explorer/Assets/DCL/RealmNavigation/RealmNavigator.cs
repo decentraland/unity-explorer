@@ -90,7 +90,8 @@ namespace DCL.RealmNavigation
             Vector2Int parcelToTeleport = default,
             bool isWorld = false,
             bool allowsWorldPositionOverride = false,
-            bool landOnParcel = false
+            bool landOnParcel = false,
+            string? spawnPointName = null
         )
         {
             if (ct.IsCancellationRequested)
@@ -128,7 +129,7 @@ namespace DCL.RealmNavigation
                 }
             }
 
-            var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport, allowsWorldPositionOverride, landOnParcel);
+            var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport, allowsWorldPositionOverride, landOnParcel, spawnPointName);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
 
             if (!loadResult.Success)
@@ -137,7 +138,7 @@ namespace DCL.RealmNavigation
                     globalWorld.Add(cameraEntity.Object, cameraSamplingData);
 
                 ReportHub.LogError(ReportCategory.REALM,
-                    $"Error trying to teleport to a realm {realm}: {loadResult.Error.Value.Message}");
+                    $"Error trying to teleport to a realm {realm}: {loadResult.Error!.Value.Message}");
 
                 return loadResult.As(ChangeRealmErrors.AsChangeRealmError);
             }
@@ -224,7 +225,7 @@ namespace DCL.RealmNavigation
             return lastOpResult;
         }
 
-        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport, bool allowsWorldPositionOverride, bool landOnParcel = false)
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport, bool allowsWorldPositionOverride, bool landOnParcel = false, string? spawnPointName = null)
         {
             return async (parentLoadReport, ct) =>
             {
@@ -234,7 +235,7 @@ namespace DCL.RealmNavigation
                 if (ct.IsCancellationRequested)
                     return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
 
-                var teleportParams = new TeleportParams(realm, parcelToTeleport, parentLoadReport, loadingStatus, allowsWorldPositionOverride, landOnParcel);
+                var teleportParams = new TeleportParams(realm, parcelToTeleport, parentLoadReport, loadingStatus, allowsWorldPositionOverride, landOnParcel, spawnPointName);
 
                 EnumResult<TaskError> opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, ct);
 
@@ -273,7 +274,8 @@ namespace DCL.RealmNavigation
             Vector2Int parcel,
             CancellationToken ct,
             bool isLocal = false,
-            bool landOnParcel = false
+            bool landOnParcel = false,
+            string? spawnPointName = null
         )
         {
             if (ct.IsCancellationRequested)
@@ -289,11 +291,11 @@ namespace DCL.RealmNavigation
 
             if (!isLocal && !realmController.RealmData.IsGenesis())
             {
-                var enumResult = await TryChangeToGenesisAsync(parcel, ct, landOnParcel);
+                var enumResult = await TryChangeToGenesisAsync(parcel, ct, landOnParcel, spawnPointName);
                 return enumResult.As(ChangeRealmErrors.AsTaskError);
             }
 
-            EnumResult<TaskError> loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TeleportToParcelAsyncOperation(parcel, landOnParcel), ct);
+            EnumResult<TaskError> loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TeleportToParcelAsyncOperation(parcel, landOnParcel, spawnPointName), ct);
 
             if (!loadResult.Success)
                 ReportHub.LogError(
@@ -304,14 +306,14 @@ namespace DCL.RealmNavigation
             return loadResult;
         }
 
-        private async UniTask<EnumResult<ChangeRealmError>> TryChangeToGenesisAsync(Vector2Int parcel, CancellationToken ct, bool landOnParcel = false)
+        private async UniTask<EnumResult<ChangeRealmError>> TryChangeToGenesisAsync(Vector2Int parcel, CancellationToken ct, bool landOnParcel = false, string? spawnPointName = null)
         {
             var genesisUrl = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
-            var enumResult = await TryChangeRealmAsync(genesisUrl, ct, parcel, landOnParcel: landOnParcel);
+            var enumResult = await TryChangeRealmAsync(genesisUrl, ct, parcel, landOnParcel: landOnParcel, spawnPointName: spawnPointName);
             return enumResult;
         }
 
-        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> TeleportToParcelAsyncOperation(Vector2Int parcel, bool landOnParcel = false) =>
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> TeleportToParcelAsyncOperation(Vector2Int parcel, bool landOnParcel = false, string? spawnPointName = null) =>
             async (parentLoadReport, ct) =>
             {
                 const string LOG_NAME = "Teleporting to Parcel";
@@ -325,7 +327,8 @@ namespace DCL.RealmNavigation
                     report: parentLoadReport,
                     currentDestinationRealm: URLDomain.EMPTY,
                     allowsWorldPositionOverride: false,
-                    landOnParcel: landOnParcel
+                    landOnParcel: landOnParcel,
+                    spawnPointName: spawnPointName
                 );
 
                 EnumResult<TaskError> result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);
