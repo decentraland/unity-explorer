@@ -110,7 +110,7 @@ namespace DCL.RealmNavigation
             {
                 if (TryExtractWorldName(realm, out string worldName))
                 {
-                    var result = await CheckWorldAccessAsync(worldName, ct);
+                    var result = await CheckWorldAccessAsync(worldName, realm, ct);
 
                     if (result == WorldAccessResult.CheckFailed)
                     {
@@ -148,11 +148,11 @@ namespace DCL.RealmNavigation
             return EnumResult<ChangeRealmError>.SuccessResult();
         }
 
-        private async UniTask<WorldAccessResult> CheckWorldAccessAsync(string worldName, CancellationToken ct)
+        private async UniTask<WorldAccessResult> CheckWorldAccessAsync(string worldName, URLDomain realm, CancellationToken ct)
         {
             try
             {
-                return await worldAccessGate.CheckAccessAsync(worldName, null, ct);
+                return await worldAccessGate.CheckAccessAsync(worldName, null, realm, ct);
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
