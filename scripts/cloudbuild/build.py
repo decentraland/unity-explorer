@@ -300,7 +300,7 @@ def cancel_build(id):
     except requests.exceptions.RequestException as e:
         print(f'Pre-cancel status check failed ({e}); attempting cancel anyway.')
 
-    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS, timeout=30)
 
     if response.status_code == 204:
         print('Build canceled successfully')
@@ -707,6 +707,17 @@ elif args.resume or args.cancel:
     id = build_info["id"]
 
     if args.cancel:
+        if id is None:
+            # The runner died between the build POST and the id write; the queued build is
+            # findable only as the target's latest non-terminal build.
+            latest = get_latest_build(os.getenv('TARGET'))
+            if latest and latest.get('buildStatus') not in TERMINAL_STATUSES:
+                id = latest['build']
+                print(f'No build id persisted; cancelling latest non-terminal build #{id} on {os.getenv("TARGET")}')
+            else:
+                print('No build id persisted and no non-terminal build found; nothing to cancel.')
+                utils.delete_build_info()
+                sys.exit(0)
         cancel_build(id)
         utils.delete_build_info()
         sys.exit(0)
@@ -741,6 +752,9 @@ else:
             else:
                 raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
 
+        # Persist the target before the POST: if the runner dies mid-request, --cancel can still
+        # find the queued build via the target's latest-build lookup.
+        utils.persist_build_info(os.getenv('TARGET'), None)
         id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
         utils.persist_build_info(os.getenv('TARGET'), id)
         print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
