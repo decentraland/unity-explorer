@@ -39,21 +39,18 @@ jobs:
     if: needs.pre-validation.outputs.pr-number != ''
     runs-on: ubuntu-latest
     steps:
-      - name: Find Comment
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+      - name: Checkout CI status action
+        uses: actions/checkout@v4
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
-      - name: Update Comment
-        uses: peter-evans/create-or-update-comment@v3
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+      - name: Reset build section to pending
+        uses: ./.github/actions/ci-status-comment
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
           body: |-
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            ![Build](https://img.shields.io/badge/Build-Pending!-ffff00?logo=github&style=for-the-badge)  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
 
             New build in progress, come back later!
-
-            [badge]: https://img.shields.io/badge/Build-Pending!-ffff00?logo=github&style=for-the-badge

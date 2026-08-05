@@ -64,31 +64,34 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'false'
     runs-on: ubuntu-latest
     steps:
-      - name: Find Comment
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+      - name: Checkout CI status action
+        uses: actions/checkout@v4
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
 
-      - name: Post skipped comment
-        uses: peter-evans/create-or-update-comment@v3
+      - name: Post skipped build section
+        uses: ./.github/actions/ci-status-comment
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
           body: |-
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            ![Build](https://img.shields.io/badge/Build-Skipped-yellow?logo=unity&logoColor=white&style=for-the-badge)  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
 
             Build skipped — no changes detected under `Explorer/`.
-
-            [badge]: https://img.shields.io/badge/Build-Skipped-yellow?logo=unity&logoColor=white&style=for-the-badge
 
   comment-success:
     needs: [pre-validation, check-build-ran]
     if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+
       - name: Get Artifact and Pull request info
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -194,44 +197,28 @@ jobs:
             echo "SIZE_REPORT=" >> "$GITHUB_ENV"
           fi
 
-      - name: Find Comment
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+      - name: Update build section
+        uses: ./.github/actions/ci-status-comment
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
-
-      - name: Update Comment
-        env:
-          JOB_PATH: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}"
-          WINDOWS_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }}"
-          WINDOWS_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
-          MAC_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
-          MAC_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
-          HEAD_SHA: "${{ env.HEAD_SHA }}"
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
           body: |-
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            ![Build](https://img.shields.io/badge/Build-Success!-3fb950?logo=unity&logoColor=white&style=for-the-badge)  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
 
             Windows and Mac build successful in Unity Cloud! You can find a link to the downloadable artifact below.
 
             | Name                | Link                    |
             | --------            | ----------------------- |
             | Commit              | ${{ env.HEAD_SHA }}     |
-            | Logs                | ${{ env.JOB_PATH }}     |
-            | Download Windows    | ${{ env.WINDOWS_ARTIFACT_URL }} |
-            | Download Windows S3 | ${{ env.WINDOWS_ARTIFACT_S3_URL }} |
-            | Download Mac        | ${{ env.MAC_ARTIFACT_URL }} |
-            | Download Mac S3     | ${{ env.MAC_ARTIFACT_S3_URL }} |
+            | Logs                | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }} |
+            | Download Windows    | ${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }} |
+            | Download Windows S3 | ${{ format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }} |
+            | Download Mac        | ${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }} |
+            | Download Mac S3     | ${{ format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }} |
             | Built on            | ${{ env.BUILD_DATE }} |
 
             ${{ env.SIZE_REPORT }}
-
-            [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=unity&logoColor=white&style=for-the-badge
 
       - name: Find latest release
         env:
@@ -259,23 +246,20 @@ jobs:
     if: github.event.workflow_run.conclusion == 'failure' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Find Comment
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+      - name: Checkout CI status action
+        uses: actions/checkout@v4
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
 
-      - name: Update Comment
-        uses: peter-evans/create-or-update-comment@v3
+      - name: Update build section
+        uses: ./.github/actions/ci-status-comment
         with:
-          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
           body: |-
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"> 
-            
+            ![Build](https://img.shields.io/badge/Build-Failed!-ff0000?logo=unity&logoColor=white&style=for-the-badge)  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+
             Build failed! Check the logs to see what went wrong.
             If the error repeats please consider the `clean-build` tag.
-
-            [badge]: https://img.shields.io/badge/Build-Failed!-ff0000?logo=unity&logoColor=white&style=for-the-badge
