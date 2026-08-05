@@ -890,7 +890,11 @@ jobs:
             echo "[${ARTIFACT_URL}](${ARTIFACT_URL})"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Symbol artifacts have no downstream consumer (Sentry uploads from the on-disk build/
+      # folder below; release drafting attaches only the player zips) — keep them only where a
+      # human might need post-hoc symbolication, and never at default retention.
       - name: Upload debug symbols
+        if: ${{ inputs.is_release_build == true }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.artifact_name }}_debug_symbols
@@ -898,6 +902,7 @@ jobs:
             build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
+          retention-days: 7
           
       - name: Upload debug symbols to Sentry
         if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' }}
