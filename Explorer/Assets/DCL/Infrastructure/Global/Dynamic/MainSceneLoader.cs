@@ -92,6 +92,7 @@ namespace Global.Dynamic
         private ProvidedInstance<SplashScreen> splashScreen;
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
+        private AbgenSidecar? abgenSidecar;
 
         private bool canShutdown;
 
@@ -121,6 +122,9 @@ namespace Global.Dynamic
 
             DisableAllSelectableTransitions();
             stopwatch.LogStep(nameof(DisableAllSelectableTransitions));
+
+            abgenSidecar?.Dispose();
+            abgenSidecar = null;
 
             if (dynamicWorldContainer != null)
             {
@@ -261,6 +265,14 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
                 cliOptimizedAssetsUrl = launchSettings.LocalAssetBundlesBaseUrl();
 
+            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl))
+            {
+                abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct);
+
+                if (abgenSidecar != null)
+                    cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
+            }
+
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
                 realmData,
@@ -329,6 +341,14 @@ namespace Global.Dynamic
                 DeepLinkAllowlist.SetWhitelistedWorlds(DeepLinkWorldWhitelistProvider.ReadWorlds(FeatureFlagsConfiguration.Instance));
 
                 DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
+
+                // Remote kill-switch: flags arrive after the sidecar decision, so it applies here.
+                if (abgenSidecar != null && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_SIDECAR_KILL))
+                {
+                    abgenSidecar.Dispose();
+                    abgenSidecar = null;
+                    decentralandUrlsSource.ClearOptimizedAssetsOverride();
+                }
 
                 // Need to ensure clock sync ASAP due to some requests may fail due this problem.
                 // Checking for clock desync after feature flags (or any other process that performs an http request)

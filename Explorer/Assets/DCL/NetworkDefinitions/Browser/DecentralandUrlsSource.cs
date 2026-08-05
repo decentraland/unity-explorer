@@ -41,7 +41,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
         private readonly string? gatekeeperBaseOverride;
-        private readonly string? optimizedAssetsBaseOverride;
+        private string? optimizedAssetsBaseOverride;
         private readonly bool isTodayEnvironment;
 
         public DecentralandUrlsSource(
@@ -187,6 +187,10 @@ namespace DCL.Browser.DecentralandUrls
             foreach (DecentralandUrl url in realmDependentCachedUrls)
                 cache.Remove(url);
         }
+
+        /// <summary>Drops a sidecar-provided optimized-assets base so urls resolve back to the dedicated host; only effective while the url is still flag-dependent (uncached).</summary>
+        public void ClearOptimizedAssetsOverride() =>
+            optimizedAssetsBaseOverride = null;
 
         private string ResolveGatekeeperBaseUrl(string defaultBaseUrl) =>
             gatekeeperBaseOverride ?? defaultBaseUrl;
