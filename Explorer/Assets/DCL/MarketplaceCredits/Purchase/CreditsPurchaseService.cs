@@ -53,14 +53,6 @@ namespace DCL.MarketplaceCredits.Purchase
             this.isFeatureEnabled = isFeatureEnabled;
         }
 
-        /// <summary>
-        ///     Quotes the LISTING, not a trade id.
-        ///     <para>
-        ///         The row from /v3/catalog/unified already says how the item is acquired, what it costs and how
-        ///         much is left; passing only its tradeId threw that away and forced everything to be re-derived
-        ///         from a trade — which a CollectionStore mint does not have, so it could not be bought at all.
-        ///     </para>
-        /// </summary>
         public async UniTask<CreditsQuoteResult> QuoteAsync(ShopListingDto listing, CancellationToken ct)
         {
             if (!isFeatureEnabled || !creditsFeatureAccess.IsUserAllowed())
@@ -112,32 +104,14 @@ namespace DCL.MarketplaceCredits.Purchase
             }
         }
 
-        /// <summary>
-        ///     A CollectionStore mint is FOR SALE when it has stock, not when it has a trade.
-        ///     <para>
-        ///         `acquisition` is the server's own discriminator. A missing value means an older server that did
-        ///         not send it, and back then every row was a trade — so the absence must read as "trade", never
-        ///         as "mint".
-        ///     </para>
-        /// </summary>
         private static bool IsStoreMint(ShopListingDto listing) =>
             string.Equals(listing.acquisition, "store", StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>
-        ///     Quotes a mint entirely from the listing row: there is no trade to fetch and never will be.
-        ///     <para>
-        ///         A mint is always MANA-priced, so its credit price exists only through the oracle — the same
-        ///         path a legacy MANA trade takes. The rate is read through the marketplace contract because that
-        ///         is what exposes `manaUsdAggregator()`; a collection contract does not.
-        ///     </para>
-        /// </summary>
         private async UniTask<CreditsQuoteResult> QuoteStoreMintInternalAsync(ShopListingDto listing, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(listing.itemId))
                 return new CreditsQuoteResult(CreditsPurchaseError.ListingNotAvailable, "Mint listing has no itemId");
 
-            // Stock, not a trade, is what "still on sale" means here. A sold-out mint would otherwise be carried
-            // all the way to an on-chain revert.
             if (listing.available <= 0)
                 return new CreditsQuoteResult(CreditsPurchaseError.ListingNotAvailable, "Mint is sold out");
 
@@ -239,9 +213,6 @@ namespace DCL.MarketplaceCredits.Purchase
             BigInteger requiredManaWei = quote.RequiredManaWei;
             StoreMintTarget mint = quote.Mint;
 
-            // A mint's price is an ARGUMENT to CollectionStore.buy and the contract re-validates it against the
-            // item's live price, reverting if the creator moved it — so it is re-read here, as late as possible,
-            // instead of trusting the quote. A trade cannot fail this way: its price is signed into the order.
             if (quote.Kind == CreditsListingKind.StoreMint)
             {
                 SetState(CreditsPurchaseState.ResolvingListing);
@@ -264,8 +235,6 @@ namespace DCL.MarketplaceCredits.Purchase
                 mint = new StoreMintTarget(mint.CollectionAddress, mint.ItemId, fresh.manaWei!);
                 requiredManaWei = CreditsTradeEncoder.AmountOrZero(fresh.manaWei!);
 
-                // A price that moved UP past what the buyer confirmed must not be charged silently. The cap check
-                // below catches it too, but failing here names the reason.
                 if (requiredManaWei > quote.RequiredManaWei)
                     return Fail(CreditsPurchaseError.PriceChanged, message: "The mint price changed");
             }
@@ -324,8 +293,6 @@ namespace DCL.MarketplaceCredits.Purchase
 
                 long externalCallExpiresAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + EXTERNAL_CALL_TTL_SECONDS;
 
-                // Same envelope, same credit, same caps — only the external call differs: accept([trade]) against
-                // the marketplace, or buy([item]) against the CollectionStore.
                 useCreditsCalldata = quote.Kind == CreditsListingKind.StoreMint
                     ? CreditsTradeEncoder.BuildStoreMintUseCreditsCalldata(
                         chainConfig.CollectionStoreAddress, mint.CollectionAddress, mint.ItemId, mint.PriceWei,
@@ -407,7 +374,6 @@ namespace DCL.MarketplaceCredits.Purchase
             }
         }
 
-        /// <summary>What the logs should call this purchase — a mint has no trade id to name.</summary>
         private static string QuoteLabel(in CreditsPurchaseQuote quote) =>
             quote.Kind == CreditsListingKind.StoreMint
                 ? $"mint {quote.Mint.CollectionAddress}-{quote.Mint.ItemId}"
