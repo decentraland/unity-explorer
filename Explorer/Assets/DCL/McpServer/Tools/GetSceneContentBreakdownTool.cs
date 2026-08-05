@@ -21,10 +21,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class GetSceneContentBreakdownTool : McpTool
     {
-        // Generous: with another consumer already collecting, the next pass can be a full
-        // 60-frame cooldown away, which stretches to seconds when the scene runs at low FPS
-        private const int POLL_INTERVAL_MS = 100;
-        private const int DEFAULT_COLLECTION_TIMEOUT_MS = 10_000;
         private const int DEFAULT_LIMIT = 10;
         private const int MAX_LIMIT = 50;
 
@@ -50,7 +46,7 @@ namespace DCL.McpServer.Tools
             schema.Integer("limit", "Maximum entries to return, heaviest first. Default 10.")
                   .String("sortBy", "Metric to rank by. Default triangles.", enumValues: new[] { "triangles", "materials", "shaderVariants", "drawCalls", "visibleTriangles" });
 
-        public GetSceneContentBreakdownTool(IScenesCache scenesCache, int collectionTimeoutMs = DEFAULT_COLLECTION_TIMEOUT_MS)
+        public GetSceneContentBreakdownTool(IScenesCache scenesCache, int collectionTimeoutMs = SceneContentStatsPolling.DEFAULT_COLLECTION_TIMEOUT_MS)
         {
             this.scenesCache = scenesCache;
             this.collectionTimeoutMs = collectionTimeoutMs;
@@ -73,16 +69,8 @@ namespace DCL.McpServer.Tools
 
             try
             {
-                var elapsedMs = 0;
-
-                while (stats.CollectionCount == collectionsBefore && elapsedMs < collectionTimeoutMs)
-                {
-                    await UniTask.Delay(POLL_INTERVAL_MS, cancellationToken: ct);
-                    elapsedMs += POLL_INTERVAL_MS;
-
-                    if (scenesCache.CurrentScene.Value != scene)
-                        return McpToolResult.Error("The current scene changed while collecting the breakdown.");
-                }
+                if (!await SceneContentStatsPolling.WaitForCollectionAsync(scenesCache, scene, stats, collectionsBefore, collectionTimeoutMs, ct))
+                    return McpToolResult.Error("The current scene changed while collecting the breakdown.");
             }
             finally
             {

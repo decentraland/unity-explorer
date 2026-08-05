@@ -55,6 +55,9 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Number("sampleSeconds", "Seconds to sample the frame rate, clamped to 0.5–10. Default 2. The call holds for this duration while it measures.");
+
         public GetPerformanceStatsTool(IScenesCache scenesCache)
         {
             this.scenesCache = scenesCache;

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using DCL.Profiling;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
@@ -17,11 +18,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class GetSceneContentStatsTool : McpTool
     {
-        // Generous: with another consumer already collecting, the next pass can be a full
-        // 60-frame cooldown away, which stretches to seconds when the scene runs at low FPS
-        private const int POLL_INTERVAL_MS = 100;
-        private const int DEFAULT_COLLECTION_TIMEOUT_MS = 10_000;
-
         private readonly IScenesCache scenesCache;
         private readonly int collectionTimeoutMs;
 
@@ -57,7 +53,7 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
-        public GetSceneContentStatsTool(IScenesCache scenesCache, int collectionTimeoutMs = DEFAULT_COLLECTION_TIMEOUT_MS)
+        public GetSceneContentStatsTool(IScenesCache scenesCache, int collectionTimeoutMs = SceneContentStatsPolling.DEFAULT_COLLECTION_TIMEOUT_MS)
         {
             this.scenesCache = scenesCache;
             this.collectionTimeoutMs = collectionTimeoutMs;
@@ -76,16 +72,8 @@ namespace DCL.McpServer.Tools
 
             try
             {
-                var elapsedMs = 0;
-
-                while (stats.CollectionCount == collectionsBefore && elapsedMs < collectionTimeoutMs)
-                {
-                    await UniTask.Delay(POLL_INTERVAL_MS, cancellationToken: ct);
-                    elapsedMs += POLL_INTERVAL_MS;
-
-                    if (scenesCache.CurrentScene.Value != scene)
-                        return McpToolResult.Error("The current scene changed while collecting stats.");
-                }
+                if (!await SceneContentStatsPolling.WaitForCollectionAsync(scenesCache, scene, stats, collectionsBefore, collectionTimeoutMs, ct))
+                    return McpToolResult.Error("The current scene changed while collecting stats.");
             }
             finally
             {
