@@ -39,6 +39,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Minimap
@@ -88,6 +89,8 @@ namespace DCL.Minimap
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings? homeToggleSettings;
         private string previousRealmName = string.Empty;
+        private CanvasGroup? minimapContainerCanvasGroup;
+        private Image? expandBgImage;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -207,6 +210,9 @@ namespace DCL.Minimap
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
             viewInstance.favoriteButton.OnButtonClicked += OnFavoriteButtonClicked;
             viewInstance.donateButton.onClick.AddListener(OpenDonateToCreatorPanel);
+
+            minimapContainerCanvasGroup = viewInstance.minimapContainer.GetComponent<CanvasGroup>();
+            expandBgImage = viewInstance.minimapContainer.parent.Find("ExpandBgImage")?.GetComponent<Image>();
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -340,6 +346,11 @@ namespace DCL.Minimap
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
             viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.EXPAND);
+            minimapContainerCanvasGroup!.blocksRaycasts = true;
+            minimapContainerCanvasGroup.interactable = true;
+
+            if (expandBgImage != null)
+                expandBgImage.raycastTarget = true;
         }
 
         private void CollapseMinimap()
@@ -348,6 +359,11 @@ namespace DCL.Minimap
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
             viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.COLLAPSE);
+            minimapContainerCanvasGroup!.blocksRaycasts = false;
+            minimapContainerCanvasGroup.interactable = false;
+
+            if (expandBgImage != null)
+                expandBgImage.raycastTarget = false;
         }
 
         private void OpenSideMenu()
