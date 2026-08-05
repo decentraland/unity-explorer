@@ -133,6 +133,9 @@ namespace DCL.AuthenticationScreenFlow
             view.TermsOfUseAndPrivacyLink.OnLinkClicked += OpenClickableURL;
 
             UpdateFinalizeButtonState();
+
+            view.JumpInIcon.SetActive(true);
+            view.FinalizeLoading.SetActive(false);
         }
 
         public override void Exit()
@@ -285,6 +288,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             view.FinalizeNewUserButton.interactable = false;
             view.BackButton.interactable = false;
+            view.JumpInIcon.SetActive(false);
+            view.FinalizeLoading.SetActive(true);
 
             if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
                 SubscribeToNewsletterAsync(userEmail).Forget();
@@ -298,6 +303,7 @@ namespace DCL.AuthenticationScreenFlow
                 try
                 {
                     newUserProfile.Name = view.ProfileNameInputField.Text;
+
                     Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                     newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
 
