@@ -27,24 +27,37 @@ namespace DCL.MarketplaceCredits
     }
 
     [Serializable]
+    /// <summary>
+    ///     A TRADE-backed purchase: identified by its trade.
+    ///     <para>
+    ///         Deliberately a separate shape from the mint body below rather than one struct with every field.
+    ///         `JsonUtility` cannot omit a field — it serialises every public member — and the server validates
+    ///         `contractAddress`/`itemId` as a pair the moment EITHER key is present. An empty string counts as
+    ///         present and fails the address check, which is exactly how a trade purchase came back 400 while the
+    ///         mint went through. Two shapes make "absent" expressible.
+    ///     </para>
+    ///     <para>
+    ///         Note what is NOT here: nothing identifying is part of what the server SIGNS. The authorization is
+    ///         a voucher for an AMOUNT (value + expiry + salt + signature) plus the caps the CreditsManager
+    ///         enforces on-chain against whatever MANA the external call actually moves. The identifiers are
+    ///         recorded on the intent so the buyer's purchase history can name what was bought.
+    ///     </para>
+    /// </summary>
     public struct AuthorizeUsdCreditBody
     {
         public int usdPriceCents;
-
-        /// <summary>
-        ///     Empty for a CollectionStore mint, which has no trade.
-        ///     <para>
-        ///         Neither this nor the item pair below is part of what the server SIGNS: the authorization is a
-        ///         voucher for an AMOUNT (value + expiry + salt + signature) and the caps the CreditsManager
-        ///         enforces on-chain against whatever MANA the external call actually moves. These fields are
-        ///         recorded on the intent so the buyer's purchase history can name what was bought — and for a
-        ///         mint they are the only identity it has, since there is no trade to resolve a name from.
-        ///     </para>
-        /// </summary>
         public string tradeId;
+    }
 
+    /// <summary>
+    ///     A COLLECTIONSTORE MINT: it has no trade, so it is identified by what is being bought. The server takes
+    ///     the pair only as a pair — half of it resolves to nothing.
+    /// </summary>
+    [Serializable]
+    public struct AuthorizeUsdMintCreditBody
+    {
+        public int usdPriceCents;
         public string contractAddress;
-
         public string itemId;
     }
 
