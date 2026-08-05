@@ -175,7 +175,7 @@ jobs:
                 echo "<details><summary>Warnings/errors in files changed by this PR ($total)</summary>"
                 echo ""
                 echo '```'
-                jq -r '.pr_findings[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
+                jq -r '.pr_findings[] | "\(.file | gsub("[\r\n]"; " ")):\(.line)  \(.rule | gsub("[\r\n]"; " "))  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
                 shown=$(jq -r '.pr_findings | length' warning-result.json)
                 if [ "$total" -gt "$shown" ]; then
                   echo ""
@@ -194,7 +194,7 @@ jobs:
                   echo "<details><summary>No warnings in files changed by this PR — showing general ones you can remove to unblock ($dcount of $COUNT)</summary>"
                   echo ""
                   echo '```'
-                  jq -r '.droppable[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
+                  jq -r '.droppable[] | "\(.file | gsub("[\r\n]"; " ")):\(.line)  \(.rule | gsub("[\r\n]"; " "))  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
                   echo '```'
                   echo ""
                   echo "</details>"
