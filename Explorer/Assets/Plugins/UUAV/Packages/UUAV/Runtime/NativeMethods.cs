@@ -307,7 +307,13 @@ namespace UUAV
 
     internal static class NativeMethods
     {
+        // ad-hoc in-process alternative: uuav_core.dll exposes the same FFI
+        // surface directly, bypassing the uuav-helper process and IPC layer
+#if UUAV_NO_IPC_LAYER
+        private const string Lib = "uuav_core";
+#else
         private const string Lib = "uuav";
+#endif
 
         // must be called exactly once per non-null message
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]

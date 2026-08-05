@@ -32,6 +32,12 @@ Darwin)
         ".target/aarch64-apple-darwin/release/uuav-helper" \
         ".target/x86_64-apple-darwin/release/uuav-helper" \
         -output "$DEST_DIR/uuav-helper"
+    # ad-hoc in-process alternative to libuuav.dylib: same FFI surface, no
+    # helper process/IPC, selected from Unity via the UUAV_NO_IPC_LAYER define
+    lipo -create \
+        ".target/aarch64-apple-darwin/release/libuuav_core.dylib" \
+        ".target/x86_64-apple-darwin/release/libuuav_core.dylib" \
+        -output "$DEST_DIR/libuuav_core.dylib"
 
     # deploy each FFmpeg dylib under its major-version name (dereferencing
     # the libavutil.60.dylib -> libavutil.60.26.100.dylib symlink): that is
@@ -69,6 +75,9 @@ Darwin)
     # the helper ships next to uuav.dll so the FFmpeg DLLs resolve from its
     # own directory
     cp ".target/$TARGET/release/uuav-helper.exe" "$DEST_DIR/"
+    # ad-hoc in-process alternative to uuav.dll: same FFI surface, no helper
+    # process/IPC, selected from Unity via the UUAV_NO_IPC_LAYER define
+    cp ".target/$TARGET/release/uuav_core.dll" "$DEST_DIR/"
 
     # FFmpeg runtime DLLs from the exact build the helper linked against.
     # The helper's import closure is these four: avfilter/avdevice/swscale
