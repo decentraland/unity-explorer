@@ -1960,6 +1960,9 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1147396868523150519}
   <raycaster>k__BackingField: {fileID: 428436290765236980}
   closeButton: {fileID: 8170154585729313670}
+  globalPxLoopList: {fileID: 8783063539357997033}
+  smartWearableLoopList: {fileID: 1255626797719651181}
+  localPxLoopList: {fileID: 1215949243142382562}
 --- !u!222 &7992919956621311097
 CanvasRenderer:
   m_ObjectHideFlags: 0
