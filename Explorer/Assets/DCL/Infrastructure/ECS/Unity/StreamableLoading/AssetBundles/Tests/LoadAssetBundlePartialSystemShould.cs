@@ -146,7 +146,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         private LoadAssetBundleSystem CreateSystem(IWebRequestController webRequestController, IDiskCache<PartialLoadingState> diskCachePartials) =>
-            new (world, new NoCache<AssetBundleData, GetAssetBundleIntention>(true, false), webRequestController, buffersPool, new AssetBundleLoadingMutex(), diskCachePartials, false);
+            new (world, new NoCache<AssetBundleData, GetAssetBundleIntention>(true, false), webRequestController, buffersPool, new AssetBundleLoadingMutex(), diskCachePartials, false, null);
 
         [TearDown]
         public void Cleanup()
