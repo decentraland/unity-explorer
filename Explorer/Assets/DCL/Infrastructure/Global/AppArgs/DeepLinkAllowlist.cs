@@ -96,7 +96,8 @@ namespace Global.AppArgs
             AppArgsFlags.ENVIRONMENT,
 
             // Opens the per-scene JS console: a read-only view of the log lines the running scene already emits, and
-            // the debug menu that hosts it. Not realm-gated (product decision) — creators and QA need it against
+            // Opens the debug menu with its informational widget categories — scene logs, performance, memory,
+            // room and realm info, entity requests, analytics, and web request metrics. Not realm-gated (product
             // production realms and worlds to diagnose a deployed scene, which is exactly what the whitelisted-realm
             // tier below forbids. It unlocks no capability of its own: it loads no content, changes no endpoint, and
             // the menu it opens is restricted to the informational widget categories (see DebugUtilitiesContainer) —
