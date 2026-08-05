@@ -48,10 +48,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout CI status action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github/actions/ci-status-comment
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Reset build section to pending
         uses: ./.github/actions/ci-status-comment
@@ -95,10 +96,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout CI status action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github/actions/ci-status-comment
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Post skipped build section
         uses: ./.github/actions/ci-status-comment
@@ -117,10 +119,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout CI status action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github/actions/ci-status-comment
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Get Artifact and Pull request info
         env:
@@ -277,10 +280,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout CI status action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github/actions/ci-status-comment
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Update build section
         uses: ./.github/actions/ci-status-comment
