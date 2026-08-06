@@ -35,6 +35,11 @@ namespace DCL.WebRequests
             private readonly PersistentSetting<bool> enableSetting;
             private readonly PersistentSetting<float> delaySetting;
 
+            // Main-thread-updated cache of the two debug settings. The persistent settings are
+            // main-thread-only (PlayerPrefs); caching lets GetOptionsAsync run lock-free off any thread.
+            private bool cachedEnable;
+            private float cachedDelay;
+
             public ElementBindingOptions() : this(
                 PersistentSetting.CreateBool(DCLPrefKeys.WEB_REQUEST_ARTIFICIAL_DELAY_ENABLED, false),
                 PersistentSetting.CreateFloat(DCLPrefKeys.WEB_REQUEST_ARTIFICIAL_DELAY_SECONDS, 10)
@@ -46,25 +51,26 @@ namespace DCL.WebRequests
                 this.delaySetting = delaySetting;
                 Enable = new PersistentElementBinding<bool>(enableSetting);
                 Delay = new PersistentElementBinding<float>(delaySetting);
+
+                // Ctor runs on the main thread: seed the cache and keep it live via the binding change events.
+                cachedEnable = Enable.Value;
+                cachedDelay = Delay.Value;
+
+                ((PersistentElementBinding<bool>)Enable).OnValueChanged += v => cachedEnable = v;
+                ((PersistentElementBinding<float>)Delay).OnValueChanged += v => cachedDelay = v;
             }
 
-            public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync(CancellationToken ct)
-            {
-                await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
-                {
-                    ct.ThrowIfCancellationRequested();
-
-                    if (UnityObjectUtils.IsQuitting)
-                        throw new OperationCanceledException(nameof(UnityObjectUtils.IsQuitting));
-
-                    return (Delay.Value, Enable.Value);
-                }
-            }
+            // No main-thread hop, no PlayerPrefs read, no await: a synchronously-completed UniTask over the
+            // cached debug toggle. Runs on the caller's (often worker) thread on every web request.
+            public UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync(CancellationToken ct) =>
+                UniTask.FromResult((cachedDelay, cachedEnable));
 
             public void ApplyValues(bool enable, float delay)
             {
                 enableSetting.ForceSave(enable);
                 delaySetting.ForceSave(delay);
+                cachedEnable = enable;
+                cachedDelay = delay;
             }
         }
     }

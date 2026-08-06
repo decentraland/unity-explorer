@@ -112,6 +112,21 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             avatarMaterial.renderQueue = (int)RenderQueue.Transparent;
         }
 
+        /// <summary>
+        ///     True when the renderer is a facial-feature mesh (eyes/eyebrows/mouth) — matched by the
+        ///     same name-suffix convention <see cref="TrySetupFacialFeature" /> uses to route it to the
+        ///     DCL_FACIAL_FEATURES shader. Single source of truth so callers cannot drift from the actual
+        ///     facial-feature routing.
+        /// </summary>
+        public static bool IsFacialFeature(Renderer meshRenderer)
+        {
+            for (var i = 0; i < SUFFIX_CATEGORY_MAP.Length; i++)
+                if (meshRenderer.name.EndsWith(SUFFIX_CATEGORY_MAP[i].suffix))
+                    return true;
+
+            return false;
+        }
+
         private static (Material, TextureArraySlot?[], int) TrySetupFacialFeature(
             Renderer meshRenderer, IAvatarMaterialPoolHandler poolHandler, in AvatarShapeComponent avatarShapeComponent,
             in FacialFeaturesTextures facialFeatures,

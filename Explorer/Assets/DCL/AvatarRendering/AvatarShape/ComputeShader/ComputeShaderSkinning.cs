@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -18,6 +19,37 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
+        /// <summary>
+        ///     Original-material texture slot that feeds the toon shader's tangent-space normal-map
+        ///     array. The normal handler in <see cref="TextureArrayContainerFactory" /> is registered on
+        ///     <c>BUMP_MAP_ORIGINAL_TEXTURE_ID</c> (<c>_BumpMap</c>) — see
+        ///     TextureArrayContainerFactory.cs (regular + raw-GLTF mappings) — and
+        ///     <c>TextureArrayContainer.SetTexturesFromOriginalMaterial</c> reads exactly that slot when
+        ///     building <c>_NormalMapArr</c>. This is therefore the ONLY property that decides whether a
+        ///     mesh's rendered material samples a tangent-space normal map, so it is the property the
+        ///     tangent-recompute gate must key off. (<c>_NormalMap</c> / NORMAL_MAP_ORIGINAL_TEXTURE_ID is
+        ///     dead in production and must NOT be used here.)
+        /// </summary>
+        public static readonly int TANGENT_SOURCE_TEXTURE_ID = TextureArrayConstants.BUMP_MAP_ORIGINAL_TEXTURE_ID;
+
+        /// <summary>
+        ///     Whether a mesh needs a <see cref="Mesh.RecalculateTangents" /> pass before compute skinning.
+        ///     Tangents are only consumed when the rendered material samples a tangent-space normal map,
+        ///     which for wearable/body meshes is sourced from the original material's
+        ///     <see cref="TANGENT_SOURCE_TEXTURE_ID" /> (<c>_BumpMap</c>) slot. Facial-feature meshes render
+        ///     through the DCL_FACIAL_FEATURES shader (textures come from replacement maps, NOT the original
+        ///     material — see <c>AvatarMaterialConfiguration.DoFacialFeature</c>), so the _BumpMap probe is
+        ///     not meaningful for them; they retain the original unconditional recompute.
+        /// </summary>
+        public static bool MeshNeedsTangents(Renderer renderer, Material originalMaterial)
+        {
+            if (renderer != null && AvatarMaterialConfiguration.IsFacialFeature(renderer))
+                return true;
+
+            return originalMaterial != null
+                   && originalMaterial.GetTexture(TANGENT_SOURCE_TEXTURE_ID) != null;
+        }
+
         public override AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
             in FacialFeaturesTextures facialFeatureTexture, int boneCount)
@@ -54,7 +86,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 MeshData meshData = meshesData[i];
                 int meshVertexCount = meshData.Mesh.sharedMesh.vertexCount;
                 ResetTransforms(meshData.Transform, meshData.RootTransform);
-                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount, meshData.SpringBoneOffset);
+                bool needsTangents = MeshNeedsTangents(meshData.Renderer, meshData.OriginalMaterial);
+                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount, meshData.SpringBoneOffset, needsTangents);
                 vertCounter += meshVertexCount;
                 skinnedMeshCounter++;
             }
@@ -82,10 +115,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return new AvatarCustomSkinningComponent.Buffers(mBones, kernel);
         }
 
-        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount, int springBoneOffset)
+        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount, int springBoneOffset, bool needsTangents)
         {
-            // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
-            mesh.RecalculateTangents();
+            // RecalculateTangents is an O(vertexCount) main-thread pass that also allocates transient
+            // arrays and forces a mesh CPU->GPU re-upload. Tangents are only sampled by the rendered
+            // material when it has a normal map, sourced from the original material's _BumpMap slot
+            // (see MeshNeedsTangents / TANGENT_SOURCE_TEXTURE_ID). Skip the pass for meshes with no
+            // normal map to cut the crowd-spawn hitch.
+            if (needsTangents)
+                mesh.RecalculateTangents();
 
             computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, springBoneOffset);
         }

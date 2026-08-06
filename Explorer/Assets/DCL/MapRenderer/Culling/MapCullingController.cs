@@ -91,6 +91,11 @@ namespace DCL.MapRenderer.Culling
             // shifting to the right will add zeroes on the left
             state.SetCameraFlag((-1 >> (cameraStates.Count - 1)));
 
+            EnqueueDirtyObject(state);
+        }
+
+        private void EnqueueDirtyObject(TrackedState state)
+        {
             if (IsTrackedStateDirty(state))
                 return;
 
@@ -133,22 +138,29 @@ namespace DCL.MapRenderer.Culling
         {
             Profiler.BeginSample(nameof(ResolveDirtyCameras));
 
-            for (var i = 0; i < MAX_CAMERAS_COUNT; i++)
+            if (dirtyCamerasFlag != 0)
             {
-                if (!IsCameraDirty(i))
-                    continue;
-
-                foreach ((IMapPositionProvider obj, TrackedState cullable) in trackedObjs)
+                // Fan camera-level dirtiness out into per-object dirtiness and route every affected
+                // object through the SAME mutation-safe, per-frame-budgeted dirtyObjects queue that
+                // ResolveDirtyObjects already drains. A single camera-dirty event (zoom/teleport)
+                // otherwise fires CallListener -> pool.Get + DOTween spin-up for every marker in one
+                // frame; enqueuing instead spreads that became-visible burst across
+                // MAX_DIRTY_OBJECTS_PER_FRAME/frame. Eventual consistency holds because each object
+                // keeps its per-camera dirty bit until ResolveDirtyObject clears it, and StopTracking
+                // removes queued nodes by reference (never skipping a survivor).
+                foreach ((IMapPositionProvider _, TrackedState cullable) in trackedObjs)
                 {
-                    //If index is higher than camera count we have a dirty flag for a no longer tracked camera, we ignore it by setting the flag as 0
-                    bool visible = i < cameraStates.Count && cullingVisibilityChecker.IsVisible(obj, cameraStates[i]);
-                    cullable.SetVisibleFlag(i, visible);
-                    cullable.SetCameraFlag(i, false);
-                    cullable.CallListener();
-                }
-            }
+                    for (var i = 0; i < MAX_CAMERAS_COUNT; i++)
+                    {
+                        if (IsCameraDirty(i))
+                            cullable.SetCameraFlag(i, true);
+                    }
 
-            dirtyCamerasFlag = 0;
+                    EnqueueDirtyObject(cullable);
+                }
+
+                dirtyCamerasFlag = 0;
+            }
 
             Profiler.EndSample();
         }

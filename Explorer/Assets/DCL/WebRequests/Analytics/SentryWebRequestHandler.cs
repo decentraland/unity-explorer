@@ -44,6 +44,13 @@ namespace DCL.WebRequests.Analytics
             // Fast path to ignore files
             if (envelope.CommonArguments.URL.IsFile()) return;
 
+            // Skip everything the sampler would reject anyway: only whitelisted templates ever sample, so a
+            // non-whitelisted URL (the CDN-download majority) must not pay a TransactionContext allocation + a
+            // pooled-dict rent + an SDK transaction-map insert just to be discarded as unsampled. This is
+            // behavior-preserving: such URLs previously produced an unsampled transaction with no trace-header
+            // injection, and the finished/exception handlers below now early-out symmetrically on the same miss.
+            if (!sampler.IsWhitelisted(envelope.CommonArguments.URL)) return;
+
             // Before the decision of sampling has been made, minimize allocations
             // unlike UWR.url, envelope.CommonArguments.URL is already allocated
             // Transaction context can't be reused as it contains several closed fields, so the allocation is inevitable
@@ -86,11 +93,14 @@ namespace DCL.WebRequests.Analytics
 
             UnityWebRequest uwr = request.UnityWebRequest;
 
-            if (Instance.TryGet(uwr, out ITransactionTracer transaction))
-            {
-                transaction.SetExtra(OpenTelemetrySemantics.AttributeHttpRequestContentLength, uwr.uploadedBytes);
-                transaction.SetExtra(OpenTelemetrySemantics.AttributeHttpResponseContentLength, uwr.downloadedBytes);
-            }
+            // Non-whitelisted requests never started a transaction (see OnRequestStarted), so there is nothing to
+            // instrument. Bail before StartSpan, whose mapping lookup would otherwise log a "transaction not found"
+            // warning — and allocate its interpolated message — once per skipped CDN download.
+            if (!Instance.TryGet(uwr, out ITransactionTracer transaction))
+                return;
+
+            transaction.SetExtra(OpenTelemetrySemantics.AttributeHttpRequestContentLength, uwr.uploadedBytes);
+            transaction.SetExtra(OpenTelemetrySemantics.AttributeHttpResponseContentLength, uwr.downloadedBytes);
 
             const string OP_NAME = "process_data";
 
@@ -106,7 +116,12 @@ namespace DCL.WebRequests.Analytics
         /// </summary>
         public void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest
         {
-            using ProfilerMarker.AutoScope _ = onProcessDataFinished.Auto();
+            using ProfilerMarker.AutoScope _scope = onProcessDataFinished.Auto();
+
+            // Skip when no transaction was started (non-whitelisted request, see OnRequestStarted): the two mapping
+            // calls below would each log a "transaction not found" warning (and allocate the message) on a miss.
+            if (!Instance.TryGet(request.UnityWebRequest, out _))
+                return;
 
             Instance.EndCurrentSpan(request.UnityWebRequest);
             Instance.EndTransaction(request.UnityWebRequest);
@@ -127,10 +142,12 @@ namespace DCL.WebRequests.Analytics
 
         public void OnException<T>(T request, Exception exception, TimeSpan duration) where T: ITypedWebRequest
         {
-            using ProfilerMarker.AutoScope _ = onException.Auto();
+            using ProfilerMarker.AutoScope _scope = onException.Auto();
 
-            // The exception will be attached to the corresponding transaction automatically
-            Instance.EndTransactionWithError(request.UnityWebRequest, $"{exception.GetType().Name}", exception: exception);
+            // The exception will be attached to the corresponding transaction automatically.
+            // Non-whitelisted requests have no transaction to end; skip so the mapping does not warn on a miss.
+            if (Instance.TryGet(request.UnityWebRequest, out _))
+                Instance.EndTransactionWithError(request.UnityWebRequest, $"{exception.GetType().Name}", exception: exception);
         }
 
         public void OnException<T>(T request, UnityWebRequestException exception, TimeSpan duration) where T: ITypedWebRequest { }

@@ -33,6 +33,10 @@ namespace DCL.Landscape.Systems
         private readonly MaterialPropertyBlock materialProperties;
         private readonly GrassIndirectRenderer? grassIndirectRenderer;
 
+        private NativeArray<int> instanceCounts;
+        private NativeList<Matrix4x4> transforms;
+        private bool nativeContainersInitialized;
+
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
         private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
         private static readonly int OCCUPANCY_MAP_ID = Shader.PropertyToID("_OccupancyMap");
@@ -99,11 +103,29 @@ namespace DCL.Landscape.Systems
                 return;
             }
 
-            NativeArray<int> instanceCounts = new NativeArray<int>(
-                landscapeData.GroundMeshes.Length, Allocator.TempJob);
+            if (!nativeContainersInitialized)
+            {
+                // Persistent containers reused every frame instead of churning a TempJob
+                // allocation + dispose pair on the render path. Freshly allocated Persistent
+                // memory is zero-initialized, so no clear is needed on the first frame.
+                instanceCounts = new NativeArray<int>(
+                    landscapeData.GroundMeshes.Length, Allocator.Persistent);
 
-            NativeList<Matrix4x4> transforms = new NativeList<Matrix4x4>(
-                landscapeData.GroundInstanceCapacity, Allocator.TempJob);
+                transforms = new NativeList<Matrix4x4>(
+                    landscapeData.GroundInstanceCapacity, Allocator.Persistent);
+
+                nativeContainersInitialized = true;
+            }
+            else
+            {
+                // GenerateGroundJob only writes InstanceCounts for mesh slots that hold
+                // instances this frame; unwritten slots would otherwise keep last frame's
+                // count and render ghost instances, so the reused array must be cleared.
+                for (int i = 0; i < instanceCounts.Length; i++)
+                    instanceCounts[i] = 0;
+
+                transforms.Clear();
+            }
 
             var generateGroundJob = new GenerateGroundJob
             {
@@ -160,9 +182,18 @@ namespace DCL.Landscape.Systems
 
                 startInstance += instanceCount;
             }
+        }
 
-            instanceCounts.Dispose();
-            transforms.Dispose();
+        protected override void OnDispose()
+        {
+            if (!nativeContainersInitialized)
+                return;
+
+            if (instanceCounts.IsCreated)
+                instanceCounts.Dispose();
+
+            if (transforms.IsCreated)
+                transforms.Dispose();
         }
 
         private MinMaxAABB GetTerrainBounds()

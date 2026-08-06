@@ -130,6 +130,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraGameObject.transform.LookAt(bounds.center);
 
             // Act
+            system.CalculateFrustumPlanes(testCamera);
             bool isVisible = system.IsVisibleInCamera(testCamera, bounds);
 
             // Assert
@@ -144,6 +145,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             cameraGameObject.transform.rotation = Quaternion.identity; // Looking forward (+Z)
 
             // Act
+            system.CalculateFrustumPlanes(testCamera);
             bool isVisible = system.IsVisibleInCamera(testCamera, bounds);
 
             // Assert

@@ -273,7 +273,10 @@ namespace DCL.MapRenderer.Tests.Culling
             }
 
             // Act
+            // ResolveDirtyCameras now fans camera-dirtiness into the budgeted dirtyObjects queue
+            // instead of resolving inline; drain it so the visibility checks actually run.
             culling.ResolveDirtyCameras_Test();
+            culling.ResolveDirtyObjects_Test(int.MaxValue);
 
             // Assert
             visibilityChecker.DidNotReceive().IsVisible(Arg.Any<IMapPositionProvider>(), culling.CameraStates[0]); // Camera 0 is not dirty
@@ -306,7 +309,10 @@ namespace DCL.MapRenderer.Tests.Culling
             }
 
             // Act
+            // ResolveDirtyCameras now fans camera-dirtiness into the budgeted dirtyObjects queue
+            // instead of resolving inline; drain it so the visibility checks actually run.
             culling.ResolveDirtyCameras_Test();
+            culling.ResolveDirtyObjects_Test(int.MaxValue);
 
             // Assert
             visibilityChecker.DidNotReceive().IsVisible(Arg.Any<IMapPositionProvider>(), culling.CameraStates[0]); // Camera 0 is not dirty
@@ -339,7 +345,10 @@ namespace DCL.MapRenderer.Tests.Culling
             }
 
             // Act
+            // ResolveDirtyCameras now fans camera-dirtiness into the budgeted dirtyObjects queue
+            // instead of resolving inline; drain it so any (phantom) visibility checks would run.
             culling.ResolveDirtyCameras_Test();
+            culling.ResolveDirtyObjects_Test(int.MaxValue);
 
             // Assert
             visibilityChecker.DidNotReceiveWithAnyArgs().IsVisible(Arg.Any<IMapPositionProvider>(), Arg.Any<CameraState>());
