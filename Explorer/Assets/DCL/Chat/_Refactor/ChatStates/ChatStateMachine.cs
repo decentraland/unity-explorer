@@ -132,10 +132,14 @@ namespace DCL.Chat.ChatStates
 
         public void SetToggleState()
         {
-            if (IsMinimized)
-                fsm.Enter<FocusedChatState>();
-            else
+            // Branch on focus, not on IsMinimized: Escape leaves the panel in
+            // DefaultChatState, which is neither focused nor minimized, so a
+            // minimized-only test sends the next toggle to Minimized and the
+            // click reads as dead.
+            if (IsFocused)
                 fsm.Enter<MinimizedChatState>();
+            else
+                fsm.Enter<FocusedChatState>();
         }
 
         public void PopState()
