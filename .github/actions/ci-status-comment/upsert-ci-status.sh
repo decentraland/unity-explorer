@@ -103,7 +103,7 @@ for attempt in 1 2 3 4 5; do
   fi
 
   if [ -n "$COMMENT_ID" ]; then
-    CURRENT_BODY=$(jq -r --arg id "$COMMENT_ID" '.[][] | select(.id==($id|tonumber)) | .body' <<< "$COMMENTS")
+    CURRENT_BODY=$(jq -r --arg id "$COMMENT_ID" '.[] | select(.id==($id|tonumber)) | .body' <<< "$(flatten_pages "$COMMENTS")")
   else
     CURRENT_BODY=""
   fi
