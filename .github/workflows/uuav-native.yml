@@ -156,7 +156,10 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json, os
+          import json, os, sys
+          # Windows Python writes CRLF in text mode; the \r would survive into
+          # every output value and break bash string comparisons downstream.
+          sys.stdout.reconfigure(newline="\n")
           target = json.load(open(os.environ["LOCK"]))["targets"]["windows-x86_64"]
           print(f"rust_target={target['rust']['target']}")
           print(f"provenance={target['ffmpeg']['provenance']}")
