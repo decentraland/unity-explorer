@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
+using DCL.BugReporting.UI;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -66,6 +67,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly IMVCManager mvcManager;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -113,7 +115,8 @@ namespace DCL.AuthenticationScreenFlow
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -133,6 +136,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.mvcManager = mvcManager;
         }
 
         public override void Dispose()
@@ -157,6 +161,12 @@ namespace DCL.AuthenticationScreenFlow
 
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
+
+            bool bugReportEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            viewInstance.BugReportButton?.gameObject.SetActive(bugReportEnabled);
+
+            if (bugReportEnabled)
+                viewInstance.BugReportButton?.onClick.AddListener(OpenBugReport);
 
             // States
             fsm = new MVCStateMachine<AuthStateBase>();
@@ -291,6 +301,16 @@ namespace DCL.AuthenticationScreenFlow
         {
             webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.SupportLink);
             DiscordButtonClicked?.Invoke();
+        }
+
+        private void OpenBugReport() =>
+            OpenBugReportAsync().Forget();
+
+        private async UniTaskVoid OpenBugReportAsync()
+        {
+            try { await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams())); }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
         }
 
         private void ExitApplication()

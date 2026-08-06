@@ -940,7 +940,8 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     new BugReportSessionContext(staticContainer.ScenesCache, appArgs),
-                    debugBuilder));
+                    debugBuilder,
+                    staticContainer.LoadingStatus));
 
             if (includeMarketplaceCredits)
             {

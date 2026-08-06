@@ -26,6 +26,9 @@ namespace DCL.BugReporting.UI
         // cap stays well under the proxy's 10,000 characters-per-attribute limit.
         internal const int DESCRIPTION_MAX_LENGTH = 5000;
 
+        // Well above the order overlays are pushed with (1), so the boosted form clears them all.
+        private const int ABOVE_OVERLAYS_ORDER = 100;
+
         private readonly BugReportService bugReportService;
         private readonly ISelfProfile selfProfile;
         private readonly IInputBlock inputBlock;
@@ -122,8 +125,16 @@ namespace DCL.BugReporting.UI
             RefreshSubmitInteractable();
         }
 
-        protected override void OnViewShow() =>
+        protected override void OnViewShow()
+        {
             inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+
+            // The MVC stack keeps the form a popup (escape, modality), but a popup draws behind
+            // Overlay views: when the entry point lives on one, only the draw order is raised.
+            // The stack reassigns the popup ordering on every show, so this needs no undoing.
+            if (inputData.ShowAboveOverlays)
+                viewInstance!.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, ABOVE_OVERLAYS_ORDER));
+        }
 
         protected override void OnViewClose()
         {

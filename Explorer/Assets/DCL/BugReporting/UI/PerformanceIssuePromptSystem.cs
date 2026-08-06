@@ -22,13 +22,15 @@ namespace DCL.BugReporting.UI
 
         private readonly IMVCManager mvcManager;
         private readonly PerformanceIssueDetector detector;
+        private readonly Func<bool> isLoadingScreenOn;
 
         private bool promptExhausted;
 
-        internal PerformanceIssuePromptSystem(World world, IMVCManager mvcManager, PerformanceIssueDetector detector, IDebugContainerBuilder debugBuilder) : base(world)
+        internal PerformanceIssuePromptSystem(World world, IMVCManager mvcManager, PerformanceIssueDetector detector, Func<bool> isLoadingScreenOn, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.mvcManager = mvcManager;
             this.detector = detector;
+            this.isLoadingScreenOn = isLoadingScreenOn;
             promptExhausted = DCLPlayerPrefs.GetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED);
 
             // Debug trigger with a synthetic hiccup: it skips the detector and the one-per-session
@@ -42,9 +44,10 @@ namespace DCL.BugReporting.UI
             if (promptExhausted)
                 return;
 
-            // A modal view on screen means either a flow the prompt must not interrupt or a state
-            // (loading screen, menus) whose frame times are not gameplay evidence.
-            if (mvcManager.IsAnyModalViewShowing())
+            // A modal view or the loading screen means either a flow the prompt must not interrupt
+            // or a state whose frame times are not gameplay evidence. The loading screen needs its
+            // own check: it lives on the Overlay layer, which does not count as modal.
+            if (mvcManager.IsAnyModalViewShowing() || isLoadingScreenOn())
             {
                 detector.Reset();
                 return;

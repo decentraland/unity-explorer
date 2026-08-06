@@ -9,6 +9,7 @@ using DCL.Diagnostics.Sentry;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -30,6 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly IBugReportSessionContext sessionContext;
         private readonly IDebugContainerBuilder debugBuilder;
+        private readonly IReadOnlyLoadingStatus loadingStatus;
 
         private BugReportController? bugReportController;
         private PerformanceIssuePromptController? performanceIssuePromptController;
@@ -45,7 +47,8 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World globalWorld,
             Entity playerEntity,
             IBugReportSessionContext sessionContext,
-            IDebugContainerBuilder debugBuilder)
+            IDebugContainerBuilder debugBuilder,
+            IReadOnlyLoadingStatus loadingStatus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -57,6 +60,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.sessionContext = sessionContext;
             this.debugBuilder = debugBuilder;
+            this.loadingStatus = loadingStatus;
         }
 
         public void Dispose()
@@ -69,7 +73,7 @@ namespace DCL.PluginSystem.Global
         {
             // The detector exists only when InitializeAsync found the prompt prefab configured.
             if (performanceIssueDetector != null)
-                PerformanceIssuePromptSystem.InjectToWorld(ref builder, mvcManager, performanceIssueDetector, debugBuilder);
+                PerformanceIssuePromptSystem.InjectToWorld(ref builder, mvcManager, performanceIssueDetector, loadingStatus.IsLoadingScreenOn, debugBuilder);
         }
 
         public async UniTask InitializeAsync(BugReportSettings settings, CancellationToken ct)
