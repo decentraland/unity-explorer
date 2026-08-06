@@ -77,12 +77,15 @@ extract_section() {
   ' <<< "$1"
 }
 
-# IDs of every marker-bearing bot comment on the PR, oldest first. Input is the
-# `--paginate --slurp` shape (an array of per-page arrays), so flatten with
-# `.[][]` before filtering — otherwise sort_by would only order within a page.
+# Normalise the comment list to a flat array, whether `--paginate --slurp` hands
+# back a flat array of comments or an array of per-page arrays.
+flatten_pages() { jq -c '[.[] | if type=="array" then .[] else . end]' <<< "$1"; }
+
+# IDs of every marker-bearing bot comment on the PR, oldest first. Flattened
+# first so sort_by orders globally rather than only within a page.
 marker_ids() {
   jq -r --arg m "$MARKER" --arg bot "$BOT" \
-    '[.[][] | select(.user.login==$bot and (.body|contains($m)))] | sort_by(.id) | .[].id' <<< "$1"
+    '[.[] | select(.user.login==$bot and (.body|contains($m)))] | sort_by(.id) | .[].id' <<< "$(flatten_pages "$1")"
 }
 
 for attempt in 1 2 3 4 5; do
