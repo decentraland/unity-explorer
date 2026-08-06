@@ -30,6 +30,7 @@ namespace SceneRuntime
 
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
         private int nextUint8Array;
+        private bool isDisposing;
 
         private ScriptObject updateFunc;
         private ScriptObject startFunc;
@@ -134,6 +135,10 @@ namespace SceneRuntime
 
         public void SetIsDisposing()
         {
+            if (isDisposing)
+                return;
+
+            isDisposing = true;
             isDisposingTokenSource.Cancel();
             isDisposingTokenSource.Dispose();
         }
