@@ -2,20 +2,16 @@
 using Arch.System;
 using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using DCL.CharacterCamera;
-using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.SceneFacade;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.LOD.Components;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 using Utility;
 
@@ -47,14 +43,15 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void ForEachRealm(ref RealmComponent realm, ref StaticScenePointers staticScenePointers)
+        [All(typeof(RealmComponent))]
+        private void ForEachRealm(ref StaticScenePointers staticScenePointers)
         {
-            StartSceneLoadingQuery(World, realm.Ipfs, in staticScenePointers);
+            StartSceneLoadingQuery(World, in staticScenePointers);
         }
 
         [Query]
-        [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(SceneLODInfo))]
-        private void StartSceneLoading([Data] IIpfsRealm realm, [Data] in StaticScenePointers staticScenePointers,
+        [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(SceneLODInfo), typeof(SceneDefinitionRefreshPending))]
+        private void StartSceneLoading([Data] in StaticScenePointers staticScenePointers,
             in Entity entity, ref SceneDefinitionComponent definition, ISSDescriptor issDescriptor, ref PartitionComponent partitionComponent)
         {
             for (var i = 0; i < definition.Parcels.Count; i++)

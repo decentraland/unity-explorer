@@ -39,7 +39,6 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
-using DCL.RealmNavigation;
 using DCL.Roads.Systems;
 using SystemGroups.Visualiser;
 using UnityEngine;
@@ -236,7 +235,7 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache),
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache, staticContainer.RealmPartitionSettings),
                 UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
