@@ -1,0 +1,127 @@
+name: Probe Windows image builder
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chore/probe-windows-image-builder
+    paths:
+      - .github/workflows/probe-windows-image-builder.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe Windows GPU image builder
+    runs-on: win-gpu-t4-explorer-image-builder
+    timeout-minutes: 15
+
+    steps:
+      - name: Record runner allocation
+        shell: powershell
+        run: |
+          "## Runner allocation" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "- Runner: ``$env:RUNNER_NAME``" >> $env:GITHUB_STEP_SUMMARY
+          "- OS: ``$env:RUNNER_OS``" >> $env:GITHUB_STEP_SUMMARY
+          "- Architecture: ``$env:RUNNER_ARCH``" >> $env:GITHUB_STEP_SUMMARY
+          "- Job started: ``$([DateTime]::UtcNow.ToString('o'))``" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Inspect Windows and display hardware
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          Get-ComputerInfo |
+            Select-Object WindowsProductName, WindowsVersion, OsBuildNumber, OsArchitecture |
+            Format-List
+
+          Write-Host "=== Video controllers ==="
+          Get-CimInstance Win32_VideoController |
+            Select-Object Name, DriverVersion, Status, AdapterRAM, VideoProcessor |
+            Format-List
+
+          Write-Host "=== Display configuration ==="
+          Get-CimInstance Win32_DesktopMonitor -ErrorAction SilentlyContinue |
+            Select-Object Name, ScreenWidth, ScreenHeight, Status |
+            Format-List
+
+          Write-Host "=== Disk ==="
+          Get-Volume -DriveLetter C |
+            Select-Object DriveLetter, FileSystem, Size, SizeRemaining |
+            Format-List
+
+      - name: Inspect NVIDIA runtime
+        shell: powershell
+        run: |
+          $nvidiaSmi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
+
+          if ($nvidiaSmi) {
+            Write-Host "nvidia-smi found at $($nvidiaSmi.Source)"
+            nvidia-smi
+            "- NVIDIA runtime: available" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            Write-Warning "nvidia-smi is not installed or is not on PATH"
+            "- NVIDIA runtime: missing" >> $env:GITHUB_STEP_SUMMARY
+
+            Write-Host "=== NVIDIA files found on disk ==="
+            Get-ChildItem "C:\Program Files\NVIDIA*" -Recurse -Filter "nvidia-smi.exe" -ErrorAction SilentlyContinue |
+              Select-Object FullName
+
+            Get-ChildItem "C:\Windows\System32" -Filter "nv*.dll" -ErrorAction SilentlyContinue |
+              Select-Object Name
+          }
+
+          Write-Host "=== Display devices ==="
+          Get-PnpDevice -Class Display -ErrorAction SilentlyContinue |
+            Select-Object FriendlyName, InstanceId, Status |
+            Format-List
+
+      - name: Inventory automation toolchain
+        shell: powershell
+        run: |
+          $tools = @(
+            @{ Name = "git"; Arguments = @("--version") },
+            @{ Name = "gh"; Arguments = @("--version") },
+            @{ Name = "dotnet"; Arguments = @("--version") },
+            @{ Name = "node"; Arguments = @("--version") },
+            @{ Name = "npm"; Arguments = @("--version") },
+            @{ Name = "mf"; Arguments = @("--version") },
+            @{ Name = "allure"; Arguments = @("--version") },
+            @{ Name = "aws"; Arguments = @("--version") }
+          )
+
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "## Toolchain inventory" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "| Tool | Available | Location |" >> $env:GITHUB_STEP_SUMMARY
+          "|---|---|---|" >> $env:GITHUB_STEP_SUMMARY
+
+          foreach ($tool in $tools) {
+            $command = Get-Command $tool.Name -ErrorAction SilentlyContinue
+            if ($command) {
+              Write-Host "=== $($tool.Name) ==="
+              $arguments = $tool.Arguments
+              & $command.Source @arguments
+              "| $($tool.Name) | yes | ``$($command.Source)`` |" >> $env:GITHUB_STEP_SUMMARY
+            } else {
+              Write-Warning "$($tool.Name) is not installed or is not on PATH"
+              "| $($tool.Name) | no | - |" >> $env:GITHUB_STEP_SUMMARY
+            }
+          }
+
+          $altTester = Get-ChildItem `
+            -Path "C:\Program Files", "C:\Program Files (x86)" `
+            -Filter "AltTesterDesktop.exe" `
+            -Recurse `
+            -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+
+          if ($altTester) {
+            Write-Host "AltTester Desktop found at $($altTester.FullName)"
+            "| AltTester Desktop | yes | ``$($altTester.FullName)`` |" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            Write-Warning "AltTester Desktop is not installed"
+            "| AltTester Desktop | no | - |" >> $env:GITHUB_STEP_SUMMARY
+          }
