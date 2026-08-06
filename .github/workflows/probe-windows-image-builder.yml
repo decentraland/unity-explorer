@@ -21,7 +21,6 @@ jobs:
     name: Probe Windows GPU image builder
     runs-on: win-gpu-t4-explorer-image-builder
     timeout-minutes: 15
-    snapshot: unity-explorer-windows-probe
 
     steps:
       - name: Record runner allocation
