@@ -677,6 +677,25 @@ jobs:
           echo "image=$derived" >> $GITHUB_OUTPUT
           echo "Built derived image with ripgrep: $derived"
 
+      # game-ci pipes the editor output to artifacts/<mode>.log, so a deadlocked
+      # editor keeps the step console silent and burns the full 80-minute step
+      # timeout (run 29613116640 attempt 1: editmode console silent for 70 min
+      # after "Testing in editmode" until manually cancelled). The watchdog polls
+      # that log from the host and kills the Unity container when it stops
+      # growing, failing the step within ~15 min instead. It survives across
+      # steps as a background process and is stopped by the step after the
+      # runner; if the runner dies without cleanup it self-expires (MAX_LIFETIME).
+      - name: Start stale-log watchdog
+        env:
+          UNITY_IMAGE: ${{ matrix.testMode == 'editmode' && steps.rg-img.outputs.image || steps.img.outputs.ghcr }}
+          TEST_MODE: ${{ matrix.testMode }}
+        run: |
+          nohup bash scripts/ci/test-stale-log-watchdog.sh \
+            "artifacts/$TEST_MODE.log" "$UNITY_IMAGE" watchdog-status.json \
+            > watchdog-output.log 2>&1 &
+          echo $! > watchdog.pid
+          echo "Stale-log watchdog started (pid $(cat watchdog.pid)) for artifacts/$TEST_MODE.log"
+
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
@@ -691,6 +710,27 @@ jobs:
           customImage: ${{ matrix.testMode == 'editmode' && steps.rg-img.outputs.image || steps.img.outputs.ghcr }}
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
+
+      # Fails the job with an explicit cause when the watchdog killed the
+      # container — without this the only signals are the confusing follow-on
+      # errors ("Input required and not supplied: path", "No test report files
+      # were found") seen in run 29613116640.
+      - name: Stop stale-log watchdog and fail on stall
+        if: always()
+        env:
+          TEST_MODE: ${{ matrix.testMode }}
+        run: |
+          if [ -f watchdog.pid ]; then
+            kill "$(cat watchdog.pid)" 2>/dev/null || true
+          fi
+          echo "::group::Watchdog output"
+          cat watchdog-output.log 2>/dev/null || echo "(no watchdog output)"
+          echo "::endgroup::"
+          if [ -f watchdog-status.json ]; then
+            stalled=$(jq -r '.stalledSeconds' watchdog-status.json)
+            echo "::error::Unity $TEST_MODE tests hung: artifacts/$TEST_MODE.log did not grow for ${stalled}s, so the stale-log watchdog killed the Unity container. See 'Dump Unity Editor log on failure' below for the log tail."
+            exit 1
+          fi
 
       - name: Dump Unity Editor log on failure
         if: always() && steps.testRunner.outcome != 'success'
