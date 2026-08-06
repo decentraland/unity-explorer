@@ -309,6 +309,9 @@ namespace UUAV
     {
         // ad-hoc in-process alternative: uuav_core.dll exposes the same FFI
         // surface directly, bypassing the uuav-helper process and IPC layer
+#if UUAV_NO_IPC_LAYER && !DEBUG
+#error UUAV_NO_IPC_LAYER loads FFmpeg in-process and bypasses the sandbox (no helper process, Seatbelt profile, restricted token, job object or crash isolation); it is only allowed in DEBUG (Editor / Development Build).
+#endif
 #if UUAV_NO_IPC_LAYER
         private const string Lib = "uuav_core";
 #else

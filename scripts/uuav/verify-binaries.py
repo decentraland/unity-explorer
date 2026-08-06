@@ -532,6 +532,46 @@ def check_artifacts(repo: str, target: str, spec: dict, update: bool) -> list[st
     return problems
 
 
+# What counts as a shippable binary inside a runtime dir: native libraries and
+# executables by extension, plus extensionless files (the macOS uuav-helper).
+# Everything else there (.meta, .sh) is not loaded by the player.
+SHIPPABLE_SUFFIXES = (".dll", ".dylib", ".exe")
+
+
+def check_runtime_dir_completeness(repo: str, target: str, spec: dict) -> list[str]:
+    """Every shippable binary in the runtime dir must be named by the lock.
+
+    check_artifacts() walks the lock; this walks the directory. Without it the
+    lock is an allowlist with no completeness check - a binary dropped into
+    the shipped plugin folder next to the listed ones would reach end users
+    with no recorded hash and this script would never mention it.
+
+    Runs in --update mode too: a relock can refresh hashes of listed
+    artifacts, but only a human can decide that a new binary belongs in the
+    shipping set, so an unlisted one always fails.
+    """
+    runtime_dir = os.path.join(repo, spec["runtime_dir"])
+    if not os.path.isdir(runtime_dir):
+        return [f"[{target}] missing runtime dir: {spec['runtime_dir']}"]
+
+    listed = {os.path.basename(artifact["path"]) for artifact in spec["artifacts"]}
+    problems = []
+    for name in sorted(os.listdir(runtime_dir)):
+        if not os.path.isfile(os.path.join(runtime_dir, name)):
+            continue
+        extension = os.path.splitext(name)[1].lower()
+        if extension not in SHIPPABLE_SUFFIXES and extension != "":
+            continue
+        if name not in listed:
+            problems.append(
+                f"[{target}] {spec['runtime_dir']}/{name} is in the shipped "
+                f"plugin folder but has no entry in the lock - its provenance "
+                f"is unverified.\n"
+                f"    Add it to this target's artifacts and relock with "
+                f"--update, or remove it from the folder.")
+    return problems
+
+
 def build_input_digest(path: str, spec: dict) -> tuple[str, int | None]:
     """The digest of one build input, by kind. Returns (digest, file count)."""
     kind = spec.get("kind", "file")
@@ -973,6 +1013,7 @@ def main() -> int:
             note(f"{target}: not relocked (--only {args.only})")
             continue
         problems += check_artifacts(repo, target, spec, update_target)
+        problems += check_runtime_dir_completeness(repo, target, spec)
         problems += check_rust_source(repo, lock, target, spec, update_target)
         problems += check_ffmpeg_builder(repo, target, spec, update_target)
         problems += check_provenance(repo, target, spec, update_target)

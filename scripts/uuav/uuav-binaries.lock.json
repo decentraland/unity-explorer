@@ -225,6 +225,12 @@
           "produced_by": "cargo"
         },
         {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libuuav_core.dylib",
+          "sha256": "f75ca59f971c9195babc34c88596971b322eaee05606044b64e2b54ad17b94fc",
+          "bytes": 1261696,
+          "produced_by": "cargo"
+        },
+        {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper",
           "sha256": "002898164832f6ab8dd19aa11f4dfdd172f40dc31633d66c059793a37656cb4c",
           "bytes": 1736976,
@@ -309,6 +315,12 @@
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav.dll",
           "sha256": "2d42d91058da05bf26c945c2359a360ec2c5e676585b325e2b48a9fa66b672b4",
           "bytes": 1347584,
+          "produced_by": "cargo"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav_core.dll",
+          "sha256": "acfbae0e9955b3d0c41a2d45d53a9b751d7f8286c247dcc0d98d62ebecb12a27",
+          "bytes": 1244672,
           "produced_by": "cargo"
         },
         {
