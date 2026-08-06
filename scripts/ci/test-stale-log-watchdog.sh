@@ -76,6 +76,12 @@ while :; do
 
     if [ "$growth_observed" = true ] && (( now - last_growth > STALL_THRESHOLD )); then
         stalled_for=$(( now - last_growth ))
+        # Results on disk mean the editor already exited: the log went quiet
+        # during game-ci's post-run work, which is not a hang.
+        if compgen -G "$(dirname "$LOG_FILE")/*.xml" > /dev/null; then
+            echo "Log stalled for ${stalled_for}s but test results are already written - exiting without a verdict."
+            exit 0
+        fi
         containers=$(docker ps -q --filter "ancestor=$IMAGE" 2>/dev/null || true)
         if [ -z "$containers" ]; then
             echo "Log stalled for ${stalled_for}s but no container is running $IMAGE - step is tearing down, exiting."
