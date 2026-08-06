@@ -17,6 +17,14 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 
 
 ##############################################################################
+# shell scripts — force LF so they run correctly on Unix-based build agents
+# even when checked out on Windows
+#
+##############################################################################
+*.sh text eol=lf
+
+
+##############################################################################
 # unity specifics
 #
 ##############################################################################
