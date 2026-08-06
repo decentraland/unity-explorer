@@ -10,6 +10,7 @@ namespace DCL.AvatarRendering.Emotes
     {
         BodyShape BodyShape { get; }
         bool Loop { get; }
+        string EmoteHash { get; }
         URN NewSceneEmoteURN();
         void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote);
         bool IsTimeout(float deltaTime);
