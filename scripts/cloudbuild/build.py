@@ -872,6 +872,16 @@ if final_outcome in ('queue_timeout', 'build_timeout', 'log_stall'):
             print(f'Warning: could not download log after {final_outcome}: {e}')
     sys.exit(RETRYABLE_EXIT_CODE)
 
+if final_outcome == 'canceled':
+    # This run's own cancellations exit through the watchdog/timeout branches above,
+    # so 'canceled' here came from outside: UBA giving up on builder provisioning
+    # (observed: 9 min in sentToBuilder, then a platform-side cancel) or an external
+    # actor reclaiming the target. Retry with a fresh build instead of failing the
+    # job outright; nick-fields/retry bounds this to one extra attempt.
+    print('Build was canceled outside this run - retrying with a fresh build.')
+    utils.delete_build_info()
+    sys.exit(RETRYABLE_EXIT_CODE)
+
 utils.delete_build_info()
 
 print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
