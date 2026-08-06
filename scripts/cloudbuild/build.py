@@ -480,14 +480,17 @@ def get_log_byte_count(id):
     """
     url = f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}/log'
     try:
-        resp = requests.head(url, headers=HEADERS, timeout=30)
+        # requests defaults HEAD to allow_redirects=False; the log endpoint may 302 to
+        # signed storage, so follow redirects or the HEAD branch is dead weight.
+        # timeout=10 (not 30): this runs on the poll loop's critical path.
+        resp = requests.head(url, headers=HEADERS, timeout=10, allow_redirects=True)
         if resp.status_code == 200 and 'Content-Length' in resp.headers:
             return int(resp.headers['Content-Length'])
         # Range fallback: fetch exactly one byte; read the total from Content-Range.
         resp = requests.get(
             url,
             headers={**HEADERS, 'Range': 'bytes=0-0'},
-            timeout=30,
+            timeout=10,
             stream=True,
         )
         resp.close()
@@ -499,9 +502,15 @@ def get_log_byte_count(id):
             # Server returned 200 without Content-Range → use Content-Length.
             if 'Content-Length' in resp.headers:
                 return int(resp.headers['Content-Length'])
+        if not get_log_byte_count._non_2xx_logged:
+            # Print once so a permanently dead probe (404 before the log exists, 401,
+            # redirect dead-end) is visible in the run output instead of a silent no-op.
+            print(f'Log size probe returned HTTP {resp.status_code}; stall watchdog inactive until the log endpoint responds.')
+            get_log_byte_count._non_2xx_logged = True
     except requests.exceptions.RequestException as e:
         print(f'Warning: log size probe failed ({e})')
     return None
+get_log_byte_count._non_2xx_logged = False
 
 
 def delete_build(id):
@@ -673,6 +682,8 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
     last_poll = now
     last_log_byte_count = None  # most recently observed log size in bytes
     last_log_growth = None      # wall-clock time of the last log-size increase
+    log_growth_observed = False # stall cancel arms only after one real size increase
+    log_probe_logged = False    # first probe result printed once for visibility
 
     while True:
         now = time.time()
@@ -712,15 +723,28 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
         # Log-stall watchdog: probe log size on every poll tick while the build
         # is active.  A deadlocked builder keeps status=started but its log stops
         # growing.  Cancel and retry (exit 99 → fresh builder VM) after the
-        # configured threshold.  If the probe itself fails we skip rather than
-        # false-positive cancel.
+        # configured threshold.  The cancel only arms after at least one observed
+        # size *increase*: a probe that reports a constant value (proxy answering
+        # HEAD with Content-Length: 0, endpoint not live during the build) must
+        # read as "watchdog inactive", never as "stalled".  A size *decrease*
+        # (restarted builds can replace/truncate the log) resets the clock.
+        # Measured baseline for the threshold: the longest log silence across 18
+        # preserved warm builds is 99 s (IL2CPP), so 900 s has a ~9x margin.
         if status in ACTIVE_STATUSES:
             log_bytes = get_log_byte_count(id)
-            if log_bytes is not None:
-                if last_log_byte_count is None or log_bytes > last_log_byte_count:
+            if not log_probe_logged:
+                print(f'Log-stall watchdog: first size probe returned {log_bytes!r}.')
+                log_probe_logged = True
+            if log_bytes:
+                if last_log_byte_count is None or log_bytes < last_log_byte_count:
+                    # First observation, or the log was reset (e.g. on `restarted`).
                     last_log_byte_count = log_bytes
                     last_log_growth = now
-                elif last_log_growth is not None and (now - last_log_growth) > LOG_STALL_THRESHOLD:
+                elif log_bytes > last_log_byte_count:
+                    last_log_byte_count = log_bytes
+                    last_log_growth = now
+                    log_growth_observed = True
+                elif log_growth_observed and (now - last_log_growth) > LOG_STALL_THRESHOLD:
                     stall_duration = datetime.timedelta(seconds=int(now - last_log_growth))
                     print(
                         f'Build log has not grown for {stall_duration} '

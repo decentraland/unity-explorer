@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'Explorer/**'
+      # The rsp-drift job must run when the generator changes, or drift merges unnoticed.
+      - 'scripts/generate-ignore-warnings.sh'
     types:
       - opened
       - reopened
@@ -42,6 +44,9 @@ jobs:
   rsp-drift:
     name: rsp files match generator
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -52,7 +57,15 @@ jobs:
         run: |
           set -euo pipefail
           bash scripts/generate-ignore-warnings.sh
-          git diff --exit-code -- 'Explorer/Assets/*.rsp'
+          # git status --porcelain (not `git diff`) so a newly added, still-untracked
+          # rsp file also counts as drift.
+          drift=$(git status --porcelain -- 'Explorer/Assets/*.rsp')
+          if [[ -n "$drift" ]]; then
+            echo "Committed rsp files differ from generate-ignore-warnings.sh output:"
+            echo "$drift"
+            git diff -- 'Explorer/Assets/*.rsp'
+            exit 1
+          fi
 
   changes:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build') || (github.event.label.name == 'force-lint')
