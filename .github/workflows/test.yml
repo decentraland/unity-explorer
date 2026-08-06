@@ -36,6 +36,24 @@ concurrency:
 
 jobs:
 
+  # The committed Explorer/Assets/*.rsp files must stay byte-identical to what
+  # generate-ignore-warnings.sh produces: on drift the preBuildScript rewrites them
+  # on every cloud build, and the Bee DAG rebuild (~4.5 min per build) silently returns.
+  rsp-drift:
+    name: rsp files match generator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Regenerate rsp files and fail on drift
+        run: |
+          set -euo pipefail
+          bash scripts/generate-ignore-warnings.sh
+          git diff --exit-code -- 'Explorer/Assets/*.rsp'
+
   changes:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build') || (github.event.label.name == 'force-lint')
     name: Detect C# changes

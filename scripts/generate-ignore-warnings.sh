@@ -19,20 +19,31 @@ fi
 # Write suppressions to each .rsp file, but only on content drift: the rsp files are
 # timestamp inputs to Bee's build graph, and an unconditional rewrite forces a DAG
 # rebuild (IL2CPP + Usym rerun, ~267s) on every otherwise-no-change build.
+# The temp file lives outside Assets/ so an interrupted run never leaves a stray
+# file for Unity to import.
+tmp=$(mktemp) || { echo "Failed to create temp file"; exit 1; }
+trap 'rm -f "$tmp"' EXIT
+
+if ! {
+    for warning in "${warnings_to_ignore[@]}"; do
+        echo "-nowarn:$warning"
+    done
+} > "$tmp"; then
+    echo "Failed to write warning suppressions"
+    exit 1
+fi
+
 for file_name in "${rsp_files[@]}"; do
     file_path="$assets_path/$file_name"
 
-    {
-        for warning in "${warnings_to_ignore[@]}"; do
-            echo "-nowarn:$warning"
-        done
-    } > "$file_path.tmp"
-    if cmp -s "$file_path.tmp" "$file_path" 2>/dev/null; then rm -f "$file_path.tmp"; else mv "$file_path.tmp" "$file_path"; fi
-
-    if [[ $? -eq 0 ]]; then
-        echo "Successfully generated $file_name with ${#warnings_to_ignore[@]} warning suppressions."
+    if cmp -s "$tmp" "$file_path" 2>/dev/null; then
+        echo "$file_name unchanged (${#warnings_to_ignore[@]} warning suppressions)."
     else
-        echo "Failed to write to $file_name"
-        exit 1
+        # cp keeps the destination inode and permissions; only content (and mtime) change.
+        if ! cp "$tmp" "$file_path"; then
+            echo "Failed to write to $file_name"
+            exit 1
+        fi
+        echo "Updated $file_name with ${#warnings_to_ignore[@]} warning suppressions."
     fi
 done

@@ -227,7 +227,7 @@ def set_parameters(params):
         sys.exit(99)
 
 def get_latest_build(target):
-    response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1})
+    response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1}, timeout=30)
     
     if response.status_code == 200:
         builds = response.json()
@@ -776,13 +776,17 @@ elif args.resume or args.cancel:
     if args.cancel:
         if id is None:
             # The runner died between the build POST and the id write; the queued build is
-            # findable only as the target's latest non-terminal build.
+            # findable only as the target's latest build. Cancel it only while it is still
+            # in a queue status: targets are shared (release pool; consecutive runs on one
+            # branch), so an already-started build may belong to a concurrent run — leaving
+            # it is at worst one wasted build, cancelling it would kill someone else's.
+            # A missing/unknown status is treated as not-cancellable for the same reason.
             latest = get_latest_build(os.getenv('TARGET'))
-            if latest and latest.get('buildStatus') not in TERMINAL_STATUSES:
+            if latest and latest.get('buildStatus') in QUEUE_STATUSES:
                 id = latest['build']
-                print(f'No build id persisted; cancelling latest non-terminal build #{id} on {os.getenv("TARGET")}')
+                print(f'No build id persisted; cancelling latest queued build #{id} on {os.getenv("TARGET")}')
             else:
-                print('No build id persisted and no non-terminal build found; nothing to cancel.')
+                print('No build id persisted and no queued build found; nothing to cancel.')
                 utils.delete_build_info()
                 sys.exit(0)
         cancel_build(id)
