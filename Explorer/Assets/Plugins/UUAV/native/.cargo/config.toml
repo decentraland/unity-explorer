@@ -9,6 +9,10 @@ target-dir = ".target"
 # TODO why exactly this linker?
 [target.x86_64-pc-windows-gnu]
 linker = "C:\\msys64\\mingw64\\bin\\gcc.exe"
+# --no-insert-timestamp: GNU ld stamps the PE COFF TimeDateStamp (offset 136)
+# with the wall clock, making every build byte-unique; zeroing it is required
+# for the reproducibility gates (scripts/uuav/repro-gate.sh)
+rustflags = ["-C", "link-arg=-Wl,--no-insert-timestamp"]
 
 # @loader_path rpath: libuuav.dylib resolves the @rpath/... FFmpeg dylibs
 # from its own folder, in-editor and in a built player alike

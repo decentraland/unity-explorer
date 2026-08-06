@@ -6,11 +6,11 @@ TARGET="${1:-}"
 case "$TARGET" in
 macos-universal)
     PLATFORM_DIR="macOS"
-    CARGO_ARTIFACTS=(libuuav.dylib uuav-helper)
+    CARGO_ARTIFACTS=(libuuav.dylib libuuav_core.dylib uuav-helper)
     ;;
 windows-x86_64)
     PLATFORM_DIR="x86_64"
-    CARGO_ARTIFACTS=(uuav.dll uuav-helper.exe)
+    CARGO_ARTIFACTS=(uuav.dll uuav_core.dll uuav-helper.exe)
     ;;
 *)
     echo "usage: repro-gate.sh <macos-universal|windows-x86_64>" >&2
