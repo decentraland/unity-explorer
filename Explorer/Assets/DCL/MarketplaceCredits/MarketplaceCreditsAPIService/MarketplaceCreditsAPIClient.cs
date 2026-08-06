@@ -90,13 +90,48 @@ namespace DCL.MarketplaceCredits
                                              .CreateFromJson<CreditPacksResponse>(WRJsonParser.Unity);
         }
 
-        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, CancellationToken ct)
+        /// <summary>
+        ///     Reserves the dollars and signs the credit for ONE purchase.
+        ///     <para>
+        ///         `tradeId` is empty for a CollectionStore mint, which is identified by the
+        ///         (contractAddress, itemId) pair instead — the server accepts either, and signs neither: what it
+        ///         signs is a voucher for an amount, and the caps the CreditsManager enforces on-chain.
+        ///     </para>
+        /// </summary>
+        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, string contractAddress, string itemId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
-            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdCreditBody { usdPriceCents = usdPriceCents, tradeId = tradeId });
+            string jsonBody = BuildAuthorizeBody(usdPriceCents, tradeId, contractAddress, itemId);
 
             return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                              .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);
+        }
+
+        /// <summary>
+        ///     The authorize body, carrying ONLY the keys that apply to the rail being bought.
+        ///     <para>
+        ///         The server validates `contractAddress`/`itemId` as a pair the moment either key is present, and
+        ///         an empty string counts as present: sending `""` for both on a trade purchase fails its address
+        ///         check with a 400. `JsonUtility` cannot omit a field, so the shape is chosen here instead — which
+        ///         is also why this is a static, directly testable function rather than an inline serialise.
+        ///     </para>
+        /// </summary>
+        internal static string BuildAuthorizeBody(int usdPriceCents, string? tradeId, string? contractAddress, string? itemId)
+        {
+            bool hasItem = !string.IsNullOrEmpty(contractAddress) && !string.IsNullOrEmpty(itemId);
+
+            return hasItem
+                ? JsonUtility.ToJson(new AuthorizeUsdMintCreditBody
+                {
+                    usdPriceCents = usdPriceCents,
+                    contractAddress = contractAddress,
+                    itemId = itemId,
+                })
+                : JsonUtility.ToJson(new AuthorizeUsdCreditBody
+                {
+                    usdPriceCents = usdPriceCents,
+                    tradeId = tradeId ?? string.Empty,
+                });
         }
 
         public virtual async UniTask ReleaseUsdIntentsAsync(string[] salts, CancellationToken ct)
