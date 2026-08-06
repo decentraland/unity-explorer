@@ -726,6 +726,11 @@ jobs:
           echo "::group::Watchdog output"
           cat watchdog-output.log 2>/dev/null || echo "(no watchdog output)"
           echo "::endgroup::"
+          # An unarmed watchdog gave this job no hang protection at all, usually
+          # because the editor log moved; don't let that pass unremarked.
+          if ! grep -q "stall detection armed" watchdog-output.log 2>/dev/null; then
+            echo "::warning::Stale-log watchdog never armed - artifacts/$TEST_MODE.log never grew, so a hang would still have run to the step timeout. Check that game-ci still writes the editor log there."
+          fi
           if [ -f watchdog-status.json ]; then
             stalled=$(jq -r '.stalledSeconds' watchdog-status.json)
             echo "::error::Unity $TEST_MODE tests hung: artifacts/$TEST_MODE.log did not grow for ${stalled}s, so the stale-log watchdog killed the Unity container. See 'Dump Unity Editor log on failure' below for the log tail."
