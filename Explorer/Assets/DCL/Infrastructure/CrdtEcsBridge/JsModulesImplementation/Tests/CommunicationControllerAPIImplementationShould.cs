@@ -115,6 +115,31 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         }
 
         [Test]
+        public void DropOversizedReceivedMessage()
+        {
+            // The size of a received payload is peer-controlled and can exceed the pooled
+            // receive buffer (rented for LIVEKIT_MAX_SIZE); such a message must be dropped
+            // without throwing — an unchecked Span.CopyTo into the undersized buffer raises
+            // ArgumentException "Destination is too short.".
+            // https://decentraland.sentry.io/issues/7638559416/ (UNITY-EXPLORER-PJA)
+            const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+            const byte COMMS_REQ_CRDT_STATE = 2; // CommsMessageType.ReqCRDTState -> the unfiltered raw-copy path
+
+            RoomMetadataCurrentScene.InitializeTest();
+
+            // Bigger than any array that can back the pooled destination
+            // (LIVEKIT_MAX_SIZE rounded up to the next pow2 bucket by ArrayPool)
+            var data = new byte[IJsOperations.LIVEKIT_MAX_SIZE + 4096];
+            data[0] = COMMS_REQ_CRDT_STATE;
+
+            Assert.DoesNotThrow(() =>
+                sceneCommunicationPipe.onSceneMessage.Invoke(
+                    new ISceneCommunicationPipe.DecodedMessage(data.AsSpan(), WALLET_ID, isTrustedSource: true)));
+
+            Assert.AreEqual(0, api.EventsToProcess.Count, "an oversized message must be dropped, not enqueued");
+        }
+
+        [Test]
         public void ApplyFilterToCRDTMessages()
         {
             // Tests that CRDT messages (type 1) are filtered to remove NO_SYNC_COMPONENT_ID
