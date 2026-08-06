@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Create or update the single unified CI status comment on a PR, replacing only
 # one section (build | lint | tests). All four CI comment workflows call this
-# through the ci-status-comment composite action, so the three separate bot
+# one section (build | lint | tests). All three CI comment workflows call this
 # comments collapse into one.
 #
 # The comment is keyed by the hidden <!-- ci-status --> marker and holds three
