@@ -6,9 +6,13 @@ namespace DCL.BugReporting.UI
         /// <summary>Optional initial content of the description field.</summary>
         public readonly string? PrefilledDescription;
 
-        public BugReportParams(string? prefilledDescription = null)
+        /// <summary>Optional initial selection of the issue type dropdown.</summary>
+        public readonly BugReportIssueType? PrefilledIssueType;
+
+        public BugReportParams(string? prefilledDescription = null, BugReportIssueType? prefilledIssueType = null)
         {
             PrefilledDescription = prefilledDescription;
+            PrefilledIssueType = prefilledIssueType;
         }
     }
 }

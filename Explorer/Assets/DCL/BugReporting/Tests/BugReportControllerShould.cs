@@ -59,6 +59,14 @@ namespace DCL.BugReporting.Tests
             Assert.AreEqual(expected, BugReportController.CanSubmit(issueTypeIndex, description, shareLogs));
 
         [Test]
+        public void ResolveThePrefilledIssueTypeToItsDropdownIndex()
+        {
+            Assert.AreEqual(Array.IndexOf(BugReportIssueTypes.ALL, BugReportIssueTypes.PERFORMANCE), BugReportController.IssueTypeIndexOf(BugReportIssueTypes.PERFORMANCE));
+            Assert.AreEqual(-1, BugReportController.IssueTypeIndexOf(null));
+            Assert.AreEqual(-1, BugReportController.IssueTypeIndexOf(new BugReportIssueType("Unknown", "no-such-option")));
+        }
+
+        [Test]
         public async Task SendDraftValuesToService()
         {
             // Arrange

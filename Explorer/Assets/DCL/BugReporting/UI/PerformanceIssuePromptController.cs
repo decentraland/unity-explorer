@@ -62,7 +62,7 @@ namespace DCL.BugReporting.UI
         {
             try
             {
-                await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams(inputData.PrefilledDescription)));
+                await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams(inputData.PrefilledDescription, BugReportIssueTypes.PERFORMANCE)));
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.UNSPECIFIED); }

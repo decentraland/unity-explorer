@@ -21,9 +21,11 @@ namespace DCL.BugReporting
     /// </summary>
     public static class BugReportIssueTypes
     {
+        public static readonly BugReportIssueType PERFORMANCE = new ("Performance (Lag/FPS)", "84d3e47f-396f-40be-bb93-a8b36196cf97");
+
         public static readonly BugReportIssueType[] ALL =
         {
-            new ("Performance (Lag/FPS)", "84d3e47f-396f-40be-bb93-a8b36196cf97"),
+            PERFORMANCE,
             new ("Crash / Freeze", "10ab00f9-e944-4a7f-8b75-c8bf4e4ff270"),
             new ("Chat", "b2db7b2e-3634-4c9d-9f55-b732bfe41319"),
             new ("Voice Chat", "4395e4a3-7eb8-4bd1-a82e-546250d5c16d"),

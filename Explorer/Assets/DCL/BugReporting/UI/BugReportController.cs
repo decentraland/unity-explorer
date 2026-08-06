@@ -73,6 +73,19 @@ namespace DCL.BugReporting.UI
         internal static bool CanSubmit(int issueTypeIndex, string description, bool shareLogs) =>
             issueTypeIndex >= 0 && issueTypeIndex < BugReportIssueTypes.ALL.Length && !string.IsNullOrWhiteSpace(description) && shareLogs;
 
+        /// <returns>The dropdown index of the issue type, or -1 ("no selection") when it is null or unknown.</returns>
+        internal static int IssueTypeIndexOf(BugReportIssueType? issueType)
+        {
+            if (issueType == null)
+                return -1;
+
+            for (var i = 0; i < BugReportIssueTypes.ALL.Length; i++)
+                if (BugReportIssueTypes.ALL[i].OptionId == issueType.Value.OptionId)
+                    return i;
+
+            return -1;
+        }
+
         protected override void OnViewInstantiated()
         {
             viewInstance!.IssueTypeDropdown.options.Clear();
@@ -100,7 +113,7 @@ namespace DCL.BugReporting.UI
             operationsCts = operationsCts.SafeRestart();
             ClearAttachedImage();
 
-            viewInstance!.IssueTypeDropdown.SetValueWithoutNotify(-1);
+            viewInstance!.IssueTypeDropdown.SetValueWithoutNotify(IssueTypeIndexOf(inputData.PrefilledIssueType));
             viewInstance.DescriptionInput.SetTextWithoutNotify(inputData.PrefilledDescription ?? string.Empty);
             viewInstance.HideCharCounter();
             viewInstance.ShareLogsToggle.SetIsOnWithoutNotify(true);
