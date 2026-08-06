@@ -17,12 +17,17 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <summary>
         ///     <paramref name="useManualManifest" /> stamps the manual manifest instead of fetching a real one —
         ///     used by local scene development when its bundles come as raw GLTFs rather than from an asset-bundle server.
+        ///     <para>Returns the manifest the fallback downloaded, or null when no fetch was needed. The manifest
+        ///     promise uses <c>NoCache</c>, so callers that also need the manifest's <c>files[]</c> (scene deps
+        ///     digests) must reuse this instance instead of fetching the same JSON again.</para>
         /// </summary>
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
+        public static async UniTask<SceneAssetBundleManifest?> CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
         {
-            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest, skipException);
+            SceneAssetBundleManifest? fetchedManifest = await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest, skipException);
 
-            entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
+            entityDefinition.AssetBundleManifestVersionOrFailed.InjectContent(entityDefinition.id, entityDefinition.content);
+
+            return fetchedManifest;
         }
 
         public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false)
@@ -30,12 +35,12 @@ namespace ECS.StreamableLoading.AssetBundles
             await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest);
         }
 
-        private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
+        private static async UniTask<SceneAssetBundleManifest?> CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
         {
             if (useManualManifest)
             {
                 entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
-                return;
+                return null;
             }
 
             //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
@@ -58,13 +63,16 @@ namespace ECS.StreamableLoading.AssetBundles
                 StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
                 if (assetBundleManifest.Succeeded)
-                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
-                else
                 {
-                    assetBundleManifest.TryLogException();
-                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
+                    return assetBundleManifest.Asset;
                 }
+
+                assetBundleManifest.TryLogException();
+                entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
             }
+
+            return null;
         }
     }
 }
