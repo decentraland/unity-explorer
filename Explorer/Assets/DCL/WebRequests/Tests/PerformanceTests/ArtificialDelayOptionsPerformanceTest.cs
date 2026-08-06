@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using Unity.PerformanceTesting;
+using Unity.Profiling;
 
 namespace DCL.WebRequests.Tests.PerformanceTests
 {
@@ -27,6 +28,10 @@ namespace DCL.WebRequests.Tests.PerformanceTests
         private const int N = 1000;
 
         private ArtificialDelayOptions.ElementBindingOptions options = null!;
+
+        // Accumulates GetOptionsAsync results so the measured loop cannot be elided. A plain float field means
+        // the measurement lambda captures only `this`, adding no per-iteration closure allocation.
+        private float allocProbeSink;
 
         [SetUp]
         public void SetUp()
@@ -56,11 +61,10 @@ namespace DCL.WebRequests.Tests.PerformanceTests
             for (int i = 0; i < 64; i++)
                 Assert.AreEqual(UniTaskStatus.Succeeded, options.GetOptionsAsync(CancellationToken.None).Status);
 
-            // No boxing/allocating asserts inside the measured region: accumulate primitives, assert afterwards.
+            // Synchronous-completion falsifier (kept intact): every call must be already-completed and yield a
+            // finite result. The pre-fix async main-thread-scope path returns a non-completed task.
             int notCompleted = 0;
             float sink = 0f;
-
-            long before = GC.GetTotalMemory(false);
 
             for (int i = 0; i < N; i++)
             {
@@ -73,16 +77,37 @@ namespace DCL.WebRequests.Tests.PerformanceTests
                 sink += r.ArtificialDelaySeconds;
             }
 
-            long delta = GC.GetTotalMemory(false) - before;
-
             Assert.AreEqual(0, notCompleted, "Every GetOptionsAsync must complete synchronously (no main-thread hop)");
             Assert.IsTrue(float.IsFinite(sink));
 
-            Measure.Custom(new SampleGroup("GetOptionsAsync.TotalAllocatedBytes", SampleUnit.Byte), delta);
+            // Allocation falsifier: measure managed bytes allocated across N calls via the Memory "GC.Alloc"
+            // profiler counter. It is supported on Mono and IL2CPP, whereas GC.GetTotalMemory deltas are noisy
+            // and reported a null SampleGroup on this runtime. Measure.Method drives the loop and advances the
+            // sampling frames, so LastValue reflects the bytes allocated by the final measured pass.
+            using var gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
+
+            Measure.Method(() =>
+                   {
+                       for (int i = 0; i < N; i++)
+                       {
+                           UniTask<(float ArtificialDelaySeconds, bool UseDelay)> task = options.GetOptionsAsync(CancellationToken.None);
+                           allocProbeSink += task.GetAwaiter().GetResult().ArtificialDelaySeconds;
+                       }
+                   })
+                  .WarmupCount(5)
+                  .MeasurementCount(10)
+                  .GC()
+                  .Run();
+
+            long allocatedBytes = gcAlloc.LastValue;
+
+            Assert.IsTrue(float.IsFinite(allocProbeSink));
+
+            Measure.Custom(new SampleGroup("GetOptionsAsync.AllocatedBytes", SampleUnit.Byte), allocatedBytes);
 
             // A completed UniTask<T> over a value tuple is heap-allocation free. Allow a tiny slack for the
-            // GC counter's own bookkeeping but reject anything resembling per-call boxing (the pre-fix path).
-            Assert.Less(delta, 4L * N, $"Expected near-zero allocation over {N} calls, got {delta} bytes");
+            // counter's own bookkeeping but reject anything resembling per-call boxing (the pre-fix path).
+            Assert.Less(allocatedBytes, 4L * N, $"Expected near-zero allocation over {N} calls, got {allocatedBytes} bytes");
         }
 
         /// <summary>

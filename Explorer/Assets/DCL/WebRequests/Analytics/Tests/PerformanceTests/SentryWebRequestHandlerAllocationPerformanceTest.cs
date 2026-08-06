@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.PerformanceTesting;
+using Unity.Profiling;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics.PerformanceTests
@@ -17,9 +18,11 @@ namespace DCL.WebRequests.Analytics.PerformanceTests
     ///     handler to discard it with no trace-header injection. The fix adds a cheap <c>IsWhitelisted</c> pre-check
     ///     so only URLs a configured template matches pay that cost.
     ///     <para>
-    ///     The metric is bytes allocated on the current thread across N identical <c>OnRequestStarted</c> calls
-    ///     (<see cref="GC.GetAllocatedBytesForCurrentThread" />), measured for a whitelisted URL (still allocates a
-    ///     transaction — the baseline) and a non-whitelisted URL (must not). The comparison is self-calibrating so it
+    ///     The metric is managed bytes allocated across N identical <c>OnRequestStarted</c> calls, read from the
+    ///     Memory profiler's <c>GC.Alloc</c> counter via <see cref="Unity.Profiling.ProfilerRecorder" /> (supported
+    ///     on Mono and IL2CPP, where <c>GC.GetAllocatedBytesForCurrentThread</c> is inert), measured for a
+    ///     whitelisted URL (still allocates a transaction — the baseline) and a non-whitelisted URL (must not).
+    ///     The comparison is self-calibrating so it
     ///     needs no absolute byte threshold: on the pre-fix build the non-whitelisted path allocates as much as the
     ///     whitelisted one and the >=95%-reduction assertion FAILS; on the fixed build it is ~0 and the assertion
     ///     passes. Requiring the whitelisted baseline to be > 0 simultaneously falsifies an over-aggressive early-out
@@ -71,15 +74,6 @@ namespace DCL.WebRequests.Analytics.PerformanceTests
         [Test, Performance]
         public void OnRequestStarted_NonWhitelisted_AllocatesFarLessThanWhitelisted()
         {
-            // Verify the allocation counter is live on this runtime; otherwise the comparison is meaningless.
-            long p0 = GC.GetAllocatedBytesForCurrentThread();
-            var probe = new byte[4096];
-            long p1 = GC.GetAllocatedBytesForCurrentThread();
-            GC.KeepAlive(probe);
-
-            if (p1 - p0 <= 0)
-                Assert.Inconclusive("GC.GetAllocatedBytesForCurrentThread does not report allocations on this runtime.");
-
             // Baseline: whitelisted URLs still start a transaction, so they allocate (>0).
             long whitelistedBytes = MeasureAllocatedBytes(WHITELISTED_URL, N);
 
@@ -116,15 +110,27 @@ namespace DCL.WebRequests.Analytics.PerformanceTests
             RequestEnvelope<FakeTypedWebRequest, FakeArgs> envelope = BuildEnvelope(url);
             DateTime startedAt = DateTime.UtcNow;
 
+            // Warm-up call primes the template cache, the sampling-context pool and the JIT so the measured
+            // window reflects steady state.
             handler.OnRequestStarted(in envelope, request, startedAt);
 
-            long before = GC.GetAllocatedBytesForCurrentThread();
+            // The Memory "GC.Alloc" profiler counter reports managed bytes allocated and is supported on both
+            // Mono and IL2CPP (unlike GC.GetAllocatedBytesForCurrentThread, which is inert on this runtime).
+            // Measure.Method drives the loop and advances the sampling frames, so LastValue reflects the bytes
+            // allocated by the final measured pass over the whole iterations loop.
+            using var gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
 
-            for (var i = 0; i < iterations; i++)
-                handler.OnRequestStarted(in envelope, request, startedAt);
+            Measure.Method(() =>
+                   {
+                       for (var i = 0; i < iterations; i++)
+                           handler.OnRequestStarted(in envelope, request, startedAt);
+                   })
+                  .WarmupCount(3)
+                  .MeasurementCount(5)
+                  .GC()
+                  .Run();
 
-            long after = GC.GetAllocatedBytesForCurrentThread();
-            return after - before;
+            return gcAlloc.LastValue;
         }
 
         private static RequestEnvelope<FakeTypedWebRequest, FakeArgs> BuildEnvelope(string url) =>

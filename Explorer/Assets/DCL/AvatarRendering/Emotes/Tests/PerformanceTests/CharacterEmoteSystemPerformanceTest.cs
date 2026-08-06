@@ -37,6 +37,7 @@ namespace DCL.AvatarRendering.Emotes.Tests.PerformanceTests
     [Category("Performance")]
     public class CharacterEmoteSystemPerformanceTest : UnitySystemTestBase<CharacterEmoteSystem>
     {
+        private GameObject poolRoot = null!;
         private GameObject audioSourcePrefab = null!;
         private EmoteReferences legacyEmote = null!;
         private IAvatarView avatarView = null!;
@@ -45,6 +46,11 @@ namespace DCL.AvatarRendering.Emotes.Tests.PerformanceTests
         [SetUp]
         public void SetUp()
         {
+            // EmotePlayer's constructor resolves its pool root via GameObject.Find("ROOT_POOL_CONTAINER").transform.
+            // Without this object in the scene, Find returns null and the ctor throws an NRE inside [SetUp]. The
+            // passing CharacterEmoteSystemShould fixture creates it too; mirror that so the fixture builds.
+            poolRoot = new GameObject("ROOT_POOL_CONTAINER");
+
             audioSourcePrefab = new GameObject("EmoteAudioSource");
             AudioSource audioSource = audioSourcePrefab.AddComponent<AudioSource>();
             var emotePlayer = new EmotePlayer(audioSource, ScriptableObject.CreateInstance<EmoteMaskCatalog>(), legacyAnimationsEnabled: true);
@@ -68,6 +74,7 @@ namespace DCL.AvatarRendering.Emotes.Tests.PerformanceTests
         {
             if (legacyEmote != null) Object.DestroyImmediate(legacyEmote.gameObject);
             if (audioSourcePrefab != null) Object.DestroyImmediate(audioSourcePrefab);
+            if (poolRoot != null) Object.DestroyImmediate(poolRoot);
         }
 
         private void PopulateCrowd(int n, int emoting)
