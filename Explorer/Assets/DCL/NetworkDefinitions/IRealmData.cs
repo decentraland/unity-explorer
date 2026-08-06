@@ -5,7 +5,8 @@ using DCL.Utilities;
 namespace ECS
 {
     /// <summary>
-    ///     Readonly interface to fetch realm data
+    ///     Interface to fetch realm data. Read-only except for secret scoping via
+    ///     <see cref="SetPendingWorldCommsSecret" /> / <see cref="ClearPendingWorldCommsSecret" />.
     /// </summary>
     public interface IRealmData
     {

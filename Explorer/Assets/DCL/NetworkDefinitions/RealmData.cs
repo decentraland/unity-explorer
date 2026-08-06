@@ -108,7 +108,7 @@ namespace ECS
 
         public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol,
             string hostname, bool isLocalSceneDevelopment, WorldManifest worldManifest, float? skyboxFixedHour = null,
-            URLDomain realmUrl = default)
+            URLDomain realmUrl = default) // Security: omitting realmUrl clears any pending world secret (fail-closed).
         {
             IsDirty = true;
             Configured = true;
