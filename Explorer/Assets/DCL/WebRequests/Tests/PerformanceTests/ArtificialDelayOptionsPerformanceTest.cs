@@ -60,7 +60,7 @@ namespace DCL.WebRequests.Tests.PerformanceTests
             int notCompleted = 0;
             float sink = 0f;
 
-            long before = GC.GetTotalAllocatedBytes(false);
+            long before = GC.GetTotalMemory(false);
 
             for (int i = 0; i < N; i++)
             {
@@ -73,7 +73,7 @@ namespace DCL.WebRequests.Tests.PerformanceTests
                 sink += r.ArtificialDelaySeconds;
             }
 
-            long delta = GC.GetTotalAllocatedBytes(false) - before;
+            long delta = GC.GetTotalMemory(false) - before;
 
             Assert.AreEqual(0, notCompleted, "Every GetOptionsAsync must complete synchronously (no main-thread hop)");
             Assert.IsTrue(float.IsFinite(sink));
