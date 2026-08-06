@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Optimization.Renderer;
+using ECS;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -26,13 +27,21 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
         private readonly EmoteMaskCatalog emoteMaskCatalog;
+        private readonly IRealmData realmData;
         private readonly bool legacyAnimationsEnabled;
         private readonly bool forceBackfaceCullingEnabled;
 
-        public EmotePlayer(AudioSource audioSourcePrefab, EmoteMaskCatalog emoteMaskCatalog, bool legacyAnimationsEnabled = false, bool forceBackfaceCullingEnabled = false)
+        /// <summary>
+        ///     Untrusted catalysts load emotes as raw GLTFs whose clips are Legacy. The flag is only known
+        ///     after this player is created, hence the live check instead of a constructor argument.
+        /// </summary>
+        private bool LegacyAnimationsEnabled => legacyAnimationsEnabled || realmData.IsUntrustedCatalyst;
+
+        public EmotePlayer(AudioSource audioSourcePrefab, EmoteMaskCatalog emoteMaskCatalog, IRealmData realmData, bool legacyAnimationsEnabled = false, bool forceBackfaceCullingEnabled = false)
         {
             this.forceBackfaceCullingEnabled = forceBackfaceCullingEnabled;
             this.emoteMaskCatalog = emoteMaskCatalog;
+            this.realmData = realmData;
             this.legacyAnimationsEnabled = legacyAnimationsEnabled;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
@@ -60,7 +69,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteReferences.legacy)
             {
-                if (!legacyAnimationsEnabled)
+                if (!LegacyAnimationsEnabled)
                 {
                     Stop(emoteReferences);
                     return false;
@@ -257,7 +266,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private bool IsValid(GameObject mainAsset) =>
             mainAsset.GetComponentInChildren<Animator>(true)
-            || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
+            || (LegacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
 
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset, bool forceBackfaceCullingEnabled)
         {

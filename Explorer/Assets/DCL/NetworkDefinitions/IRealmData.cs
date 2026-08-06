@@ -27,6 +27,13 @@ namespace ECS
         string Protocol { get; }
         string Hostname { get; }
         bool IsLocalSceneDevelopment { get; }
+
+        /// <summary>
+        ///     True when the session runs against a custom catalyst outside the trusted-realms list and the user
+        ///     explicitly accepted the risk. All content must then resolve through the realm's /about endpoints
+        ///     as raw GLTFs — the asset-bundle registry and asset bundles are never consulted.
+        /// </summary>
+        bool IsUntrustedCatalyst { get; }
         string WorldCommsSecret { get; set; }
 
         /// <summary>
@@ -60,6 +67,7 @@ namespace ECS
             public string Protocol { get; }
             public string Hostname { get; }
             public bool IsLocalSceneDevelopment { get; }
+            public bool IsUntrustedCatalyst => false;
             public string WorldCommsSecret { get; set; } = string.Empty;
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }

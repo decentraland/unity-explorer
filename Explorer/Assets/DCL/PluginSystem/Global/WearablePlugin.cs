@@ -71,13 +71,15 @@ namespace DCL.AvatarRendering.Wearables
                 new NoCache<TrimmedWearablesResponse, GetTrimmedWearableByParamIntention>(false, false),
                 realmData, WEARABLES_COMPLEMENT_URL, urlsSource, wearableStorage,
                 trimmedWearableStorage, builderContentURL);
-            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), entitiesAnalytics);
+            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), realmData, entitiesAnalytics);
             BatchWearablesDTOSystem.InjectToWorld(ref builder, urlsSource, batchHeartbeat);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
-            if (builderCollectionsPreview)
+            // Untrusted catalysts route every wearable through the raw (non-asset-bundle) pipeline,
+            // so the raw finalization system must run there as well.
+            if (builderCollectionsPreview || realmData.IsUntrustedCatalyst)
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);

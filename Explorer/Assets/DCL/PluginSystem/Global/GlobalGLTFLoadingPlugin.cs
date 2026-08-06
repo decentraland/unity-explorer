@@ -39,7 +39,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            IGltFastDownloadStrategy downloadStrategy = localSceneDevelopment
+            // Untrusted catalysts resolve raw GLTFs from the realm's own content server, like local scene development does.
+            IGltFastDownloadStrategy downloadStrategy = localSceneDevelopment || realmData.IsUntrustedCatalyst
                 ? new GltFastRealmDataDownloadStrategy(realmData)
                 : new GltFastGlobalDownloadStrategy(builderContentURL);
 

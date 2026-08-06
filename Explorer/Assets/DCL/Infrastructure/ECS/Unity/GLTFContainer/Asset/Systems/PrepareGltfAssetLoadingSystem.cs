@@ -56,7 +56,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            bool loadRawGltf = options.PreviewingBuilderCollection;
+            // Untrusted catalysts never use asset bundles: every scene asset loads as a raw GLTF from the realm.
+            bool loadRawGltf = options.PreviewingBuilderCollection || options.ForceRawGltf;
 
             if (options.LocalSceneDevelopment)
             {
@@ -91,6 +92,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             public bool UseRemoteAssetBundles;
             public bool UseLocalAssetBundles;
             public bool PreviewingBuilderCollection;
+
+            /// <summary>Forces every asset to load as a raw GLTF — set when the session runs against an untrusted catalyst.</summary>
+            public bool ForceRawGltf;
         }
     }
 }

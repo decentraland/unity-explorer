@@ -139,7 +139,12 @@ namespace Global.Dynamic
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
                 localSceneParcels = ParseLocalSceneParcels(result.configurations.localSceneParcels);
-                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
+
+                // Untrusted catalysts must not consult the asset-bundle registry: the registry has no data
+                // for them anyway, so the world degrades to the empty-manifest (single-scene) behaviour.
+                WorldManifest worldManifest = realmData.IsUntrustedCatalyst
+                    ? WorldManifest.Empty
+                    : await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 
                 string hostname = ResolveHostname(realm, result);
 

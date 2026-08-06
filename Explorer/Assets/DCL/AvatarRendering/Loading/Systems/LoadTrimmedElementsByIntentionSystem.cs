@@ -159,7 +159,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         private async UniTask<AssetBundlesVersions> GetABVersionsAsync(IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>> lambdaResponse, CancellationToken ct)
         {
-            if (lambdaResponse.TotalAmount == 0)
+            // Untrusted catalysts never consult the asset-bundle registry.
+            if (realmData.IsUntrustedCatalyst || lambdaResponse.TotalAmount == 0)
                 return AssetBundlesVersions.Create();
 
             var urns = ARRAY_POOL.Rent(lambdaResponse.Page.Count);
@@ -214,8 +215,13 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             var wearable = trimmedAvatarElementStorage.GetOrAddByDTO(elementDTO);
 
+            // Untrusted catalysts never use asset bundles: assets resolve as raw content
+            // from the realm itself and no registry/manifest request is ever issued.
+            if (realmData.IsUntrustedCatalyst)
+                wearable.TrimmedDTO.SetRawContentSource(realmData.Ipfs.ContentBaseUrl.Value);
+
             // Run the asset bundle fallback check in parallel
-            if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
+            else if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
                 wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version, wearableVersions.windows.buildDate);
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);

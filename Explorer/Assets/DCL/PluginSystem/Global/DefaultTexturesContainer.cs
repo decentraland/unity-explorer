@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using ECS;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
@@ -54,6 +55,7 @@ namespace DCL.PluginSystem.Global
             IPluginSettingsContainer settingsContainer,
             IAssetsProvisioner assetsProvisioner,
             IAppArgs appArgs,
+            IRealmData realmData,
             CancellationToken ct)
         {
             var container = new DefaultTexturesContainer();
@@ -81,7 +83,8 @@ namespace DCL.PluginSystem.Global
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 256), mainTex256);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 512) , mainTex512);
 
-                texturesContainer.TextureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures, enableRawGltfWearables: appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
+                // Untrusted catalysts load every wearable as a raw GLTF, so the raw texture-array handlers must exist there too.
+                texturesContainer.TextureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures, enableRawGltfWearables: appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS) || realmData.IsUntrustedCatalyst);
             });
         }
     }

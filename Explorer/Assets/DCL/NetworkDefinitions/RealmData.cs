@@ -24,6 +24,7 @@ namespace ECS
         public string Protocol { get; private set; }
         public string Hostname { get; private set; }
         public bool IsLocalSceneDevelopment { get; private set; }
+        public bool IsUntrustedCatalyst { get; private set; }
         public string WorldCommsSecret { get; set; }
         public bool Configured { get; private set; }
         public float? SkyboxFixedHour { get; private set; }
@@ -125,6 +126,15 @@ namespace ECS
                 realmType.Value = RealmKind.GenesisCity;
             else
                 realmType.Value = RealmKind.World;
+        }
+
+        /// <summary>
+        ///     Marks the whole session as running against an untrusted custom catalyst.
+        ///     Survives realm reconfigurations: the catalyst choice is a launch-level decision.
+        /// </summary>
+        public void MarkAsUntrustedCatalyst()
+        {
+            IsUntrustedCatalyst = true;
         }
 
         /// <summary>

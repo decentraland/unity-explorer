@@ -353,6 +353,13 @@ namespace Global.Dynamic
 
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
+                // Resolved before the dynamic world container is built: plugin selection (raw-GLTF loading,
+                // registry bypass) depends on whether the session targets an untrusted custom catalyst.
+                bool isTrustedRealm = await IsTrustedRealmAsync(decentralandUrlsSource, ct);
+
+                if (!isTrustedRealm)
+                    realmData.MarkAsUntrustedCatalyst();
+
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
@@ -381,7 +388,7 @@ namespace Global.Dynamic
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CheckDiskSpace))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
-                if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
+                if (!isTrustedRealm)
                 {
                     splashScreen.Value.Hide();
 

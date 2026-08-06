@@ -42,6 +42,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     {
         private readonly IWebRequestController webRequestController;
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly IRealmData realmData;
         private readonly bool isLocalSceneDevelopment;
         private readonly bool useLocalAssetBundles;
 
@@ -52,11 +53,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly ProfilerMarker deserializationSampler;
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
-        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, bool useLocalAssetBundles,
+        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController, IRealmData realmData, bool isLocalSceneDevelopment, bool useLocalAssetBundles,
             IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, EntitiesAnalytics entitiesAnalytics)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.realmData = realmData;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.useLocalAssetBundles = useLocalAssetBundles;
             this.entitiesAnalytics = entitiesAnalytics;
@@ -124,6 +126,14 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
             {
+                // Untrusted catalysts never use asset bundles: the failed sentinel dead-ends every AB path
+                // without issuing a single registry or manifest request, and scenes load as raw GLTFs.
+                if (realmData.IsUntrustedCatalyst)
+                {
+                    sceneEntityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
+                    continue;
+                }
+
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
                 //Could be removed once the asset bundle manifest registry has been battle tested.
                 //With local asset bundles the manual LSD manifest is skipped so the real manifest is fetched

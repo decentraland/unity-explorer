@@ -16,6 +16,16 @@ namespace DCL.AvatarRendering.Loading.DTO
 
         public abstract TrimmedMetadataBase<TrimmedDataBase> Metadata { get; }
 
+        /// <summary>
+        ///     Routes every asset of this attachment to a raw content server, bypassing asset bundles entirely:
+        ///     the manifest sentinel marks the attachment as never having an asset bundle.
+        /// </summary>
+        public void SetRawContentSource(string contentDownloadUrl)
+        {
+            ContentDownloadUrl = contentDownloadUrl;
+            assetBundleManifestVersion = AssetBundleManifestVersion.CreateLSDAsset();
+        }
+
         [Serializable]
         public abstract class TrimmedMetadataBase<TDataBase> where TDataBase : TrimmedDataBase
         {

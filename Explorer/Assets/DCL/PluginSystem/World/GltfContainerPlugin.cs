@@ -9,6 +9,7 @@ using DCL.RealmNavigation;
 using DCL.ResourcesUnloading;
 using DCL.Utility;
 using DCL.WebRequests;
+using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -40,6 +41,7 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILaunchMode launchMode;
+        private readonly IRealmData realmData;
         private readonly bool useRemoteAssetBundles;
         private readonly bool useLocalAssetBundles;
         private readonly IWebRequestController webRequestController;
@@ -56,6 +58,7 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILaunchMode launchMode,
+            IRealmData realmData,
             bool useRemoteAssetBundles,
             bool useLocalAssetBundles,
             IWebRequestController webRequestController,
@@ -67,6 +70,7 @@ namespace DCL.PluginSystem.World
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.launchMode = launchMode;
+            this.realmData = realmData;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.useLocalAssetBundles = useLocalAssetBundles;
             this.webRequestController = webRequestController;
@@ -111,7 +115,8 @@ namespace DCL.PluginSystem.World
                     LocalSceneDevelopment = localSceneDevelopment,
                     UseRemoteAssetBundles = useRemoteAssetBundles,
                     UseLocalAssetBundles = useLocalAssetBundles,
-                    PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
+                    PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS),
+                    ForceRawGltf = realmData.IsUntrustedCatalyst,
                 });
 
             CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
