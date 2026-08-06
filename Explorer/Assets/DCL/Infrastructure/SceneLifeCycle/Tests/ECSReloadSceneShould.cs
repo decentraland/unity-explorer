@@ -99,6 +99,63 @@ namespace DCL.SceneLifeCycle.Tests
             Assert.That(world.Get<StaticScenePointers>(realmEntity).Promise, Is.Null);
         }
 
+        [Test]
+        public void DetectContentVersionedIds()
+        {
+            //Arrange: a NUL byte separates path from mtime in version-capable server ids
+            string versionedId = "b64-" + EncodeBase64("/home/user/scene/assets/tree.glb\u00001786032377138-my-host.local");
+            SceneEntityDefinition definition = CreateDefinition(new[] { "0,0" }, new[] { new ContentDefinition { file = "tree.glb", hash = versionedId } });
+
+            //Act & Assert
+            Assert.That(ECSReloadScene.HasContentVersionedIds(definition), Is.True);
+        }
+
+        [Test]
+        public void DetectContentVersionedIdsWithUrlSafeAlphabet()
+        {
+            //Arrange
+            string versionedId = "b64-" + EncodeBase64("/home/user/scene/assets/tree.glb\u00001786032377138-my-host.local")
+               .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
+            SceneEntityDefinition definition = CreateDefinition(new[] { "0,0" }, new[] { new ContentDefinition { file = "tree.glb", hash = versionedId } });
+
+            //Act & Assert
+            Assert.That(ECSReloadScene.HasContentVersionedIds(definition), Is.True);
+        }
+
+        [Test]
+        public void NotDetectVersionedIdsOnLegacyPathOnlyIds()
+        {
+            //Arrange: legacy ids are base64(path-machineId) — no NUL byte can occur
+            string legacyId = "b64-" + EncodeBase64("/home/user/scene/assets/tree.glb-my-host.local");
+            SceneEntityDefinition definition = CreateDefinition(new[] { "0,0" }, new[] { new ContentDefinition { file = "tree.glb", hash = legacyId } });
+
+            //Act & Assert
+            Assert.That(ECSReloadScene.HasContentVersionedIds(definition), Is.False);
+        }
+
+        [TestCase("bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi")]
+        [TestCase("b64-%%%not-base64%%%")]
+        [TestCase("")]
+        public void NotDetectVersionedIdsOnMalformedOrForeignIds(string hash)
+        {
+            //Arrange
+            SceneEntityDefinition definition = CreateDefinition(new[] { "0,0" }, new[] { new ContentDefinition { file = "tree.glb", hash = hash } });
+
+            //Act & Assert
+            Assert.That(ECSReloadScene.HasContentVersionedIds(definition), Is.False);
+        }
+
+        [Test]
+        public void NotDetectVersionedIdsOnMissingDefinitionOrContent()
+        {
+            Assert.That(ECSReloadScene.HasContentVersionedIds(null), Is.False);
+            Assert.That(ECSReloadScene.HasContentVersionedIds(CreateDefinition(new[] { "0,0" }, System.Array.Empty<ContentDefinition>())), Is.False);
+        }
+
+        private static string EncodeBase64(string value) =>
+            System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value));
+
         private static SceneEntityDefinition CreateDefinition(string[] pointers, ContentDefinition[] content) =>
             new ("test-scene", new SceneMetadata())
             {

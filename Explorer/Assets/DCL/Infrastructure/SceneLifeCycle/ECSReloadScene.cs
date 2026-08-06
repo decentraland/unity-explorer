@@ -22,6 +22,7 @@ namespace ECS.SceneLifeCycle
     public class ECSReloadScene
     {
         private const double DEFINITION_REFRESH_TIMEOUT_SECS = 3;
+        private const string B64_ID_PREFIX = "b64-";
 
         private readonly IScenesCache scenesCache;
 
@@ -91,12 +92,21 @@ namespace ECS.SceneLifeCycle
         {
             ct.ThrowIfCancellationRequested();
 
+            float reloadStart = Time.realtimeSinceStartup;
+            float disposeDone, drainDone, refreshDone;
+            bool drainSkipped;
+
+            SceneEntityDefinition? cachedDefinition = null;
+
             // Gate facade promise recreation on the kept definition entity: UnloadSceneSystem strips
             // the facade components as soon as the unload starts, and without the gate
             // ResolveStaticPointersSystem would recreate the promise before the refreshed
             // definition lands.
             if (localSceneDevelopment)
+            {
+                cachedDefinition = world.Get<SceneDefinitionComponent>(entity).Definition;
                 world.Add<SceneDefinitionRefreshPending>(entity);
+            }
 
             try
             {
@@ -122,13 +132,29 @@ namespace ECS.SceneLifeCycle
 
                 if (!localSceneDevelopment) return;
 
-                // Force-drain dereferenced caches on LSD reload. The local dev server derives hashes
-                // from the file path, not content, so an updated model keeps the same hash and cache
-                // hits would return stale assets. Draining guarantees fresh loads.
-                cacheCleaner.UnloadCache(budgeted: false);
-                Resources.UnloadUnusedAssets();
+                disposeDone = Time.realtimeSinceStartup;
 
-                ApplyRefreshedDefinition(entity, await definitionRefresh);
+                // Await the refresh before the cache drain: the fetch completed during the dispose
+                // wait, while Resources.UnloadUnusedAssets hitches the main thread for several frames
+                // and would stall the await's main-thread continuation.
+                SceneEntityDefinition? refreshedDefinition = await definitionRefresh;
+                ApplyRefreshedDefinition(entity, refreshedDefinition);
+
+                refreshDone = Time.realtimeSinceStartup;
+
+                // Content-versioned ids (the sdk server embeds the file's mtime) give an edited
+                // file a new id, so every cache key derived from it self-invalidates and the
+                // caches stay warm across the reload. Path-only ids keep the same key when the
+                // file changes: draining every cache is the only way edits show up.
+                drainSkipped = HasContentVersionedIds(refreshedDefinition ?? cachedDefinition);
+
+                if (!drainSkipped)
+                {
+                    cacheCleaner.UnloadCache(budgeted: false);
+                    Resources.UnloadUnusedAssets();
+                }
+
+                drainDone = Time.realtimeSinceStartup;
             }
             finally
             {
@@ -137,6 +163,11 @@ namespace ECS.SceneLifeCycle
             }
 
             await WaitUntilNewSceneIsFullyLoadedAsync();
+
+            float loadDone = Time.realtimeSinceStartup;
+
+            ReportHub.LogProductionInfo(
+                $"JUANI: Scene reload completed in {loadDone - reloadStart:F2}s (dispose {disposeDone - reloadStart:F2}s, definition refresh +{refreshDone - disposeDone:F2}s, cache drain {drainDone - refreshDone:F2}s{(drainSkipped ? " [skipped: content-versioned ids]" : string.Empty)}, load {loadDone - drainDone:F2}s)");
 
             return;
 
@@ -192,6 +223,48 @@ namespace ECS.SceneLifeCycle
                 ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Scene reload: definition refresh failed, reusing the cached definition: {e.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        ///     True when the scene's content ids embed a version marker: a NUL byte separating the
+        ///     file path from its mtime, minted by sdk-commands' content-versioned hashing. Such ids
+        ///     change whenever the file changes, so cache keys derived from them never go stale. The
+        ///     marker is unforgeable by accident — neither file paths nor hostnames can contain a NUL
+        ///     byte, so plain path-derived ids can never decode to one. Any doubt (non-b64 id, empty
+        ///     content, malformed base64) returns false.
+        /// </summary>
+        internal static bool HasContentVersionedIds(SceneEntityDefinition? definition)
+        {
+            ContentDefinition[]? content = definition?.content;
+
+            if (content == null || content.Length == 0)
+                return false;
+
+            // One entry decides for the whole definition: the sdk server mints every file id
+            // with the same hashing function within a single response.
+            string hash = content[0].hash;
+
+            if (string.IsNullOrEmpty(hash) || !hash.StartsWith(B64_ID_PREFIX, StringComparison.Ordinal))
+                return false;
+
+            // Ids have been minted with both the standard and the url-safe base64 alphabets
+            // across sdk-commands versions; normalize to the standard one.
+            string payload = hash.Substring(B64_ID_PREFIX.Length).Replace('-', '+').Replace('_', '/');
+
+            int remainder = payload.Length % 4;
+
+            if (remainder == 1)
+                return false;
+
+            if (remainder > 0)
+                payload += new string('=', 4 - remainder);
+
+            try
+            {
+                byte[] decoded = Convert.FromBase64String(payload);
+                return Array.IndexOf(decoded, (byte)0) >= 0;
+            }
+            catch (FormatException) { return false; }
         }
 
         internal void ApplyRefreshedDefinition(Entity entity, SceneEntityDefinition? refreshed)
