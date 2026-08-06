@@ -31,9 +31,16 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             lock (sync)
             {
-                if (peersByWallet.Remove(peerId, out (Web3Address wallet, string realm) entry))
-                    walletsByPeerId.Remove(entry.wallet);
+                RemoveEntry(peerId);
             }
+        }
+
+        private void RemoveEntry(uint peerId)
+        {
+            if (peersByWallet.Remove(peerId, out (Web3Address wallet, string realm) entry)
+                && walletsByPeerId.TryGetValue(entry.wallet, out uint currentPeerId)
+                && currentPeerId == peerId)
+                walletsByPeerId.Remove(entry.wallet);
         }
 
         /// <summary>
@@ -121,8 +128,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                 foreach (uint peerId in removalBuffer)
                 {
-                    if (peersByWallet.Remove(peerId, out (Web3Address wallet, string realm) entry))
-                        walletsByPeerId.Remove(entry.wallet);
+                    RemoveEntry(peerId);
 
                     onPeerRemoved(peerId);
                 }

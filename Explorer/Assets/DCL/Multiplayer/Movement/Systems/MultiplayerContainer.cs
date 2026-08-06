@@ -234,7 +234,7 @@ namespace DCL.Multiplayer.Movement
             var pulseActivation = new PulseActivation(FeaturesRegistry.Instance.IsEnabled(FeatureId.Pulse));
 
             PulseContainer pulseContainer = await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, realmData, pulseActivation, ct);
-            var liveKitContainer = new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings, pulseActivation);
+            var liveKitContainer = new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings, pulseActivation, pulseContainer.peerIdCache);
 
             return new MultiplayerContainer(pulseContainer, liveKitContainer, selfProfile, pulseActivation);
         }

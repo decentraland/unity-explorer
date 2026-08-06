@@ -28,9 +28,10 @@ namespace DCL.Multiplayer.Movement
             ISelfProfile selfProfile,
             IUserBlockingCache userBlockingCache,
             MultiplayerDebugSettings multiplayerDebugSettings,
-            PulseActivation pulseActivation)
+            PulseActivation pulseActivation,
+            PeerIdCache peerIdCache)
         {
-            var broadcaster = new LiveKitMessagesBroadcaster(roomHub.SceneRoom(), messagePipesHub, pulseActivation);
+            var broadcaster = new LiveKitMessagesBroadcaster(roomHub.SceneRoom(), messagePipesHub, pulseActivation, peerIdCache);
 
             RemoteAnnouncements = new LiveKitRemoteAnnouncements(messagePipesHub, broadcaster);
             ProfileBroadcast = new DebounceLiveKitProfileBroadcast(new LiveKitProfileBroadcast(selfProfile, broadcaster));

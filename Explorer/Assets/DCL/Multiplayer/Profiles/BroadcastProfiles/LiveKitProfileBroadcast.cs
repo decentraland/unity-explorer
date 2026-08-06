@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             {
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
-                broadcaster.Send<Profile?, AnnounceProfileVersion>(static (p, version) => BuildMessage(p, version), profile, LKDataPacketKind.KindReliable, ct);
+                broadcaster.SendProfileAnnouncement<Profile?, AnnounceProfileVersion>(static (p, version) => BuildMessage(p, version), profile, LKDataPacketKind.KindReliable, ct);
             }
 
             GetProfileVersionThenSendAsync(cancellationTokenSource.Token).Forget();
