@@ -134,7 +134,7 @@ namespace DCL.Multiplayer.Movement
                 else return;
             }
 
-            if (CanTeleport(remotePlayerMovement, remote))
+            while (CanTeleport(remotePlayerMovement, remote))
             {
                 isBlend = false;
                 TeleportFiltered(ref remote, ref transComp, ref remotePlayerMovement, playerInbox);
@@ -208,7 +208,7 @@ namespace DCL.Multiplayer.Movement
             float posDiff = Vector3.SqrMagnitude(remotePlayerMovement.PastMessage.position - remote.position);
             float rotDiff = Mathf.Abs(remotePlayerMovement.PastMessage.rotationY - remote.rotationY);
 
-            return posDiff > settings.MinTeleportDistance || (settings.InterpolationSettings.UseSpeedUp && rotDiff < settings.MinRotationDelta && posDiff < settings.MinPositionDelta);
+            return remote.isInstant || posDiff > settings.MinTeleportDistance || (settings.InterpolationSettings.UseSpeedUp && rotDiff < settings.MinRotationDelta && posDiff < settings.MinPositionDelta);
         }
 
         private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
