@@ -939,7 +939,8 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     globalWorld,
                     playerEntity,
-                    new BugReportSessionContext(staticContainer.ScenesCache, appArgs)));
+                    new BugReportSessionContext(staticContainer.ScenesCache, appArgs),
+                    debugBuilder));
 
             if (includeMarketplaceCredits)
             {

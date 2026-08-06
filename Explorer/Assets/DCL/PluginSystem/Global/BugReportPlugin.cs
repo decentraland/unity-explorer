@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.BugReporting;
 using DCL.BugReporting.UI;
+using DCL.DebugUtilities;
 using DCL.Diagnostics.Sentry;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -28,6 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World globalWorld;
         private readonly Entity playerEntity;
         private readonly IBugReportSessionContext sessionContext;
+        private readonly IDebugContainerBuilder debugBuilder;
 
         private BugReportController? bugReportController;
         private PerformanceIssuePromptController? performanceIssuePromptController;
@@ -42,7 +44,8 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World globalWorld,
             Entity playerEntity,
-            IBugReportSessionContext sessionContext)
+            IBugReportSessionContext sessionContext,
+            IDebugContainerBuilder debugBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -53,6 +56,7 @@ namespace DCL.PluginSystem.Global
             this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
             this.sessionContext = sessionContext;
+            this.debugBuilder = debugBuilder;
         }
 
         public void Dispose()
@@ -65,7 +69,7 @@ namespace DCL.PluginSystem.Global
         {
             // The detector exists only when InitializeAsync found the prompt prefab configured.
             if (performanceIssueDetector != null)
-                PerformanceIssuePromptSystem.InjectToWorld(ref builder, mvcManager, performanceIssueDetector);
+                PerformanceIssuePromptSystem.InjectToWorld(ref builder, mvcManager, performanceIssueDetector, debugBuilder);
         }
 
         public async UniTask InitializeAsync(BugReportSettings settings, CancellationToken ct)

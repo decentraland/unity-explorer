@@ -1244,6 +1244,15 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <SentryFeedbackUrlTemplate>k__BackingField: https://decentraland.sentry.io/issues/feedback/?projectSlug=unity-explorer&eventId={0}
+        <PerformanceIssuePromptPrefab>k__BackingField:
+          m_AssetGUID: 46abfd8d700191d43b8892c99421c5a7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PromptHiccupSeconds>k__BackingField: 1
+        <PromptLowFpsThreshold>k__BackingField: 15
+        <PromptLowFpsWindowSeconds>k__BackingField: 10
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:

@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Prefs;
 using ECS.Abstract;
@@ -17,16 +18,23 @@ namespace DCL.BugReporting.UI
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     public partial class PerformanceIssuePromptSystem : BaseUnityLoopSystem
     {
+        private const float DEBUG_HICCUP_SECONDS = 2.5f;
+
         private readonly IMVCManager mvcManager;
         private readonly PerformanceIssueDetector detector;
 
         private bool promptExhausted;
 
-        internal PerformanceIssuePromptSystem(World world, IMVCManager mvcManager, PerformanceIssueDetector detector) : base(world)
+        internal PerformanceIssuePromptSystem(World world, IMVCManager mvcManager, PerformanceIssueDetector detector, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.mvcManager = mvcManager;
             this.detector = detector;
             promptExhausted = DCLPlayerPrefs.GetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED);
+
+            // Debug trigger with a synthetic hiccup: it skips the detector and the one-per-session
+            // guard, so the prompt can be exercised repeatedly and regardless of the opt-out.
+            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.BUG_REPORT)
+                       ?.AddSingleButton("Show Performance Prompt", () => ShowPromptAsync(PerformanceIssue.Hiccup(DEBUG_HICCUP_SECONDS)).Forget());
         }
 
         protected override void Update(float t)
