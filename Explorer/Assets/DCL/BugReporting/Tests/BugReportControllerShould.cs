@@ -50,12 +50,13 @@ namespace DCL.BugReporting.Tests
             World.Destroy(world);
         }
 
-        [TestCase(-1, DESCRIPTION, false)]
-        [TestCase(0, "", false)]
-        [TestCase(0, "   ", false)]
-        [TestCase(0, DESCRIPTION, true)]
-        public void GateSubmissionOnIssueTypeAndDescription(int issueTypeIndex, string description, bool expected) =>
-            Assert.AreEqual(expected, BugReportController.CanSubmit(issueTypeIndex, description));
+        [TestCase(-1, DESCRIPTION, true, false)]
+        [TestCase(0, "", true, false)]
+        [TestCase(0, "   ", true, false)]
+        [TestCase(0, DESCRIPTION, false, false)]
+        [TestCase(0, DESCRIPTION, true, true)]
+        public void GateSubmissionOnIssueTypeDescriptionAndLogsConsent(int issueTypeIndex, string description, bool shareLogs, bool expected) =>
+            Assert.AreEqual(expected, BugReportController.CanSubmit(issueTypeIndex, description, shareLogs));
 
         [Test]
         public async Task SendDraftValuesToService()
@@ -78,6 +79,27 @@ namespace DCL.BugReporting.Tests
             Assert.IsFalse(captured.ShareLogs);
             Assert.IsNull(captured.UserName);
             Assert.IsNull(captured.Coordinates);
+        }
+
+        [Test]
+        public async Task IncludeSessionContextInTheInput()
+        {
+            // Arrange
+            IBugReportSessionContext sessionContext = Substitute.For<IBugReportSessionContext>();
+            sessionContext.MeetsMinimumSpecs.Returns(false);
+            sessionContext.SceneSdkVersion.Returns("7.5.6");
+            sessionContext.LauncherVersion.Returns("1.4.2");
+
+            using var contextController = new BugReportController(
+                () => null!, bugReportService, selfProfile, Substitute.For<IInputBlock>(), world, world.Create(), sessionContext: sessionContext);
+
+            // Act
+            await contextController.SubmitDraftAsync(Draft(), CancellationToken.None);
+
+            // Assert
+            Assert.IsFalse(captured.MeetsMinimumSpecs);
+            Assert.AreEqual("7.5.6", captured.SceneSdkVersion);
+            Assert.AreEqual("1.4.2", captured.LauncherVersion);
         }
 
         [Test]

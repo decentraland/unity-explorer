@@ -1,3 +1,4 @@
+using DCL.UI;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -12,6 +13,7 @@ namespace DCL.BugReporting.UI.Editor
     public static class BugReportViewPrefabScaffolder
     {
         private const string PREFAB_PATH = "Assets/DCL/BugReporting/UI/BugReportView.prefab";
+        private const string PROMPT_PREFAB_PATH = "Assets/DCL/BugReporting/UI/PerformanceIssuePrompt.prefab";
 
         private static readonly Color PANEL_COLOR = new (0.13f, 0.13f, 0.16f, 1f);
         private static readonly Color BACKDROP_COLOR = new (0f, 0f, 0f, 0.6f);
@@ -62,6 +64,7 @@ namespace DCL.BugReporting.UI.Editor
 
                 TMP_Dropdown issueTypeDropdown = CreateIssueTypeDropdown(formPanel.transform, resources);
                 TMP_InputField descriptionInput = CreateDescriptionInput(formPanel.transform, resources);
+                TextMeshProUGUI descriptionCharCounter = CreateCharCounter(descriptionInput);
 
                 GameObject screenshotSection = CreateChild(formPanel.transform, "ScreenshotSection");
                 AddVerticalLayout(screenshotSection, padding: 0, topPadding: 0, spacing: 8f);
@@ -72,7 +75,7 @@ namespace DCL.BugReporting.UI.Editor
                 Button removeScreenshotButton = CreateButton(screenshotSection.transform, "RemoveScreenshotButton", "Remove Screenshot", resources.standard, 40f);
                 removeScreenshotButton.gameObject.SetActive(false);
 
-                Toggle shareLogsToggle = CreateShareLogsToggle(formPanel.transform, resources);
+                Toggle shareLogsToggle = CreateToggle(formPanel.transform, "ShareLogsToggle", "Share logs with this report", resources);
 
                 GameObject buttonsRow = CreateChild(formPanel.transform, "ButtonsRow");
                 var row = buttonsRow.AddComponent<HorizontalLayoutGroup>();
@@ -90,13 +93,78 @@ namespace DCL.BugReporting.UI.Editor
                 Button successDoneButton = CreateButton(successPanel.transform, "SuccessDoneButton", "Done", resources.standard, 44f);
                 successPanel.SetActive(false);
 
-                WireSerializedFields(view, canvas, raycaster, issueTypeDropdown, descriptionInput, shareLogsToggle, submitButton, cancelButton, closeButton,
+                WireSerializedFields(view, canvas, raycaster, issueTypeDropdown, descriptionInput, descriptionCharCounter, shareLogsToggle, submitButton, cancelButton, closeButton,
                     screenshotSection, screenshotPreview, attachScreenshotButton, removeScreenshotButton,
                     formPanel, successPanel, successDoneButton);
 
                 GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, PREFAB_PATH);
                 Selection.activeObject = prefab;
                 Debug.Log($"BugReportView prefab scaffolded at {PREFAB_PATH}. Style it and mark it Addressable for BugReportPlugin settings.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [MenuItem("Decentraland/UI/Scaffold PerformanceIssuePrompt Prefab")]
+        private static void ScaffoldPerformanceIssuePrompt()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(PROMPT_PREFAB_PATH) != null &&
+                !EditorUtility.DisplayDialog("Scaffold PerformanceIssuePrompt", $"{PROMPT_PREFAB_PATH} already exists. Overwrite it?", "Overwrite", "Cancel"))
+                return;
+
+            TMP_DefaultControls.Resources resources = BuiltinResources();
+
+            GameObject root = new ("PerformanceIssuePrompt", typeof(RectTransform));
+
+            try
+            {
+                var canvas = root.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+                var scaler = root.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+                var raycaster = root.AddComponent<GraphicRaycaster>();
+
+                var view = root.AddComponent<PerformanceIssuePromptView>();
+
+                Image backdrop = AddImage(CreateChild(root.transform, "Backdrop"), null, BACKDROP_COLOR);
+                Stretch(backdrop.rectTransform);
+
+                Image panel = AddImage(CreateChild(root.transform, "Panel"), resources.background, PANEL_COLOR);
+                panel.rectTransform.sizeDelta = new Vector2(480f, 300f);
+                AddVerticalLayout(panel.gameObject, padding: 24, topPadding: 24, spacing: 16f);
+
+                CreateText(panel.transform, "Title", "Performance issue detected", 24f, FontStyles.Bold, TextAlignmentOptions.Center, 32f);
+                CreateText(panel.transform, "Message",
+                    "We noticed a drop in performance while you were exploring. Would you like to send us a report to help improve the experience?",
+                    16f, FontStyles.Normal, TextAlignmentOptions.Center, 72f);
+                Toggle dontShowAgainToggle = CreateToggle(panel.transform, "DontShowAgainToggle", "Don't show this again", resources);
+
+                GameObject buttonsRow = CreateChild(panel.transform, "ButtonsRow");
+                var row = buttonsRow.AddComponent<HorizontalLayoutGroup>();
+                row.spacing = 12f;
+                row.childControlWidth = row.childControlHeight = true;
+                row.childForceExpandWidth = true;
+                row.childForceExpandHeight = false;
+                SetPreferredHeight(buttonsRow, 44f);
+                Button closeButton = CreateButton(buttonsRow.transform, "CloseButton", "Close", resources.standard, 44f);
+                Button reportBugButton = CreateButton(buttonsRow.transform, "ReportBugButton", "Report Bug", resources.standard, 44f);
+
+                var serializedView = new SerializedObject(view);
+                SetReference(serializedView, "canvas", canvas);
+                SetReference(serializedView, "raycaster", raycaster);
+                SetReference(serializedView, nameof(PerformanceIssuePromptView.DontShowAgainToggle), dontShowAgainToggle);
+                SetReference(serializedView, nameof(PerformanceIssuePromptView.CloseButton), closeButton);
+                SetReference(serializedView, nameof(PerformanceIssuePromptView.ReportBugButton), reportBugButton);
+                serializedView.ApplyModifiedPropertiesWithoutUndo();
+
+                GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, PROMPT_PREFAB_PATH);
+                Selection.activeObject = prefab;
+                Debug.Log($"PerformanceIssuePrompt prefab scaffolded at {PROMPT_PREFAB_PATH}. Style it, mark it Addressable and assign it to BugReportPlugin settings.");
             }
             finally
             {
@@ -150,6 +218,20 @@ namespace DCL.BugReporting.UI.Editor
             return dropdown;
         }
 
+        // Overlaid on the field's bottom-right corner, outside any layout group.
+        private static TextMeshProUGUI CreateCharCounter(TMP_InputField input)
+        {
+            var counter = CreateText(input.transform, "CharCounter", "0/0", 12f, FontStyles.Normal, TextAlignmentOptions.BottomRight, 0f, withLayout: false);
+            counter.color = PLACEHOLDER_COLOR;
+
+            var rect = counter.rectTransform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-10f, 6f);
+            rect.sizeDelta = new Vector2(100f, 16f);
+
+            return counter;
+        }
+
         private static TMP_InputField CreateDescriptionInput(Transform parent, TMP_DefaultControls.Resources resources)
         {
             GameObject inputGo = TMP_DefaultControls.CreateInputField(resources);
@@ -160,7 +242,7 @@ namespace DCL.BugReporting.UI.Editor
             layout.preferredHeight = 160f;
             layout.flexibleHeight = 1f;
 
-            var input = inputGo.GetComponent<TMP_InputField>();
+            TMP_InputField input = ReplaceWithMultilineInputField(inputGo.GetComponent<TMP_InputField>());
             input.lineType = TMP_InputField.LineType.MultiLineNewline;
             input.textComponent.alignment = TextAlignmentOptions.TopLeft;
 
@@ -171,9 +253,28 @@ namespace DCL.BugReporting.UI.Editor
             return input;
         }
 
-        private static Toggle CreateShareLogsToggle(Transform parent, TMP_DefaultControls.Resources resources)
+        // TMP_DefaultControls can only build the stock component, so the wired field is rebuilt as
+        // a MultilineInputField (Enter keeps adding lines), keeping the references it created.
+        private static MultilineInputField ReplaceWithMultilineInputField(TMP_InputField stock)
         {
-            GameObject toggleGo = CreateChild(parent, "ShareLogsToggle");
+            GameObject go = stock.gameObject;
+            RectTransform viewport = stock.textViewport;
+            TMP_Text text = stock.textComponent;
+            Graphic placeholder = stock.placeholder;
+            Graphic targetGraphic = stock.targetGraphic;
+            Object.DestroyImmediate(stock);
+
+            var input = go.AddComponent<MultilineInputField>();
+            input.textViewport = viewport;
+            input.textComponent = text;
+            input.placeholder = placeholder;
+            input.targetGraphic = targetGraphic;
+            return input;
+        }
+
+        private static Toggle CreateToggle(Transform parent, string name, string label, TMP_DefaultControls.Resources resources)
+        {
+            GameObject toggleGo = CreateChild(parent, name);
             SetPreferredHeight(toggleGo, 24f);
             var toggle = toggleGo.AddComponent<Toggle>();
 
@@ -187,8 +288,8 @@ namespace DCL.BugReporting.UI.Editor
             checkmarkRect.anchorMin = checkmarkRect.anchorMax = new Vector2(0.5f, 0.5f);
             checkmarkRect.sizeDelta = new Vector2(20f, 20f);
 
-            var label = CreateText(toggleGo.transform, "Label", "Share logs with this report", 14f, FontStyles.Normal, TextAlignmentOptions.Left, 0f, withLayout: false);
-            var labelRect = label.rectTransform;
+            var labelText = CreateText(toggleGo.transform, "Label", label, 14f, FontStyles.Normal, TextAlignmentOptions.Left, 0f, withLayout: false);
+            var labelRect = labelText.rectTransform;
             Stretch(labelRect);
             labelRect.offsetMin = new Vector2(28f, 0f);
 
@@ -269,7 +370,7 @@ namespace DCL.BugReporting.UI.Editor
         }
 
         private static void WireSerializedFields(BugReportView view, Canvas canvas, GraphicRaycaster raycaster,
-            TMP_Dropdown issueTypeDropdown, TMP_InputField descriptionInput,
+            TMP_Dropdown issueTypeDropdown, TMP_InputField descriptionInput, TextMeshProUGUI descriptionCharCounter,
             Toggle shareLogsToggle, Button submitButton, Button cancelButton, Button closeButton, GameObject screenshotSection,
             RawImage screenshotPreview, Button attachScreenshotButton, Button removeScreenshotButton, GameObject formPanel,
             GameObject successPanel, Button successDoneButton)
@@ -282,6 +383,7 @@ namespace DCL.BugReporting.UI.Editor
 
             SetReference(serializedView, nameof(BugReportView.IssueTypeDropdown), issueTypeDropdown);
             SetReference(serializedView, nameof(BugReportView.DescriptionInput), descriptionInput);
+            SetReference(serializedView, nameof(BugReportView.DescriptionCharCounter), descriptionCharCounter);
             SetReference(serializedView, nameof(BugReportView.ShareLogsToggle), shareLogsToggle);
             SetReference(serializedView, nameof(BugReportView.SubmitButton), submitButton);
             SetReference(serializedView, nameof(BugReportView.CancelButton), cancelButton);

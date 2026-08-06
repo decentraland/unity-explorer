@@ -12,8 +12,8 @@ namespace DCL.BugReporting
         public string Description;
 
         /// <summary>
-        ///     Image the user attached, already encoded. It travels to Sentry only: the proxy
-        ///     defines no upload envelope for it yet.
+        ///     Image the user attached, already encoded. It travels both to Sentry as the feedback
+        ///     attachment and to the Intercom proxy, which hosts it and inlines it into the ticket.
         /// </summary>
         public byte[]? Image;
 
@@ -26,5 +26,14 @@ namespace DCL.BugReporting
         public string? ContactEmail;
         public string? UserName;
         public Vector2Int? Coordinates;
+
+        /// <summary>Outcome of the startup hardware check; null when unknown.</summary>
+        public bool? MeetsMinimumSpecs;
+
+        /// <summary>Sdk version of the scene the player stands on; null when on none.</summary>
+        public string? SceneSdkVersion;
+
+        /// <summary>Version of the launcher that started the client; null when launched without one.</summary>
+        public string? LauncherVersion;
     }
 }

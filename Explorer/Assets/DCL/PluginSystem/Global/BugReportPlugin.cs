@@ -27,8 +27,11 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World globalWorld;
         private readonly Entity playerEntity;
+        private readonly IBugReportSessionContext sessionContext;
 
         private BugReportController? bugReportController;
+        private PerformanceIssuePromptController? performanceIssuePromptController;
+        private PerformanceIssueDetector? performanceIssueDetector;
 
         public BugReportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -38,7 +41,8 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IInputBlock inputBlock,
             Arch.Core.World globalWorld,
-            Entity playerEntity)
+            Entity playerEntity,
+            IBugReportSessionContext sessionContext)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -48,14 +52,21 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
+            this.sessionContext = sessionContext;
         }
 
         public void Dispose()
         {
             bugReportController?.Dispose();
+            performanceIssuePromptController?.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            // The detector exists only when InitializeAsync found the prompt prefab configured.
+            if (performanceIssueDetector != null)
+                PerformanceIssuePromptSystem.InjectToWorld(ref builder, mvcManager, performanceIssueDetector);
+        }
 
         public async UniTask InitializeAsync(BugReportSettings settings, CancellationToken ct)
         {
@@ -73,9 +84,29 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 globalWorld,
                 playerEntity,
-                new OsFileBrowserBugReportImageProvider());
+                new OsFileBrowserBugReportImageProvider(),
+                sessionContext);
 
             mvcManager.RegisterController(bugReportController);
+
+            // The prompt ships behind the prefab assignment: with none configured the form stays
+            // reachable through its manual entry points only.
+            if (settings.PerformanceIssuePromptPrefab.RuntimeKeyIsValid())
+            {
+                var promptViewPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.PerformanceIssuePromptPrefab, ct))
+                    .Value.GetComponent<PerformanceIssuePromptView>();
+
+                performanceIssuePromptController = new PerformanceIssuePromptController(
+                    PerformanceIssuePromptController.CreateLazily(promptViewPrefab, null),
+                    mvcManager);
+
+                mvcManager.RegisterController(performanceIssuePromptController);
+
+                performanceIssueDetector = new PerformanceIssueDetector(
+                    settings.PromptHiccupSeconds,
+                    settings.PromptLowFpsThreshold,
+                    settings.PromptLowFpsWindowSeconds);
+            }
         }
 
         [Serializable]
@@ -89,6 +120,22 @@ namespace DCL.PluginSystem.Global
             [field: Tooltip("Deep link into the Sentry feedback UI; {0} is replaced with the feedback event id")]
             [field: SerializeField]
             public string SentryFeedbackUrlTemplate { get; private set; } = "https://decentraland.sentry.io/issues/feedback/?projectSlug=unity-explorer&eventId={0}";
+
+            [field: Tooltip("Popup offered when a performance drop is detected. Leave unassigned to disable the prompt")]
+            [field: SerializeField]
+            public AssetReferenceGameObject PerformanceIssuePromptPrefab { get; private set; } = null!;
+
+            [field: Tooltip("A single frame at least this long (seconds) counts as a performance issue")]
+            [field: SerializeField]
+            public float PromptHiccupSeconds { get; private set; } = 1f;
+
+            [field: Tooltip("An average FPS below this over the measuring window counts as a performance issue")]
+            [field: SerializeField]
+            public float PromptLowFpsThreshold { get; private set; } = 15f;
+
+            [field: Tooltip("Length (seconds) of the rolling window the average FPS is measured over")]
+            [field: SerializeField]
+            public float PromptLowFpsWindowSeconds { get; private set; } = 10f;
         }
     }
 }

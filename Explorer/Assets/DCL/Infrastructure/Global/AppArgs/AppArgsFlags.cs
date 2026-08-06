@@ -161,5 +161,11 @@ namespace Global.AppArgs
             public const string LAUNCHER_ID = "launcher_anonymous_id";
             public const string CAMPAIGN_ANON_USER_ID = "campaign_anon_user_id";
         }
+
+        public static class Launcher
+        {
+            /// <summary>Version of the launcher that started the client; launchers older than the flag do not send it.</summary>
+            public const string VERSION = "launcher_version";
+        }
     }
 }

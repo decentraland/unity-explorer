@@ -41,16 +41,32 @@ namespace DCL.BugReporting.Tests
         }
 
         [Test]
-        public void IncludeSystemContext()
+        public void MapTheMinimumSpecOutcomeToItsListOption()
         {
-            // Act
-            string composed = BugReportService.ComposeTicketDescription(DESCRIPTION, null, LINK);
+            Assert.AreEqual(BugReportMinimumSpecOptions.MEETS_MIN_SPEC, BugReportService.MinimumSpecOptionId(true));
+            Assert.AreEqual(BugReportMinimumSpecOptions.BELOW_MIN_SPEC, BugReportService.MinimumSpecOptionId(false));
+            Assert.IsNull(BugReportService.MinimumSpecOptionId(null));
+        }
 
-            // Assert - the machine context rides in the body because the ticket type rejects extra attributes.
-            StringAssert.Contains("OS: ", composed);
-            StringAssert.Contains("GPU: ", composed);
-            StringAssert.Contains("RAM: ", composed);
-            StringAssert.Contains("Client version: ", composed);
+        [Test]
+        public void KeepAnImageWithinTheEvidenceCap()
+        {
+            // Arrange
+            var image = new byte[16];
+
+            // Assert
+            Assert.AreSame(image, BugReportService.SelectEvidenceImage(image));
+            Assert.IsNull(BugReportService.SelectEvidenceImage(null));
+        }
+
+        [Test]
+        public void DropAnImageAboveTheEvidenceCap()
+        {
+            // Arrange
+            var image = new byte[IntercomTicketPayload.MAX_EVIDENCE_BYTES + 1];
+
+            // Assert
+            Assert.IsNull(BugReportService.SelectEvidenceImage(image));
         }
     }
 }

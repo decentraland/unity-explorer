@@ -265,6 +265,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab23199c8104ca44e837d8ac570fee44
+    m_Address: BugReportView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ace53bd2bc5e2b8439785bb3122b12e3
     m_Address: Assets/DCL/InWorldCamera/InWorldCamera/Prefabs/InWorldCamera.FollowTarget.prefab
     m_ReadOnly: 0

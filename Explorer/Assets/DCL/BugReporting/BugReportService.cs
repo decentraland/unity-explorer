@@ -14,16 +14,10 @@ namespace DCL.BugReporting
     /// </summary>
     public class BugReportService
     {
-        // The "Bug Report" ticket type in the Decentraland Intercom workspace.
-        private const long BUG_REPORT_TICKET_TYPE_ID = 4557778;
         private const string TITLE_PREFIX = "Bug Report: ";
         private const string DIAGNOSTICS_LABEL = "Internal diagnostics: ";
         private const string DIAGNOSTICS_UNAVAILABLE = "unavailable";
         private const string COORDINATES_LABEL = "Coordinates: ";
-        private const string OS_LABEL = "OS: ";
-        private const string GPU_LABEL = "GPU: ";
-        private const string RAM_LABEL = "RAM: ";
-        private const string CLIENT_VERSION_LABEL = "Client version: ";
 
         private readonly SentryUserFeedbackService feedbackService;
         private readonly IntercomTicketClient ticketClient;
@@ -48,8 +42,6 @@ namespace DCL.BugReporting
             // A Sentry failure never blocks the ticket: the description degrades to a note instead.
             Result<string> feedbackLink = await feedbackService.SubmitAsync(feedbackReport, ct);
 
-            // The feedback service is exception-free and reports cancellation through its result,
-            // so it is checked here rather than caught.
             if (ct.IsCancellationRequested)
                 return Result<string>.CancelledResult();
 
@@ -58,17 +50,50 @@ namespace DCL.BugReporting
 
             var ticket = new IntercomTicketData
             {
-                TicketTypeId = BUG_REPORT_TICKET_TYPE_ID,
                 Title = $"{TITLE_PREFIX}{input.IssueType.Label}",
                 Description = ComposeTicketDescription(input.Description, input.Coordinates, feedbackLink.Success ? feedbackLink.Value : null),
+                IssueTypeOptionId = input.IssueType.OptionId,
+                OperatingSystem = SystemInfo.operatingSystem,
+                GraphicCard = SystemInfo.graphicsDeviceName,
+                Ram = $"{SystemInfo.systemMemorySize} MB",
+                ClientVersion = Application.version,
+                SdkVersion = input.SceneSdkVersion,
+                LauncherVersion = input.LauncherVersion,
+                MeetsMinimumRequirementsOptionId = MinimumSpecOptionId(input.MeetsMinimumSpecs),
+                EvidenceImage = SelectEvidenceImage(input.Image),
+                EvidenceContentType = input.ImageContentType,
             };
 
             return await ticketClient.CreateTicketAsync(ticket, ct);
         }
 
         /// <summary>
-        ///     All context rides in the ticket body: the proxy's workspace rejects attribute names
-        ///     beyond the _default_title_/_default_description_ pseudo-attributes every type has.
+        ///     The hardware check yields a boolean, so only the two spec options it can tell apart
+        ///     are ever sent; an unknown outcome leaves the attribute out of the ticket.
+        /// </summary>
+        public static string? MinimumSpecOptionId(bool? meetsMinimumSpecs) =>
+            meetsMinimumSpecs == null
+                ? null
+                : meetsMinimumSpecs.Value
+                    ? BugReportMinimumSpecOptions.MEETS_MIN_SPEC
+                    : BugReportMinimumSpecOptions.BELOW_MIN_SPEC;
+
+        /// <summary>
+        ///     The proxy rejects the whole ticket over an oversized image, so one degrades to the
+        ///     Sentry copy instead: the description's diagnostics link still leads to it.
+        /// </summary>
+        public static byte[]? SelectEvidenceImage(byte[]? image)
+        {
+            if (image is not { Length: > IntercomTicketPayload.MAX_EVIDENCE_BYTES })
+                return image;
+
+            ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"The attached image exceeds the {IntercomTicketPayload.MAX_EVIDENCE_BYTES / (1024 * 1024)}MB ticket evidence cap: it travels to Sentry only");
+            return null;
+        }
+
+        /// <summary>
+        ///     Coordinates and the diagnostics link ride in the ticket body: the Bug Report ticket
+        ///     type declares no attribute for either.
         /// </summary>
         public static string ComposeTicketDescription(string description, Vector2Int? coordinates, string? feedbackLink)
         {
@@ -79,10 +104,6 @@ namespace DCL.BugReporting
                 builder.Append('\n').Append(COORDINATES_LABEL).Append(coordinates.Value.x).Append(',').Append(coordinates.Value.y);
 
             builder.Append('\n').Append(DIAGNOSTICS_LABEL).Append(feedbackLink ?? DIAGNOSTICS_UNAVAILABLE);
-            builder.Append('\n').Append(OS_LABEL).Append(SystemInfo.operatingSystem);
-            builder.Append('\n').Append(GPU_LABEL).Append(SystemInfo.graphicsDeviceName);
-            builder.Append('\n').Append(RAM_LABEL).Append(SystemInfo.systemMemorySize).Append(" MB");
-            builder.Append('\n').Append(CLIENT_VERSION_LABEL).Append(Application.version);
 
             return builder.ToString();
         }

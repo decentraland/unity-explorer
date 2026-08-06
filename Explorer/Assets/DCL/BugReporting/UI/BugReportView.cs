@@ -16,6 +16,7 @@ namespace DCL.BugReporting.UI
         [field: Header("Form")]
         [field: SerializeField] internal TMP_Dropdown IssueTypeDropdown { get; private set; } = null!;
         [field: SerializeField] internal TMP_InputField DescriptionInput { get; private set; } = null!;
+        [field: SerializeField] internal TMP_Text DescriptionCharCounter { get; private set; } = null!;
         [field: SerializeField] internal Toggle ShareLogsToggle { get; private set; } = null!;
         [field: SerializeField] internal Button SubmitButton { get; private set; } = null!;
         [field: SerializeField] internal Button CancelButton { get; private set; } = null!;
@@ -32,18 +33,69 @@ namespace DCL.BugReporting.UI
         [field: SerializeField] internal GameObject SuccessPanel { get; private set; } = null!;
         [field: SerializeField] internal Button SuccessDoneButton { get; private set; } = null!;
 
+        private void Awake()
+        {
+            WireCharCounter(DescriptionInput, DescriptionCharCounter);
+
+            // The preview hangs from the left edge of its slot; SetScreenshot sizes it to the
+            // texture's aspect ratio.
+            RectTransform previewRect = ScreenshotPreview.rectTransform;
+            previewRect.anchorMin = previewRect.anchorMax = previewRect.pivot = new Vector2(0f, 0.5f);
+            previewRect.anchoredPosition = Vector2.zero;
+        }
+
         public void ShowState(BugReportViewState state)
         {
             FormPanel.SetActive(state == BugReportViewState.Form);
             SuccessPanel.SetActive(state == BugReportViewState.Success);
         }
 
+        /// <summary>
+        ///     Deselection normally hides the counter, but the field can still be focused when the
+        ///     view closes, so a reopen starts from an explicit clean slate.
+        /// </summary>
+        public void HideCharCounter() =>
+            DescriptionCharCounter.gameObject.SetActive(false);
+
         public void SetScreenshot(Texture2D? texture)
         {
             ScreenshotPreview.texture = texture;
+
+            if (texture != null)
+                FitScreenshotPreviewToSlot(texture);
+
             ScreenshotPreview.gameObject.SetActive(texture != null);
             RemoveScreenshotButton.gameObject.SetActive(texture != null);
             AttachScreenshotButton.gameObject.SetActive(texture == null);
         }
+
+        /// <summary>Sizes the preview to the largest rect at the texture's aspect ratio that fits its slot.</summary>
+        private void FitScreenshotPreviewToSlot(Texture2D texture)
+        {
+            Rect slot = ((RectTransform)ScreenshotPreview.rectTransform.parent).rect;
+            float aspect = texture.width / (float)texture.height;
+            float height = Mathf.Min(slot.height, slot.width / aspect);
+            ScreenshotPreview.rectTransform.sizeDelta = new Vector2(height * aspect, height);
+        }
+
+        // The counter shows only while its field is focused. It refreshes on focus as well as on
+        // typing because the controller fills the fields with SetTextWithoutNotify, which skips
+        // onValueChanged.
+        private static void WireCharCounter(TMP_InputField input, TMP_Text counter)
+        {
+            input.onValueChanged.AddListener(_ => RefreshCharCounter(input, counter));
+
+            input.onSelect.AddListener(_ =>
+            {
+                RefreshCharCounter(input, counter);
+                counter.gameObject.SetActive(true);
+            });
+
+            input.onDeselect.AddListener(_ => counter.gameObject.SetActive(false));
+            counter.gameObject.SetActive(false);
+        }
+
+        private static void RefreshCharCounter(TMP_InputField input, TMP_Text counter) =>
+            counter.text = $"{input.text.Length}/{input.characterLimit}";
     }
 }

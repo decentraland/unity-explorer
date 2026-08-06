@@ -41,4 +41,15 @@ namespace DCL.BugReporting
             new ("Other", "30b90385-7138-4d42-99aa-87eeb1c85619"),
         };
     }
+
+    /// <summary>
+    ///     The options of the "Meets Minimum Requirements" list attribute the client can tell
+    ///     apart. The startup hardware check is a boolean, so the recommended-spec options the
+    ///     type also declares are never sent.
+    /// </summary>
+    public static class BugReportMinimumSpecOptions
+    {
+        public const string BELOW_MIN_SPEC = "bf4067b3-4d19-456b-b615-4d21f7695228";
+        public const string MEETS_MIN_SPEC = "d1b00226-638c-40d8-9c0c-952b7c74621a";
+    }
 }

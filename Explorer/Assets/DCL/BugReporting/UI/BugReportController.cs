@@ -32,6 +32,7 @@ namespace DCL.BugReporting.UI
         private readonly World globalWorld;
         private readonly Entity playerEntity;
         private readonly IBugReportImageProvider? imageProvider;
+        private readonly IBugReportSessionContext? sessionContext;
 
         private BugReportImage? attachedImage;
         private UniTaskCompletionSource? closeIntent;
@@ -49,7 +50,8 @@ namespace DCL.BugReporting.UI
             IInputBlock inputBlock,
             World globalWorld,
             Entity playerEntity,
-            IBugReportImageProvider? imageProvider = null) : base(viewFactory)
+            IBugReportImageProvider? imageProvider = null,
+            IBugReportSessionContext? sessionContext = null) : base(viewFactory)
         {
             this.bugReportService = bugReportService;
             this.selfProfile = selfProfile;
@@ -57,6 +59,7 @@ namespace DCL.BugReporting.UI
             this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
             this.imageProvider = imageProvider;
+            this.sessionContext = sessionContext;
         }
 
         public override void Dispose()
@@ -67,8 +70,8 @@ namespace DCL.BugReporting.UI
             ClearAttachedImage();
         }
 
-        internal static bool CanSubmit(int issueTypeIndex, string description) =>
-            issueTypeIndex >= 0 && issueTypeIndex < BugReportIssueTypes.ALL.Length && !string.IsNullOrWhiteSpace(description);
+        internal static bool CanSubmit(int issueTypeIndex, string description, bool shareLogs) =>
+            issueTypeIndex >= 0 && issueTypeIndex < BugReportIssueTypes.ALL.Length && !string.IsNullOrWhiteSpace(description) && shareLogs;
 
         protected override void OnViewInstantiated()
         {
@@ -81,6 +84,7 @@ namespace DCL.BugReporting.UI
 
             viewInstance.IssueTypeDropdown.onValueChanged.AddListener(OnFormChanged);
             viewInstance.DescriptionInput.onValueChanged.AddListener(OnFormChanged);
+            viewInstance.ShareLogsToggle.onValueChanged.AddListener(OnFormChanged);
             viewInstance.SubmitButton.onClick.AddListener(OnSubmitClicked);
             viewInstance.CancelButton.onClick.AddListener(RequestClose);
             viewInstance.CloseButton.onClick.AddListener(RequestClose);
@@ -88,7 +92,6 @@ namespace DCL.BugReporting.UI
             viewInstance.AttachScreenshotButton.onClick.AddListener(OnAttachScreenshotClicked);
             viewInstance.RemoveScreenshotButton.onClick.AddListener(OnRemoveScreenshotClicked);
 
-            // Without a provider there is no way to pick an image, so the section is hidden.
             viewInstance.ScreenshotSection.SetActive(imageProvider != null);
         }
 
@@ -99,6 +102,7 @@ namespace DCL.BugReporting.UI
 
             viewInstance!.IssueTypeDropdown.SetValueWithoutNotify(-1);
             viewInstance.DescriptionInput.SetTextWithoutNotify(inputData.PrefilledDescription ?? string.Empty);
+            viewInstance.HideCharCounter();
             viewInstance.ShareLogsToggle.SetIsOnWithoutNotify(true);
             viewInstance.SetScreenshot(null);
             viewInstance.ShowState(BugReportViewState.Form);
@@ -130,12 +134,15 @@ namespace DCL.BugReporting.UI
         private void OnFormChanged(string _) =>
             RefreshSubmitInteractable();
 
+        private void OnFormChanged(bool _) =>
+            RefreshSubmitInteractable();
+
         private void RefreshSubmitInteractable() =>
-            viewInstance!.SubmitButton.interactable = CanSubmit(viewInstance.IssueTypeDropdown.value, viewInstance.DescriptionInput.text);
+            viewInstance!.SubmitButton.interactable = CanSubmit(viewInstance.IssueTypeDropdown.value, viewInstance.DescriptionInput.text, viewInstance.ShareLogsToggle.isOn);
 
         private void OnSubmitClicked()
         {
-            if (!CanSubmit(viewInstance!.IssueTypeDropdown.value, viewInstance.DescriptionInput.text))
+            if (!CanSubmit(viewInstance!.IssueTypeDropdown.value, viewInstance.DescriptionInput.text, viewInstance.ShareLogsToggle.isOn))
                 return;
 
             var draft = new BugReportDraft(
@@ -173,6 +180,9 @@ namespace DCL.BugReporting.UI
                 ShareLogs = draft.ShareLogs,
                 UserName = userName,
                 Coordinates = CurrentParcel(),
+                MeetsMinimumSpecs = sessionContext?.MeetsMinimumSpecs,
+                SceneSdkVersion = sessionContext?.SceneSdkVersion,
+                LauncherVersion = sessionContext?.LauncherVersion,
             };
 
             return await bugReportService.SubmitAsync(input, ct);

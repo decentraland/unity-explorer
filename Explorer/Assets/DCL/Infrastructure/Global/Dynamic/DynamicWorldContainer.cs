@@ -938,7 +938,8 @@ namespace Global.Dynamic
                     profileContainer.SelfProfile,
                     staticContainer.InputBlock,
                     globalWorld,
-                    playerEntity));
+                    playerEntity,
+                    new BugReportSessionContext(staticContainer.ScenesCache, appArgs)));
 
             if (includeMarketplaceCredits)
             {
