@@ -15,7 +15,6 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
-using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -60,7 +59,7 @@ namespace DCL.Multiplayer.Movement
             ref ExtrapolationComponent extComp,
             ref HandPointAtComponent handPointAt)
         {
-            SimplePriorityQueue<NetworkMovementMessage, double>? playerInbox = remotePlayerMovement.Queue;
+            BoundedNetworkMessageQueue? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
 
             settings.InboxCount = playerInbox.Count;
@@ -118,7 +117,7 @@ namespace DCL.Multiplayer.Movement
         }
 
         private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp,
-            SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
+            BoundedNetworkMessageQueue playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
             remotePlayerMovement.UpdateHeadIK(remote);
@@ -150,7 +149,7 @@ namespace DCL.Multiplayer.Movement
         }
 
         private bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, BoundedNetworkMessageQueue playerInbox)
         {
             double minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
@@ -189,7 +188,7 @@ namespace DCL.Multiplayer.Movement
 
         private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement,
-            SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
+            BoundedNetworkMessageQueue playerInbox)
         {
             // Filter messages with the same position and rotation
             if (settings.InterpolationSettings.UseSpeedUp)
