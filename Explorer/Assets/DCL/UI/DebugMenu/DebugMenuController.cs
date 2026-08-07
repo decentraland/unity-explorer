@@ -22,9 +22,9 @@ namespace DCL.UI.DebugMenu
         private ConsolePanelView consolePanelView;
         private MetricsPanelView metricsPanelView;
 
-        private DebugPanelView visiblePanel;
+        private DebugPanelView? visiblePanel;
 
-        private IInputBlock inputBlock;
+        private IInputBlock? inputBlock;
 
         private Button consoleButton;
         private Button metricsButton;
@@ -57,7 +57,10 @@ namespace DCL.UI.DebugMenu
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
-            consolePanelView.SetInputBlock(inputBlock);
+
+            // Null until Initialize runs; the view receives it in SetInputBlock then
+            if (inputBlock != null)
+                consolePanelView.SetInputBlock(inputBlock);
 
             metricsPanelView = new MetricsPanelView(root.Q("MetricsPanel"), metricsButton, OnMetricsButtonClicked);
 

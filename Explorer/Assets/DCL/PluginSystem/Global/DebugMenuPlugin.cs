@@ -73,6 +73,6 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(DebugMenuPlugin) + "." + nameof(DebugMenuSettings))]
         [field: Space]
         [field: SerializeField]
-        public AssetReferenceGameObject UiDocumentPrefab;
+        public AssetReferenceGameObject UiDocumentPrefab = null!;
     }
 }
