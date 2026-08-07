@@ -39,7 +39,7 @@ class ZipFileWithPermissions(zipfile.ZipFile):
 is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
 
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
-HEADERS = utils.create_headers(os.getenv('API_KEY'))
+HEADERS = utils.create_headers(os.getenv('KEY_ID'), os.getenv('SECRET_KEY'))
 
 POLL_TIME = int(os.getenv('POLL_TIME', '60'))
 QUEUE_POLL_TIME = int(os.getenv('QUEUE_POLL_TIME', '120'))

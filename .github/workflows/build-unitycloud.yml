@@ -567,7 +567,8 @@ jobs:
             echo "🔧 Starting Unity Cloud Build attempt at $(date '+%Y-%m-%d %H:%M:%S')"
             python -u scripts/cloudbuild/build.py
         env:
-          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          KEY_ID: ${{ secrets.UNITY_CLOUD_KEY_ID }}
+          SECRET_KEY: ${{ secrets.UNITY_CLOUD_SECRET_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
           POLL_TIME: 60
@@ -935,7 +936,8 @@ jobs:
       - name: Cancel Unity Cloud build
         if: ${{ cancelled() || failure() }}
         env:
-          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          KEY_ID: ${{ secrets.UNITY_CLOUD_KEY_ID }}
+          SECRET_KEY: ${{ secrets.UNITY_CLOUD_SECRET_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/cloudbuild/build.py --cancel || true
