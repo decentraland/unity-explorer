@@ -50,10 +50,10 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
-        public void ClearBothDemandFlagsWhenNoPassArrives()
+        public void ReleaseBothDemandRefcountsWhenNoPassArrives()
         {
             // Arrange — the zero timeout skips the wait, so no fresh pass lands and the tool errors;
-            // the cleanup finally must still reset both the breakdown request and the MCP demand flag.
+            // the cleanup finally must still release both the breakdown and the MCP demand refcounts.
             var tool = new GetSceneContentBreakdownTool(scenesCache, collectionTimeoutMs: 0);
 
             // Act
@@ -61,8 +61,24 @@ namespace DCL.McpServer.Tests
 
             // Assert
             Assert.That(result.Payload["isError"]!.Value<bool>(), Is.True);
-            Assert.That(runtimeMetrics.ContentStats.BreakdownRequested, Is.False);
-            Assert.That(runtimeMetrics.ContentStats.RequestedByMcp, Is.False);
+            Assert.That(runtimeMetrics.ContentStats.BreakdownRequests, Is.EqualTo(0));
+            Assert.That(runtimeMetrics.ContentStats.McpRequests, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ReleaseOnlyItsOwnDemandWhenCallsOverlap()
+        {
+            // Arrange — another in-flight tool call already holds one count of each demand
+            runtimeMetrics.ContentStats.BreakdownRequests = 1;
+            runtimeMetrics.ContentStats.McpRequests = 1;
+            var tool = new GetSceneContentBreakdownTool(scenesCache, collectionTimeoutMs: 0);
+
+            // Act
+            Execute(tool);
+
+            // Assert — the finished call must not cancel the other call's demand
+            Assert.That(runtimeMetrics.ContentStats.BreakdownRequests, Is.EqualTo(1));
+            Assert.That(runtimeMetrics.ContentStats.McpRequests, Is.EqualTo(1));
         }
 
         [Test]

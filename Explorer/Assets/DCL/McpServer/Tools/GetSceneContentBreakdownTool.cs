@@ -17,7 +17,7 @@ namespace DCL.McpServer.Tools
     /// <summary>
     ///     Ranks the current scene's rendered content by source model so an agent can tell a creator
     ///     what to optimize, not just that a budget is exceeded. Piggybacks on the scene world's
-    ///     content-stats pass with a one-shot breakdown flag.
+    ///     content-stats pass with a breakdown demand refcount held while it waits.
     /// </summary>
     public class GetSceneContentBreakdownTool : McpTool
     {
@@ -64,8 +64,8 @@ namespace DCL.McpServer.Tools
 
             SceneContentStats stats = scene.RuntimeMetrics.ContentStats;
             long collectionsBefore = stats.CollectionCount;
-            stats.BreakdownRequested = true;
-            stats.RequestedByMcp = true;
+            stats.BreakdownRequests++;
+            stats.McpRequests++;
 
             try
             {
@@ -74,8 +74,8 @@ namespace DCL.McpServer.Tools
             }
             finally
             {
-                stats.RequestedByMcp = false;
-                stats.BreakdownRequested = false;
+                stats.McpRequests--;
+                stats.BreakdownRequests--;
             }
 
             if (stats.CollectionCount == collectionsBefore)

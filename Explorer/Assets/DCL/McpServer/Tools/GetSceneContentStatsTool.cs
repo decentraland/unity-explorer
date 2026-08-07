@@ -68,7 +68,7 @@ namespace DCL.McpServer.Tools
 
             SceneContentStats stats = scene.RuntimeMetrics.ContentStats;
             long collectionsBefore = stats.CollectionCount;
-            stats.RequestedByMcp = true;
+            stats.McpRequests++;
 
             try
             {
@@ -77,7 +77,7 @@ namespace DCL.McpServer.Tools
             }
             finally
             {
-                stats.RequestedByMcp = false;
+                stats.McpRequests--;
             }
 
             if (!stats.HasData)

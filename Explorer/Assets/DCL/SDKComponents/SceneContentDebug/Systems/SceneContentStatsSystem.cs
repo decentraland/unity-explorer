@@ -123,7 +123,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
             uniqueTextures.Clear();
             uniqueShaderVariants.Clear();
 
-            collectBreakdown = stats.BreakdownRequested;
+            collectBreakdown = stats.BreakdownRequests > 0;
 
             if (collectBreakdown)
             {
@@ -299,8 +299,6 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
 
                 stats.BreakdownEntries.Add(entry);
             }
-
-            stats.BreakdownRequested = false;
         }
 
         private int CountShaderVariants(HashSet<Material> sourceMaterials)

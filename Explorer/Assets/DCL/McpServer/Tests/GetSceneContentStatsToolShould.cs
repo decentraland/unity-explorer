@@ -60,7 +60,7 @@ namespace DCL.McpServer.Tests
 
             // Assert
             Assert.That(result.Payload["isError"]!.Value<bool>(), Is.True);
-            Assert.That(runtimeMetrics.ContentStats.RequestedByMcp, Is.False);
+            Assert.That(runtimeMetrics.ContentStats.McpRequests, Is.EqualTo(0));
         }
 
         [Test]
@@ -98,7 +98,7 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
-        public void ClearTheDemandFlagAfterReporting()
+        public void ReleaseTheDemandRefcountAfterReporting()
         {
             // Arrange
             runtimeMetrics.ContentStats.HasData = true;
@@ -108,7 +108,22 @@ namespace DCL.McpServer.Tests
             Execute(tool);
 
             // Assert
-            Assert.That(runtimeMetrics.ContentStats.RequestedByMcp, Is.False);
+            Assert.That(runtimeMetrics.ContentStats.McpRequests, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ReleaseOnlyItsOwnDemandWhenCallsOverlap()
+        {
+            // Arrange — another in-flight tool call already holds one demand count
+            runtimeMetrics.ContentStats.HasData = true;
+            runtimeMetrics.ContentStats.McpRequests = 1;
+            var tool = new GetSceneContentStatsTool(scenesCache, collectionTimeoutMs: 0);
+
+            // Act
+            Execute(tool);
+
+            // Assert — the finished call must not cancel the other call's demand
+            Assert.That(runtimeMetrics.ContentStats.McpRequests, Is.EqualTo(1));
         }
 
         private static McpToolResult Execute(GetSceneContentStatsTool tool) =>

@@ -4,7 +4,7 @@ namespace DCL.Profiling
 {
     /// <summary>
     ///     One scene model's share of the rendered content, grouped by source. Produced on demand by
-    ///     <c>SceneContentStatsSystem</c> when <see cref="SceneContentStats.BreakdownRequested" /> is set.
+    ///     <c>SceneContentStatsSystem</c> while <see cref="SceneContentStats.BreakdownRequests" /> is held.
     /// </summary>
     public struct SceneContentBreakdownEntry
     {
@@ -67,15 +67,18 @@ namespace DCL.Profiling
         public bool RequestedByMetricsPanel;
 
         /// <summary>
-        ///     Set by the MCP get_scene_content_stats tool while it waits for a collection pass.
+        ///     Count of MCP tool calls currently waiting for a collection pass. A refcount rather than
+        ///     a bool because tool calls can overlap and the first to finish must not cancel the
+        ///     others' demand. Mutated on the Unity main thread only.
         /// </summary>
-        public bool RequestedByMcp;
+        public int McpRequests;
 
         /// <summary>
-        ///     One-shot: when set, the next collection pass also fills <see cref="BreakdownEntries" />
-        ///     and clears the flag. Collection must also be requested by a consumer flag.
+        ///     Count of waiters that need collection passes to also fill <see cref="BreakdownEntries" />.
+        ///     Same refcount semantics as <see cref="McpRequests" />; each waiter releases its own count.
+        ///     Collection must also be requested by a consumer flag.
         /// </summary>
-        public bool BreakdownRequested;
+        public int BreakdownRequests;
 
         /// <summary>
         ///     False until the first collection pass completes for this scene.
@@ -89,7 +92,7 @@ namespace DCL.Profiling
 
         /// <summary>
         ///     Rendered content grouped by source model, unsorted. Only refreshed by passes that ran
-        ///     with <see cref="BreakdownRequested" /> set.
+        ///     with <see cref="BreakdownRequests" /> held.
         /// </summary>
         public readonly List<SceneContentBreakdownEntry> BreakdownEntries = new ();
 
@@ -97,7 +100,7 @@ namespace DCL.Profiling
         ///     While false the scene world skips collection entirely, so the counters cost nothing
         ///     when no consumer is showing them.
         /// </summary>
-        public bool CollectionRequested => RequestedByDebugWidget || RequestedByMetricsPanel || RequestedByMcp;
+        public bool CollectionRequested => RequestedByDebugWidget || RequestedByMetricsPanel || McpRequests > 0;
 
         public int Entities;
         public long Triangles;
