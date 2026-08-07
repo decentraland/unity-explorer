@@ -384,7 +384,7 @@ namespace DCL.UI
 
             async UniTaskVoid AcceptFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.AcceptFriendshipAsync(userAddress, ct);
+                await friendService.AcceptFriendshipAsync(userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 

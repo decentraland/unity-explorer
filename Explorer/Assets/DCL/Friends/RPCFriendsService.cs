@@ -13,6 +13,11 @@ using System.Threading;
 
 namespace DCL.Friends
 {
+    public class FriendshipActionRejectedException : Exception
+    {
+        public FriendshipActionRejectedException(string message) : base(message) { }
+    }
+
     public class RPCFriendsService : RPCSocialServiceBase, IFriendsService
     {
         /// <summary>
@@ -584,9 +589,18 @@ namespace DCL.Friends
                                                                       .AttachExternalCancellation(ct)
                                                                       .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
+            return UnwrapUpsertFriendshipResponse(response);
+        }
+
+        internal static UpsertFriendshipResponse.Types.Accepted UnwrapUpsertFriendshipResponse(UpsertFriendshipResponse response)
+        {
             return response.ResponseCase switch
                    {
                        UpsertFriendshipResponse.ResponseOneofCase.Accepted => response.Accepted,
+                       UpsertFriendshipResponse.ResponseOneofCase.InvalidFriendshipAction => throw new FriendshipActionRejectedException(
+                           response.InvalidFriendshipAction?.Message ?? "InvalidFriendshipAction"),
+                       UpsertFriendshipResponse.ResponseOneofCase.InternalServerError => throw new Exception(
+                           $"Cannot update friendship {response.ResponseCase}: {response.InternalServerError?.Message}"),
                        _ => throw new Exception($"Cannot update friendship {response.ResponseCase}"),
                    };
         }

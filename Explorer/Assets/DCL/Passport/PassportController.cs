@@ -1156,7 +1156,7 @@ namespace DCL.Passport
 
             async UniTaskVoid AcceptFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.AcceptFriendshipAsync(inputData.UserId, ct);
+                await friendService.AcceptFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
                 ShowFriendshipInteraction();
             }
