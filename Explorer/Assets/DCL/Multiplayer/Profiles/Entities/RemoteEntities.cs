@@ -36,6 +36,8 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly Dictionary<string, RemoteAvatarCollider> collidersByWalletId = new ();
         private readonly Transform? remoteEntitiesParent = null;
 
+        private IMovementMessageBus? movementMessageBus;
+
         private IComponentPool<RemoteAvatarCollider> remoteAvatarColliderPool = null!;
         private IComponentPool<Transform> transformPool = null!;
 
@@ -55,6 +57,9 @@ namespace DCL.Multiplayer.Profiles.Entities
             remoteEntitiesParent = new GameObject("REMOTE_ENTITIES").transform;
 #endif
         }
+
+        public void SetMovementMessageBus(IMovementMessageBus bus) =>
+            movementMessageBus = bus;
 
         public void Initialize(RemoteAvatarCollider remoteAvatarCollider)
         {
@@ -103,6 +108,8 @@ namespace DCL.Multiplayer.Profiles.Entities
                 return;
 
             movementInbox.RemovePending(walletId);
+
+            movementMessageBus?.EvictPeer(walletId);
 
             if (collidersByWalletId.TryGetValue(walletId, out RemoteAvatarCollider remoteAvatarCollider))
             {

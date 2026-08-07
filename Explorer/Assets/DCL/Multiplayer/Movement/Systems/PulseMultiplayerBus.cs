@@ -93,6 +93,8 @@ namespace DCL.Multiplayer.Movement
             pulseService.UnregisterAllHandlers();
         }
 
+        public void EvictPeer(string walletId) { }
+
         public void SubscribeToIncomingMessages()
         {
             pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.PlayerJoined, HandlePlayerJoined);
