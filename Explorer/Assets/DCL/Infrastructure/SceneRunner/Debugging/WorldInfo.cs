@@ -1,4 +1,5 @@
 using Arch.Core;
+using CRDT;
 using DCL.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
@@ -48,6 +49,22 @@ namespace SceneRunner.Debugging
             var result = sb.ToString();
             ReportHub.Log(ReportCategory.DEBUG, result);
             return result;
+        }
+
+        public int? CrdtEntityId(int entityId)
+        {
+            int? crdtEntityId = null;
+
+            world.Query(
+                new QueryDescription().WithAll<CRDTEntity>().WithNone<FindMarker>(),
+                entity =>
+                {
+                    if (entity.Id == entityId && world.TryGet<CRDTEntity>(entity, out CRDTEntity crdtEntity))
+                        crdtEntityId = crdtEntity.Id;
+                }
+            );
+
+            return crdtEntityId;
         }
 
         public IReadOnlyList<int> EntityIds()

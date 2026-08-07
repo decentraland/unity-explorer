@@ -1,4 +1,5 @@
-﻿using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+﻿using CRDT.Attribution;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -23,10 +24,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         private readonly IGateKeeperSceneRoom sceneRoom;
         private readonly IMessagePipe messagePipe;
+        private readonly ICrdtWriterLog writerLog;
 
-        public SceneCommunicationPipe(IMessagePipesHub messagePipesHub, IGateKeeperSceneRoom sceneRoom)
+        public SceneCommunicationPipe(IMessagePipesHub messagePipesHub, IGateKeeperSceneRoom sceneRoom, ICrdtWriterLog? writerLog = null)
         {
             this.sceneRoom = sceneRoom;
+            this.writerLog = writerLog ?? ICrdtWriterLog.Null.INSTANCE;
             messagePipe = messagePipesHub.ScenePipe();
             messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.OriginThread);
         }
@@ -59,6 +62,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                     message.FromWalletId,
                     isTrustedSource
                 );
+
+                // Attribution is taken from the message the scene is about to receive, so it names the peer the
+                // transport authenticated rather than anything the CRDT payload claims about itself.
+                if (msgType == ISceneCommunicationPipe.MsgType.Uint8Array)
+                    writerLog.RecordInbound(message.Payload.SceneId, message.FromWalletId, isTrustedSource, decodedMessage);
 
                 handler(dm);
             }

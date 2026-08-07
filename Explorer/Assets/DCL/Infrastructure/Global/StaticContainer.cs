@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.SceneRunner.Scene;
 using CommunicationData.URLHelpers;
+using CRDT.Attribution;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -85,6 +86,12 @@ namespace Global
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
+
+        /// <summary>
+        ///     Records who wrote each networked component of a scene. Inert until a consumer enables it — today only
+        ///     the MCP server does, so a normal session pays a single branch per inbound scene-room message.
+        /// </summary>
+        public readonly ICrdtWriterLog CrdtWriterLog = new CrdtWriterLog();
 
         private IAssetsProvisioner assetsProvisioner;
         public Entity PlayerEntity { get; set; }

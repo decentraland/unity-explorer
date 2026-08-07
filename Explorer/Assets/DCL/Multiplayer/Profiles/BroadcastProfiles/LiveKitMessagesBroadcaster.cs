@@ -1,4 +1,5 @@
-﻿using DCL.LiveKit.Public;
+﻿using CRDT.Attribution;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -23,7 +24,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
         /// <summary>
         ///     Hardcoded identity for the authoritative server in the LiveKit network.
         /// </summary>
-        public const string AUTH_SERVER_IDENTITY = "authoritative-server";
+        public const string AUTH_SERVER_IDENTITY = ICrdtWriterLog.AUTHORITATIVE_SERVER_ADDRESS;
 
         private readonly IGateKeeperSceneRoom sceneRoom;
         private readonly IMessagePipesHub messagePipesHub;

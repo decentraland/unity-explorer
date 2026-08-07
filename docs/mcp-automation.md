@@ -62,10 +62,10 @@ The tables below are a human-readable overview. The authoritative argument contr
 |---|---|---|
 | `screenshot` | `maxWidth?` (default 1280), `quality?`, `worldOnly?` (exclude UI; post-processing still applied) | Downscaled image of the current view (UI included by default) + caption |
 | `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode + wallet address |
-| `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage |
+| `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage, `authoritativeMultiplayer`, and `networkWriters` — every address that has written to the scene's synced state |
 | `get_scene_logs` | `limit?`, `severity?`, `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
 | `list_scene_entities` | `limit?` | Entity ids of the current scene's ECS world |
-| `get_entity_details` | `entityId` | All components of one scene entity |
+| `get_entity_details` | `entityId` | All components of one scene entity, plus `networkWrites` — the address that last wrote each of its networked components |
 
 ### Controlling
 
@@ -84,7 +84,42 @@ The tables below are a human-readable overview. The authoritative argument contr
 
 ## Structured output
 
-`get_player_state`, `get_scene_state` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
+`get_player_state`, `get_scene_state`, `list_scene_entities` and `get_entity_details` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
+
+## Writer attribution
+
+The scene tools report the state of a scene, and for a networked scene that state is a merge: the scene's own
+JavaScript writes to it, and so does every peer in the scene room — including, for an authoritative game, its
+server. Once merged the rows are indistinguishable, so "the crate moved" cannot by itself answer "did the server
+move it, or did a client assert that it had?". Scenes built on `@dcl/sdk/network` decide exactly that question
+themselves, in `validateBeforeChange` comparing the sender against `authoritative-server`.
+
+The client records the same provenance those guards act on. Every CRDT write that arrives over the scene room is
+attributed to the address the transport authenticated it from, keyed by entity and component, and surfaced by:
+
+- `get_scene_state` → `scene.networkWriters`, one entry per address with its write count and how long ago it last
+  wrote, plus `scene.authoritativeMultiplayer`. On an authoritative scene, an address other than
+  `authoritative-server` with a non-zero `writes` count is a peer writing state the server did not.
+- `get_entity_details` → `networkWrites`, the last write per component of one entity: `writer`,
+  `isAuthoritativeServer`, `isTrustedSource`, `viaStateSync`, the CRDT `messageType` and Lamport `crdtTimestamp`,
+  and `ageSeconds`.
+
+Three limits are worth stating plainly:
+
+- **Only inbound network writes are recorded.** A component the scene's own code wrote locally never appears, so an
+  empty `networkWrites` means "no peer asserted this", not "nothing wrote this".
+- **A state-sync row names a relay, not an author.** A client joining mid-game hydrates by asking a peer for the
+  scene's CRDT state, and that peer's answer replays writes it did not necessarily make — including the server's.
+  Those rows carry `viaStateSync: true`, count into `stateSyncWrites` rather than `writes`, and never report
+  `isAuthoritativeServer: true` however they were originally authored. **Exclude them when testing authorship:**
+  `isAuthoritativeServer` alone is already safe, and "a peer wrote this" means `!isAuthoritativeServer &&
+  !viaStateSync`.
+- **Attribution starts when the client does.** Counts and ages cover this session only, and a scene's rows are
+  bounded (4096 components, 128 distinct addresses, 8 scenes); `scene.droppedWriteRecords` above zero means the log
+  undercounts. A write refused by either budget is dropped whole, so an entity never names an address that
+  `networkWriters` omits.
+
+Recording is off until the MCP server starts, so a session without `--mcp` pays one branch per inbound message.
 
 ## The scene-iteration loop
 
