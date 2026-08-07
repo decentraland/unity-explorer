@@ -15,18 +15,21 @@ MonoBehaviour:
   m_Version: 
   m_DefaultFontAsset: {fileID: 0}
   m_DefaultFontAssetPath: Fonts & Materials/
-  m_FallbackFontAssets: []
+  m_FallbackFontAssets:
+  - {fileID: 11400000, guid: 4d0381cbcc4aad846ab6f3156ecee770, type: 2}
+  - {fileID: 11400000, guid: f38dc3f6cf805594b86ad9a2f931897e, type: 2}
+  m_FallbackOSFontAssets: []
   m_MatchMaterialPreset: 0
   m_MissingCharacterUnicode: 0
   m_ClearDynamicDataOnBuild: 1
   m_EnableEmojiSupport: 0
-  m_EmojiFallbackTextAssets: []
+  m_EmojiFallbackTextAssets:
+  - {fileID: 11400000, guid: 6e91b23f4d82c4cbfb4001ba83a92072, type: 2}
   m_DefaultSpriteAsset: {fileID: 11400000, guid: 6e91b23f4d82c4cbfb4001ba83a92072, type: 2}
   m_DefaultSpriteAssetPath: Sprite Assets/
   m_FallbackSpriteAssets: []
   m_MissingSpriteCharacterUnicode: 0
   m_DefaultStyleSheet: {fileID: 0}
-  m_StyleSheetsResourcePath: Text Style Sheets/
   m_DefaultColorGradientPresetsPath: Text Color Gradients/
   m_UnicodeLineBreakingRules:
     m_UnicodeLineBreakingRules: {fileID: 0}
@@ -34,3 +37,16 @@ MonoBehaviour:
     m_FollowingCharacters: {fileID: 4900000, guid: fade42e8bc714b018fac513c043d323b, type: 3}
     m_UseModernHangulLineBreakingRules: 0
   m_DisplayWarnings: 0
+  m_FontReferences:
+  - font: {fileID: 12800000, guid: 16e3d6ebbb2afa8478140aa1fffd9d09, type: 3}
+    fontAsset: {fileID: 0}
+  - font: {fileID: 12800000, guid: 05befaedcb2db4303a48d552554db836, type: 3}
+    fontAsset: {fileID: 0}
+  - font: {fileID: 12800000, guid: 6662efddf575d46528acad7d7309708b, type: 3}
+    fontAsset: {fileID: 0}
+  - font: {fileID: 12800000, guid: 3d5604d303a734a85bf5000c0e2e5d92, type: 3}
+    fontAsset: {fileID: 0}
+  - font: {fileID: 2230732570650464555, guid: 10e86a2123940e44b95c43e0bbfb27d1, type: 3}
+    fontAsset: {fileID: 0}
+  - font: {fileID: 2230732570650464555, guid: 4deb06e376f984b6790130c58914a876, type: 3}
+    fontAsset: {fileID: 0}
