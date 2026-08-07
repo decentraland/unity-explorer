@@ -16,6 +16,7 @@ namespace DCL.PluginSystem.World
             SDKAnimatorUpdaterSystem.InjectToWorld(ref builder);
             AnimationPlayerSystem.InjectToWorld(ref builder);
             LegacyAnimationPlayerSystem.InjectToWorld(ref builder);
+            AnimatorFinishWritebackSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
         }
     }
 }
