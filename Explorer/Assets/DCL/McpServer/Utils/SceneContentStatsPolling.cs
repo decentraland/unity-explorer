@@ -28,12 +28,13 @@ namespace DCL.McpServer.Utils
         /// </summary>
         public static async UniTask<bool> WaitForCollectionAsync(IScenesCache scenesCache, ISceneFacade scene, SceneContentStats stats, long collectionsBefore, int timeoutMs, CancellationToken ct)
         {
-            var elapsedMs = 0;
+            float startTime = UnityEngine.Time.realtimeSinceStartup;
 
-            while (stats.CollectionCount == collectionsBefore && elapsedMs < timeoutMs)
+            // Elapsed is measured against the wall clock rather than accumulated from the requested
+            // delay: at low FPS each Delay completes a whole frame late, and those overshoots add up.
+            while (stats.CollectionCount == collectionsBefore && (UnityEngine.Time.realtimeSinceStartup - startTime) * 1000f < timeoutMs)
             {
                 await UniTask.Delay(POLL_INTERVAL_MS, cancellationToken: ct);
-                elapsedMs += POLL_INTERVAL_MS;
 
                 if (scenesCache.CurrentScene.Value != scene)
                     return false;
