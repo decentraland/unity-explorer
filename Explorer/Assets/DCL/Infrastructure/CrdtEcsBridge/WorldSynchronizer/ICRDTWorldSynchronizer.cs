@@ -23,5 +23,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// </summary>
         /// <param name="syncCommandBuffer"></param>
         void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer);
+
+        void AbortSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer);
     }
 }

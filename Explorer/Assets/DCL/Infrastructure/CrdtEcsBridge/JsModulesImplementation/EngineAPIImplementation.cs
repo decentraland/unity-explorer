@@ -255,11 +255,14 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
+            var acquired = false;
+
             try
             {
-                using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
-
                 applyBufferSampler.Begin();
+
+                using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
+                acquired = true;
 
                 // Apply changes to the ECS World on the main thread
                 crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
@@ -269,7 +272,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
                 systemGroupsUpdateGate.Open();
             }
-            catch (Exception e) { exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE); }
+            catch (Exception e)
+            {
+                if (!acquired && e is not ObjectDisposedException)
+                    crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
+
+                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
