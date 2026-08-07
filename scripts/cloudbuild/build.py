@@ -874,12 +874,27 @@ if final_outcome in ('queue_timeout', 'build_timeout', 'log_stall'):
 
 if final_outcome == 'canceled':
     # This run's own cancellations exit through the watchdog/timeout branches above,
-    # so 'canceled' here came from outside: UBA giving up on builder provisioning
-    # (observed: 9 min in sentToBuilder, then a platform-side cancel) or an external
-    # actor reclaiming the target. Retry with a fresh build instead of failing the
-    # job outright; nick-fields/retry bounds this to one extra attempt.
-    print('Build was canceled outside this run - retrying with a fresh build.')
+    # so 'canceled' here came from outside.  Two different outsides, though:
+    #  - UBA giving up on builder provisioning (observed: 9 min in sentToBuilder, then a
+    #    platform-side cancel) — nothing else wants the target, so retry on a fresh build;
+    #  - a concurrent run superseding us via run_build's `already a build pending` cancel.
+    #    main/release/*/hotfix/* share one target but sit in different concurrency groups,
+    #    so re-POSTing here would cancel *their* build and hand them the same exit 99 —
+    #    both runs then burn a full queue+build cycle and one still ends red.
+    # Build numbers are monotonic per target: a newer build means we were superseded.
+    latest = get_latest_build(os.getenv('TARGET'))
     utils.delete_build_info()
+    try:
+        download_log(id)
+    except Exception as e:
+        print(f'Warning: could not download log after external cancel: {e}')
+    if latest and int(latest.get('build') or 0) > int(id):
+        print(
+            f'Build {id} was superseded by #{latest["build"]} on shared target '
+            f'{os.getenv("TARGET")} - not retrying (the successor owns the slot).'
+        )
+        sys.exit(1)
+    print('Build was canceled outside this run - retrying with a fresh build.')
     sys.exit(RETRYABLE_EXIT_CODE)
 
 utils.delete_build_info()
