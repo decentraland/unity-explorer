@@ -95,7 +95,7 @@ namespace DCL.SDKComponents.Animator.Systems
             animator.enabled = true;
         }
 
-        private void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator)
+        internal void SetAnimationState(List<SDKAnimationState> sdkAnimationStates, UAnimator animator)
         {
             if (sdkAnimationStates.Count == 0)
                 return;
@@ -119,8 +119,8 @@ namespace DCL.SDKComponents.Animator.Systems
                     continue;
                 }
 
-                animator.SetBool($"{name}_Enabled", sdkAnimationState.Playing);
-                animator.SetBool($"{name}_Loop", sdkAnimationState.Loop);
+                animator.SetBool(sdkAnimationState.EnabledParamHash, sdkAnimationState.Playing);
+                animator.SetBool(sdkAnimationState.LoopParamHash, sdkAnimationState.Loop);
 
                 // TODO: it could be an edge case due sdkAnimationState.ShouldReset.. support it if need it
 
@@ -137,7 +137,7 @@ namespace DCL.SDKComponents.Animator.Systems
                     // So the trigger gets enabled and makes the execution play twice (after it finishes), although is set to loop:false
                     // The fix consists on avoid triggering the animation if it is already playing, to avoid stacking the trigger.
                     if (!isAnimationAlreadyPlaying)
-                        animator.SetTrigger($"{name}_Trigger");
+                        animator.SetTrigger(sdkAnimationState.TriggerParamHash);
 
                     // Animators don't support speed by state, just a global speed
                     animator.speed = sdkAnimationState.Speed;
