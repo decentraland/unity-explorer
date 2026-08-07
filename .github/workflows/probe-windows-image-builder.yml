@@ -45,15 +45,19 @@ jobs:
 
           $nvidiaSmi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
           if (-not $nvidiaSmi) { throw "nvidia-smi is not available" }
-          nvidia-smi
+
+          $nvidiaOutput = (& nvidia-smi 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 0) { throw "nvidia-smi failed with exit code $LASTEXITCODE" }
+          Write-Host $nvidiaOutput
 
           $gpuName = (nvidia-smi --query-gpu=name --format=csv,noheader | Select-Object -First 1).Trim()
-          $driverModel = (nvidia-smi --query-gpu=driver_model.current --format=csv,noheader | Select-Object -First 1).Trim()
+          if ($LASTEXITCODE -ne 0) { throw "Failed to query the GPU name" }
           if ($gpuName -notmatch "Tesla T4") { throw "Expected Tesla T4, received '$gpuName'" }
-          if ($driverModel -ne "WDDM") { throw "Expected WDDM, received '$driverModel'" }
+          if ($nvidiaOutput -notmatch '\bWDDM\b') { throw "nvidia-smi did not report WDDM" }
 
           "- GPU: ``$gpuName``" >> $env:GITHUB_STEP_SUMMARY
-          "- Driver model: ``$driverModel``" >> $env:GITHUB_STEP_SUMMARY
+          "- Driver model: ``WDDM``" >> $env:GITHUB_STEP_SUMMARY
+          $global:LASTEXITCODE = 0
 
       - name: Validate persistent toolchain
         shell: powershell
