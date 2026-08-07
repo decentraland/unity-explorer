@@ -24,7 +24,6 @@ namespace DCL.McpServer.Tools
         private const float DEFAULT_SAMPLE_SECONDS = 2f;
         private const float MIN_SAMPLE_SECONDS = 0.5f;
         private const float MAX_SAMPLE_SECONDS = 10f;
-        private const float HICCUP_THRESHOLD_MS = 50f;
 
         private readonly IScenesCache scenesCache;
         private readonly long[] tickScratch = new long[SampledCounter.BUFFER_CAPACITY];
@@ -32,7 +31,8 @@ namespace DCL.McpServer.Tools
         public override string Name => "get_performance_stats";
 
         public override string Description =>
-            "Sample the client's real frame rate over a short window and report render FPS (average, min, max, hiccup frames > 50 ms) plus "
+            "Sample the client's real frame rate over a short window and report render FPS (average, min, max, hiccup frames — frames above "
+            + "the client's hiccup threshold, the max of 50 ms and 2x the target frame time) plus "
             + "the current scene's tick FPS vs its target, both measured over the same window. The call holds for sampleSeconds while it measures. Use together with "
             + "get_scene_content_breakdown (sortBy=visibleTriangles) to correlate a viewpoint's content cost with the frame rate it actually "
             + "produces — position the camera first, then sample.";
@@ -46,7 +46,8 @@ namespace DCL.McpServer.Tools
                           .Number("maxFps")
                           .Number("averageFrameMs")
                           .Number("maxFrameMs")
-                          .Integer("hiccupFrames", "Frames longer than 50 ms in the window.")
+                          .Integer("hiccupFrames", "Frames longer than hiccupThresholdMs in the window.")
+                          .Number("hiccupThresholdMs", "Hiccup threshold used: the client-wide definition, max of 50 ms and 2x the target frame time.")
                           .Object("sceneTick", McpJsonSchema.Object()
                                                              .Number("averageFps")
                                                              .Number("minFps")
@@ -74,6 +75,7 @@ namespace DCL.McpServer.Tools
             float minFrameMs = float.MaxValue;
             float maxFrameMs = 0f;
             var hiccupFrames = 0;
+            float hiccupThresholdMs = Profiler.EffectiveHiccupThresholdNs() / 1_000_000f;
 
             ISceneFacade? sceneAtStart = scenesCache.CurrentScene.Value;
             long ticksAddedBefore = sceneAtStart?.RuntimeMetrics.TickTimesNs.AddedCount ?? 0;
@@ -89,7 +91,7 @@ namespace DCL.McpServer.Tools
                 totalMs += frameMs;
                 if (frameMs < minFrameMs) minFrameMs = frameMs;
                 if (frameMs > maxFrameMs) maxFrameMs = frameMs;
-                if (frameMs > HICCUP_THRESHOLD_MS) hiccupFrames++;
+                if (frameMs > hiccupThresholdMs) hiccupFrames++;
             }
 
             if (framesSampled == 0)
@@ -148,6 +150,7 @@ namespace DCL.McpServer.Tools
                 ["averageFrameMs"] = Round1(averageFrameMs),
                 ["maxFrameMs"] = Round1(maxFrameMs),
                 ["hiccupFrames"] = hiccupFrames,
+                ["hiccupThresholdMs"] = Round1(hiccupThresholdMs),
                 ["sceneTick"] = sceneTick ?? (JToken)JValue.CreateNull(),
             };
 
@@ -156,7 +159,7 @@ namespace DCL.McpServer.Tools
                 .Append(minFps.ToString("F1", CultureInfo.InvariantCulture)).Append(", max ")
                 .Append(maxFps.ToString("F1", CultureInfo.InvariantCulture)).Append(") over ")
                 .Append(framesSampled).Append(" frames / ").Append(sampleSeconds.ToString("F1", CultureInfo.InvariantCulture)).Append("s; ")
-                .Append(hiccupFrames).AppendLine(" hiccup frames (>50 ms).");
+                .Append(hiccupFrames).Append(" hiccup frames (>").Append(hiccupThresholdMs.ToString("F0", CultureInfo.InvariantCulture)).AppendLine(" ms).");
 
             if (sceneTick != null)
                 text.Append("Scene tick: ").Append(sceneTick["averageFps"]!.Value<float>().ToString("F1", CultureInfo.InvariantCulture))
