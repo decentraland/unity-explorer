@@ -12,6 +12,8 @@ namespace DCL.Events
     {
         private readonly Dictionary<string, EventDTO> currentEvents = new();
         private readonly Dictionary<string, PlacesData.PlaceInfo> currentPlaces = new();
+        private static readonly List<Profile.CompactInfo> EMPTY_FRIENDS = new();
+
         private readonly List<Profile.CompactInfo> allFriends = new();
         private readonly List<GetUserCommunitiesData.CommunityData> myCommunities = new();
 
@@ -19,7 +21,7 @@ namespace DCL.Events
         {
             public EventDTO EventInfo;
             public PlacesData.PlaceInfo? PlaceInfo;
-            public List<Profile.CompactInfo> FriendsConnectedToPlace = new();
+            public List<Profile.CompactInfo> FriendsConnectedToPlace = EMPTY_FRIENDS;
             public GetUserCommunitiesData.CommunityData? CommunityInfo;
         }
 
@@ -37,16 +39,18 @@ namespace DCL.Events
                     result.PlaceInfo = placeInfo;
                 }
 
-                List<Profile.CompactInfo> friendsConnectedToPlace = new();
-                if (eventInfo.connected_addresses != null)
+                if (eventInfo.connected_addresses is { Length: > 0 })
                 {
+                    List<Profile.CompactInfo>? friendsConnectedToPlace = null;
                     foreach (string addressConnected in eventInfo.connected_addresses)
                     {
                         if (TryGetFriendById(addressConnected, out Profile.CompactInfo friend))
-                            friendsConnectedToPlace.Add(friend);
+                            (friendsConnectedToPlace ??= new List<Profile.CompactInfo>()).Add(friend);
                     }
+                    result.FriendsConnectedToPlace = friendsConnectedToPlace ?? EMPTY_FRIENDS;
                 }
-                result.FriendsConnectedToPlace = friendsConnectedToPlace;
+                else
+                    result.FriendsConnectedToPlace = EMPTY_FRIENDS;
 
                 if (TryGetCommunityById(eventInfo.community_id, out GetUserCommunitiesData.CommunityData? communityData))
                     result.CommunityInfo = communityData;
