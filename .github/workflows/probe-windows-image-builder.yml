@@ -1,4 +1,4 @@
-name: Probe Windows image builder
+name: Probe Unity Explorer Windows image
 
 on:
   workflow_dispatch:
@@ -7,33 +7,34 @@ on:
       - chore/probe-windows-image-builder
     paths:
       - .github/workflows/probe-windows-image-builder.yml
-  pull_request:
-    branches:
-      - dev
-    paths:
-      - .github/workflows/probe-windows-image-builder.yml
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: probe-unity-explorer-windows-image
+  cancel-in-progress: true
 
 jobs:
   probe:
-    name: Probe Windows GPU image builder
-    runs-on: win-gpu-t4-explorer-image-builder
-    timeout-minutes: 15
+    name: Probe custom Windows GPU runner
+    runs-on: win-gpu-t4-explorer
+    timeout-minutes: 10
 
     steps:
       - name: Record runner allocation
         shell: powershell
         run: |
-          "## Runner allocation" >> $env:GITHUB_STEP_SUMMARY
+          $ErrorActionPreference = "Stop"
+          $startedAt = [DateTime]::UtcNow
+
+          "## Custom image probe" >> $env:GITHUB_STEP_SUMMARY
           "" >> $env:GITHUB_STEP_SUMMARY
           "- Runner: ``$env:RUNNER_NAME``" >> $env:GITHUB_STEP_SUMMARY
           "- OS: ``$env:RUNNER_OS``" >> $env:GITHUB_STEP_SUMMARY
           "- Architecture: ``$env:RUNNER_ARCH``" >> $env:GITHUB_STEP_SUMMARY
-          "- Job started: ``$([DateTime]::UtcNow.ToString('o'))``" >> $env:GITHUB_STEP_SUMMARY
+          "- Probe started: ``$($startedAt.ToString('o'))``" >> $env:GITHUB_STEP_SUMMARY
 
-      - name: Inspect Windows and display hardware
+      - name: Validate Windows GPU
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
@@ -42,91 +43,82 @@ jobs:
             Select-Object WindowsProductName, WindowsVersion, OsBuildNumber, OsArchitecture |
             Format-List
 
-          Write-Host "=== Video controllers ==="
-          Get-CimInstance Win32_VideoController |
-            Select-Object Name, DriverVersion, Status, AdapterRAM, VideoProcessor |
-            Format-List
+          $nvidiaSmi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
+          if (-not $nvidiaSmi) { throw "nvidia-smi is not available" }
+          nvidia-smi
 
-          Write-Host "=== Display configuration ==="
-          Get-CimInstance Win32_DesktopMonitor -ErrorAction SilentlyContinue |
-            Select-Object Name, ScreenWidth, ScreenHeight, Status |
-            Format-List
+          $gpuName = (nvidia-smi --query-gpu=name --format=csv,noheader | Select-Object -First 1).Trim()
+          $driverModel = (nvidia-smi --query-gpu=driver_model.current --format=csv,noheader | Select-Object -First 1).Trim()
+          if ($gpuName -notmatch "Tesla T4") { throw "Expected Tesla T4, received '$gpuName'" }
+          if ($driverModel -ne "WDDM") { throw "Expected WDDM, received '$driverModel'" }
 
-          Write-Host "=== Disk ==="
-          Get-Volume -DriveLetter C |
-            Select-Object DriveLetter, FileSystem, Size, SizeRemaining |
-            Format-List
+          "- GPU: ``$gpuName``" >> $env:GITHUB_STEP_SUMMARY
+          "- Driver model: ``$driverModel``" >> $env:GITHUB_STEP_SUMMARY
 
-      - name: Inspect NVIDIA runtime
+      - name: Validate persistent toolchain
         shell: powershell
         run: |
-          $nvidiaSmi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
+          $ErrorActionPreference = "Stop"
 
-          if ($nvidiaSmi) {
-            Write-Host "nvidia-smi found at $($nvidiaSmi.Source)"
-            nvidia-smi
-            "- NVIDIA runtime: available" >> $env:GITHUB_STEP_SUMMARY
-          } else {
-            Write-Warning "nvidia-smi is not installed or is not on PATH"
-            "- NVIDIA runtime: missing" >> $env:GITHUB_STEP_SUMMARY
-
-            Write-Host "=== NVIDIA files found on disk ==="
-            Get-ChildItem "C:\Program Files\NVIDIA*" -Recurse -Filter "nvidia-smi.exe" -ErrorAction SilentlyContinue |
-              Select-Object FullName
-
-            Get-ChildItem "C:\Windows\System32" -Filter "nv*.dll" -ErrorAction SilentlyContinue |
-              Select-Object Name
+          $expectedTools = @{
+            git = "C:\Tools\MinGit\cmd\git.exe"
+            dotnet = "C:\Program Files\dotnet\dotnet.exe"
+            node = "C:\Program Files\nodejs\node.exe"
+            npm = "C:\Program Files\nodejs\npm.cmd"
+            allure = "C:\Tools\npm-global\allure.cmd"
+            aws = "C:\Program Files\Amazon\AWSCLIV2\aws.exe"
+            mf = "C:\Tools\MetaForge\mf.exe"
           }
 
-          Write-Host "=== Display devices ==="
-          Get-PnpDevice -Class Display -ErrorAction SilentlyContinue |
-            Select-Object FriendlyName, InstanceId, Status |
-            Format-List
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "### Persistent toolchain" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "| Tool | Location |" >> $env:GITHUB_STEP_SUMMARY
+          "|---|---|" >> $env:GITHUB_STEP_SUMMARY
 
-      - name: Inventory automation toolchain
+          foreach ($entry in $expectedTools.GetEnumerator()) {
+            if (-not (Test-Path $entry.Value)) {
+              throw "$($entry.Key) is missing from $($entry.Value)"
+            }
+            "| $($entry.Key) | ``$($entry.Value)`` |" >> $env:GITHUB_STEP_SUMMARY
+          }
+
+          $gh = Get-ChildItem "C:\Tools\gh" -Recurse -Filter "gh.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $gh) { throw "gh.exe is missing from C:\Tools\gh" }
+          if (-not (Test-Path "C:\Program Files\AltTesterDesktop\AltTesterDesktop.exe")) {
+            throw "AltTester Desktop is missing"
+          }
+
+          & $expectedTools.git --version
+          & $gh.FullName --version | Select-Object -First 1
+          & $expectedTools.dotnet --version
+          & $expectedTools.node --version
+          & $expectedTools.npm --version
+          & $expectedTools.allure --version
+          & $expectedTools.aws --version
+          & $expectedTools.mf --version
+
+      - name: Validate warm dependency caches
         shell: powershell
         run: |
-          $tools = @(
-            @{ Name = "git"; Arguments = @("--version") },
-            @{ Name = "gh"; Arguments = @("--version") },
-            @{ Name = "dotnet"; Arguments = @("--version") },
-            @{ Name = "node"; Arguments = @("--version") },
-            @{ Name = "npm"; Arguments = @("--version") },
-            @{ Name = "mf"; Arguments = @("--version") },
-            @{ Name = "allure"; Arguments = @("--version") },
-            @{ Name = "aws"; Arguments = @("--version") }
-          )
+          $ErrorActionPreference = "Stop"
+          $expectedCaches = @{
+            NUGET_PACKAGES = "C:\Tools\Caches\nuget"
+            NPM_CONFIG_CACHE = "C:\Tools\Caches\npm"
+          }
 
-          "" >> $env:GITHUB_STEP_SUMMARY
-          "## Toolchain inventory" >> $env:GITHUB_STEP_SUMMARY
-          "" >> $env:GITHUB_STEP_SUMMARY
-          "| Tool | Available | Location |" >> $env:GITHUB_STEP_SUMMARY
-          "|---|---|---|" >> $env:GITHUB_STEP_SUMMARY
-
-          foreach ($tool in $tools) {
-            $command = Get-Command $tool.Name -ErrorAction SilentlyContinue
-            if ($command) {
-              Write-Host "=== $($tool.Name) ==="
-              $arguments = $tool.Arguments
-              & $command.Source @arguments
-              "| $($tool.Name) | yes | ``$($command.Source)`` |" >> $env:GITHUB_STEP_SUMMARY
-            } else {
-              Write-Warning "$($tool.Name) is not installed or is not on PATH"
-              "| $($tool.Name) | no | - |" >> $env:GITHUB_STEP_SUMMARY
+          foreach ($entry in $expectedCaches.GetEnumerator()) {
+            $configured = [Environment]::GetEnvironmentVariable($entry.Key, "Machine")
+            if ($configured -ne $entry.Value) {
+              throw "$($entry.Key) is '$configured'; expected '$($entry.Value)'"
+            }
+            if (-not (Get-ChildItem $entry.Value -Force -ErrorAction SilentlyContinue | Select-Object -First 1)) {
+              throw "$($entry.Key) cache is empty at $($entry.Value)"
             }
           }
 
-          $altTester = Get-ChildItem `
-            -Path "C:\Program Files", "C:\Program Files (x86)" `
-            -Filter "AltTesterDesktop.exe" `
-            -Recurse `
-            -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-
-          if ($altTester) {
-            Write-Host "AltTester Desktop found at $($altTester.FullName)"
-            "| AltTester Desktop | yes | ``$($altTester.FullName)`` |" >> $env:GITHUB_STEP_SUMMARY
-          } else {
-            Write-Warning "AltTester Desktop is not installed"
-            "| AltTester Desktop | no | - |" >> $env:GITHUB_STEP_SUMMARY
-          }
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "### Warm caches" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "- NuGet: ``$($expectedCaches.NUGET_PACKAGES)``" >> $env:GITHUB_STEP_SUMMARY
+          "- npm: ``$($expectedCaches.NPM_CONFIG_CACHE)``" >> $env:GITHUB_STEP_SUMMARY
