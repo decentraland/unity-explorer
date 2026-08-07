@@ -582,7 +582,8 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
                     realmNavigator,
-                    chatContainer.ChatHistory),
+                    chatContainer.ChatHistory,
+                    chatContainer.ChatEventBus),
                 new MinimapPlugin(
                     uiShellContainer.MainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,

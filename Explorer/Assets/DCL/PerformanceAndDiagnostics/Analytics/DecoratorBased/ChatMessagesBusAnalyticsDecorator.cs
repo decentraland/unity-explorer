@@ -18,7 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IProfileCache profileCache;
         private readonly SelfProfile selfProfile;
 
-        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
         public ChatMessagesBusAnalyticsDecorator(IChatMessagesBus core, IAnalyticsController analytics, IProfileCache profileCache, SelfProfile selfProfile)
         {
@@ -64,7 +64,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (channel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
                 jsonObject.Add("community_id", ChatChannel.GetCommunityIdFromChannelId(channel.Id));
 
-            analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
+            analytics.Track(AnalyticsEvents.Ui.MESSAGE_SENT, jsonObject);
         }
 
         private bool CheckIfIsMention(string message)
