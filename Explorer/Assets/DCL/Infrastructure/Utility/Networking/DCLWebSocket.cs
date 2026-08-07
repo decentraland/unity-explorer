@@ -13,6 +13,7 @@ namespace Utility.Networking
         private System.Net.WebSockets.ClientWebSocket ws = new ();
 #endif
 
+        private bool disposed;
 
         public WebSocketState State
         {
@@ -28,11 +29,14 @@ namespace Utility.Networking
 
         public void Dispose()
         {
+            disposed = true;
             ws.Dispose();
         }
 
         public async UniTask SendAsync(ReadOnlyMemory<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken)
         {
+            if (disposed) return;
+
             try
             {
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
@@ -48,10 +52,13 @@ namespace Utility.Networking
             {
                 throw new WebSocketException(e);
             }
+            catch (ObjectDisposedException) { }
         }
 
         public async UniTask<WebSocketReceiveResult> ReceiveAsync(Memory<byte> buffer, CancellationToken cancellationToken)
         {
+            if (disposed) return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true);
+
             try
             {
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
@@ -73,6 +80,10 @@ namespace Utility.Networking
             {
                 throw new WebSocketException(e);
             }
+            catch (ObjectDisposedException)
+            {
+                return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true);
+            }
         }
 
         public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
@@ -89,6 +100,8 @@ namespace Utility.Networking
 
         public async UniTask CloseAsync(WebSocketCloseStatus status, String? description, CancellationToken cancellationToken)
         {
+            if (disposed) return;
+
             try
             {
 
@@ -103,6 +116,7 @@ namespace Utility.Networking
             {
                 throw new WebSocketException(e);
             }
+            catch (ObjectDisposedException) { }
         }
 
         public void Abort()
