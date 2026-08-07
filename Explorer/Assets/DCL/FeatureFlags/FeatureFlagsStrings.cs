@@ -43,6 +43,7 @@ namespace DCL.FeatureFlags
         public const string USER_CREDITS = "alfa-user-credits";
         public const string CREDITS_WEARABLE_PURCHASE = "alfa-credits-wearable-purchase";
         public const string CREDITS_TOPUP = "alfa-credits-topup";
+        public const string CREDITS_WALLETS = "alfa-credits-wallets";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";

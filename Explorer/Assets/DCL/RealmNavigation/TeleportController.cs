@@ -78,6 +78,13 @@ namespace DCL.RealmNavigation
 
             if (sceneDef != null && !TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
+                // Honor the spawn point the creator placed in the requested parcel instead of aiming at its centre
+                if (landOnParcel && TeleportUtils.TryPickSpawnPointNameInParcel(sceneDef, parcel, out string parcelSpawnPointName))
+                {
+                    landOnParcel = false;
+                    spawnPointName ??= parcelSpawnPointName;
+                }
+
                 // When landing on the exact parcel, keep the requested parcel; otherwise snap to the
                 // scene base so the spawn point is used.
                 if (!landOnParcel)
