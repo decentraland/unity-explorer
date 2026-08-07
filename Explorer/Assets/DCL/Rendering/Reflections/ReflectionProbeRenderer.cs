@@ -11,7 +11,7 @@ public class ReflectionProbeRenderer : MonoBehaviour
     private void Start()
     {
         RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
-        reflectionProbe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
+        reflectionProbe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
         timer = intervalInSeconds;
     }
 
