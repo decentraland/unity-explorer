@@ -131,7 +131,7 @@ for attempt in 1 2 3 4 5; do
   RECHECK=$(gh api "/repos/$REPO/issues/$PR_NUMBER/comments" --paginate --slurp)
   RIDS=()
   while IFS= read -r line; do [ -n "$line" ] && RIDS+=("$line"); done <<< "$(marker_ids "$RECHECK")"
-  LIVE_BODY=$(jq -r --arg id "$COMMENT_ID" '.[][] | select(.id==($id|tonumber)) | .body' <<< "$RECHECK")
+  LIVE_BODY=$(jq -r --arg id "$COMMENT_ID" '.[] | select(.id==($id|tonumber)) | .body' <<< "$(flatten_pages "$RECHECK")")
 
   # Success means our section landed on the comment we wrote — nothing more.
   # Duplicate collapsing is best-effort cleanup (the DELETE above may lack
