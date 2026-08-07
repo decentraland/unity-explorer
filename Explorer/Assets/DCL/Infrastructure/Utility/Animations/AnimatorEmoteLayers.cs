@@ -7,6 +7,8 @@ namespace Utility.Animations
         public const string BASE_LAYER = "Base Layer";
         public const string UPPER_BODY_LAYER = "Upper Body Layer";
 
+        public const int BASE_LAYER_INDEX = 0;
+
         public static readonly string[] ALL_LAYERS =
         {
             BASE_LAYER,

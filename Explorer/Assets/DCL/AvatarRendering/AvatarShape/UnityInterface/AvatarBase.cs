@@ -2,10 +2,13 @@ using CommunicationData.URLHelpers;
 using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
+using AvatarEmoteMask = DCL.ECSComponents.AvatarEmoteMask;
+using DclAvatarMask = DCL.ECSComponents.AvatarMask;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+using Utility.Animations;
 using Random = UnityEngine.Random;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
@@ -16,6 +19,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         private int rightPointAtLayerIndex;
         private int rotationLayerIndex;
+        private int upperBodyLayerIndex;
 
         public int RandomID;
 
@@ -152,6 +156,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             rightPointAtLayerIndex = AvatarAnimator.GetLayerIndex("RightPointAtHand");
             rotationLayerIndex = AvatarAnimator.GetLayerIndex("Rotation");
+            upperBodyLayerIndex = AvatarAnimator.GetLayerIndex(AnimatorEmoteLayers.UPPER_BODY_LAYER);
             overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(animationOverrides);
@@ -240,6 +245,17 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             int layerIndex = AvatarAnimator.GetLayerIndex(layerName);
             return AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
         }
+
+        public int UpperBodyLayerIndex => upperBodyLayerIndex;
+
+        public int GetAnimatorCurrentStateTag(int layerIndex) =>
+            AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
+
+        public void SetLayerWeight(int layerIndex, float weight) =>
+            AvatarAnimator.SetLayerWeight(layerIndex, weight);
+
+        public int GetEmoteLayerIndex(AvatarEmoteMask mask) =>
+            mask == AvatarEmoteMask.AemUpperBody ? upperBodyLayerIndex : AnimatorEmoteLayers.BASE_LAYER_INDEX;
 
         public void ResetAnimatorTrigger(int hash) =>
             AvatarAnimator.ResetTrigger(hash);
@@ -409,10 +425,18 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         int GetAnimatorCurrentStateTag(string layerName);
 
+        int UpperBodyLayerIndex { get; }
+
+        int GetAnimatorCurrentStateTag(int layerIndex);
+
+        int GetEmoteLayerIndex(AvatarEmoteMask mask);
+
         void ResetAnimatorTrigger(int hash);
 
         void ResetArmatureInclination();
 
         void SetLayerWeight(string layerName, float weight);
+
+        void SetLayerWeight(int layerIndex, float weight);
     }
 }

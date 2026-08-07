@@ -152,7 +152,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
-            int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
             emoteComponent.SetAnimationTag(currentStateTag);
         }
 
@@ -188,7 +188,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
-            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
             bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
             if (isOnAnotherTag)
@@ -478,7 +478,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             int prevTag = animationComponent.CurrentAnimationTag;
             if (prevTag == 0) return;
 
-            int currentTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            int currentTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
 
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
