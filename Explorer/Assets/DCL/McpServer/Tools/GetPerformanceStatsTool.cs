@@ -108,20 +108,22 @@ namespace DCL.McpServer.Tools
                     long totalNs = 0;
                     long minNs = long.MaxValue;
                     long maxNs = long.MinValue;
+                    var validSamples = 0;
 
                     for (var i = 0; i < tickSamples; i++)
                     {
                         long ns = tickScratch[i];
                         if (ns <= 0) continue;
                         totalNs += ns;
+                        validSamples++;
                         if (ns < minNs) minNs = ns;
                         if (ns > maxNs) maxNs = ns;
                     }
 
-                    if (totalNs > 0)
+                    if (validSamples > 0)
                         sceneTick = new JObject
                         {
-                            ["averageFps"] = Round1(1e9f / ((float)totalNs / tickSamples)),
+                            ["averageFps"] = Round1(1e9f / ((float)totalNs / validSamples)),
                             ["minFps"] = Round1(1e9f / maxNs),
                             ["maxFps"] = Round1(1e9f / minNs),
                             ["targetFps"] = metrics.TargetFps,
