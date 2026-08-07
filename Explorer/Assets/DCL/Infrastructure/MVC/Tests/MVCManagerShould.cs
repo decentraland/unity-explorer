@@ -14,6 +14,8 @@ namespace MVC.Tests
         private IWindowsStackManager windowsStackManager;
         private MVCManager mvcManager;
         private IPopupCloserView popupCloserView;
+        private List<IController> showed;
+        private List<IController> closed;
 
         [SetUp]
         public void Setup()
@@ -22,6 +24,12 @@ namespace MVC.Tests
             windowsStackManager.PushFullscreen(Arg.Any<IController>()).Returns(new FullscreenPushInfo(new List<(IController, int)>(), new CanvasOrdering(), new UniTaskCompletionSource()));
             popupCloserView = Substitute.For<IPopupCloserView>();
             mvcManager = new MVCManager(windowsStackManager, new CancellationTokenSource(), popupCloserView);
+
+            showed = new List<IController>();
+            closed = new List<IController>();
+
+            mvcManager.OnViewShowed += showed.Add;
+            mvcManager.OnViewClosed += closed.Add;
         }
 
         [Test]
@@ -196,6 +204,91 @@ namespace MVC.Tests
                     windowsStackManager.Received().PushPersistent(controller);
                     break;
             }
+        }
+
+        [Test]
+        public async Task RaiseViewClosedWhenTheViewLifeCycleIsCancelled()
+        {
+            IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
+            controller.Layer.Returns(CanvasOrdering.SortingLayer.Fullscreen);
+
+            var viewLifeCycle = new UniTaskCompletionSource();
+
+            controller.LaunchViewLifeCycleAsync(Arg.Any<CanvasOrdering>(), Arg.Any<TestInputData>(), Arg.Any<CancellationToken>())
+                      .Returns(viewLifeCycle.Task);
+
+            mvcManager.RegisterController(controller);
+
+            UniTask show = mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>());
+
+            viewLifeCycle.TrySetCanceled();
+
+            await show;
+
+            // Guards the test itself: without this the assertion below would also hold for a run that
+            // never entered the show path at all.
+            Assert.That(showed, Is.EqualTo(new[] { controller }));
+
+            // ShowFullScreenAsync tears the view down in a finally block and pops it off the stack, so a
+            // cancelled life cycle still ends with the view hidden. Subscribers are told about every other
+            // way it can end, and they have no other signal to pair with OnViewShowed.
+            Assert.That(closed, Is.EqualTo(new[] { controller }));
+        }
+
+        [Test]
+        public async Task RaiseViewClosedOnceWhenTheViewLifeCycleCompletes()
+        {
+            IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
+            controller.Layer.Returns(CanvasOrdering.SortingLayer.Fullscreen);
+
+            mvcManager.RegisterController(controller);
+
+            await mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>());
+
+            // Exact sequences rather than counts: the show path leaves the view hidden the ordinary way
+            // too, and the pairing is one to one, so a second OnViewClosed here would be a duplicate.
+            Assert.That(showed, Is.EqualTo(new[] { controller }));
+            Assert.That(closed, Is.EqualTo(new[] { controller }));
+        }
+
+        [Test]
+        public void RaiseViewClosedWhenTheViewLifeCycleFails()
+        {
+            IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
+            controller.Layer.Returns(CanvasOrdering.SortingLayer.Fullscreen);
+
+            var viewLifeCycle = new UniTaskCompletionSource();
+
+            controller.LaunchViewLifeCycleAsync(Arg.Any<CanvasOrdering>(), Arg.Any<TestInputData>(), Arg.Any<CancellationToken>())
+                      .Returns(viewLifeCycle.Task);
+
+            mvcManager.RegisterController(controller);
+
+            UniTask show = mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>());
+
+            viewLifeCycle.TrySetException(new InvalidOperationException());
+
+            // Only cancellation is swallowed, so this one travels out of ShowAsync — and the view is torn
+            // down on the way, which is what subscribers are told about.
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await show);
+            Assert.That(closed, Is.EqualTo(new[] { controller }));
+        }
+
+        [Test]
+        public async Task RaiseNoViewEventsForAControllerThatIsNotHidden()
+        {
+            IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
+            controller.Layer.Returns(CanvasOrdering.SortingLayer.Fullscreen);
+            controller.State.Returns(ControllerState.ViewFocused);
+
+            mvcManager.RegisterController(controller);
+
+            await mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>());
+
+            // ShowAsync returns before showing anything in this case, so there is no session to report
+            // either end of.
+            Assert.That(showed, Is.Empty);
+            Assert.That(closed, Is.Empty);
         }
     }
 
