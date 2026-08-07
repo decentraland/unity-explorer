@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using Decentraland.Kernel.Comms.Rfc4;
@@ -40,10 +41,11 @@ namespace DCL.Multiplayer.Movement
             this.movementInbox = movementInbox;
             this.broadcaster = broadcaster;
 
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived, IMessagePipe.ThreadStrict.OriginThread);
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived, IMessagePipe.ThreadStrict.OriginThread);
+
+            messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived, IMessagePipe.ThreadStrict.MainThreadOnly);
+            messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived, IMessagePipe.ThreadStrict.MainThreadOnly);
         }
 
         public void Dispose()
