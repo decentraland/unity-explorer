@@ -274,6 +274,7 @@ namespace DCL.MapRenderer.Tests.Culling
 
             // Act
             culling.ResolveDirtyCameras_Test();
+            culling.ResolveDirtyObjects_Test(int.MaxValue);
 
             // Assert
             visibilityChecker.DidNotReceive().IsVisible(Arg.Any<IMapPositionProvider>(), culling.CameraStates[0]); // Camera 0 is not dirty
@@ -307,6 +308,7 @@ namespace DCL.MapRenderer.Tests.Culling
 
             // Act
             culling.ResolveDirtyCameras_Test();
+            culling.ResolveDirtyObjects_Test(int.MaxValue);
 
             // Assert
             visibilityChecker.DidNotReceive().IsVisible(Arg.Any<IMapPositionProvider>(), culling.CameraStates[0]); // Camera 0 is not dirty
@@ -340,6 +342,7 @@ namespace DCL.MapRenderer.Tests.Culling
 
             // Act
             culling.ResolveDirtyCameras_Test();
+            culling.ResolveDirtyObjects_Test(int.MaxValue);
 
             // Assert
             visibilityChecker.DidNotReceiveWithAnyArgs().IsVisible(Arg.Any<IMapPositionProvider>(), Arg.Any<CameraState>());
