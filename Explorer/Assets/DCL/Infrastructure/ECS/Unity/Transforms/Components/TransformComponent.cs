@@ -61,7 +61,8 @@ namespace ECS.Unity.Transforms.Components
             Transform.SetPositionAndRotation(worldPosition, worldRotation);
             Transform.localScale = localScale;
 
-            UpdateCache();
+            Cached.WorldPosition = worldPosition;
+            Cached.WorldRotation = worldRotation;
         }
 
         public void SetTransform(Transform transform)
