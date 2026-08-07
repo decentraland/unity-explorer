@@ -583,7 +583,8 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
                     realmNavigator,
-                    chatContainer.ChatHistory),
+                    chatContainer.ChatHistory,
+                    chatContainer.ChatEventBus),
                 new MinimapPlugin(
                     uiShellContainer.MainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,
@@ -1006,7 +1007,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DiagnosticsContainer,
                     staticContainer.InputBlock,
                     assetsProvisioner,
-                    debugBuilder
+                    debugBuilder,
+                    staticContainer.ScenesCache
                 ));
 
             if (!localSceneDevelopment)
