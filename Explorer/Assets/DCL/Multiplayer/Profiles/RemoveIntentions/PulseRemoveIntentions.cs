@@ -23,6 +23,9 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
                 set.Remove(new RemoveIntention(walletId, RoomSource.Pulse));
         }
 
+        public bool NewBunchAvailable() =>
+            set.Count > 0;
+
         public OwnedBunch<RemoveIntention> Bunch() =>
             new (mutexSync, set);
     }
