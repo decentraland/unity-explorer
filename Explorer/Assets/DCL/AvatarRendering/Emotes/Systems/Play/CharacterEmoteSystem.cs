@@ -152,6 +152,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
+            if (emoteComponent.CurrentEmoteReference == null && emoteComponent.CurrentAnimationTag == 0)
+                return;
+
             int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
             emoteComponent.SetAnimationTag(currentStateTag);
         }
