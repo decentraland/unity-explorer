@@ -24,8 +24,8 @@ namespace DCL.Places
             }
         }
 
-        private List<Profile.CompactInfo> allFriends { get; } = new();
-        private List<EventDTO> liveEvents { get; } = new();
+        private readonly Dictionary<string, Profile.CompactInfo> allFriends = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, EventDTO> liveEvents = new(StringComparer.OrdinalIgnoreCase);
 
         public PlaceInfoWithConnectedFriends? GetPlaceInfoById(string placeId) =>
             CurrentPlaces.GetValueOrDefault(placeId);
@@ -84,7 +84,9 @@ namespace DCL.Places
         public void SetAllFriends(List<Profile.CompactInfo> friends)
         {
             allFriends.Clear();
-            allFriends.AddRange(friends);
+            foreach (var friend in friends)
+                if (!string.IsNullOrEmpty(friend.UserId))
+                    allFriends.TryAdd(friend.UserId, friend);
         }
 
         public void ClearAllFriends() =>
@@ -93,7 +95,9 @@ namespace DCL.Places
         public void SetLiveEvents(List<EventDTO> events)
         {
             liveEvents.Clear();
-            liveEvents.AddRange(events);
+            foreach (var liveEvent in events)
+                if (!string.IsNullOrEmpty(liveEvent.place_id))
+                    liveEvents.TryAdd(liveEvent.place_id, liveEvent);
         }
 
         public void ClearLiveEvents() =>
@@ -104,26 +108,19 @@ namespace DCL.Places
 
         private bool TryGetFriendById(string userId, out Profile.CompactInfo friendProfile)
         {
-            foreach (var friend in allFriends)
+            if (string.IsNullOrEmpty(userId))
             {
-                if (!friend.UserId.Equals(userId, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                friendProfile = friend;
-                return true;
+                friendProfile = default(Profile.CompactInfo);
+                return false;
             }
 
-            friendProfile = default(Profile.CompactInfo);
-            return false;
+            return allFriends.TryGetValue(userId, out friendProfile);
         }
 
         private bool TryGetLiveEventByPlaceId(string placeId, out EventDTO? eventInfo)
         {
-            foreach (var liveEvent in liveEvents)
+            if (!string.IsNullOrEmpty(placeId) && liveEvents.TryGetValue(placeId, out EventDTO liveEvent))
             {
-                if (!liveEvent.place_id.Equals(placeId, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
                 eventInfo = liveEvent;
                 return true;
             }
