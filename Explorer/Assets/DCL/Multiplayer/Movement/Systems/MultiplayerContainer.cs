@@ -59,6 +59,12 @@ namespace DCL.Multiplayer.Movement
                 pulseMultiplayerBus.Send(message);
                 liveKitMovementMessageBus.Send(message);
             }
+
+            public void EvictPeer(string walletId)
+            {
+                pulseMultiplayerBus.EvictPeer(walletId);
+                liveKitMovementMessageBus.EvictPeer(walletId);
+            }
         }
 
         private class RemoteAnnouncementsProxy : IRemoteAnnouncements
@@ -245,8 +251,11 @@ namespace DCL.Multiplayer.Movement
             IDebugContainerBuilder debugBuilder,
             CommsContainer commsContainer,
             MultiplayerDebugSettings debugSettings,
-            IAppArgs appArgs) =>
-            new (
+            IAppArgs appArgs)
+        {
+            commsContainer.RemoteEntities.SetMovementMessageBus(MovementMessageBus);
+
+            return new MultiplayerMovementPlugin(
                 assetsProvisioner,
                 LiveKitMovementMessageBus,
                 PulseMultiplayerBus,
@@ -262,6 +271,7 @@ namespace DCL.Multiplayer.Movement
                 staticContainer.RealmData,
                 commsContainer.RemoteMetadata,
                 ParcelEncoder);
+        }
 
         private void OnSelfProfilePropagated(Profile profile)
         {

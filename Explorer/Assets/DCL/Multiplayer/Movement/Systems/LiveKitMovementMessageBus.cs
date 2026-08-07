@@ -8,6 +8,7 @@ using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using Decentraland.Kernel.Comms.Rfc4;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
@@ -30,7 +31,14 @@ namespace DCL.Multiplayer.Movement
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         private Action<NetworkMovementMessage, MovementCompressed> compressMessage = null!;
+
         private NetworkMessageEncoder? messageEncoder;
+
+        private MessageEncodingSettings? encodingSettings;
+        private ParcelEncoder? parcelEncoder;
+
+        private readonly Dictionary<string, NetworkMessageEncoder> decodersByWallet = new ();
+
         private bool isDisposed;
         private IMultiplayerMovementSettings? settingsValue;
 
@@ -57,6 +65,10 @@ namespace DCL.Multiplayer.Movement
         public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue, ParcelEncoder parcelEncoder)
         {
             this.settingsValue = settingsValue;
+
+            this.encodingSettings = messageEncodingSettings;
+            this.parcelEncoder = parcelEncoder;
+
             messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, parcelEncoder);
             compressMessage = (message, compressed) => WriteToProto(messageEncoder.Compress(message), compressed);
         }
@@ -120,8 +132,30 @@ namespace DCL.Multiplayer.Movement
                     pointAtData = receivedMessage.Payload.PointAtData,
                 };
 
-                Inbox(messageEncoder.Decompress(message), receivedMessage.FromWalletId);
+                Inbox(DecoderFor(receivedMessage.FromWalletId).Decompress(message), receivedMessage.FromWalletId);
             }
+        }
+
+        /// <summary>
+        ///     Get-or-create this peer's dedicated decoder. Lazily allocated on the first message from a wallet
+        ///     (cold path — never per-message). Shares the immutable settings + stateless ParcelEncoder refs;
+        ///     the only per-peer allocation is a fresh NetworkMessageEncoder wrapping its own TimestampEncoder,
+        ///     giving this peer isolated lastOriginalTimestamp/timestampOffset wraparound state.
+        /// </summary>
+        private NetworkMessageEncoder DecoderFor(string walletId)
+        {
+            if (!decodersByWallet.TryGetValue(walletId, out NetworkMessageEncoder? decoder))
+            {
+                decoder = new NetworkMessageEncoder(encodingSettings!, parcelEncoder!);
+                decodersByWallet[walletId] = decoder;
+            }
+
+            return decoder;
+        }
+
+        public void EvictPeer(string walletId)
+        {
+            decodersByWallet.Remove(walletId);
         }
 
         private static NetworkMovementMessage UncompressedMovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto)
@@ -236,7 +270,7 @@ namespace DCL.Multiplayer.Movement
                     movementData = messageWrap.Payload.MovementData,
                 };
 
-                message = messageEncoder.Decompress(compressedMessage);
+                message = new NetworkMessageEncoder(encodingSettings!, parcelEncoder!).Decompress(compressedMessage);
             }
             else
             {
