@@ -15,7 +15,7 @@
     "cargo_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/Cargo.toml",
-      "sha256": "f6ab0419132af68bb741a9a7babff53a52d11a7cb2af4df0b38614b8e60e25ce"
+      "sha256": "aa75ab05328c53920fdcd070fd9a4c49a30f7a429fbd8a39bc38dec822762f02"
     },
     "cargo_lock": {
       "comment": [
@@ -33,7 +33,7 @@
         "uuav-client",
         "uuav-server"
       ],
-      "sha256": "47d29424232ef619702d337b88fb9c8516c88a4e6829c6d25b9baace233125f9",
+      "sha256": "8564f0e2bf3f6145a220161fb11fc1e70fb75a08a76931182f3d95de1028c91f",
       "entries": 118
     },
     "cargo_config": {
@@ -43,7 +43,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/.cargo/config.toml",
-      "sha256": "52f27062704ef20f8fbb3fd7eccc45f02aa3bbd9f4a0ac5fbbfa2fa24691a88f"
+      "sha256": "99638f2710a4b1eea8992aade076d5478010393c0c97ef435e703c8c3d84bed8"
     },
     "rust_toolchain": {
       "comment": [
@@ -51,7 +51,6 @@
         "channel is a rebuild-and-relock event for both targets, not a",
         "routine edit."
       ],
-      "pending": "the committed binaries predate the pin (built with rustc 1.88.0); enforce at the first rebuild-and-relock on the pinned toolchain",
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/rust-toolchain.toml",
       "sha256": "2d9f13db1ad0cda305e163d91c9484eaf22ab2d9004f0b64138bd65993108f10"
@@ -59,17 +58,17 @@
     "client_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-client/Cargo.toml",
-      "sha256": "c60a02f126ee76f18661214666c2373d7d2d5a147428d21add48d082803a7f89"
+      "sha256": "4504d0b2f23cb299803ba84c7a0173feb6ec8eeaef781dda48c892eb7ced214d"
     },
     "server_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-server/Cargo.toml",
-      "sha256": "3fade0c92082feecc6084f5ce6280f222d83a3db9a178274067bd10d56af487a"
+      "sha256": "536151faabecbce5620ea1f25070e7146e2b3d9dfcc41bde146a959254b176f1"
     },
     "ipc_manifest": {
       "kind": "file",
       "path": "Explorer/Assets/Plugins/UUAV/native/uuav-ipc/Cargo.toml",
-      "sha256": "af29aafdfd2a740de158f29605b350b02a477652f282c2fd0ae912f6da302d76"
+      "sha256": "46c9c987e6be6111617b20fbcdc232e7be2eaaf666fd93e96d51287db3e4f70d"
     },
     "client_source": {
       "comment": [
@@ -82,7 +81,7 @@
       "suffix": [
         ".rs"
       ],
-      "sha256": "811cbb76b7f77b2d6ee442dc5ff17ad37a202d7c00cac0fe2c0615ee708a0ca5",
+      "sha256": "f4bb051caccc4da24678cf2c05087813c840ed2407c08f49b15aff991312ae29",
       "entries": 10
     },
     "server_source": {
@@ -102,7 +101,7 @@
         "target",
         ".target"
       ],
-      "sha256": "052aeb59a8b269737e479f83f27fedb9a62af6096a3347c69aa7590428d5682e",
+      "sha256": "fe5ba7c213d2634977e3a1689e6f99095b8e01dea3d3d4a2a0530d8f02ff1106",
       "entries": 11
     },
     "ipc_source": {
@@ -115,7 +114,7 @@
       "suffix": [
         ".rs"
       ],
-      "sha256": "3732c1320dafbfe8bbda49af1902c9790e4f4e025e17164c7873c5142fcab606",
+      "sha256": "d0ebd0d5655d9b54d82b3709dc5354ede0f1e04b007ee89677c783a1c26a9e2d",
       "entries": 6
     }
   },
@@ -125,8 +124,8 @@
       "rust": {
         "target": "universal (aarch64-apple-darwin + x86_64-apple-darwin)",
         "profile": "release",
-        "crate_version": "0.2.0",
-        "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+        "crate_version": "0.3.0",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "toolchain": {
           "comment": [
             "The identities of the host toolchain that produced the committed",
@@ -135,19 +134,19 @@
             "(reproduces-lock.py) hard-checks byte reproduction only on a",
             "runner matching every component here; anything else skips."
           ],
-          "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
-          "cargo": "cargo 1.88.0 (873a06493 2025-05-10)",
-          "clang": "Apple clang version 17.0.0 (clang-1700.4.4.1)",
-          "xcode": "Xcode 26.1.1 Build version 17B100",
-          "sdk": "macosx26.1 (25B74)"
+          "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+          "clang": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+          "xcode": "Xcode 16.4 Build version 16F6",
+          "sdk": "macosx15.5 (24F74)"
         },
         "link_args": [
           "-C",
           "link-arg=-Wl,-rpath,@loader_path"
         ],
-        "source_digest": "773ee1d1559b172d5df2d8dd846eb0ab091fb084f95f486e9e710f845a3d0e6c",
-        "source_files": 20,
-        "repo_commit": "711bf22a75ae368e0d5d1a6624057c1d816109d1"
+        "source_digest": "23eeabf361ad469da2d94909ce9971c25c539f084b149c359daab3816c8e9176",
+        "source_files": 21,
+        "repo_commit": "ee42b24e4715054eb0eb71c70a3f677794a1e228"
       },
       "ffmpeg": {
         "provenance": "built-from-source",
@@ -220,14 +219,20 @@
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libuuav.dylib",
-          "sha256": "09f56f60159d1fff1cfdc3fe6e09d8d186d7a36a611d14ea111812347a07cc81",
-          "bytes": 1524304,
+          "sha256": "19504315bd3fce4b3950e9d52ae25897bdebd2f421e8c771628112e9dd09c5e9",
+          "bytes": 1495744,
+          "produced_by": "cargo"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libuuav_core.dylib",
+          "sha256": "1ef45f1cb58c353870c59b1ed4c5cf53535633ccadf77dacefe8e2694a119ad1",
+          "bytes": 1265248,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper",
-          "sha256": "002898164832f6ab8dd19aa11f4dfdd172f40dc31633d66c059793a37656cb4c",
-          "bytes": 1736976,
+          "sha256": "1d6cf17cb3ff8fba0171afbac6f8518a1e9c435babe8e776f008abf7548eb30f",
+          "bytes": 1713456,
           "produced_by": "cargo"
         }
       ]
@@ -237,21 +242,16 @@
       "rust": {
         "target": "x86_64-pc-windows-gnu",
         "profile": "release",
-        "crate_version": "0.2.0",
-        "rustc": "unknown - not recorded when the committed binaries were built",
-        "toolchain_comment": [
-          "No toolchain pin yet: the committed Windows binaries were built",
-          "on a developer machine whose identities were never recorded, so",
-          "Gate B (reproduces-lock.py) skips byte reproduction for this",
-          "target. Pin it at the next Windows rebuild with",
-          "  python3 scripts/uuav/verify-binaries.py --update --only",
-          "  windows-x86_64 --toolchain toolchain-windows.txt",
-          "using the file the build workflow's 'Record the toolchain",
-          "actually used' step writes."
-        ],
-        "source_digest": "773ee1d1559b172d5df2d8dd846eb0ab091fb084f95f486e9e710f845a3d0e6c",
-        "source_files": 20,
-        "repo_commit": "ad82db6e231d24e10d05d70fb6967a1e73ce966e"
+        "crate_version": "0.3.0",
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+        "source_digest": "23eeabf361ad469da2d94909ce9971c25c539f084b149c359daab3816c8e9176",
+        "source_files": 21,
+        "repo_commit": "ee42b24e4715054eb0eb71c70a3f677794a1e228",
+        "toolchain": {
+          "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+          "gcc": "gcc.exe (Rev5, Built by MSYS2 project) 16.1.0"
+        }
       },
       "ffmpeg": {
         "provenance": "third-party-release-asset",
@@ -307,14 +307,20 @@
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav.dll",
-          "sha256": "2d42d91058da05bf26c945c2359a360ec2c5e676585b325e2b48a9fa66b672b4",
-          "bytes": 1347584,
+          "sha256": "88c1d7756b5d9015f56bb4b1c843d11e3e37bc1edb2feeb5e0f4656363c5cbe2",
+          "bytes": 1326592,
+          "produced_by": "cargo"
+        },
+        {
+          "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav_core.dll",
+          "sha256": "b5f2a65a4d36dbff97029e5517cd9fd3de2119fbbb647213c2e94aff1bb12232",
+          "bytes": 1244672,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe",
-          "sha256": "1cb357c934daabde32e9c42b903f8f6ba4ab6f8613b6519b188d2f45503f3ed9",
-          "bytes": 1411072,
+          "sha256": "c9d5f62a26928b66d8346f3d28c70f64d6711a0c5c0a98c13f0f079f20f546c5",
+          "bytes": 1410560,
           "produced_by": "cargo"
         }
       ]

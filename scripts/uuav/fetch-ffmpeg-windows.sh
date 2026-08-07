@@ -9,6 +9,9 @@ PREFIX="${1:-$REPO_ROOT/Explorer/Assets/Plugins/UUAV/native/.third_party/ffmpeg}
 read -r URL EXPECTED_SHA ASSET RELEASE_TAG PROVENANCE < <(
     python3 -c '
 import json, sys
+# Windows Python writes CRLF in text mode; read would keep the \r on the
+# last variable and break the provenance comparison below.
+sys.stdout.reconfigure(newline="\n")
 ffmpeg = json.load(open(sys.argv[1]))["targets"]["windows-x86_64"]["ffmpeg"]
 print(ffmpeg.get("url", "-"), ffmpeg.get("asset_sha256", "-"),
       ffmpeg.get("asset", "-"), ffmpeg.get("release_tag", "-"),

@@ -37,8 +37,9 @@ namespace DCL.Tests
         // TODO better regex matching?
 
         private static readonly string[] WEBGL_THREAD_SAFETY_EXCLUDED_PATHS = {
-            "Assets/DCL/Input/UnityInputSystem/DCLInput.cs"
-        }; // cause it's autogen
+            "Assets/DCL/Input/UnityInputSystem/DCLInput.cs", // cause it's autogen
+            "Assets/Plugins/UUAV/Packages/UUAV/Runtime/UUAVPlayer.cs", // desktop-only native plugin; Interlocked guards FFI callback state and the assembly never targets WebGL
+        };
 
         private static readonly string[] WEB_SOCKETS_EXCLUDED_PATHS = {
             "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs",

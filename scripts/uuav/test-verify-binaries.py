@@ -32,6 +32,7 @@ def make_repo(toolchain: dict | None, manifest_version: str | None = None,
     root = tempfile.mkdtemp(prefix="uuav-lock-test-")
     os.makedirs(os.path.join(root, "scripts", "uuav"))
     os.makedirs(os.path.join(root, "native", "src"))
+    os.makedirs(os.path.join(root, "native", "out"))
     with open(os.path.join(root, "native", "src", "lib.rs"), "w",
               encoding="utf-8") as handle:
         handle.write("pub fn probe() {}\n")
@@ -212,6 +213,31 @@ class DetectionTests(unittest.TestCase):
         result = run(self.root)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("PENDING", result.stdout)
+
+    def test_unlisted_binary_in_runtime_dir_fails(self):
+        with open(os.path.join(self.root, "native", "out", "stray.dll"),
+                  "wb") as handle:
+            handle.write(b"MZ unlisted")
+        result = run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("stray.dll", result.stdout)
+        self.assertIn("no entry in the lock", result.stdout)
+
+    def test_unlisted_binary_fails_even_on_update(self):
+        with open(os.path.join(self.root, "native", "out", "stray"),
+                  "wb") as handle:
+            handle.write(b"\x7fELF unlisted extensionless helper")
+        result = run(self.root, "--update")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("stray", result.stdout)
+
+    def test_non_shippable_files_in_runtime_dir_are_ignored(self):
+        out = os.path.join(self.root, "native", "out")
+        for name in ("plugin.bin.meta", "doctor.sh"):
+            with open(os.path.join(out, name), "w", encoding="utf-8") as handle:
+                handle.write("not a binary\n")
+        result = run(self.root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 class UpdateToolchainTests(unittest.TestCase):

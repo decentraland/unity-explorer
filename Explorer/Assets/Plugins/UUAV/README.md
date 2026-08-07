@@ -1,6 +1,6 @@
 # UUAV (Ultimately United Audio/Video)
 
-A video/audio player for Unity built on a native Rust core and FFmpeg, with hardware-accelerated video decoding: D3D11VA on Windows, VideoToolbox on macOS (Apple Silicon + Metal). Decoding runs **out of process** — FFmpeg never shares Unity's address space or GPU device, so a decoder crash cannot take the engine down. The decode process is also **sandboxed** on both platforms, so a decoder exploit lands in a process that cannot launch anything or write to disk (see [Sandboxing](#sandboxing)).
+A video/audio player for Unity built on a native Rust core and FFmpeg, with hardware-accelerated video decoding: D3D11VA on Windows, VideoToolbox on macOS (Apple Silicon + Metal). Decoding runs **out of process** — FFmpeg never shares Unity's address space or GPU device, so a decoder crash cannot take the engine down. The decode process is also **sandboxed** on both platforms, so a decoder exploit lands in a process that cannot launch anything or write to disk (see [Sandboxing](#sandboxing)). The only exception is the debug-only `UUAV_NO_IPC_LAYER` mode, which cannot reach a release player build (see [Debug-only in-process mode](#debug-only-in-process-mode-uuav_no_ipc_layer)).
 
 - `native/` - Rust workspace:
   - `src/` (**uuav-core**) - the decode/playback core, linked into the helper
@@ -36,6 +36,12 @@ FFmpeg demuxes attacker-controlled media (URLs come from untrusted scenes), so t
 The macOS IOSurface channel authenticates its sender (`uuav-ipc/src/mach_channel.rs`): the per-session bootstrap name is discoverable by other local processes (shared namespace, helper argv), so the client's receiver requests the kernel audit trailer on every message and destroys, unread, anything not sent by the exact helper pid it spawned. A third local process that looks the service up and sends surface ports gets its rights released, never a rendered plane.
 
 Debugging a macOS denial: run `log stream --style compact --predicate 'sender == "Sandbox"'` next to the Editor and look for `uuav-helper(pid) deny(1) <operation> <name>` lines, then extend `helper.sb` with a comment tying the new allowance to its need.
+
+### Debug-only in-process mode (`UUAV_NO_IPC_LAYER`)
+
+`uuav-core` also builds as a cdylib (`uuav_core.dll` / `libuuav_core.dylib`) exposing the same C ABI as the client. Defining `UUAV_NO_IPC_LAYER` in the scripting defines repoints every P/Invoke at it, running the decode core **inside Unity's process** with no helper, no IPC and no recovery worker. This exists purely as a debugging aid — to bisect whether a bug lives in the core or in the IPC/helper layer, and to step through decode code without attaching to a second process.
+
+In this mode every guarantee in this section is off: no Seatbelt profile, no restricted low-integrity token, no kill-on-close job object, no process-mitigation policy, no separate GPU device, and a decoder crash takes the engine down with it. Because that must never ship to end users, `NativeMethods.cs` fails compilation with `#error` when `UUAV_NO_IPC_LAYER` is defined without `DEBUG` — Unity defines `DEBUG` only in the Editor and in Development builds, so a release player build with the define set cannot be produced. The protocol whitelist is unaffected by the switch: `uuav_core`'s `uuav_init` takes the same `protocol_whitelist` argument and the C# layer passes the same constant either way.
 
 ### Basic usage
 
