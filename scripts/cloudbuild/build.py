@@ -882,7 +882,22 @@ if final_outcome == 'canceled':
     #    so re-POSTing here would cancel *their* build and hand them the same exit 99 —
     #    both runs then burn a full queue+build cycle and one still ends red.
     # Build numbers are monotonic per target: a newer build means we were superseded.
-    latest = get_latest_build(os.getenv('TARGET'))
+    def probe_latest_build():
+        # Fail-open: a transient socket error here must not traceback past the
+        # cleanup below - it degrades to the retry path, same as a non-200 probe.
+        try:
+            return get_latest_build(os.getenv('TARGET'))
+        except requests.exceptions.RequestException as e:
+            print(f'Warning: latest-build probe failed ({e})')
+            return None
+
+    latest = probe_latest_build()
+    if latest and int(latest.get('build') or 0) <= int(id):
+        # run_build cancels the pending build and only re-POSTs ~30 s later, so a
+        # supersede can be invisible for that gap. Re-probe once past it before
+        # deciding to retry.
+        time.sleep(35)
+        latest = probe_latest_build() or latest
     utils.delete_build_info()
     try:
         download_log(id)
