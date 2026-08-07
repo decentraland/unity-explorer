@@ -18,6 +18,17 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             this.buffersPool = buffersPool;
         }
 
+        protected override void ReceiveContentLengthHeader(ulong contentLength)
+        {
+            if (PartialData == null && contentLength > 0)
+            {
+                var target = (int)Math.Min(contentLength, (ulong)PartialDownloadingRange.CHUNK_SIZE);
+
+                if (target > 0)
+                    PartialData = buffersPool.Rent(target);
+            }
+        }
+
         protected override bool ReceiveData(byte[] receivedData, int dataLength)
         {
             if (dataLength == 0)
@@ -30,8 +41,9 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             }
             else if(PartialData.Length < bufferPointer + dataLength)
             {
-                var newBuffer = buffersPool.Rent(PartialData.Length + dataLength);
-                Array.Copy(PartialData, newBuffer, PartialData.Length);
+                var newSize = Math.Max(PartialData.Length * 2, bufferPointer + dataLength);
+                var newBuffer = buffersPool.Rent(newSize);
+                Array.Copy(PartialData, newBuffer, bufferPointer);
                 buffersPool.Return(PartialData, true);
                 PartialData = newBuffer;
             }
