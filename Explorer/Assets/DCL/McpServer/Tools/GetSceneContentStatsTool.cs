@@ -20,6 +20,7 @@ namespace DCL.McpServer.Tools
     {
         private readonly IScenesCache scenesCache;
         private readonly int collectionTimeoutMs;
+        private readonly SceneContentStatsPolling.WaitForCollection waitForCollection;
 
         public override string Name => "get_scene_content_stats";
 
@@ -53,10 +54,12 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
-        public GetSceneContentStatsTool(IScenesCache scenesCache, int collectionTimeoutMs = SceneContentStatsPolling.DEFAULT_COLLECTION_TIMEOUT_MS)
+        public GetSceneContentStatsTool(IScenesCache scenesCache, int collectionTimeoutMs = SceneContentStatsPolling.DEFAULT_COLLECTION_TIMEOUT_MS,
+            SceneContentStatsPolling.WaitForCollection? waitForCollection = null)
         {
             this.scenesCache = scenesCache;
             this.collectionTimeoutMs = collectionTimeoutMs;
+            this.waitForCollection = waitForCollection ?? SceneContentStatsPolling.WaitForCollectionAsync;
         }
 
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
@@ -72,7 +75,7 @@ namespace DCL.McpServer.Tools
 
             try
             {
-                if (!await SceneContentStatsPolling.WaitForCollectionAsync(scenesCache, scene, stats, collectionsBefore, collectionTimeoutMs, ct))
+                if (!await waitForCollection(scenesCache, scene, stats, collectionsBefore, collectionTimeoutMs, ct))
                     return McpToolResult.Error("The current scene changed while collecting stats.");
             }
             finally

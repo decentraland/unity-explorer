@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using DCL.Profiling;
@@ -82,6 +83,78 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void RankEntriesByTrianglesWithShareMathAndSceneTotals()
+        {
+            // Arrange
+            GetSceneContentBreakdownTool tool = ToolWithLandedPass();
+
+            // Act
+            var structured = (JObject)Execute(tool).Payload["structuredContent"]!;
+            var entries = (JArray)structured["entries"]!;
+
+            // Assert — default sort is triangles, heaviest first
+            Assert.That(entries.Count, Is.EqualTo(3));
+            Assert.That(entries[0]!["source"]!.Value<string>(), Is.EqualTo("heavy.glb"));
+            Assert.That(entries[1]!["source"]!.Value<string>(), Is.EqualTo("mid.glb"));
+            Assert.That(entries[2]!["source"]!.Value<string>(), Is.EqualTo("light.glb"));
+
+            // 600 of the scene's 1000 triangles; 100 of the 400 visible ones
+            Assert.That(entries[0]!["trianglesSharePercent"]!.Value<float>(), Is.EqualTo(60f));
+            Assert.That(entries[0]!["visibleTrianglesSharePercent"]!.Value<float>(), Is.EqualTo(25f));
+
+            // Scene totals sum across ALL sources, not only the returned ones
+            Assert.That(structured["sceneDrawCallsEstimate"]!.Value<int>(), Is.EqualTo(10));
+            Assert.That(structured["visibleTriangles"]!.Value<long>(), Is.EqualTo(400));
+            Assert.That(structured["visibleDrawCallsEstimate"]!.Value<int>(), Is.EqualTo(5));
+            Assert.That(structured["totalSources"]!.Value<int>(), Is.EqualTo(3));
+        }
+
+        [Test]
+        public void SortByVisibleTrianglesWhenRequested()
+        {
+            // Arrange — mid.glb is lighter overall but the heaviest from this point of view
+            GetSceneContentBreakdownTool tool = ToolWithLandedPass();
+
+            // Act
+            var structured = (JObject)Execute(tool, new JObject { ["sortBy"] = "visibleTriangles" }).Payload["structuredContent"]!;
+            var entries = (JArray)structured["entries"]!;
+
+            // Assert
+            Assert.That(structured["sortedBy"]!.Value<string>(), Is.EqualTo("visibleTriangles"));
+            Assert.That(entries[0]!["source"]!.Value<string>(), Is.EqualTo("mid.glb"));
+            Assert.That(entries[1]!["source"]!.Value<string>(), Is.EqualTo("heavy.glb"));
+            Assert.That(entries[2]!["source"]!.Value<string>(), Is.EqualTo("light.glb"));
+        }
+
+        [Test]
+        public void ClampTheLimitAndReportTheTruncation()
+        {
+            // Arrange
+            GetSceneContentBreakdownTool tool = ToolWithLandedPass();
+
+            // Act — 0 clamps to the minimum of 1 entry
+            var structured = (JObject)Execute(tool, new JObject { ["limit"] = 0 }).Payload["structuredContent"]!;
+
+            // Assert
+            Assert.That(structured["returned"]!.Value<int>(), Is.EqualTo(1));
+            Assert.That(((JArray)structured["entries"]!).Count, Is.EqualTo(1));
+            Assert.That(structured["totalSources"]!.Value<int>(), Is.EqualTo(3));
+        }
+
+        [Test]
+        public void ErrorWhenTheCurrentSceneChangesMidWait()
+        {
+            // Arrange
+            var tool = new GetSceneContentBreakdownTool(scenesCache, waitForCollection: (_, _, _, _, _, _) => UniTask.FromResult(false));
+
+            // Act
+            McpToolResult result = Execute(tool);
+
+            // Assert
+            Assert.That(result.Payload["isError"]!.Value<bool>(), Is.True);
+        }
+
+        [Test]
         public void DeclareLimitAndSortByInTheInputSchema()
         {
             // Arrange
@@ -95,7 +168,43 @@ namespace DCL.McpServer.Tests
             Assert.That(properties["sortBy"], Is.Not.Null);
         }
 
-        private static McpToolResult Execute(GetSceneContentBreakdownTool tool) =>
-            tool.ExecuteAsync(new JObject(), CancellationToken.None).GetAwaiter().GetResult();
+        /// <summary>
+        ///     A tool whose injected wait behaves like a counting pass landing: the entries are already
+        ///     in place (as the scene world would leave them) and the collection count advances.
+        /// </summary>
+        private GetSceneContentBreakdownTool ToolWithLandedPass()
+        {
+            SceneContentStats stats = runtimeMetrics.ContentStats;
+            stats.Triangles = 1000;
+            stats.Materials = 6;
+            stats.ShaderVariants = 2;
+            stats.BreakdownEntries.Add(Entry("heavy.glb", triangles: 600, drawCalls: 5, visibleTriangles: 100, visibleDrawCalls: 2));
+            stats.BreakdownEntries.Add(Entry("mid.glb", triangles: 300, drawCalls: 4, visibleTriangles: 300, visibleDrawCalls: 3));
+            stats.BreakdownEntries.Add(Entry("light.glb", triangles: 100, drawCalls: 1, visibleTriangles: 0, visibleDrawCalls: 0));
+
+            return new GetSceneContentBreakdownTool(scenesCache, waitForCollection: (_, _, s, before, _, _) =>
+            {
+                s.CollectionCount = before + 1;
+                return UniTask.FromResult(true);
+            });
+        }
+
+        private static SceneContentBreakdownEntry Entry(string source, long triangles, int drawCalls, long visibleTriangles, int visibleDrawCalls) =>
+            new ()
+            {
+                Source = source,
+                Instances = 1,
+                Renderers = 2,
+                Triangles = triangles,
+                Materials = 2,
+                DrawCalls = drawCalls,
+                ShaderVariants = 1,
+                VisibleRenderers = 1,
+                VisibleTriangles = visibleTriangles,
+                VisibleDrawCalls = visibleDrawCalls,
+            };
+
+        private static McpToolResult Execute(GetSceneContentBreakdownTool tool, JObject? arguments = null) =>
+            tool.ExecuteAsync(arguments ?? new JObject(), CancellationToken.None).GetAwaiter().GetResult();
     }
 }

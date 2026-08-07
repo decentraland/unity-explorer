@@ -14,6 +14,12 @@ namespace DCL.McpServer.Utils
     /// </summary>
     public static class SceneContentStatsPolling
     {
+        /// <summary>
+        ///     Shape of <see cref="WaitForCollectionAsync" />. The content-stats tools take it as an
+        ///     injectable dependency so tests can simulate a pass landing or the scene changing mid-wait.
+        /// </summary>
+        public delegate UniTask<bool> WaitForCollection(IScenesCache scenesCache, ISceneFacade scene, SceneContentStats stats, long collectionsBefore, int timeoutMs, CancellationToken ct);
+
         private const int POLL_INTERVAL_MS = 100;
 
         // Generous: with another consumer already collecting, the next pass can be a full

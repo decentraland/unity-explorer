@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using DCL.Profiling;
@@ -109,6 +110,39 @@ namespace DCL.McpServer.Tests
 
             // Assert
             Assert.That(runtimeMetrics.ContentStats.McpRequests, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ReportFreshStatsWhenAPassLandsDuringTheWait()
+        {
+            // Arrange — the injected wait stands in for the scene world completing a counting pass
+            var tool = new GetSceneContentStatsTool(scenesCache, waitForCollection: (_, _, s, before, _, _) =>
+            {
+                s.HasData = true;
+                s.CollectionCount = before + 1;
+                s.Entities = 10;
+                return UniTask.FromResult(true);
+            });
+
+            // Act
+            var structured = (JObject)Execute(tool).Payload["structuredContent"]!;
+
+            // Assert
+            Assert.That(structured["fresh"]!.Value<bool>(), Is.True);
+            Assert.That(structured["entities"]!.Value<int>(), Is.EqualTo(10));
+        }
+
+        [Test]
+        public void ErrorWhenTheCurrentSceneChangesMidWait()
+        {
+            // Arrange
+            var tool = new GetSceneContentStatsTool(scenesCache, waitForCollection: (_, _, _, _, _, _) => UniTask.FromResult(false));
+
+            // Act
+            McpToolResult result = Execute(tool);
+
+            // Assert
+            Assert.That(result.Payload["isError"]!.Value<bool>(), Is.True);
         }
 
         [Test]

@@ -26,6 +26,7 @@ namespace DCL.McpServer.Tools
 
         private readonly IScenesCache scenesCache;
         private readonly int collectionTimeoutMs;
+        private readonly SceneContentStatsPolling.WaitForCollection waitForCollection;
 
         public override string Name => "get_scene_content_breakdown";
 
@@ -46,10 +47,12 @@ namespace DCL.McpServer.Tools
             schema.Integer("limit", "Maximum entries to return, heaviest first. Default 10.")
                   .String("sortBy", "Metric to rank by. Default triangles.", enumValues: new[] { "triangles", "materials", "shaderVariants", "drawCalls", "visibleTriangles" });
 
-        public GetSceneContentBreakdownTool(IScenesCache scenesCache, int collectionTimeoutMs = SceneContentStatsPolling.DEFAULT_COLLECTION_TIMEOUT_MS)
+        public GetSceneContentBreakdownTool(IScenesCache scenesCache, int collectionTimeoutMs = SceneContentStatsPolling.DEFAULT_COLLECTION_TIMEOUT_MS,
+            SceneContentStatsPolling.WaitForCollection? waitForCollection = null)
         {
             this.scenesCache = scenesCache;
             this.collectionTimeoutMs = collectionTimeoutMs;
+            this.waitForCollection = waitForCollection ?? SceneContentStatsPolling.WaitForCollectionAsync;
         }
 
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
@@ -69,7 +72,7 @@ namespace DCL.McpServer.Tools
 
             try
             {
-                if (!await SceneContentStatsPolling.WaitForCollectionAsync(scenesCache, scene, stats, collectionsBefore, collectionTimeoutMs, ct))
+                if (!await waitForCollection(scenesCache, scene, stats, collectionsBefore, collectionTimeoutMs, ct))
                     return McpToolResult.Error("The current scene changed while collecting the breakdown.");
             }
             finally
