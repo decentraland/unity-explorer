@@ -94,6 +94,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 currentOwnedTexture = await textureTask!;
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
+
+                if ((texture.width & 3) == 0 && (texture.height & 3) == 0 && texture.format == TextureFormat.RGBA32)
+                    texture.Compress(false);
             }
             catch (Exception e)
             {
