@@ -39,6 +39,8 @@ namespace SceneRuntime
 
         CancellationTokenSource ISceneRuntime.isDisposingTokenSource => isDisposingTokenSource;
 
+        IJsOperations ISceneRuntime.JsOperations => this;
+
         public SceneRuntimeImpl(
             string sourceCode,
             string initCode,
