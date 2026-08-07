@@ -440,6 +440,7 @@ namespace Global.Dynamic
                 new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig),
                 new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
                 new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
+                creditsChainConfig,
                 identityCache,
                 CreditsFeatureAccess.Instance,
                 FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits));
@@ -582,7 +583,8 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
                     realmNavigator,
-                    chatContainer.ChatHistory),
+                    chatContainer.ChatHistory,
+                    chatContainer.ChatEventBus),
                 new MinimapPlugin(
                     uiShellContainer.MainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,
