@@ -60,6 +60,13 @@ fi
 
 # LGPL is the default (no --enable-gpl). Do NOT disable avdevice/avfilter:
 # ffmpeg-sys-next's default features link all seven libraries.
+#
+# --disable-xlib / --disable-libxcb: both are X11 screen-grab indev/outdevs
+# (xv/x11grab) we never use. configure autodetects them from a build host's
+# Homebrew libx11/libxcb and, worse, leaks -lX11 into avutil's extralibs so
+# every dylib ends up hard-linked to /opt/homebrew/opt/libx11/.../libX11.6.dylib
+# - a path absent on clean machines, so the helper fails dyld load there.
+# Disabling both keeps the shipped dylibs free of any Homebrew absolute path.
 build_arch() {
     local arch="$1" prefix="$2"
     shift 2
@@ -75,6 +82,8 @@ build_arch() {
         --disable-static \
         --disable-programs \
         --disable-doc \
+        --disable-xlib \
+        --disable-libxcb \
         --enable-videotoolbox \
         --enable-securetransport \
         "$@"
@@ -113,3 +122,22 @@ for lib in "$PREFIX"/lib/lib*.dylib; do
     [[ -L "$lib" ]] && continue
     printf '%s   [%s]\n' "$(otool -D "$lib" | tail -1)" "$(lipo -archs "$lib")"
 done
+
+# regression gate: no dylib may depend on a build-host absolute path
+# (Homebrew/Cellar or /usr/local) - those resolve only on this machine and
+# fail dyld load on a clean one. Only @rpath refs and system frameworks/libs
+# under /System, /usr/lib are portable.
+leaked=0
+for lib in "$PREFIX"/lib/lib*.dylib; do
+    [[ -L "$lib" ]] && continue
+    if bad="$(otool -L "$lib" | tail -n +2 | grep -E '/opt/homebrew|/usr/local|/opt/local')"; then
+        echo "error: $(basename "$lib") links a non-portable absolute path:" >&2
+        echo "$bad" >&2
+        leaked=1
+    fi
+done
+if [[ "$leaked" -ne 0 ]]; then
+    echo "error: FFmpeg build leaked build-host library paths; see above" >&2
+    exit 1
+fi
+echo "All dylibs are free of build-host absolute paths."
