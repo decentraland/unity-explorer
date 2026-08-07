@@ -598,17 +598,34 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (candidateName.Length == 0)
                     continue;
 
-                ReadOnlySpan<char> candidatePrefix = (candidateName + "-").AsSpan();
-
-                if (payloadWithoutLoop.StartsWith(candidatePrefix, StringComparison.Ordinal))
+                if (TryMatchSceneEmotePayload(payloadWithoutLoop, candidateName, out string emoteHash))
                 {
                     sceneId = candidateName;
-                    parsedEmoteHash = payloadWithoutLoop.Slice(candidatePrefix.Length).ToString();
+                    parsedEmoteHash = emoteHash;
                     resolvedScene = facade;
                     return true;
                 }
             }
 
+            return false;
+        }
+
+        /// <summary>
+        /// Zero-alloc equivalent of <c>payload.StartsWith(candidateName + "-", Ordinal)</c> followed by a slice past the
+        /// separator. Semantics are identical, including the edge where the payload is exactly "name-" (empty hash) and the
+        /// near-miss where the payload starts with the name but the following char is not '-'.
+        /// </summary>
+        internal static bool TryMatchSceneEmotePayload(ReadOnlySpan<char> payloadWithoutLoop, string candidateName, out string parsedEmoteHash)
+        {
+            int n = candidateName.Length;
+
+            if (payloadWithoutLoop.Length >= n + 1 && payloadWithoutLoop[n] == '-' && payloadWithoutLoop.Slice(0, n).SequenceEqual(candidateName.AsSpan()))
+            {
+                parsedEmoteHash = payloadWithoutLoop.Slice(n + 1).ToString();
+                return true;
+            }
+
+            parsedEmoteHash = string.Empty;
             return false;
         }
 
