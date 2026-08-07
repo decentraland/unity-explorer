@@ -146,7 +146,7 @@
         ],
         "source_digest": "23eeabf361ad469da2d94909ce9971c25c539f084b149c359daab3816c8e9176",
         "source_files": 21,
-        "repo_commit": "ee42b24e4715054eb0eb71c70a3f677794a1e228"
+        "repo_commit": "6f426f8f5f04f0c428db89f123cc05ba9e2a3511"
       },
       "ffmpeg": {
         "provenance": "built-from-source",
@@ -164,12 +164,12 @@
           "15-minute rebuild.",
           "Recompute with verify-binaries.py's build_script_sha256()."
         ],
-        "builder_sha256": "b2019c9bb82fecc2295b08ad94720bd8926ce4927f55745f57e0a8b43e43d498",
+        "builder_sha256": "7c2a59d8637fc0288d93fc6b832299c9422669b1647301b6e131b55f2fb6eb0e",
         "configure_expected": [
-          "--disable-doc --disable-programs --disable-static --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
+          "--disable-doc --disable-libxcb --disable-programs --disable-static --disable-xlib --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
         ],
         "configure_observed": [
-          "--disable-doc --disable-programs --disable-static --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
+          "--disable-doc --disable-libxcb --disable-programs --disable-static --disable-xlib --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
         ],
         "drift_acknowledged": false,
         "drift_note": "Universal (arm64 + x86_64) from-source LGPL shared build; the shipped dylibs match the recipe."
@@ -177,44 +177,44 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavcodec.62.dylib",
-          "sha256": "3aed72f86bf327b40ab688239b699d548f6f1276676886056d9fbb6ab5259a67",
-          "bytes": 29020960,
+          "sha256": "69fe9321d941d17544cc7988d08e7333d3c2dd5211cffb7a3017f809aa675f28",
+          "bytes": 28817024,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavdevice.62.dylib",
-          "sha256": "489c28d04a3bdb0f2ba4894f0e36e0412144b585de3ecb55eb84b771e5e4013d",
-          "bytes": 219776,
+          "sha256": "b606c92ac2c776a2cb605960a27d48b4f0d2b2a46a3e57f70dcff058331d46fb",
+          "bytes": 215216,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavfilter.11.dylib",
-          "sha256": "6635664fd261589de7a5499f5348314ccfc3c49f4b2302dfd91a2b6cc5adcbd1",
-          "bytes": 8502256,
+          "sha256": "ec9f27500fddc79b0d77bafe7cbe8c2e58e6dcfaa25fcc3e03619388a2ce70f8",
+          "bytes": 8443024,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavformat.62.dylib",
-          "sha256": "73ef0c41a129d771515978e7b5eca3bc5ed60d85737924862adb478d22725df6",
-          "bytes": 5149328,
+          "sha256": "5f8188f06a85d0b7695c16eb3a393e431c7e8d44e3964f2f95f05920831b59d6",
+          "bytes": 5147888,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavutil.60.dylib",
-          "sha256": "1e6bae3f577ef5814797ec4bb7c81facc8fa846aadd1f4cd54068740ad1c0cbe",
-          "bytes": 1643040,
+          "sha256": "ce122001d3421b2db9bb8c8a3529096c51e89b2c2927d04ba4a4d6282c3b7c78",
+          "bytes": 1647360,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libswresample.6.dylib",
-          "sha256": "0d15cbdec0fdad17fbb49c217218a56cd95160448ab4c06e807869d10e090050",
-          "bytes": 317904,
+          "sha256": "eadcd64bf8ee03625bb7c54bbbffdc12f2905331e46df3133af40b25ada2bf2e",
+          "bytes": 318608,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libswscale.9.dylib",
-          "sha256": "7561f535767d2fe16f17c74819e86e3e1075dfadc418e3a08d333ac89b25472b",
-          "bytes": 2718048,
+          "sha256": "72d89cf869b95e69605a389853e62fe6be5b2fe3c7417a523029e00674c19208",
+          "bytes": 2708416,
           "produced_by": "ffmpeg"
         },
         {
