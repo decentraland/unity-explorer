@@ -555,8 +555,12 @@ namespace DCL.Chat.ChatMessages
 
         private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent upd)
         {
-            if (upd.ChannelId.Equals(currentChannelService.CurrentChannelId))
-                view.RefreshVisibleElements();
+            if (!upd.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                return;
+
+            for (int i = 0; i < viewModels.Count; i++)
+                if (!viewModels[i].IsSeparator && viewModels[i].Message.SenderWalletAddress == upd.UserId)
+                    view.RefreshItem(i);
         }
 
         private void OnChannelUsersUpdated(ChatEvents.ChannelUsersStatusUpdated upd)

@@ -136,8 +136,12 @@ namespace DCL.Chat.ChatMessages
 
         public void RefreshItem(int viewModelIndex)
         {
-            RefreshVisibleElements();
+            loopList.RefreshItemByItemIndex(ModelToViewIndex(viewModelIndex));
         }
+
+        internal int ItemBindCount;
+
+        internal Vector2 ContentAnchoredPosition => loopList.ScrollRect.content.anchoredPosition;
 
         /// <summary>
         ///     Reconstructs the scroll view with the data source that was previously set.
@@ -250,6 +254,8 @@ namespace DCL.Chat.ChatMessages
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
+            ItemBindCount++;
+
             // Resolve paddings - they are not part of the viewModels list
             if (index == 0 || index == viewModels.Count + 1)
                 return listView.NewListViewItem(GetPrefabName(ChatItemPrefabIndex.Padding));
