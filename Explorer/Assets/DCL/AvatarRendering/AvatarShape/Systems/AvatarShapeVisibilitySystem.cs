@@ -60,12 +60,19 @@ namespace DCL.AvatarRendering.AvatarShape
             BanAvatarsQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
             UpdateMainPlayerAvatarVisibilityStateQuery(World, camera.GetCameraComponent(World));
-            GetAvatarsVisibleWithOutlineQuery(World);
+
+            if (outlineFeature != null && outlineFeature.isActive)
+            {
+                Camera cam = camera.GetCameraComponent(World).Camera;
+                CalculateFrustumPlanes(cam);
+                GetAvatarsVisibleWithOutlineQuery(World, cam);
+            }
         }
+
+        public void CalculateFrustumPlanes(Camera camera) => GeometryUtility.CalculateFrustumPlanes(camera, planes);
 
         public bool IsVisibleInCamera(Camera camera, Bounds bounds)
         {
-            GeometryUtility.CalculateFrustumPlanes(camera, planes);
             return GeometryUtility.TestPlanesAABB(planes, bounds);
         }
 
@@ -77,9 +84,9 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
+        private void GetAvatarsVisibleWithOutline([Data] Camera cam, in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
         {
-            if (outlineFeature != null && outlineFeature.isActive && (avatarShape.IsPreview || IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds)))
+            if (avatarShape.IsPreview || (IsWithinCameraDistance(cam, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(cam, avatarBase.AvatarSkinnedMeshRenderer.bounds)))
             {
                 RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(avatarShape.OutlineCompatibleRenderers);
             }
