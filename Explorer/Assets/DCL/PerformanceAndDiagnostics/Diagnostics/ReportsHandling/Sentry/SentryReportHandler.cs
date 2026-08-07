@@ -114,7 +114,7 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
         {
-            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
+            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData, exception.Message);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
@@ -176,6 +176,23 @@ namespace DCL.Diagnostics.Sentry
             }
         }
 
+        internal static void AddSceneJsFingerprint(Scope scope, in ReportData data, string? exceptionMessage)
+        {
+            if (!data.Category.Equals(ReportCategory.JAVASCRIPT))
+                return;
+
+            if (string.IsNullOrEmpty(exceptionMessage))
+                return;
+
+            scope.SetFingerprint(new[] { "scene-js", data.SceneShortInfo.Name, FirstLine(exceptionMessage) });
+        }
+
+        private static string FirstLine(string message)
+        {
+            int newLineIndex = message.IndexOf('\n');
+            return newLineIndex < 0 ? message : message.Substring(0, newLineIndex).TrimEnd('\r');
+        }
+
         private class PerReportScope
         {
             public readonly Action<Scope> ExecuteCached;
@@ -183,6 +200,7 @@ namespace DCL.Diagnostics.Sentry
             private readonly IReadOnlyList<ConfigureScope> scopeConfigurators;
 
             internal ReportData reportData { private get; set; }
+            internal string? exceptionMessage { private get; set; }
 
             private PerReportScope(IReadOnlyList<ConfigureScope> scopeConfigurators)
             {
@@ -202,6 +220,7 @@ namespace DCL.Diagnostics.Sentry
 
                 AddCategoryTag(scope, reportData);
                 AddSceneInfo(scope, reportData);
+                AddSceneJsFingerprint(scope, reportData, exceptionMessage);
             }
 
             private static void AddCategoryTag(Scope scope, ReportData data) =>
@@ -221,10 +240,11 @@ namespace DCL.Diagnostics.Sentry
                 public Pool(IReadOnlyList<ConfigureScope> scopeConfigurators) : base(
                     () => new PerReportScope(scopeConfigurators), defaultCapacity: 3, collectionCheck: PoolConstants.CHECK_COLLECTIONS) { }
 
-                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData)
+                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData, string? exceptionMessage = null)
                 {
                     PoolExtensions.Scope<PerReportScope> scope = this.AutoScope();
                     scope.Value.reportData = reportData;
+                    scope.Value.exceptionMessage = exceptionMessage;
                     return scope;
                 }
             }

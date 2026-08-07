@@ -74,7 +74,7 @@ namespace Global.Tests.PlayMode
             IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
             reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
 
-            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
+            var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings, false);
 
             var world = World.Create();
             var cameraEntity = world.Create();
