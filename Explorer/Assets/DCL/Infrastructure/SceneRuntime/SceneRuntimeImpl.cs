@@ -29,6 +29,8 @@ namespace SceneRuntime
         private readonly JSTaskResolverResetable resetableSource;
 
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
+
+        private readonly object[] updateSceneArgs = new object[1];
         private int nextUint8Array;
 
         private ScriptObject updateFunc;
@@ -158,7 +160,9 @@ namespace SceneRuntime
             nextUint8Array = 0;
             RuntimeHeapInfo = engine.GetRuntimeHeapInfo();
             resetableSource.Reset();
-            updateFunc.InvokeAsFunction(dt);
+
+            updateSceneArgs[0] = dt;
+            updateFunc.InvokeAsFunction(updateSceneArgs);
             return resetableSource.Task;
         }
 
