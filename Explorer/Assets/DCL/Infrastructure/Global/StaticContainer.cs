@@ -308,7 +308,7 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
+                container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData, container.DebugContainerBuilder),
                 new SDKEntityTriggerAreaPlugin(
                     globalWorld,
                     container.MainPlayerAvatarBaseProxy,
