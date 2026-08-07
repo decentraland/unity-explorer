@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
@@ -69,6 +70,9 @@ namespace DCL.AvatarRendering.Wearables
                 var localBuffer = ListPool<ITrimmedWearable>.Get();
                 for (var i = 0; i < collections.Length; i++)
                 {
+                    if (!BuilderCollectionIds.IsValid(collections[i], ReportCategory.WEARABLE))
+                        continue;
+
                     // localBuffer accumulates the loaded wearables
                     await source.GetTrimmedByParamsAsync(
                         parameters,

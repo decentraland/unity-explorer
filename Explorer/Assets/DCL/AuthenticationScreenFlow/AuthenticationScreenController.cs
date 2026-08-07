@@ -13,19 +13,15 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Global.AppArgs;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.AuthenticationScreenFlow
@@ -50,6 +46,7 @@ namespace DCL.AuthenticationScreenFlow
 
         internal const int ANIMATION_DELAY = 300;
         internal const string LOADING_TRANSACTION_NAME = "loading_process";
+        private const string EPIC_STORE_INSTALL_SOURCE = "epic";
 
         private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly ISelfProfile selfProfile;
@@ -154,9 +151,13 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewInstantiated();
 
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
-            bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
+            bool isEpicBuild = string.Equals(installSource, EPIC_STORE_INSTALL_SOURCE, StringComparison.OrdinalIgnoreCase);
+            // Epic builds only support emailOTP due to deeplink limitations
+            // See: https://github.com/decentraland/unity-explorer/issues/9554
+            bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth) || isEpicBuild;
+            bool otherLoginMethodsEnabled = !isEpicBuild;
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
 
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
@@ -173,7 +174,8 @@ namespace DCL.AuthenticationScreenFlow
 
             fsm.AddStates(
                 new InitAuthState(viewInstance, installSource),
-                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
+                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
+                    enableEmailOTP, otherLoginMethodsEnabled),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),

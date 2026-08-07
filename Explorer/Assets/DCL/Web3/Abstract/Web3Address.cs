@@ -22,6 +22,25 @@ namespace DCL.Web3
             this.address = address.ToLower();
         }
 
+        /// <summary>
+        /// Checks that a value is shaped like an Ethereum wallet address: "0x" followed by 40 hex digits.
+        /// </summary>
+        /// <param name="walletAddress">The value to check. Null and malformed values return false.</param>
+        public static bool IsValidWalletAddress(string? walletAddress)
+        {
+            if (walletAddress == null || walletAddress.Length != ETH_ADDRESS_LENGTH) return false;
+
+            if (walletAddress[0] != '0' || (walletAddress[1] != 'x' && walletAddress[1] != 'X')) return false;
+
+            for (int i = 2; i < walletAddress.Length; i++)
+            {
+                if (walletAddress[i] is not (>= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F'))
+                    return false;
+            }
+
+            return true;
+        }
+
         public override string ToString() =>
             address;
 
