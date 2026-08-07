@@ -5,6 +5,7 @@ using DCL.Profiling;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
+using System;
 using System.Globalization;
 using System.Text;
 using System.Threading;
@@ -14,8 +15,9 @@ namespace DCL.McpServer.Tools
 {
     /// <summary>
     ///     Samples the client's real frame rate over its own short window (no shared profiler state
-    ///     is touched) and reports it together with the current scene's tick FPS, so an agent can
-    ///     correlate a viewpoint's content cost with the frame rate it actually produces.
+    ///     is touched) and reports it together with the current scene's tick FPS measured over the
+    ///     same window, so an agent can correlate a viewpoint's content cost with the frame rate it
+    ///     actually produces.
     /// </summary>
     public class GetPerformanceStatsTool : McpTool
     {
@@ -31,7 +33,7 @@ namespace DCL.McpServer.Tools
 
         public override string Description =>
             "Sample the client's real frame rate over a short window and report render FPS (average, min, max, hiccup frames > 50 ms) plus "
-            + "the current scene's tick FPS vs its target. The call holds for sampleSeconds while it measures. Use together with "
+            + "the current scene's tick FPS vs its target, both measured over the same window. The call holds for sampleSeconds while it measures. Use together with "
             + "get_scene_content_breakdown (sortBy=visibleTriangles) to correlate a viewpoint's content cost with the frame rate it actually "
             + "produces — position the camera first, then sample.";
 
@@ -50,7 +52,7 @@ namespace DCL.McpServer.Tools
                                                              .Number("minFps")
                                                              .Number("maxFps")
                                                              .Integer("targetFps"),
-                              "The current scene's JS tick rate, or null when no scene is loaded or it has not ticked yet.", nullable: true)
+                              "The current scene's JS tick rate over the sampling window, or null when no scene is loaded, the scene changed mid-window, or it did not tick during the window (e.g. paused).", nullable: true)
                           .Build();
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
@@ -72,6 +74,9 @@ namespace DCL.McpServer.Tools
             float minFrameMs = float.MaxValue;
             float maxFrameMs = 0f;
             var hiccupFrames = 0;
+
+            ISceneFacade? sceneAtStart = scenesCache.CurrentScene.Value;
+            long ticksAddedBefore = sceneAtStart?.RuntimeMetrics.TickTimesNs.AddedCount ?? 0;
 
             float start = UnityEngine.Time.realtimeSinceStartup;
 
@@ -98,19 +103,21 @@ namespace DCL.McpServer.Tools
             JObject? sceneTick = null;
             ISceneFacade? scene = scenesCache.CurrentScene.Value;
 
-            if (scene != null)
+            if (scene != null && ReferenceEquals(scene, sceneAtStart))
             {
                 SceneRuntimeMetrics metrics = scene.RuntimeMetrics;
+                long ticksInWindow = metrics.TickTimesNs.AddedCount - ticksAddedBefore;
                 int tickSamples = metrics.TickTimesNs.CopySnapshot(tickScratch);
+                var usedSamples = (int)Math.Min(ticksInWindow, tickSamples);
 
-                if (tickSamples > 0)
+                if (usedSamples > 0)
                 {
                     long totalNs = 0;
                     long minNs = long.MaxValue;
                     long maxNs = long.MinValue;
                     var validSamples = 0;
 
-                    for (var i = 0; i < tickSamples; i++)
+                    for (int i = tickSamples - usedSamples; i < tickSamples; i++)
                     {
                         long ns = tickScratch[i];
                         if (ns <= 0) continue;
@@ -155,7 +162,7 @@ namespace DCL.McpServer.Tools
                 text.Append("Scene tick: ").Append(sceneTick["averageFps"]!.Value<float>().ToString("F1", CultureInfo.InvariantCulture))
                     .Append(" fps avg (target ").Append(sceneTick["targetFps"]!.Value<int>()).Append(").");
             else
-                text.Append("Scene tick: no data (no scene loaded or it has not ticked yet).");
+                text.Append("Scene tick: no data (no scene loaded, scene changed mid-sample, or no ticks during the window).");
 
             return McpToolResult.TextWithStructured(text.ToString(), structured);
         }
