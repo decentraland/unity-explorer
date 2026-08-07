@@ -72,7 +72,7 @@ namespace DCL.BugReporting.Tests
             // Arrange
             byte[] imageBytes = { 1, 2, 3 };
             var image = new BugReportImage(imageBytes, "image/png", null!);
-            var draft = new BugReportDraft(ISSUE_TYPE_INDEX, $"  {DESCRIPTION}  ", image, shareLogs: false);
+            var draft = new BugReportDraft(ISSUE_TYPE_INDEX, $"  {DESCRIPTION}  ", image);
 
             // Act
             Result<string> result = await controller.SubmitDraftAsync(draft, CancellationToken.None);
@@ -84,7 +84,6 @@ namespace DCL.BugReporting.Tests
             Assert.AreEqual(DESCRIPTION, captured.Description);
             Assert.AreEqual(imageBytes, captured.Image);
             Assert.AreEqual("image/png", captured.ImageContentType);
-            Assert.IsFalse(captured.ShareLogs);
             Assert.IsNull(captured.UserName);
             Assert.IsNull(captured.Coordinates);
         }
@@ -169,6 +168,6 @@ namespace DCL.BugReporting.Tests
         }
 
         private static BugReportDraft Draft() =>
-            new (ISSUE_TYPE_INDEX, DESCRIPTION, null, shareLogs: true);
+            new (ISSUE_TYPE_INDEX, DESCRIPTION, null);
     }
 }

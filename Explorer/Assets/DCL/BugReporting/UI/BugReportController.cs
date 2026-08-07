@@ -22,9 +22,11 @@ namespace DCL.BugReporting.UI
     /// </summary>
     public class BugReportController : ControllerBase<BugReportView, BugReportParams>
     {
-        // The service appends coordinates and the Sentry link to the description, so the form's
-        // cap stays well under the proxy's 10,000 characters-per-attribute limit.
-        internal const int DESCRIPTION_MAX_LENGTH = 5000;
+        // The proxy HTML-escapes and formats the description (newlines become <br>, & becomes
+        // &amp;...) and enforces its 10,000 characters-per-attribute cap on that inflated text,
+        // with coordinates and the Sentry link appended by the service on top. The form's cap
+        // leaves room for that inflation even on escape-heavy input like pasted logs.
+        internal const int DESCRIPTION_MAX_LENGTH = 2500;
 
         // Well above the order overlays are pushed with (1), so the boosted form clears them all.
         private const int ABOVE_OVERLAYS_ORDER = 100;
@@ -73,6 +75,10 @@ namespace DCL.BugReporting.UI
             ClearAttachedImage();
         }
 
+        /// <summary>
+        ///     The logs toggle is a required agreement: every report ships the client log, so a
+        ///     report cannot be submitted with it unchecked.
+        /// </summary>
         internal static bool CanSubmit(int issueTypeIndex, string description, bool shareLogs) =>
             issueTypeIndex >= 0 && issueTypeIndex < BugReportIssueTypes.ALL.Length && !string.IsNullOrWhiteSpace(description) && shareLogs;
 
@@ -172,8 +178,7 @@ namespace DCL.BugReporting.UI
             var draft = new BugReportDraft(
                 viewInstance.IssueTypeDropdown.value,
                 viewInstance.DescriptionInput.text,
-                attachedImage,
-                viewInstance.ShareLogsToggle.isOn);
+                attachedImage);
 
             viewInstance.ShowState(BugReportViewState.Success);
             SubmitDetachedAsync(draft, submissionsCts.Token).Forget();
@@ -201,7 +206,6 @@ namespace DCL.BugReporting.UI
                 Description = draft.Description.Trim(),
                 Image = draft.Image?.Bytes,
                 ImageContentType = draft.Image?.ContentType,
-                ShareLogs = draft.ShareLogs,
                 UserName = userName,
                 Coordinates = CurrentParcel(),
                 MeetsMinimumSpecs = sessionContext?.MeetsMinimumSpecs,
@@ -241,7 +245,13 @@ namespace DCL.BugReporting.UI
             Result<BugReportImage> picked = await imageProvider!.PickAsync(ct);
 
             if (ct.IsCancellationRequested)
+            {
+                // The view is gone: a picked preview has no owner left to destroy it later.
+                if (picked.Success)
+                    UnityEngine.Object.Destroy(picked.Value.Preview);
+
                 return;
+            }
 
             if (!picked.Success)
             {
@@ -277,14 +287,12 @@ namespace DCL.BugReporting.UI
         public readonly int IssueTypeIndex;
         public readonly string Description;
         public readonly BugReportImage? Image;
-        public readonly bool ShareLogs;
 
-        public BugReportDraft(int issueTypeIndex, string description, BugReportImage? image, bool shareLogs)
+        public BugReportDraft(int issueTypeIndex, string description, BugReportImage? image)
         {
             IssueTypeIndex = issueTypeIndex;
             Description = description;
             Image = image;
-            ShareLogs = shareLogs;
         }
     }
 }

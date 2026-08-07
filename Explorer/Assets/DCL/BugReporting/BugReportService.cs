@@ -36,8 +36,7 @@ namespace DCL.BugReporting
                 input.ContactEmail,
                 input.UserName,
                 input.Image,
-                input.ImageContentType,
-                input.ShareLogs);
+                input.ImageContentType);
 
             // A Sentry failure never blocks the ticket: the description degrades to a note instead.
             Result<string> feedbackLink = await feedbackService.SubmitAsync(feedbackReport, ct);

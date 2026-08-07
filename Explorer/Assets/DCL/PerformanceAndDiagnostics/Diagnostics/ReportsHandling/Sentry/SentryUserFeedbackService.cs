@@ -44,6 +44,9 @@ namespace DCL.Diagnostics.Sentry
 
         public virtual async UniTask<Result<string>> SubmitAsync(SentryUserFeedbackReport report, CancellationToken ct)
         {
+            if (ct.IsCancellationRequested)
+                return Result<string>.CancelledResult();
+
             // Every capture call is a silent no-op while the hub is disabled, so refuse to report success.
             if (!SentrySdk.IsEnabled)
                 return Result<string>.ErrorResult("Sentry is not initialized");
@@ -56,7 +59,7 @@ namespace DCL.Diagnostics.Sentry
 
             // A feedback envelope keeps a single attachment, so the log travels on an event of its
             // own, which the feedback points at through its associated event id.
-            SentryId logEventId = report.AttachLog ? CaptureLogEvent() : SentryId.Empty;
+            SentryId logEventId = CaptureLogEvent();
 
             SentryHint? hint = null;
 
@@ -83,12 +86,11 @@ namespace DCL.Diagnostics.Sentry
                 return Result<string>.ErrorResult($"Sentry rejected the feedback: {result}");
 
             // The deep link resolves only once the envelope reaches Sentry, so delivery is awaited
-            // before the link is handed out. A timed-out flush still delivers later, so it is not an error.
+            // before the link is handed out. A timed-out flush still delivers later, so it is not an
+            // error, and a cancellation cannot recall the captured feedback: success is reported anyway.
             await FlushAsync();
 
-            return ct.IsCancellationRequested
-                ? Result<string>.CancelledResult()
-                : Result<string>.SuccessResult(string.Format(feedbackUrlTemplate, feedbackId));
+            return Result<string>.SuccessResult(string.Format(feedbackUrlTemplate, feedbackId));
         }
 
         private SentryId CaptureLogEvent()

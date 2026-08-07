@@ -8,6 +8,7 @@ using DCL.Prefs;
 using ECS.Abstract;
 using MVC;
 using System;
+using UnityEngine;
 
 namespace DCL.BugReporting.UI
 {
@@ -25,6 +26,7 @@ namespace DCL.BugReporting.UI
         private readonly Func<bool> isLoadingScreenOn;
 
         private bool promptExhausted;
+        private bool wasPaused = true;
 
         internal PerformanceIssuePromptSystem(World world, IMVCManager mvcManager, PerformanceIssueDetector detector, Func<bool> isLoadingScreenOn, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -44,12 +46,22 @@ namespace DCL.BugReporting.UI
             if (promptExhausted)
                 return;
 
-            // A modal view or the loading screen means either a flow the prompt must not interrupt
-            // or a state whose frame times are not gameplay evidence. The loading screen needs its
-            // own check: it lives on the Overlay layer, which does not count as modal.
-            if (mvcManager.IsAnyModalViewShowing() || isLoadingScreenOn())
+            // A modal view, the loading screen or an unfocused window means either a flow the
+            // prompt must not interrupt or a state whose frame times are not gameplay evidence.
+            // The loading screen needs its own check: it lives on the Overlay layer, which does
+            // not count as modal.
+            if (mvcManager.IsAnyModalViewShowing() || isLoadingScreenOn() || !Application.isFocused)
             {
                 detector.Reset();
+                wasPaused = true;
+                return;
+            }
+
+            // The first frame after a pause carries the delta of whatever ended it (a refocus
+            // stall, the post-loading scene activation spike), which would read as a fake freeze.
+            if (wasPaused)
+            {
+                wasPaused = false;
                 return;
             }
 

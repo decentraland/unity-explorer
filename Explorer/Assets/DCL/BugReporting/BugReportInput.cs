@@ -20,9 +20,6 @@ namespace DCL.BugReporting
         /// <summary>Mime type of <see cref="Image" />, e.g. "image/jpeg".</summary>
         public string? ImageContentType;
 
-        /// <summary>Whether the user consented to sharing the client log.</summary>
-        public bool ShareLogs;
-
         public string? ContactEmail;
         public string? UserName;
         public Vector2Int? Coordinates;

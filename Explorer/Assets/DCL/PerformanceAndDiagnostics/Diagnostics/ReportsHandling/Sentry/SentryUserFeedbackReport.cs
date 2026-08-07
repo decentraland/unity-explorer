@@ -20,16 +20,13 @@ namespace DCL.Diagnostics.Sentry
         /// </summary>
         public readonly string? ImageContentType;
 
-        public readonly bool AttachLog;
-
-        public SentryUserFeedbackReport(string message, string? contactEmail, string? userName, byte[]? image, string? imageContentType, bool attachLog)
+        public SentryUserFeedbackReport(string message, string? contactEmail, string? userName, byte[]? image, string? imageContentType)
         {
             Message = message;
             ContactEmail = contactEmail;
             UserName = userName;
             Image = image;
             ImageContentType = imageContentType;
-            AttachLog = attachLog;
         }
     }
 }

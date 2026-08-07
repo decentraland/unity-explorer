@@ -1,8 +1,6 @@
-using Crosstales;
 using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.Utility.Types;
-using System.IO;
 using System.Threading;
 using UnityEngine;
 
@@ -37,11 +35,25 @@ namespace DCL.BugReporting.UI
             if (data.Length > MAX_IMAGE_SIZE_BYTES)
                 return Result<BugReportImage>.ErrorResult($"The image exceeds {MAX_IMAGE_SIZE_BYTES / (1024 * 1024)} MB");
 
-            Texture2D preview = data.CTToTexture();
-            return Result<BugReportImage>.SuccessResult(new BugReportImage(data, ContentTypeFor(path), preview));
+            // Decoding doubles as validation: the extension filter cannot vouch for the content.
+            var preview = new Texture2D(2, 2);
+
+            if (!preview.LoadImage(data))
+            {
+                Object.Destroy(preview);
+                return Result<BugReportImage>.ErrorResult("The file is not a readable image");
+            }
+
+            return Result<BugReportImage>.SuccessResult(new BugReportImage(data, ContentTypeFor(data), preview));
         }
 
-        private static string ContentTypeFor(string path) =>
-            Path.GetExtension(path).ToLowerInvariant() == ".png" ? "image/png" : "image/jpeg";
+        /// <summary>
+        ///     From the content, not the file name: LoadImage accepting the bytes proves them to be
+        ///     one of the two formats, and a mislabeled extension must not mislead the uploads.
+        /// </summary>
+        private static string ContentTypeFor(byte[] data) =>
+            data.Length >= 4 && data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47
+                ? "image/png"
+                : "image/jpeg";
     }
 }
