@@ -15,8 +15,7 @@ namespace DCL.Multiplayer.Movement
         public const string TEST_ID = "SelfReplica";
         private const short MAX_MESSAGES = 10;
 
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool;
-        private readonly SimplePriorityQueue<NetworkMovementMessage, double> queue;
+        private readonly BoundedNetworkMessageQueue queue;
         private bool disposed;
 
         public NetworkMovementMessage PastMessage;
@@ -25,7 +24,7 @@ namespace DCL.Multiplayer.Movement
         public bool WasTeleported;
         public bool WasPassedThisFrame;
 
-        public readonly SimplePriorityQueue<NetworkMovementMessage, double>? Queue => disposed ? null : queue;
+        public readonly BoundedNetworkMessageQueue? Queue => disposed ? null : queue;
 
         public float InitialCooldownTime;
 
@@ -37,8 +36,7 @@ namespace DCL.Multiplayer.Movement
 
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool)
         {
-            this.queuePool = queuePool;
-            queue = queuePool.Get()!;
+            queue = new BoundedNetworkMessageQueue(MAX_MESSAGES);
             disposed = false;
 
             PastMessage = new NetworkMovementMessage();
@@ -59,10 +57,7 @@ namespace DCL.Multiplayer.Movement
 
         public void Enqueue(NetworkMovementMessage message)
         {
-            while (queue.Count > MAX_MESSAGES)
-                queue.Dequeue();
-
-            queue.Enqueue(message, message.timestamp);
+            queue.Enqueue(message);
         }
 
         public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)
@@ -99,7 +94,7 @@ namespace DCL.Multiplayer.Movement
         public void Dispose()
         {
             disposed = true;
-            queuePool.Release(queue);
+            queue.Clear();
         }
     }
 }
