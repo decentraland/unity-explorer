@@ -96,7 +96,7 @@ The content tools report *counts*, and some counts look scarier than they are. G
 
 ## Structured output
 
-`get_player_state`, `get_scene_state`, `get_scene_content_stats` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
+`get_player_state`, `get_scene_state`, `get_scene_content_stats`, `get_scene_content_breakdown`, `get_performance_stats` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only on the read-only state tools that benefit from it** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
 
 ## The scene-iteration loop
 

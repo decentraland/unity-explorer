@@ -92,7 +92,8 @@ namespace DCL.McpServer.Tests
             var structured = (JObject)Execute(tool).Payload["structuredContent"]!;
             var entries = (JArray)structured["entries"]!;
 
-            // Assert — default sort is triangles, heaviest first
+            // Assert — schema and payload agree, default sort is triangles, heaviest first
+            McpSchemaAssert.KeysMatch(tool.OutputSchema, structured);
             Assert.That(entries.Count, Is.EqualTo(3));
             Assert.That(entries[0]!["source"]!.Value<string>(), Is.EqualTo("heavy.glb"));
             Assert.That(entries[1]!["source"]!.Value<string>(), Is.EqualTo("mid.glb"));

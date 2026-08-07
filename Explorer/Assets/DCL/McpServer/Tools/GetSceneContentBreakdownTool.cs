@@ -41,6 +41,33 @@ namespace DCL.McpServer.Tools
             + "a high material count mainly costs memory, textures and lost instancing opportunities. Check shaderVariants before recommending "
             + "material dedup as a frame-time optimization. Triggers a fresh counting pass over the currently rendered content.";
 
+        public override JObject OutputSchema =>
+            McpJsonSchema.Object()
+                          .Integer("sceneTriangles")
+                          .Integer("sceneMaterials", "Unique materials scene-wide; entries can sum above this because a shared material counts once per source.")
+                          .Integer("sceneShaderVariants")
+                          .Integer("sceneDrawCallsEstimate", "Material slots summed across all sources' renderers, before batching.")
+                          .Integer("visibleTriangles", "Triangles of renderers that passed culling for the current point of view, summed across all sources.")
+                          .Integer("visibleDrawCallsEstimate")
+                          .String("sortedBy")
+                          .Integer("totalSources")
+                          .Integer("returned", "Entries included below after applying limit.")
+                          .ObjectArray("entries", McpJsonSchema.Object()
+                                                                .String("source")
+                                                                .Integer("triangles")
+                                                                .Number("trianglesSharePercent")
+                                                                .Integer("instances")
+                                                                .Integer("renderers")
+                                                                .Integer("materials")
+                                                                .Integer("shaderVariants")
+                                                                .Integer("drawCallsEstimate")
+                                                                .Integer("visibleTriangles")
+                                                                .Number("visibleTrianglesSharePercent")
+                                                                .Integer("visibleRenderers")
+                                                                .Integer("visibleDrawCallsEstimate"),
+                              "Heaviest sources first, per sortBy.")
+                          .Build();
+
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
