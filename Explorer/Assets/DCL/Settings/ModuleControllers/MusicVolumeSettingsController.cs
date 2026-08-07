@@ -27,11 +27,13 @@ namespace DCL.Settings.ModuleControllers
 		private void SetMusicVolumeSettings(float volumePercentage)
 		{
 			generalAudioMixer.SetFloat(MUSIC_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-			DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_MUSIC_VOLUME, volumePercentage, save: true);
+			DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_MUSIC_VOLUME, volumePercentage);
+			PrefsSaveDebouncer.Shared.RequestSave();
 		}
 
 		public override void Dispose()
 		{
+			PrefsSaveDebouncer.Shared.FlushIfPending();
 			view.SliderView.Slider.onValueChanged.RemoveListener(SetMusicVolumeSettings);
 		}
 	}
