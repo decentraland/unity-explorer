@@ -139,7 +139,7 @@ namespace DCL.Chat
             backgroundRectTransform.sizeDelta = backgroundSize;
         }
 
-        private float CalculatePreferredWidth(string displayText, ChatMessage originalMessage, string usernameOverride = null, string walletIdOverride = null)
+        internal float CalculatePreferredWidth(string displayText, ChatMessage originalMessage, string usernameOverride = null, string walletIdOverride = null)
         {
             string username = string.IsNullOrEmpty(usernameOverride) ? originalMessage.SenderValidatedName : usernameOverride;
             int nameLength = 0;
@@ -155,7 +155,7 @@ namespace DCL.Chat
             TMP_Text messageContentText = messageContentElement.messageContentText;
 
             // We use the displayText to get the textInfo, but the original message for emoji counting.
-            messageContentText.SetText(displayText); // Important: Set text first to get accurate textInfo
+            messageContentElement.SetMessageContent(displayText);
             int parsedTextLength = messageContentText.textInfo.characterCount;
 
             var emojisCount = 0;
