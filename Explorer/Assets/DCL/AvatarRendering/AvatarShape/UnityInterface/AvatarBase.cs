@@ -17,6 +17,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private int rightPointAtLayerIndex;
         private int rotationLayerIndex;
 
+        private float lastPointAtLayerWeight = float.NaN;
+        private float lastRotationLayerWeight = float.NaN;
+
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
@@ -200,11 +203,19 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void StopMaskedLegacyEmote() =>
             maskedLegacyBlender?.Stop();
 
-        public void SetPointAtLayerWeight(float weight) =>
+        public void SetPointAtLayerWeight(float weight)
+        {
+            if (weight == lastPointAtLayerWeight) return;
+            lastPointAtLayerWeight = weight;
             AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
+        }
 
-        public void SetRotationLayerWeight(float weight) =>
+        public void SetRotationLayerWeight(float weight)
+        {
+            if (weight == lastRotationLayerWeight) return;
+            lastRotationLayerWeight = weight;
             AvatarAnimator.SetLayerWeight(rotationLayerIndex, weight);
+        }
 
         public void SetAnimatorFloat(int hash, float value)
         {
@@ -261,6 +272,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             LegacyAnimation?.Stop();
             maskedLegacyBlender?.Stop();
             AvatarAnimator.Rebind();
+
+            lastPointAtLayerWeight = float.NaN;
+            lastRotationLayerWeight = float.NaN;
+
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
             FeetIKRig.enabled = false;
