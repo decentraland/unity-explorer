@@ -19,7 +19,32 @@ namespace ECS.Unity.Visibility.Systems
             forEachEvent = ProcessEvent;
         }
 
+        /// <summary>
+        ///     Default cadence used by consumers that are not split into throttled/un-throttled halves
+        ///     (e.g. text-shape and NFT-shape visibility): dirty scans, then the every-frame event drain,
+        ///     then removal — preserving the original ordering and behavior.
+        /// </summary>
         protected override void Update(float t)
+        {
+            UpdateDirtyDrivenVisibility();
+            ApplyNewlyCreatedRenderables();
+            HandleRemovedVisibilityComponents();
+        }
+
+        /// <summary>
+        ///     Dirty-driven visibility application (the two full renderer-archetype scans). This is the
+        ///     path the split concrete systems carry the <c>[ThrottlingEnabled]</c> attribute for.
+        ///     <para>
+        ///     Both signals these scans react to can only change while the SDK update gate is open:
+        ///     <see cref="ResolvedVisibilityComponent" /><c>.IsDirty</c> is set by the
+        ///     <c>[ThrottlingEnabled]</c> <c>VisibilityPropagationSystem</c>, and
+        ///     <c>PBVisibilityComponent.IsDirty</c> is set on CRDT application (gate-open) and cleared by
+        ///     the <c>[ThrottlingEnabled]</c> <c>ResetDirtyFlagSystem</c>. On gate-closed frames nothing
+        ///     could have set <c>IsDirty</c>, so aligning these scans to the producer's throttled cadence
+        ///     removes the idle-frame waste with no behavioral change.
+        ///     </para>
+        /// </summary>
+        protected void UpdateDirtyDrivenVisibility()
         {
             // Primary: use ResolvedVisibilityComponent (handles propagation)
             UpdateVisibilityFromResolvedVisibilityQuery(World!);
@@ -27,11 +52,31 @@ namespace ECS.Unity.Visibility.Systems
             // Fallback: direct PBVisibilityComponent for entities without resolved visibility
             // (backwards compatibility for entities not yet processed by propagation system)
             UpdateVisibilityFromPBComponentQuery(World);
+        }
 
-            // Handle newly created renderable components
-            eventsBuffer.ForEach(forEachEvent);
-
+        /// <summary>
+        ///     Reset-to-visible on visibility-component removal. RemovedComponents is a persistent
+        ///     per-entity component (NOT drained by ClearEntityEventsSystem) whose entries are only added
+        ///     during CRDT application, so it is safe to co-locate with the throttled dirty scans.
+        /// </summary>
+        protected void HandleRemovedVisibilityComponents()
+        {
             HandleComponentRemovalQuery(World);
+        }
+
+        /// <summary>
+        ///     Applies visibility to renderables whose create event was produced this frame.
+        ///     <para>
+        ///     MUST run on every frame: those one-shot events are produced on whatever frame an async load
+        ///     resolves (routinely a gate-closed frame for distant/throttled scenes) and are cleared every
+        ///     frame by <c>ClearEntityEventsSystem</c>, so a throttled consumer would be skipped and the
+        ///     event dropped. For the split systems this runs from the un-throttled companion
+        ///     <c>*VisibilityEventSystem</c>.
+        ///     </para>
+        /// </summary>
+        protected void ApplyNewlyCreatedRenderables()
+        {
+            eventsBuffer.ForEach(forEachEvent);
         }
 
         /// <summary>

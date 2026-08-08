@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private Texture2DArray CreateTexture2DArray()
         {
-            var texture2DArray = new Texture2DArray(resolution.x, resolution.y, minArraySize, textureFormat, false, false);
+            var texture2DArray = new Texture2DArray(resolution.x, resolution.y, minArraySize, textureFormat, true, false);
             texture2DArray.name = $"TextureArray_domain:{domain}_x:{resolution.x}_y:{resolution.y}_minArraySize:{minArraySize}_textureFormat:{textureFormat}";
             texture2DArray.Apply(false, true);
             texture2DArray.filterMode = FilterMode.Bilinear;

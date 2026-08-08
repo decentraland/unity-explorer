@@ -73,15 +73,19 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public void OnBecameVisible()
         {
-            poolableBehavior.OnBecameVisible().title.text = title;
-            poolableBehavior.instance.SetCategorySprite(iconSprite);
+            // OnBecameVisible() does pool.Get on the first call and is idempotent afterwards; call it
+            // once and reuse the returned instance so the pooled object's transform is written a single
+            // time instead of five (matches PinMarker.OnBecameVisible).
+            CategoryMarkerObject obj = poolableBehavior.OnBecameVisible();
+            obj.title.text = title;
+            obj.SetCategorySprite(iconSprite);
 
-            MarkerHelper.SetAlpha(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 0);
-            MarkerHelper.FadeToAsync(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 1, 0.5f, Ease.OutBack, CancellationToken.None).Forget();
+            MarkerHelper.SetAlpha(obj.renderers, obj.textRenderers, 0);
+            MarkerHelper.FadeToAsync(obj.renderers, obj.textRenderers, 1, 0.5f, Ease.OutBack, CancellationToken.None).Forget();
 
             if (currentBaseScale != 0)
             {
-                poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                obj.SetScale(currentBaseScale, currentNewScale);
                 ToggleSelection(isSelectedPin);
             }
         }

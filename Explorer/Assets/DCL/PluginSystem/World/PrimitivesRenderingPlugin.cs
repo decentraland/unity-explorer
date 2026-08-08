@@ -47,6 +47,10 @@ namespace DCL.PluginSystem.World
             ReleaseOutdatedRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             PrimitivesVisibilitySystem.InjectToWorld(ref builder, buffer);
+            // Un-throttled companion: drains the one-shot instantiation events every frame so a primitive
+            // instantiated on a gate-closed frame still gets its initial visibility (the throttled system
+            // above would miss it, and ClearEntityEventsSystem clears the buffer the same frame).
+            PrimitivesVisibilityEventSystem.InjectToWorld(ref builder, buffer);
 
             ResetDirtyFlagSystem<PBMeshRenderer>.InjectToWorld(ref builder);
 

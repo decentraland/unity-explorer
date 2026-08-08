@@ -105,7 +105,8 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 if (defaultTextures!.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
                 {
                     var defaultSlot = slotHandler.GetNextFreeSlot();
-                    Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                    for (int mip = 0; mip < defaultTexture.mipmapCount; ++mip)
+                        Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: mip, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: mip);
                 }
             }
 
@@ -145,7 +146,8 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                     if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
                     {
                         var defaultSlot = slotHandler.GetNextFreeSlot();
-                        Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                        for (int mip = 0; mip < defaultTexture.mipmapCount; ++mip)
+                            Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: mip, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: mip);
                     }
                 }
             }
@@ -161,13 +163,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public TextureArraySlot SetTexture(Material material, Texture2D texture, Vector2Int resolution)
         {
             TextureArraySlot slot = GetOrCreateSlotHandler(resolution).GetNextFreeSlot();
-            var mipLevel = 0;
 
-            //for (int mipLevel = 0; mipLevel < texture.mipmapCount; ++mipLevel)
-            //{
-            Graphics.CopyTexture(texture, srcElement: 0, srcMip: mipLevel, slot.TextureArray, dstElement: slot.UsedSlotIndex, dstMip: mipLevel);
+            for (int mipLevel = 0; mipLevel < texture.mipmapCount; ++mipLevel)
+                Graphics.CopyTexture(texture, srcElement: 0, srcMip: mipLevel, slot.TextureArray, dstElement: slot.UsedSlotIndex, dstMip: mipLevel);
 
-            //}
             material.SetInteger(arrayID, slot.UsedSlotIndex);
             material.SetTexture(textureID, slot.TextureArray);
             return slot;

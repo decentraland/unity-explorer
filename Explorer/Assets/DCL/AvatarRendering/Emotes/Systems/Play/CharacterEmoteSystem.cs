@@ -152,6 +152,12 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
+            // Non-emoting avatars hold no live emote reference and rest on tag 0 — polling Mecanim for
+            // them every frame is pure waste. Reset() deliberately leaves the tag nonzero for one frame,
+            // so the exit transition (EMOTE/EMOTE_LOOP -> 0) is still captured before the guard arms.
+            if (emoteComponent.CurrentEmoteReference == null && emoteComponent.CurrentAnimationTag == 0)
+                return;
+
             int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
             emoteComponent.SetAnimationTag(currentStateTag);
         }

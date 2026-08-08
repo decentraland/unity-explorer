@@ -61,7 +61,11 @@ namespace ECS.Unity.Transforms.Components
             Transform.SetPositionAndRotation(worldPosition, worldRotation);
             Transform.localScale = localScale;
 
-            UpdateCache();
+            // SetPositionAndRotation is world-authoritative regardless of parenting, so the resulting
+            // world pose equals the arguments — assign the cache directly instead of paying two native
+            // Transform property getters via UpdateCache()/Cached.Update(Transform).
+            Cached.WorldPosition = worldPosition;
+            Cached.WorldRotation = worldRotation;
         }
 
         public void SetTransform(Transform transform)

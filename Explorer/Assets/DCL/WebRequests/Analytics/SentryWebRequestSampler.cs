@@ -71,6 +71,22 @@ namespace DCL.WebRequests.Analytics
         }
 
         /// <summary>
+        ///     Cheap pre-check that reuses the exact same matcher as <see cref="Execute" />: returns true only for
+        ///     URLs that at least one configured template matches (sampling rate ≥ 0). Lets the download hot path
+        ///     skip the whole transaction/allocation setup for the non-whitelisted CDN-download majority that the
+        ///     sampler would otherwise sample at rate 0. Allocation-free: index loop (no <see cref="IReadOnlyList{T}" />
+        ///     enumerator), and <see cref="UrlMatchesTemplate" /> hits the cached template + StartsWith fast path.
+        /// </summary>
+        public bool IsWhitelisted(string url)
+        {
+            for (var i = 0; i < urlsToSample.Count; i++)
+                if (UrlMatchesTemplate(url, urlsToSample[i].url, out _))
+                    return true;
+
+            return false;
+        }
+
+        /// <summary>
         ///     Checks if a URL matches a template URL pattern and returns the cached template data.
         ///     Uses simple StartsWith for templates without placeholders,
         ///     regex only when placeholders like {{0}} are present.

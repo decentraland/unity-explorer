@@ -29,6 +29,13 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             RegisterMainPlayerQuery(World);
             RegisterRemoteAvatarsQuery(World);
+
+            // Refresh each registered avatar's matrix count from the authoritative
+            // AvatarCustomSkinningComponent.BoneCount (the exact range ComputeSkinning uploads) AFTER
+            // registration and BEFORE scheduling, so a re-equip that changes the bone count is honoured
+            // even when the avatar (e.g. the main player) is not released/re-registered.
+            RefreshBoneCountsQuery(World);
+
             avatarTransformMatrixBatchJob.ScheduleBoneMatrixCalculation();
         }
 
@@ -53,6 +60,13 @@ namespace DCL.AvatarRendering.AvatarShape
                 return;
 
             avatarTransformMatrixBatchJob.RegisterAvatar(avatarBase, ref transformMatrixComponent);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void RefreshBoneCounts(ref AvatarTransformMatrixComponent transformMatrixComponent, ref AvatarCustomSkinningComponent skinningComponent)
+        {
+            avatarTransformMatrixBatchJob.SetBoneCount(ref transformMatrixComponent, skinningComponent.BoneCount);
         }
     }
 }

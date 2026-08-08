@@ -94,6 +94,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 currentOwnedTexture = await textureTask!;
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
+
+                // Block-compress the CPU-readable RGBA32 buffer-path tile (DXT5, ~4x smaller) to cut
+                // retained atlas VRAM. Compress needs multiple-of-4 dims; skip non-conforming tiles.
+                if ((texture.width & 3) == 0 && (texture.height & 3) == 0 && texture.format == TextureFormat.RGBA32)
+                    texture.Compress(false);
             }
             catch (Exception e)
             {
