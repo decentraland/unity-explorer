@@ -83,7 +83,12 @@ namespace DCL.Multiplayer.Movement
 
             // Realm-agnostic on purpose: removals must process even for peers whose stored realm is stale
             if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out Web3Address wallet))
-                removeIntentions.Enqueue(wallet);
+            {
+                if (peerIdCache.TryGetPeerId(wallet, out uint currentPeerId) && currentPeerId != playerLeft.SubjectId)
+                    ReportHub.Log(ReportCategory.MULTIPLAYER, $"Ignoring stale PlayerLeft for {playerLeft.SubjectId}: {wallet} re-joined as {currentPeerId}");
+                else
+                    removeIntentions.Enqueue(wallet);
+            }
 
             peerIdCache.Remove(playerLeft.SubjectId);
             PurgeQueues(playerLeft.SubjectId);

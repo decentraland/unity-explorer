@@ -292,6 +292,63 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
         }
 
+        // Regression coverage for unity-explorer#9337 (join-epoch guard, potential-fix.patch site 3+4):
+        // a PlayerLeft for a superseded session (a wallet that already re-joined under a new subject id)
+        // must not delete the freshly re-joined avatar. At pin, HandlePlayerLeft enqueues the remove
+        // unconditionally from the dangling forward entry, and PeerIdCache.Remove(7) then deletes the
+        // *live* wallet->peerId reverse mapping too (peersByWallet[7] still resolves to the wallet even
+        // though walletsByPeerId[wallet] already points at 9) - exactly the "re-join cancels the stale
+        // pending leave" gap the report's [INVISIBLE_AVATAR] diagnosis (03b82789c) named.
+        [Test]
+        public void IgnoreStalePlayerLeftForSupersededSession()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            DrainAnnouncements();
+
+            // Wallet re-joins under a new subject id (e.g. a reconnect burst) before the old session's
+            // leave is processed; the routing thread always serializes these messages in arrival order.
+            Handle(PlayerJoinedMessage(9, WALLET_1, REALM_A));
+            DrainAnnouncements();
+
+            // Late/re-ordered leave for the superseded session (subject id 7).
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available(),
+                    "A PlayerLeft for a superseded session must not delete the peer's live re-joined avatar.");
+
+            Assert.IsTrue(peerIdCache.TryGetWallet(9, out Web3Address wallet));
+            Assert.IsTrue(wallet.Equals(WALLET_1));
+
+            Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint currentPeerId),
+                "The re-join's reverse mapping (wallet -> current peer id) must survive the stale leave; " +
+                "at pin, PeerIdCache.Remove(7) deletes the *live* session's wallet->peerId entry too.");
+            Assert.AreEqual(9u, currentPeerId);
+        }
+
+        // Companion to IgnoreStalePlayerLeftForSupersededSession: the guard must only reject leaves for
+        // superseded sessions, not swallow every future leave for a wallet that has ever re-joined.
+        [Test]
+        public void ProcessPlayerLeftForCurrentSessionAfterRejoin()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            DrainAnnouncements();
+
+            Handle(PlayerJoinedMessage(9, WALLET_1, REALM_A));
+            DrainAnnouncements();
+
+            // Stale leave for the superseded session - ignored (see IgnoreStalePlayerLeftForSupersededSession).
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 7 } });
+
+            // The eventual leave for the CURRENT session (9) must still be processed normally.
+            Handle(new ServerMessage { PlayerLeft = new PlayerLeft { SubjectId = 9 } });
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.Pulse) }, bunch.Collection());
+
+            Assert.IsFalse(peerIdCache.TryGetWallet(9, out _));
+        }
+
         private void Handle(ServerMessage serverMessage)
         {
             byte[] bytes = serverMessage.ToByteArray();

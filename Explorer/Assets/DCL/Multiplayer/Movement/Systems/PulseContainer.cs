@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Movement
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly MovementInbox movementInbox;
-        private readonly PeerIdCache peerIdCache = new ();
+        internal readonly PeerIdCache peerIdCache = new ();
         private readonly MessagePipe messagePipe = new ();
 
         internal ENetTransport? transport;
