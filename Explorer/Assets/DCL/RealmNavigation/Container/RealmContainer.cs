@@ -4,7 +4,6 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -13,12 +12,7 @@ using Global.Dynamic;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
-using CommunicationData.URLHelpers;
-using DCL.Browser.DecentralandUrls;
-using DCL.FeatureFlags;
-using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PrivateWorlds;
 using DCL.Prefs;
 using Global.AppArgs;
 using Unity.Mathematics;
@@ -50,7 +44,8 @@ namespace DCL.RealmNavigation
         {
             var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
 
-            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner);
+            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner,
+                staticContainer.WebRequestsContainer.WebRequestController, urlsSource);
 
             var loadingScreenTimeout = new LoadingScreenTimeout();
             ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout, staticContainer.LoadingStatus);

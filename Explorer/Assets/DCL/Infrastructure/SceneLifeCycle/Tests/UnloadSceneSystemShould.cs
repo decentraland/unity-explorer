@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.Ipfs;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -7,6 +8,9 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
+using UnityEngine;
+using Utility;
 
 namespace DCL.SceneLifeCycle.Tests
 {
@@ -15,7 +19,7 @@ namespace DCL.SceneLifeCycle.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new UnloadSceneSystem(world, Substitute.For<IScenesCache>(), false);
+            system = new UnloadSceneSystem(world, Substitute.For<IScenesCache>());
         }
 
         [Test]
@@ -23,9 +27,13 @@ namespace DCL.SceneLifeCycle.Tests
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
 
-            Entity e = world.Create(scene, new DeleteEntityIntention(), new SceneDefinitionComponent());
+            var definitionComponent = new SceneDefinitionComponent(new SceneEntityDefinition("test-scene", new SceneMetadata()),
+                new List<Vector2Int>(), new List<ParcelMathHelper.ParcelCorners>(),
+                default(ParcelMathHelper.SceneGeometry), default(IpfsPath), isSDK7: true, isPortableExperience: false);
 
-            system.Update(0f);
+            Entity e = world.Create(scene, new DeleteEntityIntention(), definitionComponent);
+
+            system!.Update(0f);
 
             scene.Received(1).DisposeAsync();
 

@@ -23,12 +23,10 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class UnloadSceneSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IScenesCache scenesCache;
-        private readonly bool localSceneDevelopment;
 
-        internal UnloadSceneSystem(World world, IScenesCache scenesCache, bool localSceneDevelopment) : base(world)
+        internal UnloadSceneSystem(World world, IScenesCache scenesCache) : base(world)
         {
             this.scenesCache = scenesCache;
-            this.localSceneDevelopment = localSceneDevelopment;
         }
 
         protected override void Update(float t)
@@ -101,12 +99,14 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
-            ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition?.GetLogSceneName()}' disposed");
-            ReportHub.Log(ReportCategory.SCENE_LOADING, $"UnloadSceneSystem: UnloadLoadedScene '{definitionComponent.Definition?.GetLogSceneName()}'");
+            ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' disposed");
+            ReportHub.Log(ReportCategory.SCENE_LOADING, $"UnloadSceneSystem: UnloadLoadedScene '{definitionComponent.Definition.GetLogSceneName()}'");
 
-            // Keep definition so it won't be downloaded again = Cache in ECS itself
-            if (!localSceneDevelopment)
-                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
+            // Keep definition so it won't be downloaded again = Cache in ECS itself.
+            // This includes local scene development: its content hashes are path-derived, so the
+            // definition stays valid across file edits and the kept entity lets
+            // ResolveStaticPointersSystem recreate the facade promise on reload without re-discovery.
+            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
         }
 
 
@@ -117,7 +117,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             sceneFacade.DisposeAsync().Forget();
             scenesCache.RemovePortableExperienceFacade(definitionComponent.IpfsPath.EntityId);
-            ReportHub.Log(ReportCategory.SCENE_LOADING, $"UnloadSceneSystem: UnloadLoadedPortableExperienceScene '{definitionComponent.Definition?.GetLogSceneName()}'");
+            ReportHub.Log(ReportCategory.SCENE_LOADING, $"UnloadSceneSystem: UnloadLoadedPortableExperienceScene '{definitionComponent.Definition.GetLogSceneName()}'");
             World.Destroy(entity);
         }
 
