@@ -447,7 +447,7 @@ namespace DCL.PluginSystem.Global
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
+                eventElementsPool, shareContextMenu, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
                     settings.PlaceThumbnailHeight,
@@ -459,7 +459,7 @@ namespace DCL.PluginSystem.Global
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
-                userCalendar, shareContextMenu, webBrowser, decentralandUrlsSource, imageControllerProvider);
+                userCalendar, shareContextMenu, decentralandUrlsSource, imageControllerProvider);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,
@@ -476,7 +476,7 @@ namespace DCL.PluginSystem.Global
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
+                    eventElementsPool, shareContextMenu, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
             QualitySettingsController qualitySettingsController = new QualitySettingsController(
@@ -769,7 +769,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; } = null!;
 
             [field: SerializeField]
-            public PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings { get; private set; }
+            public PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings { get; private set; } = null!;
 
             [field: Header("Camera Reel")]
             [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]
@@ -781,10 +781,10 @@ namespace DCL.PluginSystem.Global
             [field: Header("Place Reel")] [field: SerializeField] public int PlaceGridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int PlaceThumbnailHeight { get; private set; }
             [field: SerializeField] public int PlaceThumbnailWidth { get; private set; }
-            [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
-            [field: Header("Place Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
-            [field: Header("Event Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
-            [field: Header("Quality Settings")] [field: SerializeField] internal QualityPresetsAsset QualityPresets { get; private set; }
+            [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; } = null!;
+            [field: Header("Place Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; } = null!;
+            [field: Header("Event Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; } = null!;
+            [field: Header("Quality Settings")] [field: SerializeField] internal QualityPresetsAsset QualityPresets { get; private set; } = null!;
         }
     }
 }

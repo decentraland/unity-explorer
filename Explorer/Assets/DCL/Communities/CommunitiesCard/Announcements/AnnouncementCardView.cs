@@ -2,6 +2,7 @@
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
@@ -82,8 +83,14 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         {
             currentAnnouncementId = announcementInfo.id;
 
-            announcementContent.text = announcementInfo.content;
-            authorName.text = announcementInfo.Profile.Name;
+            // Capped but not escaped: this label's richText is off in the prefab, so markup in the body is
+            // already inert and escaping would only mangle honest prose like "5 < 10".
+            announcementContent.text = RichTextSanitizer.Truncate(announcementInfo.content, RichTextSanitizer.DEFAULT_BODY_LENGTH);
+
+            // The author name renders through a label shared with other panels that has to stay rich text, so
+            // escaping is what keeps an author-chosen name from being read as markup. ValidatedName rather than
+            // Name because it keeps only alphanumerics, which removes the escape sequences too.
+            authorName.text = RichTextSanitizer.EscapeAndTruncate(announcementInfo.Profile.ValidatedName, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             profileTag.text = $"#{announcementInfo.authorAddress[^4..]}";
             profileTag.gameObject.SetActive(!announcementInfo.Profile.HasClaimedName);
             verifiedMark.SetActive(announcementInfo.Profile.HasClaimedName);

@@ -25,12 +25,12 @@ namespace DCL.NftPrompt
         private readonly ICursor cursor;
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly ImageControllerProvider imageControllerProvider;
-        private Action<NftPromptResultType> resultCallback;
+        private Action<NftPromptResultType>? resultCallback;
 
         private NftInfo? lastNftInfo;
-        private string marketUrl;
+        private string? marketUrl;
         private ImageController placeImageController;
-        private CancellationTokenSource cts;
+        private CancellationTokenSource? cts;
 
         public NftPromptController(
             ViewFactoryMethod viewFactory,
@@ -171,7 +171,9 @@ namespace DCL.NftPrompt
             bool hasDescription = !string.IsNullOrEmpty(info.description);
 
             if (hasDescription)
-                viewInstance.TextDescription.text = info.description;
+                // The description comes from NFT metadata anyone can mint. The label's richText is off in the
+                // prefab, so it only needs bounding.
+                viewInstance.TextDescription.text = RichTextSanitizer.Truncate(info.description, RichTextSanitizer.DEFAULT_BODY_LENGTH);
 
             viewInstance.ContainerDescription.SetActive(hasDescription);
 

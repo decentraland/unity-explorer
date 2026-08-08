@@ -195,7 +195,7 @@ namespace DCL.Communities.CommunitiesCard
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BottomLeft)
                 .AddControl(communityNotificationsContextMenuElement = new GenericContextMenuElement(
-                    communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, null, 10)))
+                    communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, horizontalLayoutSpacing: 10)))
                 .AddControl(communityNotificationsSeparatorContextMenuElement = new GenericContextMenuElement(
                     new SeparatorContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
                          .AddControl(copyLinkContextMenuElement = new GenericContextMenuElement(
@@ -391,9 +391,12 @@ namespace DCL.Communities.CommunitiesCard
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData,
             ThumbnailLoader thumbnailLoader)
         {
-            communityName.text = communityData.name;
+            // Name and description are written by whoever owns the community. The description label's richText is
+            // off in the prefab so it only needs a cap; the name is escaped as well, since a bracket is never
+            // legitimate in one and its label is shared with panels this view does not control.
+            communityName.text = RichTextSanitizer.EscapeAndTruncate(communityData.name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             UpdateMemberCount(communityData);
-            communityDescription.text = communityData.description;
+            communityDescription.text = RichTextSanitizer.Truncate(communityData.description, RichTextSanitizer.DEFAULT_BODY_LENGTH);
             communityPrivacyText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(communityData.privacy.ToString());
             UnlistedMark.SetActive(communityData.visibility == CommunityVisibility.unlisted);
             UnlistedSeparator.SetActive(communityData.visibility == CommunityVisibility.unlisted);

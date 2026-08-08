@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -41,11 +40,10 @@ namespace DCL.Navmap
         private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
-        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
-        private readonly ImageController? thumbnailImage;
+        private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
         private readonly MultiStateButtonController homeButton;
@@ -73,7 +71,6 @@ namespace DCL.Navmap
             HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             HomePlaceEventBus homePlaceEventBus,
             IDonationsService donationsService,
@@ -92,7 +89,6 @@ namespace DCL.Navmap
             this.eventsApiService = eventsApiService;
             this.eventElementPool = eventElementPool;
             this.shareContextMenu = shareContextMenu;
-            this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
             this.galleryEventBus = galleryEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
@@ -157,7 +153,7 @@ namespace DCL.Navmap
 
         public void Dispose()
         {
-            thumbnailImage?.Dispose();
+            thumbnailImage.Dispose();
             cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
             cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
         }
@@ -185,16 +181,26 @@ namespace DCL.Navmap
                 currentBaseParcel = null;
 
             thumbnailImage.RequestImage(place.image);
-            view.PlaceNameLabel.text = place.title;
-            view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
+            view.PlaceNameLabel.text = RichTextSanitizer.EscapeAndTruncate(place.title, RichTextSanitizer.DEFAULT_NAME_LENGTH);
+
+            // The creator name sits inside a <b> run this label has to keep interpreting, so it is escaped
+            // rather than the label being turned plain.
+            view.CreatorNameLabel.text = $"created by <b>{RichTextSanitizer.EscapeAndTruncate(place.contact_name, RichTextSanitizer.DEFAULT_NAME_LENGTH)}</b>";
             view.LikeRateLabel.text = $"{(place.LikeRateAsFloat ?? 0) * 100:F0}%";
             view.PlayerCountLabel.text = place.user_count.ToString();
-            view.DescriptionLabel.text = string.IsNullOrEmpty(place.description) ? "No description" : place.description;
-            view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
+
+            // The description is copied verbatim from the deployed scene's manifest: it reaches the label escaped, and
+            // a link in it opens only through the external-URL consent prompt.
+            view.DescriptionLabel.SetAuthorTextWithClickeableLinks(string.IsNullOrEmpty(place.description) ? "No description" : place.description);
 
             bool isWorld = place.IsWorld;
 
-            view.CoordinatesLabel.text = isWorld ? place.world_name : place.base_position;
+            // A world name is author-supplied, and in PlaceToast.prefab this label is the very same component the
+            // description is bound to — which has to stay rich text for its links — so escaping is the only
+            // defence available here, not a prefab flag.
+            view.CoordinatesLabel.text = isWorld
+                ? RichTextSanitizer.EscapeAndTruncate(place.world_name, RichTextSanitizer.DEFAULT_NAME_LENGTH)
+                : place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
 
             // Worlds are not on the Genesis map, so on-map navigation doesn't apply to them.
@@ -238,7 +244,7 @@ namespace DCL.Navmap
         public void SetLiveEvent(EventDTO @event)
         {
             view.LiveEventContainer.SetActive(true);
-            view.LiveEventNameLabel.text = @event.name;
+            view.LiveEventNameLabel.text = RichTextSanitizer.EscapeAndTruncate(@event.name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
         }
 
         public void HideLiveEvent()
@@ -388,9 +394,6 @@ namespace DCL.Navmap
             shareContextMenu.Show(view.SharePivot);
         }
 
-        private void OpenUrl(string url) =>
-            webBrowser.OpenUrlMainThreadOnly(url);
-
         private void OnLikeButtonClick(bool isEnabled)
         {
             rateCancellationToken = rateCancellationToken.SafeRestart();
@@ -463,7 +466,7 @@ namespace DCL.Navmap
                     element.ShareButton.onClick.AddListener(() => Share(@event, element));
                     element.Thumbnail?.RequestImage(@event.image, true);
                     element.LiveContainer.SetActive(@event.live);
-                    element.EventNameLabel.text = @event.name;
+                    element.EventNameLabel.text = RichTextSanitizer.EscapeAndTruncate(@event.name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
                     element.InterestedUserCountLabel.text = @event.total_attendees.ToString();
                     element.JoinedUserCountLabel.text = place.user_count.ToString();
                     element.ScheduleLabel.text = schedule;
