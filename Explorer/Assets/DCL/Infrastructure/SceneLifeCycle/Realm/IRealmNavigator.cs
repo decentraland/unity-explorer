@@ -70,7 +70,6 @@ namespace ECS.SceneLifeCycle.Realm
 
         public const string STREAM_WORLD_URL = "https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main";
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
-        public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
         event Action<Vector2Int> NavigationExecuted;
 
