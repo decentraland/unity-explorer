@@ -18,11 +18,6 @@ namespace CRDT.Protocol
         CRDTReconciliationResult ProcessMessage(in CRDTMessage message);
 
         /// <summary>
-        ///     Enforce LWW state update, it must be guaranteed that the message is PUT_COMPONENT or DELETE_COMPONENT
-        /// </summary>
-        void EnforceLWWState(in CRDTMessage message);
-
-        /// <summary>
         ///     <inheritdoc cref="CRDTMessagesFactory.CreateMessagesFromTheCurrentState" />
         /// </summary>
         /// <returns>
@@ -36,13 +31,14 @@ namespace CRDT.Protocol
         ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, int timestamp, in IMemoryOwner<byte> data);
 
         /// <summary>
-        ///     Creates an LWW PUT Message but does not process it
+        ///     Creates an LWW PUT Message and commits it to the local CRDT state in a single pass.
+        ///     The state takes the ownership of <paramref name="data" />
         /// </summary>
-        ProcessedCRDTMessage CreatePutMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data);
+        ProcessedCRDTMessage CreateAndCommitPutMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data);
 
         /// <summary>
-        ///     Creates an LWW DELETE Message but does not process it
+        ///     Creates an LWW DELETE Message and commits it to the local CRDT state in a single pass
         /// </summary>
-        ProcessedCRDTMessage CreateDeleteMessage(CRDTEntity entity, int componentId);
+        ProcessedCRDTMessage CreateAndCommitDeleteMessage(CRDTEntity entity, int componentId);
     }
 }

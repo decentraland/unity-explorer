@@ -1,5 +1,7 @@
 ﻿using Collections.Pooled;
+using CRDT.Memory;
 using CRDT.Protocol.Factory;
+using CRDT.Serializer;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -11,6 +13,21 @@ namespace CRDT.Protocol
     {
         private const int MAX_APPEND_COMPONENTS_COUNT = 100;
 
+        /// <summary>
+        ///     Roughly the number of distinct SDK component types a scene touches: presizing avoids rehash cascades
+        ///     during scene-load PUT storms (every rehash re-rents and copies the pooled backing arrays)
+        /// </summary>
+        private const int LWW_COMPONENTS_CAPACITY = 64;
+
+        /// <summary>
+        ///     Entities per component bucket; hot buckets (e.g. Transform) will still grow beyond it
+        /// </summary>
+        private const int LWW_ENTITIES_CAPACITY = 128;
+
+        private const int APPEND_COMPONENTS_CAPACITY = 8;
+        private const int APPEND_ENTITIES_CAPACITY = 32;
+        private const int DELETED_ENTITIES_CAPACITY = 256;
+
         private State crdtState;
 
         internal ref State CRDTState => ref crdtState;
@@ -18,9 +35,9 @@ namespace CRDT.Protocol
         public CRDTProtocol()
         {
             crdtState = new State(
-                new PooledDictionary<int, int>(),
-                new PooledDictionary<int, PooledDictionary<CRDTEntity, EntityComponentData>>(),
-                new PooledDictionary<int, PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>>());
+                new PooledDictionary<int, int>(DELETED_ENTITIES_CAPACITY),
+                new PooledDictionary<int, PooledDictionary<CRDTEntity, EntityComponentData>>(LWW_COMPONENTS_CAPACITY),
+                new PooledDictionary<int, PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>>(APPEND_COMPONENTS_CAPACITY));
         }
 
         public void Dispose()
@@ -121,16 +138,38 @@ namespace CRDT.Protocol
         public ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, int timestamp, in IMemoryOwner<byte> data) =>
             CRDTMessagesFactory.CreateAppendMessage(entity, componentId, timestamp, data);
 
-        public ProcessedCRDTMessage CreatePutMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
-            crdtState.CreatePutMessage(entity, componentId, data);
+        public ProcessedCRDTMessage CreateAndCommitPutMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
+            CreateAndCommitLwwMessage(CRDTMessageType.PUT_COMPONENT, entity, componentId, data);
 
-        public ProcessedCRDTMessage CreateDeleteMessage(CRDTEntity entity, int componentId) =>
-            crdtState.CreateDeleteMessage(entity, componentId);
+        public ProcessedCRDTMessage CreateAndCommitDeleteMessage(CRDTEntity entity, int componentId) =>
+            CreateAndCommitLwwMessage(CRDTMessageType.DELETE_COMPONENT, entity, componentId, EmptyMemoryOwner<byte>.EMPTY);
 
-        public void EnforceLWWState(in CRDTMessage message)
+        /// <summary>
+        ///     Creates the LWW message and writes it into the local CRDT state in a single probe of the state dictionaries.
+        ///     The local message is by construction the newest state (its timestamp is the stored one + 1) so the full
+        ///     reconciliation performed by <see cref="ProcessMessage" /> would be redundant.
+        ///     The CRDT state takes the ownership of <paramref name="data" />.
+        /// </summary>
+        private ProcessedCRDTMessage CreateAndCommitLwwMessage(CRDTMessageType messageType, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data)
         {
-            GetReconciliationResultFromLWWMessage(in message, out CRDTReconciliationEffect overrideEffect, out CRDTReconciliationEffect newComponentEffect);
-            UpdateLWWState(in message, overrideEffect, newComponentEffect);
+            if (!crdtState.lwwComponents.TryGetValue(componentId, out PooledDictionary<CRDTEntity, EntityComponentData> inner))
+                crdtState.lwwComponents[componentId] = inner = new PooledDictionary<CRDTEntity, EntityComponentData>(LWW_ENTITIES_CAPACITY, CRDTEntityComparer.INSTANCE);
+
+            var timestamp = 0;
+
+            if (inner.TryGetValue(entity, out EntityComponentData storedData))
+            {
+                timestamp = storedData.Timestamp + 1;
+                storedData.Data.Dispose();
+            }
+            else
+                crdtState.messagesCount++;
+
+            inner[entity] = new EntityComponentData(timestamp, data, messageType);
+
+            return new ProcessedCRDTMessage(
+                new CRDTMessage(messageType, entity, componentId, timestamp, data),
+                CRDTMessageSerializationUtils.GetMessageDataLength(messageType, in data));
         }
 
         private static void GetReconciliationResultFromLWWMessage(in CRDTMessage message, out CRDTReconciliationEffect overrideEffect, out CRDTReconciliationEffect newComponentEffect)
@@ -154,7 +193,7 @@ namespace CRDT.Protocol
 
         private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message, CRDTReconciliationEffect overrideEffect, CRDTReconciliationEffect newComponentEffect, bool ignoreTimestamp = false)
         {
-            bool innerSetExists = crdtState.TryGetLWWComponentState(message, out PooledDictionary<CRDTEntity, EntityComponentData> inner,
+            bool innerSetExists = crdtState.TryGetLWWComponentState(in message, out PooledDictionary<CRDTEntity, EntityComponentData> inner,
                 out bool componentExists, out EntityComponentData storedData);
 
             bool componentWasDeleted = componentExists && storedData.isDeleted;
@@ -201,7 +240,7 @@ namespace CRDT.Protocol
             in CRDTMessage crdtMessage, ref EntityComponentData componentData)
         {
             if (!innerSetExists)
-                crdtState.lwwComponents[crdtMessage.ComponentId] = inner = new PooledDictionary<CRDTEntity, EntityComponentData>(CRDTEntityComparer.INSTANCE);
+                crdtState.lwwComponents[crdtMessage.ComponentId] = inner = new PooledDictionary<CRDTEntity, EntityComponentData>(LWW_ENTITIES_CAPACITY, CRDTEntityComparer.INSTANCE);
 
             if (!componentExists)
                 crdtState.messagesCount++;
@@ -231,17 +270,17 @@ namespace CRDT.Protocol
 
             foreach (PooledDictionary<CRDTEntity, EntityComponentData> componentsStorage in crdtState.lwwComponents.Values)
             {
-                if (componentsStorage.TryGetValue(entityId, out EntityComponentData componentData))
+                // Remove with the out value probes the bucket once, unlike the TryGetValue + Remove pair
+                if (componentsStorage.Remove(entityId, out EntityComponentData componentData))
                 {
                     componentData.Data.Dispose();
-                    componentsStorage.Remove(entityId);
                     crdtState.messagesCount--;
                 }
             }
 
             foreach (KeyValuePair<int, PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>> componentsSet in crdtState.appendComponents)
             {
-                if (componentsSet.Value.TryGetValue(entityId, out PooledList<EntityComponentData> list))
+                if (componentsSet.Value.Remove(entityId, out PooledList<EntityComponentData> list))
                 {
                     crdtState.messagesCount -= list.Count;
 
@@ -249,7 +288,6 @@ namespace CRDT.Protocol
                         entityComponentData.Data.Dispose();
 
                     list.Dispose();
-                    componentsSet.Value.Remove(entityId);
                 }
             }
         }
@@ -300,7 +338,7 @@ namespace CRDT.Protocol
 
                 // Pooled collection will take care of pooling an internal state, there will be a small garbage related to the class itself
                 // We can tolerate it
-                crdtState.appendComponents[message.ComponentId] = outer = new PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>(CRDTEntityComparer.INSTANCE);
+                crdtState.appendComponents[message.ComponentId] = outer = new PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>(APPEND_ENTITIES_CAPACITY, CRDTEntityComparer.INSTANCE);
 
             outer[message.EntityId] = existingSet;
             return true;
@@ -374,7 +412,7 @@ namespace CRDT.Protocol
                 messagesCount = 0;
             }
 
-            internal readonly bool TryGetLWWComponentState(CRDTMessage message, out PooledDictionary<CRDTEntity, EntityComponentData> inner, out bool componentExists,
+            internal readonly bool TryGetLWWComponentState(in CRDTMessage message, out PooledDictionary<CRDTEntity, EntityComponentData> inner, out bool componentExists,
                 out EntityComponentData storedData) =>
                 TryGetLWWComponentState(message.EntityId, message.ComponentId, out inner, out componentExists, out storedData);
 

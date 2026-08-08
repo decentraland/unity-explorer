@@ -15,13 +15,13 @@ namespace CrdtEcsBridge.OutgoingMessages
 {
     public class OutgoingCRDTMessagesProvider : IOutgoingCRDTMessagesProvider
     {
-        internal static readonly ThreadSafeDictionaryPool<OutgoingMessageKey, int> INDICES_SHARED_POOL =
-            new (64, PoolConstants.SCENES_COUNT, new EqualityComparer());
+        internal static readonly ThreadSafeDictionaryPool<long, int> INDICES_SHARED_POOL =
+            new (64, PoolConstants.SCENES_COUNT);
 
         internal static readonly ThreadSafeListPool<PendingMessage> MESSAGES_SHARED_POOL =
             new (64, PoolConstants.SCENES_COUNT);
 
-        internal readonly Dictionary<OutgoingMessageKey, int> lwwMessageIndices = INDICES_SHARED_POOL.Get();
+        internal readonly Dictionary<long, int> lwwMessageIndices = INDICES_SHARED_POOL.Get();
         internal readonly List<PendingMessage> messages = MESSAGES_SHARED_POOL.Get();
 
         private readonly ISDKComponentsRegistry componentsRegistry;
@@ -74,7 +74,7 @@ namespace CrdtEcsBridge.OutgoingMessages
         {
             lock (messages)
             {
-                var key = new OutgoingMessageKey(entity, componentBridge.Id);
+                long key = OutgoingMessageKey.Pack(entity, componentBridge.Id);
 
                 if (lwwMessageIndices.TryGetValue(key, out int lwwIndex))
                 {
@@ -143,7 +143,7 @@ namespace CrdtEcsBridge.OutgoingMessages
                             memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
                             pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
                             pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
-                            processedMessages.Add(crdtProtocol.CreatePutMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, memory));
+                            processedMessages.Add(crdtProtocol.CreateAndCommitPutMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, memory));
                             break;
                         case CRDTMessageType.APPEND_COMPONENT:
                             memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
@@ -152,7 +152,7 @@ namespace CrdtEcsBridge.OutgoingMessages
                             processedMessages.Add(crdtProtocol.CreateAppendMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, pendingMessage.Timestamp, memory));
                             break;
                         case CRDTMessageType.DELETE_COMPONENT:
-                            processedMessages.Add(crdtProtocol.CreateDeleteMessage(pendingMessage.Entity, pendingMessage.Bridge.Id));
+                            processedMessages.Add(crdtProtocol.CreateAndCommitDeleteMessage(pendingMessage.Entity, pendingMessage.Bridge.Id));
                             break;
                     }
                 }
@@ -187,13 +187,5 @@ namespace CrdtEcsBridge.OutgoingMessages
             }
         }
 
-        private class EqualityComparer : IEqualityComparer<OutgoingMessageKey>
-        {
-            public bool Equals(OutgoingMessageKey x, OutgoingMessageKey y) =>
-                x.Entity.Equals(y.Entity) && x.ComponentId == y.ComponentId;
-
-            public int GetHashCode(OutgoingMessageKey obj) =>
-                HashCode.Combine(obj.Entity.Id, obj.ComponentId);
-        }
     }
 }

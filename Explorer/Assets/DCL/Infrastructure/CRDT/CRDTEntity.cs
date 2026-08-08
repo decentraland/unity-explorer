@@ -39,6 +39,14 @@ namespace CRDT
         public bool Equals(CRDTEntity other) =>
             Id.Equals(other.Id);
 
+        public override bool Equals(object obj) =>
+            obj is CRDTEntity other && Equals(other);
+
+        // Without the override the default ValueType.GetHashCode kicks in (boxing/reflection-based on Mono)
+        // when no explicit comparer is provided to a dictionary
+        public override int GetHashCode() =>
+            Id;
+
         public override string ToString() =>
             $"E: number {EntityNumber} version {EntityVersion}";
 

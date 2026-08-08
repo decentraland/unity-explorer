@@ -1,6 +1,5 @@
 ﻿using CRDT.Memory;
 using CRDT.Protocol;
-using DCL.Diagnostics;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -149,10 +148,6 @@ namespace CRDT.Deserializer
             memory = memory.Slice(shift + dataLength);
 
             crdtMessage = new CRDTMessage(messageType, entityId, componentId, timestamp, memoryOwner);
-
-            if (messageType == CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT)
-                ReportHub.Log(ReportCategory.CRDT, $"Deserialized {nameof(CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT)} - Entity: {crdtMessage.EntityId}, Component: {crdtMessage.ComponentId}, Timestamp: {crdtMessage.Timestamp}");
-
             return true;
         }
 
