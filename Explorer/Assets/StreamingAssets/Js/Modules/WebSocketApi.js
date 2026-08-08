@@ -47,6 +47,14 @@ class WebSocket {
         const thisReadyState = this.readyState;
         // console.log("WebSocket.send is called", data.constructor.name, `State is ${thisReadyState}`);
 
+        // Per the WHATWG WebSocket spec, send() on a CLOSING/CLOSED socket must NOT throw — the data is
+        // silently discarded. Throwing on CLOSED bubbled out of the scene update loop and was reported to
+        // Sentry once per tick by misbehaving scenes (UNITY-EXPLORER-NQE: "WebSocket state is 3, cannot
+        // send data"). Only a still-CONNECTING socket remains an error.
+        if (thisReadyState === WebSocket.CLOSING || thisReadyState === WebSocket.CLOSED) {
+            return;
+        }
+
         if (thisReadyState !== WebSocket.OPEN) {
             const errorMessage = `WebSocket state is ${thisReadyState}, cannot send data`;
             throw new Error(errorMessage);
