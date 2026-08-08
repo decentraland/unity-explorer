@@ -174,6 +174,8 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 method ?? string.Empty
             );
 
+            CancellationToken token = disposeCts.Token;
+
             async UniTask<FlatFetchResponse> ExecuteRequestAsync()
             {
                 await UniTask.SwitchToMainThread();
@@ -190,7 +192,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 new FlatFetchResponse<GenericPostRequest>(),
                                 signatureMetadata,
                                 GetReportData(),
-                                disposeCts.Token);
+                                token);
 
                             break;
                         case "post":
@@ -198,7 +200,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericPostRequest>(),
                                 GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                                token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
@@ -208,7 +210,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             response = await webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                                 request.url,
                                 new FlatFetchResponse<GenericGetRequest>(),
-                                disposeCts.Token,
+                                token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportData: GetReportData());
@@ -219,7 +221,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericPutRequest>(),
                                 GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                                token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
@@ -230,7 +232,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericDeleteRequest>(),
                                 GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                                token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
