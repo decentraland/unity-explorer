@@ -2,11 +2,14 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.EventsApi;
+using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -17,6 +20,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
+using DCL.UI.PortableExperiences.SummaryPopup;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -31,6 +35,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using MVC;
+using PortableExperiences.Controller;
 using Runtime.Wearables;
 using System;
 using System.Threading;
@@ -38,6 +43,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.InputSystem;
 using Utility;
+using Utility.PortableExperiences;
 
 namespace DCL.PluginSystem.Global
 {
@@ -66,9 +72,15 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly ILocalPortableExperiencesStatus localPortableExperiencesStatus;
+        private readonly IPortableExperiencesStatus globalPortableExperiencesStatus;
         private readonly HttpEventsApiService eventsApiService;
         private readonly SupportRequestService supportRequestService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
+        private readonly IInputBlock inputBlock;
+        private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly IWearableStorage wearableStorage;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -76,12 +88,13 @@ namespace DCL.PluginSystem.Global
         private ProfileMenuController? profileMenuController;
         private SkyboxMenuController? skyboxMenuController;
         private ControlsPanelController? controlsPanelController;
-        private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
+        private PortableExperiencesSideBarTooltipController? portableExperiencesSideBarTooltipController;
+        private PortableExperiencesSummaryController? portableExperiencesSummaryController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
         private NearbyVoicePanelController? nearbyVoicePanelController;
         private HelpMenuController? helpMenuController;
 
-        private CancellationTokenSource controlsShortcutCts;
+        private CancellationTokenSource? controlsShortcutCts;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -108,8 +121,14 @@ namespace DCL.PluginSystem.Global
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
             SmartWearableCache smartWearableCache,
+            ILocalPortableExperiencesStatus localPortableExperiencesStatus,
+            IPortableExperiencesStatus globalPortableExperiencesStatus,
             SupportRequestService supportRequestService,
-            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
+            IInputBlock inputBlock,
+            IPortableExperiencesController portableExperiencesController,
+            IWearableStorage wearableStorage,
+            IThumbnailProvider thumbnailProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -133,10 +152,16 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrls = decentralandUrls;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.localPortableExperiencesStatus = localPortableExperiencesStatus;
+            this.globalPortableExperiencesStatus = globalPortableExperiencesStatus;
             this.chatEventBus = chatEventBus;
             this.eventsApiService = eventsApiService;
             this.supportRequestService = supportRequestService;
             this.communitiesLiveTracker = communitiesLiveTracker;
+            this.inputBlock = inputBlock;
+            this.portableExperiencesController = portableExperiencesController;
+            this.wearableStorage = wearableStorage;
+            this.thumbnailProvider = thumbnailProvider;
         }
 
         public void Dispose()
@@ -151,7 +176,8 @@ namespace DCL.PluginSystem.Global
             profileMenuController?.Dispose();
             skyboxMenuController?.Dispose();
             controlsPanelController?.Dispose();
-            smartWearablesSideBarTooltipController?.Dispose();
+            portableExperiencesSideBarTooltipController?.Dispose();
+            portableExperiencesSummaryController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
             nearbyVoicePanelController?.Dispose();
             helpMenuController?.Dispose();
@@ -169,14 +195,35 @@ namespace DCL.PluginSystem.Global
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
+            PortableExperiencesSummaryView pxSummaryAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PXSummaryPanelPrefab, ct)).GetComponent<PortableExperiencesSummaryView>();
+            PortableExperiencesSummaryController.Preallocate(pxSummaryAsset, null!, out PortableExperiencesSummaryView pxSummaryView);
+
+            NftTypeIconSO pxRarityBackgrounds = await assetsProvisioner.ProvideMainAssetValueAsync(settings.PxRarityBackgroundsMapping, ct);
+            NFTColorsSO pxRarityColors = await assetsProvisioner.ProvideMainAssetValueAsync(settings.PxRarityColorsMapping, ct);
+            NftTypeIconSO pxCategoryIcons = await assetsProvisioner.ProvideMainAssetValueAsync(settings.PxCategoryIconsMapping, ct);
+
             controlsPanelController = new ControlsPanelController(() => controlsPanelView);
             notificationsPanelController = new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper, mvcManager);
             profileButtonPresenter = new SidebarProfileButtonPresenter( mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
             profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
-            smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
+            portableExperiencesSideBarTooltipController = new PortableExperiencesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache, localPortableExperiencesStatus, globalPortableExperiencesStatus);
+            portableExperiencesSummaryController = new PortableExperiencesSummaryController(() => pxSummaryView,
+                inputBlock,
+                portableExperiencesController,
+                smartWearableCache,
+                globalPortableExperiencesStatus,
+                localPortableExperiencesStatus,
+                wearableStorage,
+                thumbnailProvider,
+                selfProfile,
+                profileChangesBus,
+                web3IdentityCache,
+                pxRarityBackgrounds,
+                pxRarityColors,
+                pxCategoryIcons);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
-            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
+            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget);
             helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
 
             sidebarController = new SidebarController(() =>
@@ -187,7 +234,7 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 profileButtonPresenter,
-                smartWearablesSideBarTooltipController,
+                portableExperiencesSideBarTooltipController,
                 webBrowser,
                 chatHistory,
                 selfProfile,
@@ -204,11 +251,12 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(notificationsPanelController);
             mvcManager.RegisterController(profileMenuController);
             mvcManager.RegisterController(skyboxMenuController);
-            mvcManager.RegisterController(smartWearablesSideBarTooltipController);
+            mvcManager.RegisterController(portableExperiencesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
             mvcManager.RegisterController(nearbyVoicePanelController);
             mvcManager.RegisterController(helpMenuController);
             mvcManager.RegisterController(sidebarController);
+            mvcManager.RegisterController(portableExperiencesSummaryController);
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
             DCLInput.Instance.Shortcuts.Support.performed += OnSupportShortcutPerformed;
@@ -222,6 +270,10 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; } = null!;
             [field: SerializeField] public SkyboxSettingsAsset SettingsAsset { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject ControlsPanelPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject PXSummaryPanelPrefab { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> PxRarityBackgroundsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NFTColorsSO> PxRarityColorsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> PxCategoryIconsMapping { get; private set; } = null!;
         }
 
         private void OnControlsShortcutPerformed(InputAction.CallbackContext _)

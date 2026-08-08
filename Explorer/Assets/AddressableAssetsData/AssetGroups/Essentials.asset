@@ -170,6 +170,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 696c60f7fb34b41808f12ead4e67ea6c
+    m_Address: Assets/DCL/Infrastructure/Global/Dynamic/PortableExperiences/AuthorizationPopup/Assets/PortableExperienceAuthorizationPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6a252383173104e17acac54eb364afc4
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/PointAtMarker.prefab
     m_ReadOnly: 0
@@ -292,6 +297,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c16a7c2b7d6b642a4822df00f8bd5f71
     m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopupWithRetry.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c77d8bea789f045eb9824a5be2560c0d
+    m_Address: Assets/DCL/UI/PortableExperiences/SummaryPopup/Assets/PXSummary.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

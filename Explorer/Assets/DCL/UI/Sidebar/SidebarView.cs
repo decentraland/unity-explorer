@@ -54,7 +54,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Smart Wearables")]
         [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator smartWearablesButton { get; private set; } = null!;
-        [field: SerializeField] public SmartWearablesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
+        [field: SerializeField] public PortableExperiencesSideBarTooltipView SmartWearablesTooltipView { get; private set; } = null!;
 
         [field: Header("Sidebar Config")]
         [field: SerializeField] internal ButtonView sidebarConfigButton { get; private set; } = null!;
