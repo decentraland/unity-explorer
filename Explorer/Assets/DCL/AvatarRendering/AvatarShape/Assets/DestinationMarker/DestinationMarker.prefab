@@ -79,26 +79,5 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 312425904299399983, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4300024751230198601}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: -4161369568681901532, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
---- !u!1 &5359736345899209765 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 312425904299399983, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
-  m_PrefabInstance: {fileID: 5635250509909053194}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &4300024751230198601
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5359736345899209765}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81dc589d86f21784c8568883bd01920c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: AvatarShape::DCL.AvatarRendering.AvatarShape.DestinationMarkerView
-  rainbowSpeed: 2

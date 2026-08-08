@@ -5,6 +5,7 @@ using System.Threading;
 using DCL.AssetsProvision;
 using DCL.Diagnostics;
 using TMPro;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace DCL.Chat.ChatServices
@@ -13,12 +14,7 @@ namespace DCL.Chat.ChatServices
     {
         private readonly List<ProvidedAsset<TMP_FontAsset>> providedAssets = new();
 
-        public FallbackFontsProvider(IAssetsProvisioner assetsProvisioner, List<AssetReferenceT<TMP_FontAsset>> fallbackFonts, CancellationToken ct)
-        {
-            LoadAndApplyFallbacksAsync(assetsProvisioner, fallbackFonts, ct).Forget();
-        }
-
-        private async UniTask LoadAndApplyFallbacksAsync(IAssetsProvisioner assetsProvisioner, List<AssetReferenceT<TMP_FontAsset>> fallbackFonts, CancellationToken ct)
+        public async UniTask LoadAndApplyFallbacksAsync(IAssetsProvisioner assetsProvisioner, List<AssetReferenceT<TMP_FontAsset>> fallbackFonts, CancellationToken ct)
         {
             try
             {
@@ -28,12 +24,19 @@ namespace DCL.Chat.ChatServices
                 if (ct.IsCancellationRequested) return;
 
                 List<TMP_FontAsset> fallbackList = TMP_Settings.fallbackFontAssets ?? new List<TMP_FontAsset>();
+                bool addedAny = false;
 
                 foreach (ProvidedAsset<TMP_FontAsset> font in providedAssets)
                     if (font.Value != null && !fallbackList.Contains(font.Value))
+                    {
                         fallbackList.Add(font.Value);
+                        addedAny = true;
+                    }
 
                 TMP_Settings.fallbackFontAssets = fallbackList;
+
+                if (addedAny)
+                    RefreshLiveTexts();
             }
             catch (Exception ex)
             {
@@ -41,6 +44,18 @@ namespace DCL.Chat.ChatServices
                 ReportHub.LogWarning(ReportCategory.TRANSLATE,
                     $"Fallback fonts could not be loaded, some characters may not display correctly. Details: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        ///     Text generated before the fallbacks finished loading resolved missing glyphs to spaces
+        ///     and never regenerates on its own; force those meshes to rebuild against the new chain.
+        /// </summary>
+        private static void RefreshLiveTexts()
+        {
+            TMP_Text[] liveTexts = UnityEngine.Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+            foreach (TMP_Text text in liveTexts)
+                text.ForceMeshUpdate(false, true);
         }
 
         public void Dispose()

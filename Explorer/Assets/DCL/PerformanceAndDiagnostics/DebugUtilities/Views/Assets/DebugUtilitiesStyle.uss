@@ -158,7 +158,7 @@ DebugHintElement > #Sign {
 #DebugInnerFoldout.unity-foldout .unity-foldout__text {
     -unity-font-style: bold;
     font-size: 94%;
-    -unity-font-definition: url("project://database/Assets/DCL/UIToolkit/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&guid=b7c607f38bada4c96aa322fe8add23f9&type=3#NotInter-Regular");
+    -unity-font-definition: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-Regular SDF.asset');
     -unity-text-outline-width: 0;
     color: rgb(207, 207, 207);
 }
