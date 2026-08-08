@@ -10,6 +10,7 @@ using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Groups;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
 {
@@ -18,9 +19,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
     public partial class UICanvasInformationSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly UIDocument canvas;
         private BorderRect interactableArea;
         private int lastViewportResolutionWidth = -1;
-        private int lastScreenRealResolutionWidth = -1;
+        private int lastViewportResolutionHeight = -1;
+        private float lastDevicePixelRatio = -1;
 
         public override void Initialize()
         {
@@ -31,9 +34,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
             WriteToCRDT();
         }
 
-        private UICanvasInformationSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        private UICanvasInformationSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, UIDocument canvas) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.canvas = canvas;
         }
 
         protected override void Update(float t)
@@ -50,15 +54,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
 
         private void UpdateUICanvasInformationComponent()
         {
-            if (lastViewportResolutionWidth == Screen.width && lastScreenRealResolutionWidth == Screen.mainWindowDisplayInfo.width)
+            float devicePixelRatio = GetDevicePixelRatio();
+
+            if (lastViewportResolutionWidth == Screen.width && lastViewportResolutionHeight == Screen.height && Mathf.Approximately(lastDevicePixelRatio, devicePixelRatio))
                 return;
 
-            lastScreenRealResolutionWidth = Screen.mainWindowDisplayInfo.width;
             lastViewportResolutionWidth = Screen.width;
+            lastViewportResolutionHeight = Screen.height;
+            lastDevicePixelRatio = devicePixelRatio;
 
             interactableArea.Left = Screen.width * 0.25f;
 
             WriteToCRDT();
+        }
+
+        private float GetDevicePixelRatio()
+        {
+            VisualElement root = canvas.rootVisualElement;
+            return root?.panel != null ? root.scaledPixelsPerPoint : 1f;
         }
 
         private void WriteToCRDT()
@@ -68,7 +81,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
                 component.InteractableArea = system.interactableArea;
                 component.Width = Screen.width;
                 component.Height = Screen.height;
-                component.DevicePixelRatio = Screen.mainWindowDisplayInfo.width / (float)Screen.width;
+                component.DevicePixelRatio = system.GetDevicePixelRatio();
             }, SpecialEntitiesID.SCENE_ROOT_ENTITY, this);
         }
     }
