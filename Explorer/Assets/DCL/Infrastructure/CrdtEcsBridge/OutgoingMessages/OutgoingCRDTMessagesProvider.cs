@@ -22,11 +22,23 @@ namespace CrdtEcsBridge.OutgoingMessages
             new (64, PoolConstants.SCENES_COUNT);
 
         internal readonly Dictionary<OutgoingMessageKey, int> lwwMessageIndices = INDICES_SHARED_POOL.Get();
-        internal readonly List<PendingMessage> messages = MESSAGES_SHARED_POOL.Get();
+        internal List<PendingMessage> messages = MESSAGES_SHARED_POOL.Get();
 
         private readonly ISDKComponentsRegistry componentsRegistry;
         private readonly ICRDTProtocol crdtProtocol;
         private readonly ICRDTMemoryAllocator memoryAllocator;
+
+        /// <summary>
+        ///     Guards <see cref="messages" /> and <see cref="lwwMessageIndices" />: a dedicated object is required
+        ///     because <see cref="messages" /> is swapped with the spare list on serialization
+        /// </summary>
+        private readonly object writeLock = new ();
+
+        /// <summary>
+        ///     The second buffer <see cref="messages" /> is swapped with so the per-message serialization
+        ///     runs outside the lock and does not stall the main-thread systems writing new messages
+        /// </summary>
+        private List<PendingMessage> spareMessages = MESSAGES_SHARED_POOL.Get();
 
         public OutgoingCRDTMessagesProvider(ISDKComponentsRegistry componentsRegistry, ICRDTProtocol crdtProtocol, ICRDTMemoryAllocator memoryAllocator)
         {
@@ -39,6 +51,7 @@ namespace CrdtEcsBridge.OutgoingMessages
         {
             INDICES_SHARED_POOL.Release(lwwMessageIndices);
             MESSAGES_SHARED_POOL.Release(messages);
+            MESSAGES_SHARED_POOL.Release(spareMessages);
         }
 
         public void AddDeleteMessage<TMessage>(CRDTEntity entity) where TMessage: class, IMessage
@@ -72,7 +85,7 @@ namespace CrdtEcsBridge.OutgoingMessages
 
         private void AddLwwMessage(CRDTEntity entity, SDKComponentBridge componentBridge, in PendingMessage newMessage)
         {
-            lock (messages)
+            lock (writeLock)
             {
                 var key = new OutgoingMessageKey(entity, componentBridge.Id);
 
@@ -104,7 +117,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             var message = (TMessage)componentBridge.Pool.Rent();
             prepareMessage(message, data);
 
-            lock (messages) { messages.Add(new PendingMessage(message, componentBridge, entity, CRDTMessageType.APPEND_COMPONENT, timestamp)); }
+            lock (writeLock) { messages.Add(new PendingMessage(message, componentBridge, entity, CRDTMessageType.APPEND_COMPONENT, timestamp)); }
 
             return message;
         }
@@ -126,40 +139,49 @@ namespace CrdtEcsBridge.OutgoingMessages
 
             List<ProcessedCRDTMessage> processedMessages = OutgoingCRDTMessagesSyncBlock.MESSAGES_SHARED_POOL.Get();
 
-            // While we do it we must synchronize
-            lock (messages)
+            List<PendingMessage> toSerialize;
+
+            // Detach the pending batch under the lock: producers keep writing into the spare list
+            // while serialization (the expensive part) runs lock-free below
+            lock (writeLock)
             {
-                for (var i = 0; i < messages.Count; i++)
-                {
-                    PendingMessage pendingMessage = messages[i];
-
-                    actOnPendingMessage?.Invoke(pendingMessage);
-
-                    IMemoryOwner<byte> memory;
-
-                    switch (pendingMessage.MessageType)
-                    {
-                        case CRDTMessageType.PUT_COMPONENT:
-                            memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
-                            pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
-                            pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
-                            processedMessages.Add(crdtProtocol.CreatePutMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, memory));
-                            break;
-                        case CRDTMessageType.APPEND_COMPONENT:
-                            memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
-                            pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
-                            pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
-                            processedMessages.Add(crdtProtocol.CreateAppendMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, pendingMessage.Timestamp, memory));
-                            break;
-                        case CRDTMessageType.DELETE_COMPONENT:
-                            processedMessages.Add(crdtProtocol.CreateDeleteMessage(pendingMessage.Entity, pendingMessage.Bridge.Id));
-                            break;
-                    }
-                }
-
-                messages.Clear();
+                toSerialize = messages;
+                messages = spareMessages;
+                spareMessages = toSerialize;
                 lwwMessageIndices.Clear();
             }
+
+            // Safe without the lock: this method is invoked from the scene runtime thread only (single consumer)
+            // so nothing else touches the detached list
+            for (var i = 0; i < toSerialize.Count; i++)
+            {
+                PendingMessage pendingMessage = toSerialize[i];
+
+                actOnPendingMessage?.Invoke(pendingMessage);
+
+                IMemoryOwner<byte> memory;
+
+                switch (pendingMessage.MessageType)
+                {
+                    case CRDTMessageType.PUT_COMPONENT:
+                        memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
+                        pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
+                        pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
+                        processedMessages.Add(crdtProtocol.CreatePutMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, memory));
+                        break;
+                    case CRDTMessageType.APPEND_COMPONENT:
+                        memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
+                        pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
+                        pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
+                        processedMessages.Add(crdtProtocol.CreateAppendMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, pendingMessage.Timestamp, memory));
+                        break;
+                    case CRDTMessageType.DELETE_COMPONENT:
+                        processedMessages.Add(crdtProtocol.CreateDeleteMessage(pendingMessage.Entity, pendingMessage.Bridge.Id));
+                        break;
+                }
+            }
+
+            toSerialize.Clear();
 
             // This list will be released on block.Dispose()
             return new OutgoingCRDTMessagesSyncBlock(processedMessages);

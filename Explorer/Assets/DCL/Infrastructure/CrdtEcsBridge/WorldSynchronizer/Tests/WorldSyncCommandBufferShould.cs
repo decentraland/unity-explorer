@@ -137,6 +137,57 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             Assert.AreEqual(CRDTReconciliationEffect.NoChanges, result);
         }
 
+        [Test]
+        public void ReportEmptyWhenThereAreNoChangesToApply()
+        {
+            //Act
+            worldSyncCommandBuffer.FinalizeAndDeserialize();
+
+            //Assert
+            Assert.IsTrue(worldSyncCommandBuffer.IsEmpty);
+        }
+
+        [Test]
+        public void ReportNotEmptyWhenComponentChanged()
+        {
+            //Arrange
+            worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded);
+
+            //Act
+            worldSyncCommandBuffer.FinalizeAndDeserialize();
+
+            //Assert
+            Assert.IsFalse(worldSyncCommandBuffer.IsEmpty);
+        }
+
+        [Test]
+        public void ReportNotEmptyWhenEntityDeleted()
+        {
+            //Arrange
+            var message = new CRDTMessage(CRDTMessageType.DELETE_ENTITY, ENTITY_ID, 0, 0, EmptyMemoryOwner<byte>.EMPTY);
+            worldSyncCommandBuffer.SyncCRDTMessage(message, CRDTReconciliationEffect.EntityDeleted);
+
+            //Act
+            worldSyncCommandBuffer.FinalizeAndDeserialize();
+
+            //Assert
+            Assert.IsFalse(worldSyncCommandBuffer.IsEmpty);
+        }
+
+        [Test]
+        public void ReportEmptyWhenAllChangesResolveToNoChanges()
+        {
+            //Arrange: Added followed by Deleted merges to NoChanges
+            worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded);
+            worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentDeleted);
+
+            //Act
+            worldSyncCommandBuffer.FinalizeAndDeserialize();
+
+            //Assert
+            Assert.IsTrue(worldSyncCommandBuffer.IsEmpty);
+        }
+
         private static (CRDTMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected)[][] MessagesSource()
         {
             return new[]

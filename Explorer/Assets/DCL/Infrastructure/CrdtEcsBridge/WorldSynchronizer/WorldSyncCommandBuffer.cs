@@ -44,15 +44,27 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentDeleted), CRDTReconciliationEffect.ComponentDeleted },
             };
 
-        private readonly Dictionary<CRDTEntity, Dictionary<int, BatchState>> batchStates;
-        private readonly List<CRDTEntity> deletedEntities;
-
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISceneEntityFactory entityFactory;
         private readonly WorldSyncCommandBufferCollectionsPool collectionsPool;
 
+        private Dictionary<CRDTEntity, Dictionary<int, BatchState>> batchStates;
+        private List<CRDTEntity> deletedEntities;
+
         private bool finalized;
         private bool deserialized;
+        private bool containsAnyChangesToApply;
+
+        public bool IsEmpty
+        {
+            get
+            {
+                if (!deserialized)
+                    throw new InvalidOperationException($"{nameof(FinalizeAndDeserialize)} must be called before {nameof(IsEmpty)}");
+
+                return deletedEntities.Count == 0 && !containsAnyChangesToApply;
+            }
+        }
 
         /// <summary>
         ///     Can't contain a public ctor as should be instantiated within the assembly
@@ -65,6 +77,23 @@ namespace CrdtEcsBridge.WorldSynchronizer
             sdkComponentsRegistry = componentsRegistry;
             this.entityFactory = entityFactory;
             this.collectionsPool = collectionsPool;
+        }
+
+        /// <summary>
+        ///     Prepares the disposed instance for reuse so a new buffer class is not allocated on every batch.
+        ///     Must be called on the disposed instance only: the renting is serialized by the synchronizer's semaphore
+        /// </summary>
+        internal void Renew()
+        {
+            if (!finalized)
+                throw new InvalidOperationException($"{nameof(WorldSyncCommandBuffer)} can't be renewed while it is still in use");
+
+            batchStates = collectionsPool.GetMainDictionary();
+            deletedEntities = collectionsPool.GetDeletedEntities();
+
+            finalized = false;
+            deserialized = false;
+            containsAnyChangesToApply = false;
         }
 
         public void Dispose()
@@ -197,6 +226,8 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     componentsBatch.Clear();
                 }
+
+                containsAnyChangesToApply |= containsAnyChanges;
             }
 
             deserialized = true;

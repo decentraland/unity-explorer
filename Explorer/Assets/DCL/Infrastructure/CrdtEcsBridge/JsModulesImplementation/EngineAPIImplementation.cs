@@ -257,13 +257,22 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
-                using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
+                if (worldSyncBuffer.IsEmpty)
+                {
+                    // Nothing to apply to the World: skip acquiring the world mutex entirely,
+                    // otherwise an idle scene blocks its runtime thread on the main thread every tick
+                    crdtWorldSynchronizer.ReleaseSyncCommandBuffer(worldSyncBuffer);
+                }
+                else
+                {
+                    using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
 
-                applyBufferSampler.Begin();
+                    applyBufferSampler.Begin();
 
-                // Apply changes to the ECS World on the main thread
-                crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
-                applyBufferSampler.End();
+                    // Apply changes to the ECS World on the main thread
+                    crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
+                    applyBufferSampler.End();
+                }
 
                 // Allow system for which throttling is enabled to process once
                 // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
