@@ -17,6 +17,10 @@ namespace DCL.Diagnostics.Sentry
 
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
 
+#if UNITY_EDITOR
+        private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
+#endif
+
         private readonly List<ConfigureScope> scopeConfigurators = new (10);
 
         private readonly PerReportScope.Pool scopesPool;
@@ -45,6 +49,22 @@ namespace DCL.Diagnostics.Sentry
 
             options.Enabled = true;
             options.TracesSampler = sentrySampler.Execute;
+
+#if UNITY_EDITOR
+            // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve
+            // one from the environment instead: with the variable unset, Sentry stays off as before.
+            if (!IsValidConfiguration(options))
+            {
+                string? editorDsn = Environment.GetEnvironmentVariable(EDITOR_DSN_ENV_VAR);
+
+                if (!string.IsNullOrWhiteSpace(editorDsn))
+                {
+                    options.Dsn = editorDsn;
+                    options.Environment = "editor";
+                    options.CaptureInEditor = true;
+                }
+            }
+#endif
 
             if (!IsValidConfiguration(options))
             {

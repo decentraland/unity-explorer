@@ -127,7 +127,8 @@ namespace DCL.PluginSystem.Global
                 wearablesProvider,
                 webRequestController,
                 decentralandUrlsSource,
-                profileChangesBus);
+                profileChangesBus,
+                mvcManager);
 
             mvcManager.RegisterController(authenticationScreenController);
 

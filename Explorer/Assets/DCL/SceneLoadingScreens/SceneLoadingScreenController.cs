@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.BugReporting.UI;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Prefs;
@@ -24,6 +26,7 @@ namespace DCL.SceneLoadingScreens
         private readonly TimeSpan minimumDisplayDuration;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly IInputBlock inputBlock;
+        private readonly IMVCManager mvcManager;
         private readonly List<UniTask> fadingTasks = new ();
         private readonly PersistentSetting<int> currentTip =
             PersistentSetting.CreateInt(DCLPrefKeys.SCENE_LOADING_LAST_TIP_INDEX, 0);
@@ -43,12 +46,14 @@ namespace DCL.SceneLoadingScreens
             ISceneTipsProvider sceneTipsProvider,
             TimeSpan minimumDisplayDuration,
             AudioMixerVolumesController audioMixerVolumesController,
-            IInputBlock inputBlock) : base(viewFactory)
+            IInputBlock inputBlock,
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.sceneTipsProvider = sceneTipsProvider;
             this.minimumDisplayDuration = minimumDisplayDuration;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.inputBlock = inputBlock;
+            this.mvcManager = mvcManager;
         }
 
         public override void Dispose()
@@ -79,7 +84,27 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.OnBreadcrumbClicked += ShowTipWithFade;
 
+            bool bugReportEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            viewInstance.BugReportButton?.gameObject.SetActive(bugReportEnabled);
+
+            if (bugReportEnabled)
+                viewInstance.BugReportButton?.onClick.AddListener(OpenBugReport);
+
             UpdateLocalizedTextAsync().Forget();
+        }
+
+        private void OpenBugReport() =>
+            OpenBugReportAsync().Forget();
+
+        private async UniTaskVoid OpenBugReportAsync()
+        {
+            try
+            {
+                // The loading screen is an Overlay view, so the form asks to be drawn above it.
+                await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams(showAboveOverlays: true)));
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         private async UniTaskVoid UpdateLocalizedTextAsync()

@@ -42,5 +42,9 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public MuteButtonView MuteButton { get; private set; } = null!;
+
+        /// <summary>Nullable so prefabs predating the button keep working.</summary>
+        [field: SerializeField]
+        public Button? BugReportButton { get; private set; }
     }
 }

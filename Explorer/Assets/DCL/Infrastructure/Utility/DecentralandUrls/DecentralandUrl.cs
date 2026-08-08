@@ -164,5 +164,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         MarketplaceServer = 101,
         ShopLink = 102,
+
+        IntercomTickets = 103,
     }
 }

@@ -337,6 +337,9 @@ namespace DCL.Browser.DecentralandUrls
 
                 DecentralandUrl.SocialServiceMutes => $"https://social-api.decentraland.{ENV}/v1/mutes",
 
+                // The proxy is deployed to org only, there is no zone counterpart.
+                DecentralandUrl.IntercomTickets => "https://intercom-proxy.decentraland.org/intercom/tickets",
+
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
 

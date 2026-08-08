@@ -63,7 +63,7 @@ namespace DCL.PluginSystem.Global
             await unityLocalizationSceneTipsProvider.InitializeAsync(ct);
 
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
-                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock));
+                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock, mvcManager));
 
             loadingStatus.CurrentStage.Subscribe(stage => currentStageBinding.Value = stage.ToString());
             loadingStatus.AssetState.Subscribe(assetState => assetStateBinding.Value = assetState);

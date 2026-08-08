@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.BugReporting.UI;
 using DCL.Chat;
 using DCL.Chat.ChatStates;
 using DCL.Chat.History;
@@ -65,6 +66,7 @@ namespace DCL.UI.Sidebar
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isNearbyVoiceChatEnabled;
+        private readonly bool isBugReportFeatureEnabled;
         private readonly HttpEventsApiService eventsApiService;
 
         private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
@@ -119,6 +121,7 @@ namespace DCL.UI.Sidebar
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MarketplaceCredits);
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat);
+            isBugReportFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -162,6 +165,9 @@ namespace DCL.UI.Sidebar
 
                 if (isMarketplaceCreditsFeatureEnabled)
                     viewInstance.marketplaceCreditsButton.onClick.RemoveListener(OnMarketplaceCreditsButtonClicked);
+
+                if (isBugReportFeatureEnabled)
+                    viewInstance.bugReportButton?.onClick.RemoveListener(OnBugReportButtonClicked);
             }
 
             NotificationsBusController.Instance.UnsubscribeFromNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
@@ -190,6 +196,7 @@ namespace DCL.UI.Sidebar
             viewInstance.placesButton?.gameObject.SetActive(isDiscoverFeatureEnabled);
             viewInstance.eventsButton.gameObject.SetActive(isDiscoverFeatureEnabled);
             viewInstance.NearbyVoiceChatButton.gameObject.SetActive(isNearbyVoiceChatEnabled);
+            viewInstance.bugReportButton?.gameObject.SetActive(isBugReportFeatureEnabled);
 
             SubscribeToEvents();
 
@@ -247,6 +254,7 @@ namespace DCL.UI.Sidebar
 
             if (isCameraReelFeatureEnabled) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
             if (isFriendsFeatureEnabled) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
+            if (isBugReportFeatureEnabled) viewInstance.bugReportButton?.onClick.AddListener(OnBugReportButtonClicked);
 
             if (isDiscoverFeatureEnabled)
             {
@@ -423,6 +431,8 @@ namespace DCL.UI.Sidebar
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
 
         private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();
+
+        private void OnBugReportButtonClicked() => OpenPanelAsync(viewInstance!.bugReportButton, BugReportController.IssueCommand(new BugReportParams())).Forget();
 
         private void OnSidebarConfigButtonClicked() => OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
         private void OnProfilePanelButtonClicked() => OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
