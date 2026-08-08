@@ -169,6 +169,14 @@ namespace DCL.CharacterMotion.Systems
         [All(typeof(DeleteEntityIntention))]
         private void CleanUpDestroyedAvatarsProp(ref GliderProp gliderProp)
         {
+            // The prop View is parented to the avatar transform; if the avatar GameObject was
+            // destroyed by Unity directly, the child View is already destroyed (== null via Unity's
+            // overload) while the ECS component still references it. Guard before touching members,
+            // otherwise the throw escapes Update as EcsSystemException [GliderPropControllerSystem]
+            // (UNITY-EXPLORER-NT8).
+            if (gliderProp.View == null)
+                return;
+
             if (glidingSettings.EnablePropPooling)
             {
                 gliderProp.View.PrepareForNextActivation();
