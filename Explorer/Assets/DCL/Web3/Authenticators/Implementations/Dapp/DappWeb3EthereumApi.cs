@@ -298,7 +298,14 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> RequestEthMethodWithoutSignatureAsync(EthApiRequest request, CancellationToken ct)
         {
-            string reqJson = JsonConvert.SerializeObject(request);
+            // Part of the RPC gateway fleet rejects frames whose id is negative (-32600 "unknown
+            // command"), so the id is masked to a non-negative int for the wire — exactly
+            // representable even by a float64-based backend — and the caller's id restored on the
+            // response, keeping ids echoed back to SDK scenes untouched.
+            long callerId = request.id;
+            request.id &= int.MaxValue;
+
+            string reqJson = JsonConvert.SerializeObject(new { jsonrpc = "2.0", request.id, request.method, request.@params });
             byte[] bytes = Encoding.UTF8.GetBytes(reqJson);
             await rpcWebSocket!.SendAsync(bytes, WebSocketMessageType.Text, true, ct);
 
@@ -317,7 +324,10 @@ namespace DCL.Web3.Authenticators
                         throw new Web3Exception($"RPC {request.method} failed: code {response.error.code} {response.error.message}");
 
                     if (response.id == request.id)
+                    {
+                        response.id = callerId;
                         return response;
+                    }
                 }
                 else if (result.MessageType == WebSocketMessageType.Close)
                 {
