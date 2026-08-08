@@ -31,6 +31,7 @@ namespace DCL.SceneLoadingScreens
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
         private CancellationTokenSource? tipsFadeCancellationToken;
+        private bool inputsBlocked;
 
         // IntVariable causes deadlock occasionally.
         // There is a similar issue reported on the forum:https://discussions.unity.com/t/deadlock-freezing-issue-with-localizationsettings-stringdatabase-getlocalizedstring-under-multiple-concurrent-calls-on-mobile/1566794
@@ -122,6 +123,12 @@ namespace DCL.SceneLoadingScreens
         protected override void OnViewClose()
         {
             base.OnViewClose();
+
+            // The blocked inputs must be restored on every close path, so the release runs first,
+            // before any statement that can throw: the fade-out is skipped when the close intent
+            // is cancelled or fails, while OnViewClose is guaranteed by the MVC teardown.
+            UnblockUnwantedInputs();
+
             tipsRotationCancellationToken?.SafeCancelAndDispose();
             tipsFadeCancellationToken?.SafeCancelAndDispose();
 
@@ -130,7 +137,14 @@ namespace DCL.SceneLoadingScreens
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
 
             viewInstance!.ClearTips();
-            tips.Release();
+
+            // Tips is null until the first load completes: a close racing that load must not
+            // release a default instance, and a later close must not release the same tips twice.
+            if (tips.Tips != null)
+            {
+                tips.Release();
+                tips = default;
+            }
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -287,11 +301,17 @@ namespace DCL.SceneLoadingScreens
 
         private void BlockUnwantedInputs()
         {
+            if (inputsBlocked) return;
+
+            inputsBlocked = true;
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void UnblockUnwantedInputs()
         {
+            if (!inputsBlocked) return;
+
+            inputsBlocked = false;
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
     }
