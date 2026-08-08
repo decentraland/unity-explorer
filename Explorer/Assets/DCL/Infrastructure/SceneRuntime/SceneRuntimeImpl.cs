@@ -37,6 +37,8 @@ namespace SceneRuntime
 
         public V8RuntimeHeapInfo RuntimeHeapInfo { get; private set; }
 
+        public IJsOperations JsOperations => this;
+
         CancellationTokenSource ISceneRuntime.isDisposingTokenSource => isDisposingTokenSource;
 
         public SceneRuntimeImpl(
