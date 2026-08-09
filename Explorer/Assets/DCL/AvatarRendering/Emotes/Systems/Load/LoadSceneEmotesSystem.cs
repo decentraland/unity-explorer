@@ -19,7 +19,7 @@ namespace DCL.AvatarRendering.Emotes.Load
     [LogCategory(ReportCategory.EMOTE)]
     public partial class LoadSceneEmotesSystem : BaseUnityLoopSystem
     {
-        //Logical file name of the synthesized DTO's single content entry; scene emotes have no real file list.
+        // Logical file name of the synthesized DTO's single content entry; scene emotes have no real file list.
         private const string SCENE_EMOTE_MAIN_FILE = "scene-emote.glb";
 
         private readonly URLSubdirectory customStreamingSubdirectory;
