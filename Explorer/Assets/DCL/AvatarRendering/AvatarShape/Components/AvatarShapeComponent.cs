@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
@@ -40,6 +41,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public readonly List<string> LastWearables;
 
+        /// <summary>
+        /// Snapshot of the last applied force-render category list (profile path only). Reused across
+        /// updates to detect structural changes without per-frame allocation.
+        /// </summary>
+        public readonly List<string> LastForceRender;
+
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
             Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false)
         {
@@ -51,6 +58,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             InstantiatedWearables = new List<CachedAttachment>();
             OutlineCompatibleRenderers = new List<Renderer>();
             LastWearables = new List<string>();
+            LastForceRender = new List<string>();
             SkinColor = skinColor;
             HairColor = hairColor;
             EyesColor = eyesColor;
@@ -87,6 +95,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             InstantiatedWearables = new List<CachedAttachment>();
             OutlineCompatibleRenderers = new List<Renderer>();
             LastWearables = new List<string>();
+            LastForceRender = new List<string>();
             IsVisible = true;
         }
 
@@ -122,6 +131,61 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             LastWearables.Clear();
             for (int i = 0; i < wearables.Count; i++)
                 LastWearables.Add(wearables[i]);
+        }
+
+        /// <summary>
+        /// Profile-path counterpart of <see cref="HasStructuralChange(PBAvatarShape)"/>. Takes plain fields
+        /// (not a <c>Profile</c>/<c>Avatar</c>) because DCL.Profiles depends on DCL.AvatarRendering, so this
+        /// assembly cannot see those types. Returns true when any field that requires re-instantiation changed:
+        /// BodyShape, the three avatar colors, the wearable set, or the force-render set. Wearables and
+        /// force-render are compared as sets (count-equal + one-way containment) because both snapshots are
+        /// captured from HashSets (<c>Avatar.wearables</c> / <c>Avatar.forceRender</c>) and carry no duplicates.
+        /// This is a semantic delta from the order-sensitive SDK-path overload above.
+        /// </summary>
+        public readonly bool HasStructuralChange(in BodyShape bodyShape, in Color hairColor, in Color skinColor,
+            in Color eyesColor, IReadOnlyCollection<URN> wearables, IReadOnlyCollection<string> forceRender)
+        {
+            if (!BodyShape.Equals(bodyShape)) return true;
+
+            if (HairColor != hairColor) return true;
+            if (SkinColor != skinColor) return true;
+            if (EyesColor != eyesColor) return true;
+
+            if (LastWearables.Count != wearables.Count) return true;
+            foreach (URN urn in wearables)
+                if (!ContainsOrdinal(LastWearables, urn.LowerCaseUrn()))
+                    return true;
+
+            if (LastForceRender.Count != forceRender.Count) return true;
+            foreach (string category in forceRender)
+                if (!ContainsOrdinal(LastForceRender, category))
+                    return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Profile-path snapshot: stores lowercase URNs (matching <see cref="URN.LowerCaseUrn"/> equality) for
+        /// wearables and the raw force-render categories.
+        /// </summary>
+        public void CaptureProfileSnapshot(IReadOnlyCollection<URN> wearables, IReadOnlyCollection<string> forceRender)
+        {
+            LastWearables.Clear();
+            foreach (URN urn in wearables)
+                LastWearables.Add(urn.LowerCaseUrn());
+
+            LastForceRender.Clear();
+            foreach (string category in forceRender)
+                LastForceRender.Add(category);
+        }
+
+        private static bool ContainsOrdinal(List<string> list, string value)
+        {
+            for (int i = 0; i < list.Count; i++)
+                if (string.Equals(list[i], value, StringComparison.Ordinal))
+                    return true;
+
+            return false;
         }
     }
 }

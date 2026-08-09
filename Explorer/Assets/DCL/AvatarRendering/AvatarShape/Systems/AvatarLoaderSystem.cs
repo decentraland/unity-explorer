@@ -64,6 +64,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
             var avatarShape = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
+            avatarShape.CaptureProfileSnapshot(profile.Avatar.Wearables, profile.Avatar.ForceRender);
             World.Add(entity, avatarShape, new AvatarHighlightComponent());
         }
 
@@ -75,6 +76,7 @@ namespace DCL.AvatarRendering.AvatarShape
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
 
             var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
+            avatarShapeComponent.CaptureProfileSnapshot(profile.Avatar.Wearables, profile.Avatar.ForceRender);
 
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
             LoadAllEmotes(profile, partition);
@@ -137,16 +139,24 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private void ApplyProfileToAvatarShape(Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
-            avatarShapeComponent.WearablePromise.ForgetLoading(World);
-
-            WearablePromise newPromise = CreateWearablePromise(profile, partition);
+            // Identity fields are cheap to track and never affect rendering - update unconditionally
+            // (mirrors UpdateAvatarFromSDKComponent).
             avatarShapeComponent.ID = profile.UserId;
             avatarShapeComponent.Name = profile.Name;
-            avatarShapeComponent.WearablePromise = newPromise;
-            avatarShapeComponent.BodyShape = profile.Avatar.BodyShape;
-            avatarShapeComponent.HairColor = profile.Avatar.HairColor;
-            avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;
-            avatarShapeComponent.EyesColor = profile.Avatar.EyesColor;
+
+            Avatar avatar = profile.Avatar;
+
+            if (!avatarShapeComponent.HasStructuralChange(avatar.BodyShape, avatar.HairColor, avatar.SkinColor, avatar.EyesColor, avatar.Wearables, avatar.ForceRender))
+                return;
+
+            avatarShapeComponent.WearablePromise.ForgetLoading(World);
+
+            avatarShapeComponent.WearablePromise = CreateWearablePromise(profile, partition);
+            avatarShapeComponent.BodyShape = avatar.BodyShape;
+            avatarShapeComponent.HairColor = avatar.HairColor;
+            avatarShapeComponent.SkinColor = avatar.SkinColor;
+            avatarShapeComponent.EyesColor = avatar.EyesColor;
+            avatarShapeComponent.CaptureProfileSnapshot(avatar.Wearables, avatar.ForceRender);
             avatarShapeComponent.IsDirty = true;
         }
 
