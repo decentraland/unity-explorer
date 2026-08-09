@@ -18,6 +18,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
+        // Tangents are written INTO the shared asset-bundle Mesh (sharedMesh) and persist on it, so recomputing on
+        // every avatar build reproduces identical, deterministic data. Keyed by managed Mesh reference (Unity Objects
+        // use reference equality) so each distinct shared Mesh recomputes exactly once — never keyed by avatar/instance.
+        internal readonly HashSet<Mesh> tangentsGenerated = new ();
+
         public override AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
             in FacialFeaturesTextures facialFeatureTexture, int boneCount)
@@ -84,10 +89,23 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount, int springBoneOffset)
         {
-            // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
-            mesh.RecalculateTangents();
+            EnsureTangents(mesh);
 
             computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, springBoneOffset);
+        }
+
+        /// <summary>
+        /// Computes mesh tangents once per shared asset-bundle Mesh instance. Returns true when the tangents were
+        /// actually (re)computed for this Mesh, false when the memoized prior computation was reused.
+        /// </summary>
+        internal bool EnsureTangents(Mesh mesh)
+        {
+            // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
+            if (!tangentsGenerated.Add(mesh))
+                return false;
+
+            mesh.RecalculateTangents();
+            return true;
         }
 
         private (int vertCount, int totalBoneBufferCount) SetupCounters(IReadOnlyList<MeshData> meshesData, int boneCount)
