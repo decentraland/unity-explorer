@@ -17,7 +17,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -157,10 +156,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape)
+        internal static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape)
         {
-            return wearable.WearableAssetResults[bodyShape].Results == null
-                   || wearable.WearableAssetResults[bodyShape].Results!.Any(result => result is { Succeeded: false });
+            StreamableLoadingResult<AttachmentAssetBase>?[]? results = wearable.WearableAssetResults[bodyShape].Results;
+            if (results == null) return true;
+
+            for (var i = 0; i < results.Length; i++)
+                if (results[i] is { Succeeded: false })
+                    return true;
+
+            return false;
         }
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AttachmentAssetBase> wearableResult, in BodyShape bodyShape, int index)
