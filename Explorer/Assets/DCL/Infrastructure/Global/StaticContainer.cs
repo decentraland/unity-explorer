@@ -299,6 +299,7 @@ namespace Global
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles),
                 new PrimitivesRenderingPlugin(sharedDependencies),
+                new SceneContentStatsPlugin(),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
                 new AudioAnalysisPlugin(sharedDependencies),

@@ -195,14 +195,16 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 return;
             }
 
-            CreditsQuoteResult quoteResult = await purchaseService.QuoteAsync(inputData.Listing.tradeId, ct);
+            // The whole row, not its tradeId: a mint has none, and everything the quote needs is already here.
+            CreditsQuoteResult quoteResult = await purchaseService.QuoteAsync(inputData.Listing, ct);
 
             if (ct.IsCancellationRequested)
                 return;
 
             if (!quoteResult.Success)
             {
-                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Quote failed for trade {inputData.Listing.tradeId}: {quoteResult.Error} {quoteResult.Message}");
+                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE,
+                    $"Quote failed for {inputData.Listing.contractAddress}-{inputData.Listing.itemId}: {quoteResult.Error} {quoteResult.Message}");
                 PurchaseFailed?.Invoke(inputData.Listing, ANALYTICS_STEP_QUOTE, MapAnalyticsErrorCode(quoteResult.Error), MapAnalyticsErrorDetail(quoteResult.Error));
                 ShowError(quoteResult.Error);
                 return;
