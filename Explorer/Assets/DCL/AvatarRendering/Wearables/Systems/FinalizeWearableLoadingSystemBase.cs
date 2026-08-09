@@ -17,8 +17,10 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -66,8 +68,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
                 else
                 {
-                    using var _ = WearableComponentsUtils.POINTERS_POOL.Get(out var failedDTOList);
-                    failedDTOList!.AddRange(promise.LoadingIntention.Pointers);
+                    // Track which pointers actually resolved, then error-finalize the complement. A set of
+                    // resolved ids (O(1) Add) replaces removing from a seeded List<URN> (O(n) scan+shift per
+                    // DTO), turning the per-batch bookkeeping from O(n^2) into O(n).
+                    HashSet<URN> resolvedDTOs = HashSetPool<URN>.Get();
 
                     using (var list = promise.Result.Value.Asset.ConsumeAttachments())
                         foreach (WearableDTO assetEntity in list.Value)
@@ -78,13 +82,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             if (component!.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)) == false)
                                 ReportHub.LogError(GetReportData(), $"Wearable DTO has already been initialized: {assetEntity.Metadata.id}");
 
-                            failedDTOList.Remove(assetEntity.Metadata.id);
+                            resolvedDTOs.Add(assetEntity.Metadata.id);
                             component.UpdateLoadingStatus(false);
                         }
 
-                    //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
-                    foreach (var urn in failedDTOList)
-                        ReportAndFinalizeWithError(urn);
+                    //Any pointer that did not resolve to a DTO must be finalized as error
+                    foreach (URN urn in promise.LoadingIntention.Pointers)
+                        if (!resolvedDTOs.Contains(urn))
+                            ReportAndFinalizeWithError(urn);
+
+                    HashSetPool<URN>.Release(resolvedDTOs);
                 }
 
                 promise.LoadingIntention.ReleasePointers();
