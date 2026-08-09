@@ -25,6 +25,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         private BatchedPointersIntentions currentBatch = BatchedPointersIntentions.Create();
 
+        // De-duplicates pointers across every avatar sharing an item within the current batch; reused per
+        // batch (cleared when the batch is recreated) so steady state allocates nothing.
+        private readonly HashSet<URN> batchedPointers = new ();
+
         protected BatchPointersSystemBase(World world, TimeSpan batchHeartbeat, IDecentralandUrlsSource urlsSource) : base(world)
         {
             this.batchHeartbeat = batchHeartbeat;
@@ -55,6 +59,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             // Recreate the batch
             currentBatch = BatchedPointersIntentions.Create();
+            batchedPointers.Clear();
         }
 
         protected abstract AssetPromise<TAsset, TIntention> CreateAssetPromise(in BatchedPointersIntentions batchedIntentions, CommonLoadingArguments commonLoadingArguments);
@@ -64,7 +69,12 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         [Query]
         private void GatherIntentionsForBatch([Data] ref BatchedPointersIntentions batch, Entity entity, ref AssetPromise<TAsset, TIntention> promise, IPartitionComponent partition)
         {
-            batch.Pointers.AddRange(GetPointers(in promise));
+            // De-duplicate: many avatars wear the same items and contribute identical URNs; one fetch per
+            // unique URN resolves every avatar (resolution is URN-keyed and synced via the cache). Preserve
+            // first-seen order.
+            foreach (URN pointer in GetPointers(in promise))
+                if (batchedPointers.Add(pointer))
+                    batch.Pointers.Add(pointer);
 
             // Assign the closest partition
             // There is no much sense to group further by partition as we aim for the minimum number of requests
