@@ -153,6 +153,26 @@ namespace DCL.SceneLifeCycle.Tests
             Assert.That(ECSReloadScene.HasContentVersionedIds(CreateDefinition(new[] { "0,0" }, System.Array.Empty<ContentDefinition>())), Is.False);
         }
 
+        [Test]
+        public void TreatDefinitionWithoutManifestAsRawGltf()
+        {
+            //Arrange: no asset-bundle manifest -> the container cache is keyed by the bare hash
+            SceneEntityDefinition definition = CreateDefinition(new[] { "0,0" }, System.Array.Empty<ContentDefinition>());
+
+            //Act & Assert
+            Assert.That(ECSReloadScene.IsRawGltfModel(definition, "b64-somehash"), Is.True);
+        }
+
+        [Test]
+        public void NotTreatMissingDefinitionOrEmptyHashAsRawGltf()
+        {
+            SceneEntityDefinition definition = CreateDefinition(new[] { "0,0" }, System.Array.Empty<ContentDefinition>());
+
+            Assert.That(ECSReloadScene.IsRawGltfModel(null, "b64-somehash"), Is.False);
+            Assert.That(ECSReloadScene.IsRawGltfModel(definition, string.Empty), Is.False);
+            Assert.That(ECSReloadScene.IsRawGltfModel(definition, null!), Is.False);
+        }
+
         private static string EncodeBase64(string value) =>
             System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value));
 

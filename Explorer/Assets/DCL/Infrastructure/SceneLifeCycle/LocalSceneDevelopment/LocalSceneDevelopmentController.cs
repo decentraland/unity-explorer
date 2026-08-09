@@ -73,7 +73,21 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                     wsSceneMessage.MergeFrom(receiveBuffer.AsSpan(0, receiveResult.Count));
                     ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket scene message received: {wsSceneMessage.MessageCase}");
 
-                    // TODO: Discriminate 'wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateModel' to only update GLTF models...
+                    // An UpdateModel message names the single GLTF that changed; carry it through so the
+                    // reload can evict just that asset instead of draining every cache.
+                    string sceneId;
+                    ChangedGltfModel? changedModel;
+
+                    if (wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateModel)
+                    {
+                        sceneId = wsSceneMessage.UpdateModel.SceneId;
+                        changedModel = new ChangedGltfModel(wsSceneMessage.UpdateModel.Src, wsSceneMessage.UpdateModel.Hash);
+                    }
+                    else
+                    {
+                        sceneId = wsSceneMessage.UpdateScene.SceneId;
+                        changedModel = null;
+                    }
 
                     // Switch to the main thread because `TryReloadSceneAsync` requires that
                     await UniTask.SwitchToMainThread(cancellationToken: ct);
@@ -86,8 +100,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                         // And pause the skybox update while loading to avoid transitions
                         globalWorld.AddOrGet(skyboxEntity, new PauseSkyboxTimeUpdate());
 
-                        await reloadScene.TryReloadSceneAsync(ct,
-                                              wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateScene ? wsSceneMessage.UpdateScene.SceneId : wsSceneMessage.UpdateModel.SceneId)
+                        await reloadScene.TryReloadSceneAsync(ct, sceneId, changedModel)
                                          .Timeout(TimeSpan.FromSeconds(RELOAD_SCENE_TIMEOUT_SECS));
                     }
                     catch (TimeoutException) { }

@@ -206,6 +206,46 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.That(innerOfCache.Count, Is.EqualTo(0));
         }
 
+        [Category(INTEGRATION)]
+        [Test]
+        public void EvictGltfModelDropsTargetedModelAndKeepsOtherCachesWarm()
+        {
+            // Arrange
+            FillCachesWithElements(hashID: "test");
+
+            Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(1));
+            Assert.That(texturesCache.cache.Count, Is.EqualTo(1));
+            Assert.That(audioClipsCache.cache.Count, Is.EqualTo(1));
+
+            // Act
+            cacheCleaner.EvictGltfModel("test", "model.glb");
+
+            // Assert: only the GLTF container entry for that hash is gone; unrelated caches stay warm
+            Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(0));
+            Assert.That(texturesCache.cache.Count, Is.EqualTo(1));
+            Assert.That(audioClipsCache.cache.Count, Is.EqualTo(1));
+            Assert.That(assetBundleCache.cache.Count, Is.EqualTo(1));
+        }
+
+        [Category(INTEGRATION)]
+        [Test]
+        public void RemoveEvictsSingleStreamableEntryLeavingOthers()
+        {
+            // Arrange
+            var keyA = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString("textureA") } };
+            var keyB = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString("textureB") } };
+            texturesCache.Add(keyA, new TextureData(new Texture2D(1, 1)));
+            texturesCache.Add(keyB, new TextureData(new Texture2D(1, 1)));
+
+            // Act
+            texturesCache.Remove(keyA);
+
+            // Assert
+            Assert.That(texturesCache.cache.Count, Is.EqualTo(1));
+            Assert.That(texturesCache.TryGet(keyB, out _), Is.True);
+            Assert.That(texturesCache.TryGet(keyA, out _), Is.False);
+        }
+
         private void FillCachesWithElements(string hashID)
         {
             var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };

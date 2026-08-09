@@ -19,6 +19,22 @@ using Utility;
 
 namespace ECS.SceneLifeCycle
 {
+    /// <summary>
+    ///     The single GLTF model a local-development hot reload reported as changed, carried from the
+    ///     dev server's websocket message so the reload can evict just that asset instead of the whole cache.
+    /// </summary>
+    public readonly struct ChangedGltfModel
+    {
+        public readonly string Src;
+        public readonly string Hash;
+
+        public ChangedGltfModel(string src, string hash)
+        {
+            Src = src;
+            Hash = hash;
+        }
+    }
+
     public class ECSReloadScene
     {
         private const double DEFINITION_REFRESH_TIMEOUT_SECS = 3;
@@ -58,19 +74,19 @@ namespace ECS.SceneLifeCycle
             var foundEntity = FindSceneEntity(sceneInCache);
             if (foundEntity == Entity.Null) return null;
 
-            await DisposeAndRestartAsync(foundEntity, sceneInCache, ct);
+            await DisposeAndRestartAsync(foundEntity, sceneInCache, null, ct);
 
             return sceneInCache;
         }
 
-        public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId)
+        public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId, ChangedGltfModel? changedModel = null)
         {
             if (!scenesCache.TryGetBySceneId(sceneId, out var sceneInCache)) return null;
 
             var foundEntity = FindSceneEntity(sceneInCache!);
             if (foundEntity == Entity.Null) return null;
 
-            await DisposeAndRestartAsync(foundEntity, sceneInCache!, ct);
+            await DisposeAndRestartAsync(foundEntity, sceneInCache!, changedModel, ct);
 
             return sceneInCache;
         }
@@ -88,13 +104,13 @@ namespace ECS.SceneLifeCycle
             return sceneEntity;
         }
 
-        private async UniTask DisposeAndRestartAsync(Entity entity, ISceneFacade currentScene, CancellationToken ct)
+        private async UniTask DisposeAndRestartAsync(Entity entity, ISceneFacade currentScene, ChangedGltfModel? changedModel, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             float reloadStart = Time.realtimeSinceStartup;
             float disposeDone, drainDone, refreshDone;
-            bool drainSkipped;
+            string drainMode;
 
             SceneEntityDefinition? cachedDefinition = null;
 
@@ -142,16 +158,28 @@ namespace ECS.SceneLifeCycle
 
                 refreshDone = Time.realtimeSinceStartup;
 
-                // Content-versioned ids (the sdk server embeds the file's mtime) give an edited
-                // file a new id, so every cache key derived from it self-invalidates and the
-                // caches stay warm across the reload. Path-only ids keep the same key when the
-                // file changes: draining every cache is the only way edits show up.
-                drainSkipped = HasContentVersionedIds(refreshedDefinition ?? cachedDefinition);
+                SceneEntityDefinition? definitionInEffect = refreshedDefinition ?? cachedDefinition;
 
-                if (!drainSkipped)
+                // Content-versioned ids (the sdk server embeds the file's mtime) give an edited file a
+                // new id, so every cache key derived from it self-invalidates and the caches stay warm
+                // across the reload — nothing to drain.
+                if (HasContentVersionedIds(definitionInEffect))
+                    drainMode = "skipped: content-versioned ids";
+                else if (changedModel is { } model && IsRawGltfModel(definitionInEffect, model.Hash))
                 {
+                    // The dev server told us exactly which model changed. In raw-GLTF development its
+                    // cache key is the bare content hash, so evict just that asset and let every other
+                    // cache stay warm across the reload.
+                    cacheCleaner.EvictGltfModel(model.Hash, model.Src);
+                    drainMode = $"scoped evict: {model.Src}";
+                }
+                else
+                {
+                    // Path-only ids keep the same cache key when a file changes, and without a per-file
+                    // change signal we can't tell what is stale: drain every cache so edits show up.
                     cacheCleaner.UnloadCache(budgeted: false);
                     Resources.UnloadUnusedAssets();
+                    drainMode = "full drain";
                 }
 
                 drainDone = Time.realtimeSinceStartup;
@@ -167,7 +195,7 @@ namespace ECS.SceneLifeCycle
             float loadDone = Time.realtimeSinceStartup;
 
             ReportHub.LogProductionInfo(
-                $"JUANI: Scene reload completed in {loadDone - reloadStart:F2}s (dispose {disposeDone - reloadStart:F2}s, definition refresh +{refreshDone - disposeDone:F2}s, cache drain {drainDone - refreshDone:F2}s{(drainSkipped ? " [skipped: content-versioned ids]" : string.Empty)}, load {loadDone - drainDone:F2}s)");
+                $"JUANI: Scene reload completed in {loadDone - reloadStart:F2}s (dispose {disposeDone - reloadStart:F2}s, definition refresh +{refreshDone - disposeDone:F2}s, cache [{drainMode}] {drainDone - refreshDone:F2}s, load {loadDone - drainDone:F2}s)");
 
             return;
 
@@ -265,6 +293,20 @@ namespace ECS.SceneLifeCycle
                 return Array.IndexOf(decoded, (byte)0) >= 0;
             }
             catch (FormatException) { return false; }
+        }
+
+        /// <summary>
+        ///     True when the hash addresses a raw GLTF, i.e. no asset-bundle manifest maps it. The GLTF
+        ///     container cache is keyed by <see cref="Ipfs.AssetBundleManifestVersion.ComposeCacheKey" />,
+        ///     which returns the bare hash only in that case; under <c>--local-ab</c> the key differs and
+        ///     the model lives in the asset-bundle caches instead, so scoped eviction must not be used.
+        /// </summary>
+        internal static bool IsRawGltfModel(SceneEntityDefinition? definition, string hash)
+        {
+            if (definition == null || string.IsNullOrEmpty(hash))
+                return false;
+
+            return definition.AssetBundleManifestVersionOrFailed.ComposeCacheKey(hash) == hash;
         }
 
         internal void ApplyRefreshedDefinition(Entity entity, SceneEntityDefinition? refreshed)
