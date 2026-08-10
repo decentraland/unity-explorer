@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
+using DCL.Utility;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using System;
@@ -43,7 +44,7 @@ namespace DCL.LoadingTimes
         private readonly IAnalyticsController analytics;
         private readonly IScenesCache scenesCache;
 
-        private bool reported;
+        private bool reportRequestFired;
 
         public LoadingTimeBenchmark(ILoadingStatus loadingStatus, IAnalyticsController analytics, IScenesCache scenesCache)
         {
@@ -70,17 +71,17 @@ namespace DCL.LoadingTimes
 
         private void OnStageUpdated(LoadingStatus.LoadingStage stage)
         {
-            if (reported) return;
+            if (reportRequestFired) return;
 
-            Sample(stage);
+            AddSample(stage);
 
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
-            reported = true;
+            reportRequestFired = true;
             ReportAndQuitAsync(scenesCache.CurrentScene.Value?.Info.Name).Forget();
         }
 
-        private void Sample(LoadingStatus.LoadingStage stage)
+        private void AddSample(LoadingStatus.LoadingStage stage)
         {
             float time = UnityEngine.Time.realtimeSinceStartup;
 
@@ -96,7 +97,7 @@ namespace DCL.LoadingTimes
             });
         }
 
-        private JObject BuildPayload(string? sceneHash)
+        private JObject PayloadSnapshot(string? sceneHash)
         {
             float stopTime = measures[^1].StopTime;
 
@@ -124,12 +125,10 @@ namespace DCL.LoadingTimes
         {
             try
             {
-                JObject payload = BuildPayload(sceneHash);
+                JObject payload = PayloadSnapshot(sceneHash);
 
                 analytics.Track(AnalyticsEvents.Profiling.LOADING_TIMES, payload, true);
-#if UNITY_EDITOR
                 ReportHub.LogProductionInfo(payload.ToString());
-#endif
 
                 await UniTask.Delay(ANALYTICS_DELIVERY_GRACE, cancellationToken: cts.Token);
             }
@@ -143,7 +142,7 @@ namespace DCL.LoadingTimes
                 ReportHub.LogException(e, ReportCategory.ANALYTICS);
             }
 
-            Application.Quit();
+            ExitUtils.Exit();
         }
 
         private struct StageMeasure
