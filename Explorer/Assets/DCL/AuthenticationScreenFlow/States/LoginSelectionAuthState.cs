@@ -49,7 +49,6 @@ namespace DCL.AuthenticationScreenFlow
 
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
-            view.OtherLoginOptionsDisclaimerLink.OnLinkClicked += webBrowser.OpenUrlMainThreadOnly;
         }
 
         public new void Enter()
@@ -86,6 +85,9 @@ namespace DCL.AuthenticationScreenFlow
                 // ThirdWeb
                 view.EmailInputField.Submitted += OTPLogin;
             }
+
+            if (isEpicBuild)
+                view.OtherLoginOptionsDisclaimerLink.OnLinkClicked += webBrowser.OpenUrlMainThreadOnly;
         }
 
         public override void Exit()
