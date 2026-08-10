@@ -16,9 +16,6 @@ namespace DCL.BugReporting
     public class IntercomTicketClient
     {
         private const string ORIGIN_HEADER = "Origin";
-
-        // The proxy allowlists the web client origin and rejects requests without it with a 403.
-        private const string ORIGIN = "https://play.decentraland.org";
         private const string SIGNATURE_METADATA = "{}";
 
         private readonly IWebRequestController webRequestController;
@@ -34,6 +31,9 @@ namespace DCL.BugReporting
         public virtual async UniTask<Result<string>> CreateTicketAsync(IntercomTicketData ticket, CancellationToken ct)
         {
             string url = urlsSource.Url(DecentralandUrl.IntercomTickets);
+
+            // The proxy allowlists the web client origin of its environment and rejects any other with a 403.
+            string origin = urlsSource.Url(DecentralandUrl.IntercomTicketsOrigin);
             string json = IntercomTicketPayload.BuildCreateTicketJson(in ticket);
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
@@ -41,7 +41,7 @@ namespace DCL.BugReporting
             {
                 IntercomTicketResponse response = await webRequestController
                                                        .PostAsync(url, GenericPostArguments.CreateJson(json), ct, ReportCategory.GENERIC_WEB_REQUEST,
-                                                            headersInfo: new WebRequestHeadersInfo().Add(ORIGIN_HEADER, ORIGIN).WithSign(SIGNATURE_METADATA, unixTimestamp),
+                                                            headersInfo: new WebRequestHeadersInfo().Add(ORIGIN_HEADER, origin).WithSign(SIGNATURE_METADATA, unixTimestamp),
                                                             signInfo: WebRequestSignInfo.NewFromRaw(SIGNATURE_METADATA, urlsSource.GetOriginalUrl(url), unixTimestamp, "post"))
                                                        .CreateFromJson<IntercomTicketResponse>(WRJsonParser.Unity);
 
