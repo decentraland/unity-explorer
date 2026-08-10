@@ -39,7 +39,9 @@ namespace DCL.McpServer.Tools
             + "(move_to/set_camera_pose). Use it after get_scene_content_stats shows a metric near its cap to find which assets to optimize. "
             + "Interpretation: URP's SRP Batcher bins draws by shader variant, so many materials sharing few shaderVariants render cheaply — "
             + "a high material count mainly costs memory, textures and lost instancing opportunities. Check shaderVariants before recommending "
-            + "material dedup as a frame-time optimization. Triggers a fresh counting pass over the currently rendered content.";
+            + "material dedup as a frame-time optimization. Do not recommend LODs (level-of-detail meshes) to cut a heavy source's triangles: "
+            + "per-model LODs are not supported at the scene level currently and must be handled manually in the source asset. "
+            + "Triggers a fresh counting pass over the currently rendered content.";
 
         public override JObject OutputSchema =>
             McpJsonSchema.Object()
