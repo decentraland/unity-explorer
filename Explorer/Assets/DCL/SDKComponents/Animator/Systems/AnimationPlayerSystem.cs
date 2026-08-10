@@ -61,6 +61,8 @@ namespace DCL.SDKComponents.Animator.Systems
             World.Add(entity, sdkAnimatorComponent);
             // The PBAnimator is only dirtied on SDK side either on Create/CreateOrReplace
             // or when doing changes to it when triggered by events on the scene, so we never set it to true on the client.
+            // The client does write PBAnimator back to the scene on natural clip finish (AnimatorFinishWritebackSystem),
+            // but that path mutates States in place and PUTs without ever setting IsDirty.
             pbAnimator.IsDirty = false;
         }
 
