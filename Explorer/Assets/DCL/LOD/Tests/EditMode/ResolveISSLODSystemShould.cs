@@ -396,6 +396,8 @@ namespace DCL.LOD.Tests
 
             public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount) { }
 
+            public void Remove(in string key) { }
+
             public void SetAssetLoadCache(AssetPreLoadCache assetPreLoadCache) { }
         }
     }
