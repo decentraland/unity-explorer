@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Browser.DecentralandUrls;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -451,7 +452,9 @@ namespace DCL.Passport.Modules
             if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
                 return "";
 
-            return string.Format(marketplace, contract, item);
+            // Tagged here rather than on the ShopLink constant: the format string above appends a path to it,
+            // so a query string on the constant would land before the path and 404. See ClientSourceUrlExtensions.
+            return string.Format(marketplace, contract, item).WithClientSource();
         }
     }
 }

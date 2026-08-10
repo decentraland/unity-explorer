@@ -232,6 +232,10 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
+                // Deliberately WITHOUT a query string: the passport builds an item URL by appending
+                // "/item/{contract}/{id}" to this value, and a `?` here would put the path after the
+                // query and produce a link that 404s. Callers that OPEN this url tag it themselves —
+                // see DecentralandUrlExtensions.WithClientSource.
                 DecentralandUrl.ShopLink => $"https://decentraland.{ENV}/shop",
                 DecentralandUrl.MarketplaceServer => $"https://marketplace-api.decentraland.{ENV}",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
@@ -297,7 +301,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
                 DecentralandUrl.MediaConverter => $"https://metamorph-api.decentraland.{ENV}/convert?url={{0}}",
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",
-                DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
+                // Safe to tag on the constant, unlike ShopLink: nothing appends a path to this one, and it
+                // already carries a query string so the separator is '&'.
+                DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true&utm_source=client",
                 DecentralandUrl.Notifications => $"https://notifications.decentraland.{ENV}",
                 DecentralandUrl.Communities => $"https://social-api.decentraland.{ENV}/v1/communities",
                 DecentralandUrl.CommunitiesV2 => $"https://social-api.decentraland.{ENV}/v2/communities",
