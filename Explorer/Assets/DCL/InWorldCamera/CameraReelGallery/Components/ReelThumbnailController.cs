@@ -58,7 +58,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             float realWidth = originalToSmallerRatio * rectTransform.rect.width;
             float realWidthDiff = thumbnailTexture.width - realWidth;
             view.thumbnailImage.texture = thumbnailTexture;
-            view.thumbnailImage.uvRect = new Rect((realWidthDiff / 2f) / thumbnailTexture.width, 0, (thumbnailTexture.width - realWidthDiff) / thumbnailTexture.width, 1);
+            view.thumbnailImage.uvRect = new Rect(realWidthDiff / 2f / thumbnailTexture.width, 0, (thumbnailTexture.width - realWidthDiff) / thumbnailTexture.width, 1);
 
             view.loadingBrightView.FinishLoadingAnimation(view.thumbnailImage.gameObject);
 
