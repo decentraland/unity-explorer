@@ -104,7 +104,8 @@ namespace DCL.ResourcesUnloading
             // stale import. The import cache is keyed by (Name, Hash) where Name is the verbatim src
             // from scene code, which this caller cannot reconstruct — evict by hash instead.
             gltfContainerAssetsCache?.Remove(hash);
-            (gltfLoadCache as GltfLoadCache)?.RemoveByHash(hash);
+            if (gltfLoadCache is GltfLoadCache typedCache)
+                typedCache.RemoveByHash(hash);
         }
 
         private void ClearExtendedObjectPools(IPerformanceBudget budgetToUse, int maxUnload)
