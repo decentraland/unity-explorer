@@ -12,6 +12,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string ERROR = "error";
             public const string LOADING_ERROR = "loading_error";
             public const string MEETS_MINIMUM_REQUIREMENTS = "meets_minimum_requirements";
+            public const string TELEPORT_OPERATION_DURATION = "teleport_operation_duration";
         }
 
         public static class World
@@ -25,7 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string USED_EMOTE = "used_emote";
         }
 
-        public static class UI
+        public static class Ui
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
