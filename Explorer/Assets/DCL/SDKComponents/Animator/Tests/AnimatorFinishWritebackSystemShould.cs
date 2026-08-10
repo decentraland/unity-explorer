@@ -37,6 +37,7 @@ namespace DCL.SDKComponents.Animator.Tests
         private Entity entity;
         private PBAnimator pbAnimator;
         private IECSToCRDTWriter ecsToCRDTWriter;
+        private IPerformanceBudget frameTimeBudget;
         private SDKAnimatorUpdaterSystem sdkAnimatorUpdaterSystem;
         private LegacyAnimationPlayerSystem legacyAnimationPlayerSystem;
         private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
@@ -67,7 +68,9 @@ namespace DCL.SDKComponents.Animator.Tests
             legacyAnimationPlayerSystem = new LegacyAnimationPlayerSystem(world);
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new AnimatorFinishWritebackSystem(world, ecsToCRDTWriter);
+            frameTimeBudget = Substitute.For<IPerformanceBudget>();
+            frameTimeBudget.TrySpendBudget().Returns(true);
+            system = new AnimatorFinishWritebackSystem(world, ecsToCRDTWriter, frameTimeBudget);
 
             pbAnimator = new PBAnimator
             {
@@ -208,6 +211,48 @@ namespace DCL.SDKComponents.Animator.Tests
 
             // Assert: scene-driven stop is never reported as a natural finish.
             ecsToCRDTWriter.DidNotReceive().PutMessage(Arg.Any<Action<PBAnimator, PBAnimator>>(), Arg.Any<CRDTEntity>(), Arg.Any<PBAnimator>());
+        }
+
+        [Test]
+        public async Task DelayDetectionWhileFrameBudgetIsExhausted()
+        {
+            // Arrange
+            Animation animation = await StartLegacyPlaybackAsync();
+            system.Update(0); // latch while the clip is active
+
+            animation.Stop("bite");
+            frameTimeBudget.TrySpendBudget().Returns(false);
+
+            // Act: budget-denied frames skip observation entirely.
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.DidNotReceive().PutMessage(Arg.Any<Action<PBAnimator, PBAnimator>>(), Arg.Any<CRDTEntity>(), Arg.Any<PBAnimator>());
+
+            // Act: the finish is delayed, not lost — the next budgeted frame detects it.
+            frameTimeBudget.TrySpendBudget().Returns(true);
+            system.Update(0);
+
+            // Assert
+            ecsToCRDTWriter.Received(1).PutMessage(Arg.Any<Action<PBAnimator, PBAnimator>>(), Arg.Any<CRDTEntity>(), Arg.Any<PBAnimator>());
+            Assert.That(pbAnimator.States[0].Playing, Is.False);
+        }
+
+        [Test]
+        public void PrecomputeAndPreserveClipHash()
+        {
+            // Arrange
+            var states = new List<SDKAnimationState>
+            {
+                new (new PBAnimationState { Clip = "bite", Playing = true, Loop = false }),
+            };
+
+            int expectedHash = UnityEngine.Animator.StringToHash("bite");
+
+            // Assert: the hash is computed on construction and survives the latch transitions.
+            Assert.That(states[0].ClipHash, Is.EqualTo(expectedHash));
+            Assert.That(states[0].WithObserved().ClipHash, Is.EqualTo(expectedHash));
+            Assert.That(states[0].AsStopped().ClipHash, Is.EqualTo(expectedHash));
         }
 
         [Test]

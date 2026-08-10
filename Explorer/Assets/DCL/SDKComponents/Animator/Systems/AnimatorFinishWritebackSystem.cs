@@ -6,6 +6,7 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.Animator.Components;
 using ECS.Abstract;
 using ECS.Groups;
@@ -34,10 +35,12 @@ namespace DCL.SDKComponents.Animator.Systems
     public partial class AnimatorFinishWritebackSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly IPerformanceBudget frameTimeBudget;
 
-        internal AnimatorFinishWritebackSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        internal AnimatorFinishWritebackSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IPerformanceBudget frameTimeBudget) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.frameTimeBudget = frameTimeBudget;
         }
 
         protected override void Update(float t)
@@ -50,6 +53,7 @@ namespace DCL.SDKComponents.Animator.Systems
         [None(typeof(LegacyGltfAnimation), typeof(DeleteEntityIntention))]
         private void DetectFinishedMecanimClips(in CRDTEntity sdkEntity, ref PBAnimator pbAnimator, ref SDKAnimatorComponent sdkAnimator, ref GltfContainerComponent gltfContainerComponent)
         {
+            if (!frameTimeBudget.TrySpendBudget()) return;
             if (!CanDetect(in sdkAnimator, in gltfContainerComponent)) return;
 
             List<UAnimator> animators = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
@@ -60,7 +64,7 @@ namespace DCL.SDKComponents.Animator.Systems
             {
                 if (!IsTracked(states[i])) continue;
 
-                if (!UpdateLatch(states, i, IsMecanimClipActive(animators, states[i].Clip))) continue;
+                if (!UpdateLatch(states, i, IsMecanimClipActive(animators, states[i]))) continue;
 
                 MarkClipStopped(pbAnimator, states[i].Clip);
                 anyFinished = true;
@@ -75,6 +79,7 @@ namespace DCL.SDKComponents.Animator.Systems
         [None(typeof(DeleteEntityIntention))]
         private void DetectFinishedLegacyClips(in CRDTEntity sdkEntity, ref PBAnimator pbAnimator, ref SDKAnimatorComponent sdkAnimator, ref GltfContainerComponent gltfContainerComponent)
         {
+            if (!frameTimeBudget.TrySpendBudget()) return;
             if (!CanDetect(in sdkAnimator, in gltfContainerComponent)) return;
 
             List<Animation> animations = gltfContainerComponent.Promise.Result!.Value.Asset.Animations;
@@ -140,18 +145,18 @@ namespace DCL.SDKComponents.Animator.Systems
         internal static bool IsMecanimStateActive(bool stateIsClip, float normalizedTime) =>
             stateIsClip && normalizedTime < 1f;
 
-        private static bool IsMecanimClipActive(List<UAnimator> animators, string clip)
+        private static bool IsMecanimClipActive(List<UAnimator> animators, in SDKAnimationState state)
         {
             for (var i = 0; i < animators.Count; i++)
             {
                 UAnimator animator = animators[i];
-                int layerIndex = animator.GetLayerIndex(clip);
+                int layerIndex = animator.GetLayerIndex(state.Clip);
 
                 if (layerIndex == -1) continue;
 
                 AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
 
-                if (IsMecanimStateActive(stateInfo.IsName(clip), stateInfo.normalizedTime))
+                if (IsMecanimStateActive(stateInfo.shortNameHash == state.ClipHash, stateInfo.normalizedTime))
                     return true;
             }
 
