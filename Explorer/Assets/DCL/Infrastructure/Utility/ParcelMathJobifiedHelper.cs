@@ -127,7 +127,7 @@ namespace Utility
                 int index = (4 * ringLevel * (ringLevel + 1)) + 1; // + 1 stands for 0 radius
 
                 ringLevel++;
-                float ringSqrDistance = ringLevel * ParcelMathHelper.PARCEL_SIZE * (ringLevel * ParcelMathHelper.PARCEL_SIZE);
+                float ringSqrDistance = ringLevel * ParcelMathHelper.PARCEL_SIZE * ringLevel * ParcelMathHelper.PARCEL_SIZE;
 
                 for (int i = -ringLevel; i <= ringLevel; i++)
                 {
