@@ -25,7 +25,9 @@ namespace DCL.Backpack
         private readonly BackpackGridController backpackGridController;
         private readonly AvatarTabsManager tabsManager;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "backpack");
+        // Still "backpack" even though the destination is now the Shop: this names where the click came FROM,
+        // and keeping it is what lets the web side see this traffic move from the marketplace over to the Shop.
+        private readonly URLParameter shopSourceParam = new ("utm_source", "backpack");
 
         public AvatarController(AvatarView view,
             UnityAppWebBrowser webBrowser,
@@ -51,7 +53,7 @@ namespace DCL.Backpack
 
             rectTransform = view.GetComponent<RectTransform>();
 
-            view.marketplaceButton.onClick.AddListener(OnOpenMarketplace);
+            view.marketplaceButton.onClick.AddListener(OnOpenShop);
 
             slotsController = new BackpackSlotsController(slotViews,
                 backpackCommandBus,
@@ -72,11 +74,14 @@ namespace DCL.Backpack
             tabsManager.InitializeAndEnable();
         }
 
-        private void OnOpenMarketplace()
+        // The Shop and not the marketplace: this button lives in the avatar section, so what it is asked for is
+        // always wearables or emotes, and those are what the Shop sells. LAND keeps pointing at the marketplace
+        // elsewhere — the Shop carries no parcels or estates.
+        private void OnOpenShop()
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));
-            urlBuilder.AppendParameter(marketplaceSourceParam);
+            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ShopLink)));
+            urlBuilder.AppendParameter(shopSourceParam);
             webBrowser.OpenUrlMainThreadOnly(urlBuilder.Build());
         }
 

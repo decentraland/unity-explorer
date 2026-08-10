@@ -63,7 +63,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             async UniTaskVoid AnimateAndAwaitAsync()
             {
                 await UniTask.Delay((int)(view.buyButtonAnimationDuration * 1000));
-                webBrowser.OpenUrlMainThreadOnly(currentWearable.GetMarketplaceLink(decentralandUrlsSource));
+                webBrowser.OpenUrlMainThreadOnly(currentWearable.GetShopLink(decentralandUrlsSource));
                 MarketClicked?.Invoke();
             }
 

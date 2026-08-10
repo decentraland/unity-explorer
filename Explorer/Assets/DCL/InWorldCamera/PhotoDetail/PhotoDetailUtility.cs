@@ -8,12 +8,20 @@ namespace DCL.InWorldCamera.PhotoDetail
     public static class PhotoDetailUtility
     {
         /// <summary>
-        ///     Extracts the marketplace link from a wearable.
-        ///     Taken from the old renderer.
+        ///     Builds the Shop link for a wearable worn in a photo.
+        ///     <para>
+        ///         The Shop and not the marketplace: the subject here is always a wearable, which is what the Shop
+        ///         sells and prices in USD. LAND still belongs to the marketplace — the Shop carries no parcels.
+        ///     </para>
+        ///     <para>
+        ///         Note the route differs, so this is not a host swap: the marketplace addresses an item as
+        ///         <c>/contracts/{contract}/items/{id}</c> and the Shop as <c>/item/{contract}/{id}</c>. Keeping the
+        ///         old shape against the new host is a 404, not a redirect.
+        ///     </para>
         /// </summary>
-        public static string GetMarketplaceLink(this IWearable wearable, IDecentralandUrlsSource decentralandUrlsSource)
+        public static string GetShopLink(this IWearable wearable, IDecentralandUrlsSource decentralandUrlsSource)
         {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
+            var shop = $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{{0}}/{{1}}";
             ReadOnlySpan<char> idSpan = wearable.GetUrn().ToString().AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 
@@ -29,7 +37,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
                 return "";
 
-            return string.Format(marketplace, contract, item);
+            return string.Format(shop, contract, item);
         }
     }
 }
