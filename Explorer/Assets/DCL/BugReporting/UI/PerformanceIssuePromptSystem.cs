@@ -27,6 +27,7 @@ namespace DCL.BugReporting.UI
 
         private bool promptExhausted;
         private bool wasPaused = true;
+        private bool debugHiccupPending;
 
         internal PerformanceIssuePromptSystem(World world, IMVCManager mvcManager, PerformanceIssueDetector detector, Func<bool> isLoadingScreenOn, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -35,10 +36,11 @@ namespace DCL.BugReporting.UI
             this.isLoadingScreenOn = isLoadingScreenOn;
             promptExhausted = DCLPlayerPrefs.GetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED);
 
-            // Debug trigger with a synthetic hiccup: it skips the detector and the one-per-session
-            // guard, so the prompt can be exercised repeatedly and regardless of the opt-out.
+            // Debug trigger: the next unpaused frame is fed to the detector as a synthetic hiccup,
+            // so the whole production pipeline runs, detection, pause guards, the one-per-session
+            // offer and the opt-out included.
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.BUG_REPORT)
-                       ?.AddSingleButton("Show Performance Prompt", () => ShowPromptAsync(PerformanceIssue.Hiccup(DEBUG_HICCUP_SECONDS)).Forget());
+                       ?.AddSingleButton("Simulate Performance Hiccup", () => debugHiccupPending = true);
         }
 
         protected override void Update(float t)
@@ -65,7 +67,15 @@ namespace DCL.BugReporting.UI
                 return;
             }
 
-            if (!detector.OnFrame(t, out PerformanceIssue issue))
+            float frameSeconds = t;
+
+            if (debugHiccupPending)
+            {
+                debugHiccupPending = false;
+                frameSeconds = DEBUG_HICCUP_SECONDS;
+            }
+
+            if (!detector.OnFrame(frameSeconds, out PerformanceIssue issue))
                 return;
 
             // One offer per session: a prompt the user ignored must not reappear minutes later.
