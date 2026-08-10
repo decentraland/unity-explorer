@@ -307,7 +307,7 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
-                new AnimatorPlugin(),
+                new AnimatorPlugin(sharedDependencies.FrameTimeBudget),
                 new TweenPlugin(),
                 container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new SDKEntityTriggerAreaPlugin(
