@@ -379,6 +379,7 @@ namespace DCL.AuthenticationScreenFlow
                                                ct)
                                           .WithNoOpAsync();
             }
+            catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 // Best-effort attribution: any failure (timeout, network) must not surface as a
