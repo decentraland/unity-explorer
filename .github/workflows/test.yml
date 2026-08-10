@@ -732,7 +732,8 @@ jobs:
           # that never reached a verdict (cancelled by cancel-in-progress, or
           # skipped) ended before the editor wrote anything, so there is no
           # drift to report there.
-          if [ "$RUNNER_OUTCOME" != cancelled ] && [ "$RUNNER_OUTCOME" != skipped ] \
+          if { [ "$RUNNER_OUTCOME" = success ] || [ "$RUNNER_OUTCOME" = failure ]; } \
+             && ! grep -q "stall detection armed" watchdog-output.log 2>/dev/null; then
              && ! grep -q "stall detection armed" watchdog-output.log 2>/dev/null; then
             echo "::warning::Stale-log watchdog never armed - artifacts/$TEST_MODE.log never grew, so a hang would still have run to the step timeout. Check that game-ci still writes the editor log there."
           fi
