@@ -9,28 +9,13 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle
 {
-    /// <summary>
-    ///     The single GLTF model a local-development hot reload reported as changed, carried from the
-    ///     dev server's websocket message so the reload can evict just that asset instead of the whole cache.
-    /// </summary>
-    public readonly struct ChangedGltfModel
-    {
-        public readonly string Src;
-        public readonly string Hash;
-
-        public ChangedGltfModel(string src, string hash)
-        {
-            Src = src;
-            Hash = hash;
-        }
-    }
-
     public class ECSReloadScene
     {
         private readonly IScenesCache scenesCache;
@@ -66,14 +51,14 @@ namespace ECS.SceneLifeCycle
             return sceneInCache;
         }
 
-        public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId, ChangedGltfModel? changedModel = null)
+        public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId, string? changedModelSrc = null)
         {
             if (!scenesCache.TryGetBySceneId(sceneId, out var sceneInCache)) return null;
 
             var foundEntity = FindSceneEntity(sceneInCache!);
             if (foundEntity == Entity.Null) return null;
 
-            await DisposeAndRestartAsync(foundEntity, sceneInCache!, changedModel, ct);
+            await DisposeAndRestartAsync(foundEntity, sceneInCache!, changedModelSrc, ct);
 
             return sceneInCache;
         }
@@ -91,7 +76,7 @@ namespace ECS.SceneLifeCycle
             return sceneEntity;
         }
 
-        private async UniTask DisposeAndRestartAsync(Entity entity, ISceneFacade currentScene, ChangedGltfModel? changedModel, CancellationToken ct)
+        private async UniTask DisposeAndRestartAsync(Entity entity, ISceneFacade currentScene, string? changedModelSrc, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -118,12 +103,14 @@ namespace ECS.SceneLifeCycle
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
                     (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
 
-                if (changedModel is { } model && IsRawGltfModel(definition, model.Hash))
+                if (changedModelSrc != null
+                    && TryResolveContentHash(definition, changedModelSrc, out string contentHash)
+                    && IsRawGltfModel(definition, contentHash))
                 {
                     // The dev server named the exact model that changed. In raw-GLTF development its
                     // cache key is the bare content hash, so evict just that asset and let every other
                     // cache stay warm across the reload.
-                    cacheCleaner.EvictGltfModel(model.Hash, model.Src);
+                    cacheCleaner.EvictGltfModel(contentHash);
                 }
                 else
                 {
@@ -165,6 +152,33 @@ namespace ECS.SceneLifeCycle
                     return isLoadCompleted;
                 }, cancellationToken: ct);
             }
+        }
+
+        /// <summary>
+        ///     Resolve the changed file to the hash the caches are actually keyed on. The reload
+        ///     message's own hash is minted from the watcher-relative path, while every cache key
+        ///     derives from the content-mapping hash (minted from the absolute path) — the two never
+        ///     match, so the file must be joined to the definition's content list by its src instead.
+        /// </summary>
+        internal static bool TryResolveContentHash(SceneEntityDefinition? definition, string src, out string hash)
+        {
+            hash = string.Empty;
+
+            ContentDefinition[]? content = definition?.content;
+
+            if (content == null || string.IsNullOrEmpty(src))
+                return false;
+
+            foreach (ContentDefinition entry in content)
+            {
+                if (string.Equals(entry.file, src, StringComparison.OrdinalIgnoreCase))
+                {
+                    hash = entry.hash;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

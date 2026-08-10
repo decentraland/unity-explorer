@@ -73,20 +73,22 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                     wsSceneMessage.MergeFrom(receiveBuffer.AsSpan(0, receiveResult.Count));
                     ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket scene message received: {wsSceneMessage.MessageCase}");
 
-                    // An UpdateModel message names the single GLTF that changed; carry it through so the
-                    // reload can evict just that asset instead of draining every cache.
+                    // An UpdateModel message names the single GLTF that changed; carry its src through so
+                    // the reload can evict just that asset instead of draining every cache. The message's
+                    // own hash is unusable — it is minted from the watcher-relative path while cache keys
+                    // derive from the content-mapping hash, so the reload resolves the hash by src itself.
                     string sceneId;
-                    ChangedGltfModel? changedModel;
+                    string? changedModelSrc;
 
                     if (wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateModel)
                     {
                         sceneId = wsSceneMessage.UpdateModel.SceneId;
-                        changedModel = new ChangedGltfModel(wsSceneMessage.UpdateModel.Src, wsSceneMessage.UpdateModel.Hash);
+                        changedModelSrc = wsSceneMessage.UpdateModel.Src;
                     }
                     else
                     {
                         sceneId = wsSceneMessage.UpdateScene.SceneId;
-                        changedModel = null;
+                        changedModelSrc = null;
                     }
 
                     // Switch to the main thread because `TryReloadSceneAsync` requires that
@@ -100,7 +102,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                         // And pause the skybox update while loading to avoid transitions
                         globalWorld.AddOrGet(skyboxEntity, new PauseSkyboxTimeUpdate());
 
-                        await reloadScene.TryReloadSceneAsync(ct, sceneId, changedModel)
+                        await reloadScene.TryReloadSceneAsync(ct, sceneId, changedModelSrc)
                                          .Timeout(TimeSpan.FromSeconds(RELOAD_SCENE_TIMEOUT_SECS));
                     }
                     catch (TimeoutException) { }

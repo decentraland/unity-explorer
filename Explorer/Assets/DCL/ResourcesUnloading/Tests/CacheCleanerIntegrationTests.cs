@@ -208,18 +208,22 @@ namespace DCL.ResourcesUnloading.Tests
         [Test]
         public void EvictGltfModelDropsTargetedModelAndKeepsOtherCachesWarm()
         {
-            // Arrange
+            // Arrange: the parsed import sits under a Name whose casing the evictor cannot know —
+            // eviction must match by content hash alone.
             FillCachesWithElements(hashId: "test");
+            gltfLoadCache.Add(GetGLTFIntention.Create("Models/Test.GLB", "test"), new GLTFData(null!, new GameObject()));
 
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(1));
+            Assert.That(gltfLoadCache.cache.Count, Is.EqualTo(1));
             Assert.That(texturesCache.cache.Count, Is.EqualTo(1));
             Assert.That(audioClipsCache.cache.Count, Is.EqualTo(1));
 
             // Act
-            cacheCleaner.EvictGltfModel("test", "model.glb");
+            cacheCleaner.EvictGltfModel("test");
 
-            // Assert: only the GLTF container entry for that hash is gone; unrelated caches stay warm
+            // Assert: only the GLTF entries for that hash are gone; unrelated caches stay warm
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(0));
+            Assert.That(gltfLoadCache.cache.Count, Is.EqualTo(0));
             Assert.That(texturesCache.cache.Count, Is.EqualTo(1));
             Assert.That(audioClipsCache.cache.Count, Is.EqualTo(1));
             Assert.That(assetBundleCache.cache.Count, Is.EqualTo(1));
