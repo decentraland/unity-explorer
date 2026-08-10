@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using NSubstitute;
@@ -21,6 +22,12 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private const string TRADE_ID = "trade-1";
         private const string CREDIT_ID = "intent-1";
         private const string TX_HASH = "0x1122";
+        private const string COLLECTION = "0x2222222222222222222222222222222222222222";
+        private const string MINT_ITEM_ID = "3";
+
+        // A mint priced at 5 MANA — $1.25 at the fixture rate, charged as 13 whole credits, same arithmetic as a
+        // legacy MANA trade because a mint is MANA-denominated too.
+        private const string MINT_MANA_WEI = "5000000000000000000";
 
         // $0.25 per MANA on a Chainlink-style 8-decimal feed.
         private const int ORACLE_DECIMALS = 8;
@@ -42,6 +49,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private CreditsManagerMetaTxRelayer metaTxRelayer = null!;
         private PolygonSettlementPoller settlementPoller = null!;
         private ManaUsdRateReader manaUsdRateReader = null!;
+        private CreditsChainConfig chainConfig = null!;
         private IWeb3IdentityCache identityCache = null!;
         private CreditsFeatureAccess creditsFeatureAccess = null!;
         private CancellationTokenSource warmUpCts = null!;
@@ -56,6 +64,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             metaTxRelayer = Substitute.For<CreditsManagerMetaTxRelayer>(null, null, null, null);
             settlementPoller = Substitute.For<PolygonSettlementPoller>(null, null);
             manaUsdRateReader = Substitute.For<ManaUsdRateReader>(null, null);
+            chainConfig = new CreditsChainConfig(DecentralandEnvironment.Zone);
             identityCache = Substitute.For<IWeb3IdentityCache>();
 
             IWeb3Identity identity = Substitute.For<IWeb3Identity>();
@@ -68,7 +77,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                              .Returns(UniTask.FromResult(new ManaUsdRate(MANA_USD_RATE, ORACLE_DECIMALS)));
 
-            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(CreateAuthorization()));
 
             metaTxRelayer.RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -100,7 +109,38 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         private CreditsPurchaseService CreateService(bool isFeatureEnabled, CreditsFeatureAccess? featureAccess = null) =>
-            new (shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller, manaUsdRateReader, identityCache, featureAccess ?? creditsFeatureAccess, isFeatureEnabled);
+            new (shopAPIClient, creditsAPIClient, metaTxRelayer, settlementPoller, manaUsdRateReader, chainConfig, identityCache,
+                featureAccess ?? creditsFeatureAccess, isFeatureEnabled);
+
+        /// <summary>The listing row a trade is quoted from — the quote resolves the trade through its id.</summary>
+        private static ShopListingDto TradeListing() =>
+            new ()
+            {
+                tradeId = TRADE_ID,
+                acquisition = "trade",
+                listingType = "primary",
+                source = "native",
+                contractAddress = COLLECTION,
+                itemId = MINT_ITEM_ID,
+                available = 5,
+            };
+
+        /// <summary>
+        ///     A CollectionStore mint: no tradeId, no order, priced in MANA, with stock. Everything the quote
+        ///     needs is here, which is the point — there is nothing to fetch.
+        /// </summary>
+        private static ShopListingDto MintListing(int available = 8, string? manaWei = MINT_MANA_WEI) =>
+            new ()
+            {
+                tradeId = null!,
+                acquisition = "store",
+                listingType = "primary",
+                source = "legacy",
+                contractAddress = COLLECTION,
+                itemId = MINT_ITEM_ID,
+                manaWei = manaWei,
+                available = available,
+            };
 
         private static TradeDto CreateTrade() =>
             new ()
@@ -180,7 +220,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private async UniTask<CreditsPurchaseResult> QuoteAndPurchaseAsync()
         {
-            CreditsQuoteResult quote = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult quote = await service.QuoteAsync(TradeListing(), CancellationToken.None);
             Assert.IsTrue(quote.Success, $"Quote failed with {quote.Error}: {quote.Message}");
             return await service.PurchaseAsync(quote.Quote, CancellationToken.None);
         }
@@ -209,7 +249,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                              .Returns<UniTask<ManaUsdRate>>(_ => throw new InvalidOperationException("stale"));
 
             // Act
-            CreditsQuoteResult result = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult result = await service.QuoteAsync(TradeListing(), CancellationToken.None);
 
             // Assert: the settlement wei is left for purchase time, and only the cache warm-up touches the reader.
             Assert.IsTrue(result.Success);
@@ -227,11 +267,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Arrange
             shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(CreateLegacyManaTrade()));
 
-            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(CreateAuthorization(LEGACY_PRICE_CENTS)));
 
             // Act
-            CreditsQuoteResult quote = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult quote = await service.QuoteAsync(TradeListing(), CancellationToken.None);
             CreditsPurchaseResult result = await service.PurchaseAsync(quote.Quote, CancellationToken.None);
 
             // Assert: the MANA price is converted at the rate settlement uses, then rounded up to a whole credit.
@@ -241,7 +281,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(BigInteger.Parse(LEGACY_MANA_WEI), quote.Quote.RequiredManaWei);
             Assert.IsTrue(quote.Quote.IsLiveRatePrice);
             Assert.IsTrue(result.Success);
-            await creditsAPIClient.Received(1).AuthorizeUsdCreditAsync(LEGACY_PRICE_CENTS, TRADE_ID, Arg.Any<CancellationToken>());
+            await creditsAPIClient.Received(1).AuthorizeUsdCreditAsync(LEGACY_PRICE_CENTS, TRADE_ID, string.Empty, string.Empty, Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -254,18 +294,18 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                              .Returns(UniTask.FromException<ManaUsdRate>(new InvalidOperationException("stale")));
 
             // Act
-            CreditsQuoteResult result = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult result = await service.QuoteAsync(TradeListing(), CancellationToken.None);
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.PriceUnavailable, result.Error);
-            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
         public async Task RejectPurchaseWithoutChargingWhenTheRateIsUnavailableAtConfirm()
         {
             // Arrange: the USD-pegged quote succeeds, then the oracle dies before the confirm click.
-            CreditsQuoteResult quote = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult quote = await service.QuoteAsync(TradeListing(), CancellationToken.None);
             Assert.IsTrue(quote.Success);
 
             manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -276,7 +316,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Assert: the rate failed before any credit intent existed, so there is nothing to release.
             Assert.AreEqual(CreditsPurchaseError.PriceUnavailable, result.Error);
-            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
         }
 
@@ -285,7 +325,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange: MANA halves between authorization sizing and the purchase-time read, so the trade draws
             // 20 MANA against a cap sized for ~10.
-            CreditsQuoteResult quote = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult quote = await service.QuoteAsync(TradeListing(), CancellationToken.None);
             Assert.IsTrue(quote.Success);
 
             manaUsdRateReader.ReadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -307,7 +347,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditsPurchaseService disabledService = CreateService(isFeatureEnabled: false);
 
             // Act
-            CreditsQuoteResult result = await disabledService.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult result = await disabledService.QuoteAsync(TradeListing(), CancellationToken.None);
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.FeatureDisabled, result.Error);
@@ -334,7 +374,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             CreditsPurchaseService restrictedService = CreateService(isFeatureEnabled: true, new CreditsFeatureAccess(identityCache, warmUpCts.Token));
 
             // Act
-            CreditsQuoteResult result = await restrictedService.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult result = await restrictedService.QuoteAsync(TradeListing(), CancellationToken.None);
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.FeatureDisabled, result.Error);
@@ -350,11 +390,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(trade));
 
             // Act
-            CreditsQuoteResult result = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult result = await service.QuoteAsync(TradeListing(), CancellationToken.None);
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.OwnListing, result.Error);
-            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -367,11 +407,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(trade));
 
             // Act
-            CreditsQuoteResult result = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult result = await service.QuoteAsync(TradeListing(), CancellationToken.None);
 
             // Assert
             Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, result.Error);
-            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await creditsAPIClient.DidNotReceive().AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -380,11 +420,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // Arrange
             LogAssert.Expect(LogType.Exception, "Exception: boom");
 
-            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromException<AuthorizeCreditResponse>(new Exception("boom")));
 
             // Act
-            CreditsQuoteResult quote = await service.QuoteAsync(TRADE_ID, CancellationToken.None);
+            CreditsQuoteResult quote = await service.QuoteAsync(TradeListing(), CancellationToken.None);
             CreditsPurchaseResult result = await service.PurchaseAsync(quote.Quote, CancellationToken.None);
 
             // Assert
@@ -396,7 +436,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task ReleaseReservationWhenAuthorizationPricesAboveTheConfirmedAmount()
         {
             // Arrange
-            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(CreateAuthorization(NATIVE_PRICE_CENTS + 50)));
 
             // Act
@@ -412,7 +452,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task CompletePurchaseWhenAuthorizationPricesBelowTheConfirmedAmount()
         {
             // Arrange: a cheaper charge whose cap still covers the trade — the server read a rate kinder than ours.
-            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(CreateAuthorization(NATIVE_PRICE_CENTS - 50, manaCapWei: "10200000000000000000")));
 
             // Act
@@ -430,7 +470,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             // listing authorized off a stale catalogue price, which reverts on-chain if it is ever submitted.
             shopAPIClient.GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<TradeDto?>(CreateLegacyManaTrade()));
 
-            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromResult(CreateAuthorization(10)));
 
             // Act
@@ -519,6 +559,175 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(CreditsPurchaseError.SettlementPending, result.Error);
             await creditsAPIClient.DidNotReceive().ReleaseUsdIntentsAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
             await settlementPoller.DidNotReceive().WaitForSettlementAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>());
+        }
+
+        /// <summary>
+        ///     BUYING A COLLECTIONSTORE MINT.
+        ///
+        ///     A mint has no trade and no order: nothing was ever signed or listed, and the item is minted straight
+        ///     from the store contract. Measured in production — the mint at 0xf90645e2…6213 could not be bought at
+        ///     all while the trade at 0x58628c49…a212 went through for the same buyer in the same session, because
+        ///     the whole quote was derived from a trade that does not exist for a mint.
+        /// </summary>
+        [Test]
+        public async Task QuoteAMintWithoutFetchingATrade()
+        {
+            // Act
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(), CancellationToken.None);
+
+            // Assert
+            Assert.IsTrue(quote.Success, $"Quote failed with {quote.Error}: {quote.Message}");
+            Assert.AreEqual(CreditsListingKind.StoreMint, quote.Quote.Kind);
+            Assert.AreEqual(LEGACY_PRICE_CENTS, quote.Quote.UsdCents); // MANA-priced, so the oracle decides
+            Assert.AreEqual(LEGACY_PRICE_CREDITS, quote.Quote.Credits);
+            Assert.AreEqual(BigInteger.Parse(MINT_MANA_WEI), quote.Quote.RequiredManaWei);
+            Assert.AreEqual(COLLECTION, quote.Quote.Mint.CollectionAddress);
+            Assert.AreEqual(MINT_ITEM_ID, quote.Quote.Mint.ItemId);
+
+            // The point: /v1/trades was never called, because there is nothing there to call it with.
+            await shopAPIClient.DidNotReceive().GetTradeAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseASoldOutMintOnStockRatherThanOnAMissingTrade()
+        {
+            // Act
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(available: 0), CancellationToken.None);
+
+            // Assert — carried to an on-chain revert otherwise.
+            Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, quote.Error);
+        }
+
+        [Test]
+        public async Task RefuseAMintWithNoPrice()
+        {
+            // Act
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(manaWei: null), CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, quote.Error);
+        }
+
+        /// <summary>
+        ///     A missing `acquisition` is an OLDER SERVER, and back then every row was a trade. Reading the absence
+        ///     as "mint" would route a trade down the store rail and revert.
+        /// </summary>
+        [Test]
+        public async Task TreatAnAbsentAcquisitionAsATrade()
+        {
+            // Arrange
+            ShopListingDto listing = TradeListing();
+            listing.acquisition = null;
+
+            // Act
+            CreditsQuoteResult quote = await service.QuoteAsync(listing, CancellationToken.None);
+
+            // Assert
+            Assert.IsTrue(quote.Success, $"Quote failed with {quote.Error}: {quote.Message}");
+            Assert.AreEqual(CreditsListingKind.Trade, quote.Quote.Kind);
+            await shopAPIClient.Received(1).GetTradeAsync(TRADE_ID, Arg.Any<CancellationToken>());
+        }
+
+        /// <summary>
+        ///     The mint's price is an ARGUMENT to CollectionStore.buy and the contract re-validates it against the
+        ///     item's live price, so it is re-read immediately before encoding. A trade cannot fail this way — its
+        ///     price is signed into the order.
+        /// </summary>
+        [Test]
+        public async Task RereadTheMintPriceBeforeBuying()
+        {
+            // Arrange
+            shopAPIClient.GetShopListingForItemAsync(COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<ShopListingDto?>(MintListing()));
+
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(CreateAuthorization(LEGACY_PRICE_CENTS)));
+
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(), CancellationToken.None);
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(quote.Quote, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.None, result.Error);
+            await shopAPIClient.Received(1).GetShopListingForItemAsync(COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAMintWhosePriceWentUpBeforeBuying()
+        {
+            // Arrange — the creator raised it between the quote and the click.
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(), CancellationToken.None);
+
+            shopAPIClient.GetShopListingForItemAsync(COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<ShopListingDto?>(MintListing(manaWei: "9000000000000000000")));
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(quote.Quote, CancellationToken.None);
+
+            // Assert — never charged silently at the new price.
+            Assert.AreEqual(CreditsPurchaseError.PriceChanged, result.Error);
+            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RefuseAMintThatSoldOutBetweenTheQuoteAndTheClick()
+        {
+            // Arrange
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(), CancellationToken.None);
+
+            shopAPIClient.GetShopListingForItemAsync(COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<ShopListingDto?>(MintListing(available: 0)));
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(quote.Quote, CancellationToken.None);
+
+            // Assert
+            Assert.AreEqual(CreditsPurchaseError.ListingNotAvailable, result.Error);
+            await metaTxRelayer.DidNotReceive().RelayUseCreditsAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        /// <summary>
+        ///     A mint is identified to the credits-server by WHAT it is, since it has no trade. Neither identifier
+        ///     is part of what the server signs — it signs a voucher for an amount — but without the pair the
+        ///     buyer's purchase history has no way to name the item.
+        /// </summary>
+        [Test]
+        public async Task AuthorizeAMintByItsItemRatherThanByATradeId()
+        {
+            // Arrange
+            shopAPIClient.GetShopListingForItemAsync(COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<ShopListingDto?>(MintListing()));
+
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(), CancellationToken.None);
+
+            // Act
+            await service.PurchaseAsync(quote.Quote, CancellationToken.None);
+
+            // Assert
+            await creditsAPIClient.Received(1).AuthorizeUsdCreditAsync(
+                LEGACY_PRICE_CENTS, string.Empty, COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task RelayTheMintSoABuyerWithNoPolCanStillBuyIt()
+        {
+            // Arrange
+            shopAPIClient.GetShopListingForItemAsync(COLLECTION, MINT_ITEM_ID, Arg.Any<CancellationToken>())
+                         .Returns(UniTask.FromResult<ShopListingDto?>(MintListing()));
+
+            creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(CreateAuthorization(LEGACY_PRICE_CENTS)));
+
+            CreditsQuoteResult quote = await service.QuoteAsync(MintListing(), CancellationToken.None);
+
+            // Act
+            CreditsPurchaseResult result = await service.PurchaseAsync(quote.Quote, CancellationToken.None);
+
+            // Assert — the same gasless rail a trade takes: the buyer signs, the relayer pays.
+            Assert.AreEqual(CreditsPurchaseError.None, result.Error);
+            Assert.AreEqual(TX_HASH, result.TxHash);
+            await metaTxRelayer.Received(1).RelayUseCreditsAsync(BUYER, Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
     }
 }

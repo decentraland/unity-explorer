@@ -573,6 +573,7 @@ jobs:
           POLL_TIME: 60
           QUEUE_POLL_TIME: 120
           STALE_POLL_THRESHOLD: 600
+          LOG_STALL_THRESHOLD: 900
           QUEUE_TIMEOUT: 14400
           BUILD_TIMEOUT: 10800
           TARGET: t_${{ matrix.target }}
@@ -598,6 +599,19 @@ jobs:
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
           PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
+
+      # Must run before any always() log/report steps: on cancellation GitHub grants a 5-minute
+      # grace window, and the DELETE that frees the Unity-side queue slot has to win that race
+      # (a large-log upload ahead of it can eat the whole window). Also runs on failure() so an
+      # outer-step timeout doesn't leave a Unity-side build holding a slot.
+      - name: Cancel Unity Cloud build
+        if: ${{ cancelled() || failure() }}
+        timeout-minutes: 2
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+        run: python -u scripts/cloudbuild/build.py --cancel || true
 
       - name: Locate Windows main executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
@@ -877,7 +891,11 @@ jobs:
             echo "[${ARTIFACT_URL}](${ARTIFACT_URL})"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Symbol artifacts have no downstream consumer (Sentry uploads from the on-disk build/
+      # folder below; release drafting attaches only the player zips) — keep them only where a
+      # human might need post-hoc symbolication, and never at default retention.
       - name: Upload debug symbols
+        if: ${{ inputs.is_release_build == true }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.artifact_name }}_debug_symbols
@@ -885,6 +903,7 @@ jobs:
             build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
+          retention-days: 7
           
       - name: Upload debug symbols to Sentry
         if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' }}
@@ -899,22 +918,22 @@ jobs:
             --project "$SENTRY_PROJECT" \
             "build"
 
-      # Will run always (even if failing)
+      # Runs even on failure, but only once a log actually exists (a run cancelled in-queue
+      # never writes one, and a guaranteed-failing upload would burn the cancellation grace window).
       - name: Upload cloud logs
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
           if-no-files-found: error
 
-      # Will run always (even if failing)
       - name: Print cloud logs
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         run: cat unity_cloud_log.log
 
       - name: Extract and display errors
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         run: |
           echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
           grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
@@ -930,15 +949,6 @@ jobs:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
           if-no-files-found: warn
-
-      # Also runs on failure() so an outer-step timeout doesn't leave a Unity-side build holding a slot.
-      - name: Cancel Unity Cloud build
-        if: ${{ cancelled() || failure() }}
-        env:
-          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
-          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
-          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-        run: python -u scripts/cloudbuild/build.py --cancel || true
 
   build-gate:
     name: Build Gate (Windows + macOS)
