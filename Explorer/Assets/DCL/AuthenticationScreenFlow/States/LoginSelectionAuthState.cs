@@ -84,10 +84,10 @@ namespace DCL.AuthenticationScreenFlow
 
                 // ThirdWeb
                 view.EmailInputField.Submitted += OTPLogin;
-            }
 
-            if (isEpicBuild)
-                view.OtherLoginOptionsDisclaimerLink.OnLinkClicked += webBrowser.OpenUrlMainThreadOnly;
+                if (isEpicBuild)
+                    view.OtherLoginOptionsDisclaimerLink.OnLinkClicked += webBrowser.OpenUrlMainThreadOnly;
+            }
         }
 
         public override void Exit()
