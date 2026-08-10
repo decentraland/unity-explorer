@@ -525,7 +525,8 @@ namespace Global.Dynamic
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
-                    staticContainer.SceneLoadingLimit, appArgs, staticContainer.LoadingStatus),
+                    staticContainer.SceneLoadingLimit, appArgs, staticContainer.LoadingStatus,
+                    bootstrapContainer.Analytics.Controller),
 #if UNITY_EDITOR
                 new RenderingSystemPlugin(debugBuilder),
 #endif
