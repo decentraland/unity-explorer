@@ -48,7 +48,7 @@ namespace DCL.Web3
         ///     itself accepts any string and only lowercases it.
         /// </summary>
         public static Web3Address? FromUntrusted(string? address) =>
-            IsValidWalletAddress(address) ? new Web3Address(address) : (Web3Address?)null;
+            IsValidWalletAddress(address) ? new Web3Address(address) : null;
 
         public override string ToString() =>
             address;

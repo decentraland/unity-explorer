@@ -40,9 +40,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ProfileChangesBus profileChangesBus;
         private readonly Web3Address? referrer;
 
-        /// <summary>Total budget for the whole referral registration (POST + PATCH), not per request.</summary>
-        private const int REFERRAL_REGISTRATION_TIMEOUT_SECONDS = 5;
-
         private readonly AvatarRandomizer avatarRandomizer = new ();
 
         private BodyShape selectedBodyType = BodyShape.MALE;
@@ -314,7 +311,7 @@ namespace DCL.AuthenticationScreenFlow
                     // Register the referral here — awaited BEFORE the user proceeds to the world —
                     // so the referral exists before the first LOGGED_IN event reaches the backend
                     // (whose finalize step drops events for referrals that don't exist yet). Best
-                    // effort and time-boxed: a slow/failed call must not block or fail onboarding.
+                    // effort: a failed call must not fail onboarding.
                     await RegisterReferralAsync(ct);
 
                     // Mark the analytics-visible end of the onboarding step. Anything between
@@ -347,11 +344,9 @@ namespace DCL.AuthenticationScreenFlow
 
         /// <summary>
         ///     Registers the referral: POST creates it, PATCH marks the invited user as signed up.
-        ///     Awaited by the caller so the create completes before the user enters the world, but
-        ///     time-boxed and best-effort so it never blocks or fails onboarding. Both requests
-        ///     share ONE timeout budget, so the worst case onboarding delay is that budget and not
-        ///     the sum of a per-request timeout. The token is independent of the login-flow token
-        ///     on purpose: attribution should survive login-flow cancellation, just not hang.
+        ///     Awaited by the caller so the create completes before the user enters the world, and
+        ///     best-effort so a failure never fails onboarding. Runs on the login-flow token, so
+        ///     abandoning the flow abandons the attribution too.
         /// </summary>
         private async UniTask RegisterReferralAsync(CancellationToken ct)
         {

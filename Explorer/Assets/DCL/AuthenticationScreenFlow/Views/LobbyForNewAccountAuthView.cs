@@ -65,8 +65,8 @@ namespace DCL.AuthenticationScreenFlow
         public TMP_Text_ClickeableLink TermsOfUseAndPrivacyLink { get; private set; } = null!;
 
         [Space]
-        [SerializeField] private Animator animator;
-        [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] private Animator animator = null!;
+        [SerializeField] private CanvasGroup canvasGroup = null!;
 
         private int hideAnimHash = UIAnimationHashes.OUT;
 
