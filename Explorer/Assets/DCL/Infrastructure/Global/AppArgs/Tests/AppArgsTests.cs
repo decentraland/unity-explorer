@@ -219,12 +219,13 @@ namespace Global.AppArgs.Tests
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&mcp=true");
+                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&mcp=true&measure-loading-time=true");
 
             // Assert
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene must survive for a whitelisted world realm");
             Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv must survive for a whitelisted world realm");
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MCP), "mcp must survive for a whitelisted world realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must survive for a whitelisted world realm — the QA loading-benchmark flow targets a whitelisted world");
         }
 
         [Test]
@@ -394,6 +395,24 @@ namespace Global.AppArgs.Tests
                 "decentraland://?realm=https://peer.decentraland.org&local-scene=true&local-ab=true");
 
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_AB), "local-ab must be dropped for a non-loopback (remote) realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsMeasureLoadingTimeForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&measure-loading-time=true");
+
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must survive for a loopback (local dev) realm");
+        }
+
+        [Test]
+        public void DeepLinkDropsMeasureLoadingTimeForRemoteRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&measure-loading-time=true");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must be dropped for a non-whitelisted realm — it suppresses the sign-in screen and quits the client when no identity is cached");
         }
     }
 }
