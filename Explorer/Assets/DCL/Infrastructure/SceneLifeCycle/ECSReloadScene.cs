@@ -9,7 +9,6 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -171,7 +170,7 @@ namespace ECS.SceneLifeCycle
 
             foreach (ContentDefinition entry in content)
             {
-                if (string.Equals(entry.file, src, StringComparison.OrdinalIgnoreCase))
+                if (ContentPathEquals(entry.file, src))
                 {
                     hash = entry.hash;
                     return true;
@@ -179,6 +178,32 @@ namespace ECS.SceneLifeCycle
             }
 
             return false;
+        }
+
+        /// <summary>
+        ///     Case- and separator-insensitive content path comparison. Content mappings always spell
+        ///     paths with '/', while the local dev server's file watcher reports the platform separator —
+        ///     on Windows that is '\', so an ordinal comparison never matches there even though the two
+        ///     name the same file. Compared in place to keep the reload path allocation-free.
+        /// </summary>
+        private static bool ContentPathEquals(string? contentFile, string src)
+        {
+            if (contentFile == null || contentFile.Length != src.Length)
+                return false;
+
+            for (var i = 0; i < contentFile.Length; i++)
+            {
+                char a = contentFile[i];
+                char b = src[i];
+
+                if (a == '\\') a = '/';
+                if (b == '\\') b = '/';
+
+                if (a != b && char.ToLowerInvariant(a) != char.ToLowerInvariant(b))
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>

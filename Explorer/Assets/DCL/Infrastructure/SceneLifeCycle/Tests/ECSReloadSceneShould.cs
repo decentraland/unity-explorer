@@ -42,6 +42,22 @@ namespace DCL.SceneLifeCycle.Tests
         }
 
         [Test]
+        public void ResolveContentHashWhenSrcUsesWindowsSeparators()
+        {
+            //Arrange: content mappings always spell paths with '/', but the local dev server's file
+            //watcher reports the platform separator — on Windows that is '\'.
+            SceneEntityDefinition definition = CreateDefinition(
+                new ContentDefinition { file = "assets/models/out/models/BenchStreet.glb", hash = "b64-content-hash" });
+
+            //Act
+            bool resolved = ECSReloadScene.TryResolveContentHash(definition, @"assets\models\out\models\BenchStreet.glb", out string hash);
+
+            //Assert
+            Assert.That(resolved, Is.True);
+            Assert.That(hash, Is.EqualTo("b64-content-hash"));
+        }
+
+        [Test]
         public void NotResolveContentHashWhenSrcIsUnknownOrMissing()
         {
             //Arrange
