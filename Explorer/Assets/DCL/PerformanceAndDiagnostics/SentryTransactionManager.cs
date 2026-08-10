@@ -8,8 +8,6 @@ using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.PerformanceAndDiagnostics
