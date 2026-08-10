@@ -30,31 +30,29 @@ namespace DCL.ResourcesUnloading.Tests
 {
     public class CacheCleanerIntegrationTests
     {
-        private CacheCleaner cacheCleaner;
+        private CacheCleaner cacheCleaner = null!;
 
-        private IReleasablePerformanceBudget releasablePerformanceBudget;
+        private IReleasablePerformanceBudget releasablePerformanceBudget = null!;
 
         // Caches
-        private WearableStorage wearableStorage;
-        private TrimmedWearableStorage trimmedWearableStorage;
-        private TrimmedEmoteStorage trimmedEmoteStorage;
-        private AttachmentsAssetsCache attachmentsAssetsCache;
-        private TexturesCache<GetTextureIntention> texturesCache;
-        private AudioClipsCache audioClipsCache;
-        private GltfContainerAssetsCache gltfContainerAssetsCache;
-        private GltfLoadCache gltfLoadCache;
-        private LODCache lodAssets;
-        private RoadAssetsPool roadAssets;
-        private IEmoteStorage emoteStorage;
-        private IProfileCache profileCache;
-        private IComponentPoolsRegistry poolsRegistry;
+        private WearableStorage wearableStorage = null!;
+        private TrimmedWearableStorage trimmedWearableStorage = null!;
+        private TrimmedEmoteStorage trimmedEmoteStorage = null!;
+        private AttachmentsAssetsCache attachmentsAssetsCache = null!;
+        private TexturesCache<GetTextureIntention> texturesCache = null!;
+        private AudioClipsCache audioClipsCache = null!;
+        private GltfContainerAssetsCache gltfContainerAssetsCache = null!;
+        private GltfLoadCache gltfLoadCache = null!;
+        private LODCache lodAssets = null!;
+        private RoadAssetsPool roadAssets = null!;
+        private IEmoteStorage emoteStorage = null!;
+        private IProfileCache profileCache = null!;
+        private IComponentPoolsRegistry poolsRegistry = null!;
 
-        private IReadOnlyDictionary<string, string> innerOfCache;
-        private IMemoryCache<string, string> jsSourcesCache;
+        private IReadOnlyDictionary<string, string> innerOfCache = null!;
+        private IMemoryCache<string, string> jsSourcesCache = null!;
 
-        private AssetBundleCache assetBundleCache;
-
-        private IExtendedObjectPool<Material> materialPool;
+        private AssetBundleCache assetBundleCache = null!;
 
         [SetUp]
         public void SetUp()
@@ -123,7 +121,7 @@ namespace DCL.ResourcesUnloading.Tests
             releasablePerformanceBudget.TrySpendBudget().Returns(true);
 
             for (var i = 0; i < cachedElementsAmount; i++)
-                FillCachesWithElements(hashID: $"test{i}");
+                FillCachesWithElements(hashId: $"test{i}");
 
             // Measure
             Measure.Method(() =>
@@ -147,7 +145,7 @@ namespace DCL.ResourcesUnloading.Tests
             releasablePerformanceBudget.TrySpendBudget().Returns(true);
 
             for (var i = 0; i < cachedElementsAmount; i++)
-                FillCachesWithElements(hashID: $"test{i}");
+                FillCachesWithElements(hashId: $"test{i}");
 
             SampleGroup totalAllocatedMemory = new SampleGroup("TotalAllocatedMemory", SampleUnit.Kilobyte, increaseIsBetter: false);
 
@@ -164,7 +162,7 @@ namespace DCL.ResourcesUnloading.Tests
         public void DisposingShouldProperlyDereferenceDependencyChain()
         {
             // Arrange
-            var assetBundleData = new AssetBundleData(null, Array.Empty<Object>(), typeof(GameObject), null);
+            var assetBundleData = new AssetBundleData(null!, Array.Empty<Object>(), typeof(GameObject), null!);
 
             var gltfAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
@@ -191,7 +189,7 @@ namespace DCL.ResourcesUnloading.Tests
         {
             // Arrange
             releasablePerformanceBudget.TrySpendBudget().Returns(true);
-            FillCachesWithElements(hashID: "test");
+            FillCachesWithElements(hashId: "test");
 
             // Act
             cacheCleaner.UnloadCache();
@@ -211,7 +209,7 @@ namespace DCL.ResourcesUnloading.Tests
         public void EvictGltfModelDropsTargetedModelAndKeepsOtherCachesWarm()
         {
             // Arrange
-            FillCachesWithElements(hashID: "test");
+            FillCachesWithElements(hashId: "test");
 
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(1));
             Assert.That(texturesCache.cache.Count, Is.EqualTo(1));
@@ -246,28 +244,28 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.That(texturesCache.TryGet(keyA, out _), Is.False);
         }
 
-        private void FillCachesWithElements(string hashID)
+        private void FillCachesWithElements(string hashId)
         {
-            var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
+            var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashId) } };
             texturesCache.Add(textureIntention, new TextureData(new Texture2D(1, 1)));
 
-            var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
-            var audioClip = new AudioClipData(AudioClip.Create(hashID, 1, 1, 2000, false));
+            var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashId) } };
+            var audioClip = new AudioClipData(AudioClip.Create(hashId, 1, 1, 2000, false));
             audioClipsCache.Add(audioClipIntention, audioClip);
             audioClipsCache.AddReference(in audioClipIntention, audioClip);
             audioClip.Dereference();
 
-            var assetBundleData = new AssetBundleData(null, new []{new GameObject()}, typeof(GameObject), Array.Empty<AssetBundleData>());
-            assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
+            var assetBundleData = new AssetBundleData(null!, new Object[] { new GameObject() }, typeof(GameObject), Array.Empty<AssetBundleData>());
+            assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashId }, assetBundleData);
 
             var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
-            gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset); // add to cache
+            gltfContainerAssetsCache.Dereference(hashId, gltfContainerAsset); // add to cache
 
             var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(10), assetBundleData);
             assetBundleData.AddReference();
             var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<AttachmentAssetBase>(wearableAsset) } };
-            wearableStorage.AddWearable(hashID, wearable, true); // add to cache
+            wearableStorage.AddWearable(hashId, wearable, true); // add to cache
 
             var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true, Array.Empty<SpringBoneData>());
             wearableAsset.AddReference();
