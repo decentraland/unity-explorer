@@ -73,7 +73,6 @@ namespace Global.Dynamic
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
-        private readonly bool useLocalAssetBundles;
         private readonly IProfileRepository profileRepository;
         private readonly bool useRemoteAssetBundles;
         private readonly HashSet<Vector2Int> roadCoordinates;
@@ -100,7 +99,6 @@ namespace Global.Dynamic
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IProfileRepository profileRepository,
             bool useRemoteAssetBundles,
-            bool useLocalAssetBundles,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
             EntitiesAnalytics entitiesAnalytics,
@@ -125,7 +123,6 @@ namespace Global.Dynamic
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment);
-            this.useLocalAssetBundles = useLocalAssetBundles;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneRoomStatus = sceneRoomStatus;
             this.world = world;
@@ -158,8 +155,8 @@ namespace Global.Dynamic
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, useLocalAssetBundles, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 

@@ -15,12 +15,14 @@ namespace DCL.UI.DebugMenu
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
         private ConsolePanelView consolePanelView;
+        private AbConversionPanelView abConversionPanelView;
 
         private DebugPanelView visiblePanel;
 
         private IInputBlock inputBlock;
 
         private Button consoleButton;
+        private Button abConversionButton;
         private Button debugPanelButton;
 
         private bool shouldRefreshConsole;
@@ -36,13 +38,16 @@ namespace DCL.UI.DebugMenu
 
             // Sidebar
             consoleButton = root.Q<Button>("ConsoleButton");
+            abConversionButton = root.Q<Button>("AbConversionButton");
             debugPanelButton = root.Q<Button>("DebugPanelButton");
 
             consoleButton.clicked += OnConsoleButtonClicked;
+            abConversionButton.clicked += OnAbConversionButtonClicked;
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
             consolePanelView.SetInputBlock(inputBlock);
+            abConversionPanelView = new AbConversionPanelView(root.Q("AbConversionPanel"), abConversionButton, OnAbConversionButtonClicked);
 
             // Shortcuts
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
@@ -55,6 +60,10 @@ namespace DCL.UI.DebugMenu
                     case ConsolePanelView:
                         consolePanelView.Toggle();
                         visiblePanel = consolePanelView;
+                        break;
+                    case AbConversionPanelView:
+                        abConversionPanelView.Toggle();
+                        visiblePanel = abConversionPanelView;
                         break;
                 }
         }
@@ -106,6 +115,9 @@ namespace DCL.UI.DebugMenu
                 shouldRefreshConsole = false;
                 consolePanelView.Refresh();
             }
+
+            // Cheap when nothing changed: a version check against the conversion metrics.
+            abConversionPanelView?.Refresh();
         }
 
         private void HideDebugPanelOwnToggle()
@@ -130,6 +142,9 @@ namespace DCL.UI.DebugMenu
 
         private void OnConsoleButtonClicked() =>
             TogglePanel(consolePanelView);
+
+        private void OnAbConversionButtonClicked() =>
+            TogglePanel(abConversionPanelView);
 
         private void OnDebugPanelButtonClicked()
         {

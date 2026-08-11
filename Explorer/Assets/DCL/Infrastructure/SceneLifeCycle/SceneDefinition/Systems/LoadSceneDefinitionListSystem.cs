@@ -43,7 +43,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly IWebRequestController webRequestController;
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isLocalSceneDevelopment;
-        private readonly bool useLocalAssetBundles;
 
         // cache
         private readonly StringBuilder bodyBuilder = new ();
@@ -52,13 +51,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly ProfilerMarker deserializationSampler;
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
-        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, bool useLocalAssetBundles,
+        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment,
             IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, EntitiesAnalytics entitiesAnalytics)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
-            this.useLocalAssetBundles = useLocalAssetBundles;
             this.entitiesAnalytics = entitiesAnalytics;
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
@@ -126,9 +124,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             {
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
                 //Could be removed once the asset bundle manifest registry has been battle tested.
-                //With local asset bundles the manual LSD manifest is skipped so the real manifest is fetched
-                //from the local asset-bundle server; failures there are expected (whole-scene raw-GLTF degrade).
-                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: isLocalSceneDevelopment);
+                //In local scene development no server manifest exists: raw-GLTF and in-process-build (local-ab) both
+                //run off the manual LSD manifest.
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment, skipException: isLocalSceneDevelopment);
 
                 // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
                 // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.

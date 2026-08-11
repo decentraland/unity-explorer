@@ -25,14 +25,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     {
         private readonly IWebRequestController webRequestController;
         private readonly bool isLocalSceneDevelopment;
-        private readonly bool useLocalAssetBundles;
 
-        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, bool useLocalAssetBundles, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
+        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
-            this.useLocalAssetBundles = useLocalAssetBundles;
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -45,9 +43,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
 
             //These are fetched from catalyst, meaning they never have a manifest (fallback + no exception).
-            //With local asset bundles the manual LSD manifest is skipped so the real manifest is fetched
-            //from the local asset-bundle server (optimized-assets-url).
-            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: true);
+            //In local scene development no server manifest exists: raw-GLTF and in-process-build (local-ab) both
+            //run off the manual LSD manifest.
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment, skipException: true);
 
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
             // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.

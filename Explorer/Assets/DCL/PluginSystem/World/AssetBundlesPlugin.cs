@@ -45,9 +45,10 @@ namespace DCL.PluginSystem.World
         private readonly URLDomain assetBundleURL;
         private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
         private readonly ILaunchMode launchMode;
+        private readonly bool useLocalAssetBundles;
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
-            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache, ILaunchMode launchMode)
+            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache, ILaunchMode launchMode, bool useLocalAssetBundles = false)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
@@ -55,6 +56,7 @@ namespace DCL.PluginSystem.World
             this.partialsDiskCache = partialsDiskCache;
             this.assetBundleURL = assetBundleURL;
             this.launchMode = launchMode;
+            this.useLocalAssetBundles = useLocalAssetBundles;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
@@ -69,8 +71,14 @@ namespace DCL.PluginSystem.World
 
             bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
 
+            bool buildLocalBundles = useLocalAssetBundles && launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
+
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress, sharedDependencies.SceneData.SceneContent);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress, sharedDependencies.SceneData.SceneContent,
+                buildLocalBundles);
+
+            if (buildLocalBundles)
+                finalizeWorldSystems.Add(WarmUpLocalAssetBundlesSystem.InjectToWorld(ref builder, sharedDependencies.SceneData));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

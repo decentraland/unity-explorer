@@ -549,6 +549,12 @@
       "dependencies": {},
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
+    "org.decentraland.abgen": {
+      "version": "file:org.decentraland.abgen",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "org.decentraland.clearscript": {
       "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package#7.5.1.a",
       "depth": 0,

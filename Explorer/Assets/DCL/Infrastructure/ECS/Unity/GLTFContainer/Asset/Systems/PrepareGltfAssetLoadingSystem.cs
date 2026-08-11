@@ -62,12 +62,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             {
                 if (options.UseRemoteAssetBundles)
                     loadRawGltf |= sceneData.SceneContent.IsRawAsset(intention.Name);
-                else if (options.UseLocalAssetBundles)
 
-                    // Whole-scene degrade: when the manifest could not be fetched from the local
-                    // asset-bundle server every AB request would dead-end, so load raw GLTFs instead.
-                    loadRawGltf |= sceneData.SceneEntityDefinition.assetBundleManifestVersion is not { assetBundleManifestRequestFailed: false };
-                else
+                // local-ab keeps the asset-bundle lane on the manual manifest: LoadAssetBundleSystem
+                // converts the GLTF in-process with abgen (disk-cached), so no server manifest is needed.
+                // Plain LSD (neither flag) loads raw GLTFs.
+                else if (!options.UseLocalAssetBundles)
                     loadRawGltf = true;
             }
 

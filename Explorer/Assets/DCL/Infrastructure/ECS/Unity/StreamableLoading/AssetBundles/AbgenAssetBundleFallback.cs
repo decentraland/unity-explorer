@@ -16,9 +16,10 @@ using UnityEngine;
 namespace ECS.StreamableLoading.AssetBundles
 {
     /// <summary>
-    ///     Last resort when the prebuilt bundle is absent from the CDN: fetch the source GLB and the external
-    ///     textures/buffers it references from the scene content and convert them to a bundle in-process with
-    ///     abgen (no Editor, no sidecar, no HTTP server).
+    ///     In-process asset-bundle build for local scene development (<c>--local-ab</c>): fetch the source GLB and
+    ///     the external textures/buffers it references from the scene content and convert them to a bundle with the
+    ///     embedded abgen library (no Editor, no sidecar, no HTTP server). Results are cached on disk
+    ///     (<see cref="AbgenBundleDiskCache" />) so a reload or next-day restart reconverts only what changed.
     /// </summary>
     internal static class AbgenAssetBundleFallback
     {
@@ -31,7 +32,23 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             if (glbPath == null || sceneContent == null) return null;
             if (!glbPath.EndsWith(".glb", StringComparison.OrdinalIgnoreCase) && !glbPath.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)) return null;
-            if (!sceneContent.TryGetHash(glbPath, out string glbHash) || !AbgenConverter.IsAbiCompatible()) return null;
+
+            if (!sceneContent.TryGetHash(glbPath, out string glbHash))
+            {
+                Debug.LogWarning($"[Juani][abgen] '{glbPath}' is not in the scene content mapping; skipping in-process conversion");
+                return null;
+            }
+
+            if (!AbgenConverter.IsAbiCompatible())
+            {
+                Debug.LogWarning("[Juani][abgen] native library missing or ABI-incompatible (expected the abgen plugin under Packages/org.decentraland.abgen/Runtime/Plugins); skipping in-process conversion");
+                return null;
+            }
+
+            // Read persistentDataPath here, on the main thread, before any await hops to the thread pool.
+            string cacheRoot = AbgenBundleDiskCache.RootDirectory();
+
+            AbgenConversionMetrics.INSTANCE.OnStarted(glbPath);
 
             try
             {
@@ -53,6 +70,27 @@ namespace ECS.StreamableLoading.AssetBundles
                            .AddContentEntry(path, hash);
                 }
 
+                byte[] requestBlob = request.ToBytes();
+                string cacheKey = AbgenBundleDiskCache.ComputeKey(requestBlob);
+
+                if (AbgenBundleDiskCache.TryGetPath(cacheRoot, cacheKey, out string cachedPath))
+                {
+                    await UniTask.SwitchToMainThread();
+                    AssetBundle? cached = AssetBundle.LoadFromFile(cachedPath);
+
+                    if (cached != null)
+                    {
+                        long bytes = new System.IO.FileInfo(cachedPath).Length;
+                        Debug.Log($"[Juani][abgen] disk-cache hit for '{glbPath}' ({bytes} B)");
+                        AbgenConversionMetrics.INSTANCE.OnSucceeded(glbPath, "(disk) " + cacheKey.Substring(0, 8), (int)bytes, 0);
+                        return cached;
+                    }
+
+                    // Corrupt or partially-written entry: drop it and reconvert.
+                    Debug.LogWarning($"[Juani][abgen] disk-cache entry for '{glbPath}' failed to load; reconverting");
+                    AbgenBundleDiskCache.Delete(cacheRoot, cacheKey);
+                }
+
                 if (!threadsCapped)
                 {
                     // Process-wide and effective once: keep the native pool from competing with the frame budget.
@@ -60,17 +98,45 @@ namespace ECS.StreamableLoading.AssetBundles
                     threadsCapped = true;
                 }
 
-                AbgenResult result = await UniTask.RunOnThreadPool(() => AbgenConverter.Convert(request), cancellationToken: ct);
+                (AbgenResult result, long elapsedMs) = await UniTask.RunOnThreadPool(() =>
+                {
+                    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    AbgenResult r = AbgenConverter.Convert(request);
+                    stopwatch.Stop();
 
-                if (!result.Succeeded || result.Artifacts.Count == 0) return null;
+                    // Persist off the main thread, before we hop back to load the freshly-written file.
+                    if (r.Succeeded && r.Artifacts.Count > 0)
+                        AbgenBundleDiskCache.Write(cacheRoot, cacheKey, r.Artifacts[0].Data);
+
+                    return (r, stopwatch.ElapsedMilliseconds);
+                }, cancellationToken: ct);
+
+                if (!result.Succeeded || result.Artifacts.Count == 0)
+                {
+                    string error = $"status: {result.Status}, artifacts: {result.Artifacts.Count}, errors: {string.Join(" | ", result.Errors)}";
+                    Debug.LogWarning($"[Juani][abgen] conversion of '{glbPath}' produced no bundle ({error})");
+                    AbgenConversionMetrics.INSTANCE.OnFailed(glbPath, error);
+                    return null;
+                }
 
                 await UniTask.SwitchToMainThread();
-                return AssetBundle.LoadFromMemory(result.Artifacts[0].Data);
+                Debug.Log($"[Juani][abgen] converted '{glbPath}' -> {result.Artifacts[0].Name} ({result.Artifacts[0].Data.Length} B) in {elapsedMs} ms");
+                AbgenConversionMetrics.INSTANCE.OnSucceeded(glbPath, result.Artifacts[0].Name, result.Artifacts[0].Data.Length, elapsedMs);
+
+                // Load the on-disk copy (memory-mapped) rather than the managed byte[] we just wrote.
+                return AbgenBundleDiskCache.TryGetPath(cacheRoot, cacheKey, out string writtenPath)
+                    ? AssetBundle.LoadFromFile(writtenPath)
+                    : AssetBundle.LoadFromMemory(result.Artifacts[0].Data);
             }
-            catch (OperationCanceledException) { throw; }
+            catch (OperationCanceledException)
+            {
+                AbgenConversionMetrics.INSTANCE.OnCancelled(glbPath);
+                throw;
+            }
             catch (Exception e)
             {
                 // The caller's own "bundle is null" error handling stays authoritative.
+                AbgenConversionMetrics.INSTANCE.OnFailed(glbPath, e.Message);
                 ReportHub.LogException(e, reportData);
                 return null;
             }

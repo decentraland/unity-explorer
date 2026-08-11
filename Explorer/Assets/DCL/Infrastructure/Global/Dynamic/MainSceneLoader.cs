@@ -262,10 +262,9 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
-            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
-                cliOptimizedAssetsUrl = launchSettings.LocalAssetBundlesBaseUrl();
-
-            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl))
+            // local-ab builds bundles in-process (disk-cached), so it needs no optimized-assets server:
+            // neither an explicit --optimized-assets-url nor the sidecar fallback applies in that mode.
+            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && !launchSettings.useLocalAssetBundles)
             {
                 abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct);
 
