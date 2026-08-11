@@ -39,7 +39,7 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
-        private readonly DCLSemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new ();
         private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
         private readonly URLBuilder urlBuilder = new ();
 

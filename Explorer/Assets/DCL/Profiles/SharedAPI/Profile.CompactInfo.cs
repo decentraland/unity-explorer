@@ -74,12 +74,12 @@ namespace DCL.Profiles
             // Tracks the in-flight face snapshot download; O(1) cancellation on update and ownership transfer on profile replacement.
             public AssetPromise<TextureData, GetTextureIntention>? PicturePromise { get; set; }
 
-            public CompactInfo(UserId userId) : this(userId, "", false, "", null) { }
+            public CompactInfo(UserId userId) : this(userId, "") { }
 
             public CompactInfo(UserId userId, string name, bool hasClaimedName = false, string faceUrl = "", Color? claimedNameColor = null) : this()
             {
                 this.name = name;
-                UpdateUserId(userId, true);
+                UpdateUserId(userId);
                 HasClaimedName = hasClaimedName;
                 FaceSnapshotUrl = string.IsNullOrEmpty(faceUrl) ? default(URLAddress) : URLAddress.FromString(faceUrl);
                 this.claimedNameColor = claimedNameColor;
@@ -94,7 +94,7 @@ namespace DCL.Profiles
             {
                 get => userId!;
 
-                set => UpdateUserId(value, true);
+                set => UpdateUserId(value);
             }
 
             /// <summary>
@@ -177,13 +177,12 @@ namespace DCL.Profiles
             /// </summary>
             public string MentionName { get; private set; }
 
-            private void UpdateUserId(UserId value, bool generateAndValidateName = true)
+            private void UpdateUserId(UserId value)
             {
                 userId = value;
                 Address = new Web3Address(value.Value);
 
-                if (generateAndValidateName)
-                    GenerateAndValidateName();
+                GenerateAndValidateName();
             }
 
             private void GenerateAndValidateName()
