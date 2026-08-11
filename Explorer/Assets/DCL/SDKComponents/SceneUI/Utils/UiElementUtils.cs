@@ -253,10 +253,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             if (font < styleFontDefinitions.Length)
                 labelToSetup.style.unityFontDefinition = styleFontDefinitions[font];
 
-            if (model.HasTextWrap)
-                labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
-            else
-                labelToSetup.style.whiteSpace = WhiteSpace.NoWrap;
+            labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
         }
 
         public static void SetupFromSdkModel(this DCLImage imageToSetup, ref PBUiBackground model, Texture? texture = null)
