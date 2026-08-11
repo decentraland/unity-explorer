@@ -1,4 +1,5 @@
 using DCL.Utility.Types;
+using DCL.Web3;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -69,6 +70,30 @@ namespace DCL.Profiles.Tests
             // Assert
             Assert.That(found, Is.True);
             Assert.That(value, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void CreateFromWeb3AddressInItsLowercaseForm()
+        {
+            // Arrange
+            var address = new Web3Address("0xABCDEF1234567890abcdef1234567890ABCDEF12");
+
+            // Act
+            Option<UserId> userId = UserId.From(address);
+
+            // Assert
+            Assert.That(userId.Has, Is.True);
+            Assert.That(userId.Value.Value, Is.EqualTo("0xabcdef1234567890abcdef1234567890abcdef12"));
+        }
+
+        [Test]
+        public void RejectEmptyWeb3Address()
+        {
+            // Act
+            Option<UserId> userId = UserId.From(new Web3Address(string.Empty));
+
+            // Assert
+            Assert.That(userId.Has, Is.False);
         }
 
         [Test]

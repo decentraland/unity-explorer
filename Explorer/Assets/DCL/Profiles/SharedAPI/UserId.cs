@@ -1,4 +1,5 @@
 using DCL.Utility.Types;
+using DCL.Web3;
 using System;
 
 namespace DCL.Profiles
@@ -22,6 +23,12 @@ namespace DCL.Profiles
             string.IsNullOrEmpty(raw)
                 ? Option<UserId>.None
                 : Option<UserId>.Some(new UserId(raw!));
+
+        /// <summary>
+        ///     Carries the lowercase form of the wallet address; <see cref="Option{T}.None" /> when the address is empty
+        /// </summary>
+        public static Option<UserId> From(Web3Address address) =>
+            New(address.ToString());
 
         public bool Equals(UserId? other) =>
             other is not null && string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);
