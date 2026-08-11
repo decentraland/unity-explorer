@@ -85,7 +85,7 @@ namespace DCL.Profiles.Tests
         [Test]
         public async Task ResolveProfilesByBatch()
         {
-            string[] ids = dtos.Select(d => d.UserId).ToArray();
+            string[] ids = dtos.Select(d => d.UserId.Value).ToArray();
             UniTask<List<Profile>> task = repository.GetAsync(ids, CancellationToken.None, LAMBDAS);
 
             // Created a pending batch
@@ -96,7 +96,7 @@ namespace DCL.Profiles.Tests
 
             List<Profile>? profiles = await task;
 
-            CollectionAssert.AreEquivalent(ids, profiles.Select(p => p.UserId).ToArray());
+            CollectionAssert.AreEquivalent(ids, profiles.Select(p => p.UserId.Value).ToArray());
         }
 
         [Test]

@@ -171,6 +171,15 @@ namespace DCL.Utility.Types
             this.Value = value;
             this.Has = has;
         }
+
+        /// <summary>
+        ///     The only safe way to read <see cref="Value" /> without branching on <see cref="Has" />:
+        ///     throws when there is no value instead of silently returning <c>default</c>
+        /// </summary>
+        public T Unwrap() =>
+            Has
+                ? Value
+                : throw new InvalidOperationException($"Cannot unwrap Option<{typeof(T).Name}>: it has no value");
     }
 
     public enum TaskError
