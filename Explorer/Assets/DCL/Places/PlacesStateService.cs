@@ -1,6 +1,7 @@
-﻿using DCL.EventsApi;
+using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.Utility.Types;
 using System;
 using System.Collections.Generic;
 
@@ -24,8 +25,8 @@ namespace DCL.Places
             }
         }
 
-        private readonly Dictionary<string, Profile.CompactInfo> allFriends = new(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, EventDTO> liveEvents = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<UserId, Profile.CompactInfo> allFriends = new();
+        private readonly Dictionary<PlaceId, EventDTO> liveEvents = new();
 
         public PlaceInfoWithConnectedFriends? GetPlaceInfoById(string placeId) =>
             CurrentPlaces.GetValueOrDefault(placeId);
@@ -84,9 +85,8 @@ namespace DCL.Places
         public void SetAllFriends(List<Profile.CompactInfo> friends)
         {
             allFriends.Clear();
-            foreach (var friend in friends)
-                if (!string.IsNullOrEmpty(friend.UserId))
-                    allFriends.TryAdd(friend.UserId, friend);
+            foreach (Profile.CompactInfo friend in friends)
+                allFriends.TryAdd(friend.UserId, friend);
         }
 
         public void ClearAllFriends() =>
@@ -95,9 +95,13 @@ namespace DCL.Places
         public void SetLiveEvents(List<EventDTO> events)
         {
             liveEvents.Clear();
-            foreach (var liveEvent in events)
-                if (!string.IsNullOrEmpty(liveEvent.place_id))
-                    liveEvents.TryAdd(liveEvent.place_id, liveEvent);
+            foreach (EventDTO liveEvent in events)
+            {
+                Option<PlaceId> placeId = PlaceId.New(liveEvent.place_id);
+
+                if (placeId.Has)
+                    liveEvents.TryAdd(placeId.Value, liveEvent);
+            }
         }
 
         public void ClearLiveEvents() =>
@@ -106,20 +110,22 @@ namespace DCL.Places
         public void Dispose() =>
             ClearPlaces();
 
-        private bool TryGetFriendById(string userId, out Profile.CompactInfo friendProfile)
+        private bool TryGetFriendById(string rawUserId, out Profile.CompactInfo friendProfile)
         {
-            if (string.IsNullOrEmpty(userId))
-            {
-                friendProfile = default(Profile.CompactInfo);
-                return false;
-            }
+            Option<UserId> userId = UserId.New(rawUserId);
 
-            return allFriends.TryGetValue(userId, out friendProfile);
+            if (userId.Has)
+                return allFriends.TryGetValue(userId.Value, out friendProfile);
+
+            friendProfile = default(Profile.CompactInfo);
+            return false;
         }
 
-        private bool TryGetLiveEventByPlaceId(string placeId, out EventDTO? eventInfo)
+        private bool TryGetLiveEventByPlaceId(string rawPlaceId, out EventDTO? eventInfo)
         {
-            if (!string.IsNullOrEmpty(placeId) && liveEvents.TryGetValue(placeId, out EventDTO liveEvent))
+            Option<PlaceId> placeId = PlaceId.New(rawPlaceId);
+
+            if (placeId.Has && liveEvents.TryGetValue(placeId.Value, out EventDTO liveEvent))
             {
                 eventInfo = liveEvent;
                 return true;

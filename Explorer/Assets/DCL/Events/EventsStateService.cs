@@ -1,7 +1,9 @@
-﻿using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.Utility.Types;
 using NBitcoin;
 using System;
 using System.Collections.Generic;
@@ -11,9 +13,9 @@ namespace DCL.Events
     public class EventsStateService : IDisposable
     {
         private readonly Dictionary<string, EventDTO> currentEvents = new();
-        private readonly Dictionary<string, PlacesData.PlaceInfo> currentPlaces = new();
-        private readonly Dictionary<string, Profile.CompactInfo> allFriends = new(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, GetUserCommunitiesData.CommunityData> myCommunities = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<PlaceId, PlacesData.PlaceInfo> currentPlaces = new();
+        private readonly Dictionary<UserId, Profile.CompactInfo> allFriends = new();
+        private readonly Dictionary<CommunityId, GetUserCommunitiesData.CommunityData> myCommunities = new();
 
         public class EventWithPlaceAndFriendsData
         {
@@ -31,9 +33,11 @@ namespace DCL.Events
             {
                 result.EventInfo = eventInfo;
 
-                if (!string.IsNullOrEmpty(eventInfo.place_id))
+                Option<PlaceId> placeId = PlaceId.New(eventInfo.place_id);
+
+                if (placeId.Has)
                 {
-                    currentPlaces.TryGetValue(eventInfo.place_id, out PlacesData.PlaceInfo? placeInfo);
+                    currentPlaces.TryGetValue(placeId.Value, out PlacesData.PlaceInfo? placeInfo);
                     result.PlaceInfo = placeInfo;
                 }
 
@@ -42,14 +46,18 @@ namespace DCL.Events
                 {
                     foreach (string addressConnected in eventInfo.connected_addresses)
                     {
-                        if (TryGetFriendById(addressConnected, out Profile.CompactInfo friend))
+                        Option<UserId> friendId = UserId.New(addressConnected);
+
+                        if (friendId.Has && allFriends.TryGetValue(friendId.Value, out Profile.CompactInfo friend))
                             friendsConnectedToPlace.Add(friend);
                     }
                 }
                 result.FriendsConnectedToPlace = friendsConnectedToPlace;
 
-                if (TryGetCommunityById(eventInfo.community_id, out GetUserCommunitiesData.CommunityData? communityData))
-                    result.CommunityInfo = communityData;
+                Option<CommunityId> communityId = CommunityId.New(eventInfo.community_id);
+
+                if (communityId.Has && myCommunities.TryGetValue(communityId.Value, out GetUserCommunitiesData.CommunityData community))
+                    result.CommunityInfo = community;
 
                 return result;
             }
@@ -72,23 +80,31 @@ namespace DCL.Events
                 ClearPlaces();
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
-                currentPlaces.AddOrReplace(placeInfo.id, placeInfo);
+            {
+                Option<PlaceId> placeId = PlaceId.New(placeInfo.id);
+
+                if (placeId.Has)
+                    currentPlaces.AddOrReplace(placeId.Value, placeInfo);
+            }
         }
 
         public void SetAllFriends(List<Profile.CompactInfo> friends)
         {
             ClearAllFriends();
-            foreach (var friend in friends)
-                if (!string.IsNullOrEmpty(friend.UserId))
-                    allFriends.TryAdd(friend.UserId, friend);
+            foreach (Profile.CompactInfo friend in friends)
+                allFriends.TryAdd(friend.UserId, friend);
         }
 
         public void SetMyCommunities(List<GetUserCommunitiesData.CommunityData> myCommunitiesList)
         {
             ClearMyCommunities();
-            foreach (var community in myCommunitiesList)
-                if (!string.IsNullOrEmpty(community.id))
-                    myCommunities.TryAdd(community.id, community);
+            foreach (GetUserCommunitiesData.CommunityData community in myCommunitiesList)
+            {
+                Option<CommunityId> communityId = CommunityId.New(community.id);
+
+                if (communityId.Has)
+                    myCommunities.TryAdd(communityId.Value, community);
+            }
         }
 
         public void ClearEvents() =>
@@ -107,35 +123,6 @@ namespace DCL.Events
         {
             ClearEvents();
             ClearPlaces();
-        }
-
-        private bool TryGetFriendById(string userId, out Profile.CompactInfo friendProfile)
-        {
-            if (string.IsNullOrEmpty(userId))
-            {
-                friendProfile = default(Profile.CompactInfo);
-                return false;
-            }
-
-            return allFriends.TryGetValue(userId, out friendProfile);
-        }
-
-        private bool TryGetCommunityById(string communityId, out GetUserCommunitiesData.CommunityData? communityData)
-        {
-            if (string.IsNullOrEmpty(communityId))
-            {
-                communityData = null;
-                return false;
-            }
-
-            if (myCommunities.TryGetValue(communityId, out GetUserCommunitiesData.CommunityData community))
-            {
-                communityData = community;
-                return true;
-            }
-
-            communityData = null;
-            return false;
         }
     }
 }
