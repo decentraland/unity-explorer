@@ -20,7 +20,7 @@ namespace DCL.Profiles
         }
 
         public static Option<UserId> New(string? raw) =>
-            string.IsNullOrEmpty(raw)
+            string.IsNullOrWhiteSpace(raw)
                 ? Option<UserId>.None
                 : Option<UserId>.Some(new UserId(raw!));
 
