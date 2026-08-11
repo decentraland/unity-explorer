@@ -23,13 +23,15 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Permitted only for a whitelisted realm</b> — the local-development params Creator Hub and the
     ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, hub, skip-auth-screen,
-    ///             landscape-terrain-enabled, multi-instance, local-ab, mcp, mcp-port. A realm is "whitelisted" when
+    ///             landscape-terrain-enabled, multi-instance, local-ab, mcp, mcp-port — plus the loading-benchmark
+    ///             param measure-loading-time. A realm is "whitelisted" when
     ///             it is loopback (127.0.0.1 / localhost / [::1]) OR its world matches the
     ///             <c>deeplink-whitelisted-worlds</c> feature flag (see <see cref="IsRealmWhitelisted" /> and
     ///             <see cref="SetWhitelistedWorlds" />). A remote-realm deep link from a web page can never enable
     ///             them unless that exact world was explicitly whitelisted. All but the MCP pair are individually
     ///             low-harm — an analytics tag, a cosmetic toggle, an instance count, a screen skip that still forces
-    ///             auth when no valid identity is cached, or asset loading pointed at the realm the link already
+    ///             auth when no valid identity is cached, a benchmark that quits instead of bypassing that auth, or
+    ///             asset loading pointed at the realm the link already
     ///             targets — and the whitelisted-realm gate confines them to the dev context.
     ///             <c>mcp</c>/<c>mcp-port</c> start an unauthenticated loopback control port and are the one
     ///             non-low-harm pair in this set; they lean on the gate plus the server's own 127.0.0.1 bind and
@@ -151,6 +153,12 @@ namespace Global.AppArgs
             // (optimized-assets-url) points AB/LOD/registry endpoints at arbitrary infrastructure and stays
             // never-permitted.
             AppArgsFlags.LOCAL_AB,
+
+            // Runs the loading-time benchmark (LoadingTimeBenchmark reports stage timings to analytics) and, like
+            // autopilot, suppresses the auth screen — it cannot bypass authentication: when no valid identity is
+            // cached the client quits instead (RealUserInAppInitializationFlow). Whitelisted-realm-gated because
+            // it's a CI based action used internally on a specific realm.
+            AppArgsFlags.MEASURE_LOADING_TIME,
         };
 
         // Canonical (lowercased world-name) whitelist, set from the deeplink-whitelisted-worlds feature flag. Empty
