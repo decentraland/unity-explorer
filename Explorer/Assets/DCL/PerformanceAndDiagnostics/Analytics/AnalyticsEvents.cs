@@ -1,10 +1,6 @@
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    /// <summary>
-    ///     IMPORTANT!!
-    ///     After doing any change to the events here, we need to hit the "Refresh Events" button on the AnalyticsConfiguration Scriptable Object so the new events are recognized!!
-    ///     IMPORTANT!!
-    /// </summary>
+
     public static class AnalyticsEvents
     {
         public static class General
@@ -313,6 +309,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string PLACE_SHARED = "place_shared";
             public const string PLACE_LINK_COPIED = "place_link_copied";
             public const string PLACE_NAVIGATION_STARTED = "place_navigation_started";
+        }
+
+        public static class Profiling
+        {
+            public const string LOADING_TIMES = "synthetic_loading_times";
         }
     }
 }
