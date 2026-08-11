@@ -190,9 +190,9 @@ namespace DCL.Profiles.Tests
         {
             Action onProfileResolved = Substitute.For<Action>();
 
-            string userId = dtos[0].UserId;
+            string userId = dtos[0].UserId.Value;
 
-            profileCache.TryGet(userId, out Arg.Any<Profile>())
+            profileCache.TryGet(userId, out Arg.Any<Profile?>())
                         .Returns(c =>
                          {
                              dtos[0].Version = 10;
@@ -223,7 +223,7 @@ namespace DCL.Profiles.Tests
         {
             Action onProfileResolved = Substitute.For<Action>();
 
-            string userId = dtos[0].UserId;
+            string userId = dtos[0].UserId.Value;
 
             profileCache.TryGet(userId, Arg.Any<ProfileTier.Kind>(), out Arg.Any<ProfileTier>())
                         .Returns(c =>

@@ -198,7 +198,7 @@ namespace DCL.UI.Controls
             CancelFriendButton.gameObject.SetActive(false);
             AcceptFriendButton.gameObject.SetActive(false);
 
-            Button buttonToActivate = settings.friendshipStatus switch
+            Button? buttonToActivate = settings.friendshipStatus switch
                                       {
                                           UserProfileContextMenuControlSettings.FriendshipStatus.None => AddFriendButton,
                                           UserProfileContextMenuControlSettings.FriendshipStatus.Friend => RemoveFriendButton,

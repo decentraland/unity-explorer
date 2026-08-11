@@ -48,7 +48,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                     addresses = new string[5];
                     for (var a = 0; a < 5; a++)
                     {
-                        int idx = (i * 5 + a) % friendPoolSize;
+                        int idx = ((i * 5) + a) % friendPoolSize;
                         string addr = $"0xFriend{idx}";
                         addresses[a] = a % 2 == 0 ? addr.ToUpperInvariant() : addr.ToLowerInvariant();
                     }
@@ -69,9 +69,9 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 {
                     _ when i % 97 == 0 => null,
                     _ when i % 89 == 0 => string.Empty,
-                    _ => (i % 2 == 0 ? $"P{i % 50}" : $"p{i % 50}"),
+                    _ => i % 2 == 0 ? $"P{i % 50}" : $"p{i % 50}",
                 };
-                events.Add(new EventDTO { id = $"ev{i}", place_id = placeId });
+                events.Add(new EventDTO { id = $"ev{i}", place_id = placeId! });
             }
 
             return events;
@@ -162,7 +162,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             Measure.Custom(new SampleGroup("addplaces-friends-1000", SampleUnit.Millisecond), large);
             Debug.Log($"[PlacesStateService] AddPlaces pass: friends=10 -> {small:F3}ms, friends=1000 -> {large:F3}ms");
 
-            Assert.LessOrEqual(large, 3 * small + 5, "dictionary lookups must not scale with friend/live-event list size");
+            Assert.LessOrEqual(large, (3 * small) + 5, "dictionary lookups must not scale with friend/live-event list size");
         }
 
         private static double AddPlacesPassMs(int poolSize)

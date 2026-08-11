@@ -256,8 +256,12 @@ namespace DCL.Friends
 
             if (response.ResponseCase == UnblockUserResponse.ResponseOneofCase.Ok)
             {
-                BlockedProfile blockedProfile = ToClientBlockedProfile(response.Ok.Profile);
-                eventBus.BroadcastYouUnblockedProfile(blockedProfile);
+                BlockedProfile? blockedProfile = ToClientBlockedProfile(response.Ok.Profile);
+
+                if (blockedProfile != null)
+                    eventBus.BroadcastYouUnblockedProfile(blockedProfile);
+                else
+                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping unblock broadcast: server sent a profile without a valid address");
             }
             else
                 throw new Exception($"Cannot unblock user {userId}: {response.ResponseCase}");
@@ -665,7 +669,12 @@ namespace DCL.Friends
             return blockedProfileBuffer;
         }
 
-        [Obsolete(IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE)]
+        /// <remarks>
+        ///     Legacy bridge (<see cref="IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE" />):
+        ///     should be moved to the unified POST originated from the client. Not marked
+        ///     <see cref="ObsoleteAttribute" /> because every caller lives in this service and must
+        ///     keep using it until that migration lands.
+        /// </remarks>
         private Option<Profile.CompactInfo> ToClientFriendProfile(FriendProfile profile)
         {
             Option<UserId> userId = UserId.New(profile.Address);

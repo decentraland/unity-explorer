@@ -112,7 +112,7 @@ namespace DCL.Profiles.Tests
         public void ConvertImplicitlyToItsRawString()
         {
             // Act
-            string raw = UserId.New("0xAbC").Unwrap();
+            string? raw = UserId.New("0xAbC").Unwrap();
 
             // Assert
             Assert.That(raw, Is.EqualTo("0xAbC"));

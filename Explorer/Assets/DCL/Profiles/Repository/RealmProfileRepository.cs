@@ -130,7 +130,7 @@ namespace DCL.Profiles
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = Array.Empty<ContentDefinition>(),
-                pointers = new string[] { profile.UserId },
+                pointers = new string[] { profile.UserId.Value },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };

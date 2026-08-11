@@ -98,7 +98,7 @@ namespace DCL.Character.CharacterObject.Tests
             Assert.IsFalse(characterTransform.IsDirty, "IsDirty should be false initially");
 
             // Act - Move above threshold (0.01f)
-            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + (Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE);
             characterTransform.SetPositionWithDirtyCheck(newPosition);
 
             // Assert
@@ -118,7 +118,7 @@ namespace DCL.Character.CharacterObject.Tests
             Assert.IsFalse(characterTransform.IsDirty, "IsDirty should be false initially");
 
             // Act - Move below threshold
-            Vector3 newPosition = testGameObject.transform.position + Vector3.one * (BELLOW_MINIMAL_DISTANCE_DIFFERENCE / 3);
+            Vector3 newPosition = testGameObject.transform.position + (Vector3.one * (BELLOW_MINIMAL_DISTANCE_DIFFERENCE / 3));
             characterTransform.SetPositionWithDirtyCheck(newPosition);
 
             // Assert
@@ -134,7 +134,7 @@ namespace DCL.Character.CharacterObject.Tests
             var characterTransform = new CharacterTransform(testGameObjects[0].transform);
 
             // Act
-            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.forward * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + (Vector3.forward * ABOVE_MINIMAL_DISTANCE_DIFFERENCE);
             Quaternion newRotation = Quaternion.Euler(0, 90, 0);
             characterTransform.SetPositionAndRotationWithDirtyCheck(newPosition, newRotation);
 
@@ -178,7 +178,7 @@ namespace DCL.Character.CharacterObject.Tests
             );
 
             // Make transform dirty
-            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + (Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE);
             characterTransform.SetPositionWithDirtyCheck(newPosition);
             globalWorld.Set(avatarEntity, characterTransform);
 
@@ -187,7 +187,7 @@ namespace DCL.Character.CharacterObject.Tests
             Assert.IsTrue(dirtyTransform.IsDirty, "Transform should be dirty before system update");
 
             // Act - Run partition system
-            system.Update(0.1f);
+            system!.Update(0.1f);
 
             // Assert - Dirty flag should be cleared
             ref var clearedTransform = ref globalWorld.Get<CharacterTransform>(avatarEntity);
@@ -231,7 +231,7 @@ namespace DCL.Character.CharacterObject.Tests
 
             // Act - Update with camera not dirty (should only process dirty entities)
             camSampling.IsDirty.Returns(false);
-            system.Update(0.1f);
+            system!.Update(0.1f);
 
             // Assert
             ref CharacterTransform dirtyAfter = ref globalWorld.Get<CharacterTransform>(dirtyEntity);
@@ -260,7 +260,7 @@ namespace DCL.Character.CharacterObject.Tests
 
             // Act - Update with camera dirty (triggers RePartitionExistingEntityQuery)
             camSampling.IsDirty.Returns(true);
-            system.Update(0.1f);
+            system!.Update(0.1f);
 
             // Assert - CharacterTransform.IsDirty should remain unchanged since entity didn't move
             ref CharacterTransform afterTransform = ref globalWorld.Get<CharacterTransform>(entity);

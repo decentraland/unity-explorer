@@ -90,7 +90,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             world.Add(triggerAreaEntity, component);
 
-            system.Update(0);
+            system!.Update(0);
 
             Assert.IsTrue(world.TryGet(triggerAreaEntity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);

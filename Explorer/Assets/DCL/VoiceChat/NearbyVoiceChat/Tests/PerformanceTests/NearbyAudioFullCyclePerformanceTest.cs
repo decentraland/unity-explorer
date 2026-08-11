@@ -113,7 +113,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
             // Defensive: LivekitAudioSource keeps invoking OnAudioFilterRead on the audio thread
             // even after disposal — reap any straggler not caught above to avoid NREs between runs.
-            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include))
             {
                 if (src == null) continue;
                 src.Stop();

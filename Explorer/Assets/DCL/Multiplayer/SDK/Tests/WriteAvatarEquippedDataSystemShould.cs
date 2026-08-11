@@ -63,7 +63,7 @@ namespace DCL.Multiplayer.SDK.Tests
         public void DispatchAvatarEquippedDataUpdateCorrectly()
         {
             world.Add(entity, profile);
-            system.Update(0);
+            system!.Update(0);
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.SDK.Tests
         public void HandleComponentRemovalCorrectly()
         {
             world.Add(entity, profile);
-            system.Update(0);
+            system!.Update(0);
 
             world.Add<DeleteEntityIntention>(entity);
 

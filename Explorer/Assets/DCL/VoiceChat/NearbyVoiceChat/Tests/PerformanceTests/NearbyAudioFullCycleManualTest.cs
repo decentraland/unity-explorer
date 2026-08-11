@@ -162,7 +162,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             positionSystem?.Dispose();
             bindingSystem?.Dispose();
 
-            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include))
             {
                 if (src == null) continue;
                 src.Stop();
@@ -268,7 +268,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
         private Camera EnsureCameraAndListener()
         {
-            Camera camera = Camera.main;
+            Camera? camera = Camera.main;
             if (camera == null)
             {
                 var camGo = new GameObject("Main Camera") { tag = "MainCamera" };

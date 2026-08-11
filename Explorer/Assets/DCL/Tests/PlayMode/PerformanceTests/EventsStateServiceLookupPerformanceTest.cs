@@ -51,7 +51,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 var addresses = new string[5];
                 for (var a = 0; a < 5; a++)
                 {
-                    int idx = (i * 5 + a) % friendPoolSize;
+                    int idx = ((i * 5) + a) % friendPoolSize;
                     string addr = $"0xFriend{idx}";
                     addresses[a] = a % 2 == 0 ? addr.ToUpperInvariant() : addr.ToLowerInvariant();
                 }
@@ -60,7 +60,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 {
                     id = $"ev{i}",
                     connected_addresses = addresses,
-                    community_id = i % 2 == 0 ? $"comm{i % 50}" : null,
+                    community_id = i % 2 == 0 ? $"comm{i % 50}" : null!,
                 });
             }
 
@@ -141,7 +141,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             Measure.Custom(new SampleGroup("populate-friends-1000", SampleUnit.Millisecond), large);
             Debug.Log($"[EventsStateService] populate pass: friends=10 -> {small:F3}ms, friends=1000 -> {large:F3}ms");
 
-            Assert.LessOrEqual(large, 3 * small + 5, "dictionary lookups must not scale with friend-list size");
+            Assert.LessOrEqual(large, (3 * small) + 5, "dictionary lookups must not scale with friend-list size");
         }
 
         private static double PopulatePassMs(int friendPoolSize)

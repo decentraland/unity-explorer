@@ -87,7 +87,7 @@ namespace DCL.Interaction.Systems.Tests
 
         private static void OverrideFeatureFlag(FeatureId featureId, bool value)
         {
-            FieldInfo field = typeof(FeaturesRegistry).GetField("featureStates", BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo? field = typeof(FeaturesRegistry).GetField("featureStates", BindingFlags.NonPublic | BindingFlags.Instance);
             var dict = (Dictionary<FeatureId, bool>)field!.GetValue(FeaturesRegistry.Instance);
             dict[featureId] = value;
         }
