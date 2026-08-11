@@ -311,16 +311,22 @@ If `X` does nothing useful without `Y`, and there is no second consumer of `X`, 
 // WRONG — Value is default/null when Has is false
 UserId userId = UserId.New(raw).Value;
 
+// WRONG in production — Unwrap() hides the absence case instead of modeling it
+UserId userId = UserId.New(raw).Unwrap();
+
 // RIGHT — branch on Has when the input may be invalid
 Option<UserId> userId = UserId.New(raw);
 if (!userId.Has) return;
 Use(userId.Value);
 
-// RIGHT — Unwrap() when validity is guaranteed by construction; it throws loudly at the source
+// RIGHT — a factory that is valid by construction needs no Option at all
+UserId userId = UserId.NewRandom();
+
+// RIGHT in tests only — Unwrap() for known-valid constants; it throws loudly at the source
 UserId userId = UserId.New(KNOWN_CONSTANT).Unwrap();
 ```
 
-This applies to test code too — known-valid constants go through `Unwrap()`, never bare `.Value`.
+In production code, handle `None` explicitly (early return, propagation) or use a by-construction-valid factory. `Unwrap()` is a test-only affordance — and in tests, known-valid constants go through `Unwrap()`, never bare `.Value`.
 
 ## PR Standards
 
