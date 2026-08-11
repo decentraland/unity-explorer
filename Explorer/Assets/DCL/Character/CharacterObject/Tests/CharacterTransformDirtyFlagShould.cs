@@ -397,7 +397,7 @@ namespace DCL.Character.CharacterObject.Tests
 
             Entity entity = globalWorld.Create(
                 characterTransform,
-                Profile.Create("Ia4Ia5Cth0ulhu2Ftaghn2", "fake user", new Avatar(
+                new Profile(UserId.New("Ia4Ia5Cth0ulhu2Ftaghn2").Unwrap(), "fake user", new Avatar(
                     BodyShape.MALE,
                     WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),

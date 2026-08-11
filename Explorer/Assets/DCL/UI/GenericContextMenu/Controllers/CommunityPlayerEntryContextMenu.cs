@@ -138,7 +138,7 @@ namespace DCL.UI
 
             var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
 
-            bool targetIsLocalParticipant = targetProfile.UserId.Equals(localParticipant.WalletId, StringComparison.InvariantCultureIgnoreCase);
+            bool targetIsLocalParticipant = string.Equals(targetProfile.UserId, localParticipant.WalletId, StringComparison.InvariantCultureIgnoreCase);
             bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantCommunityRole.Moderator or VoiceChatParticipantCommunityRole.Owner;
 
             closeContextMenuTask.TrySetResult();
