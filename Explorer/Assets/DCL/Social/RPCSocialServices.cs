@@ -49,12 +49,12 @@ namespace DCL.SocialService
         /// <summary>
         ///     Used to ensure that only one connection establishment process is running at a time.
         /// </summary>
-        private readonly DCLSemaphoreSlim connectionEstablishingMutex = new ();
+        private readonly DCLSemaphoreSlim connectionEstablishingMutex = new (1, 1);
 
         /// <summary>
         ///     Used to ensure that handshake and disconnection processes do not overlap.
         /// </summary>
-        private readonly DCLSemaphoreSlim handshakeMutex = new ();
+        private readonly DCLSemaphoreSlim handshakeMutex = new (1, 1);
 
         private readonly Uri apiUrl;
         private readonly IWeb3IdentityCache identityCache;

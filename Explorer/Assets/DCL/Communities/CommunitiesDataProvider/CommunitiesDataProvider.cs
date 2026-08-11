@@ -634,7 +634,10 @@ namespace DCL.Communities.CommunitiesDataProvider
                 Option<UserId> userId = UserId.New(address);
 
                 if (!userId.Has)
+                {
+                    ReportHub.LogWarning(ReportCategory.COMMUNITIES, "Skipping community member profile: the entry has an empty address");
                     return;
+                }
 
                 resolvedProfile = new Profile.CompactInfo(userId.Value);
             }
