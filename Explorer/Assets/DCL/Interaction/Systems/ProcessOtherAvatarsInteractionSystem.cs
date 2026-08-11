@@ -134,9 +134,6 @@ namespace DCL.Interaction.Systems
 
             string userId = currentProfileHovered.UserId;
 
-            if (string.IsNullOrEmpty(userId))
-                return;
-
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId))).Forget();
         }
 
@@ -146,9 +143,6 @@ namespace DCL.Interaction.Systems
                 return;
 
             string userId = currentProfileHovered.UserId;
-
-            if (string.IsNullOrEmpty(userId))
-                return;
 
             wasCursorLockedWhenMenuOpened  = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
 

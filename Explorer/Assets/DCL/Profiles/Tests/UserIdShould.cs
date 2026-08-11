@@ -73,6 +73,18 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
+        public void CreateUniqueNonEmptyRandomIds()
+        {
+            // Act
+            UserId first = UserId.NewRandom();
+            UserId second = UserId.NewRandom();
+
+            // Assert
+            Assert.That(first.Value, Is.Not.Empty);
+            Assert.That(first.Equals(second), Is.False);
+        }
+
+        [Test]
         public void CreateFromWeb3AddressInItsLowercaseForm()
         {
             // Arrange

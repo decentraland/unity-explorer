@@ -30,6 +30,13 @@ namespace DCL.Profiles
         public static Option<UserId> From(Web3Address address) =>
             New(address.ToString());
 
+        /// <summary>
+        ///     Creates a unique placeholder id for locally generated users (random avatars, fakes);
+        ///     non-empty by construction, so no validation is involved
+        /// </summary>
+        public static UserId NewRandom() =>
+            new (Guid.NewGuid().ToString());
+
         public bool Equals(UserId? other) =>
             other is not null && string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);
 

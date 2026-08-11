@@ -22,7 +22,7 @@ namespace DCL.Profiles
 
         public Color UserNameColor => compact.UserNameColor;
 
-        public string UserId
+        public UserId UserId
         {
             get => compact.UserId;
             set => compact.UserId = value;
@@ -60,7 +60,7 @@ namespace DCL.Profiles
         public struct CompactInfo : IEquatable<CompactInfo>, IDisposable
         {
             private string name;
-            private string userId;
+            private UserId? userId;
             private bool hasClaimedName;
 
             /// <summary>
@@ -74,9 +74,9 @@ namespace DCL.Profiles
             // Tracks the in-flight face snapshot download; O(1) cancellation on update and ownership transfer on profile replacement.
             public AssetPromise<TextureData, GetTextureIntention>? PicturePromise { get; set; }
 
-            public CompactInfo(string userId) : this(userId, "", false, "", null) { }
+            public CompactInfo(UserId userId) : this(userId, "", false, "", null) { }
 
-            public CompactInfo(string userId, string name, bool hasClaimedName = false, string faceUrl = "", Color? claimedNameColor = null) : this()
+            public CompactInfo(UserId userId, string name, bool hasClaimedName = false, string faceUrl = "", Color? claimedNameColor = null) : this()
             {
                 this.name = name;
                 UpdateUserId(userId, true);
@@ -86,11 +86,13 @@ namespace DCL.Profiles
             }
 
             /// <summary>
-            ///     Is the complete wallet address of the user
+            ///     Is the complete wallet address of the user. <br />
+            ///     Never null in an instance created through a constructor; only <c>default(CompactInfo)</c>
+            ///     carries no user id, and its <see cref="UserId" /> must not be read.
             /// </summary>
-            public string UserId
+            public UserId UserId
             {
-                get => userId;
+                get => userId!;
 
                 set => UpdateUserId(value, true);
             }
@@ -175,10 +177,10 @@ namespace DCL.Profiles
             /// </summary>
             public string MentionName { get; private set; }
 
-            private void UpdateUserId(string value, bool generateAndValidateName = true)
+            private void UpdateUserId(UserId value, bool generateAndValidateName = true)
             {
                 userId = value;
-                Address = new Web3Address(value);
+                Address = new Web3Address(value.Value);
 
                 if (generateAndValidateName)
                     GenerateAndValidateName();
@@ -213,9 +215,10 @@ namespace DCL.Profiles
                 ReadOnlySpan<char> validatedSpan = buffer[..validLength];
                 ValidatedName = new string(validatedSpan);
 
-                if (!HasClaimedName && !string.IsNullOrEmpty(UserId) && UserId.Length > 4)
+                if (!HasClaimedName && userId is { Value: { Length: > 4 } })
                 {
-                    ReadOnlySpan<char> lastFourChars = UserId.AsSpan(UserId.Length - 4, 4);
+                    string rawUserId = userId.Value;
+                    ReadOnlySpan<char> lastFourChars = rawUserId.AsSpan(rawUserId.Length - 4, 4);
 
                     // Build WalletId: #XXXX
                     Span<char> walletBuffer = stackalloc char[5];
@@ -285,6 +288,7 @@ namespace DCL.Profiles
                 PicturePromise = null;
 
                 ProfilePicture.TryDereference();
+                ProfilePicture = null;
             }
         }
     }

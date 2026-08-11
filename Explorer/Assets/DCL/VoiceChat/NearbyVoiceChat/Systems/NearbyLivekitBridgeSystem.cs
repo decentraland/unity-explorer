@@ -48,7 +48,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void AddStreaming(Entity entity, in Profile profile)
         {
             string walletId = profile.UserId;
-            if (string.IsNullOrEmpty(walletId)) return;
 
             string[]? arr = registry.GetAudioSidsArray(walletId);
             if (arr != null)
@@ -61,7 +60,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void RefreshStreaming(in Profile profile, ref NearbyAudioStreamerComponent nearby)
         {
             string userId = profile.UserId;
-            if (string.IsNullOrEmpty(userId)) return;
 
             string[]? current = registry.GetAudioSidsArray(userId);
             if (current == null) return; // cleanup is RemoveStreaming's responsibility
@@ -77,7 +75,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void RemoveStreaming(Entity entity, in Profile profile)
         {
             string userId = profile.UserId;
-            if (string.IsNullOrEmpty(userId) || registry.GetAudioSidsArray(userId) != null) return;
+            if (registry.GetAudioSidsArray(userId) != null) return;
 
             // Drop NearbyAudioStreamerComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
             World.Remove<NearbyAudioStreamerComponent>(entity);
@@ -95,7 +93,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void AddSpeaking(Entity entity, in Profile profile)
         {
             string walletId = profile.UserId;
-            if (!string.IsNullOrEmpty(walletId) && registry.IsActiveSpeaker(walletId))
+            if (registry.IsActiveSpeaker(walletId))
                 World.Add<IsActivelySpeakingTag>(entity);
         }
 
@@ -105,7 +103,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void RemoveSpeaking(Entity entity, in Profile profile)
         {
             string walletId = profile.UserId;
-            if (!string.IsNullOrEmpty(walletId) && !registry.IsActiveSpeaker(walletId))
+            if (!registry.IsActiveSpeaker(walletId))
                 World.Remove<IsActivelySpeakingTag>(entity);
         }
     }
