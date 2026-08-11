@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using DCL.CharacterMotion.Components;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
+using ECS.TestSuite;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,14 @@ namespace DCL.AvatarRendering.Emotes.Tests
         private UpdateEmoteInputSystem system;
         private TestEmoteWheelShortcutHandler testShortcutHandler;
         private GameObject testGameObject;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void SetUp()

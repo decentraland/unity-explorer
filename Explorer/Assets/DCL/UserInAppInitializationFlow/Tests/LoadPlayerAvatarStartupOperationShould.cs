@@ -5,6 +5,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
@@ -21,6 +22,14 @@ namespace DCL.UserInAppInitializationFlow.Tests
         private ObjectProxy<AvatarBase> avatarBaseProxy;
         private GameObject avatarGameObject;
         private CancellationTokenSource cts;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void SetUp()
