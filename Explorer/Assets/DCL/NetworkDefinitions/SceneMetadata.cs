@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.ComponentModel;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     [Serializable]

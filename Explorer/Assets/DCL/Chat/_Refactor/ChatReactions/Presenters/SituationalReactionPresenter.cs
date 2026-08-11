@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.CharacterCamera;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Debug;
@@ -20,6 +21,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         private readonly ChatReactionDebugState debugState;
         private readonly SituationalReactionDebugController? debugController;
         private readonly RectTransform? debugButtonRect;
+        private readonly IExposedCameraData exposedCameraData;
         private readonly CancellationTokenSource cts = new ();
 
         private Camera? cachedMainCamera;
@@ -30,12 +32,14 @@ namespace DCL.Chat.ChatReactions.Presenters
         internal SituationalReactionPresenter(ISituationalReactionSimulation service,
             ChatReactionsConfig config,
             ChatReactionDebugState debugState,
+            IExposedCameraData exposedCameraData,
             SituationalReactionDebugController? debugController = null,
             Button? debugButton = null)
         {
             this.service = service;
             this.config = config;
             this.debugState = debugState;
+            this.exposedCameraData = exposedCameraData;
             this.debugController = debugController;
             this.debugButtonRect = debugButton != null ? debugButton.GetComponent<RectTransform>() : null;
 
@@ -62,7 +66,7 @@ namespace DCL.Chat.ChatReactions.Presenters
                     float dt = UnityEngine.Time.unscaledDeltaTime;
 
                     if (cachedMainCamera == null)
-                        cachedMainCamera = Camera.main;
+                        cachedMainCamera = exposedCameraData.CinemachineBrain?.OutputCamera;
 
                     Profiler.BeginSample("ChatReactions.Tick");
                     service.Tick(dt);

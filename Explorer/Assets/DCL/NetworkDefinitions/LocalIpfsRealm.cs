@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     /// <summary>
