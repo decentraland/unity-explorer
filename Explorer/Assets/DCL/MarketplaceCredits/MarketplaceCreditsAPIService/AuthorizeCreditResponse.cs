@@ -34,6 +34,14 @@ namespace DCL.MarketplaceCredits
     }
 
     [Serializable]
+    public struct AuthorizeUsdMintCreditBody
+    {
+        public int usdPriceCents;
+        public string contractAddress;
+        public string itemId;
+    }
+
+    [Serializable]
     public struct ReleaseUsdIntentsBody
     {
         public string[] salts;

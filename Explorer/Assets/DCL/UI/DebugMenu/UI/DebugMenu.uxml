@@ -30,8 +30,15 @@
             <ui:Button name="CloseButton" class="dcl-clickable debug-panel__close-button" />
         </ui:VisualElement>
     </ui:VisualElement>
+    <ui:VisualElement name="MetricsPanel" usage-hints="DynamicTransform" class="metrics-panel debug-panel debug-panel--hidden">
+        <ui:VisualElement name="Header" class="metrics-panel__header">
+            <ui:Label text="SCENE STATS" name="TitleLabel" class="metrics-panel__title" />
+        </ui:VisualElement>
+        <ui:VisualElement name="MetricsRows" class="metrics-panel__rows" />
+    </ui:VisualElement>
     <ui:VisualElement name="Sidebar" class="sidebar">
         <ui:Button name="ConsoleButton" class="sidebar__button sidebar__button--console dcl-clickable" />
+        <ui:Button name="MetricsButton" class="sidebar__button sidebar__button--metrics dcl-clickable" />
         <ui:Button name="AbConversionButton" text="AB" class="sidebar__button dcl-clickable" />
         <ui:Button name="DebugPanelButton" class="sidebar__button sidebar__button--debug dcl-clickable" style="display: none;" />
     </ui:VisualElement>

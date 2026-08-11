@@ -1,0 +1,33 @@
+name: Upsert CI Status Comment
+description: >-
+  Create or update the single unified CI status comment on a PR, replacing only
+  the given section (build | lint | tests). Seeds a skeleton with all three
+  sections the first time it runs, and re-reads/retries so concurrent writers
+  (build vs. Unity Test) never clobber each other's section.
+
+inputs:
+  pr-number:
+    description: Pull request number to comment on.
+    required: true
+  section:
+    description: Which section to replace — one of build, lint, tests.
+    required: true
+  body:
+    description: Markdown for this section (inline badge + message). Rendered as-is between the section markers.
+    required: true
+  github-token:
+    description: Token with pull-requests:write used to read and upsert the comment.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Upsert unified CI status comment
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        SECTION: ${{ inputs.section }}
+        SECTION_BODY: ${{ inputs.body }}
+      run: bash "$GITHUB_ACTION_PATH/upsert-ci-status.sh"

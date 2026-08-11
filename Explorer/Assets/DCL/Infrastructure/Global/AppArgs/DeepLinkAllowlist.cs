@@ -7,7 +7,7 @@ namespace Global.AppArgs
     /// <summary>
     ///     Deny-by-default allowlist of query params a <c>decentraland://</c> deep link may inject into app-args.
     ///     Shared by the cold-start argv path and the runtime bridge path (both funnel through
-    ///     <see cref="ApplicationParametersParser.ProcessDeepLinkParameters" />).
+    ///     <see cref="ApplicationParametersParser.ProcessDeepLinkParameters(string,System.Collections.Generic.Dictionary{string,string})" />).
     ///     <para>
     ///     A deep link is fully attacker-controllable — anyone can craft one and get a victim to open it — so
     ///     params fall into three tiers:
@@ -15,24 +15,27 @@ namespace Global.AppArgs
     ///     <list type="bullet">
     ///         <item>
     ///             <b>Always permitted</b> — benign navigation / share / login intents whose worst case is already
-    ///             gated elsewhere (a consent prompt, a matching login token, a plain coordinate, or a closed
-    ///             Decentraland-owned enum): realm, position, community, signin, authRequestId, force-open-backpack,
-    ///             spawnpoint, dclenv, self-preview-builder-collections.
+    ///             gated elsewhere (a consent prompt, a matching login token, a plain coordinate, a closed
+    ///             Decentraland-owned enum, or a read-only log view): realm, position, community, signin,
+    ///             authRequestId, force-open-backpack, spawnpoint, dclenv, self-preview-builder-collections,
+    ///             scene-console.
     ///         </item>
     ///         <item>
     ///             <b>Permitted only for a whitelisted realm</b> — the local-development params Creator Hub and the
-    ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, dclenv, hub,
-    ///             skip-auth-screen, landscape-terrain-enabled, multi-instance, scene-console, mcp, mcp-port. A realm
-    ///             is "whitelisted" when it is loopback (127.0.0.1 / localhost / [::1]) OR its world matches the
+    ///             SDK (<c>sdk-commands</c>) attach to their preview deep links: local-scene, hub, skip-auth-screen,
+    ///             landscape-terrain-enabled, multi-instance, local-ab, mcp, mcp-port — plus the loading-benchmark
+    ///             param measure-loading-time. A realm is "whitelisted" when
+    ///             it is loopback (127.0.0.1 / localhost / [::1]) OR its world matches the
     ///             <c>deeplink-whitelisted-worlds</c> feature flag (see <see cref="IsRealmWhitelisted" /> and
     ///             <see cref="SetWhitelistedWorlds" />). A remote-realm deep link from a web page can never enable
     ///             them unless that exact world was explicitly whitelisted. All but the MCP pair are individually
-    ///             low-harm — an analytics tag, a cosmetic toggle, an instance count, an env enum, a screen skip that
-    ///             still forces auth when no valid identity is cached, or the per-scene JS console — and the
-    ///             whitelisted-realm gate confines them to the dev context. <c>mcp</c>/<c>mcp-port</c> start an
-    ///             unauthenticated loopback control port and are the one non-low-harm pair in this set; they lean on
-    ///             the gate plus the server's own 127.0.0.1 bind and Origin check — see the per-key comment for what
-    ///             the gate does and does not cover.
+    ///             low-harm — an analytics tag, a cosmetic toggle, an instance count, a screen skip that still forces
+    ///             auth when no valid identity is cached, a benchmark that quits instead of bypassing that auth, or
+    ///             asset loading pointed at the realm the link already
+    ///             targets — and the whitelisted-realm gate confines them to the dev context.
+    ///             <c>mcp</c>/<c>mcp-port</c> start an unauthenticated loopback control port and are the one
+    ///             non-low-harm pair in this set; they lean on the gate plus the server's own 127.0.0.1 bind and
+    ///             Origin check — see the per-key comment for what the gate does and does not cover.
     ///         </item>
     ///         <item>
     ///             <b>Never permitted</b> — everything else, in particular params that launch code
@@ -93,6 +96,16 @@ namespace Global.AppArgs
             // cannot point the client at attacker infrastructure. Worst case is a session in a Decentraland-owned test
             // environment, strictly less capable than the attacker-supplied REALM above.
             AppArgsFlags.ENVIRONMENT,
+
+            // Opens the per-scene JS console: a read-only view of the log lines the running scene already emits, and
+            // Opens the debug menu with its informational widget categories — scene logs, performance, memory,
+            // room and realm info, entity requests, analytics, and web request metrics. Not realm-gated (product
+            // production realms and worlds to diagnose a deployed scene, which is exactly what the whitelisted-realm
+            // tier below forbids. It unlocks no capability of its own: it loads no content, changes no endpoint, and
+            // the menu it opens is restricted to the informational widget categories (see DebugUtilitiesContainer) —
+            // the full debug panel still needs the never-permitted "debug". Worst case is a session logging verbosely
+            // (ReportHub.EnforceUnconditionalVerboseLogs) with a log panel on screen.
+            AppArgsFlags.SCENE_CONSOLE,
         };
 
         // Local-development params Creator Hub / sdk-commands attach to preview deep links. Permitted ONLY when the
@@ -141,6 +154,12 @@ namespace Global.AppArgs
             // adds no attacker-controllable input. The full-URL variant (optimized-assets-url) points
             // AB/LOD/registry endpoints at arbitrary infrastructure and stays never-permitted.
             AppArgsFlags.LOCAL_AB,
+
+            // Runs the loading-time benchmark (LoadingTimeBenchmark reports stage timings to analytics) and, like
+            // autopilot, suppresses the auth screen — it cannot bypass authentication: when no valid identity is
+            // cached the client quits instead (RealUserInAppInitializationFlow). Whitelisted-realm-gated because
+            // it's a CI based action used internally on a specific realm.
+            AppArgsFlags.MEASURE_LOADING_TIME,
         };
 
         // Canonical (lowercased world-name) whitelist, set from the deeplink-whitelisted-worlds feature flag. Empty
