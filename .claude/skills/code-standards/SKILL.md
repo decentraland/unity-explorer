@@ -303,6 +303,25 @@ A loop that re-queues unresolved items will spin forever when the upstream sourc
 
 If `X` does nothing useful without `Y`, and there is no second consumer of `X`, merge them. Splits must pay for themselves in polymorphism, reuse, or test isolation.
 
+### 8. Accessing `Option<T>.Value` without checking `Has`
+
+`Option<T>.Value` (`Utility/Types/Result.cs`) is `default` — null for reference types — when `Has` is false. A blind read silently propagates an invalid value far from its source.
+
+```csharp
+// WRONG — Value is default/null when Has is false
+UserId userId = UserId.New(raw).Value;
+
+// RIGHT — branch on Has when the input may be invalid
+Option<UserId> userId = UserId.New(raw);
+if (!userId.Has) return;
+Use(userId.Value);
+
+// RIGHT — Unwrap() when validity is guaranteed by construction; it throws loudly at the source
+UserId userId = UserId.New(KNOWN_CONSTANT).Unwrap();
+```
+
+This applies to test code too — known-valid constants go through `Unwrap()`, never bare `.Value`.
+
 ## PR Standards
 
 - **Branches:** Based on `dev` branch
