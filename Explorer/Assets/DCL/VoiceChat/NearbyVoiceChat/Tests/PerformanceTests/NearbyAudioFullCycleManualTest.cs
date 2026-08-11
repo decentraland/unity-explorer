@@ -236,7 +236,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             headAnchorGo.transform.localPosition = new Vector3(0, 1.6f, 0);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            Entity entity = world.Create(new Profile(wallet, wallet, new Avatar()), avatarBase);
+            Entity entity = world.Create(new Profile(UserId.New(wallet).Unwrap(), wallet, new Avatar()), avatarBase);
             registry.Add(wallet, "sid");
 
             avatars.Add(new AvatarHandle { Wallet = wallet, Entity = entity, AvatarGo = avatarGo });

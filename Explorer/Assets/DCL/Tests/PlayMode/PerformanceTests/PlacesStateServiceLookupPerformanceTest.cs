@@ -31,7 +31,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             var friends = new List<Profile.CompactInfo>(count);
             for (var i = 0; i < count; i++)
-                friends.Add(new Profile.CompactInfo($"0xFriend{i}", $"Friend{i}"));
+                friends.Add(new Profile.CompactInfo(UserId.New($"0xFriend{i}").Unwrap(), $"Friend{i}"));
             return friends;
         }
 
@@ -80,7 +80,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         private static bool NaiveFriend(List<Profile.CompactInfo> friends, string userId, out Profile.CompactInfo match)
         {
             foreach (var f in friends)
-                if (!string.IsNullOrEmpty(f.UserId) && f.UserId.Equals(userId, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(f.UserId) && string.Equals(f.UserId, userId, StringComparison.OrdinalIgnoreCase))
                 {
                     match = f;
                     return true;

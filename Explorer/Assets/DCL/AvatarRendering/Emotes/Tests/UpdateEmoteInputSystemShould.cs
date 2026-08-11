@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
         private Profile CreateProfileWithEmotes(params string[] emoteUrns)
         {
-            var profile = Profile.Create();
+            var profile = Profile.NewRandomProfile("0x8a5b1234567890abcdef1234567890abcdef1234");
             var avatar = new Avatar();
 
             for (int i = 0; i < emoteUrns.Length && i < Avatar.MAX_EQUIPPED_EMOTES; i++)

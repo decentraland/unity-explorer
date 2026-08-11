@@ -59,7 +59,7 @@ namespace DCL.Interaction.Systems.Tests
             cameraEntityProxy = new ObjectProxy<Entity>();
             cameraEntityProxy.SetObject(cameraEntity);
 
-            testProfile = new Profile { UserId = TEST_USER_ID };
+            testProfile = new Profile(UserId.New(TEST_USER_ID).Unwrap(), "test user", new Avatar());
             avatarEntity = world.Create(testProfile);
 
             queryEntity = world.Create(
@@ -274,23 +274,6 @@ namespace DCL.Interaction.Systems.Tests
             Assert.That(mvcManager.ReceivedCalls(), Is.Empty);
         }
 
-        [Test]
-        public void NotOpenPassportWhenUserIdIsEmpty()
-        {
-            // Arrange
-            SetUpWithFeatureFlag(false);
-            testProfile.UserId = "";
-            SetupValidAvatarHit();
-            system.Update(0);
-
-            // Act
-            Press(mouse.leftButton);
-            Release(mouse.leftButton);
-
-            // Assert
-            Assert.That(mvcManager.ReceivedCalls(), Is.Empty);
-        }
-
         // ==========================================================
         // Context-menu mode (feature flag ON) - right click
         // ==========================================================
@@ -315,22 +298,6 @@ namespace DCL.Interaction.Systems.Tests
         {
             // Arrange
             SetUpWithFeatureFlag(true);
-            system.Update(0);
-
-            // Act
-            Press(mouse.rightButton);
-
-            // Assert
-            Assert.That(CountContextMenuCalls(), Is.EqualTo(0));
-        }
-
-        [Test]
-        public void NotOpenContextMenuWhenUserIdIsEmpty()
-        {
-            // Arrange
-            SetUpWithFeatureFlag(true);
-            testProfile.UserId = "";
-            SetupValidAvatarHit();
             system.Update(0);
 
             // Act
