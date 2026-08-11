@@ -134,9 +134,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             int contentLength = 0; // No payload content for simplicity
 
             int crdtTotalLength = 1 // comms type
-                                   + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength) // VALID1
-                                   + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength) // NO_SYNC (dropped)
-                                   + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength); // VALID2
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // VALID1
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // NO_SYNC (dropped)
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength; // VALID2
 
             var crdtMessage = new byte[crdtTotalLength];
             var crdtWrite = crdtMessage.AsSpan();
@@ -216,9 +216,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             int contentLength = 0; // No payload content for simplicity
 
-            int crdtDataLength = (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength) // VALID1
-                               + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength) // NO_SYNC (dropped)
-                               + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength); // VALID2
+            int crdtDataLength = PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // VALID1
+                               + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // NO_SYNC (dropped)
+                               + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength; // VALID2
 
             var crdtData = new byte[crdtDataLength];
             var crdtBody = crdtData.AsSpan();

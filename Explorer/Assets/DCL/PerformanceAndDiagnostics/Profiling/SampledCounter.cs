@@ -19,12 +19,20 @@ namespace DCL.Profiling
         private int sampleCount;
 
         private long total;
+        private long addedCount;
 
         public long Total => DCLInterlocked.Read(ref total);
+
+        /// <summary>
+        ///     Monotonic count of samples ever added. Unlike the ring it never wraps, so a reader can
+        ///     delta two reads to learn how many samples arrived in between.
+        /// </summary>
+        public long AddedCount => DCLInterlocked.Read(ref addedCount);
 
         public void Add(long value)
         {
             DCLInterlocked.Add(ref total, value);
+            DCLInterlocked.Increment(ref addedCount);
 
             lock (lockObject)
             {

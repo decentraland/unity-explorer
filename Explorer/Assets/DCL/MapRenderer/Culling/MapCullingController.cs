@@ -30,7 +30,7 @@ namespace DCL.MapRenderer.Culling
 
         private void SetCameraDirtyInternal(int index)
         {
-            dirtyCamerasFlag |= (1 << index);
+            dirtyCamerasFlag |= 1 << index;
         }
 
         private bool IsCameraDirty(int index) =>
@@ -89,7 +89,7 @@ namespace DCL.MapRenderer.Culling
         private void SetTrackedStateDirty(TrackedState state)
         {
             // shifting to the right will add zeroes on the left
-            state.SetCameraFlag((-1 >> (cameraStates.Count - 1)));
+            state.SetCameraFlag(-1 >> (cameraStates.Count - 1));
 
             if (IsTrackedStateDirty(state))
                 return;
