@@ -9,7 +9,7 @@ namespace DCL.Places
 {
     public class PlacesStateService : IDisposable
     {
-        public Dictionary<string, PlaceInfoWithConnectedFriends> CurrentPlaces { get; } = new();
+        public Dictionary<PlaceId, PlaceInfoWithConnectedFriends> CurrentPlaces { get; } = new();
 
         public class PlaceInfoWithConnectedFriends
         {
@@ -28,13 +28,18 @@ namespace DCL.Places
         private readonly Dictionary<UserId, Profile.CompactInfo> allFriends = new();
         private readonly Dictionary<PlaceId, EventDTO> liveEvents = new();
 
-        public PlaceInfoWithConnectedFriends? GetPlaceInfoById(string placeId) =>
+        public PlaceInfoWithConnectedFriends? GetPlaceInfoById(PlaceId placeId) =>
             CurrentPlaces.GetValueOrDefault(placeId);
 
         public void AddPlaces(IReadOnlyList<PlacesData.PlaceInfo> places)
         {
             foreach (PlacesData.PlaceInfo place in places)
             {
+                Option<PlaceId> placeId = PlaceId.New(place.id);
+
+                if (!placeId.Has)
+                    continue;
+
                 List<Profile.CompactInfo> friendsConnectedToPlace = new();
                 if (place.connected_addresses != null)
                 {
@@ -45,16 +50,16 @@ namespace DCL.Places
                     }
                 }
 
-                TryGetLiveEventByPlaceId(place.id, out EventDTO? liveEventAssociatedToPlace);
+                TryGetLiveEventByPlaceId(placeId.Value, out EventDTO? liveEventAssociatedToPlace);
 
-                CurrentPlaces[place.id] = new PlaceInfoWithConnectedFriends(place, friendsConnectedToPlace, liveEventAssociatedToPlace);
+                CurrentPlaces[placeId.Value] = new PlaceInfoWithConnectedFriends(place, friendsConnectedToPlace, liveEventAssociatedToPlace);
             }
         }
 
         public void RefreshFriendsData()
         {
-            var placeIds = new List<string>(CurrentPlaces.Keys);
-            foreach (string placeId in placeIds)
+            var placeIds = new List<PlaceId>(CurrentPlaces.Keys);
+            foreach (PlaceId placeId in placeIds)
             {
                 var existing = CurrentPlaces[placeId];
                 var place = existing.PlaceInfo;
@@ -70,8 +75,8 @@ namespace DCL.Places
 
         public void RefreshLiveEventsData()
         {
-            var placeIds = new List<string>(CurrentPlaces.Keys);
-            foreach (string placeId in placeIds)
+            var placeIds = new List<PlaceId>(CurrentPlaces.Keys);
+            foreach (PlaceId placeId in placeIds)
             {
                 var existing = CurrentPlaces[placeId];
                 TryGetLiveEventByPlaceId(placeId, out EventDTO? liveEvent);
@@ -121,11 +126,9 @@ namespace DCL.Places
             return false;
         }
 
-        private bool TryGetLiveEventByPlaceId(string rawPlaceId, out EventDTO? eventInfo)
+        private bool TryGetLiveEventByPlaceId(PlaceId placeId, out EventDTO? eventInfo)
         {
-            Option<PlaceId> placeId = PlaceId.New(rawPlaceId);
-
-            if (placeId.Has && liveEvents.TryGetValue(placeId.Value, out EventDTO liveEvent))
+            if (liveEvents.TryGetValue(placeId, out EventDTO liveEvent))
             {
                 eventInfo = liveEvent;
                 return true;

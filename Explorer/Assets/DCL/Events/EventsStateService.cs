@@ -12,7 +12,7 @@ namespace DCL.Events
 {
     public class EventsStateService : IDisposable
     {
-        private readonly Dictionary<string, EventDTO> currentEvents = new();
+        private readonly Dictionary<EventId, EventDTO> currentEvents = new();
         private readonly Dictionary<PlaceId, PlacesData.PlaceInfo> currentPlaces = new();
         private readonly Dictionary<UserId, Profile.CompactInfo> allFriends = new();
         private readonly Dictionary<CommunityId, GetUserCommunitiesData.CommunityData> myCommunities = new();
@@ -25,7 +25,7 @@ namespace DCL.Events
             public GetUserCommunitiesData.CommunityData? CommunityInfo;
         }
 
-        public EventWithPlaceAndFriendsData? GetEventDataById(string eventId)
+        public EventWithPlaceAndFriendsData? GetEventDataById(EventId eventId)
         {
             EventWithPlaceAndFriendsData result = new EventWithPlaceAndFriendsData();
 
@@ -71,7 +71,12 @@ namespace DCL.Events
                 ClearEvents();
 
             foreach (EventDTO eventInfo in events)
-                currentEvents.AddOrReplace(eventInfo.id, eventInfo);
+            {
+                Option<EventId> eventId = EventId.New(eventInfo.id);
+
+                if (eventId.Has)
+                    currentEvents.AddOrReplace(eventId.Value, eventInfo);
+            }
         }
 
         public void AddPlaces(IReadOnlyList<PlacesData.PlaceInfo> places, bool clearCurrentPlaces = false)

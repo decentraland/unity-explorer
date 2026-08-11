@@ -107,7 +107,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             foreach (EventDTO e in events)
             {
-                EventsStateService.EventWithPlaceAndFriendsData? data = service.GetEventDataById(e.id);
+                EventsStateService.EventWithPlaceAndFriendsData? data = service.GetEventDataById(EventId.New(e.id).Unwrap());
                 Assert.IsNotNull(data);
 
                 var expectedFriends = new List<string>();
@@ -131,7 +131,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             using var dupService = new EventsStateService();
             dupService.SetAllFriends(dupFriends);
             dupService.AddEvents(new List<EventDTO> { new () { id = "evDup", connected_addresses = new[] { "0xDup" } } });
-            EventsStateService.EventWithPlaceAndFriendsData? dupData = dupService.GetEventDataById("evDup");
+            EventsStateService.EventWithPlaceAndFriendsData? dupData = dupService.GetEventDataById(EventId.New("evDup").Unwrap());
             Assert.AreEqual(1, dupData!.FriendsConnectedToPlace.Count);
             Assert.AreEqual("First", dupData.FriendsConnectedToPlace[0].Name, "duplicate ids must resolve to the first inserted");
 
@@ -158,7 +158,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             var sw = Stopwatch.StartNew();
             for (var rep = 0; rep < 50; rep++)
                 foreach (EventDTO e in events)
-                    service.GetEventDataById(e.id);
+                    service.GetEventDataById(EventId.New(e.id).Unwrap());
             sw.Stop();
 
             return sw.Elapsed.TotalMilliseconds;

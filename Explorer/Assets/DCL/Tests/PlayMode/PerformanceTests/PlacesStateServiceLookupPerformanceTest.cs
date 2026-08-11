@@ -127,7 +127,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             foreach (PlacesData.PlaceInfo place in places)
             {
-                PlacesStateService.PlaceInfoWithConnectedFriends entry = service.CurrentPlaces[place.id];
+                PlacesStateService.PlaceInfoWithConnectedFriends entry = service.CurrentPlaces[PlaceId.New(place.id).Unwrap()];
 
                 var expectedFriends = ExpectedFriends(place, friends);
                 var actualFriends = new List<string>();
@@ -145,7 +145,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             foreach (PlacesData.PlaceInfo place in places)
             {
-                PlacesStateService.PlaceInfoWithConnectedFriends entry = service.CurrentPlaces[place.id];
+                PlacesStateService.PlaceInfoWithConnectedFriends entry = service.CurrentPlaces[PlaceId.New(place.id).Unwrap()];
 
                 var expectedFriends = ExpectedFriends(place, otherFriends);
                 var actualFriends = new List<string>();
