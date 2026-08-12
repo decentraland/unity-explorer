@@ -1,4 +1,3 @@
-// ReSharper disable once CheckNamespace
 namespace Global.AppArgs
 {
     public static class AppArgsFlags
