@@ -55,7 +55,7 @@ namespace DCL.UI.Sidebar
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
         private readonly World globalWorld;
-        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
+        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "client");
         private readonly ChatEventBus chatEventBus;
         private readonly IDisposable chatEventBusSubscription;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
