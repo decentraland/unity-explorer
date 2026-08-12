@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics.Sentry;
 using RichTypes;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 
 namespace DCL.Chat.Commands
 {

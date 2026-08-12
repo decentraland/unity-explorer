@@ -329,6 +329,8 @@ namespace DCL.Passport
             overviewPassportModules.Add(new EquippedItemsPassportModuleController(
                 viewInstance.EquippedItemsModuleView,
                 world,
+                webRequestController,
+                webBrowser,
                 rarityBackgrounds,
                 rarityColors,
                 categoryIcons,
