@@ -2,6 +2,7 @@
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.Utility.Types;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using SuperScrollView;
@@ -30,7 +31,7 @@ namespace DCL.Events
         [SerializeField] private Button goToNextDayButton = null!;
 
         private EventsStateService eventsStateService = null!;
-        private readonly List<string> currentEventsIds = new ();
+        private readonly List<EventId> currentEventsIds = new ();
         private ThumbnailLoader? eventCardsThumbnailLoader;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
@@ -70,7 +71,12 @@ namespace DCL.Events
             ClearEvents();
 
             foreach (EventDTO eventInfo in events)
-                currentEventsIds.Add(eventInfo.id);
+            {
+                Option<EventId> eventId = EventId.New(eventInfo.id);
+
+                if (eventId.Has)
+                    currentEventsIds.Add(eventId.Value);
+            }
 
             eventsLoopGrid.SetListItemCount(currentEventsIds.Count, resetPos);
 

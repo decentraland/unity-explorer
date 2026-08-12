@@ -171,7 +171,7 @@ namespace DCL.UI.ProfileNames
 
             void SetUpNonClaimed(ProfileNameEditorView.NonClaimedNameConfig config, Profile profile)
             {
-                config.userHashLabel.text = $"#{profile.UserId[^4..]}";
+                config.userHashLabel.text = $"#{profile.UserId.Value[^4..]}";
                 config.saveButtonInteractable = false;
                 config.nameInputField.SetValue(profile.HasClaimedName ? string.Empty : profile.Name);
                 config.saveLoading.SetActive(false);

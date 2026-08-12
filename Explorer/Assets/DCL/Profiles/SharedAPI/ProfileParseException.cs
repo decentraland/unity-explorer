@@ -11,5 +11,11 @@ namespace DCL.Profiles
         {
             ProfileId = profileId;
         }
+
+        public ProfileParseException(string profileId, string json)
+            : base($"Cannot parse profile: {profileId}\n{json}")
+        {
+            ProfileId = profileId;
+        }
     }
 }

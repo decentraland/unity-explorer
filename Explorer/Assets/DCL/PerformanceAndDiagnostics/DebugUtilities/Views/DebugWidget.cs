@@ -20,7 +20,7 @@ namespace DCL.DebugUtilities.Views
             foldout.text = title;
 
             prefsKey = ConstructPrefsKey(foldKey ?? title);
-            foldout.value = DCLPlayerPrefs.GetInt(prefsKey, 0) == 1;
+            foldout.value = DCLPlayerPrefs.GetInt(prefsKey) == 1;
 
             foldout.RegisterValueChangedCallback(evt => DCLPlayerPrefs.SetInt(prefsKey, evt.newValue ? 1 : 0));
         }
