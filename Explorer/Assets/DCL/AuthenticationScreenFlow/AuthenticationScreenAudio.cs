@@ -51,7 +51,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnMuteButtonClicked()
         {
-            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED);
 
             UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, !isMuted);
 
@@ -71,7 +71,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void InitMusicMute()
         {
-            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED);
 
             if (isMuted)
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
