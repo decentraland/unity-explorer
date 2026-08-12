@@ -118,18 +118,23 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
             catch (TimeoutException)
             {
-                lifeCycleCts.SafeCancelAndDispose();
-
-                // As there is no direct way to tell Connection Timeout to ENet
-                // at this point it might be [already] connected or not, simply force it to disconnect
-                serverPeer.Value.DisconnectNow((uint)DisconnectReason.NONE);
-                host.Dispose();
-
-                serverPeer = null;
-                host = null;
-
+                await ForceDisconnectAsync();
                 throw;
             }
+        }
+
+        private async UniTask ForceDisconnectAsync()
+        {
+            lifeCycleCts.SafeCancelAndDispose();
+
+            // Wait for the loop to finish in order to prevent race conditions to ENet
+            while (Volatile.Read(ref listenLoopIsActive))
+                await UniTask.Yield();
+
+            // As there is no direct way to tell Connection Timeout to ENet
+            // at this point it might be [already] connected or not, simply force it to disconnect
+            serverPeer?.DisconnectNow((uint)DisconnectReason.NONE);
+            FinalizeHost();
         }
 
         public UniTask DisconnectAsync(DisconnectReason reason) =>
