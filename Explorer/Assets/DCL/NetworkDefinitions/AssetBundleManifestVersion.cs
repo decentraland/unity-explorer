@@ -48,6 +48,9 @@ public class AssetBundleManifestVersion
             return HasHashInPathValue.Value;
         }
 
+        /// <summary>True once <see cref="InjectDepsDigests" /> stored a manifest's files — the signal that no further manifest fetch is needed.</summary>
+        public bool DepsDigestsInjected => hasReusableAssets;
+
         /// <summary>True when the manifest's version is v49 or newer — a pure version check; individual files may still carry no digest.</summary>
         public bool SupportsDepsDigests()
         {

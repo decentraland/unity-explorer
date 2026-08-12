@@ -16,7 +16,8 @@ namespace ECS.StreamableLoading.AssetBundles
     ///     entity's <see cref="AssetBundleManifestVersion"/>. Required for v49+ ABs so the cache layers
     ///     (in-memory, disk, Unity webcache, GLTF container) can differentiate two scenes that share the
     ///     same hash but resolve different dependency closures.
-    ///     <para>The fetch is deduped by <see cref="AssetBundleManifestPromise"/>'s cache.</para>
+    ///     <para>Only fetches when the digests are not already present — a manifest obtained by the
+    ///     fallback helper injects them at fetch time, so this downloads nothing in that path.</para>
     /// </summary>
     public static class SceneAssetBundleDigestsLoader
     {
@@ -26,6 +27,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // Pre-v49 manifests have no canonical assets/ layout — skip both the manifest download and the injection.
             if (!manifestVersion.SupportsDepsDigests())
+                return;
+
+            if (manifestVersion.DepsDigestsInjected)
                 return;
 
             //Needed to use the UnityEngine.Time.realtimeSinceStartup on the intention creation

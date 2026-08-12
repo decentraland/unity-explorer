@@ -58,7 +58,14 @@ namespace ECS.StreamableLoading.AssetBundles
                 StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
                 if (assetBundleManifest.Succeeded)
+                {
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
+
+                    // The fetched document already carries files[] — inject the deps digests here so the
+                    // digests loader doesn't have to download the very same manifest a second time.
+                    if (entityDefinition.assetBundleManifestVersion.SupportsDepsDigests())
+                        entityDefinition.assetBundleManifestVersion.InjectDepsDigests(assetBundleManifest.Asset.GetFiles());
+                }
                 else
                 {
                     assetBundleManifest.TryLogException();
