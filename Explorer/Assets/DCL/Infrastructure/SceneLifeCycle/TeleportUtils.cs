@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -84,11 +83,10 @@ namespace ECS.SceneLifeCycle
 
             if (sceneDef != null && spawnPoints is { Count: > 0 })
             {
-                SceneMetadata.SpawnPoint spawnPoint;
                 Vector3 anchorWorldPosition;
                 LocalBounds bounds;
 
-                if (TryPickNamedSpawnPoint(spawnPoints, spawnPointName, out spawnPoint))
+                if (TryPickNamedSpawnPoint(spawnPoints, spawnPointName, out SceneMetadata.SpawnPoint spawnPoint))
                 {
                     // Named spawn point positions are scene-local: anchor them at the scene base parcel,
                     // not at the teleport target parcel
@@ -110,6 +108,98 @@ namespace ECS.SceneLifeCycle
             }
 
             return (targetWorldPosition, cameraTarget);
+        }
+
+        /// <summary>
+        ///     Names the first spawn point the creator placed in <paramref name="parcel" />, so a teleport aimed at
+        ///     that parcel can address it through <see cref="PickTargetWithOffset" /> instead of guessing a spot
+        ///     itself. A nameless spawn point cannot be addressed and counts as absent.
+        /// </summary>
+        public static bool TryPickSpawnPointNameInParcel(SceneEntityDefinition sceneDef, Vector2Int parcel, out string spawnPointName)
+        {
+            spawnPointName = string.Empty;
+
+            List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
+
+            if (spawnPoints is not { Count: > 0 })
+                return false;
+
+            Vector2Int baseParcel = sceneDef.metadata.scene.DecodedBase;
+            LocalBounds bounds = CalculateLocalBounds(sceneDef.metadata.scene.DecodedParcels, baseParcel);
+
+            // The parcel expressed in the same scene-local space as the spawn point coordinates
+            var parcelMin = new Vector2((parcel.x - baseParcel.x) * ParcelMathHelper.PARCEL_SIZE,
+                (parcel.y - baseParcel.y) * ParcelMathHelper.PARCEL_SIZE);
+
+            foreach (SceneMetadata.SpawnPoint spawnPoint in spawnPoints)
+                if (!string.IsNullOrEmpty(spawnPoint.name) && CoversParcel(spawnPoint, in bounds, parcelMin))
+                {
+                    spawnPointName = spawnPoint.name;
+                    return true;
+                }
+
+            return false;
+        }
+
+        /// <summary>
+        ///     True when the span that <paramref name="spawnPoint" /> can resolve to reaches into the parcel whose
+        ///     scene-local minimum corner is <paramref name="parcelMin" />. Spawn point coordinates are
+        ///     scene-local, so clamp them to the scene bounds exactly as <see cref="PickTargetWithOffset" /> does.
+        ///     Borders belong to both neighbours: a spawn point sitting on a parcel edge counts as inside it.
+        /// </summary>
+        private static bool CoversParcel(SceneMetadata.SpawnPoint spawnPoint, in LocalBounds bounds, Vector2 parcelMin)
+        {
+            // An unset coordinate resolves to the parcel centre, as GetSpawnPositionOffset does
+            if (!TryGetClampedRange(spawnPoint.position.x, bounds.MinX, bounds.MaxX, out float minX, out float maxX))
+                minX = maxX = ParcelMathHelper.HALF_PARCEL_SIZE;
+
+            if (!TryGetClampedRange(spawnPoint.position.z, bounds.MinZ, bounds.MaxZ, out float minZ, out float maxZ))
+                minZ = maxZ = ParcelMathHelper.HALF_PARCEL_SIZE;
+
+            return maxX >= parcelMin.x && minX <= parcelMin.x + ParcelMathHelper.PARCEL_SIZE
+                                       && maxZ >= parcelMin.y && minZ <= parcelMin.y + ParcelMathHelper.PARCEL_SIZE;
+        }
+
+        /// <summary>
+        ///     The span a spawn point coordinate can resolve to, clamped to the axis bounds. False when the
+        ///     coordinate is absent from the scene metadata, leaving the fallback to the caller — the spawn
+        ///     position substitutes the parcel centre horizontally but the ground vertically.
+        /// </summary>
+        private static bool TryGetClampedRange(SceneMetadata.SpawnPoint.Coordinate coordinate, float axisMin, float axisMax, out float min, out float max)
+        {
+            if (coordinate.SingleValue != null)
+            {
+                min = max = Mathf.Clamp(coordinate.SingleValue.Value, axisMin, axisMax);
+                return true;
+            }
+
+            float[]? range = coordinate.MultiValue;
+
+            if (range == null)
+            {
+                min = max = 0f;
+                return false;
+            }
+
+            switch (range.Length)
+            {
+                case 0:
+                    min = max = 0f;
+                    return true;
+                case 1:
+                    min = max = Mathf.Clamp(range[0], axisMin, axisMax);
+                    return true;
+                default:
+                    min = range[0];
+                    max = range[1];
+
+                    if (min > max)
+                        (min, max) = (max, min);
+
+                    min = Mathf.Clamp(min, axisMin, axisMax);
+                    max = Mathf.Clamp(max, axisMin, axisMax);
+                    return true;
+            }
         }
 
         private static bool TryPickNamedSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, string? spawnPointName, out SceneMetadata.SpawnPoint spawnPoint)
@@ -148,7 +238,10 @@ namespace ECS.SceneLifeCycle
         private static SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition, in LocalBounds bounds)
         {
             List<SceneMetadata.SpawnPoint> defaults = ListPool<SceneMetadata.SpawnPoint>.Get();
-            defaults.AddRange(spawnPoints.Where(sp => sp.@default));
+
+            for (var i = 0; i < spawnPoints.Count; i++)
+                if (spawnPoints[i].@default)
+                    defaults.Add(spawnPoints[i]);
 
             IReadOnlyList<SceneMetadata.SpawnPoint> elegibleSpawnPoints = defaults.Count > 0 ? defaults : spawnPoints;
             var closestIndex = 0;
@@ -180,48 +273,22 @@ namespace ECS.SceneLifeCycle
 
         private static Vector3 GetSpawnPositionOffset(SceneMetadata.SpawnPoint spawnPoint, in LocalBounds bounds)
         {
-            static float GetRandomPointClamped(float[] coordArray, float axisMin, float axisMax)
-            {
-                switch (coordArray.Length)
-                {
-                    case 1:
-                        return Mathf.Clamp(coordArray[0], axisMin, axisMax);
-                    case >= 2:
-                    {
-                        float min = coordArray[0];
-                        float max = coordArray[1];
+            return new Vector3(
+                GetSpawnComponentClamped(spawnPoint.position.x, bounds.MinX, bounds.MaxX) ?? ParcelMathHelper.HALF_PARCEL_SIZE,
+                GetSpawnComponentClamped(spawnPoint.position.y, 0f, float.PositiveInfinity) ?? 0,
+                GetSpawnComponentClamped(spawnPoint.position.z, bounds.MinZ, bounds.MaxZ) ?? ParcelMathHelper.HALF_PARCEL_SIZE);
 
-                        if (min > max)
-                            (min, max) = (max, min);
-
-                        min = Mathf.Clamp(min, axisMin, axisMax);
-                        max = Mathf.Clamp(max, axisMin, axisMax);
-
-                        if (Mathf.Approximately(min, max))
-                            return max;
-
-                        return (float)((RANDOM.NextDouble() * (max - min)) + min);
-                    }
-                    default:
-                        return 0;
-                }
-            }
-
+            // Scatter the players over the whole span the creator declared instead of stacking them on one point
             static float? GetSpawnComponentClamped(SceneMetadata.SpawnPoint.Coordinate coordinate, float axisMin, float axisMax)
             {
-                if (coordinate.SingleValue != null)
-                    return Mathf.Clamp(coordinate.SingleValue.Value, axisMin, axisMax);
+                if (!TryGetClampedRange(coordinate, axisMin, axisMax, out float min, out float max))
+                    return null;
 
-                if (coordinate.MultiValue != null)
-                    return GetRandomPointClamped(coordinate.MultiValue, axisMin, axisMax);
+                if (Mathf.Approximately(min, max))
+                    return max;
 
-                return null;
+                return (float)((RANDOM.NextDouble() * (max - min)) + min);
             }
-
-            return new Vector3(
-                GetSpawnComponentClamped(spawnPoint.position.x, bounds.MinX, bounds.MaxX) ?? ParcelMathHelper.PARCEL_SIZE / 2f,
-                GetSpawnComponentClamped(spawnPoint.position.y, 0f, float.PositiveInfinity) ?? 0,
-                GetSpawnComponentClamped(spawnPoint.position.z, bounds.MinZ, bounds.MaxZ) ?? ParcelMathHelper.PARCEL_SIZE / 2f);
         }
 
         private static LocalBounds CalculateLocalBounds(IReadOnlyList<Vector2Int> sceneParcels, Vector2Int referenceParcel)
@@ -265,7 +332,6 @@ namespace ECS.SceneLifeCycle
                 MaxZ = maxZ;
             }
         }
-
 
         public struct PlayerTeleportingState
         {
