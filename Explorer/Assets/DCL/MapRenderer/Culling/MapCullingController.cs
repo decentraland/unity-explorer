@@ -91,6 +91,11 @@ namespace DCL.MapRenderer.Culling
             // shifting to the right will add zeroes on the left
             state.SetCameraFlag(-1 >> (cameraStates.Count - 1));
 
+            EnqueueDirtyObject(state);
+        }
+
+        private void EnqueueDirtyObject(TrackedState state)
+        {
             if (IsTrackedStateDirty(state))
                 return;
 
@@ -133,22 +138,21 @@ namespace DCL.MapRenderer.Culling
         {
             Profiler.BeginSample(nameof(ResolveDirtyCameras));
 
-            for (var i = 0; i < MAX_CAMERAS_COUNT; i++)
+            if (dirtyCamerasFlag != 0)
             {
-                if (!IsCameraDirty(i))
-                    continue;
-
-                foreach ((IMapPositionProvider obj, TrackedState cullable) in trackedObjs)
+                foreach ((IMapPositionProvider _, TrackedState cullable) in trackedObjs)
                 {
-                    //If index is higher than camera count we have a dirty flag for a no longer tracked camera, we ignore it by setting the flag as 0
-                    bool visible = i < cameraStates.Count && cullingVisibilityChecker.IsVisible(obj, cameraStates[i]);
-                    cullable.SetVisibleFlag(i, visible);
-                    cullable.SetCameraFlag(i, false);
-                    cullable.CallListener();
-                }
-            }
+                    for (var i = 0; i < MAX_CAMERAS_COUNT; i++)
+                    {
+                        if (IsCameraDirty(i))
+                            cullable.SetCameraFlag(i, true);
+                    }
 
-            dirtyCamerasFlag = 0;
+                    EnqueueDirtyObject(cullable);
+                }
+
+                dirtyCamerasFlag = 0;
+            }
 
             Profiler.EndSample();
         }
