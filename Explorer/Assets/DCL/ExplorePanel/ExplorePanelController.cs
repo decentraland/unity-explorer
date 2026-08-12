@@ -33,7 +33,7 @@ using Utility;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>
     {
         private readonly BackpackController backpackController;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
@@ -121,13 +121,27 @@ namespace DCL.ExplorePanel
             communitiesLiveBadgeSubscription?.Dispose();
         }
 
-        private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
+        public void OnReshowWhileVisible(ExplorePanelParameter parameter)
         {
-            if (State == ControllerState.ViewHidden)
-                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(sectionToShow)));
-            else
-                ShowSection(sectionToShow);
+            ExploreSections sectionToShow = parameter.IsSectionProvided ? parameter.Section : lastShownSection;
+
+            if (sectionToShow != lastShownSection)
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+
+            ShowSection(sectionToShow);
+
+            if (parameter.BackpackSection != null)
+                backpackController.Toggle(parameter.BackpackSection.Value);
+
+            if (parameter.SettingsSection != null)
+                SettingsController.Toggle(parameter.SettingsSection.Value);
+
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
         }
+
+        private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow) =>
+            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(sectionToShow)));
 
         protected override void OnViewInstantiated()
         {

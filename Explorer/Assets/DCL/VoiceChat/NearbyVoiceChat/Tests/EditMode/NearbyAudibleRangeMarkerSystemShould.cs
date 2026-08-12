@@ -357,7 +357,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
             var remoteMovement = new RemotePlayerMovementComponent(movementQueuePool) { Initialized = initialized };
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase, remoteMovement);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase, remoteMovement);
         }
 
         private void MoveAvatar(Entity entity, float distance)

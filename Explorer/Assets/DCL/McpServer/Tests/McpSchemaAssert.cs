@@ -20,8 +20,12 @@ namespace DCL.McpServer.Tests
                 $"Output schema and payload disagree on the keys of '{PathOf(schema)}'.");
 
             foreach (JProperty property in properties.Properties())
+            {
                 if (DeclaresObject(property.Value) && payload[property.Name] is JObject nested)
                     KeysMatch((JObject)property.Value, nested);
+                else if (property.Value["items"] is JObject items && DeclaresObject(items) && payload[property.Name] is JArray { Count: > 0 } array && array[0] is JObject firstItem)
+                    KeysMatch(items, firstItem);
+            }
         }
 
         private static List<string> NamesOf(JObject obj)

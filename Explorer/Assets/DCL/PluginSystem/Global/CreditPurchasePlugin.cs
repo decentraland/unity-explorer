@@ -90,7 +90,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private UniTask OpenGetCreditsPanelAsync(CancellationToken ct) =>
-            FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup)
+            FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
                 ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_PURCHASE_MODAL)), ct)
                 : mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
 
