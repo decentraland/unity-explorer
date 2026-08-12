@@ -92,6 +92,14 @@ on:
           - both
           - windows-only
           - macos-only
+      install_source:
+        description: 'Install source baked into the build'
+        required: true
+        default: 'launcher'
+        type: choice
+        options:
+          - launcher
+          - epic
   workflow_call:
     inputs:
       profile:
