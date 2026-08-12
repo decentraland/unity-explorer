@@ -33,9 +33,7 @@ namespace DCL.Landscape.Systems
         private readonly MaterialPropertyBlock materialProperties;
         private readonly GrassIndirectRenderer? grassIndirectRenderer;
 
-        private NativeArray<int> instanceCounts;
-        private NativeList<Matrix4x4> transforms;
-        private bool nativeContainersInitialized;
+        private (NativeArray<int> instanceCounts, NativeList<Matrix4x4> transforms)? nativeContainers;
 
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
         private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
@@ -103,7 +101,10 @@ namespace DCL.Landscape.Systems
                 return;
             }
 
-            if (!nativeContainersInitialized)
+            NativeArray<int> instanceCounts;
+            NativeList<Matrix4x4> transforms;
+
+            if (nativeContainers == null)
             {
                 instanceCounts = new NativeArray<int>(
                     landscapeData.GroundMeshes.Length, Allocator.Persistent);
@@ -111,10 +112,12 @@ namespace DCL.Landscape.Systems
                 transforms = new NativeList<Matrix4x4>(
                     landscapeData.GroundInstanceCapacity, Allocator.Persistent);
 
-                nativeContainersInitialized = true;
+                nativeContainers = (instanceCounts, transforms);
             }
             else
             {
+                (instanceCounts, transforms) = nativeContainers.Value;
+
                 for (int i = 0; i < instanceCounts.Length; i++)
                     instanceCounts[i] = 0;
 
@@ -180,14 +183,12 @@ namespace DCL.Landscape.Systems
 
         protected override void OnDispose()
         {
-            if (!nativeContainersInitialized)
+            if (nativeContainers == null)
                 return;
 
-            if (instanceCounts.IsCreated)
-                instanceCounts.Dispose();
-
-            if (transforms.IsCreated)
-                transforms.Dispose();
+            (NativeArray<int> instanceCounts, NativeList<Matrix4x4> transforms) = nativeContainers.Value;
+            instanceCounts.Dispose();
+            transforms.Dispose();
         }
 
         private MinMaxAABB GetTerrainBounds()
