@@ -106,7 +106,7 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public void TryLogException(ReportData? overrideReportData = null)
         {
-            if (!Succeeded && exceptionData is { exception: not StreamableLoadingException or OperationCanceledException })
+            if (!Succeeded && exceptionData is { exception: not (StreamableLoadingException or OperationCanceledException) })
                 ReportHub.LogException(exceptionData.Value.exception, overrideReportData ?? exceptionData.Value.reportData);
         }
 
