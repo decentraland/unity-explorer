@@ -26,108 +26,109 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public int RandomID;
 
-                private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides = null!;
-                private AnimationClip lastEmote = null!;
+        private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides = null!;
+        private AnimationClip lastEmote = null!;
         private AnimationClip? lastMaskedEmote;
-                private AnimatorOverrideController overrideController = null!;
+        private AnimatorOverrideController overrideController = null!;
 
-                [field: SerializeField] public Animator AvatarAnimator { get; private set; } = null!;
-                [field: SerializeField] public AvatarAudioPlaybackController AudioPlaybackController { get; private set; } = null!;
+        [field: SerializeField] public Animator AvatarAnimator { get; private set; } = null!;
+        [field: SerializeField] public AvatarAudioPlaybackController AudioPlaybackController { get; private set; } = null!;
 
         public Animation? LegacyAnimation { get; private set; }
 
         private MaskedLegacyEmoteBlender? maskedLegacyBlender;
 
-                [field: SerializeField] public RigBuilder RigBuilder { get; private set; } = null!;
+        [field: SerializeField] public RigBuilder RigBuilder { get; private set; } = null!;
 
-                [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; } = null!;
+        [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; } = null!;
 
         [field: Header("FEET IK")]
 
         // This Rig controls the weight of ALL the feet IK constraints
-                [field: SerializeField] public Rig FeetIKRig { get; private set; } = null!;
+        [field: SerializeField] public Rig FeetIKRig { get; private set; } = null!;
 
         //This Transform position has the current position of the right leg feet, after the animation kicks in, before the IK. We raycast from this position
-                [field: SerializeField] public Transform RightLegConstraint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightLegConstraint { get; private set; } = null!;
 
         // This transform position decides where we want to put the right leg
-                [field: SerializeField] public Transform RightLegIKTarget { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftLegConstraint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftLegIKTarget { get; private set; } = null!;
+        [field: SerializeField] public Transform RightLegIKTarget { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftLegConstraint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftLegIKTarget { get; private set; } = null!;
 
         // Constraint that controls the weight of the leg IK
-                [field: SerializeField] public TwoBoneIKConstraint RightLegIK { get; private set; } = null!;
-                [field: SerializeField] public TwoBoneIKConstraint LeftLegIK { get; private set; } = null!;
+        [field: SerializeField] public TwoBoneIKConstraint RightLegIK { get; private set; } = null!;
+        [field: SerializeField] public TwoBoneIKConstraint LeftLegIK { get; private set; } = null!;
 
         //This constraint Applies an offset to the hips, lowering the avatar position based on the desired feet position
-                [field: SerializeField] public MultiPositionConstraint HipsConstraint { get; private set; } = null!;
+        [field: SerializeField] public MultiPositionConstraint HipsConstraint { get; private set; } = null!;
 
         [field: Header("HANDS IK")]
-                [field: SerializeField] public Rig HandsIKRig { get; private set; } = null!;
-                [field: SerializeField] public TwoBoneIKConstraint LeftHandIK { get; private set; } = null!;
+        [field: SerializeField] public Rig HandsIKRig { get; private set; } = null!;
+        [field: SerializeField] public TwoBoneIKConstraint LeftHandIK { get; private set; } = null!;
 
         // IK target position and rotation, its called subTarget because the real target has a parent constraint based on this transform to fix some offsets
-                [field: SerializeField] public Transform LeftHandSubTarget { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftHandSubTarget { get; private set; } = null!;
 
         // Position where we raycast from
-                [field: SerializeField] public Transform LeftHandRaycast { get; private set; } = null!;
-                [field: SerializeField] public TwoBoneIKConstraint RightHandIK { get; private set; } = null!;
-                [field: SerializeField] public Transform RightHandSubTarget { get; private set; } = null!;
-                [field: SerializeField] public Transform RightHandTarget { get; private set; } = null!;
-                [field: SerializeField] public Transform RightHandRaycast { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftHandRaycast { get; private set; } = null!;
+        [field: SerializeField] public TwoBoneIKConstraint RightHandIK { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandSubTarget { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandTarget { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandRaycast { get; private set; } = null!;
 
         [field: Header("LOOK-AT IK")]
-                [field: SerializeField] public Rig HeadIKRig { get; private set; } = null!;
+        [field: SerializeField] public Rig HeadIKRig { get; private set; } = null!;
 
         // The LookAt IK is based on 2 constraints, one for horizontal rotation and other for vertical rotation in order to control different bone chains for both of them, Horizontal is applied first
-                [field: SerializeField] public TwistChainConstraint HeadLookAtTargetVerticalConstraint { get; private set; } = null!;
-                [field: SerializeField] public Transform HeadLookAtTargetHorizontal { get; private set; } = null!;
-                [field: SerializeField] public Transform HeadLookAtTargetVertical { get; private set; } = null!;
+        [field: SerializeField] public TwistChainConstraint HeadLookAtTargetVerticalConstraint { get; private set; } = null!;
+        [field: SerializeField] public Transform HeadLookAtTargetHorizontal { get; private set; } = null!;
+        [field: SerializeField] public Transform HeadLookAtTargetVertical { get; private set; } = null!;
 
         // Position of the head after the animations
-                [field: SerializeField] public Transform HeadPositionConstraint { get; private set; } = null!;
+        [field: SerializeField] public Transform HeadPositionConstraint { get; private set; } = null!;
 
         [field: Header("TORSO IK")]
-                [field: SerializeField] public Rig TorsoIKRig { get; private set; } = null!;
-                [field: SerializeField] public Transform TorsoTarget { get; private set; } = null!;
+        [field: SerializeField] public Rig TorsoIKRig { get; private set; } = null!;
+        [field: SerializeField] public Transform TorsoTarget { get; private set; } = null!;
 
         [field: Header("ADDITIVE BREATH")]
-                [field: SerializeField] public Rig CachePoseRig { get; private set; } = null!;
-                [field: SerializeField] public Rig AdditiveBreathRig { get; private set; } = null!;
-                [field: SerializeField] public AdditiveBreathDataBridge AdditiveBreathBridge { get; private set; } = null!;
+        [field: SerializeField] public Rig CachePoseRig { get; private set; } = null!;
+        [field: SerializeField] public Rig AdditiveBreathRig { get; private set; } = null!;
+        [field: SerializeField] public AdditiveBreathDataBridge AdditiveBreathBridge { get; private set; } = null!;
 
         [field: Header("OTHER")]
+
         // Anchor points to attach entities to, through the SDK
-                [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform HeadAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform NeckAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform SpineAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform Spine1AnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform Spine2AnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform HipAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftShoulderAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftArmAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftForearmAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftHandIndexAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightShoulderAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightArmAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightForearmAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightHandIndexAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftUpLegAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftLegAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftFootAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform LeftToeBaseAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightUpLegAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightLegAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; } = null!;
-                [field: SerializeField] public Transform Armature { get; private set; } = null!;
+        [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform HeadAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform NeckAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform SpineAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform Spine1AnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform Spine2AnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform HipAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftShoulderAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftArmAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftForearmAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftHandIndexAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightShoulderAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightArmAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightForearmAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandIndexAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftUpLegAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftLegAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftFootAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftToeBaseAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightUpLegAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightLegAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform Armature { get; private set; } = null!;
 
-                [field: SerializeField] public GameObject GhostGameObject { get; private set; } = null!;
+        [field: SerializeField] public GameObject GhostGameObject { get; private set; } = null!;
 
-                public Renderer GhostRenderer { get; private set; } = null!;
+        public Renderer GhostRenderer { get; private set; } = null!;
 
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
@@ -139,8 +140,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [SerializeField] [Tooltip("Extra height added to the nametag while the glider is deployed, to avoid clipping the glider model, [m]")]
         private float nametagGlideOffset = 0.8f;
 
-                [SerializeField] private Transform headAramatureBone = null!;
-                [SerializeField] private Transform[] potentialHighestBones = null!;
+        [SerializeField] private Transform headAramatureBone = null!;
+        [SerializeField] private Transform[] potentialHighestBones = null!;
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
         private Vector3 headArmatureBoneStartPosition;
 
