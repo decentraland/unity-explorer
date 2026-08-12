@@ -20,6 +20,16 @@ namespace DCL.LOD.Components
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
 
+        // Cached signature of the inputs UpdateLODLevel reads, so a clean-partition scene with unchanged LOD-load state
+        // skips the per-frame threshold scan. Captures what IsDirty doesn't cover (FullQuality; LOD-load fields that
+        // change on a clean partition when a promise resolves) so any change re-opens the gate. Starts uncached.
+        public bool LODEvalCached;
+        public bool LODEvalFullQuality;
+        public byte LODEvalSuccessfullLODs;
+        public byte LODEvalFailedLODs;
+        public byte LODEvalLevelPromise;
+        public float LODEvalLODChangeDistance;
+
         //TODO (JUANI) : Ideally, this would be a LODAsset that gets cached, so we dont have to make the asset bundle request again and neither we have to
         // recreate the RootGameobject
         // Same problem related to UNloadSceneLODSystem.UnloadSceneLOFForISS. We need to clear the result because this gets re-initiated every time
@@ -28,7 +38,7 @@ namespace DCL.LOD.Components
         public void Dispose(World world)
         {
             InitialSceneStateLOD.Dispose(world);
-            InitialSceneStateLOD = null;
+            InitialSceneStateLOD = null!;
             CurrentLODPromise.ForgetLoading(world);
         }
 
@@ -43,7 +53,7 @@ namespace DCL.LOD.Components
 
         public void RecalculateLODDistances(float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
         {
-            var lods = metadata.LodGroup.GetLODs();
+            var lods = metadata.RentReusableLODs();
             SetupLODRelativeHeights(lods, defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
             metadata.LodGroup.SetLODs(lods);
         }
@@ -64,7 +74,7 @@ namespace DCL.LOD.Components
 
             if (TEMP_RENDERERS.Count != 0)
             {
-                var lods = metadata.LodGroup.GetLODs();
+                var lods = metadata.RentReusableLODs();
                 SetupRenderers(lods, TEMP_RENDERERS, CurrentLODLevelPromise);
                 SetupLODRelativeHeights(lods, defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
                 metadata.LodGroup.SetLODs(lods);
@@ -181,6 +191,10 @@ namespace DCL.LOD.Components
                 };
                 SetupLODRelativeHeights(lodsWithoutLOD0, defaultFOV, defaultLodBias, loadingDistance, sceneParcels);
                 metadata.LodGroup.SetLODs(lodsWithoutLOD0);
+
+                // This SetLODs bypassed the reusable buffer; drop it so the next AddSuccessLOD/RecalculateLODDistances
+                // re-reads the (now LOD0-less) native state instead of writing back a stale array.
+                metadata.InvalidateReusableLODs();
             }
 
         }

@@ -8,6 +8,10 @@ namespace DCL.LOD.Components
         public readonly LODGroup LodGroup;
         public LODAsset?[] LODAssets { get; private set; }
 
+        // One owned LOD[] reused across SceneLODInfo's GetLODs()/SetLODs() roundtrips instead of allocating per call
+        // (Unity's GetLODs has no non-alloc overload). Lazily seeded, kept authoritative because callers only
+        // mutate-then-SetLODs this instance; any out-of-band SetLODs must InvalidateReusableLODs() to re-read native state.
+        private UnityEngine.LOD[]? reusableLODs;
 
         public float CullRelativeHeightPercentage;
         public float LODChangeRelativeDistance;
@@ -31,10 +35,23 @@ namespace DCL.LOD.Components
             foreach (var lodAsset in LODAssets)
                 lodAsset?.Dispose();
 
-            LODAssets = null;
+            LODAssets = null!;
         }
 
         public int LODLoadedCount() =>
             SceneLODInfoUtils.LODCount(SuccessfullLODs) + SceneLODInfoUtils.LODCount(FailedLODs);
+
+        /// <summary>
+        ///     The reusable LOD buffer mirroring the LODGroup's current LODs, seeded once from <see cref="LODGroup.GetLODs" />.
+        ///     Callers mutate it in place and write it back with <see cref="LODGroup.SetLODs" />.
+        /// </summary>
+        public UnityEngine.LOD[] RentReusableLODs() =>
+            reusableLODs ??= LodGroup.GetLODs();
+
+        /// <summary>Drop the cached buffer after an out-of-band SetLODs so the next <see cref="RentReusableLODs" /> re-reads native state.</summary>
+        public void InvalidateReusableLODs() =>
+            reusableLODs = null;
+
+        internal UnityEngine.LOD[]? ReusableLODsBufferForTests => reusableLODs;
     }
 }
