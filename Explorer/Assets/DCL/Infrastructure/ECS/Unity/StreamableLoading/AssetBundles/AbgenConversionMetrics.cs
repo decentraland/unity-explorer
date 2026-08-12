@@ -5,10 +5,9 @@ using System.Collections.Generic;
 namespace ECS.StreamableLoading.AssetBundles
 {
     /// <summary>
-    ///     Live record of the session's abgen conversions, written from the conversion flows and read by the
-    ///     scene dev console's "AB Conversion" panel on the main thread: per-file entries for the in-process
-    ///     lane (<see cref="AbgenAssetBundleFallback" />, worker threads) and the whole-scene warm-up stage
-    ///     of the sidecar's eager build (main thread). A process-wide instance: the writers are static or
+    ///     Live record of the session's abgen conversions, written from the sidecar's warm-up flow and read
+    ///     by the scene dev console's "AB Conversion" panel on the main thread: per-file entries and the
+    ///     whole-scene warm-up stage of the eager build. A process-wide instance: the writers are static or
     ///     singular and the reader lives in the global UI, so there is exactly one pipeline to describe.
     /// </summary>
     public sealed class AbgenConversionMetrics

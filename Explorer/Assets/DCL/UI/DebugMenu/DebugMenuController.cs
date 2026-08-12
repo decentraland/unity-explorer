@@ -162,7 +162,7 @@ namespace DCL.UI.DebugMenu
 
         /// <summary>
         ///     Flashes the AB sidebar button while any abgen conversion is running (sidecar whole-scene
-        ///     warm-up or in-process fallback) and holds it lit after a failure until the panel is opened.
+        ///     warm-up) and holds it lit after a failure until the panel is opened.
         ///     The class toggle pulses smoothly because sidebar__button transitions background-color.
         /// </summary>
         private void UpdateAbConversionAttention()

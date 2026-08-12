@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 namespace DCL.UI.DebugMenu
 {
     /// <summary>
-    ///     Live view over <see cref="AbgenConversionMetrics" />: one row per in-process abgen conversion of the
+    ///     Live view over <see cref="AbgenConversionMetrics" />: one row per abgen conversion of the
     ///     current local-scene session, newest first, plus a summary line in the header.
     /// </summary>
     public class AbConversionPanelView : DebugPanelView
