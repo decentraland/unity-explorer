@@ -5,9 +5,8 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
     public interface IRemoveIntentions
     {
         /// <summary>
-        ///     Racy, lock-free peek of the pending-intention count. Lets the per-frame drain
-        ///     skip constructing an <see cref="OwnedBunch{T}"/> (which acquires+releases the
-        ///     backing <c>MutexSync</c>) when there is nothing to remove. Mirrors
+        ///     Racy, lock-free peek that returns <c>true</c> when at least one intention
+        ///     is queued. Does not acquire the backing <c>MutexSync</c>. Mirrors
         ///     <c>RemoteProfiles.NewBunchAvailable()</c>.
         ///     <para>
         ///     May observe a just-published intention one frame late; the item stays queued and
