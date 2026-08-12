@@ -13,6 +13,11 @@ namespace DCL.Profiling
         public readonly SampledCounter MessagesFromScene = new ();
         public readonly SampledCounter MessagesToScene = new ();
 
+        /// <summary>
+        ///     Unlike the counters above, written and read on the Unity main thread only.
+        /// </summary>
+        public readonly SceneContentStats ContentStats = new ();
+
         public int TargetFps { get; set; }
     }
 }

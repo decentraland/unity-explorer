@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
+using DCL.Utility.Types;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
@@ -93,12 +94,20 @@ namespace DCL.Friends
                                     break;
                                 }
 
+                                Option<Profile.CompactInfo> requesterProfile = ToClientFriendProfile(request.Friend);
+
+                                if (!requesterProfile.Has)
+                                {
+                                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Ignoring incoming friend request: server sent a friend profile without an address");
+                                    break;
+                                }
+
                                 Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
                                 var fr = new FriendRequest(
                                     request.Id,
                                     DateTimeOffset.FromUnixTimeMilliseconds(request.CreatedAt).DateTime,
-                                    ToClientFriendProfile(request.Friend),
+                                    requesterProfile.Value,
                                     myProfile!.Compact,
                                     request.HasMessage ? request.Message : string.Empty);
 
@@ -129,16 +138,24 @@ namespace DCL.Friends
                             continue;
                         }
 
+                        Option<Profile.CompactInfo> friendProfile = ToClientFriendProfile(response.Friend);
+
+                        if (!friendProfile.Has)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, $"Ignoring connectivity update with status {response.Status}: server sent a friend profile without an address");
+                            continue;
+                        }
+
                         switch (response.Status)
                         {
                             case ConnectivityStatus.Away:
-                                eventBus.BroadcastFriendAsAway(ToClientFriendProfile(response.Friend));
+                                eventBus.BroadcastFriendAsAway(friendProfile.Value);
                                 break;
                             case ConnectivityStatus.Offline:
-                                eventBus.BroadcastFriendDisconnected(ToClientFriendProfile(response.Friend));
+                                eventBus.BroadcastFriendDisconnected(friendProfile.Value);
                                 break;
                             case ConnectivityStatus.Online:
-                                eventBus.BroadcastFriendConnected(ToClientFriendProfile(response.Friend));
+                                eventBus.BroadcastFriendConnected(friendProfile.Value);
                                 break;
                         }
                     }
@@ -239,8 +256,12 @@ namespace DCL.Friends
 
             if (response.ResponseCase == UnblockUserResponse.ResponseOneofCase.Ok)
             {
-                BlockedProfile blockedProfile = ToClientBlockedProfile(response.Ok.Profile);
-                eventBus.BroadcastYouUnblockedProfile(blockedProfile);
+                BlockedProfile? blockedProfile = ToClientBlockedProfile(response.Ok.Profile);
+
+                if (blockedProfile != null)
+                    eventBus.BroadcastYouUnblockedProfile(blockedProfile);
+                else
+                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping unblock broadcast: server sent a profile without a valid address");
             }
             else
                 throw new Exception($"Cannot unblock user {userId}: {response.ResponseCase}");
@@ -393,10 +414,18 @@ namespace DCL.Friends
                             continue;
                         }
 
+                        Option<Profile.CompactInfo> requesterProfile = ToClientFriendProfile(rr.Friend);
+
+                        if (!requesterProfile.Has)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping received friend request: server sent a friend profile without an address");
+                            continue;
+                        }
+
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
-                            ToClientFriendProfile(rr.Friend),
+                            requesterProfile.Value,
                             myProfile!.Compact,
                             rr.Message);
 
@@ -447,11 +476,19 @@ namespace DCL.Friends
                             continue;
                         }
 
+                        Option<Profile.CompactInfo> recipientProfile = ToClientFriendProfile(rr.Friend);
+
+                        if (!recipientProfile.Has)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping sent friend request: server sent a friend profile without an address");
+                            continue;
+                        }
+
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
                             myProfile!.Compact,
-                            ToClientFriendProfile(rr.Friend),
+                            recipientProfile.Value,
                             rr.Message);
 
                         sentFriendRequestsBuffer.Add(fr);
@@ -562,12 +599,17 @@ namespace DCL.Friends
             if (response.Friend == null)
                 throw new InvalidOperationException("Cannot create friend request: server accepted the upsert but returned no friend profile");
 
+            Option<Profile.CompactInfo> friendProfile = ToClientFriendProfile(response.Friend);
+
+            if (!friendProfile.Has)
+                throw new InvalidOperationException("Cannot create friend request: server returned a friend profile without an address");
+
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
             var fr = new FriendRequest(response.Id,
                 DateTimeOffset.FromUnixTimeMilliseconds(response.CreatedAt).DateTime,
                 myProfile!.Compact,
-                ToClientFriendProfile(response.Friend),
+                friendProfile.Value,
                 messageBody);
 
             eventBus.BroadcastThatYouSentFriendRequestToOtherUser(fr);
@@ -597,7 +639,14 @@ namespace DCL.Friends
             friendProfileBuffer.Clear();
 
             foreach (FriendProfile profile in friends)
-                friendProfileBuffer.Add(ToClientFriendProfile(profile));
+            {
+                Option<Profile.CompactInfo> compact = ToClientFriendProfile(profile);
+
+                if (compact.Has)
+                    friendProfileBuffer.Add(compact.Value);
+                else
+                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping friend entry: server sent a profile without an address");
+            }
 
             return friendProfileBuffer;
         }
@@ -608,24 +657,45 @@ namespace DCL.Friends
             blockedProfileBuffer.Clear();
 
             foreach (BlockedUserProfile profile in friends)
-                blockedProfileBuffer.Add(ToClientBlockedProfile(profile));
+            {
+                BlockedProfile? blockedProfile = ToClientBlockedProfile(profile);
+
+                if (blockedProfile != null)
+                    blockedProfileBuffer.Add(blockedProfile);
+                else
+                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping blocked-user entry: server sent a profile without an address");
+            }
 
             return blockedProfileBuffer;
         }
 
-        [Obsolete(IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE)]
-        private Profile.CompactInfo ToClientFriendProfile(FriendProfile profile) =>
-            new (profile.Address, profile.Name, profile.HasClaimedName, profile.ProfilePictureUrl);
-
-        private BlockedProfile ToClientBlockedProfile(BlockedUserProfile profile)
+        /// <remarks>
+        ///     Legacy bridge (<see cref="IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE" />):
+        ///     should be moved to the unified POST originated from the client. Not marked
+        ///     <see cref="ObsoleteAttribute" /> because every caller lives in this service and must
+        ///     keep using it until that migration lands.
+        /// </remarks>
+        private Option<Profile.CompactInfo> ToClientFriendProfile(FriendProfile profile)
         {
-            var fp = new BlockedProfile(new Web3Address(profile.Address),
+            Option<UserId> userId = UserId.New(profile.Address);
+
+            return userId.Has
+                ? Option<Profile.CompactInfo>.Some(new Profile.CompactInfo(userId.Value, profile.Name, profile.HasClaimedName, profile.ProfilePictureUrl))
+                : Option<Profile.CompactInfo>.None;
+        }
+
+        private BlockedProfile? ToClientBlockedProfile(BlockedUserProfile profile)
+        {
+            Option<UserId> userId = UserId.From(new Web3Address(profile.Address));
+
+            if (!userId.Has)
+                return null;
+
+            return new BlockedProfile(userId.Value,
                 profile.Name,
                 profile.HasClaimedName,
                 profile.ProfilePictureUrl,
                 DateTimeOffset.FromUnixTimeMilliseconds(profile.BlockedAt).DateTime);
-
-            return fp;
         }
     }
 }

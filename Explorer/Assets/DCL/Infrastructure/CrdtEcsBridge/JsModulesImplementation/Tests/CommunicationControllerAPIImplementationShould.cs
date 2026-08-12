@@ -99,6 +99,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             byte[] data = GetRandomBytes(50).Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
 
+            // The first payload byte is the SDK comms routing type: 1 (CRDT) and 3 (ResCRDTState) get their payload rewritten by CRDTFilter
+            data[1] = 0xFF;
+
             sceneCommunicationPipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(data.AsSpan()[1..], WALLET_ID, isTrustedSource: true));
 
             byte[] walletBytes = Encoding.UTF8.GetBytes(WALLET_ID);
@@ -134,9 +137,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             int contentLength = 0; // No payload content for simplicity
 
             int crdtTotalLength = 1 // comms type
-                                   + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength) // VALID1
-                                   + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength) // NO_SYNC (dropped)
-                                   + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength); // VALID2
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // VALID1
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // NO_SYNC (dropped)
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength; // VALID2
 
             var crdtMessage = new byte[crdtTotalLength];
             var crdtWrite = crdtMessage.AsSpan();
@@ -216,9 +219,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             int contentLength = 0; // No payload content for simplicity
 
-            int crdtDataLength = (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength) // VALID1
-                               + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength) // NO_SYNC (dropped)
-                               + (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength); // VALID2
+            int crdtDataLength = PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // VALID1
+                               + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // NO_SYNC (dropped)
+                               + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength; // VALID2
 
             var crdtData = new byte[crdtDataLength];
             var crdtBody = crdtData.AsSpan();

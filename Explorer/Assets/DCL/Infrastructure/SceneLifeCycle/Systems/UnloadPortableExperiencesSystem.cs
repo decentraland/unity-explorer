@@ -21,7 +21,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), (typeof(PortableExperienceRealmComponent)))]
+        [All(typeof(DeleteEntityIntention), typeof(PortableExperienceRealmComponent))]
         private void UnloadPortableExperienceRealm(in Entity entity, ref PortableExperienceComponent portableExperienceComponent)
         {
             //We start another query from here using the data from the px component to match all other entities that were created by this PX
