@@ -1,0 +1,181 @@
+name: In-World Tests
+
+# Dispatcher for the InWorld NUnit suite. The mechanics — Explorer install,
+# AltTester, `mf explorer test`, Allure upload, PR comment — live in
+# decentraland/explorer-automation's `run-inworld-suite.yml`. This file only
+# decides when to run and against which build, and shares its build resolution
+# with visual-regression.yml via .github/actions/resolve-explorer-build.
+#
+# Triggers:
+#   - Every PR into main from a `release/**` or `hotfix/**` branch. `pull_request`
+#     and not `workflow_run` on the build, because a workflow_run reports against
+#     the default branch's SHA: it never joins the PR's checks and so can never
+#     gate a merge. Here the check is on the PR from the moment it opens, and the
+#     first job waits out the ~40-minute Unity Cloud Build the same event started.
+#   - Manually, from the Actions tab, against any ref.
+#
+# To make a red suite block the merge, add `InWorld suite result` to main's
+# required status checks. That job is the gate: it is the only name worth
+# requiring, it stays stable when the reusable workflow's own job names change,
+# and it passes for PRs into main that are not release or hotfix.
+#
+# One gap to know about: create-release-branch.yml opens the release PR with
+# GITHUB_TOKEN, and that raises no events, so nothing runs until the first human
+# push. A required check on a PR nobody has pushed to reads as "waiting to be
+# reported" — push a commit, or run this workflow by hand.
+#
+# Required vars:
+#   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Artifact bucket, and where the
+#     Allure report is published
+#
+# Inherited by the reusable workflow via `secrets: inherit`:
+#   - secrets.ALTTESTER_LICENSE
+#   - secrets.REPOS_READ_ONLY_TOKEN
+#   - secrets.EXPLORER_TEAM_S3_BUCKET
+#   - secrets.EXPLORER_TEAM_AWS_DEFAULT_REGION
+#   - secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID
+#   - secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+
+  workflow_dispatch:
+    inputs:
+      filter:
+        description: 'NUnit filter. Empty runs the whole Category=InWorld suite.'
+        required: false
+        default: ''
+        type: string
+      build_url:
+        description: 'Artifact URL to test. Empty resolves the selected ref''s own Unity Cloud Build.'
+        required: false
+        default: ''
+        type: string
+      tests_ref:
+        description: 'explorer-automation ref for the tests. Empty matches this ref''s name there, else main.'
+        required: false
+        default: ''
+        type: string
+      record_perf:
+        description: 'Record fixture-level perf samples. Off by default — paravirt numbers are unreliable.'
+        required: false
+        default: false
+        type: boolean
+
+# A newer commit supersedes the run in flight: the question is whether the branch
+# is good now, and the newer commit contains the older one.
+concurrency:
+  group: in-world-tests-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  # `actions: read` for the build lookup; the other two must be a superset of
+  # run-inworld-suite.yml's, or the call dies at startup.
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  resolve:
+    name: Wait for the build
+    # Skipped rather than filtered at the trigger, so the gate job below still
+    # reports on every PR into main and a required check never hangs unreported.
+    #
+    # Drafts are excluded to match build-unitycloud.yml, which does not build
+    # them without a `force-build` label — waiting for a build that will never
+    # start just turns into a timeout. `ready_for_review` above picks the PR up
+    # the moment it leaves draft.
+    #
+    # Fork PRs are excluded because they get no secrets, and the suite needs the
+    # AltTester licence. Release and hotfix branches never come from a fork.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      ((startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/')) &&
+       github.event.pull_request.draft == false &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    # Covers the wait below plus the artifact check. Builds measure ~40m.
+    timeout-minutes: 100
+
+    env:
+      HEAD_REF: ${{ github.head_ref || github.ref_name }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+    outputs:
+      build_url: ${{ steps.resolve.outputs.build-url }}
+      commit_sha: ${{ steps.resolve.outputs.short-sha }}
+      tests_ref: ${{ inputs.tests_ref || steps.resolve.outputs.tests-ref }}
+      branch_label: ${{ github.head_ref || github.ref_name }}
+
+    steps:
+      # `uses: ./…` resolves against $GITHUB_WORKSPACE, so the action has to be
+      # on disk. Sparse, because the full tree is ~21k files and none of the
+      # rest is read here.
+      - name: Fetch the resolver action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/resolve-explorer-build
+
+      - name: Resolve build URL and tests ref
+        id: resolve
+        uses: ./.github/actions/resolve-explorer-build
+        with:
+          head-ref: ${{ env.HEAD_REF }}
+          head-sha: ${{ env.HEAD_SHA }}
+          # A PR opens before its build exists, so wait one out. Manual runs
+          # pick a ref whose build is already there — or say which to use.
+          wait-minutes: ${{ github.event_name == 'pull_request' && 90 || 0 }}
+          build-url-override: ${{ inputs.build_url }}
+          public-url-prefix: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          automation-token: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
+
+  run-suite:
+    name: InWorld suite
+    needs: resolve
+    # @main pins the merged version of the reusable, so PRs to
+    # explorer-automation that touch it cannot change release validation here.
+    uses: decentraland/explorer-automation/.github/workflows/run-inworld-suite.yml@main
+    with:
+      build_url: ${{ needs.resolve.outputs.build_url }}
+      filter: ${{ inputs.filter || '' }}
+      # Empty on a manual run, so the reusable keeps it to the job summary.
+      pr_number: ${{ github.event.pull_request.number || '' }}
+      tests_ref: ${{ needs.resolve.outputs.tests_ref }}
+      commit_sha: ${{ needs.resolve.outputs.commit_sha }}
+      branch_label: ${{ needs.resolve.outputs.branch_label }}
+      # `== true` rather than the raw input: a pull_request event supplies no
+      # inputs at all, and the reusable's parameter is typed boolean.
+      record_perf: ${{ inputs.record_perf == true }}
+    secrets: inherit
+
+  result:
+    name: InWorld suite result
+    needs: [resolve, run-suite]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # The one check worth requiring on main. Everything above is either
+      # plumbing or a job name owned by another repository.
+      - name: Gate on the suite
+        env:
+          RESOLVE: ${{ needs.resolve.result }}
+          SUITE: ${{ needs.run-suite.result }}
+        run: |
+          set -euo pipefail
+          if [ "$RESOLVE" = "skipped" ]; then
+            echo "::notice::Not a release or hotfix PR — the InWorld suite does not gate this one."
+            exit 0
+          fi
+          if [ "$RESOLVE" = "success" ] && [ "$SUITE" = "success" ]; then
+            echo "::notice::InWorld suite passed."
+            exit 0
+          fi
+          # Cancelled counts as failure on purpose: a merge gate must not go
+          # green because the run was interrupted. The superseding run reports
+          # its own result.
+          echo "::error::InWorld gate failed — build: ${RESOLVE}, suite: ${SUITE}. See the Allure report linked in the suite's job summary."
+          exit 1
