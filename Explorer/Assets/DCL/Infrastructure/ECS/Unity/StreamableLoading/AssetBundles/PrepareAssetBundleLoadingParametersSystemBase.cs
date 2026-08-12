@@ -20,13 +20,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly URLDomain streamingAssetURL;
         private readonly URLDomain assetBundlesURL;
-        private readonly bool entityScopedBundleUrls;
 
-        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL, bool entityScopedBundleUrls = false) : base(world)
+        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world)
         {
             this.streamingAssetURL = streamingAssetURL;
             this.assetBundlesURL = assetBundlesURL;
-            this.entityScopedBundleUrls = entityScopedBundleUrls;
         }
 
         protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state, bool ignoreCacheHash = false)
@@ -65,7 +63,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.CurrentSource = AssetSource.Web;
 
                 // Hash was already translated to the CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash.
-                ca.URL = assetBundlesURL.Append(new URLPath(assetBundleIntention.AssetBundleManifest.GetCdnRequestPath(assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, entityScopedBundleUrls)));
+                ca.URL = assetBundlesURL.Append(new URLPath(assetBundleIntention.AssetBundleManifest.GetCdnRequestPath(assetBundleIntention.Hash, assetBundleIntention.ParentEntityID)));
                 assetBundleIntention.CommonArguments = ca;
 
                 if (ignoreCacheHash) return;

@@ -45,10 +45,9 @@ namespace DCL.PluginSystem.World
         private readonly URLDomain assetBundleURL;
         private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
         private readonly ILaunchMode launchMode;
-        private readonly bool useLocalAssetBundles;
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
-            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache, ILaunchMode launchMode, bool useLocalAssetBundles = false)
+            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache, ILaunchMode launchMode)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
@@ -56,7 +55,6 @@ namespace DCL.PluginSystem.World
             this.partialsDiskCache = partialsDiskCache;
             this.assetBundleURL = assetBundleURL;
             this.launchMode = launchMode;
-            this.useLocalAssetBundles = useLocalAssetBundles;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
@@ -66,12 +64,8 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
-
-            // Asset Bundles. local-ab requests scene bundles entity-scoped ({version}/{sceneID}/{file}) —
-            // the lane the local abgen sidecar serves digest-bearing names from.
-            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, localSceneDevelopment,
-                entityScopedBundleUrls: localSceneDevelopment && useLocalAssetBundles);
+            // Asset Bundles
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment);
 
             bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
 

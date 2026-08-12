@@ -18,8 +18,7 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private readonly bool localSceneDevelopment;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL, bool localSceneDevelopment, bool entityScopedBundleUrls)
-            : base(world, streamingAssetURL, assetBundlesURL, entityScopedBundleUrls)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL, bool localSceneDevelopment) : base(world, streamingAssetURL, assetBundlesURL)
         {
             this.localSceneDevelopment = localSceneDevelopment;
         }
