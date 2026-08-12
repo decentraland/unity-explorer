@@ -18,7 +18,6 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
@@ -59,7 +58,6 @@ namespace DCL.UI.Sidebar
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
         private readonly ChatEventBus chatEventBus;
         private readonly IDisposable chatEventBusSubscription;
-        private readonly HelpMenuController helpMenuController;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
         private readonly bool isCameraReelFeatureEnabled;
         private readonly bool isFriendsFeatureEnabled;
@@ -97,7 +95,6 @@ namespace DCL.UI.Sidebar
             World globalWorld,
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
-            HelpMenuController helpMenuController,
             JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
             : base(viewFactory)
         {
@@ -112,7 +109,6 @@ namespace DCL.UI.Sidebar
             this.globalWorld = globalWorld;
             this.chatEventBus = chatEventBus;
             this.eventsApiService = eventsApiService;
-            this.helpMenuController = helpMenuController;
             this.communitiesLiveTracker = communitiesLiveTracker;
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends);

@@ -1,4 +1,3 @@
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
