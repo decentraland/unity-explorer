@@ -81,6 +81,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas
                 currentOwnedTexture = await textureTask!;
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
+
+                if ((texture.width & 3) == 0 && (texture.height & 3) == 0 && texture.format == TextureFormat.RGBA32)
+                    texture.Compress(false);
             }
             catch (Exception e)
             {
@@ -92,8 +95,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas
                 Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
 
             atlasChunk.MainSpriteRenderer.enabled = true;
-            atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
-            atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
+            _ = atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
+            _ = atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
         }
 
         public void SetDrawOrder(int order)
