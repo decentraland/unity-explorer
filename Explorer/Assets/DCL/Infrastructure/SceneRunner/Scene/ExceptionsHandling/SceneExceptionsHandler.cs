@@ -55,7 +55,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
             // Stopping the scene execution after a javascript exception causes some scenes to not work at all, since they intentionally have execution errors. ie: events-board-api goerli 78,1.
             // In order to keep the scenes running we need to increase the error tolerance. Scenes that exceed will need a fix on the scene level.
             // This works different from the old kernel. The sdk7 runtime just does a try/catch: https://github.com/decentraland/scene-runtime/blob/adbf9e78c3b5d85d619c41494a177dfd7b6b5581/src/worker-sdk7/sdk7-runtime.ts#L119-L130
-            if (Handle(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber), javascriptRegisteredExceptions) != ISystemGroupExceptionHandler.Action.Continue)
+            if (Handle(exception, new ReportData(ReportCategory.JAVASCRIPT, new ReportDebounce(SceneJsExceptionsDebouncer.INSTANCE), sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber), javascriptRegisteredExceptions) != ISystemGroupExceptionHandler.Action.Continue)
                 sceneState!.State.Set(SceneState.JavaScriptError);
         }
 
@@ -91,7 +91,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
         public void ReportApiException(Exception e)
         {
-            ReportHub.LogException(e, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState!.TickNumber));
+            ReportHub.LogException(e, new ReportData(ReportCategory.JAVASCRIPT, new ReportDebounce(SceneJsExceptionsDebouncer.INSTANCE), sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState!.TickNumber));
         }
 
         public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)
