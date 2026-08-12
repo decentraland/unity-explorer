@@ -101,13 +101,13 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 viewInstance.RetryButton.onClick.RemoveListener(OnRetryClicked);
             }
 
-            if (currentState == ModalState.WaitingForBrowser)
+            if (currentState is ModalState.WaitingForBrowser or ModalState.Pending)
             {
                 CreditsTopUpStatus status = topUpService.CurrentStatus;
                 BuyCreditsCancelled?.Invoke(status.OrderId!, status.Pack);
-                topUpService.StopWaitingForBrowser();
+                topUpService.CancelTopUp();
             }
-            else if (currentState is ModalState.Success or ModalState.Failed or ModalState.Pending)
+            else if (currentState is ModalState.Success or ModalState.Failed)
                 topUpService.AcknowledgeTerminalState();
 
             lifeCts.SafeCancelAndDispose();
@@ -311,8 +311,8 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             foreach (CreditsTopUpPackItemView packItem in viewInstance.PackItems)
                 packItem.BuyButton.interactable = newState == ModalState.PackSelection;
 
-            // Close is locked only while creating the checkout; during the browser wait the X acts as
-            // "stop waiting" and hands the order off to the background poll.
+            // Close is locked only while creating the checkout; during the browser wait or pending
+            // states the X cancels the top-up so the next open starts from pack selection.
             viewInstance.CloseButton.interactable = newState != ModalState.CreatingCheckout;
         }
 
