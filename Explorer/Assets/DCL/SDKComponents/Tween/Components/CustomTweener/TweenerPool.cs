@@ -1,7 +1,6 @@
 using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
 using System;
-using System.Collections.Generic;
 using UnityEngine.Pool;
 using UnityEngine;
 
@@ -124,10 +123,10 @@ namespace DCL.SDKComponents.Tween.Components
                     break;
             }
 
-            sdkTweenComponent.CustomTweener = null;
+            sdkTweenComponent.CustomTweener = null!;
         }
 
-        public ITweener GetSequenceTweener(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform, Material? material = null)
+        public ITweener GetSequenceTweener(PBTween firstTween, Google.Protobuf.Collections.RepeatedField<PBTween> additionalTweens, TweenLoop? loopType, Transform transform, Material? material = null)
         {
             SequenceTweener sequenceTweener = sequenceTweenerPool.Get();
             sequenceTweener.Initialize(firstTween, additionalTweens, loopType, transform, material);
@@ -144,7 +143,7 @@ namespace DCL.SDKComponents.Tween.Components
                 sequenceTweenerPool.Release(sequenceTweener);
             }
 
-            sdkTweenSequenceComponent.SequenceTweener = null;
+            sdkTweenSequenceComponent.SequenceTweener = null!;
         }
     }
 }

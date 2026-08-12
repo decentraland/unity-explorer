@@ -4,7 +4,7 @@ using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using DCL.ECSComponents;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using System.Collections.Generic;
+using Google.Protobuf.Collections;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
@@ -13,7 +13,7 @@ namespace DCL.SDKComponents.Tween.Components
     {
         private readonly TweenCallback onCompleteCallback;
         private bool finished;
-        private Sequence sequence;
+        private Sequence sequence = null!;
 
         /// <summary>
         /// Resolved MoveRotateScale values filled by callback when a MoveRotateScale step starts.
@@ -25,7 +25,7 @@ namespace DCL.SDKComponents.Tween.Components
             onCompleteCallback = OnSequenceComplete;
         }
 
-        public void Initialize(PBTween firstTween, IEnumerable<PBTween> additionalTweens, TweenLoop? loopType, Transform transform, Material? material = null)
+        public void Initialize(PBTween firstTween, RepeatedField<PBTween> additionalTweens, TweenLoop? loopType, Transform transform, Material? material = null)
         {
             sequence?.Kill();
             finished = false;
@@ -36,8 +36,13 @@ namespace DCL.SDKComponents.Tween.Components
 
             AppendTweenStep(firstTween, firstTween.Duration / 1000f, transform, material);
 
-            foreach (PBTween pbTween in additionalTweens)
+            // Indexed access over the concrete RepeatedField avoids the heap enumerator that an
+            // IEnumerable<PBTween>-typed foreach allocates on every setup (mirrors AnalyzeSequence).
+            for (int i = 0; i < additionalTweens.Count; i++)
+            {
+                PBTween pbTween = additionalTweens[i];
                 AppendTweenStep(pbTween, pbTween.Duration / 1000f, transform, material);
+            }
 
             if (loopType.HasValue)
             {
@@ -108,7 +113,7 @@ namespace DCL.SDKComponents.Tween.Components
                     if (material != null)
                     {
                         int propertyId = TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE;
-                        TweenerCore<Vector2, Vector2, VectorOptions> textureTweener = null;
+                        TweenerCore<Vector2, Vector2, VectorOptions> textureTweener = null!;
 
                         switch (pbTween.TextureMove.MovementType)
                         {
