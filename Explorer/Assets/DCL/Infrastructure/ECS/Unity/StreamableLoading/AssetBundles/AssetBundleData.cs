@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiling;
+using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
 using Unity.Profiling;
