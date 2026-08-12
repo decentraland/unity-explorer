@@ -18,7 +18,6 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         [field: Header("Balance")]
         [field: SerializeField] public GameObject BalanceContainer { get; private set; } = null!;
         [field: SerializeField] public TMP_Text BalanceCreditsText { get; private set; } = null!;
-        [field: SerializeField] public GameObject BalanceLoadingSpinner { get; private set; } = null!;
         [field: SerializeField] public TMP_Text BoughtCreditsAmount { get; private set; } = null!;
 
         [field: Header("Actions")]

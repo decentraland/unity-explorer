@@ -323,9 +323,6 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             if (identity == null)
                 return;
 
-            if (viewInstance != null)
-                viewInstance.BalanceLoadingSpinner.SetActive(true);
-
             try
             {
                 UserCreditsResponse credits = await creditsApiClient.GetUserCreditsAsync(identity.Address, ct);
@@ -337,11 +334,6 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Top-up balance load failed: {e.Message}");
-            }
-            finally
-            {
-                if (viewInstance != null)
-                    viewInstance.BalanceLoadingSpinner.SetActive(false);
             }
         }
 
