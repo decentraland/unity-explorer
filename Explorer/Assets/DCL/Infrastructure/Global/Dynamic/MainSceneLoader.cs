@@ -263,15 +263,22 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
             // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
-            // content endpoints — no SDK-side sidecar or proxy involved. Its base URL feeds SceneAssetBundlesCDN
-            // exclusively, so wearables, emotes, LODs and the registry keep their dedicated hosts.
+            // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
+            // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
+            // stream through it from the production upstream (abgen's ab-cdn read-through and registry
+            // pass-through), so no lane loses content.
             if (launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
             {
                 abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct, contentUrlOverride: launchSettings.LocalSceneContentUrl(), jitContentDigest: true);
 
-                // Eager conversion: kick the whole-scene build now, overlapping it with the rest of
-                // startup and login instead of waiting for the world to request bundles.
-                abgenSidecar?.WarmUpLocalSceneAsync(ct).Forget();
+                if (abgenSidecar != null)
+                {
+                    cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
+
+                    // Eager conversion: kick the whole-scene build now, overlapping it with the rest of
+                    // startup and login instead of waiting for the world to request bundles.
+                    abgenSidecar.WarmUpLocalSceneAsync(ct).Forget();
+                }
             }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
@@ -281,8 +288,7 @@ namespace Global.Dynamic
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
-                cliOptimizedAssetsUrl,
-                abgenSidecar?.BaseUrl);
+                cliOptimizedAssetsUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);

@@ -163,8 +163,7 @@ namespace Global.Dynamic
 
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 
-            // Scene manifests live next to the scene bundles, so both hybrid and regular scene loading read the scene key.
-            var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.SceneAssetBundlesCDN));
+            var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
             var lodGeneratorCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
 
             LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, lodGeneratorCdnUrl,

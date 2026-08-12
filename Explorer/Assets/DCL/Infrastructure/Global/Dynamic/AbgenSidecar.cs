@@ -22,8 +22,9 @@ namespace Global.Dynamic
 {
     /// <summary>
     ///     Runs the abgen JIT asset-bundle server as a supervised localhost sidecar. The client's unchanged
-    ///     loading path consumes its base URL as <c>DecentralandUrl.SceneAssetBundlesCDN</c> (scene GLB
-    ///     bundles only). The server converts what its cache lacks, caching bundles on disk.
+    ///     loading path consumes its base URL as the optimized-assets source; the server JIT-converts the
+    ///     local scene and answers everything else from the production upstream (ab-cdn read-through and
+    ///     registry pass-through), caching converted bundles on disk.
     ///     The binary is never embedded in the build: it is probed in the download cache (newest installed
     ///     version wins), then StreamingAssets as an explicit developer override that suppresses updates.
     ///     The latest GitHub release is resolved and fetched in the background — first launch installs it,
