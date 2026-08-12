@@ -634,6 +634,17 @@ jobs:
           echo "MAIN_EXE=$MAIN_EXE_ABS" >> "$GITHUB_ENV"
           echo "Located: $MAIN_EXE_ABS"
 
+          # the UUAV media helper (deployed by HelperBuildPostprocessor)
+          # is a user-facing executable and must be signed like the game exe
+          HELPER_EXE=$(find build -path '*/Plugins/x86_64/uuav-helper.exe' | head -n1)
+          if [[ -z "$HELPER_EXE" ]]; then
+            echo "::error::uuav-helper.exe not found in build/ (HelperBuildPostprocessor regression?)"
+            exit 1
+          fi
+          HELPER_EXE_ABS=$(readlink -f "$HELPER_EXE")
+          echo "HELPER_EXE=$HELPER_EXE_ABS" >> "$GITHUB_ENV"
+          echo "Located: $HELPER_EXE_ABS"
+
       - name: Sign Windows executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
         continue-on-error: true
@@ -649,6 +660,21 @@ jobs:
           malware_block: 'false'
           environment_name: PROD
 
+      - name: Sign UUAV helper executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        uses: sslcom/esigner-codesign@b7f8ff36fc0de8690fbbab8e5b4421d29802f747 # develop @ 2025-06-23, pinned for supply-chain safety
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ env.HELPER_EXE }}
+          override: 'true'
+          malware_block: 'false'
+          environment_name: PROD
+
       - name: Verify Windows signature
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
         continue-on-error: true
@@ -656,9 +682,11 @@ jobs:
           set -euo pipefail
           sudo apt-get install -y -qq osslsigncode > /dev/null 2>&1
 
-          echo "Verifying signature on $MAIN_EXE ..."
-          osslsigncode verify -in "$MAIN_EXE"
-          echo "::notice::Signature verified for $MAIN_EXE"
+          for exe in "$MAIN_EXE" "$HELPER_EXE"; do
+            echo "Verifying signature on $exe ..."
+            osslsigncode verify -in "$exe"
+            echo "::notice::Signature verified for $exe"
+          done
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'
