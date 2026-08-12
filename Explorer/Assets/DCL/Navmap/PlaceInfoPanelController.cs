@@ -460,7 +460,6 @@ namespace DCL.Navmap
                                 schedule = $"Event started {(int)elapsed.TotalMinutes} min ago";
                         }
                         else
-                            // TODO: we might need to convert to local, currently R:RFC1123 Fri, 18 Apr 2008 20:30:00 GMT
                             schedule = startAt.ToString("R");
                     }
 
