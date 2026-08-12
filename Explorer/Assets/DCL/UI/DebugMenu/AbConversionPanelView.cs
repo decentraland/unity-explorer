@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,6 +18,12 @@ namespace DCL.UI.DebugMenu
         private const string USS_ENTRY = "ab-conversion-entry";
         private const string USS_ENTRY_WARNING = "ab-conversion-entry--warning";
         private const string USS_ENTRY_ERROR = "ab-conversion-entry--error";
+
+        /// <summary>
+        ///     GLTFast instantiates raw-GLTF roots under the glTF's own scene name — "Scene" for the
+        ///     standard Blender export pipeline (see LoadGLTFSystem's <c>GetSceneName</c> usage).
+        /// </summary>
+        private const string RAW_GLTF_SCENE_NAME_PREFIX = "Scene";
 
         private static readonly int BASE_COLOR_ID = Shader.PropertyToID("_BaseColor");
         private static readonly int COLOR_ID = Shader.PropertyToID("_Color");
@@ -99,7 +104,8 @@ namespace DCL.UI.DebugMenu
 
         /// <summary>
         ///     Tints every scene object green when it was loaded from an asset bundle and red when it fell
-        ///     back to a raw GLTF, keyed off the source-prefixed root names Utils stamps at creation.
+        ///     back to a raw GLTF, keyed off the names the loaders already produce: bundle assets are renamed
+        ///     with <see cref="AssetBundleData.NAME_PREFIX" /> at load, raw roots carry the glTF scene name.
         ///     Property blocks only — shared materials are never touched; a second click restores them.
         /// </summary>
         private void OnHighlightClicked()
@@ -132,13 +138,23 @@ namespace DCL.UI.DebugMenu
 
             foreach (Transform sceneTransform in transforms)
             {
-                bool fromAssetBundle = sceneTransform.name.StartsWith(GltfContainerAsset.AB_ROOT_NAME_PREFIX, StringComparison.Ordinal);
+                bool fromAssetBundle = sceneTransform.name.StartsWith(AssetBundleData.NAME_PREFIX, StringComparison.Ordinal);
 
-                if (!fromAssetBundle && !sceneTransform.name.StartsWith(GltfContainerAsset.RAW_GLTF_ROOT_NAME_PREFIX, StringComparison.Ordinal))
+                if (!fromAssetBundle && !sceneTransform.name.StartsWith(RAW_GLTF_SCENE_NAME_PREFIX, StringComparison.Ordinal))
                     continue;
 
-                if (fromAssetBundle) abRoots++;
-                else gltfRoots++;
+                // Count only outermost matches: an instantiated bundle asset repeats the prefix on its
+                // clone under the container, which would double every root in the tally.
+                Transform parent = sceneTransform.parent;
+                bool nestedMatch = parent != null
+                                   && (parent.name.StartsWith(AssetBundleData.NAME_PREFIX, StringComparison.Ordinal)
+                                       || parent.name.StartsWith(RAW_GLTF_SCENE_NAME_PREFIX, StringComparison.Ordinal));
+
+                if (!nestedMatch)
+                {
+                    if (fromAssetBundle) abRoots++;
+                    else gltfRoots++;
+                }
 
                 sceneTransform.GetComponentsInChildren(renderersScratch);
 

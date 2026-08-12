@@ -283,10 +283,11 @@ namespace ECS.StreamableLoading.AssetBundles
             lock (gate)
             {
                 Entry entry = TakeEntry(contentPath);
+                bool wasInFlight = entry.Status == ConversionStatus.Converting;
                 entry.Status = ConversionStatus.Processed;
                 entries[contentPath] = entry;
 
-                inFlight--;
+                if (wasInFlight) inFlight--;
                 succeeded++;
                 version++;
             }
@@ -297,11 +298,12 @@ namespace ECS.StreamableLoading.AssetBundles
             lock (gate)
             {
                 Entry entry = TakeEntry(contentPath);
+                bool wasInFlight = entry.Status == ConversionStatus.Converting;
                 entry.Status = ConversionStatus.Failed;
                 entry.Error = error;
                 entries[contentPath] = entry;
 
-                inFlight--;
+                if (wasInFlight) inFlight--;
                 failed++;
                 version++;
             }
@@ -312,10 +314,11 @@ namespace ECS.StreamableLoading.AssetBundles
             lock (gate)
             {
                 Entry entry = TakeEntry(contentPath);
+                bool wasInFlight = entry.Status == ConversionStatus.Converting;
                 entry.Status = ConversionStatus.Cancelled;
                 entries[contentPath] = entry;
 
-                inFlight--;
+                if (wasInFlight) inFlight--;
                 version++;
             }
         }

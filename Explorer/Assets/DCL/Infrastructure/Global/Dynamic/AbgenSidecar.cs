@@ -40,7 +40,7 @@ namespace Global.Dynamic
         private const int HEALTH_POLL_MS = 250;
         private const int PROGRESS_POLL_MS = 500;
 
-        private static bool downloadStarted;
+        private static volatile bool downloadStarted;
 
         private readonly string catalystContentUrl;
         private readonly string upstreamCdnUrl;
@@ -427,7 +427,11 @@ namespace Global.Dynamic
                 byte type = header[156];
                 string path = Path.Combine(destination, name);
 
-                if (type == (byte)'5')
+                // Defense in depth: a ".." component would escape the destination. The archive is
+                // sha256-pinned, so this only fires on a hostile or corrupt file — skip the entry.
+                if (name.Contains(".."))
+                    SkipBytes(gz, size);
+                else if (type == (byte)'5')
                     Directory.CreateDirectory(path);
                 else if (type is (byte)'0' or 0 && size >= 0)
                 {

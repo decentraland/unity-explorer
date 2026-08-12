@@ -14,6 +14,9 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
+        /// <summary>Every loaded asset is renamed with this prefix (see <see cref="AssetInfo" />), so instantiated hierarchies are recognizable as bundle-sourced by name.</summary>
+        public const string NAME_PREFIX = "AB:";
+
         private readonly string AssetBundleName;
 
         private bool AssetBundleUnloaded;
@@ -137,7 +140,7 @@ public struct AssetInfo
     {
         Asset = asset;
         AssetType = assetType;
-        Asset.name = $"AB:{Asset?.name}_{version}_{source}";
+        Asset.name = $"{AssetBundleData.NAME_PREFIX}{Asset?.name}_{version}_{source}";
     }
 }
 

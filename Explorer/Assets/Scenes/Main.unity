@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 6
+    initialRealm: 0
     targetScene: {x: 0, y: 0}
     EditorSceneStartPosition: 1
     predefinedScenes:
@@ -393,8 +393,7 @@ MonoBehaviour:
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
     useRemoteAssetsBundles: 0
-    useLocalAssetBundles: 1
-    buildLocalAssetBundles: 0
+    useLocalAssetBundles: 0
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
   decentralandEnvironment: 0

@@ -12,12 +12,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 {
     public class GltfContainerAsset : IDisposable
     {
-        /// <summary>Root GameObjects are name-prefixed by loading source so tooling (hierarchy, debug highlight) can tell them apart.</summary>
-        public const string AB_ROOT_NAME_PREFIX = "AB:";
-
-        /// <summary>See <see cref="AB_ROOT_NAME_PREFIX" />.</summary>
-        public const string RAW_GLTF_ROOT_NAME_PREFIX = "GLTF:";
-
         public struct VisibleMeshCollider
         {
             public Mesh Mesh;
