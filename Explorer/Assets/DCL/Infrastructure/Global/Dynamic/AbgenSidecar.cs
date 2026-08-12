@@ -42,6 +42,10 @@ namespace Global.Dynamic
 
         private static volatile bool downloadStarted;
 
+        /// <summary>Path under the realm root where a content server exposes its entities and files.</summary>
+        private const string CONTENT_PATH = "/content";
+
+        private readonly string realmRoot;
         private readonly string catalystContentUrl;
         private readonly string upstreamCdnUrl;
         private readonly string cacheRoot;
@@ -53,10 +57,11 @@ namespace Global.Dynamic
 
         public string BaseUrl { get; }
 
-        private AbgenSidecar(int port, string catalystContentUrl, string upstreamCdnUrl, string cacheRoot, bool jitContentDigest)
+        private AbgenSidecar(int port, string realmRoot, string upstreamCdnUrl, string cacheRoot, bool jitContentDigest)
         {
             BaseUrl = $"http://127.0.0.1:{port}";
-            this.catalystContentUrl = catalystContentUrl;
+            this.realmRoot = realmRoot;
+            catalystContentUrl = realmRoot + CONTENT_PATH;
             this.upstreamCdnUrl = upstreamCdnUrl;
             this.cacheRoot = cacheRoot;
             this.jitContentDigest = jitContentDigest;
@@ -71,14 +76,15 @@ namespace Global.Dynamic
         ///     Returns null when no binary is available yet (a background download is started — the sidecar
         ///     activates on the next launch) or the server never became healthy.
         ///     <para>
-        ///     <paramref name="contentUrlOverride" /> points the server at a non-catalyst content source (the
-        ///     local-scene-development preview server); its cache is kept apart from the catalyst one.
+        ///     <paramref name="realmRootOverride" /> points the server at a non-catalyst realm (the
+        ///     local-scene-development preview server), whose /content endpoints the scene is read through;
+        ///     its cache is kept apart from the catalyst one.
         ///     <paramref name="jitContentDigest" /> enables abgen's dev-mode freshness: every manifest request
         ///     re-downloads and re-hashes the entity's content, so edits reconvert even under LSD's
         ///     path-derived hashes, which never change.
         ///     </para>
         /// </summary>
-        public static async UniTask<AbgenSidecar?> TryStartAsync(string environmentDomain, CancellationToken ct, string? cacheRoot = null, string? contentUrlOverride = null, bool jitContentDigest = false)
+        public static async UniTask<AbgenSidecar?> TryStartAsync(string environmentDomain, CancellationToken ct, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
         {
             string? exe = TryFindPinnedExecutable() ?? (File.Exists(StreamingAssetsExecutablePath) ? StreamingAssetsExecutablePath : null);
 
@@ -93,9 +99,9 @@ namespace Global.Dynamic
                 return null;
 
             var sidecar = new AbgenSidecar(FreeLoopbackPort(),
-                contentUrlOverride ?? $"https://peer.decentraland.{environmentDomain}/content",
+                realmRootOverride?.TrimEnd('/') ?? $"https://peer.decentraland.{environmentDomain}",
                 $"https://ab-cdn.decentraland.{environmentDomain}",
-                cacheRoot ?? Path.Combine(Application.persistentDataPath, contentUrlOverride == null ? AbgenBundleDiskCache.SIDECAR_DIR : AbgenBundleDiskCache.SIDECAR_LSD_DIR),
+                cacheRoot ?? Path.Combine(Application.persistentDataPath, realmRootOverride == null ? AbgenBundleDiskCache.SIDECAR_DIR : AbgenBundleDiskCache.SIDECAR_LSD_DIR),
                 jitContentDigest);
 
             if (sidecar.Launch(exe) && await sidecar.WaitHealthyAsync(ct))
@@ -119,10 +125,6 @@ namespace Global.Dynamic
 
             try
             {
-                string realmRoot = catalystContentUrl.EndsWith(RealmLaunchSettings.CONTENT_PATH, StringComparison.Ordinal)
-                    ? catalystContentUrl[..^RealmLaunchSettings.CONTENT_PATH.Length]
-                    : catalystContentUrl;
-
                 using UnityWebRequest aboutRequest = UnityWebRequest.Get($"{realmRoot}/about");
                 aboutRequest.timeout = 10;
                 await aboutRequest.SendWebRequest().WithCancellation(ct);

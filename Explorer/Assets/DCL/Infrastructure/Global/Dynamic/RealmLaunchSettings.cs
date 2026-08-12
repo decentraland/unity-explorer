@@ -20,12 +20,6 @@ namespace Global.Dynamic
     [Serializable]
     public class RealmLaunchSettings : ILaunchMode
     {
-        /// <summary>
-        ///     Path under the local-scene-development realm where the preview server exposes the scene's
-        ///     entities and files — the lane the explorer's embedded abgen sidecar reads the scene through.
-        /// </summary>
-        public const string CONTENT_PATH = "/content";
-
         [Serializable]
         public struct PredefinedScenes
         {
@@ -98,19 +92,18 @@ namespace Global.Dynamic
         }
 
         /// <summary>
-        ///     Content-server base of the local-scene-development realm (the preview server), the source the
-        ///     embedded abgen sidecar JIT-converts the scene from. No value other than the realm itself —
-        ///     which the deep-link allowlist already gates on being loopback — feeds the result, so a deep
-        ///     link cannot point it anywhere the realm doesn't already reach. Null outside local scene
-        ///     development.
+        ///     Root URL of the local-scene-development realm (the preview server), the source the embedded
+        ///     abgen sidecar JIT-converts the scene from. No value other than the realm itself — which the
+        ///     deep-link allowlist already gates on being loopback — feeds the result, so a deep link cannot
+        ///     point it anywhere the realm doesn't already reach. Null outside local scene development.
         /// </summary>
-        public string? LocalSceneContentUrl()
+        public string? LocalSceneRealmRoot()
         {
             if (isLocalSceneDevelopmentRealm)
-                return customRealm.TrimEnd('/') + CONTENT_PATH;
+                return customRealm.TrimEnd('/');
 
             if (initialRealm == InitialRealm.Localhost)
-                return IRealmNavigator.LOCALHOST + CONTENT_PATH;
+                return IRealmNavigator.LOCALHOST;
 
             return null;
         }

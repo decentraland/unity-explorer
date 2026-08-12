@@ -183,10 +183,10 @@ namespace Global.Tests.EditMode
             Assert.AreEqual(world, realmLaunchSettings.TargetWorld);
         }
 
-        [TestCase("http://127.0.0.1:8000", "http://127.0.0.1:8000/content")]
-        [TestCase("http://127.0.0.1:8000/", "http://127.0.0.1:8000/content")] // trailing slash must not double up
-        [TestCase("http://localhost:8001", "http://localhost:8001/content")]
-        public void DeriveLocalSceneContentUrlFromRealm(string realm, string expectedUrl)
+        [TestCase("http://127.0.0.1:8000", "http://127.0.0.1:8000")]
+        [TestCase("http://127.0.0.1:8000/", "http://127.0.0.1:8000")] // trailing slash must be trimmed
+        [TestCase("http://localhost:8001", "http://localhost:8001")]
+        public void DeriveLocalSceneRealmRootFromRealm(string realm, string expectedUrl)
         {
             //Arrange
             var realmLaunchSettings = new RealmLaunchSettings();
@@ -201,11 +201,11 @@ namespace Global.Tests.EditMode
 
             //Assert
             Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab must enable local asset bundles");
-            Assert.AreEqual(expectedUrl, realmLaunchSettings.LocalSceneContentUrl());
+            Assert.AreEqual(expectedUrl, realmLaunchSettings.LocalSceneRealmRoot());
         }
 
         [Test]
-        public void NotDeriveLocalSceneContentUrlOutsideLocalSceneDevelopment()
+        public void NotDeriveLocalSceneRealmRootOutsideLocalSceneDevelopment()
         {
             //Arrange
             var realmLaunchSettings = new RealmLaunchSettings();
@@ -220,7 +220,7 @@ namespace Global.Tests.EditMode
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             //Assert
-            Assert.IsNull(realmLaunchSettings.LocalSceneContentUrl());
+            Assert.IsNull(realmLaunchSettings.LocalSceneRealmRoot());
         }
 
         [Test]

@@ -269,7 +269,7 @@ namespace Global.Dynamic
             // pass-through), so no lane loses content.
             if (launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
             {
-                abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct, contentUrlOverride: launchSettings.LocalSceneContentUrl(), jitContentDigest: true);
+                abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct, realmRootOverride: launchSettings.LocalSceneRealmRoot(), jitContentDigest: true);
 
                 if (abgenSidecar != null)
                 {
