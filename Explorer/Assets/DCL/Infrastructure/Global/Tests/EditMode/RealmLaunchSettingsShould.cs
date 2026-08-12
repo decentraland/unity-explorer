@@ -183,22 +183,44 @@ namespace Global.Tests.EditMode
             Assert.AreEqual(world, realmLaunchSettings.TargetWorld);
         }
 
-        [Test]
-        public void EnableLocalAssetBundlesFromLocalAbFlag()
+        [TestCase("http://127.0.0.1:8000", "http://127.0.0.1:8000/content")]
+        [TestCase("http://127.0.0.1:8000/", "http://127.0.0.1:8000/content")] // trailing slash must not double up
+        [TestCase("http://localhost:8001", "http://localhost:8001/content")]
+        public void DeriveLocalSceneContentUrlFromRealm(string realm, string expectedUrl)
         {
             //Arrange
             var realmLaunchSettings = new RealmLaunchSettings();
 
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
-                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true&local-ab=true",
+                $"decentraland://?realm={realm}&position=100,100&local-scene=true&local-ab=true",
             });
 
             //Act
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             //Assert
-            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab must enable the in-process asset-bundle build");
+            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab must enable local asset bundles");
+            Assert.AreEqual(expectedUrl, realmLaunchSettings.LocalSceneContentUrl());
+        }
+
+        [Test]
+        public void NotDeriveLocalSceneContentUrlOutsideLocalSceneDevelopment()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "--realm",
+                "https://peer.decentraland.org",
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.IsNull(realmLaunchSettings.LocalSceneContentUrl());
         }
 
         [Test]

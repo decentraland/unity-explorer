@@ -148,11 +148,13 @@ namespace Global.AppArgs
             // Opens the per-scene JS console (dev tooling for inspecting a scene under development).
             AppArgsFlags.SCENE_CONSOLE,
 
-            // Local-scene development only: convert the scene's GLTFs to asset bundles in-process with the
-            // embedded abgen library (cached on disk) instead of raw GLTFs. A pure boolean — sources come
-            // exclusively from the scene's own content server (the realm this gate already vetted), so the flag
-            // adds no attacker-controllable input. The full-URL variant (optimized-assets-url) points
-            // AB/LOD/registry endpoints at arbitrary infrastructure and stays never-permitted.
+            // Local-scene development only: serve the scene as asset bundles JIT-converted by the explorer's
+            // embedded abgen sidecar instead of raw GLTFs. A pure boolean — the sidecar reads the scene through
+            // the realm's own /content endpoints (RealmLaunchSettings.LocalSceneContentUrl), the same value this
+            // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
+            // point asset conversion at the realm the link already targets. The full-URL variant
+            // (optimized-assets-url) points AB/LOD/registry endpoints at arbitrary infrastructure and stays
+            // never-permitted.
             AppArgsFlags.LOCAL_AB,
 
             // Runs the loading-time benchmark (LoadingTimeBenchmark reports stage timings to analytics) and, like

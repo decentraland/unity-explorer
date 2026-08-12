@@ -3,6 +3,7 @@ using DCL.DebugUtilities;
 using DCL.Profiling;
 using DCL.UI.DebugMenu.LogHistory;
 using ECS.SceneLifeCycle;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace DCL.UI.DebugMenu
     public class DebugMenuController : MonoBehaviour
     {
         private const string USS_SIDEBAR_BUTTON_SELECTED = "sidebar__button--selected";
+        private const string USS_SIDEBAR_BUTTON_ATTENTION = "sidebar__button--attention";
         private const int METRICS_REFRESH_COOLDOWN_FRAMES = 30;
 
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
@@ -40,6 +42,8 @@ namespace DCL.UI.DebugMenu
 
         private ISceneFacade? metricsScene;
         private SceneContentCaps metricsCaps;
+        private int seenFailedConversions;
+        private bool seenWarmUpFailure;
         private int framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
         private long lastMetricsCollectionCount = -1;
 
@@ -152,7 +156,39 @@ namespace DCL.UI.DebugMenu
             // Cheap when nothing changed: a version check against the conversion metrics.
             abConversionPanelView?.Refresh();
 
+            UpdateAbConversionAttention();
             UpdateMetricsPanel();
+        }
+
+        /// <summary>
+        ///     Flashes the AB sidebar button while any abgen conversion is running (sidecar whole-scene
+        ///     warm-up or in-process fallback) and holds it lit after a failure until the panel is opened.
+        ///     The class toggle pulses smoothly because sidebar__button transitions background-color.
+        /// </summary>
+        private void UpdateAbConversionAttention()
+        {
+            AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
+
+            AbgenConversionMetrics.WarmUpStage warmUpStage = metrics.WarmUp;
+            int failedConversions = metrics.Failed;
+            bool warmUpFailed = warmUpStage == AbgenConversionMetrics.WarmUpStage.Failed;
+
+            if (abConversionPanelView.Visible)
+            {
+                seenFailedConversions = failedConversions;
+                seenWarmUpFailure = warmUpFailed;
+            }
+            else if (warmUpStage == AbgenConversionMetrics.WarmUpStage.Converting)
+                seenWarmUpFailure = false; // a new warm-up can fail anew
+
+            bool converting = warmUpStage == AbgenConversionMetrics.WarmUpStage.Converting || metrics.InFlight > 0;
+            bool unseenFailure = failedConversions > seenFailedConversions || (warmUpFailed && !seenWarmUpFailure);
+
+            bool attention = converting
+                ? (int)(UnityEngine.Time.unscaledTime * 2f) % 2 == 0
+                : unseenFailure;
+
+            abConversionButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, attention);
         }
 
         private void UpdateMetricsPanel()

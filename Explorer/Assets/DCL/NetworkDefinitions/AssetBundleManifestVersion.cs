@@ -113,13 +113,20 @@ public class AssetBundleManifestVersion
                 ? ComputeHashV49(hash, GetAssetBundleManifestVersion())
                 : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate());
 
-        /// <summary>Builds the CDN-relative path for a request hash: reusable bundles live under the shared <c>assets/</c> prefix (no entity segment), entity-scoped bundles (wearables/emotes, pre-v49 scenes) keep the legacy shapes.</summary>
-        public string GetCdnRequestPath(string hash, string sceneID)
+        /// <summary>
+        ///     Builds the CDN-relative path for a request hash: reusable bundles live under the shared
+        ///     <c>assets/</c> prefix (no entity segment), entity-scoped bundles (wearables/emotes, pre-v49
+        ///     scenes) keep the legacy shapes. <paramref name="entityScoped" /> puts reusable bundles under
+        ///     <c>{version}/{sceneID}/</c> instead — the only lane the local abgen sidecar serves
+        ///     digest-bearing names from (its flat <c>assets/</c> lane resolves bare hashes against a
+        ///     catalyst, which local-scene path-derived ids defeat).
+        /// </summary>
+        public string GetCdnRequestPath(string hash, string sceneID, bool entityScoped = false)
         {
             string version = GetAssetBundleManifestVersion();
 
             if (hasReusableAssets)
-                return $"{version}/assets/{hash}";
+                return entityScoped ? $"{version}/{sceneID}/{hash}" : $"{version}/assets/{hash}";
 
             if (HasHashInPath())
                 return $"{version}/{sceneID}/{hash}";

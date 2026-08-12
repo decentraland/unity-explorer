@@ -262,14 +262,24 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
-            // local-ab builds bundles in-process (disk-cached), so it needs no optimized-assets server:
-            // neither an explicit --optimized-assets-url nor the sidecar fallback applies in that mode.
-            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && !launchSettings.useLocalAssetBundles)
+            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl))
             {
-                abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct);
+                // local-ab: the embedded abgen JIT server reads the scene through the preview server's own
+                // content endpoints — no SDK-side sidecar or proxy involved. Otherwise the sidecar converts
+                // catalyst content, read-throughing the production CDN.
+                abgenSidecar = launchSettings.useLocalAssetBundles
+                    ? await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct, contentUrlOverride: launchSettings.LocalSceneContentUrl(), jitContentDigest: true)
+                    : await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct);
 
                 if (abgenSidecar != null)
+                {
                     cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
+
+                    // Eager conversion: kick the whole-scene build now, overlapping it with the rest of
+                    // startup and login instead of waiting for the world to request bundles.
+                    if (launchSettings.useLocalAssetBundles)
+                        abgenSidecar.WarmUpLocalSceneAsync(ct).Forget();
+                }
             }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
@@ -341,8 +351,9 @@ namespace Global.Dynamic
 
                 DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
 
-                // Remote kill-switch: flags arrive after the sidecar decision, so it applies here.
-                if (abgenSidecar != null && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_SIDECAR_KILL))
+                // Remote kill-switch: flags arrive after the sidecar decision, so it applies here. It governs
+                // the catalyst rollout only — a local-ab sidecar was explicitly requested by the developer.
+                if (abgenSidecar != null && !launchSettings.useLocalAssetBundles && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_SIDECAR_KILL))
                 {
                     abgenSidecar.Dispose();
                     abgenSidecar = null;

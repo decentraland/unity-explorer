@@ -66,19 +66,17 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            // Asset Bundles
-            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment);
+            bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
+
+            // Asset Bundles. local-ab requests scene bundles entity-scoped ({version}/{sceneID}/{file}) —
+            // the lane the local abgen sidecar serves digest-bearing names from.
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL, localSceneDevelopment,
+                entityScopedBundleUrls: localSceneDevelopment && useLocalAssetBundles);
 
             bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.ByteWeightedLoadingProgress);
 
-            bool buildLocalBundles = useLocalAssetBundles && launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
-
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress, sharedDependencies.SceneData.SceneContent,
-                buildLocalBundles);
-
-            if (buildLocalBundles)
-                finalizeWorldSystems.Add(WarmUpLocalAssetBundlesSystem.InjectToWorld(ref builder, sharedDependencies.SceneData));
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress, sharedDependencies.SceneData.SceneContent);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

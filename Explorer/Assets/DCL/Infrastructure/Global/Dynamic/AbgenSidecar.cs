@@ -2,6 +2,8 @@
 
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utility;
+using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -13,6 +15,8 @@ using System.Security.Cryptography;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+
+// ReSharper disable InconsistentNaming
 
 namespace Global.Dynamic
 {
@@ -30,12 +34,14 @@ namespace Global.Dynamic
         private const int MAX_RESTARTS = 3;
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
+        private const int PROGRESS_POLL_MS = 500;
 
         private static bool downloadStarted;
 
         private readonly string catalystContentUrl;
         private readonly string upstreamCdnUrl;
         private readonly string cacheRoot;
+        private readonly bool jitContentDigest;
 
         private Process? process;
         private int restarts;
@@ -43,12 +49,13 @@ namespace Global.Dynamic
 
         public string BaseUrl { get; }
 
-        private AbgenSidecar(int port, string catalystContentUrl, string upstreamCdnUrl, string cacheRoot)
+        private AbgenSidecar(int port, string catalystContentUrl, string upstreamCdnUrl, string cacheRoot, bool jitContentDigest)
         {
             BaseUrl = $"http://127.0.0.1:{port}";
             this.catalystContentUrl = catalystContentUrl;
             this.upstreamCdnUrl = upstreamCdnUrl;
             this.cacheRoot = cacheRoot;
+            this.jitContentDigest = jitContentDigest;
         }
 
         public static string DownloadedExecutablePath =>
@@ -62,8 +69,15 @@ namespace Global.Dynamic
         /// <summary>
         ///     Returns null when no binary is available yet (a background download is started — the sidecar
         ///     activates on the next launch) or the server never became healthy.
+        ///     <para>
+        ///     <paramref name="contentUrlOverride" /> points the server at a non-catalyst content source (the
+        ///     local-scene-development preview server); its cache is kept apart from the catalyst one.
+        ///     <paramref name="jitContentDigest" /> enables abgen's dev-mode freshness: every manifest request
+        ///     re-downloads and re-hashes the entity's content, so edits reconvert even under LSD's
+        ///     path-derived hashes, which never change.
+        ///     </para>
         /// </summary>
-        public static async UniTask<AbgenSidecar?> TryStartAsync(string environmentDomain, CancellationToken ct, string? cacheRoot = null)
+        public static async UniTask<AbgenSidecar?> TryStartAsync(string environmentDomain, CancellationToken ct, string? cacheRoot = null, string? contentUrlOverride = null, bool jitContentDigest = false)
         {
             string exe = File.Exists(DownloadedExecutablePath) ? DownloadedExecutablePath
                 : File.Exists(StreamingAssetsExecutablePath) ? StreamingAssetsExecutablePath : string.Empty;
@@ -73,6 +87,7 @@ namespace Global.Dynamic
                 if (!downloadStarted && Platform() != null)
                 {
                     downloadStarted = true;
+                    AbgenConversionMetrics.INSTANCE.OnMilestone("abgen binary not installed — downloading in the background; local conversion activates next launch");
                     DownloadBinaryAsync().Forget();
                 }
 
@@ -80,15 +95,193 @@ namespace Global.Dynamic
             }
 
             var sidecar = new AbgenSidecar(FreeLoopbackPort(),
-                $"https://peer.decentraland.{environmentDomain}/content",
+                contentUrlOverride ?? $"https://peer.decentraland.{environmentDomain}/content",
                 $"https://ab-cdn.decentraland.{environmentDomain}",
-                cacheRoot ?? Path.Combine(Application.persistentDataPath, "abgen"));
+                cacheRoot ?? Path.Combine(Application.persistentDataPath, contentUrlOverride == null ? "abgen" : "abgen-lsd"),
+                jitContentDigest);
 
             if (sidecar.Launch(exe) && await sidecar.WaitHealthyAsync(ct))
                 return sidecar;
 
+            AbgenConversionMetrics.INSTANCE.OnMilestone("abgen sidecar failed to start — asset bundles come straight from the CDN");
             sidecar.Dispose();
             return null;
+        }
+
+        /// <summary>
+        ///     Eager scene pre-conversion: resolves the realm's scene entity from its /about and requests that
+        ///     entity's manifest, which makes the server JIT-convert every convertible file of the scene into
+        ///     its corpus in one pass (observable at <c>/progress/{entity}</c>). Bundle requests that arrive
+        ///     while the build runs coalesce with it; anything requested after is a disk hit. Failures are
+        ///     logged and harmless — the lazy per-request lane still converts on demand.
+        /// </summary>
+        public async UniTaskVoid WarmUpLocalSceneAsync(CancellationToken ct)
+        {
+            string? convertingFile = null;
+
+            try
+            {
+                string realmRoot = catalystContentUrl.EndsWith(RealmLaunchSettings.CONTENT_PATH, StringComparison.Ordinal)
+                    ? catalystContentUrl[..^RealmLaunchSettings.CONTENT_PATH.Length]
+                    : catalystContentUrl;
+
+                using UnityWebRequest aboutRequest = UnityWebRequest.Get($"{realmRoot}/about");
+                aboutRequest.timeout = 10;
+                await aboutRequest.SendWebRequest().WithCancellation(ct);
+
+                string? entityId = ParseFirstSceneEntityId(aboutRequest.downloadHandler.text)
+                                   ?? await ResolveEntityIdFromParcelAsync(aboutRequest.downloadHandler.text, ct);
+
+                if (entityId == null)
+                {
+                    AbgenConversionMetrics.INSTANCE.OnMilestone("warm-up skipped — could not resolve the scene entity (no scenesUrn or localSceneParcels in the realm's /about)");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen warm-up skipped: could not resolve the scene entity from the realm's /about");
+                    return;
+                }
+
+                AbgenConversionMetrics.INSTANCE.OnWarmUpStarted(entityId);
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up started — converting scene {entityId} in the background");
+                ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: converting scene {entityId} — asset bundles are being built in the background");
+
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                using UnityWebRequest manifestRequest = UnityWebRequest.Get($"{BaseUrl}/manifest/{entityId}{PlatformUtils.GetCurrentPlatform()}.json");
+                manifestRequest.timeout = 0; // a cold heavy scene converts for minutes; the server paces the build
+                UnityWebRequestAsyncOperation manifestOperation = manifestRequest.SendWebRequest();
+
+                // While the server holds the manifest request, mirror its per-file build progress into
+                // the metrics the scene dev console's AB tab renders.
+                var plannedTotal = -1;
+                var sawBuildProgress = false;
+
+                while (!manifestOperation.isDone)
+                {
+                    await UniTask.Delay(PROGRESS_POLL_MS, DelayType.Realtime, cancellationToken: ct);
+
+                    BuildProgress? progress = await TryGetBuildProgressAsync(entityId, ct);
+                    if (progress == null) continue;
+
+                    sawBuildProgress = true;
+                    AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
+
+                    if (progress.total != plannedTotal)
+                    {
+                        plannedTotal = progress.total;
+                        metrics.OnPlanned(plannedTotal);
+                    }
+
+                    if (progress.file != convertingFile)
+                    {
+                        if (convertingFile != null)
+                            metrics.OnProcessed(convertingFile);
+
+                        convertingFile = null;
+
+                        if (!string.IsNullOrEmpty(progress.file))
+                        {
+                            metrics.OnStarted(progress.file);
+                            convertingFile = progress.file;
+                        }
+                    }
+                }
+
+                if (convertingFile != null)
+                {
+                    AbgenConversionMetrics.INSTANCE.OnProcessed(convertingFile);
+                    convertingFile = null;
+                }
+
+                if (manifestRequest.result != UnityWebRequest.Result.Success)
+                    throw new IOException($"manifest request failed ({manifestRequest.responseCode}): {manifestRequest.error}");
+
+                AbgenConversionMetrics.INSTANCE.OnWarmUpReady((float)stopwatch.Elapsed.TotalSeconds, alreadyWarm: !sawBuildProgress);
+
+                AbgenConversionMetrics.INSTANCE.OnMilestone(sawBuildProgress
+                    ? $"manifest retrieved — asset bundles ready in {stopwatch.Elapsed.TotalSeconds:F1}s"
+                    : "asset bundles already converted — manifest served from warm cache");
+
+                ReportHub.Log(ReportCategory.ASSET_BUNDLES, sawBuildProgress
+                    ? $"abgen warm-up: manifest retrieved — asset bundles READY for scene {entityId} in {stopwatch.Elapsed.TotalSeconds:F1}s"
+                    : $"abgen warm-up: asset bundles already converted (warm cache) — manifest for scene {entityId} served in {stopwatch.Elapsed.TotalSeconds:F1}s");
+
+                int exitCode = JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text).exitCode;
+
+                if (exitCode != 0)
+                {
+                    AbgenConversionMetrics.INSTANCE.OnMilestone($"some files failed server-side conversion (manifest exitCode {exitCode})");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: manifest exitCode {exitCode} — some files failed server-side conversion; check the sidecar's cache logs");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                if (convertingFile != null)
+                    AbgenConversionMetrics.INSTANCE.OnCancelled(convertingFile);
+            }
+            catch (Exception e)
+            {
+                if (convertingFile != null)
+                    AbgenConversionMetrics.INSTANCE.OnCancelled(convertingFile);
+
+                AbgenConversionMetrics.INSTANCE.OnWarmUpFailed();
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up failed ({e.Message}) — bundles still convert lazily per request");
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen warm-up failed — bundles still convert lazily per request");
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+            }
+        }
+
+        /// <summary>Null when no build for the entity is in flight (the route 404s before the build registers and after it finishes).</summary>
+        private async UniTask<BuildProgress?> TryGetBuildProgressAsync(string entityId, CancellationToken ct)
+        {
+            using UnityWebRequest request = UnityWebRequest.Get($"{BaseUrl}/progress/{entityId}");
+            request.timeout = 2;
+
+            try { await request.SendWebRequest().WithCancellation(ct); }
+            catch (OperationCanceledException) { throw; }
+            catch { return null; }
+
+            return JsonUtility.FromJson<BuildProgress>(request.downloadHandler.text);
+        }
+
+        /// <summary>
+        ///     Resolves the scene entity by parcel pointer, for realms whose /about carries no scenesUrn —
+        ///     the LSD preview server advertises <c>localSceneParcels</c> instead. Null when that field is
+        ///     absent too or the content server returns no active entity for the parcel.
+        /// </summary>
+        private async UniTask<string?> ResolveEntityIdFromParcelAsync(string aboutJson, CancellationToken ct)
+        {
+            string? parcel = ParseJsonStringAfter(aboutJson, "\"localSceneParcels\":[\"");
+            if (parcel == null) return null;
+
+            using UnityWebRequest request = UnityWebRequest.Post($"{catalystContentUrl}/entities/active", $"{{\"pointers\":[\"{parcel}\"]}}", "application/json");
+            request.timeout = 10;
+            await request.SendWebRequest().WithCancellation(ct);
+
+            return ParseJsonStringAfter(request.downloadHandler.text, "\"id\":\"");
+        }
+
+        private static string? ParseJsonStringAfter(string json, string marker)
+        {
+            int start = json.IndexOf(marker, StringComparison.Ordinal);
+            if (start < 0) return null;
+            start += marker.Length;
+
+            int end = json.IndexOf('"', start);
+            return end > start ? json[start..end] : null;
+        }
+
+        /// <summary>First <c>urn:decentraland:entity:{id}</c> in the /about JSON; the id runs until the urn's query string or the JSON string ends.</summary>
+        private static string? ParseFirstSceneEntityId(string aboutJson)
+        {
+            const string URN_PREFIX = "urn:decentraland:entity:";
+
+            int start = aboutJson.IndexOf(URN_PREFIX, StringComparison.Ordinal);
+            if (start < 0) return null;
+            start += URN_PREFIX.Length;
+
+            int end = start;
+            while (end < aboutJson.Length && aboutJson[end] != '?' && aboutJson[end] != '"' && aboutJson[end] != '\\') end++;
+
+            return end > start ? aboutJson[start..end] : null;
         }
 
         public void Dispose()
@@ -248,6 +441,9 @@ namespace Global.Dynamic
             psi.EnvironmentVariables["ABGEN_CATALYST_URL"] = catalystContentUrl;
             psi.EnvironmentVariables["ABGEN_UPSTREAM_AB_CDN"] = upstreamCdnUrl;
 
+            if (jitContentDigest)
+                psi.EnvironmentVariables["ABGEN_JIT_CONTENT_DIGEST"] = "1";
+
             try
             {
                 process = Process.Start(psi);
@@ -325,6 +521,21 @@ namespace Global.Dynamic
             {
                 // Already exited or inaccessible — nothing to clean up.
             }
+        }
+
+        /// <summary>abgen <c>GET /progress/{entity}</c> response (crate/src/abcdn/handlers/status.rs).</summary>
+        [Serializable]
+        private class BuildProgress
+        {
+            public int total;
+            public string file = null!;
+        }
+
+        /// <summary>The corpus manifest's failure indicator (crate/src/manifest.rs); the rest of the document is ignored here.</summary>
+        [Serializable]
+        private class CorpusManifest
+        {
+            public int exitCode;
         }
     }
 }

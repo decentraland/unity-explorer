@@ -19,7 +19,7 @@ namespace ECS.StreamableLoading.AssetBundles
     ///     the content-table hashes, which in local scene development are path-derived and never change on edit.
     ///     </para>
     /// </summary>
-    internal static class AbgenBundleDiskCache
+    public static class AbgenBundleDiskCache
     {
         // Bump to invalidate every cached bundle when the C# packaging (request layout, file naming) changes.
         private const string CACHE_VERSION = "v1";
@@ -72,6 +72,32 @@ namespace ECS.StreamableLoading.AssetBundles
             if (File.Exists(path)) File.Delete(path);
         }
 
+        /// <summary>
+        ///     Deletes every cached bundle under <paramref name="root" />, including in-progress temp files.
+        ///     Files that cannot be deleted (e.g. memory-mapped by a loaded AssetBundle on Windows) are skipped
+        ///     and counted. Walks every shard — call from a background thread.
+        /// </summary>
+        public static ClearResult ClearAll(string root)
+        {
+            var result = new ClearResult();
+
+            if (!Directory.Exists(root)) return result;
+
+            foreach (string file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+            {
+                try
+                {
+                    long size = new FileInfo(file).Length;
+                    File.Delete(file);
+                    result.DeletedFiles++;
+                    result.DeletedBytes += size;
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { result.SkippedFiles++; }
+            }
+
+            return result;
+        }
+
         // Two-char shard keeps any single directory from collecting every bundle (mirrors abgen's LocalContentStore).
         private static string PathForKey(string root, string key) =>
             Path.Combine(root, key.Substring(0, 2), key);
@@ -81,6 +107,13 @@ namespace ECS.StreamableLoading.AssetBundles
             var sb = new StringBuilder(bytes.Length * 2);
             foreach (byte b in bytes) sb.Append(b.ToString("x2"));
             return sb.ToString();
+        }
+
+        public struct ClearResult
+        {
+            public int DeletedFiles;
+            public long DeletedBytes;
+            public int SkippedFiles;
         }
     }
 }

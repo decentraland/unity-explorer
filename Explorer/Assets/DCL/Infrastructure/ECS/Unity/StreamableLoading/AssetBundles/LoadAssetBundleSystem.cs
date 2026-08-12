@@ -39,7 +39,6 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly IWebRequestController webRequestController;
         private readonly bool byteWeightedProgress;
         private readonly ISceneContent? sceneContent;
-        private readonly bool buildLocalAssetBundles;
 
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
@@ -48,14 +47,12 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleLoadingMutex loadingMutex,
             IDiskCache<PartialLoadingState> partialDiskCache,
             bool byteWeightedProgress,
-            ISceneContent? sceneContent,
-            bool buildLocalAssetBundles) : base(world, cache)
+            ISceneContent? sceneContent) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
             this.webRequestController = webRequestController;
             this.byteWeightedProgress = byteWeightedProgress;
             this.sceneContent = sceneContent;
-            this.buildLocalAssetBundles = buildLocalAssetBundles;
         }
 
         private async UniTask<AssetBundleData[]> LoadDependenciesAsync(GetAssetBundleIntention parentIntent, IPartitionComponent partition, AssetBundleMetadata assetBundleMetadata, CancellationToken ct)
@@ -78,15 +75,6 @@ namespace ECS.StreamableLoading.AssetBundles
             if (ShaderBundlePreloader.TryGetPreloadedBundle(intention.Hash ?? "", out AssetBundle? preloaded))
                 assetBundle = preloaded;
 #endif
-
-            // Local in-process build: the scene has no prebuilt bundles anywhere, so convert the source
-            // GLTF with abgen before ever considering the network. Dependency intents (shader bundles)
-            // carry no Name and fall through to their usual embedded StreamingAssets source.
-            if (assetBundle == null && buildLocalAssetBundles)
-            {
-                Debug.Log($"[Juani][abgen] local build mode active; intent name='{intention.Name}' hash='{intention.Hash}' (deps/non-GLTF intents are skipped by the builder)");
-                assetBundle = await AbgenAssetBundleFallback.TryBuildAsync(intention.Name, sceneContent, webRequestController, GetReportData(), ct);
-            }
 
             if (assetBundle == null)
             {

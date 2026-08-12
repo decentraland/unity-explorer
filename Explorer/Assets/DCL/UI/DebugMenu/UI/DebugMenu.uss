@@ -235,6 +235,14 @@
     background-color: transparent;
 }
 
+.ab-conversion-panel {
+    background-color: rgba(15, 15, 17, 0.9);
+}
+
+.ab-conversion-panel .unity-collection-view__item--alternative-background {
+    background-color: transparent;
+}
+
 .console-entry:hover {
     background-color: var(--dcl-color-black-70);
 }
@@ -334,6 +342,10 @@
 
 .sidebar__button--selected {
     background-color: var(--dcl-color-orange);
+}
+
+.sidebar__button--attention {
+    background-color: rgb(255, 201, 91);
 }
 
 .sidebar__button--console {

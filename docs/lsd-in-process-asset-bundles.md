@@ -2,6 +2,19 @@
 
 **Branch:** `feat/local-ab-inproc-build` (prototype) · builds on `feat/ab-local-fallback-abgen`
 
+> **STATUS: dormant.** `--local-ab` is on the **server mount, owned by the explorer**: the client
+> spawns its own `AbgenSidecar` (the same supervised abgen JIT server it uses for catalyst scenes)
+> pointed at the preview server's `{realm}/content` endpoints, with `ABGEN_JIT_CONTENT_DIGEST=1`
+> for edit freshness and a separate `abgen-lsd` cache root. No js-sdk-toolchain involvement —
+> plain `dcl start` suffices; the binary comes from StreamingAssets or the pinned-release
+> auto-download. The in-process lane below still exists in the code (`AbgenAssetBundleFallback` +
+> disk cache + AB Conversion panel) but is only reachable as the CDN-miss safety net;
+> `WarmUpLocalAssetBundlesSystem` is not injected anywhere. Re-activating it means re-wiring
+> `AssetBundlesPlugin`/`LoadAssetBundleSystem` (see this branch's history). The in-proc lane's
+> remaining blocker was texture handling through the FFI — fixable with an `inline_textures`
+> input flag in abgen; the model-surgery workaround (data:-URI inlining) is already implemented
+> in the helper and working.
+
 ## What it is
 
 `--local-ab` **is** the in-process asset-bundle build. It replaces the old meaning of the flag
@@ -40,8 +53,15 @@ content server the preview already runs.
    content server → check the disk cache → convert (only on a miss) → `AssetBundle.LoadFromFile`.
 5. The bundle's `metadata.json` dependencies are the embedded shader bundles
    (`dcl/scene_ignore_{platform}`, …), which resolve through the existing `AssetSource.Embedded`
-   path from `StreamingAssets/AssetBundles` — fully offline. Textures are baked into each model
-   bundle by ConvertOnly, so there are no texture dependency bundles to miss.
+   path from `StreamingAssets/AssetBundles` — fully offline. External images are **inlined into
+   the model as `data:` URIs before conversion**: abgen turns any image URI it can resolve to a
+   content hash into a cross-bundle reference plus a `metadata.json` dependency on a separate
+   texture bundle (which only the CDN pipeline builds — locally it would 404), whereas a `data:`
+   URI is compressed into the model bundle itself. External buffers (`.bin`) stay external and are
+   uploaded with content-table entries keyed by the sha256 of their bytes — abgen's key from a
+   resolved URI into the uploaded files; buffers never become metadata dependencies. The model's
+   own content entry keeps the scene hash, because it names the prefab inside the bundle and must
+   equal the hash the client extracts it by.
 6. Failures degrade per-asset: if the build returns null the normal web lane runs (and dead-ends
    against the CDN with the path-derived hash), surfacing the usual "Asset Bundle is null" error
    for that entity only.
@@ -72,7 +92,9 @@ promises are forgotten on world teardown (`IFinalizeWorldSystem`).
 The scene dev console (`--scene-console true`, shown automatically in LSD) has an **AB** sidebar
 button opening the "AB Conversion" panel: a summary line (planned / converting / ok / failed /
 total MB) and one row per conversion (status, size, duration, artifact — disk hits show `(disk)`
-and 0 ms), newest first. Fed by `AbgenConversionMetrics.INSTANCE`, written from the conversion flow
+and 0 ms), newest first. A **CLEAR CACHE** header button deletes every bundle in the on-disk cache
+(files locked by a loaded bundle are skipped and counted); the summary line reports what was
+freed. Fed by `AbgenConversionMetrics.INSTANCE`, written from the conversion flow
 (`AbgenAssetBundleFallback`) on worker threads; the warmup resets it per scene session.
 
 ## How to enable
@@ -89,8 +111,9 @@ and 0 ms), newest first. Fed by `AbgenConversionMetrics.INSTANCE`, written from 
 
 - Scene worlds only: the global world (wearables/emotes) passes no `ISceneContent`, so it keeps
   its normal lanes.
-- No cache eviction yet: `{persistentDataPath}/abgen-bundles` grows unbounded across sessions
-  (bump `CACHE_VERSION` or delete the folder to clear). A size-capped LRU is the next increment.
+- No automatic cache eviction yet: `{persistentDataPath}/abgen-bundles` grows unbounded across
+  sessions (clear manually via the AB Conversion panel's CLEAR CACHE button, or bump
+  `CACHE_VERSION`). A size-capped LRU is the next increment.
 - The source bytes are re-fetched from the content server on every load to compute the cache key
   (cheap over loopback); only conversion — the expensive part — is skipped on a hit.
 - The conversion is CPU-bound on the client (native pool capped at 2–4 threads); a cold heavy

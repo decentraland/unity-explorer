@@ -5,10 +5,11 @@ using System.Collections.Generic;
 namespace ECS.StreamableLoading.AssetBundles
 {
     /// <summary>
-    ///     Live record of the session's in-process abgen conversions, written from the conversion flow on
-    ///     worker threads and read by the scene dev console's "AB Conversion" panel on the main thread.
-    ///     A process-wide instance: the writer (<see cref="AbgenAssetBundleFallback" />) is static and the
-    ///     reader lives in the global UI, so there is exactly one conversion pipeline to describe.
+    ///     Live record of the session's abgen conversions, written from the conversion flows and read by the
+    ///     scene dev console's "AB Conversion" panel on the main thread: per-file entries for the in-process
+    ///     lane (<see cref="AbgenAssetBundleFallback" />, worker threads) and the whole-scene warm-up stage
+    ///     of the sidecar's eager build (main thread). A process-wide instance: the writers are static or
+    ///     singular and the reader lives in the global UI, so there is exactly one pipeline to describe.
     /// </summary>
     public sealed class AbgenConversionMetrics
     {
@@ -16,8 +17,22 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             Converting,
             Converted,
+
+            /// <summary>Completed by the sidecar server; the per-file outcome is only visible as the manifest's exitCode.</summary>
+            Processed,
             Failed,
             Cancelled,
+
+            /// <summary>Not a file: a warm-up milestone rendered as an informational row (Path carries the message).</summary>
+            Milestone,
+        }
+
+        public enum WarmUpStage
+        {
+            Inactive,
+            Converting,
+            Ready,
+            Failed,
         }
 
         public static readonly AbgenConversionMetrics INSTANCE = new ();
@@ -32,6 +47,11 @@ namespace ECS.StreamableLoading.AssetBundles
         private long totalOutputBytes;
         private int sequence;
         private int version;
+
+        private WarmUpStage warmUpStage;
+        private string? warmUpSceneId;
+        private float warmUpElapsedSeconds;
+        private bool warmUpAlreadyWarm;
 
         /// <summary>Bumped on every change so readers can skip rebuilding an unchanged view.</summary>
         public int Version
@@ -79,6 +99,71 @@ namespace ECS.StreamableLoading.AssetBundles
             get
             {
                 lock (gate) { return totalOutputBytes; }
+            }
+        }
+
+        public WarmUpStage WarmUp
+        {
+            get
+            {
+                lock (gate) { return warmUpStage; }
+            }
+        }
+
+        public string? WarmUpSceneId
+        {
+            get
+            {
+                lock (gate) { return warmUpSceneId; }
+            }
+        }
+
+        public float WarmUpElapsedSeconds
+        {
+            get
+            {
+                lock (gate) { return warmUpElapsedSeconds; }
+            }
+        }
+
+        /// <summary>True when the ready manifest came from an already-converted corpus (no build ran).</summary>
+        public bool WarmUpAlreadyWarm
+        {
+            get
+            {
+                lock (gate) { return warmUpAlreadyWarm; }
+            }
+        }
+
+        public void OnWarmUpStarted(string sceneEntityId)
+        {
+            lock (gate)
+            {
+                warmUpStage = WarmUpStage.Converting;
+                warmUpSceneId = sceneEntityId;
+                warmUpElapsedSeconds = 0;
+                warmUpAlreadyWarm = false;
+                version++;
+            }
+        }
+
+        public void OnWarmUpReady(float elapsedSeconds, bool alreadyWarm)
+        {
+            lock (gate)
+            {
+                warmUpStage = WarmUpStage.Ready;
+                warmUpElapsedSeconds = elapsedSeconds;
+                warmUpAlreadyWarm = alreadyWarm;
+                version++;
+            }
+        }
+
+        public void OnWarmUpFailed()
+        {
+            lock (gate)
+            {
+                warmUpStage = WarmUpStage.Failed;
+                version++;
             }
         }
 
@@ -137,6 +222,37 @@ namespace ECS.StreamableLoading.AssetBundles
                 inFlight--;
                 succeeded++;
                 totalOutputBytes += outputBytes;
+                version++;
+            }
+        }
+
+        /// <summary>Adds an informational row to the panel without touching the counters.</summary>
+        public void OnMilestone(string message)
+        {
+            lock (gate)
+            {
+                entries[message] = new Entry
+                {
+                    Path = message,
+                    Status = ConversionStatus.Milestone,
+                    Sequence = sequence++,
+                };
+
+                version++;
+            }
+        }
+
+        /// <summary>Sidecar warm-up file completion: no bytes/elapsed detail crosses the progress endpoint.</summary>
+        public void OnProcessed(string contentPath)
+        {
+            lock (gate)
+            {
+                Entry entry = TakeEntry(contentPath);
+                entry.Status = ConversionStatus.Processed;
+                entries[contentPath] = entry;
+
+                inFlight--;
+                succeeded++;
                 version++;
             }
         }

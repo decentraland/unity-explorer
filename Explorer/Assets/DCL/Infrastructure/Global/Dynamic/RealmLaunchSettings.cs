@@ -20,6 +20,12 @@ namespace Global.Dynamic
     [Serializable]
     public class RealmLaunchSettings : ILaunchMode
     {
+        /// <summary>
+        ///     Path under the local-scene-development realm where the preview server exposes the scene's
+        ///     entities and files — the lane the explorer's embedded abgen sidecar reads the scene through.
+        /// </summary>
+        public const string CONTENT_PATH = "/content";
+
         [Serializable]
         public struct PredefinedScenes
         {
@@ -36,9 +42,9 @@ namespace Global.Dynamic
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles;
-        [SerializeField] [Tooltip("Local scene development only: convert the scene's GLTFs to asset bundles in-process with the "
-                                  + "embedded abgen library (cached on disk) instead of loading raw GLTFs. Takes precedence over "
-                                  + "remote asset bundles")] internal bool useLocalAssetBundles;
+        [SerializeField] [Tooltip("Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's "
+                                  + "embedded abgen sidecar (reading the preview server's content) instead of loading raw GLTFs; "
+                                  + "an explicit --optimized-assets-url overrides it")] internal bool useLocalAssetBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
@@ -89,6 +95,24 @@ namespace Global.Dynamic
             }
 
             return new HybridSceneParams();
+        }
+
+        /// <summary>
+        ///     Content-server base of the local-scene-development realm (the preview server), the source the
+        ///     embedded abgen sidecar JIT-converts the scene from. No value other than the realm itself —
+        ///     which the deep-link allowlist already gates on being loopback — feeds the result, so a deep
+        ///     link cannot point it anywhere the realm doesn't already reach. Null outside local scene
+        ///     development.
+        /// </summary>
+        public string? LocalSceneContentUrl()
+        {
+            if (isLocalSceneDevelopmentRealm)
+                return customRealm.TrimEnd('/') + CONTENT_PATH;
+
+            if (initialRealm == InitialRealm.Localhost)
+                return IRealmNavigator.LOCALHOST + CONTENT_PATH;
+
+            return null;
         }
 
         public void ApplyConfig(IAppArgs applicationParameters)
