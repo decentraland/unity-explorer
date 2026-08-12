@@ -68,7 +68,7 @@ namespace DCL.Chat.ChatStates
             scope.Dispose();
         }
         private void PropagateStateChange(ChatState currentState) =>
-            eventBus.RaiseChatStateChangedEvent(fsm.CurrentState);
+            eventBus.RaiseChatStateChangedEvent(currentState);
 
         public void OnViewShow()
         {
