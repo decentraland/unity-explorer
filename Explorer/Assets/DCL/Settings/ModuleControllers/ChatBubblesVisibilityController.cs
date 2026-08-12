@@ -41,13 +41,9 @@ namespace DCL.Settings.ModuleControllers
             switch (index)
             {
                 case (int)ChatBubbleVisibilitySettings.All:
-                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.All);
-                    return true;
                 case (int)ChatBubbleVisibilitySettings.NearbyOnly:
-                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.NearbyOnly);
-                    return true;
                 case (int)ChatBubbleVisibilitySettings.None:
-                    chatSettingsAsset.SetBubblesVisibility(ChatBubbleVisibilitySettings.None);
+                    chatSettingsAsset.SetBubblesVisibility((ChatBubbleVisibilitySettings)index);
                     return true;
                 default:
                     ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatBubblesVisibilityController: {index}");

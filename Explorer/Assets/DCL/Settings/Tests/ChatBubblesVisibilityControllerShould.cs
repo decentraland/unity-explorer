@@ -1,5 +1,4 @@
 using DCL.Prefs;
-using DCL.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
