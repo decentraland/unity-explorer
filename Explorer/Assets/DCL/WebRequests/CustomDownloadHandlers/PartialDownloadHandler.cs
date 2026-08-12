@@ -20,6 +20,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
 
         protected override void ReceiveContentLengthHeader(ulong contentLength)
         {
+            // Try to apply new PartialData buffer if contentLength is available
             if (PartialData == null && contentLength > 0)
             {
                 var target = (int)Math.Min(contentLength, (ulong)PartialDownloadingRange.CHUNK_SIZE);
@@ -34,14 +35,17 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             if (dataLength == 0)
                 return false; // No data received
 
+            var expectedLength = bufferPointer + dataLength;
 
             if (PartialData == null)
             {
                 PartialData = buffersPool.Rent(dataLength);
             }
-            else if(PartialData.Length < bufferPointer + dataLength)
+            else if (PartialData.Length < expectedLength)
             {
-                var newSize = Math.Max(PartialData.Length * 2, bufferPointer + dataLength);
+                // Max of (Twice the origin or expectedLength)
+                var newSize = Math.Max(PartialData.Length * 2, expectedLength);
+
                 var newBuffer = buffersPool.Rent(newSize);
                 Array.Copy(PartialData, newBuffer, bufferPointer);
                 buffersPool.Return(PartialData, true);
