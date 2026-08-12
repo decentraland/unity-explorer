@@ -839,7 +839,6 @@ namespace Global.Dynamic
                         staticContainer.SceneRestrictionBusController,
                         uiShellContainer.MainUIView.SidebarView.NearbyVoiceChatButton,
                         uiShellContainer.MainUIView.SidebarView.NearbyVoiceWidget,
-                        uiShellContainer.MainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
                         userBlockingCache,
                         voiceChatContainer.NearbyMuteService,

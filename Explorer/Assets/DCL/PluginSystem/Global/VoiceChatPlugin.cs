@@ -61,7 +61,6 @@ namespace DCL.PluginSystem.Global
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatButtonView nearbyVoiceChatButtonView;
         private readonly NearbyVoiceWidgetView nearbyVoiceWidgetView;
-        private readonly NearbyVoiceTipView nearbyVoiceTipView;
         private readonly ILoadingStatus loadingStatus;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
@@ -85,7 +84,6 @@ namespace DCL.PluginSystem.Global
         private NearbyMicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
-        private CancellationTokenSource? nearbyTipCts;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -106,7 +104,6 @@ namespace DCL.PluginSystem.Global
             ISceneRestrictionBusController sceneRestrictionBusController,
             NearbyVoiceChatButtonView nearbyVoiceChatButtonView,
             NearbyVoiceWidgetView nearbyVoiceWidgetView,
-            NearbyVoiceTipView nearbyVoiceTipView,
             VolumeBus volumeBus,
             IUserBlockingCache userBlockingCache,
             NearbyMuteService? nearbyMuteService = null,
@@ -131,7 +128,6 @@ namespace DCL.PluginSystem.Global
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.nearbyVoiceChatButtonView = nearbyVoiceChatButtonView;
             this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
-            this.nearbyVoiceTipView = nearbyVoiceTipView;
             this.volumeBus = volumeBus;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
@@ -139,7 +135,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            nearbyTipCts.SafeCancelAndDispose();
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -258,18 +253,7 @@ namespace DCL.PluginSystem.Global
 
                 nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, stateModel, voiceChatConfiguration.ChatAudioMixerGroup, volumeBus);
                 pluginScope.Add(nearbyWidgetController);
-
-                // Intro FLUX
-                nearbyTipCts = new CancellationTokenSource();
-                RunNearbyVoiceTipAsync(nearbyVoiceTipView, loadingStatus, nearbyVoiceChatButtonView, nearbyTipCts.Token).Forget();
             }
-        }
-
-        private static async UniTaskVoid RunNearbyVoiceTipAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus,
-            NearbyVoiceChatButtonView buttonView, CancellationToken ct)
-        {
-            if (await NearbyVoiceTipFlow.WaitAndShowAsync(view, loadingStatus, ct))
-                buttonView.Button.onClick.Invoke();
         }
 
         [Serializable]
@@ -281,39 +265,6 @@ namespace DCL.PluginSystem.Global
             public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
             {
                 public VoiceChatConfigurationsReference(string guid) : base(guid) { }
-            }
-        }
-
-        private static class NearbyVoiceTipFlow
-        {
-            public static async UniTask<bool> WaitAndShowAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus, CancellationToken ct)
-            {
-                view.Hide();
-
-                if (DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED))
-                    return false;
-
-                try
-                {
-                    await UniTask.WaitUntil(
-                        () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed,
-                        cancellationToken: ct);
-
-                    view.Show();
-
-                    int winner = await UniTask.WhenAny(
-                        view.CloseButton.OnClickAsync(ct),
-                        view.TryItNowButton.OnClickAsync(ct));
-
-                    DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
-                    view.Hide();
-
-                    return winner == 1;
-                }
-                catch (OperationCanceledException)
-                {
-                    return false;
-                }
             }
         }
     }
