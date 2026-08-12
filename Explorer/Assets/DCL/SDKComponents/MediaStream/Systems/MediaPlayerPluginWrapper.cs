@@ -53,8 +53,6 @@ namespace DCL.SDKComponents.MediaStream
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
 #if !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            ReportHub.LogProductionInfo("[MediaPlayerPluginWrapper] Inject");
-
             MediaFactory sceneMediaFactory = mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub, placeholderSource);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, sceneMediaFactory);
@@ -67,8 +65,6 @@ namespace DCL.SDKComponents.MediaStream
             GatherMediaStreamDebugSystem.InjectToWorld(ref builder, debugRegistry, sceneDeps.SceneStateProvider, sceneDeps.SceneData);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
-#else
-            ReportHub.LogProductionInfo("[MediaPlayerPluginWrapper] Ignore Inject");
 #endif
         }
 
