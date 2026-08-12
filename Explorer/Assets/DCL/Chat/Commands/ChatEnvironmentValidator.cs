@@ -7,10 +7,12 @@ namespace DCL.Chat.Commands
     public class ChatEnvironmentValidator
     {
         private readonly DecentralandEnvironment dclEnvironment;
+        private readonly string realmDomainSuffix;
 
-        public ChatEnvironmentValidator(DecentralandEnvironment dclEnvironment)
+        public ChatEnvironmentValidator(DecentralandEnvironment dclEnvironment, string realmDomainSuffix)
         {
             this.dclEnvironment = dclEnvironment;
+            this.realmDomainSuffix = realmDomainSuffix;
         }
 
         public Result ValidateTeleport(string realmToTeleportTo)
@@ -21,12 +23,12 @@ namespace DCL.Chat.Commands
                     return Result.ErrorResult(
                         "🔴 Error. You cannot change realms in the Today environment. Please restart DCL with the desired environment");
                 case DecentralandEnvironment.Zone:
-                    return HostHasSuffix(realmToTeleportTo, IDecentralandUrlsSource.ZONE_DOMAIN)
+                    return HostHasSuffix(realmToTeleportTo, realmDomainSuffix)
                         ? Result.SuccessResult()
                         : Result.ErrorResult(
                             "🔴 Error. You cannot teleport to other realms that are not Zone in Zone environment. Please restart DCL with the desired environment");
                 case DecentralandEnvironment.Org:
-                    return HostHasSuffix(realmToTeleportTo, IDecentralandUrlsSource.ORG_DOMAIN)
+                    return HostHasSuffix(realmToTeleportTo, realmDomainSuffix)
                         ? Result.SuccessResult()
                         : Result.ErrorResult(
                             "🔴 Error. You cannot teleport to other realms that are not Org or World in Org environment. Please restart DCL with the desired environment");

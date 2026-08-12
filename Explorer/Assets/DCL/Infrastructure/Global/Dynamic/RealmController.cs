@@ -371,9 +371,8 @@ namespace Global.Dynamic
             else
                 hostname = about.comms == null
 
-                    // Consider it as the "main" realm which shares the comms with many catalysts
-                    // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
-                    ? "realm-provider." + IDecentralandUrlsSource.ORG_DOMAIN
+                    // Consider it as the "main" realm which shares the comms with many catalysts.
+                    ? "realm-provider." + decentralandUrlsSource.Url(DecentralandUrl.Host).Replace("https://", string.Empty)
                     : new Uri(realm.Value).Host;
 
             return hostname;

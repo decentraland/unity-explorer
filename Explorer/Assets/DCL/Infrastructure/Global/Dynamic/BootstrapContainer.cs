@@ -133,7 +133,7 @@ namespace Global.Dynamic
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START));
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct);
                 container.WebRequestsContainer = webRequestsContainer;
-                var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
+                var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController, decentralandUrlsSource), decentralandUrlsSource);
 
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);

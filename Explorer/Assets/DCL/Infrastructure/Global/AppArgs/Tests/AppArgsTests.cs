@@ -10,6 +10,7 @@ namespace Global.AppArgs.Tests
         {
             // Reset the cached/overridden world whitelist so tests don't leak state into one another.
             DeepLinkAllowlist.SetWhitelistedWorlds(null);
+            DeepLinkAllowlist.SetCustomBaseDomain(null);
         }
 
         [Test]
@@ -279,6 +280,19 @@ namespace Global.AppArgs.Tests
 
             // Act & Assert
             Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [Test]
+        public void TrustCustomBaseDomainHostForWhitelistedRealm()
+        {
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+            const string REALM = "https://worlds-content-server.interconnected.online/world/test-world.dcl.eth";
+
+            DeepLinkAllowlist.SetCustomBaseDomain(null);
+            Assert.IsFalse(DeepLinkAllowlist.IsRealmWhitelisted(REALM), "a non-decentraland host is untrusted without --base-domain");
+
+            DeepLinkAllowlist.SetCustomBaseDomain("interconnected.online");
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted(REALM), "the --base-domain host is trusted like decentraland.* once set");
         }
 
         [Test]

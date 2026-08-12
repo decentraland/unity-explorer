@@ -32,6 +32,15 @@ namespace DCL.Browser.DecentralandUrls
         }
 
         protected const string ENV = "{ENV}";
+
+        /// <summary>
+        ///     The base-domain substring baked into every URL template ("decentraland.{ENV}").
+        ///     When a custom base domain is supplied it replaces this whole token, so the client
+        ///     can target a non-decentraland deployment (e.g. "interconnected.online") without
+        ///     the environment enum having to model it.
+        /// </summary>
+        protected const string DOMAIN_TOKEN = "decentraland." + ENV;
+
         private const string SCENE_ADAPTER_PATH = "/get-scene-adapter";
 
         private static readonly string FEATURE_FLAGS_RAW_URL = $"https://feature-flags.decentraland.{ENV}";
@@ -40,6 +49,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly IRealmData realmData;
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
+        private readonly string? customBaseDomain;
         private readonly string? gatekeeperBaseOverride;
         private readonly string? optimizedAssetsBaseOverride;
         private readonly bool isTodayEnvironment;
@@ -51,9 +61,11 @@ namespace DCL.Browser.DecentralandUrls
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null)
+            string? cliOptimizedAssetsUrl = null,
+            string? customBaseDomain = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
+            this.customBaseDomain = string.IsNullOrWhiteSpace(customBaseDomain) ? null : customBaseDomain!.Trim();
             isTodayEnvironment = environment == DecentralandEnvironment.Today;
             this.realmData = realmData;
             this.launchMode = launchMode;
@@ -124,6 +136,9 @@ namespace DCL.Browser.DecentralandUrls
         public static DecentralandUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode) =>
             new (environment, new IRealmData.Fake(), launchMode);
 
+        public static DecentralandUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode, string? customBaseDomain) =>
+            new (environment, new IRealmData.Fake(), launchMode, customBaseDomain: customBaseDomain);
+
         public string Probe(DecentralandUrl decentralandUrl)
         {
             if (cache.TryGetValue(decentralandUrl, out UrlData cached))
@@ -131,11 +146,28 @@ namespace DCL.Browser.DecentralandUrls
 
             UrlData rawUrl = RawUrl(decentralandUrl);
 
-            return Probe(rawUrl.ToString(), decentralandDomain);
+            return ResolveDomain(rawUrl.ToString());
         }
 
         private static string Probe(string rawUrl, string environment) =>
             rawUrl.Replace(ENV, environment);
+
+        /// <summary>
+        ///     The base domain the client resolves against: a custom override when set,
+        ///     otherwise "decentraland.&lt;env&gt;". Exposed so gateway routing and any
+        ///     domain-suffix allowlist follow the same value instead of re-deriving it.
+        /// </summary>
+        protected string ResolvedBaseDomain => customBaseDomain ?? $"decentraland.{decentralandDomain}";
+
+        /// <summary>
+        ///     Substitutes the base domain into a URL template. Default path swaps only the
+        ///     "{ENV}" TLD token (unchanged behaviour, today-mixture safe); a custom base domain
+        ///     replaces the whole "decentraland.{ENV}" token so every host moves to the new domain.
+        /// </summary>
+        private string ResolveDomain(string urlTemplate) =>
+            customBaseDomain != null
+                ? urlTemplate.Replace(DOMAIN_TOKEN, customBaseDomain)
+                : urlTemplate.Replace(ENV, decentralandDomain);
 
         public string Url(DecentralandUrl decentralandUrl)
         {
@@ -155,7 +187,7 @@ namespace DCL.Browser.DecentralandUrls
                         return urlData.Url ?? FEATURE_FLAG_DEPENDENT;
 
                     default:
-                        urlData = new UrlData(urlData.Caching, urlData.Url!.Replace(ENV, decentralandDomain));
+                        urlData = new UrlData(urlData.Caching, ResolveDomain(urlData.Url!));
                         cache[decentralandUrl] = urlData;
                         break;
                 }
@@ -205,7 +237,7 @@ namespace DCL.Browser.DecentralandUrls
             if (featureFlags.IsEmpty)
                 return isTodayEnvironment
                     ? dedicatedHostUrl // Static — pinned on construction before the domain switches to org
-                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHostUrl.Replace(ENV, decentralandDomain));
+                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, ResolveDomain(dedicatedHostUrl));
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
                 return dedicatedHostUrl;
@@ -220,8 +252,10 @@ namespace DCL.Browser.DecentralandUrls
         private UrlData ComposeRegistryUrl(string path) =>
             new (RawUrl(DecentralandUrl.AssetBundleRegistry).Caching, $"{Url(DecentralandUrl.AssetBundleRegistry)}{path}");
 
-        public static string GetFeatureFlagsUrl(DecentralandEnvironment env) =>
-            Probe(FEATURE_FLAGS_RAW_URL, env.ToString().ToLower());
+        public static string GetFeatureFlagsUrl(DecentralandEnvironment env, string? customBaseDomain = null) =>
+            string.IsNullOrWhiteSpace(customBaseDomain)
+                ? Probe(FEATURE_FLAGS_RAW_URL, env.ToString().ToLower())
+                : FEATURE_FLAGS_RAW_URL.Replace(DOMAIN_TOKEN, customBaseDomain!.Trim());
 
         protected virtual UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
@@ -253,7 +287,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.decentraland.{ENV}"),
                 DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}{SCENE_ADAPTER_PATH}",
-                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local." + IDecentralandUrlsSource.ORG_DOMAIN)}{SCENE_ADAPTER_PATH}",
+                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local." + (customBaseDomain ?? IDecentralandUrlsSource.ORG_DOMAIN))}{SCENE_ADAPTER_PATH}",
                 DecentralandUrl.ChatAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.WhatsOnNewEventLink => $"https://decentraland.{ENV}/whats-on/new-event",

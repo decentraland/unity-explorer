@@ -257,6 +257,8 @@ namespace Global.Dynamic
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
+            applicationParametersParser.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? cliBaseDomain);
+            DeepLinkAllowlist.SetCustomBaseDomain(cliBaseDomain);
 
             if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
                 cliOptimizedAssetsUrl = launchSettings.LocalAssetBundlesBaseUrl();
@@ -268,7 +270,8 @@ namespace Global.Dynamic
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
-                cliOptimizedAssetsUrl);
+                cliOptimizedAssetsUrl,
+                cliBaseDomain);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
@@ -538,9 +541,10 @@ namespace Global.Dynamic
         private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
         {
             appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
+            appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? cliBaseDomain);
 
             string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
-                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment)
+                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, cliBaseDomain)
                 : featureFlagsOverride.TrimEnd('/');
 
             IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);

@@ -16,7 +16,7 @@ namespace DCL.Tests.Editor
         [TestCase("https://peer.decentraland.org:443", true)]       // legit host with an explicit port
         public void ValidateOrgBySuffix(string realm, bool expectSuccess)
         {
-            var validator = new ChatEnvironmentValidator(DecentralandEnvironment.Org);
+            var validator = new ChatEnvironmentValidator(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN);
             Assert.AreEqual(expectSuccess, validator.ValidateTeleport(realm).Success, realm);
         }
 
@@ -24,7 +24,18 @@ namespace DCL.Tests.Editor
         [TestCase("https://evil.example/zone", false)]
         public void ValidateZoneBySuffix(string realm, bool expectSuccess)
         {
-            var validator = new ChatEnvironmentValidator(DecentralandEnvironment.Zone);
+            var validator = new ChatEnvironmentValidator(DecentralandEnvironment.Zone, IDecentralandUrlsSource.ZONE_DOMAIN);
+            Assert.AreEqual(expectSuccess, validator.ValidateTeleport(realm).Success, realm);
+        }
+
+        [TestCase("https://interconnected.online", true)]
+        [TestCase("https://peer.interconnected.online", true)]
+        [TestCase("https://worlds-content-server.interconnected.online/world/x.dcl.eth", true)]
+        [TestCase("https://peer.decentraland.org", false)]              // the default domain is not this deployment's base
+        [TestCase("https://interconnected.online.attacker.com", false)] // suffix-spoof
+        public void ValidateCustomBaseDomainBySuffix(string realm, bool expectSuccess)
+        {
+            var validator = new ChatEnvironmentValidator(DecentralandEnvironment.Org, "interconnected.online");
             Assert.AreEqual(expectSuccess, validator.ValidateTeleport(realm).Success, realm);
         }
     }

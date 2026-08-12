@@ -165,6 +165,13 @@ namespace Global.AppArgs
         // means loopback-only — the safe default when feature flags are unavailable (e.g. before they are fetched).
         private static HashSet<string> whitelistedWorlds = new();
 
+        // Extra first-party base domain (set from --base-domain), trusted for realm hosting exactly like the
+        // decentraland.* domains. Null = decentraland-only.
+        private static string? customBaseDomain;
+
+        public static void SetCustomBaseDomain(string? domain) =>
+            customBaseDomain = string.IsNullOrWhiteSpace(domain) ? null : domain.Trim();
+
         public static bool IsPermitted(string key) =>
             PERMITTED_KEYS.Contains(key);
 
@@ -221,6 +228,12 @@ namespace Global.AppArgs
         // is what rejects lookalikes such as "decentraland.org.attacker.com" and "evil-decentraland.org".
         private static bool IsDecentralandHost(string host)
         {
+            if (customBaseDomain != null
+                && host.Length > customBaseDomain.Length
+                && host[host.Length - customBaseDomain.Length - 1] == '.'
+                && host.EndsWith(customBaseDomain, StringComparison.OrdinalIgnoreCase))
+                return true;
+
             // Indexed loop, not foreach: enumerating the IReadOnlyList would allocate an enumerator.
             IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
 

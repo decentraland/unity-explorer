@@ -95,26 +95,29 @@ namespace DCL.Browser
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl)
+            string? cliOptimizedAssetsUrl = null,
+            string? customBaseDomain = null)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
             if (envSupported)
             {
-                string envDomain = environment.ToString()!.ToLower();
                 resolvedNonClientHosts = new List<string>(SUPPORTED_URLS_OF_NON_CLIENT_ORIGIN.Count);
 
                 foreach (string pattern in SUPPORTED_URLS_OF_NON_CLIENT_ORIGIN)
-                    resolvedNonClientHosts.Add(pattern.Replace(ENV, envDomain));
+                    resolvedNonClientHosts.Add(pattern.Replace(DOMAIN_TOKEN, ResolvedBaseDomain));
 
-                gatewayPrefix = $"https://{GATEWAY_SUBDOMAIN}.decentraland.{envDomain}/";
-                domainSuffix = $".decentraland.{envDomain}";
+                gatewayPrefix = $"https://{GATEWAY_SUBDOMAIN}.{ResolvedBaseDomain}/";
+                domainSuffix = $".{ResolvedBaseDomain}";
             }
         }
 
         public new static GatewayUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode) =>
             new (environment, new IRealmData.Fake(), launchMode);
+
+        public new static GatewayUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode, string? customBaseDomain) =>
+            new (environment, new IRealmData.Fake(), launchMode, customBaseDomain: customBaseDomain);
 
         /// <summary>
         ///     Transforms a 3rd party URL, DecentralandURLs are already transformed by <see cref="RawUrl" />
