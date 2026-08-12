@@ -470,16 +470,17 @@ namespace DCL.Friends
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
-            {
-                Reject = new UpsertFriendshipPayload.Types.RejectPayload
+            if (await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {
-                    User = new User
+                    Reject = new UpsertFriendshipPayload.Types.RejectPayload
                     {
-                        Address = friendId,
+                        User = new User
+                        {
+                            Address = friendId,
+                        },
                     },
-                },
-            }, ct);
+                }, ct) is null)
+                return;
 
             eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(friendId);
         }
@@ -488,25 +489,26 @@ namespace DCL.Friends
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
-            {
-                Cancel = new UpsertFriendshipPayload.Types.CancelPayload
+            if (await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {
-                    User = new User
+                    Cancel = new UpsertFriendshipPayload.Types.CancelPayload
                     {
-                        Address = friendId,
+                        User = new User
+                        {
+                            Address = friendId,
+                        },
                     },
-                },
-            }, ct);
+                }, ct) is null)
+                return;
 
             eventBus.BroadcastThatYouCancelledFriendRequestSentToOtherUser(friendId);
         }
 
-        public async UniTask AcceptFriendshipAsync(string friendId, CancellationToken ct)
+        public async UniTask<bool> AcceptFriendshipAsync(string friendId, CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            return ApplyAcceptedFriendship(await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Accept = new UpsertFriendshipPayload.Types.AcceptPayload
                 {
@@ -515,18 +517,26 @@ namespace DCL.Friends
                         Address = friendId,
                     },
                 },
-            }, ct);
+            }, ct), friendId);
+        }
+
+        internal bool ApplyAcceptedFriendship(UpsertFriendshipResponse.Types.Accepted? accepted, string friendId)
+        {
+            if (accepted == null)
+                return false;
 
             friendsCache.Add(friendId);
 
             eventBus.BroadcastThatYouAcceptedFriendRequestReceivedFromOtherUser(friendId);
+
+            return true;
         }
 
-        public async UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct)
+        public async UniTask<bool> DeleteFriendshipAsync(string friendId, CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            return ApplyDeletedFriendship(await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Delete = new UpsertFriendshipPayload.Types.DeletePayload
                 {
@@ -535,19 +545,27 @@ namespace DCL.Friends
                         Address = friendId,
                     },
                 },
-            }, ct);
+            }, ct), friendId);
+        }
+
+        internal bool ApplyDeletedFriendship(UpsertFriendshipResponse.Types.Accepted? accepted, string friendId)
+        {
+            if (accepted == null)
+                return false;
 
             friendsCache.Remove(friendId);
 
             eventBus.BroadcastThatYouRemovedFriend(friendId);
+
+            return true;
         }
 
-        public async UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody,
+        public async UniTask<FriendRequest?> RequestFriendshipAsync(string friendId, string messageBody,
             CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            UpsertFriendshipResponse.Types.Accepted response = await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            UpsertFriendshipResponse.Types.Accepted? response = await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Request = new UpsertFriendshipPayload.Types.RequestPayload
                 {
@@ -558,6 +576,9 @@ namespace DCL.Friends
                     },
                 },
             }, ct);
+
+            if (response == null)
+                return null;
 
             if (response.Friend == null)
                 throw new InvalidOperationException("Cannot create friend request: server accepted the upsert but returned no friend profile");
@@ -575,7 +596,7 @@ namespace DCL.Friends
             return fr;
         }
 
-        private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
+        private async UniTask<UpsertFriendshipResponse.Types.Accepted?> UpdateFriendshipAsync(
             UpsertFriendshipPayload payload,
             CancellationToken ct)
         {
@@ -584,12 +605,22 @@ namespace DCL.Friends
                                                                       .AttachExternalCancellation(ct)
                                                                       .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            return response.ResponseCase switch
-                   {
-                       UpsertFriendshipResponse.ResponseOneofCase.Accepted => response.Accepted,
-                       _ => throw new Exception($"Cannot update friendship {response.ResponseCase}"),
-                   };
+            UpsertFriendshipResponse.Types.Accepted? accepted = ToAccepted(response);
+
+            if (accepted == null)
+                ReportHub.LogWarning(ReportCategory.FRIENDS, $"Ignoring friendship update rejected as invalid ({response.ResponseCase}): {response.InvalidFriendshipAction?.Message}");
+
+            return accepted;
         }
+
+        internal static UpsertFriendshipResponse.Types.Accepted? ToAccepted(UpsertFriendshipResponse response) =>
+            response.ResponseCase switch
+            {
+                UpsertFriendshipResponse.ResponseOneofCase.Accepted => response.Accepted,
+                UpsertFriendshipResponse.ResponseOneofCase.InvalidFriendshipAction => null,
+                UpsertFriendshipResponse.ResponseOneofCase.InvalidRequest => null,
+                _ => throw new Exception($"Cannot update friendship {response.ResponseCase}"),
+            };
 
         private IReadOnlyList<Profile.CompactInfo> ToClientFriendProfiles(
             RepeatedField<FriendProfile> friends)

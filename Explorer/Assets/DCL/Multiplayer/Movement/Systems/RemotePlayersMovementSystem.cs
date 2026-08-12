@@ -15,7 +15,6 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
-using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -46,7 +45,7 @@ namespace DCL.Multiplayer.Movement
 
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.UpdateHeadIK(firstRemote);
-            remotePlayerMovement.UpdatePointAtIK(firstRemote);
+            remotePlayerMovement.UpdatePointAtIK(firstRemote, characterControllerSettings.PointAtDuration);
             remotePlayerMovement.Initialized = true;
         }
 
@@ -60,7 +59,7 @@ namespace DCL.Multiplayer.Movement
             ref ExtrapolationComponent extComp,
             ref HandPointAtComponent handPointAt)
         {
-            SimplePriorityQueue<NetworkMovementMessage, double>? playerInbox = remotePlayerMovement.Queue;
+            BoundedNetworkMessageQueue? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
 
             settings.InboxCount = playerInbox.Count;
@@ -82,6 +81,8 @@ namespace DCL.Multiplayer.Movement
             var headYawAndPitch = Vector2.zero;
             if (remotePlayerMovement.HeadIKYawEnabled || remotePlayerMovement.HeadIKPitchEnabled) headYawAndPitch = Interpolation.InterpolateHeadIK(headIK, remotePlayerMovement.HeadIKYawAndPitch, settings.InterpolationSettings.HeadIKInterpolationFactor);
             ApplyHeadIK(ref headIK, remotePlayerMovement.HeadIKYawEnabled, remotePlayerMovement.HeadIKPitchEnabled, headYawAndPitch);
+
+            remotePlayerMovement.TickPointAtExpiry(deltaTime);
 
             var pointAtWorldHitPoint = Vector3.zero;
             if (remotePlayerMovement.IsPointingAt) pointAtWorldHitPoint = Interpolation.InterpolatePointAtIK(handPointAt, remotePlayerMovement.PointAtWorldHitPoint, settings.InterpolationSettings.PointAtIKInterpolationFactor);
@@ -118,11 +119,11 @@ namespace DCL.Multiplayer.Movement
         }
 
         private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp,
-            SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
+            BoundedNetworkMessageQueue playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
             remotePlayerMovement.UpdateHeadIK(remote);
-            remotePlayerMovement.UpdatePointAtIK(remote);
+            remotePlayerMovement.UpdatePointAtIK(remote, characterControllerSettings.PointAtDuration);
 
             var isBlend = false;
 
@@ -143,14 +144,14 @@ namespace DCL.Multiplayer.Movement
 
                 remote = playerInbox.Dequeue();
                 remotePlayerMovement.UpdateHeadIK(remote);
-                remotePlayerMovement.UpdatePointAtIK(remote);
+                remotePlayerMovement.UpdatePointAtIK(remote, characterControllerSettings.PointAtDuration);
             }
 
             StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
         }
 
         private bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, BoundedNetworkMessageQueue playerInbox)
         {
             double minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
@@ -189,7 +190,7 @@ namespace DCL.Multiplayer.Movement
 
         private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement,
-            SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
+            BoundedNetworkMessageQueue playerInbox)
         {
             // Filter messages with the same position and rotation
             if (settings.InterpolationSettings.UseSpeedUp)

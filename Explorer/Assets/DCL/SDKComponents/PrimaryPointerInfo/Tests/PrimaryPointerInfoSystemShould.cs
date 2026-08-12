@@ -22,18 +22,18 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
     {
         private const float TOLERANCE = 1e-4f;
 
-        private World sceneWorld;
-        private World globalWorld;
-        private Mouse mouse;
-        private GameObject cameraGameObject;
-        private Camera camera;
-        private IECSToCRDTWriter ecsToCRDTWriter;
-        private ISceneStateProvider sceneStateProvider;
-        private IExposedCameraData exposedCameraData;
-        private PrimaryPointerInfoSystem system;
+                private World sceneWorld = null!;
+                private World globalWorld = null!;
+                private Mouse mouse = null!;
+                private GameObject cameraGameObject = null!;
+                private Camera camera = null!;
+                private IECSToCRDTWriter ecsToCRDTWriter = null!;
+                private ISceneStateProvider sceneStateProvider = null!;
+                private IExposedCameraData exposedCameraData = null!;
+                private PrimaryPointerInfoSystem system = null!;
         private CumulativePointerDelta accumulatedDelta;
-        private Action<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> capturedPrepare;
-        private List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> putCalls;
+                private Action<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> capturedPrepare = null!;
+                private List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)> putCalls = null!;
 
         [SetUp]
         public void SetUp()
@@ -50,7 +50,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
             camera = cameraGameObject.AddComponent<Camera>();
             globalWorld.Create(new CameraComponent(camera));
 
-            capturedPrepare = null;
+            capturedPrepare = null!;
             putCalls = new List<(Vector2 pos, Vector2 delta, ProtoVector3 rayDir)>();
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
@@ -208,6 +208,49 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Tests
 
             // Assert
             Assert.AreEqual(0, putCalls.Count);
+        }
+
+        [Test]
+        public void SkipPutWhenPointerStateUnchanged()
+        {
+            // Arrange: nothing moves — mouse stays at (0,0), unlocked, no accumulated-delta change.
+            const int TICKS = 600;
+
+            for (var i = 0; i < TICKS; i++)
+                system.Update(0);
+
+            // identical state every tick -> the gate suppresses every send.
+            Assert.AreEqual(0, putCalls.Count);
+
+            // A genuine change must reopen the gate (proves the skip is state-driven, not a dead path).
+            Set(mouse.position, new Vector2(42f, 24f));
+            system.Update(0);
+            Assert.AreEqual(1, putCalls.Count);
+        }
+
+        // A locked pointer moving at constant velocity yields a constant NON-zero ScreenDelta every
+        // tick (pos pinned to screen-center, ray direction unchanged). ScreenDelta is a per-tick
+        // quantity scenes integrate, so each tick's delta must be delivered even though the
+        // (pos, delta, rayDir) triple repeats verbatim — one PUT per tick of sustained motion.
+        [Test]
+        public void KeepSendingConstantNonZeroDeltaWhileLocked()
+        {
+            SetPointerLocked(true);
+
+            const int TICKS = 10;
+            var perTick = new Vector2(4f, -2f);
+
+            for (var i = 0; i < TICKS; i++)
+            {
+                AdvanceAccumulatedDelta(perTick);
+                system.Update(0);
+            }
+
+            Assert.AreEqual(TICKS, putCalls.Count,
+                "Constant non-zero ScreenDelta must be sent every tick; integrating scenes depend on each delta.");
+
+            (Vector2 _, Vector2 delta, ProtoVector3 _) = LastPut();
+            AssertVector2(perTick, delta);
         }
 
         [Test]

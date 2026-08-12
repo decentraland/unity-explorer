@@ -35,6 +35,9 @@ namespace DCL.WebRequests
             private readonly PersistentSetting<bool> enableSetting;
             private readonly PersistentSetting<float> delaySetting;
 
+            private bool cachedEnable;
+            private float cachedDelay;
+
             public ElementBindingOptions() : this(
                 PersistentSetting.CreateBool(DCLPrefKeys.WEB_REQUEST_ARTIFICIAL_DELAY_ENABLED, false),
                 PersistentSetting.CreateFloat(DCLPrefKeys.WEB_REQUEST_ARTIFICIAL_DELAY_SECONDS, 10)
@@ -46,25 +49,23 @@ namespace DCL.WebRequests
                 this.delaySetting = delaySetting;
                 Enable = new PersistentElementBinding<bool>(enableSetting);
                 Delay = new PersistentElementBinding<float>(delaySetting);
+
+                cachedEnable = Enable.Value;
+                cachedDelay = Delay.Value;
+
+                ((PersistentElementBinding<bool>)Enable).OnValueChanged += v => cachedEnable = v;
+                ((PersistentElementBinding<float>)Delay).OnValueChanged += v => cachedDelay = v;
             }
 
-            public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync(CancellationToken ct)
-            {
-                await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
-                {
-                    ct.ThrowIfCancellationRequested();
-
-                    if (UnityObjectUtils.IsQuitting)
-                        throw new OperationCanceledException(nameof(UnityObjectUtils.IsQuitting));
-
-                    return (Delay.Value, Enable.Value);
-                }
-            }
+            public UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync(CancellationToken ct) =>
+                UniTask.FromResult((cachedDelay, cachedEnable));
 
             public void ApplyValues(bool enable, float delay)
             {
                 enableSetting.ForceSave(enable);
                 delaySetting.ForceSave(delay);
+                cachedEnable = enable;
+                cachedDelay = delay;
             }
         }
     }

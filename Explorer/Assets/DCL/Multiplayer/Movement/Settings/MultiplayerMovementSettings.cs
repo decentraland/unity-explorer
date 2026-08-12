@@ -1,24 +1,25 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
     public class MultiplayerMovementSettings : ScriptableObject, IMultiplayerMovementSettings
     {
-        [field: SerializeField] public CharacterControllerSettings CharacterControllerSettings { get; set; }
+                [field: SerializeField] public CharacterControllerSettings CharacterControllerSettings { get; set; } = null!;
         [field: SerializeField] public int InboxCount { get; set; }
         [field: SerializeField] public bool UseCompression { get; set; }
 
-        [field: SerializeField] public MessageEncodingSettings EncodingSettings { get; set; }
+                [field: SerializeField] public MessageEncodingSettings EncodingSettings { get; set; } = null!;
 
         [field: Header("SENDING RULES")]
         [field: SerializeField] public float MoveSendRate { get; set; }
         [field: SerializeField] public float StandSendRate { get; set; }
-        [field: SerializeField] public float[] VelocityTiers { get; set;}
+                [field: SerializeField] public float[] VelocityTiers { get; set;} = null!;
 
-        [field: SerializeField] public List<SendRuleBase> SendRules { get; set; }
+                [field: SerializeField] public List<SendRuleBase> SendRules { get; set; } = null!;
 
         [field: Header("TELEPORTATION")]
         [field: Min(0)]
@@ -33,17 +34,21 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField] public float MinTeleportDistance { get; set; } = 50f;
 
         [field: Space]
-        [field: SerializeField] public RemotePlayerInterpolationSettings InterpolationSettings { get; set; }
+                [field: SerializeField] public RemotePlayerInterpolationSettings InterpolationSettings { get; set; } = null!;
 
         [field: Header("EXTRAPOLATION")]
         [field: SerializeField] public bool UseExtrapolation { get; set; } = true;
-        [field: SerializeField] public RemotePlayerExtrapolationSettings ExtrapolationSettings { get; set; }
+                [field: SerializeField] public RemotePlayerExtrapolationSettings ExtrapolationSettings { get; set; } = null!;
         [field: SerializeField] public float AccelerationTimeThreshold { get; private set; }
         [field: SerializeField] public float IdleSlowDownSpeed { get; private set; }
-        public Dictionary<MovementKind, float> MoveKindByDistance => new()
-        {
-            { MovementKind.Walk, 1f },
-            { MovementKind.Jog, 2f },
-        };
+
+        private static readonly IReadOnlyDictionary<MovementKind, float> MOVE_KIND_BY_DISTANCE =
+            new ReadOnlyDictionary<MovementKind, float>(new Dictionary<MovementKind, float>
+            {
+                { MovementKind.Walk, 1f },
+                { MovementKind.Jog, 2f },
+            });
+
+        public IReadOnlyDictionary<MovementKind, float> MoveKindByDistance => MOVE_KIND_BY_DISTANCE;
     }
 }

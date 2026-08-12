@@ -45,7 +45,12 @@ namespace DCL.Chat.ChatMessages
         private readonly ChatConfig.ChatConfig chatConfig;
 
         private readonly List<ChatMessageViewModel> viewModels = new (500);
-        private Dictionary<string, ChatMessageViewModel>? viewModelsMap;
+
+        // Maintained unconditionally: a pure accelerator (FindViewModelById returns the same object
+        // with or without it). Invariant: the map must never outlive a released pooled view model,
+        // so it is cleared in ReleaseAndClearAllModels (the only release site) and each new message
+        // adds its own entry.
+        private readonly Dictionary<string, ChatMessageViewModel> viewModelsMap = new (512);
 
         private readonly ChatMessageViewModel separatorViewModel;
 
@@ -107,9 +112,9 @@ namespace DCL.Chat.ChatMessages
             reactionInteraction = new MessageReactionInteractionPresenter(
                 reactionsPresenter,
                 messageReactionService,
-                tooltipPresenter,
+                tooltipPresenter!,
                 currentChannelService,
-                limitToastView,
+                limitToastView!,
                 limitToastMessage);
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
@@ -147,6 +152,9 @@ namespace DCL.Chat.ChatMessages
                     ChatMessageViewModel.RELEASE(vm);
 
             viewModels.Clear();
+
+            // Invariant: never let the fast index reference a released pooled view model.
+            viewModelsMap.Clear();
         }
 
         private void OnChatReset(ChatEvents.ChatResetEvent obj)
@@ -155,7 +163,6 @@ namespace DCL.Chat.ChatMessages
 
             ReleaseAndClearAllModels();
             view.Clear();
-            viewModelsMap = null;
 
             scrollToBottomPresenter.OnChannelChanged();
             separatorFixedIndexFromBottom = -1;
@@ -276,8 +283,7 @@ namespace DCL.Chat.ChatMessages
             viewModels.Insert(index, vm);
             vm.Reactions = currentChannelService.CurrentChannel.GetReactions(vm.Message.MessageId);
 
-            if (viewModelsMap != null)
-                viewModelsMap[vm.Message.MessageId] = vm;
+            viewModelsMap[vm.Message.MessageId] = vm;
 
             return vm;
         }
@@ -377,7 +383,7 @@ namespace DCL.Chat.ChatMessages
 
             var request = new ShowContextMenuRequest
             {
-                MenuConfiguration = contextMenu, Position = chatEntry.messageBubbleElement.PopupPosition
+                MenuConfiguration = contextMenu, Position = chatEntry!.messageBubbleElement.PopupPosition
             };
 
             contextMenuService
@@ -501,7 +507,6 @@ namespace DCL.Chat.ChatMessages
                 RemoveNewMessagesSeparator();
                 ReleaseAndClearAllModels();
                 view.Clear();
-                viewModelsMap?.Clear();
             }
         }
 
@@ -555,8 +560,12 @@ namespace DCL.Chat.ChatMessages
 
         private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent upd)
         {
-            if (upd.ChannelId.Equals(currentChannelService.CurrentChannelId))
-                view.RefreshVisibleElements();
+            if (!upd.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                return;
+
+            for (int i = 0; i < viewModels.Count; i++)
+                if (!viewModels[i].IsSeparator && viewModels[i].Message.SenderWalletAddress == upd.UserId)
+                    view.RefreshItem(i);
         }
 
         private void OnChannelUsersUpdated(ChatEvents.ChannelUsersStatusUpdated upd)
@@ -652,23 +661,10 @@ namespace DCL.Chat.ChatMessages
             view.StartScrollBarFade(targetAlpha, animate ? duration : 0f, easing);
         }
 
-        private bool UseFastIndexForCurrentConversation()
-        {
-            // Gate on per-conversation Auto-Translate setting (your requirement).
-            // Keep this exactly in one place so policy changes are trivial.
-            return IsAutoTranslationEnabled();
-        }
-
         private void RebuildFastIndexIfNeeded()
         {
-            if (!UseFastIndexForCurrentConversation())
-            {
-                viewModelsMap = null;
-                return;
-            }
-
-            viewModelsMap ??= new Dictionary<string, ChatMessageViewModel>(Math.Max(16, viewModels.Count));
-
+            // auto-translate setting), so every FindViewModelById — reactions and translation
+            // lifecycle alike — is O(1) regardless of that orthogonal feature flag.
             viewModelsMap.Clear();
             for (int i = 0; i < viewModels.Count; i++)
             {
@@ -697,10 +693,11 @@ namespace DCL.Chat.ChatMessages
 
         private ChatMessageViewModel? FindViewModelById(string messageId)
         {
-            if (viewModelsMap != null && viewModelsMap.TryGetValue(messageId, out var vm))
+            if (viewModelsMap.TryGetValue(messageId, out var vm))
                 return vm;
 
-            return LinearFindViewModelById(messageId); // safe fallback when index is disabled
+            // Safe fallback for ids not in the map (e.g. the separator, or an empty id).
+            return LinearFindViewModelById(messageId);
         }
 
         private void BindReactionsToViewModels()

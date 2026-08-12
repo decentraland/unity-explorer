@@ -8,6 +8,7 @@ using DCL.Chat.ChatReactions.Debug;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Presenters;
 using DCL.Chat.ChatServices;
+using DCL.CharacterCamera;
 using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Chat.ChatServices.ChatContextService;
@@ -79,7 +80,8 @@ namespace DCL.Chat
             ChatMessageReactionService messageReactionService,
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IExposedCameraData exposedCameraData)
         {
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
@@ -229,6 +231,7 @@ namespace DCL.Chat
                     reactionSimulation,
                     reactionsConfig,
                     reactionDebugState,
+                    exposedCameraData,
                     reactionDebugController,
                     view.ChatReactionButton.ReactionButton);
             }

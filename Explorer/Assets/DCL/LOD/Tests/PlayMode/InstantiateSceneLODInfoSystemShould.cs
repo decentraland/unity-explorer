@@ -38,7 +38,7 @@ namespace DCL.LOD.Tests
         private SceneLODInfo sceneLODInfo;
         private GameObjectPool<LODGroup>? lodGroupPool;
         private SceneDefinitionComponent sceneDefinitionComponent;
-        private IScenesCache scenesCache;
+                private IScenesCache scenesCache = null!;
 
         [SetUp]
         public void Setup()
@@ -99,7 +99,7 @@ namespace DCL.LOD.Tests
             Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
-            system.Update(0);
+            system!.Update(0);
 
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
@@ -123,7 +123,7 @@ namespace DCL.LOD.Tests
             Entity sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
-            system.Update(0);
+            system!.Update(0);
 
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
@@ -131,6 +131,60 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.FailedLODs, 0), true);
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.SuccessfullLODs, 0), false);
             scenesCache.Received().AddNonRealScene(Arg.Is<Vector2Int[]>(arr => arr.SequenceEqual(DECODED_PARCELS)));
+        }
+
+        // The injected budgets (FrameTimeCapBudget/MemoryBudget) are stateless per-frame threshold reads, so the reorder
+        // is behaviour-preserving; this asserts the resulting call-count property: TrySpendBudget() is invoked only for
+        // scenes with a promise mid-flight, not for every loaded scene.
+        [Test]
+        public void SpendsBudgetOnlyForActivePromises_Performance()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            int frameCalls = 0;
+            var frameBudget = Substitute.For<IPerformanceBudget>();
+            frameBudget.TrySpendBudget().Returns(_ => { frameCalls++; return true; });
+
+            var memBudget = Substitute.For<IPerformanceBudget>();
+            memBudget.TrySpendBudget().Returns(true);
+
+            var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
+            var countingSystem = new InstantiateSceneLODInfoSystem(world, frameBudget, memBudget, scenesCache,
+                Substitute.For<ISceneReadinessReportQueue>(),
+                textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new[]
+                {
+                    new TextureArrayResolutionDescriptor(256, 500, 1)
+                }, TextureFormat.BC7, 20, 1), Substitute.For<IRealmPartitionSettings>());
+
+            const int M = 3;    // scenes with an active, unresolved LOD promise
+            const int IDLE = 7; // loaded scenes with no active promise (steady-state majority)
+
+            for (int i = 0; i < M; i++)
+            {
+                var info = SceneLODInfo.Create();
+                info.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
+                info.id = $"active_{i.ToString()}";
+                info.CurrentLODLevelPromise = 1; // active (!= byte.MaxValue) and not yet instantiated
+                info.CurrentLODPromise = Promise.Create(world,
+                    GetAssetBundleIntention.FromHash("h", AssetBundleManifestVersion.CreateForLOD("LOD/1", "dummyDate"), typeof(GameObject)),
+                    new PartitionComponent()); // no result added -> TryConsume returns false -> resolve is a no-op
+                world.Create(info, sceneDefinitionComponent);
+            }
+
+            for (int i = 0; i < IDLE; i++)
+            {
+                var info = SceneLODInfo.Create(); // CurrentLODLevelPromise == byte.MaxValue -> HasActiveLODPromise() == false
+                info.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
+                info.id = $"idle_{i.ToString()}";
+                world.Create(info, sceneDefinitionComponent);
+            }
+
+            countingSystem.Update(0);
+
+            // Only the M active scenes reach the budget spend.
+            Assert.AreEqual(M, frameCalls);
+
+            countingSystem.Dispose();
         }
 
         private Promise GenerateFailedPromise()
@@ -151,7 +205,7 @@ namespace DCL.LOD.Tests
                 GetAssetBundleIntention.FromHash("Cube", AssetBundleManifestVersion.CreateForLOD("LOD/0", "dummyDate"), typeof(GameObject)),
                 new PartitionComponent());
 
-            var fakeAssetBundleData = new AssetBundleData(null, new []{GameObject.CreatePrimitive(PrimitiveType.Cube)},
+            var fakeAssetBundleData = new AssetBundleData(null!, new []{GameObject.CreatePrimitive(PrimitiveType.Cube)},
                 typeof(GameObject), new AssetBundleData[] { });
 
             world.Add(promise.Entity,
