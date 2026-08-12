@@ -101,6 +101,8 @@ namespace Global.AppArgs
 
         public const string DOUBLE_JUMP = "double-jump";
 
+        public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
+
         public const string GLIDING = "gliding";
         public const string POINT_AT = "point-at";
 
