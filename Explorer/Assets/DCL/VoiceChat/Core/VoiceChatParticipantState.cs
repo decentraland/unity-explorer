@@ -1,18 +1,23 @@
 using CommunicationData.URLHelpers;
 using DCL.Profiles;
 using DCL.Utilities;
+using DCL.Utility.Types;
 
 namespace DCL.VoiceChat
 {
     public class VoiceChatParticipantState
     {
-        public Profile.CompactInfo Profile { get; internal set; }
+        /// <summary>
+        ///     None until the participant's identity is known — the local participant has no profile
+        ///     before login and after the identity is cleared
+        /// </summary>
+        public Option<Profile.CompactInfo> Profile { get; internal set; }
 
-        public string WalletId => Profile.UserId;
+        public Option<string> WalletId => Profile.Has ? Option<string>.Some(Profile.Value.UserId.Value) : Option<string>.None;
         public ReactiveProperty<bool> IsSpeaking { get; }
-        public string Name => Profile.Name;
-        public bool HasClaimedName => Profile.HasClaimedName;
-        public URLAddress ProfilePictureUrl => Profile.FaceSnapshotUrl;
+        public Option<string> Name => Profile.Has ? Option<string>.Some(Profile.Value.Name) : Option<string>.None;
+        public bool HasClaimedName => Profile.Has && Profile.Value.HasClaimedName;
+        public Option<URLAddress> ProfilePictureUrl => Profile.Has ? Option<URLAddress>.Some(Profile.Value.FaceSnapshotUrl) : Option<URLAddress>.None;
         public ReactiveProperty<bool> IsRequestingToSpeak { get; }
         public ReactiveProperty<bool> IsSpeaker { get; }
         public ReactiveProperty<bool> IsMuted { get; }
@@ -21,7 +26,12 @@ namespace DCL.VoiceChat
         private VoiceChatParticipantState(string walletId, ReactiveProperty<bool> isSpeaking, ReactiveProperty<bool> isRequestingToSpeak, ReactiveProperty<bool> isSpeaker, ReactiveProperty<VoiceChatParticipantCommunityRole> role,
             ReactiveProperty<bool> isMuted)
         {
-            Profile = new Profile.CompactInfo { UserId = walletId };
+            Option<UserId> userId = UserId.New(walletId);
+
+            Profile = userId.Has
+                ? Option<Profile.CompactInfo>.Some(new Profile.CompactInfo(userId.Value))
+                : Option<Profile.CompactInfo>.None;
+
             IsSpeaking = isSpeaking;
             IsRequestingToSpeak = isRequestingToSpeak;
             IsSpeaker = isSpeaker;
