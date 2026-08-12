@@ -41,9 +41,9 @@ namespace DCL.Tests.Editor
     // code path actually touches are injected.
     //
     // Scope: this covers the loading-skeleton half of the patch (SetAsLastSibling in
-    // SetAsLoadingState). It does not additionally drive the main fetch-result loop's sort +
-    // SetAsLastSibling with real event data - see report.md's "## Test" section for why that
-    // half was left uncovered.
+    // SetAsLoadingState). The sort's order contract is covered separately by
+    // EventDisplayOrderComparerShould; driving the main fetch-result loop with real event
+    // data would additionally require a fully wired EventElementView hierarchy.
     [TestFixture]
     public class PlaceInfoPanelControllerEventOrderingShould
     {

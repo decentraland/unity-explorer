@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 
+// ReSharper disable InconsistentNaming
 namespace DCL.EventsApi
 {
     public interface IEventDTO : ISerializationCallbackReceiver
@@ -34,6 +35,7 @@ namespace DCL.EventsApi
         int Y {get; set; }
     }
 
+    // Server schema: decentraland/events src/entities/Event/types.ts#/EventAttributes
     [Serializable]
     public struct EventDTO : IEventDTO
     {

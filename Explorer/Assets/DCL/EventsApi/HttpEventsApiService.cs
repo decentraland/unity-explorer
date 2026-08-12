@@ -50,7 +50,7 @@ namespace DCL.EventsApi
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
 
-        public async UniTask<IReadOnlyList<EventDTO>> GetEventsByParcelAsync(IEnumerable<Vector2Int> parcels, CancellationToken ct, bool onlyLiveEvents = false)
+        public async UniTask<EventDTO[]> GetEventsByParcelAsync(IEnumerable<Vector2Int> parcels, CancellationToken ct, bool onlyLiveEvents = false)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
@@ -155,7 +155,7 @@ namespace DCL.EventsApi
             urlBuilder.AppendDomain(baseUrl)
                       .AppendParameter(new URLParameter(COMMUNITY_ID_PARAMETER, communityId))
                       .AppendParameter(new URLParameter(PAGINATION_LIMIT_PARAMETER, elementsPerPage.ToString()))
-                      .AppendParameter(new URLParameter(PAGINATION_OFFSET_PARAMETER, ((pageNumber - 1) * elementsPerPage).ToString()));;
+                      .AppendParameter(new URLParameter(PAGINATION_OFFSET_PARAMETER, ((pageNumber - 1) * elementsPerPage).ToString()));
 
             return await webRequestController
                         .SignedFetchGetAsync(urlBuilder.Build(), string.Empty, ct)
@@ -202,7 +202,7 @@ namespace DCL.EventsApi
                 throw new EventsApiException($"Error on trying to create attend intention to event {eventId}");
         }
 
-        private async UniTask<IReadOnlyList<EventDTO>> FetchEventListAsync(URLAddress url, CancellationToken ct)
+        private async UniTask<EventDTO[]> FetchEventListAsync(URLAddress url, CancellationToken ct)
         {
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
