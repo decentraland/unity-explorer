@@ -55,7 +55,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
         private SingleInstanceEntity camera;
 
-        private HandPointAtSystem(World world) : base(world)
+        internal HandPointAtSystem(World world) : base(world)
         {
             dclInput = DCLInput.Instance;
         }
@@ -67,9 +67,19 @@ namespace DCL.Character.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
+            ResetPointAtOnTeleportQuery(World);
             CancelPointAtIfEmotingQuery(World);
             UpdateHandPointAtQuery(World, in camera.GetCameraComponent(World), t);
             ApplyPointAtIKQuery(World, t);
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent), typeof(PlayerTeleportIntent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ResetPointAtOnTeleport(ref HandPointAtComponent handPointAtComponent)
+        {
+            if (handPointAtComponent.IsPointing)
+                handPointAtComponent.StopPointing();
         }
 
         private CursorInfo HandleCursorLogic(ref HandPointAtComponent handPointAtComponent)
