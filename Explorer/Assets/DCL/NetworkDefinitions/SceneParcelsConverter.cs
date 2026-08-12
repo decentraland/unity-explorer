@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     /// <summary>

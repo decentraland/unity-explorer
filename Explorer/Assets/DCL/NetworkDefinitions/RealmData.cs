@@ -4,7 +4,6 @@ using DCL.Utilities;
 using System;
 using System.Text;
 
-// ReSharper disable once CheckNamespace
 namespace ECS
 {
     /// <summary>

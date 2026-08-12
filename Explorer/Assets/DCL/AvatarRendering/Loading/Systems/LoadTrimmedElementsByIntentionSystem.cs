@@ -193,7 +193,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                     var avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO, false);
 
                     //Builder items will never have an asset bundle
-                    if (avatarElement.DTO.assetBundleManifestVersion == null)
+                    if (avatarElement.DTO!.assetBundleManifestVersion == null)
                         avatarElement.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateLSDAsset();
 
                     intention.AppendToResult(avatarElement);
@@ -209,9 +209,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             var elementDTO = element.Entity;
 
-            if (elementDTO.thumbnail != null)
-                elementDTO.thumbnail = AssetBundleManifestHelper.SanitizeEntityHash(elementDTO.thumbnail);
-
             var wearable = trimmedAvatarElementStorage.GetOrAddByDTO(elementDTO);
 
             // Run the asset bundle fallback check in parallel
@@ -219,6 +216,9 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version, wearableVersions.windows.buildDate);
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
+
+            if (wearable.TrimmedDTO.thumbnail != null)
+                wearable.TrimmedDTO.thumbnail = AssetBundleManifestHelper.SanitizeEntityHash(wearable.TrimmedDTO.thumbnail, wearable.TrimmedDTO.assetBundleManifestVersion);
 
             if (element.IndividualData != null)
                 // Process individual data (this part needs to remain sequential per element for thread safety)
