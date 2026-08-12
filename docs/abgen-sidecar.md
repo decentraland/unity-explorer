@@ -28,12 +28,12 @@ encode auto-tries CUDA→wgpu and falls back to CPU with a logged qualification 
 
 ## Binary acquisition
 
-The binary is never embedded in the build. The newest installed version under
-`persistentDataPath/abgen/bin/{version}/` wins; `StreamingAssets/abgen(.exe)` acts as an explicit
-developer override that suppresses updates. In the background the latest GitHub release is
-resolved and downloaded (sha256-verified against the release asset digest) and activates on the
-next launch; a pinned fallback release with compile-time checksums covers the release API being
-unreachable when nothing is installed yet.
+The binary is never embedded in the build. On first run the **pinned release** is downloaded in
+the background into `persistentDataPath/abgen/bin/{version}/`, verified against its compile-time
+sha256, and activates on the next launch. Only the pinned version is ever executed — upgrading
+abgen requires a deliberate pin+checksum bump in `AbgenSidecar`, so a compromised GitHub release
+cannot propagate to users on its own. `StreamingAssets/abgen(.exe)` acts as an explicit developer
+override when no pinned install exists.
 
 ## Verification
 

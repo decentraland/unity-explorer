@@ -1,6 +1,5 @@
 #nullable enable
 
-using System;
 using System.Collections.Generic;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -52,6 +51,8 @@ namespace ECS.StreamableLoading.AssetBundles
         private string? warmUpSceneId;
         private float warmUpElapsedSeconds;
         private bool warmUpAlreadyWarm;
+        private int warmUpDone;
+        private int warmUpTotal;
 
         /// <summary>Bumped on every change so readers can skip rebuilding an unchanged view.</summary>
         public int Version
@@ -135,6 +136,36 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
+        /// <summary>Files completed so far, as counted by the server's own progress endpoint.</summary>
+        public int WarmUpDone
+        {
+            get
+            {
+                lock (gate) { return warmUpDone; }
+            }
+        }
+
+        /// <summary>Files planned for the whole-scene build, as counted by the server; 0 until the first progress sample.</summary>
+        public int WarmUpTotal
+        {
+            get
+            {
+                lock (gate) { return warmUpTotal; }
+            }
+        }
+
+        /// <summary>The server's authoritative converted/planned counters for the running whole-scene build.</summary>
+        public void OnWarmUpProgress(int done, int total)
+        {
+            lock (gate)
+            {
+                warmUpDone = done;
+                warmUpTotal = total;
+                planned = total;
+                version++;
+            }
+        }
+
         public void OnWarmUpStarted(string sceneEntityId)
         {
             lock (gate)
@@ -154,6 +185,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 warmUpStage = WarmUpStage.Ready;
                 warmUpElapsedSeconds = elapsedSeconds;
                 warmUpAlreadyWarm = alreadyWarm;
+
+                // The manifest only returns once the whole corpus build finished, so the build is complete
+                // even when the last progress sample landed short of the total.
+                warmUpDone = warmUpTotal;
                 version++;
             }
         }
@@ -288,8 +323,8 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <summary>
         ///     Full-census correction for the sampled progress lane: every file in
         ///     <paramref name="contentPaths" /> that the ~2 Hz progress poll never witnessed becomes a
-        ///     processed row, still-converting ones settle to processed, and the planned/ok counters
-        ///     rise to the census size. Call once the whole-scene build has finished.
+        ///     processed row, and still-converting ones settle to processed. Rows only — the converted/total
+        ///     counters come from the server's progress endpoint, never from this client-side census.
         /// </summary>
         public void ReconcileWarmUpCensus(IReadOnlyList<string> contentPaths)
         {
@@ -304,7 +339,6 @@ namespace ECS.StreamableLoading.AssetBundles
                         existing.Status = ConversionStatus.Processed;
                         entries[path] = existing;
                         inFlight--;
-                        succeeded++;
                         continue;
                     }
 
@@ -314,11 +348,8 @@ namespace ECS.StreamableLoading.AssetBundles
                         Status = ConversionStatus.Processed,
                         Sequence = sequence++,
                     };
-
-                    succeeded++;
                 }
 
-                planned = Math.Max(planned, contentPaths.Count);
                 version++;
             }
         }

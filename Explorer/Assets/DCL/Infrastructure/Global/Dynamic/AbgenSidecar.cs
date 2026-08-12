@@ -26,17 +26,15 @@ namespace Global.Dynamic
     ///     loading path consumes its base URL as the optimized-assets source; the server JIT-converts the
     ///     local scene and answers everything else from the production upstream (ab-cdn read-through and
     ///     registry pass-through), caching converted bundles on disk.
-    ///     The binary is never embedded in the build: it is probed in the download cache (newest installed
-    ///     version wins), then StreamingAssets as an explicit developer override that suppresses updates.
-    ///     The latest GitHub release is resolved and fetched in the background — first launch installs it,
-    ///     later launches upgrade to it — and activates on the next launch. The pinned fallback release is
-    ///     used only when nothing is installed and the release API is unreachable. An explicit
-    ///     --optimized-assets-url always takes precedence.
+    ///     The binary is never embedded in the build: the pinned release is downloaded in the background on
+    ///     first run, verified against its compile-time sha256, and activates on the next launch. Only the
+    ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
+    ///     deliberate pin+checksum bump in this file. StreamingAssets acts as an explicit developer override.
+    ///     An explicit --optimized-assets-url always takes precedence.
     /// </summary>
     public sealed class AbgenSidecar : IDisposable
     {
-        private const string FALLBACK_VERSION = "0.15.4";
-        private const string LATEST_RELEASE_API = "https://api.github.com/repos/decentraland/abgen/releases/latest";
+        private const string PINNED_VERSION = "0.15.4";
         private const int MAX_RESTARTS = 3;
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
@@ -82,19 +80,13 @@ namespace Global.Dynamic
         /// </summary>
         public static async UniTask<AbgenSidecar?> TryStartAsync(string environmentDomain, CancellationToken ct, string? cacheRoot = null, string? contentUrlOverride = null, bool jitContentDigest = false)
         {
-            string? exe = TryFindInstalledExecutable(out string? installedVersion);
-            bool streamingAssetsOverride = exe == null && File.Exists(StreamingAssetsExecutablePath);
-            if (streamingAssetsOverride) exe = StreamingAssetsExecutablePath;
+            string? exe = TryFindPinnedExecutable() ?? (File.Exists(StreamingAssetsExecutablePath) ? StreamingAssetsExecutablePath : null);
 
-            // A StreamingAssets binary is a deliberate developer override: never shadow it with a release download.
-            if (!streamingAssetsOverride && !downloadStarted && Platform() != null)
+            if (exe == null && !downloadStarted && Platform() != null)
             {
                 downloadStarted = true;
-
-                if (exe == null)
-                    AbgenConversionMetrics.INSTANCE.OnMilestone("abgen binary not installed — downloading the latest release in the background; local conversion activates next launch");
-
-                EnsureLatestBinaryAsync(installedVersion).Forget();
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen binary not installed — downloading the pinned release v{PINNED_VERSION} in the background; local conversion activates next launch");
+                EnsurePinnedBinaryAsync().Forget();
             }
 
             if (exe == null)
@@ -156,8 +148,10 @@ namespace Global.Dynamic
                 UnityWebRequestAsyncOperation manifestOperation = manifestRequest.SendWebRequest();
 
                 // While the server holds the manifest request, mirror its per-file build progress into
-                // the metrics the scene dev console's AB tab renders.
-                var plannedTotal = -1;
+                // the metrics the scene dev console's AB tab renders. done/total are the server's own
+                // authoritative counters — the sampled per-file rows are color, not the count.
+                var lastDone = -1;
+                var lastTotal = -1;
                 var sawBuildProgress = false;
 
                 while (!manifestOperation.isDone)
@@ -170,10 +164,11 @@ namespace Global.Dynamic
                     sawBuildProgress = true;
                     AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
 
-                    if (progress.total != plannedTotal)
+                    if (progress.done != lastDone || progress.total != lastTotal)
                     {
-                        plannedTotal = progress.total;
-                        metrics.OnPlanned(plannedTotal);
+                        lastDone = progress.done;
+                        lastTotal = progress.total;
+                        metrics.OnWarmUpProgress(progress.done, progress.total);
                     }
 
                     if (progress.file != convertingFile)
@@ -339,7 +334,7 @@ namespace Global.Dynamic
             process = null;
         }
 
-        /// <summary>Release target triple and the fallback release's pinned archive sha256 for the current platform; null when unsupported.</summary>
+        /// <summary>Release target triple and the pinned release's archive sha256 for the current platform; null when unsupported.</summary>
         private static (string target, string sha256)? Platform() =>
             Application.platform switch
             {
@@ -351,98 +346,25 @@ namespace Global.Dynamic
                 _ => null,
             };
 
-        /// <summary>Newest version installed under <c>bin/{version}/abgen-v{version}-{target}/</c>, or null when none is usable.</summary>
-        private static string? TryFindInstalledExecutable(out string? installedVersion)
+        /// <summary>The pinned version installed under <c>bin/{version}/abgen-v{version}-{target}/</c>, or null. Other installed versions are never executed.</summary>
+        private static string? TryFindPinnedExecutable()
         {
-            installedVersion = null;
-
             string? target = Platform()?.target;
-            string binRoot = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin");
+            if (target == null) return null;
 
-            if (target == null || !Directory.Exists(binRoot))
-                return null;
+            string exe = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin",
+                PINNED_VERSION, $"abgen-v{PINNED_VERSION}-{target}", IsWindows ? "abgen.exe" : "abgen");
 
-            string? bestPath = null;
-
-            foreach (string versionDir in Directory.GetDirectories(binRoot))
-            {
-                string version = Path.GetFileName(versionDir);
-                string exe = Path.Combine(versionDir, $"abgen-v{version}-{target}", IsWindows ? "abgen.exe" : "abgen");
-
-                if (File.Exists(exe) && (installedVersion == null || CompareVersions(version, installedVersion) > 0))
-                {
-                    installedVersion = version;
-                    bestPath = exe;
-                }
-            }
-
-            return bestPath;
+            return File.Exists(exe) ? exe : null;
         }
 
-        /// <summary>Dotted-numeric comparison; missing or non-numeric segments count as zero.</summary>
-        private static int CompareVersions(string a, string b)
-        {
-            string[] partsA = a.Split('.');
-            string[] partsB = b.Split('.');
-
-            for (var i = 0; i < Math.Max(partsA.Length, partsB.Length); i++)
-            {
-                int numA = i < partsA.Length && int.TryParse(partsA[i], out int parsedA) ? parsedA : 0;
-                int numB = i < partsB.Length && int.TryParse(partsB[i], out int parsedB) ? parsedB : 0;
-
-                if (numA != numB)
-                    return numA.CompareTo(numB);
-            }
-
-            return 0;
-        }
-
-        /// <summary>
-        ///     Resolves the newest release tag from GitHub and installs it when it is newer than what is on
-        ///     disk, verifying the archive against the release asset's sha256 digest. When the release API is
-        ///     unreachable, an installed binary keeps serving as-is; with nothing installed, the pinned
-        ///     fallback release (whose checksum is known at compile time) is downloaded instead.
-        /// </summary>
-        private static async UniTaskVoid EnsureLatestBinaryAsync(string? installedVersion)
+        /// <summary>Downloads and installs the pinned release, verified against its compile-time sha256.</summary>
+        private static async UniTaskVoid EnsurePinnedBinaryAsync()
         {
             try
             {
-                (string target, string fallbackSha256) = Platform()!.Value;
-
-                string? releaseJson = null;
-
-                using (UnityWebRequest req = UnityWebRequest.Get(LATEST_RELEASE_API))
-                {
-                    req.timeout = 30;
-                    try { await req.SendWebRequest(); } catch { /* result checked below */ }
-
-                    if (req.result == UnityWebRequest.Result.Success)
-                        releaseJson = req.downloadHandler.text;
-                }
-
-                string? latest = releaseJson != null ? ParseJsonStringAfter(releaseJson, "\"tag_name\":\"v") : null;
-
-                if (latest == null)
-                {
-                    if (installedVersion != null)
-                    {
-                        ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen release check failed; keeping installed v{installedVersion}");
-                        return;
-                    }
-
-                    latest = FALLBACK_VERSION;
-                }
-
-                if (installedVersion != null && CompareVersions(latest, installedVersion) <= 0)
-                    return;
-
-                string? sha256 = latest == FALLBACK_VERSION ? fallbackSha256
-                    : ParseAssetDigest(releaseJson!, $"abgen-v{latest}-{target}.tar.gz");
-
-                if (installedVersion != null)
-                    AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen v{latest} available (installed: v{installedVersion}) — downloading in the background; activates next launch");
-
-                await DownloadAndInstallAsync(latest, target, sha256);
+                (string target, string sha256) = Platform()!.Value;
+                await DownloadAndInstallAsync(PINNED_VERSION, target, sha256);
             }
             catch (Exception e)
             {
@@ -451,24 +373,7 @@ namespace Global.Dynamic
             }
         }
 
-        /// <summary>
-        ///     Sha256 digest of the named asset from a GitHub release JSON document, or null when the release
-        ///     carries no digest for it. The search is bounded to the asset's own object so a digest-less asset
-        ///     never borrows the next asset's checksum.
-        /// </summary>
-        private static string? ParseAssetDigest(string releaseJson, string assetName)
-        {
-            int assetIndex = releaseJson.IndexOf($"\"name\":\"{assetName}\"", StringComparison.Ordinal);
-            if (assetIndex < 0) return null;
-
-            string scope = releaseJson[assetIndex..];
-            int nextAsset = scope.IndexOf("\"name\":\"", 1, StringComparison.Ordinal);
-            if (nextAsset > 0) scope = scope[..nextAsset];
-
-            return ParseJsonStringAfter(scope, "\"digest\":\"sha256:");
-        }
-
-        private static async UniTask DownloadAndInstallAsync(string version, string target, string? sha256)
+        private static async UniTask DownloadAndInstallAsync(string version, string target, string sha256)
         {
             string url = $"https://github.com/decentraland/abgen/releases/download/v{version}/abgen-v{version}-{target}.tar.gz";
 
@@ -481,16 +386,13 @@ namespace Global.Dynamic
 
             byte[] archive = req.downloadHandler.data;
 
-            if (sha256 != null)
+            using (var sha = SHA256.Create())
             {
-                using var sha = SHA256.Create();
                 string actual = BitConverter.ToString(sha.ComputeHash(archive)).Replace("-", "").ToLowerInvariant();
 
                 if (actual != sha256)
                     throw new IOException($"abgen archive checksum mismatch: {actual}");
             }
-            else
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen v{version} release exposes no asset digest — installing unverified");
 
             await UniTask.RunOnThreadPool(() =>
             {
@@ -687,6 +589,7 @@ namespace Global.Dynamic
         [Serializable]
         private class BuildProgress
         {
+            public int done;
             public int total;
             public string file = null!;
         }

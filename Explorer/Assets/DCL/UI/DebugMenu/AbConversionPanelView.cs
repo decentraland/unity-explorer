@@ -88,7 +88,13 @@ namespace DCL.UI.DebugMenu
                                 _ => string.Empty,
                             };
 
-            summary.text = $"{warmUp}{metrics.Planned} planned · {metrics.InFlight} converting · <color=#63D471>{metrics.Succeeded} ok</color> · <color=#FF6C6C>{metrics.Failed} failed</color> · {metrics.TotalOutputBytes / (1024 * 1024f):F1} MB";
+            // The server's own done/total counter is the truth for a whole-scene build; the sampled
+            // row-derived counters only describe sessions without a warm-up (lazy conversions).
+            string counts = metrics.WarmUpTotal > 0
+                ? $"<color=#63D471>{metrics.WarmUpDone}/{metrics.WarmUpTotal}</color> converted"
+                : $"{metrics.Planned} planned · {metrics.InFlight} converting · <color=#63D471>{metrics.Succeeded} ok</color>";
+
+            summary.text = $"{warmUp}{counts} · <color=#FF6C6C>{metrics.Failed} failed</color> · {metrics.TotalOutputBytes / (1024 * 1024f):F1} MB";
         }
 
         /// <summary>
