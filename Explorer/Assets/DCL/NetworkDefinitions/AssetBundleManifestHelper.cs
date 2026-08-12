@@ -11,8 +11,11 @@ namespace DCL.Ipfs
             return span.Length >= 2 && span[0] == 'Q' && span[1] == 'm';
         }
 
-        public static string SanitizeEntityHash(string inputHash)
+        public static string SanitizeEntityHash(string inputHash, AssetBundleManifestVersion? manifestVersion)
         {
+            if (manifestVersion?.PreservesOriginalCasing() == true)
+                return inputHash;
+
             if (IsQmEntity(inputHash) && IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
                 return inputHash.ToLowerInvariant();
 

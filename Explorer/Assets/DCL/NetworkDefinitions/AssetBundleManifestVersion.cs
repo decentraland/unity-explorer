@@ -20,6 +20,9 @@ public class AssetBundleManifestVersion
         //manifests can't have an ISS, so the descriptor lookup is short-circuited.
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 49;
 
+        //From v49 the converter preserves the published casing of Qm hashes; pre-v49 output was lowercase
+        private const int ASSET_BUNDLE_VERSION_PRESERVES_CASING = 49;
+
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
@@ -32,6 +35,7 @@ public class AssetBundleManifestVersion
 
         private bool? SupportsDepsDigestsValue;
         private bool? SupportsISSValue;
+        private bool? PreservesOriginalCasingValue;
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
@@ -42,7 +46,7 @@ public class AssetBundleManifestVersion
         //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.
         private bool hasReusableAssets;
 
-        private bool HasHashInPath()
+        public bool HasHashInPath()
         {
             HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
             return HasHashInPathValue.Value;
@@ -53,6 +57,13 @@ public class AssetBundleManifestVersion
         {
             SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             return SupportsDepsDigestsValue.Value;
+        }
+
+        /// <summary>True when the manifest's version (v49+) preserves the Qm hash's published casing, so Mac must not lowercase Qm requests.</summary>
+        public bool PreservesOriginalCasing()
+        {
+            PreservesOriginalCasingValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_PRESERVES_CASING;
+            return PreservesOriginalCasingValue.Value;
         }
 
         /// <summary>
@@ -263,7 +274,7 @@ public class AssetBundleManifestVersion
 
             cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
             string platformSuffix = PlatformUtils.GetCurrentPlatform();
-            bool lowerCase = IPlatform.DEFAULT.Is(IPlatform.Kind.Mac);
+            bool lowerCase = IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && !PreservesOriginalCasing();
 
             // TryAdd keeps the first entry for each key; a digest-bearing name already stored by InjectDepsDigests is never overwritten.
             for (var i = 0; i < entityDefinitionContent.Length; i++)
