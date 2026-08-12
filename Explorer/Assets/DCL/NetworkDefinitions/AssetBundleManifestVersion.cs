@@ -48,12 +48,15 @@ public class AssetBundleManifestVersion
             return HasHashInPathValue.Value;
         }
 
-        /// <summary>True once <see cref="InjectDepsDigests" /> stored a manifest's files — the signal that no further manifest fetch is needed.</summary>
-        public bool DepsDigestsInjected => hasReusableAssets;
-
-        /// <summary>True when the manifest's version is v49 or newer — a pure version check; individual files may still carry no digest.</summary>
+        /// <summary>
+        ///     True when the manifest's version is v49 or newer — a pure version check; individual files may
+        ///     still carry no digest. Always false for LSD assets: their hashes are path-derived and unique
+        ///     per file, so the cross-scene hash collisions deps digests disambiguate cannot occur there.
+        /// </summary>
         public bool SupportsDepsDigests()
         {
+            if (IsLSDAsset) return false;
+
             SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             return SupportsDepsDigestsValue.Value;
         }
