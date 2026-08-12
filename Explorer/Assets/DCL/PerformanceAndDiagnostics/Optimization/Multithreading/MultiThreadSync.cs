@@ -106,31 +106,85 @@ namespace Utility.Multithreading
             // There is already one thread doing work. Wait for the signal
             if (shouldWait)
             {
-                if (!owner.Wait(TIMEOUT, cts.Token, out bool wasCancelled) && !wasCancelled)
+                if (!owner.Wait(TIMEOUT, cts.Token, out bool wasCancelled))
                 {
                     lock (monitor)
                     {
-                        DateTime time = DateTime.Now;
-                        AcquisitionInfo current = currentAcquisitionInfo!.Value;
-                        TimeSpan difference = time - current.AcquiredAt;
+                        // The waiter never acquired the sync: withdraw its entry so an abandoned
+                        // owner can never stall or desynchronize subsequent acquisitions
+                        RemoveFromQueue(owner);
 
+                        // On disposal the wait is cancelled: leave without taking ownership so the
+                        // static ownership table is not repopulated after Dispose removed the syncId
+                        if (wasCancelled)
+                            return;
+
+                        DateTime time = DateTime.Now;
                         int requestingThreadId = NativeThread.CurrentId;
                         int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
 
+                        string currentOwnerDescription = currentAcquisitionInfo.HasValue
+                            ? $"\"{currentAcquisitionInfo.Value.Owner.Name}\" takes too long: {(time - currentAcquisitionInfo.Value.AcquiredAt).TotalSeconds}"
+                            : "unowned";
+
                         syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: {currentOwnerDescription}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
                     }
                 }
             }
 
             lock (monitor)
             {
+                // Disposal may have raced the successful wait: ownership must not be recorded
+                // for a disposed sync (Release no-ops on isDisposing, so it would never be cleared)
+                if (isDisposing)
+                    return;
+
                 currentAcquisitionInfo = new AcquisitionInfo(owner, DateTime.Now);
                 SYNC_OWNERSHIP[syncId] = NativeThread.CurrentId;
 
 #if SYNC_DEBUG
                 syncLogsBuffer.Report("MultithreadSync Acquire finished for:", owner.Name);
 #endif
+            }
+        }
+
+        /// <summary>
+        ///     Removes the first queued occurrence of <paramref name="owner" /> without disturbing the order of the
+        ///     other waiters. If a concurrent <see cref="Release" /> already handed the baton to this owner
+        ///     (it is the signalled head), the baton is passed on to the next waiter so the chain never stalls.
+        ///     Must be called under <see cref="monitor" />.
+        /// </summary>
+        private void RemoveFromQueue(Owner owner)
+        {
+            if (queue.Count == 0)
+                return;
+
+            if (ReferenceEquals(queue.Peek(), owner) && owner.IsSignalled)
+            {
+                queue.Dequeue();
+                owner.Reset();
+
+                if (queue.TryPeek(out Owner? next))
+                    next.Set();
+
+                return;
+            }
+
+            int count = queue.Count;
+            var removed = false;
+
+            for (var i = 0; i < count; i++)
+            {
+                Owner candidate = queue.Dequeue();
+
+                if (!removed && ReferenceEquals(candidate, owner))
+                {
+                    removed = true;
+                    continue;
+                }
+
+                queue.Enqueue(candidate);
             }
         }
 
@@ -147,32 +201,38 @@ namespace Utility.Multithreading
                 if (isDisposing)
                     return;
 
-                // If the queue is empty, then our logic is wrong
-                if (queue.TryDequeue(out Owner? finishedWaiter))
+                try
                 {
-                    // The one releasing should be the one at the top of the queue
-                    if (owner != finishedWaiter)
+                    // If the queue is empty, then our logic is wrong
+                    if (queue.TryDequeue(out Owner? finishedWaiter))
                     {
-                        syncLogsBuffer.Print();
-                        throw new OwnerMismatchException(owner, finishedWaiter);
-                    }
+                        // The one releasing should be the one at the top of the queue
+                        if (owner != finishedWaiter)
+                        {
+                            syncLogsBuffer.Print();
+                            throw new OwnerMismatchException(owner, finishedWaiter);
+                        }
 
-                    finishedWaiter.Reset();
+                        finishedWaiter.Reset();
 
-                    if (queue.TryPeek(out Owner? next))
-                        next.Set(); // Signal the next waiter in line
+                        if (queue.TryPeek(out Owner? next))
+                            next.Set(); // Signal the next waiter in line
 
 #if SYNC_DEBUG
-                    syncLogsBuffer.Report("MultithreadSync Release finished for:", source);
+                        syncLogsBuffer.Report("MultithreadSync Release finished for:", source);
+#endif
+                    }
+#if SYNC_DEBUG
+                    else
+                        syncLogsBuffer.Report("MultithreadSync Release finished CANNOT", source);
 #endif
                 }
-#if SYNC_DEBUG
-                else
-                    syncLogsBuffer.Report("MultithreadSync Release finished CANNOT", source);
-#endif
-
-                currentAcquisitionInfo = null;
-                SYNC_OWNERSHIP.TryRemove(syncId, out _);
+                finally
+                {
+                    // Ownership must be cleared even on a mismatch so no stale entry survives in the table
+                    currentAcquisitionInfo = null;
+                    SYNC_OWNERSHIP.TryRemove(syncId, out _);
+                }
             }
         }
 
@@ -227,6 +287,11 @@ namespace Utility.Multithreading
         {
             private readonly ManualResetEventSlim eventSlim = new (false);
             public readonly string Name;
+
+            /// <summary>
+            ///     Whether the owner has been signalled to proceed and has not consumed the signal yet.
+            /// </summary>
+            public bool IsSignalled => eventSlim.IsSet;
 
             public Owner(string name)
             {
@@ -289,8 +354,12 @@ namespace Utility.Multithreading
             {
                 multiThreadSync.Release(source);
 
+                // The release itself succeeded: an over-long hold is diagnostic information,
+                // throwing here would leave the caller's scope-tracking state inconsistent
                 if (DateTime.Now - start > TIMEOUT)
-                    throw new TimeoutException($"{nameof(MultiThreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}. Releasing thread: {NativeThread.CurrentId}");
+                    ReportHub.LogWarning(
+                        new ReportData(ReportCategory.SYNC, sceneShortInfo: multiThreadSync.syncLogsBuffer.sceneShortInfo),
+                        $"{nameof(MultiThreadSync)} scope for {source.Name} was held for {(DateTime.Now - start).TotalSeconds}s, longer than {TIMEOUT.TotalSeconds}s. Releasing thread: {NativeThread.CurrentId}");
             }
         }
 
@@ -315,11 +384,13 @@ namespace Utility.Multithreading
 
             public void ReleaseIfAcquired()
             {
-                if (isScoped)
-                {
-                    scope.Dispose();
-                    isScoped = false;
-                }
+                if (!isScoped)
+                    return;
+
+                // Cleared before disposing so a throwing release can never leave a stale scope
+                // that would be double-released on the next call
+                isScoped = false;
+                scope.Dispose();
             }
         }
     }

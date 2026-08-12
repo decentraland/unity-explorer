@@ -153,10 +153,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 // If the loading process didn't finish successfully unload the bundle
                 // Otherwise, it gets stuck in Unity's memory but not cached in our cache
                 // Can only be done in main thread
+                // Unload asynchronously: a synchronous unload blocks the main thread until
+                // any in-flight async load operation on this bundle completes
                 await UniTask.SwitchToMainThread();
 
                 if (assetBundle)
-                    assetBundle.Unload(true);
+                    assetBundle.UnloadAsync(true);
 
                 throw;
             }
