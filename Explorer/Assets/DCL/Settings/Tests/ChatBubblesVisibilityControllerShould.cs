@@ -65,7 +65,6 @@ namespace DCL.Settings.Tests
         [Test]
         public void ApplyStoredNoneVisibilityToSettingsAssetOnConstruction()
         {
-            // Arrange: a previous session saved "None" (index 0) for the chat bubbles setting.
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, (int) ChatBubbleVisibilitySettings.None, save: false);
 
             var view = viewGameObject.GetComponent<SettingsDropdownModuleView>();
@@ -73,12 +72,8 @@ namespace DCL.Settings.Tests
 
             var eventListener = new FakeSettingsModuleEventListener();
 
-            // Act: constructing the controller mirrors DropdownModuleBinding.CreateChatBubblesController,
-            // which runs eagerly during plugin bootstrap — before any chat message can arrive.
             controller = new ChatBubblesVisibilityController(view, chatSettingsAsset, eventListener);
 
-            // Assert: ChatWorldBubbleService gates every bubble spawn on this exact field. It must
-            // already be None right after construction, not just the dropdown's displayed value.
             Assert.AreEqual(
                 ChatBubbleVisibilitySettings.None,
                 chatSettingsAsset.chatBubblesVisibilitySettings,
