@@ -262,24 +262,16 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
-            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl))
+            // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
+            // content endpoints — no SDK-side sidecar or proxy involved. Its base URL feeds SceneAssetBundlesCDN
+            // exclusively, so wearables, emotes, LODs and the registry keep their dedicated hosts.
+            if (launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
             {
-                // local-ab: the embedded abgen JIT server reads the scene through the preview server's own
-                // content endpoints — no SDK-side sidecar or proxy involved. Otherwise the sidecar converts
-                // catalyst content, read-throughing the production CDN.
-                abgenSidecar = launchSettings.useLocalAssetBundles
-                    ? await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct, contentUrlOverride: launchSettings.LocalSceneContentUrl(), jitContentDigest: true)
-                    : await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct);
+                abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct, contentUrlOverride: launchSettings.LocalSceneContentUrl(), jitContentDigest: true);
 
-                if (abgenSidecar != null)
-                {
-                    cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
-
-                    // Eager conversion: kick the whole-scene build now, overlapping it with the rest of
-                    // startup and login instead of waiting for the world to request bundles.
-                    if (launchSettings.useLocalAssetBundles)
-                        abgenSidecar.WarmUpLocalSceneAsync(ct).Forget();
-                }
+                // Eager conversion: kick the whole-scene build now, overlapping it with the rest of
+                // startup and login instead of waiting for the world to request bundles.
+                abgenSidecar?.WarmUpLocalSceneAsync(ct).Forget();
             }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
@@ -289,7 +281,8 @@ namespace Global.Dynamic
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
-                cliOptimizedAssetsUrl);
+                cliOptimizedAssetsUrl,
+                abgenSidecar?.BaseUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
@@ -350,15 +343,6 @@ namespace Global.Dynamic
                 DeepLinkAllowlist.SetWhitelistedWorlds(DeepLinkWorldWhitelistProvider.ReadWorlds(FeatureFlagsConfiguration.Instance));
 
                 DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
-
-                // Remote kill-switch: flags arrive after the sidecar decision, so it applies here. It governs
-                // the catalyst rollout only — a local-ab sidecar was explicitly requested by the developer.
-                if (abgenSidecar != null && !launchSettings.useLocalAssetBundles && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ABGEN_SIDECAR_KILL))
-                {
-                    abgenSidecar.Dispose();
-                    abgenSidecar = null;
-                    decentralandUrlsSource.ClearOptimizedAssetsOverride();
-                }
 
                 // Need to ensure clock sync ASAP due to some requests may fail due this problem.
                 // Checking for clock desync after feature flags (or any other process that performs an http request)

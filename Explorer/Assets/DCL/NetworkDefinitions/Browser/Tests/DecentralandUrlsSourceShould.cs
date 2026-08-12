@@ -95,6 +95,30 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
+        public void RebaseOnlySceneBundlesOnTheLocalAbgenSidecar()
+        {
+            InitializeFeatureFlags(optimizedAssets: false);
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.LOCAL_SCENE_DEVELOPMENT, sceneAssetBundlesUrl: "http://127.0.0.1:5147");
+
+            Assert.AreEqual("http://127.0.0.1:5147", urlsSource.Url(DecentralandUrl.SceneAssetBundlesCDN));
+
+            // Non-scene lanes keep their dedicated hosts
+            Assert.AreEqual("https://ab-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://lod-generator-unity-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
+            Assert.AreEqual("https://asset-bundle-registry.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ResolveSceneBundlesLikeAssetBundlesCdnWithoutASidecar(bool optimizedAssets)
+        {
+            InitializeFeatureFlags(optimizedAssets);
+            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual(urlsSource.Url(DecentralandUrl.AssetBundlesCDN), urlsSource.Url(DecentralandUrl.SceneAssetBundlesCDN));
+        }
+
+        [Test]
         public void ComposeRegistryEndpointsForWearablesWorldsAndProfilesOffTheUnifiedBase()
         {
             InitializeFeatureFlags(optimizedAssets: true, assetBundleFallback: true);

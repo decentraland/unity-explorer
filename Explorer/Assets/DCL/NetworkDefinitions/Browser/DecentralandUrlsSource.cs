@@ -41,7 +41,8 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
         private readonly string? gatekeeperBaseOverride;
-        private string? optimizedAssetsBaseOverride;
+        private readonly string? optimizedAssetsBaseOverride;
+        private readonly string? sceneAssetBundlesBaseOverride;
         private readonly bool isTodayEnvironment;
 
         public DecentralandUrlsSource(
@@ -51,7 +52,8 @@ namespace DCL.Browser.DecentralandUrls
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null)
+            string? cliOptimizedAssetsUrl = null,
+            string? sceneAssetBundlesUrl = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
             isTodayEnvironment = environment == DecentralandEnvironment.Today;
@@ -60,6 +62,7 @@ namespace DCL.Browser.DecentralandUrls
             gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
+            sceneAssetBundlesBaseOverride = sceneAssetBundlesUrl?.TrimEnd('/');
 
             if (isTodayEnvironment)
             {
@@ -188,10 +191,6 @@ namespace DCL.Browser.DecentralandUrls
                 cache.Remove(url);
         }
 
-        /// <summary>Drops a sidecar-provided optimized-assets base so urls resolve back to the dedicated host; only effective while the url is still flag-dependent (uncached).</summary>
-        public void ClearOptimizedAssetsOverride() =>
-            optimizedAssetsBaseOverride = null;
-
         private string ResolveGatekeeperBaseUrl(string defaultBaseUrl) =>
             gatekeeperBaseOverride ?? defaultBaseUrl;
 
@@ -278,6 +277,12 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.decentraland.{ENV}"),
+
+                // Scene GLB bundles only: the sidecar-provided base when set, otherwise the exact
+                // AssetBundlesCDN resolution. FeatureFlagsDependent keeps the localhost base out of the gateway rewrite.
+                DecentralandUrl.SceneAssetBundlesCDN => sceneAssetBundlesBaseOverride is { Length: > 0 }
+                    ? new UrlData(CacheBehaviour.FeatureFlagsDependent, sceneAssetBundlesBaseOverride)
+                    : ResolveOptimizedAssetsUrl($"https://ab-cdn.decentraland.{ENV}"),
                 DecentralandUrl.LodGeneratorCDN => ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.decentraland.{ENV}"),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",

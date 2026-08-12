@@ -164,5 +164,11 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         MarketplaceServer = 101,
         ShopLink = 102,
+
+        /// <summary>
+        ///     Base for scene GLB bundles only. Resolves to the local abgen sidecar when one is running,
+        ///     otherwise identical to <see cref="AssetBundlesCDN" /> (wearables, emotes and LODs always use the dedicated keys).
+        /// </summary>
+        SceneAssetBundlesCDN = 103,
     }
 }

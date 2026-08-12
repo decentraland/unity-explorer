@@ -7,13 +7,14 @@
 `AbgenSidecar` (Global/Dynamic) runs the abgen JIT server as a supervised localhost child:
 free loopback port, env-configured (peer catalyst upstream, `ABGEN_UPSTREAM_AB_CDN` read-through,
 persistent disk cache under `persistentDataPath/abgen`), health-checked, restarted up to 3× on
-unexpected exit, killed in `MainSceneLoader.Shutdown()`. It is the third link in the
-optimized-assets precedence chain (`--optimized-assets-url` > `useLocalAssetBundles` > sidecar),
-gated on `StreamingAssets/abgen(.exe)` being provisioned. The loading flow is untouched: bundles
-stream over loopback via `DownloadHandlerAssetBundle` directly into native memory (no managed
-copies), and the server covers manifests, scene bundles, dependencies and wearables/emotes
-(read-through), JIT-converting only what the CDN lacks. The in-proc fallback below remains as a
-second, narrower safety net; it can be stripped once the sidecar is judged sufficient.
+unexpected exit, killed in `MainSceneLoader.Shutdown()`. It only spawns in local scene development
+with `--local-ab`, and only when no explicit `--optimized-assets-url` is given. Its base URL feeds
+`DecentralandUrl.SceneAssetBundlesCDN` exclusively — scene GLB bundles and scene manifests — while
+wearables, emotes, LODs and the asset-bundle registry keep resolving to their dedicated hosts. The
+loading flow is untouched: bundles stream over loopback via `DownloadHandlerAssetBundle` directly
+into native memory (no managed copies), the server JIT-converting whatever its cache lacks. The
+in-proc fallback below remains as a second, narrower safety net; it can be stripped once the
+sidecar is judged sufficient.
 
 Measured (Linux x86_64, CPU-only): cold whole-entity JIT 0.8s (2-GLB scene) / 5.3s (24-GLB, 12MB);
 warm disk-cache hits <1ms; server RSS ~16MB idle, 130–435MB peak during converts; GPU BC7/BC5
