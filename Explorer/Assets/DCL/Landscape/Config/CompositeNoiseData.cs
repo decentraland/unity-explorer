@@ -30,7 +30,9 @@ namespace DCL.Landscape.Config
 
         public float finalCutOff;
 
+#pragma warning disable CS0618 // NoiseGeneratorCache preserved for World Terrain only
         public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache) =>
             new CompositeNoiseGenerator(this, baseSeed, variantSeed, cache);
+#pragma warning restore CS0618
     }
 }

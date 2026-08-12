@@ -2,12 +2,14 @@ using Cysharp.Threading.Tasks;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.UI.ConfirmationDialog
 {
@@ -32,6 +34,11 @@ namespace DCL.UI.ConfirmationDialog
         [field: SerializeField] private TMP_Text_ClickeableLink additionalUrlTextLinkHandler { get; set; } = null!;
 
         private readonly UniTask[] closeTasks = new UniTask[3];
+
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> profileThumbnail = new (ProfileThumbnailViewModel.Default());
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> fromProfileThumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? profileThumbnailCts;
+        private CancellationTokenSource? fromProfileThumbnailCts;
 
         public UniTask[] GetCloseTasks(CancellationToken ct)
         {
@@ -88,10 +95,16 @@ namespace DCL.UI.ConfirmationDialog
             if (!hasProfileImage) return;
 
             profilePictureView.SetDefaultThumbnail();
-            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo);
+            profileThumbnail.UpdateValue(ProfileThumbnailViewModel.Default(dialogData.UserInfo.UserNameColor));
+            profilePictureView.Bind(profileThumbnail);
+            profileThumbnailCts = profileThumbnailCts.SafeRestart();
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(profileThumbnail, null, dialogData.UserInfo, profileThumbnailCts.Token).Forget();
 
             fromProfilePictureView.SetDefaultThumbnail();
-            fromProfilePictureView.Setup(profileRepositoryWrapper, dialogData.FromUserInfo);
+            fromProfileThumbnail.UpdateValue(ProfileThumbnailViewModel.Default(dialogData.FromUserInfo.UserNameColor));
+            fromProfilePictureView.Bind(fromProfileThumbnail);
+            fromProfileThumbnailCts = fromProfileThumbnailCts.SafeRestart();
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(fromProfileThumbnail, null, dialogData.FromUserInfo, fromProfileThumbnailCts.Token).Forget();
 
 
             additonalUrlText.gameObject.SetActive(false);
@@ -122,6 +135,12 @@ namespace DCL.UI.ConfirmationDialog
 
             cancelButton.gameObject.SetActive(false);
             confirmButton.gameObject.SetActive(false);
+        }
+
+        private void OnDestroy()
+        {
+            profileThumbnailCts.SafeCancelAndDispose();
+            fromProfileThumbnailCts.SafeCancelAndDispose();
         }
 
     }

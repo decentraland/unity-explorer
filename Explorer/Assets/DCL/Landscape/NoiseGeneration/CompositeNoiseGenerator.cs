@@ -10,10 +10,13 @@ namespace DCL.Landscape.NoiseGeneration
     public class CompositeNoiseGenerator : BaseNoiseGenerator
     {
         private readonly CompositeNoiseData compositeNoiseData;
+#pragma warning disable CS0618 // NoiseGeneratorCache preserved for World Terrain only
         private readonly NoiseGeneratorCache generatorCache;
+#pragma warning restore CS0618
         private readonly uint baseSeed;
         private NoiseGenerator mainJob;
 
+#pragma warning disable CS0618 // NoiseGeneratorCache preserved for World Terrain only
         public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed, uint variantSeed, NoiseGeneratorCache generatorCache) :
             base(compositeNoiseData, variantSeed, baseSeed, generatorCache.noiseNativeArrayProvider)
         {
@@ -21,6 +24,7 @@ namespace DCL.Landscape.NoiseGeneration
             this.baseSeed = baseSeed;
             this.generatorCache = generatorCache;
         }
+#pragma warning restore CS0618
 
         protected override JobHandle OnSchedule(NoiseDataPointer noiseDataPointer, JobHandle parentJobHandle, int batchCount)
         {

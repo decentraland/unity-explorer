@@ -9,7 +9,9 @@ namespace DCL.Landscape.Config
         public uint seed;
         public NoiseDataBase other;
 
+#pragma warning disable CS0618 // NoiseGeneratorCache preserved for World Terrain only
         public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache) =>
             other.GetGenerator(baseSeed, seed, cache);
+#pragma warning restore CS0618
     }
 }

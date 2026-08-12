@@ -1,12 +1,16 @@
+using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using System;
 using System.Globalization;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utility;
 using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
@@ -45,6 +49,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         private bool canUnHover = true;
         private bool isUserCard = false;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.Members;
+
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? thumbnailCts;
 
         public ICommunityMemberData? UserProfile { get; protected set; }
 
@@ -96,6 +103,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             background.color = normalColor;
         }
 
+        private void OnDestroy()
+        {
+            thumbnailCts.SafeCancelAndDispose();
+        }
+
         public void Configure(ICommunityMemberData memberProfile, MembersListView.MemberListSections section, bool isSelfCard, ProfileRepositoryWrapper profileDataProvider)
         {
             UnHover();
@@ -112,7 +124,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             mutualFriendsText.gameObject.SetActive(memberProfile.FriendshipStatus != FriendshipStatus.friend && memberProfile.MutualFriends > 0);
             roleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.Role.ToString());
             roleText.transform.parent.gameObject.SetActive(memberProfile.Role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            profilePicture.Setup(profileDataProvider, memberProfile.Profile);
+
+            thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(userColor));
+            profilePicture.Bind(thumbnail);
+            thumbnailCts = thumbnailCts.SafeRestart();
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, memberProfile.Profile, thumbnailCts.Token).Forget();
 
             currentSection = section;
             isUserCard = isSelfCard;

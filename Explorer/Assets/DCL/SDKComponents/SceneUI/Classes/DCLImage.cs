@@ -240,7 +240,9 @@ namespace DCL.SDKComponents.SceneUI.Classes
             MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
 
             // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
+#pragma warning disable CS0618 // MeshWriteData.uvRegion is editor-deprecated in 6000.x; manual remap retained pending a visual check that the renderer now auto-remaps
             var uvRegion = mwd.uvRegion;
+#pragma warning restore CS0618
 
             VERTICES[0].uv = (uvs.BottomLeft * uvRegion.size) + uvRegion.min;
             VERTICES[1].uv = (uvs.TopLeft * uvRegion.size) + uvRegion.min;
@@ -281,7 +283,9 @@ namespace DCL.SDKComponents.SceneUI.Classes
             MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
 
             // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
+#pragma warning disable CS0618 // MeshWriteData.uvRegion is editor-deprecated in 6000.x; manual remap retained pending a visual check that the renderer now auto-remaps
             var uvRegion = mwd.uvRegion;
+#pragma warning restore CS0618
 
             // the texture should be cut off if it exceeds the parent rect
             float uvsDisplacementX = (1 - (width / targetTextureWidth)) / 2f;

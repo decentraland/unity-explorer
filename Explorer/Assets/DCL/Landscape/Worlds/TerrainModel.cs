@@ -61,7 +61,9 @@ namespace DCL.Landscape
 
             // Generate chunk models
             {
+#pragma warning disable CS0618 // TerrainModel.ChunkModels preserved for World Terrain only
                 ChunkModels = new ChunkModel[SizeInChunks * SizeInChunks];
+#pragma warning restore CS0618
 
                 for (var x = 0; x < SizeInChunks; x++)
                 for (var y = 0; y < SizeInChunks; y++)
@@ -73,11 +75,15 @@ namespace DCL.Landscape
                     if (TryOverlap(model, out int2 overlap))
                         model.ProcessOverlap(overlap);
 
+#pragma warning disable CS0618 // TerrainModel.ChunkModels preserved for World Terrain only
                     ChunkModels[x + (y * SizeInChunks)] = model;
+#pragma warning restore CS0618
                 }
 
                 foreach (int2 parcel in ownedParcels)
+#pragma warning disable CS0618 // TerrainModel.ChunkModels preserved for World Terrain only
                 foreach (ChunkModel chunk in ChunkModels)
+#pragma warning restore CS0618
                     if (ChunkContains(chunk, parcel))
                     {
                         chunk.AddOccupiedParcel(parcel);

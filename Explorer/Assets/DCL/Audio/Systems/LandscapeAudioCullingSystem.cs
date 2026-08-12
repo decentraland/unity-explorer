@@ -130,7 +130,9 @@ namespace DCL.Audio.Systems
         private void InitializeTerrainAudioStates()
         {
             int parcelSize = terrain.ParcelSize;
+#pragma warning disable CS0618 // TerrainModel.ChunkModels preserved for World Terrain only
             ChunkModel[] terrainChunks = terrain.TerrainModel.ChunkModels;
+#pragma warning restore CS0618
             landscapeAudioStates = new NativeArray<LandscapeAudioState>(terrainChunks.Length, Allocator.Persistent);
             landscapeAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrainChunks.Length, Allocator.Persistent);
             int chunkSize = terrain.GetChunkSize();

@@ -1,4 +1,5 @@
-﻿using DCL.Audio;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.Emoji;
 using DCL.Profiles;
@@ -6,11 +7,14 @@ using DCL.UI.CustomInputField;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SuggestionPanel;
+using DCL.Utilities;
 using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Communities.CommunitiesCard.Announcements
 {
@@ -41,6 +45,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private string currentProfileThumbnailUrl = null!;
         private AnnouncementEmojiController? announcementEmojiController;
 
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? thumbnailCts;
+
         private void Awake()
         {
             characterCounter.SetMaximumLength(announcementInput.characterLimit);
@@ -63,6 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             ViewDependencies.ClipboardManager.OnPaste -= OnPasteClipboardText;
 
             announcementEmojiController?.Dispose();
+            thumbnailCts.SafeCancelAndDispose();
         }
 
         public void Configure(Profile? profile, ProfileRepositoryWrapper profileDataProvider)
@@ -72,7 +80,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             if (profile != null && currentProfileThumbnailUrl != profile.Compact.FaceSnapshotUrl)
             {
-                profilePicture.Setup(profileDataProvider, profile.UserNameColor, profile.Compact.FaceSnapshotUrl);
+                thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(profile.UserNameColor));
+                profilePicture.Bind(thumbnail);
+                thumbnailCts = thumbnailCts.SafeRestart();
+                GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile.Compact, thumbnailCts.Token).Forget();
                 currentProfileThumbnailUrl = profile.Compact.FaceSnapshotUrl;
             }
 

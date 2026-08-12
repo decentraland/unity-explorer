@@ -17,10 +17,12 @@ namespace DCL.Landscape.Config
             persistance = 0.3f,
         };
 
+#pragma warning disable CS0618 // NoiseGeneratorCache preserved for World Terrain only
         public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache)
         {
             return new NoiseGenerator(this, variantSeed, baseSeed, cache.noiseNativeArrayProvider);
         }
+#pragma warning restore CS0618
     }
 
     [Serializable]

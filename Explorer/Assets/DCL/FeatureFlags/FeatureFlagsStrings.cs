@@ -178,7 +178,6 @@ namespace DCL.FeatureFlags
                 FeatureFlag.MarketplaceCredits => FeatureFlagsStrings.MARKETPLACE_CREDITS,
                 FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
                 FeatureFlag.AuthCodeValidation => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
-                FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
                 FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
                 FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
                 FeatureFlag.GiftingEnabled => FeatureFlagsStrings.GIFTING_ENABLED,
