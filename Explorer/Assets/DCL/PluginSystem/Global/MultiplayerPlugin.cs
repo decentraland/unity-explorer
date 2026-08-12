@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -48,7 +47,6 @@ namespace DCL.PluginSystem.Global
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IEmoteStorage emoteStorage;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IProfileBroadcast profileBroadcast;
@@ -87,7 +85,6 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IRemoteEntities remoteEntities,
             IScenesCache scenesCache,
-            IEmoteStorage emoteStorage,
             CharacterDataPropagationUtility characterDataPropagationUtility,
             IComponentPoolsRegistry poolsRegistry,
             ThroughputBufferBunch islandThroughputBufferBunch,
@@ -113,7 +110,6 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
-            this.emoteStorage = emoteStorage;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.poolsRegistry = poolsRegistry;
             this.islandThroughputBufferBunch = islandThroughputBufferBunch;
@@ -171,7 +167,7 @@ namespace DCL.PluginSystem.Global
             PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);
             PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
-            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteStorage);
+            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder);
             PlayerTransformPropagationSystem.InjectToWorld(ref builder, poolsRegistry.GetReferenceTypePool<SDKTransform>());
 #endif
         }

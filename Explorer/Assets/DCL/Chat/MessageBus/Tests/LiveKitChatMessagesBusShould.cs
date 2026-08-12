@@ -19,6 +19,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using ChatMessage = DCL.Chat.History.ChatMessage;
 using ChatPacket = Decentraland.Kernel.Comms.Rfc4.Chat;
 
@@ -60,7 +61,7 @@ namespace DCL.Chat.MessageBus.Tests
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
             OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
             FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
-            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
+            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs, CancellationToken.None));
             RoomMetadataCurrentScene.InitializeTest();
 
             pipesHub = new FakeMessagePipesHub();
