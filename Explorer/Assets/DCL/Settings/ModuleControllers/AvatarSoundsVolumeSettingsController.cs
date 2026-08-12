@@ -27,11 +27,13 @@ namespace DCL.Settings.ModuleControllers
         private void SetAvatarVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_AVATAR_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_AVATAR_VOLUME, volumePercentage);
+            PrefsSaveDebouncer.Shared.RequestSave();
         }
 
         public override void Dispose()
         {
+            PrefsSaveDebouncer.Shared.FlushIfPending();
             view.SliderView.Slider.onValueChanged.RemoveListener(SetAvatarVolumeSettings);
         }
     }

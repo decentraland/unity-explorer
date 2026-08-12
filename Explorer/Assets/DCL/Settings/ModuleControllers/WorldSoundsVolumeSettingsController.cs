@@ -30,12 +30,14 @@ namespace DCL.Settings.ModuleControllers
         private void SetWorldVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_WORLD_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_WORLD_VOLUME, volumePercentage);
+            PrefsSaveDebouncer.Shared.RequestSave();
             volumeBus.SetWorldVolume(volumePercentage / 100);
         }
 
         public override void Dispose()
         {
+            PrefsSaveDebouncer.Shared.FlushIfPending();
             view.SliderView.Slider.onValueChanged.RemoveListener(SetWorldVolumeSettings);
         }
     }
