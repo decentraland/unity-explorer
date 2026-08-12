@@ -10,9 +10,6 @@ namespace ECS.StreamableLoading.Cache
     public abstract class RefCountStreamableCacheBase<TAssetData, TAsset, TLoadingIntention> : IStreamableCache<TAssetData, TLoadingIntention>
         where TAssetData: StreamableRefCountData<TAsset> where TLoadingIntention: IEquatable<TLoadingIntention>
     {
-        private static readonly Comparison<(TLoadingIntention intention, TAssetData asset)> COMPARE_BY_LAST_USED_FRAME_REVERSED =
-            (d1, d2) => d2.asset.LastUsedFrame.CompareTo(d1.asset.LastUsedFrame);
-
         internal readonly Dictionary<TLoadingIntention, TAssetData> cache = new (IntentionsComparer<TLoadingIntention>.INSTANCE);
 
         internal readonly List<(TLoadingIntention intention, TAssetData asset)> listedCache = new ();
@@ -61,18 +58,76 @@ namespace ECS.StreamableLoading.Cache
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
         {
-            listedCache.Sort(COMPARE_BY_LAST_USED_FRAME_REVERSED);
+            // CacheCleaner.UnloadCache evicts a small fixed per-frame chunk (TEXTURE 1, GLTF 3, AUDIO_CLIP 100),
+            // always tiny next to the resident count N, so a full O(N log N) sort every frame is wasted work:
+            // select the k = maxUnloadAmount least-recently-used disposable entries via k linear min-scans instead.
+            if (maxUnloadAmount <= 0 || listedCache.Count == 0)
+                return;
 
-            for (int i = listedCache.Count - 1; frameTimeBudget.TrySpendBudget() && i >= 0 && maxUnloadAmount > 0; i--)
+            // Full-purge fast-track when maxUnloadAmount >= listedCache.Count (k >= N; the unbudgeted hot-reload
+            // path passes int.MaxValue). Every disposable entry is evicted regardless of order, so a single O(N)
+            // compaction sweep drains them instead of one O(N) min-scan per eviction (which would be O(N^2)).
+            if (maxUnloadAmount >= listedCache.Count)
             {
-                (var key, var asset) = listedCache[i];
+                var write = 0;
+                var budgetExhausted = false;
 
+                for (var read = 0; read < listedCache.Count; read++)
+                {
+                    (TLoadingIntention key, TAssetData asset) = listedCache[read];
 
-                if (!asset.CanBeDisposed()) continue;
+                    if (!budgetExhausted && asset.CanBeDisposed())
+                    {
+                        if (frameTimeBudget.TrySpendBudget())
+                        {
+                            asset.Dispose();
+                            cache.Remove(key);
+                            continue; // drop it — do not copy into the survivor prefix
+                        }
 
-                asset.Dispose();
+                        budgetExhausted = true; // out of budget: keep this and every remaining entry
+                    }
+
+                    listedCache[write++] = listedCache[read];
+                }
+
+                listedCache.RemoveRange(write, listedCache.Count - write);
+
+                inCacheCount.Value = cache.Count;
+                return;
+            }
+
+            while (maxUnloadAmount > 0 && listedCache.Count > 0 && frameTimeBudget.TrySpendBudget())
+            {
+                int victim = -1;
+                long victimFrame = long.MaxValue;
+
+                for (var i = 0; i < listedCache.Count; i++)
+                {
+                    TAssetData asset = listedCache[i].asset;
+
+                    if (!asset.CanBeDisposed()) continue;
+
+                    long frame = asset.LastUsedFrame;
+
+                    if (victim == -1 || frame < victimFrame)
+                    {
+                        victim = i;
+                        victimFrame = frame;
+                    }
+                }
+
+                if (victim == -1) break;
+
+                (var key, TAssetData victimAsset) = listedCache[victim];
+
+                victimAsset.Dispose();
                 cache.Remove(key);
-                listedCache.RemoveAt(i);
+
+                // Order no longer needs to be preserved (nothing reads listedCache ordered), so swap-remove is O(1).
+                int last = listedCache.Count - 1;
+                listedCache[victim] = listedCache[last];
+                listedCache.RemoveAt(last);
 
                 maxUnloadAmount--;
             }
