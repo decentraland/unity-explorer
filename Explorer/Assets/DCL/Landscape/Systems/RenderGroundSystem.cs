@@ -101,6 +101,9 @@ namespace DCL.Landscape.Systems
                 return;
             }
 
+            // Allocated once and never resized: instanceCounts holds one slot per ground mesh kind,
+            // and GroundMeshes is enum-indexed (GroundMeshPiece) with a private setter, so its length
+            // is fixed for the lifetime of the app. transforms is a NativeList and grows on demand.
             NativeArray<int> instanceCounts;
             NativeList<Matrix4x4> transforms;
 
