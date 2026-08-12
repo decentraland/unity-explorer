@@ -209,7 +209,7 @@ jobs:
   prebuild:
     name: Prebuild
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     # Skip when PR has 'perf_test' label (only performance tests should run)
     if: |
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
@@ -256,11 +256,14 @@ jobs:
       targets: ${{ steps.get_targets.outputs.targets }}
     steps:
       - name: Checkout code
+        if: github.event_name == 'pull_request' || (github.event.inputs.version == '' && inputs.version == '')
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          filter: blob:none
 
       - name: Detect changes under Explorer/**
+        if: github.event_name == 'pull_request'
         id: changed_explorer
         uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
         with:
@@ -353,7 +356,7 @@ jobs:
           fi
 
       - name: Debug Commit SHA
-        if: steps.decide.outputs.should_build == 'true'
+        if: steps.decide.outputs.should_build == 'true' && (github.event_name == 'pull_request' || (github.event.inputs.version == '' && inputs.version == ''))
         run: |
           echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
           echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"
