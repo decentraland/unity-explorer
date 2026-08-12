@@ -76,6 +76,9 @@ namespace DCL.Events
             view.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
         }
 
+        public static DateTime GetEventLocalDate(in EventDTO eventInfo) =>
+            eventInfo.NextStartAtProcessed.ToLocalTime();
+
         public void Dispose()
         {
             eventsStateService.ClearEvents();
@@ -288,7 +291,7 @@ namespace DCL.Events
                     // In case we have live events prior to today, they have to be also shown on the calendar, so we add them into the current results
                     foreach (EventDTO liveEventInfo in liveEventsResults.Value)
                     {
-                        DateTime eventLocalDate = DateTimeOffset.Parse(liveEventInfo.next_start_at).ToLocalTime().DateTime;
+                        DateTime eventLocalDate = GetEventLocalDate(in liveEventInfo);
                         if (eventLocalDate.Date < fromDate)
                             eventsList.Add(liveEventInfo);
                     }
@@ -299,7 +302,7 @@ namespace DCL.Events
 
             foreach (EventDTO eventInfo in eventsResult.Value)
             {
-                DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
+                DateTime eventLocalDate = GetEventLocalDate(in eventInfo);
                 if (eventLocalDate.Date >= fromDate)
                     eventsList.Add(eventInfo);
             }
@@ -316,7 +319,7 @@ namespace DCL.Events
                 List<EventDTO> liveEventsPriorToToday = new ();
                 foreach (EventDTO eventInfo in eventsList)
                 {
-                    DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
+                    DateTime eventLocalDate = GetEventLocalDate(in eventInfo);
 
                     for (var i = 0; i < numberOfDays; i++)
                     {

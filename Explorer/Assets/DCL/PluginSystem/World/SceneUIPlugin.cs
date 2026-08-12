@@ -17,6 +17,7 @@ using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
 using DCL.SDKComponents.SceneUI.Systems.UIText;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
+using DCL.Utility;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -31,20 +32,26 @@ namespace DCL.PluginSystem.World
 {
     public class SceneUIPlugin : IDCLWorldPlugin<SceneUIPlugin.Settings>
     {
+        // Deploy timestamp on/after which an unset textWrap follows the SDK default (wrap); earlier deployments keep
+        // the legacy "unset textWrap => no wrap" layout. An explicit textWrap is always honored. (2026-08-11T00:00:00Z)
+        private static readonly long TEXT_WRAP_DEFAULT_CUTOFF_MS = new DateTimeOffset(2026, 8, 11, 0, 0, 0, TimeSpan.Zero).ToUnixTimeMilliseconds();
+
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly FrameTimeCapBudget frameTimeBudgetProvider;
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IComponentPool<UITransformComponent> transformsPool;
         private readonly IInputBlock inputBlock;
+        private readonly bool isLocalSceneDevelopment;
 
         private UIDocument uiDocument = null!;
         private StyleFontDefinition[] styleFontDefinitions;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, ILaunchMode launchMode)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
+            isLocalSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
@@ -59,6 +66,15 @@ namespace DCL.PluginSystem.World
         public void Dispose()
         {
         }
+
+        /// <summary>
+        ///     Whether a text whose textWrap is unset should wrap by default. Locally developed scenes are authored
+        ///     against the current SDK default and always wrap; deployed scenes only wrap when they were deployed on or
+        ///     after <see cref="TEXT_WRAP_DEFAULT_CUTOFF_MS" />, so older layouts keep the legacy no-wrap behavior.
+        ///     A missing timestamp (0) is treated as a legacy deployment.
+        /// </summary>
+        public static bool ShouldWrapUnsetTextByDefault(bool isLocalSceneDevelopment, long sceneDeployTimestampMs) =>
+            isLocalSceneDevelopment || sceneDeployTimestampMs >= TEXT_WRAP_DEFAULT_CUTOFF_MS;
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
@@ -89,7 +105,8 @@ namespace DCL.PluginSystem.World
             UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
             sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot));
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions);
+            bool wrapUnsetTextByDefault = ShouldWrapUnsetTextByDefault(isLocalSceneDevelopment, sharedDependencies.SceneData.SceneEntityDefinition.timestamp);
+            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions, wrapUnsetTextByDefault);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             finalizeWorldSystems.Add(UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));

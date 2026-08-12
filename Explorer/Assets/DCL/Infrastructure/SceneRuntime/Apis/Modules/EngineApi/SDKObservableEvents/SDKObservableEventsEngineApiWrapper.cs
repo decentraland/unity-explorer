@@ -21,8 +21,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             IInstancePoolsProvider instancePoolsProvider,
             ISceneExceptionsHandler exceptionsHandler,
             SceneRuntimeMetrics metrics,
+            IJsOperations jsOperations,
             CancellationTokenSource disposeCts)
-            : base(api, sceneData, instancePoolsProvider, exceptionsHandler, metrics, disposeCts)
+            : base(api, sceneData, instancePoolsProvider, exceptionsHandler, metrics, jsOperations, disposeCts)
         {
             engineApi = api;
             this.commsApi = commsApi;

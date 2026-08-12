@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using System.Collections.Generic;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     public class LogIpfsRealm : IIpfsRealm
