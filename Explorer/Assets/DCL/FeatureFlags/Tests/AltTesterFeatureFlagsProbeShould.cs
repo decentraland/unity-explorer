@@ -4,10 +4,11 @@ using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.FeatureFlags.Tests
 {
-    public class AlttesterFeatureFlagsProbeShould
+    public class AltTesterFeatureFlagsProbeShould
     {
         private const string FLAGS_JSON = @"{""flags"":{""alfa-marketplace-credits"":true,""alfa-friends"":true,""disabled-ff"":false},""variants"":{""alfa-marketplace-credits"":{""name"":""wallets"",""payload"":{""type"":""string"",""value"":""0x1,0x2""},""enabled"":true}}}";
 
@@ -36,7 +37,7 @@ namespace DCL.FeatureFlags.Tests
             InitializeFlags(FLAGS_JSON);
 
             // Act
-            bool enabled = AlttesterFeatureFlagsProbe.IsFlagEnabled(flagId);
+            bool enabled = AltTesterFeatureFlagsProbe.IsFlagEnabled(flagId);
 
             // Assert
             Assert.AreEqual(expected, enabled);
@@ -51,7 +52,7 @@ namespace DCL.FeatureFlags.Tests
             InitializeRegistry();
 
             // Act
-            bool enabled = AlttesterFeatureFlagsProbe.IsFeatureEnabled(featureId);
+            bool enabled = AltTesterFeatureFlagsProbe.IsFeatureEnabled(featureId);
 
             // Assert
             Assert.IsTrue(enabled);
@@ -65,7 +66,7 @@ namespace DCL.FeatureFlags.Tests
             InitializeRegistry();
 
             // Act
-            bool enabled = AlttesterFeatureFlagsProbe.IsFeatureEnabled("MarketplaceCredits");
+            bool enabled = AltTesterFeatureFlagsProbe.IsFeatureEnabled("MarketplaceCredits");
 
             // Assert
             Assert.IsFalse(enabled);
@@ -81,7 +82,7 @@ namespace DCL.FeatureFlags.Tests
             InitializeRegistry();
 
             // Act / Assert — a typo must fail loudly instead of reading as "off".
-            Assert.Throws<ArgumentException>(() => AlttesterFeatureFlagsProbe.IsFeatureEnabled(featureId));
+            Assert.Throws<ArgumentException>(() => AltTesterFeatureFlagsProbe.IsFeatureEnabled(featureId));
         }
 
         [Test]
@@ -92,7 +93,7 @@ namespace DCL.FeatureFlags.Tests
 
             // Act
             var variant = JsonConvert.DeserializeObject<VariantDto>(
-                AlttesterFeatureFlagsProbe.GetFlagVariantJson("alfa-marketplace-credits"));
+                AltTesterFeatureFlagsProbe.GetFlagVariantJson("alfa-marketplace-credits"));
 
             // Assert
             Assert.IsTrue(variant.present);
@@ -110,7 +111,7 @@ namespace DCL.FeatureFlags.Tests
 
             // Act
             var variant = JsonConvert.DeserializeObject<VariantDto>(
-                AlttesterFeatureFlagsProbe.GetFlagVariantJson("alfa-friends"));
+                AltTesterFeatureFlagsProbe.GetFlagVariantJson("alfa-friends"));
 
             // Assert
             Assert.IsFalse(variant.present);
@@ -124,7 +125,7 @@ namespace DCL.FeatureFlags.Tests
             InitializeRegistry();
 
             // Act
-            var status = JsonConvert.DeserializeObject<StatusDto>(AlttesterFeatureFlagsProbe.GetStatusJson());
+            StatusDto status = JsonConvert.DeserializeObject<StatusDto>(AltTesterFeatureFlagsProbe.GetStatusJson());
 
             // Assert
             Assert.IsTrue(status.flagsLoaded);
@@ -141,7 +142,7 @@ namespace DCL.FeatureFlags.Tests
             // Arrange — nothing initialized, as when a test probes before login completes.
 
             // Act
-            var status = JsonConvert.DeserializeObject<StatusDto>(AlttesterFeatureFlagsProbe.GetStatusJson());
+            StatusDto status = JsonConvert.DeserializeObject<StatusDto>(AltTesterFeatureFlagsProbe.GetStatusJson());
 
             // Assert
             Assert.IsFalse(status.flagsLoaded);
@@ -156,6 +157,7 @@ namespace DCL.FeatureFlags.Tests
             FeaturesRegistry.Initialize(new FeaturesRegistry(Substitute.For<IAppArgs>(), false));
 
         [Serializable]
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private struct VariantDto
         {
             public bool present;
@@ -166,6 +168,7 @@ namespace DCL.FeatureFlags.Tests
         }
 
         [Serializable]
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private struct StatusDto
         {
             public bool flagsLoaded;

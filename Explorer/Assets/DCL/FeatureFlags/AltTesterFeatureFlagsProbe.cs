@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.FeatureFlags
 {
@@ -12,7 +13,7 @@ namespace DCL.FeatureFlags
     ///     Gated by the <c>ALTTESTER</c> compile define (stripped from release builds by <c>CloudBuild.cs</c>
     ///     when <c>IS_RELEASE_BUILD=true</c>), so the type is absent from shipping binaries.
     /// </summary>
-    public static class AlttesterFeatureFlagsProbe
+    public static class AltTesterFeatureFlagsProbe
     {
         /// <summary>
         ///     Raw remote flag state, keyed without the <c>explorer-</c> prefix the server carries
@@ -34,6 +35,7 @@ namespace DCL.FeatureFlags
         ///     The flag's variant and payload, for allowlist-style gating.
         ///     Shape: <c>{"present":true,"name":"wallets","enabled":true,"payloadType":"string","payloadValue":"0x1,0x2"}</c>.
         /// </summary>
+        [SuppressMessage("ReSharper", "RedundantAnonymousTypePropertyName")]
         public static string GetFlagVariantJson(string flagId)
         {
             if (!FeatureFlagsConfiguration.Instance.TryGetVariant(flagId, out FeatureFlagVariantDto variant))
