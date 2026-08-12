@@ -239,8 +239,33 @@
     background-color: rgba(15, 15, 17, 0.9);
 }
 
-.ab-conversion-panel .unity-collection-view__item--alternative-background {
+/* Mirrors .console-entry so both consoles read the same. */
+.ab-conversion-entry {
+    padding-left: 8px;
+    padding-right: 36px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    color: var(--dcl-color-snow);
+    background-color: var(--dcl-color-black-40);
+    -unity-font-definition: var(--dcl-font-azeretmono-medium);
+    font-size: 14px;
+    white-space: normal;
+}
+
+.ab-conversion-entry.unity-collection-view__item--alternative-background {
     background-color: transparent;
+}
+
+.ab-conversion-entry:hover {
+    background-color: var(--dcl-color-black-70);
+}
+
+.ab-conversion-entry--warning {
+    color: var(--dcl-color-rarity-unique);
+}
+
+.ab-conversion-entry--error {
+    color: rgb(255, 36, 36);
 }
 
 .console-entry:hover {

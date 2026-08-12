@@ -13,6 +13,10 @@ namespace DCL.UI.DebugMenu
     /// </summary>
     public class AbConversionPanelView : DebugPanelView
     {
+        private const string USS_ENTRY = "ab-conversion-entry";
+        private const string USS_ENTRY_WARNING = "ab-conversion-entry--warning";
+        private const string USS_ENTRY_ERROR = "ab-conversion-entry--error";
+
         private readonly List<AbgenConversionMetrics.Entry> rows = new ();
         private readonly ListView list;
         private readonly Label summary;
@@ -65,9 +69,9 @@ namespace DCL.UI.DebugMenu
             try
             {
                 // Reads persistentDataPath, so it must run on the main thread; only the walk goes to the pool.
-                string root = AbgenBundleDiskCache.RootDirectory();
+                string[] roots = AbgenBundleDiskCache.AllBundleRoots();
 
-                AbgenBundleDiskCache.ClearResult result = await UniTask.RunOnThreadPool(() => AbgenBundleDiskCache.ClearAll(root));
+                AbgenBundleDiskCache.ClearResult result = await UniTask.RunOnThreadPool(() => AbgenBundleDiskCache.ClearAll(roots));
 
                 string skipped = result.SkippedFiles > 0 ? $" · <color=#FFC95B>{result.SkippedFiles} in use, skipped</color>" : string.Empty;
                 summary.text = $"cache cleared: {result.DeletedFiles} bundles · {result.DeletedBytes / (1024 * 1024f):F1} MB freed{skipped}";
@@ -79,10 +83,7 @@ namespace DCL.UI.DebugMenu
         private static VisualElement MakeRow()
         {
             var label = new Label();
-            label.style.paddingLeft = 8;
-            label.style.paddingTop = 2;
-            label.style.paddingBottom = 2;
-            label.style.whiteSpace = WhiteSpace.Normal;
+            label.AddToClassList(USS_ENTRY);
             return label;
         }
 
@@ -91,17 +92,21 @@ namespace DCL.UI.DebugMenu
             if (index < 0 || index >= rows.Count) return;
 
             AbgenConversionMetrics.Entry entry = rows[index];
+            var label = (Label)element;
 
-            ((Label)element).text = entry.Status switch
-                                    {
-                                        AbgenConversionMetrics.ConversionStatus.Converting => $"<color=#FFC95B>CONVERTING</color>  {entry.Path}",
-                                        AbgenConversionMetrics.ConversionStatus.Converted => $"<color=#63D471>OK</color>  {entry.Path}  —  {entry.OutputBytes / 1024} KB · {entry.ElapsedMs} ms · {entry.ArtifactName}",
-                                        AbgenConversionMetrics.ConversionStatus.Processed => $"<color=#63D471>DONE</color>  {entry.Path}",
-                                        AbgenConversionMetrics.ConversionStatus.Failed => $"<color=#FF6C6C>FAILED</color>  {entry.Path}  —  {entry.Error}",
-                                        AbgenConversionMetrics.ConversionStatus.Cancelled => $"<color=#8E8E8E>CANCELLED</color>  {entry.Path}",
-                                        AbgenConversionMetrics.ConversionStatus.Milestone => $"<color=#5BC0EB>●</color>  {entry.Path}",
-                                        _ => entry.Path,
-                                    };
+            label.text = entry.Status switch
+                         {
+                             AbgenConversionMetrics.ConversionStatus.Converting => $"CONVERTING  {entry.Path}",
+                             AbgenConversionMetrics.ConversionStatus.Converted => $"OK  {entry.Path}  —  {entry.OutputBytes / 1024} KB · {entry.ElapsedMs} ms · {entry.ArtifactName}",
+                             AbgenConversionMetrics.ConversionStatus.Processed => $"DONE  {entry.Path}",
+                             AbgenConversionMetrics.ConversionStatus.Failed => $"FAILED  {entry.Path}  —  {entry.Error}",
+                             AbgenConversionMetrics.ConversionStatus.Cancelled => $"CANCELLED  {entry.Path}",
+                             AbgenConversionMetrics.ConversionStatus.Milestone => $"●  {entry.Path}",
+                             _ => entry.Path,
+                         };
+
+            label.EnableInClassList(USS_ENTRY_WARNING, entry.Status == AbgenConversionMetrics.ConversionStatus.Converting);
+            label.EnableInClassList(USS_ENTRY_ERROR, entry.Status == AbgenConversionMetrics.ConversionStatus.Failed);
         }
     }
 }

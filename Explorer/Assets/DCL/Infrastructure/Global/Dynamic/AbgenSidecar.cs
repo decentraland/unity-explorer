@@ -59,7 +59,7 @@ namespace Global.Dynamic
         }
 
         public static string DownloadedExecutablePath =>
-            Path.Combine(Application.persistentDataPath, "abgen", "bin", VERSION, $"abgen-v{VERSION}-{Platform()?.target}", IsWindows ? "abgen.exe" : "abgen");
+            Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin", VERSION, $"abgen-v{VERSION}-{Platform()?.target}", IsWindows ? "abgen.exe" : "abgen");
 
         public static string StreamingAssetsExecutablePath =>
             Path.Combine(Application.streamingAssetsPath, IsWindows ? "abgen.exe" : "abgen");
@@ -97,7 +97,7 @@ namespace Global.Dynamic
             var sidecar = new AbgenSidecar(FreeLoopbackPort(),
                 contentUrlOverride ?? $"https://peer.decentraland.{environmentDomain}/content",
                 $"https://ab-cdn.decentraland.{environmentDomain}",
-                cacheRoot ?? Path.Combine(Application.persistentDataPath, contentUrlOverride == null ? "abgen" : "abgen-lsd"),
+                cacheRoot ?? Path.Combine(Application.persistentDataPath, contentUrlOverride == null ? AbgenBundleDiskCache.SIDECAR_DIR : AbgenBundleDiskCache.SIDECAR_LSD_DIR),
                 jitContentDigest);
 
             if (sidecar.Launch(exe) && await sidecar.WaitHealthyAsync(ct))
@@ -329,7 +329,7 @@ namespace Global.Dynamic
 
                 await UniTask.RunOnThreadPool(() =>
                 {
-                    string finalDir = Path.Combine(Application.persistentDataPath, "abgen", "bin", VERSION);
+                    string finalDir = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin", VERSION);
                     string tmpDir = finalDir + ".tmp";
                     if (Directory.Exists(tmpDir)) Directory.Delete(tmpDir, true);
                     ExtractTarGz(archive, tmpDir);

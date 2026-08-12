@@ -24,9 +24,34 @@ namespace ECS.StreamableLoading.AssetBundles
         // Bump to invalidate every cached bundle when the C# packaging (request layout, file naming) changes.
         private const string CACHE_VERSION = "v1";
 
+        /// <summary>Sidecar server home under persistentDataPath: bin/ (the binary), cache/ and out/ (bundles).</summary>
+        public const string SIDECAR_DIR = "abgen";
+
+        /// <summary>Sidecar home for the local-scene-development flavor; kept apart from the catalyst one.</summary>
+        public const string SIDECAR_LSD_DIR = "abgen-lsd";
+
         /// <summary>Reads <see cref="UnityEngine.Application.persistentDataPath" />; call from the main thread.</summary>
         public static string RootDirectory() =>
             Path.Combine(UnityEngine.Application.persistentDataPath, "abgen-bundles", CACHE_VERSION);
+
+        /// <summary>
+        ///     Every disk root the abgen lanes write bundles to: this in-process cache plus each sidecar
+        ///     flavor's cache/ and out/ directories — deliberately never a sidecar's bin/, which holds the
+        ///     downloaded binary. Reads persistentDataPath; call from the main thread.
+        /// </summary>
+        public static string[] AllBundleRoots()
+        {
+            string persistent = UnityEngine.Application.persistentDataPath;
+
+            return new[]
+            {
+                RootDirectory(),
+                Path.Combine(persistent, SIDECAR_DIR, "cache"),
+                Path.Combine(persistent, SIDECAR_DIR, "out"),
+                Path.Combine(persistent, SIDECAR_LSD_DIR, "cache"),
+                Path.Combine(persistent, SIDECAR_LSD_DIR, "out"),
+            };
+        }
 
         public static string ComputeKey(byte[] requestBlob)
         {
@@ -96,6 +121,22 @@ namespace ECS.StreamableLoading.AssetBundles
             }
 
             return result;
+        }
+
+        /// <summary>Aggregate of <see cref="ClearAll(string)" /> over every root.</summary>
+        public static ClearResult ClearAll(string[] roots)
+        {
+            var total = new ClearResult();
+
+            foreach (string root in roots)
+            {
+                ClearResult result = ClearAll(root);
+                total.DeletedFiles += result.DeletedFiles;
+                total.DeletedBytes += result.DeletedBytes;
+                total.SkippedFiles += result.SkippedFiles;
+            }
+
+            return total;
         }
 
         // Two-char shard keeps any single directory from collecting every bundle (mirrors abgen's LocalContentStore).
