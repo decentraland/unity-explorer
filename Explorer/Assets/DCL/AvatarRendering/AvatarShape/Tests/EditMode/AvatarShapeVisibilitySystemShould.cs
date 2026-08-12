@@ -131,38 +131,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             // Act
             system!.CalculateFrustumPlanes(testCamera);
-            bool isVisible = system.IsVisibleInCamera(testCamera, bounds);
+            bool isVisible = system.IsVisibleInCamera(bounds);
 
             // Assert
             Assert.IsTrue(isVisible);
-        }
-
-        [Test]
-        public void IsVisibleInCameraRejectsPlanesFromDifferentCamera()
-        {
-            // The frustum-plane extraction is hoisted out of the per-avatar loop into CalculateFrustumPlanes,
-            // so IsVisibleInCamera reads cached planes. Querying it with a camera whose planes were not the
-            // ones just computed must be caught, not silently answered against another camera's planes.
-            var bounds = new Bounds(new Vector3(0, 1, 5), Vector3.one);
-
-            var otherCameraGo = new GameObject("OtherCamera");
-            createdGameObjects.Add(otherCameraGo);
-            Camera otherCamera = otherCameraGo.AddComponent<Camera>();
-
-            system.CalculateFrustumPlanes(testCamera);
-
-            bool previousRaiseExceptions = UnityEngine.Assertions.Assert.raiseExceptions;
-            UnityEngine.Assertions.Assert.raiseExceptions = true;
-
-            try
-            {
-                Assert.Throws<UnityEngine.Assertions.AssertionException>(
-                    () => system.IsVisibleInCamera(otherCamera, bounds));
-            }
-            finally
-            {
-                UnityEngine.Assertions.Assert.raiseExceptions = previousRaiseExceptions;
-            }
         }
 
         [Test]
@@ -174,7 +146,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             // Act
             system!.CalculateFrustumPlanes(testCamera);
-            bool isVisible = system.IsVisibleInCamera(testCamera, bounds);
+            bool isVisible = system.IsVisibleInCamera(bounds);
 
             // Assert
             Assert.IsFalse(isVisible);

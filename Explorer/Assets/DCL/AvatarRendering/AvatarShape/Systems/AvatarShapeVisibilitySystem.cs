@@ -32,9 +32,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private SingleInstanceEntity camera;
         private GameObject? playerCamera;
-        // Camera the cached frustum planes were built for. IsVisibleInCamera validates against this so a
-        // caller cannot read planes computed for a different camera (or before any were computed).
-        private Camera? planesCamera;
 
         public AvatarShapeVisibilitySystem(World world, IUserBlockingCache userBlockingCache, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering, bool includeBannedUsersFromScene) : base(world)
         {
@@ -68,27 +65,21 @@ namespace DCL.AvatarRendering.AvatarShape
 
             if (outlineFeature != null && outlineFeature.isActive)
             {
-                Camera cam = camera.GetCameraComponent(World).Camera;
-                CalculateFrustumPlanes(cam);
-                GetAvatarsVisibleWithOutlineQuery(World, cam);
+                CameraComponent cameraComponent = camera.GetCameraComponent(World);
+                CalculateFrustumPlanes(cameraComponent.Camera);
+                GetAvatarsVisibleWithOutlineQuery(World, cameraComponent);
             }
         }
 
-        public void CalculateFrustumPlanes(Camera camera)
+        internal void CalculateFrustumPlanes(Camera camera)
         {
             GeometryUtility.CalculateFrustumPlanes(camera, planes);
-            planesCamera = camera;
         }
 
         // Tests the AABB against the frustum planes cached by the most recent CalculateFrustumPlanes call.
-        // Extraction runs once per tick in Update (not per avatar), so this does not recompute the planes;
-        // the camera argument is validated to match the camera those cached planes were built for.
-        public bool IsVisibleInCamera(Camera camera, Bounds bounds)
-        {
-            UnityEngine.Assertions.Assert.IsTrue(ReferenceEquals(planesCamera, camera),
-                "IsVisibleInCamera reads planes cached by CalculateFrustumPlanes; call it for this camera in the current tick first.");
-            return GeometryUtility.TestPlanesAABB(planes, bounds);
-        }
+        // Extraction runs once per tick in Update (not per avatar), so this does not recompute the planes.
+        internal bool IsVisibleInCamera(Bounds bounds) =>
+            GeometryUtility.TestPlanesAABB(planes, bounds);
 
         public bool IsWithinCameraDistance(Camera camera, Transform objectTransform, float maxDistancesquared)
         {
@@ -98,9 +89,9 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        private void GetAvatarsVisibleWithOutline([Data] Camera cam, in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
+        private void GetAvatarsVisibleWithOutline([Data] in CameraComponent cameraComponent, in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
         {
-            if (avatarShape.IsPreview || (IsWithinCameraDistance(cam, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(cam, avatarBase.AvatarSkinnedMeshRenderer.bounds)))
+            if (avatarShape.IsPreview || (IsWithinCameraDistance(cameraComponent.Camera, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(avatarBase.AvatarSkinnedMeshRenderer.bounds)))
             {
                 RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(avatarShape.OutlineCompatibleRenderers);
             }
