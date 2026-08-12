@@ -7,6 +7,7 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DG.Tweening;
@@ -127,6 +128,10 @@ namespace DCL.Communities.CommunitiesBrowser
             mainButton.onClick.RemoveAllListeners();
             viewCommunityButton.onClick.RemoveAllListeners();
             joinCommunityButton.onClick.RemoveAllListeners();
+
+            if (mutualFriends.thumbnails != null)
+                foreach (MutualFriendsConfig.MutualThumbnail thumb in mutualFriends.thumbnails)
+                    thumb.thumbnailCts.SafeCancelAndDispose();
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>
@@ -294,7 +299,14 @@ namespace DCL.Communities.CommunitiesBrowser
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
                 Profile.CompactInfo mutualFriend = communityData.Friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, mutualFriend);
+
+                ref MutualFriendsConfig.MutualThumbnail thumb = ref mutualFriends.thumbnails[i];
+                thumb.thumbnail ??= new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
+                thumb.thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(mutualFriend.UserNameColor));
+                thumb.picture.Bind(thumb.thumbnail);
+                thumb.thumbnailCts = thumb.thumbnailCts.SafeRestart();
+                GetProfileThumbnailCommand.Instance.ExecuteAsync(thumb.thumbnail, null, mutualFriend, thumb.thumbnailCts.Token).Forget();
+
                 bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(mutualFriend.UserId);
                 mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.Name, mutualFriend.HasClaimedName, isOfficial);
 
@@ -413,6 +425,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 public ProfileNameTooltipView profileNameTooltip;
 
                 internal bool isPointerEventsSubscribed;
+                internal ReactiveProperty<ProfileThumbnailViewModel>? thumbnail;
+                internal CancellationTokenSource? thumbnailCts;
             }
         }
 

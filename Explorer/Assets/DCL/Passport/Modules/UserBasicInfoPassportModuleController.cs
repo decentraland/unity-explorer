@@ -73,8 +73,8 @@ namespace DCL.Passport.Modules
 
         public void Clear()
         {
-            userNameElementPresenter.Element.CopyNameWarningNotification.Hide(true);
-            walletAddressElementPresenter.Element.CopyWalletWarningNotification.Hide(true);
+            userNameElementPresenter.Clear();
+            walletAddressElementPresenter.Clear();
         }
 
         public void Dispose()

@@ -37,7 +37,9 @@ namespace DCL.Quality.Runtime
                 if (!volumeProfile.Has<T>())
                 {
                     volumeProfile.components.Add(volumeComponent);
+#pragma warning disable CS0618 // VolumeProfile.isDirty is editor-deprecated in 6000.x but remains the runtime trigger to refresh the volume stack after mutating components
                     volumeProfile.isDirty = true;
+#pragma warning restore CS0618
                 }
             }
 

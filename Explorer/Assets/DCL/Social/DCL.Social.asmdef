@@ -2,6 +2,7 @@
     "name": "DCL.Social",
     "rootNamespace": "",
     "references": [
+        "GUID:4307f53044263cf4b835bd812fc161a4",
         "GUID:9b4463c7170cb485aaf17878a8b7281e",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",

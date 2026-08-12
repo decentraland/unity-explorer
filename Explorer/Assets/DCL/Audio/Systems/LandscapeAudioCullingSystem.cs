@@ -130,7 +130,9 @@ namespace DCL.Audio.Systems
         private void InitializeTerrainAudioStates()
         {
             int parcelSize = terrain.ParcelSize;
+#pragma warning disable CS0612, CS0618 // reads the [Obsolete] World-Terrain ChunkModels array (live audio boundary)
             ChunkModel[] terrainChunks = terrain.TerrainModel.ChunkModels;
+#pragma warning restore CS0612, CS0618
             landscapeAudioStates = new NativeArray<LandscapeAudioState>(terrainChunks.Length, Allocator.Persistent);
             landscapeAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrainChunks.Length, Allocator.Persistent);
             int chunkSize = terrain.GetChunkSize();
@@ -140,7 +142,9 @@ namespace DCL.Audio.Systems
 
             for (var i = 0; i < terrainChunks.Length; i++)
             {
+#pragma warning disable CS0612 // ChunkModel: live World-Terrain audio boundary
                 ChunkModel chunk = terrainChunks[i];
+#pragma warning restore CS0612
                 int2 center = (chunk.MinParcel * parcelSize) + halfTerrainChunkSize;
 
                 landscapeAudioStates[i] = new LandscapeAudioState
@@ -174,7 +178,9 @@ namespace DCL.Audio.Systems
             oceanListeningDistanceThreshold = math.pow(landscapeAudioSystemSettings.OceanDistanceThreshold, 2);
         }
 
+#pragma warning disable CS0612 // ChunkModel param: live World-Terrain audio boundary
         private NativeArray<int2> CalculateAudioSourcesPositions(ChunkModel terrain, int2 chunkSize, int parcelSize)
+#pragma warning restore CS0612
         {
             int rowsPerChunk = landscapeAudioSystemSettings.RowsPerChunk;
             int retryAttempts = landscapeAudioSystemSettings.AudioSourcePositioningRetryAttempts;

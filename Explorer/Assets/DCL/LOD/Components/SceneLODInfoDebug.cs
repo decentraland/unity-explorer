@@ -55,6 +55,9 @@ namespace DCL.LOD
             }
 
             sceneLODInfo.metadata.LodGroup.SetLODs(lods);
+
+            // Same out-of-band SetLODs as Update: invalidate the reusable buffer so it re-reads restored native state.
+            sceneLODInfo.metadata.InvalidateReusableLODs();
         }
 
         public void Update(SceneLODInfo sceneLODInfo, IReadOnlyList<Vector2Int> parcels, Material[] failedMaterials)
@@ -82,6 +85,10 @@ namespace DCL.LOD
 
             sceneLODInfo.metadata.LodGroup.RecalculateBounds();
             sceneLODInfo.metadata.LodGroup.SetLODs(lods);
+
+            // This debug SetLODs bypassed the reusable buffer (LODCacheInfo.reusableLODs); drop it so a stale cached
+            // array can't be written back over the debug mutation by the next AddSuccessLOD/RecalculateLODDistances.
+            sceneLODInfo.metadata.InvalidateReusableLODs();
 
             currentLODCount = sceneLODInfo.metadata.LODLoadedCount();
         }

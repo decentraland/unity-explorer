@@ -16,6 +16,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 using DCL.Passport;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using Utility;
@@ -41,6 +42,8 @@ namespace DCL.InWorldCamera.PhotoDetail
         private bool isShowingWearables;
         private bool wearablesLoaded;
         private CancellationTokenSource loadWearablesCts = new();
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? thumbnailCts;
 
         public VisiblePersonController(VisiblePersonView view,
             IProfileRepository profileRepository,
@@ -80,8 +83,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.userName.color = userColor;
             string address = visiblePerson.userAddress;
             view.userNameTag.text = $"#{address[^Math.Min(4, address.Length)..]}";
-            view.profilePictureView.SetBackgroundColor(userColor);
-            view.profilePictureView.SetLoadingState(true);
+            thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(userColor));
+            view.profilePictureView.Bind(thumbnail);
 
             Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(visiblePerson.userAddress, ct);
 
@@ -91,7 +94,8 @@ namespace DCL.InWorldCamera.PhotoDetail
                 view.verifiedMark.SetActive(profile.Value.HasClaimedName);
                 view.officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(visiblePerson.userAddress));
                 SetInteractable(true);
-                await view.profilePictureView.SetupAsync(profileRepositoryWrapper, userColor, profile.Value.FaceSnapshotUrl, visiblePerson.userAddress, ct);
+                thumbnailCts = thumbnailCts.SafeRestart();
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile.Value, thumbnailCts.Token);
             }
             else
             {
@@ -210,6 +214,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.userProfileButton.onClick.RemoveListener(ShowPersonPassportClicked);
             view.expandWearableButton.onClick.RemoveListener(WearableListButtonClicked);
             loadWearablesCts.SafeCancelAndDispose();
+            thumbnailCts.SafeCancelAndDispose();
         }
     }
 }

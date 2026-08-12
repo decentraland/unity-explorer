@@ -228,6 +228,7 @@ namespace Global.Dynamic
                 bootstrapContainer.Environment,
                 bootstrapContainer.Analytics.Controller,
                 StreamReactionsChatCommand,
+                staticContainer.ExposedGlobalDataContainer.ExposedCameraData,
                 CurrentChannelService);
 
         public void Dispose()

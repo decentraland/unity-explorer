@@ -183,7 +183,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		{
 			mapMarker = null;
 
-			if (gameObject.GetInstanceID() != homeMarker.MarkerObject.gameObject.GetInstanceID())
+			if (gameObject.GetEntityId() != homeMarker.MarkerObject.gameObject.GetEntityId())
 				return false;
 
 			mapMarker = homeMarker;
@@ -194,7 +194,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 		public bool TryDeHighlightObject(GameObject gameObject)
 		{
-			if (gameObject.GetInstanceID() != homeMarker.MarkerObject.gameObject.GetInstanceID())
+			if (gameObject.GetEntityId() != homeMarker.MarkerObject.gameObject.GetEntityId())
 				return false;
 
 			deHighlightCt = deHighlightCt.SafeRestart();
@@ -206,7 +206,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		{
 			mapRenderMarker = null;
 
-			if (gameObject.GetInstanceID() != homeMarker.MarkerObject.gameObject.GetInstanceID())
+			if (gameObject.GetEntityId() != homeMarker.MarkerObject.gameObject.GetEntityId())
 				return false;
 
 			DisplayPlacesInfoPanelAsync(CurrentCoordinates).Forget();

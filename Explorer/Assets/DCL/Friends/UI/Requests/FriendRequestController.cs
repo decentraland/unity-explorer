@@ -5,12 +5,14 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -41,6 +43,8 @@ namespace DCL.Friends.UI.Requests
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly Dictionary<ProfilePictureView, ReactiveProperty<ProfileThumbnailViewModel>> thumbnailProperties = new ();
+        private readonly Dictionary<ProfilePictureView, CancellationTokenSource> thumbnailLoadCts = new ();
         private CancellationTokenSource? requestOperationCancellationToken;
         private CancellationTokenSource? fetchUserCancellationToken;
         private CancellationTokenSource? showPreCancelToastCancellationToken;
@@ -129,6 +133,16 @@ namespace DCL.Friends.UI.Requests
             UnblockUnwantedInputs();
         }
 
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            foreach (CancellationTokenSource cts in thumbnailLoadCts.Values)
+                cts.SafeCancelAndDispose();
+
+            thumbnailLoadCts.Clear();
+        }
+
         private void Close()
         {
             lifeCycleTask?.TrySetResult();
@@ -176,7 +190,7 @@ namespace DCL.Friends.UI.Requests
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
                 config.UserNameHash.text = compactInfo.Value.WalletId;
 
-                await config.UserThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.FaceSnapshotUrl, user, ct);
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(BindThumbnail(config.UserThumbnail, profile.UserNameColor), null, profile, RestartThumbnailCts(config.UserThumbnail, ct));
             }
         }
 
@@ -231,7 +245,7 @@ namespace DCL.Friends.UI.Requests
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
             config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
 
-            await UniTask.WhenAll(config.UserThumbnail.SetupAsync(profileRepositoryWrapper, user.UserNameColor, user.FaceSnapshotUrl, user.Address, ct),
+            await UniTask.WhenAll(GetProfileThumbnailCommand.Instance.ExecuteAsync(BindThumbnail(config.UserThumbnail, user.UserNameColor), null, user, RestartThumbnailCts(config.UserThumbnail, ct)),
                 LoadMutualFriendsAsync(config, user.Address, ct));
         }
 
@@ -258,8 +272,30 @@ namespace DCL.Friends.UI.Requests
                 if (!friendExists) continue;
                 Profile.CompactInfo mutualFriend = mutualFriendsResult.Friends[i];
                 ProfilePictureView view = mutualConfig[i].Image;
-                view.SetupAsync(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FaceSnapshotUrl, mutualFriend.Address, ct).Forget();
+                GetProfileThumbnailCommand.Instance.ExecuteAsync(BindThumbnail(view, mutualFriend.UserNameColor), null, mutualFriend, RestartThumbnailCts(view, ct)).Forget();
             }
+        }
+
+        private ReactiveProperty<ProfileThumbnailViewModel> BindThumbnail(ProfilePictureView view, Color color)
+        {
+            if (!thumbnailProperties.TryGetValue(view, out ReactiveProperty<ProfileThumbnailViewModel> property))
+            {
+                property = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.ReadyToLoad(color));
+                thumbnailProperties[view] = property;
+                view.Bind(property);
+            }
+            else
+                property.SetLoading(color);
+
+            return property;
+        }
+
+        private CancellationToken RestartThumbnailCts(ProfilePictureView view, CancellationToken ct)
+        {
+            thumbnailLoadCts.TryGetValue(view, out CancellationTokenSource? cts);
+            cts = cts.SafeRestartLinked(ct);
+            thumbnailLoadCts[view] = cts;
+            return cts.Token;
         }
 
         private void Send()
@@ -278,11 +314,11 @@ namespace DCL.Friends.UI.Requests
                         ct)
                                                      .SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                    if (result.Success)
+                    if (result is { Success: true, Value: { } friendRequest })
                     {
                         await ShowOperationConfirmationAsync(
                             ViewState.ConfirmedSent,
-                            viewInstance.sentConfirmed, result.Value.To,
+                            viewInstance.sentConfirmed, friendRequest.To,
                             FRIEND_REQUEST_SENT_FORMAT,
                             ct);
 
@@ -322,9 +358,9 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid AcceptThenCloseAsync(CancellationToken ct)
             {
-                EnumResult<TaskError> result = await friendsService.AcceptFriendshipAsync(target.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                var result = await friendsService.AcceptFriendshipAsync(target.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                if (result.Success)
+                if (result is { Success: true, Value: true })
                 {
                     await ShowOperationConfirmationAsync(
                         ViewState.ConfirmedAccepted,
@@ -390,14 +426,14 @@ namespace DCL.Friends.UI.Requests
             Profile.CompactInfo profile, string textWithUserNameParam, CancellationToken ct)
         {
             config.Label.text = string.Format(textWithUserNameParam, ToHexStr(profile.UserNameColor), profile.Name);
-            config.FriendThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.FaceSnapshotUrl, profile.Address, ct).Forget();
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(BindThumbnail(config.FriendThumbnail, profile.UserNameColor), null, profile, RestartThumbnailCts(config.FriendThumbnail, ct)).Forget();
 
             if (config.MyThumbnail != null)
             {
                 Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct, IProfileRepository.FetchBehaviour.DelayUntilResolved);
 
                 if (myProfile != null)
-                    config.MyThumbnail.SetupAsync(profileRepositoryWrapper, myProfile.UserNameColor, myProfile.Compact.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
+                    GetProfileThumbnailCommand.Instance.ExecuteAsync(BindThumbnail(config.MyThumbnail, myProfile.UserNameColor), null, myProfile.Compact, RestartThumbnailCts(config.MyThumbnail, ct)).Forget();
             }
 
             Toggle(state);

@@ -19,6 +19,19 @@ if [ -n "$input" ] && command -v jq >/dev/null 2>&1; then
     [ "$(printf '%s' "$input" | jq -r '.stop_hook_active // false' 2>/dev/null)" = "true" ] && exit 0
 fi
 
+# Fast deterministic project rules first (CLAUDE.md / skills, added lines only):
+# instant feedback, and no point paying the multi-minute ReSharper load while
+# these are unresolved. WARN findings print but never block; BLOCK exits 2.
+custom_out="$(bash "$LINT_DIR/custom-rules.sh" --working-tree 2>/dev/null)"
+custom_rc=$?
+if [ -n "$custom_out" ]; then
+    {
+        echo "Project-rule findings on lines added this session (scripts/lint/custom-rules.sh):"
+        printf '%s\n' "$custom_out" | sed 's/^/  /'
+    } >&2
+fi
+[ "$custom_rc" -eq 2 ] && exit 2
+
 # Changed C# under Explorer/ (working tree + staged + new untracked).
 changed="$(
     {

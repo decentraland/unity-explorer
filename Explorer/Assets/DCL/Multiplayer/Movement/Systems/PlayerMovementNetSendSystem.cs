@@ -74,7 +74,7 @@ namespace DCL.Multiplayer.Movement
 
             var timeDiff = (float)(UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
-            bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
+            bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity) || World.Has<PlayerTeleportIntent>(entity);
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.JumpCount != anim.States.JumpCount)

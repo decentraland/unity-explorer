@@ -59,6 +59,12 @@ namespace DCL.Multiplayer.Movement
                 pulseMultiplayerBus.Send(message);
                 liveKitMovementMessageBus.Send(message);
             }
+
+            public void EvictPeer(string walletId)
+            {
+                pulseMultiplayerBus.EvictPeer(walletId);
+                liveKitMovementMessageBus.EvictPeer(walletId);
+            }
         }
 
         private class RemoteAnnouncementsProxy : IRemoteAnnouncements

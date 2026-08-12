@@ -23,7 +23,7 @@ namespace ECS.SceneLifeCycle
 
         void RemoveNonRealScene(IReadOnlyList<Vector2Int> parcels);
 
-        void RemoveSceneFacade(IReadOnlyList<Vector2Int> parcels);
+        void RemoveSceneFacade(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
         bool Contains(Vector2Int parcel);
 
@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
             for (var i = 0; i < parcels.Count; i++)
-                scenesByParcels.Add(parcels[i], sceneFacade);
+                scenesByParcels[parcels[i]] = sceneFacade;
 
             scenes.Add(sceneFacade);
         }
@@ -83,16 +83,15 @@ namespace ECS.SceneLifeCycle
                 nonRealSceneByParcel.Remove(parcel);
         }
 
-        public void RemoveSceneFacade(IReadOnlyList<Vector2Int> parcels)
+        public void RemoveSceneFacade(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
             foreach (var parcel in parcels)
             {
-                if (scenesByParcels.TryGetValue(parcel, out ISceneFacade? sceneFacade))
-                {
-                    scenes.Remove(sceneFacade);
+                if (scenesByParcels.TryGetValue(parcel, out ISceneFacade? currentFacade) && ReferenceEquals(currentFacade, sceneFacade))
                     scenesByParcels.Remove(parcel);
-                }
             }
+
+            scenes.Remove(sceneFacade);
         }
 
         public void AddPortableExperienceScene(ISceneFacade sceneFacade, string sceneUrn)

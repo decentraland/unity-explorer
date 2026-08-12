@@ -1,5 +1,6 @@
 ﻿using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.World;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UIText;
@@ -17,9 +18,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITextInstantiationSystemShould : UnitySystemTestBase<UITextInstantiationSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
+        private IComponentPoolsRegistry poolsRegistry = null!;
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
+        private UITransformComponent uiTransformComponent = null!;
+        private StyleFontDefinition[] fonts = null!;
 
         [SetUp]
         public void SetUp()
@@ -28,9 +30,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 new Dictionary<Type, IComponentPool>
                 {
                     { typeof(Label), new ComponentPool.WithDefaultCtor<Label>() },
-                }, null);
+                }, null!);
 
-            system = new UITextInstantiationSystem(world, poolsRegistry, new []{new StyleFontDefinition()});
+            fonts = new[] { new StyleFontDefinition() };
+            system = new UITextInstantiationSystem(world, poolsRegistry, fonts, wrapUnsetTextByDefault: true);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
         }
@@ -43,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Act
             world.Add(entity, input);
-            system.Update(0);
+            system!.Update(0);
 
             // Assert
             ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
@@ -59,7 +62,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Arrange
             var input = new PBUiText();
             world.Add(entity, input);
-            system.Update(0);
+            system!.Update(0);
             const int NUMBER_OF_UPDATES = 3;
 
             for (var i = 0; i < NUMBER_OF_UPDATES; i++)
@@ -79,6 +82,74 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Assert.IsTrue(input.GetFontSize() == uiTextComponent.Label.style.fontSize);
                 Assert.IsTrue(input.GetTextAlign() == uiTextComponent.Label.style.unityTextAlign);
             }
+        }
+
+        [Test]
+        public void WrapUnsetTextWrapForNewScenes()
+        {
+            // Arrange
+            var label = new Label();
+            var model = new PBUiText();
+            Assert.IsFalse(model.HasTextWrap);
+
+            // Act
+            UiElementUtils.SetupLabel(ref label, ref model, ref uiTransformComponent, in fonts, wrapUnsetByDefault: true);
+
+            // Assert
+            Assert.AreEqual(WhiteSpace.Normal, label.style.whiteSpace.value);
+        }
+
+        [Test]
+        public void KeepUnsetTextWrapAsNoWrapForLegacyScenes()
+        {
+            // Arrange
+            var label = new Label();
+            var model = new PBUiText();
+            Assert.IsFalse(model.HasTextWrap);
+
+            // Act
+            UiElementUtils.SetupLabel(ref label, ref model, ref uiTransformComponent, in fonts, wrapUnsetByDefault: false);
+
+            // Assert
+            Assert.AreEqual(WhiteSpace.NoWrap, label.style.whiteSpace.value);
+        }
+
+        [Test]
+        public void HonorExplicitTextWrapRegardlessOfDefault([Values(false, true)] bool wrapUnsetByDefault)
+        {
+            // Arrange
+            var wrapLabel = new Label();
+            var wrapModel = new PBUiText { TextWrap = TextWrap.TwWrap };
+            var noWrapLabel = new Label();
+            var noWrapModel = new PBUiText { TextWrap = TextWrap.TwNoWrap };
+
+            // Act
+            UiElementUtils.SetupLabel(ref wrapLabel, ref wrapModel, ref uiTransformComponent, in fonts, wrapUnsetByDefault);
+            UiElementUtils.SetupLabel(ref noWrapLabel, ref noWrapModel, ref uiTransformComponent, in fonts, wrapUnsetByDefault);
+
+            // Assert
+            Assert.AreEqual(WhiteSpace.Normal, wrapLabel.style.whiteSpace.value);
+            Assert.AreEqual(WhiteSpace.NoWrap, noWrapLabel.style.whiteSpace.value);
+        }
+
+        [Test]
+        public void WrapUnsetTextForLocalSceneDevelopmentDespiteOldTimestamp()
+        {
+            // Arrange: a local-development scene with a missing deploy timestamp still wraps, overriding the date gate,
+            // whereas a deployed scene with the same timestamp keeps the legacy no-wrap default.
+            bool wrapUnsetByDefault = SceneUIPlugin.ShouldWrapUnsetTextByDefault(isLocalSceneDevelopment: true, sceneDeployTimestampMs: 0);
+            Assert.IsTrue(wrapUnsetByDefault);
+            Assert.IsFalse(SceneUIPlugin.ShouldWrapUnsetTextByDefault(isLocalSceneDevelopment: false, sceneDeployTimestampMs: 0));
+
+            var label = new Label();
+            var model = new PBUiText();
+            Assert.IsFalse(model.HasTextWrap);
+
+            // Act
+            UiElementUtils.SetupLabel(ref label, ref model, ref uiTransformComponent, in fonts, wrapUnsetByDefault);
+
+            // Assert
+            Assert.AreEqual(WhiteSpace.Normal, label.style.whiteSpace.value);
         }
     }
 }

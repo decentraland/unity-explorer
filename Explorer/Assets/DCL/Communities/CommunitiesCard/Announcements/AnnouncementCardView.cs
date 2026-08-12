@@ -53,6 +53,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private CancellationTokenSource confirmationDialogCts = null!;
 
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? thumbnailCts;
+
         public event Action<string>? LikeAnnouncementButtonClicked;
         public event Action<string>? UnlikeAnnouncementButtonClicked;
         public event Action<string>? DeleteAnnouncementButtonClicked;
@@ -76,6 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             likeAnnouncementButton.onClick.RemoveListener(OnLikeAnnouncementButtonClicked);
             unlikeAnnouncementButton.onClick.RemoveListener(OnUnlikeAnnouncementButtonClicked);
             deleteAnnouncementButton.onClick.RemoveListener(OnDeleteAnnouncementButtonClicked);
+            thumbnailCts.SafeCancelAndDispose();
         }
 
         public void Configure(CommunityPost announcementInfo, ProfileRepositoryWrapper profileDataProvider, bool allowDeletion)
@@ -92,7 +96,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             if (currentAuthorAddress != announcementInfo.authorAddress)
             {
-                profilePicture.Setup(profileDataProvider, announcementInfo.Profile);
+                thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(announcementInfo.Profile.UserNameColor));
+                profilePicture.Bind(thumbnail);
+                thumbnailCts = thumbnailCts.SafeRestart();
+                GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, announcementInfo.Profile, thumbnailCts.Token).Forget();
                 currentAuthorAddress = announcementInfo.authorAddress;
             }
 

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using System;
 using System.Threading;
@@ -21,7 +22,12 @@ namespace DCL.RealmNavigation.TeleportOperations
             float finalizationProgress =
                 teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitRestarting);
 
-            await roomHub.StartAsync().Timeout(livekitTimeout);
+            try
+            {
+                await roomHub.StartAsync().Timeout(livekitTimeout);
+            }
+            catch (TimeoutException) { ReportHub.Log(ReportCategory.LIVEKIT, "Livekit handshake timed out; proceeding with teleport"); }
+
             teleportParams.Report.SetProgress(finalizationProgress);
         }
     }

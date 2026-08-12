@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using MVC;
@@ -36,6 +37,8 @@ namespace DCL.UI.ProfileElements
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? thumbnailCts;
 
         public async UniTaskVoid SetupAsync(Web3Address playerId, ProfileRepositoryWrapper profileDataProvider, CancellationToken ct)
         {
@@ -49,7 +52,10 @@ namespace DCL.UI.ProfileElements
 
             currentWalledId = playerId;
             userNameElement.Setup(profile.Value);
-            await profilePictureView.SetupAsync(profileRepositoryWrapper, profile.Value.UserNameColor, profile.Value.FaceSnapshotUrl, profile.Value.UserId, ct);
+            thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(profile.Value.UserNameColor));
+            profilePictureView.Bind(thumbnail);
+            thumbnailCts = thumbnailCts.SafeRestart();
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile.Value, thumbnailCts.Token);
         }
 
         private void Awake()
@@ -89,6 +95,11 @@ namespace DCL.UI.ProfileElements
         private void OnDisable()
         {
             contextMenuTask?.TrySetResult();
+        }
+
+        private void OnDestroy()
+        {
+            thumbnailCts.SafeCancelAndDispose();
         }
     }
 }

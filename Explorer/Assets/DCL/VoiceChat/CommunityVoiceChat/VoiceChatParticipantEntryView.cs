@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
@@ -46,6 +47,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [SerializeField] private GameObject promotingSpinner = null!;
 
         private Sequence? isSpeakingCurrentSequence;
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? thumbnailCts;
 
         private void Start()
         {
@@ -132,7 +135,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             nameElement.text = participantName;
             nameElement.color = nameColor;
-            profilePictureView.SetupAsync(profileRepositoryWrapper, nameColor, profilePictureUrl, walletId, ct).Forget();
+            thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(nameColor));
+            profilePictureView.Bind(thumbnail);
+            thumbnailCts = thumbnailCts.SafeRestart();
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, walletId, profilePictureUrl, thumbnailCts.Token).Forget();
         }
 
         private void OnApproveButtonClicked()
@@ -212,6 +218,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             isSpeakingCurrentSequence = null;
             isSpeakingIconRect.localScale = IDLE_SCALE;
             isSpeakingIconOuterRect.localScale = IDLE_SCALE;
+        }
+
+        private void OnDestroy()
+        {
+            thumbnailCts.SafeCancelAndDispose();
         }
     }
 }

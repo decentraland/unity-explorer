@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace DCL.Landscape.Config.Editor
 {
+    [System.Obsolete]
     public abstract class NoiseTextureGenerator : UnityEditor.Editor
     {
         private static int currentResolutionIndex = 1;

@@ -84,7 +84,9 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
         internal static bool ApplyAnchorPointTransformValues(TransformComponent targetTransform, AvatarAttachComponent avatarAttachComponent)
         {
+#pragma warning disable CS0618 // PivotCorrection is an intentional cheat to offset the old-client 0.75
             Vector3 anchorPointPosition = avatarAttachComponent.AnchorPointTransform.position + (avatarAttachComponent.PivotCorrection * Vector3.up);
+#pragma warning restore CS0618
             Quaternion anchorPointRotation = avatarAttachComponent.AnchorPointTransform.rotation;
             var modifiedComponent = false;
 

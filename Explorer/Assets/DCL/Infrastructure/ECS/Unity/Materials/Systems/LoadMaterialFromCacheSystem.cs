@@ -13,7 +13,6 @@ namespace ECS.Unity.Materials.Systems
     ///     Intercepts the loading process if the material is in the cache.
     ///     TODO Consider reworking as currently Materials caching is disabled
     /// </summary>
-    [Obsolete("the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear, consider revising when and if needed")]
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     [UpdateBefore(typeof(CreateBasicMaterialSystem))]

@@ -2,7 +2,8 @@
 // https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/engine_api.proto
 
 module.exports.crdtSendToRenderer = async function(messages) {
-    const data = new Uint8Array(UnityEngineApi.CrdtSendToRenderer(messages.data))
+    // C# already returns a JS Uint8Array (ClearScript typed-array proxy) — no `new Uint8Array(...)` wrapper.
+    const data = UnityEngineApi.CrdtSendToRenderer(messages.data)
     return {
         data: [data]
     };
@@ -22,7 +23,8 @@ module.exports.sendBatch = async function() {
 }
 
 module.exports.crdtGetState = async function() {
-    const data = new Uint8Array(UnityEngineApi.CrdtGetState())
+    // C# already returns a JS Uint8Array (ClearScript typed-array proxy) — no `new Uint8Array(...)` wrapper.
+    const data = UnityEngineApi.CrdtGetState()
     return {
         data: [data],
         hasEntities: true //TODO replace with actual value

@@ -1,0 +1,286 @@
+#!/usr/bin/env bash
+# Deterministic project-rule linter: regex rules from CLAUDE.md / .claude/skills,
+# enforced ONLY on lines added in the diff under inspection — pre-existing
+# violations never block (same ratchet philosophy as the ReSharper warning count).
+#
+# Usage:
+#   custom-rules.sh --working-tree            # added lines vs HEAD + untracked files (Stop hook)
+#   custom-rules.sh --diff <base> <head>      # added lines in a commit range (CI)
+#
+# Output: one finding per line  ->  <path>:<line>  <severity>  <rule-id>  <message>
+# Exit codes: 0 = clean (or only WARN findings); 2 = BLOCK findings present;
+#             3 = a rule pattern is broken (never silently passes).
+#
+# Escape hatch: a finding is suppressed when its line carries a trailing
+#   // lint-ignore: <rule-id>[, <rule-id>...]
+# comment naming that rule. Use it for the rare sanctioned exception (e.g. an
+# #if UNITY_EDITOR-guarded Debug.Log); the suppression stays visible in the
+# diff for reviewers to challenge.
+#
+# Patterns are POSIX EREs evaluated by awk as dynamic regexes: no \b/\y word
+# boundaries (write (^|[^[:alnum:]_.]) guards instead) so they behave the same
+# under gawk, mawk, and BSD awk.
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+mode="${1:?usage: custom-rules.sh --working-tree | --diff <base> <head>}"
+
+# ---------------------------------------------------------------------------
+# Rules. rule <severity> <id> <include-path-ERE> <exclude-path-ERE> <line-ERE> <message> [anti-ERE]
+#   severity  BLOCK (exit 2) or WARN (printed, never blocks)
+#   include   rule applies only to paths matching (empty = every .cs file)
+#   exclude   rule never applies to paths matching (empty = no exclusions)
+#   anti      optional: a line matching this is NOT a finding even when the
+#             pattern matches (carves a sanctioned idiom out of a broad pattern)
+# Keep each message pointing at the rule's source doc so findings explain themselves.
+# ---------------------------------------------------------------------------
+declare -a R_SEV=() R_ID=() R_INC=() R_EXC=() R_PAT=() R_MSG=() R_ANT=()
+rule() { R_SEV+=("$1"); R_ID+=("$2"); R_INC+=("$3"); R_EXC+=("$4"); R_PAT+=("$5"); R_MSG+=("$6"); R_ANT+=("${7:-}"); }
+
+EXCLUDE_NON_PROD='(^|/)([A-Za-z]*Tests?|Editor|Plugins|Demo)/|Editor\.cs$|Should\.cs$|Tests?\.cs$'
+
+# CLAUDE.md § Other project-specific rules: ReportHub for all logging.
+# ReportsHandling is the ReportHub implementation itself - its own error/ANR-dump
+# paths cannot log through it.
+rule BLOCK debug-log '' "$EXCLUDE_NON_PROD|(^|/)ReportsHandling/" \
+    '(^|[^[:alnum:]_])(UnityEngine\.)?Debug\.(Log|LogError|LogWarning|LogException|LogFormat|LogErrorFormat|LogWarningFormat|LogAssertion)\(' \
+    'Use ReportHub instead of Debug.Log (CLAUDE.md; diagnostics-and-logging skill)'
+
+# CLAUDE.md § Anti-Patterns: ObjectProxy is an anti-pattern — never introduce a new
+# instance. Tests constructing the two sanctioned proxies are exempt.
+rule BLOCK object-proxy '' "$EXCLUDE_NON_PROD" \
+    '(^|[^[:alnum:]_])new +ObjectProxy<' \
+    'ObjectProxy is an anti-pattern - pick a recipe from docs/architecture-overview.md § Deferred dependencies (CLAUDE.md)'
+
+# CLAUDE.md § Anti-Patterns: fix the namespace or leave the warning visible.
+rule BLOCK checknamespace-suppression '' '' \
+    'ReSharper +disable( +once)? +CheckNamespace' \
+    'Never suppress CheckNamespace - fix the namespace instead (docs/code-style-guidelines.md § Namespaces)'
+
+# CLAUDE.md § Performance Constraints: no LINQ in systems - it allocates.
+rule BLOCK linq-in-system 'System\.cs$' "$EXCLUDE_NON_PROD" \
+    'using +System\.Linq' \
+    'No LINQ in ECS systems - Update() must be allocation-free (CLAUDE.md § Performance Constraints)'
+
+# CLAUDE.md § Anti-Patterns: camera is an ECS singleton - TryGet in a system,
+# not Camera.main in a presenter.
+rule BLOCK camera-main '' "$EXCLUDE_NON_PROD" \
+    '(^|[^[:alnum:]_])(UnityEngine\.)?Camera\.main($|[^[:alnum:]_])' \
+    'Use the ECS camera singleton (TryGet in a system), not Camera.main (CLAUDE.md § Anti-Patterns)'
+
+# NOTE: no null!/default! rule on purpose - `[field: SerializeField] ... = null!`
+# is the sanctioned inspector-assigned idiom and the attribute sits on the previous
+# line, invisible to a per-line check (310 hits over 200 commits, all legitimate).
+
+# code-standards skill: #nullable disable is a last resort for generated/interop code.
+rule BLOCK nullable-disable '' '' \
+    '^[ \t]*#nullable +disable' \
+    'Do not add #nullable disable - annotate properly instead (code-standards skill)'
+
+# docs/code-style-guidelines.md § Naming: interfaces are prefixed with I.
+rule BLOCK interface-prefix '' '' \
+    '(public|internal) +(partial +)?interface +([^I[:space:]]|I[a-z_])' \
+    'Interface names must start with I (docs/code-style-guidelines.md § Naming Conventions)'
+
+# docs/standards.md § Tests: NUnit + NSubstitute only.
+rule BLOCK foreign-test-framework '' '' \
+    'using +(Moq|Xunit|FluentAssertions|FakeItEasy)( *;|\.)' \
+    'Tests use NUnit + NSubstitute only (docs/standards.md § Tests)'
+
+# testing-infrastructure skill: async tests must be async Task - async void
+# exceptions escape the test runner.
+rule BLOCK async-void-in-tests '(^|/)Tests?/|Should\.cs$|Tests\.cs$' '' \
+    '(^|[^[:alnum:]_])async +void +' \
+    'Tests must use async Task, not async void (testing-infrastructure skill)'
+
+# feature-flags-and-configuration skill: flag names in code drop the explorer- prefix.
+rule BLOCK explorer-flag-prefix '' '' \
+    'IsEnabled *\( *"explorer-' \
+    'Flag names drop the explorer- prefix in code (feature-flags-and-configuration skill)'
+
+# debug-widget skill: TryAddWidget returns null when debug is disabled - consume with ?.
+rule BLOCK tryaddwidget-unguarded '' '' \
+    'TryAddWidget *\([^)]*\) *\.' \
+    'TryAddWidget returns null when debug is disabled - chain with ?. (debug-widget skill)'
+
+# scene-runtime-and-crdt skill: no thread affinity in scene-runtime code - execution
+# hops threads at every await.
+rule BLOCK thread-affinity-scene-runtime '(^|/)(SceneRunner|SceneRuntime|CrdtEcsBridge)/' "$EXCLUDE_NON_PROD" \
+    '\[ThreadStatic\]|ThreadLocal<|Thread\.CurrentThread' \
+    'No thread affinity in scene-runtime code - it hops threads at every await (scene-runtime-and-crdt skill)'
+
+# diagnostics-and-logging skill: pass a ReportCategory constant, not a string literal.
+# WARN: some overloads legitimately take the message first.
+rule WARN reporthub-string-category '' '' \
+    'ReportHub\.(Log|LogWarning|LogError|LogException) *\( *"' \
+    'Pass a ReportCategory constant to ReportHub, not a string literal (diagnostics-and-logging skill)'
+
+# CLAUDE.md § Querying: World.Query is a last resort (delegate/closure overhead).
+rule WARN world-query '' "$EXCLUDE_NON_PROD" \
+    '(^|[^[:alnum:]_])[Ww]orld\.Query *\(' \
+    'World.Query is a last resort - prefer source-generated [Query] (CLAUDE.md § Querying)'
+
+# web-requests skill: HTTP goes through IWebRequestController.
+rule WARN raw-http '' "(^|/)WebRequests/|$EXCLUDE_NON_PROD" \
+    'new +(HttpClient|WebClient) *\(|UnityWebRequest\.(Get|Post|Put|Delete|Head) *\(|new +UnityWebRequest *\(' \
+    'Route HTTP through IWebRequestController (web-requests skill)'
+
+# docs/code-style-guidelines.md: use nameof for parameter names.
+rule WARN nameof-argument-exception '' '' \
+    'new +(ArgumentNullException|ArgumentOutOfRangeException) *\( *"' \
+    'Use nameof(...) for the parameter name (docs/code-style-guidelines.md)'
+
+# Make invalid states unrepresentable: a nullable local smuggles a maybe-state
+# through the method. Rewrite with pattern matching to get a NON-nullable local:
+#   if (source.Find(id) is not { } item) return;   // item is T, not T?
+rule BLOCK nullable-local '' "$EXCLUDE_NON_PROD" \
+    '^[ \t]*[A-Za-z_][A-Za-z0-9_.]*(<[^;={}]*>)?\? +[a-z_][A-Za-z0-9_]* *(=[^;]*)?;' \
+    'Local variables must not be nullable - use pattern matching (is not { } x) to bind a non-nullable local (CLAUDE.md § Anti-Patterns)'
+
+# The null-forgiving operator lies to the compiler about nullability. The anti
+# carves out (a) the sanctioned "= null!"/"= default!" initializer idiom
+# (wire-format DTOs, [SerializeField]-assigned members, generic defaults) and
+# (b) the three split-phase-initialization idioms the frameworks force -
+# viewInstance! (MVC view created after the controller), Instance! (late-init
+# singletons), World! (Arch ECS field assigned during system wiring) - where
+# no NRT-clean rewrite exists.
+rule BLOCK null-forgiving-suppression '' "$EXCLUDE_NON_PROD" \
+    '! *[.;,)]' \
+    'Never use the null-forgiving ! to silence nullability - restructure so the value is provably non-null (CLAUDE.md § Anti-Patterns)' \
+    '(null|default) *! *[.;,)]|(viewInstance|(^|[^[:alnum:]_])(Instance|World))! *[.;,)]'
+
+# CLAUDE.md § Safe Component Mutation: use ref var to obtain a component,
+# never var alone - a plain var copies the struct and mutations are silently
+# lost. Correct form: ref var x = ref world.Get<T>(entity).
+rule BLOCK world-get-copy '' "$EXCLUDE_NON_PROD" \
+    '(^|[ \t(])var +[a-z_][A-Za-z0-9_]* *= *([A-Za-z_][A-Za-z0-9_.]*)?[Ww]orld\.Get<' \
+    'Use ref var x = ref World.Get<T>() - a plain var copies the component and mutations are silently lost (CLAUDE.md § Safe Component Mutation)' \
+    'ref +(readonly +)?var'
+
+# Review-enforced (mikhail-dcl, PR #9339): interpolation inside StringBuilder
+# allocates the intermediate string - the typed Append overloads exist for this.
+rule BLOCK stringbuilder-interpolation '' "$EXCLUDE_NON_PROD" \
+    '\.Append(Line)? *\( *\$"' \
+    'Do not interpolate into StringBuilder - use the typed Append overloads (review rule, PR #9339; docs/standards.md § Memory)'
+
+# CLAUDE.md § Anti-Patterns: comments state what THIS code does, never what
+# callers/upper layers will do with it (review-enforced by NickKhalow).
+rule WARN caller-narrating-comment '' "$EXCLUDE_NON_PROD" \
+    '// .*so (that )?(the )?(caller|consumer|upper layer|client)s?[^[:alnum:]]' \
+    'Comments must not narrate caller/external behavior - state only what this code does (CLAUDE.md § Anti-Patterns)'
+
+# docs/code-style-guidelines.md § Attributes: [Button] from EasyButtons over [ContextMenu].
+rule WARN contextmenu '' "$EXCLUDE_NON_PROD" \
+    '\[ContextMenu' \
+    'Prefer [Button] from EasyButtons over [ContextMenu] (docs/code-style-guidelines.md § Attribute Usages)'
+
+# ---------------------------------------------------------------------------
+# Emit added lines as: <path>\t<line-number>\t<line-text>
+# ---------------------------------------------------------------------------
+parse_diff() {
+    awk '
+        /^\+\+\+ b\// { path = substr($0, 7); sub(/\t$/, "", path); next }
+        /^@@ /        { split($0, a, "+"); split(a[2], b, /[ ,]/); line = b[1]; next }
+        /^\+/         { if (path != "") printf "%s\t%d\t%s\n", path, line, substr($0, 2); line++ }
+    '
+}
+
+# The -c/-- flags pin the exact diff format parse_diff expects, immune to user
+# gitconfig (diff.noprefix, diff.mnemonicPrefix, diff.external, core.quotePath).
+GIT_DIFF=(git -c core.quotePath=off -c diff.noprefix=false diff
+    --no-ext-diff --src-prefix=a/ --dst-prefix=b/ -U0 --no-color --diff-filter=ACMR)
+
+# The selftest fixture corpus is violations on purpose - never lint it.
+# Assets/Plugins and Packages are vendored/plugin-layer code these project
+# rules don't govern (mirrors filter-warnings.sh's ownership boundary).
+# Analyzers/ is Roslyn-host code with its own idioms (nullable locals are
+# idiomatic there) - governed by its own test suite, not these Unity rules.
+PATHSPEC=('*.cs'
+    ':(exclude)scripts/lint/tests/**'
+    ':(exclude)Analyzers/**'
+    ':(exclude)Explorer/Assets/Plugins/**'
+    ':(exclude)Explorer/Packages/**')
+
+added_lines() {
+    case "$mode" in
+        --working-tree)
+            "${GIT_DIFF[@]}" HEAD -- "${PATHSPEC[@]}" 2>/dev/null | parse_diff
+            # untracked .cs files: every line counts as added
+            git -c core.quotePath=off ls-files --others --exclude-standard -- "${PATHSPEC[@]}" 2>/dev/null |
+            while IFS= read -r f; do
+                [ -f "$f" ] && F="$f" awk '{ printf "%s\t%d\t%s\n", ENVIRON["F"], NR, $0 }' < "$f"
+            done
+            ;;
+        --diff)
+            local base="${2:?--diff needs <base> <head>}" head="${3:?--diff needs <base> <head>}"
+            "${GIT_DIFF[@]}" "$base" "$head" -- "${PATHSPEC[@]}" 2>/dev/null | parse_diff
+            ;;
+        *)
+            echo "custom-rules: unknown mode '$mode'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Apply every rule to every added line. A cheap grep -E pass narrows each rule
+# to candidate lines (the C regex engine is ~200x faster than awk dynamic
+# regexes on big diffs); awk then re-verifies the exact pattern against the
+# text column alone and applies the path include/exclude. Patterns reach awk
+# through the environment (never -v, which escape-processes backslashes).
+# A rule whose pattern fails to compile exits 3 - never a silent pass.
+# ---------------------------------------------------------------------------
+main() {
+    local tmp found i cpat
+    tmp="$(mktemp)"; found="$(mktemp)"
+    trap 'rm -f "$tmp" "$found"' EXIT
+
+    added_lines "$@" > "$tmp"
+    [ -s "$tmp" ] || exit 0
+
+    for i in "${!R_ID[@]}"; do
+        # Candidate pre-filter over the whole TSV line. A leading ^ can never
+        # match after the path\tline\t prefix, so strip it for the candidate
+        # pass - the exact pattern is still enforced by awk below. (^|...)
+        # groups degrade gracefully: the other branch matches the tab.
+        cpat="${R_PAT[$i]#^}"
+        printf 'probe\n' | grep -E -- "$cpat" >/dev/null 2>&1
+        if [ $? -gt 1 ]; then
+            echo "custom-rules: rule '${R_ID[$i]}' has an invalid pattern - refusing to pass" >&2
+            exit 3
+        fi
+        { grep -E -- "$cpat" "$tmp" || true; } |
+        INC="${R_INC[$i]}" EXC="${R_EXC[$i]}" PAT="${R_PAT[$i]}" ANT="${R_ANT[$i]}" \
+        SEV="${R_SEV[$i]}" ID="${R_ID[$i]}" MSG="${R_MSG[$i]}" \
+        awk -F'\t' '
+            BEGIN {
+                inc = ENVIRON["INC"]; exc = ENVIRON["EXC"]; pat = ENVIRON["PAT"]; ant = ENVIRON["ANT"]
+            }
+            {
+                path = $1; ln = $2
+                text = $0; sub(/^[^\t]*\t[^\t]*\t/, "", text)
+                if (inc != "" && path !~ inc) next
+                if (exc != "" && path ~ exc) next
+                if (text !~ pat) next
+                if (ant != "" && text ~ ant) next
+                # same-line escape hatch: // lint-ignore: rule-a, rule-b
+                if (text ~ ("lint-ignore:[ a-z0-9,-]*" ENVIRON["ID"] "([^a-z0-9-]|$)")) next
+                printf "%s:%s  %s  %s  %s\n", path, ln, ENVIRON["SEV"], ENVIRON["ID"], ENVIRON["MSG"]
+            }
+        ' >> "$found" || {
+            echo "custom-rules: rule '${R_ID[$i]}' failed to evaluate - refusing to pass" >&2
+            exit 3
+        }
+    done
+
+    [ -s "$found" ] || exit 0
+    sort -t: -k1,1 -k2,2n "$found"
+    # grep -q on a file, not a pipe: a SIGPIPE'd writer under pipefail once
+    # turned BLOCK findings into exit 0 here.
+    grep -q '  BLOCK  ' "$found" && exit 2
+    exit 0
+}
+
+main "$@"

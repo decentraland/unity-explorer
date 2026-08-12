@@ -17,6 +17,7 @@ namespace DCL.Landscape.Config
             persistance = 0.3f,
         };
 
+        [Obsolete(TerrainModel.OBSOLESCENCE_MESSAGE)]
         public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache)
         {
             return new NoiseGenerator(this, variantSeed, baseSeed, cache.noiseNativeArrayProvider);

@@ -58,7 +58,6 @@ using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
 
-// ReSharper disable once CheckNamespace
 namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner

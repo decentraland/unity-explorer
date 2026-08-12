@@ -27,6 +27,31 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             return new AnyInputInfo(anyButtonWasPressedThisFrame, anyButtonWasReleasedThisFrame, anyButtonIsPressed);
         }
 
+        /// <summary>
+        ///     Non-boxing overload for the hot path. Iterating a concrete
+        ///     <see cref="Dictionary{TKey,TValue}.ValueCollection" /> binds its struct enumerator,
+        ///     whereas the <see cref="IEnumerable{T}" /> overload boxes <c>IEnumerator&lt;InputAction&gt;</c>
+        ///     on the heap every call. Logic is identical to the interface overload.
+        /// </summary>
+        public static AnyInputInfo GatherAnyInputInfo(this Dictionary<ECSComponents.InputAction, InputAction>.ValueCollection eligibleInputActions)
+        {
+            var anyButtonWasPressedThisFrame = false;
+            var anyButtonWasReleasedThisFrame = false;
+            var anyButtonIsPressed = false;
+
+            foreach (InputAction inputAction in eligibleInputActions)
+            {
+                // Break the loop as soon as we resolve all press state
+                // Note: & is used instead of && to ensure all input actions are evaluated
+                if ((anyButtonWasPressedThisFrame |= inputAction.WasPressedThisFrame())
+                    & (anyButtonWasReleasedThisFrame |= inputAction.WasReleasedThisFrame())
+                    & (anyButtonIsPressed |= inputAction.IsPressed()))
+                    break;
+            }
+
+            return new AnyInputInfo(anyButtonWasPressedThisFrame, anyButtonWasReleasedThisFrame, anyButtonIsPressed);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsQualifiedByDistance(
             in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
@@ -100,6 +125,20 @@ namespace DCL.Interaction.PlayerOriginated.Utility
         }
 
         public static void TryAppendButtonAction(IReadOnlyDictionary<DCL.ECSComponents.InputAction, InputAction> sdkInputActionsMap, ref AppendPointerEventResultsIntent resultsIntent)
+        {
+            foreach (var input in sdkInputActionsMap)
+
+                // Add all inputs that were pressed/unpressed this frame
+                TryAppendButtonAction(input.Value!, input.Key, ref resultsIntent);
+        }
+
+        /// <summary>
+        ///     Non-boxing overload for the hot path. Iterating a concrete
+        ///     <see cref="Dictionary{TKey,TValue}" /> binds its struct enumerator, whereas the
+        ///     <see cref="IReadOnlyDictionary{TKey,TValue}" /> overload boxes the enumerator on the
+        ///     heap every call. Same iteration, same order, identical body.
+        /// </summary>
+        public static void TryAppendButtonAction(Dictionary<DCL.ECSComponents.InputAction, InputAction> sdkInputActionsMap, ref AppendPointerEventResultsIntent resultsIntent)
         {
             foreach (var input in sdkInputActionsMap)
 

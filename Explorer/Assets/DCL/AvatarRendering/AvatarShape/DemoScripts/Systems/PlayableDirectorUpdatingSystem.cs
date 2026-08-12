@@ -31,7 +31,7 @@ namespace DCL.AvatarAnimation
         {
             // Just taking the one and only playable director from the scene is ok for now
             if (playableDirector == null)
-                playableDirector = GameObject.FindObjectOfType<PlayableDirector>();
+                playableDirector = GameObject.FindAnyObjectByType<PlayableDirector>();
 
             if (playableDirector != null)
             {

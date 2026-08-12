@@ -1,4 +1,5 @@
-﻿using DCL.Communities;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.EventInfo;
 using DCL.EventsApi;
@@ -8,6 +9,7 @@ using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -66,6 +68,9 @@ namespace DCL.Events
                 public GameObject root;
                 public ProfilePictureView picture;
                 public HoverableTooltip tooltip;
+
+                internal ReactiveProperty<ProfileThumbnailViewModel>? thumbnail;
+                internal CancellationTokenSource? thumbnailCts;
             }
         }
 
@@ -127,6 +132,10 @@ namespace DCL.Events
             loadingThumbnailCts.SafeCancelAndDispose();
             openContextMenuCts.SafeCancelAndDispose();
             lastLoadedThumbnailUrl = null;
+
+            if (friendsConnected.thumbnails != null)
+                foreach (FriendsConnectedConfig.FriendsConnectedThumbnail thumb in friendsConnected.thumbnails)
+                    thumb.thumbnailCts.SafeCancelAndDispose();
         }
 
         private void OnDestroy()
@@ -198,7 +207,14 @@ namespace DCL.Events
                     friendsThumbnails[i].root.SetActive(friendExists);
                     if (!friendExists) continue;
                     Profile.CompactInfo friendInfo = friends[i];
-                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+
+                    ref FriendsConnectedConfig.FriendsConnectedThumbnail thumb = ref friendsThumbnails[i];
+                    thumb.thumbnail ??= new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
+                    thumb.thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(friendInfo.UserNameColor));
+                    thumb.picture.Bind(thumb.thumbnail);
+                    thumb.thumbnailCts = thumb.thumbnailCts.SafeRestart();
+                    GetProfileThumbnailCommand.Instance.ExecuteAsync(thumb.thumbnail, null, friendInfo, thumb.thumbnailCts.Token).Forget();
+
                     friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
                 }
             }

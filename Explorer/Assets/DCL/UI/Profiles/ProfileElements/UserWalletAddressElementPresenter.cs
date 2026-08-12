@@ -38,6 +38,13 @@ namespace DCL.UI.ProfileElements
             Element.UserWalletAddressText.text = $"{profileId[..5]}...{profileId[^5..]}";
         }
 
+        public void Clear()
+        {
+            currentProfileId = null;
+            Element.UserWalletAddressText.text = string.Empty;
+            Element.CopyWalletWarningNotification.Hide(true);
+        }
+
         public void Dispose()
         {
             Element.CopyWalletAddressButton.onClick.RemoveAllListeners();

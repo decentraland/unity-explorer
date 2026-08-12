@@ -118,6 +118,19 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
+        public void GateQmCasingPreservationOnV49()
+        {
+            Assert.That(AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01").PreservesOriginalCasing(), Is.True,
+                "v49 manifests preserve the original Qm casing");
+            Assert.That(AssetBundleManifestVersion.CreateFromFallback("v50", "2026-05-01").PreservesOriginalCasing(), Is.True,
+                "Versions past v49 also preserve casing");
+            Assert.That(AssetBundleManifestVersion.CreateFromFallback("v48", "2026-05-01").PreservesOriginalCasing(), Is.False,
+                "Pre-v49 manifests keep the legacy lowercase behavior");
+            Assert.That(AssetBundleManifestVersion.CreateFromFallback("v35", "2026-05-01").PreservesOriginalCasing(), Is.False,
+                "Legacy Qm conversions keep the lowercase behavior");
+        }
+
+        [Test]
         public void PreferDigestEntriesOverContentCasingEntries()
         {
             string platform = PlatformUtils.GetCurrentPlatform();

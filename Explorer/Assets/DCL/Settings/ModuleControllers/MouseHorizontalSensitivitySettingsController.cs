@@ -24,11 +24,13 @@ namespace DCL.Settings.ModuleControllers
         private void SetHorizontalMouseSensitivity(float sensitivity)
         {
             controlsSettingsAsset.HorizontalMouseSensitivity = sensitivity;
-            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY, sensitivity, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY, sensitivity);
+            PrefsSaveDebouncer.Shared.RequestSave();
         }
 
         public override void Dispose()
         {
+            PrefsSaveDebouncer.Shared.FlushIfPending();
             view.SliderView.Slider.onValueChanged.RemoveAllListeners();
         }
     }
