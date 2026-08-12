@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -280,6 +281,44 @@ namespace ECS.StreamableLoading.AssetBundles
                 entries[contentPath] = entry;
 
                 inFlight--;
+                version++;
+            }
+        }
+
+        /// <summary>
+        ///     Full-census correction for the sampled progress lane: every file in
+        ///     <paramref name="contentPaths" /> that the ~2 Hz progress poll never witnessed becomes a
+        ///     processed row, still-converting ones settle to processed, and the planned/ok counters
+        ///     rise to the census size. Call once the whole-scene build has finished.
+        /// </summary>
+        public void ReconcileWarmUpCensus(IReadOnlyList<string> contentPaths)
+        {
+            lock (gate)
+            {
+                foreach (string path in contentPaths)
+                {
+                    if (entries.TryGetValue(path, out Entry existing))
+                    {
+                        if (existing.Status != ConversionStatus.Converting) continue;
+
+                        existing.Status = ConversionStatus.Processed;
+                        entries[path] = existing;
+                        inFlight--;
+                        succeeded++;
+                        continue;
+                    }
+
+                    entries[path] = new Entry
+                    {
+                        Path = path,
+                        Status = ConversionStatus.Processed,
+                        Sequence = sequence++,
+                    };
+
+                    succeeded++;
+                }
+
+                planned = Math.Max(planned, contentPaths.Count);
                 version++;
             }
         }

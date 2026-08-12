@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Utility;
 using ECS.StreamableLoading.AssetBundles;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -199,6 +200,10 @@ namespace Global.Dynamic
                 if (manifestRequest.result != UnityWebRequest.Result.Success)
                     throw new IOException($"manifest request failed ({manifestRequest.responseCode}): {manifestRequest.error}");
 
+                // The progress poll only samples whichever file is converting at each tick, so fast files
+                // leave no row; backfill the panel with the scene's full convertible file list.
+                await ReconcileCensusAsync(entityId, ct);
+
                 AbgenConversionMetrics.INSTANCE.OnWarmUpReady((float)stopwatch.Elapsed.TotalSeconds, alreadyWarm: !sawBuildProgress);
 
                 AbgenConversionMetrics.INSTANCE.OnMilestone(sawBuildProgress
@@ -233,6 +238,44 @@ namespace Global.Dynamic
                 ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
             }
         }
+
+        /// <summary>
+        ///     Backfills the AB panel with every convertible file of the scene entity, sourced from the
+        ///     entity definition's content list (readable paths — the manifest only carries hashed artifact
+        ///     names). Best effort: a failure leaves the sampled rows as they are.
+        /// </summary>
+        private async UniTask ReconcileCensusAsync(string entityId, CancellationToken ct)
+        {
+            try
+            {
+                using UnityWebRequest request = UnityWebRequest.Get($"{catalystContentUrl}/contents/{entityId}");
+                request.timeout = 10;
+                await request.SendWebRequest().WithCancellation(ct);
+
+                EntityContent? entity = JsonUtility.FromJson<EntityContent>(request.downloadHandler.text);
+                if (entity?.content == null) return;
+
+                var files = new List<string>(entity.content.Length);
+
+                foreach (EntityContent.FileEntry entry in entity.content)
+                    if (IsConvertible(entry.file))
+                        files.Add(entry.file);
+
+                AbgenConversionMetrics.INSTANCE.ReconcileWarmUpCensus(files);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+            }
+        }
+
+        /// <summary>The extensions abgen's corpus build converts: models and the standalone images they reference.</summary>
+        private static bool IsConvertible(string file) =>
+            file.EndsWith(".glb", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>Null when no build for the entity is in flight (the route 404s before the build registers and after it finishes).</summary>
         private async UniTask<BuildProgress?> TryGetBuildProgressAsync(string entityId, CancellationToken ct)
@@ -653,6 +696,19 @@ namespace Global.Dynamic
         private class CorpusManifest
         {
             public int exitCode;
+        }
+
+        /// <summary>The content mapping of a deployed entity (ADR-80 entity schema); the rest of the document is ignored here.</summary>
+        [Serializable]
+        private class EntityContent
+        {
+            public FileEntry[] content = null!;
+
+            [Serializable]
+            public class FileEntry
+            {
+                public string file = null!;
+            }
         }
     }
 }
