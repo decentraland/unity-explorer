@@ -13,7 +13,6 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -21,27 +20,14 @@ using Utility;
 
 namespace DCL.MapRenderer.Tests.LiveEvents
 {
-    /// <summary>
-    ///     Regression coverage for decentraland/unity-explorer#9538 ("Live event markers missing on the map when
-    ///     many events are live"). <see cref="LiveEventsMarkersController" />'s poll method fetches all live
-    ///     events (Land + WORLD, interleaved and ordered by start time) and must build a marker for every LAND
-    ///     event regardless of where a WORLD event sorts in that list.
-    ///     <br />
-    ///     Pre-patch, the loop does `if (eventDto.world) return;` instead of `continue`, which exits the whole
-    ///     polling method (not just the loop) the first time a WORLD event is seen - any LAND event ordered
-    ///     after it in the response never gets a marker. This test feeds [world-event, land-event, land-event]
-    ///     and expects both land markers to be created. It is expected to FAIL against the unpatched code (zero
-    ///     markers created for either land event) and PASS once `return` is changed to `continue`
-    ///     (potential-fix.patch).
-    /// </summary>
     [TestFixture]
     public class LiveEventsMarkersControllerShould
     {
-        private LiveEventsMarkersController controller;
-        private IWebRequestController webRequestController;
-        private CategoryIconMappingsSO categoryIconMappings;
-        private CancellationTokenSource pollCts;
-        private List<string> createdMarkerEventNames;
+        private LiveEventsMarkersController controller = null!;
+        private IWebRequestController webRequestController = null!;
+        private CategoryIconMappingsSO categoryIconMappings = null!;
+        private CancellationTokenSource pollCts = null!;
+        private List<string> createdMarkerEventNames = null!;
 
         [SetUp]
         public void SetUp()
@@ -87,7 +73,7 @@ namespace DCL.MapRenderer.Tests.LiveEvents
                 eventsApiService,
                 Substitute.For<IObjectPool<CategoryMarkerObject>>(),
                 builder,
-                null,
+                null!,
                 coordsUtils,
                 cullingController,
                 categoryIconMappings,
@@ -103,7 +89,7 @@ namespace DCL.MapRenderer.Tests.LiveEvents
         {
             pollCts.Cancel();
             pollCts.Dispose();
-            controller?.Dispose();
+            controller.Dispose();
 
             if (categoryIconMappings != null)
                 UnityEngine.Object.DestroyImmediate(categoryIconMappings);
@@ -141,15 +127,12 @@ namespace DCL.MapRenderer.Tests.LiveEvents
 
         private void InvokePoll()
         {
-            MethodInfo pollMethod = typeof(LiveEventsMarkersController).GetMethod(
-                "PollEventsAndPlacesOverTimeAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;
-
             // The mocked GetEventsAsync resolves as an already-completed UniTask, so this runs synchronously
             // (same call stack) all the way up to the first genuine suspension point - `await
             // UniTask.Delay(LIVE_EVENTS_POLLING_TIME, ...)`. That means every marker for this poll cycle is
-            // already created by the time Invoke returns, exactly mirroring the synchronous portion of the
+            // already created by the time InvokePoll returns, exactly mirroring the synchronous portion of the
             // production `PollEventsAndPlacesOverTimeAsync(...).Forget()` call in EnableAsync.
-            pollMethod.Invoke(controller, new object[] { pollCts.Token });
+            controller.PollEventsAndPlacesOverTimeAsync(pollCts.Token).Forget();
         }
     }
 }
