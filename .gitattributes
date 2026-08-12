@@ -51,3 +51,13 @@ scripts/uuav/uuav-binaries.lock.json text eol=lf
 *.asset binary
 *.controller binary
 *.asset text diff=yaml merge=yaml
+
+# Root-level compiler rsp files must check out byte-identical to what
+# scripts/generate-ignore-warnings.sh writes (LF), or its drift check rewrites
+# them on CRLF-converting builders and re-triggers a Bee DAG rebuild.
+Explorer/Assets/*.rsp text eol=lf
+
+# Shell scripts must check out LF everywhere: CRLF-converting Windows builders
+# fail them with "$'\r': command not found" (seen on every Windows cloud build
+# running the UBA preBuildScript).
+*.sh text eol=lf

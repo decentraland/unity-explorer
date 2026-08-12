@@ -292,7 +292,7 @@ namespace DCL.SDKComponents.Tween
             pbTween.Duration > 0
             && sdkTweenComponent.CustomTweener != null
             && !sdkTweenComponent.CustomTweener.IsFinished()
-            && sdkTweenComponent.CustomTweener.GetElapsedTime() >= (pbTween.Duration / MILLISECONDS_CONVERSION_INT);
+            && sdkTweenComponent.CustomTweener.GetElapsedTime() >= pbTween.Duration / MILLISECONDS_CONVERSION_INT;
     }
 
     /// <summary>

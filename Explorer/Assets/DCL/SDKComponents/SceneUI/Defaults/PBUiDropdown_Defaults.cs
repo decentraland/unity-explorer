@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Defaults
             !self.Disabled;
 
         public static int GetSelectedIndex(this PBUiDropdown self) =>
-            self.SelectedIndex <= -1 ? (self.AcceptEmpty ? -1 : 0) : self.SelectedIndex;
+            self.SelectedIndex <= -1 ? self.AcceptEmpty ? -1 : 0 : self.SelectedIndex;
 
         public static TextAnchor GetTextAlign(this PBUiDropdown self) =>
             (self.HasTextAlign ? self.TextAlign : TextAlignMode.TamMiddleCenter).ToUnityTextAlign();
