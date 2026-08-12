@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.Ipfs;
 using DCL.ResourcesUnloading;
@@ -39,6 +40,8 @@ namespace ECS.SceneLifeCycle
 
         public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct)
         {
+            ResetStalePointAt();
+
             var parcel = world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
             if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache)) return null;
 
@@ -52,6 +55,8 @@ namespace ECS.SceneLifeCycle
 
         public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId, string? changedModelSrc = null)
         {
+            ResetStalePointAt();
+
             if (!scenesCache.TryGetBySceneId(sceneId, out var sceneInCache)) return null;
 
             var foundEntity = FindSceneEntity(sceneInCache!);
@@ -73,6 +78,14 @@ namespace ECS.SceneLifeCycle
                 });
 
             return sceneEntity;
+        }
+
+        private void ResetStalePointAt()
+        {
+            if (!world.Has<HandPointAtComponent>(playerEntity)) return;
+
+            ref var pointAt = ref world.Get<HandPointAtComponent>(playerEntity);
+            if (pointAt.IsPointing) pointAt.StopPointing();
         }
 
         private async UniTask DisposeAndRestartAsync(Entity entity, ISceneFacade currentScene, string? changedModelSrc, CancellationToken ct)
@@ -117,7 +130,7 @@ namespace ECS.SceneLifeCycle
                     // from the file path, not content, so an updated model keeps the same hash and cache
                     // hits would return stale assets. Draining guarantees fresh loads.
                     cacheCleaner.UnloadCache(budgeted: false);
-                    Resources.UnloadUnusedAssets();
+                    _ = Resources.UnloadUnusedAssets();
                 }
 
                 await WaitUntilNewSceneIsFullyLoadedAsync();

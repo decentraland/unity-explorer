@@ -86,7 +86,7 @@ namespace DCL.UI
                     view.SetImage(sprite, fitAndCenterImage);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
-                    view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
+                    _ = view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
                 }
                 else if (defaultSprite != null)
                     TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
@@ -135,6 +135,7 @@ namespace DCL.UI
         {
             cts.SafeCancelAndDispose();
             DisposeCurrentTexture();
+            view.Image.DOKill(true);
             view.IsLoading = false;
         }
 

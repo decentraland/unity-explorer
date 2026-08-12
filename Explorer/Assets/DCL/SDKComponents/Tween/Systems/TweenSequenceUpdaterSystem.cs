@@ -136,6 +136,10 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, ref TransformComponent transformComponent, bool isCurrentScene)
         {
+            // A non-looping sequence that already reported completion is terminal: GetTweenerState can only
+            // re-return TsCompleted and the else-if(TsActive) write-back is skipped either way — skip the dead dispatch.
+            if (sdkTweenSequenceComponent.TweenStateStatus == TweenStateStatus.TsCompleted) return;
+
             TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenSequenceComponent.SequenceTweener);
             if (newState != sdkTweenSequenceComponent.TweenStateStatus)
             {

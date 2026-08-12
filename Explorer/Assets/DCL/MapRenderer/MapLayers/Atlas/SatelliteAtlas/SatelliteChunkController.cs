@@ -71,7 +71,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         public async UniTask LoadImageAsync(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
         {
-            linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
+            linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts!.Token, ct);
             atlasChunk.MainSpriteRenderer.enabled = false;
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
@@ -94,6 +94,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 currentOwnedTexture = await textureTask!;
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
+
+                if ((texture.width & 3) == 0 && (texture.height & 3) == 0 && texture.format == TextureFormat.RGBA32)
+                    texture.Compress(false);
             }
             catch (Exception e)
             {
@@ -107,8 +110,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 float pixelsPerUnit = texture.width / chunkWorldSize;
 
                 atlasChunk.MainSpriteRenderer.enabled = true;
-                atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
-                atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
+                _ = atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
+                _ = atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
 
                 atlasChunk.MainSpriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
                     0, SpriteMeshType.FullRect, Vector4.one, false);

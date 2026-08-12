@@ -14,10 +14,10 @@ namespace Global.Tests.EditMode
 	[TestFixture]
 	public class RealmLaunchSettingsHomePositionOverrideShould
 	{
-		private RealmLaunchSettings launchSettings;
-		private IAppArgs appArgs;
+				private RealmLaunchSettings launchSettings = null!;
+				private IAppArgs appArgs = null!;
 
-        private static IDCLPrefs originalPrefs;
+                private static IDCLPrefs originalPrefs = null!;
         private static bool prefsInitialized;
 
         [OneTimeSetUp]
@@ -182,6 +182,43 @@ namespace Global.Tests.EditMode
 
             launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
             Assert.AreEqual(InitialRealm.World, launchSettings.initialRealm);
+        }
+
+        [Test]
+        public void UseDeepLinkRealmOverSavedWorldHome()
+        {
+            HomeMarkerController.SerializeWorldName("myhome.dcl.eth");
+            launchSettings.EditorSceneStartPosition = false;
+            appArgs.HasFlag(AppArgsFlags.REALM).Returns(true);
+            appArgs.TryGetValue(AppArgsFlags.REALM, out Arg.Any<string?>())
+                   .Returns(call =>
+                    {
+                        call[1] = "cozyfarm.dcl.eth";
+                        return true;
+                    });
+
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            launchSettings.ApplyConfig(appArgs);
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+
+            Assert.AreEqual(InitialRealm.World, launchSettings.initialRealm);
+            Assert.AreEqual("cozyfarm.dcl.eth", launchSettings.TargetWorld);
+        }
+
+        [Test]
+        public void NotUseHomePositionWhenDeepLinkRealmProvided()
+        {
+            HomeMarkerController.Serialize(new Vector2Int(100, 200));
+            launchSettings.targetScene = new Vector2Int(5, 5);
+            launchSettings.EditorSceneStartPosition = false;
+            appArgs.HasFlag(AppArgsFlags.REALM).Returns(true);
+
+            var featureFlags = GetFeatureFlagsConfiguration(false, "0,0");
+
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+
+            Assert.AreEqual(new Vector2Int(5, 5), launchSettings.targetScene);
         }
 
         [Test]

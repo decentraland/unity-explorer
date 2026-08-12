@@ -14,6 +14,8 @@ namespace DCL.Chat.ChatStates
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatPanelPresenter chatPanelPresenter;
 
+        private bool dismissedByEscape;
+
         public bool IsFocused => fsm.CurrentState is FocusedChatState;
         public bool IsMinimized => fsm.CurrentState is MinimizedChatState;
         public bool IsHidden => fsm.CurrentState is HiddenChatState;
@@ -67,8 +69,11 @@ namespace DCL.Chat.ChatStates
 
             scope.Dispose();
         }
-        private void PropagateStateChange(ChatState currentState) =>
-            eventBus.RaiseChatStateChangedEvent(fsm.CurrentState);
+        private void PropagateStateChange(ChatState currentState)
+        {
+            dismissedByEscape = false;
+            eventBus.RaiseChatStateChangedEvent(fsm.CurrentState!);
+        }
 
         public void OnViewShow()
         {
@@ -132,11 +137,14 @@ namespace DCL.Chat.ChatStates
 
         public void SetToggleState()
         {
-            if (IsMinimized)
+            if (ShouldFocusOnToggle(fsm.CurrentState, dismissedByEscape))
                 fsm.Enter<FocusedChatState>();
             else
                 fsm.Enter<MinimizedChatState>();
         }
+
+        internal static bool ShouldFocusOnToggle(ChatState? currentState, bool dismissedByEscape) =>
+            currentState is MinimizedChatState || dismissedByEscape;
 
         public void PopState()
         {
@@ -146,7 +154,10 @@ namespace DCL.Chat.ChatStates
         public void SetVisibility(bool isVisible)
         {
             if (isVisible)
+            {
                 fsm.Enter<DefaultChatState>();
+                dismissedByEscape = true;
+            }
             else
                 fsm.Enter<HiddenChatState>();
         }

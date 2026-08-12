@@ -815,3 +815,17 @@ resharper_space_after_operator_keyword = true
 # resharper_web_config_wrong_module_highlighting = warning
 # resharper_wrong_indent_size_highlighting = hint
 
+
+# DCL.Analyzers (Analyzers/README.md). Corruption-class rules fail the build;
+# the rest are advisory while their real-world precision is established.
+dotnet_diagnostic.DCLA001.severity = error # ref component used after structural change
+dotnet_diagnostic.DCLA002.severity = warning # detached UniTask flow swallows exceptions
+dotnet_diagnostic.DCLA003.severity = warning # allocation in system Update
+dotnet_diagnostic.DCLA004.severity = warning # pooled rental provably leaks
+dotnet_diagnostic.DCLA005.severity = error # FFI enum without explicit underlying type
+
+# Tests exercise structural-change scenarios deliberately; corruption-class
+# rules stay visible there but never fail the build.
+[**/Tests/**]
+dotnet_diagnostic.DCLA001.severity = warning
+dotnet_diagnostic.DCLA005.severity = warning

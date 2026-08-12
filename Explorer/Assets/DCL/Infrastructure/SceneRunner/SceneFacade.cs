@@ -210,6 +210,9 @@ namespace SceneRunner
             // https://github.com/decentraland/unity-explorer/issues/8493
             RunHangWatchdogAsync(UPDATE_HANG_INTERRUPT_THRESHOLD_MS, watchdogCts.Token).Forget();
 
+            using var tickDelay = DCLTask.CreateReusableTickDelay();
+            tickDelay.AttachCancellation(ct);
+
             SceneStateProvider.State.Set(SceneState.Running);
 
             try
@@ -252,8 +255,8 @@ namespace SceneRunner
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
 
                     // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-                    // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
-                    await DCLTask.Delay(sleepMS, ct);
+                    // We can't use UniTask.Delay directly as this loop has nothing to do with the Unity Player Loop
+                    await tickDelay.Delay(sleepMS);
 
                     MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay), isMainThread: false);
 

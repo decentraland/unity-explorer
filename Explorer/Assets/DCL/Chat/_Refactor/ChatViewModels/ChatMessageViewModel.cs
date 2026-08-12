@@ -36,11 +36,27 @@ namespace DCL.Chat.ChatViewModels
 
         private CancellationTokenSource cancellationTokenSource = new ();
 
-        public ChatMessage Message { get; internal set; }
-        public bool ShowDateDivider { get; internal set; }
+        // Monotonic content-version counter, bumped by every setter that feeds a bound cell's visuals
+        // (Message/TranslationState/TranslatedText/ShowDateDivider/Reactions). ChatEntryView caches the
+        // last-bound (reference, Version) pair and skips the expensive rebuild when the SAME pooled view
+        // model is re-offered unchanged (RefreshAllShownItem). INVARIANT: any future mutable field whose
+        // value SetItemData renders MUST bump Version here, or a gated cell will show stale content.
+        public int Version { get; private set; }
 
-        public TranslationState TranslationState { get; set; } = TranslationState.Original;
-        public string TranslatedText { get; set; } = string.Empty;
+        private ChatMessage message;
+        public ChatMessage Message { get => message; internal set { message = value; Version++; } }
+
+        private bool showDateDivider;
+        public bool ShowDateDivider { get => showDateDivider; internal set { showDateDivider = value; Version++; } }
+
+        private TranslationState translationState = TranslationState.Original;
+        public TranslationState TranslationState { get => translationState; set { translationState = value; Version++; } }
+
+        private string translatedText = string.Empty;
+        public string TranslatedText { get => translatedText; set { translatedText = value; Version++; } }
+
+        // Deliberately does NOT bump Version: nothing renders this field (SetItemData never reads it),
+        // and every write pairs with a TranslationState/TranslatedText change that already bumps Version.
         public string TranslationError { get; set; } = string.Empty;
 
         public bool IsTranslated => TranslationState == TranslationState.Success;
@@ -67,7 +83,8 @@ namespace DCL.Chat.ChatViewModels
 
         public bool PendingToAnimate { get; internal set; }
 
-        public ReactionSet? Reactions { get; internal set; }
+        private ReactionSet? reactions;
+        public ReactionSet? Reactions { get => reactions; internal set { reactions = value; Version++; } }
 
         /// <summary>
         ///     Will be fired when the object is released back to the pool.

@@ -17,23 +17,23 @@ namespace DCL.Chat.ChatMessages
 {
     public class ChatMessageFeedView : MonoBehaviour, IDisposable
     {
-        [SerializeField] private ChatScrollToBottomView chatScrollToBottomView;
+                [SerializeField] private ChatScrollToBottomView chatScrollToBottomView = null!;
 
         [SerializeField] private float chatEntriesFadeTime = 3f;
         [SerializeField] private int chatEntriesWaitBeforeFading = 10000;
-        [SerializeField] private CanvasGroup scrollbarCanvasGroup;
-        [SerializeField] private CanvasGroup chatEntriesCanvasGroup;
-        [SerializeField] private LoopListView2 loopList;
-        [SerializeField] private ScrollRect scrollRect;
+                [SerializeField] private CanvasGroup scrollbarCanvasGroup = null!;
+                [SerializeField] private CanvasGroup chatEntriesCanvasGroup = null!;
+                [SerializeField] private LoopListView2 loopList = null!;
+                [SerializeField] private ScrollRect scrollRect = null!;
         [Range(0.0f, 1.0f)] [SerializeField] private float entryGreyOutOpacity = 0.6f;
 
         private CancellationTokenSource? fadeoutCts;
 
         private IReadOnlyCollection<string> onlineParticipants = Array.Empty<string>();
 
-        private ChatReactionsAtlasConfig reactionsAtlasConfig;
+                private ChatReactionsAtlasConfig reactionsAtlasConfig = null!;
         private string ownWalletAddress = string.Empty;
-        private ChatReactionsMessageConfig messageReactionsConfig;
+                private ChatReactionsMessageConfig messageReactionsConfig = null!;
 
         private bool reactionsEnabled = true;
 
@@ -42,11 +42,27 @@ namespace DCL.Chat.ChatMessages
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
         public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
 
-        public event Action<string> OnTranslateMessageRequested;
-        public event Action<string> OnRevertMessageRequested;
+                public event Action<string> OnTranslateMessageRequested = null!;
+                public event Action<string> OnRevertMessageRequested = null!;
         private Func<bool>? isTranslationActivated;
         private Func<bool>? isAutoTranslationEnabled;
         private Func<string, bool>? isTranslationForMessageInMemory;
+
+        // Instance-cached forwarders assigned to each cell per offer instead of allocating a fresh
+        // method-group delegate (translate/revert) and a capturing closure (reaction) on every bind.
+        // Allocated at most once for the lifetime of this view.
+        private Action<string>? cachedTranslateHandler;
+        private Action<string>? cachedRevertHandler;
+        private Action<string, ChatEntryView>? cachedReactionHandler;
+
+        // The exact forwarder instances WireCachedHandlers hands to a cell on every offer. Each is
+        // materialized at most once (??=) and reused thereafter, so re-offering a cell allocates no new
+        // delegate. Exposed internal purely so the bind-alloc performance test can assert delegate
+        // IDENTITY across reads without instantiating a live ChatEntryView MonoBehaviour.
+        internal Action<string> TranslateForwarder => cachedTranslateHandler ??= HandleTranslateRequest;
+        internal Action<string> RevertForwarder => cachedRevertHandler ??= HandleRevertRequest;
+        internal Action<string, ChatEntryView>? ReactionForwarder =>
+            reactionsEnabled ? (cachedReactionHandler ??= HandleReactionButtonClicked) : null;
 
         public void Dispose()
         {
@@ -69,7 +85,7 @@ namespace DCL.Chat.ChatMessages
         public event Action<string, ChatEntryView>? OnReactionButtonClicked;
 
         [field: Header("Event Bus")]
-        [field: SerializeField] internal ViewEventBus reactionEventBus { get; private set; }
+                [field: SerializeField] internal ViewEventBus reactionEventBus { get; private set; } = null!;
 
         private Sequence? _fadeSequenceTween;
 
@@ -136,8 +152,12 @@ namespace DCL.Chat.ChatMessages
 
         public void RefreshItem(int viewModelIndex)
         {
-            RefreshVisibleElements();
+            loopList.RefreshItemByItemIndex(ModelToViewIndex(viewModelIndex));
         }
+
+        internal int ItemBindCount;
+
+        internal Vector2 ContentAnchoredPosition => loopList.ScrollRect.content.anchoredPosition;
 
         /// <summary>
         ///     Reconstructs the scroll view with the data source that was previously set.
@@ -250,6 +270,8 @@ namespace DCL.Chat.ChatMessages
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
+            ItemBindCount++;
+
             // Resolve paddings - they are not part of the viewModels list
             if (index == 0 || index == viewModels.Count + 1)
                 return listView.NewListViewItem(GetPrefabName(ChatItemPrefabIndex.Padding));
@@ -279,26 +301,16 @@ namespace DCL.Chat.ChatMessages
                 ChatEntryView? chatEntry = item.GetComponent<ChatEntryView>();
                 chatEntry.Reset();
                 chatEntry.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
-                    !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, isTranslationActivated, isAutoTranslationEnabled);
+                    !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, isTranslationActivated!, isAutoTranslationEnabled!);
 
-                chatEntry.OnTranslateRequested = HandleTranslateRequest;
-                chatEntry.OnRevertRequested = HandleRevertRequest;
+                WireCachedHandlers(chatEntry);
                 chatEntry.InitializeReactions(reactionsAtlasConfig, ownWalletAddress, messageReactionsConfig, reactionEventBus);
 
-                if (chatEntry.messageBubbleElement.reactionButton != null)
-                {
-                    chatEntry.messageBubbleElement.reactionButton.onClick.RemoveAllListeners();
-
-                    if (reactionsEnabled)
-                    {
-                        chatEntry.messageBubbleElement.reactionButton.onClick.AddListener(() =>
-                            OnReactionButtonClicked?.Invoke(viewModel.Message.MessageId, chatEntry));
-                    }
-                    else
-                    {
-                        chatEntry.messageBubbleElement.reactionButton.gameObject.SetActive(false);
-                    }
-                }
+                // The reaction button's onClick is wired once in ChatEntryView.Awake and forwards to
+                // chatEntry.OnReactionButtonClicked (set by WireCachedHandlers, null when reactions are
+                // disabled so a lingering-visible button no-ops). Only the disabled-state toggle remains here.
+                if (!reactionsEnabled && chatEntry.messageBubbleElement.reactionButton != null)
+                    chatEntry.messageBubbleElement.reactionButton.gameObject.SetActive(false);
 
                 float padding = viewModel.ShowDateDivider ? chatEntry.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
@@ -319,6 +331,22 @@ namespace DCL.Chat.ChatMessages
             }
 
             return item;
+        }
+
+        /// <summary>
+        /// Assigns cached, instance-lifetime forwarders to a cell being (re)offered — no heap
+        /// allocation after the first call.
+        /// </summary>
+        internal void WireCachedHandlers(ChatEntryView chatEntry)
+        {
+            chatEntry.OnTranslateRequested = TranslateForwarder;
+            chatEntry.OnRevertRequested = RevertForwarder;
+            chatEntry.OnReactionButtonClicked = ReactionForwarder;
+        }
+
+        private void HandleReactionButtonClicked(string messageId, ChatEntryView chatEntry)
+        {
+            OnReactionButtonClicked?.Invoke(messageId, chatEntry);
         }
 
         private void HandleTranslateRequest(string messageId)

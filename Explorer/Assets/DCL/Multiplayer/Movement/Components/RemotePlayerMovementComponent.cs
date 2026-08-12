@@ -15,8 +15,7 @@ namespace DCL.Multiplayer.Movement
         public const string TEST_ID = "SelfReplica";
         private const short MAX_MESSAGES = 10;
 
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool;
-        private readonly SimplePriorityQueue<NetworkMovementMessage, double> queue;
+        private readonly BoundedNetworkMessageQueue queue;
         private bool disposed;
 
         public NetworkMovementMessage PastMessage;
@@ -25,7 +24,7 @@ namespace DCL.Multiplayer.Movement
         public bool WasTeleported;
         public bool WasPassedThisFrame;
 
-        public readonly SimplePriorityQueue<NetworkMovementMessage, double>? Queue => disposed ? null : queue;
+        public readonly BoundedNetworkMessageQueue? Queue => disposed ? null : queue;
 
         public float InitialCooldownTime;
 
@@ -34,11 +33,11 @@ namespace DCL.Multiplayer.Movement
         public float2 HeadIKYawAndPitch;
         public bool IsPointingAt;
         public float3 PointAtWorldHitPoint;
+        public float PointAtTimeToLive;
 
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool)
         {
-            this.queuePool = queuePool;
-            queue = queuePool.Get()!;
+            queue = new BoundedNetworkMessageQueue(MAX_MESSAGES);
             disposed = false;
 
             PastMessage = new NetworkMovementMessage();
@@ -55,14 +54,12 @@ namespace DCL.Multiplayer.Movement
 
             IsPointingAt = false;
             PointAtWorldHitPoint = float3.zero;
+            PointAtTimeToLive = 0f;
         }
 
         public void Enqueue(NetworkMovementMessage message)
         {
-            while (queue.Count > MAX_MESSAGES)
-                queue.Dequeue();
-
-            queue.Enqueue(message, message.timestamp);
+            queue.Enqueue(message);
         }
 
         public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)
@@ -90,16 +87,31 @@ namespace DCL.Multiplayer.Movement
             HeadIKYawAndPitch = message.headYawAndPitch;
         }
 
-        public void UpdatePointAtIK(in NetworkMovementMessage message)
+        public void UpdatePointAtIK(in NetworkMovementMessage message, float pointAtDuration)
         {
             IsPointingAt = message.isPointingAt;
             PointAtWorldHitPoint = message.pointAtWorldHitPoint;
+            PointAtTimeToLive = message.isPointingAt ? pointAtDuration : 0f;
+        }
+
+        public void TickPointAtExpiry(float deltaTime)
+        {
+            if (!IsPointingAt)
+                return;
+
+            PointAtTimeToLive -= deltaTime;
+
+            if (PointAtTimeToLive <= 0f)
+            {
+                PointAtTimeToLive = 0f;
+                IsPointingAt = false;
+            }
         }
 
         public void Dispose()
         {
             disposed = true;
-            queuePool.Release(queue);
+            queue.Clear();
         }
     }
 }

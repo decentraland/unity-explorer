@@ -37,7 +37,8 @@ namespace DCL.Settings.ModuleControllers
         {
             float db = AudioUtils.PercentageVolumeToDecibel(volumePercentage);
             generalAudioMixer.SetFloat(VOICE_CHAT_VOLUME_EXPOSED_PARAM, db);
-            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, volumePercentage);
+            PrefsSaveDebouncer.Shared.RequestSave();
             volumeBus.SetVoiceChatVolume(volumePercentage);
         }
 
@@ -48,6 +49,7 @@ namespace DCL.Settings.ModuleControllers
 
         public override void Dispose()
         {
+            PrefsSaveDebouncer.Shared.FlushIfPending();
             view.SliderView.Slider.onValueChanged.RemoveListener(SetVoiceChatVolumeSettings);
             volumeBus.OnVoiceChatVolumeChanged -= OnVoiceChatVolumeChangedExternally;
         }

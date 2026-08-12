@@ -22,6 +22,8 @@ namespace DCL.AvatarRendering.AvatarShape
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem
     {
         private readonly RendererFeature_AvatarOutline? outlineFeature;
+        // Reused frustum-plane scratch buffer: rewritten once per tick in Update (CalculateFrustumPlanes) before the
+        // outline query reads it. Owned by the single-threaded ECS Update — NOT safe for concurrent callers.
         private readonly Plane[] planes;
         private readonly float startFadeDithering;
         private readonly float endFadeDithering;
@@ -30,6 +32,9 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private SingleInstanceEntity camera;
         private GameObject? playerCamera;
+        // Camera the cached frustum planes were built for. IsVisibleInCamera validates against this so a
+        // caller cannot read planes computed for a different camera (or before any were computed).
+        private Camera? planesCamera;
 
         public AvatarShapeVisibilitySystem(World world, IUserBlockingCache userBlockingCache, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering, bool includeBannedUsersFromScene) : base(world)
         {
@@ -60,12 +65,28 @@ namespace DCL.AvatarRendering.AvatarShape
             BanAvatarsQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
             UpdateMainPlayerAvatarVisibilityStateQuery(World, camera.GetCameraComponent(World));
-            GetAvatarsVisibleWithOutlineQuery(World);
+
+            if (outlineFeature != null && outlineFeature.isActive)
+            {
+                Camera cam = camera.GetCameraComponent(World).Camera;
+                CalculateFrustumPlanes(cam);
+                GetAvatarsVisibleWithOutlineQuery(World, cam);
+            }
         }
 
-        public bool IsVisibleInCamera(Camera camera, Bounds bounds)
+        public void CalculateFrustumPlanes(Camera camera)
         {
             GeometryUtility.CalculateFrustumPlanes(camera, planes);
+            planesCamera = camera;
+        }
+
+        // Tests the AABB against the frustum planes cached by the most recent CalculateFrustumPlanes call.
+        // Extraction runs once per tick in Update (not per avatar), so this does not recompute the planes;
+        // the camera argument is validated to match the camera those cached planes were built for.
+        public bool IsVisibleInCamera(Camera camera, Bounds bounds)
+        {
+            UnityEngine.Assertions.Assert.IsTrue(ReferenceEquals(planesCamera, camera),
+                "IsVisibleInCamera reads planes cached by CalculateFrustumPlanes; call it for this camera in the current tick first.");
             return GeometryUtility.TestPlanesAABB(planes, bounds);
         }
 
@@ -77,9 +98,9 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
+        private void GetAvatarsVisibleWithOutline([Data] Camera cam, in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
         {
-            if (outlineFeature != null && outlineFeature.isActive && (avatarShape.IsPreview || IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds)))
+            if (avatarShape.IsPreview || (IsWithinCameraDistance(cam, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(cam, avatarBase.AvatarSkinnedMeshRenderer.bounds)))
             {
                 RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(avatarShape.OutlineCompatibleRenderers);
             }
@@ -159,18 +180,21 @@ namespace DCL.AvatarRendering.AvatarShape
             SetHiddenComponent(entity, isBanned, HiddenPlayerComponent.HiddenReason.Banned);
         }
 
-        private void SetHiddenComponent(Entity entity, bool hiddenValue, HiddenPlayerComponent.HiddenReason hiddenReason)
+        // Bitwise test in place of Enum.HasFlag, which boxes receiver and argument on Mono/IL2CPP (no
+        // intrinsic elision) — two heap allocations per test on this per-frame tick. Relies on callers
+        // passing a single flag: "& != 0" means ANY bit set, whereas HasFlag means ALL bits set.
+        internal void SetHiddenComponent(Entity entity, bool hiddenValue, HiddenPlayerComponent.HiddenReason hiddenReason)
         {
             ref HiddenPlayerComponent attachedHiddenComponent = ref World.TryGetRef<HiddenPlayerComponent>(entity, out bool isHiddenComponentAttached);
 
-            if (hiddenValue && (!isHiddenComponentAttached || (isHiddenComponentAttached && !attachedHiddenComponent.Reason.HasFlag(hiddenReason))))
+            if (hiddenValue && (!isHiddenComponentAttached || (isHiddenComponentAttached && (attachedHiddenComponent.Reason & hiddenReason) == 0)))
             {
                 if (!isHiddenComponentAttached)
                     World.Add(entity, new HiddenPlayerComponent { Reason = hiddenReason } );
                 else
                     attachedHiddenComponent.Reason |= hiddenReason;
             }
-            else if (!hiddenValue && isHiddenComponentAttached && attachedHiddenComponent.Reason.HasFlag(hiddenReason))
+            else if (!hiddenValue && isHiddenComponentAttached && (attachedHiddenComponent.Reason & hiddenReason) != 0)
             {
                 attachedHiddenComponent.Reason &= ~hiddenReason;
                 if (attachedHiddenComponent.Reason == 0)

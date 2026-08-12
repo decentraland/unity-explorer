@@ -40,6 +40,18 @@ namespace DCL.UI.ProfileElements
             Element.OfficialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(profile.UserId));
         }
 
+        public void Clear()
+        {
+            currentProfile = null;
+
+            Element.UserNameText.text = string.Empty;
+            Element.UserNameHashtagText.text = string.Empty;
+            Element.UserNameHashtagText.gameObject.SetActive(false);
+            Element.VerifiedMark.SetActive(false);
+            Element.OfficialMark.SetActive(false);
+            Element.CopyNameWarningNotification.Hide(true);
+        }
+
         public void Dispose()
         {
             Element.CopyUserNameButton.onClick.RemoveAllListeners();

@@ -12,8 +12,8 @@ namespace DCL.Events
     {
         private readonly Dictionary<string, EventDTO> currentEvents = new();
         private readonly Dictionary<string, PlacesData.PlaceInfo> currentPlaces = new();
-        private readonly List<Profile.CompactInfo> allFriends = new();
-        private readonly List<GetUserCommunitiesData.CommunityData> myCommunities = new();
+        private readonly Dictionary<string, Profile.CompactInfo> allFriends = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, GetUserCommunitiesData.CommunityData> myCommunities = new(StringComparer.OrdinalIgnoreCase);
 
         public class EventWithPlaceAndFriendsData
         {
@@ -78,13 +78,17 @@ namespace DCL.Events
         public void SetAllFriends(List<Profile.CompactInfo> friends)
         {
             ClearAllFriends();
-            allFriends.AddRange(friends);
+            foreach (var friend in friends)
+                if (!string.IsNullOrEmpty(friend.UserId))
+                    allFriends.TryAdd(friend.UserId, friend);
         }
 
         public void SetMyCommunities(List<GetUserCommunitiesData.CommunityData> myCommunitiesList)
         {
             ClearMyCommunities();
-            myCommunities.AddRange(myCommunitiesList);
+            foreach (var community in myCommunitiesList)
+                if (!string.IsNullOrEmpty(community.id))
+                    myCommunities.TryAdd(community.id, community);
         }
 
         public void ClearEvents() =>
@@ -107,26 +111,25 @@ namespace DCL.Events
 
         private bool TryGetFriendById(string userId, out Profile.CompactInfo friendProfile)
         {
-            foreach (var friend in allFriends)
+            if (string.IsNullOrEmpty(userId))
             {
-                if (!friend.UserId.Equals(userId, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                friendProfile = friend;
-                return true;
+                friendProfile = default(Profile.CompactInfo);
+                return false;
             }
 
-            friendProfile = default(Profile.CompactInfo);
-            return false;
+            return allFriends.TryGetValue(userId, out friendProfile);
         }
 
         private bool TryGetCommunityById(string communityId, out GetUserCommunitiesData.CommunityData? communityData)
         {
-            foreach (var community in myCommunities)
+            if (string.IsNullOrEmpty(communityId))
             {
-                if (!community.id.Equals(communityId, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                communityData = null;
+                return false;
+            }
 
+            if (myCommunities.TryGetValue(communityId, out GetUserCommunitiesData.CommunityData community))
+            {
                 communityData = community;
                 return true;
             }
