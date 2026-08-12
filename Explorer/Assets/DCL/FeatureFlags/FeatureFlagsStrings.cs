@@ -14,6 +14,7 @@ namespace DCL.FeatureFlags
         public const string MAP_PINS = "alfa-map-pins";
         public const string CUSTOM_MAP_PINS_ICONS = "alfa-map-pins-custom-icons";
         public const string USER_ALLOW_LIST = "user-allow-list";
+        public const string DEEPLINK_WHITELISTED_WORLDS = "deeplink-whitelisted-worlds";
         public const string CSV_VARIANT = "csv-variant";
         public const string STRING_VARIANT = "string-variant";
         public const string WALLET_VARIANT = "wallet";
@@ -42,6 +43,7 @@ namespace DCL.FeatureFlags
         public const string USER_CREDITS = "alfa-user-credits";
         public const string CREDITS_WEARABLE_PURCHASE = "alfa-credits-wearable-purchase";
         public const string CREDITS_TOPUP = "alfa-credits-topup";
+        public const string CREDITS_WALLETS = "alfa-credits-wallets";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
@@ -82,13 +84,15 @@ namespace DCL.FeatureFlags
         public const string NEARBY_VOICE_CHAT = "alfa-nearby-voice-chat";
         public const string AVATAR_CONTEXT_MENU = "alfa-avatar-context-menu";
         public const string DOUBLE_CLICK_WALK = "alfa-double-click-walk";
-        public const string AB_DEPS_DIGEST_CACHE_KEY = "alfa-ab-deps-digest-cache-key";
         public const string BYTE_WEIGHTED_LOADING_PROGRESS = "alfa-byte-weighted-loading-progress";
         public const string NEW_LODS = "new-lods";
         public const string FOUNDATION_COMMUNITY_ID = "alfa-foundation-community-id";
         public const string HARDWARE_FINGERPRINT = "alfa-hardware-fingerprint";
         public const string OPTIMIZED_ASSETS = "optimized-assets";
         public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
+        public const string USE_CUSTOM_MEDIA_PLAYER_WINDOWS = "use-custom-media-player-windows";
+        public const string USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON = "use-custom-media-player-mac-silicon";
+        public const string USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL = "use-custom-media-player-mac-intel";
 
         public static class Endpoints
         {

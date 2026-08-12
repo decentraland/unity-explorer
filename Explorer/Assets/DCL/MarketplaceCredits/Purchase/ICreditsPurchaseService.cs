@@ -8,6 +8,8 @@ namespace DCL.MarketplaceCredits.Purchase
     {
         event Action<CreditsPurchaseState>? StateChanged;
 
-        UniTask<CreditsPurchaseResult> PurchaseAsync(string tradeId, int expectedPriceCredits, CancellationToken ct);
+        UniTask<CreditsQuoteResult> QuoteAsync(ShopListingDto listing, CancellationToken ct);
+
+        UniTask<CreditsPurchaseResult> PurchaseAsync(CreditsPurchaseQuote quote, CancellationToken ct);
     }
 }

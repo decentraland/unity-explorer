@@ -17,7 +17,7 @@ namespace DCL.ApplicationGuards
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         public readonly UniTaskCompletionSource HoldingTask;
 
-        private MinimumSpecsTablePresenter specsTablePresenter;
+        private MinimumSpecsTablePresenter? specsTablePresenter;
 
         public MinimumSpecsScreenController(ViewFactoryMethod viewFactory,
             UnityAppWebBrowser webBrowser,
@@ -32,13 +32,18 @@ namespace DCL.ApplicationGuards
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.ContinueButton.onClick.AddListener(OnContinueClicked);
+            viewInstance!.ContinueButton.onClick.AddListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.AddListener(OnReadMoreClicked);
             viewInstance.DontShowAgainToggle.SetIsOnWithoutNotify(DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN));
             viewInstance.DontShowAgainToggle.onValueChanged.AddListener(OnToggleChanged);
 
             specsTablePresenter = new MinimumSpecsTablePresenter(viewInstance.TableView);
             specsTablePresenter.Populate(specResult);
+        }
+
+        protected override void OnViewShow()
+        {
+            analytics.Track(AnalyticsEvents.Ui.MINIMUM_REQUIREMENTS_SCREEN_SHOWN);
         }
 
         private void OnToggleChanged(bool dontShowAgain)
@@ -54,14 +59,14 @@ namespace DCL.ApplicationGuards
             viewInstance.ContinueButton.onClick.RemoveListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.RemoveListener(OnReadMoreClicked);
             viewInstance.DontShowAgainToggle.onValueChanged.RemoveListener(OnToggleChanged);
-            HoldingTask?.TrySetResult();
+            HoldingTask.TrySetResult();
         }
 
         private void OnContinueClicked()
         {
-            DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, viewInstance.DontShowAgainToggle.isOn, true);
-            analytics.Track(AnalyticsEvents.UI.SKIP_MINIMUM_REQUIREMENTS_SCREEN);
-            HoldingTask?.TrySetResult();
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, viewInstance!.DontShowAgainToggle.isOn, true);
+            analytics.Track(AnalyticsEvents.Ui.SKIP_MINIMUM_REQUIREMENTS_SCREEN);
+            HoldingTask.TrySetResult();
         }
 
         private void OnReadMoreClicked()

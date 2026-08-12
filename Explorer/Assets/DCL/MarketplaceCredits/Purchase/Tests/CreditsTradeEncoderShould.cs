@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using System;
+using System.Globalization;
 using System.Numerics;
 
 namespace DCL.MarketplaceCredits.Purchase.Tests
@@ -17,6 +18,48 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private const long EXTERNAL_CALL_EXPIRES_AT = 1800000000;
 
         private const string EXPECTED_ACCEPT_SELECTOR = "0x961a547e";
+
+        // The CollectionStore rail. Generated from the same reference implementation, against the REAL
+        // CollectionStore ABI shipped in decentraland-transactions — never a hand-written signature, which is how
+        // a wrong selector gets shipped. Fixture: collection 0x2222…2222, item 3, 20 MANA, the buyer below.
+        private const string EXPECTED_STORE_BUY_SELECTOR = "0xa4fdc78a";
+        private const string EXPECTED_COLLECTION = "0x2222222222222222222222222222222222222222";
+        private const string EXPECTED_STORE_ADDRESS = "0x214ffc0f0103735728dc66b61a22e4f163e275ae";
+        private const string MINT_ITEM_ID = "3";
+        private const string MINT_PRICE_WEI = "20000000000000000000";
+
+        private const string EXPECTED_STORE_BUY_DATA =
+            "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000" +
+            "0000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000022222222222222222222" +
+            "2222222222222222222200000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000" +
+            "0000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000" +
+            "0000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000" +
+            "00000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000001158e460913d000000000" +
+            "00000000000000000000000000000000000000000000000000000000000100000000000000000000000099995f38fc9d786eab5c3a1b1c4e6ae5f4" +
+            "e99999";
+
+        private const string EXPECTED_STORE_USE_CREDITS =
+            "0x1863572d00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000" +
+            "0000000000000000c00000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000" +
+            "0000000000000000000000000200000000000000000000000000000000000000000000000000000000000000046000000000000000000000000000" +
+            "00000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000006124fee993bc00000000000000000000" +
+            "00000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000053444835ec580000000000" +
+            "000000000000000000000000000000000000000000000000006955b900000000000000000000000000000000000000696e74656e742d6162632d3132" +
+            "33000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000" +
+            "000000000000200000000000000000000000000000000000000000000000000000000000000041bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" +
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0000000000000000000000000000" +
+            "0000000000000000000000000000000000000000000000000000000000214ffc0f0103735728dc66b61a22e4f163e275aea4fdc78a000000000000" +
+            "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a00000000000" +
+            "00000000000000000000000000000000000000000000006b49d200cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd" +
+            "00000000000000000000000000000000000000000000000000000000000001a0000000000000000000000000000000000000000000000000000000" +
+            "0000000020000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000" +
+            "0000000000000000002000000000000000000000000022222222222222222222222222222222222222220000000000000000000000000000000000" +
+            "00000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000" +
+            "0000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000100000000000000" +
+            "0000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010000" +
+            "00000000000000000000000000000000000000000001158e460913d000000000000000000000000000000000000000000000000000000000000000" +
+            "00000100000000000000000000000099995f38fc9d786eab5c3a1b1c4e6ae5f4e99999000000000000000000000000000000000000000000000000" +
+            "0000000000000000";
 
         private const string EXPECTED_ACCEPT_DATA =
             "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000" +
@@ -222,6 +265,72 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(EXPECTED_USE_CREDITS, calldata);
         }
 
+        /// <summary>
+        ///     A CollectionStore MINT is bought with the same envelope as a trade — only the external call
+        ///     differs. There is no trade and no order to fetch: nothing was ever signed or listed, so the item is
+        ///     minted straight from the store contract.
+        /// </summary>
+        [Test]
+        public void EncodeStoreBuyCallMatchingReferenceImplementation()
+        {
+            // Act
+            (byte[] selector, byte[] data) = CreditsTradeEncoder.BuildStoreBuyCall(EXPECTED_COLLECTION, MINT_ITEM_ID, MINT_PRICE_WEI, BUYER);
+
+            // Assert
+            Assert.AreEqual(EXPECTED_STORE_BUY_SELECTOR, ToHex(selector));
+            Assert.AreEqual(EXPECTED_STORE_BUY_DATA, ToHex(data));
+        }
+
+        [Test]
+        public void EncodeStoreMintUseCreditsCalldataMatchingReferenceImplementation()
+        {
+            // Act
+            string calldata = CreditsTradeEncoder.BuildStoreMintUseCreditsCalldata(
+                EXPECTED_STORE_ADDRESS, EXPECTED_COLLECTION, MINT_ITEM_ID, MINT_PRICE_WEI,
+                BUYER, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            // Assert
+            Assert.AreEqual(EXPECTED_STORE_USE_CREDITS, calldata);
+        }
+
+        /// <summary>
+        ///     The buyer must be named as the beneficiary in the calldata itself. The store never sees them as
+        ///     msg.sender on either rail — the CreditsManager is the caller — so if the beneficiary came from the
+        ///     sender the relayed mint would send the item to the relayer.
+        /// </summary>
+        [Test]
+        public void NameTheBuyerAsTheMintBeneficiary()
+        {
+            // Act
+            (byte[] _, byte[] data) = CreditsTradeEncoder.BuildStoreBuyCall(EXPECTED_COLLECTION, MINT_ITEM_ID, MINT_PRICE_WEI, BUYER);
+
+            // Assert
+            StringAssert.Contains(BUYER.Substring(2).ToLowerInvariant(), ToHex(data));
+        }
+
+        /// <summary>
+        ///     The two rails share the envelope and differ only in the external call, so the mint's calldata must
+        ///     point at the STORE while the trade's points at the marketplace. Getting this backwards would send
+        ///     an accept() to the store (or a buy() to the marketplace) and revert.
+        /// </summary>
+        [Test]
+        public void TargetTheStoreForAMintAndTheMarketplaceForATrade()
+        {
+            // Act
+            string mint = CreditsTradeEncoder.BuildStoreMintUseCreditsCalldata(
+                EXPECTED_STORE_ADDRESS, EXPECTED_COLLECTION, MINT_ITEM_ID, MINT_PRICE_WEI,
+                BUYER, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            string trade = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                CreateTradeFixture(), BUYER, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            // Assert
+            StringAssert.Contains(EXPECTED_STORE_ADDRESS.Substring(2), mint);
+            StringAssert.Contains(EXPECTED_STORE_BUY_SELECTOR.Substring(2), mint);
+            StringAssert.DoesNotContain(EXPECTED_STORE_BUY_SELECTOR.Substring(2), trade);
+            StringAssert.Contains(EXPECTED_ACCEPT_SELECTOR.Substring(2), trade);
+        }
+
         [Test]
         public void EncodeExecuteMetaTransactionMatchingReferenceImplementation()
         {
@@ -237,6 +346,36 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(EXPECTED_EXECUTE_META_TX, calldata);
         }
 
+        /// <summary>
+        ///     The relayed meta-transaction reverts with no reason when the head offset of _signature is written
+        ///     from the unpadded length of _functionData: the contract then decodes an empty signature and no
+        ///     recovery can match the buyer. useCredits calldata is never a multiple of 32 bytes, so this always
+        ///     matters — assert the padding rather than trusting the encoder.
+        /// </summary>
+        [Test]
+        public void PadTheFunctionDataBeforeTheSignatureOffset()
+        {
+            // Arrange
+            string useCredits = CreditsTradeEncoder.BuildUseCreditsCalldata(
+                CreateTradeFixture(), BUYER, CreateCreditFixture(), MAX_CREDITED, EXTERNAL_CALL_EXPIRES_AT, CreateExternalCallSalt());
+
+            // Act
+            string calldata = CreditsTradeEncoder.BuildExecuteMetaTxCalldata(BUYER, useCredits, "0x" + new string('c', 130));
+
+            // Assert
+            string args = calldata.Substring("0x".Length + 8);
+            int functionDataOffset = HeadWord(args, 1);
+            int signatureOffset = HeadWord(args, 2);
+            int functionDataLength = WordAt(args, functionDataOffset);
+            int paddedLength = (functionDataLength + 31) / 32 * 32;
+
+            Assert.AreEqual((useCredits.Length - "0x".Length) / 2, functionDataLength);
+            Assert.AreNotEqual(0, functionDataLength % 32, "The fixture must exercise a functionData length that needs padding");
+            Assert.AreEqual(96 + 32 + paddedLength, signatureOffset);
+            Assert.AreEqual(65, WordAt(args, signatureOffset), "The contract must decode the whole 65-byte signature");
+            Assert.AreEqual(96, functionDataOffset);
+        }
+
         [Test]
         public void CeilUsdWeiToCents()
         {
@@ -245,6 +384,55 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(1, CreditsTradeEncoder.UsdWeiToCents("1"));
             Assert.AreEqual(0, CreditsTradeEncoder.UsdWeiToCents(null));
             Assert.AreEqual(0, CreditsTradeEncoder.UsdWeiToCents(string.Empty));
+        }
+
+        [Test]
+        public void CeilManaWeiToUsdCentsAtTheOracleRate()
+        {
+            // $0.25 per MANA on an 8-decimal feed: 5 MANA is $1.25.
+            var quarterDollar = new ManaUsdRate(25_000_000, 8);
+            Assert.AreEqual(125, CreditsTradeEncoder.ManaWeiToUsdCents("5000000000000000000", quarterDollar));
+
+            // The rate conversion floors to USD wei first, so a fraction of a cent has to survive that step to
+            // round the price up — 4 MANA wei is the first amount worth a wei more than $1.25 here.
+            Assert.AreEqual(125, CreditsTradeEncoder.ManaWeiToUsdCents("5000000000000000001", quarterDollar));
+            Assert.AreEqual(126, CreditsTradeEncoder.ManaWeiToUsdCents("5000000000000000004", quarterDollar));
+
+            // The failing purchase: 7 MANA at $0.1348 is 95 cents, not the single credit that was authorized.
+            Assert.AreEqual(95, CreditsTradeEncoder.ManaWeiToUsdCents("7000000000000000000", new ManaUsdRate(13_480_500, 8)));
+
+            // Feeds with other precisions are read from the aggregator, never assumed.
+            Assert.AreEqual(125, CreditsTradeEncoder.ManaWeiToUsdCents("5000000000000000000", new ManaUsdRate(BigInteger.Parse("250000000000000000"), 18)));
+
+            Assert.AreEqual(0, CreditsTradeEncoder.ManaWeiToUsdCents(null, quarterDollar));
+            Assert.AreEqual(0, CreditsTradeEncoder.ManaWeiToUsdCents(string.Empty, quarterDollar));
+        }
+
+        [Test]
+        public void ConvertUsdWeiToTheManaTheMarketplaceDraws()
+        {
+            // $2.50 at $0.25 per MANA is the 10 MANA the accept() call transfers.
+            var quarterDollar = new ManaUsdRate(25_000_000, 8);
+            Assert.AreEqual(BigInteger.Parse("10000000000000000000"), CreditsTradeEncoder.UsdWeiToManaWei("2500000000000000000", quarterDollar));
+            Assert.AreEqual(BigInteger.Zero, CreditsTradeEncoder.UsdWeiToManaWei(null, quarterDollar));
+        }
+
+        [Test]
+        public void RoundCentsUpToWholeCredits()
+        {
+            Assert.AreEqual(130, CreditsTradeEncoder.RoundUpToWholeCredit(125, 10));
+            Assert.AreEqual(130, CreditsTradeEncoder.RoundUpToWholeCredit(130, 10));
+            Assert.AreEqual(10, CreditsTradeEncoder.RoundUpToWholeCredit(1, 10));
+            Assert.AreEqual(0, CreditsTradeEncoder.RoundUpToWholeCredit(0, 10));
+        }
+
+        [Test]
+        public void ClampTheUncreditedValueAtZero()
+        {
+            // The ephemeral credits this flow authorizes are sized exactly to their trade, so nothing is uncredited.
+            Assert.AreEqual(BigInteger.Zero, CreditsTradeEncoder.UncreditedValue("7000000000000000000", "7000000000000000000"));
+            Assert.AreEqual(BigInteger.Zero, CreditsTradeEncoder.UncreditedValue("6000000000000000000", "7000000000000000000"));
+            Assert.AreEqual(BigInteger.Parse("1000000000000000000"), CreditsTradeEncoder.UncreditedValue("7000000000000000000", "6000000000000000000"));
         }
 
         [Test]
@@ -296,6 +484,18 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(3, ((Newtonsoft.Json.Linq.JArray)typedData["types"]!["MetaTransaction"]!).Count);
             Assert.AreEqual(4, ((Newtonsoft.Json.Linq.JArray)typedData["types"]!["EIP712Domain"]!).Count);
         }
+
+        /// <summary>
+        ///     The value of the ABI head word at the given parameter index, as a byte count.
+        /// </summary>
+        private static int HeadWord(string argsHex, int index) =>
+            WordAt(argsHex, index * 32);
+
+        /// <summary>
+        ///     The 32-byte ABI word starting at the given byte offset into the argument block.
+        /// </summary>
+        private static int WordAt(string argsHex, int byteOffset) =>
+            (int)BigInteger.Parse($"0{argsHex.Substring(byteOffset * 2, 64)}", NumberStyles.HexNumber);
 
         private static string ToHex(byte[] bytes) =>
             "0x" + BitConverter.ToString(bytes).Replace("-", string.Empty).ToLowerInvariant();

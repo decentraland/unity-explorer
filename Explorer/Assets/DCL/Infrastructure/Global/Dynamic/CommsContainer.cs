@@ -113,13 +113,14 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             bool isolateScenesCommunication,
             bool enableAnalytics,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            string? localSceneDevelopmentRealm = null)
         {
             var entityParticipantTable = new EntityParticipantTable();
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
-            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
+            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController, localSceneDevelopmentRealm).WithLog();
 
             Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HardwareFingerprint)
                 ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())
@@ -249,7 +250,6 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 RemoteEntities,
                 staticContainer.ScenesCache,
-                staticContainer.EmoteStorage,
                 staticContainer.CharacterDataPropagationUtility,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                 islandThroughputBunch,

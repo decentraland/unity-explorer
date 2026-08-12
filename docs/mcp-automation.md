@@ -13,7 +13,7 @@ The server is compiled into all builds but stays dormant unless explicitly enabl
 | `--mcp` | Starts the MCP server on the default port **8123** |
 | `--mcp-port <port>` | Starts the MCP server on a specific port (implies `--mcp`) |
 
-The flag is accepted from the command line or a deep link. The endpoint is `http://127.0.0.1:<port>/unity-explorer-mcp`.
+The flag is accepted from the command line, or from a deep link whose target realm is loopback (`decentraland://?realm=http://127.0.0.1:8000&mcp=true`) — a deep link pointing at a remote realm drops it, see [`DeepLinkAllowlist`](../Explorer/Assets/DCL/Infrastructure/Global/AppArgs/DeepLinkAllowlist.cs). The endpoint is `http://127.0.0.1:<port>/unity-explorer-mcp`.
 
 ```bash
 # macOS
@@ -32,6 +32,7 @@ From a scene folder, `@dcl/sdk-commands` can enable it at launch: `npm run start
 - The listener binds to **127.0.0.1 only** — it is never reachable from the network.
 - Browser-originated requests are rejected unless their `Origin` is localhost (defense against drive-by pages and DNS rebinding). Requests without an `Origin` header (CLI clients) are allowed.
 - The server only exists while the process runs with the flag; there is no persistence and no authentication token in v1.
+- A deep link can only turn it on when the link's `realm` is loopback (deep-link allowlist tier 2, SEC-019/020), so a link aimed at a production realm cannot start the server. That gate narrows the drive-by surface rather than closing it: a crafted link can supply a loopback realm of its own. Because there is no token, treat an open port as full local control of the client — screenshots, chat commands as the signed-in user, movement — and only enable it on a machine where every local process is trusted.
 
 ## Connecting a coding agent
 
@@ -62,6 +63,9 @@ The tables below are a human-readable overview. The authoritative argument contr
 | `screenshot` | `maxWidth?` (default 1280), `quality?`, `worldOnly?` (exclude UI; post-processing still applied) | Downscaled image of the current view (UI included by default) + caption |
 | `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode + wallet address |
 | `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage |
+| `get_scene_content_stats` | — | Current scene's content stats (entities, triangles, bodies, geometries, materials, textures, shader variants, colliders, videos) with the documented soft-limit caps for its parcel count (materials is shown uncapped — see the SRP Batcher note below); triggers a fresh counting pass |
+| `get_scene_content_breakdown` | `limit?` (default 10), `sortBy?` (`triangles`/`materials`/`shaderVariants`/`drawCalls`/`visibleTriangles`) | Rendered content grouped by source model (GLTF `src` + one primitives row): triangles + share of scene, unique materials, shader variants, draw-call estimate, instances, renderers — plus each source's visible-from-this-POV subset (post-culling renderers, triangles, draw calls); position the camera first for viewpoint analysis |
+| `get_performance_stats` | `sampleSeconds?` (default 2, max 10) | Holds the call while sampling real frame times: render FPS avg/min/max, hiccup frames (>50 ms), and the current scene's tick FPS vs target — pair with the breakdown tool for POV cost-vs-FPS analysis |
 | `get_scene_logs` | `limit?`, `severity?`, `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
 | `list_scene_entities` | `limit?` | Entity ids of the current scene's ECS world |
 | `get_entity_details` | `entityId` | All components of one scene entity |
@@ -81,9 +85,18 @@ The tables below are a human-readable overview. The authoritative argument contr
 | `trigger_emote` | `urn` or `stop: true`, `loop?` | Plays or stops an avatar emote |
 | `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?`, `eventType?`, `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. Returns `hit`, hover text, hit point/distance, or the blocking entity |
 
+### Interpreting the numbers
+
+The content tools report *counts*, and some counts look scarier than they are. Guidance for drawing conclusions from them:
+
+- **Materials ≠ draw-call cost.** The client renders with URP's SRP Batcher, which bins draws by **shader variant** (shader + enabled keywords) and keeps each material's properties in a persistent GPU buffer — so many materials sharing few variants render cheaply. Judge draw-call risk by `shaderVariants`, not `materials`. A high material count with a low variant count is a **memory and texture** concern (and a lost GPU-instancing opportunity, since instancing needs identical materials), not a frame-time concern.
+- **`drawCallsEstimate` is pre-batching.** It counts material slots across renderers — an upper bound before the SRP Batcher and instancing reduce the real cost. Use it to compare sources against each other, not as an absolute GPU cost.
+- **`shaderVariants` is a lower-bound proxy.** It counts distinct variant bins, not per-frame SetPass calls — the batcher only merges *consecutive* draws with the same variant, so interleaving can produce more switches than the bin count suggests. A low variant count reliably proves material dedup won't buy frame time; a high one flags shader churn worth consolidating.
+- **The caps are soft.** The documented limits are warnings ("strong recommendations"), not enforced budgets. Correlate with measured cost — `get_performance_stats` at the relevant viewpoints — before prescribing optimizations.
+
 ## Structured output
 
-`get_player_state`, `get_scene_state` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
+`get_player_state`, `get_scene_state`, `get_scene_content_stats`, `get_scene_content_breakdown`, `get_performance_stats` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only on the read-only state tools that benefit from it** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
 
 ## The scene-iteration loop
 
