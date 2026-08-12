@@ -105,7 +105,7 @@ namespace DCL.Profiles
             }
         }
 
-        public static Profile NewRandomProfile(string? userId)
+        public static Profile NewRandomProfile(string? userId = null)
         {
             BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
