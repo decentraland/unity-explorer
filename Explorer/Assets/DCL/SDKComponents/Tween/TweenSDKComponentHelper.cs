@@ -184,6 +184,10 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, bool isCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
+            // A non-looping tween that already reported completion is terminal: GetTweenerState can only
+            // re-return TsCompleted and the else-if(TsActive) body is skipped either way — skip the dead dispatch.
+            if (sdkTweenComponent.TweenStateStatus == TweenStateStatus.TsCompleted) return;
+
             TweenStateStatus newState = GetTweenerState(sdkTweenComponent.CustomTweener);
 
             if (newState != sdkTweenComponent.TweenStateStatus)
@@ -235,6 +239,10 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent, bool isCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
+            // A non-looping tween that already reported completion is terminal: GetTweenerState can only
+            // re-return TsCompleted and the else-if(TsActive) body is skipped either way — skip the dead dispatch.
+            if (sdkTweenComponent.TweenStateStatus == TweenStateStatus.TsCompleted) return;
+
             TweenStateStatus newState = GetTweenerState(sdkTweenComponent.CustomTweener);
             if (newState != sdkTweenComponent.TweenStateStatus)
             {

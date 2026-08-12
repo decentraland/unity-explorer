@@ -161,7 +161,7 @@ namespace DCL.SDKComponents.MediaStream
                 onCurrentStream: static self => self.BestInitialVideoKey()
             );
 
-            if (streamKey.HasValue)
+            if (streamKey.HasValue && HasSubscribedTrack(streamKey.Value))
             {
                 Weak<IVideoStream> stream = room.VideoStreams.ActiveStream(streamKey.Value);
                 cvs = CurrentVideoStreamInfo.New(streamKey.Value, stream);
@@ -172,6 +172,19 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             playingAddress = livekitAddress;
+        }
+
+        private bool HasSubscribedTrack(StreamKey streamKey)
+        {
+            var participant = room.Participants.RemoteParticipant(streamKey.identity);
+
+            if (participant == null)
+                return false;
+
+            if (!participant.Tracks.TryGetValue(streamKey.sid, out TrackPublication publication))
+                return false;
+
+            return publication.Track is { Handle: { IsInvalid: false } };
         }
 
         private void OpenMissingAudioStreams()
@@ -192,6 +205,9 @@ namespace DCL.SDKComponents.MediaStream
                     var key = new StreamKey(identity, sid);
 
                     if (audioSources.ContainsKey(key))
+                        continue;
+
+                    if (!HasSubscribedTrack(key))
                         continue;
 
                     Weak<AudioStream> audioStream = room.AudioStreams.ActiveStream(key);
@@ -219,7 +235,7 @@ namespace DCL.SDKComponents.MediaStream
 
             // Switch only if the best source actually changed; re-allocating cvs every frame would
             // reset the speaker-hold timer and re-wrap a healthy stream (e.g. while a screen share holds it).
-            if (targetKey != null && cvs?.key.Equals(targetKey.Value) != true)
+            if (targetKey != null && cvs?.key.Equals(targetKey.Value) != true && HasSubscribedTrack(targetKey.Value))
             {
                 var currentVideoStream = room.VideoStreams.ActiveStream(targetKey.Value);
                 cvs = CurrentVideoStreamInfo.New(targetKey.Value, currentVideoStream);

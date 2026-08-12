@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 
 // ReSharper disable InconsistentNaming
-// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     // Server schema: decentraland/common-schemas src/platform/entity.ts#/Entity
