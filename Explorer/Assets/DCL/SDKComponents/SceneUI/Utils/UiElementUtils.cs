@@ -238,7 +238,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions)
+        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions, bool wrapUnsetByDefault)
         {
             labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
@@ -253,10 +253,9 @@ namespace DCL.SDKComponents.SceneUI.Utils
             if (font < styleFontDefinitions.Length)
                 labelToSetup.style.unityFontDefinition = styleFontDefinitions[font];
 
-            if (model.HasTextWrap)
-                labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
-            else
-                labelToSetup.style.whiteSpace = WhiteSpace.NoWrap;
+            // An explicit textWrap is always honored; when it is unset the caller decides the default.
+            bool wrap = model.HasTextWrap ? model.TextWrap == TextWrap.TwWrap : wrapUnsetByDefault;
+            labelToSetup.style.whiteSpace = wrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
         }
 
         public static void SetupFromSdkModel(this DCLImage imageToSetup, ref PBUiBackground model, Texture? texture = null)
@@ -265,7 +264,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Slices = model.GetBorder();
             imageToSetup.UVs = model.Uvs.ToDCLUVs();
             imageToSetup.ScaleMode = model.TextureMode.ToDCLImageScaleMode();
-            imageToSetup.Texture = texture;
+            imageToSetup.Texture = texture!;
         }
 
         public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, in PBUiInput model, in StyleFontDefinition[] styleFontDefinitions)
