@@ -59,8 +59,6 @@ namespace DCL.MapRenderer.Tests.LiveEvents
                     {
                         ICategoryMarker marker = Substitute.For<ICategoryMarker>();
 
-                        // Record which event a marker was actually populated with, so the assertion doesn't
-                        // depend on reflecting into the controller's private `markers` dictionary.
                         marker.When(m => m.SetData(Arg.Any<string>(), Arg.Any<Vector3>(), Arg.Any<PlacesData.PlaceInfo?>(), Arg.Any<EventDTO>()))
                               .Do(callInfo => createdMarkerEventNames.Add(callInfo.Arg<string>()));
 
@@ -118,8 +116,6 @@ namespace DCL.MapRenderer.Tests.LiveEvents
             var landEventA = new EventDTO { name = "Land Event A", world = false, x = 10, y = 20 };
             var landEventB = new EventDTO { name = "Land Event B", world = false, x = 30, y = 40 };
 
-            // Server order is next_start_at ASC and interleaves world/land events (see report.md) - the world
-            // event sorting before the land events is exactly the "many live events" failure mode.
             ConfigureEventsResponse(worldEvent, landEventA, landEventB);
 
             InvokePoll();
