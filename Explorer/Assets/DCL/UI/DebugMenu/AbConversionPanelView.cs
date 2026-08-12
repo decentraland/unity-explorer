@@ -11,7 +11,8 @@ namespace DCL.UI.DebugMenu
 {
     /// <summary>
     ///     Live view over <see cref="AbgenConversionMetrics" />: one row per abgen conversion of the
-    ///     current local-scene session, newest first, plus a summary line in the header.
+    ///     current local-scene session in chronological order (newest at the bottom, following the
+    ///     scroll like the debug console), plus a summary line in the header.
     /// </summary>
     public class AbConversionPanelView : DebugPanelView
     {
@@ -24,6 +25,7 @@ namespace DCL.UI.DebugMenu
 
         private readonly List<AbgenConversionMetrics.Entry> rows = new ();
         private readonly ListView list;
+        private readonly ScrollView scrollView;
         private readonly Label summary;
         private readonly Button clearCacheButton;
         private readonly Button highlightButton;
@@ -43,9 +45,22 @@ namespace DCL.UI.DebugMenu
             list.makeItem = MakeRow;
             list.bindItem = BindRow;
             list.itemsSource = rows;
+            scrollView = list.Q<ScrollView>();
         }
 
-        public void Refresh()
+        public override void Toggle()
+        {
+            base.Toggle();
+
+            // Land on the newest rows when opened; -1 forces the rebuild even if nothing changed since.
+            if (Visible)
+            {
+                lastVersion = -1;
+                Refresh(scrollToBottom: true);
+            }
+        }
+
+        public void Refresh(bool scrollToBottom = false)
         {
             if (!Visible) return;
 
@@ -54,8 +69,14 @@ namespace DCL.UI.DebugMenu
 
             lastVersion = metrics.Version;
 
+            // Follow the tail only while the user is already at it, mirroring ConsolePanelView.
+            bool atBottom = scrollToBottom || scrollView == null || scrollView.verticalScroller.value >= scrollView.verticalScroller.highValue * 0.999f;
+
             metrics.CopySnapshot(rows);
             list.RefreshItems();
+
+            if (atBottom && rows.Count > 0)
+                list.ScrollToItem(rows.Count - 1);
 
             string warmUp = metrics.WarmUp switch
                             {

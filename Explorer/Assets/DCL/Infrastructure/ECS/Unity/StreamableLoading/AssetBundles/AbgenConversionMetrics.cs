@@ -284,7 +284,10 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        /// <summary>Fills <paramref name="target" /> with the current entries, most recently started first.</summary>
+        /// <summary>
+        ///     Fills <paramref name="target" /> with the current entries in chronological order (oldest
+        ///     first, console-style). An entry keeps its original position when its status changes later.
+        /// </summary>
         public void CopySnapshot(List<Entry> target)
         {
             target.Clear();
@@ -295,7 +298,7 @@ namespace ECS.StreamableLoading.AssetBundles
                     target.Add(entry);
             }
 
-            target.Sort(static (a, b) => b.Sequence.CompareTo(a.Sequence));
+            target.Sort(static (a, b) => a.Sequence.CompareTo(b.Sequence));
         }
 
         private Entry TakeEntry(string contentPath) =>
