@@ -25,10 +25,17 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData exposedCameraData;
-        private InputAction inputPoint;
+        private InputAction inputPoint = null!;
         private Vector2 previousPosition = Vector2.zero;
         private CumulativePointerDelta lastSeenAccumulatedDelta;
-        private Camera cachedCamera;
+        private Camera cachedCamera = null!;
+
+        // Change-gating bookkeeping: the last payload actually sent to the scene, so an
+        // identical re-send (walking straight, no mouse movement) can be skipped entirely.
+        private Vector2 lastSentPos;
+        private Vector2 lastSentDelta;
+        private UnityEngine.Vector3 lastSentRayDir;
+        private bool hasSent;
 
         internal PrimaryPointerInfoSystem(
             World world,
@@ -89,13 +96,28 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             previousPosition = rawPosition;
             lastSeenAccumulatedDelta = accumulatedDelta;
 
-            var ray = cachedCamera.ScreenPointToRay(pointerPos);
+            Ray ray = cachedCamera.ScreenPointToRay(pointerPos);
+            UnityEngine.Vector3 rayDirection = ray.direction;
+
+            // PBPrimaryPointerInfo is last-writer-wins and this system is its sole writer for
+            // SCENE_ROOT_ENTITY. ScreenCoordinates and WorldRayDirection are absolute, so an identical
+            // re-send is a no-op; ScreenDelta is a per-tick quantity scenes integrate, so a non-zero delta
+            // must be sent every tick it repeats (constant-velocity locked look) and its return to zero too.
+            // Skip only the steady state: no motion continuing an already-zero delta with both absolute
+            // fields unchanged. previousPosition / lastSeenAccumulatedDelta above update unconditionally, so
+            // the skip never corrupts next tick's delta.
+            if (hasSent
+                && deltaPos.Equals(Vector2.zero)
+                && lastSentDelta.Equals(Vector2.zero)
+                && pointerPos.Equals(lastSentPos)
+                && rayDirection.Equals(lastSentRayDir))
+                return;
 
             var worldRayDirection = new Vector3
             {
-                X = ray.direction.x,
-                Y = ray.direction.y,
-                Z = ray.direction.z,
+                X = rayDirection.x,
+                Y = rayDirection.y,
+                Z = rayDirection.z,
             };
 
             ecsToCRDTWriter.PutMessage<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, Vector3 rayDir)>(static (component, data) =>
@@ -105,6 +127,13 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
                 component.ScreenDelta = new Decentraland.Common.Vector2 { X = data.delta.x, Y = data.delta.y };
                 component.WorldRayDirection = data.rayDir;
             }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (pointerPos, deltaPos, worldRayDirection));
+
+            // Record what was sent only after the write is issued: if PutMessage throws, the bookkeeping
+            // stays at the last delivered payload so the update is retried next tick, not gated out forever.
+            lastSentPos = pointerPos;
+            lastSentDelta = deltaPos;
+            lastSentRayDir = rayDirection;
+            hasSent = true;
         }
     }
 }
