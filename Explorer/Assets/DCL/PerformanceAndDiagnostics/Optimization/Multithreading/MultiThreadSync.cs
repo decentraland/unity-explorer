@@ -110,15 +110,28 @@ namespace Utility.Multithreading
                 {
                     lock (monitor)
                     {
-                        DateTime time = DateTime.Now;
-                        AcquisitionInfo current = currentAcquisitionInfo!.Value;
-                        TimeSpan difference = time - current.AcquiredAt;
+                        // The previous owner may have signalled this waiter between the wait expiring
+                        // and re-entering the monitor. In that case the acquisition succeeded, just late
+                        bool ownershipHandedOver = queue.TryPeek(out Owner? head) && head == owner && owner.IsSet;
 
-                        int requestingThreadId = NativeThread.CurrentId;
-                        int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+                        if (!ownershipHandedOver)
+                        {
+                            // Withdraw the entry enqueued by this acquisition and clear any pending signal,
+                            // so the queue never holds entries nobody is waiting on and the reused owner
+                            // starts its next acquisition from a clean state
+                            RemoveTimedOutWaiter(owner);
 
-                        syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                            DateTime time = DateTime.Now;
+                            AcquisitionInfo? current = currentAcquisitionInfo;
+                            string currentOwnerName = current?.Owner.Name ?? "<none>";
+                            double heldSeconds = current.HasValue ? (time - current.Value.AcquiredAt).TotalSeconds : 0d;
+
+                            int requestingThreadId = NativeThread.CurrentId;
+                            int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+
+                            syncLogsBuffer.Print();
+                            throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{currentOwnerName}\" takes too long: {heldSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                        }
                     }
                 }
             }
@@ -148,15 +161,17 @@ namespace Utility.Multithreading
                     return;
 
                 // If the queue is empty, then our logic is wrong
-                if (queue.TryDequeue(out Owner? finishedWaiter))
+                if (queue.TryPeek(out Owner? finishedWaiter))
                 {
-                    // The one releasing should be the one at the top of the queue
+                    // The one releasing should be the one at the top of the queue.
+                    // Validate before dequeuing so a mismatch doesn't consume another owner's entry
                     if (owner != finishedWaiter)
                     {
                         syncLogsBuffer.Print();
                         throw new OwnerMismatchException(owner, finishedWaiter);
                     }
 
+                    queue.Dequeue();
                     finishedWaiter.Reset();
 
                     if (queue.TryPeek(out Owner? next))
@@ -174,6 +189,38 @@ namespace Utility.Multithreading
                 currentAcquisitionInfo = null;
                 SYNC_OWNERSHIP.TryRemove(syncId, out _);
             }
+        }
+
+        /// <summary>
+        ///     Removes a single entry of the given owner from the queue, preserving the order of the remaining
+        ///     entries, and resets the owner's event so a pending signal cannot leak into its next acquisition.
+        ///     Must be called under <see cref="monitor" />.
+        /// </summary>
+        private void RemoveTimedOutWaiter(Owner owner)
+        {
+            int count = queue.Count;
+            var removed = false;
+            var removedHead = false;
+
+            for (var i = 0; i < count; i++)
+            {
+                Owner entry = queue.Dequeue();
+
+                if (!removed && entry == owner)
+                {
+                    removed = true;
+                    removedHead = i == 0;
+                    continue;
+                }
+
+                queue.Enqueue(entry);
+            }
+
+            owner.Reset();
+
+            // If the removed entry was at the head, ownership passes to the next waiter
+            if (removedHead && queue.TryPeek(out Owner? next))
+                next.Set();
         }
 
         public Scope GetScope(Owner source)
@@ -227,6 +274,8 @@ namespace Utility.Multithreading
         {
             private readonly ManualResetEventSlim eventSlim = new (false);
             public readonly string Name;
+
+            public bool IsSet => eventSlim.IsSet;
 
             public Owner(string name)
             {
@@ -289,8 +338,10 @@ namespace Utility.Multithreading
             {
                 multiThreadSync.Release(source);
 
+                // The scope is already released at this point: a long hold is a diagnostic,
+                // not a failure of the release itself
                 if (DateTime.Now - start > TIMEOUT)
-                    throw new TimeoutException($"{nameof(MultiThreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}. Releasing thread: {NativeThread.CurrentId}");
+                    ReportHub.LogError(ReportCategory.SYNC, $"{nameof(MultiThreadSync)} source {source.Name} took too much time! Held for: {(DateTime.Now - start).TotalSeconds}s. Releasing thread: {NativeThread.CurrentId}");
             }
         }
 
@@ -317,8 +368,10 @@ namespace Utility.Multithreading
             {
                 if (isScoped)
                 {
-                    scope.Dispose();
+                    // Clear the flag before disposing so a throwing release cannot leave a stale
+                    // scope behind that would be double-released on the next call
                     isScoped = false;
+                    scope.Dispose();
                 }
             }
         }
