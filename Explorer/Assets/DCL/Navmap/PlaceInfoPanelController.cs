@@ -43,14 +43,14 @@ namespace DCL.Navmap
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
-        private readonly GalleryEventBus galleryEventBus;
+        private readonly GalleryEventBus? galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly ImageController? thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
-        private readonly MultiStateButtonController homeButton;
+        private readonly MultiStateButtonController? homeButton;
         private readonly List<EventElementView> eventElements = new ();
-        private readonly CameraReelGalleryController cameraReelGalleryController;
+        private readonly CameraReelGalleryController? cameraReelGalleryController;
         private readonly IDonationsService donationsService;
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
@@ -81,7 +81,7 @@ namespace DCL.Navmap
             ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
             bool? reelUseSignedRequest = null,
-            GalleryEventBus galleryEventBus = null)
+            GalleryEventBus? galleryEventBus = null)
         {
             this.view = view;
             this.imageControllerProvider = imageControllerProvider;
@@ -108,7 +108,7 @@ namespace DCL.Navmap
                     cameraReelScreenshotsStorage!,
                     reelGalleryConfigParams!.Value,
                     reelUseSignedRequest!.Value,
-                    galleryEventBus);
+                    galleryEventBus!);
                 this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
                 this.cameraReelGalleryController.MaxThumbnailsUpdated += UpdatePhotosTabText;
             }
@@ -158,8 +158,12 @@ namespace DCL.Navmap
         public void Dispose()
         {
             thumbnailImage?.Dispose();
-            cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
-            cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
+
+            if (cameraReelGalleryController != null)
+            {
+                cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
+                cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
+            }
         }
 
         public void Show()
@@ -173,7 +177,7 @@ namespace DCL.Navmap
         }
 
         private void DonateToSceneCreator() =>
-            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Create(place!.creator_address, place!.base_position_processed)));
+            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Create(place!.creator_address!, place.base_position_processed)));
 
         public void Set(PlacesData.PlaceInfo placeInfo)
         {
@@ -184,7 +188,7 @@ namespace DCL.Navmap
             else
                 currentBaseParcel = null;
 
-            thumbnailImage.RequestImage(placeInfo.image);
+            thumbnailImage?.RequestImage(placeInfo.image);
             view.PlaceNameLabel.text = placeInfo.title;
             view.CreatorNameLabel.text = $"created by <b>{placeInfo.contact_name}</b>";
             view.LikeRateLabel.text = $"{(placeInfo.LikeRateAsFloat ?? 0) * 100:F0}%";
@@ -210,7 +214,7 @@ namespace DCL.Navmap
             else
                 view.FavoriteButton.SetButtonState(placeInfo.user_favorite);
 
-            if (view.HomeButton != null)
+            if (homeButton != null)
             {
                 bool isHome = homePlaceEventBus.IsHome(placeInfo);
                 homeButton.SetButtonState(isHome);
@@ -231,7 +235,7 @@ namespace DCL.Navmap
 
             view.CoordinatesLabel.text = $"{parcel.Value.x},{parcel.Value.y}";
 
-            if(!homeButton.IsButtonOn)
+            if (homeButton != null && !homeButton.IsButtonOn)
                 homeButton.SetButtonState(!homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == parcel.Value);
         }
 
@@ -534,14 +538,14 @@ namespace DCL.Navmap
         private void FetchPhotos()
         {
             showPlaceGalleryCancellationToken = showPlaceGalleryCancellationToken.SafeRestart();
-            cameraReelGalleryController?.ShowPlaceGalleryAsync(place?.id, showPlaceGalleryCancellationToken!.Token).Forget();
+            cameraReelGalleryController?.ShowPlaceGalleryAsync(place!.id, showPlaceGalleryCancellationToken!.Token).Forget();
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
             Action<CameraReelResponseCompact> reelDeleteIntention,  Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
                 true, PhotoDetailParameter.CallerContext.PlaceInfoPanel, reelDeleteIntention,
-                reelListRefreshIntention, galleryEventBus)));
+                reelListRefreshIntention, galleryEventBus!)));
 
         private void UpdatePhotosTabText(int count) =>
             view.SetPhotoTabText(count);
