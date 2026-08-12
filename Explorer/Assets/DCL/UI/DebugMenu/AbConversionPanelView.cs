@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.UI.DebugMenu
@@ -17,17 +19,26 @@ namespace DCL.UI.DebugMenu
         private const string USS_ENTRY_WARNING = "ab-conversion-entry--warning";
         private const string USS_ENTRY_ERROR = "ab-conversion-entry--error";
 
+        private static readonly int BASE_COLOR_ID = Shader.PropertyToID("_BaseColor");
+        private static readonly int COLOR_ID = Shader.PropertyToID("_Color");
+
         private readonly List<AbgenConversionMetrics.Entry> rows = new ();
         private readonly ListView list;
         private readonly Label summary;
         private readonly Button clearCacheButton;
+        private readonly Button highlightButton;
+        private readonly List<Renderer> highlightedRenderers = new ();
+        private readonly List<Renderer> renderersScratch = new ();
         private int lastVersion = -1;
+        private bool highlightActive;
 
         public AbConversionPanelView(VisualElement root, Button sidebarButton, Action closeClicked) : base(root, sidebarButton, closeClicked)
         {
             summary = root.Q<Label>("AbConversionSummary");
             clearCacheButton = root.Q<Button>("AbConversionClearCacheButton");
             clearCacheButton.clicked += OnClearCacheClicked;
+            highlightButton = root.Q<Button>("AbConversionHighlightButton");
+            highlightButton.clicked += OnHighlightClicked;
             list = root.Q<ListView>("AbConversionList");
             list.makeItem = MakeRow;
             list.bindItem = BindRow;
@@ -57,6 +68,61 @@ namespace DCL.UI.DebugMenu
                             };
 
             summary.text = $"{warmUp}{metrics.Planned} planned · {metrics.InFlight} converting · <color=#63D471>{metrics.Succeeded} ok</color> · <color=#FF6C6C>{metrics.Failed} failed</color> · {metrics.TotalOutputBytes / (1024 * 1024f):F1} MB";
+        }
+
+        /// <summary>
+        ///     Tints every scene object green when it was loaded from an asset bundle and red when it fell
+        ///     back to a raw GLTF, keyed off the source-prefixed root names Utils stamps at creation.
+        ///     Property blocks only — shared materials are never touched; a second click restores them.
+        /// </summary>
+        private void OnHighlightClicked()
+        {
+            highlightActive = !highlightActive;
+            highlightButton.text = highlightActive ? "CLEAR HIGHLIGHT" : "HIGHLIGHT SOURCES";
+
+            if (!highlightActive)
+            {
+                foreach (Renderer renderer in highlightedRenderers)
+                    if (renderer)
+                        renderer.SetPropertyBlock(null);
+
+                highlightedRenderers.Clear();
+                return;
+            }
+
+            var abTint = new MaterialPropertyBlock();
+            abTint.SetColor(BASE_COLOR_ID, Color.green);
+            abTint.SetColor(COLOR_ID, Color.green);
+
+            var gltfTint = new MaterialPropertyBlock();
+            gltfTint.SetColor(BASE_COLOR_ID, Color.red);
+            gltfTint.SetColor(COLOR_ID, Color.red);
+
+            var abRoots = 0;
+            var gltfRoots = 0;
+
+            Transform[] transforms = UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+
+            foreach (Transform sceneTransform in transforms)
+            {
+                bool fromAssetBundle = sceneTransform.name.StartsWith(GltfContainerAsset.AB_ROOT_NAME_PREFIX, StringComparison.Ordinal);
+
+                if (!fromAssetBundle && !sceneTransform.name.StartsWith(GltfContainerAsset.RAW_GLTF_ROOT_NAME_PREFIX, StringComparison.Ordinal))
+                    continue;
+
+                if (fromAssetBundle) abRoots++;
+                else gltfRoots++;
+
+                sceneTransform.GetComponentsInChildren(renderersScratch);
+
+                foreach (Renderer renderer in renderersScratch)
+                {
+                    renderer.SetPropertyBlock(fromAssetBundle ? abTint : gltfTint);
+                    highlightedRenderers.Add(renderer);
+                }
+            }
+
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"highlight — {abRoots} objects from asset bundles (green) · {gltfRoots} from raw GLTF (red)");
         }
 
         private void OnClearCacheClicked() =>

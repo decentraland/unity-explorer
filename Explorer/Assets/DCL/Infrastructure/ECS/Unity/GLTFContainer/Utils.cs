@@ -59,6 +59,7 @@ namespace ECS.Unity.GLTFContainer
             // metadata, not the underlying asset data. This mirrors Utils.TryCreateGltfObject for the AB path and
             // is what lets 50 entities share one GltfImport's mesh/texture memory instead of loading 50 copies.
             GameObject cloneRoot = Object.Instantiate(gltfData.Root);
+            cloneRoot.name = GltfContainerAsset.RAW_GLTF_ROOT_NAME_PREFIX + gltfData.Root.name;
             cloneRoot.SetActive(false);
 
             var result = GltfContainerAsset.Create(cloneRoot, gltfData, hierarchyPaths: gltfData.HierarchyPaths);
@@ -157,7 +158,7 @@ namespace ECS.Unity.GLTFContainer
                 return false;
             }
 
-            var container = new GameObject($"{asset.name}");
+            var container = new GameObject($"{GltfContainerAsset.AB_ROOT_NAME_PREFIX}{asset.name}");
 
             // Let the upper layer decide what to do with the root
             container.SetActive(false);

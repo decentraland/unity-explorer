@@ -27,6 +27,7 @@
             <ui:Label text="AB CONVERSION" name="TitleLabel" class="debug-panel__title" />
             <ui:Label text="" name="AbConversionSummary" class="debug-panel__title" />
             <ui:Button text="CLEAR CACHE" name="AbConversionClearCacheButton" class="scene-debug-console__outlined-item scene-debug-console__clear-button dcl-clickable" />
+            <ui:Button text="HIGHLIGHT SOURCES" name="AbConversionHighlightButton" class="scene-debug-console__outlined-item scene-debug-console__clear-button dcl-clickable" />
             <ui:VisualElement name="Spacer" class="debug-panel__header-spacer" />
             <ui:Button name="CloseButton" class="dcl-clickable debug-panel__close-button" />
         </ui:VisualElement>
