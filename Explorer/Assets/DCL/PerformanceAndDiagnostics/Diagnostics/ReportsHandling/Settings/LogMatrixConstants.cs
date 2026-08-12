@@ -8,6 +8,7 @@ namespace DCL.Diagnostics
         public const string LOG_MATRIX_LOAD_SUCCESS = "Successfully loaded log matrix override from: {0}";
         public const string LOG_MATRIX_LOAD_FAILED = "Failed to load log matrix override file: {0}";
         public const string LOG_MATRIX_INVALID_SEVERITY = "Invalid severity '{0}' for category '{1}' in log matrix override";
+        public const string LOG_MATRIX_ALL_OVERRIDE = "Log matrix override enables ALL categories and severities in the log file";
         
         public const string LOG_MATRIX_ENABLED = "Enabled {0}.{1} logging";
         public const string LOG_MATRIX_DISABLED = "Disabled {0}.{1} logging";

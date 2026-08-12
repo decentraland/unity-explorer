@@ -1,7 +1,9 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using CRDT;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.AvatarRendering.Emotes;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using ECS.LifeCycle.Components;
@@ -16,12 +18,13 @@ namespace DCL.Multiplayer.SDK.Tests
 {
     public class WriteAvatarEmoteCommandSystemShould : UnitySystemTestBase<WriteAvatarEmoteCommandSystem>
     {
+        private const int TICK_NUMBER = 563;
+
         private readonly URN emoteUrn1 = new ("thunder-kiss-65");
         private readonly URN emoteUrn2 = new ("more-human-than-human");
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
         private PlayerSceneCRDTEntity playerCRDTEntity;
-        private AvatarEmoteCommandComponent emoteCommand;
         private ISceneStateProvider sceneStateProvider;
 
         [SetUp]
@@ -30,69 +33,156 @@ namespace DCL.Multiplayer.SDK.Tests
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.TickNumber.Returns((uint)TICK_NUMBER);
             system = new WriteAvatarEmoteCommandSystem(world, ecsToCRDTWriter, sceneStateProvider);
 
             playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
             entity = world.Create(playerCRDTEntity);
-
-            emoteCommand = new AvatarEmoteCommandComponent
-            {
-                IsDirty = true,
-                PlayingEmote = emoteUrn2,
-                LoopingEmote = false,
-            };
-        }
-
-        protected override void OnTearDown()
-        {
-            world.Dispose();
         }
 
         [Test]
-        public void DispatchEmoteCommandUpdateCorrectly()
+        public void AppendStopBeforeStartWithSameTickExactlyOnce()
         {
-            world.Add(entity, emoteCommand);
+            // Arrange: a supersede — the previous emote's stop and the new emote's start on the same frame.
+            world.Add(entity, new AvatarEmoteCommandComponent
+            {
+                IsDirty = true,
+                StopEvent = new EmoteStopEvent { Urn = emoteUrn1, Loop = false, Reason = EmoteState.EsInterrupted, IsSet = true },
+                StartEvent = new EmoteStartEvent { Urn = emoteUrn2, Loop = true, IsSet = true },
+                PlayingEmote = emoteUrn2,
+                LoopingEmote = true,
+                IsPlaying = true,
+            });
 
-            var tickNumber = 563;
-            sceneStateProvider.TickNumber.Returns((uint)tickNumber);
-
+            // Act
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1)
-                           .AppendMessage(
-                                Arg.Any<Action<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent, uint)>>(),
-                                playerCRDTEntity.CRDTEntity,
-                                tickNumber,
-                                (emoteCommand, (uint)tickNumber));
+            // Assert: stop first, then start, both with the same tick timestamp.
+            Received.InOrder(() =>
+            {
+                ecsToCRDTWriter.AppendMessage(
+                    Arg.Any<Action<PBAvatarEmoteCommand, (EmoteStopEvent, uint)>>(),
+                    playerCRDTEntity.CRDTEntity, TICK_NUMBER, Arg.Any<(EmoteStopEvent, uint)>());
 
+                ecsToCRDTWriter.AppendMessage(
+                    Arg.Any<Action<PBAvatarEmoteCommand, (URN, bool, uint)>>(),
+                    playerCRDTEntity.CRDTEntity, TICK_NUMBER, Arg.Any<(URN, bool, uint)>());
+            });
+
+            // The one-shot events are consumed; the replay snapshot survives.
+            AvatarEmoteCommandComponent emoteCommand = world.Get<AvatarEmoteCommandComponent>(entity);
+            Assert.IsFalse(emoteCommand.IsDirty);
+            Assert.IsFalse(emoteCommand.StopEvent.IsSet);
+            Assert.IsFalse(emoteCommand.StartEvent.IsSet);
+            Assert.AreEqual(emoteUrn2, emoteCommand.PlayingEmote);
+            Assert.IsTrue(emoteCommand.IsPlaying);
+
+            // Act: further updates append nothing.
             ecsToCRDTWriter.ClearReceivedCalls();
-
-            emoteCommand.PlayingEmote = emoteUrn1;
-            emoteCommand.LoopingEmote = true;
-            emoteCommand.IsDirty = true;
-            world.Set(entity, emoteCommand);
-
-            tickNumber = 666;
-            sceneStateProvider.TickNumber.Returns((uint)tickNumber);
-
+            system.Update(0);
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1)
-                           .AppendMessage(
-                                Arg.Any<Action<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent, uint)>>(),
-                                playerCRDTEntity.CRDTEntity,
-                                tickNumber,
-                                (emoteCommand, (uint)tickNumber));
+            // Assert
+            ecsToCRDTWriter.DidNotReceive().AppendMessage(Arg.Any<Action<PBAvatarEmoteCommand, (EmoteStopEvent, uint)>>(), Arg.Any<CRDTEntity>(), Arg.Any<int>(), Arg.Any<(EmoteStopEvent, uint)>());
+            ecsToCRDTWriter.DidNotReceive().AppendMessage(Arg.Any<Action<PBAvatarEmoteCommand, (URN, bool, uint)>>(), Arg.Any<CRDTEntity>(), Arg.Any<int>(), Arg.Any<(URN, bool, uint)>());
+        }
+
+        [Test]
+        public void SerializeStartAndStopStatesCorrectly()
+        {
+            // Arrange
+            world.Add(entity, new AvatarEmoteCommandComponent
+            {
+                IsDirty = true,
+                StopEvent = new EmoteStopEvent { Urn = emoteUrn1, Loop = true, Reason = EmoteState.EsFinished, IsSet = true },
+                StartEvent = new EmoteStartEvent { Urn = emoteUrn2, Loop = false, IsSet = true },
+            });
+
+            Action<PBAvatarEmoteCommand, (EmoteStopEvent, uint)> stopPrepare = null;
+            (EmoteStopEvent, uint) stopData = default;
+            Action<PBAvatarEmoteCommand, (URN, bool, uint)> startPrepare = null;
+            (URN, bool, uint) startData = default;
+
+            ecsToCRDTWriter.AppendMessage(
+                Arg.Do<Action<PBAvatarEmoteCommand, (EmoteStopEvent, uint)>>(prepare => stopPrepare = prepare),
+                Arg.Any<CRDTEntity>(), Arg.Any<int>(),
+                Arg.Do<(EmoteStopEvent, uint)>(data => stopData = data));
+
+            ecsToCRDTWriter.AppendMessage(
+                Arg.Do<Action<PBAvatarEmoteCommand, (URN, bool, uint)>>(prepare => startPrepare = prepare),
+                Arg.Any<CRDTEntity>(), Arg.Any<int>(),
+                Arg.Do<(URN, bool, uint)>(data => startData = data));
+
+            // Act
+            system.Update(0);
+
+            // Assert: the prepare lambdas write the full payload, including the new State field.
+            var stopMessage = new PBAvatarEmoteCommand();
+            stopPrepare!(stopMessage, stopData);
+            Assert.AreEqual(emoteUrn1.ToString(), stopMessage.EmoteUrn);
+            Assert.IsTrue(stopMessage.Loop);
+            Assert.AreEqual((uint)TICK_NUMBER, stopMessage.Timestamp);
+            Assert.AreEqual(EmoteState.EsFinished, stopMessage.State);
+
+            var startMessage = new PBAvatarEmoteCommand();
+            startPrepare!(startMessage, startData);
+            Assert.AreEqual(emoteUrn2.ToString(), startMessage.EmoteUrn);
+            Assert.IsFalse(startMessage.Loop);
+            Assert.AreEqual((uint)TICK_NUMBER, startMessage.Timestamp);
+            Assert.AreEqual(EmoteState.EsStarted, startMessage.State);
+        }
+
+        [Test]
+        public void ReplayOnlyStartedStateOfPlayingEmoteOnInitialize()
+        {
+            // Arrange: an emote is still playing; a stale stop event must never be replayed.
+            world.Add(entity, new AvatarEmoteCommandComponent
+            {
+                IsDirty = false,
+                PlayingEmote = emoteUrn1,
+                LoopingEmote = true,
+                IsPlaying = true,
+            });
+
+            // Act
+            system.Initialize();
+
+            // Assert: exactly one start append, no stop appends.
+            ecsToCRDTWriter.Received(1).AppendMessage(
+                Arg.Any<Action<PBAvatarEmoteCommand, (URN, bool, uint)>>(),
+                playerCRDTEntity.CRDTEntity, TICK_NUMBER, Arg.Any<(URN, bool, uint)>());
+
+            ecsToCRDTWriter.DidNotReceive().AppendMessage(Arg.Any<Action<PBAvatarEmoteCommand, (EmoteStopEvent, uint)>>(), Arg.Any<CRDTEntity>(), Arg.Any<int>(), Arg.Any<(EmoteStopEvent, uint)>());
+        }
+
+        [Test]
+        public void NotReplayStoppedEmoteOnInitialize()
+        {
+            // Arrange: the emote already stopped — nothing is playing.
+            world.Add(entity, new AvatarEmoteCommandComponent
+            {
+                IsDirty = false,
+                PlayingEmote = emoteUrn1,
+                LoopingEmote = false,
+                IsPlaying = false,
+            });
+
+            // Act
+            system.Initialize();
+
+            // Assert
+            ecsToCRDTWriter.DidNotReceive().AppendMessage(Arg.Any<Action<PBAvatarEmoteCommand, (URN, bool, uint)>>(), Arg.Any<CRDTEntity>(), Arg.Any<int>(), Arg.Any<(URN, bool, uint)>());
         }
 
         [Test]
         public void HandleComponentRemovalCorrectly()
         {
-            world.Add(entity, emoteCommand);
-
-            var tickNumber = 563;
-            sceneStateProvider.TickNumber.Returns((uint)tickNumber);
+            world.Add(entity, new AvatarEmoteCommandComponent
+            {
+                IsDirty = true,
+                StartEvent = new EmoteStartEvent { Urn = emoteUrn2, Loop = false, IsSet = true },
+            });
 
             system.Update(0);
 
