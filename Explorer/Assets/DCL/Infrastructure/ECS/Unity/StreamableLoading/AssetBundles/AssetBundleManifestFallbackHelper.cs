@@ -18,9 +18,9 @@ namespace ECS.StreamableLoading.AssetBundles
         ///     <paramref name="useManualManifest" /> stamps the manual manifest instead of fetching a real one —
         ///     used by local scene development when its bundles come as raw GLTFs rather than from an asset-bundle server.
         /// </summary>
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false, bool isLocalSceneDevelopment = false)
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
         {
-            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest, skipException, isLocalSceneDevelopment);
+            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest, skipException);
 
             entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
         }
@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.AssetBundles
             await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, useManualManifest);
         }
 
-        private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false, bool isLocalSceneDevelopment = false)
+        private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool useManualManifest = false, bool skipException = false)
         {
             if (useManualManifest)
             {
@@ -58,13 +58,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
                 if (assetBundleManifest.Succeeded)
-                {
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
-
-                    // Marks the manifest so deps-digest handling stays off for LSD (fresh instance only —
-                    // the FAILED sentinel below is shared and must never be mutated).
-                    entityDefinition.assetBundleManifestVersion.IsLSDAsset = isLocalSceneDevelopment;
-                }
                 else
                 {
                     assetBundleManifest.TryLogException();
