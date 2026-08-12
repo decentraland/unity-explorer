@@ -13,7 +13,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         /// </summary>
         public static string GetMarketplaceLink(this IWearable wearable, IDecentralandUrlsSource decentralandUrlsSource)
         {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
+            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{{0}}/{{1}}";
             ReadOnlySpan<char> idSpan = wearable.GetUrn().ToString().AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 

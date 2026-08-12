@@ -449,7 +449,7 @@ namespace DCL.UI.Sidebar
         private void OnMarketplaceButtonClicked()
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));
+            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ShopLink)));
             urlBuilder.AppendParameter(marketplaceSourceParam);
             webBrowser.OpenUrlMainThreadOnly(urlBuilder.Build());
         }
