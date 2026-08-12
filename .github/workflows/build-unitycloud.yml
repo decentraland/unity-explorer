@@ -976,6 +976,17 @@ jobs:
           path: unity_cloud_log.log
           if-no-files-found: error
 
+      # Written by build.py as soon as the Unity-side build id is known, so it exists for
+      # failed builds too. The PR status comment uses it to deep-link the Unity Cloud
+      # build page instead of asking humans to search cloud.unity.com by hand.
+      - name: Upload Unity Cloud build info
+        if: ${{ always() && hashFiles('unity_cloud_build_info.env') != '' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: unity_build_info_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
+          path: unity_cloud_build_info.env
+          if-no-files-found: error
+
       - name: Print cloud logs
         if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         run: cat unity_cloud_log.log

@@ -61,6 +61,13 @@ TERMINAL_STATUSES = {'success', 'failure', 'canceled', 'unknown'}
 
 build_healthy = True
 
+# Deep link to this build in the Unity Cloud dashboard, captured from the first build
+# response that carries one. Persisted to BUILD_LINK_INFO_PATH so the workflow can
+# upload it and the PR status comment can link the build directly.
+BUILD_LINK_INFO_PATH = 'unity_cloud_build_info.env'
+dashboard_url = None
+_build_link_info_written = False
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
 parser.add_argument('--cancel', help='Cancel a running build stored in build_info.json', action='store_true')
@@ -616,6 +623,44 @@ def try_resume_build():
     return None
 
 
+def record_build_link_info(id, response_json):
+    """Persist the Unity Cloud dashboard deep link for this build (best-effort).
+
+    Build API responses carry dashboard links; the workflow uploads the written file
+    as an artifact so the PR status comment can link the build id directly instead
+    of telling humans to search cloud.unity.com by hand.
+    """
+    global dashboard_url, _build_link_info_written
+
+    links = response_json.get('links') or {}
+    href = None
+    # dashboard_summary is the build's page and dashboard_log its log tab;
+    # dashboard_url can be just the dashboard root, so a candidate only
+    # qualifies when it points at this specific build.
+    for key in ('dashboard_summary', 'dashboard_log', 'dashboard_url'):
+        candidate = (links.get(key) or {}).get('href')
+        if candidate and '/builds/' in candidate:
+            href = candidate
+            break
+
+    if _build_link_info_written and not href:
+        return
+
+    try:
+        with open(BUILD_LINK_INFO_PATH, 'w') as f:
+            f.write(f'BUILD_TARGET={os.getenv("TARGET")}\n')
+            f.write(f'BUILD_ID={id}\n')
+            if href:
+                f.write(f'DASHBOARD_URL={href}\n')
+    except OSError as e:
+        print(f'Warning: could not write {BUILD_LINK_INFO_PATH}: {e}')
+
+    if href:
+        dashboard_url = href
+        print(f'::notice::Unity Cloud build #{id} ({os.getenv("TARGET")}): {href}')
+    _build_link_info_written = True
+
+
 def write_step_summary(target, build_id, final_status, phase_durations, queue_reasons, queue_elapsed, build_elapsed):
     """Append a phase breakdown to $GITHUB_STEP_SUMMARY (best-effort)."""
     summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
@@ -635,6 +680,8 @@ def write_step_summary(target, build_id, final_status, phase_durations, queue_re
     lines.append('')
     lines.append(f'- Target: `{target}`')
     lines.append(f'- Build ID: `{build_id}`')
+    if dashboard_url:
+        lines.append(f'- Unity Cloud build page: {dashboard_url}')
     lines.append(f'- Final outcome: `{final_status}`')
     if queue_reasons:
         lines.append(f"- Queue reasons seen: {', '.join(f'`{r}`' for r in sorted(queue_reasons))}")
@@ -710,6 +757,9 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
                 return 'build_timeout', phase_durations, queue_reasons, queue_elapsed, build_elapsed
 
         keep_polling, status, response_json = poll_build(id)
+
+        if dashboard_url is None:
+            record_build_link_info(id, response_json)
 
         queued_reason = response_json.get('queuedReason')
         if queued_reason and status in QUEUE_STATUSES:
@@ -920,7 +970,8 @@ download_artifact(id)
 download_log(id)
 
 if not build_healthy:
-    print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
+    where = dashboard_url or f'https://cloud.unity.com/ (search for target "{os.getenv("TARGET")}" and build ID "{id}")'
+    print(f'Build unhealthy - check the downloaded logs or the Unity Cloud build page: {where}')
     sys.exit(1)
 
 # Cleanup (only if build is healthy and not release)
