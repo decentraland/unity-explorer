@@ -3,6 +3,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -101,6 +102,7 @@ namespace DCL.PluginSystem.Global
         private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
         private readonly StreamReactionsChatCommand streamReactionsChatCommand;
+        private readonly IExposedCameraData exposedCameraData;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
 
@@ -149,6 +151,7 @@ namespace DCL.PluginSystem.Global
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
             StreamReactionsChatCommand streamReactionsChatCommand,
+            IExposedCameraData exposedCameraData,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -188,6 +191,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
             this.streamReactionsChatCommand = streamReactionsChatCommand;
+            this.exposedCameraData = exposedCameraData;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -403,7 +407,8 @@ namespace DCL.PluginSystem.Global
                 messageReactionService,
                 web3IdentityCache,
                 profileCache,
-                inputBlock
+                inputBlock,
+                exposedCameraData
             );
 
             pluginScope.Add(chatPanelPresenter);

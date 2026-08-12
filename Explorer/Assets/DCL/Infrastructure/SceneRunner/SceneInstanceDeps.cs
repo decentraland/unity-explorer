@@ -28,6 +28,7 @@ using DCL.SDKComponents.MediaStream;
 using DCL.SkyBox;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Exceptions;
 using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
@@ -73,7 +74,7 @@ namespace SceneRunner
         internal readonly ISystemGroupsUpdateGate systemGroupThrottler;
         private readonly ISystemsUpdateGate systemsUpdateGate;
         private readonly ISceneData sceneData;
-        private readonly IJsApiPermissionsProvider permissionsProvider;
+        private readonly IJsApiPermissionsProvider permissionsProvider = null!;
 
         private readonly MultiThreadSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
@@ -136,6 +137,15 @@ namespace SceneRunner
         {
             this.sceneData = sceneData;
             this.permissionsProvider = permissionsProvider;
+
+            if (sceneData.IsSdk7())
+            {
+                if (!sceneData.TryGetMainScriptUrl(out SceneCodeUrl))
+                    throw new ManifestNotFoundException($"Scene main script '{sceneData.SceneEntityDefinition.metadata.main}' not found in the content manifest of scene {sceneData.SceneShortInfo}");
+            }
+            else
+                SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
+
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
             CRDTProtocol = new CRDTProtocol();
             SceneStateProvider = new SceneStateProvider();
@@ -160,11 +170,6 @@ namespace SceneRunner
 
             EcsExecutor = new SceneEcsExecutor(ECSWorldFacade.EcsWorld);
             entityCollidersGlobalCache.AddSceneInfo(EntityCollidersCache, EcsExecutor);
-
-            if (sceneData.IsSdk7()) // Create an instance of Scene Runtime on the thread pool
-                sceneData.TryGetMainScriptUrl(out SceneCodeUrl);
-            else
-                SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
         }
 
         public void Dispose()

@@ -25,11 +25,15 @@ namespace SceneRunner.Scene
 
     public static class SceneStateProviderExtensions
     {
-        public static bool IsNotRunningState(this ISceneStateProvider sceneStateProvider) =>
-            sceneStateProvider.State.Value()
+        public static bool IsNotRunningState(this ISceneStateProvider sceneStateProvider)
+        {
+            SceneState state = sceneStateProvider.State;
+
+            return state
                 is SceneState.Disposing
                 or SceneState.Disposed
                 or SceneState.JavaScriptError
                 or SceneState.EngineError;
+        }
     }
 }

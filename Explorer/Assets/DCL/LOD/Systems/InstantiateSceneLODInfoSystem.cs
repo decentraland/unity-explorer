@@ -61,14 +61,17 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
-                return;
-
+            // Check HasActiveLODPromise before spending budget: the injected budgets (FrameTimeCapBudget + MemoryBudget)
+            // are stateless per-frame threshold reads, so reordering the spend after the cheap byte checks is
+            // behaviour-preserving while sparing idle scenes the two virtual TrySpendBudget() calls each frame.
             if (!sceneLODInfo.HasActiveLODPromise())
                 return;
 
             //Means it has already been resolved
             if (sceneLODInfo.IsLODInstantiated(sceneLODInfo.CurrentLODLevelPromise))
+                return;
+
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
                 return;
 
             if (sceneLODInfo.CurrentLODLevelPromise == 0 && sceneLODInfo.InitialSceneStateLOD.IsProcessing())
@@ -86,7 +89,7 @@ namespace DCL.LOD.Systems
                 // by distance. No overlap, no empty frame.
                 sceneLODInfo.InitialSceneStateLOD.RevealAssembledAssets();
 
-                sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, null, defaultFOV, defaultLodBias,
+                sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, null!, defaultFOV, defaultLodBias,
                     realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
                 sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.Resolved;
             }
@@ -96,7 +99,7 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                if (result.Succeeded && result.Asset.TryGetAsset(out GameObject go))
+                if (result.Succeeded && result.Asset!.TryGetAsset(out GameObject go))
                 {
                     GameObject? instantiatedLOD = Object.Instantiate(go,
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
@@ -124,7 +127,7 @@ namespace DCL.LOD.Systems
         {
             var slots = Array.Empty<TextureArraySlot?>();
             if (!lodLevel.Equals(0))
-                slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.id, sceneDefinitionComponent.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
+                slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.id!, sceneDefinitionComponent.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
             return slots;
         }
 

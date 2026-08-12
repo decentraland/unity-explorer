@@ -52,6 +52,11 @@ namespace Utility.Multithreading
             UniTask.RunOnThreadPool(func, configureAwait, cancellationToken); // IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG
 #endif
 
+        // Reusable per-tick delay for a serially-awaited loop: amortizes the per-await promise (and, on
+        // desktop, the Timer + cancellation registration) across the loop lifetime. See ReusableTickDelay.
+        public static ReusableTickDelay CreateReusableTickDelay() =>
+            new ReusableTickDelay();
+
 #if UNITY_WEBGL
         public static UniTask Delay(
                 int sleepMS,

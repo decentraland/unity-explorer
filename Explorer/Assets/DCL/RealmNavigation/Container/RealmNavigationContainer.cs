@@ -58,8 +58,11 @@ namespace DCL.RealmNavigation
 
             IAnalyticsController analytics = bootstrapContainer.Analytics.Controller;
 
-            var worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
-                bootstrapContainer.DecentralandUrlsSource, identityCache, communityMembershipChecker);
+            IWorldPermissionsService worldPermissionsService = new CachedWorldPermissionsService(
+                new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
+                    bootstrapContainer.DecentralandUrlsSource, identityCache, communityMembershipChecker),
+                () => identityCache.Identity?.Address,
+                TimeSpan.FromSeconds(30));
 
             var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, staticContainer.RealmData);
 

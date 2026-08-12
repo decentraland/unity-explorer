@@ -255,21 +255,33 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
+            var acquired = false;
+
             try
             {
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
+                acquired = true;
 
                 applyBufferSampler.Begin();
 
-                // Apply changes to the ECS World on the main thread
-                crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
-                applyBufferSampler.End();
+                try
+                {
+                    // Apply changes to the ECS World on the main thread
+                    crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
+                }
+                finally { applyBufferSampler.End(); }
 
                 // Allow system for which throttling is enabled to process once
                 // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
                 systemGroupsUpdateGate.Open();
             }
-            catch (Exception e) { exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE); }
+            catch (Exception e)
+            {
+                if (!acquired && e is not ObjectDisposedException)
+                    crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
+
+                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
