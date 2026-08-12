@@ -464,6 +464,10 @@ MonoBehaviour:
       Severity: 2
     - Category: AUTHENTICATION
       Severity: 0
+    - Category: CREDITS_PURCHASE
+      Severity: 1
+    - Category: CREDITS_PURCHASE
+      Severity: 4
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
