@@ -1,8 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using NBitcoin;
 using System;
 using System.Collections.Generic;
@@ -217,42 +220,51 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         internal async UniTask PollEventsAndPlacesOverTimeAsync(CancellationToken ct)
         {
-            do
+            while (!ct.IsCancellationRequested)
             {
-                foreach (IClusterableMarker clusterableMarker in markers.Values)
+                Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                     .SuppressToResultAsync(ReportCategory.EVENTS);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (eventsResult.Success)
                 {
-                    var marker = (ICategoryMarker)clusterableMarker;
-                    mapCullingController.StopTracking(marker);
-                    marker.OnBecameInvisible();
+                    // Existing markers are cleared only when fresh data is available so a failed poll keeps the last known events on the map
+                    foreach (IClusterableMarker clusterableMarker in markers.Values)
+                    {
+                        var marker = (ICategoryMarker)clusterableMarker;
+                        mapCullingController.StopTracking(marker);
+                        marker.OnBecameInvisible();
+                    }
+                    markers.Clear();
+                    clusterController.Disable();
+
+                    foreach (EventDTO eventDto in eventsResult.Value)
+                    {
+                        if (eventDto.world)
+                            continue;
+
+                        Vector2Int coords = new Vector2Int(eventDto.x, eventDto.y);
+                        if (markers.ContainsKey(coords))
+                            continue;
+
+                        ICategoryMarker marker = builder(objectsPool, mapCullingController, coordsUtils);
+                        marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
+                        marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords), null, eventDto);
+                        markers.Add(coords, marker);
+
+                        if(isEnabled)
+                            mapCullingController.StartTracking(marker, this);
+                    }
+
+                    if(isEnabled && !ZoomBlocked)
+                        foreach (IClusterableMarker clusterableMarker in clusterController.UpdateClusters(currentZoomLevel, currentBaseZoom, currentZoom, markers))
+                            mapCullingController.StartTracking((ICategoryMarker)clusterableMarker, this);
                 }
-                markers.Clear();
-                clusterController.Disable();
 
-                IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true);
-                foreach (EventDTO eventDto in events)
-                {
-                    if (eventDto.world)
-                        continue;
-                    
-                    Vector2Int coords = new Vector2Int(eventDto.x, eventDto.y);
-                    if (markers.ContainsKey(coords))
-                        continue;
-
-                    ICategoryMarker marker = builder(objectsPool, mapCullingController, coordsUtils);
-                    marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
-                    marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords), null, eventDto);
-                    markers.Add(coords, marker);
-
-                    if(isEnabled)
-                        mapCullingController.StartTracking(marker, this);
-                }
-
-                if(isEnabled && !ZoomBlocked)
-                    foreach (IClusterableMarker clusterableMarker in clusterController.UpdateClusters(currentZoomLevel, currentBaseZoom, currentZoom, markers))
-                        mapCullingController.StartTracking((ICategoryMarker)clusterableMarker, this);
                 await UniTask.Delay(LIVE_EVENTS_POLLING_TIME, DelayType.Realtime, cancellationToken: ct);
             }
-            while (ct.IsCancellationRequested == false);
         }
     }
 }

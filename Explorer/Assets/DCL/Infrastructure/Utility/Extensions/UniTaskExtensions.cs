@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Utility.Types;
 using System;
+using UnityEngine.Networking;
 using Utility;
 
 namespace DCL.Utilities.Extensions
@@ -24,14 +25,8 @@ namespace DCL.Utilities.Extensions
             }
             catch (Exception e)
             {
-                ReportException(e);
+                ReportSuppressedException(e, reportData);
                 return exceptionToResult?.Invoke(e) ?? EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message, e);
-            }
-
-            void ReportException(Exception e)
-            {
-                if (reportData != null)
-                    ReportHub.LogException(e, reportData.Value);
             }
         }
 
@@ -44,15 +39,24 @@ namespace DCL.Utilities.Extensions
             catch (OperationCanceledException) { return Result<T>.CancelledResult(); }
             catch (Exception e)
             {
-                ReportException(e);
+                ReportSuppressedException(e, reportData);
                 return exceptionToResult?.Invoke(e) ?? Result<T>.ErrorResult(e.Message);
             }
+        }
 
-            void ReportException(Exception e)
-            {
-                if (reportData != null)
-                    ReportHub.LogException(e, reportData.Value);
-            }
+        /// <summary>
+        ///     Connection-level web request failures (TLS, DNS, unreachable host) are expected transient network
+        ///     conditions, so they are reported as warnings; all other exceptions keep full exception reporting
+        /// </summary>
+        private static void ReportSuppressedException(Exception e, ReportData? reportData)
+        {
+            if (reportData == null)
+                return;
+
+            if (e is UnityWebRequestException { Result: UnityWebRequest.Result.ConnectionError } webRequestException)
+                ReportHub.LogWarning(reportData.Value, $"Suppressed web request failure ({webRequestException.Result}, code {webRequestException.ResponseCode}): {webRequestException.Error}");
+            else
+                ReportHub.LogException(e, reportData.Value);
         }
 
         public static UniTask<TResult?> SuppressAnyExceptionWithFallback<TResult>(this UniTask<TResult?> coreOp,

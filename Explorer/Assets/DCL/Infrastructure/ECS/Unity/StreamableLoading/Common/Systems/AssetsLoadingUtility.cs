@@ -8,6 +8,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -56,16 +57,20 @@ namespace ECS.StreamableLoading.Common.Systems
 
                         // Removal from Permitted Sources is done after this method
                         if (intention.CommonArguments.PermittedSources.HasExactlyOneFlag())
+                        {
+                            string message = $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
+                                             + "No more sources left.";
 
                             // conclude now
+                            // Recoverable errors that exhausted their attempts are expected transient network conditions,
+                            // so they are demoted to a warning; irrecoverable errors keep full exception reporting
                             return new StreamableLoadingResult<TAsset>(
                                 reportData,
-                                new Exception(
-                                    $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
-                                    + "No more sources left.",
-                                    unityWebRequestException
-                                )
+                                unityWebRequestException.IsIrrecoverableError()
+                                    ? new Exception(message, unityWebRequestException)
+                                    : new StreamableLoadingException(LogType.Warning, message, unityWebRequestException)
                             );
+                        }
 
                         // Leave other systems to decide on other sources
                         return null;
