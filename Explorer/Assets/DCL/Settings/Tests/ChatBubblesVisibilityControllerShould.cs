@@ -11,12 +11,6 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Tests
 {
-    /// <summary>
-    /// Regression coverage for #9562: a chat-bubbles-visibility preference saved in a previous
-    /// session must be applied to the live <see cref="ChatSettingsAsset"/> the moment
-    /// <see cref="ChatBubblesVisibilityController"/> is constructed at boot — not merely
-    /// reflected in the dropdown widget while the runtime asset stays at its serialized default.
-    /// </summary>
     [TestFixture]
     public class ChatBubblesVisibilityControllerShould
     {
@@ -61,10 +55,12 @@ namespace DCL.Settings.Tests
             DCL_PREFS_BACKING_FIELD.SetValue(null, originalPrefs);
         }
 
-        [Test]
-        public void ApplyStoredNoneVisibilityToSettingsAssetOnConstruction()
+        [TestCase(ChatBubbleVisibilitySettings.None)]
+        [TestCase(ChatBubbleVisibilitySettings.NearbyOnly)]
+        [TestCase(ChatBubbleVisibilitySettings.All)]
+        public void ApplyStoredVisibilityToSettingsAssetOnConstruction(ChatBubbleVisibilitySettings expected)
         {
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, (int) ChatBubbleVisibilitySettings.None, save: false);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, (int) expected, save: false);
 
             var view = viewGameObject.GetComponent<SettingsDropdownModuleView>();
             Assert.IsNotNull(view, "Dropdown prefab is missing its SettingsDropdownModuleView component");
@@ -74,17 +70,17 @@ namespace DCL.Settings.Tests
             controller = new ChatBubblesVisibilityController(view, chatSettingsAsset, eventListener);
 
             Assert.AreEqual(
-                ChatBubbleVisibilitySettings.None,
+                expected,
                 chatSettingsAsset.chatBubblesVisibilitySettings,
-                "The stored 'None' preference was not applied to ChatSettingsAsset at construction time.");
+                $"The stored '{expected}' preference was not applied to ChatSettingsAsset at construction time.");
         }
 
         private sealed class FakeSettingsModuleEventListener : ISettingsModuleEventListener
         {
-            public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
+            public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged = delegate { };
 
             public void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility) =>
-                ChatBubblesVisibilityChanged?.Invoke(newVisibility);
+                ChatBubblesVisibilityChanged.Invoke(newVisibility);
         }
     }
 }
