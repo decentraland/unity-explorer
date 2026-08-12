@@ -264,6 +264,9 @@ jobs:
             echo '```'
             cat manifest/TOOLCHAINS.txt
             echo '```'
+            echo
+            echo '> [!WARNING]'
+            echo "> **Nothing was committed** — this workflow has \`contents: read\` and only verifies. If this build is meant to ship, follow the relock steps in \`Explorer/Assets/Plugins/UUAV/README.md\`: commit the binaries from this run's artifacts, then run \`verify-binaries.py --update --only <target> --toolchain toolchain-<os>.txt\`."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
