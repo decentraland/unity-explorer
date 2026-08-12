@@ -209,7 +209,7 @@ jobs:
   prebuild:
     name: Prebuild
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     # Skip when PR has 'perf_test' label (only performance tests should run)
     if: |
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
@@ -255,12 +255,24 @@ jobs:
       install_source: ${{ steps.set_defaults.outputs.install_source }}
       targets: ${{ steps.get_targets.outputs.targets }}
     steps:
+      - name: Plan checkout
+        id: plan
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]] || { [[ -z "${{ github.event.inputs.version }}" ]] && [[ -z "${{ inputs.version }}" ]]; }; then
+            echo "checkout=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkout=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout code
+        if: steps.plan.outputs.checkout == 'true'
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          filter: blob:none
 
       - name: Detect changes under Explorer/**
+        if: github.event_name == 'pull_request'
         id: changed_explorer
         uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
         with:
@@ -353,7 +365,7 @@ jobs:
           fi
 
       - name: Debug Commit SHA
-        if: steps.decide.outputs.should_build == 'true'
+        if: steps.decide.outputs.should_build == 'true' && steps.plan.outputs.checkout == 'true'
         run: |
           echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
           echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"
@@ -361,7 +373,7 @@ jobs:
 
       - name: Get version
         id: get_version
-        if: steps.decide.outputs.should_build == 'true' && github.event.inputs.version == '' && inputs.version == ''
+        if: steps.decide.outputs.should_build == 'true' && steps.plan.outputs.checkout == 'true'
         uses: ./.github/actions/version
         with:
           commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
