@@ -1,0 +1,192 @@
+name: Resolve Explorer build
+description: >-
+  Resolves the macOS Unity Cloud Build artifact URL for a commit, plus the
+  explorer-automation ref its tests should come from. Shared by the dispatchers
+  for explorer-automation's reusable suites — visual-regression.yml and
+  in-world-tests.yml — which differ only in their trigger and in which suite
+  they call.
+
+inputs:
+  head-ref:
+    description: 'Branch under test. Looked up in explorer-automation to pick tests-ref.'
+    required: true
+  head-sha:
+    description: 'Commit to find a build for.'
+    required: true
+  wait-minutes:
+    description: >-
+      How long to wait for a build that has not finished yet. 0 (the default)
+      requires one to already exist — right for a caller a human triggers, since
+      they can look. A caller that fires the moment a PR opens has to wait for
+      the build the same event started.
+    required: false
+    default: '0'
+  build-url-override:
+    description: >-
+      Use this artifact URL as-is and skip resolution. For manual runs that
+      target a build this repo cannot derive — an older commit, another branch.
+    required: false
+    default: ''
+  public-url-prefix:
+    description: 'vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL — public prefix of the artifact bucket.'
+    required: true
+  github-token:
+    description: 'Token with actions:read on this repo.'
+    required: true
+  automation-token:
+    description: 'Token with contents:read on decentraland/explorer-automation (REPOS_READ_ONLY_TOKEN).'
+    required: true
+
+outputs:
+  build-url:
+    description: 'Direct URL to Decentraland_macos.zip, verified reachable.'
+    value: ${{ steps.build.outputs.build-url }}
+  short-sha:
+    description: 'First 7 characters of the commit the build was made from.'
+    value: ${{ steps.build.outputs.short-sha }}
+  tests-ref:
+    description: 'explorer-automation ref to take tests from. Empty means that repo default.'
+    value: ${{ steps.match.outputs.tests-ref }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve build URL
+      id: build
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        WAIT_MINUTES: ${{ inputs.wait-minutes }}
+        BUILD_URL_OVERRIDE: ${{ inputs.build-url-override }}
+        PUBLIC_URL_PREFIX: ${{ inputs.public-url-prefix }}
+      run: |
+        set -euo pipefail
+
+        if [ -n "$BUILD_URL_OVERRIDE" ]; then
+          # Everything below only ever produces bucket URLs; an override is the
+          # one path where a caller picks the host, so pin it here rather than
+          # leaving it to the suite's own check on the macOS runner.
+          case "$BUILD_URL_OVERRIDE" in
+            https://explorer-artifacts.decentraland.org/*) ;;
+            *)
+              echo "::error::build_url must be an https://explorer-artifacts.decentraland.org/ URL."
+              exit 1
+              ;;
+          esac
+          {
+            echo "build-url=${BUILD_URL_OVERRIDE}"
+            echo "short-sha=${HEAD_SHA:0:7}"
+          } >> "$GITHUB_OUTPUT"
+          echo "::notice::Using caller-supplied build URL."
+          exit 0
+        fi
+
+        DEADLINE=$(( SECONDS + WAIT_MINUTES * 60 ))
+        while :; do
+          # Scoped to the build workflow file: a repo-wide head_sha listing gets
+          # crowded out by bot runs sharing the SHA (90+ on a typical release
+          # commit) and the build falls past the first page. Only
+          # pull_request/push builds qualify — dispatch builds can carry
+          # non-default options (e.g. profiling) that break the determinism the
+          # suites rely on.
+          RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")]')
+          RUN_JSON=$(jq -c '[.[] | select(.conclusion == "success")] | .[0] // empty' <<< "$RUNS")
+          if [ -n "$RUN_JSON" ]; then break; fi
+
+          TOTAL=$(jq 'length' <<< "$RUNS")
+          RUNNING=$(jq '[.[] | select(.status != "completed")] | length' <<< "$RUNS")
+
+          if [ "$WAIT_MINUTES" -eq 0 ]; then
+            echo "::error::No successful Unity Cloud Build run for ${HEAD_SHA:0:7}. Is the build still in progress, or did it fail?"
+            exit 1
+          fi
+          # Every build for this commit finished and none produced an artifact.
+          # Waiting for a re-run that nobody has asked for only delays the red.
+          if [ "$TOTAL" -gt 0 ] && [ "$RUNNING" -eq 0 ]; then
+            echo "::error::Unity Cloud Build failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
+            exit 1
+          fi
+          if [ "$SECONDS" -ge "$DEADLINE" ]; then
+            echo "::error::Gave up after ${WAIT_MINUTES}m waiting for a Unity Cloud Build of ${HEAD_SHA:0:7}."
+            if [ "$TOTAL" -eq 0 ]; then
+              # build-unitycloud.yml skips drafts and PRs that touch no
+              # Explorer/** file. A `force-build` label overrides both.
+              echo "::error::No build was ever queued for this commit. Label the PR \`force-build\`, or push a change under Explorer/, then re-run this job."
+            else
+              echo "::error::Re-run this job once the build is green."
+            fi
+            exit 1
+          fi
+          # TOTAL of 0 is normal right after a PR opens: the build is triggered
+          # by the same event as this job and takes a moment to register.
+          echo "Waiting for a build of ${HEAD_SHA:0:7} — ${RUNNING} of ${TOTAL} still running. $(( (DEADLINE - SECONDS) / 60 ))m left."
+          sleep 60
+        done
+
+        RUN_NUMBER=$(jq -r '.run_number'  <<< "$RUN_JSON")
+        RUN_EVENT=$(jq  -r '.event'       <<< "$RUN_JSON")
+        RUN_BRANCH=$(jq -r '.head_branch' <<< "$RUN_JSON")
+        BUILT_SHA=$(jq  -r '.head_sha'    <<< "$RUN_JSON")
+        SHORT_SHA="${BUILT_SHA:0:7}"
+
+        # The S3 prefix and branch segment come from the run that produced the
+        # build, not from what is under test: a commit's only build may have run
+        # on another trigger — e.g. bot-created release PRs, whose tip is built
+        # by the push to dev. Table mirrors build-unitycloud.yml's
+        # "Set SHA, branch, and build prefix".
+        case "$RUN_EVENT" in
+          pull_request)      BUILD_PREFIX="pr" ;;
+          push)              BUILD_PREFIX="pu" ;;
+          merge_group)       BUILD_PREFIX="mg" ;;
+          workflow_dispatch) BUILD_PREFIX="wd" ;;
+          workflow_call)     BUILD_PREFIX="wc" ;;
+          schedule)          BUILD_PREFIX="sc" ;;
+          *)                 BUILD_PREFIX="gn" ;;
+        esac
+
+        # Always the branch/ path, never releases/: release builds are compiled
+        # without the ALTTESTER scripting define (CloudBuild.cs strips it), so
+        # the client installs and renders but never accepts a connection, and
+        # the suite sits at "Wait for connection: 0%" until its job cap.
+        ARTIFACT_PATH="@dcl/${GITHUB_REPOSITORY##*/}/branch/${RUN_BRANCH}/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
+        BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
+
+        # A successful run does not guarantee a macOS zip — build-unitycloud.yml
+        # takes a `platforms` input. Failing here costs seconds; the same failure
+        # inside the suite costs a whole macOS runner slot.
+        # curl still prints its -w output when it exits non-zero, so a
+        # `|| echo 000` fallback would concatenate codes ("200000") — normalize
+        # separately, and only when the output is empty.
+        HTTP=$(curl -sS -o /dev/null -w '%{http_code}' -I --retry 3 --retry-delay 5 "$BUILD_URL" || true)
+        HTTP=${HTTP:-000}
+        if [ "$HTTP" != "200" ]; then
+          echo "::error::Build artifact is not reachable (HTTP ${HTTP}): ${BUILD_URL}"
+          exit 1
+        fi
+
+        {
+          echo "build-url=${BUILD_URL}"
+          echo "short-sha=${SHORT_SHA}"
+        } >> "$GITHUB_OUTPUT"
+        echo "::notice::Using ${RUN_BRANCH} build ${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}."
+
+    - name: Look up matching explorer-automation branch
+      id: match
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.automation-token }}
+        HEAD_REF: ${{ inputs.head-ref }}
+      run: |
+        set -euo pipefail
+        # 200 = the branch exists there, so fixtures and visual baselines come
+        # from the matching feature branch. 404 = fall back to empty, which both
+        # reusable workflows resolve to their repo default.
+        if gh api "repos/decentraland/explorer-automation/branches/${HEAD_REF}" --silent >/dev/null 2>&1; then
+          echo "tests-ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Using matching explorer-automation branch '${HEAD_REF}'."
+        else
+          echo "tests-ref=" >> "$GITHUB_OUTPUT"
+          echo "::notice::No matching explorer-automation branch '${HEAD_REF}' — using default."
+        fi
