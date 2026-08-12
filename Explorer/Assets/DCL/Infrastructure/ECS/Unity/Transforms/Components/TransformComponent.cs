@@ -61,6 +61,9 @@ namespace ECS.Unity.Transforms.Components
             Transform.SetPositionAndRotation(worldPosition, worldRotation);
             Transform.localScale = localScale;
 
+            // The world-space values are already known here, so write them into the cache directly
+            // instead of calling UpdateCache(): reading Transform.position/rotation back would cross
+            // the managed/native boundary twice for values we just set.
             Cached.WorldPosition = worldPosition;
             Cached.WorldRotation = worldRotation;
         }
