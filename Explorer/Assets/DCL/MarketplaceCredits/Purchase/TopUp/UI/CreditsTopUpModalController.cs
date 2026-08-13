@@ -6,6 +6,7 @@ using MVC;
 using System;
 using System.Globalization;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
@@ -37,6 +38,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private CreditsTopUpStage lastStage = CreditsTopUpStage.Idle;
         private bool isViewShown;
         private CancellationTokenSource? lifeCts;
+        private CreditsTopUpPackItemView? purchasedPackItem;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -89,6 +91,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         protected override void OnViewClose()
         {
             isViewShown = false;
+            purchasedPackItem = null;
 
             if (viewInstance != null)
             {
@@ -185,7 +188,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 packItem.BestValueBadge.SetActive(pack.BestValue);
 
                 packItem.BuyButton.onClick.RemoveAllListeners();
-                packItem.BuyButton.onClick.AddListener(() => OnPackClicked(pack));
+                packItem.BuyButton.onClick.AddListener(() => OnPackClicked(pack, packItem));
 
                 packItem.ConfigureImageController(imageControllerProvider);
                 packItem.SetupImage(pack.ImageUrl);
@@ -220,11 +223,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private static CreditPack ToCreditPack(in CreditPackData data) =>
             new (data.id, data.usd, data.credits, data.recommended, data.imageUrl);
 
-        private void OnPackClicked(CreditPack pack)
+        private void OnPackClicked(CreditPack pack, CreditsTopUpPackItemView packItem)
         {
             if (currentState != ModalState.PackSelection || topUpService.IsOrderInFlight)
                 return;
 
+            purchasedPackItem = packItem;
             BuyCreditsStarted?.Invoke(pack, inputData.Source);
             topUpService.StartTopUp(pack);
         }
@@ -281,6 +285,14 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 case CreditsTopUpStage.Credited:
                     viewInstance.BoughtCreditsAmount.text = status.Pack.Credits.ToString();
                     viewInstance.BalanceCreditsText.text = status.NewBalance.ToString();
+
+                    if (viewInstance.SuccessPackImage != null)
+                    {
+                        Sprite? packSprite = purchasedPackItem != null ? purchasedPackItem.PackImage.ImageSprite : null;
+                        viewInstance.SuccessPackImage.sprite = packSprite;
+                        viewInstance.SuccessPackImage.enabled = packSprite != null;
+                    }
+
                     break;
                 case CreditsTopUpStage.Failed:
                     (string reason, bool allowRetry) = MapFailureCopy(status);

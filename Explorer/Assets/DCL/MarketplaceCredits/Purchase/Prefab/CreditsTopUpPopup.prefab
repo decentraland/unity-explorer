@@ -2146,6 +2146,7 @@ MonoBehaviour:
   <WaitingForBrowserContainer>k__BackingField: {fileID: 2921428069285825940}
   <FailedContainer>k__BackingField: {fileID: 134592408915867626}
   <SuccessContainer>k__BackingField: {fileID: 5460508158325035155}
+  <SuccessPackImage>k__BackingField: {fileID: 6655338597906822569}
   <FailedReasonText>k__BackingField: {fileID: 700895079608528011}
   <RetryButton>k__BackingField: {fileID: 566756525056964189}
   <DoneButton>k__BackingField: {fileID: 6826231945838355991}
@@ -3093,11 +3094,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 784420661941954712, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 50
+      value: 140
       objectReference: {fileID: 0}
     - target: {fileID: 784420661941954712, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 50
+      value: 140
       objectReference: {fileID: 0}
     - target: {fileID: 784420661941954712, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -3149,6 +3150,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 31830104734820138, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
   m_PrefabInstance: {fileID: 944364006716594191}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6655338597906822569 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5856805142060297638, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
+  m_PrefabInstance: {fileID: 944364006716594191}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!114 &6977378130102478166 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7912734928840146265, guid: 8d78d1aadac2c45a8ab564121437bb80, type: 3}
