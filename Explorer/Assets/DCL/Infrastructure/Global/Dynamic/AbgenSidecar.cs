@@ -153,7 +153,7 @@ namespace Global.Dynamic
         ///     while the build runs coalesce with it; anything requested after is a disk hit. Failures are
         ///     logged and harmless — the lazy per-request lane still converts on demand.
         /// </summary>
-        public async UniTaskVoid WarmUpLocalSceneAsync(CancellationToken ct)
+        public async UniTask WarmUpLocalSceneAsync(CancellationToken ct)
         {
             string? convertingFile = null;
 

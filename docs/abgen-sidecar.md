@@ -41,13 +41,20 @@ encode auto-tries CUDA→wgpu and falls back to CPU with a logged qualification 
 
 The binary is never embedded in the build. On first run `AbgenSidecarPlugin` downloads the
 **pinned release** into `persistentDataPath/abgen/bin/{version}/`, verified against its
-compile-time sha256, then starts the sidecar in the same session — the AB panel auto-opens and
-shows download progress (25% milestone steps), install, launch and conversion. The scene loads as
-raw GLTFs while this runs (the reserved port fails fast) and picks up bundles on the next scene
-reload. Only the pinned version is ever executed — upgrading abgen requires a deliberate
+compile-time sha256, then starts the sidecar in the same session; download progress lands in the
+AB panel as milestone rows (25% steps) and the panel opens itself once the debug menu is on
+screen. Only the pinned version is ever executed — upgrading abgen requires a deliberate
 pin+checksum bump in `AbgenSidecar`, so a compromised GitHub release cannot propagate to users on
 its own. `StreamingAssets/abgen(.exe)` acts as an explicit developer override when no pinned
 install exists.
+
+**Boot holds on readiness**: the scene's bundles-vs-GLTFs verdict is made once, at the scene's
+first manifest request, and a failure is cached for the session (`IrrecoverableFailures`). So
+`MainSceneLoader` awaits `DynamicWorldContainer.AbgenSidecarReadyAsync` before loading the
+starting realm (which is what starts scene loading): the plugin completes it when the sidecar is
+warm — whole-scene warm-up done — or has given up (no binary and the download failed, launch
+failure). First run therefore enters the world with bundles already served; outside
+LSD + `--local-ab` the task is pre-completed and boot is unaffected.
 
 ## Verification
 

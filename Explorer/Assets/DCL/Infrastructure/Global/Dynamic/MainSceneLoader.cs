@@ -414,6 +414,12 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
+                // Realm loading is what starts scene loading — and with it the scene's asset-bundle
+                // manifest request, whose bundles-vs-GLTFs verdict is final for the session. Hold it
+                // until the abgen sidecar is warm or has given up; completed immediately when the
+                // sidecar is not mounted.
+                await dynamicWorldContainer!.AbgenSidecarReadyAsync.AttachExternalCancellation(ct);
+
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);
 
