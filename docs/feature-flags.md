@@ -63,6 +63,10 @@ public void DoStuff()
 }
 ```
 
+From an automation test, read the flags out of the running client via
+`AlttesterFeatureFlagsProbe` rather than fetching the remote document — see
+[Static Probes](automation-testing.md#static-probes).
+
 ## How to get content of a feature flag (variants)
 
 Refer to: https://gh.getunleash.io/reference/strategy-variants#what-are-strategy-variants

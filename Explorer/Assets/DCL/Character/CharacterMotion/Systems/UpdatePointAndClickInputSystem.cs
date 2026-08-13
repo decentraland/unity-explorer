@@ -126,7 +126,7 @@ namespace DCL.CharacterMotion.Systems
             if (!navigateToAction.WasPerformedThisFrame())
                 return false;
 
-            if (!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_DOUBLE_TAP_TO_MOVE, false))
+            if (!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_DOUBLE_TAP_TO_MOVE))
                 return false;
 
             var mouse = Mouse.current;
