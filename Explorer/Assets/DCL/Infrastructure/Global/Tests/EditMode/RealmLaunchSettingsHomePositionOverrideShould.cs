@@ -11,13 +11,13 @@ using UnityEngine;
 
 namespace Global.Tests.EditMode
 {
-	[TestFixture]
-	public class RealmLaunchSettingsHomePositionOverrideShould
-	{
-				private RealmLaunchSettings launchSettings = null!;
-				private IAppArgs appArgs = null!;
+    [TestFixture]
+    public class RealmLaunchSettingsHomePositionOverrideShould
+    {
+        private RealmLaunchSettings launchSettings = null!;
+        private IAppArgs appArgs = null!;
 
-                private static IDCLPrefs originalPrefs = null!;
+        private static IDCLPrefs originalPrefs = null!;
         private static bool prefsInitialized;
 
         [OneTimeSetUp]
@@ -34,7 +34,7 @@ namespace Global.Tests.EditMode
             RestoreOriginalPrefs();
         }
 
-		[SetUp]
+        [SetUp]
         public void Setup()
         {
             launchSettings = new RealmLaunchSettings();
@@ -66,6 +66,7 @@ namespace Global.Tests.EditMode
                 {
                     // Store the original if it exists
                     originalPrefs = currentPrefs;
+
                     // Replace prefs for tests
                     var testPrefs = new InMemoryDCLPlayerPrefs();
                     dclPrefsField.SetValue(null, testPrefs);
@@ -190,6 +191,7 @@ namespace Global.Tests.EditMode
             HomeMarkerController.SerializeWorldName("myhome.dcl.eth");
             launchSettings.EditorSceneStartPosition = false;
             appArgs.HasFlag(AppArgsFlags.REALM).Returns(true);
+
             appArgs.TryGetValue(AppArgsFlags.REALM, out Arg.Any<string?>())
                    .Returns(call =>
                     {
@@ -264,6 +266,5 @@ namespace Global.Tests.EditMode
 
             return new FeatureFlagsConfiguration(resultDto);
         }
-	}
+    }
 }
-
