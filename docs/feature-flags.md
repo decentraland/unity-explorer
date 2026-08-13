@@ -179,4 +179,4 @@ With the defaults a fresh user sees the tip on launch 5 and again on launch 10, 
 
 The gap is measured from the **last display**, not from launch 0. A returning user who is already well past every threshold when the flag is enabled therefore gets one display on their next launch and the second one a full period later — they never burn both displays on consecutive launches.
 
-Independently of the flag, the tip is never shown to a user who has already spoken over nearby voice chat, or who dismissed the tip back when it was shown once on first login.
+Independently of the flag, the tip is never shown again to a user who has spoken over nearby voice chat, who pressed the tip's own "Try it now" button, or who dismissed the tip back when it was shown once on first login. Merely closing the tip does not retire it — that user still gets their remaining scheduled display.

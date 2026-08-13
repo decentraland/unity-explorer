@@ -14,9 +14,10 @@ namespace DCL.VoiceChat.UI
 {
     /// <summary>
     ///     Drives the Nearby Voice Chat intro tip: schedules it by launch count, caps how many times it is ever
-    ///     displayed, retires it once the user actually speaks over nearby voice, and hides it while a panel covers
-    ///     the screen. Usage is recorded even when the tip is not scheduled, so enabling the feature flag later does
-    ///     not resurface the tip for users who already found the feature on their own.
+    ///     displayed, retires it once the user discovers nearby voice — either by speaking or by taking the tip up on
+    ///     its offer — and hides it while a panel covers the screen. Discovery is recorded even when the tip is not
+    ///     scheduled, so enabling the feature flag later does not resurface it for users who already found the
+    ///     feature on their own.
     /// </summary>
     public class NearbyVoiceTipController : IDisposable
     {
@@ -94,9 +95,16 @@ namespace DCL.VoiceChat.UI
                     view.CloseButton.OnClickAsync(ct),
                     view.TryItNowButton.OnClickAsync(ct));
 
+                bool tryItNow = winner == 1;
+
+                // Acting on the tip is discovery in itself, so it is retired for good. Closing it is not:
+                // the user still gets their remaining scheduled display.
+                if (tryItNow)
+                    MarkNearbyVoiceUsed();
+
                 Retire();
 
-                if (winner == 1)
+                if (tryItNow)
                     nearbyVoiceChatButtonView.Button.onClick.Invoke();
             }
             catch (OperationCanceledException) { }
@@ -106,11 +114,18 @@ namespace DCL.VoiceChat.UI
         {
             if (hasUsedNearbyVoice || state != NearbyVoiceChatState.OpenMic) return;
 
-            hasUsedNearbyVoice = true;
-            DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_USED, true, save: true);
+            MarkNearbyVoiceUsed();
 
             if (isTipLive)
                 Retire();
+        }
+
+        private void MarkNearbyVoiceUsed()
+        {
+            if (hasUsedNearbyVoice) return;
+
+            hasUsedNearbyVoice = true;
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_USED, true, save: true);
         }
 
         private void OnMVCViewOpened(ChatSharedAreaEvents.MVCViewOpenEvent evt)
