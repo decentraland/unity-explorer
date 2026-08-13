@@ -47,7 +47,9 @@ namespace DCL.ECSComponents {
   }
   #region Messages
   /// <summary>
-  /// PBExplorerUiEventsResult transports events for when fullscreen explorer panels are opened or closed.
+  /// PBExplorerUiEventsResult transports the lifecycle events of fullscreen explorer panels — a panel was
+  /// opened, a panel was closed. It is a grow only value set appended to the scene root entity, so every
+  /// event of a tick is delivered and none overwrites another.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBExplorerUiEventsResult : pb::IMessage<PBExplorerUiEventsResult>
