@@ -150,7 +150,7 @@ namespace Global.AppArgs
 
             // Local-scene development only: serve the scene as asset bundles JIT-converted by the explorer's
             // embedded abgen sidecar instead of raw GLTFs. A pure boolean — the sidecar reads the scene through
-            // the realm's own /content endpoints (RealmLaunchSettings.LocalSceneRealmRoot), the same value this
+            // the realm's own /content endpoints (RealmUrls.LocalSceneDevelopmentRealmAsync), the same value this
             // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
             // point asset conversion at the realm the link already targets. The full-URL variant
             // (optimized-assets-url) points AB/LOD/registry endpoints at arbitrary infrastructure and stays

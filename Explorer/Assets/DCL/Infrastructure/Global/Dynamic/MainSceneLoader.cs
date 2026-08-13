@@ -262,18 +262,13 @@ namespace Global.Dynamic
             // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
             // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
             // stream through it from the production upstream (abgen's ab-cdn read-through and registry
-            // pass-through), so no lane loses content. Only the port is reserved here — the URL sources
-            // below need BaseUrl at construction; AbgenSidecarPlugin (registered from this instance,
-            // absent otherwise) launches the server, runs the warm-up and disposes it.
-            AbgenSidecar? abgenSidecar = null;
+            // pass-through), so no lane loses content. Only the loopback endpoint is reserved here — the
+            // URL sources below need it at construction; AbgenSidecarPlugin (registered from this value,
+            // absent otherwise) owns everything else: creation, launch, warm-up and disposal.
+            string? localAbBaseUrl = null;
 
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
-            {
-                abgenSidecar = AbgenSidecar.TryReserve(decentralandEnvironment.ToString().ToLower(), realmRootOverride: launchSettings.LocalSceneRealmRoot(), jitContentDigest: true);
-
-                if (abgenSidecar != null)
-                    cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
-            }
+                cliOptimizedAssetsUrl = localAbBaseUrl = AbgenSidecar.ReserveBaseUrl();
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -315,7 +310,7 @@ namespace Global.Dynamic
                 world,
                 decentralandEnvironment,
                 dclVersion,
-                abgenSidecar,
+                localAbBaseUrl,
                 destroyCancellationToken
             );
 

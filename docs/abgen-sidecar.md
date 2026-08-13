@@ -10,14 +10,16 @@ free loopback port, env-configured (preview content server as `ABGEN_CATALYST_UR
 preview server's path-derived hashes, persistent disk cache under `persistentDataPath/abgen-lsd`),
 health-checked, restarted up to 3× on unexpected exit.
 
-The lifecycle is split in two. `MainSceneLoader` only *reserves* the sidecar
-(`AbgenSidecar.TryReserve`: binary resolution + loopback port, no process) — its `BaseUrl` must
-exist before the URL sources are built — and only in local scene development with `--local-ab`
-when no explicit `--optimized-assets-url` is given. Everything else lives in
-**`AbgenSidecarPlugin`** (PluginSystem/Global), registered by `DynamicWorldContainer` exclusively
-from that reserved instance: it launches the process (`StartAsync`), runs the whole-scene warm-up
-once healthy, and kills the child on dispose (global-plugin teardown in
-`MainSceneLoader.Shutdown()`). In every other mode the plugin is never constructed.
+The lifecycle is split in two. `MainSceneLoader` only *reserves the loopback endpoint*
+(`AbgenSidecar.ReserveBaseUrl` — a URL, nothing else) — it must exist before the URL sources are
+built — and only in local scene development with `--local-ab` when no explicit
+`--optimized-assets-url` is given. Everything else lives in **`AbgenSidecarPlugin`**
+(PluginSystem/Global), registered by `DynamicWorldContainer` exclusively from that reserved URL:
+it resolves the realm through the canonical `RealmUrls.LocalSceneDevelopmentRealmAsync`, creates
+the sidecar (`TryCreate` — binary resolution, background download when absent), launches it
+(`StartAsync`), runs the whole-scene warm-up once healthy, and kills the child on dispose
+(global-plugin teardown in `MainSceneLoader.Shutdown()`). In every other mode the plugin is never
+constructed.
 The sidecar's base URL becomes the optimized-assets source
 (`AssetBundlesCDN` / `LodGeneratorCDN` / `AssetBundleRegistry`): the server JIT-converts the local
 scene and answers everything else — wearables, emotes, LODs, registry records — from the

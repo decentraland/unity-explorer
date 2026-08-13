@@ -31,10 +31,10 @@ namespace Global.Dynamic
     ///     loading path consumes its base URL as the optimized-assets source; the server JIT-converts the
     ///     local scene and answers everything else from the production upstream (ab-cdn read-through and
     ///     registry pass-through), caching converted bundles on disk.
-    ///     Two-step lifecycle: <see cref="TryReserve" /> (synchronous — binary and loopback port only, so
-    ///     <see cref="BaseUrl" /> can seed the URL sources built early in startup), then
-    ///     <see cref="StartAsync" /> launches the process — called from AbgenSidecarPlugin, which owns the
-    ///     instance from there on.
+    ///     Two-step lifecycle: <see cref="ReserveBaseUrl" /> (synchronous — a loopback port only, so the
+    ///     URL can seed the URL sources built early in startup), then AbgenSidecarPlugin creates the
+    ///     instance on that URL (<see cref="TryCreate" />) and launches it (<see cref="StartAsync" />),
+    ///     owning it from there on.
     ///     The binary is never embedded in the build: the pinned release is downloaded in the background on
     ///     first run, verified against its compile-time sha256, and activates on the next launch. Only the
     ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
@@ -77,9 +77,9 @@ namespace Global.Dynamic
 
         public string BaseUrl { get; }
 
-        private AbgenSidecar(int port, string executablePath, string realmRoot, string upstreamCdnUrl, string cacheRoot, bool jitContentDigest)
+        private AbgenSidecar(string baseUrl, string executablePath, string realmRoot, string upstreamCdnUrl, string cacheRoot, bool jitContentDigest)
         {
-            BaseUrl = $"http://127.0.0.1:{port}";
+            BaseUrl = baseUrl;
             this.executablePath = executablePath;
             this.realmRoot = realmRoot;
             catalystContentUrl = realmRoot + CONTENT_PATH;
@@ -94,11 +94,18 @@ namespace Global.Dynamic
         private static bool IsWindows => Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor;
 
         /// <summary>
-        ///     Resolves the server binary and reserves a loopback port, WITHOUT starting the process —
-        ///     synchronous, so <see cref="BaseUrl" /> can seed the URL sources built early in startup;
-        ///     <see cref="StartAsync" /> (called by AbgenSidecarPlugin) launches the server later.
-        ///     Returns null when no binary is available yet (a background download is started — the
-        ///     sidecar activates on the next launch).
+        ///     Reserves a free loopback endpoint for the server WITHOUT creating or starting anything —
+        ///     synchronous, so the URL can seed the URL sources built early in startup. The server is
+        ///     created on this URL later via <see cref="TryCreate" />.
+        /// </summary>
+        public static string ReserveBaseUrl() =>
+            $"http://127.0.0.1:{FreeLoopbackPort()}";
+
+        /// <summary>
+        ///     Resolves the server binary and creates the (not yet started) sidecar on
+        ///     <paramref name="baseUrl" />; <see cref="StartAsync" /> launches it. Returns null when no
+        ///     binary is available yet (a background download is started — the sidecar activates on the
+        ///     next launch).
         ///     <para>
         ///     <paramref name="realmRootOverride" /> points the server at a non-catalyst realm (the
         ///     local-scene-development preview server), whose /content endpoints the scene is read through;
@@ -108,7 +115,7 @@ namespace Global.Dynamic
         ///     path-derived hashes, which never change.
         ///     </para>
         /// </summary>
-        public static AbgenSidecar? TryReserve(string environmentDomain, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
+        public static AbgenSidecar? TryCreate(string baseUrl, string environmentDomain, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
         {
             string? exe = TryFindPinnedExecutable() ?? (File.Exists(StreamingAssetsExecutablePath) ? StreamingAssetsExecutablePath : null);
 
@@ -122,7 +129,7 @@ namespace Global.Dynamic
             if (exe == null)
                 return null;
 
-            return new AbgenSidecar(FreeLoopbackPort(),
+            return new AbgenSidecar(baseUrl,
                 exe,
                 realmRootOverride?.TrimEnd('/') ?? $"https://peer.decentraland.{environmentDomain}",
                 $"https://ab-cdn.decentraland.{environmentDomain}",

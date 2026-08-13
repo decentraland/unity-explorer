@@ -32,7 +32,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             string cacheRoot = Path.Combine(Path.GetTempPath(), "abgen-sidecar-test-" + Guid.NewGuid().ToString("N")[..8]);
 
-            AbgenSidecar sidecar = AbgenSidecar.TryReserve("org", cacheRoot);
+            AbgenSidecar sidecar = AbgenSidecar.TryCreate(AbgenSidecar.ReserveBaseUrl(), "org", cacheRoot);
             Assert.IsNotNull(sidecar, "no abgen binary was resolved");
             Assert.IsTrue(await sidecar.StartAsync(CancellationToken.None), "sidecar did not become healthy");
 

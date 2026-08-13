@@ -91,24 +91,6 @@ namespace Global.Dynamic
             return new HybridSceneParams();
         }
 
-        /// <summary>
-        ///     Root URL of the local-scene-development realm (the preview server), the source the embedded
-        ///     abgen sidecar JIT-converts the scene from. Null outside <see cref="LaunchMode.LocalSceneDevelopment" />;
-        ///     within it, resolves the same realm <c>RealmUrls.StartingRealmAsync</c> does (the sidecar spawns
-        ///     before <c>RealmUrls</c> can be constructed). No value other than the realm itself — which the
-        ///     deep-link allowlist already gates on being loopback — feeds the result, so a deep link cannot
-        ///     point it anywhere the realm doesn't already reach.
-        /// </summary>
-        public string? LocalSceneRealmRoot()
-        {
-            if (CurrentMode is not LaunchMode.LocalSceneDevelopment)
-                return null;
-
-            return initialRealm == InitialRealm.Localhost
-                ? IRealmNavigator.LOCALHOST
-                : customRealm.TrimEnd('/');
-        }
-
         public void ApplyConfig(IAppArgs applicationParameters)
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))

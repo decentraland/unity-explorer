@@ -853,10 +853,10 @@ namespace Global.Dynamic
             {
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(realmContainer.ReloadSceneController, realmUrls));
 
-                // Present only when local-ab reserved a sidecar at startup; the plugin owns the abgen
-                // server's whole lifecycle (launch, warm-up, dispose).
-                if (bootstrapContainer.AbgenSidecar != null)
-                    globalPlugins.Add(new AbgenSidecarPlugin(bootstrapContainer.AbgenSidecar));
+                // local-ab only (the endpoint is reserved exclusively under that flag); the plugin owns
+                // the abgen server's whole lifecycle: creation, launch, warm-up, dispose.
+                if (bootstrapContainer.LocalAbBaseUrl != null)
+                    globalPlugins.Add(new AbgenSidecarPlugin(bootstrapContainer.LocalAbBaseUrl, realmUrls, bootstrapContainer.Environment));
             }
             else
             {
