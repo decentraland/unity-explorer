@@ -91,7 +91,8 @@ run_upsert build "BUILD-CONTENT" >/dev/null
 BODY="$(body_of)"
 grep -q 'BUILD-CONTENT' <<< "$BODY" || fail "create: build content missing"
 grep -q '<!-- ci:performance:start -->' <<< "$BODY" || fail "create: performance fence missing"
-grep -q 'alt="Decentraland"' <<< "$BODY" || fail "create: header logo missing"
+grep -q '🚦 CI Status' <<< "$BODY" || fail "create: emoji header missing"
+grep -q 'decentraland_256x256' <<< "$BODY" && fail "create: retired logo header present"
 pass "create seeds skeleton with all sections"
 
 # --- 2. section update preserves the others ---------------------------------
@@ -104,7 +105,9 @@ pass "section update preserves other sections"
 # --- 3. missing fence appended, others intact --------------------------------
 reset_store "$(python3 - <<'PY'
 import json
-body = "<!-- ci-status -->\n### 🚦 CI Status\n<!-- ci:build:start -->\nOLD-BUILD\n<!-- ci:build:end -->"
+body = ('<!-- ci-status -->\n### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png"'
+        ' width="30" alt="Decentraland"></picture> CI Status\n'
+        "<!-- ci:build:start -->\nOLD-BUILD\n<!-- ci:build:end -->")
 print(json.dumps([{"id": 5, "user": {"login": "github-actions[bot]"}, "body": body}]))
 PY
 )"
@@ -112,8 +115,8 @@ run_upsert automation "AUTO-CONTENT" >/dev/null
 BODY="$(body_of)"
 grep -q 'OLD-BUILD' <<< "$BODY" || fail "append: existing section wiped"
 grep -q 'AUTO-CONTENT' <<< "$BODY" || fail "append: new section missing"
-grep -q 'alt="Decentraland"' <<< "$BODY" || fail "append: emoji header not migrated"
-grep -q '🚦' <<< "$BODY" && fail "append: old emoji header still present"
+grep -q '🚦 CI Status' <<< "$BODY" || fail "append: logo header not migrated"
+grep -q 'decentraland_256x256' <<< "$BODY" && fail "append: retired logo header still present"
 pass "missing fence appended + header migrated"
 
 # --- 4. marker-shaped body lines are stripped --------------------------------
