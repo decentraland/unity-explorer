@@ -1,5 +1,6 @@
 ﻿using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
+using System;
 using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
@@ -7,6 +8,7 @@ using Unity.Mathematics;
 
 namespace DCL.Landscape.NoiseGeneration
 {
+    [Obsolete(TerrainModel.OBSOLESCENCE_MESSAGE)]
     public class CompositeNoiseGenerator : BaseNoiseGenerator
     {
         private readonly CompositeNoiseData compositeNoiseData;

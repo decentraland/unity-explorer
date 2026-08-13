@@ -28,6 +28,7 @@ namespace DCL.Landscape
         public void ApplyDetailLayer(TerrainData terrainData, int i, int[,] detailLayer) { }
     }
 
+    [Obsolete]
     public class CPUTerrainDetailSetter : ITerrainDetailSetter
     {
 

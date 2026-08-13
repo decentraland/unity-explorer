@@ -15,6 +15,7 @@ using static Unity.Mathematics.math;
 
 namespace DCL.Landscape.Config.Editor
 {
+    [Obsolete]
     public sealed class TreeDataGenerator : ScriptableWizard
     {
         [field: SerializeField] private TerrainGenerationData? terrainData { get; set; }

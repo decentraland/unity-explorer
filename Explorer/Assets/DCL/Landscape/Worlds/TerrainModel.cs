@@ -60,6 +60,7 @@ namespace DCL.Landscape
             (SizeInChunks, ChunkSizeInParcels) = CalculateChunkSizeAndCount();
 
             // Generate chunk models
+#pragma warning disable CS0612, CS0618 // builds the [Obsolete] ChunkModels array (OBSOLESCENCE_MESSAGE); read only by the World-Terrain audio path
             {
                 ChunkModels = new ChunkModel[SizeInChunks * SizeInChunks];
 
@@ -84,6 +85,7 @@ namespace DCL.Landscape
                         break;
                     }
             }
+#pragma warning restore CS0612, CS0618
         }
 
         public bool IsInsideBounds(Vector2Int parcel) =>
@@ -106,12 +108,14 @@ namespace DCL.Landscape
             return (sizeInChunks, chunkSizeInParcels);
         }
 
+        [Obsolete(OBSOLESCENCE_MESSAGE)]
         private bool ChunkContains(ChunkModel chunk, int2 parcel) =>
             parcel.x >= chunk.MinParcel.x &&
             parcel.x < chunk.MinParcel.x + ChunkSizeInParcels &&
             parcel.y >= chunk.MinParcel.y &&
             parcel.y < chunk.MinParcel.y + ChunkSizeInParcels;
 
+        [Obsolete(OBSOLESCENCE_MESSAGE)]
         private bool TryOverlap(in ChunkModel chunk, out int2 overlap)
         {
             var horizontalOverlap = 0;
