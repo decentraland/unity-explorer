@@ -22,6 +22,19 @@
 # confirm the section landed and no duplicate slipped in — retrying otherwise.
 set -euo pipefail
 
+# Optional caller knobs (used by decentraland/performance-testing, which runs
+# this script directly against unity-explorer's unified comment):
+#   SECTION_BODY_FILE — read the body from a file instead of $SECTION_BODY,
+#                       for bodies too large to pass comfortably via env.
+#   NO_CREATE=1       — never create the unified comment; exit 3 when it does
+#                       not exist so the caller can fall back to a standalone
+#                       comment (a foreign-token creation would not be authored
+#                       by github-actions[bot] and later writers would not
+#                       find it, spawning duplicates).
+if [ -n "${SECTION_BODY_FILE:-}" ]; then
+  SECTION_BODY="$(cat "$SECTION_BODY_FILE")"
+fi
+
 MARKER="<!-- ci-status -->"
 HEADER="### 🚦 CI Status"
 BOT="github-actions[bot]"
@@ -99,6 +112,11 @@ for attempt in 1 2 3 4 5; do
   IDS=()
   while IFS= read -r line; do [ -n "$line" ] && IDS+=("$line"); done <<< "$(marker_ids "$COMMENTS")"
   COMMENT_ID="${IDS[0]:-}"
+
+  if [ -z "$COMMENT_ID" ] && [ -n "${NO_CREATE:-}" ]; then
+    echo "No unified CI status comment exists and NO_CREATE is set; leaving creation to the repo's own workflows."
+    exit 3
+  fi
 
   # Collapse accidental duplicates from a create race: keep the oldest, drop the rest.
   if [ "${#IDS[@]}" -gt 1 ]; then
