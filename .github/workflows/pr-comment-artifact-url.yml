@@ -303,6 +303,31 @@ jobs:
               "mac_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip"
             }
 
+      # The PAT's remaining lifetime comes back as a response header on any API
+      # call it makes; surfacing it in the status comment replaces a separate
+      # expiry canary — the 2026-06..08 outage was exactly this token expiring
+      # with no warning anywhere a human looks.
+      - name: Probe performance PAT expiry
+        if: steps.perf_dispatch.outcome == 'success'
+        env:
+          PAT: ${{ secrets.PERFORMANCE_TESTING_PAT }}
+        run: |
+          set -euo pipefail
+          exp=$(curl -sI -H "Authorization: Bearer $PAT" https://api.github.com/repos/decentraland/performance-testing \
+            | tr -d '\r' | grep -i '^github-authentication-token-expiration:' | cut -d' ' -f2- || true)
+          msg=""
+          if [ -n "$exp" ]; then
+            exp_s=$(date -d "$exp" +%s 2>/dev/null || echo 0)
+            if [ "$exp_s" -gt 0 ]; then
+              days=$(( (exp_s - $(date +%s)) / 86400 ))
+              echo "PERFORMANCE_TESTING_PAT expires in $days days ($exp)"
+              if [ "$days" -lt 30 ]; then
+                msg="⚠️ \`PERFORMANCE_TESTING_PAT\` expires in **$days days** ($exp) — rotate it before benchmark dispatches start failing."
+              fi
+            fi
+          fi
+          echo "PAT_EXPIRY_WARNING=$msg" >> "$GITHUB_ENV"
+
       # repository_dispatch is fire-and-forget (no run id comes back), so this
       # links the target workflow's run list; the benchmark itself posts a
       # separate perf-test-summary comment with its run link when it finishes.
@@ -317,6 +342,8 @@ jobs:
             [![Performance](https://img.shields.io/badge/Performance-Dispatched!-ffff00?logo=speedtest&logoColor=white&style=for-the-badge)](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)
 
             🏁 Bare-metal benchmark dispatched for this build ([run queue](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)) — results across the runner fleet will be posted as a separate `perf-test-summary` comment.
+
+            ${{ env.PAT_EXPIRY_WARNING }}
 
       # A failing dispatch (an expired PERFORMANCE_TESTING_PAT is the historical
       # cause — it broke silently from 2026-06-15 to 2026-08-13) turns this job
