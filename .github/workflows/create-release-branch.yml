@@ -136,3 +136,31 @@ jobs:
             echo "[badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge"
           } > comment.md
           post_comment
+
+      # The PR above was opened with GITHUB_TOKEN, whose events start no workflow
+      # runs — the same suppression the build-links step exists to work around.
+      # So the InWorld gate has to be started explicitly, by a token that can.
+      #
+      # Dispatching against the release branch is what puts the gate on the PR:
+      # a workflow_dispatch run attaches its checks to the dispatched ref's tip,
+      # and that tip is the PR head. Without this the required check on main
+      # never reports and the release cannot merge.
+      - name: Start the InWorld gate on the release branch
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # A dispatched gate resolves this commit's build and fails fast when
+          # there is none, so only start it once one exists. Same condition as
+          # the comment above, and the same fix: re-run this workflow.
+          HEAD_SHA=$(git rev-parse HEAD)
+          RUN_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")] | .[0]')
+          if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
+            echo "::notice::No build for ${HEAD_SHA:0:7} yet, so the InWorld gate was not started. Re-run this workflow once one finishes."
+            exit 0
+          fi
+
+          gh workflow run in-world-tests.yml --ref "$BRANCH_NAME"
+          echo "::notice::InWorld gate dispatched against ${BRANCH_NAME}."

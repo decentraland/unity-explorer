@@ -19,10 +19,10 @@ name: In-World Tests
 # requiring, it stays stable when the reusable workflow's own job names change,
 # and it passes for PRs into main that are not release or hotfix.
 #
-# One gap to know about: create-release-branch.yml opens the release PR with
-# GITHUB_TOKEN, and that raises no events, so nothing runs until the first human
-# push. A required check on a PR nobody has pushed to reads as "waiting to be
-# reported" — push a commit, or run this workflow by hand.
+# Release PRs are opened by create-release-branch.yml with GITHUB_TOKEN, and
+# events that token raises start no workflow runs — so that workflow dispatches
+# this one itself. A dispatch attaches its checks to the dispatched ref's tip,
+# which is the PR head, so the gate still lands on the PR.
 #
 # Required vars:
 #   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Artifact bucket, and where the
@@ -109,6 +109,7 @@ jobs:
       commit_sha: ${{ steps.resolve.outputs.short-sha }}
       tests_ref: ${{ inputs.tests_ref || steps.resolve.outputs.tests-ref }}
       branch_label: ${{ github.head_ref || github.ref_name }}
+      pr_number: ${{ github.event.pull_request.number || steps.pr.outputs.number }}
 
     steps:
       # `uses: ./…` resolves against $GITHUB_WORKSPACE, so the action has to be
@@ -135,6 +136,26 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           automation-token: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
 
+      # A dispatched run carries no PR, and the release gate is started that way
+      # — create-release-branch.yml dispatches it, because the PR it opens with
+      # GITHUB_TOKEN raises no events. Without this the result reaches only the
+      # job summary, on the one path where the PR is the whole point.
+      # `--head` matches on branch name alone, hence the fork exclusion.
+      - name: Find the branch's open PR
+        id: pr
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$HEAD_REF" --state open \
+            --json number,isCrossRepository \
+            --jq '[.[] | select(.isCrossRepository == false)] | .[0].number // ""')
+          if [ -n "$NUMBER" ]; then
+            echo "::notice::Results will be commented on PR #${NUMBER}."
+          fi
+          echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
+
   run-suite:
     name: InWorld suite
     needs: resolve
@@ -144,8 +165,8 @@ jobs:
     with:
       build_url: ${{ needs.resolve.outputs.build_url }}
       filter: ${{ inputs.filter || '' }}
-      # Empty on a manual run, so the reusable keeps it to the job summary.
-      pr_number: ${{ github.event.pull_request.number || '' }}
+      # From the event on a PR run, looked up on a dispatched one.
+      pr_number: ${{ needs.resolve.outputs.pr_number }}
       tests_ref: ${{ needs.resolve.outputs.tests_ref }}
       commit_sha: ${{ needs.resolve.outputs.commit_sha }}
       branch_label: ${{ needs.resolve.outputs.branch_label }}
