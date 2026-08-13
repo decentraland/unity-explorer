@@ -662,8 +662,9 @@ def record_build_link_info(id, response_json):
         with open(BUILD_LINK_INFO_PATH, 'w') as f:
             f.write(f'BUILD_TARGET={os.getenv("TARGET")}\n')
             f.write(f'BUILD_ID={id}\n')
-            if href:
-                f.write(f'DASHBOARD_URL={href}\n')
+            link = href or _dashboard_log_url(id)
+            if link:
+                f.write(f'DASHBOARD_URL={link}\n')
     except OSError as e:
         print(f'Warning: could not write {BUILD_LINK_INFO_PATH}: {e}')
 
@@ -720,6 +721,19 @@ def _platform_key():
     return target or 'unknown'
 
 
+def _dashboard_log_url(build_id):
+    """Classic Unity Cloud dashboard log page for a build, constructible from
+    the env alone — the API's own dashboard_summary/dashboard_log deep links
+    replace it as soon as a poll response carries them."""
+    org = os.getenv('ORG_ID')
+    project = os.getenv('PROJECT_ID')
+    target = os.getenv('TARGET')
+    if not (org and project and target):
+        return None
+    return (f'https://developer.cloud.unity3d.com/build/orgs/{org}/projects/{project}'
+            f'/buildtargets/{target}/builds/{build_id}/log/')
+
+
 def _own_job_url():
     repo = os.getenv('GITHUB_REPOSITORY')
     run_id = os.getenv('GITHUB_RUN_ID')
@@ -753,9 +767,10 @@ def upsert_live_comment(build_id, only_if_missing=False):
     job_url = _own_job_url()
     if job_url:
         parts.append(f'[GitHub job]({job_url})')
-    # Unlinked fallback must not say "#N": GitHub autolinks bare #N in comments
-    # to issue N.
-    parts.append(f'[Unity Cloud #{build_id}]({dashboard_url})' if dashboard_url else f'Unity Cloud build {build_id}')
+    # Unlinked last-resort must not say "#N": GitHub autolinks bare #N in
+    # comments to issue N.
+    link = dashboard_url or _dashboard_log_url(build_id)
+    parts.append(f'[Unity Cloud #{build_id}]({link})' if link else f'Unity Cloud build {build_id}')
     own_row = f'| {label} | {" · ".join(parts)} {marker} |'
 
     rows = [line for line in section.splitlines() if LIVE_MARKER_PREFIX in line and marker not in line]
@@ -1129,7 +1144,7 @@ download_artifact(id)
 download_log(id)
 
 if not build_healthy:
-    where = dashboard_url or f'https://cloud.unity.com/ (search for target "{os.getenv("TARGET")}" and build ID "{id}")'
+    where = dashboard_url or _dashboard_log_url(id) or f'https://cloud.unity.com/ (search for target "{os.getenv("TARGET")}" and build ID "{id}")'
     print(f'Build unhealthy - check the downloaded logs or the Unity Cloud build page: {where}')
     sys.exit(1)
 
