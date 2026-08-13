@@ -267,7 +267,7 @@ namespace Global.Dynamic
             // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
             // stream through it from the production upstream (abgen's ab-cdn read-through and registry
             // pass-through), so no lane loses content.
-            if (launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
             {
                 abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct, realmRootOverride: launchSettings.LocalSceneRealmRoot(), jitContentDigest: true);
 
