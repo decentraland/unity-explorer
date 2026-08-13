@@ -15,8 +15,9 @@ The lifecycle is split in two. `MainSceneLoader` only *reserves the loopback end
 built — and only in local scene development with `--local-ab` when no explicit
 `--optimized-assets-url` is given. Everything else lives in **`AbgenSidecarPlugin`**
 (PluginSystem/Global), registered by `DynamicWorldContainer` exclusively from that reserved URL:
-it resolves the realm through the canonical `RealmUrls.LocalSceneDevelopmentRealmAsync`, creates
-the sidecar (`TryCreate` — binary resolution, background download when absent), launches it
+it resolves the realm through the canonical `RealmUrls.LocalSceneDevelopmentRealmAsync`, downloads
+the pinned binary when absent (`EnsurePinnedBinaryAsync`, awaited — the AB panel is auto-opened so
+the wait is visible), creates the sidecar (`TryCreate`), launches it
 (`StartAsync`), runs the whole-scene warm-up once healthy, and kills the child on dispose
 (global-plugin teardown in `MainSceneLoader.Shutdown()`). In every other mode the plugin is never
 constructed.
@@ -38,12 +39,15 @@ encode auto-tries CUDA→wgpu and falls back to CPU with a logged qualification 
 
 ## Binary acquisition
 
-The binary is never embedded in the build. On first run the **pinned release** is downloaded in
-the background into `persistentDataPath/abgen/bin/{version}/`, verified against its compile-time
-sha256, and activates on the next launch. Only the pinned version is ever executed — upgrading
-abgen requires a deliberate pin+checksum bump in `AbgenSidecar`, so a compromised GitHub release
-cannot propagate to users on its own. `StreamingAssets/abgen(.exe)` acts as an explicit developer
-override when no pinned install exists.
+The binary is never embedded in the build. On first run `AbgenSidecarPlugin` downloads the
+**pinned release** into `persistentDataPath/abgen/bin/{version}/`, verified against its
+compile-time sha256, then starts the sidecar in the same session — the AB panel auto-opens and
+shows download progress (25% milestone steps), install, launch and conversion. The scene loads as
+raw GLTFs while this runs (the reserved port fails fast) and picks up bundles on the next scene
+reload. Only the pinned version is ever executed — upgrading abgen requires a deliberate
+pin+checksum bump in `AbgenSidecar`, so a compromised GitHub release cannot propagate to users on
+its own. `StreamingAssets/abgen(.exe)` acts as an explicit developer override when no pinned
+install exists.
 
 ## Verification
 

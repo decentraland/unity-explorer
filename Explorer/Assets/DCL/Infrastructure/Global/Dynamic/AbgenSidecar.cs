@@ -35,8 +35,8 @@ namespace Global.Dynamic
     ///     URL can seed the URL sources built early in startup), then AbgenSidecarPlugin creates the
     ///     instance on that URL (<see cref="TryCreate" />) and launches it (<see cref="StartAsync" />),
     ///     owning it from there on.
-    ///     The binary is never embedded in the build: the pinned release is downloaded in the background on
-    ///     first run, verified against its compile-time sha256, and activates on the next launch. Only the
+    ///     The binary is never embedded in the build: on first run the pinned release is downloaded
+    ///     (<see cref="EnsurePinnedBinaryAsync" />) and verified against its compile-time sha256. Only the
     ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
     ///     deliberate pin+checksum bump in this file. StreamingAssets acts as an explicit developer override.
     ///     An explicit --optimized-assets-url always takes precedence.
@@ -49,8 +49,6 @@ namespace Global.Dynamic
         private const int HEALTH_POLL_MS = 250;
         private const int PROGRESS_POLL_MS = 500;
         private const int SUPERVISION_POLL_MS = 2000;
-
-        private static volatile bool downloadStarted;
 
         /// <summary>Path under the realm root where a content server exposes its entities and files.</summary>
         private const string CONTENT_PATH = "/content";
@@ -104,8 +102,7 @@ namespace Global.Dynamic
         /// <summary>
         ///     Resolves the server binary and creates the (not yet started) sidecar on
         ///     <paramref name="baseUrl" />; <see cref="StartAsync" /> launches it. Returns null when no
-        ///     binary is available yet (a background download is started — the sidecar activates on the
-        ///     next launch).
+        ///     binary is installed — <see cref="EnsurePinnedBinaryAsync" /> downloads it.
         ///     <para>
         ///     <paramref name="realmRootOverride" /> points the server at a non-catalyst realm (the
         ///     local-scene-development preview server), whose /content endpoints the scene is read through;
@@ -118,13 +115,6 @@ namespace Global.Dynamic
         public static AbgenSidecar? TryCreate(string baseUrl, string environmentDomain, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
         {
             string? exe = TryFindPinnedExecutable() ?? (File.Exists(StreamingAssetsExecutablePath) ? StreamingAssetsExecutablePath : null);
-
-            if (exe == null && !downloadStarted && Platform() != null)
-            {
-                downloadStarted = true;
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen binary not installed — downloading the pinned release v{PINNED_VERSION} in the background; local conversion activates next launch");
-                EnsurePinnedBinaryAsync().Forget();
-            }
 
             if (exe == null)
                 return null;
@@ -403,28 +393,56 @@ namespace Global.Dynamic
             return File.Exists(exe) ? exe : null;
         }
 
-        /// <summary>Downloads and installs the pinned release, verified against its compile-time sha256.</summary>
-        private static async UniTaskVoid EnsurePinnedBinaryAsync()
+        /// <summary>
+        ///     Downloads and installs the pinned release, verified against its compile-time sha256.
+        ///     Progress is reported to the AB panel as milestone rows. True when the binary is installed
+        ///     and <see cref="TryCreate" /> will resolve it; false on an unsupported platform,
+        ///     cancellation or a failed download.
+        /// </summary>
+        public static async UniTask<bool> EnsurePinnedBinaryAsync(CancellationToken ct)
         {
+            if (Platform() == null)
+                return false;
+
             try
             {
                 (string target, string sha256) = Platform()!.Value;
-                await DownloadAndInstallAsync(PINNED_VERSION, target, sha256);
+                await DownloadAndInstallAsync(PINNED_VERSION, target, sha256, ct);
+                return true;
             }
+            catch (OperationCanceledException) { return false; }
             catch (Exception e)
             {
-                downloadStarted = false;
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen download failed ({e.Message}) — retried on the next launch");
                 ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+                return false;
             }
         }
 
-        private static async UniTask DownloadAndInstallAsync(string version, string target, string sha256)
+        private static async UniTask DownloadAndInstallAsync(string version, string target, string sha256, CancellationToken ct)
         {
             string url = $"https://github.com/decentraland/abgen/releases/download/v{version}/abgen-v{version}-{target}.tar.gz";
 
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen binary not installed — downloading the pinned release v{version}");
+
             using UnityWebRequest req = UnityWebRequest.Get(url);
             req.timeout = 600;
-            try { await req.SendWebRequest(); } catch { /* result checked below */ }
+            UnityWebRequestAsyncOperation downloadOperation = req.SendWebRequest();
+            var lastReportedQuarter = 0;
+
+            // Disposing the request (the using above) aborts the transfer when ct fires mid-download.
+            while (!downloadOperation.isDone)
+            {
+                await UniTask.Delay(500, DelayType.Realtime, cancellationToken: ct);
+
+                var quarter = (int)(req.downloadProgress * 4f);
+
+                if (quarter > lastReportedQuarter && quarter < 4)
+                {
+                    lastReportedQuarter = quarter;
+                    AbgenConversionMetrics.INSTANCE.OnMilestone($"downloading abgen v{version} — {quarter * 25}% ({req.downloadedBytes / (1024 * 1024)} MB)");
+                }
+            }
 
             if (req.result != UnityWebRequest.Result.Success)
                 throw new IOException($"abgen archive download failed: {req.error}");
@@ -460,8 +478,8 @@ namespace Global.Dynamic
                 Directory.Move(tmpDir, finalDir);
             });
 
-            AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen v{version} installed — activates next launch");
-            ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen sidecar binary v{version} downloaded; activates next launch");
+            AbgenConversionMetrics.INSTANCE.OnMilestone($"abgen v{version} installed");
+            ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen sidecar binary v{version} downloaded and installed");
         }
 
         /// <summary>Minimal ustar reader: extracts regular files and directories, preserving relative paths.</summary>

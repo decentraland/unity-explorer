@@ -47,6 +47,8 @@ namespace ECS.StreamableLoading.AssetBundles
         private int sequence;
         private int version;
 
+        private bool panelOpenRequested;
+
         private WarmUpStage warmUpStage;
         private string? warmUpSceneId;
         private float warmUpElapsedSeconds;
@@ -258,6 +260,23 @@ namespace ECS.StreamableLoading.AssetBundles
                 succeeded++;
                 totalOutputBytes += outputBytes;
                 version++;
+            }
+        }
+
+        /// <summary>Asks the host to bring the AB panel on screen, so a long wait (binary download, cold conversion) is visible.</summary>
+        public void RequestPanelOpen()
+        {
+            lock (gate) { panelOpenRequested = true; }
+        }
+
+        /// <summary>True once per <see cref="RequestPanelOpen" /> — consuming it resets the request.</summary>
+        public bool TryConsumePanelOpenRequest()
+        {
+            lock (gate)
+            {
+                bool requested = panelOpenRequested;
+                panelOpenRequested = false;
+                return requested;
             }
         }
 

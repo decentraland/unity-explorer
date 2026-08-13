@@ -153,6 +153,10 @@ namespace DCL.UI.DebugMenu
                 consolePanelView.Refresh();
             }
 
+            // Long-running abgen work (binary download, cold conversion) asks to be brought on screen.
+            if (AbgenConversionMetrics.INSTANCE.TryConsumePanelOpenRequest() && !abConversionPanelView.Visible)
+                TogglePanel(abConversionPanelView);
+
             // Cheap when nothing changed: a version check against the conversion metrics.
             abConversionPanelView?.Refresh();
 
