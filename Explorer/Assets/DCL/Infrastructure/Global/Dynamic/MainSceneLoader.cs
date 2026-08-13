@@ -92,7 +92,6 @@ namespace Global.Dynamic
         private ProvidedInstance<SplashScreen> splashScreen;
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
-        private AbgenSidecar? abgenSidecar;
 
         private bool canShutdown;
 
@@ -122,9 +121,6 @@ namespace Global.Dynamic
 
             DisableAllSelectableTransitions();
             stopwatch.LogStep(nameof(DisableAllSelectableTransitions));
-
-            abgenSidecar?.Dispose();
-            abgenSidecar = null;
 
             if (dynamicWorldContainer != null)
             {
@@ -266,19 +262,17 @@ namespace Global.Dynamic
             // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
             // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
             // stream through it from the production upstream (abgen's ab-cdn read-through and registry
-            // pass-through), so no lane loses content.
+            // pass-through), so no lane loses content. Only the port is reserved here — the URL sources
+            // below need BaseUrl at construction; AbgenSidecarPlugin (registered from this instance,
+            // absent otherwise) launches the server, runs the warm-up and disposes it.
+            AbgenSidecar? abgenSidecar = null;
+
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
             {
-                abgenSidecar = await AbgenSidecar.TryStartAsync(decentralandEnvironment.ToString().ToLower(), ct, realmRootOverride: launchSettings.LocalSceneRealmRoot(), jitContentDigest: true);
+                abgenSidecar = AbgenSidecar.TryReserve(decentralandEnvironment.ToString().ToLower(), realmRootOverride: launchSettings.LocalSceneRealmRoot(), jitContentDigest: true);
 
                 if (abgenSidecar != null)
-                {
                     cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
-
-                    // Eager conversion: kick the whole-scene build now, overlapping it with the rest of
-                    // startup and login instead of waiting for the world to request bundles.
-                    abgenSidecar.WarmUpLocalSceneAsync(ct).Forget();
-                }
             }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
@@ -321,6 +315,7 @@ namespace Global.Dynamic
                 world,
                 decentralandEnvironment,
                 dclVersion,
+                abgenSidecar,
                 destroyCancellationToken
             );
 

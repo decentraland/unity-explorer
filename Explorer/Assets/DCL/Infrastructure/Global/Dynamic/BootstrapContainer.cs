@@ -62,6 +62,13 @@ namespace Global.Dynamic
         public bool UseRemoteAssetBundles { get; private set; }
         public bool UseLocalAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
+
+        /// <summary>
+        ///     The reserved (not yet started) local-ab abgen server. Non-null only in local scene
+        ///     development with local asset bundles — DynamicWorldContainer registers AbgenSidecarPlugin,
+        ///     which owns its whole lifecycle, exclusively from this.
+        /// </summary>
+        public AbgenSidecar? AbgenSidecar { get; private set; }
         public RealmClock RealmClock { get; } = new ();
         public WebRequestsContainer WebRequestsContainer { get; private set; }
 
@@ -94,6 +101,7 @@ namespace Global.Dynamic
             World world,
             DecentralandEnvironment decentralandEnvironment,
             DCLVersion dclVersion,
+            AbgenSidecar? abgenSidecar,
             CancellationToken ct)
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
@@ -111,7 +119,8 @@ namespace Global.Dynamic
                 AppArgs = applicationParametersParser,
                 DebugSettings = debugSettings,
                 VolumeBus = new VolumeBus(),
-                Environment = decentralandEnvironment
+                Environment = decentralandEnvironment,
+                AbgenSidecar = abgenSidecar
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>

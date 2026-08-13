@@ -8,9 +8,17 @@
 free loopback port, env-configured (preview content server as `ABGEN_CATALYST_URL`,
 `ABGEN_UPSTREAM_AB_CDN` read-through, `ABGEN_JIT_CONTENT_DIGEST=1` so edits reconvert under the
 preview server's path-derived hashes, persistent disk cache under `persistentDataPath/abgen-lsd`),
-health-checked, restarted up to 3× on unexpected exit, killed in `MainSceneLoader.Shutdown()`.
-It only spawns in local scene development with `--local-ab`, and only when no explicit
-`--optimized-assets-url` is given. Its base URL becomes the optimized-assets source
+health-checked, restarted up to 3× on unexpected exit.
+
+The lifecycle is split in two. `MainSceneLoader` only *reserves* the sidecar
+(`AbgenSidecar.TryReserve`: binary resolution + loopback port, no process) — its `BaseUrl` must
+exist before the URL sources are built — and only in local scene development with `--local-ab`
+when no explicit `--optimized-assets-url` is given. Everything else lives in
+**`AbgenSidecarPlugin`** (PluginSystem/Global), registered by `DynamicWorldContainer` exclusively
+from that reserved instance: it launches the process (`StartAsync`), runs the whole-scene warm-up
+once healthy, and kills the child on dispose (global-plugin teardown in
+`MainSceneLoader.Shutdown()`). In every other mode the plugin is never constructed.
+The sidecar's base URL becomes the optimized-assets source
 (`AssetBundlesCDN` / `LodGeneratorCDN` / `AssetBundleRegistry`): the server JIT-converts the local
 scene and answers everything else — wearables, emotes, LODs, registry records — from the
 production upstream via its built-in ab-cdn read-through and registry pass-through, so no lane
@@ -37,6 +45,6 @@ override when no pinned install exists.
 
 ## Verification
 
-- `AbgenSidecarShould` — spawns the sidecar exactly as MainSceneLoader does, JIT-converts a real
+- `AbgenSidecarShould` — reserves and starts the sidecar exactly as the production flow does, JIT-converts a real
   2-GLB scene via the manifest lane, fetches a bundle through `UnityWebRequestAssetBundle` (the
   client's real consumption path) and verifies Dispose kills the listener. Green on v16 (14.9s).

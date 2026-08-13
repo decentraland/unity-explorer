@@ -850,7 +850,14 @@ namespace Global.Dynamic
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
 
             if (localSceneDevelopment)
+            {
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(realmContainer.ReloadSceneController, realmUrls));
+
+                // Present only when local-ab reserved a sidecar at startup; the plugin owns the abgen
+                // server's whole lifecycle (launch, warm-up, dispose).
+                if (bootstrapContainer.AbgenSidecar != null)
+                    globalPlugins.Add(new AbgenSidecarPlugin(bootstrapContainer.AbgenSidecar));
+            }
             else
             {
                 globalPlugins.Add(lodContainer.LODPlugin);
