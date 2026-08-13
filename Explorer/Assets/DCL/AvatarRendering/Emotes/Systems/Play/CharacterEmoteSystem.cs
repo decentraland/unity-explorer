@@ -152,6 +152,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
+            if (emoteComponent.CurrentEmoteReference == null && emoteComponent.CurrentAnimationTag == 0)
+                return;
+
             int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
             emoteComponent.SetAnimationTag(currentStateTag);
         }
@@ -643,17 +646,34 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (candidateName.Length == 0)
                     continue;
 
-                ReadOnlySpan<char> candidatePrefix = (candidateName + "-").AsSpan();
-
-                if (payloadWithoutLoop.StartsWith(candidatePrefix, StringComparison.Ordinal))
+                if (TryMatchSceneEmotePayload(payloadWithoutLoop, candidateName, out string emoteHash))
                 {
                     sceneId = candidateName;
-                    parsedEmoteHash = payloadWithoutLoop.Slice(candidatePrefix.Length).ToString();
+                    parsedEmoteHash = emoteHash;
                     resolvedScene = facade;
                     return true;
                 }
             }
 
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whether a scene-emote payload names <paramref name="candidateName"/> and, if so, extracts that
+        /// emote's content hash. Scene emotes are addressed as "&lt;name&gt;-&lt;hash&gt;", so the payload matches a candidate
+        /// only when it is that name followed by '-' and a (possibly empty) hash.
+        /// </summary>
+        internal static bool TryMatchSceneEmotePayload(ReadOnlySpan<char> payloadWithoutLoop, string candidateName, out string parsedEmoteHash)
+        {
+            int n = candidateName.Length;
+
+            if (payloadWithoutLoop.Length >= n + 1 && payloadWithoutLoop[n] == '-' && payloadWithoutLoop.Slice(0, n).SequenceEqual(candidateName.AsSpan()))
+            {
+                parsedEmoteHash = payloadWithoutLoop.Slice(n + 1).ToString();
+                return true;
+            }
+
+            parsedEmoteHash = string.Empty;
             return false;
         }
 

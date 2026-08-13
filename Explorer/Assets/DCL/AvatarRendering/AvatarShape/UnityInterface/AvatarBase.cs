@@ -256,6 +256,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public int GetAnimatorCurrentStateTag(int layerIndex) =>
             AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
 
+        public int GetAnimatorCurrentStateTag(string layerName)
+        {
+            int layerIndex = AvatarAnimator.GetLayerIndex(layerName);
+            return AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
+        }
+
         public int GetEmoteLayerIndex(AvatarEmoteMask mask) =>
             mask == AvatarEmoteMask.AemUpperBody ? upperBodyLayerIndex : AnimatorEmoteLayers.BASE_LAYER_INDEX;
 
