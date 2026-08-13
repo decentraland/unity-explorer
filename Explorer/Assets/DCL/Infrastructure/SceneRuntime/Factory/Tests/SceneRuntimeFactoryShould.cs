@@ -23,8 +23,8 @@ namespace SceneRuntime.Factory.Tests
     {
         private readonly ISceneExceptionsHandler sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
 
-                private V8EngineFactory engineFactory = null!;
-                private IWebJsSources webJsSources = null!;
+        private V8EngineFactory engineFactory = null!;
+        private IWebJsSources webJsSources = null!;
 
         [SetUp]
         public void SetUp()
@@ -109,6 +109,7 @@ namespace SceneRuntime.Factory.Tests
                 {
                     using SceneRuntimeImpl _ = await factory.CreateByPathAsync(URLAddress.EMPTY,
                         instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+
                     Assert.Fail("Expected an exception for an empty scene source URL");
                 }
                 catch (System.ArgumentException e)

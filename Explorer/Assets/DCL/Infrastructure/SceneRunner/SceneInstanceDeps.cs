@@ -22,11 +22,8 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Profiling;
-using DCL.SceneRunner;
 using DCL.SceneRuntime.Apis.RestrictedActionsApi;
-using DCL.SDKComponents.MediaStream;
 using DCL.SkyBox;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Exceptions;
 using DCL.WebRequests;
@@ -48,7 +45,6 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
-using RichTypes;
 
 namespace SceneRunner
 {
