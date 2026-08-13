@@ -30,6 +30,20 @@ module.exports.OpenExplorerUiResult = makeEnum([
     ['REJECTED_NO_USER_GESTURE', 5],
 ]);
 
+// Names carry the OIP_ prefix because the proto does: proto3 enum values are siblings of their enum,
+// so bare names would collide with OpenExplorerUiResult. They MUST match the generated SDK type, or a
+// scene reading OpenItemPurchaseResult.OIP_PURCHASED would typecheck and get undefined at runtime.
+module.exports.OpenItemPurchaseResult = makeEnum([
+    ['OIP_UNSPECIFIED', 0],
+    ['OIP_PURCHASED', 1],
+    ['OIP_DISMISSED', 2],
+    ['OIP_REJECTED_NOT_CURRENT_SCENE', 3],
+    ['OIP_REJECTED_NO_USER_GESTURE', 4],
+    ['OIP_REJECTED_FEATURE_DISABLED', 5],
+    ['OIP_REJECTED_NOT_PURCHASABLE', 6],
+    ['OIP_FAILED', 7],
+]);
+
 module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
@@ -94,6 +108,14 @@ module.exports.openNftDialog = async function(message) {
 module.exports.openExplorerUi = async function(message) {
     const openResult = UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
     return { openResult };
+}
+
+// The scene supplies ONLY the item URN: the client resolves the price from the catalog, signs and
+// confirms. Deliberately coarse verdict -- "insufficient credits" is folded into FAILED so scene
+// code cannot probe a wallet by attempting purchases.
+module.exports.openItemPurchase = async function(message) {
+    const result = await UnityRestrictedActionsApi.OpenItemPurchase(message.urn)
+    return { result };
 }
 
 module.exports.setCommunicationsAdapter = async function(message) {
