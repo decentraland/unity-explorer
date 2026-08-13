@@ -90,7 +90,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             world.Add(triggerAreaEntity, component);
 
-            system.Update(0);
+            system!.Update(0);
 
             Assert.IsTrue(world.TryGet(triggerAreaEntity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
@@ -219,7 +219,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -268,7 +268,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -288,7 +288,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             var avatar1ExcludedId = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(avatar1ExcludedId.ToLower(), "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(avatar1ExcludedId.ToLower()).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -309,7 +309,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
                 {
                     Transform = fakeAvatar2ShapeTransform,
                 },
-                new Profile(avatar2ExcludedId.ToLower(), "fake user", new Avatar(
+                new Profile(UserId.New(avatar2ExcludedId.ToLower()).Unwrap(), "fake user", new Avatar(
                     BodyShape.MALE,
                     WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -387,7 +387,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -439,7 +439,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -489,7 +489,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -538,7 +538,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID.ToLower(), "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID.ToLower()).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -579,7 +579,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             var avatar1ExcludedId = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(avatar1ExcludedId.ToLower(), "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(avatar1ExcludedId.ToLower()).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -641,7 +641,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -687,7 +687,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),

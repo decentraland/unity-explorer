@@ -26,7 +26,7 @@ namespace DCL.Tests.Editor
     {
         private static readonly HashSet<string> DEBUG_METHOD_NAMES = new () { "Log", "LogError", "LogWarning", "LogException" };
 
-        private readonly string[] excludedFolders = { "Editor", "Stylized Grass Shader" };
+        private readonly string[] excludedFolders = { "Editor", "Stylized Grass Shader", "UUAV" };
         private readonly string[] excludedFileNames = { "JsonUtils.cs", "WorldSyncCommandBufferCollectionsPool.cs", "DCLPlayerPrefs.cs" };
         private readonly string[] fileNameExclusionKeywords = { "Playground", "Test", "Sentry" };
 
@@ -169,7 +169,7 @@ namespace DCL.Tests.Editor
         {
             const string MAIN_SCENE = "Assets/Scenes/Main.unity";
             EditorSceneManager.OpenScene(MAIN_SCENE);
-            MainSceneLoader boot = Object.FindObjectOfType<MainSceneLoader>().EnsureNotNull("Boot not found!")!;
+            MainSceneLoader boot = Object.FindAnyObjectByType<MainSceneLoader>().EnsureNotNull("Boot not found!");
             yield return boot.ValidateSettingsAsync().ToCoroutine();
         }
 
