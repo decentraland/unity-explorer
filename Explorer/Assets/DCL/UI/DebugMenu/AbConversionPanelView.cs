@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility.Multithreading;
 
 namespace DCL.UI.DebugMenu
 {
@@ -180,7 +181,7 @@ namespace DCL.UI.DebugMenu
                 // Reads persistentDataPath, so it must run on the main thread; only the walk goes to the pool.
                 string[] roots = AbgenBundleDiskCache.AllBundleRoots();
 
-                AbgenBundleDiskCache.ClearResult result = await UniTask.RunOnThreadPool(() => AbgenBundleDiskCache.ClearAll(roots));
+                AbgenBundleDiskCache.ClearResult result = await DCLTask.RunOnThreadPool(() => AbgenBundleDiskCache.ClearAll(roots));
 
                 string skipped = result.SkippedFiles > 0 ? $" · <color=#FFC95B>{result.SkippedFiles} in use, skipped</color>" : string.Empty;
                 summary.text = $"cache cleared: {result.DeletedFiles} bundles · {result.DeletedBytes / (1024 * 1024f):F1} MB freed{skipped}";

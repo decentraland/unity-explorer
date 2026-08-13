@@ -15,6 +15,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility.Multithreading;
 #if UNITY_EDITOR
 using System.Diagnostics;
 #elif !UNITY_STANDALONE_WIN
@@ -457,7 +458,7 @@ namespace Global.Dynamic
                     throw new IOException($"abgen archive checksum mismatch: {actual}");
             }
 
-            await UniTask.RunOnThreadPool(() =>
+            await DCLTask.RunOnThreadPool(() =>
             {
                 string finalDir = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin", version);
                 string tmpDir = finalDir + ".tmp";
@@ -685,7 +686,8 @@ namespace Global.Dynamic
                 if (disposed || ct.IsCancellationRequested) return;
                 if (ChildAlive()) continue;
 
-                if (Interlocked.Increment(ref restarts) > MAX_RESTARTS)
+                // Main-thread only: UniTask.Delay resumes this loop on the player loop, so no atomicity is needed.
+                if (++restarts > MAX_RESTARTS)
                 {
                     ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
                     return;
