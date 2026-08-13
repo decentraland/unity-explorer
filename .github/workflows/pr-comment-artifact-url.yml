@@ -318,6 +318,22 @@ jobs:
 
             🏁 Bare-metal benchmark dispatched for this build ([run queue](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)) — results across the runner fleet will be posted as a separate `perf-test-summary` comment.
 
+      # A failing dispatch (an expired PERFORMANCE_TESTING_PAT is the historical
+      # cause — it broke silently from 2026-06-15 to 2026-08-13) turns this job
+      # red but leaves no trace on the PR; surface it in the performance section
+      # so it cannot go unnoticed for weeks again.
+      - name: Mark performance section as dispatch-failed
+        if: failure() && steps.perf_dispatch.outcome == 'failure'
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: performance
+          github-token: ${{ github.token }}
+          body: |-
+            [![Performance](https://img.shields.io/badge/Performance-Dispatch%20failed-ff0000?logo=speedtest&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ❌ Could not dispatch the bare-metal benchmark — see the [step log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). If it says "Repository not found, OR token has insufficient permissions", the `PERFORMANCE_TESTING_PAT` secret has expired and needs to be rotated.
+
   comment-failed:
     needs: [pre-validation, check-build-ran]
     if: github.event.workflow_run.conclusion == 'failure' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
