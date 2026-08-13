@@ -43,7 +43,7 @@ namespace Utility.Multithreading
 
         private readonly object monitor = new ();
 
-        private readonly Queue<Owner> queue = new ();
+        private readonly LinkedList<Owner> queue = new ();
 
         private readonly SyncLogsBuffer syncLogsBuffer;
 
@@ -100,25 +100,38 @@ namespace Utility.Multithreading
                     throw new ObjectDisposedException(nameof(MultiThreadSync));
 
                 shouldWait = queue.Count > 0;
-                queue.Enqueue(owner);
+                queue.AddLast(owner);
             }
 
             // There is already one thread doing work. Wait for the signal
             if (shouldWait)
             {
-                if (!owner.Wait(TIMEOUT, cts.Token, out bool wasCancelled) && !wasCancelled)
+                if (!owner.Wait(TIMEOUT, cts.Token, out bool wasCancelled))
                 {
                     lock (monitor)
                     {
+                        queue.Remove(owner);
+
+                        if (isDisposing || wasCancelled)
+                            throw new ObjectDisposedException(nameof(MultiThreadSync));
+
+                        owner.Reset();
+
                         DateTime time = DateTime.Now;
-                        AcquisitionInfo current = currentAcquisitionInfo!.Value;
-                        TimeSpan difference = time - current.AcquiredAt;
 
                         int requestingThreadId = NativeThread.CurrentId;
                         int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
 
                         syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+
+                        if (currentAcquisitionInfo.HasValue)
+                        {
+                            AcquisitionInfo current = currentAcquisitionInfo.Value;
+                            TimeSpan difference = time - current.AcquiredAt;
+                            throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                        }
+
+                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: <unknown> (no acquisition info). Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
                     }
                 }
             }
@@ -148,8 +161,11 @@ namespace Utility.Multithreading
                     return;
 
                 // If the queue is empty, then our logic is wrong
-                if (queue.TryDequeue(out Owner? finishedWaiter))
+                if (queue.First != null)
                 {
+                    Owner finishedWaiter = queue.First.Value;
+                    queue.RemoveFirst();
+
                     // The one releasing should be the one at the top of the queue
                     if (owner != finishedWaiter)
                     {
@@ -159,8 +175,8 @@ namespace Utility.Multithreading
 
                     finishedWaiter.Reset();
 
-                    if (queue.TryPeek(out Owner? next))
-                        next.Set(); // Signal the next waiter in line
+                    if (queue.First != null)
+                        queue.First.Value.Set();
 
 #if SYNC_DEBUG
                     syncLogsBuffer.Report("MultithreadSync Release finished for:", source);

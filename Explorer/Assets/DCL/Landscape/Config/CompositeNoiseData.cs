@@ -30,6 +30,7 @@ namespace DCL.Landscape.Config
 
         public float finalCutOff;
 
+        [Obsolete(TerrainModel.OBSOLESCENCE_MESSAGE)]
         public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache) =>
             new CompositeNoiseGenerator(this, baseSeed, variantSeed, cache);
     }

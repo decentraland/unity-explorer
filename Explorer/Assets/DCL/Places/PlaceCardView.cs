@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Communities;
 using DCL.PrivateWorlds;
 using DCL.EventsApi;
@@ -5,6 +6,7 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -85,6 +87,8 @@ namespace DCL.Places
         private PlaceInfo? currentPlaceInfo;
         private CancellationTokenSource loadingThumbnailCts;
         private CancellationTokenSource? worldAccessCts;
+        private ReactiveProperty<ProfileThumbnailViewModel>[]? friendThumbnailProps;
+        private CancellationTokenSource?[]? friendThumbnailCts;
         private string lastPlaceTitle = string.Empty;
         private WorldAccessCheckResult lastAccessState = WorldAccessCheckResult.Allowed;
         private WorldAccessType? lastAccessType;
@@ -142,6 +146,10 @@ namespace DCL.Places
         {
             loadingThumbnailCts.SafeCancelAndDispose();
             worldAccessCts.SafeCancelAndDispose();
+
+            if (friendThumbnailCts != null)
+                foreach (CancellationTokenSource? thumbnailCts in friendThumbnailCts)
+                    thumbnailCts.SafeCancelAndDispose();
         }
 
         public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader,
@@ -194,13 +202,25 @@ namespace DCL.Places
                 friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
 
                 var friendsThumbnails = friendsConnected.thumbnails;
+
+                friendThumbnailProps ??= new ReactiveProperty<ProfileThumbnailViewModel>[friendsThumbnails.Length];
+                friendThumbnailCts ??= new CancellationTokenSource?[friendsThumbnails.Length];
+
                 for (var i = 0; i < friendsThumbnails.Length; i++)
                 {
                     bool friendExists = i < friends.Count;
                     friendsThumbnails[i].root.SetActive(friendExists);
                     if (!friendExists) continue;
                     Profile.CompactInfo friendInfo = friends[i];
-                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+
+                    ReactiveProperty<ProfileThumbnailViewModel> thumbnailProp = friendThumbnailProps[i] ??= new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
+                    thumbnailProp.UpdateValue(ProfileThumbnailViewModel.Default(friendInfo.UserNameColor));
+                    friendsThumbnails[i].picture.Bind(thumbnailProp);
+
+                    CancellationTokenSource itemCts = friendThumbnailCts[i].SafeRestart();
+                    friendThumbnailCts[i] = itemCts;
+                    GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnailProp, null, friendInfo, itemCts.Token).Forget();
+
                     friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
                 }
             }

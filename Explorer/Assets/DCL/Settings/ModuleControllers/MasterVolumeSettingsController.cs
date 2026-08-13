@@ -30,12 +30,14 @@ namespace DCL.Settings.ModuleControllers
         private void SetMasterVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage);
+            PrefsSaveDebouncer.Shared.RequestSave();
             volumeBus.SetMasterVolume(volumePercentage / 100);
         }
 
         public override void Dispose()
         {
+            PrefsSaveDebouncer.Shared.FlushIfPending();
             view.SliderView.Slider.onValueChanged.RemoveListener(SetMasterVolumeSettings);
         }
     }

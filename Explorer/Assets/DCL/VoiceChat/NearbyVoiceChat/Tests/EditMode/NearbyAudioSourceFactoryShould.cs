@@ -43,7 +43,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // Destroy any straggler that escaped the factory's lifecycle — pooled sources keep their
             // GameObjects alive after Dispose and would carry over into the next test, where Unity
             // could still invoke OnAudioFilterRead on the audio thread.
-            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include))
             {
                 if (src == null) continue;
                 src.Stop();

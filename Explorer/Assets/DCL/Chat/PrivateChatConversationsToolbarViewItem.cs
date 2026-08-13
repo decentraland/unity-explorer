@@ -6,6 +6,8 @@ namespace DCL.Chat
 {
     public class PrivateChatConversationsToolbarViewItem : ChatConversationsToolbarViewItem
     {
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
+
         protected override void Start()
         {
             base.Start();
@@ -33,13 +35,10 @@ namespace DCL.Chat
 
             var pictureView = thumbnailView.GetComponent<ProfilePictureView>();
 
-            bool isLoading = sprite == null;
-            pictureView.SetLoadingState(isLoading);
-
-            if (!isLoading)
-            {
-                pictureView.SetImage(sprite);
-            }
+            thumbnail.UpdateValue(sprite == null
+                ? ProfileThumbnailViewModel.ReadyToLoad()
+                : ProfileThumbnailViewModel.FromFallback(sprite));
+            pictureView.Bind(thumbnail);
         }
     }
 }

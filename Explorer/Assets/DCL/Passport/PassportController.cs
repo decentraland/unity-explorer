@@ -31,6 +31,8 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3;
@@ -140,6 +142,8 @@ namespace DCL.Passport
         private CancellationTokenSource? friendshipStatusCts;
         private CancellationTokenSource? friendshipOperationCts;
         private CancellationTokenSource? fetchMutualFriendsCts;
+        private ReactiveProperty<ProfileThumbnailViewModel>[]? mutualThumbnailProps;
+        private CancellationTokenSource?[]? mutualThumbnailCts;
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection currentSection;
@@ -628,6 +632,11 @@ namespace DCL.Passport
             friendshipStatusCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
             fetchMutualFriendsCts?.SafeCancelAndDispose();
+
+            if (mutualThumbnailCts != null)
+                foreach (CancellationTokenSource? thumbnailCts in mutualThumbnailCts)
+                    thumbnailCts.SafeCancelAndDispose();
+
             photoLoadingCts.SafeCancelAndDispose();
             jumpToFriendLocationCts.SafeCancelAndDispose();
             reportConfirmationDialogCts.SafeCancelAndDispose();
@@ -1054,13 +1063,23 @@ namespace DCL.Passport
 
                 var mutualConfig = config.Thumbnails;
 
+                mutualThumbnailProps ??= new ReactiveProperty<ProfileThumbnailViewModel>[mutualConfig.Length];
+                mutualThumbnailCts ??= new CancellationTokenSource?[mutualConfig.Length];
+
                 for (var i = 0; i < mutualConfig.Length; i++)
                 {
                     bool friendExists = i < mutualFriendsResult.Friends.Count;
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
                     Profile.CompactInfo mutualFriend = mutualFriendsResult.Friends[i];
-                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend);
+
+                    ReactiveProperty<ProfileThumbnailViewModel> thumbnailProp = mutualThumbnailProps[i] ??= new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
+                    thumbnailProp.UpdateValue(ProfileThumbnailViewModel.Default(mutualFriend.UserNameColor));
+                    mutualConfig[i].Picture.Bind(thumbnailProp);
+
+                    CancellationTokenSource itemCts = mutualThumbnailCts[i].SafeRestart();
+                    mutualThumbnailCts[i] = itemCts;
+                    GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnailProp, null, mutualFriend, itemCts.Token).Forget();
                 }
             }
         }

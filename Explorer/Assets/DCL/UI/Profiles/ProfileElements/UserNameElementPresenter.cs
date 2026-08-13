@@ -37,7 +37,19 @@ namespace DCL.UI.ProfileElements
             Element.UserNameHashtagText.text = profile.WalletId;
             Element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             Element.VerifiedMark.SetActive(profile.HasClaimedName);
-            Element.OfficialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(profile.UserId));
+            Element.OfficialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(profile.UserId.Value));
+        }
+
+        public void Clear()
+        {
+            currentProfile = null;
+
+            Element.UserNameText.text = string.Empty;
+            Element.UserNameHashtagText.text = string.Empty;
+            Element.UserNameHashtagText.gameObject.SetActive(false);
+            Element.VerifiedMark.SetActive(false);
+            Element.OfficialMark.SetActive(false);
+            Element.CopyNameWarningNotification.Hide(true);
         }
 
         public void Dispose()

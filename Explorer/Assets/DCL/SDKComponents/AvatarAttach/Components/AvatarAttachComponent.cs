@@ -13,7 +13,9 @@ namespace DCL.SDKComponents.AvatarAttach.Components
         public AvatarAttachComponent(Transform anchorPointTransform, float pivotCorrection = 0)
         {
             AnchorPointTransform = anchorPointTransform;
+#pragma warning disable CS0618 // PivotCorrection is an intentional cheat to offset the old-client 0.75
             PivotCorrection = pivotCorrection;
+#pragma warning restore CS0618
         }
 
         public static implicit operator AvatarAttachComponent(Transform transform) =>

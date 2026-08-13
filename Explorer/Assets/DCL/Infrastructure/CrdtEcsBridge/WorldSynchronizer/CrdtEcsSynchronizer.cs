@@ -91,5 +91,16 @@ namespace CrdtEcsBridge.WorldSynchronizer
 #endif
             }
         }
+
+        public void AbortSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
+        {
+            try { syncCommandBuffer.Dispose(); }
+            finally
+            {
+#if !UNITY_WEBGL
+                semaphore.Release();
+#endif
+            }
+        }
     }
 }

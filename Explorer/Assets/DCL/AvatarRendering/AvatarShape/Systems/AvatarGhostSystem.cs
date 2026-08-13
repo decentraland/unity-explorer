@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape
@@ -47,6 +48,28 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private readonly Material ghostMaterialTemplate;
 
+        // Reusable per-frame buffer of entities whose reveal finished this Update. Populated inside
+        // UpdateRevealTransitionAnimation and drained after the query returns; the tag is added there,
+        // never mid-iteration. Cleared at the top of every Update so it never allocates per frame.
+        private readonly List<Entity> entitiesToTagFinished = new ();
+
+#if UNITY_INCLUDE_TESTS
+        // Test-only per-body visit counters, bumped on the first line of each reveal query (before any
+        // early-out) so they measure how many entities the query actually iterates.
+        internal static int HideNewlyInstantiatedWearablesVisits;
+        internal static int CheckWearablesReadyStartRevealTransitionVisits;
+        internal static int UpdateGhostRevealAnimationVisits;
+        internal static int UpdateRevealTransitionAnimationVisits;
+
+        internal static void ResetVisitCounters()
+        {
+            HideNewlyInstantiatedWearablesVisits = 0;
+            CheckWearablesReadyStartRevealTransitionVisits = 0;
+            UpdateGhostRevealAnimationVisits = 0;
+            UpdateRevealTransitionAnimationVisits = 0;
+        }
+#endif
+
         internal AvatarGhostSystem(World world, Material ghostMaterialTemplate) : base(world)
         {
             this.ghostMaterialTemplate = ghostMaterialTemplate;
@@ -54,11 +77,19 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
+            entitiesToTagFinished.Clear();
+
             EnsureGhostAvatarQuery(World);
             HideNewlyInstantiatedWearablesQuery(World);
             CheckWearablesReadyStartRevealTransitionQuery(World);
             UpdateGhostRevealAnimationQuery(World, t);
             UpdateRevealTransitionAnimationQuery(World, t);
+
+            // Deferred structural change: AvatarGhostFinishedTag is added here, after the query has finished
+            // iterating. Adding a component moves the entity to a new archetype, and Arch's swap-back chunk
+            // iteration can skip the entity that backfills the vacated slot if that move happens mid-query.
+            foreach (Entity entity in entitiesToTagFinished)
+                World.Add(entity, new AvatarGhostFinishedTag());
         }
 
         [Query]
@@ -79,9 +110,12 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(AvatarGhostFinishedTag))]
         private void HideNewlyInstantiatedWearables(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
         {
+#if UNITY_INCLUDE_TESTS
+            HideNewlyInstantiatedWearablesVisits++;
+#endif
             if (avatarGhostComponent.WearablesHidden) return;
             if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
 
@@ -99,9 +133,12 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(AvatarGhostFinishedTag))]
         private void CheckWearablesReadyStartRevealTransition(ref AvatarGhostComponent avatarGhostComponent)
         {
+#if UNITY_INCLUDE_TESTS
+            CheckWearablesReadyStartRevealTransitionVisits++;
+#endif
             if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
             if (!avatarGhostComponent.WearablesHidden) return;
 
@@ -112,9 +149,12 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(AvatarGhostFinishedTag))]
         private void UpdateGhostRevealAnimation([Data] float deltaTime, ref AvatarGhostComponent avatarGhostComponent)
         {
+#if UNITY_INCLUDE_TESTS
+            UpdateGhostRevealAnimationVisits++;
+#endif
             if (avatarGhostComponent.Phase != AvatarGhostPhase.GhostRevealingTransition) return;
 
             avatarGhostComponent.PhaseElapsed += deltaTime;
@@ -131,9 +171,12 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateRevealTransitionAnimation([Data] float deltaTime, ref AvatarGhostComponent avatarGhostComponent, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        [None(typeof(DeleteEntityIntention), typeof(AvatarGhostFinishedTag))]
+        private void UpdateRevealTransitionAnimation([Data] float deltaTime, in Entity entity, ref AvatarGhostComponent avatarGhostComponent, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
+#if UNITY_INCLUDE_TESTS
+            UpdateRevealTransitionAnimationVisits++;
+#endif
             if (avatarGhostComponent.Phase != AvatarGhostPhase.FullAvatarRevealing) return;
 
             avatarGhostComponent.PhaseElapsed += deltaTime;
@@ -166,6 +209,13 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarGhostComponent.PhaseElapsed = 0f;
 
                 avatarBase.GhostGameObject.SetActive(false);
+
+                // Reveal is complete and one-way (the phase machine never leaves Hidden). Queue the entity so the
+                // four reveal queries above stop scanning it every frame; the tag itself is added after this query
+                // returns (see Update), because a structural change here would corrupt Arch's chunk iterator.
+                // AvatarGhostComponent is intentionally kept attached so AvatarGhostCleanupSystem still destroys the
+                // GhostMaterial on entity delete.
+                entitiesToTagFinished.Add(entity);
             }
         }
     }

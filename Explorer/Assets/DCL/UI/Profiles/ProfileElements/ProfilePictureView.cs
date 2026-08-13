@@ -34,7 +34,6 @@ namespace DCL.UI.ProfileElements
         private Action? contextMenuAction;
         private string? userAddress;
 
-        [Obsolete]
         private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public void Dispose()

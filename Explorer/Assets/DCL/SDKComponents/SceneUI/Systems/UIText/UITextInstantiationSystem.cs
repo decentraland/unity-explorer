@@ -23,10 +23,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         private readonly IComponentPool<Label> labelsPool;
         private readonly StyleFontDefinition[] styleFontDefinitions;
 
-        public UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, in StyleFontDefinition[] styleFontDefinitions) : base(world)
+        // Whether a text with an unset textWrap wraps by default; legacy scenes keep the historical no-wrap behavior.
+        private readonly bool wrapUnsetTextByDefault;
+
+        public UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, in StyleFontDefinition[] styleFontDefinitions, bool wrapUnsetTextByDefault) : base(world)
         {
             labelsPool = poolsRegistry.GetReferenceTypePool<Label>();
             this.styleFontDefinitions = styleFontDefinitions;
+            this.wrapUnsetTextByDefault = wrapUnsetTextByDefault;
         }
 
         protected override void Update(float t)
@@ -56,7 +60,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent, in styleFontDefinitions);
+            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent, in styleFontDefinitions, wrapUnsetTextByDefault);
             sdkModel.IsDirty = false;
         }
     }

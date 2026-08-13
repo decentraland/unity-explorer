@@ -4,11 +4,13 @@ using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using DG.Tweening;
 using MVC;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Friends.UI.PushNotifications
 {
@@ -29,9 +31,17 @@ namespace DCL.Friends.UI.PushNotifications
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig? ShowNotificationSound { get; private set; }
 
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> profileThumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? loadThumbnailCts;
+
         private void Start()
         {
             HideToast();
+        }
+
+        private void OnDestroy()
+        {
+            loadThumbnailCts.SafeCancelAndDispose();
         }
 
         internal void HideToast()
@@ -48,7 +58,11 @@ namespace DCL.Friends.UI.PushNotifications
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
             OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.Address));
-            ProfilePictureView.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FaceSnapshotUrl, friendProfile.Address);
+
+            profileThumbnail.UpdateValue(ProfileThumbnailViewModel.Default(userColor));
+            ProfilePictureView.Bind(profileThumbnail);
+            loadThumbnailCts = loadThumbnailCts.SafeRestart();
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(profileThumbnail, null, friendProfile, loadThumbnailCts.Token).Forget();
         }
 
         internal async UniTask ShowToastAsync(CancellationToken ct)

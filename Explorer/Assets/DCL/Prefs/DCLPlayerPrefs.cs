@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,16 +36,13 @@ namespace DCL.Prefs
             public void SaveSync() => Warn();
 
             [System.Diagnostics.Conditional("UNITY_EDITOR")]
-            private static void Warn([System.Runtime.CompilerServices.CallerMemberName] string caller = "")
-            {
-                // TODO: Use ReportHub when it properly lives in its own dependency.
-                Debug.LogWarning( $"[DCLPlayerPrefs] {caller} called after shutdown — ignored.");
-            }
+            private static void Warn([System.Runtime.CompilerServices.CallerMemberName] string caller = "") =>
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"[DCLPlayerPrefs] {caller} called after shutdown — ignored.");
         }
 
         private const string VECTOR2_KEY_FORMAT = "{0}_{1}";
 
-        private static IDCLPrefs dclPrefs;
+        private static IDCLPrefs dclPrefs = null!;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Initialize()
@@ -164,7 +162,7 @@ namespace DCL.Prefs
             (dclPrefs as IDisposable)?.Dispose();
             // Avoid any shutdown exceptions, just throw warnings.
             dclPrefs = new DisposedDCLPlayerPrefs();
-            Debug.Log($"[ExitUtils] [DCLPlayerPrefs] cleanup took {stopwatch.ElapsedMilliseconds}ms");
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[ExitUtils] [DCLPlayerPrefs] cleanup took {stopwatch.ElapsedMilliseconds}ms");
         }
 
 #if UNITY_EDITOR
@@ -185,7 +183,7 @@ namespace DCL.Prefs
         private static void ResetNearbyVoiceIntroTip()
         {
             DeleteKey(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, save: true);
-            Debug.Log("Nearby Voice Intro Tip has been reset.");
+            Debug.Log("Nearby Voice Intro Tip has been reset."); // editor MenuItem outside play mode - ReportHub is not initialized // lint-ignore: debug-log
         }
 #endif
     }

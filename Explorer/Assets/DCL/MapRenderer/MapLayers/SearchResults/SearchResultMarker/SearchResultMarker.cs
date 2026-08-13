@@ -22,14 +22,14 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         private float currentBaseScale;
         private float currentNewScale;
 
-        public PlacesData.PlaceInfo PlaceInfo => placeInfo;
+        public PlacesData.PlaceInfo PlaceInfo => placeInfo!;
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
         public bool IsVisible => poolableBehavior.isVisible;
 
         public Vector2 Pivot => new (0.5f, 0.5f);
 
-        internal string title { get; private set; }
+        internal string title { get; private set; } = null!;
         internal PlacesData.PlaceInfo? placeInfo { get; private set; }
         private bool isSelectedPin;
 
@@ -55,15 +55,16 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         public void OnBecameVisible()
         {
-            poolableBehavior.OnBecameVisible().title.text = title;
+            SearchResultMarkerObject obj = poolableBehavior.OnBecameVisible();
+            obj.title.text = title;
 
-            MarkerHelper.SetAlpha(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 0);
-            MarkerHelper.FadeToAsync(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 1, 0.5f, Ease.OutBack, CancellationToken.None).Forget();
+            MarkerHelper.SetAlpha(obj.renderers, obj.textRenderers, 0);
+            MarkerHelper.FadeToAsync(obj.renderers, obj.textRenderers, 1, 0.5f, Ease.OutBack, CancellationToken.None).Forget();
             AnimateDeSelectionAsync(default).Forget();
 
             if (currentBaseScale != 0)
             {
-                poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                obj.SetScale(currentBaseScale, currentNewScale);
                 ToggleSelection(isSelectedPin);
             }
         }

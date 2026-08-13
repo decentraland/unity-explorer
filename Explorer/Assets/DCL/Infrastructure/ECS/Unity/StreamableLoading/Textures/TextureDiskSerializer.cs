@@ -28,7 +28,11 @@ namespace ECS.StreamableLoading.Textures
 
             unsafe { texture.LoadRawTextureData((IntPtr)handle.Pointer + meta.ArrayLength, data.Memory.Length - meta.ArrayLength); }
 
-            texture.Apply();
+            // The serialized blob is GetRawTextureData<byte>() (the full mip chain), which LoadRawTextureData
+            // already copied in verbatim. updateMipmaps:false keeps those real serialized mips instead of
+            // discarding them and box-filter-regenerating mip1..N from mip0 (an O(W*H) native pyramid pass) on
+            // every disk-cache hit.
+            texture.Apply(updateMipmaps: false);
 
             // LoadRawTextureData copies the data
             data.Dispose();

@@ -1,13 +1,17 @@
+using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
 {
@@ -26,6 +30,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
         [field: SerializeField] public GameObject OfficialIcon { get; private set; }
         [field: SerializeField] public ProfilePictureView ProfilePicture { get; private set; }
+
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> profileThumbnail = new (ProfileThumbnailViewModel.Default());
+        private CancellationTokenSource? loadThumbnailCts;
 
         private bool canUnHover = true;
 
@@ -53,6 +60,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             MainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
         }
 
+        private void OnDestroy()
+        {
+            loadThumbnailCts.SafeCancelAndDispose();
+        }
+
         public void SafelyResetMainButtonListeners()
         {
             MainButton.onClick.RemoveAllListeners();
@@ -77,7 +89,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
             OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.UserId));
-            ProfilePicture.Setup(profileDataProvider, friendProfile);
+
+            profileThumbnail.UpdateValue(ProfileThumbnailViewModel.Default(userColor));
+            ProfilePicture.Bind(profileThumbnail);
+            loadThumbnailCts = loadThumbnailCts.SafeRestart();
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(profileThumbnail, null, friendProfile, loadThumbnailCts.Token).Forget();
         }
 
         public void ConfigureThumbnailClickData(Action thumbnailContextMenuAction) =>

@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utility.Types;
 using DCL.Web3;
@@ -16,9 +18,11 @@ namespace DCL.Friends.UI
         private readonly IFriendsService friendsService;
         private readonly IProfileRepository profileRepository;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> profileThumbnail = new (ProfileThumbnailViewModel.Default());
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? unfriendCancellationToken;
         private CancellationTokenSource? fetchProfileCancellationToken;
+        private CancellationTokenSource? loadThumbnailCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -38,6 +42,7 @@ namespace DCL.Friends.UI
 
             unfriendCancellationToken.SafeCancelAndDispose();
             fetchProfileCancellationToken.SafeCancelAndDispose();
+            loadThumbnailCts.SafeCancelAndDispose();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -72,7 +77,11 @@ namespace DCL.Friends.UI
                 if (profile == null) return;
 
                 viewInstance!.DescriptionLabel.text = $"Are you sure you want to unfriend {profile.Value.Name}?";
-                viewInstance!.ProfilePicture.Setup(profileRepositoryWrapper, profile.Value);
+
+                profileThumbnail.UpdateValue(ProfileThumbnailViewModel.Default(profile.Value.UserNameColor));
+                viewInstance!.ProfilePicture.Bind(profileThumbnail);
+                loadThumbnailCts = loadThumbnailCts.SafeRestart();
+                GetProfileThumbnailCommand.Instance.ExecuteAsync(profileThumbnail, null, profile.Value, loadThumbnailCts.Token).Forget();
             }
         }
 
@@ -89,9 +98,9 @@ namespace DCL.Friends.UI
 
             async UniTaskVoid UnfriendAsync(CancellationToken ct)
             {
-                EnumResult<TaskError> result = await friendsService.DeleteFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                var result = await friendsService.DeleteFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                if (result.Success)
+                if (result is { Success: true, Value: true })
                     Close();
             }
         }

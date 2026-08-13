@@ -9,10 +9,11 @@ using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
@@ -24,11 +25,49 @@ namespace SceneRuntime.Apis.Modules.Players
         private readonly IProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
 
+        private readonly PlayersJsonWriter playersWriter = new ();
+        private readonly object writerLock = new ();
+
         public PlayersWrap(IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, CancellationTokenSource disposeCts) : base(disposeCts)
         {
             this.roomHub = roomHub;
             this.profileRepository = profileRepository;
             this.remoteMetadata = remoteMetadata;
+        }
+
+        private string BuildPlayersJson(IParticipantsHub participantsHub)
+        {
+            lock (writerLock)
+            {
+                try
+                {
+                    JsonTextWriter writer = playersWriter.Begin();
+
+                    writer.WriteStartArray();
+
+                    IReadOnlyDictionary<string, LKParticipant> identities = participantsHub.RemoteParticipantIdentities();
+
+                    lock (identities)
+                    {
+                        foreach ((string identity, _) in identities)
+                        {
+                            writer.WriteStartObject();
+                            writer.WritePropertyName("userId");
+                            writer.WriteValue(participantsHub.RemoteParticipant(identity)!.Identity);
+                            writer.WriteEndObject();
+                        }
+                    }
+
+                    writer.WriteEndArray();
+
+                    return playersWriter.Complete();
+                }
+                catch
+                {
+                    playersWriter.Recreate();
+                    throw;
+                }
+            }
         }
 
         [UsedImplicitly]
@@ -46,11 +85,11 @@ namespace SceneRuntime.Apis.Modules.Players
 
         [UsedImplicitly]
         public object ConnectedPlayers() =>
-            new PlayerListResponse(roomHub.IslandRoom().Participants);
+            new PlayerListResponse(BuildPlayersJson(roomHub.IslandRoom().Participants));
 
         [UsedImplicitly]
         public object PlayersInScene() =>
-            new PlayerListResponse(roomHub.SceneRoom().Room().Participants);
+            new PlayerListResponse(BuildPlayersJson(roomHub.SceneRoom().Room().Participants));
 
         [Serializable]
         [PublicAPI]
@@ -58,23 +97,47 @@ namespace SceneRuntime.Apis.Modules.Players
         {
             public string playersJson;
 
-            public PlayerListResponse(IParticipantsHub participantsHub)
+            public PlayerListResponse(string playersJson)
             {
-                IReadOnlyDictionary<string, LKParticipant> identities = participantsHub.RemoteParticipantIdentities();
+                this.playersJson = playersJson;
+            }
+        }
 
-                using PooledObject<List<Player>> pooledObj = ListPool<Player>.Get(out List<Player>? players);
+        /// <summary>
+        ///     RAII-style reused JsonTextWriter over a single StringBuilder, recreated after exceptions to avoid
+        ///     corrupted depth/token state. NOT thread-safe — callers synchronize (see BuildPlayersJson).
+        /// </summary>
+        private sealed class PlayersJsonWriter
+        {
+            private readonly StringBuilder stringBuilder = new ();
+            private StringWriter stringWriter;
+            private JsonTextWriter writer;
 
-                // See: https://github.com/decentraland/unity-explorer/issues/3796
-                lock (identities)
-                {
-                    foreach ((string identity, _) in identities)
-                    {
-                        LKParticipant remote = participantsHub.RemoteParticipant(identity)!;
-                        players!.Add(new Player(remote));
-                    }
-                }
+            public PlayersJsonWriter()
+            {
+                stringWriter = new StringWriter(stringBuilder);
+                writer = new JsonTextWriter(stringWriter);
+            }
 
-                playersJson = JsonConvert.SerializeObject(players);
+            public JsonTextWriter Begin()
+            {
+                stringBuilder.Clear();
+                return writer;
+            }
+
+            public string Complete() =>
+                stringWriter.ToString();
+
+            public void Recreate()
+            {
+                try { writer.Close(); }
+                catch
+                {  }
+
+                stringWriter.Dispose();
+
+                stringWriter = new StringWriter(stringBuilder);
+                writer = new JsonTextWriter(stringWriter);
             }
         }
 
@@ -110,7 +173,7 @@ namespace SceneRuntime.Apis.Modules.Players
                     new AvatarData(profile.Avatar),
                     profile.DisplayName,
                     walletId,
-                    profile.UserId,
+                    profile.UserId.Value,
                     profile.Version
                 );
             }

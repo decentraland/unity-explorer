@@ -84,6 +84,12 @@ namespace DCL.Chat.ChatCommands
 
             Result<Profile.CompactInfo?> profileResult = await profileRepository.GetProfileAsync(walletId, cancellationToken).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
 
+            // The captured token belongs to the view model incarnation that started this fetch and is
+            // cancelled when it is released back to the pool. A fetch that completes in that window
+            // must not apply the old sender's profile to a reacquired (recycled) view model.
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             if (!profileResult.Success)
                 return;
 

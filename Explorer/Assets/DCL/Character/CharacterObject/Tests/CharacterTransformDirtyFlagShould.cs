@@ -31,12 +31,12 @@ namespace DCL.Character.CharacterObject.Tests
         private const float BELLOW_MINIMAL_DISTANCE_DIFFERENCE = 0.009f;
         private const float ABOVE_MINIMAL_DISTANCE_DIFFERENCE = 0.011f;
 
-        private World globalWorld;
+                private World globalWorld = null!;
 
-        private IReadOnlyCameraSamplingData camSampling;
-        private IPartitionSettings partitionSettings;
-        private IComponentPool<PartitionComponent> partitionComponentPool;
-        private List<GameObject> testGameObjects;
+                private IReadOnlyCameraSamplingData camSampling = null!;
+                private IPartitionSettings partitionSettings = null!;
+                private IComponentPool<PartitionComponent> partitionComponentPool = null!;
+                private List<GameObject> testGameObjects = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
@@ -467,6 +467,83 @@ namespace DCL.Character.CharacterObject.Tests
 
             Assert.AreEqual(message.position, afterPartition.Position,
                 "Position should be maintained through the flow");
+        }
+
+        [Test]
+        public void RemotePlayerPointAtExpiresAfterPointAtDuration()
+        {
+            const float POINT_AT_DURATION = 0.5f;
+
+            testGameObjects.Add(new GameObject("PointAtExpiryEntity"));
+            testGameObjects[0].transform.position = Vector3.zero;
+            var characterTransform = new CharacterTransform(testGameObjects[0].transform);
+
+            Entity remoteEntity = globalWorld.Create(
+                characterTransform,
+                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
+                new HeadIKComponent(),
+                new HandPointAtComponent()
+            );
+
+            var movementSettings = Substitute.For<IMultiplayerMovementSettings>();
+            movementSettings.MoveSendRate.Returns(0.1f);
+            movementSettings.UseExtrapolation.Returns(false);
+
+            // ReSharper disable once Unity.IncorrectScriptableObjectInstantiation
+            movementSettings.InterpolationSettings.Returns(new RemotePlayerInterpolationSettings());
+
+            var characterControllerSettings = Substitute.For<ICharacterControllerSettings>();
+            characterControllerSettings.PointAtDuration.Returns(POINT_AT_DURATION);
+
+            var movementSystem = new RemotePlayersMovementSystem(
+                globalWorld, movementSettings, characterControllerSettings);
+
+            var queuePool = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage, double>(),
+                actionOnRelease: queue => queue.Clear()
+            );
+
+            globalWorld.Add(remoteEntity, new RemotePlayerMovementComponent(queuePool));
+            globalWorld.Add(remoteEntity, new InterpolationComponent());
+            globalWorld.Add(remoteEntity, new ExtrapolationComponent());
+
+            ref RemotePlayerMovementComponent movementComponent = ref globalWorld.Get<RemotePlayerMovementComponent>(remoteEntity);
+            movementComponent.Initialized = false;
+            movementComponent.InitialCooldownTime = 0.3f;
+
+            var pointingSnapshot = new NetworkMovementMessage
+            {
+                timestamp = 1f,
+                position = Vector3.zero,
+                rotationY = 0f,
+                velocity = Vector3.zero,
+                velocitySqrMagnitude = 0f,
+                movementKind = MovementKind.Idle,
+                isInstant = false,
+                isPointingAt = true,
+                pointAtWorldHitPoint = new Vector3(5f, 1f, 5f),
+            };
+
+            movementComponent.Enqueue(pointingSnapshot);
+            globalWorld.Set(remoteEntity, movementComponent);
+
+            movementSystem.Update(0.1f);
+            Assert.IsTrue(globalWorld.Get<HandPointAtComponent>(remoteEntity).IsPointing,
+                "Remote avatar should start pointing after the replayed snapshot");
+
+            for (var i = 0; i < 4; i++)
+                movementSystem.Update(0.1f);
+
+            Assert.IsTrue(globalWorld.Get<HandPointAtComponent>(remoteEntity).IsPointing,
+                "Remote point-at should still be active before PointAtDuration elapses");
+
+            for (var i = 0; i < 3; i++)
+                movementSystem.Update(0.1f);
+
+            Assert.IsFalse(globalWorld.Get<HandPointAtComponent>(remoteEntity).IsPointing,
+                "Remote point-at must expire after PointAtDuration when no message contradicts it");
+            Assert.IsFalse(globalWorld.Get<RemotePlayerMovementComponent>(remoteEntity).IsPointingAt,
+                "Replicated point-at intent must be cleared once it expires");
         }
     }
 }

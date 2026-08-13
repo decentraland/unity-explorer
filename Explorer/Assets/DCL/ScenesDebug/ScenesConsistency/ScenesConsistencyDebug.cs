@@ -51,7 +51,7 @@ namespace DCL.ScenesDebug.ScenesConsistency
                                     .Where(x => x.IsRunning() == false)
                                     .ToList();
 
-            var chatView = new DelayedResource<ChatPanelView>(FindObjectOfType<ChatPanelView>);
+            var chatView = new DelayedResource<ChatPanelView>(FindAnyObjectByType<ChatPanelView>);
 
             var chatTeleport = new LogChatTeleport(
                 new ChatTeleport(chatView),

@@ -6,6 +6,7 @@ using UnityEditor;
 namespace DCL.Landscape.Config.Editor
 {
     [CustomEditor(typeof(VariantNoiseData))]
+    [System.Obsolete]
     public class VariantNoiseDataEditor : NoiseTextureGenerator
     {
         private INoiseGenerator generator;

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
+using System.IO;
 using System.Text;
 using System.Threading;
 using Utility;
@@ -11,6 +12,8 @@ namespace DCL.SocialService
 {
     public class WebSocketRpcTransport : ITransport
     {
+        private const int MAX_MESSAGE_SIZE = 8 * 1024 * 1024;
+
         private readonly Uri uri;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly byte[] receiveBuffer;
@@ -37,6 +40,8 @@ namespace DCL.SocialService
 
         public void Dispose()
         {
+            isDisposed = true;
+
             lifeCycleCancellationToken.SafeCancelAndDispose();
 
             try
@@ -45,8 +50,6 @@ namespace DCL.SocialService
                 webSocket.Dispose();
             }
             catch (ObjectDisposedException) { }
-
-            isDisposed = true;
         }
 
         public async UniTask ConnectAsync(CancellationToken ct)
@@ -69,6 +72,8 @@ namespace DCL.SocialService
 
             async UniTaskVoid ListenAndProcessIncomingDataAsync(CancellationToken ct)
             {
+                using var messageStream = new MemoryStream();
+
                 while (!ct.IsCancellationRequested && isConnected)
                 {
                     try
@@ -77,11 +82,27 @@ namespace DCL.SocialService
 
                         if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
                         {
-                            var data = new byte[result.Count];
-                            receiveBuffer.AsSpan(0, result.Count).CopyTo(data);
+                            messageStream.Write(receiveBuffer, 0, result.Count);
 
-                            // Buffer.BlockCopy(receiveBuffer, 0, data, 0, result.Count);
-                            OnMessageEvent?.Invoke(data);
+                            if (messageStream.Length > MAX_MESSAGE_SIZE)
+                            {
+                                ReportHub.LogWarning(ReportCategory.SOCIAL, $"Social message exceeded {MAX_MESSAGE_SIZE} bytes; dropping.");
+                                messageStream.SetLength(0);
+                                continue;
+                            }
+
+                            if (!result.EndOfMessage)
+                                continue;
+
+                            var data = messageStream.ToArray();
+                            messageStream.SetLength(0);
+
+                            try { OnMessageEvent?.Invoke(data); }
+                            catch (Google.Protobuf.InvalidProtocolBufferException e)
+                            {
+                                ReportHub.LogWarning(ReportCategory.SOCIAL, $"Dropped malformed social message. {e.Message}");
+                                continue;
+                            }
                         }
 
                         if (result.MessageType == WebSocketMessageType.Close)
@@ -119,6 +140,8 @@ namespace DCL.SocialService
             {
                 OnErrorEvent?.Invoke(e);
             }
+            catch (ObjectDisposedException) { }
+            catch (OperationCanceledException) { }
         }
 
         public virtual async UniTask SendMessageAsync(string data, CancellationToken ct)
@@ -130,6 +153,8 @@ namespace DCL.SocialService
             {
                 OnErrorEvent?.Invoke(e);
             }
+            catch (ObjectDisposedException) { }
+            catch (OperationCanceledException) { }
         }
 
         public void Close() =>

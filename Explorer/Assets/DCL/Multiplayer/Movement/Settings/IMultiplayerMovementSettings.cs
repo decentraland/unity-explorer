@@ -29,6 +29,6 @@ namespace DCL.Multiplayer.Movement.Settings
         RemotePlayerExtrapolationSettings ExtrapolationSettings { get; }
         float AccelerationTimeThreshold { get; }
         float IdleSlowDownSpeed { get; }
-        Dictionary<MovementKind, float> MoveKindByDistance { get; }
+        IReadOnlyDictionary<MovementKind, float> MoveKindByDistance { get; }
     }
 }

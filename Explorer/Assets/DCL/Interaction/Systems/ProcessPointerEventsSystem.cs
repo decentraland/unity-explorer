@@ -25,13 +25,27 @@ namespace DCL.Interaction.Systems
     {
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly IEventSystem eventSystem;
-        private readonly IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap;
+        // Concrete Dictionary (not IReadOnlyDictionary): enumerating .Values / the map itself binds
+        // the struct enumerators instead of boxing IEnumerator<> through the interface every hover
+        // frame (see InteractionInputUtils.GatherAnyInputInfo / TryAppendButtonAction overloads).
+        private readonly Dictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap;
         private readonly QueryDescription highlightQuery = new QueryDescription().WithAll<HighlightComponent>();
+
+        // Records which scene Worlds already have their HighlightComponent tracker entity, so
+        // HighlightNewEntity can skip the per-frame CountEntities(highlightQuery) archetype scan.
+        // ConditionalWeakTable (not a Dictionary) because this system is a single global instance
+        // that outlives every scene World it sees: the World is a WEAK key here, so a disposed scene
+        // World is collected instead of being pinned for the app's lifetime, and membership is keyed
+        // by reference identity — never by World.Id — so a later World that Arch hands a recycled Id
+        // can never false-hit a departed scene's entry. Value is a shared sentinel (presence is all
+        // that matters).
+        private static readonly object TRACKER_PRESENT = new ();
+        private readonly ConditionalWeakTable<World, object> highlightTrackerWorlds = new ();
 
         private SingleInstanceEntity playerCamera;
 
         internal ProcessPointerEventsSystem(World world,
-            IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
+            Dictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             IEventSystem eventSystem) : base(world)
         {
@@ -229,16 +243,32 @@ namespace DCL.Interaction.Systems
             ProximityFeedbackUtils.TryIssueProximityLeaveEventForPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo);
         }
 
-        private void HighlightNewEntity(GlobalColliderSceneEntityInfo entityInfo, bool isAtDistance)
+        // Test seam: count of HighlightComponent existence scans (CountEntities over the scene world's archetypes).
+        internal int HighlightScanCount { get; private set; }
+
+        internal void HighlightNewEntity(GlobalColliderSceneEntityInfo entityInfo, bool isAtDistance)
         {
             World world = entityInfo.EcsExecutor.World;
             Entity entityRef = entityInfo.ColliderSceneEntityInfo.EntityReference;
+
+            // The HighlightComponent tracker entity is created once per scene World and only ever Reset()/reused (never
+            // destroyed — see ResetHighlightComponent), so once it exists the answer is permanently yes. Cache that instead
+            // of walking the world's archetypes with CountEntities every hover frame.
+            if (highlightTrackerWorlds.TryGetValue(world, out _))
+            {
+                SetupHighlightComponentQuery(world, isAtDistance, entityRef);
+                return;
+            }
+
+            HighlightScanCount++;
             int count = world.CountEntities(highlightQuery);
 
             if (count > 0)
                 SetupHighlightComponentQuery(world, isAtDistance, entityRef);
             else
                 world.Create(HighlightComponent.NewEntityHighlightComponent(isAtDistance, entityRef));
+
+            highlightTrackerWorlds.Add(world, TRACKER_PRESENT);
         }
 
         [Pure]
