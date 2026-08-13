@@ -33,14 +33,28 @@ set -euo pipefail
 #                       find it, spawning duplicates).
 if [ -n "${SECTION_BODY_FILE:-}" ]; then
   SECTION_BODY="$(cat "$SECTION_BODY_FILE")"
-  # GitHub caps an issue comment at 65536 chars across every section; keep one
-  # writer from consuming the whole budget and failing an unrelated section's
-  # PATCH with an opaque 422. Truncation is fine for a status section that
-  # already links out to the full report.
-  if [ "${#SECTION_BODY}" -gt 20000 ]; then
-    echo "::warning::Section body is ${#SECTION_BODY} chars; truncating to 20000."
-    SECTION_BODY="${SECTION_BODY:0:20000}"$'\n\n'"_…truncated; see the linked run for the full report._"
+fi
+
+# GitHub caps an issue comment at 65536 chars across every section; keep one
+# writer — whichever path its body arrived by — from consuming the whole budget
+# and failing an unrelated section's PATCH with an opaque 422. Truncation is
+# fine for a status section that already links out to the full report.
+if [ "${#SECTION_BODY}" -gt 20000 ]; then
+  echo "::warning::Section body is ${#SECTION_BODY} chars; truncating to 20000."
+  SECTION_BODY="${SECTION_BODY:0:20000}"
+  # Close constructs the cut may have severed — an unterminated code fence or
+  # <details> makes GitHub render everything after it in this comment inside
+  # the open block, visually eating the neighbouring sections.
+  if [ $(( $(grep -c '^```' <<< "$SECTION_BODY") % 2 )) -ne 0 ]; then
+    SECTION_BODY="$SECTION_BODY"$'\n''```'
   fi
+  opens=$(grep -oi '<details' <<< "$SECTION_BODY" | wc -l || true)
+  closes=$(grep -oi '</details' <<< "$SECTION_BODY" | wc -l || true)
+  while [ "${opens:-0}" -gt "${closes:-0}" ]; do
+    SECTION_BODY="$SECTION_BODY"$'\n</details>'
+    closes=$((closes + 1))
+  done
+  SECTION_BODY="$SECTION_BODY"$'\n\n'"_…truncated; see the linked run for the full report._"
 fi
 
 # Fail fast on a section name outside the fence set — an unknown name would

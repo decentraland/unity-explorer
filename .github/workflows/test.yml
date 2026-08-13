@@ -841,14 +841,19 @@ jobs:
                   if case_result == "Passed":
                       passed += 1
                   elif case_result == "Failed":
-                      failed.append(test_case.get("fullname") or test_case.get("name"))
+                      # "(unnamed)" keeps the set homogeneous — one None among
+                      # strings makes sorted() raise and kills the whole file.
+                      failed.append(test_case.get("fullname") or test_case.get("name") or "(unnamed)")
 
           result = {
               "hasResults": len(xml_files) > 0,
               "total": total,
               "passed": passed,
               "failed": sorted(set(failed)),
-              "duration": round(duration, 1),
+              # The per-case clamp keeps each addend (and the slowest list)
+              # finite, but a sum of finite doubles can still overflow to inf —
+              # clamp again at the one point the accumulator is serialised.
+              "duration": round(duration, 1) if math.isfinite(duration) else 0.0,
               "slowest": [
                   {"name": name, "seconds": round(seconds, 1)}
                   for seconds, name in sorted(timings, key=lambda t: -t[0])[:10]
