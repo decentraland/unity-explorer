@@ -6,7 +6,6 @@ using DCL.Utility;
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -16,6 +15,12 @@ using System.Security.Cryptography;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+#if UNITY_EDITOR
+using System.Diagnostics;
+#elif !UNITY_STANDALONE_WIN
+using Plugins.DclNativeProcesses;
+using RichTypes;
+#endif
 
 // ReSharper disable InconsistentNaming
 
@@ -43,6 +48,7 @@ namespace Global.Dynamic
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
         private const int PROGRESS_POLL_MS = 500;
+        private const int SUPERVISION_POLL_MS = 2000;
 
         private static volatile bool downloadStarted;
 
@@ -56,7 +62,16 @@ namespace Global.Dynamic
         private readonly string cacheRoot;
         private readonly bool jitContentDigest;
 
+        // System.Diagnostics.Process cannot spawn under IL2CPP (Win32Exception "Native error= Success"),
+        // so player builds hold the child as a raw OS handle/pid; only the editor's Mono runtime keeps
+        // the managed Process object (and its drained stdout/stderr pipes).
+#if UNITY_EDITOR
         private Process? process;
+#elif UNITY_STANDALONE_WIN
+        private IntPtr processHandle;
+#else
+        private int processId;
+#endif
         private int restarts;
         private volatile bool disposed;
 
@@ -124,7 +139,10 @@ namespace Global.Dynamic
         public async UniTask<bool> StartAsync(CancellationToken ct)
         {
             if (Launch(executablePath) && await WaitHealthyAsync(ct))
+            {
+                SuperviseAsync(ct).Forget();
                 return true;
+            }
 
             AbgenConversionMetrics.INSTANCE.OnMilestone("abgen sidecar failed to start — the scene loads as raw GLTFs");
             Dispose();
@@ -351,8 +369,7 @@ namespace Global.Dynamic
         public void Dispose()
         {
             disposed = true;
-            TryKill(process);
-            process = null;
+            KillChild();
         }
 
         /// <summary>Release target triple and the pinned release's archive sha256 for the current platform; null when unsupported.</summary>
@@ -423,7 +440,14 @@ namespace Global.Dynamic
                 ExtractTarGz(archive, tmpDir);
 
                 if (!IsWindows)
-                    Process.Start(new ProcessStartInfo { FileName = "chmod", Arguments = $"-R a+rx \"{tmpDir}\"", UseShellExecute = false })?.WaitForExit();
+                {
+                    // Straight through libc — a chmod subprocess needs System.Diagnostics.Process,
+                    // which cannot spawn under IL2CPP.
+                    PosixChmod(tmpDir, UNIX_MODE_755);
+
+                    foreach (string entry in Directory.GetFileSystemEntries(tmpDir, "*", SearchOption.AllDirectories))
+                        PosixChmod(entry, UNIX_MODE_755);
+                }
 
                 if (Directory.Exists(finalDir)) Directory.Delete(finalDir, true);
                 Directory.Move(tmpDir, finalDir);
@@ -512,6 +536,30 @@ namespace Global.Dynamic
 
         private bool Launch(string executablePath)
         {
+            try
+            {
+                // abgen is configured entirely through environment variables, and every spawn path
+                // below launches the child with this process's environment.
+                Environment.SetEnvironmentVariable("HTTP_SERVER_HOST", "127.0.0.1");
+                Environment.SetEnvironmentVariable("HTTP_SERVER_PORT", new Uri(BaseUrl).Port.ToString());
+                Environment.SetEnvironmentVariable("ABGEN_CACHE_DIR", Path.Combine(cacheRoot, "cache"));
+                Environment.SetEnvironmentVariable("ABGEN_OUT_ROOT", Path.Combine(cacheRoot, "out"));
+                Environment.SetEnvironmentVariable("ABGEN_CATALYST_URL", catalystContentUrl);
+                Environment.SetEnvironmentVariable("ABGEN_UPSTREAM_AB_CDN", upstreamCdnUrl);
+                Environment.SetEnvironmentVariable("ABGEN_JIT_CONTENT_DIGEST", jitContentDigest ? "1" : null);
+
+                return LaunchChild(executablePath);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+                return false;
+            }
+        }
+
+        private bool LaunchChild(string executablePath)
+        {
+#if UNITY_EDITOR
             var psi = new ProcessStartInfo
             {
                 FileName = executablePath,
@@ -521,48 +569,111 @@ namespace Global.Dynamic
                 RedirectStandardError = true,
             };
 
-            psi.EnvironmentVariables["HTTP_SERVER_HOST"] = "127.0.0.1";
-            psi.EnvironmentVariables["HTTP_SERVER_PORT"] = new Uri(BaseUrl).Port.ToString();
-            psi.EnvironmentVariables["ABGEN_CACHE_DIR"] = Path.Combine(cacheRoot, "cache");
-            psi.EnvironmentVariables["ABGEN_OUT_ROOT"] = Path.Combine(cacheRoot, "out");
-            psi.EnvironmentVariables["ABGEN_CATALYST_URL"] = catalystContentUrl;
-            psi.EnvironmentVariables["ABGEN_UPSTREAM_AB_CDN"] = upstreamCdnUrl;
+            process = Process.Start(psi);
+            if (process == null) return false;
 
-            if (jitContentDigest)
-                psi.EnvironmentVariables["ABGEN_JIT_CONTENT_DIGEST"] = "1";
+            // Drain pipes so the child never blocks on a full stdout/stderr buffer.
+            process.OutputDataReceived += static (_, _) => { };
+            process.ErrorDataReceived += static (_, _) => { };
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            return true;
+#elif UNITY_STANDALONE_WIN
+            // CREATE_NO_WINDOW keeps the console-subsystem server from opening a console window;
+            // the child's null std handles are swallowed by its runtime.
+            var startupInfo = new STARTUPINFO { cb = Marshal.SizeOf<STARTUPINFO>() };
 
-            try
+            if (!CreateProcessW(null, new System.Text.StringBuilder($"\"{executablePath}\""), IntPtr.Zero, IntPtr.Zero, false,
+                    CREATE_NO_WINDOW, IntPtr.Zero, null, ref startupInfo, out PROCESS_INFORMATION processInformation))
             {
-                process = Process.Start(psi);
-                if (process == null) return false;
-
-                // Drain pipes so the child never blocks on a full stdout/stderr buffer.
-                process.OutputDataReceived += static (_, _) => { };
-                process.ErrorDataReceived += static (_, _) => { };
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                process.EnableRaisingEvents = true;
-                process.Exited += (_, _) => OnExited(executablePath);
-                return true;
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen CreateProcess failed (err {Marshal.GetLastWin32Error()})");
                 return false;
             }
+
+            CloseHandle(processInformation.hThread);
+
+            if (processHandle != IntPtr.Zero) CloseHandle(processHandle);
+            processHandle = processInformation.hProcess;
+            return true;
+#else
+            Result<int> result = DclProcesses.Start(executablePath, Array.Empty<string>());
+
+            if (!result.Success)
+            {
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen spawn failed: {result.ErrorMessage}");
+                return false;
+            }
+
+            processId = result.Value;
+            return true;
+#endif
         }
 
-        private void OnExited(string executablePath)
+        private bool ChildAlive()
         {
-            if (disposed || Interlocked.Increment(ref restarts) > MAX_RESTARTS)
-                return;
+#if UNITY_EDITOR
+            try { return process is { HasExited: false }; }
+            catch (Exception) { return false; }
+#elif UNITY_STANDALONE_WIN
+            return processHandle != IntPtr.Zero && WaitForSingleObject(processHandle, 0) == WAIT_TIMEOUT;
+#else
+            return processId > 0 && kill(processId, 0) == 0;
+#endif
+        }
 
-            ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar exited; restart {restarts}/{MAX_RESTARTS}");
+        private void KillChild()
+        {
+#if UNITY_EDITOR
+            try
+            {
+                if (process is { HasExited: false }) process.Kill();
+                process?.Dispose();
+            }
+            catch (Exception)
+            {
+                // Already exited or inaccessible — nothing to clean up.
+            }
 
-            // Same port on purpose: consumers already hold BaseUrl.
-            if (!Launch(executablePath))
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
+            process = null;
+#elif UNITY_STANDALONE_WIN
+            if (processHandle == IntPtr.Zero) return;
+            TerminateProcess(processHandle, 0);
+            CloseHandle(processHandle);
+            processHandle = IntPtr.Zero;
+#else
+            if (processId > 0) kill(processId, SIGKILL);
+            processId = 0;
+#endif
+        }
+
+        /// <summary>
+        ///     Liveness is polled rather than event-driven — an Exited event needs the managed Process
+        ///     object, which player builds don't have. A dead child is relaunched on the same port
+        ///     (consumers already hold <see cref="BaseUrl" />) up to <see cref="MAX_RESTARTS" /> times.
+        /// </summary>
+        private async UniTaskVoid SuperviseAsync(CancellationToken ct)
+        {
+            while (!disposed && !ct.IsCancellationRequested)
+            {
+                await UniTask.Delay(SUPERVISION_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
+
+                if (disposed || ct.IsCancellationRequested) return;
+                if (ChildAlive()) continue;
+
+                if (Interlocked.Increment(ref restarts) > MAX_RESTARTS)
+                {
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar keeps exiting; asset bundles fall back to direct CDN errors");
+                    return;
+                }
+
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar exited; restart {restarts}/{MAX_RESTARTS}");
+
+                if (!Launch(executablePath))
+                {
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
+                    return;
+                }
+            }
         }
 
         private async UniTask<bool> WaitHealthyAsync(CancellationToken ct)
@@ -595,20 +706,66 @@ namespace Global.Dynamic
             return port;
         }
 
-        private static void TryKill(Process? proc)
-        {
-            if (proc == null) return;
+        private const uint UNIX_MODE_755 = 0x1ED; // rwxr-xr-x
 
-            try
-            {
-                if (!proc.HasExited) proc.Kill();
-                proc.Dispose();
-            }
-            catch (Exception)
-            {
-                // Already exited or inaccessible — nothing to clean up.
-            }
+        // Never called on Windows (IsWindows-guarded call sites); the import only binds on first call.
+        [DllImport("libc", EntryPoint = "chmod", SetLastError = true)]
+        private static extern int PosixChmod(string path, uint mode);
+
+#if !UNITY_EDITOR && UNITY_STANDALONE_WIN
+        private const uint CREATE_NO_WINDOW = 0x08000000;
+        private const uint WAIT_TIMEOUT = 0x102;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct STARTUPINFO
+        {
+            public int cb;
+            public IntPtr lpReserved;
+            public IntPtr lpDesktop;
+            public IntPtr lpTitle;
+            public int dwX;
+            public int dwY;
+            public int dwXSize;
+            public int dwYSize;
+            public int dwXCountChars;
+            public int dwYCountChars;
+            public int dwFillAttribute;
+            public int dwFlags;
+            public short wShowWindow;
+            public short cbReserved2;
+            public IntPtr lpReserved2;
+            public IntPtr hStdInput;
+            public IntPtr hStdOutput;
+            public IntPtr hStdError;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct PROCESS_INFORMATION
+        {
+            public IntPtr hProcess;
+            public IntPtr hThread;
+            public int dwProcessId;
+            public int dwThreadId;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern bool CreateProcessW(string? lpApplicationName, System.Text.StringBuilder lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes,
+            bool bInheritHandles, uint dwCreationFlags, IntPtr lpEnvironment, string? lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+#elif !UNITY_EDITOR
+        private const int SIGKILL = 9;
+
+        [DllImport("libc", SetLastError = true)]
+        private static extern int kill(int pid, int sig);
+#endif
 
         /// <summary>abgen <c>GET /progress/{entity}</c> response (crate/src/abcdn/handlers/status.rs).</summary>
         [Serializable]
