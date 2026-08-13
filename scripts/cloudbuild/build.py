@@ -69,6 +69,7 @@ build_healthy = True
 BUILD_LINK_INFO_PATH = 'unity_cloud_build_info.env'
 dashboard_url = None
 _build_link_info_written = False
+_final_elapsed = None  # (queue_secs, build_secs), set once when the build reaches a terminal status
 
 # Live PR status-comment update: the artifact above only leaves the runner when
 # this job ends, so the comment's build section is also written directly the
@@ -662,9 +663,12 @@ def record_build_link_info(id, response_json):
         with open(BUILD_LINK_INFO_PATH, 'w') as f:
             f.write(f'BUILD_TARGET={os.getenv("TARGET")}\n')
             f.write(f'BUILD_ID={id}\n')
-            link = href or _dashboard_build_url(id)
+            link = href or dashboard_url or _dashboard_build_url(id)
             if link:
                 f.write(f'DASHBOARD_URL={link}\n')
+            if _final_elapsed:
+                f.write(f'QUEUE_SECS={_final_elapsed[0]}\n')
+                f.write(f'BUILD_SECS={_final_elapsed[1]}\n')
     except OSError as e:
         print(f'Warning: could not write {BUILD_LINK_INFO_PATH}: {e}')
 
@@ -675,6 +679,16 @@ def record_build_link_info(id, response_json):
     # force: a dashboard link that arrives on a later poll must replace the
     # unlinked row the first write left behind.
     maybe_update_live_comment(id, force=bool(href))
+
+
+def record_final_elapsed(id, queue_secs, build_secs):
+    """Rewrite the link-info file with the final queue/build split, so the
+    comment's build rows can show how long each platform took. Runs after the
+    last poll; the artifact uploads when the job ends."""
+    global _final_elapsed, _build_link_info_written
+    _final_elapsed = (max(0, int(queue_secs)), max(0, int(build_secs)))
+    _build_link_info_written = False  # bypass the no-news guard for this rewrite
+    record_build_link_info(id, {})
 
 
 def _github_api(path):
@@ -780,8 +794,7 @@ def upsert_live_comment(build_id, only_if_missing=False):
     server = os.getenv('GITHUB_SERVER_URL', 'https://github.com')
     run_url = f"{server}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
     body = '\n'.join([
-        f'[![Build](https://img.shields.io/badge/Build-In%20progress-1f6feb?logo=unity&logoColor=white&style=for-the-badge)]({run_url})  '
-        f'<img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">',
+        f'[![Build](https://img.shields.io/badge/Build-In%20progress-1f6feb?logo=unity&logoColor=white&style=for-the-badge)]({run_url})',
         '',
         '| Name | Link |',
         '| -------- | ----------------------- |',
@@ -1139,6 +1152,7 @@ if final_outcome == 'canceled':
 utils.delete_build_info()
 
 print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
+record_final_elapsed(id, queue_elapsed, build_elapsed)
 
 download_artifact(id)
 download_log(id)

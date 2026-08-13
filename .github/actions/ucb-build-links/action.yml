@@ -58,14 +58,20 @@ runs:
           local dir="ucb_info_${target}"
           REPLY_ID=""
           REPLY_URL=""
+          REPLY_QUEUE=""
+          REPLY_BUILD=""
           if gh run download "$RUN_ID" \
                --repo "$REPO_FULL" \
                --name "unity_build_info_${target}_launcher" \
                --dir "$dir" 2>"${dir}.err"; then
             REPLY_ID=$(grep -m1 '^BUILD_ID=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
             REPLY_URL=$(grep -m1 '^DASHBOARD_URL=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
+            REPLY_QUEUE=$(grep -m1 '^QUEUE_SECS=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
+            REPLY_BUILD=$(grep -m1 '^BUILD_SECS=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
             [[ "$REPLY_ID" =~ ^[0-9]+$ ]] || REPLY_ID=""
             [[ "$REPLY_URL" =~ $URL_RE ]] || REPLY_URL=""
+            [[ "$REPLY_QUEUE" =~ ^[0-9]+$ ]] || REPLY_QUEUE=""
+            [[ "$REPLY_BUILD" =~ ^[0-9]+$ ]] || REPLY_BUILD=""
           else
             # Absence is normal for runs predating the info artifact; still surface the
             # gh error so an auth/permission regression doesn't silently eat the rows.
@@ -83,6 +89,13 @@ runs:
         SUITE_ID=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID" --jq '.check_suite_id' 2>/dev/null || echo "")
         [[ "$SUITE_ID" =~ ^[0-9]+$ ]] || SUITE_ID=""
         ARTIFACTS_JSON=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID/artifacts?per_page=100" 2>/dev/null || echo '{"artifacts":[]}')
+
+        fmt_dur() {
+          local s=$1
+          if [ "$s" -ge 3600 ]; then printf '%dh %dm' $((s/3600)) $((s%3600/60))
+          elif [ "$s" -ge 60 ]; then printf '%dm %ds' $((s/60)) $((s%60))
+          else printf '%ds' "$s"; fi
+        }
 
         WINDOWS_CELL=""
         MAC_CELL=""
@@ -109,6 +122,11 @@ runs:
           fi
           if [ -n "$log_id" ] && [ -n "$SUITE_ID" ]; then
             parts+=("[Unity log](${GITHUB_SERVER_URL:-https://github.com}/${REPO_FULL}/suites/${SUITE_ID}/artifacts/${log_id})")
+          fi
+          if [ -n "$REPLY_BUILD" ]; then
+            t="⏱ $(fmt_dur "$REPLY_BUILD")"
+            [ -n "$REPLY_QUEUE" ] && [ "$REPLY_QUEUE" -gt 0 ] && t+=" ($(fmt_dur "$REPLY_QUEUE") queued)"
+            parts+=("$t")
           fi
 
           cell=""

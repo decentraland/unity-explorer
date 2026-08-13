@@ -66,7 +66,10 @@ case "${SECTION:-}" in
 esac
 
 MARKER="<!-- ci-status -->"
-HEADER="### 🚦 CI Status"
+# The <picture> wrapper stops GitHub's renderer from auto-wrapping the logo in
+# a link to the image itself — the one construct its sanitizer leaves unlinked.
+HEADER='### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"></picture> CI Status'
+OLD_HEADER="### 🚦 CI Status"
 BOT="github-actions[bot]"
 START="<!-- ci:${SECTION}:start -->"
 END="<!-- ci:${SECTION}:end -->"
@@ -186,6 +189,9 @@ for attempt in 1 2 3 4 5; do
   elif ! grep -qxF "$START" <<< "$CURRENT_BODY"; then
     CURRENT_BODY="$CURRENT_BODY"$'\n\n'"$(wrap_section "$SECTION" "$(section_default "$SECTION")")"
   fi
+
+  # Migrate comments created while the header was still the emoji variant.
+  CURRENT_BODY="${CURRENT_BODY/"$OLD_HEADER"/$HEADER}"
 
   NEW_BODY="$(replace_section "$CURRENT_BODY")"
 

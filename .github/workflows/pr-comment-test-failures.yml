@@ -99,12 +99,20 @@ jobs:
             job_url=$(jq -r --arg n "Test ($mode)" '.jobs[]? | select(.name==$n) | .html_url // empty' <<< "$JOBS_JSON" | head -1)
             if [ -n "$job_url" ]; then disp_cell="[$disp]($job_url)"; else disp_cell="$disp"; fi
 
+            # Wall time of the suite's job (checkout + Unity licensing + import +
+            # tests), from the trusted Actions API — pairs with the test-sum Time
+            # column so setup overhead is visible.
+            job_secs=$(jq -r --arg n "Test ($mode)" \
+              '[.jobs[]? | select(.name==$n and .completed_at != null)
+                | ((.completed_at|fromdateiso8601) - (.started_at|fromdateiso8601))] | first // empty' <<< "$JOBS_JSON")
+            if [[ "$job_secs" =~ ^[0-9]+$ ]]; then job_dur=$(fmt_secs "$job_secs"); else job_dur="—"; fi
+
             # A suite that produced no result XML crashed or timed out before finishing.
             # Surface it as its own state instead of silently contributing 0 to a green total.
             if [ "$(jq -r '.hasResults' "$file")" != "true" ]; then
               status=incomplete
               [ -n "$job_url" ] || job_url="$WORKFLOW_RUN_URL"
-              rows="$rows| $disp_cell | ⚠️ No results | — | — | — | — |"$'\n'
+              rows="$rows| $disp_cell | ⚠️ No results | — | — | — | — | $job_dur |"$'\n'
               warnings="$warnings⚠️ **$disp** produced no results — the run likely crashed or timed out before finishing. Check the [\`Unity Test / Test ($mode)\`]($job_url) job."$'\n\n'
               continue
             fi
@@ -132,11 +140,11 @@ jobs:
             if [ "$f" -gt 0 ]; then
               if [ "$status" = "passed" ]; then status=failed; fi
               total_failed=$((total_failed + f))
-              rows="$rows| $disp_cell | ❌ $f failed | $p | $f | $s | $dur |"$'\n'
+              rows="$rows| $disp_cell | ❌ $f failed | $p | $f | $s | $dur | $job_dur |"$'\n'
               names=$(jq -r --arg mode "$mode" '.failed[] | "- [\($mode)] `\(. | gsub("[\r\n`|]"; " "))`"' "$file")
               failed_list="$failed_list$names"$'\n'
             else
-              rows="$rows| $disp_cell | ✅ Passed | $p | 0 | $s | $dur |"$'\n'
+              rows="$rows| $disp_cell | ✅ Passed | $p | 0 | $s | $dur | $job_dur |"$'\n'
             fi
           done
 
@@ -162,8 +170,8 @@ jobs:
             echo ""
             printf '%s\n' "$headline"
             echo ""
-            echo "| TESTS SUITE | Result | Passed | Failed | Skipped | Time |"
-            echo "| ----------- | ------ | -----: | -----: | ------: | ---: |"
+            echo "| TESTS SUITE | Result | Passed | Failed | Skipped | Tests time | Job time |"
+            echo "| ----------- | ------ | -----: | -----: | ------: | ---: | ---: |"
             printf '%s' "$rows"
             if [ "$total_failed" -gt 0 ]; then
               echo ""

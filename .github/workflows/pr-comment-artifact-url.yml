@@ -61,7 +61,7 @@ jobs:
           section: build
           github-token: ${{ github.token }}
           body: |-
-            [![Build](https://img.shields.io/badge/Build-Pending!-ffff00?logo=github&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            [![Build](https://img.shields.io/badge/Build-Pending!-ffff00?logo=github&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
 
             New build in progress — per-platform Unity Cloud links land here as soon as each build is created.
 
@@ -127,7 +127,7 @@ jobs:
           section: build
           github-token: ${{ github.token }}
           body: |-
-            [![Build](https://img.shields.io/badge/Build-Skipped-yellow?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            [![Build](https://img.shields.io/badge/Build-Skipped-yellow?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
 
             Build skipped — no changes detected under `Explorer/`.
 
@@ -292,7 +292,7 @@ jobs:
           section: build
           github-token: ${{ github.token }}
           body: |-
-            [![Build](https://img.shields.io/badge/Build-Success!-3fb950?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }})  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            [![Build](https://img.shields.io/badge/Build-Success!-3fb950?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }})
 
             Windows and Mac built successfully in Unity Cloud.
 
@@ -428,7 +428,7 @@ jobs:
           section: build
           github-token: ${{ github.token }}
           body: |-
-            [![Build](https://img.shields.io/badge/Build-Failed!-ff0000?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            [![Build](https://img.shields.io/badge/Build-Failed!-ff0000?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
 
             Build failed! Check the [logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}) to see what went wrong.
             If the error repeats please consider the `clean-build` tag.
