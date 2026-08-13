@@ -32,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private CreditPurchaseModalController? creditPurchaseModalController;
         private ICreditsTopUpService? creditsTopUpService;
         private CreditsTopUpModalController? creditsTopUpModalController;
+        private UnityApplicationFocusSource? applicationFocusSource;
 
         public CreditPurchasePlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -56,6 +57,7 @@ namespace DCL.PluginSystem.Global
             creditPurchaseModalController?.Dispose();
             creditsTopUpModalController?.Dispose();
             creditsTopUpService?.Dispose();
+            applicationFocusSource?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -76,6 +78,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(creditPurchaseModalController);
 
             creditsTopUpService = new CreditsTopUpService(marketplaceCreditsAPIClient, web3IdentityCache, webBrowser);
+            applicationFocusSource = new UnityApplicationFocusSource();
 
             CreditsTopUpModalView topUpViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CreditsTopUpPopupPrefab, ct: ct)).GetComponent<CreditsTopUpModalView>();
 
@@ -84,7 +87,8 @@ namespace DCL.PluginSystem.Global
                 creditsTopUpService,
                 marketplaceCreditsAPIClient,
                 web3IdentityCache,
-                imageControllerProvider);
+                imageControllerProvider,
+                applicationFocusSource);
 
             mvcManager.RegisterController(creditsTopUpModalController);
         }

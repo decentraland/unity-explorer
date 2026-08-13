@@ -29,10 +29,14 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string PACKS_LOAD_FAILED_REQUEST = "request_failed";
         private const string PACKS_LOAD_FAILED_EMPTY = "empty_response";
 
+        private static readonly TimeSpan DEFAULT_FOCUS_RETURN_GRACE_PERIOD = TimeSpan.FromSeconds(10);
+
         private readonly ICreditsTopUpService topUpService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IApplicationFocusSource applicationFocusSource;
+        private readonly TimeSpan focusReturnGracePeriod;
 
         private ModalState currentState;
         private CreditsTopUpStage lastStage = CreditsTopUpStage.Idle;
@@ -57,13 +61,17 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             ICreditsTopUpService topUpService,
             MarketplaceCreditsAPIClient creditsApiClient,
             IWeb3IdentityCache identityCache,
-            ImageControllerProvider imageControllerProvider)
+            ImageControllerProvider imageControllerProvider,
+            IApplicationFocusSource applicationFocusSource,
+            TimeSpan? focusReturnGracePeriod = null)
             : base(viewFactory)
         {
             this.topUpService = topUpService;
             this.creditsApiClient = creditsApiClient;
             this.identityCache = identityCache;
             this.imageControllerProvider = imageControllerProvider;
+            this.applicationFocusSource = applicationFocusSource;
+            this.focusReturnGracePeriod = focusReturnGracePeriod ?? DEFAULT_FOCUS_RETURN_GRACE_PERIOD;
             topUpService.StatusChanged += OnServiceStatusChanged;
         }
 
@@ -85,11 +93,13 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             LoadAndBindPacksAsync(lifeCts.Token).Forget();
             LoadBalanceAsync(lifeCts.Token).Forget();
 
+            applicationFocusSource.FocusChanged += OnApplicationFocusChanged;
             ModalOpened?.Invoke(inputData.Source);
         }
 
         protected override void OnViewClose()
         {
+            applicationFocusSource.FocusChanged -= OnApplicationFocusChanged;
             isViewShown = false;
             purchasedPackItem = null;
 
@@ -240,6 +250,31 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
 
             RetryClicked?.Invoke(topUpService.CurrentStatus.Pack);
             topUpService.AcknowledgeTerminalState();
+        }
+
+        private void OnApplicationFocusChanged(bool hasFocus)
+        {
+            if (!hasFocus || currentState != ModalState.WaitingForBrowser)
+                return;
+
+            // The user has returned to the Explorer while the Stripe checkout was open.
+            // Wait a short grace period to let a completed payment arrive via the poll cycle;
+            // if the state is still WaitingForBrowser after the grace period, the user
+            // likely cancelled in the browser — auto-cancel the top-up on their behalf.
+            WaitAndAutoCancelAsync(lifeCts!.Token).Forget();
+        }
+
+        private async UniTaskVoid WaitAndAutoCancelAsync(CancellationToken ct)
+        {
+            bool wasCancelled = await UniTask.Delay(focusReturnGracePeriod, cancellationToken: ct)
+                                             .SuppressCancellationThrow();
+
+            if (wasCancelled || currentState != ModalState.WaitingForBrowser)
+                return;
+
+            CreditsTopUpStatus status = topUpService.CurrentStatus;
+            BuyCreditsCancelled?.Invoke(status.OrderId!, status.Pack);
+            topUpService.CancelTopUp();
         }
 
         private void OnServiceStatusChanged(CreditsTopUpStatus status)

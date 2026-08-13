@@ -5,6 +5,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DCL.MarketplaceCredits.Purchase.Tests
 {
@@ -17,6 +18,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private static readonly CreditPack PACK = new ("pack_25", 24.99f, 235, true, string.Empty);
 
         private ICreditsTopUpService topUpService = null!;
+        private IApplicationFocusSource applicationFocusSource = null!;
         private TestableController controller = null!;
 
         private readonly List<(string orderId, CreditPack pack)> redirected = new ();
@@ -39,11 +41,13 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             packsLoadFailed.Clear();
 
             topUpService = Substitute.For<ICreditsTopUpService>();
+            applicationFocusSource = Substitute.For<IApplicationFocusSource>();
 
             controller = new TestableController(
                 topUpService,
                 Substitute.For<MarketplaceCreditsAPIClient>(null, null),
-                Substitute.For<IWeb3IdentityCache>());
+                Substitute.For<IWeb3IdentityCache>(),
+                applicationFocusSource);
 
             controller.RedirectedToStripe += (orderId, pack) => redirected.Add((orderId, pack));
             controller.BuyCreditsCompleted += (orderId, pack) => completed.Add((orderId, pack));
@@ -189,6 +193,69 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.AreEqual(1, cancelled.Count);
         }
 
+        [Test]
+        public async Task CancelTopUpAfterGracePeriodWhenFocusReturnedWhileWaitingForBrowser()
+        {
+            // Arrange: start with the service in WaitingForPayment so the controller
+            // enters WaitingForBrowser UI state; use a near-zero grace period.
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+            var fastController = new TestableController(
+                topUpService,
+                Substitute.For<MarketplaceCreditsAPIClient>(null, null),
+                Substitute.For<IWeb3IdentityCache>(),
+                applicationFocusSource,
+                gracePeriod: TimeSpan.FromMilliseconds(30));
+
+            fastController.BuyCreditsCancelled += (orderId, pack) => cancelled.Add((orderId, pack));
+
+            fastController.Show();
+            RaiseStatus(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+
+            // Act: simulate the user returning focus to the Explorer (browser tab closed).
+            applicationFocusSource.FocusChanged += Raise.Event<Action<bool>>(true);
+
+            // Assert: after the grace period the service must have been cancelled.
+            await Task.Delay(200);
+            topUpService.Received(1).CancelTopUp();
+            Assert.AreEqual(1, cancelled.Count);
+            Assert.AreEqual(ORDER_ID, cancelled[0].orderId);
+
+            fastController.Dispose();
+        }
+
+        [Test]
+        public async Task NotCancelTopUpWhenPaymentArrivesWithinGracePeriod()
+        {
+            // Arrange: service in WaitingForPayment; grace period shorter than payment arrival simulation.
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+            var fastController = new TestableController(
+                topUpService,
+                Substitute.For<MarketplaceCreditsAPIClient>(null, null),
+                Substitute.For<IWeb3IdentityCache>(),
+                applicationFocusSource,
+                gracePeriod: TimeSpan.FromMilliseconds(100));
+
+            fastController.BuyCreditsCompleted += (orderId, pack) => completed.Add((orderId, pack));
+
+            fastController.Show();
+            RaiseStatus(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+
+            // Act: user returns focus, but payment arrives before grace period expires.
+            applicationFocusSource.FocusChanged += Raise.Event<Action<bool>>(true);
+
+            // Simulate payment arriving within the grace period (immediately after focus).
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.Credited(PACK, ORDER_ID, 250, 300));
+            RaiseStatus(CreditsTopUpStatus.Credited(PACK, ORDER_ID, 250, 300));
+
+            await Task.Delay(300);
+
+            // Assert: CancelTopUp must NOT have been called — success won the race.
+            topUpService.DidNotReceive().CancelTopUp();
+            Assert.AreEqual(1, completed.Count);
+
+            fastController.Dispose();
+        }
+
         private void RaiseStatus(CreditsTopUpStatus status) =>
             topUpService.StatusChanged += Raise.Event<Action<CreditsTopUpStatus>>(status);
 
@@ -198,8 +265,17 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             public TestableController(
                 ICreditsTopUpService topUpService,
                 MarketplaceCreditsAPIClient creditsApiClient,
-                IWeb3IdentityCache identityCache)
-                : base(() => null!, topUpService, creditsApiClient, identityCache, null!) { }
+                IWeb3IdentityCache identityCache,
+                IApplicationFocusSource? applicationFocusSource = null,
+                TimeSpan? gracePeriod = null)
+                : base(
+                    () => null!,
+                    topUpService,
+                    creditsApiClient,
+                    identityCache,
+                    null!,
+                    applicationFocusSource ?? Substitute.For<IApplicationFocusSource>(),
+                    gracePeriod) { }
 
             public void Show() =>
                 OnViewShow();
