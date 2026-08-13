@@ -8,6 +8,8 @@ import zipfile
 import requests
 import datetime
 import argparse
+import subprocess
+import tempfile
 import collections
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
@@ -67,6 +69,15 @@ build_healthy = True
 BUILD_LINK_INFO_PATH = 'unity_cloud_build_info.env'
 dashboard_url = None
 _build_link_info_written = False
+
+# Live PR status-comment update: the artifact above only leaves the runner when
+# this job ends, so the comment's build section is also written directly the
+# moment the build id is known — the Unity Cloud link goes live while the build
+# runs instead of after it. Purely cosmetic: every failure is swallowed.
+CI_STATUS_SCRIPT = os.path.join('.github', 'actions', 'ci-status-comment', 'upsert-ci-status.sh')
+LIVE_MARKER_PREFIX = '<!-- ucb-live:'
+_live_comment_asserts = 0
+_live_comment_last_attempt = 0.0
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
@@ -660,6 +671,137 @@ def record_build_link_info(id, response_json):
         dashboard_url = href
         print(f'::notice::Unity Cloud build #{id} ({os.getenv("TARGET")}): {href}')
     _build_link_info_written = True
+    # force: a dashboard link that arrives on a later poll must replace the
+    # unlinked row the first write left behind.
+    maybe_update_live_comment(id, force=bool(href))
+
+
+def _github_api(path):
+    token = os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')
+    base = os.getenv('GITHUB_API_URL', 'https://api.github.com')
+    return requests.get(
+        f'{base}{path}',
+        headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json'},
+        timeout=30)
+
+
+def _build_section_of_status_comment():
+    """Current text between the build fences of the unified CI status comment, or ''.
+
+    Oldest marker-bearing bot comment wins, matching upsert-ci-status.sh's
+    duplicate-collapse rule, so both read the same comment.
+    """
+    repo = os.getenv('GITHUB_REPOSITORY')
+    pr = os.getenv('PR_NUMBER')
+    for page in (1, 2, 3):
+        resp = _github_api(f'/repos/{repo}/issues/{pr}/comments?per_page=100&page={page}')
+        if resp.status_code != 200:
+            return ''
+        comments = resp.json()
+        for comment in comments:
+            body = comment.get('body') or ''
+            if (comment.get('user') or {}).get('login') == 'github-actions[bot]' and '<!-- ci-status -->' in body:
+                start = body.find('<!-- ci:build:start -->')
+                end = body.find('<!-- ci:build:end -->')
+                return body[start:end] if 0 <= start < end else ''
+        if len(comments) < 100:
+            break
+    return ''
+
+
+def _own_job_url():
+    target = (os.getenv('TARGET') or '')[2:]
+    repo = os.getenv('GITHUB_REPOSITORY')
+    run_id = os.getenv('GITHUB_RUN_ID')
+    try:
+        resp = _github_api(f'/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100')
+        if resp.status_code == 200:
+            for job in resp.json().get('jobs') or []:
+                if job.get('name') == f'Build ({target})':
+                    return job.get('html_url')
+    except requests.RequestException:
+        pass
+    return None
+
+
+def upsert_live_comment(build_id, only_if_missing=False):
+    """Write this target's live links into the comment's build section.
+
+    Each matrix job re-reads the section and carries the other target's live
+    row along, so concurrent first writes converge on both rows instead of
+    clobbering each other; write races on the comment itself are the upsert
+    script's problem. Returns whether a write was attempted.
+    """
+    target = (os.getenv('TARGET') or '')[2:]
+    label = {'windows64': 'Windows', 'macos': 'Mac'}.get(target, target)
+    marker = f'{LIVE_MARKER_PREFIX}{target} -->'
+    section = _build_section_of_status_comment()
+    if only_if_missing and marker in section:
+        return False
+
+    parts = []
+    job_url = _own_job_url()
+    if job_url:
+        parts.append(f'[GitHub job]({job_url})')
+    parts.append(f'[Unity Cloud #{build_id}]({dashboard_url})' if dashboard_url else f'Unity Cloud #{build_id}')
+    own_row = f'| {label} | {" · ".join(parts)} {marker} |'
+
+    rows = [line for line in section.splitlines() if LIVE_MARKER_PREFIX in line and marker not in line]
+    rows.append(own_row)
+    rows.sort(key=lambda row: 0 if '| Windows |' in row else 1)
+
+    server = os.getenv('GITHUB_SERVER_URL', 'https://github.com')
+    run_url = f"{server}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
+    body = '\n'.join([
+        f'[![Build](https://img.shields.io/badge/Build-In%20progress-1f6feb?logo=unity&logoColor=white&style=for-the-badge)]({run_url})  '
+        f'<img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">',
+        '',
+        'Building in Unity Cloud — live links, one row per platform as each build is created:',
+        '',
+        '| Name | Link |',
+        '| -------- | ----------------------- |',
+        *rows,
+    ])
+
+    body_file = None
+    try:
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write(body)
+            body_file = f.name
+        env = dict(os.environ,
+                   REPO=os.getenv('GITHUB_REPOSITORY') or '',
+                   SECTION='build',
+                   SECTION_BODY='',
+                   SECTION_BODY_FILE=body_file)
+        subprocess.run(['bash', CI_STATUS_SCRIPT], env=env, timeout=180, check=False)
+    finally:
+        if body_file:
+            os.unlink(body_file)
+    return True
+
+
+def maybe_update_live_comment(build_id, reconcile=False, force=False):
+    """Gate and rate-limit the live comment write; never let it fail the build."""
+    global _live_comment_asserts, _live_comment_last_attempt
+    if not os.getenv('PR_NUMBER') or not (os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')):
+        return
+    if not os.path.exists(CI_STATUS_SCRIPT):
+        return
+    if reconcile:
+        # Re-assert a few times only: the Pending reset (or the other target's
+        # first write racing ours) can land after us and drop this row.
+        if _live_comment_asserts == 0 or _live_comment_asserts >= 3:
+            return
+        if time.time() - _live_comment_last_attempt < 240:
+            return
+    elif _live_comment_asserts > 0 and not force:
+        return
+    try:
+        _live_comment_last_attempt = time.time()
+        if upsert_live_comment(build_id, only_if_missing=reconcile):
+            _live_comment_asserts += 1
+    except Exception as e:
+        print(f'note: live status-comment update failed: {e}')
 
 
 def write_step_summary(target, build_id, final_status, phase_durations, queue_reasons, queue_elapsed, build_elapsed):
@@ -761,6 +903,8 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
 
         if dashboard_url is None:
             record_build_link_info(id, response_json)
+        else:
+            maybe_update_live_comment(id, reconcile=True)
 
         queued_reason = response_json.get('queuedReason')
         if queued_reason and status in QUEUE_STATUSES:

@@ -63,7 +63,7 @@ jobs:
           body: |-
             [![Build](https://img.shields.io/badge/Build-Pending!-ffff00?logo=github&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
 
-            New build in progress, come back later!
+            New build in progress — per-platform Unity Cloud links land here as soon as each build is created.
 
   check-build-ran:
     needs: pre-validation
@@ -187,6 +187,7 @@ jobs:
 
           SHORT_SHA=$(echo "$HEAD_SHA" | cut -c1-7)
           echo "Short SHA: $SHORT_SHA"
+          echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
 
           SAFE_BRANCH_NAME=$(jq -r '.pull_requests[0].head.ref // .head_branch' <<< "$WORKFLOW_RUN_EVENT_OBJ")
           echo "Safe Branch Name: $SAFE_BRANCH_NAME"
@@ -257,6 +258,33 @@ jobs:
           run-id: ${{ env.PREVIOUS_JOB_ID }}
           github-token: ${{ github.token }}
 
+      # One row per platform: GitHub job · Unity Cloud build · Unity log · zip
+      # downloads. Composed here rather than inline in the body so a link whose
+      # id could not be resolved is dropped instead of rendering broken.
+      - name: Compose platform rows
+        env:
+          WINDOWS_CELL: ${{ steps.ucb.outputs.windows-cell }}
+          MAC_CELL: ${{ steps.ucb.outputs.mac-cell }}
+          S3_BASE: ${{ format('{0}/{1}', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}
+        run: |
+          set -euo pipefail
+          compose_row() {
+            local label="$1" cell="$2" art_id="$3" file="$4"
+            local parts=()
+            [ -n "$cell" ] && parts+=("$cell")
+            [ -n "$art_id" ] && parts+=("[Download .zip](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/suites/${SUITE_ID}/artifacts/${art_id})")
+            parts+=("[.zip via S3](${S3_BASE}/${file})")
+            local joined
+            joined=$(printf '%s · ' "${parts[@]}")
+            printf '| %s | %s |\n' "$label" "${joined% · }"
+          }
+          {
+            echo "PLATFORM_ROWS<<PLATFORM_ROWS_EOF"
+            compose_row "Windows" "$WINDOWS_CELL" "${WINDOWS_ARTIFACT_ID:-}" "Decentraland_windows64.zip"
+            compose_row "Mac" "$MAC_CELL" "${MAC_ARTIFACT_ID:-}" "Decentraland_macos.zip"
+            echo "PLATFORM_ROWS_EOF"
+          } >> "$GITHUB_ENV"
+
       - name: Update build section
         uses: ./.github/actions/ci-status-comment
         with:
@@ -266,18 +294,12 @@ jobs:
           body: |-
             [![Build](https://img.shields.io/badge/Build-Success!-3fb950?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }})  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
 
-            Windows and Mac build successful in Unity Cloud! You can find a link to the downloadable artifact below.
+            Windows and Mac built successfully in Unity Cloud.
 
-            | Name                | Link                    |
-            | --------            | ----------------------- |
-            | Commit              | ${{ env.HEAD_SHA }}     |
-            | Logs                | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }} |
-            | Download Windows    | ${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }} |
-            | Download Windows S3 | ${{ format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }} |
-            | Download Mac        | ${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }} |
-            | Download Mac S3     | ${{ format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }} |
-            | Built on            | ${{ env.BUILD_DATE }} |
-            ${{ steps.ucb.outputs.rows }}
+            | Name | Link |
+            | -------- | ----------------------- |
+            | Build | [`${{ env.SHORT_SHA }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.HEAD_SHA }}) · [Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}) · built ${{ env.BUILD_DATE }} |
+            ${{ env.PLATFORM_ROWS }}
 
             ${{ env.SIZE_REPORT }}
 

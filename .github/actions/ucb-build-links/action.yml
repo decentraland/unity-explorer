@@ -16,14 +16,22 @@ inputs:
 outputs:
   rows:
     description: >-
-      "| Name | Link |"-shaped rows for an existing two-column table, pairing
-      each target's Unity Cloud build page with its GitHub job log; empty when
-      no valid build info was found.
+      "| Name | Link |"-shaped rows for an existing two-column table, one per
+      target, each pairing the GitHub job log, the Unity Cloud build page and
+      the Unity log artifact; empty when no valid build info was found.
     value: ${{ steps.fetch.outputs.rows }}
   section:
     description: >-
       Standalone table (header + rows); empty when no valid build info was found.
     value: ${{ steps.fetch.outputs.section }}
+  windows-cell:
+    description: >-
+      The Windows row's link cell alone ("[GitHub job](…) · [Unity Cloud #N](…) ·
+      [Unity log](…)"), for callers composing their own rows; empty when unknown.
+    value: ${{ steps.fetch.outputs.windows-cell }}
+  mac-cell:
+    description: Mac twin of windows-cell.
+    value: ${{ steps.fetch.outputs.mac-cell }}
 
 runs:
   using: composite
@@ -70,27 +78,47 @@ runs:
         # page with the GitHub-side job log.
         JOBS_JSON=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID/jobs?per_page=100" 2>/dev/null || echo '{"jobs":[]}')
 
+        # Suite id + artifact ids feed the per-target Unity log download links
+        # (artifact downloads hang off the check suite, not the run).
+        SUITE_ID=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID" --jq '.check_suite_id' 2>/dev/null || echo "")
+        [[ "$SUITE_ID" =~ ^[0-9]+$ ]] || SUITE_ID=""
+        ARTIFACTS_JSON=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID/artifacts?per_page=100" 2>/dev/null || echo '{"artifacts":[]}')
+
+        WINDOWS_CELL=""
+        MAC_CELL=""
         ROWS=""
         for entry in "windows64:Windows" "macos:Mac"; do
           target="${entry%%:*}"
           label="${entry#*:}"
           parse_info "$target"
           job_url=$(jq -r --arg n "Build ($target)" '.jobs[]? | select(.name==$n) | .html_url // empty' <<< "$JOBS_JSON" | head -1)
+          log_id=$(jq -r --arg n "${target}_launcher_unity_log" \
+            '.artifacts[]? | select(.name==$n and .expired==false) | .id' <<< "$ARTIFACTS_JSON" | head -1)
+          [[ "$log_id" =~ ^[0-9]+$ ]] || log_id=""
 
-          cell=""
+          parts=()
+          [ -n "$job_url" ] && parts+=("[GitHub job](${job_url})")
           # A URL without a valid id only occurs on a tampered artifact — drop the link
           # rather than render an empty "[#](...)" label.
           if [ -n "$REPLY_ID" ] && [ -n "$REPLY_URL" ]; then
-            cell="[Unity Cloud #${REPLY_ID}](${REPLY_URL})"
+            parts+=("[Unity Cloud #${REPLY_ID}](${REPLY_URL})")
           elif [ -n "$REPLY_ID" ]; then
-            cell="Unity Cloud #${REPLY_ID}"
+            parts+=("Unity Cloud #${REPLY_ID}")
           fi
-          if [ -n "$cell" ] && [ -n "$job_url" ]; then
-            cell="${cell} · [GitHub job](${job_url})"
+          if [ -n "$log_id" ] && [ -n "$SUITE_ID" ]; then
+            parts+=("[Unity log](${GITHUB_SERVER_URL:-https://github.com}/${REPO_FULL}/suites/${SUITE_ID}/artifacts/${log_id})")
           fi
-          if [ -n "$cell" ]; then
-            ROWS+="| ${label} build | ${cell} |"$'\n'
+
+          cell=""
+          if [ "${#parts[@]}" -gt 0 ]; then
+            cell=$(printf '%s · ' "${parts[@]}")
+            cell="${cell% · }"
+            ROWS+="| ${label} | ${cell} |"$'\n'
           fi
+          case "$target" in
+            windows64) WINDOWS_CELL="$cell" ;;
+            macos)     MAC_CELL="$cell" ;;
+          esac
         done
 
         SECTION=""
@@ -107,5 +135,11 @@ runs:
           echo "${DELIM}"
           echo "section<<${DELIM}"
           printf '%s' "$SECTION"
+          echo "${DELIM}"
+          echo "windows-cell<<${DELIM}"
+          printf '%s' "$WINDOWS_CELL"
+          echo "${DELIM}"
+          echo "mac-cell<<${DELIM}"
+          printf '%s' "$MAC_CELL"
           echo "${DELIM}"
         } >> "$GITHUB_OUTPUT"

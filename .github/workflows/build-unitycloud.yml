@@ -597,6 +597,10 @@ jobs:
           QUEUE_TIMEOUT: 14400
           BUILD_TIMEOUT: 10800
           TARGET: t_${{ matrix.target }}
+          # For the live PR status-comment update the moment the Unity-side
+          # build id is known; empty PR number (push/dispatch) disables it.
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
