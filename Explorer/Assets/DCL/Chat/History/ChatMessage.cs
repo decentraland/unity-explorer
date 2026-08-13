@@ -59,8 +59,7 @@ namespace DCL.Chat.History
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,
                 chatMessage.SentTimestampRaw,
-                chatMessage.IsMention,
-                false);
+                chatMessage.IsMention);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
