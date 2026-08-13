@@ -110,25 +110,35 @@ namespace Utility.Multithreading
                 {
                     lock (monitor)
                     {
-                        // The waiter never acquired the sync: withdraw its entry so an abandoned
-                        // owner can never stall or desynchronize subsequent acquisitions
-                        RemoveFromQueue(owner);
-
-                        // On disposal the wait is cancelled: leave without taking ownership so the
-                        // static ownership table is not repopulated after Dispose removed the syncId
+                        // On disposal the wait is cancelled: withdraw the entry and leave without taking
+                        // ownership so the static ownership table is not repopulated after Dispose removed the syncId
                         if (wasCancelled)
+                        {
+                            RemoveFromQueue(owner);
                             return;
+                        }
 
-                        DateTime time = DateTime.Now;
-                        int requestingThreadId = NativeThread.CurrentId;
-                        int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+                        // Release may have signalled this waiter between the wait expiring and re-entering
+                        // the monitor: the acquisition succeeded, just late
+                        bool ownershipHandedOver = queue.TryPeek(out Owner? head) && ReferenceEquals(head, owner) && owner.IsSignalled;
 
-                        string currentOwnerDescription = currentAcquisitionInfo.HasValue
-                            ? $"\"{currentAcquisitionInfo.Value.Owner.Name}\" takes too long: {(time - currentAcquisitionInfo.Value.AcquiredAt).TotalSeconds}"
-                            : "unowned";
+                        if (!ownershipHandedOver)
+                        {
+                            // The waiter never acquired the sync: withdraw its entry so an abandoned
+                            // owner can never stall or desynchronize subsequent acquisitions
+                            RemoveFromQueue(owner);
 
-                        syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: {currentOwnerDescription}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                            DateTime time = DateTime.Now;
+                            int requestingThreadId = NativeThread.CurrentId;
+                            int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+
+                            string currentOwnerDescription = currentAcquisitionInfo.HasValue
+                                ? $"\"{currentAcquisitionInfo.Value.Owner.Name}\" takes too long: {(time - currentAcquisitionInfo.Value.AcquiredAt).TotalSeconds}"
+                                : "unowned";
+
+                            syncLogsBuffer.Print();
+                            throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: {currentOwnerDescription}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                        }
                     }
                 }
             }
@@ -151,28 +161,15 @@ namespace Utility.Multithreading
 
         /// <summary>
         ///     Removes the first queued occurrence of <paramref name="owner" /> without disturbing the order of the
-        ///     other waiters. If a concurrent <see cref="Release" /> already handed the baton to this owner
-        ///     (it is the signalled head), the baton is passed on to the next waiter so the chain never stalls.
-        ///     Must be called under <see cref="monitor" />.
+        ///     other waiters, and resets the owner's event so a pending signal cannot leak into its next acquisition.
+        ///     If the removed entry had already been handed the baton (it was the signalled head), the baton is
+        ///     passed on to the next waiter so the chain never stalls. Must be called under <see cref="monitor" />.
         /// </summary>
         private void RemoveFromQueue(Owner owner)
         {
-            if (queue.Count == 0)
-                return;
-
-            if (ReferenceEquals(queue.Peek(), owner) && owner.IsSignalled)
-            {
-                queue.Dequeue();
-                owner.Reset();
-
-                if (queue.TryPeek(out Owner? next))
-                    next.Set();
-
-                return;
-            }
-
             int count = queue.Count;
             var removed = false;
+            var removedSignalledHead = false;
 
             for (var i = 0; i < count; i++)
             {
@@ -181,11 +178,22 @@ namespace Utility.Multithreading
                 if (!removed && ReferenceEquals(candidate, owner))
                 {
                     removed = true;
+                    removedSignalledHead = i == 0 && owner.IsSignalled;
                     continue;
                 }
 
                 queue.Enqueue(candidate);
             }
+
+            // A disposed sync has already cleared the queue and disposed the owners' events:
+            // when nothing was removed the owner's event must not be touched
+            if (!removed)
+                return;
+
+            owner.Reset();
+
+            if (removedSignalledHead && queue.TryPeek(out Owner? next))
+                next.Set();
         }
 
         private void Release(Owner owner)
@@ -204,15 +212,17 @@ namespace Utility.Multithreading
                 try
                 {
                     // If the queue is empty, then our logic is wrong
-                    if (queue.TryDequeue(out Owner? finishedWaiter))
+                    if (queue.TryPeek(out Owner? finishedWaiter))
                     {
-                        // The one releasing should be the one at the top of the queue
+                        // The one releasing should be the one at the top of the queue.
+                        // Validate before dequeuing so a mismatch doesn't consume another owner's entry
                         if (owner != finishedWaiter)
                         {
                             syncLogsBuffer.Print();
                             throw new OwnerMismatchException(owner, finishedWaiter);
                         }
 
+                        queue.Dequeue();
                         finishedWaiter.Reset();
 
                         if (queue.TryPeek(out Owner? next))
