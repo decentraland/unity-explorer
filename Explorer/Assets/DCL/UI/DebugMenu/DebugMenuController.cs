@@ -18,6 +18,7 @@ namespace DCL.UI.DebugMenu
         private const string USS_SIDEBAR_BUTTON_SELECTED = "sidebar__button--selected";
         private const string USS_SIDEBAR_BUTTON_ATTENTION = "sidebar__button--attention";
         private const int METRICS_REFRESH_COOLDOWN_FRAMES = 30;
+        private const float AB_PANEL_AUTO_CLOSE_LINGER_SECONDS = 3f;
 
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
@@ -44,6 +45,8 @@ namespace DCL.UI.DebugMenu
         private SceneContentCaps metricsCaps;
         private int seenFailedConversions;
         private bool seenWarmUpFailure;
+        private bool abPanelAutoOpened;
+        private float abPanelAutoCloseAt = -1f;
         private int framesSinceMetricsRefresh = METRICS_REFRESH_COOLDOWN_FRAMES;
         private long lastMetricsCollectionCount = -1;
 
@@ -155,13 +158,48 @@ namespace DCL.UI.DebugMenu
 
             // Long-running abgen work (binary download, cold conversion) asks to be brought on screen.
             if (AbgenConversionMetrics.INSTANCE.TryConsumePanelOpenRequest() && !abConversionPanelView.Visible)
+            {
                 TogglePanel(abConversionPanelView);
+                abPanelAutoOpened = true;
+                abPanelAutoCloseAt = -1f;
+            }
 
             // Cheap when nothing changed: a version check against the conversion metrics.
             abConversionPanelView?.Refresh();
 
             UpdateAbConversionAttention();
             UpdateMetricsPanel();
+        }
+
+        /// <summary>
+        ///     A panel this controller opened on its own also closes on its own: once the warm-up ends
+        ///     Ready with zero failed conversions, it lingers briefly (so the READY row is seen) and
+        ///     closes. A failure — warm-up or any per-file one — keeps it open, and a manual toggle
+        ///     hands the panel back to the user (see <see cref="OnAbConversionButtonClicked" />).
+        /// </summary>
+        private void UpdateAbPanelAutoClose(AbgenConversionMetrics.WarmUpStage warmUpStage, int failedConversions)
+        {
+            if (!abPanelAutoOpened) return;
+
+            if (!abConversionPanelView.Visible)
+            {
+                abPanelAutoOpened = false;
+                return;
+            }
+
+            if (warmUpStage != AbgenConversionMetrics.WarmUpStage.Ready || failedConversions > 0)
+            {
+                abPanelAutoCloseAt = -1f;
+                return;
+            }
+
+            if (abPanelAutoCloseAt < 0f)
+                abPanelAutoCloseAt = UnityEngine.Time.unscaledTime + AB_PANEL_AUTO_CLOSE_LINGER_SECONDS;
+            else if (UnityEngine.Time.unscaledTime >= abPanelAutoCloseAt)
+            {
+                TogglePanel(abConversionPanelView);
+                abPanelAutoOpened = false;
+            }
         }
 
         /// <summary>
@@ -193,6 +231,8 @@ namespace DCL.UI.DebugMenu
                 : unseenFailure;
 
             abConversionButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, attention);
+
+            UpdateAbPanelAutoClose(warmUpStage, failedConversions);
         }
 
         private void UpdateMetricsPanel()
@@ -262,8 +302,13 @@ namespace DCL.UI.DebugMenu
         private void OnConsoleButtonClicked() =>
             TogglePanel(consolePanelView);
 
-        private void OnAbConversionButtonClicked() =>
+        private void OnAbConversionButtonClicked()
+        {
+            // A manual toggle hands the panel back to the user: no pending auto-close survives it.
+            abPanelAutoOpened = false;
+            abPanelAutoCloseAt = -1f;
             TogglePanel(abConversionPanelView);
+        }
 
         private void OnMetricsButtonClicked() =>
             TogglePanel(metricsPanelView);

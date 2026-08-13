@@ -43,7 +43,8 @@ The binary is never embedded in the build. On first run `AbgenSidecarPlugin` dow
 **pinned release** into `persistentDataPath/abgen/bin/{version}/`, verified against its
 compile-time sha256, then starts the sidecar in the same session; download progress lands in the
 AB panel as milestone rows (25% steps) and the panel opens itself once the debug menu is on
-screen. Only the pinned version is ever executed — upgrading abgen requires a deliberate
+screen — then closes itself a few seconds after a clean READY (failures keep it open, and a
+manual toggle cancels the automation). Only the pinned version is ever executed — upgrading abgen requires a deliberate
 pin+checksum bump in `AbgenSidecar`, so a compromised GitHub release cannot propagate to users on
 its own. `StreamingAssets/abgen(.exe)` acts as an explicit developer override when no pinned
 install exists.
