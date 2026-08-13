@@ -49,6 +49,12 @@ byte-compares its own rebuild against the committed DLL, so a stale or
 out-of-band DLL cannot merge. The DLL is LFS-tracked; commit it with the
 source change (CI tells you when you forget).
 
+**The CI (Linux) build is canonical.** A Windows build of identical sources
+can come out byte-different (observed in practice), so if the drift gate
+fails on a DLL you built locally, download the `DCL.Analyzers.dll-canonical`
+artifact from the failed run, copy it to `Explorer/Assets/DCL/DCL.Analyzers.dll`,
+and commit that. Linux/nix builds match CI directly.
+
 ## Adding a rule
 
 New `DiagnosticAnalyzer` (next `DCLA00N`) + tests stubbing external types by

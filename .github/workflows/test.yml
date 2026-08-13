@@ -230,17 +230,32 @@ jobs:
         run: dotnet test DCL.Analyzers.Tests -v q --nologo
 
       # The committed DLL is what Unity actually enforces; it must be provably
-      # built from the reviewed source. Deterministic build + pinned SDK + CI
-      # path normalization make the comparison byte-exact across machines.
-      - name: Fail on DLL drift
+      # built from the reviewed source. THIS job's Linux build is the canonical
+      # one: Windows builds of the same sources can differ byte-wise (observed),
+      # so on drift the fix is to commit the DLL this job uploads below.
+      - name: Rebuild DLL deterministically
         run: |
           set -euo pipefail
           (cd Analyzers && dotnet build DCL.Analyzers -c Release -v q --nologo \
             -p:ContinuousIntegrationBuild=true -p:DebugType=none)
+
+      # Uploaded before the comparison so the canonical DLL is available from
+      # this run precisely when the drift gate below fails.
+      - name: Upload canonical DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: DCL.Analyzers.dll-canonical
+          path: Analyzers/DCL.Analyzers/bin/Release/netstandard2.0/DCL.Analyzers.dll
+          retention-days: 7
+
+      - name: Fail on DLL drift
+        run: |
+          set -euo pipefail
           built=Analyzers/DCL.Analyzers/bin/Release/netstandard2.0/DCL.Analyzers.dll
           committed=Explorer/Assets/DCL/DCL.Analyzers.dll
           if ! cmp -s "$built" "$committed"; then
-            echo "Committed DCL.Analyzers.dll does not match a build of Analyzers/ - run scripts/build-analyzers.sh and commit the DLL."
+            echo "Committed DCL.Analyzers.dll does not match this job's canonical build of Analyzers/."
+            echo "Download the 'DCL.Analyzers.dll-canonical' artifact from this run, copy it to $committed, and commit it."
             sha256sum "$built" "$committed"
             exit 1
           fi
