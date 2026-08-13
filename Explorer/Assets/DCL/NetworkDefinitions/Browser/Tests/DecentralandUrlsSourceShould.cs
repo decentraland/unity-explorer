@@ -7,7 +7,6 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Browser.DecentralandUrls.Tests
 {
     public class DecentralandUrlsSourceShould
