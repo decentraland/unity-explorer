@@ -29,7 +29,7 @@ app arg, instead of only `decentraland.{org,zone,today}`.
   `gateway.decentraland.{ENV}/…`, then `ResolveDomain` substitutes the whole
   `decentraland.{ENV}` token (gateway host included) — so a `--base-domain`
   deployment routes supported hosts through `gateway.{base-domain}/…`, letting
-  the catalyrst gateway proxy them (comms-gatekeeper included). New tests pin the
+  the catalyst gateway proxy them (comms-gatekeeper included). New tests pin the
   gatekeeper family (`GateKeeperSceneAdapter`, `ChatAdapter`, `GatekeeperStatus`,
   `BannedUsers`) routing through the gateway on both default and custom domains.
 - **comms-gatekeeper** stays independently overridable via the existing
