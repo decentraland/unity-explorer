@@ -597,7 +597,7 @@ namespace DCL.Interaction.Raycast.Tests
             {
                 ColliderLayer mask = sdkLayerMask[i];
                 var entity = new CRDTEntity(i);
-                CreateSingleCollider(mask, i, entity, true);
+                CreateSingleCollider(mask, i, entity);
             }
         }
 
