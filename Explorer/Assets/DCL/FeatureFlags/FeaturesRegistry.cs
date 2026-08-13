@@ -1,6 +1,7 @@
 using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using Global.AppArgs;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -69,10 +70,12 @@ namespace DCL.FeatureFlags
                 [FeatureId.AvatarContextMenu] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
                 [FeatureId.DoubleClickWalk] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK)),
                 [FeatureId.Pulse] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false) && !localSceneDevelopment,
-                [FeatureId.ABDepsDigestCacheKey] = featureFlags.IsEnabled(FeatureFlagsStrings.AB_DEPS_DIGEST_CACHE_KEY),
                 [FeatureId.ByteWeightedLoadingProgress] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HardwareFingerprint] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 [FeatureId.McpServer] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
+                [FeatureId.UseCustomMediaPlayerWindows] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_WINDOWS), requireDebug: false),
+                [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
+                [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -203,6 +206,7 @@ namespace DCL.FeatureFlags
         AvatarContextMenu = 60,
         DoubleClickWalk = 61,
         NearbyVoiceChat = 62,
+        [Obsolete("The v49 deps-digest scheme is always on (gated by the manifest version itself); the flag is no longer read. Kept to preserve enum ordering.")]
         ABDepsDigestCacheKey = 63,
         ByteWeightedLoadingProgress = 64,
         Pulse = 65,
@@ -211,5 +215,8 @@ namespace DCL.FeatureFlags
         CreditsWearablePurchase = 68,
         CreditsTopup = 69,
         McpServer = 70,
+        UseCustomMediaPlayerWindows = 71,
+        UseCustomMediaPlayerMacSilicon = 72,
+        UseCustomMediaPlayerMacIntel = 73,
     }
 }

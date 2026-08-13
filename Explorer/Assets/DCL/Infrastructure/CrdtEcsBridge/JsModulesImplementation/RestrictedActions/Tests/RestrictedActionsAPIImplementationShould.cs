@@ -7,6 +7,8 @@ using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.ECSComponents;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.TeleportPrompt;
 using DCL.UI;
 using Decentraland.Kernel.Apis;
@@ -33,11 +35,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private ISystemClipboard systemClipboard;
         private IExplorerUiActions explorerUiActions;
         private World sceneWorld;
+        private int clipboardNotificationsReceived;
 
         [SetUp]
         public void SetUp()
         {
             EcsTestsUtils.SetUpFeaturesRegistry();
+
+            NotificationsBusController.Initialize(new NotificationsBusController());
+            clipboardNotificationsReceived = 0;
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE, _ => clipboardNotificationsReceived++);
 
             mvcManager = Substitute.For<IMVCManager>();
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
@@ -78,6 +85,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             World.Destroy(sceneWorld);
             EcsTestsUtils.TearDownFeaturesRegistry();
+            NotificationsBusController.Reset();
         }
 
         [Test]
@@ -270,6 +278,42 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             systemClipboard.Received(1).Set(TEST_TEXT);
+        }
+
+        [Test]
+        public void CopyToClipboard_NotifiesTheUser()
+        {
+            // Act
+            restrictedActionsAPIImplementation.TryCopyToClipboard("Ia Ia! Cthulhu Ftaghn!");
+
+            // Assert
+            Assert.AreEqual(1, clipboardNotificationsReceived);
+        }
+
+        [Test]
+        public void CopyToClipboard_NotifiesOnEveryWrite()
+        {
+            // Act: a scene calling from onUpdate writes on every tick
+            for (var i = 0; i < 10; i++)
+                restrictedActionsAPIImplementation.TryCopyToClipboard($"0xATTACKER{i}");
+
+            // Assert: the API reports every write; collapsing repeats into a single toast is the
+            // notification controller's job, so that it can uncollapse as soon as the toast is gone.
+            systemClipboard.Received(10).Set(Arg.Any<string>());
+            Assert.AreEqual(10, clipboardNotificationsReceived);
+        }
+
+        [Test]
+        public void CopyToClipboard_DoesNotNotify_WhenSceneIsNotCurrent()
+        {
+            // Arrange
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            // Act
+            restrictedActionsAPIImplementation.TryCopyToClipboard("This should not be copied");
+
+            // Assert
+            Assert.AreEqual(0, clipboardNotificationsReceived);
         }
 
         [Test]

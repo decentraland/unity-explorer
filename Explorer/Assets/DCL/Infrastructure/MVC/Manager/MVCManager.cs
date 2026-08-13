@@ -103,7 +103,18 @@ namespace MVC
             IController controller = controllers[typeof(IController<TView, TInputData>)];
 
             if (controller.State != ControllerState.ViewHidden)
+            {
+                if (windowsStackManager.CurrentFullscreenController == controller
+                    && controller.State == ControllerState.ViewFocused
+                    && controller is IReshowController<TInputData> reshowable)
+                {
+                    CloseAllPopups(windowsStackManager.GetNonPersistentControllersInfo().PopupControllers);
+                    popupCloser.HideAsync(CancellationToken.None).Forget();
+                    reshowable.OnReshowWhileVisible(command.InputData);
+                }
+
                 return;
+            }
 
             ct = ct.Equals(CancellationToken.None)
                 ? destructionToken

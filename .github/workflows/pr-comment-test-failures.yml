@@ -5,6 +5,9 @@ name: Comment Test Failures on PR
 # Runs in the trusted base-repo context after the (possibly fork) "Unity Test"
 # run completes, so it can comment with write permissions without exposing them
 # to the untrusted test job. Mirrors pr-comment-warnings.yml.
+#
+# Writes only the "tests" section of the unified CI status comment via the
+# ci-status-comment composite action (build / lint / tests live in one comment).
 on:
   workflow_run:
     types:
@@ -16,6 +19,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  actions: read
 
 jobs:
   comment:
@@ -60,60 +64,102 @@ jobs:
       - name: Compose comment body
         if: steps.pr.outputs.pr-number != '' && (steps.download-editmode.outcome == 'success' || steps.download-playmode.outcome == 'success')
         id: body
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_RUN_URL: ${{ github.event.workflow_run.html_url }}
         run: |
+          set -euo pipefail
+
+          # Job list of the originating "Unity Test" run, used to deep-link a
+          # crashed/timed-out suite straight to its job page in the warning line.
+          JOBS_JSON=$(gh api "/repos/$REPO/actions/runs/$WORKFLOW_RUN_ID/jobs" 2>/dev/null || echo '{"jobs":[]}')
+
+          declare -A DISPLAY=( [editmode]=EditMode [playmode]=PlayMode )
+
+          status=passed          # passed | failed | incomplete
+          rows=""
+          warnings=""
+          failed_list=""
+          total_failed=0
+
+          for mode in editmode playmode; do
+            file="failed-tests/$mode/failed-tests-$mode.json"
+            [ -f "$file" ] || continue
+            disp=${DISPLAY[$mode]}
+
+            # A suite that produced no result XML crashed or timed out before finishing.
+            # Surface it as its own state instead of silently contributing 0 to a green total.
+            if [ "$(jq -r '.hasResults' "$file")" != "true" ]; then
+              status=incomplete
+              job_url=$(jq -r --arg n "Test ($mode)" '.jobs[]? | select(.name==$n) | .html_url' <<< "$JOBS_JSON" | head -1)
+              [ -n "$job_url" ] || job_url="$WORKFLOW_RUN_URL"
+              rows="$rows| $disp | ⚠️ No results | — | — | — |"$'\n'
+              warnings="$warnings⚠️ **$disp** produced no results — the run likely crashed or timed out before finishing. Check the [\`Unity Test / Test ($mode)\`]($job_url) job."$'\n\n'
+              continue
+            fi
+
+            # The artifact comes from the untrusted pull_request job - never let a
+            # non-numeric value reach the arithmetic context.
+            p=$(jq -r '.passed' "$file"); [[ "$p" =~ ^[0-9]+$ ]] || p=0
+            t=$(jq -r '.total'  "$file"); [[ "$t" =~ ^[0-9]+$ ]] || t=0
+            f=$(jq -r '.failed | length' "$file")
+            s=$((t - p - f)); if [ "$s" -lt 0 ]; then s=0; fi
+
+            if [ "$f" -gt 0 ]; then
+              if [ "$status" = "passed" ]; then status=failed; fi
+              total_failed=$((total_failed + f))
+              rows="$rows| $disp | ❌ $f failed | $p | $f | $s |"$'\n'
+              names=$(jq -r --arg mode "$mode" '.failed[] | "- [\($mode)] \(. | gsub("[\r\n]"; " "))"' "$file")
+              failed_list="$failed_list$names"$'\n'
+            else
+              rows="$rows| $disp | ✅ Passed | $p | 0 | $s |"$'\n'
+            fi
+          done
+
+          case "$status" in
+            incomplete) badge="https://img.shields.io/badge/Tests-Incomplete-d29922?logo=codecov&logoColor=white&style=for-the-badge"; headline="$warnings" ;;
+            failed)     badge="https://img.shields.io/badge/Tests-Failed!-ff0000?logo=codecov&logoColor=white&style=for-the-badge";     headline="Some Unity tests failed ❌" ;;
+            *)          badge="https://img.shields.io/badge/Tests-Passed!-3fb950?logo=codecov&logoColor=white&style=for-the-badge";     headline="All Unity tests passed ✅" ;;
+          esac
+
           DELIM="EOF_$(uuidgen)"
           {
             echo "body<<$DELIM"
-            echo "<!-- test-failures -->"
-
-            passed=0
-            failed=0
-            any_results=false
-            for mode in editmode playmode; do
-              file="failed-tests/$mode/failed-tests-$mode.json"
-              [ -f "$file" ] || continue
-              [ "$(jq -r '.hasResults' "$file")" = "true" ] && any_results=true
-              # The artifact comes from the untrusted pull_request job - never let a
-              # non-numeric value reach the arithmetic context.
-              p=$(jq -r '.passed' "$file"); [[ "$p" =~ ^[0-9]+$ ]] || p=0
-              passed=$((passed + p))
-              failed=$((failed + $(jq -r '.failed | length' "$file")))
-            done
-
-            if [ "$any_results" = "false" ]; then
-              echo "**Test results not found** — the test run likely crashed or timed out before producing results; check the \`Unity Tests\` checks."
-            elif [ "$failed" -eq 0 ]; then
-              echo "**Tests: $passed passed, 0 failed** ✅"
-            else
-              echo "**Tests: $passed passed, $failed failed**"
+            echo "![Tests]($badge)"
+            echo ""
+            printf '%s\n' "$headline"
+            echo ""
+            echo "| TESTS SUITE | Result | Passed | Failed | Skipped |"
+            echo "| ----------- | ------ | -----: | -----: | ------: |"
+            printf '%s' "$rows"
+            if [ "$total_failed" -gt 0 ]; then
               echo ""
-              echo "<details><summary>Failed tests ($failed)</summary>"
+              echo "<details><summary>Failed tests ($total_failed)</summary>"
               echo ""
-              for mode in editmode playmode; do
-                file="failed-tests/$mode/failed-tests-$mode.json"
-                [ -f "$file" ] || continue
-                jq -r --arg mode "$mode" '.failed[] | "- [\($mode)] \(. | gsub("[\r\n]"; " "))"' "$file"
-              done
+              printf '%s' "$failed_list"
               echo ""
               echo "</details>"
             fi
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Find existing comment
+      - name: Checkout CI status action
         if: steps.body.outcome == 'success'
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- test-failures -->'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+          # Own path so checkout's workspace-clean can't wipe the already-downloaded failed-tests/.
+          path: ci-status-action
 
-      - name: Upsert comment
+      - name: Update tests section
         if: steps.body.outcome == 'success'
-        uses: peter-evans/create-or-update-comment@v3
+        uses: ./ci-status-action/.github/actions/ci-status-comment
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ steps.pr.outputs.pr-number }}
+          section: tests
+          github-token: ${{ github.token }}
           body: ${{ steps.body.outputs.body }}

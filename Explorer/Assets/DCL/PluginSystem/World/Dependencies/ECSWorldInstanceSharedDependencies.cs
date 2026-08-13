@@ -3,6 +3,7 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.UpdateGate;
 using DCL.Interaction.Utility;
+using DCL.Profiling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.Unity.ExplorerUiEvents;
@@ -26,6 +27,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly MultiThreadSync MultiThreadSync;
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
+        public readonly SceneRuntimeMetrics RuntimeMetrics;
 
         /// <summary>
         ///     Explore panel life cycle events this scene's own openExplorerUi calls produced, filled by the
@@ -43,6 +45,7 @@ namespace DCL.PluginSystem.World.Dependencies
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
             MultiThreadSync multiThreadSync,
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate,
+            SceneRuntimeMetrics runtimeMetrics,
             Queue<ExplorerUiEvent> explorerUiEvents)
         {
             SceneData = sceneData;
@@ -56,6 +59,7 @@ namespace DCL.PluginSystem.World.Dependencies
             EcsGroupThrottler = ecsGroupThrottler;
             EcsSystemsGate = ecsSystemsGate;
             EntityEventsBuilder = entityEventsBuilder;
+            RuntimeMetrics = runtimeMetrics;
             ExplorerUiEvents = explorerUiEvents;
         }
     }

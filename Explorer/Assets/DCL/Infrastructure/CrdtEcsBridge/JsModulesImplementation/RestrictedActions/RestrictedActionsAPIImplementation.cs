@@ -10,6 +10,8 @@ using DCL.UI;
 using Utility.Arch;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.SceneRuntime.Apis.RestrictedActionsApi;
 using DCL.TeleportPrompt;
 using DCL.Utilities;
@@ -293,6 +295,11 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             await UniTask.SwitchToMainThread();
             systemClipboard.Set(text);
+
+            // Raised on every write so a clipboard change driven by the scene, instead of by the user, is never
+            // silent: whatever the user had copied is gone and pasting now yields scene-controlled text. A scene
+            // can write on every tick, so the type is collapsible — the toast never queues more than one deep.
+            NotificationsBusController.Instance.AddNotification(new SceneClipboardWriteNotification());
         }
 
         /// <summary>

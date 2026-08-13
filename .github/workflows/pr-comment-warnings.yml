@@ -6,11 +6,13 @@ name: Comment Warning Ratchet on PR
 # workflow, so it can comment with write permissions without exposing them to the
 # untrusted lint job. Mirrors pr-comment-artifact-url.yml.
 #
-# 'requested' -> post a "Lint pending" banner the moment Unity Test starts, so a
-#                stale Passed/Blocked banner from a previous run never lingers.
-# 'completed' -> ALWAYS refresh the banner: Passed / Blocked / Skipped (no C#
-#                changes) / Unavailable (lint did not finish). Keyed on the hidden
-#                <!-- warning-ratchet --> marker so every state edits the same comment.
+# Writes only the "lint" section of the unified CI status comment via the
+# ci-status-comment composite action (build / lint / tests live in one comment).
+#
+# 'requested' -> reset the lint section to "pending" the moment Unity Test starts,
+#                so a stale Passed/Blocked state from a previous run never lingers.
+# 'completed' -> ALWAYS refresh the section: Passed / Blocked / Skipped (no C#
+#                changes) / Unavailable (lint did not finish).
 on:
   workflow_run:
     types:
@@ -23,6 +25,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  actions: read       # needed by download-artifact@v4 to fetch warning-result from the Unity Test run
 
 jobs:
   pending:
@@ -43,29 +46,25 @@ jobs:
             echo "pr-number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Find existing comment
+      - name: Checkout CI status action
         if: steps.pr.outputs.pr-number != ''
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- warning-ratchet -->'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
 
-      - name: Upsert pending banner
+      - name: Reset lint section to pending
         if: steps.pr.outputs.pr-number != ''
-        uses: peter-evans/create-or-update-comment@v3
+        uses: ./.github/actions/ci-status-comment
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ steps.pr.outputs.pr-number }}
+          section: lint
+          github-token: ${{ github.token }}
           body: |-
-            <!-- warning-ratchet -->
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+            ![Lint](https://img.shields.io/badge/Lint-Pending!-ffff00?logo=jetbrains&logoColor=white&style=for-the-badge)
 
             Lint in progress, come back later!
-
-            [badge]: https://img.shields.io/badge/Lint-Pending!-ffff00?logo=github&style=for-the-badge
 
   comment:
     if: github.event.action == 'completed'
@@ -126,9 +125,16 @@ jobs:
           RUN_URL: ${{ github.event.workflow_run.html_url }}
         run: |
           DELIM="EOF_$(uuidgen)"
-          LOGO='<img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">'
-          BADGE_STYLE="?logo=github&style=for-the-badge"
+          BADGE_STYLE="?logo=jetbrains&logoColor=white&style=for-the-badge"
           DETAILS=""
+          BLOCKED=0
+
+          # COUNT/BASELINE come from the artifact produced by the untrusted pull_request job
+          # (fork-controlled). This step has no `set -e`, and bash's `[` errors out on a
+          # non-numeric operand and falls through - never let such a value reach a comparison
+          # or a bash arithmetic context ($(( )) evaluates its operands as expressions).
+          [[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=0
+          [[ "$BASELINE" =~ ^[0-9]+$ ]] || BASELINE=""
 
           if [ "$FOUND" != "true" ]; then
             if [ "$CONCLUSION" = "success" ]; then
@@ -152,19 +158,25 @@ jobs:
               MSG="**Warnings unchanged: $BASELINE => $COUNT** — allowed on release/hotfix branches."
               BADGE="https://img.shields.io/badge/Lint-Passed!-3fb950${BADGE_STYLE}"
             else
-              MSG="**Warnings not reduced: $BASELINE => $COUNT** — remove at least one warning to merge."
+              need=$((COUNT - BASELINE + 1))
+              if [ "$need" -eq 1 ]; then noun="warning"; else noun="warnings"; fi
+              MSG="**Warnings not reduced: $BASELINE => $COUNT** — remove at least $need $noun to merge."
               BADGE="https://img.shields.io/badge/Lint-Blocked!-ff0000${BADGE_STYLE}"
+              BLOCKED=1
             fi
 
-            # List the warnings/errors in files this PR changed, collapsed by default.
+            # One collapsible block. Primary: warnings in files this PR changed. Fallback
+            # (branch clean but still blocked): a general list of easy-to-remove warnings
+            # from anywhere, so the dev has concrete targets to get under the baseline.
             total=$(jq -r '.pr_findings_total // 0' warning-result.json)
+            [[ "$total" =~ ^[0-9]+$ ]] || total=0
             if [ "$total" -gt 0 ]; then
               {
                 echo ""
                 echo "<details><summary>Warnings/errors in files changed by this PR ($total)</summary>"
                 echo ""
                 echo '```'
-                jq -r '.pr_findings[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
+                jq -r '.pr_findings[] | "\(.file | gsub("[\r\n]"; " ")):\(.line | tostring | gsub("[\r\n]"; " "))  \(.rule | gsub("[\r\n]"; " "))  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
                 shown=$(jq -r '.pr_findings | length' warning-result.json)
                 if [ "$total" -gt "$shown" ]; then
                   echo ""
@@ -175,35 +187,48 @@ jobs:
                 echo "</details>"
               } > details.md
               DETAILS="details.md"
+            elif [ "$BLOCKED" = 1 ]; then
+              dcount=$(jq -r '.droppable | length' warning-result.json)
+              if [ "$dcount" -gt 0 ]; then
+                {
+                  echo ""
+                  echo "<details><summary>No warnings in files changed by this PR — showing general ones you can remove to unblock ($dcount of $COUNT)</summary>"
+                  echo ""
+                  echo '```'
+                  jq -r '.droppable[] | "\(.file | gsub("[\r\n]"; " ")):\(.line | tostring | gsub("[\r\n]"; " "))  \(.rule | gsub("[\r\n]"; " "))  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
+                  echo '```'
+                  echo ""
+                  echo "</details>"
+                } > details.md
+                DETAILS="details.md"
+              fi
             fi
           fi
 
           {
             echo "body<<$DELIM"
-            echo "<!-- warning-ratchet -->"
-            echo "![badge]  $LOGO"
+            echo "![Lint]($BADGE)"
             echo ""
             echo "$MSG"
             [ -n "$DETAILS" ] && cat "$DETAILS"
-            echo ""
-            echo "[badge]: $BADGE"
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Find existing comment
+      - name: Checkout CI status action
         if: steps.pr.outputs.pr-number != ''
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- warning-ratchet -->'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+          # Own path so checkout's workspace-clean can't wipe the already-downloaded warning-result.json.
+          path: ci-status-action
 
-      - name: Upsert comment
+      - name: Update lint section
         if: steps.pr.outputs.pr-number != ''
-        uses: peter-evans/create-or-update-comment@v3
+        uses: ./ci-status-action/.github/actions/ci-status-comment
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ steps.pr.outputs.pr-number }}
+          section: lint
+          github-token: ${{ github.token }}
           body: ${{ steps.body.outputs.body }}
