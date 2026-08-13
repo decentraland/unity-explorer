@@ -753,7 +753,9 @@ def upsert_live_comment(build_id, only_if_missing=False):
     job_url = _own_job_url()
     if job_url:
         parts.append(f'[GitHub job]({job_url})')
-    parts.append(f'[Unity Cloud #{build_id}]({dashboard_url})' if dashboard_url else f'Unity Cloud #{build_id}')
+    # Unlinked fallback must not say "#N": GitHub autolinks bare #N in comments
+    # to issue N.
+    parts.append(f'[Unity Cloud #{build_id}]({dashboard_url})' if dashboard_url else f'Unity Cloud build {build_id}')
     own_row = f'| {label} | {" · ".join(parts)} {marker} |'
 
     rows = [line for line in section.splitlines() if LIVE_MARKER_PREFIX in line and marker not in line]
@@ -765,8 +767,6 @@ def upsert_live_comment(build_id, only_if_missing=False):
     body = '\n'.join([
         f'[![Build](https://img.shields.io/badge/Build-In%20progress-1f6feb?logo=unity&logoColor=white&style=for-the-badge)]({run_url})  '
         f'<img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">',
-        '',
-        'Building in Unity Cloud — live links, one row per platform as each build is created:',
         '',
         '| Name | Link |',
         '| -------- | ----------------------- |',

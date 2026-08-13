@@ -103,7 +103,9 @@ runs:
           if [ -n "$REPLY_ID" ] && [ -n "$REPLY_URL" ]; then
             parts+=("[Unity Cloud #${REPLY_ID}](${REPLY_URL})")
           elif [ -n "$REPLY_ID" ]; then
-            parts+=("Unity Cloud #${REPLY_ID}")
+            # Unlinked fallback must not say "#N": GitHub autolinks bare #N in
+            # comments to issue N.
+            parts+=("Unity Cloud build ${REPLY_ID}")
           fi
           if [ -n "$log_id" ] && [ -n "$SUITE_ID" ]; then
             parts+=("[Unity log](${GITHUB_SERVER_URL:-https://github.com}/${REPO_FULL}/suites/${SUITE_ID}/artifacts/${log_id})")
