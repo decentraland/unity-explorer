@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
@@ -39,7 +40,9 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, AvatarPlaceHolderTextureSource? placeholderSource) =>
-            new (sceneDeps.SceneData, roomHub.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
+            new (sceneDeps.SceneData, roomHub.StreamingRoom(),
+                () => roomHub.SceneRoom().CurrentState() == IConnectiveRoom.State.Running,
+                mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
                 volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
                 analyticsController, placeholderSource);
     }
