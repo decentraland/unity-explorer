@@ -1,4 +1,3 @@
-using System.Reflection;
 using DCL.UI;
 using DG.Tweening;
 using NUnit.Framework;
@@ -9,7 +8,7 @@ namespace DCL.Tests.Editor
 {
     public class ImageControllerShould
     {
-                private GameObject go = null!;
+        private GameObject go = null!;
 
         [TearDown]
         public void TearDown()
@@ -27,9 +26,7 @@ namespace DCL.Tests.Editor
             var view = go.AddComponent<ImageView>();
             var image = go.GetComponent<Image>();
 
-            typeof(ImageView)
-                .GetProperty("Image", BindingFlags.Instance | BindingFlags.NonPublic)
-                .SetValue(view, image);
+            view.Image = image;
 
             var controller = new ImageController(view, null!);
 

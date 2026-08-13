@@ -1,7 +1,5 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.WebRequests;
 using DG.Tweening;
 using System;
 using Utility;
@@ -21,7 +19,7 @@ namespace DCL.UI
         private Texture2DRef? currentTextureRef;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
-        
+
         public ImageController(ImageView view, ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
@@ -62,7 +60,7 @@ namespace DCL.UI
                 view.IsLoading = true;
 
                 Sprite? sprite = null;
-                
+
                 var textureRef = await imageControllerProvider.LoadTextureAsync(uri, ct);
 
                 if (textureRef.HasValue)
@@ -80,7 +78,7 @@ namespace DCL.UI
                         false
                     );
                 }
-                
+
                 if (sprite != null)
                 {
                     view.SetImage(sprite, fitAndCenterImage);
@@ -112,7 +110,7 @@ namespace DCL.UI
         {
             if (currentTextureRef != null)
                 currentTextureRef.Value.Dispose();
-            
+
             currentTextureRef = null;
         }
 
