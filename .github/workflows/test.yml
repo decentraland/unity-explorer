@@ -130,7 +130,9 @@ jobs:
             echo "cs=false" >> "$GITHUB_OUTPUT"
           fi
 
-          if git diff --name-only "$base" "$head" -- 'Analyzers/' 'scripts/build-analyzers.sh' | grep -q .; then
+          # The committed DLL is in the pathspec so a PR that swaps ONLY the binary
+          # still runs the drift check - that is the exact attack/mistake it exists for.
+          if git diff --name-only "$base" "$head" -- 'Analyzers/' 'scripts/build-analyzers.sh' 'Explorer/Assets/DCL/DCL.Analyzers.dll' | grep -q .; then
             echo "analyzers=true" >> "$GITHUB_OUTPUT"
           else
             echo "analyzers=false" >> "$GITHUB_OUTPUT"

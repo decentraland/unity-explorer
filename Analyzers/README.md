@@ -49,11 +49,16 @@ byte-compares its own rebuild against the committed DLL, so a stale or
 out-of-band DLL cannot merge. The DLL is LFS-tracked; commit it with the
 source change (CI tells you when you forget).
 
-**The CI (Linux) build is canonical.** A Windows build of identical sources
-can come out byte-different (observed in practice), so if the drift gate
-fails on a DLL you built locally, download the `DCL.Analyzers.dll-canonical`
-artifact from the failed run, copy it to `Explorer/Assets/DCL/DCL.Analyzers.dll`,
-and commit that. Linux/nix builds match CI directly.
+Reproducibility notes, each learned from a real drift-gate failure:
+`Analyzers/**` is pinned to LF in `.gitattributes` (the deterministic MVID
+hashes source bytes, so a CRLF checkout builds different bytes);
+`build-analyzers.sh` wipes `bin`/`obj` first (stale incremental state changed
+the output); and `IncludeSourceRevisionInInformationalVersion` is off in the
+csproj (the SDK's implicit SourceLink otherwise embeds the git HEAD sha, so a
+committed DLL could never match a rebuild at any other commit). If the gate
+still fails unexpectedly, the job uploads its own build as the
+`DCL.Analyzers.dll-canonical` artifact — download, copy over
+`Explorer/Assets/DCL/DCL.Analyzers.dll`, commit.
 
 ## Adding a rule
 

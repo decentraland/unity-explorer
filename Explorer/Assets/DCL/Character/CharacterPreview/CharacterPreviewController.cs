@@ -98,7 +98,12 @@ namespace DCL.CharacterPreview
             // entity creation relocate archetype chunks and invalidate any outstanding ref
             // to this component - including the structural changes hidden inside
             // Promise.Create and ForgetLoading.
-            globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).WearablePromise.ForgetLoading(globalWorld);
+            // The old promise is deliberately COPIED out (not operated via ref): calling
+            // ForgetLoading on a ref into the chunk would keep 'this' pointing at ECS memory
+            // while it destroys the promise entity. The copy's mutations are discarded -
+            // the component's WearablePromise is overwritten wholesale below.
+            AssetPromise<WearablesResolution, GetWearablesByPointersIntention> oldWearablePromise = globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).WearablePromise;
+            oldWearablePromise.ForgetLoading(globalWorld);
 
             var wearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
                 globalWorld,

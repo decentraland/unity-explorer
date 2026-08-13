@@ -9,6 +9,12 @@
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <Deterministic>true</Deterministic>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- The SDK's built-in SourceLink appends the git HEAD sha to
+         AssemblyInformationalVersion, making every build depend on the CURRENT
+         commit - a committed DLL could then never byte-match the CI drift
+         check's rebuild (committing the DLL moves HEAD). Output must depend on
+         sources and flags only. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
