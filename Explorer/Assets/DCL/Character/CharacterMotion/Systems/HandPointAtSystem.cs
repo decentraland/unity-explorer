@@ -15,6 +15,8 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle;
+using SceneRunner.Scene;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -52,12 +54,17 @@ namespace DCL.Character.CharacterMotion.Systems
         private static readonly int RAYCAST_LAYER_MASK = PhysicsLayers.CHARACTER_ONLY_MASK | (1 << PhysicsLayers.OTHER_AVATARS_LAYER);
 
         private readonly DCLInput dclInput;
+        private readonly IScenesCache scenesCache;
 
         private SingleInstanceEntity camera;
+        private bool currentSceneLost;
 
-        private HandPointAtSystem(World world) : base(world)
+        internal HandPointAtSystem(World world, IScenesCache scenesCache) : base(world)
         {
             dclInput = DCLInput.Instance;
+            this.scenesCache = scenesCache;
+
+            scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
 
         public override void Initialize()
@@ -65,11 +72,49 @@ namespace DCL.Character.CharacterMotion.Systems
             camera = World.CacheCamera();
         }
 
+        protected override void OnDispose()
+        {
+            scenesCache.CurrentScene.OnUpdate -= OnCurrentSceneChanged;
+        }
+
+        // Fires synchronously from whichever code sets CurrentScene, so only latch — never mutate components here.
+        private void OnCurrentSceneChanged(ISceneFacade? currentScene)
+        {
+            if (currentScene == null)
+                currentSceneLost = true;
+        }
+
         protected override void Update(float t)
         {
+            if (currentSceneLost)
+            {
+                currentSceneLost = false;
+                ResetPointAtOnCurrentSceneLostQuery(World);
+            }
+
+            ResetPointAtOnTeleportQuery(World);
             CancelPointAtIfEmotingQuery(World);
             UpdateHandPointAtQuery(World, in camera.GetCameraComponent(World), t);
             ApplyPointAtIKQuery(World, t);
+        }
+
+        // Movement already clears IsPointing before the parcel can change, so losing CurrentScene while pointing only happens when the scene is torn down under the player (reload, ban, realm change).
+        [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ResetPointAtOnCurrentSceneLost(ref HandPointAtComponent handPointAtComponent)
+        {
+            if (handPointAtComponent.IsPointing)
+                handPointAtComponent.StopPointing();
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent), typeof(PlayerTeleportIntent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ResetPointAtOnTeleport(ref HandPointAtComponent handPointAtComponent)
+        {
+            if (handPointAtComponent.IsPointing)
+                handPointAtComponent.StopPointing();
         }
 
         private CursorInfo HandleCursorLogic(ref HandPointAtComponent handPointAtComponent)
