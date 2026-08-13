@@ -44,7 +44,7 @@ on:
   workflow_dispatch:
     inputs:
       filter:
-        description: 'NUnit filter. Empty runs the whole Category=InWorld suite.'
+        description: 'NUnit filter. Empty runs the whole Category=InWorld suite, split across Windows runners; anything narrower runs on one.'
         required: false
         default: ''
         type: string
@@ -160,6 +160,16 @@ jobs:
       # `build_url` is the macOS zip; the Windows leg needs its own or it
       # resolves the newest dev build and reports on the wrong commit.
       windows_build_url: ${{ needs.resolve.outputs.windows_build_url }}
+      # What the Windows leg splits across runners. The gate runs everything, so
+      # say ALL — the same thing inworld-main.yml says for the same reason.
+      #
+      # The planner would infer it: an empty scope plus the whole-category filter
+      # reads as ALL. But that inference exists to stop callers who resolved
+      # nothing from running unsplit, and a gate should not lean on a fallback
+      # for its runtime. Empty here is reserved for the other case — a manual run
+      # with a narrow `filter`, which has no scope to split and belongs on one
+      # runner as `1/1`.
+      scope: ${{ (inputs.filter || '') == '' && 'ALL' || '' }}
     secrets: inherit
 
   result:
