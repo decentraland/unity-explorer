@@ -62,7 +62,7 @@ jobs:
           section: lint
           github-token: ${{ github.token }}
           body: |-
-            [![Lint](https://img.shields.io/badge/Lint-Pending!-ffff00?logo=jetbrains&logoColor=white&style=for-the-badge)](${{ github.event.workflow_run.html_url }})
+            [![Lint](https://img.shields.io/badge/Lint-Pending!-yellow?logo=jetbrains&logoColor=white&style=for-the-badge)](${{ github.event.workflow_run.html_url }})
 
             Lint in progress, come back later!
 
@@ -222,7 +222,11 @@ jobs:
             FOOTER="<sub>[Lint run]($RUN_URL)"
             [ -n "$ART_ID" ] && FOOTER="$FOOTER · [full InspectCode report](https://github.com/$REPO/actions/runs/$RUN_ID/artifacts/$ART_ID)"
             if [[ "$LINT_SECS" =~ ^[0-9]+$ ]]; then
-              FOOTER="$FOOTER · took $((LINT_SECS/60))m $((LINT_SECS%60))s"
+              # Same h/m/s convention as fmt_dur in ucb-build-links/action.yml.
+              if [ "$LINT_SECS" -ge 3600 ]; then took="$((LINT_SECS/3600))h $((LINT_SECS%3600/60))m"
+              elif [ "$LINT_SECS" -ge 60 ]; then took="$((LINT_SECS/60))m $((LINT_SECS%60))s"
+              else took="${LINT_SECS}s"; fi
+              FOOTER="$FOOTER · took $took"
             fi
             FOOTER="$FOOTER</sub>"
           fi

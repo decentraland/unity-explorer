@@ -94,6 +94,8 @@ jobs:
             echo ""
             echo "$MSG The benchmark report is rendered on the [run summary]($RUN_URL)."
             echo ""
+            echo "<sub>Written by the \`perf_test\`-label suite; the next build's benchmark dispatch replaces it.</sub>"
+            echo ""
             if [ -n "$links" ]; then
               echo "<sub>Download:${links#" ·"}</sub>"
             else

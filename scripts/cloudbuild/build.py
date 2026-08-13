@@ -1026,156 +1026,158 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
         time.sleep(poll_interval)
 
 
-args = parser.parse_args()
 
-build_already_active = False
-resumed_build_elapsed = 0
+if __name__ == '__main__':
+    args = parser.parse_args()
 
-if args.delete:
-    delete_current_target()
-elif args.resume or args.cancel:
-    build_info = utils.read_build_info()
-    if build_info is None:
-        sys.exit(1)
+    build_already_active = False
+    resumed_build_elapsed = 0
 
-    os.environ['TARGET'] = build_info["target"]
-    id = build_info["id"]
+    if args.delete:
+        delete_current_target()
+    elif args.resume or args.cancel:
+        build_info = utils.read_build_info()
+        if build_info is None:
+            sys.exit(1)
 
-    if args.cancel:
-        if id is None:
-            # The runner died between the build POST and the id write; the queued build is
-            # findable only as the target's latest build. Cancel it only while it is still
-            # in a queue status: targets are shared (release pool; consecutive runs on one
-            # branch), so an already-started build may belong to a concurrent run — leaving
-            # it is at worst one wasted build, cancelling it would kill someone else's.
-            # A missing/unknown status is treated as not-cancellable for the same reason.
-            latest = get_latest_build(os.getenv('TARGET'))
-            if latest and latest.get('buildStatus') in QUEUE_STATUSES:
-                id = latest['build']
-                print(f'No build id persisted; cancelling latest queued build #{id} on {os.getenv("TARGET")}')
-            else:
-                print('No build id persisted and no queued build found; nothing to cancel.')
-                utils.delete_build_info()
-                sys.exit(0)
-        cancel_build(id)
-        utils.delete_build_info()
-        sys.exit(0)
+        os.environ['TARGET'] = build_info["target"]
+        id = build_info["id"]
 
-else:
-    branch_name = os.getenv('BRANCH_NAME')
-    validate_branch_name(branch_name)
+        if args.cancel:
+            if id is None:
+                # The runner died between the build POST and the id write; the queued build is
+                # findable only as the target's latest build. Cancel it only while it is still
+                # in a queue status: targets are shared (release pool; consecutive runs on one
+                # branch), so an already-started build may belong to a concurrent run — leaving
+                # it is at worst one wasted build, cancelling it would kill someone else's.
+                # A missing/unknown status is treated as not-cancellable for the same reason.
+                latest = get_latest_build(os.getenv('TARGET'))
+                if latest and latest.get('buildStatus') in QUEUE_STATUSES:
+                    id = latest['build']
+                    print(f'No build id persisted; cancelling latest queued build #{id} on {os.getenv("TARGET")}')
+                else:
+                    print('No build id persisted and no queued build found; nothing to cancel.')
+                    utils.delete_build_info()
+                    sys.exit(0)
+            cancel_build(id)
+            utils.delete_build_info()
+            sys.exit(0)
 
-    resumed = try_resume_build()
-    if resumed is not None:
-        target_name, id, resumed_status, resumed_elapsed = resumed
-        os.environ['TARGET'] = target_name
-        build_already_active = resumed_status in ACTIVE_STATUSES
-        if build_already_active:
-            resumed_build_elapsed = resumed_elapsed
     else:
-        try:
-            clone_current_target(True)
-        except Exception as e:
-            print(f"Operation failed: {e}")
+        branch_name = os.getenv('BRANCH_NAME')
+        validate_branch_name(branch_name)
 
-        # Set parameters immediately before run_build to avoid races with concurrent
-        # builds on shared targets.
-        set_parameters(get_param_env_variables())
+        resumed = try_resume_build()
+        if resumed is not None:
+            target_name, id, resumed_status, resumed_elapsed = resumed
+            os.environ['TARGET'] = target_name
+            build_already_active = resumed_status in ACTIVE_STATUSES
+            if build_already_active:
+                resumed_build_elapsed = resumed_elapsed
+        else:
+            try:
+                clone_current_target(True)
+            except Exception as e:
+                print(f"Operation failed: {e}")
 
-        def get_clean_build_bool():
-            value = os.getenv('CLEAN_BUILD', 'false').lower()
-            if value in ['true', '1']:
-                return True
-            elif value in ['false', '0']:
-                return False
-            else:
-                raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
+            # Set parameters immediately before run_build to avoid races with concurrent
+            # builds on shared targets.
+            set_parameters(get_param_env_variables())
 
-        # Persist the target before the POST: if the runner dies mid-request, --cancel can still
-        # find the queued build via the target's latest-build lookup.
-        utils.persist_build_info(os.getenv('TARGET'), None)
-        id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
-        utils.persist_build_info(os.getenv('TARGET'), id)
-        # Write the link info file (target + id, no URL yet) immediately so it exists
-        # even if the runner dies before the first poll; the poll loop upgrades it
-        # with the dashboard URL once a response carries one.
-        record_build_link_info(id, {})
-        print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
+            def get_clean_build_bool():
+                value = os.getenv('CLEAN_BUILD', 'false').lower()
+                if value in ['true', '1']:
+                    return True
+                elif value in ['false', '0']:
+                    return False
+                else:
+                    raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
 
-final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(
-    id,
-    build_already_active=build_already_active,
-    resumed_build_elapsed=resumed_build_elapsed,
-)
-write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed)
+            # Persist the target before the POST: if the runner dies mid-request, --cancel can still
+            # find the queued build via the target's latest-build lookup.
+            utils.persist_build_info(os.getenv('TARGET'), None)
+            id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
+            utils.persist_build_info(os.getenv('TARGET'), id)
+            # Write the link info file (target + id, no URL yet) immediately so it exists
+            # even if the runner dies before the first poll; the poll loop upgrades it
+            # with the dashboard URL once a response carries one.
+            record_build_link_info(id, {})
+            print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
 
-if final_outcome in ('queue_timeout', 'build_timeout', 'log_stall'):
-    if final_outcome in ('build_timeout', 'log_stall'):
-        # Build was cancelled; the persisted info points to a dead build.
-        # Delete it so the next retry creates a fresh build on a different VM.
+    final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(
+        id,
+        build_already_active=build_already_active,
+        resumed_build_elapsed=resumed_build_elapsed,
+    )
+    write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed)
+
+    if final_outcome in ('queue_timeout', 'build_timeout', 'log_stall'):
+        if final_outcome in ('build_timeout', 'log_stall'):
+            # Build was cancelled; the persisted info points to a dead build.
+            # Delete it so the next retry creates a fresh build on a different VM.
+            utils.delete_build_info()
+            try:
+                download_log(id)
+            except Exception as e:
+                print(f'Warning: could not download log after {final_outcome}: {e}')
+        sys.exit(RETRYABLE_EXIT_CODE)
+
+    if final_outcome == 'canceled':
+        # This run's own cancellations exit through the watchdog/timeout branches above,
+        # so 'canceled' here came from outside.  Two different outsides, though:
+        #  - UBA giving up on builder provisioning (observed: 9 min in sentToBuilder, then a
+        #    platform-side cancel) — nothing else wants the target, so retry on a fresh build;
+        #  - a concurrent run superseding us via run_build's `already a build pending` cancel.
+        #    main/release/*/hotfix/* share one target but sit in different concurrency groups,
+        #    so re-POSTing here would cancel *their* build and hand them the same exit 99 —
+        #    both runs then burn a full queue+build cycle and one still ends red.
+        # Build numbers are monotonic per target: a newer build means we were superseded.
+        def probe_latest_build():
+            # Fail-open: a transient socket error here must not traceback past the
+            # cleanup below - it degrades to the retry path, same as a non-200 probe.
+            try:
+                return get_latest_build(os.getenv('TARGET'))
+            except requests.exceptions.RequestException as e:
+                print(f'Warning: latest-build probe failed ({e})')
+                return None
+
+        latest = probe_latest_build()
+        if latest and int(latest.get('build') or 0) <= int(id):
+            # run_build cancels the pending build and only re-POSTs ~30 s later, so a
+            # supersede can be invisible for that gap. Re-probe once past it before
+            # deciding to retry.
+            time.sleep(35)
+            latest = probe_latest_build() or latest
         utils.delete_build_info()
         try:
             download_log(id)
         except Exception as e:
-            print(f'Warning: could not download log after {final_outcome}: {e}')
-    sys.exit(RETRYABLE_EXIT_CODE)
+            print(f'Warning: could not download log after external cancel: {e}')
+        if latest and int(latest.get('build') or 0) > int(id):
+            print(
+                f'Build {id} was superseded by #{latest["build"]} on shared target '
+                f'{os.getenv("TARGET")} - not retrying (the successor owns the slot).'
+            )
+            sys.exit(1)
+        print('Build was canceled outside this run - retrying with a fresh build.')
+        sys.exit(RETRYABLE_EXIT_CODE)
 
-if final_outcome == 'canceled':
-    # This run's own cancellations exit through the watchdog/timeout branches above,
-    # so 'canceled' here came from outside.  Two different outsides, though:
-    #  - UBA giving up on builder provisioning (observed: 9 min in sentToBuilder, then a
-    #    platform-side cancel) — nothing else wants the target, so retry on a fresh build;
-    #  - a concurrent run superseding us via run_build's `already a build pending` cancel.
-    #    main/release/*/hotfix/* share one target but sit in different concurrency groups,
-    #    so re-POSTing here would cancel *their* build and hand them the same exit 99 —
-    #    both runs then burn a full queue+build cycle and one still ends red.
-    # Build numbers are monotonic per target: a newer build means we were superseded.
-    def probe_latest_build():
-        # Fail-open: a transient socket error here must not traceback past the
-        # cleanup below - it degrades to the retry path, same as a non-200 probe.
-        try:
-            return get_latest_build(os.getenv('TARGET'))
-        except requests.exceptions.RequestException as e:
-            print(f'Warning: latest-build probe failed ({e})')
-            return None
-
-    latest = probe_latest_build()
-    if latest and int(latest.get('build') or 0) <= int(id):
-        # run_build cancels the pending build and only re-POSTs ~30 s later, so a
-        # supersede can be invisible for that gap. Re-probe once past it before
-        # deciding to retry.
-        time.sleep(35)
-        latest = probe_latest_build() or latest
     utils.delete_build_info()
-    try:
-        download_log(id)
-    except Exception as e:
-        print(f'Warning: could not download log after external cancel: {e}')
-    if latest and int(latest.get('build') or 0) > int(id):
-        print(
-            f'Build {id} was superseded by #{latest["build"]} on shared target '
-            f'{os.getenv("TARGET")} - not retrying (the successor owns the slot).'
-        )
+
+    print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
+    record_final_elapsed(id, queue_elapsed, build_elapsed)
+
+    download_artifact(id)
+    download_log(id)
+
+    if not build_healthy:
+        where = dashboard_url or _dashboard_build_url(id) or f'https://cloud.unity.com/ (search for target "{os.getenv("TARGET")}" and build ID "{id}")'
+        print(f'Build unhealthy - check the downloaded logs or the Unity Cloud build page: {where}')
         sys.exit(1)
-    print('Build was canceled outside this run - retrying with a fresh build.')
-    sys.exit(RETRYABLE_EXIT_CODE)
 
-utils.delete_build_info()
+    # Cleanup (only if build is healthy and not release)
+    # We only delete all artifacts, not the build target
+    if not is_release_workflow:
+        delete_build(id)
 
-print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
-record_final_elapsed(id, queue_elapsed, build_elapsed)
-
-download_artifact(id)
-download_log(id)
-
-if not build_healthy:
-    where = dashboard_url or _dashboard_build_url(id) or f'https://cloud.unity.com/ (search for target "{os.getenv("TARGET")}" and build ID "{id}")'
-    print(f'Build unhealthy - check the downloaded logs or the Unity Cloud build page: {where}')
-    sys.exit(1)
-
-# Cleanup (only if build is healthy and not release)
-# We only delete all artifacts, not the build target
-if not is_release_workflow:
-    delete_build(id)
-
-utils.delete_build_info()
+    utils.delete_build_info()

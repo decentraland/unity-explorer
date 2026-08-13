@@ -78,8 +78,11 @@ jobs:
           JOBS_JSON=$(gh api "/repos/$REPO/actions/runs/$WORKFLOW_RUN_ID/jobs?per_page=100" 2>/dev/null || echo '{"jobs":[]}')
           ARTS_JSON=$(gh api "/repos/$REPO/actions/runs/$WORKFLOW_RUN_ID/artifacts?per_page=100" 2>/dev/null || echo '{"artifacts":[]}')
 
+          # Same h/m/s convention as fmt_dur in ucb-build-links/action.yml and the
+          # lint footer in pr-comment-warnings.yml — keep the three in lockstep.
           fmt_secs() {
-            awk -v s="$1" 'BEGIN { s=int(s+0.5); m=int(s/60); r=s%60; if (m>0) printf("%dm %02ds", m, r); else printf("%ds", r) }'
+            awk -v s="$1" 'BEGIN { s=int(s+0.5); h=int(s/3600); m=int(s%3600/60); r=s%60;
+              if (h>0) printf("%dh %dm", h, m); else if (m>0) printf("%dm %ds", m, r); else printf("%ds", r) }'
           }
 
           declare -A DISPLAY=( [editmode]=EditMode [playmode]=PlayMode )

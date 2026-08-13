@@ -380,6 +380,8 @@ jobs:
 
             🏁 Bare-metal benchmark dispatched for this build ([run queue](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)) — results across the runner fleet will be posted as a separate `perf-test-summary` comment.
 
+            <sub>Latest build wins this section — it also replaces any earlier `perf_test`-suite verdict.</sub>
+
             ${{ env.PAT_EXPIRY_WARNING }}
 
       # A failing dispatch (e.g. an expired PERFORMANCE_TESTING_PAT) turns this
