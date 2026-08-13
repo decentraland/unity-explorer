@@ -22,7 +22,7 @@ fi
 # Fast deterministic project rules first (CLAUDE.md / skills, added lines only):
 # instant feedback, and no point paying the multi-minute ReSharper load while
 # these are unresolved. WARN findings print but never block; BLOCK exits 2.
-custom_out="$(bash "$LINT_DIR/custom-rules.sh" --working-tree 2>/dev/null)"
+custom_out="$(bash "$LINT_DIR/custom-rules.sh" --working-tree)"
 custom_rc=$?
 if [ -n "$custom_out" ]; then
     {
@@ -30,7 +30,9 @@ if [ -n "$custom_out" ]; then
         printf '%s\n' "$custom_out" | sed 's/^/  /'
     } >&2
 fi
-[ "$custom_rc" -eq 2 ] && exit 2
+# 2 = BLOCK findings; 3 = a rule pattern is broken - both must stop the flow
+# (3 is the "never silently passes" contract, and the hook is where rules get edited).
+{ [ "$custom_rc" -eq 2 ] || [ "$custom_rc" -eq 3 ]; } && exit 2
 
 # Changed C# under Explorer/ (working tree + staged + new untracked).
 changed="$(

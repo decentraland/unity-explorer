@@ -78,6 +78,9 @@ jobs:
     outputs:
       cs: ${{ steps.detect.outputs.cs }}
       analyzers: ${{ steps.detect.outputs.analyzers }}
+      # True when the linter itself changed - custom-lint must run its selftest
+      # even on a PR with no .cs changes, or a broken rule merges unexecuted.
+      lintscripts: ${{ steps.detect.outputs.lintscripts }}
       # Diff range for added-lines linting; base is empty when undeterminable.
       base: ${{ steps.detect.outputs.base }}
       head: ${{ steps.detect.outputs.head }}
@@ -97,15 +100,16 @@ jobs:
           BEFORE_SHA: ${{ github.event.before }}
           MG_BASE: ${{ github.event.merge_group.base_sha }}
           MG_HEAD: ${{ github.event.merge_group.head_sha }}
+          FALLBACK_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
-          head="${HEAD_SHA:-${{ github.sha }}}"
+          head="${HEAD_SHA:-$FALLBACK_SHA}"
           if [ "$EVENT" = "pull_request" ]; then
             base=$(git merge-base "origin/$BASE_REF" "$head" 2>/dev/null || true)
             if [ -z "$base" ]; then
               echo "merge-base with origin/$BASE_REF unavailable - linting to be safe."
-              { echo "cs=true"; echo "analyzers=true"; } >> "$GITHUB_OUTPUT"; exit 0
+              { echo "cs=true"; echo "analyzers=true"; echo "lintscripts=true"; } >> "$GITHUB_OUTPUT"; exit 0
             fi
           elif [ "$EVENT" = "merge_group" ]; then
             base="$MG_BASE"; head="$MG_HEAD"
@@ -113,7 +117,7 @@ jobs:
             base="$BEFORE_SHA"
           else
             echo "Cannot determine a diff base for event '$EVENT' - linting to be safe."
-            { echo "cs=true"; echo "analyzers=true"; } >> "$GITHUB_OUTPUT"; exit 0
+            { echo "cs=true"; echo "analyzers=true"; echo "lintscripts=true"; } >> "$GITHUB_OUTPUT"; exit 0
           fi
 
           echo "base=$base" >> "$GITHUB_OUTPUT"
@@ -132,17 +136,29 @@ jobs:
             echo "analyzers=false" >> "$GITHUB_OUTPUT"
           fi
 
+          if git diff --name-only "$base" "$head" -- 'scripts/lint/' | grep -q .; then
+            echo "lintscripts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lintscripts=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # Fast deterministic project rules (CLAUDE.md / .claude/skills) checked over the
   # lines ADDED in this PR/push — runs in seconds without Unity, complementing the
   # ReSharper ratchet below. Pre-existing violations never fail this job.
   custom-lint:
     needs: changes
-    if: needs.changes.outputs.cs == 'true' || github.event.label.name == 'force-lint'
+    if: needs.changes.outputs.cs == 'true' || needs.changes.outputs.lintscripts == 'true' || github.event.label.name == 'force-lint'
     name: Project rules lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
+    # This job executes PR-authored shell; it must not see the workflow-level
+    # Unity credentials it doesn't need.
+    env:
+      UNITY_EMAIL: ''
+      UNITY_PASSWORD: ''
+      UNITY_LICENSE: ''
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -188,20 +204,46 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    # This job restores and executes a PR-authored .csproj (arbitrary MSBuild
+    # targets); it must not see the workflow-level Unity credentials.
+    env:
+      UNITY_EMAIL: ''
+      UNITY_PASSWORD: ''
+      UNITY_LICENSE: ''
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+          lfs: true
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          # The exact SDK pin (not a floating channel) is what makes the drift
+          # rebuild below byte-identical to scripts/build-analyzers.sh output.
+          global-json-file: Analyzers/global.json
 
       - name: Test analyzers
-        run: dotnet test Analyzers/DCL.Analyzers.Tests -v q --nologo
+        working-directory: Analyzers
+        run: dotnet test DCL.Analyzers.Tests -v q --nologo
+
+      # The committed DLL is what Unity actually enforces; it must be provably
+      # built from the reviewed source. Deterministic build + pinned SDK + CI
+      # path normalization make the comparison byte-exact across machines.
+      - name: Fail on DLL drift
+        run: |
+          set -euo pipefail
+          (cd Analyzers && dotnet build DCL.Analyzers -c Release -v q --nologo \
+            -p:ContinuousIntegrationBuild=true -p:DebugType=none)
+          built=Analyzers/DCL.Analyzers/bin/Release/netstandard2.0/DCL.Analyzers.dll
+          committed=Explorer/Assets/DCL/DCL.Analyzers.dll
+          if ! cmp -s "$built" "$committed"; then
+            echo "Committed DCL.Analyzers.dll does not match a build of Analyzers/ - run scripts/build-analyzers.sh and commit the DLL."
+            sha256sum "$built" "$committed"
+            exit 1
+          fi
 
   lint:
     needs: changes

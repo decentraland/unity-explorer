@@ -16,7 +16,10 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 fail() { echo "selftest FAIL: $1" >&2; exit 1; }
-norm() { awk -F'  ' '{ print $1 "  " $2 "  " $3 }'; }
+# tr strips CR so goldens compare equal when git checked them out with CRLF
+# (Windows working copies); the linter itself always emits LF.
+norm() { tr -d '\r' | awk -F'  ' '{ print $1 "  " $2 "  " $3 }'; }
+golden() { tr -d '\r' < "$1"; }
 commit() { git -C "$work" -c user.email=selftest@local -c user.name=selftest -c commit.gpgsign=false commit -q "$@"; }
 run_linter() { (cd "$work" && bash "$LINTER" "$@"); }
 
@@ -29,7 +32,7 @@ if [ "${1:-}" = "--regen" ]; then
     printf '%s\n' "$out" | norm > "$HERE/expected-working-tree.txt"
 else
     [ "$rc" -eq 2 ] || fail "working-tree rc=$rc, want 2 (BLOCK findings present)"
-    diff <(printf '%s\n' "$out" | norm) "$HERE/expected-working-tree.txt" >&2 \
+    diff <(printf '%s\n' "$out" | norm) <(golden "$HERE/expected-working-tree.txt") >&2 \
         || fail "working-tree findings diverge from golden (intentional rule change? rerun with --regen)"
 fi
 
@@ -51,7 +54,7 @@ if [ "${1:-}" = "--regen" ]; then
     exit 0
 fi
 [ "$rc" -eq 2 ] || fail "diff-mode rc=$rc, want 2"
-diff <(printf '%s\n' "$out" | norm) "$HERE/expected-diff.txt" >&2 \
+diff <(printf '%s\n' "$out" | norm) <(golden "$HERE/expected-diff.txt") >&2 \
     || fail "diff-mode findings diverge from golden (line numbers test the hunk parser)"
 
 echo "selftest OK"

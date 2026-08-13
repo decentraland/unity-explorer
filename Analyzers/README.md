@@ -29,9 +29,12 @@ Roslyn host ≥ 4.3; Unity 6000.x bundles ≥ 4.9).
 bash scripts/build-analyzers.sh   # tests + Release build + DLL sync
 ```
 
-Self-wraps in `nix-shell -p dotnet-sdk_8` when dotnet is absent. The DLL is
-LFS-tracked; commit it with the source change. CI (`analyzers` job) runs the
-test suite on `Analyzers/` changes but does not rebuild the shipped DLL.
+Self-wraps in `nix-shell -p dotnet-sdk_10` when dotnet is absent. The SDK is
+pinned exactly in `Analyzers/global.json` — the build is deterministic
+(`ContinuousIntegrationBuild=true`), and CI's "Fail on DLL drift" step
+byte-compares its own rebuild against the committed DLL, so a stale or
+out-of-band DLL cannot merge. The DLL is LFS-tracked; commit it with the
+source change (CI tells you when you forget).
 
 ## Adding a rule
 

@@ -11,14 +11,24 @@ cd "$ROOT"
 
 if ! command -v dotnet >/dev/null 2>&1; then
     if command -v nix-shell >/dev/null 2>&1; then
-        exec nix-shell -p dotnet-sdk_8 --run "bash $0 $*"
+        exec nix-shell -p dotnet-sdk_10 --run "bash $0 $*"
     fi
     echo "build-analyzers: dotnet SDK not found (and no nix-shell to provide one)" >&2
     exit 1
 fi
 
-dotnet test Analyzers/DCL.Analyzers.Tests -v q --nologo
-dotnet build Analyzers/DCL.Analyzers -c Release -v q --nologo
+# Run from Analyzers/ so Analyzers/global.json pins the SDK: the CI drift check
+# byte-compares a rebuild against the committed DLL, and byte-identical output
+# requires the same Roslyn compiler on every machine.
+cd Analyzers
+dotnet test DCL.Analyzers.Tests -v q --nologo
+# ContinuousIntegrationBuild normalizes embedded paths and DebugType=none drops
+# the debug directory (whose source hashes differ between CRLF and LF checkouts),
+# so this local build is byte-identical to the CI drift check's rebuild
+# (workflow: "Fail on DLL drift").
+dotnet build DCL.Analyzers -c Release -v q --nologo \
+    -p:ContinuousIntegrationBuild=true -p:DebugType=none
+cd "$ROOT"
 
 src="Analyzers/DCL.Analyzers/bin/Release/netstandard2.0/DCL.Analyzers.dll"
 dst="Explorer/Assets/DCL/DCL.Analyzers.dll"
