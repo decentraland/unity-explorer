@@ -425,7 +425,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             // without per-test scaffolding. Inactive-state tests opt into the suspend/out-of-range
             // state explicitly (mutate IsSuspended or remove the tag).
             Entity entity = world.Create(
-                new Profile(walletId, walletId, new Avatar()),
+                new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()),
                 avatarBase,
                 new CharacterTransform(avatarGo.transform));
 
