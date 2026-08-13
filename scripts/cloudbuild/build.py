@@ -636,10 +636,11 @@ def record_build_link_info(id, response_json):
     href = None
     # dashboard_summary is the build's page and dashboard_log its log tab;
     # dashboard_url can be just the dashboard root, so a candidate only
-    # qualifies when it points at this specific build.
+    # qualifies when it is an absolute link to this specific build (the
+    # comment workflow rejects anything else, so don't persist it either).
     for key in ('dashboard_summary', 'dashboard_log', 'dashboard_url'):
         candidate = (links.get(key) or {}).get('href')
-        if candidate and '/builds/' in candidate:
+        if candidate and candidate.startswith('https://') and '/builds/' in candidate:
             href = candidate
             break
 
@@ -902,6 +903,10 @@ else:
         utils.persist_build_info(os.getenv('TARGET'), None)
         id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
         utils.persist_build_info(os.getenv('TARGET'), id)
+        # Write the link info file (target + id, no URL yet) immediately so it exists
+        # even if the runner dies before the first poll; the poll loop upgrades it
+        # with the dashboard URL once a response carries one.
+        record_build_link_info(id, {})
         print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
 
 final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(

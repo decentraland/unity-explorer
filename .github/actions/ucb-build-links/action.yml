@@ -1,0 +1,93 @@
+name: Fetch Unity Cloud Build Links
+description: >-
+  Download the unity_build_info_* artifacts of a Unity Cloud Build run and emit
+  sanitized markdown linking each build id to its Unity Cloud dashboard page:
+  bare table rows for appending to an existing two-column table, and a standalone
+  table section for comment bodies that have no table of their own.
+
+inputs:
+  run-id:
+    description: Workflow run id of the Unity Cloud Build run whose artifacts to read.
+    required: true
+  github-token:
+    description: Token used to download the run's artifacts.
+    required: true
+
+outputs:
+  rows:
+    description: >-
+      "| Name | Link |"-shaped rows for an existing two-column table; empty when
+      no valid build info was found.
+    value: ${{ steps.fetch.outputs.rows }}
+  section:
+    description: >-
+      Standalone table (header + rows); empty when no valid build info was found.
+    value: ${{ steps.fetch.outputs.section }}
+
+runs:
+  using: composite
+  steps:
+    - name: Download and sanitize Unity Cloud build info
+      id: fetch
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        RUN_ID: ${{ inputs.run-id }}
+        REPO_FULL: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+
+        # The info files come out of the PR-controlled build workflow, so treat them as
+        # untrusted input: accept only a numeric build id and a Unity dashboard URL with
+        # a conservative charset before letting them anywhere near a comment body.
+        URL_RE='^https://(cloud\.unity\.com|developer\.cloud\.unity3d\.com|dashboard\.unity3d\.com)/[A-Za-z0-9./_%~?=&#-]*$'
+        parse_info() {
+          local target="$1"
+          local dir="ucb_info_${target}"
+          REPLY_ID=""
+          REPLY_URL=""
+          if gh run download "$RUN_ID" \
+               --repo "$REPO_FULL" \
+               --name "unity_build_info_${target}_launcher" \
+               --dir "$dir" 2>"${dir}.err"; then
+            REPLY_ID=$(grep -m1 '^BUILD_ID=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
+            REPLY_URL=$(grep -m1 '^DASHBOARD_URL=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
+            [[ "$REPLY_ID" =~ ^[0-9]+$ ]] || REPLY_ID=""
+            [[ "$REPLY_URL" =~ $URL_RE ]] || REPLY_URL=""
+          else
+            # Absence is normal for runs predating the info artifact; still surface the
+            # gh error so an auth/permission regression doesn't silently eat the rows.
+            echo "note: could not fetch unity_build_info_${target}_launcher: $(tr '\n' ' ' < "${dir}.err")"
+          fi
+        }
+
+        ROWS=""
+        for entry in "windows64:Windows" "macos:Mac"; do
+          target="${entry%%:*}"
+          label="${entry#*:}"
+          parse_info "$target"
+          # A URL without a valid id only occurs on a tampered artifact — drop the row
+          # rather than render an empty "[#](...)" label.
+          if [ -n "$REPLY_ID" ] && [ -n "$REPLY_URL" ]; then
+            ROWS+="| Unity Cloud build (${label}) | [#${REPLY_ID}](${REPLY_URL}) |"$'\n'
+          elif [ -n "$REPLY_ID" ]; then
+            ROWS+="| Unity Cloud build (${label}) | #${REPLY_ID} |"$'\n'
+          fi
+        done
+
+        SECTION=""
+        if [ -n "$ROWS" ]; then
+          SECTION="| Name | Link |"$'\n'"| -------- | ----------------------- |"$'\n'"$ROWS"
+        fi
+
+        # The payload derives from artifact bytes, so the heredoc delimiter must not be
+        # guessable content even though the validation above already forbids newlines.
+        DELIM="UCB_EOF_${RANDOM}${RANDOM}_$$"
+        {
+          echo "rows<<${DELIM}"
+          printf '%s' "$ROWS"
+          echo "${DELIM}"
+          echo "section<<${DELIM}"
+          printf '%s' "$SECTION"
+          echo "${DELIM}"
+        } >> "$GITHUB_OUTPUT"

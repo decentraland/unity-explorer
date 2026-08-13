@@ -986,6 +986,8 @@ jobs:
           name: unity_build_info_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
           path: unity_cloud_build_info.env
           if-no-files-found: error
+          # Only consumed by the immediately-following PR status comment run.
+          retention-days: 7
 
       - name: Print cloud logs
         if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}

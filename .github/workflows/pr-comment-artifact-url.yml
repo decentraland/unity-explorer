@@ -71,6 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       build-ran: ${{ steps.check.outputs.build-ran }}
+      player-artifacts: ${{ steps.check.outputs.player-artifacts }}
     steps:
       - name: Check if build jobs actually ran
         id: check
@@ -80,14 +81,24 @@ jobs:
           REPO: ${{ github.event.repository.name }}
           RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
-          # Check if any build artifacts exist (they only exist when Build jobs ran).
-          # unity_build_info_* is uploaded as soon as the Unity-side build starts, so a
-          # build that failed before producing player artifacts still counts as "ran"
-          # and gets a failure comment with a Unity Cloud link instead of staying pending.
-          ARTIFACT_COUNT=$(gh api "/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts" \
-            --jq '[.artifacts[] | select((.name | startswith("Decentraland_")) or (.name | startswith("unity_build_info_")))] | length')
-          echo "Build artifact count: $ARTIFACT_COUNT"
-          if [ "$ARTIFACT_COUNT" -gt 0 ]; then
+          # player-artifacts: Decentraland_* zips exist. comment-success interpolates
+          # their artifact ids into download URLs, so the success/skipped split must
+          # keep gating on this and only this.
+          # build-ran: any evidence a Unity-side build started. unity_build_info_* is
+          # uploaded as soon as the build id is known, so a build that failed before
+          # producing player artifacts still posts a failure comment (with the Unity
+          # Cloud link) instead of leaving the comment stuck on "Pending".
+          NAMES=$(gh api "/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts" \
+            --jq '[.artifacts[].name]')
+          PLAYER_COUNT=$(jq 'map(select(startswith("Decentraland_"))) | length' <<< "$NAMES")
+          INFO_COUNT=$(jq 'map(select(startswith("unity_build_info_"))) | length' <<< "$NAMES")
+          echo "Player artifact count: $PLAYER_COUNT; build info artifact count: $INFO_COUNT"
+          if [ "$PLAYER_COUNT" -gt 0 ]; then
+            echo "player-artifacts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "player-artifacts=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$PLAYER_COUNT" -gt 0 ] || [ "$INFO_COUNT" -gt 0 ]; then
             echo "build-ran=true" >> "$GITHUB_OUTPUT"
           else
             echo "build-ran=false" >> "$GITHUB_OUTPUT"
@@ -95,7 +106,7 @@ jobs:
 
   comment-skipped:
     needs: [pre-validation, check-build-ran]
-    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'false'
+    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.player-artifacts == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout CI status action
@@ -118,13 +129,15 @@ jobs:
 
   comment-success:
     needs: [pre-validation, check-build-ran]
-    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
+    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.player-artifacts == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout CI status action
         uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout: |
+            .github/actions/ci-status-comment
+            .github/actions/ucb-build-links
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
@@ -234,52 +247,11 @@ jobs:
           fi
 
       - name: Fetch Unity Cloud build links
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.event.repository.name }}
-        run: |
-          set -euo pipefail
-
-          # The info files come out of the PR-controlled build workflow, so treat them as
-          # untrusted input: accept only a numeric build id and a Unity dashboard URL with
-          # a conservative charset before letting them anywhere near the comment body.
-          URL_RE='^https://(cloud\.unity\.com|developer\.cloud\.unity3d\.com|dashboard\.unity3d\.com)/[A-Za-z0-9./_%~?=&-]*$'
-          parse_info() {
-            local target="$1"
-            local dir="ucb_info_${target}"
-            REPLY_ID=""
-            REPLY_URL=""
-            if gh run download "$PREVIOUS_JOB_ID" \
-                 --repo "$OWNER/$REPO" \
-                 --name "unity_build_info_${target}_launcher" \
-                 --dir "$dir" 2>/dev/null; then
-              REPLY_ID=$(grep -m1 '^BUILD_ID=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
-              REPLY_URL=$(grep -m1 '^DASHBOARD_URL=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
-              [[ "$REPLY_ID" =~ ^[0-9]+$ ]] || REPLY_ID=""
-              [[ "$REPLY_URL" =~ $URL_RE ]] || REPLY_URL=""
-            fi
-          }
-
-          ROWS=""
-          parse_info windows64
-          if [ -n "$REPLY_URL" ]; then
-            ROWS+="| Unity Cloud build (Windows) | [#${REPLY_ID}](${REPLY_URL}) |"$'\n'
-          elif [ -n "$REPLY_ID" ]; then
-            ROWS+="| Unity Cloud build (Windows) | #${REPLY_ID} |"$'\n'
-          fi
-          parse_info macos
-          if [ -n "$REPLY_URL" ]; then
-            ROWS+="| Unity Cloud build (Mac) | [#${REPLY_ID}](${REPLY_URL}) |"$'\n'
-          elif [ -n "$REPLY_ID" ]; then
-            ROWS+="| Unity Cloud build (Mac) | #${REPLY_ID} |"$'\n'
-          fi
-
-          {
-            echo "UCB_ROWS<<UCB_ROWS_EOF"
-            printf '%s' "$ROWS"
-            echo "UCB_ROWS_EOF"
-          } >> "$GITHUB_ENV"
+        id: ucb
+        uses: ./.github/actions/ucb-build-links
+        with:
+          run-id: ${{ env.PREVIOUS_JOB_ID }}
+          github-token: ${{ github.token }}
 
       - name: Update build section
         uses: ./.github/actions/ci-status-comment
@@ -301,7 +273,7 @@ jobs:
             | Download Mac        | ${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }} |
             | Download Mac S3     | ${{ format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }} |
             | Built on            | ${{ env.BUILD_DATE }} |
-            ${{ env.UCB_ROWS }}
+            ${{ steps.ucb.outputs.rows }}
 
             ${{ env.SIZE_REPORT }}
 
@@ -338,63 +310,18 @@ jobs:
       - name: Checkout CI status action
         uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout: |
+            .github/actions/ci-status-comment
+            .github/actions/ucb-build-links
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
       - name: Fetch Unity Cloud build links
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.event.repository.name }}
-          RUN_ID: ${{ github.event.workflow_run.id }}
-        run: |
-          set -euo pipefail
-
-          # The info files come out of the PR-controlled build workflow, so treat them as
-          # untrusted input: accept only a numeric build id and a Unity dashboard URL with
-          # a conservative charset before letting them anywhere near the comment body.
-          URL_RE='^https://(cloud\.unity\.com|developer\.cloud\.unity3d\.com|dashboard\.unity3d\.com)/[A-Za-z0-9./_%~?=&-]*$'
-          parse_info() {
-            local target="$1"
-            local dir="ucb_info_${target}"
-            REPLY_ID=""
-            REPLY_URL=""
-            if gh run download "$RUN_ID" \
-                 --repo "$OWNER/$REPO" \
-                 --name "unity_build_info_${target}_launcher" \
-                 --dir "$dir" 2>/dev/null; then
-              REPLY_ID=$(grep -m1 '^BUILD_ID=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
-              REPLY_URL=$(grep -m1 '^DASHBOARD_URL=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
-              [[ "$REPLY_ID" =~ ^[0-9]+$ ]] || REPLY_ID=""
-              [[ "$REPLY_URL" =~ $URL_RE ]] || REPLY_URL=""
-            fi
-          }
-
-          ROWS=""
-          parse_info windows64
-          if [ -n "$REPLY_URL" ]; then
-            ROWS+="| Unity Cloud build (Windows) | [#${REPLY_ID}](${REPLY_URL}) |"$'\n'
-          elif [ -n "$REPLY_ID" ]; then
-            ROWS+="| Unity Cloud build (Windows) | #${REPLY_ID} |"$'\n'
-          fi
-          parse_info macos
-          if [ -n "$REPLY_URL" ]; then
-            ROWS+="| Unity Cloud build (Mac) | [#${REPLY_ID}](${REPLY_URL}) |"$'\n'
-          elif [ -n "$REPLY_ID" ]; then
-            ROWS+="| Unity Cloud build (Mac) | #${REPLY_ID} |"$'\n'
-          fi
-
-          SECTION=""
-          if [ -n "$ROWS" ]; then
-            SECTION="| Name | Link |"$'\n'"| -------- | ----------------------- |"$'\n'"$ROWS"
-          fi
-
-          {
-            echo "UCB_SECTION<<UCB_SECTION_EOF"
-            printf '%s' "$SECTION"
-            echo "UCB_SECTION_EOF"
-          } >> "$GITHUB_ENV"
+        id: ucb
+        uses: ./.github/actions/ucb-build-links
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
 
       - name: Update build section
         uses: ./.github/actions/ci-status-comment
@@ -408,4 +335,4 @@ jobs:
             Build failed! Check the [logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}) to see what went wrong.
             If the error repeats please consider the `clean-build` tag.
 
-            ${{ env.UCB_SECTION }}
+            ${{ steps.ucb.outputs.section }}
