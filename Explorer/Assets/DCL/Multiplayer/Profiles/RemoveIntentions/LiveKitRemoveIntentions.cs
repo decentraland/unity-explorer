@@ -78,6 +78,9 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectionUpdateFromScene;
         }
 
+        public bool NewBunchAvailable() =>
+            list.Count > 0;
+
         public OwnedBunch<RemoveIntention> Bunch() =>
             new(multithreadSync, list);
 
