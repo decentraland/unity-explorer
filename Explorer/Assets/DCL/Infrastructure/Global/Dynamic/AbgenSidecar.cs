@@ -574,6 +574,12 @@ namespace Global.Dynamic
                 Environment.SetEnvironmentVariable("ABGEN_UPSTREAM_AB_CDN", upstreamCdnUrl);
                 Environment.SetEnvironmentVariable("ABGEN_JIT_CONTENT_DIGEST", jitContentDigest ? "1" : null);
 
+                // With no backend pinned abgen auto-tries its GPU BC7/BC5 encoder, and arming CUDA
+                // costs ~60s before the HTTP listener binds — far past HEALTH_TIMEOUT_MS, so the
+                // sidecar is killed before it ever answers. The CPU encoder produces byte-identical
+                // bundles, so pinning it off only trades encode throughput for a ~1s startup.
+                Environment.SetEnvironmentVariable("ABGEN_GPU_BACKEND", "off");
+
                 return LaunchChild(executablePath);
             }
             catch (Exception e)
