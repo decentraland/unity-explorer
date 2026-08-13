@@ -814,6 +814,8 @@ jobs:
           total = 0
           passed = 0
           failed = []
+          duration = 0.0
+          timings = []
 
           for path in xml_files:
               try:
@@ -825,6 +827,12 @@ jobs:
                   if case_result is None:
                       continue
                   total += 1
+                  try:
+                      seconds = float(test_case.get("duration") or 0)
+                  except ValueError:
+                      seconds = 0.0
+                  duration += seconds
+                  timings.append((seconds, test_case.get("fullname") or test_case.get("name")))
                   if case_result == "Passed":
                       passed += 1
                   elif case_result == "Failed":
@@ -835,6 +843,11 @@ jobs:
               "total": total,
               "passed": passed,
               "failed": sorted(set(failed)),
+              "duration": round(duration, 1),
+              "slowest": [
+                  {"name": name, "seconds": round(seconds, 1)}
+                  for seconds, name in sorted(timings, key=lambda t: -t[0])[:10]
+              ],
           }
 
           with open(f"failed-tests-{test_mode}.json", "w") as f:

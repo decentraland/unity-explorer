@@ -72,9 +72,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Job list of the originating "Unity Test" run, used to deep-link a
-          # crashed/timed-out suite straight to its job page in the warning line.
-          JOBS_JSON=$(gh api "/repos/$REPO/actions/runs/$WORKFLOW_RUN_ID/jobs" 2>/dev/null || echo '{"jobs":[]}')
+          # Job and artifact lists of the originating "Unity Test" run, used to
+          # deep-link each suite to its job page and the result artifacts
+          # (NUnit XML + editor logs) to their download links.
+          JOBS_JSON=$(gh api "/repos/$REPO/actions/runs/$WORKFLOW_RUN_ID/jobs?per_page=100" 2>/dev/null || echo '{"jobs":[]}')
+          ARTS_JSON=$(gh api "/repos/$REPO/actions/runs/$WORKFLOW_RUN_ID/artifacts?per_page=100" 2>/dev/null || echo '{"artifacts":[]}')
+
+          fmt_secs() {
+            awk -v s="$1" 'BEGIN { s=int(s+0.5); m=int(s/60); r=s%60; if (m>0) printf("%dm %02ds", m, r); else printf("%ds", r) }'
+          }
 
           declare -A DISPLAY=( [editmode]=EditMode [playmode]=PlayMode )
 
@@ -82,6 +88,7 @@ jobs:
           rows=""
           warnings=""
           failed_list=""
+          slowest_list=""
           total_failed=0
 
           for mode in editmode playmode; do
@@ -89,13 +96,15 @@ jobs:
             [ -f "$file" ] || continue
             disp=${DISPLAY[$mode]}
 
+            job_url=$(jq -r --arg n "Test ($mode)" '.jobs[]? | select(.name==$n) | .html_url // empty' <<< "$JOBS_JSON" | head -1)
+            if [ -n "$job_url" ]; then disp_cell="[$disp]($job_url)"; else disp_cell="$disp"; fi
+
             # A suite that produced no result XML crashed or timed out before finishing.
             # Surface it as its own state instead of silently contributing 0 to a green total.
             if [ "$(jq -r '.hasResults' "$file")" != "true" ]; then
               status=incomplete
-              job_url=$(jq -r --arg n "Test ($mode)" '.jobs[]? | select(.name==$n) | .html_url' <<< "$JOBS_JSON" | head -1)
               [ -n "$job_url" ] || job_url="$WORKFLOW_RUN_URL"
-              rows="$rows| $disp | ⚠️ No results | — | — | — |"$'\n'
+              rows="$rows| $disp_cell | ⚠️ No results | — | — | — | — |"$'\n'
               warnings="$warnings⚠️ **$disp** produced no results — the run likely crashed or timed out before finishing. Check the [\`Unity Test / Test ($mode)\`]($job_url) job."$'\n\n'
               continue
             fi
@@ -107,14 +116,24 @@ jobs:
             f=$(jq -r '.failed | length' "$file")
             s=$((t - p - f)); if [ "$s" -lt 0 ]; then s=0; fi
 
+            # Suite duration + slowest tests come from the same untrusted artifact:
+            # duration must be numeric before it reaches awk, and slowest entries are
+            # type-checked in jq with names flattened to a single line.
+            d=$(jq -r '.duration // empty' "$file")
+            if [[ "$d" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then dur=$(fmt_secs "$d"); else dur="—"; fi
+            slow=$(jq -r --arg mode "$mode" \
+              '.slowest[]? | select((.seconds|type=="number") and (.name|type=="string")) | "- [\($mode)] \(.seconds)s  \(.name | gsub("[\r\n]"; " "))"' \
+              "$file" 2>/dev/null || true)
+            [ -n "$slow" ] && slowest_list="$slowest_list$slow"$'\n'
+
             if [ "$f" -gt 0 ]; then
               if [ "$status" = "passed" ]; then status=failed; fi
               total_failed=$((total_failed + f))
-              rows="$rows| $disp | ❌ $f failed | $p | $f | $s |"$'\n'
+              rows="$rows| $disp_cell | ❌ $f failed | $p | $f | $s | $dur |"$'\n'
               names=$(jq -r --arg mode "$mode" '.failed[] | "- [\($mode)] \(. | gsub("[\r\n]"; " "))"' "$file")
               failed_list="$failed_list$names"$'\n'
             else
-              rows="$rows| $disp | ✅ Passed | $p | 0 | $s |"$'\n'
+              rows="$rows| $disp_cell | ✅ Passed | $p | 0 | $s | $dur |"$'\n'
             fi
           done
 
@@ -124,15 +143,24 @@ jobs:
             *)          badge="https://img.shields.io/badge/Tests-Passed!-3fb950?logo=codecov&logoColor=white&style=for-the-badge";     headline="All Unity tests passed ✅" ;;
           esac
 
+          # Artifact download links (ids come from the trusted Actions API).
+          art_footer=""
+          for entry in "editmode:Test results (editmode)" "playmode:Test results (playmode)"; do
+            mode="${entry%%:*}"
+            art_name="${entry#*:}"
+            art_id=$(jq -r --arg n "$art_name" '.artifacts[]? | select(.name==$n) | .id // empty' <<< "$ARTS_JSON" | head -1)
+            [ -n "$art_id" ] && art_footer="$art_footer · [$mode](https://github.com/$REPO/actions/runs/$WORKFLOW_RUN_ID/artifacts/$art_id)"
+          done
+
           DELIM="EOF_$(uuidgen)"
           {
             echo "body<<$DELIM"
-            echo "![Tests]($badge)"
+            echo "[![Tests]($badge)]($WORKFLOW_RUN_URL)"
             echo ""
             printf '%s\n' "$headline"
             echo ""
-            echo "| TESTS SUITE | Result | Passed | Failed | Skipped |"
-            echo "| ----------- | ------ | -----: | -----: | ------: |"
+            echo "| TESTS SUITE | Result | Passed | Failed | Skipped | Time |"
+            echo "| ----------- | ------ | -----: | -----: | ------: | ---: |"
             printf '%s' "$rows"
             if [ "$total_failed" -gt 0 ]; then
               echo ""
@@ -141,6 +169,20 @@ jobs:
               printf '%s' "$failed_list"
               echo ""
               echo "</details>"
+            fi
+            if [ -n "$slowest_list" ]; then
+              echo ""
+              echo "<details><summary>Slowest tests</summary>"
+              echo ""
+              printf '%s' "$slowest_list"
+              echo ""
+              echo "</details>"
+            fi
+            echo ""
+            if [ -n "$art_footer" ]; then
+              echo "<sub>Full report: [run summary]($WORKFLOW_RUN_URL) · results + editor logs:${art_footer#" ·"}</sub>"
+            else
+              echo "<sub>Full report: [run summary]($WORKFLOW_RUN_URL)</sub>"
             fi
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"

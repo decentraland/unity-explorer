@@ -62,7 +62,7 @@ jobs:
           section: lint
           github-token: ${{ github.token }}
           body: |-
-            ![Lint](https://img.shields.io/badge/Lint-Pending!-ffff00?logo=jetbrains&logoColor=white&style=for-the-badge)
+            [![Lint](https://img.shields.io/badge/Lint-Pending!-ffff00?logo=jetbrains&logoColor=white&style=for-the-badge)](${{ github.event.workflow_run.html_url }})
 
             Lint in progress, come back later!
 
@@ -123,6 +123,9 @@ jobs:
           ALLOW_EQUAL: ${{ steps.result.outputs.allow-equal }}
           CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           DELIM="EOF_$(uuidgen)"
           BADGE_STYLE="?logo=jetbrains&logoColor=white&style=for-the-badge"
@@ -205,12 +208,28 @@ jobs:
             fi
           fi
 
+          # Footer: the lint job run plus the full InspectCode report artifact (the
+          # findings list above is capped; the artifact has everything). The id comes
+          # from the trusted Actions API.
+          FOOTER=""
+          if [ "$FOUND" = "true" ]; then
+            ART_ID=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100" \
+              --jq '.artifacts[] | select(.name=="csharp-lint-reports") | .id' 2>/dev/null | head -1)
+            FOOTER="<sub>[Lint run]($RUN_URL)"
+            [ -n "$ART_ID" ] && FOOTER="$FOOTER · [full InspectCode report](https://github.com/$REPO/actions/runs/$RUN_ID/artifacts/$ART_ID)"
+            FOOTER="$FOOTER</sub>"
+          fi
+
           {
             echo "body<<$DELIM"
-            echo "![Lint]($BADGE)"
+            echo "[![Lint]($BADGE)]($RUN_URL)"
             echo ""
             echo "$MSG"
             [ -n "$DETAILS" ] && cat "$DETAILS"
+            if [ -n "$FOOTER" ]; then
+              echo ""
+              echo "$FOOTER"
+            fi
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 

@@ -163,6 +163,33 @@ jobs:
             echo "::notice::No matching explorer-automation branch '${HEAD_REF}' — using default."
           fi
 
+  # Flip the unified CI status comment's automation section to "running" the
+  # moment the suite is dispatched, so the on-demand placeholder never lingers
+  # while a run is in flight.
+  automation-pending:
+    name: Mark automation running
+    needs: resolve
+    if: needs.resolve.outputs.authorized == 'true' && needs.resolve.outputs.pr_number != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Set automation section to running
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.resolve.outputs.pr_number }}
+          section: automation
+          github-token: ${{ github.token }}
+          body: |-
+            [![Automation](https://img.shields.io/badge/Automation-Running!-ffff00?logo=github&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            Visual regression suite running for commit `${{ needs.resolve.outputs.head_short_sha }}` — [watch the run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
   run-suite:
     name: Run visual suite
     needs: resolve
@@ -179,3 +206,67 @@ jobs:
       commit_sha: ${{ needs.resolve.outputs.head_short_sha }}
       branch_label: ${{ needs.resolve.outputs.head_ref }}
     secrets: inherit
+
+  # Final state of the automation section: badge + Allure report + run links.
+  # The reusable workflow still posts its own detailed per-platform comment;
+  # this section is the at-a-glance summary inside the unified CI status comment.
+  report:
+    name: Update CI status comment
+    needs: [resolve, run-suite]
+    if: always() && needs.resolve.outputs.authorized == 'true' && needs.resolve.outputs.pr_number != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Compose automation section
+        id: compose
+        env:
+          RESULT: ${{ needs.run-suite.result }}
+          PR_NUMBER: ${{ needs.resolve.outputs.pr_number }}
+          COMMIT_SHA: ${{ needs.resolve.outputs.head_short_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          BADGE_STYLE="?logo=github&logoColor=white&style=for-the-badge"
+          case "$RESULT" in
+            success) BADGE="https://img.shields.io/badge/Automation-Passed!-3fb950${BADGE_STYLE}"; MSG="✅ Visual regression suite passed." ;;
+            failure) BADGE="https://img.shields.io/badge/Automation-Failed!-ff0000${BADGE_STYLE}"; MSG="❌ Visual regression suite failed." ;;
+            *)       BADGE="https://img.shields.io/badge/Automation-Cancelled-lightgrey${BADGE_STYLE}"; MSG="Visual regression suite did not finish (\`$RESULT\`)." ;;
+          esac
+
+          # Mirrors run-visual-suite.yml's "Compute identifiers" S3 path. mode=test
+          # and platform=macos are the reusable workflow's defaults — this dispatcher
+          # passes neither, so keep the three in lockstep if that ever changes.
+          REPORT_URL="${PUBLIC_URL_PREFIX}/@dcl/${REPO//\//-}/visual-regression/test/macos/${PR_NUMBER}/${COMMIT_SHA}/index.html"
+
+          DELIM="EOF_${RANDOM}${RANDOM}_$$"
+          {
+            echo "body<<$DELIM"
+            echo "[![Automation]($BADGE)]($RUN_URL)"
+            echo ""
+            echo "$MSG"
+            echo ""
+            echo "| Name | Link |"
+            echo "| -------- | ----------------------- |"
+            echo "| Commit | \`$COMMIT_SHA\` |"
+            echo "| Allure report | $REPORT_URL |"
+            echo "| Workflow run | $RUN_URL |"
+            echo ""
+            echo "<sub>Triggered via \`/visual-tests\` · the detailed per-platform comment is posted separately.</sub>"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update automation section
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.resolve.outputs.pr_number }}
+          section: automation
+          github-token: ${{ github.token }}
+          body: ${{ steps.compose.outputs.body }}

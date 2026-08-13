@@ -16,7 +16,8 @@ inputs:
 outputs:
   rows:
     description: >-
-      "| Name | Link |"-shaped rows for an existing two-column table; empty when
+      "| Name | Link |"-shaped rows for an existing two-column table, pairing
+      each target's Unity Cloud build page with its GitHub job log; empty when
       no valid build info was found.
     value: ${{ steps.fetch.outputs.rows }}
   section:
@@ -61,17 +62,31 @@ runs:
           fi
         }
 
+        # Per-target GitHub job pages, from the trusted Actions API (jobs of the
+        # matrix job "Build (<target>)"), so each row pairs the Unity Cloud build
+        # page with the GitHub-side job log.
+        JOBS_JSON=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID/jobs?per_page=100" 2>/dev/null || echo '{"jobs":[]}')
+
         ROWS=""
         for entry in "windows64:Windows" "macos:Mac"; do
           target="${entry%%:*}"
           label="${entry#*:}"
           parse_info "$target"
-          # A URL without a valid id only occurs on a tampered artifact — drop the row
+          job_url=$(jq -r --arg n "Build ($target)" '.jobs[]? | select(.name==$n) | .html_url // empty' <<< "$JOBS_JSON" | head -1)
+
+          cell=""
+          # A URL without a valid id only occurs on a tampered artifact — drop the link
           # rather than render an empty "[#](...)" label.
           if [ -n "$REPLY_ID" ] && [ -n "$REPLY_URL" ]; then
-            ROWS+="| Unity Cloud build (${label}) | [#${REPLY_ID}](${REPLY_URL}) |"$'\n'
+            cell="[Unity Cloud #${REPLY_ID}](${REPLY_URL})"
           elif [ -n "$REPLY_ID" ]; then
-            ROWS+="| Unity Cloud build (${label}) | #${REPLY_ID} |"$'\n'
+            cell="Unity Cloud #${REPLY_ID}"
+          fi
+          if [ -n "$cell" ] && [ -n "$job_url" ]; then
+            cell="${cell} · [GitHub job](${job_url})"
+          fi
+          if [ -n "$cell" ]; then
+            ROWS+="| ${label} build | ${cell} |"$'\n'
           fi
         done
 
