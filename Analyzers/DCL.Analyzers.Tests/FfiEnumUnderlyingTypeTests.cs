@@ -29,6 +29,28 @@ public static class Native
 }");
 
         [Test]
+        public Task SkipsVendoredPackageCacheSources()
+        {
+            // Unity feeds the analyzer to package compilations too; vendored sources
+            // (Library/PackageCache) are skipped - the violation below must NOT report.
+            var test = new CSharpAnalyzerTest<FfiEnumUnderlyingTypeAnalyzer, DefaultVerifier>();
+
+            test.TestState.Sources.Add((
+                "/Library/PackageCache/com.example.pkg@abc123/Runtime/Native.cs",
+                @"using System.Runtime.InteropServices;
+
+public enum Mode { A, B }
+
+public static class Native
+{
+    [DllImport(""lib"")]
+    public static extern void SetMode(Mode mode);
+}"));
+
+            return test.RunAsync();
+        }
+
+        [Test]
         public Task ReportsBareEnumReturnType() =>
             VerifyAsync(@"
 public enum Status { Ok, Fail }

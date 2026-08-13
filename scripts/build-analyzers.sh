@@ -21,6 +21,10 @@ fi
 # byte-compares a rebuild against the committed DLL, and byte-identical output
 # requires the same Roslyn compiler on every machine.
 cd Analyzers
+# Always build clean: stale obj/ state can leak into the output and desync it
+# from the clean rebuild the CI drift check performs (observed: incremental
+# rebuild after an edit produced different bytes than the clean CI build).
+rm -rf DCL.Analyzers/bin DCL.Analyzers/obj
 dotnet test DCL.Analyzers.Tests -v q --nologo
 # ContinuousIntegrationBuild normalizes embedded paths and DebugType=none drops
 # the debug directory (whose source hashes differ between CRLF and LF checkouts),

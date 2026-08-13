@@ -26,8 +26,13 @@ assemblies get the error severity too.
 ## Integration
 
 `Explorer/Assets/DCL/DCL.Analyzers.dll` carries the `RoslynAnalyzer` label
-(all platforms disabled) — Unity feeds it to `csc` for every asmdef at or
-below `Assets/DCL/`, so first-party code only, nothing vendored. Built as
+(all platforms disabled). In practice Unity feeds it to more compilations
+than the label's folder suggests — including registry/git packages resolved
+into `Library/PackageCache` (observed: DCLA005 firing inside
+`com.decentraland.pulse.transport` and `com.unity.cloud.ktx`). Vendored
+sources can't be fixed here, so the analyzers scope themselves: every rule
+skips syntax trees whose path contains `/PackageCache/` (`VendoredCode.cs`);
+first-party code under `Assets/` is analyzed in full. Built as
 netstandard2.0 against Microsoft.CodeAnalysis.CSharp 4.3.1 (loads in any
 Roslyn host ≥ 4.3; Unity 6000.x bundles ≥ 4.9).
 

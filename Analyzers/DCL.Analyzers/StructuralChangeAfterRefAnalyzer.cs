@@ -68,6 +68,8 @@ namespace DCL.Analyzers
 
         private static void AnalyzeBlock(CodeBlockAnalysisContext context, INamedTypeSymbol worldType)
         {
+            if (VendoredCode.IsVendored(context.CodeBlock.SyntaxTree)) return;
+
             SyntaxNode block = context.CodeBlock;
             SemanticModel model = context.SemanticModel;
 

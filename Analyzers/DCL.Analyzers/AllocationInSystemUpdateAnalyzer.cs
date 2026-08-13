@@ -69,6 +69,8 @@ namespace DCL.Analyzers
 
         private static void AnalyzeMethod(SyntaxNodeAnalysisContext context, INamedTypeSymbol? baseSystemType)
         {
+            if (VendoredCode.IsVendored(context.Node.SyntaxTree)) return;
+
             var method = (MethodDeclarationSyntax)context.Node;
 
             bool updateShaped = method.Identifier.ValueText == UPDATE_METHOD_NAME

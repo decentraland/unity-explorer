@@ -84,6 +84,8 @@ namespace DCL.Analyzers
         /// <summary>Rule (a) for named flows: async UniTaskVoid method or local function without its own guard.</summary>
         private static void AnalyzeDeclaredFlow(SyntaxNodeAnalysisContext context, INamedTypeSymbol uniTaskVoidType, INamedTypeSymbol? exceptionType)
         {
+            if (VendoredCode.IsVendored(context.Node.SyntaxTree)) return;
+
             (SyntaxTokenList modifiers, SyntaxToken identifier, SyntaxNode? body) = context.Node switch
             {
                 MethodDeclarationSyntax method => (method.Modifiers, method.Identifier, (SyntaxNode?)method.Body ?? method.ExpressionBody?.Expression),
@@ -104,6 +106,8 @@ namespace DCL.Analyzers
         /// <summary>Rule (a) for anonymous flows: async lambda or anonymous method returning UniTaskVoid without its own guard.</summary>
         private static void AnalyzeLambda(SyntaxNodeAnalysisContext context, INamedTypeSymbol uniTaskVoidType, INamedTypeSymbol? exceptionType)
         {
+            if (VendoredCode.IsVendored(context.Node.SyntaxTree)) return;
+
             var lambda = (AnonymousFunctionExpressionSyntax)context.Node;
 
             if (!lambda.Modifiers.Any(SyntaxKind.AsyncKeyword) || lambda.Body == null) return;
@@ -125,6 +129,8 @@ namespace DCL.Analyzers
         /// </summary>
         private static void AnalyzeForget(SyntaxNodeAnalysisContext context, INamedTypeSymbol uniTaskVoidType, INamedTypeSymbol? exceptionType)
         {
+            if (VendoredCode.IsVendored(context.Node.SyntaxTree)) return;
+
             var invocation = (InvocationExpressionSyntax)context.Node;
 
             if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess

@@ -55,6 +55,8 @@ namespace DCL.Analyzers
 
         private static void AnalyzeMethod(SyntaxNodeAnalysisContext context, INamedTypeSymbol dllImportType)
         {
+            if (VendoredCode.IsVendored(context.Node.SyntaxTree)) return;
+
             var method = (MethodDeclarationSyntax)context.Node;
 
             if (context.SemanticModel.GetDeclaredSymbol(method, context.CancellationToken) is not { } symbol
