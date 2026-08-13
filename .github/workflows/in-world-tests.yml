@@ -105,6 +105,7 @@ jobs:
 
     outputs:
       build_url: ${{ steps.resolve.outputs.build-url }}
+      windows_build_url: ${{ steps.resolve.outputs.windows-build-url }}
       commit_sha: ${{ steps.resolve.outputs.short-sha }}
       tests_ref: ${{ inputs.tests_ref || steps.resolve.outputs.tests-ref }}
       branch_label: ${{ github.head_ref || github.ref_name }}
@@ -127,6 +128,8 @@ jobs:
           # A PR opens before its build exists, so wait one out. Manual runs
           # pick a ref whose build is already there — or say which to use.
           wait-minutes: ${{ github.event_name == 'pull_request' && 90 || 0 }}
+          # Both suites run, so both zips have to exist before either starts.
+          build-legs: macos,windows64
           build-url-override: ${{ inputs.build_url }}
           public-url-prefix: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -149,23 +152,14 @@ jobs:
       # `== true` rather than the raw input: a pull_request event supplies no
       # inputs at all, and the reusable's parameter is typed boolean.
       record_perf: ${{ inputs.record_perf == true }}
-      # macOS only, for now. explorer-automation#55 added a Windows leg and
-      # defaulted it on, but it is not callable from this repo yet:
-      #
-      #   - its checkout is bare, so in a workflow_call run it fetches the
-      #     CALLER — this repo — and then cannot find explorer/ci/*.ps1.
-      #     run-inworld-suite.yml's macOS leg names the repository explicitly;
-      #     the Windows one still has to.
-      #   - run-inworld-suite.yml passes it no build_url, so it resolves the
-      #     newest dev build. A release gate has to test the commit on the PR,
-      #     and the Windows artifact is a different file anyway
-      #     (Decentraland_windows64.zip beside the macOS zip, same prefix — the
-      #     resolver here can hand it over once there is an input for it).
-      #   - it runs on `win-gpu-t4-explorer`, and a called workflow's jobs use
-      #     runners the *caller* can reach. This repo registers none.
-      #
-      # Flip to true once those land; the suite splits across both legs then.
-      windows: false
+      # Both platforms gate a release. `windows` defaults to true upstream, but
+      # say it here anyway: a default that changes underneath a caller pinned to
+      # @main is how this repo silently acquired a Windows leg it could not run
+      # (explorer-automation#55, fixed by #73).
+      windows: true
+      # `build_url` is the macOS zip; the Windows leg needs its own or it
+      # resolves the newest dev build and reports on the wrong commit.
+      windows_build_url: ${{ needs.resolve.outputs.windows_build_url }}
     secrets: inherit
 
   result:

@@ -1,10 +1,9 @@
 name: Resolve Explorer build
 description: >-
-  Resolves the macOS Unity Cloud Build artifact URL for a commit, plus the
+  Resolves Unity Cloud Build artifact URLs for a commit, plus the
   explorer-automation ref its tests should come from. Shared by the dispatchers
-  for explorer-automation's reusable suites — visual-regression.yml and
-  in-world-tests.yml — which differ only in their trigger and in which suite
-  they call.
+  for explorer-automation's reusable suites — visual-regression.yml, which needs
+  the macOS build, and in-world-tests.yml, which needs both.
 
 inputs:
   head-ref:
@@ -21,10 +20,20 @@ inputs:
       the build the same event started.
     required: false
     default: '0'
+  build-legs:
+    description: >-
+      Which build-unitycloud.yml matrix legs must be green before the artifacts
+      are usable, comma-separated. Each leg contributes its own URL, so asking
+      for `windows64` is also what makes windows-build-url non-empty. Waiting on
+      the legs rather than the run skips Build Gate and anything else downstream.
+    required: false
+    default: 'macos'
   build-url-override:
     description: >-
       Use this artifact URL as-is and skip resolution. For manual runs that
       target a build this repo cannot derive — an older commit, another branch.
+      Both platforms' zips share a prefix, so the sibling URL is derived from
+      this one rather than asked for separately.
     required: false
     default: ''
   public-url-prefix:
@@ -41,6 +50,11 @@ outputs:
   build-url:
     description: 'Direct URL to Decentraland_macos.zip, verified reachable.'
     value: ${{ steps.build.outputs.build-url }}
+  windows-build-url:
+    description: >-
+      Direct URL to Decentraland_windows64.zip, verified reachable. Empty unless
+      `windows64` is in build-legs.
+    value: ${{ steps.build.outputs.windows-build-url }}
   short-sha:
     description: 'First 7 characters of the commit the build was made from.'
     value: ${{ steps.build.outputs.short-sha }}
@@ -58,10 +72,20 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
         HEAD_SHA: ${{ inputs.head-sha }}
         WAIT_MINUTES: ${{ inputs.wait-minutes }}
+        BUILD_LEGS: ${{ inputs.build-legs }}
         BUILD_URL_OVERRIDE: ${{ inputs.build-url-override }}
         PUBLIC_URL_PREFIX: ${{ inputs.public-url-prefix }}
       run: |
         set -euo pipefail
+
+        LEGS=${BUILD_LEGS//,/ }
+        # build-unitycloud.yml names both zips Decentraland_<matrix.target>.zip
+        # and uploads them to one prefix, so a leg name is all it takes to get
+        # from one to the other.
+        want_windows=0
+        for LEG in $LEGS; do
+          if [ "$LEG" = "windows64" ]; then want_windows=1; fi
+        done
 
         if [ -n "$BUILD_URL_OVERRIDE" ]; then
           # Everything below only ever produces bucket URLs; an override is the
@@ -76,6 +100,10 @@ runs:
           esac
           {
             echo "build-url=${BUILD_URL_OVERRIDE}"
+            # Same prefix, so the sibling needs no second input from the caller.
+            if [ "$want_windows" = "1" ]; then
+              echo "windows-build-url=${BUILD_URL_OVERRIDE%/*}/Decentraland_windows64.zip"
+            fi
             echo "short-sha=${HEAD_SHA:0:7}"
           } >> "$GITHUB_OUTPUT"
           echo "::notice::Using caller-supplied build URL."
@@ -100,38 +128,46 @@ runs:
           STATE=none
           for (( i = 0; i < LIMIT; i++ )); do
             CAND=$(jq -c ".[$i]" <<< "$RUNS")
-            # Wait on the macOS leg alone, not on the run. It uploads the zip we
-            # download and finishes ~9 minutes before Build (windows64); the run
-            # itself concludes later still. Nothing else the run does can make
-            # that artifact any more or less valid.
-            MAC=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$(jq -r '.id' <<< "$CAND")/jobs?per_page=50" \
-              --jq '[.jobs[] | select(.name | test("^Build \\(macos"))] | .[0] // empty')
-            if [ -z "$MAC" ]; then
-              # Prebuild has not fanned the matrix out yet, or this run decided
-              # not to build at all (draft, no Explorer/** change).
-              if [ "$(jq -r '.status' <<< "$CAND")" != "completed" ]; then STATE=pending; fi
-              continue
-            fi
-            case "$(jq -r '"\(.status)/\(.conclusion // "-")"' <<< "$MAC")" in
-              completed/success) RUN_JSON="$CAND"; break ;;
-              completed/*)       if [ "$STATE" = none ]; then STATE=failed; fi ;;
-              *)                 STATE=pending ;;
-            esac
+            RUN_DONE=$(jq -r '.status' <<< "$CAND")
+            # Wait on the build legs, not on the run: they upload the zips, and
+            # Build Gate and everything else downstream only conclude later.
+            # One call per candidate, filtered per leg locally.
+            JOBS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$(jq -r '.id' <<< "$CAND")/jobs?per_page=50" \
+              --jq '[.jobs[] | {name, status, conclusion}]')
+            legs_ok=1
+            for LEG in $LEGS; do
+              J=$(jq -c --arg leg "Build ($LEG" '[.[] | select(.name | startswith($leg))] | .[0] // empty' <<< "$JOBS")
+              if [ -z "$J" ]; then
+                # Prebuild has not fanned the matrix out yet, or this run decided
+                # not to build at all (draft, no Explorer/** change, or a
+                # platforms input that left this leg out).
+                legs_ok=0
+                if [ "$RUN_DONE" != "completed" ]; then STATE=pending; fi
+                continue
+              fi
+              case "$(jq -r '"\(.status)/\(.conclusion // "-")"' <<< "$J")" in
+                completed/success) ;;
+                completed/*)       legs_ok=0; if [ "$STATE" = none ]; then STATE=failed; fi ;;
+                *)                 legs_ok=0; STATE=pending ;;
+              esac
+            done
+            if [ "$legs_ok" = "1" ]; then RUN_JSON="$CAND"; break; fi
           done
           if [ -n "$RUN_JSON" ]; then break; fi
 
           if [ "$WAIT_MINUTES" -eq 0 ]; then
-            echo "::error::No Unity Cloud Build with a green macOS leg for ${HEAD_SHA:0:7}. Is the build still in progress, or did it fail?"
+            echo "::error::No Unity Cloud Build of ${HEAD_SHA:0:7} with all of [${BUILD_LEGS}] green. Is the build still in progress, or did it fail?"
             exit 1
           fi
-          # Newest first, so `failed` means the most recent macOS build we found
-          # is red. Waiting for a re-run nobody has asked for only delays that.
+          # Newest first, so `failed` means the most recent build we found is red
+          # on a leg we need. Waiting for a re-run nobody has asked for only
+          # delays that.
           if [ "$STATE" = failed ]; then
-            echo "::error::The macOS build failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
+            echo "::error::A build leg failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
             exit 1
           fi
           if [ "$SECONDS" -ge "$DEADLINE" ]; then
-            echo "::error::Gave up after ${WAIT_MINUTES}m waiting for a macOS build of ${HEAD_SHA:0:7}."
+            echo "::error::Gave up after ${WAIT_MINUTES}m waiting for a build of ${HEAD_SHA:0:7} with [${BUILD_LEGS}] green."
             # build-unitycloud.yml skips drafts and PRs that touch no
             # Explorer/** file. A `force-build` label overrides both. Note a
             # skipped run still counts in TOTAL, hence the state rather than the
@@ -143,7 +179,7 @@ runs:
             fi
             exit 1
           fi
-          echo "Waiting for the macOS build of ${HEAD_SHA:0:7} — ${TOTAL} build run(s), state: ${STATE}. $(( (DEADLINE - SECONDS) / 60 ))m left."
+          echo "Waiting for [${BUILD_LEGS}] on ${HEAD_SHA:0:7} — ${TOTAL} build run(s), state: ${STATE}. $(( (DEADLINE - SECONDS) / 60 ))m left."
           sleep 60
         done
 
@@ -174,25 +210,32 @@ runs:
         # the suite sits at "Wait for connection: 0%" until its job cap.
         ARTIFACT_PATH="@dcl/${GITHUB_REPOSITORY##*/}/branch/${RUN_BRANCH}/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
         BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
+        WINDOWS_BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_windows64.zip"
 
-        # A successful run does not guarantee a macOS zip — build-unitycloud.yml
-        # takes a `platforms` input. Failing here costs seconds; the same failure
-        # inside the suite costs a whole macOS runner slot.
+        # A green leg does not guarantee the zip is fetchable. Failing here costs
+        # seconds; the same failure inside a suite costs a whole runner slot, and
+        # the Windows one is a scarce self-hosted GPU box.
         # curl still prints its -w output when it exits non-zero, so a
         # `|| echo 000` fallback would concatenate codes ("200000") — normalize
         # separately, and only when the output is empty.
-        HTTP=$(curl -sS -o /dev/null -w '%{http_code}' -I --retry 3 --retry-delay 5 "$BUILD_URL" || true)
-        HTTP=${HTTP:-000}
-        if [ "$HTTP" != "200" ]; then
-          echo "::error::Build artifact is not reachable (HTTP ${HTTP}): ${BUILD_URL}"
-          exit 1
-        fi
+        verify() {
+          local url="$1" http
+          http=$(curl -sS -o /dev/null -w '%{http_code}' -I --retry 3 --retry-delay 5 "$url" || true)
+          http=${http:-000}
+          if [ "$http" != "200" ]; then
+            echo "::error::Build artifact is not reachable (HTTP ${http}): ${url}"
+            return 1
+          fi
+        }
+        verify "$BUILD_URL"
+        if [ "$want_windows" = "1" ]; then verify "$WINDOWS_BUILD_URL"; fi
 
         {
           echo "build-url=${BUILD_URL}"
+          if [ "$want_windows" = "1" ]; then echo "windows-build-url=${WINDOWS_BUILD_URL}"; fi
           echo "short-sha=${SHORT_SHA}"
         } >> "$GITHUB_OUTPUT"
-        echo "::notice::Using ${RUN_BRANCH} build ${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}."
+        echo "::notice::Using ${RUN_BRANCH} build ${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA} for [${BUILD_LEGS}]."
 
     - name: Look up matching explorer-automation branch
       id: match
