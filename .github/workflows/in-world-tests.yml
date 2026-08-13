@@ -70,13 +70,6 @@ concurrency:
   group: in-world-tests-${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
-permissions:
-  # `actions: read` for the build lookup; the other two must be a superset of
-  # run-inworld-suite.yml's, or the call dies at startup.
-  actions: read
-  contents: read
-  pull-requests: write
-
 jobs:
   resolve:
     name: Wait for the build
@@ -98,6 +91,15 @@ jobs:
     runs-on: ubuntu-latest
     # Covers the wait below plus the artifact check. Builds measure ~40m.
     timeout-minutes: 100
+
+    # `actions: read` for the build-unitycloud lookup, `contents: read` for the
+    # sparse checkout, `pull-requests: read` for the `gh pr list` below. Read
+    # access to public data survives whatever this block says while the repo is
+    # public, but the grant should not hinge on that. Nothing here writes.
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
 
     env:
       HEAD_REF: ${{ github.head_ref || github.ref_name }}
@@ -162,6 +164,12 @@ jobs:
     # @main pins the merged version of the reusable, so PRs to
     # explorer-automation that touch it cannot change release validation here.
     uses: decentraland/explorer-automation/.github/workflows/run-inworld-suite.yml@main
+    # Must be a superset of run-inworld-suite.yml's own `permissions:`, or the
+    # call dies at startup. The write is the PR comment it posts; this is the
+    # only job that needs one, hence per job rather than at the top of the file.
+    permissions:
+      contents: read
+      pull-requests: write
     with:
       build_url: ${{ needs.resolve.outputs.build_url }}
       filter: ${{ inputs.filter || '' }}
@@ -199,6 +207,8 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Reads its `needs` results and nothing else — no API call, no checkout.
+    permissions: {}
     steps:
       # The one check worth requiring on main. Everything above is either
       # plumbing or a job name owned by another repository.
