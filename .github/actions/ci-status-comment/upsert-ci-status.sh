@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 # Create or update the single unified CI status comment on a PR, replacing only
-# one section (build | lint | tests | automation). All CI comment workflows call
-# this through the ci-status-comment composite action, so the separate bot
-# comments collapse into one.
+# one section (build | lint | tests | performance | automation). All CI comment
+# workflows call this through the ci-status-comment composite action, so the
+# separate bot comments collapse into one.
 #
 # The comment is keyed by the hidden <!-- ci-status --> marker and holds one
 # fenced block per section:
 #
 #   <!-- ci-status -->
 #   ### 🚦 CI Status
-#   <!-- ci:build:start -->      …build…      <!-- ci:build:end -->
-#   <!-- ci:lint:start -->       …lint…       <!-- ci:lint:end -->
-#   <!-- ci:tests:start -->      …tests…      <!-- ci:tests:end -->
-#   <!-- ci:automation:start --> …automation… <!-- ci:automation:end -->
+#   <!-- ci:build:start -->       …build…       <!-- ci:build:end -->
+#   <!-- ci:lint:start -->        …lint…        <!-- ci:lint:end -->
+#   <!-- ci:tests:start -->       …tests…       <!-- ci:tests:end -->
+#   <!-- ci:performance:start --> …performance… <!-- ci:performance:end -->
+#   <!-- ci:automation:start -->  …automation…  <!-- ci:automation:end -->
 #
 # Build and Unity Test run as independent workflows whose comment writers can
 # fire at the same time, so a plain read-modify-write would drop a section or
@@ -35,6 +36,7 @@ section_default() {
     lint)  printf '![Lint](https://img.shields.io/badge/Lint-Waiting-lightgrey?logo=jetbrains&logoColor=white&style=for-the-badge)\n\n_Waiting for lint to start…_' ;;
     tests) printf '![Tests](https://img.shields.io/badge/Tests-Waiting-lightgrey?logo=codecov&logoColor=white&style=for-the-badge)\n\n_Waiting for tests to start…_' ;;
     automation) printf '![Automation](https://img.shields.io/badge/Automation-On%%20demand-lightgrey?logo=github&logoColor=white&style=for-the-badge)\n\n_On demand — comment `/visual-tests` on this PR to run the visual regression suite against its build._' ;;
+    performance) printf '![Performance](https://img.shields.io/badge/Performance-Waiting-lightgrey?logo=speedtest&logoColor=white&style=for-the-badge)\n\n_Bare-metal benchmarks run automatically after each successful build; results arrive as a separate comment. Add the `perf_test` label to run the in-repo Unity performance suite instead (skips normal CI and blocks merge while set)._' ;;
   esac
 }
 
@@ -43,11 +45,12 @@ wrap_section() { printf '<!-- ci:%s:start -->\n%s\n<!-- ci:%s:end -->' "$1" "$2"
 
 # A fresh comment with every section defaulted to "waiting".
 skeleton() {
-  printf '%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n' \
+  printf '%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n' \
     "$MARKER" "$HEADER" \
     "$(wrap_section build "$(section_default build)")" \
     "$(wrap_section lint  "$(section_default lint)")" \
     "$(wrap_section tests "$(section_default tests)")" \
+    "$(wrap_section performance "$(section_default performance)")" \
     "$(wrap_section automation "$(section_default automation)")"
 }
 

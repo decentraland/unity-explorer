@@ -283,6 +283,7 @@ jobs:
         run: gh release view -R $GITHUB_REPOSITORY --json tagName --template "RELEASE_TAG={{.tagName}}" >> $GITHUB_ENV
 
       - name: Trigger performance test
+        id: perf_dispatch
         uses: peter-evans/repository-dispatch@v4
         with:
           repository: decentraland/performance-testing
@@ -301,6 +302,21 @@ jobs:
               "mac_change_build_url": ${{ toJSON(format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH)) }},
               "mac_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip"
             }
+
+      # repository_dispatch is fire-and-forget (no run id comes back), so this
+      # links the target workflow's run list; the benchmark itself posts a
+      # separate perf-test-summary comment with its run link when it finishes.
+      - name: Mark performance section as dispatched
+        if: steps.perf_dispatch.outcome == 'success'
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: performance
+          github-token: ${{ github.token }}
+          body: |-
+            [![Performance](https://img.shields.io/badge/Performance-Dispatched!-ffff00?logo=speedtest&logoColor=white&style=for-the-badge)](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)
+
+            🏁 Bare-metal benchmark dispatched for this build ([run queue](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)) — results across the runner fleet will be posted as a separate `perf-test-summary` comment.
 
   comment-failed:
     needs: [pre-validation, check-build-ran]

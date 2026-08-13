@@ -1,17 +1,17 @@
 name: Upsert CI Status Comment
 description: >-
   Create or update the single unified CI status comment on a PR, replacing only
-  the given section (build | lint | tests | automation). Seeds a skeleton with
-  every section the first time it runs, appends a missing section fence to
-  older comments, and re-reads/retries so concurrent writers (build vs. Unity
-  Test) never clobber each other's section.
+  the given section (build | lint | tests | performance | automation). Seeds a
+  skeleton with every section the first time it runs, appends a missing section
+  fence to older comments, and re-reads/retries so concurrent writers (build
+  vs. Unity Test) never clobber each other's section.
 
 inputs:
   pr-number:
     description: Pull request number to comment on.
     required: true
   section:
-    description: Which section to replace — one of build, lint, tests, automation.
+    description: Which section to replace — one of build, lint, tests, performance, automation.
     required: true
   body:
     description: Markdown for this section (inline badge + message). Rendered as-is between the section markers.
