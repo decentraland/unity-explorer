@@ -67,12 +67,10 @@ case "${SECTION:-}" in
 esac
 
 MARKER="<!-- ci-status -->"
-# The <picture> wrapper stops GitHub's renderer from auto-wrapping the logo in
-# a link to the image itself — the one construct its sanitizer leaves unlinked.
-HEADER='### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30" alt="Decentraland"></picture> CI Status'
+HEADER='### 🚦 CI Status'
 # Retired header spellings, migrated to $HEADER whenever a section write runs.
 OLD_HEADERS=(
-  "### 🚦 CI Status"
+  '### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30" alt="Decentraland"></picture> CI Status'
   '### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"></picture> CI Status'
 )
 BOT="github-actions[bot]"
