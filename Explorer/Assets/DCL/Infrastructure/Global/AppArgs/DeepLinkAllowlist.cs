@@ -145,9 +145,6 @@ namespace Global.AppArgs
             // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
             AppArgsFlags.MCP_PORT,
 
-            // Opens the per-scene JS console (dev tooling for inspecting a scene under development).
-            AppArgsFlags.SCENE_CONSOLE,
-
             // Local-scene development only: serve the scene as asset bundles JIT-converted by the explorer's
             // embedded abgen sidecar instead of raw GLTFs. A pure boolean — the sidecar reads the scene through
             // the realm's own /content endpoints (RealmUrls.LocalSceneDevelopmentRealmAsync), the same value this
