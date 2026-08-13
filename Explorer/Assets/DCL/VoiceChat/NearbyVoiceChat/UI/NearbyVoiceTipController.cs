@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.ChatArea;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Prefs;
 using DCL.RealmNavigation;
@@ -108,6 +109,7 @@ namespace DCL.VoiceChat.UI
                     nearbyVoiceChatButtonView.Button.onClick.Invoke();
             }
             catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.VOICE_CHAT); }
         }
 
         private void OnNearbyVoiceStateChanged(NearbyVoiceChatState state)
