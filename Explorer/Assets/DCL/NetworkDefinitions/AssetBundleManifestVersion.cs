@@ -46,7 +46,7 @@ public class AssetBundleManifestVersion
         //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.
         private bool hasReusableAssets;
 
-        public bool HasHashInPath()
+        private bool HasHashInPath()
         {
             HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
             return HasHashInPathValue.Value;
