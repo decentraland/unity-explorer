@@ -88,7 +88,11 @@ jobs:
           # uploaded as soon as the build id is known, so a build that failed before
           # producing player artifacts still posts a failure comment (with the Unity
           # Cloud link) instead of leaving the comment stuck on "Pending".
-          NAMES=$(gh api "/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts" \
+          # per_page=100: the default page holds 30 and a two-target run already
+          # uploads ~a dozen artifacts — unity_build_info_* falling off page 1
+          # would read as build-ran=false, the exact stuck-on-Pending bug the
+          # flag exists to prevent.
+          NAMES=$(gh api "/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100" \
             --jq '[.artifacts[].name]')
           PLAYER_COUNT=$(jq 'map(select(startswith("Decentraland_"))) | length' <<< "$NAMES")
           INFO_COUNT=$(jq 'map(select(startswith("unity_build_info_"))) | length' <<< "$NAMES")
@@ -308,13 +312,20 @@ jobs:
       # expiry canary — the 2026-06..08 outage was exactly this token expiring
       # with no warning anywhere a human looks.
       - name: Probe performance PAT expiry
+        # Purely decorative — its whole output is one optional sentence, so it
+        # must never gate the dispatched/dispatch-failed section writes below.
         if: steps.perf_dispatch.outcome == 'success'
+        continue-on-error: true
         env:
           PAT: ${{ secrets.PERFORMANCE_TESTING_PAT }}
         run: |
           set -euo pipefail
-          exp=$(curl -sI -H "Authorization: Bearer $PAT" https://api.github.com/repos/decentraland/performance-testing \
-            | tr -d '\r' | grep -i '^github-authentication-token-expiration:' | cut -d' ' -f2- || true)
+          # The expiry header rides every authenticated call; /rate_limit spends
+          # no quota and names no repo that could drift. gh reads the token from
+          # the environment, keeping it out of any process's argv. head -1 keeps
+          # $GITHUB_ENV single-line even if the response ever repeats the header.
+          exp=$(GH_TOKEN="$PAT" timeout 15 gh api --include --method HEAD /rate_limit 2>/dev/null \
+            | tr -d '\r' | grep -i '^github-authentication-token-expiration:' | head -1 | cut -d' ' -f2- || true)
           msg=""
           if [ -n "$exp" ]; then
             exp_s=$(date -d "$exp" +%s 2>/dev/null || echo 0)
@@ -325,6 +336,8 @@ jobs:
                 msg="⚠️ \`PERFORMANCE_TESTING_PAT\` expires in **$days days** ($exp) — rotate it before benchmark dispatches start failing."
               fi
             fi
+          else
+            echo "::warning::No github-authentication-token-expiration header returned — PAT expiry cannot be monitored."
           fi
           echo "PAT_EXPIRY_WARNING=$msg" >> "$GITHUB_ENV"
 
@@ -349,8 +362,12 @@ jobs:
       # cause — it broke silently from 2026-06-15 to 2026-08-13) turns this job
       # red but leaves no trace on the PR; surface it in the performance section
       # so it cannot go unnoticed for weeks again.
+      # outcome != 'success' rather than == 'failure': anything failing between
+      # the checkout and the dispatch (Find latest release, the build-section
+      # upsert) skips perf_dispatch, and a skipped dispatch is the same silence
+      # on the PR as a failed one.
       - name: Mark performance section as dispatch-failed
-        if: failure() && steps.perf_dispatch.outcome == 'failure'
+        if: failure() && steps.perf_dispatch.outcome != 'success'
         uses: ./.github/actions/ci-status-comment
         with:
           pr-number: ${{ needs.pre-validation.outputs.pr-number }}
@@ -359,7 +376,7 @@ jobs:
           body: |-
             [![Performance](https://img.shields.io/badge/Performance-Dispatch%20failed-ff0000?logo=speedtest&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-            ❌ Could not dispatch the bare-metal benchmark — see the [step log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). If it says "Repository not found, OR token has insufficient permissions", the `PERFORMANCE_TESTING_PAT` secret has expired and needs to be rotated.
+            ❌ Could not dispatch the bare-metal benchmark (the job failed before or during the dispatch) — see the [step log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). If it says "Repository not found, OR token has insufficient permissions", the `PERFORMANCE_TESTING_PAT` secret has expired and needs to be rotated.
 
   comment-failed:
     needs: [pre-validation, check-build-ran]

@@ -805,7 +805,7 @@ jobs:
           TEST_MODE: ${{ matrix.testMode }}
         run: |
           python3 - <<'PY'
-          import glob, json, os, xml.etree.ElementTree as ET
+          import glob, json, math, os, xml.etree.ElementTree as ET
 
           artifacts_path = os.environ["ARTIFACTS_PATH"]
           test_mode = os.environ["TEST_MODE"]
@@ -830,6 +830,11 @@ jobs:
                   try:
                       seconds = float(test_case.get("duration") or 0)
                   except ValueError:
+                      seconds = 0.0
+                  # float() admits nan/inf/1e999 without raising, and json.dump
+                  # would then emit bare NaN/Infinity — invalid JSON that aborts
+                  # the consumer's very first jq read of this file.
+                  if not math.isfinite(seconds):
                       seconds = 0.0
                   duration += seconds
                   timings.append((seconds, test_case.get("fullname") or test_case.get("name")))

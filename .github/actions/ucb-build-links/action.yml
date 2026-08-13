@@ -41,7 +41,10 @@ runs:
         # The info files come out of the PR-controlled build workflow, so treat them as
         # untrusted input: accept only a numeric build id and a Unity dashboard URL with
         # a conservative charset before letting them anywhere near a comment body.
-        URL_RE='^https://(cloud\.unity\.com|developer\.cloud\.unity3d\.com|dashboard\.unity3d\.com)/[A-Za-z0-9./_%~?=&#-]*$'
+        # Mirrors the producer's '/builds/<id>' requirement (build.py) so the two
+        # validators agree, and pins the id to digits — a query-string-only path
+        # under a Unity host (open-redirect bait) no longer passes.
+        URL_RE='^https://(cloud\.unity\.com|developer\.cloud\.unity3d\.com|dashboard\.unity3d\.com)/[A-Za-z0-9./_%~?=&#-]*/builds/[0-9]+[A-Za-z0-9./_%~?=&#-]*$'
         parse_info() {
           local target="$1"
           local dir="ucb_info_${target}"

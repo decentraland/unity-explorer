@@ -33,7 +33,23 @@ set -euo pipefail
 #                       find it, spawning duplicates).
 if [ -n "${SECTION_BODY_FILE:-}" ]; then
   SECTION_BODY="$(cat "$SECTION_BODY_FILE")"
+  # GitHub caps an issue comment at 65536 chars across every section; keep one
+  # writer from consuming the whole budget and failing an unrelated section's
+  # PATCH with an opaque 422. Truncation is fine for a status section that
+  # already links out to the full report.
+  if [ "${#SECTION_BODY}" -gt 20000 ]; then
+    echo "::warning::Section body is ${#SECTION_BODY} chars; truncating to 20000."
+    SECTION_BODY="${SECTION_BODY:0:20000}"$'\n\n'"_…truncated; see the linked run for the full report._"
+  fi
 fi
+
+# Fail fast on a section name outside the fence set — an unknown name would
+# append a dead fence to the shared comment and then wedge the survive check
+# for 5 attempts, burning ~15 API calls per write from then on.
+case "${SECTION:-}" in
+  build|lint|tests|performance|automation) ;;
+  *) echo "::error::Unknown section '${SECTION:-}'."; exit 2 ;;
+esac
 
 MARKER="<!-- ci-status -->"
 HEADER="### 🚦 CI Status"
@@ -114,12 +130,23 @@ for attempt in 1 2 3 4 5; do
   COMMENT_ID="${IDS[0]:-}"
 
   if [ -z "$COMMENT_ID" ] && [ -n "${NO_CREATE:-}" ]; then
-    echo "No unified CI status comment exists and NO_CREATE is set; leaving creation to the repo's own workflows."
-    exit 3
+    # Lose one round before falling back: an external caller often lands here
+    # seconds before the build workflow seeds the comment, and the standalone
+    # fallback it would post instead is noise that never collapses.
+    if [ "$attempt" -ge 2 ]; then
+      echo "No unified CI status comment exists and NO_CREATE is set; leaving creation to the repo's own workflows."
+      exit 3
+    fi
+    echo "No unified CI status comment yet (attempt $attempt); waiting for the repo's own workflows to seed it."
+    sleep $((attempt * 2))
+    continue
   fi
 
-  # Collapse accidental duplicates from a create race: keep the oldest, drop the rest.
-  if [ "${#IDS[@]}" -gt 1 ]; then
+  # Collapse accidental duplicates from a create race: keep the oldest, drop the
+  # rest. Skipped for external callers — comment GC belongs to this repo's own
+  # workflows, which run often enough to clean up within minutes, and a misfire
+  # under a foreign token would delete evidence with nothing logged.
+  if [ "${#IDS[@]}" -gt 1 ] && [ -z "${NO_CREATE:-}" ]; then
     for extra in "${IDS[@]:1}"; do
       echo "Deleting duplicate CI status comment $extra."
       gh api -X DELETE "/repos/$REPO/issues/comments/$extra" >/dev/null || true
@@ -138,7 +165,11 @@ for attempt in 1 2 3 4 5; do
   # instead of resetting the whole comment and wiping the other sections' state.
   if [ -z "$CURRENT_BODY" ]; then
     CURRENT_BODY="$(skeleton)"
-  elif ! grep -qF "$START" <<< "$CURRENT_BODY"; then
+  # -x: whole-line, matching replace_section/extract_section's $0==s exactly. A
+  # substring hit on a marker embedded in a body line (which the strip filter
+  # deliberately lets through) would skip fence creation here while the awk
+  # matchers see nothing — leaving the section permanently unwritable.
+  elif ! grep -qxF "$START" <<< "$CURRENT_BODY"; then
     CURRENT_BODY="$CURRENT_BODY"$'\n\n'"$(wrap_section "$SECTION" "$(section_default "$SECTION")")"
   fi
 

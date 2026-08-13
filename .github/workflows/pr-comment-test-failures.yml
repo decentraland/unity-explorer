@@ -118,11 +118,14 @@ jobs:
 
             # Suite duration + slowest tests come from the same untrusted artifact:
             # duration must be numeric before it reaches awk, and slowest entries are
-            # type-checked in jq with names flattened to a single line.
+            # type-checked in jq with names flattened to a single line. Names render
+            # inside inline code (backticks/pipes stripped) so a name shaped like
+            # markdown — a link, an <img>, a </details> — reads as text instead of
+            # rendering as first-party comment furniture.
             d=$(jq -r '.duration // empty' "$file")
             if [[ "$d" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then dur=$(fmt_secs "$d"); else dur="—"; fi
             slow=$(jq -r --arg mode "$mode" \
-              '.slowest[]? | select((.seconds|type=="number") and (.name|type=="string")) | "- [\($mode)] \(.seconds)s  \(.name | gsub("[\r\n]"; " "))"' \
+              '.slowest[]? | select((.seconds|type=="number") and (.name|type=="string")) | "- [\($mode)] \(.seconds)s  `\(.name | gsub("[\r\n`|]"; " "))`"' \
               "$file" 2>/dev/null || true)
             [ -n "$slow" ] && slowest_list="$slowest_list$slow"$'\n'
 
@@ -130,7 +133,7 @@ jobs:
               if [ "$status" = "passed" ]; then status=failed; fi
               total_failed=$((total_failed + f))
               rows="$rows| $disp_cell | ❌ $f failed | $p | $f | $s | $dur |"$'\n'
-              names=$(jq -r --arg mode "$mode" '.failed[] | "- [\($mode)] \(. | gsub("[\r\n]"; " "))"' "$file")
+              names=$(jq -r --arg mode "$mode" '.failed[] | "- [\($mode)] `\(. | gsub("[\r\n`|]"; " "))`"' "$file")
               failed_list="$failed_list$names"$'\n'
             else
               rows="$rows| $disp_cell | ✅ Passed | $p | 0 | $s | $dur |"$'\n'

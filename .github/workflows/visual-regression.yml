@@ -171,6 +171,11 @@ jobs:
     needs: resolve
     if: needs.resolve.outputs.authorized == 'true' && needs.resolve.outputs.pr_number != ''
     runs-on: ubuntu-latest
+    # This job only writes the status comment; the workflow-level contents:write
+    # ceiling exists for the reusable suite call, not for it.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout CI status action
         uses: actions/checkout@v6
@@ -215,6 +220,11 @@ jobs:
     needs: [resolve, run-suite]
     if: always() && needs.resolve.outputs.authorized == 'true' && needs.resolve.outputs.pr_number != ''
     runs-on: ubuntu-latest
+    # This job only writes the status comment; the workflow-level contents:write
+    # ceiling exists for the reusable suite call, not for it.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout CI status action
         uses: actions/checkout@v6
