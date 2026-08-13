@@ -91,7 +91,17 @@ runs:
           # Everything below only ever produces bucket URLs; an override is the
           # one path where a caller picks the host, so pin it here rather than
           # leaving it to the suite's own check on the macOS runner.
+          #
+          # The newline arm comes first and is not just tidiness: $GITHUB_OUTPUT
+          # is line-oriented, the REST API accepts embedded newlines in a
+          # workflow_dispatch string input, and a glob matches across them. A
+          # payload could otherwise pass the host check on its first line and
+          # define a second, caller-chosen output (short-sha, say) on the next.
           case "$BUILD_URL_OVERRIDE" in
+            *[$'\n\r']*)
+              echo "::error::build_url must be a single line."
+              exit 1
+              ;;
             https://explorer-artifacts.decentraland.org/*) ;;
             *)
               echo "::error::build_url must be an https://explorer-artifacts.decentraland.org/ URL."
@@ -118,8 +128,14 @@ runs:
           # pull_request/push builds qualify — dispatch builds can carry
           # non-default options (e.g. profiling) that break the determinism the
           # suites rely on. Newest first.
-          RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
-            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")]')
+          #
+          # Absorbed rather than left to `set -e`: one 5xx or rate-limit blip
+          # would otherwise end a 90-minute wait with a red required check on a
+          # release PR that has nothing wrong with it. An empty list reads as
+          # "nothing found this poll" and the loop asks again a minute later.
+          RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=50" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")]') || RUNS=''
+          if [ -z "$RUNS" ]; then RUNS='[]'; fi
           TOTAL=$(jq 'length' <<< "$RUNS")
           LIMIT=$TOTAL
           if [ "$LIMIT" -gt 5 ]; then LIMIT=5; fi
@@ -133,25 +149,46 @@ runs:
             # Build Gate and everything else downstream only conclude later.
             # One call per candidate, filtered per leg locally.
             JOBS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$(jq -r '.id' <<< "$CAND")/jobs?per_page=50" \
-              --jq '[.jobs[] | {name, status, conclusion}]')
+              --jq '[.jobs[] | {name, status, conclusion}]') || JOBS=''
+            if [ -z "$JOBS" ]; then
+              # Same blip tolerance as the listing above, but an unreachable API
+              # must not read as a run whose matrix left the leg out: that is a
+              # fast-fail below, and this candidate is simply unknown until the
+              # next poll.
+              if [ "$STATE" = none ]; then STATE=pending; fi
+              continue
+            fi
+            # Per candidate, because the states rank against each other only
+            # within the run that produced them: `failed` and `nomatrix` are
+            # decisive and must outrank a later leg that is merely `pending`,
+            # or a red macOS leg beside a Windows leg still building would be
+            # overwritten and neither fast-exit below would ever fire.
+            CAND_STATE=none
             legs_ok=1
             for LEG in $LEGS; do
               J=$(jq -c --arg leg "Build ($LEG" '[.[] | select(.name | startswith($leg))] | .[0] // empty' <<< "$JOBS")
               if [ -z "$J" ]; then
-                # Prebuild has not fanned the matrix out yet, or this run decided
-                # not to build at all (draft, no Explorer/** change, or a
-                # platforms input that left this leg out).
                 legs_ok=0
-                if [ "$RUN_DONE" != "completed" ]; then STATE=pending; fi
+                if [ "$RUN_DONE" = "completed" ]; then
+                  # The run is over and this leg never existed: prebuild's
+                  # targets left it out, or the build job never expanded at all.
+                  if [ "$CAND_STATE" != failed ]; then CAND_STATE=nomatrix; fi
+                else
+                  # Prebuild has not fanned the matrix out yet.
+                  if [ "$CAND_STATE" = none ]; then CAND_STATE=pending; fi
+                fi
                 continue
               fi
               case "$(jq -r '"\(.status)/\(.conclusion // "-")"' <<< "$J")" in
                 completed/success) ;;
-                completed/*)       legs_ok=0; if [ "$STATE" = none ]; then STATE=failed; fi ;;
-                *)                 legs_ok=0; STATE=pending ;;
+                completed/*)       legs_ok=0; CAND_STATE=failed ;;
+                *)                 legs_ok=0; if [ "$CAND_STATE" = none ]; then CAND_STATE=pending; fi ;;
               esac
             done
             if [ "$legs_ok" = "1" ]; then RUN_JSON="$CAND"; break; fi
+            # Candidates are newest first and the fast-exits act on the newest
+            # verdict there is, so an older run's must not stomp it.
+            if [ "$STATE" = none ]; then STATE=$CAND_STATE; fi
           done
           if [ -n "$RUN_JSON" ]; then break; fi
 
@@ -166,12 +203,19 @@ runs:
             echo "::error::A build leg failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
             exit 1
           fi
+          # Equally decisive: the build is over and this leg was never in its
+          # matrix, so no amount of waiting will produce the zip.
+          if [ "$STATE" = nomatrix ]; then
+            echo "::error::The build of ${HEAD_SHA:0:7} finished without a job for every leg in [${BUILD_LEGS}]. Either the PR touches no Explorer/** file, so build-unitycloud.yml built nothing — label it \`force-build\`; or a \`windows-only\`/\`macos-only\` label narrowed its targets and left the leg out — remove it. Neither label re-triggers this workflow, so re-run this job once the build is green."
+            exit 1
+          fi
           if [ "$SECONDS" -ge "$DEADLINE" ]; then
             echo "::error::Gave up after ${WAIT_MINUTES}m waiting for a build of ${HEAD_SHA:0:7} with [${BUILD_LEGS}] green."
-            # build-unitycloud.yml skips drafts and PRs that touch no
-            # Explorer/** file. A `force-build` label overrides both. Note a
-            # skipped run still counts in TOTAL, hence the state rather than the
-            # count: it is what tells you nothing is coming.
+            # With the case above carved out, `none` is only reachable when no
+            # pull_request or push run of build-unitycloud.yml exists for the
+            # SHA at all — a run that started and built nothing is `nomatrix`.
+            # Labelling and pushing are both trigger types of that workflow, so
+            # either queues the run this commit never got.
             if [ "$STATE" = none ]; then
               echo "::error::No build was ever queued for this commit. Label the PR \`force-build\`, or push a change under Explorer/, then re-run this job."
             else
@@ -179,7 +223,7 @@ runs:
             fi
             exit 1
           fi
-          echo "Waiting for [${BUILD_LEGS}] on ${HEAD_SHA:0:7} — ${TOTAL} build run(s), state: ${STATE}. $(( (DEADLINE - SECONDS) / 60 ))m left."
+          echo "Waiting for [${BUILD_LEGS}] on ${HEAD_SHA:0:7} — ${TOTAL} build run(s) found, newest ${LIMIT} examined, state: ${STATE}. $(( (DEADLINE - SECONDS) / 60 ))m left."
           sleep 60
         done
 
