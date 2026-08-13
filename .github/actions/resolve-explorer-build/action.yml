@@ -89,39 +89,61 @@ runs:
           # commit) and the build falls past the first page. Only
           # pull_request/push builds qualify — dispatch builds can carry
           # non-default options (e.g. profiling) that break the determinism the
-          # suites rely on.
+          # suites rely on. Newest first.
           RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=20" \
             --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")]')
-          RUN_JSON=$(jq -c '[.[] | select(.conclusion == "success")] | .[0] // empty' <<< "$RUNS")
+          TOTAL=$(jq 'length' <<< "$RUNS")
+          LIMIT=$TOTAL
+          if [ "$LIMIT" -gt 5 ]; then LIMIT=5; fi
+
+          RUN_JSON=''
+          STATE=none
+          for (( i = 0; i < LIMIT; i++ )); do
+            CAND=$(jq -c ".[$i]" <<< "$RUNS")
+            # Wait on the macOS leg alone, not on the run. It uploads the zip we
+            # download and finishes ~9 minutes before Build (windows64); the run
+            # itself concludes later still. Nothing else the run does can make
+            # that artifact any more or less valid.
+            MAC=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$(jq -r '.id' <<< "$CAND")/jobs?per_page=50" \
+              --jq '[.jobs[] | select(.name | test("^Build \\(macos"))] | .[0] // empty')
+            if [ -z "$MAC" ]; then
+              # Prebuild has not fanned the matrix out yet, or this run decided
+              # not to build at all (draft, no Explorer/** change).
+              if [ "$(jq -r '.status' <<< "$CAND")" != "completed" ]; then STATE=pending; fi
+              continue
+            fi
+            case "$(jq -r '"\(.status)/\(.conclusion // "-")"' <<< "$MAC")" in
+              completed/success) RUN_JSON="$CAND"; break ;;
+              completed/*)       if [ "$STATE" = none ]; then STATE=failed; fi ;;
+              *)                 STATE=pending ;;
+            esac
+          done
           if [ -n "$RUN_JSON" ]; then break; fi
 
-          TOTAL=$(jq 'length' <<< "$RUNS")
-          RUNNING=$(jq '[.[] | select(.status != "completed")] | length' <<< "$RUNS")
-
           if [ "$WAIT_MINUTES" -eq 0 ]; then
-            echo "::error::No successful Unity Cloud Build run for ${HEAD_SHA:0:7}. Is the build still in progress, or did it fail?"
+            echo "::error::No Unity Cloud Build with a green macOS leg for ${HEAD_SHA:0:7}. Is the build still in progress, or did it fail?"
             exit 1
           fi
-          # Every build for this commit finished and none produced an artifact.
-          # Waiting for a re-run that nobody has asked for only delays the red.
-          if [ "$TOTAL" -gt 0 ] && [ "$RUNNING" -eq 0 ]; then
-            echo "::error::Unity Cloud Build failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
+          # Newest first, so `failed` means the most recent macOS build we found
+          # is red. Waiting for a re-run nobody has asked for only delays that.
+          if [ "$STATE" = failed ]; then
+            echo "::error::The macOS build failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
             exit 1
           fi
           if [ "$SECONDS" -ge "$DEADLINE" ]; then
-            echo "::error::Gave up after ${WAIT_MINUTES}m waiting for a Unity Cloud Build of ${HEAD_SHA:0:7}."
-            if [ "$TOTAL" -eq 0 ]; then
-              # build-unitycloud.yml skips drafts and PRs that touch no
-              # Explorer/** file. A `force-build` label overrides both.
+            echo "::error::Gave up after ${WAIT_MINUTES}m waiting for a macOS build of ${HEAD_SHA:0:7}."
+            # build-unitycloud.yml skips drafts and PRs that touch no
+            # Explorer/** file. A `force-build` label overrides both. Note a
+            # skipped run still counts in TOTAL, hence the state rather than the
+            # count: it is what tells you nothing is coming.
+            if [ "$STATE" = none ]; then
               echo "::error::No build was ever queued for this commit. Label the PR \`force-build\`, or push a change under Explorer/, then re-run this job."
             else
               echo "::error::Re-run this job once the build is green."
             fi
             exit 1
           fi
-          # TOTAL of 0 is normal right after a PR opens: the build is triggered
-          # by the same event as this job and takes a moment to register.
-          echo "Waiting for a build of ${HEAD_SHA:0:7} — ${RUNNING} of ${TOTAL} still running. $(( (DEADLINE - SECONDS) / 60 ))m left."
+          echo "Waiting for the macOS build of ${HEAD_SHA:0:7} — ${TOTAL} build run(s), state: ${STATE}. $(( (DEADLINE - SECONDS) / 60 ))m left."
           sleep 60
         done
 
