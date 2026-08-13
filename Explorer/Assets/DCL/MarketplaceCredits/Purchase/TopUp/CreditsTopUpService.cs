@@ -148,17 +148,16 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
 
                         if (!ct.IsCancellationRequested)
                             SetStatus(CreditsTopUpStatus.Credited(pack, orderId, order.creditsGranted, order.newBalance));
+
                         break;
                     case PollOutcome.Failed:
                         SetStatus(CreditsTopUpStatus.GrantFailed(pack, orderId, order.error));
                         break;
                 }
             }
+            catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                if (ct.IsCancellationRequested)
-                    return;
-
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
                 SetStatus(CreditsTopUpStatus.CheckoutFailed(pack, CreditsCheckoutError.NetworkError, e.Message));
             }
