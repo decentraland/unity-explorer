@@ -31,7 +31,7 @@ namespace DCL.UI.DebugMenu
 
         private readonly List<AbgenConversionMetrics.Entry> rows = new ();
         private readonly ListView list;
-        private readonly ScrollView scrollView;
+        private readonly ScrollView? scrollView;
         private readonly Label summary;
         private readonly Button clearCacheButton;
         private readonly Button highlightButton;
@@ -135,7 +135,7 @@ namespace DCL.UI.DebugMenu
             var abRoots = 0;
             var gltfRoots = 0;
 
-            Transform[] transforms = UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+            Transform[] transforms = UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsInactive.Exclude);
 
             foreach (Transform sceneTransform in transforms)
             {

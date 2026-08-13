@@ -32,8 +32,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             string cacheRoot = Path.Combine(Path.GetTempPath(), "abgen-sidecar-test-" + Guid.NewGuid().ToString("N")[..8]);
 
-            AbgenSidecar sidecar = AbgenSidecar.TryCreate(AbgenSidecar.ReserveBaseUrl(), "org", cacheRoot);
-            Assert.IsNotNull(sidecar, "no abgen binary was resolved");
+            AbgenSidecar? created = AbgenSidecar.TryCreate(AbgenSidecar.ReserveBaseUrl(), "org", cacheRoot);
+            Assert.IsNotNull(created, "no abgen binary was resolved");
+            AbgenSidecar sidecar = created!;
             Assert.IsTrue(await sidecar.StartAsync(CancellationToken.None), "sidecar did not become healthy");
 
             try
@@ -48,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 Assert.Greater(manifest.files.Length, 0, "manifest lists no bundles");
                 Debug.Log($"[abgen-sidecar] JIT manifest: [{string.Join(", ", manifest.files)}]");
 
-                string bundleName = null;
+                string? bundleName = null;
 
                 foreach (string file in manifest.files)
                     if (file.EndsWith("_windows", StringComparison.Ordinal) && file.Length > 20)
