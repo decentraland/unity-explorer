@@ -25,7 +25,7 @@ namespace DCL.Chat.ChatServices
         private readonly ChatSettingsAsset chatSettings;
         private readonly IChatHistory chatHistory;
         private readonly ICommunityDataService communityDataService;
-        private readonly IEventBus chatEventBus;
+        private readonly ITranslationSettings translationSettings;
         private readonly ITranslationSettings translationSettings;
         private static readonly Color DEFAULT_COLOR = Color.white;
 
