@@ -709,15 +709,25 @@ def _build_section_of_status_comment():
     return ''
 
 
+def _platform_key():
+    """windows64 | macos, surviving the per-branch TARGET rewrites this script does."""
+    target = os.getenv('TARGET') or ''
+    if target.startswith('t_'):
+        target = target[2:]
+    for key in ('windows64', 'macos'):
+        if target.startswith(key):
+            return key
+    return target or 'unknown'
+
+
 def _own_job_url():
-    target = (os.getenv('TARGET') or '')[2:]
     repo = os.getenv('GITHUB_REPOSITORY')
     run_id = os.getenv('GITHUB_RUN_ID')
     try:
         resp = _github_api(f'/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100')
         if resp.status_code == 200:
             for job in resp.json().get('jobs') or []:
-                if job.get('name') == f'Build ({target})':
+                if job.get('name') == f'Build ({_platform_key()})':
                     return job.get('html_url')
     except requests.RequestException:
         pass
@@ -732,9 +742,9 @@ def upsert_live_comment(build_id, only_if_missing=False):
     clobbering each other; write races on the comment itself are the upsert
     script's problem. Returns whether a write was attempted.
     """
-    target = (os.getenv('TARGET') or '')[2:]
-    label = {'windows64': 'Windows', 'macos': 'Mac'}.get(target, target)
-    marker = f'{LIVE_MARKER_PREFIX}{target} -->'
+    platform = _platform_key()
+    label = {'windows64': 'Windows', 'macos': 'Mac'}.get(platform, platform)
+    marker = f'{LIVE_MARKER_PREFIX}{platform} -->'
     section = _build_section_of_status_comment()
     if only_if_missing and marker in section:
         return False
