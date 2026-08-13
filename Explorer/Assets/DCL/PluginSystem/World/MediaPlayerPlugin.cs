@@ -1,19 +1,14 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
-using DCL.FeatureFlags;
+using DCL.DebugUtilities;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.ResourcesUnloading;
 using DCL.SDKComponents.MediaStream.Settings;
-using DCL.WebRequests;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Audio;
 using DCL.SDKComponents.MediaStream;
 using UnityEngine;
 
@@ -24,21 +19,26 @@ namespace DCL.PluginSystem.World
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly ExposedCameraData exposedCameraData;
         private readonly MediaFactoryBuilder mediaFactory;
+        private readonly IDebugContainerBuilder debugBuilder;
         private MediaPlayerPluginWrapper mediaPlayerPluginWrapper = null!;
+        private MediaPlayerDebugContainer? mediaPlayerDebugContainer;
 
         public MediaPlayerPlugin(
             IPerformanceBudget frameTimeBudget,
             ExposedCameraData exposedCameraData,
-            MediaFactoryBuilder mediaFactory)
+            MediaFactoryBuilder mediaFactory,
+            IDebugContainerBuilder debugBuilder)
         {
             this.frameTimeBudget = frameTimeBudget;
             this.exposedCameraData = exposedCameraData;
             this.mediaFactory = mediaFactory;
+            this.debugBuilder = debugBuilder;
         }
 
         public void Dispose()
         {
-            mediaPlayerPluginWrapper?.Dispose();
+            mediaPlayerPluginWrapper.Dispose();
+            mediaPlayerDebugContainer?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
@@ -46,13 +46,16 @@ namespace DCL.PluginSystem.World
 
         public UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
-            AvatarPlaceHolderTextureSource? placeholderSource = null;
-
             // The placeholder builds an offscreen camera + render texture eagerly, so only create it on
             // platforms where the LiveKit media feature is actually compiled in (see MediaPlayerPluginWrapper).
-#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            placeholderSource = new AvatarPlaceHolderTextureSource(settings.CameraOffPlaceholder);
+#if !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
+            var placeholderSource = new AvatarPlaceHolderTextureSource(settings.CameraOffPlaceholder);
+#else
+            AvatarPlaceHolderTextureSource? placeholderSource = null;
 #endif
+
+            var debugRegistry = new MediaPlayerDebugRegistry();
+            mediaPlayerDebugContainer = new MediaPlayerDebugContainer(debugBuilder, debugRegistry);
 
             mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(
                 frameTimeBudget,
@@ -61,7 +64,8 @@ namespace DCL.PluginSystem.World
                 settings.VideoPrioritizationSettings,
                 mediaFactory,
                 settings.FlipMaterial,
-                placeholderSource
+                placeholderSource,
+                debugRegistry
             );
 
             return UniTask.CompletedTask;
@@ -72,12 +76,12 @@ namespace DCL.PluginSystem.World
         {
             [field: SerializeField] public float FadeSpeed { get; private set; } = 1f;
 
-            [field: SerializeField] public Material FlipMaterial { get; private set; }
+            [field: SerializeField] public Material FlipMaterial { get; private set; } = null!;
 
             [field: SerializeField] [field: Tooltip("Shown on LiveKit screens when the streamer turns their camera off. Falls back to black if unset.")]
-            public Texture2D CameraOffPlaceholder { get; private set; }
+            public Texture2D CameraOffPlaceholder { get; private set; } = null!;
 
-            public VideoPrioritizationSettings VideoPrioritizationSettings;
+            public VideoPrioritizationSettings VideoPrioritizationSettings = null!;
         }
     }
 }
