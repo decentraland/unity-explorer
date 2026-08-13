@@ -27,7 +27,11 @@ namespace DCL.Analyzers
             "FFI enum without explicit underlying type",
             "enum '{0}' crosses a DllImport boundary{1} but does not declare its underlying type - pin the ABI with ': byte', ': int', ...",
             "Correctness",
-            DiagnosticSeverity.Warning,
+            // Error by DEFAULT: Unity's csc ignores .editorconfig dotnet_diagnostic severities
+            // (verified: a probe violation compiled as a warning), so a corruption-class rule
+            // only fails the Unity build if the descriptor itself says Error. The .editorconfig
+            // pins still govern IDEs and dotnet builds (including the Tests downgrade).
+            DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             description: "Native code compiles against a fixed layout; an enum without an explicit base relies on " +
                          "C#'s implicit int, which nothing pins at the interop boundary. Review-enforced (PR #9088).");

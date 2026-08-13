@@ -3,7 +3,15 @@
 Semantic checks running inside Unity's C# compilation (and Rider/VS), covering
 what the regex layer (`scripts/lint/custom-rules.sh`) cannot: symbol
 resolution, type checks, statement ordering. Full semantics live in each
-analyzer's XML doc; severities are pinned in `Explorer/.editorconfig`.
+analyzer's XML doc.
+
+Severities: Unity's csc **ignores** `.editorconfig` `dotnet_diagnostic` entries
+(verified with a probe violation: it compiled as a warning despite an `error`
+pin), so the corruption-class rules (DCLA001, DCLA005) carry
+`DiagnosticSeverity.Error` in their descriptors — that is what fails the Unity
+build. The pins in `Explorer/.editorconfig` govern IDEs and `dotnet` builds,
+including the `**/Tests/**` downgrade, which is therefore IDE-only: Unity test
+assemblies get the error severity too.
 
 ## Rules
 

@@ -66,7 +66,7 @@ namespace DCL.Chat.ChatReactions.Presenters
                     float dt = UnityEngine.Time.unscaledDeltaTime;
 
                     if (cachedMainCamera == null)
-                        cachedMainCamera = exposedCameraData.CinemachineBrain?.OutputCamera;
+                        cachedMainCamera = exposedCameraData.OutputCamera;
 
                     Profiler.BeginSample("ChatReactions.Tick");
                     service.Tick(dt);

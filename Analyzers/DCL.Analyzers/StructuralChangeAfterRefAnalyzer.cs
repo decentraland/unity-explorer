@@ -39,7 +39,11 @@ namespace DCL.Analyzers
             "Ref component used after a structural change",
             "ref local '{0}' is used after '{1}' - structural changes relocate entity memory and invalidate outstanding refs; complete all ref reads/writes first, or defer the structural change",
             "Correctness",
-            DiagnosticSeverity.Warning,
+            // Error by DEFAULT: Unity's csc ignores .editorconfig dotnet_diagnostic severities
+            // (verified: a probe violation compiled as a warning), so a corruption-class rule
+            // only fails the Unity build if the descriptor itself says Error. The .editorconfig
+            // pins still govern IDEs and dotnet builds (including the Tests downgrade).
+            DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             description: "Structural changes (World.Add/Remove/Create/Destroy) move entity data between archetype chunks. " +
                          "Any ref obtained from World.Get/TryGetRef before the change points at the old location: " +
