@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Create or update the single unified CI status comment on a PR, replacing only
-# one section (build | lint | tests | performance | automation). All CI comment
-# workflows call this through the ci-status-comment composite action, so the
-# separate bot comments collapse into one.
+# one section (build | lint | tests | performance | automation). CI comment
+# workflows call this through the ci-status-comment composite action; build.py
+# (live build rows) and decentraland/performance-testing run it directly. Either
+# way the separate bot comments collapse into one.
 #
-# The comment is keyed by the hidden <!-- ci-status --> marker and holds one
-# fenced block per section:
+# The comment is keyed by the hidden <!-- ci-status --> marker and holds the
+# $HEADER heading plus one fenced block per section:
 #
 #   <!-- ci-status -->
-#   ### 🚦 CI Status
+#   ### <logo> CI Status
 #   <!-- ci:build:start -->       …build…       <!-- ci:build:end -->
 #   <!-- ci:lint:start -->        …lint…        <!-- ci:lint:end -->
 #   <!-- ci:tests:start -->       …tests…       <!-- ci:tests:end -->
@@ -22,8 +23,8 @@
 # confirm the section landed and no duplicate slipped in — retrying otherwise.
 set -euo pipefail
 
-# Optional caller knobs (used by decentraland/performance-testing, which runs
-# this script directly against unity-explorer's unified comment):
+# Optional caller knobs for direct invocations (build.py, and
+# decentraland/performance-testing writing against unity-explorer's comment):
 #   SECTION_BODY_FILE — read the body from a file instead of $SECTION_BODY,
 #                       for bodies too large to pass comfortably via env.
 #   NO_CREATE=1       — never create the unified comment; exit 3 when it does
@@ -68,8 +69,12 @@ esac
 MARKER="<!-- ci-status -->"
 # The <picture> wrapper stops GitHub's renderer from auto-wrapping the logo in
 # a link to the image itself — the one construct its sanitizer leaves unlinked.
-HEADER='### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"></picture> CI Status'
-OLD_HEADER="### 🚦 CI Status"
+HEADER='### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30" alt="Decentraland"></picture> CI Status'
+# Retired header spellings, migrated to $HEADER whenever a section write runs.
+OLD_HEADERS=(
+  "### 🚦 CI Status"
+  '### <picture><img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"></picture> CI Status'
+)
 BOT="github-actions[bot]"
 START="<!-- ci:${SECTION}:start -->"
 END="<!-- ci:${SECTION}:end -->"
@@ -190,8 +195,10 @@ for attempt in 1 2 3 4 5; do
     CURRENT_BODY="$CURRENT_BODY"$'\n\n'"$(wrap_section "$SECTION" "$(section_default "$SECTION")")"
   fi
 
-  # Migrate comments created while the header was still the emoji variant.
-  CURRENT_BODY="${CURRENT_BODY/"$OLD_HEADER"/$HEADER}"
+  # Migrate comments created under a retired header spelling.
+  for OLD_HEADER in "${OLD_HEADERS[@]}"; do
+    CURRENT_BODY="${CURRENT_BODY/"$OLD_HEADER"/$HEADER}"
+  done
 
   NEW_BODY="$(replace_section "$CURRENT_BODY")"
 
@@ -211,6 +218,15 @@ for attempt in 1 2 3 4 5; do
   RIDS=()
   while IFS= read -r line; do [ -n "$line" ] && RIDS+=("$line"); done <<< "$(marker_ids "$RECHECK")"
   LIVE_BODY=$(jq -r --arg id "$COMMENT_ID" '.[] | select(.id==($id|tonumber)) | .body' <<< "$(flatten_pages "$RECHECK")")
+
+  # A write that landed on a younger duplicate is doomed: GC keeps the oldest,
+  # so this section's content would vanish with the duplicate. Retry on the
+  # survivor instead of declaring success on a comment about to be deleted.
+  if [ -n "${RIDS[0]:-}" ] && [ "$COMMENT_ID" != "${RIDS[0]}" ]; then
+    echo "Comment $COMMENT_ID lost the create race to ${RIDS[0]}; retrying on the survivor."
+    sleep $attempt
+    continue
+  fi
 
   # Success means our section landed on the comment we wrote — nothing more.
   # Duplicate collapsing is best-effort cleanup (the DELETE above may lack

@@ -2,8 +2,9 @@
 ---
 name: Comment Artifact URL on PR
 
-# Writes only the "build" section of the unified CI status comment via the
-# ci-status-comment composite action (build / lint / tests live in one comment).
+# Writes the "build" section of the unified CI status comment via the
+# ci-status-comment composite action, plus the "performance" section's dispatch
+# status (the comment holds build / lint / tests / performance / automation).
 #
 # 'requested' -> reset the build section to "pending" the moment a new build
 #                starts, so last build's download links never linger as stale.
@@ -61,7 +62,7 @@ jobs:
           section: build
           github-token: ${{ github.token }}
           body: |-
-            [![Build](https://img.shields.io/badge/Build-Pending!-ffff00?logo=github&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
+            [![Build](https://img.shields.io/badge/Build-Pending!-yellow?logo=github&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
 
             New build in progress — per-platform Unity Cloud links land here as soon as each build is created.
 
@@ -257,10 +258,12 @@ jobs:
         with:
           run-id: ${{ env.PREVIOUS_JOB_ID }}
           github-token: ${{ github.token }}
+          install-source: launcher
 
-      # One row per platform: GitHub job · Unity Cloud build · Unity log · zip
-      # downloads. Composed here rather than inline in the body so a link whose
-      # id could not be resolved is dropped instead of rendering broken.
+      # One row per platform: GitHub job · Unity Cloud build · Unity log ·
+      # build duration · zip downloads. Composed here rather than inline in the
+      # body so a link whose id could not be resolved is dropped instead of
+      # rendering broken.
       - name: Compose platform rows
         env:
           WINDOWS_CELL: ${{ steps.ucb.outputs.windows-cell }}
@@ -296,7 +299,7 @@ jobs:
 
             Windows and Mac built successfully in Unity Cloud.
 
-            | Name | Link |
+            | Name | Links & timing |
             | -------- | ----------------------- |
             | Build | [`${{ env.SHORT_SHA }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.HEAD_SHA }}) · [Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}) · built ${{ env.BUILD_DATE }} |
             ${{ env.PLATFORM_ROWS }}
@@ -331,8 +334,7 @@ jobs:
 
       # The PAT's remaining lifetime comes back as a response header on any API
       # call it makes; surfacing it in the status comment replaces a separate
-      # expiry canary — the 2026-06..08 outage was exactly this token expiring
-      # with no warning anywhere a human looks.
+      # expiry canary — an expiring token must warn somewhere a human looks.
       - name: Probe performance PAT expiry
         # Purely decorative — its whole output is one optional sentence, so it
         # must never gate the dispatched/dispatch-failed section writes below.
@@ -374,16 +376,15 @@ jobs:
           section: performance
           github-token: ${{ github.token }}
           body: |-
-            [![Performance](https://img.shields.io/badge/Performance-Dispatched!-ffff00?logo=speedtest&logoColor=white&style=for-the-badge)](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)
+            [![Performance](https://img.shields.io/badge/Performance-Dispatched!-yellow?logo=speedtest&logoColor=white&style=for-the-badge)](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)
 
             🏁 Bare-metal benchmark dispatched for this build ([run queue](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)) — results across the runner fleet will be posted as a separate `perf-test-summary` comment.
 
             ${{ env.PAT_EXPIRY_WARNING }}
 
-      # A failing dispatch (an expired PERFORMANCE_TESTING_PAT is the historical
-      # cause — it broke silently from 2026-06-15 to 2026-08-13) turns this job
-      # red but leaves no trace on the PR; surface it in the performance section
-      # so it cannot go unnoticed for weeks again.
+      # A failing dispatch (e.g. an expired PERFORMANCE_TESTING_PAT) turns this
+      # job red but leaves no trace on the PR; surface it in the performance
+      # section so it cannot go unnoticed.
       # outcome != 'success' rather than == 'failure': anything failing between
       # the checkout and the dispatch (Find latest release, the build-section
       # upsert) skips perf_dispatch, and a skipped dispatch is the same silence
@@ -420,6 +421,7 @@ jobs:
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
+          install-source: launcher
 
       - name: Update build section
         uses: ./.github/actions/ci-status-comment

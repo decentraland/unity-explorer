@@ -173,6 +173,8 @@ jobs:
             echo "| TESTS SUITE | Result | Passed | Failed | Skipped | Tests time | Job time |"
             echo "| ----------- | ------ | -----: | -----: | ------: | ---: | ---: |"
             printf '%s' "$rows"
+            echo ""
+            echo "<sub>Tests time sums the test cases; Job time is the job's wall clock including checkout, licensing and asset import.</sub>"
             if [ "$total_failed" -gt 0 ]; then
               echo ""
               echo "<details><summary>Failed tests ($total_failed)</summary>"

@@ -14,7 +14,10 @@ inputs:
     description: Which section to replace — one of build, lint, tests, performance, automation.
     required: true
   body:
-    description: Markdown for this section (inline badge + message). Rendered as-is between the section markers.
+    description: >-
+      Markdown for this section (inline badge + message). Rendered between the
+      section markers after dropping marker-shaped lines; bodies over 20000
+      chars are truncated with fences/<details> re-closed and a truncation note.
     required: true
   github-token:
     description: Token with pull-requests:write used to read and upsert the comment.

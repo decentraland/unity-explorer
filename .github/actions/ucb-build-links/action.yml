@@ -12,22 +12,32 @@ inputs:
   github-token:
     description: Token used to download the run's artifacts.
     required: true
+  install-source:
+    description: >-
+      Install source half of the info-artifact name
+      (unity_build_info_<target>_<install-source>), matching the build
+      workflow's install_source matrix value.
+    required: false
+    default: launcher
 
 outputs:
   rows:
     description: >-
-      "| Name | Link |"-shaped rows for an existing two-column table, one per
-      target, each pairing the GitHub job log, the Unity Cloud build page and
-      the Unity log artifact; empty when no valid build info was found.
+      Two-column table rows, one per target, each pairing the GitHub job log,
+      the Unity Cloud build page, the Unity log artifact and a "⏱" duration
+      cell; a row omits the parts whose data was absent or invalid, and rows
+      built purely from the Actions API (job/log links) still render when the
+      info artifact itself is missing.
     value: ${{ steps.fetch.outputs.rows }}
   section:
     description: >-
-      Standalone table (header + rows); empty when no valid build info was found.
+      Standalone table (header + rows); empty only when no row could be built.
     value: ${{ steps.fetch.outputs.section }}
   windows-cell:
     description: >-
-      The Windows row's link cell alone ("[GitHub job](…) · [Unity Cloud #N](…) ·
-      [Unity log](…)"), for callers composing their own rows; empty when unknown.
+      The Windows row's cell alone ("[GitHub job](…) · [Unity Cloud #N](…) ·
+      [Unity log](…) · ⏱ …"), for callers composing their own rows; empty when
+      unknown.
     value: ${{ steps.fetch.outputs.windows-cell }}
   mac-cell:
     description: Mac twin of windows-cell.
@@ -43,6 +53,7 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
         RUN_ID: ${{ inputs.run-id }}
         REPO_FULL: ${{ github.repository }}
+        INSTALL_SOURCE: ${{ inputs.install-source }}
       run: |
         set -euo pipefail
 
@@ -62,7 +73,7 @@ runs:
           REPLY_BUILD=""
           if gh run download "$RUN_ID" \
                --repo "$REPO_FULL" \
-               --name "unity_build_info_${target}_launcher" \
+               --name "unity_build_info_${target}_${INSTALL_SOURCE}" \
                --dir "$dir" 2>"${dir}.err"; then
             REPLY_ID=$(grep -m1 '^BUILD_ID=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
             REPLY_URL=$(grep -m1 '^DASHBOARD_URL=' "$dir/unity_cloud_build_info.env" | cut -d= -f2- || true)
@@ -75,7 +86,7 @@ runs:
           else
             # Absence is normal for runs predating the info artifact; still surface the
             # gh error so an auth/permission regression doesn't silently eat the rows.
-            echo "note: could not fetch unity_build_info_${target}_launcher: $(tr '\n' ' ' < "${dir}.err")"
+            echo "note: could not fetch unity_build_info_${target}_${INSTALL_SOURCE}: $(tr '\n' ' ' < "${dir}.err")"
           fi
         }
 
@@ -105,7 +116,7 @@ runs:
           label="${entry#*:}"
           parse_info "$target"
           job_url=$(jq -r --arg n "Build ($target)" '.jobs[]? | select(.name==$n) | .html_url // empty' <<< "$JOBS_JSON" | head -1)
-          log_id=$(jq -r --arg n "${target}_launcher_unity_log" \
+          log_id=$(jq -r --arg n "${target}_${INSTALL_SOURCE}_unity_log" \
             '.artifacts[]? | select(.name==$n and .expired==false) | .id' <<< "$ARTIFACTS_JSON" | head -1)
           [[ "$log_id" =~ ^[0-9]+$ ]] || log_id=""
 
@@ -124,8 +135,8 @@ runs:
             parts+=("[Unity log](${GITHUB_SERVER_URL:-https://github.com}/${REPO_FULL}/suites/${SUITE_ID}/artifacts/${log_id})")
           fi
           if [ -n "$REPLY_BUILD" ]; then
-            t="⏱ $(fmt_dur "$REPLY_BUILD")"
-            [ -n "$REPLY_QUEUE" ] && [ "$REPLY_QUEUE" -gt 0 ] && t+=" ($(fmt_dur "$REPLY_QUEUE") queued)"
+            t="⏱ $(fmt_dur "$REPLY_BUILD") build"
+            [ -n "$REPLY_QUEUE" ] && [ "$REPLY_QUEUE" -gt 0 ] && t+=" + $(fmt_dur "$REPLY_QUEUE") queue"
             parts+=("$t")
           fi
 
@@ -143,23 +154,23 @@ runs:
 
         SECTION=""
         if [ -n "$ROWS" ]; then
-          SECTION="| Name | Link |"$'\n'"| -------- | ----------------------- |"$'\n'"$ROWS"
+          SECTION="| Platform | Links & timing |"$'\n'"| -------- | ----------------------- |"$'\n'"$ROWS"
         fi
 
         # The payload derives from artifact bytes, so the heredoc delimiter must not be
         # guessable content even though the validation above already forbids newlines.
+        # Every value is emitted with exactly one trailing newline — a value glued to
+        # the delimiter line would make the runner miss the terminator entirely.
         DELIM="UCB_EOF_${RANDOM}${RANDOM}_$$"
+        emit() {
+          local name="$1" val="$2"
+          echo "${name}<<${DELIM}"
+          if [ -n "$val" ]; then printf '%s\n' "${val%$'\n'}"; fi
+          echo "${DELIM}"
+        }
         {
-          echo "rows<<${DELIM}"
-          printf '%s' "$ROWS"
-          echo "${DELIM}"
-          echo "section<<${DELIM}"
-          printf '%s' "$SECTION"
-          echo "${DELIM}"
-          echo "windows-cell<<${DELIM}"
-          printf '%s' "$WINDOWS_CELL"
-          echo "${DELIM}"
-          echo "mac-cell<<${DELIM}"
-          printf '%s' "$MAC_CELL"
-          echo "${DELIM}"
+          emit rows "$ROWS"
+          emit section "$SECTION"
+          emit windows-cell "$WINDOWS_CELL"
+          emit mac-cell "$MAC_CELL"
         } >> "$GITHUB_OUTPUT"

@@ -191,7 +191,7 @@ jobs:
           section: automation
           github-token: ${{ github.token }}
           body: |-
-            [![Automation](https://img.shields.io/badge/Automation-Running!-ffff00?logo=github&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            [![Automation](https://img.shields.io/badge/Automation-Running!-yellow?logo=github&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
             Visual regression suite running for commit `${{ needs.resolve.outputs.head_short_sha }}` — [watch the run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
 
@@ -265,9 +265,9 @@ jobs:
             echo ""
             echo "| Name | Link |"
             echo "| -------- | ----------------------- |"
-            echo "| Commit | \`$COMMIT_SHA\` |"
-            echo "| Allure report | $REPORT_URL |"
-            echo "| Workflow run | $RUN_URL |"
+            echo "| Commit | [\`$COMMIT_SHA\`](${GITHUB_SERVER_URL:-https://github.com}/${REPO}/commit/${COMMIT_SHA}) |"
+            echo "| Allure report | [Open report]($REPORT_URL) |"
+            echo "| Workflow run | [View run]($RUN_URL) |"
             echo ""
             echo "<sub>Triggered via \`/visual-tests\` · the detailed per-platform comment is posted separately.</sub>"
             echo "$DELIM"

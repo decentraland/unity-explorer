@@ -79,6 +79,7 @@ CI_STATUS_SCRIPT = os.path.join('.github', 'actions', 'ci-status-comment', 'upse
 LIVE_MARKER_PREFIX = '<!-- ucb-live:'
 _live_comment_asserts = 0
 _live_comment_last_attempt = 0.0
+_live_comment_confirms = 0
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
@@ -669,13 +670,15 @@ def record_build_link_info(id, response_json):
             if _final_elapsed:
                 f.write(f'QUEUE_SECS={_final_elapsed[0]}\n')
                 f.write(f'BUILD_SECS={_final_elapsed[1]}\n')
+        # Only a successful write settles the no-news guard; after an OSError
+        # the next poll must retry even without fresh links.
+        _build_link_info_written = True
     except OSError as e:
         print(f'Warning: could not write {BUILD_LINK_INFO_PATH}: {e}')
 
     if href:
         dashboard_url = href
         print(f'::notice::Unity Cloud build #{id} ({os.getenv("TARGET")}): {href}')
-    _build_link_info_written = True
     # force: a dashboard link that arrives on a later poll must replace the
     # unlinked row the first write left behind.
     maybe_update_live_comment(id, force=bool(href))
@@ -796,7 +799,7 @@ def upsert_live_comment(build_id, only_if_missing=False):
     body = '\n'.join([
         f'[![Build](https://img.shields.io/badge/Build-In%20progress-1f6feb?logo=unity&logoColor=white&style=for-the-badge)]({run_url})',
         '',
-        '| Name | Link |',
+        '| Platform | Links & timing |',
         '| -------- | ----------------------- |',
         *rows,
     ])
@@ -820,7 +823,7 @@ def upsert_live_comment(build_id, only_if_missing=False):
 
 def maybe_update_live_comment(build_id, reconcile=False, force=False):
     """Gate and rate-limit the live comment write; never let it fail the build."""
-    global _live_comment_asserts, _live_comment_last_attempt
+    global _live_comment_asserts, _live_comment_last_attempt, _live_comment_confirms
     if not os.getenv('PR_NUMBER') or not (os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')):
         return
     if not os.path.exists(CI_STATUS_SCRIPT):
@@ -830,6 +833,11 @@ def maybe_update_live_comment(build_id, reconcile=False, force=False):
         # first write racing ours) can land after us and drop this row.
         if _live_comment_asserts == 0 or _live_comment_asserts >= 3:
             return
+        # Every probe is a comments-API read drawn from the repo-shared rate
+        # budget; once the row has stayed put this many consecutive checks,
+        # stop probing for the rest of the build.
+        if _live_comment_confirms >= 3:
+            return
         if time.time() - _live_comment_last_attempt < 240:
             return
     elif _live_comment_asserts > 0 and not force:
@@ -838,6 +846,9 @@ def maybe_update_live_comment(build_id, reconcile=False, force=False):
         _live_comment_last_attempt = time.time()
         if upsert_live_comment(build_id, only_if_missing=reconcile):
             _live_comment_asserts += 1
+            _live_comment_confirms = 0
+        elif reconcile:
+            _live_comment_confirms += 1
     except Exception as e:
         print(f'note: live status-comment update failed: {e}')
 
