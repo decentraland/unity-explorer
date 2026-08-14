@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3271853950743335516}
   - component: {fileID: 1330979183665727932}
   - component: {fileID: 6892891261059571105}
-  - component: {fileID: 6604903006191088623}
+  - component: {fileID: 2516013827772045866}
   m_Layer: 5
   m_Name: CreditsPanel
   m_TagString: Untagged
@@ -65,6 +65,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UI::DCL.UI.Credits.CreditsPanelView
   <CurrentCredits>k__BackingField: {fileID: 2306850953007397426}
   <GetCreditsButton>k__BackingField: {fileID: 1330979183665727932}
+  <GetCreditsButton2>k__BackingField: {fileID: 1330979183665727932}
 --- !u!114 &3271853950743335516
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -79,11 +80,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
   m_Padding:
     m_Left: 0
-    m_Right: -11
+    m_Right: -7
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_Spacing: -19.66
+  m_Spacing: -28.22
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -164,8 +165,8 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 2.3
---- !u!114 &6604903006191088623
+  m_PixelsPerUnitMultiplier: 2
+--- !u!114 &2516013827772045866
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -303,6 +303,31 @@ A loop that re-queues unresolved items will spin forever when the upstream sourc
 
 If `X` does nothing useful without `Y`, and there is no second consumer of `X`, merge them. Splits must pay for themselves in polymorphism, reuse, or test isolation.
 
+### 8. Accessing `Option<T>.Value` without checking `Has`
+
+`Option<T>.Value` (`Utility/Types/Result.cs`) is `default` — null for reference types — when `Has` is false. A blind read silently propagates an invalid value far from its source.
+
+```csharp
+// WRONG — Value is default/null when Has is false
+UserId userId = UserId.New(raw).Value;
+
+// WRONG in production — Unwrap() hides the absence case instead of modeling it
+UserId userId = UserId.New(raw).Unwrap();
+
+// RIGHT — branch on Has when the input may be invalid
+Option<UserId> userId = UserId.New(raw);
+if (!userId.Has) return;
+Use(userId.Value);
+
+// RIGHT — a factory that is valid by construction needs no Option at all
+UserId userId = UserId.NewRandom();
+
+// RIGHT in tests only — Unwrap() for known-valid constants; it throws loudly at the source
+UserId userId = UserId.New(KNOWN_CONSTANT).Unwrap();
+```
+
+In production code, handle `None` explicitly (early return, propagation) or use a by-construction-valid factory. `Unwrap()` is a test-only affordance — and in tests, known-valid constants go through `Unwrap()`, never bare `.Value`.
+
 ## PR Standards
 
 - **Branches:** Based on `dev` branch

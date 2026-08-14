@@ -14,6 +14,7 @@ namespace Global.AppArgs
         public const string SCENE_CONSOLE = "scene-console";
 
         public const string AUTOPILOT = "autopilot";
+        public const string MEASURE_LOADING_TIME = "measure-loading-time";
         public const string AUTOPILOT_CSV = "csv";
         public const string AUTOPILOT_SUMMARY = "summary";
         public const string PROFILER_LOG_FILE = "raw";
@@ -99,6 +100,8 @@ namespace Global.AppArgs
         public const string FORCE_CHECK_DISK_SPACE = "force-check-disk-space";
 
         public const string DOUBLE_JUMP = "double-jump";
+
+        public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
 
         public const string GLIDING = "gliding";
         public const string POINT_AT = "point-at";
