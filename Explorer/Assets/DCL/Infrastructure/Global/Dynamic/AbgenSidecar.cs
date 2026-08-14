@@ -8,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Net;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
@@ -49,6 +47,9 @@ namespace Global.Dynamic
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
         private const int PROGRESS_POLL_MS = 500;
+
+        /// <summary>abgen's built-in default bind port (crate/src/abcdn/config.rs) — never exported as an env var.</summary>
+        private const int ABGEN_DEFAULT_PORT = 5147;
         private const int SUPERVISION_POLL_MS = 2000;
 
         /// <summary>Path under the realm root where a content server exposes its entities and files.</summary>
@@ -93,12 +94,15 @@ namespace Global.Dynamic
         private static bool IsWindows => Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor;
 
         /// <summary>
-        ///     Reserves a free loopback endpoint for the server WITHOUT creating or starting anything —
-        ///     synchronous, so the URL can seed the URL sources built early in startup. The server is
-        ///     created on this URL later via <see cref="TryCreate" />.
+        ///     The server's endpoint WITHOUT creating or starting anything — synchronous, so the URL can
+        ///     seed the URL sources built early in startup. The server is created on this URL later via
+        ///     <see cref="TryCreate" />. Always abgen's default bind (127.0.0.1:5147): exporting the port
+        ///     would take the generic HTTP_SERVER_HOST/PORT names, which leak into every child process
+        ///     spawned after <see cref="Launch" />. A second --local-ab instance loses the port and its
+        ///     scene degrades to raw GLTFs — acceptable for a dev-only tool.
         /// </summary>
         public static string ReserveBaseUrl() =>
-            $"http://127.0.0.1:{FreeLoopbackPort()}";
+            $"http://127.0.0.1:{ABGEN_DEFAULT_PORT}";
 
         /// <summary>
         ///     Resolves the server binary and creates the (not yet started) sidecar on
@@ -565,9 +569,9 @@ namespace Global.Dynamic
             try
             {
                 // abgen is configured entirely through environment variables, and every spawn path
-                // below launches the child with this process's environment.
-                Environment.SetEnvironmentVariable("HTTP_SERVER_HOST", "127.0.0.1");
-                Environment.SetEnvironmentVariable("HTTP_SERVER_PORT", new Uri(BaseUrl).Port.ToString());
+                // below launches the child with this process's environment. The bind endpoint is NOT
+                // exported: the server's defaults already match ReserveBaseUrl (127.0.0.1:5147), and
+                // HTTP_SERVER_HOST/PORT are generic names any later-spawned child could misread.
                 Environment.SetEnvironmentVariable("ABGEN_CACHE_DIR", Path.Combine(cacheRoot, "cache"));
                 Environment.SetEnvironmentVariable("ABGEN_OUT_ROOT", Path.Combine(cacheRoot, "out"));
                 Environment.SetEnvironmentVariable("ABGEN_CATALYST_URL", catalystContentUrl);
@@ -728,15 +732,6 @@ namespace Global.Dynamic
             }
 
             return false;
-        }
-
-        private static int FreeLoopbackPort()
-        {
-            var listener = new TcpListener(IPAddress.Loopback, 0);
-            listener.Start();
-            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            listener.Stop();
-            return port;
         }
 
         private const uint UNIX_MODE_755 = 0x1ED; // rwxr-xr-x

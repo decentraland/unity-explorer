@@ -6,8 +6,11 @@ after the CPU-encoder pin.
 
 ## Architecture
 
-`AbgenSidecar` (Global/Dynamic) runs the abgen JIT server as a supervised localhost child:
-free loopback port, env-configured (preview content server as `ABGEN_CATALYST_URL`,
+`AbgenSidecar` (Global/Dynamic) runs the abgen JIT server as a supervised localhost child on
+abgen's **default bind** (`127.0.0.1:5147`) — the endpoint is deliberately not exported, because
+abgen's `HTTP_SERVER_HOST`/`HTTP_SERVER_PORT` are generic names that would leak into every child
+process spawned afterwards; a second `--local-ab` instance loses the port and its scene degrades
+to raw GLTFs. Everything else is env-configured (preview content server as `ABGEN_CATALYST_URL`,
 `ABGEN_UPSTREAM_AB_CDN` read-through, `ABGEN_JIT_CONTENT_DIGEST=1` so edits reconvert under the
 preview server's path-derived hashes, persistent disk cache under `persistentDataPath/abgen-lsd`,
 and `ABGEN_GPU_BACKEND=off` — see below), health-checked, restarted up to 3× on unexpected exit.
