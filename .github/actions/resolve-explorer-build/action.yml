@@ -274,6 +274,35 @@ runs:
           done
           if [ -n "$RUN_JSON" ]; then break; fi
 
+          # These two verdicts are decided before the wait-minutes: 0 branch
+          # below, not after it. Both are conclusions the candidate loop has
+          # already reached, and the single-poll callers are precisely the ones
+          # that can do least with the generic message that branch ends in:
+          # visual-regression.yml takes this path on every /visual-tests, and
+          # in-world-tests.yml on the dispatch create-release-branch.yml gates
+          # a release cut with. Neither can wait the condition out, so telling
+          # them to guess at something already known is the one case where the
+          # specific message matters most.
+          #
+          # Hoisting them cannot mask that branch's listing-outage message: a
+          # listing that never answered leaves RUNS empty, so no candidate is
+          # ever examined and STATE stays `none` — which neither of these two
+          # matches. The waiting path is unaffected either way, since the
+          # branch between them never fires when WAIT_MINUTES is non-zero.
+          #
+          # Newest first, so `failed` means the most recent build we found is red
+          # on a leg we need. Waiting for a re-run nobody has asked for only
+          # delays that.
+          if [ "$STATE" = failed ]; then
+            echo "::error::A build leg failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
+            exit 1
+          fi
+          # Equally decisive: the build is over and this leg was never in its
+          # matrix, so no amount of waiting will produce the zip.
+          if [ "$STATE" = nomatrix ]; then
+            echo "::error::The build of ${HEAD_SHA:0:7} finished without a job for every leg in [${BUILD_LEGS}]. Either the PR touches no Explorer/** file, so build-unitycloud.yml built nothing — label it \`force-build\`; or a \`windows-only\`/\`macos-only\` label narrowed its targets and left the leg out — remove it. Neither label re-triggers this workflow, so re-run this job once the build is green."
+            exit 1
+          fi
           if [ "$WAIT_MINUTES" -eq 0 ]; then
             # The consequential half of the same ambiguity: this path has no
             # second poll to correct itself, and it is the one
@@ -287,20 +316,12 @@ runs:
               echo "::error::Could not list build-unitycloud.yml runs for ${HEAD_SHA:0:7} — the GitHub Actions API did not answer. Nothing was learned about the build, so this says nothing about whether one exists: re-run this job."
               exit 1
             fi
-            echo "::error::No Unity Cloud Build of ${HEAD_SHA:0:7} with all of [${BUILD_LEGS}] green. Is the build still in progress, or did it fail?"
-            exit 1
-          fi
-          # Newest first, so `failed` means the most recent build we found is red
-          # on a leg we need. Waiting for a re-run nobody has asked for only
-          # delays that.
-          if [ "$STATE" = failed ]; then
-            echo "::error::A build leg failed for ${HEAD_SHA:0:7} — there is nothing to test. Fix the build, or push again."
-            exit 1
-          fi
-          # Equally decisive: the build is over and this leg was never in its
-          # matrix, so no amount of waiting will produce the zip.
-          if [ "$STATE" = nomatrix ]; then
-            echo "::error::The build of ${HEAD_SHA:0:7} finished without a job for every leg in [${BUILD_LEGS}]. Either the PR touches no Explorer/** file, so build-unitycloud.yml built nothing — label it \`force-build\`; or a \`windows-only\`/\`macos-only\` label narrowed its targets and left the leg out — remove it. Neither label re-triggers this workflow, so re-run this job once the build is green."
+            # With `failed` and `nomatrix` exiting above, what reaches here is
+            # `pending` — legs still building — or `none`: the listing answered
+            # and there is no build run for this commit at all. The old "or did
+            # it fail?" asked after a case that can no longer arrive, which is
+            # worse than vague now that the specific message exists.
+            echo "::error::No Unity Cloud Build of ${HEAD_SHA:0:7} with all of [${BUILD_LEGS}] green — no leg has failed, so the build is either still in progress or was never queued for this commit."
             exit 1
           fi
           if [ "$SECONDS" -ge "$DEADLINE" ]; then
