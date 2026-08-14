@@ -8,9 +8,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.Rendering;
 using Utility.Animations;
-using AvatarMask = UnityEngine.AvatarMask;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Emotes.Play
@@ -58,6 +56,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
+            emotesInUse.Add(emoteReferences, pools[mainAsset]);
+
             if (emoteReferences.legacy)
             {
                 if (!legacyAnimationsEnabled)
@@ -71,7 +71,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             else
                 PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
 
-            emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
             return true;
         }
@@ -87,6 +86,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
+            emotesInUse.Add(emoteReferences, pools[mainAsset]);
+
             if (emoteReferences.legacy)
             {
                 if (!PlayMaskedLegacyEmote(view, ref maskedEmote, emoteReferences, isLooping))
@@ -98,7 +99,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             else
                 PlayMaskedMecanimEmote(view, ref maskedEmote, emoteReferences, isLooping);
 
-            emotesInUse.Add(emoteReferences, pools[mainAsset]);
             maskedEmote.CurrentEmoteReference = emoteReferences;
             return true;
         }
