@@ -9,6 +9,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -24,6 +25,10 @@ namespace ECS.SceneLifeCycle
         private readonly bool localSceneDevelopment;
         private readonly ICacheCleaner cacheCleaner;
 
+        // Tail of the serial reload chain. Each new reload awaits this before touching the world, so
+        // reloads never overlap regardless of which caller triggered them. See RunSerializedAsync.
+        private UniTask ongoingReload = UniTask.CompletedTask;
+
         public ECSReloadScene(IScenesCache scenesCache,
             World world,
             Entity playerEntity,
@@ -37,7 +42,41 @@ namespace ECS.SceneLifeCycle
             this.cacheCleaner = cacheCleaner;
         }
 
-        public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct)
+        public UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct) =>
+            RunSerializedAsync(ReloadCurrentParcelAsync, ct);
+
+        public UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId, string? changedModelSrc = null) =>
+            RunSerializedAsync(reloadCt => ReloadBySceneIdAsync(sceneId, changedModelSrc, reloadCt), ct);
+
+        /// <summary>
+        ///     Serializes reloads across every caller (LSD hot reload, the /reload chat command, the MCP
+        ///     reload tool). Two reloads running at once race the cache eviction/drain in
+        ///     <see cref="DisposeAndRestartAsync" /> against the next scene's in-flight GLTF import, which
+        ///     drops or corrupts models — the failure seen with rapid consecutive hot reloads. Each reload
+        ///     waits for the previous one to fully finish before it touches the world.
+        /// </summary>
+        private async UniTask<ISceneFacade?> RunSerializedAsync(Func<CancellationToken, UniTask<ISceneFacade?>> reload, CancellationToken ct)
+        {
+            UniTask previous = ongoingReload;
+            var completion = new UniTaskCompletionSource();
+            ongoingReload = completion.Task;
+
+            try
+            {
+                // The previous reload's completion never faults (see finally below), so this never throws.
+                await previous;
+                ct.ThrowIfCancellationRequested();
+                return await reload(ct);
+            }
+            finally
+            {
+                // Always release the next reload in the chain, even if this one failed or was cancelled —
+                // one reload's failure must not deadlock every reload that follows it.
+                completion.TrySetResult();
+            }
+        }
+
+        private async UniTask<ISceneFacade?> ReloadCurrentParcelAsync(CancellationToken ct)
         {
             var parcel = world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
             if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache)) return null;
@@ -50,7 +89,7 @@ namespace ECS.SceneLifeCycle
             return sceneInCache;
         }
 
-        public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId, string? changedModelSrc = null)
+        private async UniTask<ISceneFacade?> ReloadBySceneIdAsync(string sceneId, string? changedModelSrc, CancellationToken ct)
         {
             if (!scenesCache.TryGetBySceneId(sceneId, out var sceneInCache)) return null;
 
@@ -85,7 +124,10 @@ namespace ECS.SceneLifeCycle
                 : null;
 
             //There is a lingering promise we need to remove, and add the DeleteEntityIntention to make the standard unload flow.
-            world.Add<DeleteEntityIntention>(entity);
+            //A prior reload that was cancelled mid-flight may have already marked this entity for deletion; adding the
+            //component twice throws in Arch, so add it only when absent.
+            if (!world.Has<DeleteEntityIntention>(entity))
+                world.Add<DeleteEntityIntention>(entity);
 
             //We wait until scene is fully disposed
             await UniTask.WaitUntil(() => currentScene.SceneStateProvider.State.Value() == SceneState.Disposed, cancellationToken: ct);

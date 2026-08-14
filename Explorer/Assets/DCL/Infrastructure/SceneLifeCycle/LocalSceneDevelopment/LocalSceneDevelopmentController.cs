@@ -15,7 +15,10 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 {
     public class LocalSceneDevelopmentController
     {
-        private const double RELOAD_SCENE_TIMEOUT_SECS = 5;
+        // Safety valve for a reload that never converges (e.g. a scene that never reaches Disposed).
+        // Real reloads routinely run well past 5s on heavy scenes, so this must be generous — it exists
+        // only to break a genuine deadlock, not to bound a normal reload.
+        private const double RELOAD_SCENE_TIMEOUT_SECS = 60;
 
         private readonly ECSReloadScene reloadScene;
         private readonly Entity playerEntity;
@@ -94,6 +97,11 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                     // Switch to the main thread because `TryReloadSceneAsync` requires that
                     await UniTask.SwitchToMainThread(cancellationToken: ct);
 
+                    // Link a CTS into the timeout so it *cancels* the reload rather than abandoning it.
+                    // Without this the timed-out reload keeps running detached — still draining caches and
+                    // importing GLTFs — and the next message's reload overlaps it, which corrupts models.
+                    var reloadCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
                     try
                     {
                         // We need to freeze the character movement until the scene is reloaded
@@ -102,12 +110,21 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                         // And pause the skybox update while loading to avoid transitions
                         globalWorld.AddOrGet(skyboxEntity, new PauseSkyboxTimeUpdate());
 
-                        await reloadScene.TryReloadSceneAsync(ct, sceneId, changedModelSrc)
-                                         .Timeout(TimeSpan.FromSeconds(RELOAD_SCENE_TIMEOUT_SECS));
+                        await reloadScene.TryReloadSceneAsync(reloadCts.Token, sceneId, changedModelSrc)
+                                         .Timeout(TimeSpan.FromSeconds(RELOAD_SCENE_TIMEOUT_SECS), taskCancellationTokenSource: reloadCts);
                     }
-                    catch (TimeoutException) { }
+                    catch (TimeoutException)
+                    {
+                        ReportHub.LogError(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT,
+                            $"Scene reload timed out after {RELOAD_SCENE_TIMEOUT_SECS}s and was cancelled",
+                            ReportHandler.DebugLog);
+                    }
                     finally
                     {
+                        // Timeout() disposes the CTS on the timeout branch; disposing again here (the normal
+                        // completion path) is safe — CancellationTokenSource.Dispose is idempotent.
+                        reloadCts.Dispose();
+
                         globalWorld.Remove<StopCharacterMotion>(playerEntity);
                         globalWorld.Remove<PauseSkyboxTimeUpdate>(skyboxEntity);
                     }
