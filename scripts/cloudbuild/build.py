@@ -67,6 +67,11 @@ build_healthy = True
 # response that carries one. Persisted to BUILD_LINK_INFO_PATH so the workflow can
 # upload it and the PR status comment can link the build directly.
 BUILD_LINK_INFO_PATH = 'unity_cloud_build_info.env'
+# Mirror of URL_RE in .github/actions/ucb-build-links/action.yml (the consumer
+# silently drops links failing it, so only persist links that will survive).
+_DASHBOARD_LINK_RE = re.compile(
+    r'^https://(cloud\.unity\.com|developer\.cloud\.unity3d\.com|dashboard\.unity3d\.com)'
+    r'/[A-Za-z0-9./_%~?=&#-]*/builds/[0-9]+[A-Za-z0-9./_%~?=&#-]*$')
 dashboard_url = None
 _build_link_info_written = False
 _final_elapsed = None  # (queue_secs, build_secs), set once when the build reaches a terminal status
@@ -649,11 +654,11 @@ def record_build_link_info(id, response_json):
     href = None
     # dashboard_summary is the build's page and dashboard_log its log tab;
     # dashboard_url can be just the dashboard root, so a candidate only
-    # qualifies when it is an absolute link to this specific build (the
-    # comment workflow rejects anything else, so don't persist it either).
+    # qualifies when it deep-links this specific build on a Unity dashboard
+    # host — exactly what the comment workflow accepts.
     for key in ('dashboard_summary', 'dashboard_log', 'dashboard_url'):
         candidate = (links.get(key) or {}).get('href')
-        if candidate and candidate.startswith('https://') and '/builds/' in candidate:
+        if candidate and _DASHBOARD_LINK_RE.match(candidate):
             href = candidate
             break
 
@@ -830,8 +835,9 @@ def maybe_update_live_comment(build_id, reconcile=False, force=False):
         return
     if reconcile:
         # Re-assert a few times only: the Pending reset (or the other target's
-        # first write racing ours) can land after us and drop this row.
-        if _live_comment_asserts == 0 or _live_comment_asserts >= 3:
+        # first write racing ours) can land after us and drop this row. A zero
+        # count still falls through, so a failed first write gets retried.
+        if _live_comment_asserts >= 3:
             return
         # Every probe is a comments-API read drawn from the repo-shared rate
         # budget; once the row has stayed put this many consecutive checks,
@@ -1171,8 +1177,10 @@ if __name__ == '__main__':
     download_log(id)
 
     if not build_healthy:
-        where = dashboard_url or _dashboard_build_url(id) or f'https://cloud.unity.com/ (search for target "{os.getenv("TARGET")}" and build ID "{id}")'
-        print(f'Build unhealthy - check the downloaded logs or the Unity Cloud build page: {where}')
+        # Dashboard URLs embed ORG_ID/PROJECT_ID, which are masked to *** in
+        # runner logs — the PR status comment carries the clickable link.
+        print(f'Build unhealthy - check the downloaded logs or the Unity Cloud build page '
+              f'linked from the PR status comment (target "{os.getenv("TARGET")}", build {id}).')
         sys.exit(1)
 
     # Cleanup (only if build is healthy and not release)

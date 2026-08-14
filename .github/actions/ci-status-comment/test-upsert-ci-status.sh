@@ -47,6 +47,18 @@ path = next(a for a in args if a.startswith('/'))
 
 comments = load()
 if method == 'GET':
+    # Optional eventual-consistency simulation: while the STALE_READS_FILE
+    # counter is positive and a pre-PATCH snapshot exists, serve the snapshot
+    # instead of the live store and decrement the counter.
+    stale_file = os.environ.get('STALE_READS_FILE')
+    snapshot = store + '.prev'
+    if stale_file and os.path.exists(stale_file) and os.path.exists(snapshot):
+        remaining = int(open(stale_file).read().strip() or 0)
+        if remaining > 0:
+            with open(snapshot) as f:
+                comments = json.load(f)
+            with open(stale_file, 'w') as f:
+                f.write(str(remaining - 1))
     # --paginate --slurp shape: array of pages.
     print(json.dumps([comments]))
 elif method == 'POST':
@@ -58,6 +70,10 @@ elif method == 'POST':
 elif method == 'PATCH':
     cid = int(path.rsplit('/', 1)[1])
     body = json.load(sys.stdin)['body']
+    if os.environ.get('STALE_READS_FILE'):
+        # Snapshot the pre-PATCH store so stale GETs can serve it.
+        with open(store + '.prev', 'w') as f:
+            json.dump(comments, f)
     for c in comments:
         if c['id'] == cid:
             c['body'] = body
@@ -170,6 +186,47 @@ BIG="$WORK/big-body.md"
 BODY="$(body_of)"
 grep -q 'truncated' <<< "$BODY" || fail "truncate: no truncation note"
 [ "$(( $(grep -c '^```' <<< "$BODY") % 2 ))" = 0 ] || fail "truncate: unbalanced code fence"
+SECTION_CONTENT="$(awk '/^<!-- ci:tests:start -->$/{grab=1;next} /^<!-- ci:tests:end -->$/{grab=0} grab' <<< "$BODY")"
+[ "${#SECTION_CONTENT}" -le 20000 ] || fail "truncate: section is ${#SECTION_CONTENT} chars, closers re-inflated past the cap"
 pass "oversized body truncated with constructs closed"
+
+# --- 9. embedded own-section markers must not scramble the comment ------------
+# The wedge shape: the body smuggles in this section's own end marker (which
+# would truncate the fence) and the top-level comment marker. The script strips
+# such lines, so the write must settle on the first attempt with the structure
+# intact — one marker, one end fence — and later writers must still land.
+reset_store
+OUT="$(run_upsert build "$(printf 'BEFORE\n<!-- ci:build:end -->\n  <!-- ci-status -->\nAFTER')")"
+grep -q 'updated (attempt 1)' <<< "$OUT" || fail "wedge: write did not settle on attempt 1"
+[ "$(count)" = 1 ] || fail "wedge: expected 1 comment"
+BODY="$(body_of)"
+grep -q 'BEFORE' <<< "$BODY" || fail "wedge: content before marker lost"
+grep -q 'AFTER' <<< "$BODY" || fail "wedge: content after marker lost"
+[ "$(grep -c '<!-- ci:build:end -->' <<< "$BODY")" = 1 ] || fail "wedge: embedded end marker survived"
+[ "$(grep -c '<!-- ci-status -->' <<< "$BODY")" = 1 ] || fail "wedge: embedded comment marker survived"
+run_upsert lint "LINT-AFTER-WEDGE" >/dev/null
+BODY="$(body_of)"
+grep -q 'LINT-AFTER-WEDGE' <<< "$BODY" || fail "wedge: later section write lost"
+grep -q 'BEFORE' <<< "$BODY" || fail "wedge: later write wiped earlier section"
+pass "embedded section markers stripped, comment structure intact"
+
+# --- 10. stale re-read after PATCH retries and converges ----------------------
+# Create-race shape: the PATCH lands, but the confirming re-read returns a
+# stale body whose section content differs from WANT. The script must treat
+# that as unsettled, retry, and converge once reads are fresh again.
+reset_store "$(python3 - <<'PY'
+import json
+body = ("<!-- ci-status -->\n### 🚦 CI Status\n"
+        "<!-- ci:build:start -->\nPRE-RACE\n<!-- ci:build:end -->")
+print(json.dumps([{"id": 7, "user": {"login": "github-actions[bot]"}, "body": body}]))
+PY
+)"
+echo 1 > "$WORK/stale-reads"
+OUT="$( (cd "$WORK" && SECTION=build SECTION_BODY="RACE-CONVERGED" STALE_READS_FILE="$WORK/stale-reads" bash "$UPSERT") )"
+grep -q "not settled (attempt 1)" <<< "$OUT" || fail "race: stale re-read did not trigger a retry"
+grep -q 'updated (attempt 2)' <<< "$OUT" || fail "race: did not converge on attempt 2"
+grep -q 'RACE-CONVERGED' <<< "$(body_of)" || fail "race: final body missing converged content"
+[ "$(cat "$WORK/stale-reads")" = 0 ] || fail "race: stale read was not consumed"
+pass "stale re-read retried until convergence"
 
 [ "$FAILED" = 0 ] && echo "ALL PASS" || { echo "FAILURES PRESENT"; exit 1; }

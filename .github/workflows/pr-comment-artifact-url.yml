@@ -281,11 +281,12 @@ jobs:
             joined=$(printf '%s · ' "${parts[@]}")
             printf '| %s | %s |\n' "$label" "${joined% · }"
           }
+          DELIM="PLATFORM_ROWS_EOF_${RANDOM}${RANDOM}_$$"
           {
-            echo "PLATFORM_ROWS<<PLATFORM_ROWS_EOF"
+            echo "PLATFORM_ROWS<<$DELIM"
             compose_row "Windows" "$WINDOWS_CELL" "${WINDOWS_ARTIFACT_ID:-}" "Decentraland_windows64.zip"
             compose_row "Mac" "$MAC_CELL" "${MAC_ARTIFACT_ID:-}" "Decentraland_macos.zip"
-            echo "PLATFORM_ROWS_EOF"
+            echo "$DELIM"
           } >> "$GITHUB_ENV"
 
       - name: Update build section

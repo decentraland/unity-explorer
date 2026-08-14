@@ -79,8 +79,10 @@ class DashboardUrlTest(EnvMixin, unittest.TestCase):
         self.set_env(**self.ENV)
         url = build._dashboard_build_url(42)
         self.assertRegex(url, url_re)
-        # And the producer's own qualifying filter for API-returned links.
-        self.assertTrue(url.startswith('https://') and '/builds/' in url)
+        # The producer's API-href filter must be the same rule verbatim, or a
+        # link it persists could still be dropped downstream.
+        self.assertEqual(build._DASHBOARD_LINK_RE.pattern, match.group(1))
+        self.assertRegex(url, build._DASHBOARD_LINK_RE)
 
 
 class LinkInfoFileTest(EnvMixin, unittest.TestCase):
@@ -131,11 +133,74 @@ class LinkInfoFileTest(EnvMixin, unittest.TestCase):
         build.record_build_link_info(7, {'links': {'dashboard_url': {'href': 'https://cloud.unity.com/'}}})
         self.assertEqual(self.read_info()['DASHBOARD_URL'], build._dashboard_build_url(7))
 
+    def test_link_failing_consumer_allowlist_rejected(self):
+        for href in ('https://example.com/deep/builds/7',          # non-dashboard host
+                     'https://cloud.unity.com/deep/builds/none',   # no numeric build id
+                     'https://cloud.unity.com/deep/builds/7?x=<'):  # char outside the allowlist
+            build.record_build_link_info(7, {'links': {'dashboard_summary': {'href': href}}})
+            self.assertEqual(self.read_info()['DASHBOARD_URL'], build._dashboard_build_url(7), href)
+
     def test_final_elapsed_clamps_negative(self):
         build.record_final_elapsed(7, -5, -1)
         info = self.read_info()
         self.assertEqual(info['QUEUE_SECS'], '0')
         self.assertEqual(info['BUILD_SECS'], '0')
+
+
+class LiveCommentReconcileTest(EnvMixin, unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        old_cwd = os.getcwd()
+        self.addCleanup(os.chdir, old_cwd)
+        os.chdir(tmp.name)
+        # CI_STATUS_SCRIPT is cwd-relative; it must exist for the gate to pass.
+        os.makedirs(os.path.dirname(build.CI_STATUS_SCRIPT))
+        open(build.CI_STATUS_SCRIPT, 'w').close()
+        self.set_env(PR_NUMBER='1', GH_TOKEN='token')
+        self._reset_counters()
+        self.addCleanup(self._reset_counters)
+        self.addCleanup(setattr, build, 'upsert_live_comment', build.upsert_live_comment)
+
+    @staticmethod
+    def _reset_counters():
+        build._live_comment_asserts = 0
+        build._live_comment_last_attempt = 0.0
+        build._live_comment_confirms = 0
+
+    def stub_upsert(self, result):
+        calls = []
+
+        def fake(build_id, only_if_missing=False):
+            calls.append(only_if_missing)
+            if isinstance(result, Exception):
+                raise result
+            return result
+        build.upsert_live_comment = fake
+        return calls
+
+    def test_reconcile_retries_after_failed_first_write(self):
+        self.stub_upsert(RuntimeError('transient'))
+        build.maybe_update_live_comment(7)  # swallowed; no row asserted
+        self.assertEqual(build._live_comment_asserts, 0)
+
+        calls = self.stub_upsert(True)
+        build.maybe_update_live_comment(7, reconcile=True)
+        self.assertEqual(calls, [], 'the 240s spacing must still hold')
+
+        build._live_comment_last_attempt -= 241
+        build.maybe_update_live_comment(7, reconcile=True)
+        self.assertEqual(calls, [True], 'reconcile must retry the failed first write')
+        self.assertEqual(build._live_comment_asserts, 1)
+
+    def test_reconcile_caps_still_hold(self):
+        calls = self.stub_upsert(True)
+        build._live_comment_asserts = 3
+        build.maybe_update_live_comment(7, reconcile=True)
+        build._live_comment_asserts = 1
+        build._live_comment_confirms = 3
+        build.maybe_update_live_comment(7, reconcile=True)
+        self.assertEqual(calls, [])
 
 
 if __name__ == '__main__':

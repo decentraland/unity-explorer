@@ -102,7 +102,9 @@ runs:
         ARTIFACTS_JSON=$(gh api "/repos/$REPO_FULL/actions/runs/$RUN_ID/artifacts?per_page=100" 2>/dev/null || echo '{"artifacts":[]}')
 
         fmt_dur() {
-          local s=$1
+          # Digits-only input may still carry leading zeros; force base-10 so
+          # $(( )) can't parse a value like 0900 as (invalid) octal.
+          local s=$((10#$1))
           if [ "$s" -ge 3600 ]; then printf '%dh %dm' $((s/3600)) $((s%3600/60))
           elif [ "$s" -ge 60 ]; then printf '%dm %ds' $((s/60)) $((s%60))
           else printf '%ds' "$s"; fi

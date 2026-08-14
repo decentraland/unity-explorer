@@ -27,7 +27,7 @@ jobs:
 
       - name: Unit tests (build.py helpers)
         run: |
-          pip install --quiet requests
+          pip install --quiet -r scripts/cloudbuild/requirements.txt
           python3 -m unittest discover -s scripts/cloudbuild -v
 
       - name: Functional tests (upsert-ci-status.sh, stubbed gh)

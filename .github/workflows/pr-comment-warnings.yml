@@ -133,9 +133,10 @@ jobs:
           BLOCKED=0
 
           # COUNT/BASELINE come from the artifact produced by the untrusted pull_request job
-          # (fork-controlled). This step has no `set -e`, and bash's `[` errors out on a
-          # non-numeric operand and falls through - never let such a value reach a comparison
-          # or a bash arithmetic context ($(( )) evaluates its operands as expressions).
+          # (fork-controlled). This step runs under Actions' default `bash -e {0}`: `[`
+          # errors on a non-numeric operand (falling through inside `if`, aborting the step
+          # elsewhere) - never let such a value reach a comparison or a bash arithmetic
+          # context ($(( )) evaluates its operands as expressions).
           [[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=0
           [[ "$BASELINE" =~ ^[0-9]+$ ]] || BASELINE=""
 
@@ -215,10 +216,11 @@ jobs:
           if [ "$FOUND" = "true" ]; then
             ART_ID=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100" \
               --jq '.artifacts[] | select(.name=="csharp-lint-reports") | .id' 2>/dev/null | head -1)
-            # Wall time of the Lint job, from the trusted Actions API.
+            # Wall time of the Lint job, from the trusted Actions API. An API failure
+            # degrades to "no duration" (empty) instead of aborting the step under -e.
             LINT_SECS=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/jobs?per_page=100" \
-              --jq '[.jobs[] | select(.name=="Lint" and .completed_at != null)
-                     | ((.completed_at|fromdateiso8601) - (.started_at|fromdateiso8601))] | first // empty' 2>/dev/null)
+              --jq '[.jobs[] | select(.name=="Lint" and .completed_at != null and .started_at != null)
+                     | ((.completed_at|fromdateiso8601) - (.started_at|fromdateiso8601))] | first // empty' 2>/dev/null || true)
             FOOTER="<sub>[Lint run]($RUN_URL)"
             [ -n "$ART_ID" ] && FOOTER="$FOOTER · [full InspectCode report](https://github.com/$REPO/actions/runs/$RUN_ID/artifacts/$ART_ID)"
             if [[ "$LINT_SECS" =~ ^[0-9]+$ ]]; then

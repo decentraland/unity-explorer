@@ -9,7 +9,7 @@
 # $HEADER heading plus one fenced block per section:
 #
 #   <!-- ci-status -->
-#   ### <logo> CI Status
+#   ### 🚦 CI Status
 #   <!-- ci:build:start -->       …build…       <!-- ci:build:end -->
 #   <!-- ci:lint:start -->        …lint…        <!-- ci:lint:end -->
 #   <!-- ci:tests:start -->       …tests…       <!-- ci:tests:end -->
@@ -40,22 +40,37 @@ fi
 # writer — whichever path its body arrived by — from consuming the whole budget
 # and failing an unrelated section's PATCH with an opaque 422. Truncation is
 # fine for a status section that already links out to the full report.
-if [ "${#SECTION_BODY}" -gt 20000 ]; then
-  echo "::warning::Section body is ${#SECTION_BODY} chars; truncating to 20000."
-  SECTION_BODY="${SECTION_BODY:0:20000}"
-  # Close constructs the cut may have severed — an unterminated code fence or
-  # <details> makes GitHub render everything after it in this comment inside
-  # the open block, visually eating the neighbouring sections.
-  if [ $(( $(grep -c '^```' <<< "$SECTION_BODY") % 2 )) -ne 0 ]; then
-    SECTION_BODY="$SECTION_BODY"$'\n''```'
-  fi
-  opens=$(grep -oi '<details' <<< "$SECTION_BODY" | wc -l || true)
-  closes=$(grep -oi '</details' <<< "$SECTION_BODY" | wc -l || true)
-  while [ "${opens:-0}" -gt "${closes:-0}" ]; do
-    SECTION_BODY="$SECTION_BODY"$'\n</details>'
-    closes=$((closes + 1))
+CAP=20000
+if [ "${#SECTION_BODY}" -gt "$CAP" ]; then
+  echo "::warning::Section body is ${#SECTION_BODY} chars; truncating to $CAP."
+  NOTE=$'\n\n'"_…truncated; see the linked run for the full report._"
+  # Cut with headroom for the note, then close constructs the cut may have
+  # severed — an unterminated code fence or <details> makes GitHub render
+  # everything after it in this comment inside the open block, visually eating
+  # the neighbouring sections. The appended closers count against the cap too,
+  # so re-cut and re-balance until the finished body fits inside it.
+  CUT=$((CAP - ${#NOTE}))
+  while :; do
+    TRUNCATED="${SECTION_BODY:0:CUT}"
+    if [ $(( $(grep -c '^```' <<< "$TRUNCATED") % 2 )) -ne 0 ]; then
+      TRUNCATED="$TRUNCATED"$'\n''```'
+    fi
+    opens=$(grep -oi '<details' <<< "$TRUNCATED" | wc -l || true)
+    closes=$(grep -oi '</details' <<< "$TRUNCATED" | wc -l || true)
+    while [ "${opens:-0}" -gt "${closes:-0}" ]; do
+      TRUNCATED="$TRUNCATED"$'\n</details>'
+      closes=$((closes + 1))
+    done
+    TRUNCATED="$TRUNCATED$NOTE"
+    if [ "${#TRUNCATED}" -le "$CAP" ]; then
+      break
+    fi
+    CUT=$((CUT - (${#TRUNCATED} - CAP)))
+    if [ "$CUT" -lt 0 ]; then
+      CUT=0
+    fi
   done
-  SECTION_BODY="$SECTION_BODY"$'\n\n'"_…truncated; see the linked run for the full report._"
+  SECTION_BODY="$TRUNCATED"
 fi
 
 # Fail fast on a section name outside the fence set — an unknown name would

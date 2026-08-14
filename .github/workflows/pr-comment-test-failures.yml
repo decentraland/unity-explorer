@@ -106,7 +106,7 @@ jobs:
             # tests), from the trusted Actions API — pairs with the test-sum Time
             # column so setup overhead is visible.
             job_secs=$(jq -r --arg n "Test ($mode)" \
-              '[.jobs[]? | select(.name==$n and .completed_at != null)
+              '[.jobs[]? | select(.name==$n and .completed_at != null and .started_at != null)
                 | ((.completed_at|fromdateiso8601) - (.started_at|fromdateiso8601))] | first // empty' <<< "$JOBS_JSON")
             if [[ "$job_secs" =~ ^[0-9]+$ ]]; then job_dur=$(fmt_secs "$job_secs"); else job_dur="—"; fi
 
