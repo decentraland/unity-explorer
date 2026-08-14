@@ -68,7 +68,7 @@ namespace DCL.VoiceChat.UI
 
         private bool IsDue(NearbyVoiceTipSchedule schedule)
         {
-            // Users who dismissed the tip back when it was shown once on first login are never shown it again.
+            // Retro-compatibility: Users who dismissed the tip back when it was shown once on first login are never shown it again.
             if (DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED)) return false;
 
             timesShown = DCLPlayerPrefs.GetInt(DCLPrefKeys.NEARBY_VOICE_TIP_SHOWN_COUNT);
