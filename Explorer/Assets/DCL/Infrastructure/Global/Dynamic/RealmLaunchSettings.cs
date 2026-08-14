@@ -20,13 +20,6 @@ namespace Global.Dynamic
     [Serializable]
     public class RealmLaunchSettings : ILaunchMode
     {
-        /// <summary>
-        ///     Path under the local-scene-development realm where the preview server proxies its abgen sidecar
-        ///     (decentraland/js-sdk-toolchain#1504) — the client derives the optimized-assets base from the realm
-        ///     origin it already has instead of being told a second origin.
-        /// </summary>
-        public const string OPTIMIZED_ASSETS_PATH = "/optimized-assets";
-
         [Serializable]
         public struct PredefinedScenes
         {
@@ -43,8 +36,8 @@ namespace Global.Dynamic
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles;
-        [SerializeField] [Tooltip("Local scene development only: load the scene's asset bundles from the preview server instead of loading "
-                                  + "raw GLTFs. The assets base is derived from the realm ({realm}" + OPTIMIZED_ASSETS_PATH + "); "
+        [SerializeField] [Tooltip("Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's "
+                                  + "embedded abgen sidecar (reading the preview server's content) instead of loading raw GLTFs; "
                                   + "an explicit --optimized-assets-url overrides it")] internal bool useLocalAssetBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
@@ -96,23 +89,6 @@ namespace Global.Dynamic
             }
 
             return new HybridSceneParams();
-        }
-
-        /// <summary>
-        ///     Base URL for local asset bundles: the local-scene-development realm plus
-        ///     <see cref="OPTIMIZED_ASSETS_PATH" />. No value other than the realm itself — which the deep-link
-        ///     allowlist already gates on being loopback — feeds the result, so a deep link cannot point it
-        ///     anywhere the realm doesn't already reach. Null outside local scene development.
-        /// </summary>
-        public string? LocalAssetBundlesBaseUrl()
-        {
-            if (isLocalSceneDevelopmentRealm)
-                return customRealm.TrimEnd('/') + OPTIMIZED_ASSETS_PATH;
-
-            if (initialRealm == InitialRealm.Localhost)
-                return IRealmNavigator.LOCALHOST + OPTIMIZED_ASSETS_PATH;
-
-            return null;
         }
 
         public void ApplyConfig(IAppArgs applicationParameters)
