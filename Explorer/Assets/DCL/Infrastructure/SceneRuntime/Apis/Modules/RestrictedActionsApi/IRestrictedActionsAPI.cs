@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.ECSComponents;
+using Decentraland.Kernel.Apis;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -25,7 +25,7 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         int TryOpenExplorerUi(int ui);
 
-        UniTask<SceneItemPurchaseResult> TryOpenItemPurchaseAsync(string itemUrn, CancellationToken ct);
+        UniTask<OpenItemPurchaseResult> TryOpenItemPurchaseAsync(string itemUrn, CancellationToken ct);
 
         void TryCopyToClipboard(string text);
 

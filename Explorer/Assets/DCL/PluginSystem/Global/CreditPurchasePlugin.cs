@@ -15,6 +15,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
 using DCL.UI;
 using DCL.Web3.Identities;
+using Decentraland.Kernel.Apis;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -122,16 +123,16 @@ namespace DCL.PluginSystem.Global
         ///     The verdict is read from the modal's own events (the ones analytics already consumes) and is
         ///     deliberately coarse: a failure never tells the scene whether the wallet was short.
         /// </summary>
-        public async UniTask<SceneItemPurchaseResult> OpenAsync(string itemUrn, CancellationToken ct)
+        public async UniTask<OpenItemPurchaseResult> OpenAsync(string itemUrn, CancellationToken ct)
         {
             if (creditPurchaseModalController == null
                 || !FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase)
                 || !FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits)
                 || !CreditsFeatureAccess.Instance.IsUserAllowed())
-                return SceneItemPurchaseResult.RejectedFeatureDisabled;
+                return OpenItemPurchaseResult.OipRejectedFeatureDisabled;
 
             if (!CreditPurchaseBuyHandler.TryParseCollectionItem(itemUrn, out string contractAddress, out string itemId))
-                return SceneItemPurchaseResult.RejectedNotPurchasable;
+                return OpenItemPurchaseResult.OipRejectedNotPurchasable;
 
             // Everything below runs on the main thread. This flow is driven from the scene runtime's
             // thread, and every piece it touches is main-thread only: the web request controller reads a
@@ -142,15 +143,15 @@ namespace DCL.PluginSystem.Global
             ShopListingDto? listing;
 
             try { listing = await marketplaceShopAPIClient.GetShopListingForItemAsync(contractAddress, itemId, ct); }
-            catch (OperationCanceledException) { return SceneItemPurchaseResult.Dismissed; }
+            catch (OperationCanceledException) { return OpenItemPurchaseResult.OipDismissed; }
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Scene offered {itemUrn} but the listing could not be resolved: {e.Message}");
-                return SceneItemPurchaseResult.RejectedNotPurchasable;
+                return OpenItemPurchaseResult.OipRejectedNotPurchasable;
             }
 
             if (listing == null)
-                return SceneItemPurchaseResult.RejectedNotPurchasable;
+                return OpenItemPurchaseResult.OipRejectedNotPurchasable;
 
             // Best-effort thumbnail: an image must never block a purchase, so a failure here just leaves
             // the card without art.
@@ -177,7 +178,7 @@ namespace DCL.PluginSystem.Global
                     thumbnail = cached.Sprite;
                 }
             }
-            catch (OperationCanceledException) { return SceneItemPurchaseResult.Dismissed; }
+            catch (OperationCanceledException) { return OpenItemPurchaseResult.OipDismissed; }
             catch (Exception e) { ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Thumbnail for {itemUrn} could not be loaded: {e.Message}"); }
 
             // The modal is a single instance shared with the passport, and MVCManager.ShowAsync returns
@@ -186,19 +187,19 @@ namespace DCL.PluginSystem.Global
             if (creditPurchaseModalController.State != ControllerState.ViewHidden)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Scene offered {itemUrn} while the purchase modal was already showing");
-                return SceneItemPurchaseResult.Failed;
+                return OpenItemPurchaseResult.OipFailed;
             }
 
             // Closing the modal without buying is the common case, so that is the default verdict.
-            var verdict = SceneItemPurchaseResult.Dismissed;
+            var verdict = OpenItemPurchaseResult.OipDismissed;
 
             // The modal instance is shared with the passport, so an event may belong to somebody else's
             // purchase. It always carries the listing it was opened with, and that is the one we passed in.
-            void OnCompleted(ShopListingDto dto, CreditsPurchaseQuote _, string __, float ___) => SetVerdict(dto, SceneItemPurchaseResult.Purchased);
-            void OnFailed(ShopListingDto dto, string _, string __, string ___) => SetVerdict(dto, SceneItemPurchaseResult.Failed);
-            void OnCancelled(ShopListingDto dto, string _) => SetVerdict(dto, SceneItemPurchaseResult.Dismissed);
+            void OnCompleted(ShopListingDto dto, CreditsPurchaseQuote _, string __, float ___) => SetVerdict(dto, OpenItemPurchaseResult.OipPurchased);
+            void OnFailed(ShopListingDto dto, string _, string __, string ___) => SetVerdict(dto, OpenItemPurchaseResult.OipFailed);
+            void OnCancelled(ShopListingDto dto, string _) => SetVerdict(dto, OpenItemPurchaseResult.OipDismissed);
 
-            void SetVerdict(ShopListingDto dto, SceneItemPurchaseResult result)
+            void SetVerdict(ShopListingDto dto, OpenItemPurchaseResult result)
             {
                 if (!ReferenceEquals(dto, listing))
                     return;
@@ -206,7 +207,7 @@ namespace DCL.PluginSystem.Global
                 // Closing the modal after a FAILED purchase also raises PurchaseCancelled (the modal only
                 // suppresses it when the purchase succeeded), so the first terminal outcome is the real one.
                 // Without this, a purchase that broke reports back as if the player had declined it.
-                if (verdict is SceneItemPurchaseResult.Purchased or SceneItemPurchaseResult.Failed)
+                if (verdict is OpenItemPurchaseResult.OipPurchased or OpenItemPurchaseResult.OipFailed)
                     return;
 
                 verdict = result;
@@ -233,11 +234,11 @@ namespace DCL.PluginSystem.Global
 
                 await mvcManager.ShowAsync(CreditPurchaseModalController.IssueCommand(modalParams), ct);
             }
-            catch (OperationCanceledException) { return SceneItemPurchaseResult.Dismissed; }
+            catch (OperationCanceledException) { return OpenItemPurchaseResult.OipDismissed; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                return SceneItemPurchaseResult.Failed;
+                return OpenItemPurchaseResult.OipFailed;
             }
             finally
             {

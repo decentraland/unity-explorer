@@ -237,27 +237,23 @@ namespace CrdtEcsBridge.RestrictedActions
             return (int)explorerUiActions.OpenSection(section);
         }
 
-        public async UniTask<SceneItemPurchaseResult> TryOpenItemPurchaseAsync(string itemUrn, CancellationToken ct)
+        public async UniTask<OpenItemPurchaseResult> TryOpenItemPurchaseAsync(string itemUrn, CancellationToken ct)
         {
             if (!sceneStateProvider.IsCurrent)
-                return SceneItemPurchaseResult.RejectedNotCurrentScene;
+                return OpenItemPurchaseResult.OipRejectedNotCurrentScene;
 
             if (!HasRecentUserGesture())
             {
                 ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenItemPurchase: rejected, call did not originate from a recent user gesture");
-                return SceneItemPurchaseResult.RejectedNoUserGesture;
+                return OpenItemPurchaseResult.OipRejectedNoUserGesture;
             }
 
-            // A portable experience follows the player everywhere, so one able to raise a purchase
-            // confirmation anywhere is a phishing surface. An offer belongs to the scene you stand in.
             if (sceneData.IsPortableExperience())
             {
                 ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenItemPurchase: rejected, a portable experience cannot offer purchases");
-                return SceneItemPurchaseResult.RejectedFeatureDisabled;
+                return OpenItemPurchaseResult.OipRejectedFeatureDisabled;
             }
 
-            // Everything past this point -- price, signature, confirmation UI -- belongs to the client.
-            // The scene never learns more than the verdict.
             return await SceneItemPurchaseBridge.OpenAsync(itemUrn, ct);
         }
 

@@ -30,9 +30,6 @@ module.exports.OpenExplorerUiResult = makeEnum([
     ['REJECTED_NO_USER_GESTURE', 5],
 ]);
 
-// Names carry the OIP_ prefix because the proto does: proto3 enum values are siblings of their enum,
-// so bare names would collide with OpenExplorerUiResult. They MUST match the generated SDK type, or a
-// scene reading OpenItemPurchaseResult.OIP_PURCHASED would typecheck and get undefined at runtime.
 module.exports.OpenItemPurchaseResult = makeEnum([
     ['OIP_UNSPECIFIED', 0],
     ['OIP_PURCHASED', 1],
@@ -110,9 +107,6 @@ module.exports.openExplorerUi = async function(message) {
     return { openResult };
 }
 
-// The scene supplies ONLY the item URN: the client resolves the price from the catalog, signs and
-// confirms. Deliberately coarse verdict -- "insufficient credits" is folded into FAILED so scene
-// code cannot probe a wallet by attempting purchases.
 module.exports.openItemPurchase = async function(message) {
     const result = await UnityRestrictedActionsApi.OpenItemPurchase(message.urn)
     return { result };
