@@ -148,16 +148,34 @@ runs:
         # gh has no built-in retry, and both callers below are decisive on a
         # single answer: the wait-minutes: 0 path has no second poll, and a
         # listing that fails every poll would otherwise read as "no build
-        # exists". stderr is dropped because a 90-minute wait polls ~90 times
-        # and every failure that survives the retry is reported, with an
-        # action, by the messages below.
+        # exists". Three attempts five seconds apart cover a transport failure
+        # — a 5xx, a connection reset — and only that. They do not rescue a
+        # spent rate limit, which refills on an hour boundary rather than in
+        # ten seconds: there every attempt fails by construction and the retry
+        # only spends more of a budget that is already gone. What separates
+        # that outage from a real "no build" is the LISTED/LISTED_NOW pair
+        # below, not this helper.
+        #
+        # stderr is dropped on the attempts that get another go, because a
+        # 90-minute wait polls ~90 times and a blip that the next attempt
+        # answers is not news. The last attempt keeps it, because a permanent
+        # failure — build-unitycloud.yml renamed, say — 404s on every attempt
+        # of every poll, and the messages below can only report that as an API
+        # that did not answer: without gh's own line the operator is sent to a
+        # status page that is green, with the one fact that explains it
+        # discarded.
         gh_api_retry() {
           local out attempt
           for attempt in 1 2 3; do
-            if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
-            # Not after the last attempt: the callers below act on the answer
-            # immediately, so that sleep would only delay a red check.
-            if [ "$attempt" -lt 3 ]; then sleep 5; fi
+            if [ "$attempt" -lt 3 ]; then
+              if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
+              # Only between attempts: the callers below act on the answer
+              # immediately, so a sleep after the last one would just delay a
+              # red check.
+              sleep 5
+            else
+              if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
+            fi
           done
           return 1
         }
@@ -168,10 +186,13 @@ runs:
         # operator which of the two happened, and only one of them is fixed by
         # `force-build`. LISTED is "did any poll's listing ever answer";
         # LISTED_NOW, set per poll further down, is "did the last one". Both
-        # are needed: this loop spends ~360 requests/hour of a 1,000/hour
-        # budget it shares with build-unitycloud and the review bots, so the
-        # realistic outage — rate-limit exhaustion — begins partway through a
-        # 90-minute wait, and by then LISTED has long since flipped.
+        # are needed precisely for the outage the retry above cannot absorb:
+        # this loop spends ~360 requests/hour of the 1,000/hour per-repository
+        # GITHUB_TOKEN budget it shares with build-unitycloud and the review
+        # bots, so rate-limit exhaustion starts partway through a 90-minute
+        # wait and holds until the hour rolls over — every attempt of every
+        # remaining poll fails, and by then LISTED has long since flipped
+        # while LISTED_NOW has not. That difference is the whole diagnosis.
         LISTED=0
         DEADLINE=$(( SECONDS + WAIT_MINUTES * 60 ))
         while :; do

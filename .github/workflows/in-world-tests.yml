@@ -75,8 +75,22 @@ on:
 # required check. `github.head_ref` is the source branch on `pull_request` (where
 # `ref_name` is the merge ref) and empty everywhere else, so the fallback is what
 # a dispatch and a manual run against any ref key on.
+#
+# Keyed on the head repo as well, because a branch name is not ours to reserve:
+# a fork PR into main may name its branch `release/2026-08-10` too, and
+# `cancel-in-progress` is applied when the run is created — before any job's
+# `if:` is evaluated, so the fork exclusion in `resolve`'s own `if:` (:113)
+# only skips the jobs of a run that has already cancelled the real gate.
+# Without this segment an outsider could red a release's required check at
+# will, by guessing a name that release cuts make predictable.
+# `head.repo.full_name` is the head repo on `pull_request` — ours on a same-repo
+# PR, `attacker/whatever` on a fork — and absent on `workflow_dispatch`, whose
+# payload carries only `inputs`, `ref` and `workflow`; the fallback therefore
+# resolves to the same string a same-repo PR produces, which is what keeps the
+# two triggers in one group. A fork cannot collide with us: everything before
+# the first `/` is the head repo's owner, and only we can be `decentraland`.
 concurrency:
-  group: in-world-tests-${{ github.head_ref || github.ref_name }}
+  group: in-world-tests-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:

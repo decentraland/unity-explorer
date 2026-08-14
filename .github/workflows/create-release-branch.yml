@@ -164,12 +164,48 @@ jobs:
           # Runs come back newest first, and only the newest few are worth
           # asking about — the same candidate cap resolve-explorer-build uses.
           HEAD_SHA=$(git rev-parse HEAD)
+
+          # The helper resolve-explorer-build defines, duplicated because a
+          # composite action cannot export a shell function to its caller. Same
+          # justification, more sharply: this step decides on one answer and
+          # then the workflow ends, so a single 5xx must not settle a release
+          # cut. Three attempts five seconds apart cover a transport failure —
+          # a 5xx, a connection reset — and only that; a spent rate limit
+          # refills on an hour boundary, which is why the flags below record
+          # whether the API answered rather than trusting the retry to make it.
+          # stderr is kept on the last attempt so a permanent failure (this
+          # workflow file renamed, say) says what it was instead of vanishing
+          # into "the API did not answer".
+          gh_api_retry() {
+            local out attempt
+            for attempt in 1 2 3; do
+              if [ "$attempt" -lt 3 ]; then
+                if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
+                sleep 5
+              else
+                if out=$(gh api "$@"); then printf '%s' "$out"; return 0; fi
+              fi
+            done
+            return 1
+          }
+
           # Absorbed rather than left to set -e, here and on the jobs call
-          # below: an API blip must not red a cut whose branch, PR and comment
-          # all landed. Nothing found reads as "no build", which is the notice
-          # path, and re-running this workflow is the remedy either way.
-          RUN_IDS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=50" \
-            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push") | .id]') || RUN_IDS=''
+          # below: an API blip must not red a cut whose branch, PR, labels and
+          # build-links comment have all landed. But it must not be reported as
+          # "no build" either — that is the conflation LISTED/LISTED_NOW exist
+          # to stop in resolve-explorer-build, and it costs more here, because
+          # this message is the operator's only instruction and the workflow
+          # ends after it. LISTED is "the run listing answered at all";
+          # UNEXAMINED is "a candidate's jobs call did not", which leaves that
+          # run neither green nor known to be anything else.
+          LISTED=0
+          UNEXAMINED=0
+          if RUN_IDS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=50" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push") | .id]'); then
+            LISTED=1
+          else
+            RUN_IDS=''
+          fi
           if [ -z "$RUN_IDS" ]; then RUN_IDS='[]'; fi
           LIMIT=$(jq 'length' <<< "$RUN_IDS")
           if [ "$LIMIT" -gt 5 ]; then LIMIT=5; fi
@@ -177,13 +213,37 @@ jobs:
           LEGS_GREEN=false
           for (( i = 0; i < LIMIT; i++ )); do
             RUN_ID=$(jq -r ".[$i]" <<< "$RUN_IDS")
-            LEGS_GREEN=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=50" \
-              --jq '[.jobs[] | select(.conclusion == "success") | .name] | any(startswith("Build (macos")) and any(startswith("Build (windows64"))') || LEGS_GREEN=false
-            if [ "$LEGS_GREEN" = "true" ]; then break; fi
+            if LEGS_GREEN=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=50" \
+              --jq '[.jobs[] | select(.conclusion == "success") | .name] | any(startswith("Build (macos")) and any(startswith("Build (windows64"))'); then
+              if [ "$LEGS_GREEN" = "true" ]; then break; fi
+            else
+              LEGS_GREEN=false
+              UNEXAMINED=1
+            fi
           done
 
+          # Three ways to end up not dispatching, and only the last is a build
+          # problem — so they get three messages. All three are `::error::`:
+          # each one ends with the gate unreported and the release unmergeable,
+          # which is not a line in a green log, and the dispatch failure below
+          # already annotates for exactly that outcome.
+          #
+          # None of them says "re-run this workflow". Re-running re-enters the
+          # `Create or update branch` step above, which force-pushes
+          # ${BRANCH_NAME} from dev's current tip — quietly re-cutting the
+          # release from newer commits than the one that was reviewed. Starting
+          # `In-World Tests` by hand is the remedy in every case, and it is the
+          # same instruction the dispatch failure below gives.
+          if [ "$LISTED" = "0" ]; then
+            echo "::error::Could not list build-unitycloud.yml runs for ${HEAD_SHA:0:7} — the GitHub Actions API did not answer, so no build was ever looked at and the InWorld gate was not started. This says nothing about whether a build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            exit 0
+          fi
+          if [ "$LEGS_GREEN" != "true" ] && [ "$UNEXAMINED" = "1" ]; then
+            echo "::error::The GitHub Actions API did not answer for at least one build run of ${HEAD_SHA:0:7}, so whether its legs are green is unknown and the InWorld gate was not started. This is not evidence that no build exists. The release branch and its PR are fine: start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
+            exit 0
+          fi
           if [ "$LEGS_GREEN" != "true" ]; then
-            echo "::notice::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the InWorld gate was not started — it would fail on its first poll. Build the commit, then re-run this workflow."
+            echo "::error::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the InWorld gate was not started — it would fail on its first poll. Build the commit: label the release PR \`force-build\` if build-unitycloud.yml built nothing, or remove a \`windows-only\`/\`macos-only\` label that narrowed its targets. Then start \`In-World Tests\` by hand against ${BRANCH_NAME}. Do not re-run this workflow — it force-pushes ${BRANCH_NAME} and would re-cut the release from a newer dev tip."
             exit 0
           fi
 
