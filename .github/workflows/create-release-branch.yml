@@ -151,16 +151,53 @@ jobs:
         run: |
           set -euo pipefail
 
-          # A dispatched gate resolves this commit's build and fails fast when
-          # there is none, so only start it once one exists. Same condition as
-          # the comment above, and the same fix: re-run this workflow.
+          # On the dispatch path the gate resolves this commit's build with
+          # wait-minutes 0, so it fails within seconds unless both zips are
+          # already up. Ask it the same question — did both build legs conclude
+          # success — rather than whether a run went green: build-unitycloud.yml
+          # also concludes green having built nothing, when the commit touches
+          # no Explorer/** file and the matrix never expands, and green having
+          # built one platform, when a windows-only/macos-only label narrows it.
+          # Either would dispatch a gate that immediately reds a brand-new
+          # release PR with nothing wrong in it.
+          #
+          # Runs come back newest first, and only the newest few are worth
+          # asking about — the same candidate cap resolve-explorer-build uses.
           HEAD_SHA=$(git rev-parse HEAD)
-          RUN_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
-            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")] | .[0]')
-          if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
-            echo "::notice::No build for ${HEAD_SHA:0:7} yet, so the InWorld gate was not started. Re-run this workflow once one finishes."
+          # Absorbed rather than left to set -e, here and on the jobs call
+          # below: an API blip must not red a cut whose branch, PR and comment
+          # all landed. Nothing found reads as "no build", which is the notice
+          # path, and re-running this workflow is the remedy either way.
+          RUN_IDS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=50" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push") | .id]') || RUN_IDS=''
+          if [ -z "$RUN_IDS" ]; then RUN_IDS='[]'; fi
+          LIMIT=$(jq 'length' <<< "$RUN_IDS")
+          if [ "$LIMIT" -gt 5 ]; then LIMIT=5; fi
+
+          LEGS_GREEN=false
+          for (( i = 0; i < LIMIT; i++ )); do
+            RUN_ID=$(jq -r ".[$i]" <<< "$RUN_IDS")
+            LEGS_GREEN=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=50" \
+              --jq '[.jobs[] | select(.conclusion == "success") | .name] | any(startswith("Build (macos")) and any(startswith("Build (windows64"))') || LEGS_GREEN=false
+            if [ "$LEGS_GREEN" = "true" ]; then break; fi
+          done
+
+          if [ "$LEGS_GREEN" != "true" ]; then
+            echo "::notice::No build of ${HEAD_SHA:0:7} has both Build (macos) and Build (windows64) green, so the InWorld gate was not started — it would fail on its first poll. Build the commit, then re-run this workflow."
             exit 0
           fi
 
-          gh workflow run in-world-tests.yml --ref "$BRANCH_NAME"
+          # Loud but deliberately not fatal. `gh workflow run` needs
+          # `actions: write`, which ORG_ACCESS_TOKEN's other uses in this repo
+          # (org membership, PR reviews) do not require, so it may not have it —
+          # and a secret's scopes cannot be inspected from here. Failing the job
+          # would invite a re-run, and re-running this workflow force-pushes the
+          # release branch, quietly re-cutting the release from a newer dev tip.
+          # The branch, PR, labels and build-links comment have all landed by
+          # now; the annotation is what makes the missing gate visible, and the
+          # required check staying unreported is what keeps the release blocked.
+          if ! gh workflow run in-world-tests.yml --ref "$BRANCH_NAME"; then
+            echo "::error::Could not dispatch the InWorld gate against ${BRANCH_NAME}. The likeliest cause is that ORG_ACCESS_TOKEN lacks \`actions: write\` on this repository, which \`gh workflow run\` requires. The release branch and its PR are fine — start \`In-World Tests\` by hand from the Actions tab against ${BRANCH_NAME}, or its required check will sit unreported and the release will not be mergeable."
+            exit 0
+          fi
           echo "::notice::InWorld gate dispatched against ${BRANCH_NAME}."
