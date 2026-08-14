@@ -79,7 +79,11 @@ namespace DCL.PluginSystem.Global
         {
             SceneItemPurchaseBridge.Unregister();
 
-            foreach ((Texture2DRef textureRef, Sprite _) in thumbnailsByUrl.Values) textureRef.Dispose();
+            foreach ((Texture2DRef textureRef, Sprite sprite) in thumbnailsByUrl.Values)
+            {
+                if (sprite != null) Object.Destroy(sprite);
+                textureRef.Dispose();
+            }
             thumbnailsByUrl.Clear();
 
             creditPurchaseModalController?.Dispose();
