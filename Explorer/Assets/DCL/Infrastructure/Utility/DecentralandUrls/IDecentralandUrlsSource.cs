@@ -45,5 +45,11 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         public string GetOriginalUrl(string url);
 
         string GetHostnameForFeatureFlag();
+
+        /// <summary>
+        ///     Drops the "--optimized-assets-url" override (local-ab) so optimized-asset endpoints fall back to their
+        ///     production hosts. No-op when no override is set.
+        /// </summary>
+        void ClearOptimizedAssetsOverride();
     }
 }

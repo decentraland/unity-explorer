@@ -112,11 +112,12 @@ namespace Global.Dynamic
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
 
         /// <summary>
-        ///     Completed once the abgen sidecar reaches a terminal state — warm and serving, or given up
-        ///     (see <see cref="AbgenSidecarPlugin.ReadyAsync" />). Already completed when the sidecar is
-        ///     not mounted, so awaiting it costs nothing outside local scene development with local ABs.
+        ///     Completed once the abgen sidecar reaches a terminal state, with <c>true</c> when the server is up and
+        ///     serving or <c>false</c> when it never came up (see <see cref="AbgenSidecarPlugin.ReadyAsync" />).
+        ///     Resolves to <c>true</c> immediately when the sidecar is not mounted (nothing to fall back from), so
+        ///     awaiting it costs nothing outside local scene development with local ABs.
         /// </summary>
-        public UniTask AbgenSidecarReadyAsync => abgenSidecarPlugin?.ReadyAsync ?? UniTask.CompletedTask;
+        public UniTask<bool> AbgenSidecarReadyAsync => abgenSidecarPlugin?.ReadyAsync ?? UniTask.FromResult(true);
 
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,

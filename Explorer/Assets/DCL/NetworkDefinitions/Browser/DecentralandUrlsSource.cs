@@ -41,7 +41,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
         private readonly string? gatekeeperBaseOverride;
-        private readonly string? optimizedAssetsBaseOverride;
+        private string? optimizedAssetsBaseOverride;
         private readonly bool isTodayEnvironment;
 
         public DecentralandUrlsSource(
@@ -185,6 +185,31 @@ namespace DCL.Browser.DecentralandUrls
             realmDependentCachedUrls.AddRange(cache.Where(kvp => kvp.Value.Caching == CacheBehaviour.RealmDependent).Select(kvp => kvp.Key));
 
             foreach (DecentralandUrl url in realmDependentCachedUrls)
+                cache.Remove(url);
+        }
+
+        /// <summary>
+        ///     Drops the "--optimized-assets-url" override so every optimized-asset endpoint re-resolves to its
+        ///     production host. Called when the local-ab abgen sidecar the override pointed at never came up, so the
+        ///     session behaves as if local-ab were never requested instead of routing every scene, wearable, LOD and
+        ///     registry-composed profile/entities-active request at a dead loopback port and recovering per request.
+        /// </summary>
+        public void ClearOptimizedAssetsOverride()
+        {
+            if (optimizedAssetsBaseOverride == null)
+                return;
+
+            optimizedAssetsBaseOverride = null;
+
+            // With the override present these all resolved as FeatureFlagsDependent (the registry-composed
+            // profile/entities endpoints inherit the registry base's caching), so evicting that class forces
+            // production re-resolution. Anything already flag-dependent for other reasons simply re-resolves
+            // to the same value.
+            using PooledObject<List<DecentralandUrl>> _ = ListPool<DecentralandUrl>.Get(out List<DecentralandUrl>? flagDependentCachedUrls);
+
+            flagDependentCachedUrls.AddRange(cache.Where(kvp => kvp.Value.Caching == CacheBehaviour.FeatureFlagsDependent).Select(kvp => kvp.Key));
+
+            foreach (DecentralandUrl url in flagDependentCachedUrls)
                 cache.Remove(url);
         }
 

@@ -418,7 +418,13 @@ namespace Global.Dynamic
                 // manifest request, whose bundles-vs-GLTFs verdict is final for the session. Hold it
                 // until the abgen sidecar is warm or has given up; completed immediately when the
                 // sidecar is not mounted.
-                await dynamicWorldContainer!.AbgenSidecarReadyAsync.AttachExternalCancellation(ct);
+                bool sidecarUsable = await dynamicWorldContainer!.AbgenSidecarReadyAsync.AttachExternalCancellation(ct);
+
+                // The sidecar the optimized-assets override points at never came up. Drop the override now,
+                // before any optimized-asset request resolves, so the whole session falls back to production
+                // cleanly instead of hitting the dead loopback port and recovering per request.
+                if (!sidecarUsable)
+                    decentralandUrlsSource.ClearOptimizedAssetsOverride();
 
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);
