@@ -136,9 +136,9 @@ namespace Global.AppArgs
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
         /// <summary>
-        ///     Local scene development only: load assets as asset bundles served by the preview server at
-        ///     {realm}/optimized-assets instead of raw GLTFs. Carries no URL or port — the base is derived
-        ///     from the realm the client already has.
+        ///     Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's
+        ///     embedded abgen sidecar, reading the preview server's content. Carries no URL or port — the
+        ///     content base is derived from the realm the client already has.
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 
