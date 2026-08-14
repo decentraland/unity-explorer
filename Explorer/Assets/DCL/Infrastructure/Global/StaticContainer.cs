@@ -86,56 +86,56 @@ namespace Global
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
 
-        private IAssetsProvisioner assetsProvisioner;
+        private IAssetsProvisioner assetsProvisioner = null!;
         public Entity PlayerEntity { get; set; }
-        public RealmData RealmData { get; private set; }
-        public PublishIpfsEntityCommand PublishIpfsEntityCommand { get; private set; }
+        public RealmData RealmData { get; private set; } = null!;
+        public PublishIpfsEntityCommand PublishIpfsEntityCommand { get; private set; } = null!;
 
         public ComponentsContainer ComponentsContainer { get; private set; }
-        public CharacterContainer CharacterContainer { get; private set; }
-        public MediaPlayerContainer MediaContainer { get; private set; }
-        public EmotesContainer EmotesContainer { get; private set; }
-        public ProfilesContainer ProfilesContainer { get; private set; }
-        public QualityContainer QualityContainer { get; private set; }
-        public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
-        public WebRequestsContainer WebRequestsContainer { get; private set; }
-        public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
-        public IEmoteStorage EmoteStorage { get; private set; }
+        public CharacterContainer CharacterContainer { get; private set; } = null!;
+        public MediaPlayerContainer MediaContainer { get; private set; } = null!;
+        public EmotesContainer EmotesContainer { get; private set; } = null!;
+        public ProfilesContainer ProfilesContainer { get; private set; } = null!;
+        public QualityContainer QualityContainer { get; private set; } = null!;
+        public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; } = null!;
+        public WebRequestsContainer WebRequestsContainer { get; private set; } = null!;
+        public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; } = null!;
+        public IEmoteStorage EmoteStorage { get; private set; } = null!;
 
-        public ISystemMemoryCap MemoryCap { get; private set; }
+        public ISystemMemoryCap MemoryCap { get; private set; } = null!;
 
-        public SceneLoadingLimit SceneLoadingLimit { get; private set; }
+        public SceneLoadingLimit SceneLoadingLimit { get; private set; } = null!;
 
         /// <summary>
         ///     Some plugins may implement both interfaces
         /// </summary>
-        public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
+        public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; } = null!;
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
-        public Profiler Profiler { get; private set; }
-        public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
+        public Profiler Profiler { get; private set; } = null!;
+        public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; } = null!;
         public IPartitionSettings PartitionSettings => StaticSettings.PartitionSettings;
         public IRealmPartitionSettings RealmPartitionSettings => StaticSettings.RealmPartitionSettings;
-        public StaticSettings StaticSettings { get; private set; }
-        public CacheCleaner CacheCleaner { get; private set; }
-        public IEthereumApi EthereumApi { get; private set; }
-        public IInputBlock InputBlock { get; private set; }
-        public IScenesCache ScenesCache { get; private set; }
-        public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
-        public HttpFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
-        public IPortableExperiencesController PortableExperiencesController { get; private set; }
-        public SmartWearableCache SmartWearableCache { get; private set; }
-        public ImageControllerProvider ImageControllerProvider { get; private set; }
-        public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
-        public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
-        public GPUInstancingService GPUInstancingService { get; private set; }
-        public ILoadingStatus LoadingStatus { get; private set; }
-        public ILaunchMode LaunchMode { get; private set; }
-        public WorldManifestProvider WorldManifestProvider { get; private set; }
+        public StaticSettings StaticSettings { get; private set; } = null!;
+        public CacheCleaner CacheCleaner { get; private set; } = null!;
+        public IEthereumApi EthereumApi { get; private set; } = null!;
+        public IInputBlock InputBlock { get; private set; } = null!;
+        public IScenesCache ScenesCache { get; private set; } = null!;
+        public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; } = null!;
+        public HttpFeatureFlagsProvider FeatureFlagsProvider { get; private set; } = null!;
+        public IPortableExperiencesController PortableExperiencesController { get; private set; } = null!;
+        public SmartWearableCache SmartWearableCache { get; private set; } = null!;
+        public ImageControllerProvider ImageControllerProvider { get; private set; } = null!;
+        public IDebugContainerBuilder DebugContainerBuilder { get; private set; } = null!;
+        public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; } = null!;
+        public GPUInstancingService GPUInstancingService { get; private set; } = null!;
+        public ILoadingStatus LoadingStatus { get; private set; } = null!;
+        public ILaunchMode LaunchMode { get; private set; } = null!;
+        public WorldManifestProvider WorldManifestProvider { get; private set; } = null!;
 
-        public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
-        public AssetPreLoadCache AssetPreLoadCache { get; private set; }
-        public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; }
-        public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; }
+        public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; } = null!;
+        public AssetPreLoadCache AssetPreLoadCache { get; private set; } = null!;
+        public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
+        public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; } = null!;
 
         public void Dispose()
         {

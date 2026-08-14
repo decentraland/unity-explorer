@@ -101,7 +101,7 @@ namespace Runtime.Wearables
         public bool IsCached(IWearable wearable) =>
             cache.ContainsKey(GetCacheId(wearable));
 
-        public async UniTask<(ISceneContent, SceneMetadata)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
+        public async UniTask<(ISceneContent?, SceneMetadata?)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
         {
             CacheItem item = await CacheWearableInternalAsync(wearable, ct);
             return ct.IsCancellationRequested ? (null, null) : (item.SceneContent, item.SceneMetadata);
@@ -141,7 +141,7 @@ namespace Runtime.Wearables
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
             item.SceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
                                                            .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
-            if (ct.IsCancellationRequested) return null;
+            if (ct.IsCancellationRequested) return null!; // Callers never read the result once the token is cancelled
 
             item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
 
@@ -161,7 +161,7 @@ namespace Runtime.Wearables
 
         private bool IsSmart(IWearable wearable)
         {
-            foreach (var content in wearable.DTO.content)
+            foreach (var content in wearable.DTO!.content)
             {
                 if (content.file.EndsWith("scene.json", StringComparison.OrdinalIgnoreCase))
                     return true;
@@ -171,7 +171,7 @@ namespace Runtime.Wearables
 
         private string GetContentUrl(IWearable smartWearable)
         {
-            string? dtoContentUrl = smartWearable.DTO.ContentDownloadUrl;
+            string? dtoContentUrl = smartWearable.DTO!.ContentDownloadUrl;
             return string.IsNullOrEmpty(dtoContentUrl) ? $"{decentralandUrlsSource.Url(DecentralandUrl.PeerContent)}/" : dtoContentUrl;
         }
 
@@ -179,9 +179,9 @@ namespace Runtime.Wearables
         {
             public bool IsSmart;
 
-            public ISceneContent SceneContent;
+            public ISceneContent? SceneContent;
 
-            public SceneMetadata SceneMetadata;
+            public SceneMetadata? SceneMetadata;
 
             public bool RequiresAuthorization;
 

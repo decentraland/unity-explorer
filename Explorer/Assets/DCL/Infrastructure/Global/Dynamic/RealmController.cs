@@ -202,7 +202,8 @@ namespace Global.Dynamic
             await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
                                           && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
 
-            return fixedScenePointers.SceneResults;
+            // WaitUntil only completes once TryGet has populated the struct, so SceneResults is initialized
+            return fixedScenePointers.SceneResults!;
         }
 
         public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)

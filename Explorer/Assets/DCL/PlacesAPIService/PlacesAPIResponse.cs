@@ -53,9 +53,9 @@ namespace DCL.PlacesAPIService
             public int dislikes;
             public string[] categories;
             public bool highlighted;
-            public string highlighted_image;
+            public string? highlighted_image;
             public bool featured;
-            public string featured_image;
+            public string? featured_image;
             public bool user_favorite;
             public bool user_like;
             public bool user_dislike;
@@ -66,7 +66,7 @@ namespace DCL.PlacesAPIService
             public bool live;
             public string[]? connected_addresses;
 
-            [SerializeField] private string[] positions;
+            [SerializeField] private string[]? positions;
 
             // ReSharper restore InconsistentNaming
 
@@ -177,12 +177,12 @@ namespace DCL.PlacesAPIService
             public class Realm
             {
                 // ReSharper disable InconsistentNaming
-                public string serverName;
-                public string layer;
-                public string url;
+                public string serverName = null!;
+                public string layer = null!;
+                public string url = null!;
                 public int usersCount;
                 public int maxUsers;
-                public Vector2Int[] userParcels;
+                public Vector2Int[] userParcels = null!;
                 // ReSharper restore InconsistentNaming
             }
         }
@@ -194,7 +194,7 @@ namespace DCL.PlacesAPIService
             // ReSharper disable InconsistentNaming
             public bool ok;
             public int total;
-            public List<PlaceInfo> data;
+            public List<PlaceInfo> data = null!;
             // ReSharper restore InconsistentNaming
 
             int IPlacesAPIResponse.Total => total;
@@ -222,7 +222,7 @@ namespace DCL.PlacesAPIService
         {
             // ReSharper disable InconsistentNaming
             public bool ok;
-            public PlaceInfo data;
+            public PlaceInfo data = null!;
             // ReSharper restore InconsistentNaming
         }
 
@@ -233,7 +233,7 @@ namespace DCL.PlacesAPIService
     {
         // ReSharper disable InconsistentNaming
         public Vector2Int base_position;
-        public string name;
+        public string name = null!;
         // ReSharper restore InconsistentNaming
     }
 }

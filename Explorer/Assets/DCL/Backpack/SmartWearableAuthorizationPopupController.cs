@@ -70,9 +70,11 @@ namespace Runtime.Wearables
 
         private async UniTask UpdatePermissionsAsync(IWearable wearable)
         {
-            (_, SceneMetadata sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, CancellationToken.None);
+            (_, SceneMetadata? sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, CancellationToken.None);
             await UniTask.SwitchToMainThread();
-            viewInstance.SetPermissions(sceneMetadata.requiredPermissions);
+
+            // The popup is only shown for smart wearables, whose scene metadata is always cached
+            viewInstance.SetPermissions(sceneMetadata!.requiredPermissions);
         }
 
         public static async UniTask<bool> RequestAuthorizationAsync(IMVCManager mvcManager, IWearable wearable, CancellationToken ct)
