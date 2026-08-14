@@ -209,6 +209,14 @@ jobs:
   prebuild:
     name: Prebuild
     runs-on: ubuntu-latest
+    # contents: read — checkout + the version composite's `git fetch origin main:main --tags`
+    #   over the checkout's persisted credentials.
+    # statuses: write — "Skip build and test checks" posts 4 commit statuses via github-script.
+    # pull-requests: read — step-security/changed-files' REST fallback (GET /pulls/{n}/files).
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: read
     timeout-minutes: 20
     # Skip when PR has 'perf_test' label (only performance tests should run)
     if: |
@@ -550,6 +558,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: prebuild
     if: needs.prebuild.outputs.should_build == 'true'
+    # contents: read — checkout + the size-budget step's GET /releases/latest.
+    # actions: read — build.py resolves its own job URL via GET /actions/runs/{run_id}/jobs.
+    # pull-requests: write — live CI status comment upsert (issue-comment POST/PATCH/DELETE
+    #   on the PR via .github/actions/ci-status-comment/upsert-ci-status.sh).
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
     # Safety ceiling around the 450m retry budget + surrounding steps.
     timeout-minutes: 510
     strategy:
@@ -1018,6 +1034,8 @@ jobs:
   build-gate:
     name: Build Gate (Windows + macOS)
     runs-on: ubuntu-latest
+    # Pure bash over needs.* context — no checkout, no token use.
+    permissions: {}
     needs: [prebuild, build]
     if: always() && github.event_name == 'pull_request'
     steps:
