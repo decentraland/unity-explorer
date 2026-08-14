@@ -145,6 +145,34 @@ runs:
           exit 0
         fi
 
+        # gh has no built-in retry, and both callers below are decisive on a
+        # single answer: the wait-minutes: 0 path has no second poll, and a
+        # listing that fails every poll would otherwise read as "no build
+        # exists". stderr is dropped because a 90-minute wait polls ~90 times
+        # and every failure that survives the retry is reported, with an
+        # action, by the messages below.
+        gh_api_retry() {
+          local out attempt
+          for attempt in 1 2 3; do
+            if out=$(gh api "$@" 2>/dev/null); then printf '%s' "$out"; return 0; fi
+            # Not after the last attempt: the callers below act on the answer
+            # immediately, so that sleep would only delay a red check.
+            if [ "$attempt" -lt 3 ]; then sleep 5; fi
+          done
+          return 1
+        }
+
+        # A listing that fails leaves the same candidate set as a commit with
+        # no build — TOTAL=0, nothing examined, STATE=none — so without a
+        # record of the listing itself the messages below cannot tell an
+        # operator which of the two happened, and only one of them is fixed by
+        # `force-build`. LISTED is "did any poll's listing ever answer";
+        # LISTED_NOW, set per poll further down, is "did the last one". Both
+        # are needed: this loop spends ~360 requests/hour of a 1,000/hour
+        # budget it shares with build-unitycloud and the review bots, so the
+        # realistic outage — rate-limit exhaustion — begins partway through a
+        # 90-minute wait, and by then LISTED has long since flipped.
+        LISTED=0
         DEADLINE=$(( SECONDS + WAIT_MINUTES * 60 ))
         while :; do
           # Scoped to the build workflow file: a repo-wide head_sha listing gets
@@ -156,10 +184,18 @@ runs:
           #
           # Absorbed rather than left to `set -e`: one 5xx or rate-limit blip
           # would otherwise end a 90-minute wait with a red required check on a
-          # release PR that has nothing wrong with it. An empty list reads as
-          # "nothing found this poll" and the loop asks again a minute later.
-          RUNS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=50" \
-            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")]') || RUNS=''
+          # release PR that has nothing wrong with it. Only an outage that
+          # survives all three attempts lands in the else arm; an empty list
+          # reads as "nothing found this poll" and the loop asks again a
+          # minute later.
+          LISTED_NOW=0
+          if RUNS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&per_page=50" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")]'); then
+            LISTED=1
+            LISTED_NOW=1
+          else
+            RUNS=''
+          fi
           if [ -z "$RUNS" ]; then RUNS='[]'; fi
           TOTAL=$(jq 'length' <<< "$RUNS")
           LIMIT=$TOTAL
@@ -173,7 +209,7 @@ runs:
             # Wait on the build legs, not on the run: they upload the zips, and
             # Build Gate and everything else downstream only conclude later.
             # One call per candidate, filtered per leg locally.
-            JOBS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$(jq -r '.id' <<< "$CAND")/jobs?per_page=50" \
+            JOBS=$(gh_api_retry "repos/${GITHUB_REPOSITORY}/actions/runs/$(jq -r '.id' <<< "$CAND")/jobs?per_page=50" \
               --jq '[.jobs[] | {name, status, conclusion}]') || JOBS=''
             if [ -z "$JOBS" ]; then
               # Same blip tolerance as the listing above, but an unreachable API
@@ -218,6 +254,18 @@ runs:
           if [ -n "$RUN_JSON" ]; then break; fi
 
           if [ "$WAIT_MINUTES" -eq 0 ]; then
+            # The consequential half of the same ambiguity: this path has no
+            # second poll to correct itself, and it is the one
+            # visual-regression.yml takes on every /visual-tests, and
+            # in-world-tests.yml on every dispatch — which is how
+            # create-release-branch.yml gates a release cut. Reporting an
+            # unanswered API as a missing build sends the operator after a
+            # build that is very likely fine. One poll, so LISTED and
+            # LISTED_NOW are the same bit here.
+            if [ "$LISTED" = "0" ]; then
+              echo "::error::Could not list build-unitycloud.yml runs for ${HEAD_SHA:0:7} — the GitHub Actions API did not answer. Nothing was learned about the build, so this says nothing about whether one exists: re-run this job."
+              exit 1
+            fi
             echo "::error::No Unity Cloud Build of ${HEAD_SHA:0:7} with all of [${BUILD_LEGS}] green. Is the build still in progress, or did it fail?"
             exit 1
           fi
@@ -236,19 +284,43 @@ runs:
           fi
           if [ "$SECONDS" -ge "$DEADLINE" ]; then
             echo "::error::Gave up after ${WAIT_MINUTES}m waiting for a build of ${HEAD_SHA:0:7} with [${BUILD_LEGS}] green."
-            # With the case above carved out, `none` is only reachable when no
+            # With the cases above carved out, `none` means the candidate loop
+            # never reached a verdict, which happens two ways: no
             # pull_request or push run of build-unitycloud.yml exists for the
-            # SHA at all — a run that started and built nothing is `nomatrix`.
-            # Labelling and pushing are both trigger types of that workflow, so
-            # either queues the run this commit never got.
+            # SHA at all — a run that started and built nothing is `nomatrix`
+            # — or the last poll's listing went unanswered, leaving the same
+            # empty set with nothing learned. Only the first is a build
+            # problem: labelling and pushing are both trigger types of that
+            # workflow, so either queues the run this commit never got,
+            # whereas a `force-build` label does nothing whatsoever for an API
+            # that is not replying.
             if [ "$STATE" = none ]; then
-              echo "::error::No build was ever queued for this commit. Label the PR \`force-build\`, or push a change under Explorer/, then re-run this job."
+              if [ "$LISTED_NOW" = "0" ]; then
+                # The wait ended blind, so nothing here establishes that no
+                # build exists. LISTED then separates an outage that lasted
+                # the whole wait from one that began during it, because the
+                # remedies differ: a spent rate-limit budget refills on its
+                # own hour boundary and needs no page checked.
+                if [ "$LISTED" = "0" ]; then
+                  echo "::error::The GitHub Actions API never answered a single run listing in ${WAIT_MINUTES}m, so no build was ever looked at. Check https://www.githubstatus.com, then re-run this job."
+                else
+                  echo "::error::The GitHub Actions API stopped answering run listings partway through the wait, so whether a build exists is unknown — most likely this token's hourly request budget is spent. Re-run this job after the hour rolls over."
+                fi
+              else
+                echo "::error::No build was ever queued for this commit. Label the PR \`force-build\`, or push a change under Explorer/, then re-run this job."
+              fi
             else
               echo "::error::Re-run this job once the build is green."
             fi
             exit 1
           fi
-          echo "Waiting for [${BUILD_LEGS}] on ${HEAD_SHA:0:7} — ${TOTAL} build run(s) found, newest ${LIMIT} examined, state: ${STATE}. $(( (DEADLINE - SECONDS) / 60 ))m left."
+          # Without the note this line claims "0 build run(s) found" once a
+          # minute for an hour and a half, which is the same thing the flags
+          # above exist to stop asserting — and this trail is what makes an
+          # outage diagnosable after the fact.
+          LISTING_NOTE=''
+          if [ "$LISTED_NOW" = "0" ]; then LISTING_NOTE=' (run listing unavailable this poll)'; fi
+          echo "Waiting for [${BUILD_LEGS}] on ${HEAD_SHA:0:7} — ${TOTAL} build run(s) found, newest ${LIMIT} examined, state: ${STATE}${LISTING_NOTE}. $(( (DEADLINE - SECONDS) / 60 ))m left."
           sleep 60
         done
 
