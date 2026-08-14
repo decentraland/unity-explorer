@@ -131,6 +131,15 @@ namespace DCL.Tests.Editor
             }
         }
 
+        [Test]
+        public void ProfileNameEditorWorldSizeLimitsLinkIsValid()
+        {
+            string prefab = File.ReadAllText(Path.Combine(Application.dataPath, "DCL/UI/Profiles/Names/Assets/ProfileNameEditor.prefab"));
+
+            Assert.That(prefab, Does.Not.Contain("worlds/about/#worlds-size-limit"));
+            Assert.That(prefab, Does.Contain("creator/scenes-sdk7/kinds-of-projects/kinds-of-project#size-limits"));
+        }
+
         [UnityTest]
         public IEnumerator SettingsAreValid()
         {
