@@ -36,7 +36,12 @@ loses content. The loading flow is untouched: bundles stream over loopback via
 standard v25+ hash-in-path lane (`{version}/{sceneID}/{hash}`). Deps digests are skipped in LSD
 (`SceneAssetBundleDigestsLoader` takes `isLocalSceneDevelopment`): LSD hashes are path-derived and
 unique per file, so the collisions digests disambiguate cannot occur, and skipping the second
-manifest download removes ~3 s of scene-entry latency against a JIT-revalidating server.
+manifest download removes ~3 s of scene-entry latency against a JIT-revalidating server. The scene
+lane's own manifest request is also served from a hand-off (`AbgenManifestPrewarm`): the warm-up
+(and, after edits, the reconversion watcher) stores the response it already awaited, keyed by the
+exact URL, and `LoadAssetBundleManifestSystem` reuses it instead of paying the server's content
+revalidation again — several more seconds on a large scene. A content edit invalidates the entry
+(the census may have changed), so a racing reload falls back to a fresh fetch.
 
 At boot the warm-up (`WarmUpLocalSceneAsync`) resolves the scene entity from the realm (`/about`
 `scenesUrn`, falling back to `localSceneParcels` + `POST /entities/active`) and requests its

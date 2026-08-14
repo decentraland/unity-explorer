@@ -307,7 +307,8 @@ namespace Global.Dynamic
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-                using UnityWebRequest manifestRequest = UnityWebRequest.Get($"{BaseUrl}/manifest/{entityId}{PlatformUtils.GetCurrentPlatform()}.json");
+                string manifestUrl = $"{BaseUrl}/manifest/{entityId}{PlatformUtils.GetCurrentPlatform()}.json";
+                using UnityWebRequest manifestRequest = UnityWebRequest.Get(manifestUrl);
                 manifestRequest.timeout = 0; // a cold heavy scene converts for minutes; the server paces the build
                 UnityWebRequestAsyncOperation manifestOperation = manifestRequest.SendWebRequest();
 
@@ -362,6 +363,11 @@ namespace Global.Dynamic
                 // The progress poll only samples whichever file is converting at each tick, so fast files
                 // leave no row; backfill the panel with the scene's full convertible file list.
                 await ReconcileCensusAsync(entityId, ct);
+
+                // Hand the response to the scene lane, which requests this exact URL next (right after the
+                // boot-hold, or on the reload that follows an edit) — reusing it skips the server's content
+                // revalidation on the scene-entry critical path.
+                AbgenManifestPrewarm.Set(manifestUrl, manifestRequest.downloadHandler.text);
 
                 return ((float)stopwatch.Elapsed.TotalSeconds, sawBuildProgress, JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text).exitCode);
             }

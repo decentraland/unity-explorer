@@ -93,8 +93,11 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                     }
 
                     // Arm the abgen sidecar's reconversion mirror before the reload's manifest request
-                    // lands; without --local-ab nothing consumes the signal and it stays inert.
+                    // lands; without --local-ab nothing consumes the signal and it stays inert. The
+                    // prewarmed manifest may be stale from this moment (the edit can change the file
+                    // census), so drop it — the watcher's re-fetch repopulates it.
                     AbgenConversionMetrics.INSTANCE.OnContentEdit(changedModelSrc);
+                    AbgenManifestPrewarm.Invalidate();
 
                     // Switch to the main thread because `TryReloadSceneAsync` requires that
                     await UniTask.SwitchToMainThread(cancellationToken: ct);
