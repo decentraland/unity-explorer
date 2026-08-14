@@ -368,12 +368,19 @@ namespace Global.Dynamic
                 var uri = new Uri(realm.Value);
                 hostname = $"{uri.Host}{uri.AbsolutePath}";
             }
+            else if (about.comms != null)
+                hostname = new Uri(realm.Value).Host;
             else
-                hostname = about.comms == null
+            {
+                // Consider it as the "main" realm which shares the comms with many catalysts:
+                // every decentraland.* environment is served by the single org realm provider,
+                // while a custom base domain hosts its own.
+                string hostDomain = decentralandUrlsSource.Url(DecentralandUrl.Host).Replace("https://", string.Empty);
 
-                    // Consider it as the "main" realm which shares the comms with many catalysts.
-                    ? "realm-provider." + decentralandUrlsSource.Url(DecentralandUrl.Host).Replace("https://", string.Empty)
-                    : new Uri(realm.Value).Host;
+                hostname = "realm-provider." + (hostDomain.StartsWith("decentraland.", StringComparison.Ordinal)
+                    ? IDecentralandUrlsSource.ORG_DOMAIN
+                    : hostDomain);
+            }
 
             return hostname;
         }

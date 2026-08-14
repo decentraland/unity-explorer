@@ -184,7 +184,9 @@ namespace DCL.Browser.DecentralandUrls
                         return REALM_DEPENDENT;
 
                     case CacheBehaviour.FeatureFlagsDependent when FeatureFlagsConfiguration.Instance.IsEmpty:
-                        return urlData.Url ?? FEATURE_FLAG_DEPENDENT;
+                        // Not cached — re-resolved on every call until flags load. ResolveDomain is idempotent,
+                        // so the producer may hand over either a template or an already-resolved URL.
+                        return urlData.Url != null ? ResolveDomain(urlData.Url) : FEATURE_FLAG_DEPENDENT;
 
                     default:
                         urlData = new UrlData(urlData.Caching, ResolveDomain(urlData.Url!));

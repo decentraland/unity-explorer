@@ -37,6 +37,16 @@ namespace DCL.Browser.DecentralandUrls.Tests
             }));
         }
 
+        /// <summary>
+        ///     The boot window before remote flags arrive: the singleton is initialized but holds
+        ///     an empty result, so IsEmpty is true.
+        /// </summary>
+        private static void InitEmptyFlags()
+        {
+            FeatureFlagsConfiguration.Reset();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+        }
+
         // ---- Domain-bearing URLs: exactly one thing varies by environment — the domain ----
 
         private static IEnumerable DomainBearingCases()
@@ -209,6 +219,29 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
+        public void RouteGenesisThroughGatewayWhenFlagsLoadAfterFirstResolution()
+        {
+            InitEmptyFlags();
+            GatewayUrlsSource gateway = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://realm-provider-ea.decentraland.org/main", gateway.Url(DecentralandUrl.Genesis), "pre-flags URL must be fully resolved");
+
+            InitFlags(useGateway: true);
+
+            Assert.AreEqual("https://gateway.decentraland.org/realm-provider-ea/main", gateway.Url(DecentralandUrl.Genesis), "post-flags URL must route through the gateway");
+        }
+
+        [Test]
+        public void KeepGenesisRawAndStableWhenGatewayFlagDisabled()
+        {
+            InitFlags(useGateway: false);
+            GatewayUrlsSource gateway = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://realm-provider-ea.decentraland.org/main", gateway.Url(DecentralandUrl.Genesis));
+            Assert.AreEqual("https://realm-provider-ea.decentraland.org/main", gateway.Url(DecentralandUrl.Genesis), "repeated resolution must be stable");
+        }
+
+        [Test]
         public void LeaveThirdPartyHostsUntouchedByTransformUrl()
         {
             InitFlags(useGateway: true);
@@ -241,6 +274,19 @@ namespace DCL.Browser.DecentralandUrls.Tests
             InitFlags(useGateway: true);
             string routed = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY, CUSTOM_DOMAIN).Url(url);
             StringAssert.StartsWith($"https://gateway.{CUSTOM_DOMAIN}/", routed, $"{url} should route through the custom gateway host");
+        }
+
+        [Test]
+        public void RouteGenesisThroughCustomGatewayDomainWhenFlagsLoadAfterFirstResolution()
+        {
+            InitEmptyFlags();
+            GatewayUrlsSource gateway = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY, CUSTOM_DOMAIN);
+
+            Assert.AreEqual($"https://realm-provider-ea.{CUSTOM_DOMAIN}/main", gateway.Url(DecentralandUrl.Genesis), "pre-flags URL must be fully resolved");
+
+            InitFlags(useGateway: true);
+
+            Assert.AreEqual($"https://gateway.{CUSTOM_DOMAIN}/realm-provider-ea/main", gateway.Url(DecentralandUrl.Genesis), "post-flags URL must route through the custom gateway");
         }
     }
 }

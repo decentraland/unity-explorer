@@ -145,7 +145,7 @@ namespace DCL.Browser
         {
             UrlData serviceUrl = base.RawUrl(decentralandUrl);
 
-            if (!enabled || serviceUrl.Url == null || !SUPPORTED_URLS.Contains(decentralandUrl))
+            if (!envSupported || serviceUrl.Url == null || !SUPPORTED_URLS.Contains(decentralandUrl))
                 return serviceUrl;
 
             // FeatureFlagsDependent from base.RawUrl() signals a consolidated / optimized-assets URL that
@@ -153,6 +153,16 @@ namespace DCL.Browser
             // needs FeatureFlagsDependent caching AND gateway routing, give UrlData a dedicated skipGateway
             // field instead of widening this guard. Custom hosts also pass through untouched.
             if (serviceUrl.Caching == CacheBehaviour.FeatureFlagsDependent || !IsGatewayTransformable(serviceUrl.Url))
+                return serviceUrl;
+
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            // While flags are empty the gateway decision cannot be made yet: the URL stays untransformed and
+            // is tagged FeatureFlagsDependent, which is uncacheable until flags load.
+            if (featureFlags.IsEmpty)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, serviceUrl.Url);
+
+            if (!featureFlags.IsEnabled(FeatureFlagsStrings.USE_GATEWAY))
                 return serviceUrl;
 
             // it is called only once and then cached in the base class
