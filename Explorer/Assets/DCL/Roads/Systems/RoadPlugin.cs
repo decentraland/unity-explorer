@@ -25,11 +25,11 @@ namespace DCL.Roads.Systems
         private readonly IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary;
 
         private readonly RoadAssetsPool roadAssetPool;
-        private readonly GPUInstancingService gpuInstancingService;
+        private readonly GPUInstancingService? gpuInstancingService;
         private readonly bool enableGPUInstancing;
 
         public RoadPlugin(IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary,
-            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, RoadAssetsPool roadAssetPool, GPUInstancingService gpuInstancingService, IDebugContainerBuilder debugBuilder)
+            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, RoadAssetsPool roadAssetPool, GPUInstancingService? gpuInstancingService, IDebugContainerBuilder debugBuilder)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
@@ -43,7 +43,9 @@ namespace DCL.Roads.Systems
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            DebugGPUInstancingSystem.InjectToWorld(ref builder, debugBuilder, gpuInstancingService);
+            if (gpuInstancingService != null)
+                DebugGPUInstancingSystem.InjectToWorld(ref builder, debugBuilder, gpuInstancingService);
+
             RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadDataDictionary, roadAssetPool, sceneReadinessReportQueue, scenesCache);
         }
 

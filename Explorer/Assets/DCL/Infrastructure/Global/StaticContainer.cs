@@ -127,7 +127,10 @@ namespace Global
         public ImageControllerProvider ImageControllerProvider { get; private set; } = null!;
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; } = null!;
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; } = null!;
-        public GPUInstancingService GPUInstancingService { get; private set; } = null!;
+        /// <summary>
+        ///     Null when GPU instancing is disabled or the render feature/compute shader is unavailable.
+        /// </summary>
+        public GPUInstancingService? GPUInstancingService { get; private set; }
         public ILoadingStatus LoadingStatus { get; private set; } = null!;
         public ILaunchMode LaunchMode { get; private set; } = null!;
         public WorldManifestProvider WorldManifestProvider { get; private set; } = null!;
@@ -279,8 +282,10 @@ namespace Global
                 container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
                 renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
             }
-            else
+            else if (enableGPUInstancing)
                 ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
+            else
+                ReportHub.Log(ReportCategory.GPU_INSTANCING, "GPU instancing disabled: running without GPUInstancingService.");
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 

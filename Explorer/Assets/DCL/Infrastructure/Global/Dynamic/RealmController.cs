@@ -141,7 +141,7 @@ namespace Global.Dynamic
                 localSceneParcels = ParseLocalSceneParcels(result.configurations.localSceneParcels);
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 
-                string hostname = ResolveHostname(realm, result);
+                string hostname = ResolveHostname(realm, result, decentralandUrlsSource);
 
                 float? skyboxFixedHour = result.configurations.skybox is { fixedHour: >= 0 }
                     ? result.configurations.skybox.fixedHour
@@ -360,7 +360,7 @@ namespace Global.Dynamic
             return allScenes;
         }
 
-        private string ResolveHostname(URLDomain realm, ServerAbout about)
+        internal static string ResolveHostname(URLDomain realm, ServerAbout about, IDecentralandUrlsSource urlsSource)
         {
             string hostname;
 
@@ -377,7 +377,7 @@ namespace Global.Dynamic
                 // every decentraland environment is served by the single org realm provider,
                 // while a custom base domain hosts its own. Exact membership in ALL_DOMAINS is
                 // the trust boundary — a custom domain must never classify as an environment.
-                string hostDomain = decentralandUrlsSource.Url(DecentralandUrl.Host).Replace("https://", string.Empty);
+                string hostDomain = urlsSource.Url(DecentralandUrl.Host).Replace("https://", string.Empty);
 
                 hostname = "realm-provider." + (IsEnvironmentDomain(hostDomain)
                     ? IDecentralandUrlsSource.ORG_DOMAIN

@@ -34,7 +34,7 @@ namespace DCL.LOD.Systems
         private ProvidedAsset<RoadSettingsAsset> roadSettingsAsset;
         private List<GameObject> roadAssetsPrefabList;
         private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
-        private RoadsPresence roadsPresence;
+        private RoadsPresence? roadsPresence;
 
         public LODPlugin LODPlugin { get; private set; } = null!;
 
@@ -60,11 +60,14 @@ namespace DCL.LOD.Systems
             TextureArrayContainerFactory textureArrayContainerFactory,
             IDebugContainerBuilder debugBuilder,
             bool lodEnabled,
-            GPUInstancingService gpuInstancingService,
+            GPUInstancingService? gpuInstancingService,
             CancellationToken ct)
         {
             var container = new LODContainer(assetsProvisioner);
-            container.roadsPresence = new RoadsPresence(realmData, gpuInstancingService);
+
+            // Without the service there is no instanced road rendering to switch, so RoadsPresence has no job
+            if (gpuInstancingService != null)
+                container.roadsPresence = new RoadsPresence(realmData, gpuInstancingService);
 
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
@@ -113,7 +116,7 @@ namespace DCL.LOD.Systems
         {
             roadSettingsAsset.Dispose();
             lodSettingsAsset.Dispose();
-            roadsPresence.Dispose();
+            roadsPresence?.Dispose();
         }
 
         protected override async UniTask InitializeInternalAsync(LODContainerSettings lodContainerSettings, CancellationToken ct)
@@ -128,7 +131,7 @@ namespace DCL.LOD.Systems
                 roadAssetsPrefabList.Add(prefab.Value);
             }
 
-            roadsPresence.Initialize(roadSettingsAsset.Value);
+            roadsPresence?.Initialize(roadSettingsAsset.Value);
         }
 
         [Serializable]

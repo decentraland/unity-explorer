@@ -773,7 +773,6 @@ namespace Global.Dynamic
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
-                new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 uiShellContainer.CreateConfirmationDialogPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
                 new BannedUsersPlugin(commsContainer.RoomHub, staticContainer.RealmData, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
                 new SmartWearablesGlobalPlugin(wearableContainer.WearableCatalog,
@@ -791,6 +790,9 @@ namespace Global.Dynamic
                 new SpringBonesPlugin(springBoneSimulationSettings),
                 new EnsureClockSyncPlugin(realmNavigator, uiShellContainer.MvcManager, bootstrapContainer.RealmClock, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
             };
+
+            if (staticContainer.GPUInstancingService != null)
+                globalPlugins.Add(new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData));
 
             if (donationsService.DonationFeatureEnabled)
                 globalPlugins.Add(new DonationsPlugin(
