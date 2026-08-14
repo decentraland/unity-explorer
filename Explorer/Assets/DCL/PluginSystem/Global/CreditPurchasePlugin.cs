@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Backpack;
 using DCL.Browser;
 using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Diagnostics;
@@ -40,6 +41,9 @@ namespace DCL.PluginSystem.Global
         private CreditPurchaseModalController? creditPurchaseModalController;
         private ICreditsTopUpService? creditsTopUpService;
         private CreditsTopUpModalController? creditsTopUpModalController;
+        private NFTColorsSO rarityColorMappings;
+        private NftTypeIconSO categoryIconsMapping;
+        private NftTypeIconSO rarityBackgroundsMapping;
 
         /// <summary>
         ///     Thumbnails stay referenced until dispose, keyed by url: releasing one as soon as its modal closes
@@ -112,6 +116,11 @@ namespace DCL.PluginSystem.Global
                 imageControllerProvider);
 
             mvcManager.RegisterController(creditsTopUpModalController);
+
+            (rarityColorMappings, categoryIconsMapping, rarityBackgroundsMapping) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct));
 
             SceneItemPurchaseBridge.Register(this);
         }
@@ -207,15 +216,18 @@ namespace DCL.PluginSystem.Global
                     listing.name,
                     listing.rarity,
                     thumbnail,
-                    rarityBackground: null,
-                    Color.white,
-                    categoryIcon: null,
+                    rarityBackgroundsMapping.GetTypeImage(listing.rarity),
+                    rarityColorMappings.GetColor(listing.rarity),
+                    categoryIcon: categoryIconsMapping.GetTypeImage(listing.category),
                     $"{decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink)}/contracts/{contractAddress}/items/{itemId}",
                     CreditPurchaseModalControllerParams.SOURCE_SDK_SCENE);
 
                 await mvcManager.ShowAsync(CreditPurchaseModalController.IssueCommand(modalParams), ct);
             }
-            catch (OperationCanceledException) { return OpenItemPurchaseResult.OipDismissed; }
+            catch (OperationCanceledException)
+            {
+                return OpenItemPurchaseResult.OipDismissed;
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
@@ -245,6 +257,9 @@ namespace DCL.PluginSystem.Global
             [field: Header("Credit purchase")]
             [field: SerializeField] internal AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
             [field: SerializeField] internal AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; } = null!;
         }
     }
 }
