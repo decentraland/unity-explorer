@@ -104,7 +104,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!masked.IsPlaying) return;
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int layer = view.GetEmoteLayerIndex(masked.Mask);
             int currentTag = view.GetAnimatorCurrentStateTag(layer);
             bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
 
@@ -270,7 +270,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             int prevTag = masked.CurrentAnimationTag;
             if (prevTag == 0) return;
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int layer = mainPlayerAvatarBaseProxy.Object!.GetEmoteLayerIndex(masked.Mask);
             int currentTag = mainPlayerAvatarBaseProxy.Object!.GetAnimatorCurrentStateTag(layer);
 
             if ((prevTag != AnimationHashes.MASKED_EMOTE || currentTag != AnimationHashes.MASKED_EMOTE_LOOP)
