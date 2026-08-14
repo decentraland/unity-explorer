@@ -87,6 +87,24 @@ runs:
           if [ "$LEG" = "windows64" ]; then want_windows=1; fi
         done
 
+        # A green leg does not guarantee the zip is fetchable, and neither does a
+        # caller having typed a URL. Failing here costs seconds; the same failure
+        # inside a suite costs a whole runner slot, and the Windows one is a
+        # scarce self-hosted GPU box. Defined before the override branch because
+        # both paths end in a URL a suite will download.
+        # curl still prints its -w output when it exits non-zero, so a
+        # `|| echo 000` fallback would concatenate codes ("200000") — normalize
+        # separately, and only when the output is empty.
+        verify() {
+          local url="$1" http
+          http=$(curl -sS -o /dev/null -w '%{http_code}' -I --retry 3 --retry-delay 5 "$url" || true)
+          http=${http:-000}
+          if [ "$http" != "200" ]; then
+            echo "::error::Build artifact is not reachable (HTTP ${http}): ${url}"
+            return 1
+          fi
+        }
+
         if [ -n "$BUILD_URL_OVERRIDE" ]; then
           # Everything below only ever produces bucket URLs; an override is the
           # one path where a caller picks the host, so pin it here rather than
@@ -108,11 +126,18 @@ runs:
               exit 1
               ;;
           esac
+          # Same prefix, so the sibling needs no second input from the caller.
+          OVERRIDE_WINDOWS_URL="${BUILD_URL_OVERRIDE%/*}/Decentraland_windows64.zip"
+          # Checked like a resolved build rather than trusted because a human
+          # asserted it — and the sibling is not even asserted, it is derived, so
+          # an override naming a macOS-only build hands the Windows leg a 404 on
+          # the GPU box this check exists to protect.
+          verify "$BUILD_URL_OVERRIDE"
+          if [ "$want_windows" = "1" ]; then verify "$OVERRIDE_WINDOWS_URL"; fi
           {
             echo "build-url=${BUILD_URL_OVERRIDE}"
-            # Same prefix, so the sibling needs no second input from the caller.
             if [ "$want_windows" = "1" ]; then
-              echo "windows-build-url=${BUILD_URL_OVERRIDE%/*}/Decentraland_windows64.zip"
+              echo "windows-build-url=${OVERRIDE_WINDOWS_URL}"
             fi
             echo "short-sha=${HEAD_SHA:0:7}"
           } >> "$GITHUB_OUTPUT"
@@ -256,21 +281,6 @@ runs:
         BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
         WINDOWS_BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_windows64.zip"
 
-        # A green leg does not guarantee the zip is fetchable. Failing here costs
-        # seconds; the same failure inside a suite costs a whole runner slot, and
-        # the Windows one is a scarce self-hosted GPU box.
-        # curl still prints its -w output when it exits non-zero, so a
-        # `|| echo 000` fallback would concatenate codes ("200000") — normalize
-        # separately, and only when the output is empty.
-        verify() {
-          local url="$1" http
-          http=$(curl -sS -o /dev/null -w '%{http_code}' -I --retry 3 --retry-delay 5 "$url" || true)
-          http=${http:-000}
-          if [ "$http" != "200" ]; then
-            echo "::error::Build artifact is not reachable (HTTP ${http}): ${url}"
-            return 1
-          fi
-        }
         verify "$BUILD_URL"
         if [ "$want_windows" = "1" ]; then verify "$WINDOWS_BUILD_URL"; fi
 
