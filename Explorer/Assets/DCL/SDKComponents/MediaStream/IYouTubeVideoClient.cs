@@ -5,7 +5,6 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.WebRequests;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
