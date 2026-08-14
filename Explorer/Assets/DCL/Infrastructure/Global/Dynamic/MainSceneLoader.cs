@@ -569,7 +569,17 @@ namespace Global.Dynamic
 
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
             bool skipScreen = applicationParametersParser.HasFlag(AppArgsFlags.SKIP_MINIMUM_SPECS_SCREEN) && !forceShow;
-            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
+            bool hasMinimumSpecs;
+
+            try { hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs(); }
+            catch (Exception e)
+            {
+                // The specs check is advisory: an evaluation failure must never block startup.
+                ReportHub.LogException(e, ReportCategory.STARTUP);
+                hasMinimumSpecs = true;
+            }
+
+            hasMinimumSpecs &= !forceShow;
 
             if (!hasMinimumSpecs && !skipScreen)
                 SavedQualitySettingsApplier.EnforceLowPreset();
