@@ -374,16 +374,31 @@ namespace Global.Dynamic
             else
             {
                 // Consider it as the "main" realm which shares the comms with many catalysts:
-                // every decentraland.* environment is served by the single org realm provider,
-                // while a custom base domain hosts its own.
+                // every decentraland environment is served by the single org realm provider,
+                // while a custom base domain hosts its own. Exact membership in ALL_DOMAINS is
+                // the trust boundary — a custom domain must never classify as an environment.
                 string hostDomain = decentralandUrlsSource.Url(DecentralandUrl.Host).Replace("https://", string.Empty);
 
-                hostname = "realm-provider." + (hostDomain.StartsWith("decentraland.", StringComparison.Ordinal)
+                hostname = "realm-provider." + (IsEnvironmentDomain(hostDomain)
                     ? IDecentralandUrlsSource.ORG_DOMAIN
                     : hostDomain);
             }
 
             return hostname;
+        }
+
+        private static bool IsEnvironmentDomain(string hostDomain)
+        {
+            // Indexed loop, not foreach: enumerating the IReadOnlyList would allocate an enumerator.
+            IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
+
+            for (var i = 0; i < domains.Count; i++)
+            {
+                if (string.Equals(hostDomain, domains[i], StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
         }
 
         private string ResolveCommsAdapter(ServerAbout about)

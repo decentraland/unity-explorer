@@ -158,9 +158,9 @@ namespace DCL.Browser
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             // While flags are empty the gateway decision cannot be made yet: the URL stays untransformed and
-            // is tagged FeatureFlagsDependent, which is uncacheable until flags load.
+            // is tagged FlagsPending — cached provisionally, then dropped and re-resolved once flags load.
             if (featureFlags.IsEmpty)
-                return new UrlData(CacheBehaviour.FeatureFlagsDependent, serviceUrl.Url);
+                return new UrlData(CacheBehaviour.FlagsPending, serviceUrl.Url);
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.USE_GATEWAY))
                 return serviceUrl;

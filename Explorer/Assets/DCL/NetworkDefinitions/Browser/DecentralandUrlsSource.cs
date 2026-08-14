@@ -29,6 +29,12 @@ namespace DCL.Browser.DecentralandUrls
             ///     URL can't be cached if FF are not yet configured
             /// </summary>
             FeatureFlagsDependent = 2,
+
+            /// <summary>
+            ///     Resolved before feature flags loaded: cached provisionally, then dropped and re-resolved
+            ///     once flags land so a flag-driven form (e.g. gateway routing) can replace it.
+            /// </summary>
+            FlagsPending = 3,
         }
 
         protected const string ENV = "{ENV}";
@@ -141,7 +147,8 @@ namespace DCL.Browser.DecentralandUrls
 
         public string Probe(DecentralandUrl decentralandUrl)
         {
-            if (cache.TryGetValue(decentralandUrl, out UrlData cached))
+            if (cache.TryGetValue(decentralandUrl, out UrlData cached)
+                && (cached.Caching != CacheBehaviour.FlagsPending || FeatureFlagsConfiguration.Instance.IsEmpty))
                 return cached.Url!;
 
             UrlData rawUrl = RawUrl(decentralandUrl);
@@ -174,25 +181,33 @@ namespace DCL.Browser.DecentralandUrls
             const string REALM_DEPENDENT = "<REALM_DEPENDENT>";
             const string FEATURE_FLAG_DEPENDENT = "<FEATURE_FLAG_DEPENDENT>";
 
-            if (!cache.TryGetValue(decentralandUrl, out UrlData urlData))
+            if (cache.TryGetValue(decentralandUrl, out UrlData urlData))
             {
-                urlData = RawUrl(decentralandUrl);
+                // A FlagsPending entry is provisional: once flags land it is dropped and re-resolved so the
+                // final (possibly flag-driven) form replaces it. A RawUrl that observes loaded flags never
+                // produces FlagsPending, so entries cached as final are immune to the flags transition.
+                if (urlData.Caching != CacheBehaviour.FlagsPending || FeatureFlagsConfiguration.Instance.IsEmpty)
+                    return urlData.Url!;
 
-                switch (urlData.Caching)
-                {
-                    case CacheBehaviour.RealmDependent when !realmData.Configured:
-                        return REALM_DEPENDENT;
+                cache.Remove(decentralandUrl);
+            }
 
-                    case CacheBehaviour.FeatureFlagsDependent when FeatureFlagsConfiguration.Instance.IsEmpty:
-                        // Not cached — re-resolved on every call until flags load. ResolveDomain is idempotent,
-                        // so the producer may hand over either a template or an already-resolved URL.
-                        return urlData.Url != null ? ResolveDomain(urlData.Url) : FEATURE_FLAG_DEPENDENT;
+            urlData = RawUrl(decentralandUrl);
 
-                    default:
-                        urlData = new UrlData(urlData.Caching, ResolveDomain(urlData.Url!));
-                        cache[decentralandUrl] = urlData;
-                        break;
-                }
+            switch (urlData.Caching)
+            {
+                case CacheBehaviour.RealmDependent when !realmData.Configured:
+                    return REALM_DEPENDENT;
+
+                case CacheBehaviour.FeatureFlagsDependent when FeatureFlagsConfiguration.Instance.IsEmpty:
+                    // Not cached — re-resolved on every call until flags load. ResolveDomain is idempotent,
+                    // so the producer may hand over either a template or an already-resolved URL.
+                    return urlData.Url != null ? ResolveDomain(urlData.Url) : FEATURE_FLAG_DEPENDENT;
+
+                default:
+                    urlData = new UrlData(urlData.Caching, ResolveDomain(urlData.Url!));
+                    cache[decentralandUrl] = urlData;
+                    break;
             }
 
             return urlData.Url!;

@@ -242,6 +242,20 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
+        public void ConvergeGenesisToRawWhenFlagsLoadWithGatewayDisabled()
+        {
+            InitEmptyFlags();
+            GatewayUrlsSource gateway = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://realm-provider-ea.decentraland.org/main", gateway.Url(DecentralandUrl.Genesis), "pre-flags URL must be fully resolved");
+
+            InitFlags(useGateway: false);
+
+            Assert.AreEqual("https://realm-provider-ea.decentraland.org/main", gateway.Url(DecentralandUrl.Genesis), "flags landing with the gateway disabled must converge to the raw URL");
+            Assert.AreEqual("https://realm-provider-ea.decentraland.org/main", gateway.Url(DecentralandUrl.Genesis), "converged URL must be stable");
+        }
+
+        [Test]
         public void LeaveThirdPartyHostsUntouchedByTransformUrl()
         {
             InitFlags(useGateway: true);
