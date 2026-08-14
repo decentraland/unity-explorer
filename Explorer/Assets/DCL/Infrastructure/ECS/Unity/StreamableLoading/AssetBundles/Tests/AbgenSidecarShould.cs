@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using Global.Dynamic;
 using NUnit.Framework;
 using System;
@@ -47,7 +48,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
                 var manifest = JsonUtility.FromJson<ManifestDto>(manifestReq.downloadHandler.text);
                 Assert.Greater(manifest.files.Length, 0, "manifest lists no bundles");
-                Debug.Log($"[abgen-sidecar] JIT manifest: [{string.Join(", ", manifest.files)}]");
+                ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"[abgen-sidecar] JIT manifest: [{string.Join(", ", manifest.files)}]");
 
                 string? bundleName = null;
 
