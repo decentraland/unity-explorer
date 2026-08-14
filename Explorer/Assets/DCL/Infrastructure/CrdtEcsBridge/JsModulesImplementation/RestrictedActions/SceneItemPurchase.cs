@@ -13,7 +13,6 @@ namespace DCL.CrdtEcsBridge.JsModulesImplementation
     {
         private static ISceneItemPurchaseFlow? flow;
 
-        public static bool IsAvailable => flow != null;
 
         public static void Register(ISceneItemPurchaseFlow purchaseFlow) =>
             flow = purchaseFlow;
