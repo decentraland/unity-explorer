@@ -44,7 +44,6 @@
         "GUID:21c2e77c042a2d34d8cfbf58f8217053",
         "GUID:d832748739a186646b8656bdbd447ad0",
         "GUID:2665a8d13d1b3f18800f46e256720795",
-        "GUID:3ca842002c51d0a43b73e45298809a13",
         "GUID:d28a7e4beeca475418c15757abf1b6f1",
         "GUID:0df5180c0c3a0594fbfa11f83736de9f",
         "GUID:08b2edf8f14cdd3408988fd7746b749c",
@@ -73,8 +72,10 @@
         "GUID:63cde67b4a5d47449392dfc49fc0c3ed",
         "GUID:267f743eefeddd44982a713909628102",
         "GUID:0e1edbec885c4350bb2ef81c6a413df5",
+        "GUID:3c1a9be47d0f42e2a5b8c6d4e9f01a27",
         "GUID:f254b2009e854709a0ef0022a7ca697c",
-        "GUID:3c1a9be47d0f42e2a5b8c6d4e9f01a27"
+        "GUID:4d072b9bce344c9bbcff885117cf1e6f",
+        "GUID:d9709898aa920584a8d1613950e6a7f5"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -90,11 +91,6 @@
             "name": "com.dcl.gpui-assets",
             "expression": "",
             "define": "GPUI_PRO_PRESENT"
-        },
-        {
-            "name": "com.renderheads.avpro.video-ultra",
-            "expression": "",
-            "define": "AV_PRO_PRESENT"
         }
     ],
     "noEngineReferences": false

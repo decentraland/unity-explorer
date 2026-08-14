@@ -145,7 +145,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
             avatarView.SetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(mask);
+            int layer = avatarView.GetEmoteLayerIndex(mask);
             avatarView.SetLayerWeight(layer, 0);
 
             avatarView.ClearMaskedEmoteAnimationCache();
@@ -170,7 +170,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     shouldCancel = avatarView.HasMaskedLegacyEmoteFinished;
                 else if (masked.IsPlaying)
                 {
-                    string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+                    int layer = avatarView.GetEmoteLayerIndex(masked.Mask);
                     int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
                     shouldCancel = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
                 }
@@ -192,7 +192,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             // by HasMaskedLegacyEmoteFinished on the avatar view, not by tag transitions.
             if (avatarView.IsMaskedLegacyEmotePlaying || avatarView.HasMaskedLegacyEmoteFinished) return;
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int layer = avatarView.GetEmoteLayerIndex(masked.Mask);
             int currentStateTag = avatarView.GetAnimatorCurrentStateTag(layer);
             masked.SetAnimationTag(currentStateTag);
         }
@@ -395,7 +395,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE);
             view.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
 
-            string emoteLayer = AnimatorEmoteLayers.GetFromEmoteMask(maskedEmote.Mask);
+            int emoteLayer = view.GetEmoteLayerIndex(maskedEmote.Mask);
             view.SetLayerWeight(emoteLayer, 1);
 
             int targetLayerTag = view.GetAnimatorCurrentStateTag(emoteLayer);

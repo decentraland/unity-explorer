@@ -16,6 +16,8 @@ namespace DCL.MarketplaceCredits
     {
         private const string NO_DATA_STATE = "NO_DATA";
         private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
+        private const string PURCHASE_SOURCE = "client";
+
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
         public event Action<UserCreditsResponse> OnUserCreditsFetched;
 
@@ -109,11 +111,13 @@ namespace DCL.MarketplaceCredits
                     usdPriceCents = usdPriceCents,
                     contractAddress = contractAddress,
                     itemId = itemId,
+                    source = PURCHASE_SOURCE,
                 })
                 : JsonUtility.ToJson(new AuthorizeUsdCreditBody
                 {
                     usdPriceCents = usdPriceCents,
                     tradeId = tradeId ?? string.Empty,
+                    source = PURCHASE_SOURCE,
                 });
         }
 
@@ -227,7 +231,7 @@ namespace DCL.MarketplaceCredits
         public virtual async UniTask<EnumResult<CheckoutResponse, CreditsCheckoutError>> CreateCheckoutAsync(string packId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/credits/checkout";
-            string jsonBody = JsonUtility.ToJson(new CheckoutRequestBody { packId = packId });
+            string jsonBody = JsonUtility.ToJson(new CheckoutRequestBody { packId = packId, source = PURCHASE_SOURCE });
 
             try
             {
