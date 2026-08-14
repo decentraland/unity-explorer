@@ -154,7 +154,7 @@ namespace DCL.PluginSystem.Global
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.PointAt))
             {
-                HandPointAtSystem.InjectToWorld(ref builder);
+                HandPointAtSystem.InjectToWorld(ref builder, scenesCache);
                 PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache, settings.PointAtMarkerVisibilitySettings);
                 builder.World.Create(PointAtThumbnailCache.Create());
                 PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
