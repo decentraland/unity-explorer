@@ -6,8 +6,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
     {
         public const string SOURCE_PASSPORT_EQUIPPED = "passport_equipped";
         public const string SOURCE_PASSPORT_CREATIONS = "passport_creations";
-
-        /// <summary>An SDK7 scene offered the item (e.g. an in-world vending machine).</summary>
         public const string SOURCE_SDK_SCENE = "sdk_scene";
 
         public readonly ShopListingDto Listing;

@@ -113,8 +113,6 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(creditsTopUpModalController);
 
-            // Lets an SDK7 scene raise this same confirmation through ~system/RestrictedActions. Only the
-            // item URN crosses the boundary; price, signature and UI stay here.
             SceneItemPurchaseBridge.Register(this);
         }
 
@@ -134,10 +132,6 @@ namespace DCL.PluginSystem.Global
             if (!CreditPurchaseBuyHandler.TryParseCollectionItem(itemUrn, out string contractAddress, out string itemId))
                 return OpenItemPurchaseResult.OipRejectedNotPurchasable;
 
-            // Everything below runs on the main thread. This flow is driven from the scene runtime's
-            // thread, and every piece it touches is main-thread only: the web request controller reads a
-            // PersistentSetting, LoadTextureAsync creates an entity in the global ECS world, and the modal
-            // is Unity UI. The passport reaches all of this from a UI callback, so it never had to switch.
             await UniTask.SwitchToMainThread(ct);
 
             ShopListingDto? listing;
@@ -153,8 +147,6 @@ namespace DCL.PluginSystem.Global
             if (listing == null)
                 return OpenItemPurchaseResult.OipRejectedNotPurchasable;
 
-            // Best-effort thumbnail: an image must never block a purchase, so a failure here just leaves
-            // the card without art.
             Sprite? thumbnail = null;
 
             try
@@ -181,20 +173,14 @@ namespace DCL.PluginSystem.Global
             catch (OperationCanceledException) { return OpenItemPurchaseResult.OipDismissed; }
             catch (Exception e) { ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Thumbnail for {itemUrn} could not be loaded: {e.Message}"); }
 
-            // The modal is a single instance shared with the passport, and MVCManager.ShowAsync returns
-            // silently when its controller is not hidden. Without this check a busy modal would look
-            // exactly like the player dismissing the offer.
             if (creditPurchaseModalController.State != ControllerState.ViewHidden)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Scene offered {itemUrn} while the purchase modal was already showing");
                 return OpenItemPurchaseResult.OipFailed;
             }
 
-            // Closing the modal without buying is the common case, so that is the default verdict.
             var verdict = OpenItemPurchaseResult.OipDismissed;
 
-            // The modal instance is shared with the passport, so an event may belong to somebody else's
-            // purchase. It always carries the listing it was opened with, and that is the one we passed in.
             void OnCompleted(ShopListingDto dto, CreditsPurchaseQuote _, string __, float ___) => SetVerdict(dto, OpenItemPurchaseResult.OipPurchased);
             void OnFailed(ShopListingDto dto, string _, string __, string ___) => SetVerdict(dto, OpenItemPurchaseResult.OipFailed);
             void OnCancelled(ShopListingDto dto, string _) => SetVerdict(dto, OpenItemPurchaseResult.OipDismissed);
@@ -204,9 +190,6 @@ namespace DCL.PluginSystem.Global
                 if (!ReferenceEquals(dto, listing))
                     return;
 
-                // Closing the modal after a FAILED purchase also raises PurchaseCancelled (the modal only
-                // suppresses it when the purchase succeeded), so the first terminal outcome is the real one.
-                // Without this, a purchase that broke reports back as if the player had declined it.
                 if (verdict is OpenItemPurchaseResult.OipPurchased or OpenItemPurchaseResult.OipFailed)
                     return;
 
@@ -224,8 +207,6 @@ namespace DCL.PluginSystem.Global
                     listing.name,
                     listing.rarity,
                     thumbnail,
-                    // The rarity frame and the category icon come from ScriptableObject mappings that have to
-                    // be assigned per plugin in the Inspector; the modal skips them when null.
                     rarityBackground: null,
                     Color.white,
                     categoryIcon: null,
