@@ -25,7 +25,7 @@ namespace DCL.Backpack
         private readonly BackpackGridController backpackGridController;
         private readonly AvatarTabsManager tabsManager;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "backpack");
+        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "client");
 
         public AvatarController(AvatarView view,
             UnityAppWebBrowser webBrowser,
@@ -75,7 +75,7 @@ namespace DCL.Backpack
         private void OnOpenMarketplace()
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));
+            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ShopLink)));
             urlBuilder.AppendParameter(marketplaceSourceParam);
             webBrowser.OpenUrlMainThreadOnly(urlBuilder.Build());
         }

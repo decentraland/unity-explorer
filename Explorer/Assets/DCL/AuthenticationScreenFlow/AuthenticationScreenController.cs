@@ -168,7 +168,7 @@ namespace DCL.AuthenticationScreenFlow
             fsm.AddStates(
                 new InitAuthState(viewInstance, installSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
-                    enableEmailOTP, otherLoginMethodsEnabled),
+                    enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),

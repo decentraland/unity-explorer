@@ -145,11 +145,11 @@ namespace Global.AppArgs
             // the same gate; the value is clamped to 1024-65535 and falls back to the default port (McpServerPlugin).
             AppArgsFlags.MCP_PORT,
 
-            // Local-scene development only: load the scene's asset bundles from the preview server instead of raw
-            // GLTFs. A pure boolean — the optimized-assets base is derived from the realm itself
-            // ({realm}/optimized-assets, see RealmLaunchSettings.LocalAssetBundlesBaseUrl), the same value this
+            // Local-scene development only: serve the scene as asset bundles JIT-converted by the explorer's
+            // embedded abgen sidecar instead of raw GLTFs. A pure boolean — the sidecar reads the scene through
+            // the realm's own /content endpoints (RealmUrls.LocalSceneDevelopmentRealmAsync), the same value this
             // gate already requires to be loopback, so the flag adds no attacker-controllable input: it can only
-            // point asset loading at the realm the link already targets. The full-URL variant
+            // point asset conversion at the realm the link already targets. The full-URL variant
             // (optimized-assets-url) points AB/LOD/registry endpoints at arbitrary infrastructure and stays
             // never-permitted.
             AppArgsFlags.LOCAL_AB,
