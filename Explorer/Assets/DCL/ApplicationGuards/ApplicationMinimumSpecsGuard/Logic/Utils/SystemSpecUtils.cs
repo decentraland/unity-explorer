@@ -21,6 +21,13 @@ namespace DCL.ApplicationGuards
             if (!FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements))
                 return true;
 
+            // No CPU requirement configured (explicit empty lists still reject).
+            if (minimumRequirements.always_accepted_cpus == null &&
+                string.IsNullOrEmpty(minimumRequirements.ryzen_supported_cpu_regex) &&
+                string.IsNullOrEmpty(minimumRequirements.intel_ultra_cpu_supported_version_regex) &&
+                string.IsNullOrEmpty(minimumRequirements.intel_cpu_supported_version_regex))
+                return true;
+
             cpu = cpu.ToLowerInvariant();
 
             foreach (string keyword in minimumRequirements.always_accepted_cpus ?? Array.Empty<string>())
@@ -75,6 +82,12 @@ namespace DCL.ApplicationGuards
             if (!FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements))
                 return true;
 
+            // No GPU requirement configured.
+            if (string.IsNullOrEmpty(minimumRequirements.rtx_gpu_supported_version_regex) &&
+                string.IsNullOrEmpty(minimumRequirements.rx_gpu_supported_version_regex) &&
+                string.IsNullOrEmpty(minimumRequirements.arc_gpu_supported_version_regex))
+                return true;
+
             gpu = gpu.ToLowerInvariant();
 
             var rtxMatch = MatchIfPatternPresent(gpu, minimumRequirements.rtx_gpu_supported_version_regex);
@@ -113,7 +126,11 @@ namespace DCL.ApplicationGuards
             if (!FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements))
                 return true;
 
-            foreach (string version in minimumRequirements.windows_supported_versions ?? Array.Empty<string>())
+            // No OS requirement configured (an explicit empty list still rejects).
+            if (minimumRequirements.windows_supported_versions == null)
+                return true;
+
+            foreach (string version in minimumRequirements.windows_supported_versions)
             {
                 if (os.IndexOf(version, StringComparison.OrdinalIgnoreCase) >= 0)
                     return true;
@@ -126,8 +143,12 @@ namespace DCL.ApplicationGuards
             if (!FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements))
                 return true;
 
+            // No OS requirement configured (an explicit empty list still rejects).
+            if (minimumRequirements.mac_supported_versions == null)
+                return true;
+
             bool isMac = false;
-            foreach (string keyword in minimumRequirements.mac_supported_versions ?? Array.Empty<string>())
+            foreach (string keyword in minimumRequirements.mac_supported_versions)
             {
                 if (os.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
                 {
