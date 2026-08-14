@@ -90,6 +90,12 @@ namespace DCL.FeatureFlags
         public const string HARDWARE_FINGERPRINT = "alfa-hardware-fingerprint";
         public const string OPTIMIZED_ASSETS = "optimized-assets";
         public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
+
+        // Routes the asset-bundle registry + CDN to their `-abgen` parallel-pipeline
+        // siblings (own registry, ab-cdn-abgen CDN). Takes precedence over
+        // OPTIMIZED_ASSETS so the whole AB surface moves together. See
+        // DecentralandUrlsSource.ResolveAssetBundleUrl.
+        public const string ABGEN_REGISTRY = "abgen-registry";
         public const string USE_CUSTOM_MEDIA_PLAYER_WINDOWS = "use-custom-media-player-windows";
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON = "use-custom-media-player-mac-silicon";
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL = "use-custom-media-player-mac-intel";

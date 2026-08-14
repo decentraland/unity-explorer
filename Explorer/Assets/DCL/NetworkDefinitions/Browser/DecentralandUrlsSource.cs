@@ -216,6 +216,36 @@ namespace DCL.Browser.DecentralandUrls
             return new UrlData(CacheBehaviour.FeatureFlagsDependent, $"https://abcdn.decentraland.{ENV}");
         }
 
+        /// <summary>
+        ///     Asset-bundle registry / CDN base resolution. When the abgen parallel-pipeline flag is on,
+        ///     routes to the `-abgen` sibling host (own registry + ab-cdn-abgen CDN), taking precedence over
+        ///     OPTIMIZED_ASSETS so the whole AB surface (registry + CDN) moves together. The CLI
+        ///     "--optimized-assets-url" override still wins. LODs are intentionally NOT routed here (abgen's
+        ///     LOD lane is unimplemented) — LodGeneratorCDN keeps calling ResolveOptimizedAssetsUrl directly.
+        /// </summary>
+        private UrlData ResolveAssetBundleUrl(string dedicatedHostUrl)
+        {
+            if (optimizedAssetsBaseOverride is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, optimizedAssetsBaseOverride);
+
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            // FeatureFlagsDependent so the abgen host is re-resolved (not cached) until flags load — the
+            // {ENV} token is substituted in Url() once the environment domain is applied.
+            if (!featureFlags.IsEmpty && featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_REGISTRY))
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, InsertAbgenSubdomain(dedicatedHostUrl));
+
+            return ResolveOptimizedAssetsUrl(dedicatedHostUrl);
+        }
+
+        /// <summary>
+        ///     Inserts the `-abgen` label into the leading subdomain of an AB host, leaving the {ENV} token
+        ///     intact: `https://ab-cdn.decentraland.{ENV}` → `https://ab-cdn-abgen.decentraland.{ENV}`,
+        ///     `https://asset-bundle-registry.decentraland.{ENV}` → `https://asset-bundle-registry-abgen.decentraland.{ENV}`.
+        /// </summary>
+        private static string InsertAbgenSubdomain(string hostUrl) =>
+            hostUrl.Replace(".decentraland.", "-abgen.decentraland.");
+
         /// <summary>Registry-composed endpoints inherit the registry base's caching so a flag-driven base is not cached early.</summary>
         private UrlData ComposeRegistryUrl(string path) =>
             new (RawUrl(DecentralandUrl.AssetBundleRegistry).Caching, $"{Url(DecentralandUrl.AssetBundleRegistry)}{path}");
@@ -273,7 +303,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Account => $"https://decentraland.{ENV}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
-                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.decentraland.{ENV}"),
+                DecentralandUrl.AssetBundlesCDN => ResolveAssetBundleUrl($"https://ab-cdn.decentraland.{ENV}"),
                 DecentralandUrl.LodGeneratorCDN => ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.decentraland.{ENV}"),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",
@@ -286,7 +316,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
-                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl($"https://asset-bundle-registry.decentraland.{ENV}"),
+                DecentralandUrl.AssetBundleRegistry => ResolveAssetBundleUrl($"https://asset-bundle-registry.decentraland.{ENV}"),
 
                 DecentralandUrl.AssetBundleRegistryVersion => ComposeRegistryUrl("/entities/versions"),
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
