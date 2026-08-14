@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.SkyBox;
 using DCL.SkyBox.Components;
 using Decentraland.Sdk.Development;
+using ECS.StreamableLoading.AssetBundles;
 using Google.Protobuf;
 using System;
 using System.Threading;
@@ -90,6 +91,10 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                         sceneId = wsSceneMessage.UpdateScene.SceneId;
                         changedModelSrc = null;
                     }
+
+                    // Arm the abgen sidecar's reconversion mirror before the reload's manifest request
+                    // lands; without --local-ab nothing consumes the signal and it stays inert.
+                    AbgenConversionMetrics.INSTANCE.OnContentEdit(changedModelSrc);
 
                     // Switch to the main thread because `TryReloadSceneAsync` requires that
                     await UniTask.SwitchToMainThread(cancellationToken: ct);

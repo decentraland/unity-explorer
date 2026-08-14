@@ -47,6 +47,7 @@ namespace Global.Dynamic
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
         private const int PROGRESS_POLL_MS = 500;
+        private const int CONTENT_EDIT_SIGNAL_POLL_MS = 250;
 
         /// <summary>abgen's built-in default bind port (crate/src/abcdn/config.rs) — never exported as an env var.</summary>
         private const int ABGEN_DEFAULT_PORT = 5147;
@@ -74,6 +75,14 @@ namespace Global.Dynamic
 #endif
         private int restarts;
         private volatile bool disposed;
+        private string? warmedEntityId;
+
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+        // Kill-on-close Job Object tying the child's lifetime to this process on Windows: when the
+        // explorer dies for ANY reason — crash included — the kernel closes the handle and reaps the
+        // child, so orderly Dispose is just the graceful path. Always IntPtr.Zero on the macOS editor.
+        private IntPtr jobHandle;
+#endif
 
         public string BaseUrl { get; }
 
@@ -142,6 +151,18 @@ namespace Global.Dynamic
         {
             if (Launch(executablePath) && await WaitHealthyAsync(ct))
             {
+                // The port answered, but only our own live child counts: with the fixed default
+                // endpoint, an orphaned abgen from a crashed session (or any foreign process on
+                // the port) could be the one listening — serving stale bundles from a stale
+                // version or another workspace's realm. Refuse to adopt it.
+                if (!ChildAlive())
+                {
+                    AbgenConversionMetrics.INSTANCE.OnMilestone($"another process owns {BaseUrl} (our server exited on startup) — kill it and relaunch; the scene loads as raw GLTFs");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar: {BaseUrl} answers but our child is dead — a foreign/orphaned server owns the port; refusing to adopt it");
+                    Dispose();
+                    return false;
+                }
+
                 SuperviseAsync(ct).Forget();
                 return true;
             }
@@ -160,8 +181,6 @@ namespace Global.Dynamic
         /// </summary>
         public async UniTask WarmUpLocalSceneAsync(CancellationToken ct)
         {
-            string? convertingFile = null;
-
             try
             {
                 using UnityWebRequest aboutRequest = UnityWebRequest.Get($"{realmRoot}/about");
@@ -178,10 +197,114 @@ namespace Global.Dynamic
                     return;
                 }
 
+                warmedEntityId = entityId;
                 AbgenConversionMetrics.INSTANCE.OnWarmUpStarted(entityId);
                 AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up started — converting scene {entityId} in the background");
                 ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: converting scene {entityId} — asset bundles are being built in the background");
 
+                (float elapsedSeconds, bool sawBuildProgress, int exitCode) = await MirrorManifestBuildAsync(entityId, ct);
+
+                AbgenConversionMetrics.INSTANCE.OnWarmUpReady(elapsedSeconds, alreadyWarm: !sawBuildProgress);
+
+                AbgenConversionMetrics.INSTANCE.OnMilestone(sawBuildProgress
+                    ? $"manifest retrieved — asset bundles ready in {elapsedSeconds:F1}s"
+                    : "asset bundles already converted — manifest served from warm cache");
+
+                ReportHub.Log(ReportCategory.ASSET_BUNDLES, sawBuildProgress
+                    ? $"abgen warm-up: manifest retrieved — asset bundles READY for scene {entityId} in {elapsedSeconds:F1}s"
+                    : $"abgen warm-up: asset bundles already converted (warm cache) — manifest for scene {entityId} served in {elapsedSeconds:F1}s");
+
+                if (exitCode != 0)
+                {
+                    AbgenConversionMetrics.INSTANCE.OnMilestone($"some files failed server-side conversion (manifest exitCode {exitCode})");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: manifest exitCode {exitCode} — some files failed server-side conversion; check the sidecar's cache logs");
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                AbgenConversionMetrics.INSTANCE.OnWarmUpFailed();
+                AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up failed ({e.Message}) — bundles still convert lazily per request");
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen warm-up failed — bundles still convert lazily per request");
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+            }
+        }
+
+        /// <summary>
+        ///     Session-long reconversion mirror: waits for the content-edit signal the LSD reload path
+        ///     raises (see LocalSceneDevelopmentController) and re-runs the manifest lane for the warmed
+        ///     scene — the request coalesces with (or triggers) the server's rebuild of the edited files,
+        ///     so the AB panel flips back to converting, tracks the rebuild and settles to READY with the
+        ///     reconversion time even when the rebuild outpaces the progress poll. Runs detached until
+        ///     cancelled; never throws. No-op when the warm-up never resolved the scene entity.
+        /// </summary>
+        public async UniTask WatchReconversionsAsync(CancellationToken ct)
+        {
+            string? entityId = warmedEntityId;
+            if (entityId == null) return;
+
+            try
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    await UniTask.Delay(CONTENT_EDIT_SIGNAL_POLL_MS, DelayType.Realtime, cancellationToken: ct);
+
+                    if (!AbgenConversionMetrics.INSTANCE.TryConsumeContentEdit(out string? changedSrc))
+                        continue;
+
+                    AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
+
+                    try
+                    {
+                        metrics.OnWarmUpStarted(entityId);
+
+                        metrics.OnMilestone(changedSrc != null
+                            ? $"{changedSrc} changed — reconverting"
+                            : "scene content changed — revalidating bundles");
+
+                        (float elapsedSeconds, bool sawBuildProgress, int exitCode) = await MirrorManifestBuildAsync(entityId, ct);
+
+                        // A named model edit always rebuilt its bundle, even faster than the progress poll
+                        // samples; a whole-scene (code) update may genuinely have had nothing to rebuild.
+                        bool rebuilt = changedSrc != null || sawBuildProgress;
+
+                        metrics.OnWarmUpReady(elapsedSeconds, alreadyWarm: !rebuilt);
+
+                        metrics.OnMilestone(rebuilt
+                            ? $"reconverted in {elapsedSeconds:F1}s"
+                            : $"revalidated in {elapsedSeconds:F1}s — bundles already up to date");
+
+                        ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen: scene {entityId} {(rebuilt ? "reconverted" : "revalidated")} after a content edit in {elapsedSeconds:F1}s");
+
+                        if (exitCode != 0)
+                            metrics.OnMilestone($"some files failed server-side conversion (manifest exitCode {exitCode})");
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception e)
+                    {
+                        metrics.OnWarmUpFailed();
+                        metrics.OnMilestone($"reconversion failed ({e.Message}) — bundles still convert lazily per request");
+                        ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES); }
+        }
+
+        /// <summary>
+        ///     Requests the entity's manifest — making the server build every stale bundle of the scene,
+        ///     coalescing with any build already running — while mirroring <c>/progress/{entity}</c> into
+        ///     the AB panel rows, then backfills the census. Returns the request's wall time, whether any
+        ///     build progress was observed (false when everything was already warm or the build outpaced
+        ///     the poll), and the manifest's exitCode (non-zero when files failed server-side).
+        /// </summary>
+        private async UniTask<(float elapsedSeconds, bool sawBuildProgress, int exitCode)> MirrorManifestBuildAsync(string entityId, CancellationToken ct)
+        {
+            string? convertingFile = null;
+
+            try
+            {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
                 using UnityWebRequest manifestRequest = UnityWebRequest.Get($"{BaseUrl}/manifest/{entityId}{PlatformUtils.GetCurrentPlatform()}.json");
@@ -240,38 +363,14 @@ namespace Global.Dynamic
                 // leave no row; backfill the panel with the scene's full convertible file list.
                 await ReconcileCensusAsync(entityId, ct);
 
-                AbgenConversionMetrics.INSTANCE.OnWarmUpReady((float)stopwatch.Elapsed.TotalSeconds, alreadyWarm: !sawBuildProgress);
-
-                AbgenConversionMetrics.INSTANCE.OnMilestone(sawBuildProgress
-                    ? $"manifest retrieved — asset bundles ready in {stopwatch.Elapsed.TotalSeconds:F1}s"
-                    : "asset bundles already converted — manifest served from warm cache");
-
-                ReportHub.Log(ReportCategory.ASSET_BUNDLES, sawBuildProgress
-                    ? $"abgen warm-up: manifest retrieved — asset bundles READY for scene {entityId} in {stopwatch.Elapsed.TotalSeconds:F1}s"
-                    : $"abgen warm-up: asset bundles already converted (warm cache) — manifest for scene {entityId} served in {stopwatch.Elapsed.TotalSeconds:F1}s");
-
-                int exitCode = JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text).exitCode;
-
-                if (exitCode != 0)
-                {
-                    AbgenConversionMetrics.INSTANCE.OnMilestone($"some files failed server-side conversion (manifest exitCode {exitCode})");
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: manifest exitCode {exitCode} — some files failed server-side conversion; check the sidecar's cache logs");
-                }
+                return ((float)stopwatch.Elapsed.TotalSeconds, sawBuildProgress, JsonUtility.FromJson<CorpusManifest>(manifestRequest.downloadHandler.text).exitCode);
             }
-            catch (OperationCanceledException)
-            {
-                if (convertingFile != null)
-                    AbgenConversionMetrics.INSTANCE.OnCancelled(convertingFile);
-            }
-            catch (Exception e)
+            catch
             {
                 if (convertingFile != null)
                     AbgenConversionMetrics.INSTANCE.OnCancelled(convertingFile);
 
-                AbgenConversionMetrics.INSTANCE.OnWarmUpFailed();
-                AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up failed ({e.Message}) — bundles still convert lazily per request");
-                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen warm-up failed — bundles still convert lazily per request");
-                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+                throw;
             }
         }
 
@@ -613,6 +712,10 @@ namespace Global.Dynamic
             process.ErrorDataReceived += static (_, _) => { };
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
+
+            if (IsWindows)
+                TieChildLifetimeToUs(process.Handle);
+
             return true;
 #elif UNITY_STANDALONE_WIN
             // CREATE_NO_WINDOW keeps the console-subsystem server from opening a console window;
@@ -630,6 +733,7 @@ namespace Global.Dynamic
 
             if (processHandle != IntPtr.Zero) CloseHandle(processHandle);
             processHandle = processInformation.hProcess;
+            TieChildLifetimeToUs(processHandle);
             return true;
 #else
             Result<int> result = DclProcesses.Start(executablePath, Array.Empty<string>());
@@ -679,6 +783,15 @@ namespace Global.Dynamic
 #else
             if (processId > 0) kill(processId, SIGKILL);
             processId = 0;
+#endif
+
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+            if (jobHandle != IntPtr.Zero)
+            {
+                // Closing the kill-on-close job reaps anything still assigned to it.
+                CloseJobHandle(jobHandle);
+                jobHandle = IntPtr.Zero;
+            }
 #endif
         }
 
@@ -733,6 +846,88 @@ namespace Global.Dynamic
 
             return false;
         }
+
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+        /// <summary>
+        ///     Assigns the child to a kill-on-close Job Object, tying its lifetime to this process at the
+        ///     kernel level. Best effort: on any failure the child just stays untethered, exactly as before.
+        ///     Restarted children join the same job. Windows only — call sites are IsWindows-guarded in the
+        ///     editor, so the kernel32 imports never bind on macOS.
+        /// </summary>
+        private void TieChildLifetimeToUs(IntPtr childProcessHandle)
+        {
+            if (jobHandle == IntPtr.Zero)
+            {
+                IntPtr job = CreateJobObjectW(IntPtr.Zero, null);
+                if (job == IntPtr.Zero) return;
+
+                var info = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
+                info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+
+                if (!SetInformationJobObject(job, JOB_OBJECT_INFO_CLASS_EXTENDED_LIMIT, ref info, (uint)Marshal.SizeOf<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>()))
+                {
+                    CloseJobHandle(job);
+                    return;
+                }
+
+                jobHandle = job;
+            }
+
+            AssignProcessToJobObject(jobHandle, childProcessHandle);
+        }
+
+        private const uint JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000;
+        private const int JOB_OBJECT_INFO_CLASS_EXTENDED_LIMIT = 9;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct IO_COUNTERS
+        {
+            public ulong ReadOperationCount;
+            public ulong WriteOperationCount;
+            public ulong OtherOperationCount;
+            public ulong ReadTransferCount;
+            public ulong WriteTransferCount;
+            public ulong OtherTransferCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct JOBOBJECT_BASIC_LIMIT_INFORMATION
+        {
+            public long PerProcessUserTimeLimit;
+            public long PerJobUserTimeLimit;
+            public uint LimitFlags;
+            public UIntPtr MinimumWorkingSetSize;
+            public UIntPtr MaximumWorkingSetSize;
+            public uint ActiveProcessLimit;
+            public UIntPtr Affinity;
+            public uint PriorityClass;
+            public uint SchedulingClass;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+        {
+            public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
+            public IO_COUNTERS IoInfo;
+            public UIntPtr ProcessMemoryLimit;
+            public UIntPtr JobMemoryLimit;
+            public UIntPtr PeakProcessMemoryUsed;
+            public UIntPtr PeakJobMemoryUsed;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern IntPtr CreateJobObjectW(IntPtr lpJobAttributes, string? lpName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetInformationJobObject(IntPtr hJob, int jobObjectInformationClass, ref JOBOBJECT_EXTENDED_LIMIT_INFORMATION lpJobObjectInformation, uint cbJobObjectInformationLength);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool AssignProcessToJobObject(IntPtr hJob, IntPtr hProcess);
+
+        // Alias so the editor build (which lacks the player's CloseHandle import) can close the job.
+        [DllImport("kernel32.dll", EntryPoint = "CloseHandle", SetLastError = true)]
+        private static extern bool CloseJobHandle(IntPtr hObject);
+#endif
 
         private const uint UNIX_MODE_755 = 0x1ED; // rwxr-xr-x
 

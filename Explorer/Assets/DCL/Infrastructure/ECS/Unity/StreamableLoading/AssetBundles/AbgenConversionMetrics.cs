@@ -49,6 +49,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private bool panelOpenRequested;
 
+        private bool contentEditSignaled;
+        private string? contentEditSrc;
+
         private WarmUpStage warmUpStage;
         private string? warmUpSceneId;
         private float warmUpElapsedSeconds;
@@ -277,6 +280,36 @@ namespace ECS.StreamableLoading.AssetBundles
                 bool requested = panelOpenRequested;
                 panelOpenRequested = false;
                 return requested;
+            }
+        }
+
+        /// <summary>
+        ///     Signals that the LSD preview server reported a content edit, so the scene's bundles are about
+        ///     to be reconverted. <paramref name="changedSrc" /> names the edited model when the message
+        ///     carried one (UpdateModel); null for whole-scene updates. Rapid successive edits keep the
+        ///     latest name — one reconversion pass covers them all.
+        /// </summary>
+        public void OnContentEdit(string? changedSrc)
+        {
+            lock (gate)
+            {
+                contentEditSignaled = true;
+
+                // Protobuf strings default to "" — treat that as an unnamed (whole-scene) edit.
+                contentEditSrc = string.IsNullOrEmpty(changedSrc) ? null : changedSrc;
+            }
+        }
+
+        /// <summary>True once per <see cref="OnContentEdit" /> burst — consuming it resets the signal.</summary>
+        public bool TryConsumeContentEdit(out string? changedSrc)
+        {
+            lock (gate)
+            {
+                bool signaled = contentEditSignaled;
+                changedSrc = contentEditSrc;
+                contentEditSignaled = false;
+                contentEditSrc = null;
+                return signaled;
             }
         }
 

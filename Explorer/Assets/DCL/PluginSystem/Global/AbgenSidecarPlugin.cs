@@ -25,17 +25,19 @@ namespace DCL.PluginSystem.Global
         private readonly string baseUrl;
         private readonly RealmUrls realmUrls;
         private readonly DecentralandEnvironment environment;
-        private readonly UniTaskCompletionSource readyCompletionSource = new ();
+        private readonly UniTaskCompletionSource<bool> readyCompletionSource = new ();
 
         private AbgenSidecar? sidecar;
         private CancellationTokenSource? lifeCycleCancellationTokenSource;
 
         /// <summary>
-        ///     Completes when the sidecar reaches a terminal state: warm and serving (whole-scene warm-up
-        ///     finished), or given up (no binary and the download failed, launch failure, cancellation).
-        ///     Never faults. Single awaiter only.
+        ///     Completes when the sidecar reaches a terminal state, with <c>true</c> once the server is healthy and
+        ///     serving (whole-scene warm-up may still be running or have partially failed — the server answers those
+        ///     per request), or <c>false</c> when it never came up (no binary and the download failed, launch failure,
+        ///     cancellation). On <c>false</c> the caller drops the optimized-assets override so the session falls
+        ///     back to production instead of the dead loopback port. Never faults. Single awaiter only.
         /// </summary>
-        public UniTask ReadyAsync => readyCompletionSource.Task;
+        public UniTask<bool> ReadyAsync => readyCompletionSource.Task;
 
         public AbgenSidecarPlugin(string baseUrl, RealmUrls realmUrls, DecentralandEnvironment environment)
         {
@@ -50,7 +52,8 @@ namespace DCL.PluginSystem.Global
             sidecar?.Dispose();
 
             // Covers teardown before InjectToWorld ever ran; otherwise RunAsync's finally completes it.
-            readyCompletionSource.TrySetResult();
+            // Not usable: nothing is serving, so any override must fall back to production.
+            readyCompletionSource.TrySetResult(false);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -61,6 +64,8 @@ namespace DCL.PluginSystem.Global
 
         private async UniTaskVoid RunAsync(CancellationToken ct)
         {
+            bool usable = false;
+
             try
             {
                 // The canonical LSD realm — the same resolution the rest of the app runs on.
@@ -88,11 +93,20 @@ namespace DCL.PluginSystem.Global
                 sidecar = created;
 
                 if (await sidecar.StartAsync(ct))
+                {
+                    // Server is healthy: the override is valid even if the warm-up below fails, since bundles
+                    // JIT on demand and non-scene lanes stream through the read-through.
+                    usable = true;
                     await sidecar.WarmUpLocalSceneAsync(ct);
+
+                    // Detached for the sidecar's lifetime (it swallows its own exceptions): mirrors content-edit
+                    // reconversions into the AB panel. RunAsync must return so the boot-hold releases.
+                    sidecar.WatchReconversionsAsync(ct).Forget();
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES); }
-            finally { readyCompletionSource.TrySetResult(); }
+            finally { readyCompletionSource.TrySetResult(usable); }
         }
     }
 }
