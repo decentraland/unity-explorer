@@ -3,7 +3,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using UnityEngine;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Browser
 {
     public class UnityAppWebBrowser

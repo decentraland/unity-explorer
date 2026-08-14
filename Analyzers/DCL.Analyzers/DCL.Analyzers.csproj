@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- netstandard2.0 + CodeAnalysis 4.3.1: the standard analyzer floor.
+         Loads in any Roslyn host >= 4.3.1 (Unity 6000.x bundles >= 4.9). -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- The SDK's built-in SourceLink appends the git HEAD sha to
+         AssemblyInformationalVersion, making every build depend on the CURRENT
+         commit - a committed DLL could then never byte-match the CI drift
+         check's rebuild (committing the DLL moves HEAD). Output must depend on
+         sources and flags only. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

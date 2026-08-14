@@ -30,6 +30,10 @@ jq --argjson excludedRules "$(printf '%s\n' "${excluded_rules[@]}" | jq -R . | j
   | map(select(
       ((.level // "warning") | IN("warning", "error"))
       and ((.ruleId // "") | IN($excludedRules[]) | not)
+      # DCL.Analyzers diagnostics have their own enforcement channel (Unity csc +
+      # IDE, severities pinned in Explorer/.editorconfig); counting them here would
+      # double-enforce advisory rules through the unrelated ReSharper ratchet.
+      and ((.ruleId // "") | startswith("DCLA") | not)
       and ((.locations[0].physicalLocation.artifactLocation.uri // "")
            | test($excludedPaths; "i") | not)
     ))

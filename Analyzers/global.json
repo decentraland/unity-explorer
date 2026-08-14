@@ -1,0 +1,7 @@
+{
+  "sdk": {
+    "version": "10.0.204",
+    "rollForward": "disable"
+  },
+  "//": "Pinned exactly: the 'Fail on DLL drift' CI step byte-compares a rebuild against the committed Explorer/Assets/DCL/DCL.Analyzers.dll, and byte-identical output requires the same Roslyn compiler. Bump this and rebuild/commit the DLL together (scripts/build-analyzers.sh)."
+}

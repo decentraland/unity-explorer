@@ -92,18 +92,22 @@ namespace DCL.CharacterPreview
         {
             ct.ThrowIfCancellationRequested();
 
-            ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
+            BodyShape bodyShape = BodyShape.FromStringSafe(avatarModel.BodyShape);
 
-            avatarShape.SkinColor = avatarModel.SkinColor;
-            avatarShape.HairColor = avatarModel.HairColor;
-            avatarShape.EyesColor = avatarModel.EyesColor;
-            avatarShape.BodyShape = BodyShape.FromStringSafe(avatarModel.BodyShape);
+            // structural work first, results into locals: promise creation/destruction and
+            // entity creation relocate archetype chunks and invalidate any outstanding ref
+            // to this component - including the structural changes hidden inside
+            // Promise.Create and ForgetLoading.
+            // The old promise is deliberately COPIED out (not operated via ref): calling
+            // ForgetLoading on a ref into the chunk would keep 'this' pointing at ECS memory
+            // while it destroys the promise entity. The copy's mutations are discarded -
+            // the component's WearablePromise is overwritten wholesale below.
+            AssetPromise<WearablesResolution, GetWearablesByPointersIntention> oldWearablePromise = globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).WearablePromise;
+            oldWearablePromise.ForgetLoading(globalWorld);
 
-            avatarShape.WearablePromise.ForgetLoading(globalWorld);
-
-            avatarShape.WearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
+            var wearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
                 globalWorld,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape,
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape,
                     avatarModel.Wearables ?? (IReadOnlyCollection<URN>)Array.Empty<URN>(), avatarModel.ForceRenderCategories),
                 PartitionComponent.TOP_PRIORITY
             );
@@ -111,10 +115,18 @@ namespace DCL.CharacterPreview
             Entity emotePromiseEntity = builderEmotesPreview
                 ? Entity.Null
                 : globalWorld.Create(EmotePromise.Create(globalWorld,
-                    EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
+                    EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape,
                         avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
                     PartitionComponent.TOP_PRIORITY));
 
+            // the ref is taken only after every structural change has completed (DCLA001)
+            ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
+
+            avatarShape.SkinColor = avatarModel.SkinColor;
+            avatarShape.HairColor = avatarModel.HairColor;
+            avatarShape.EyesColor = avatarModel.EyesColor;
+            avatarShape.BodyShape = bodyShape;
+            avatarShape.WearablePromise = wearablePromise;
             avatarShape.IsDirty = true;
 
             return WaitForAvatarInstantiatedAsync(emotePromiseEntity, ct);

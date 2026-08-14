@@ -26,7 +26,9 @@ namespace UUAV
         Trace = 56,
     }
 
-    public enum UUAVState
+    // Crosses the DllImport boundary as-is; the underlying type is the ABI contract
+    // with the native library, so it is pinned explicitly (DCLA005).
+    public enum UUAVState : int
     {
         Closed,
         Opening,

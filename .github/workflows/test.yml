@@ -7,6 +7,10 @@ on:
       - 'Explorer/**'
       # The rsp-drift job must run when the generator changes, or drift merges unnoticed.
       - 'scripts/generate-ignore-warnings.sh'
+      # The custom-lint job must run when the linter changes, or a broken rule merges unexecuted.
+      - 'scripts/lint/**'
+      # The analyzers job must run when the Roslyn analyzers change.
+      - 'Analyzers/**'
     types:
       - opened
       - reopened
@@ -73,6 +77,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       cs: ${{ steps.detect.outputs.cs }}
+      analyzers: ${{ steps.detect.outputs.analyzers }}
+      # True when the linter itself changed - custom-lint must run its selftest
+      # even on a PR with no .cs changes, or a broken rule merges unexecuted.
+      lintscripts: ${{ steps.detect.outputs.lintscripts }}
+      # Diff range for added-lines linting; base is empty when undeterminable.
+      base: ${{ steps.detect.outputs.base }}
+      head: ${{ steps.detect.outputs.head }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -87,29 +98,168 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           BEFORE_SHA: ${{ github.event.before }}
+          MG_BASE: ${{ github.event.merge_group.base_sha }}
+          MG_HEAD: ${{ github.event.merge_group.head_sha }}
+          FALLBACK_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
+          head="${HEAD_SHA:-$FALLBACK_SHA}"
           if [ "$EVENT" = "pull_request" ]; then
-            base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA" 2>/dev/null || true)
+            base=$(git merge-base "origin/$BASE_REF" "$head" 2>/dev/null || true)
             if [ -z "$base" ]; then
               echo "merge-base with origin/$BASE_REF unavailable - linting to be safe."
-              echo "cs=true" >> "$GITHUB_OUTPUT"; exit 0
+              { echo "cs=true"; echo "analyzers=true"; echo "lintscripts=true"; } >> "$GITHUB_OUTPUT"; exit 0
             fi
-            range="$base $HEAD_SHA"
+          elif [ "$EVENT" = "merge_group" ]; then
+            base="$MG_BASE"; head="$MG_HEAD"
           elif [ "$EVENT" = "push" ] && [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ] && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
-            range="$BEFORE_SHA ${{ github.sha }}"
+            base="$BEFORE_SHA"
           else
             echo "Cannot determine a diff base for event '$EVENT' - linting to be safe."
-            echo "cs=true" >> "$GITHUB_OUTPUT"; exit 0
+            { echo "cs=true"; echo "analyzers=true"; echo "lintscripts=true"; } >> "$GITHUB_OUTPUT"; exit 0
           fi
 
-          if git diff --name-only $range -- '*.cs' | grep -q .; then
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          if git diff --name-only "$base" "$head" -- '*.cs' | grep -q .; then
             echo "C# files changed - lint will run."
             echo "cs=true" >> "$GITHUB_OUTPUT"
           else
             echo "No C# files changed - skipping lint."
             echo "cs=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # The committed DLL is in the pathspec so a PR that swaps ONLY the binary
+          # still runs the drift check - that is the exact attack/mistake it exists for.
+          if git diff --name-only "$base" "$head" -- 'Analyzers/' 'scripts/build-analyzers.sh' 'Explorer/Assets/DCL/DCL.Analyzers.dll' | grep -q .; then
+            echo "analyzers=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "analyzers=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if git diff --name-only "$base" "$head" -- 'scripts/lint/' | grep -q .; then
+            echo "lintscripts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lintscripts=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Fast deterministic project rules (CLAUDE.md / .claude/skills) checked over the
+  # lines ADDED in this PR/push — runs in seconds without Unity, complementing the
+  # ReSharper ratchet below. Pre-existing violations never fail this job.
+  custom-lint:
+    needs: changes
+    if: needs.changes.outputs.cs == 'true' || needs.changes.outputs.lintscripts == 'true' || github.event.label.name == 'force-lint'
+    name: Project rules lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    # This job executes PR-authored shell; it must not see the workflow-level
+    # Unity credentials it doesn't need.
+    env:
+      UNITY_EMAIL: ''
+      UNITY_PASSWORD: ''
+      UNITY_LICENSE: ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          # This job runs PR-head shell; don't leave the token in .git/config.
+          persist-credentials: false
+
+      # Runs before the diff lint so a broken linter fails the job even when
+      # the diff itself is clean (or the base is undeterminable).
+      - name: Linter selftest
+        run: bash scripts/lint/tests/selftest.sh
+
+      - name: Lint added lines against project rules
+        env:
+          BASE: ${{ needs.changes.outputs.base }}
+          HEAD: ${{ needs.changes.outputs.head }}
+        run: |
+          set -uo pipefail
+          if [ -z "$BASE" ]; then
+            echo "::warning::custom-lint: no diff base for event '${{ github.event_name }}' - added-lines rules were NOT evaluated."
+            exit 0
+          fi
+          out="$(bash scripts/lint/custom-rules.sh --diff "$BASE" "$HEAD")"; rc=$?
+          printf '%s\n' "$out"
+          # Surface findings as PR annotations - WARNs otherwise die in a green job's log.
+          printf '%s\n' "$out" | awk -F'  ' 'NF >= 4 {
+              split($1, loc, ":")
+              level = ($2 == "BLOCK") ? "error" : "warning"
+              printf "::%s file=%s,line=%s::[%s] %s\n", level, loc[1], loc[2], $3, $4
+          }'
+          exit "$rc"
+
+  # Roslyn analyzer test suite (Analyzers/DCL.Analyzers) - semantic rules that
+  # run inside Unity's csc. Tests only; the shipped DLL is synced manually via
+  # scripts/build-analyzers.sh and committed (LFS).
+  analyzers:
+    needs: changes
+    if: needs.changes.outputs.analyzers == 'true'
+    name: Roslyn analyzers
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    # This job restores and executes a PR-authored .csproj (arbitrary MSBuild
+    # targets); it must not see the workflow-level Unity credentials.
+    env:
+      UNITY_EMAIL: ''
+      UNITY_PASSWORD: ''
+      UNITY_LICENSE: ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          lfs: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # The exact SDK pin (not a floating channel) is what makes the drift
+          # rebuild below byte-identical to scripts/build-analyzers.sh output.
+          global-json-file: Analyzers/global.json
+
+      - name: Test analyzers
+        working-directory: Analyzers
+        run: dotnet test DCL.Analyzers.Tests -v q --nologo
+
+      # The committed DLL is what Unity actually enforces; it must be provably
+      # built from the reviewed source. THIS job's Linux build is the canonical
+      # one: Windows builds of the same sources can differ byte-wise (observed),
+      # so on drift the fix is to commit the DLL this job uploads below.
+      - name: Rebuild DLL deterministically
+        run: |
+          set -euo pipefail
+          (cd Analyzers && dotnet build DCL.Analyzers -c Release -v q --nologo \
+            -p:ContinuousIntegrationBuild=true -p:DebugType=none)
+
+      # Uploaded before the comparison so the canonical DLL is available from
+      # this run precisely when the drift gate below fails.
+      - name: Upload canonical DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: DCL.Analyzers.dll-canonical
+          path: Analyzers/DCL.Analyzers/bin/Release/netstandard2.0/DCL.Analyzers.dll
+          retention-days: 7
+
+      - name: Fail on DLL drift
+        run: |
+          set -euo pipefail
+          built=Analyzers/DCL.Analyzers/bin/Release/netstandard2.0/DCL.Analyzers.dll
+          committed=Explorer/Assets/DCL/DCL.Analyzers.dll
+          if ! cmp -s "$built" "$committed"; then
+            echo "Committed DCL.Analyzers.dll does not match this job's canonical build of Analyzers/."
+            echo "Download the 'DCL.Analyzers.dll-canonical' artifact from this run, copy it to $committed, and commit it."
+            sha256sum "$built" "$committed"
+            exit 1
           fi
 
   lint:
@@ -861,9 +1011,16 @@ jobs:
 
   watchdog:
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [analyzers, custom-lint, lint, test]
+    # always() is required: without a status-check function GitHub implicitly
+    # ANDs success(), which is false whenever a needed job failed - i.e. the
+    # watchdog could never fire on exactly the events it exists to catch.
     if: |
-      needs.lint.result == 'failure' ||
-      needs.test.result == 'failure'
+      always() && (
+        needs.analyzers.result == 'failure' ||
+        needs['custom-lint'].result == 'failure' ||
+        needs.lint.result == 'failure' ||
+        needs.test.result == 'failure'
+      )
     steps:
       - run: exit 1

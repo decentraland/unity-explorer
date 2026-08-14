@@ -61,3 +61,9 @@ Explorer/Assets/*.rsp text eol=lf
 # fail them with "$'\r': command not found" (seen on every Windows cloud build
 # running the UBA preBuildScript).
 *.sh text eol=lf
+
+# Analyzers sources must check out LF everywhere: the analyzers CI job
+# byte-compares a deterministic rebuild against the committed DLL, and the
+# deterministic MVID hashes the source BYTES - a CRLF checkout builds a
+# different DLL than CI's LF checkout.
+Analyzers/** text eol=lf

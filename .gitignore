@@ -84,3 +84,8 @@ Explorer/.cursorignore
 # ReSharper CLI download for local linting (scripts/lint/download-resharper.sh)
 /rsharp/
 rsharp.zip
+Analyzers/**/bin/
+Analyzers/**/obj/
+
+# Unity generates *.csproj at the repo root; the Analyzers projects are real.
+!Analyzers/**/*.csproj
