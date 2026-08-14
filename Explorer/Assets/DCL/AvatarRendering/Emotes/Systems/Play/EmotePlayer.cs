@@ -8,9 +8,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.Rendering;
 using Utility.Animations;
-using AvatarMask = UnityEngine.AvatarMask;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Emotes.Play
