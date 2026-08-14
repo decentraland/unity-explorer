@@ -1,8 +1,8 @@
 # Local asset bundles via the abgen sidecar (`--local-ab`)
 
-**Branch:** `feat/local-ab-inproc-build` · **Status:** editor E2E green on Windows (v16, Unity
-6000.4.0f1); macOS player verified end-to-end; Windows player pending re-test after the
-CPU-encoder pin.
+**Branch:** `feat/local-ab-inproc-build` · **Pinned:** abgen v0.16.0 · **Status:** editor E2E green
+on Windows (v16, Unity 6000.4.0f1); macOS player verified end-to-end; Windows player pending re-test
+after the CPU-encoder pin.
 
 ## Architecture
 
@@ -37,8 +37,10 @@ manifest download removes ~3 s of scene-entry latency against a JIT-revalidating
 
 At boot the warm-up (`WarmUpLocalSceneAsync`) resolves the scene entity from the realm (`/about`
 `scenesUrn`, falling back to `localSceneParcels` + `POST /entities/active`) and requests its
-manifest, which makes abgen convert the whole scene in one pass; `/progress/{entity}` is polled
-into `AbgenConversionMetrics` for the AB Conversion debug panel.
+manifest, which makes abgen convert the whole scene in one pass — parallelized across files as of
+the pinned v0.16.0 (bounded file-level workers overlap one file's single-threaded fetch/parse/BC5/IO
+phases with another file's core-parallel BC7 encode; `ABGEN_JIT_FILE_CONCURRENCY` caps the workers);
+`/progress/{entity}` is polled into `AbgenConversionMetrics` for the AB Conversion debug panel.
 
 **CPU encoder pin**: with no backend pinned abgen auto-tries its GPU BC7/BC5 encoder, and arming
 CUDA costs ~60 s before the HTTP listener binds (measured on an RTX 3060: 63.6 s/59.0 s unpinned,
@@ -54,7 +56,10 @@ uses `CreateProcessW` with `CREATE_NO_WINDOW`, macOS/Linux the `DclProcesses` na
 path (with drained stdout/stderr pipes).
 
 Measured (Linux x86_64, CPU encoder): cold whole-entity JIT 0.8s (2-GLB scene) / 5.3s (24-GLB,
-12MB); warm disk-cache hits <1ms; server RSS ~16MB idle, 130–435MB peak during converts.
+12MB); warm disk-cache hits <1ms; server RSS ~16MB idle, 130–435MB peak during converts. v0.16.0's
+per-file parallelization cut cold whole-scene conversion by ~30 s on an M-series Mac against a real
+scene (the single-threaded valleys between BC7 bursts now overlap); peak RSS runs higher since up to
+`ABGEN_JIT_FILE_CONCURRENCY` files (default `min(4, cores)`) decode concurrently.
 
 ## Binary acquisition
 
