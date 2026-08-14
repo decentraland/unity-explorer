@@ -218,15 +218,13 @@ namespace DCL.ApplicationGuards
                 variants = new Dictionary<string, FeatureFlagVariantDto>(),
             }));
 
-            Assert.Multiple(() =>
-            {
-                Assert.IsTrue(SystemSpecUtils.IsWindowsVersionAcceptable("Windows 11  (10.0.26100) 64bit"), "windows version");
-                Assert.IsTrue(SystemSpecUtils.IsMacOSVersionAcceptable("Mac OS X 10.15.7"), "macos version");
-                Assert.IsTrue(SystemSpecUtils.IsWindowsCpuAcceptable("Intel Core i3-10100"), "windows cpu");
-                Assert.IsTrue(SystemSpecUtils.IsWindowsGpuAcceptable("NVIDIA GeForce GTX 1060"), "windows gpu");
-                Assert.IsTrue(SystemSpecUtils.IsAppleSilicon("Intel Iris Pro Graphics"), "apple silicon (mac cpu/gpu check)");
-                Assert.IsFalse(SystemSpecUtils.IsIntegratedGpu("intel iris plus graphics"), "integrated-gpu classifier stays inert");
-            });
+            // Sequential asserts: the bundled NUnit predates Assert.Multiple.
+            Assert.IsTrue(SystemSpecUtils.IsWindowsVersionAcceptable("Windows 11  (10.0.26100) 64bit"), "windows version");
+            Assert.IsTrue(SystemSpecUtils.IsMacOSVersionAcceptable("Mac OS X 10.15.7"), "macos version");
+            Assert.IsTrue(SystemSpecUtils.IsWindowsCpuAcceptable("Intel Core i3-10100"), "windows cpu");
+            Assert.IsTrue(SystemSpecUtils.IsWindowsGpuAcceptable("NVIDIA GeForce GTX 1060"), "windows gpu");
+            Assert.IsTrue(SystemSpecUtils.IsAppleSilicon("Intel Iris Pro Graphics"), "apple silicon (mac cpu/gpu check)");
+            Assert.IsFalse(SystemSpecUtils.IsIntegratedGpu("intel iris plus graphics"), "integrated-gpu classifier stays inert");
         }
     }
 }
