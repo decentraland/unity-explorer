@@ -49,10 +49,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Object.DestroyImmediate(poolRoot);
         }
 
-        // Regression for https://github.com/decentraland/unity-explorer/issues/9665: a legacy emote
-        // rejected because legacyAnimationsEnabled is false must return its pooled instance to the pool.
-        // Before the fix the reference was registered in emotesInUse only after the early-out, so Stop()
-        // released nothing and the instance stayed parented under the avatar, leaking on every play.
         [Test]
         public void NotLeakPooledInstanceWhenLegacyEmoteRejected()
         {
