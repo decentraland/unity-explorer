@@ -58,6 +58,16 @@ uses `CreateProcessW` with `CREATE_NO_WINDOW`, macOS/Linux the `DclProcesses` na
 `kill(pid, 0)`), not the managed `Exited` event. Only the editor keeps the managed `Process`
 path (with drained stdout/stderr pipes).
 
+**Orphan protection**: teardown is cooperative (Dispose kills the child), so a hard crash of the
+explorer used to leave the server running — and with the fixed default port an orphan *owns* the
+endpoint the next session expects. Two defenses: on Windows (player and editor) every child is
+assigned to a kill-on-close Job Object, so the kernel reaps it when the explorer dies for any
+reason; and `StartAsync` refuses to adopt a foreign listener — after the health check passes it
+verifies our own child is still alive, and if the port is answered by anything else (orphan from a
+crashed macOS session, unrelated process) it fails fast with an explicit milestone instead of
+silently serving stale bundles. macOS has no job-object equivalent; a parent-pid watchdog in abgen
+is the tracked upstream complement.
+
 Measured (Linux x86_64, CPU encoder): cold whole-entity JIT 0.8s (2-GLB scene) / 5.3s (24-GLB,
 12MB); warm disk-cache hits <1ms; server RSS ~16MB idle, 130–435MB peak during converts. v0.16.0's
 per-file parallelization cut cold whole-scene conversion by ~30 s on an M-series Mac against a real
@@ -83,13 +93,30 @@ failure). First run therefore enters the world with bundles already served; outs
 LSD + `--local-ab` the task is pre-completed and boot is unaffected. The wait is absorbed under
 the splash screen, before the authentication screen.
 
+**Clean fallback when the sidecar can't be had**: the readiness task resolves to a bool — false
+when the server never came up — and `MainSceneLoader` then drops the optimized-assets override
+(`DecentralandUrlsSource.ClearOptimizedAssetsOverride`, which also evicts the flag-dependent URL
+cache) before any optimized-asset request has resolved. The whole session — scene bundles,
+wearables, emotes, LODs, and the registry-composed profile/entities endpoints — falls back to the
+production hosts exactly as if `--local-ab` had not been passed, instead of hitting the dead
+loopback port and recovering per request. A server that turns healthy and dies later keeps the
+override (bundles JIT per request; supervision restarts it up to 3×).
+
 ## Visibility
 
 The scene dev console's AB tab mirrors `/progress/{entity}` live: the summary shows the server's
 authoritative `converted/total` counter, per-file rows show whatever the 500 ms poll catches
 (backfilled to the full census when the manifest lands), and milestone rows mark every lifecycle
 moment — download progress, installed, warm-up started, READY in Ns, already-warm, server-side
-failures (manifest exitCode), sidecar failed. The sidebar AB button pulses while conversion runs
+failures (manifest exitCode), sidecar failed. Content-edit reconversions are mirrored too: the LSD
+reload path (`LocalSceneDevelopmentController`, which already receives the preview server's edit
+message — including the changed model's path) raises a consumable signal on
+`AbgenConversionMetrics`; the sidecar's session-long watcher (`WatchReconversionsAsync`) consumes it
+and re-runs the manifest lane, which coalesces with (or triggers) the server's rebuild — the panel
+flips back to converting, names the edited file, tracks the rebuild and settles to READY with a
+"reconverted in Ns" milestone, accurate even when the rebuild outpaces the progress poll (texture
+edits arrive as unnamed whole-scene updates — sdk-commands only names `.glb/.gltf` changes).
+The sidebar AB button pulses while conversion runs
 and stays lit after unseen failures. The panel **opens itself** when long-running work starts
 (consumable open-request on `AbgenConversionMetrics`, consumed by `DebugMenuController`) and
 **closes itself** a few seconds after a clean READY — any failure keeps it open, and a manual
