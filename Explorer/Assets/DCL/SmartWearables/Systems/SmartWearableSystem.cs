@@ -28,6 +28,7 @@ using Runtime.Wearables;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine.Pool;
 using Utility;
@@ -310,7 +311,7 @@ namespace DCL.SmartWearables
         private void OnPortableExperienceUnloaded(string id) =>
             smartWearableCache.RunningSmartWearables.Remove(id);
 
-        private void OnCurrentSceneChanged(ISceneFacade scene) =>
+        private void OnCurrentSceneChanged(ISceneFacade? scene) =>
             currentSceneDirty = true;
 
         private void HandleSceneChange()
@@ -319,12 +320,21 @@ namespace DCL.SmartWearables
 
             ReportHub.Log(GetReportCategory(), "Current Scene allows Smart Wearables: " + smartWearablesAllowed);
 
-            if (smartWearablesAllowed)
-                // Notice scenes that are already running won't run again, so we can call this safely
-                // TODO consider cancelling a previous running task
-                RunScenesForEquippedWearablesAsync(AuthorizationAction.SkipAuthorization, CancellationToken.None).Forget();
-            else
+            if (!smartWearablesAllowed)
+            {
                 UnloadAllSmartWearableScenes();
+                return;
+            }
+
+            if (!TryGetPlayerProfile(out Profile? profile))
+            {
+                ReportHub.LogWarning(GetReportCategory(), "Player profile is not available, skipping the Smart Wearable reload for the current scene");
+                return;
+            }
+
+            // Notice scenes that are already running won't run again, so we can call this safely
+            // TODO consider cancelling a previous running task
+            RunScenesForEquippedWearablesAsync(profile, AuthorizationAction.SkipAuthorization, CancellationToken.None).Forget();
         }
 
         private void UnloadAllSmartWearableScenes()
@@ -344,18 +354,37 @@ namespace DCL.SmartWearables
         {
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
+            // The profile is not guaranteed to be resolved when the loading flow completes.
+            // Keep the subscription so the next Completed transition retries the start-up instead of consuming it here.
+            if (!TryGetPlayerProfile(out Profile? profile))
+            {
+                ReportHub.LogWarning(GetReportCategory(), "Player profile is not available, deferring the Smart Wearable start-up to the next completed loading");
+                return;
+            }
+
             // Do once, then listen to scene changes
             loadingStatus.CurrentStage.OnUpdate -= OnLoadingStatusChanged;
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
 
-            RunScenesForEquippedWearablesAsync(AuthorizationAction.RequestAuthorization, CancellationToken.None).Forget();
+            RunScenesForEquippedWearablesAsync(profile, AuthorizationAction.RequestAuthorization, CancellationToken.None).Forget();
         }
 
-        private async UniTask RunScenesForEquippedWearablesAsync(AuthorizationAction authorization, CancellationToken ct)
+        /// <summary>
+        ///     Resolves the profile of the local player, which is absent until the initialization flow stores it in the world.
+        /// </summary>
+        /// <remarks>Fixes: https://github.com/decentraland/unity-explorer/issues/9753</remarks>
+        private bool TryGetPlayerProfile([NotNullWhen(true)] out Profile? profile)
         {
-            Entity player = World.CachePlayer();
-            Profile profile = World.Get<Profile>(player);
+            profile = null;
 
+            Entity player = World.CachePlayerEntityOrNull();
+            if (player.IsNull()) return false;
+
+            return World.TryGet(player, out profile) && profile?.Avatar != null;
+        }
+
+        private async UniTask RunScenesForEquippedWearablesAsync(Profile profile, AuthorizationAction authorization, CancellationToken ct)
+        {
             foreach (var urn in profile.Avatar.Wearables)
             {
                 IWearable wearable;
@@ -403,7 +432,10 @@ namespace DCL.SmartWearables
             // - The cache stores some metadata associated with Smart Wearables that have been loaded during the session
             smartWearableCache.Clear();
 
-            // Resume listening to loading status changes so we can reload Smart Wearables if we log in again
+            // Restore the subscriptions to the state left by Initialize so the next login runs the start-up exactly once.
+            // The loading status handler may still be attached if it never found a profile to run with.
+            scenesCache.CurrentScene.OnUpdate -= OnCurrentSceneChanged;
+            loadingStatus.CurrentStage.OnUpdate -= OnLoadingStatusChanged;
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
         }
 
