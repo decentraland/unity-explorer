@@ -70,7 +70,7 @@ namespace DCL.McpServer.Tools
                 ["velocity"] = (rigidTransform?.MoveVelocity.Velocity ?? Vector3.zero).ToVector(),
                 ["isGrounded"] = rigidTransform?.IsGrounded ?? false,
                 ["isPlayerStandingOnScene"] = currentSceneInfo.IsPlayerStandingOnScene,
-                ["address"] = profile == null ? JValue.CreateNull() : profile.Compact.UserId,
+                ["address"] = profile == null ? JValue.CreateNull() : profile.Compact.UserId.Value,
                 ["camera"] = new JObject
                 {
                     ["position"] = exposedCameraData.WorldPosition.Value.ToVector(),
