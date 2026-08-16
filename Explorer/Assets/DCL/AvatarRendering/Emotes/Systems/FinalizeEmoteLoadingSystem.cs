@@ -55,8 +55,8 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (!promiseResult.Succeeded)
                 {
-                    foreach (var pointerID in promise.LoadingIntention.Pointers)
-                        ReportAndFinalizeWithError(pointerID);
+                    foreach (var pointerId in promise.LoadingIntention.Pointers)
+                        ReportAndFinalizeWithError(pointerId);
                 }
                 else
                     using (var list = promiseResult.Asset.ConsumeAttachments())
@@ -87,7 +87,7 @@ namespace DCL.AvatarRendering.Emotes
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 else
                 {
-                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO?.id} failed to load from the AB");
                     AssignFailedEmoteResult(emote, bodyShape);
                 }
 
@@ -112,7 +112,7 @@ namespace DCL.AvatarRendering.Emotes
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 else
                 {
-                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the GLTF");
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO?.id} failed to load from the GLTF");
                     AssignFailedEmoteResult(emote, bodyShape);
                 }
 
@@ -138,7 +138,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             var failedResult = new StreamableLoadingResult<AttachmentRegularAsset>(
                 GetReportData(),
-                new Exception($"Emote {emote.DTO.id} failed to load"));
+                new Exception($"Emote {emote.DTO?.id} failed to load"));
 
             if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
             {

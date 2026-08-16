@@ -101,7 +101,7 @@ namespace DCL.Tests.Editor
             LogAssert.Expect(LogType.Warning, new Regex("Segment operation 5 Flush failed with: Error"));
 
             MethodInfo callback = SERVICE_TYPE.GetMethod("Callback", PRIVATE_STATIC)!;
-            callback.Invoke(null, new[] { (object)5UL, responseError });
+            callback.Invoke(null, new object[] { 5UL, responseError });
         }
 
         [Test]

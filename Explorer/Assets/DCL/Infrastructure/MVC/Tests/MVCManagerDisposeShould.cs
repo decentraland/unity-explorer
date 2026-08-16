@@ -10,8 +10,8 @@ namespace MVC.Tests
     [TestFixture]
     public class MVCManagerDisposeShould
     {
-        private IWindowsStackManager windowsStackManager;
-        private MVCManager mvcManager;
+        private IWindowsStackManager windowsStackManager = null!;
+        private MVCManager mvcManager = null!;
 
         [SetUp]
         public void SetUp()

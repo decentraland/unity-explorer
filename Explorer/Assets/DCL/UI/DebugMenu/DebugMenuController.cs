@@ -22,18 +22,20 @@ namespace DCL.UI.DebugMenu
 
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
-        private ConsolePanelView consolePanelView;
-        private AbConversionPanelView abConversionPanelView;
-        private MetricsPanelView metricsPanelView;
+        // Views and sidebar buttons are created in OnEnable, which Unity runs before Update,
+        // OnDisable and any UI callback: they are only null before the first enable.
+        private ConsolePanelView? consolePanelView;
+        private AbConversionPanelView? abConversionPanelView;
+        private MetricsPanelView? metricsPanelView;
 
         private DebugPanelView? visiblePanel;
 
         private IInputBlock? inputBlock;
 
-        private Button consoleButton;
-        private Button abConversionButton;
-        private Button metricsButton;
-        private Button debugPanelButton;
+        private Button? consoleButton;
+        private Button? abConversionButton;
+        private Button? metricsButton;
+        private Button? debugPanelButton;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -110,10 +112,13 @@ namespace DCL.UI.DebugMenu
         {
             debugContainerBuilder = builder;
 
-            // Panel handled at DebugContainerBuilder
-            debugPanelButton.clicked -= OnDebugPanelButtonClicked;
-            debugPanelButton.clicked += OnDebugPanelButtonClicked;
-            debugPanelButton.style.display = DisplayStyle.Flex;
+            if (debugPanelButton != null)
+            {
+                // Panel handled at DebugContainerBuilder
+                debugPanelButton.clicked -= OnDebugPanelButtonClicked;
+                debugPanelButton.clicked += OnDebugPanelButtonClicked;
+                debugPanelButton.style.display = DisplayStyle.Flex;
+            }
 
             // DebugPanel has its own separate toggle button (that must still be used when the
             // DebugMenu is not enabled), so we must hide that one.
@@ -123,14 +128,19 @@ namespace DCL.UI.DebugMenu
         private void SetInputBlock(IInputBlock block)
         {
             this.inputBlock = block;
-            consolePanelView.SetInputBlock(block);
+            consolePanelView?.SetInputBlock(block);
         }
 
         private void OnDisable()
         {
             logsHistory.LogsUpdated -= OnLogsUpdated;
-            abConversionButton.clicked -= OnAbConversionButtonClicked;
-            metricsButton.clicked -= OnMetricsButtonClicked;
+
+            if (abConversionButton != null)
+                abConversionButton.clicked -= OnAbConversionButtonClicked;
+
+            if (metricsButton != null)
+                metricsButton.clicked -= OnMetricsButtonClicked;
+
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
 
             if (metricsScene != null)
@@ -157,11 +167,11 @@ namespace DCL.UI.DebugMenu
             if (shouldRefreshConsole)
             {
                 shouldRefreshConsole = false;
-                consolePanelView.Refresh();
+                consolePanelView?.Refresh();
             }
 
             // Long-running abgen work (binary download, cold conversion) asks to be brought on screen.
-            if (AbgenConversionMetrics.INSTANCE.TryConsumePanelOpenRequest() && !abConversionPanelView.Visible)
+            if (AbgenConversionMetrics.INSTANCE.TryConsumePanelOpenRequest() && abConversionPanelView is { Visible: false })
             {
                 TogglePanel(abConversionPanelView);
                 abPanelAutoOpened = true;
@@ -185,7 +195,7 @@ namespace DCL.UI.DebugMenu
         {
             if (!abPanelAutoOpened) return;
 
-            if (!abConversionPanelView.Visible)
+            if (abConversionPanelView is not { Visible: true })
             {
                 abPanelAutoOpened = false;
                 return;
@@ -213,6 +223,9 @@ namespace DCL.UI.DebugMenu
         /// </summary>
         private void UpdateAbConversionAttention()
         {
+            if (abConversionPanelView == null || abConversionButton == null)
+                return;
+
             AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
 
             AbgenConversionMetrics.WarmUpStage warmUpStage = metrics.WarmUp;
@@ -241,6 +254,9 @@ namespace DCL.UI.DebugMenu
 
         private void UpdateMetricsPanel()
         {
+            if (metricsPanelView == null)
+                return;
+
             ISceneFacade? currentScene = scenesCache?.CurrentScene.Value;
 
             if (currentScene != metricsScene)
@@ -323,11 +339,13 @@ namespace DCL.UI.DebugMenu
 
             debugContainerBuilder.Container.TogglePanelVisibility();
 
-            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
+            debugPanelButton?.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
         }
 
-        private void TogglePanel(DebugPanelView panelView)
+        private void TogglePanel(DebugPanelView? panelView)
         {
+            if (panelView == null) return;
+
             if (panelView.Visible)
             {
                 panelView.Toggle();
@@ -346,7 +364,7 @@ namespace DCL.UI.DebugMenu
 
         private void OnLogsUpdated()
         {
-            if (!consolePanelView.Visible) return;
+            if (consolePanelView is not { Visible: true }) return;
             shouldRefreshConsole = true;
         }
     }

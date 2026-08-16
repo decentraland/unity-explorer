@@ -4,11 +4,8 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.Pools;
-using DCL.Profiles;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using DCL.Utility;
 using DCL.LiveKit.Public;
 using LiveKit.Rooms;
@@ -16,10 +13,11 @@ using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using LiveKit.Proto;
 using System.Linq;
 using UnityEngine;
 using Utility;
+
+// ReSharper disable InconsistentNaming
 
 namespace DCL.Chat.ChatServices
 {
@@ -289,7 +287,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouUnblockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Profile.UserId);
+            CheckOnlineStatusAndNotify(profile.Profile.UserId.Value);
 
         private void OnYouBlockedByUser(string userId)
         {
@@ -299,7 +297,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouBlockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Profile.UserId);
+            CheckOnlineStatusAndNotify(profile.Profile.UserId.Value);
 
         /// <summary>
         /// Determines if a given user should be considered "online"

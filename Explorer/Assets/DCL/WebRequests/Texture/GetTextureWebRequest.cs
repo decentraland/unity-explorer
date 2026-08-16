@@ -59,10 +59,10 @@ namespace DCL.WebRequests
             {
                 string? contentType = webRequest.UnityWebRequest.GetResponseHeader("Content-Type");
 
-                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest, ct) : ExecuteNoCompressionAsync(webRequest, ct);
+                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest) : ExecuteNoCompressionAsync(webRequest);
             }
 
-            private UniTask<Texture2D> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private UniTask<Texture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest)
             {
                 Texture2D texture;
 
@@ -86,10 +86,10 @@ namespace DCL.WebRequests
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.FromResult(texture);
+                return UniTask.FromResult<Texture2D?>(texture);
             }
 
-            private async UniTask<Texture2D> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private async UniTask<Texture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest)
             {
                 // TODO: .data creates an array
                 var data = webRequest.UnityWebRequest.downloadHandler?.data;

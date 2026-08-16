@@ -71,8 +71,12 @@ namespace DCL.WebRequests.Tests
 
         private class PlainDto
         {
+            // Field names mirror the JSON wire format
+            // ReSharper disable InconsistentNaming
             public int value;
-            public string name;
+            public string? name;
+
+            // ReSharper restore InconsistentNaming
         }
     }
 }

@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
-using DCL.AvatarRendering.Wearables;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;

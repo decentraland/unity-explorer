@@ -64,7 +64,7 @@ namespace DCL.SceneLifeCycle.Tests
 
             Entity e = world.Create(promise, PartitionComponent.TOP_PRIORITY, sceneDefinitionComponent);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -74,7 +74,7 @@ namespace DCL.SceneLifeCycle.Tests
         }
 
         [Test]
-        public async Task StartSceneWithCorrectFPS()
+        public async Task StartSceneWithCorrectFps()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
 
@@ -95,7 +95,7 @@ namespace DCL.SceneLifeCycle.Tests
             Entity e = world.Create(promise, partition, sceneDefinitionComponent);
             realmPartitionSettings.GetSceneUpdateFrequency(in partition).Returns(15);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -109,7 +109,7 @@ namespace DCL.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: true);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -122,7 +122,7 @@ namespace DCL.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: true, hasReadinessReport: true);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -135,7 +135,7 @@ namespace DCL.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: false);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -144,7 +144,7 @@ namespace DCL.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void ChangeSceneFPS()
+        public void ChangeSceneFps()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
 
@@ -153,7 +153,7 @@ namespace DCL.SceneLifeCycle.Tests
 
             world.Create(scene, partition, new SceneDefinitionComponent());
 
-            system?.Update(0f);
+            system.Update(0f);
 
             scene.Received(1).SetTargetFPS(15);
         }
@@ -173,7 +173,7 @@ namespace DCL.SceneLifeCycle.Tests
             Entity e2 = CreateResolvedSceneEntity(scene2);
 
             // a structural World.Add during query iteration can defer the sibling entity to the next update
-            system!.Update(0f);
+            system.Update(0f);
             system.Update(0f);
 
             // let the started scene switch to the thread pool
@@ -211,7 +211,7 @@ namespace DCL.SceneLifeCycle.Tests
             Entity e2 = CreateResolvedSceneEntity(scene2);
 
             // a structural World.Add during query iteration can defer the sibling entity to the next update
-            system!.Update(0f);
+            system.Update(0f);
             system.Update(0f);
 
             // let the started scene switch to the thread pool

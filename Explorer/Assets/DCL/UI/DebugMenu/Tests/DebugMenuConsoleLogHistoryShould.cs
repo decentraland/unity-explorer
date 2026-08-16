@@ -9,7 +9,7 @@ namespace DCL.UI.DebugMenu.Tests
     [TestFixture]
     public class DebugMenuConsoleLogHistoryShould
     {
-        private DebugMenuConsoleLogHistory logHistory;
+        private DebugMenuConsoleLogHistory logHistory = null!;
 
         [SetUp]
         public void SetUp()
@@ -20,7 +20,7 @@ namespace DCL.UI.DebugMenu.Tests
         [TearDown]
         public void TearDown()
         {
-            logHistory = null;
+            logHistory = null!;
         }
 
         [Test]
@@ -31,8 +31,8 @@ namespace DCL.UI.DebugMenu.Tests
             // (ConsolePanelView.Refresh / ListView binding / copy-all).
             const int ENTRY_COUNT = 50000;
 
-            Exception mainThreadException = null;
-            Exception workerException = null;
+            Exception? mainThreadException = null;
+            Exception? workerException = null;
 
             var worker = new Thread(() =>
             {
@@ -50,10 +50,10 @@ namespace DCL.UI.DebugMenu.Tests
             {
                 while (worker.IsAlive)
                 {
-                    int total = logHistory.LogEntryCount + logHistory.ErrorEntryCount;
+                    _ = logHistory.LogEntryCount + logHistory.ErrorEntryCount;
 
                     foreach (DebugMenuConsoleLogEntry entry in logHistory.FilteredLogMessages)
-                        total += entry.Type == LogMessageType.Error ? 1 : 0;
+                        _ = entry.Type == LogMessageType.Error;
                 }
             }
             catch (Exception e) { mainThreadException = e; }

@@ -12,10 +12,10 @@ namespace DCL.MapRenderer.Tests.ConsumerUtils
     {
         private const float RECT_SIZE = 300f;
 
-        private GameObject root;
-        private GameObject providerGo;
-        private PixelPerfectMapRendererTextureProvider provider;
-        private IMapCameraController cameraController;
+        private GameObject root = null!;
+        private GameObject providerGo = null!;
+        private PixelPerfectMapRendererTextureProvider provider = null!;
+        private IMapCameraController cameraController = null!;
 
         [SetUp]
         public void SetUp()
@@ -37,8 +37,8 @@ namespace DCL.MapRenderer.Tests.ConsumerUtils
         [TearDown]
         public void TearDown()
         {
-            UnityEngine.Object.DestroyImmediate(providerGo);
-            UnityEngine.Object.DestroyImmediate(root);
+            Object.DestroyImmediate(providerGo);
+            Object.DestroyImmediate(root);
         }
 
         private void PumpLateUpdate() =>

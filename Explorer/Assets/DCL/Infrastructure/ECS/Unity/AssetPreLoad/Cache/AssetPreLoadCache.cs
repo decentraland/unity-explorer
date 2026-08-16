@@ -6,6 +6,7 @@ using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ECS.Unity.AssetLoad.Cache
 {
@@ -67,7 +68,7 @@ namespace ECS.Unity.AssetLoad.Cache
 
         public bool TryAdd<T>(string key, T asset)
         {
-            if (cache.TryAdd(key, asset))
+            if (asset is not null && cache.TryAdd(key, asset))
             {
                 switch (asset)
                 {
@@ -87,7 +88,7 @@ namespace ECS.Unity.AssetLoad.Cache
             return false;
         }
 
-        public bool TryGet<T>(string key, out T asset)
+        public bool TryGet<T>(string key, [MaybeNullWhen(false)] out T asset)
         {
             if (cache.TryGetValue(key, out object? value) && value is T typedValue)
             {

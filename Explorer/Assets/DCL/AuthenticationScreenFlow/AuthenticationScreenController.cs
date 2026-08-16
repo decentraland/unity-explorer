@@ -81,10 +81,10 @@ namespace DCL.AuthenticationScreenFlow
         // misclassifying returning users whose cached identity expired.
         public bool IsCurrentlyNewAccount { get; internal set; }
 
-        public event Action DiscordButtonClicked;
-        public event Action<string, bool> OTPVerified;
-        public event Action OTPResend;
-        public event Action ProfileFinalized;
+        public event Action? DiscordButtonClicked;
+        public event Action<string, bool>? OTPVerified;
+        public event Action? OTPResend;
+        public event Action? ProfileFinalized;
 
         internal void RaiseProfileFinalized() =>
             ProfileFinalized?.Invoke();

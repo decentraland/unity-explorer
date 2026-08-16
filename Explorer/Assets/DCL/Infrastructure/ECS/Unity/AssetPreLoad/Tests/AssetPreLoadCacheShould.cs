@@ -17,11 +17,11 @@ namespace ECS.Unity.AssetLoad.Tests
         private const string KEY = "preload-key";
         private const string HASH = "preload-hash";
 
-        private IGltfContainerAssetsCache gltfCache;
-        private AssetPreLoadCache cache;
-        private GameObject sourceAsset;
-        private AssetBundleData assetBundleData;
-        private GltfContainerAsset template;
+        private IGltfContainerAssetsCache gltfCache = null!;
+        private AssetPreLoadCache cache = null!;
+        private GameObject sourceAsset = null!;
+        private AssetBundleData assetBundleData = null!;
+        private GltfContainerAsset template = null!;
 
         [SetUp]
         public void SetUp()
@@ -32,7 +32,7 @@ namespace ECS.Unity.AssetLoad.Tests
             // The template is built the same way the loading pipeline does: from an AssetBundleData
             // exposing a source GameObject under the asset hash
             sourceAsset = new GameObject(HASH);
-            assetBundleData = new AssetBundleData(null, new Object[] { sourceAsset }, typeof(GameObject), Array.Empty<AssetBundleData>());
+            assetBundleData = new AssetBundleData(null!, new Object[] { sourceAsset }, typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleData.AcquireRef();
 
             Assert.That(Utils.TryCreateGltfObject(assetBundleData, HASH, out template), Is.True);

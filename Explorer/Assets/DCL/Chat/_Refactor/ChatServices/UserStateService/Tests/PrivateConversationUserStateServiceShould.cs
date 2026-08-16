@@ -19,9 +19,9 @@ namespace DCL.Chat.ChatServices.Tests
     [TestFixture]
     public class PrivateConversationUserStateServiceShould
     {
-        private IUserBlockingCache userBlockingCache;
-        private ChatSettingsAsset settingsAsset;
-        private PrivateConversationUserStateService service;
+        private IUserBlockingCache userBlockingCache = null!;
+        private ChatSettingsAsset settingsAsset = null!;
+        private PrivateConversationUserStateService service = null!;
 
         [SetUp]
         public void SetUp()

@@ -71,7 +71,7 @@ namespace DCL.AuthenticationScreenFlow
                                     ProfileNotFoundException ex => new SpanErrorInfo($"Profile not found during {nameof(ProfileFetchingAuthState)}", ex),
                                     NotAllowedUserException ex => new SpanErrorInfo(ex.Message, ex),
                                     TimeoutException ex => new SpanErrorInfo($"Profile fetch timed out during {nameof(ProfileFetchingAuthState)}", ex),
-                                    Exception ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
+                                    { } ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
                                 };
 
                 if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException and not NotAllowedUserException)

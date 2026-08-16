@@ -60,7 +60,7 @@ namespace DCL.Chat.MessageBus.Tests
             decorator.Dispose();
 
         private static ProfileTier? CachedProfile(string wallet, string name) =>
-            (ProfileTier?)new Profile.CompactInfo(UserId.New(wallet).Unwrap(), name);
+            new Profile.CompactInfo(UserId.New(wallet).Unwrap(), name);
 
         [Test]
         public void TrackMentionOfCachedProfileAsWalletAddressString()

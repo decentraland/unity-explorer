@@ -15,7 +15,7 @@ namespace DCL.UI.DebugMenu.LogHistory
         private const int MAX_PENDING_LOGS = 10000;
 
         public readonly List<DebugMenuConsoleLogEntry> FilteredLogMessages = new ();
-        public event Action LogsUpdated;
+        public event Action? LogsUpdated;
         public bool Paused { get; set; }
         public int LogEntryCount { get; private set; }
         public int ErrorEntryCount { get; private set; }
@@ -24,7 +24,7 @@ namespace DCL.UI.DebugMenu.LogHistory
         private readonly Queue<DebugMenuConsoleLogEntry> pendingLogMessages = new ();
         private readonly List<DebugMenuConsoleLogEntry> drainBuffer = new ();
         private readonly List<DebugMenuConsoleLogEntry> allLogMessages = new ();
-        private string textFilter;
+        private string? textFilter;
         private bool showErrorEntries = true;
         private bool showLogEntries = true;
 

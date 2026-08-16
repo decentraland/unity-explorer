@@ -55,9 +55,19 @@ namespace DCL.WebRequests
 
                 // Garbage input makes Open return an error code without throwing when the native library is
                 // loadable, so the throw below is the only unsupported signal; Dispose must not run if Open threw
-                // because native state only exists once Open returns.
-                ktxTexture.Open(probeBuffer.AsReadOnly());
-                ktxTexture.Dispose();
+                // because native state only exists once Open returns. The error code is EXPECTED here, but the
+                // package logs it at Error level - that log must not reach the console (it would trip strict
+                // log asserts in whichever test first touches IsSupported), so logging is paused for the call.
+                UnityEngine.ILogger unityLogger = UnityEngine.Debug.unityLogger;
+                bool logWasEnabled = unityLogger.logEnabled;
+                unityLogger.logEnabled = false;
+
+                try
+                {
+                    ktxTexture.Open(probeBuffer.AsReadOnly());
+                    ktxTexture.Dispose();
+                }
+                finally { unityLogger.logEnabled = logWasEnabled; }
 
                 return true;
             }

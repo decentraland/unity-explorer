@@ -139,7 +139,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         /// Called from JS via ClearScript. Rate-limited to <see cref="MAX_MESSAGES_PER_SECOND"/> per topic.
         /// </summary>
         [UsedImplicitly]
-        public void PublishData(string topic, string data)
+        public void PublishData(string topic, string? data)
         {
             try
             {
@@ -213,10 +213,10 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         [UsedImplicitly]
         public void UnsubscribeFromTopic(string topic)
         {
-            if (topicBuffers.TryRemove(topic, out DCLConcurrentQueue<BufferedDataMessage> _output))
+            if (topicBuffers.TryRemove(topic, out _))
                 RebuildTopicLookup();
 
-            // 'output' object is droped and will be collected by GC (it's assumed nothing else holds the reference)
+            // the removed queue is dropped and will be collected by GC (it's assumed nothing else holds the reference)
         }
 
         /// <summary>

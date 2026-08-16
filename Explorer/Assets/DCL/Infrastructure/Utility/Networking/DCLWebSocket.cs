@@ -110,7 +110,7 @@ namespace Utility.Networking
             }
         }
 
-        public async UniTask CloseAsync(WebSocketCloseStatus status, String? description, CancellationToken cancellationToken)
+        public async UniTask CloseAsync(WebSocketCloseStatus status, string? description, CancellationToken cancellationToken)
         {
             try
             {

@@ -52,7 +52,7 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
-        private readonly DCLSemaphoreSlim realmChangeSemaphore = new (1, 1);
+        private readonly DCLSemaphoreSlim realmChangeSemaphore = new ();
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
@@ -210,12 +210,10 @@ namespace Global.Dynamic
 
         public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
-            FixedScenePointers fixedScenePointers = default;
-
-            await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
+            await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out FixedScenePointers fixedScenePointers)
                                           && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
 
-            return fixedScenePointers.SceneResults;
+            return GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmEntity).SceneResults;
         }
 
         public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
@@ -323,19 +321,19 @@ namespace Global.Dynamic
             return parsed;
         }
 
-        private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
+        private void ComplimentWithVolatilePointers(World world, Entity targetRealmEntity)
         {
-            world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
+            world.Add(targetRealmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
         }
 
-        private bool ComplimentWithStaticPointers(World world, Entity realmEntity)
+        private bool ComplimentWithStaticPointers(World world, Entity targetRealmEntity)
         {
             IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
 
             if (positions is { Count: > 0 })
             {
                 // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
-                world.Add(realmEntity, new StaticScenePointers(positions));
+                world.Add(targetRealmEntity, new StaticScenePointers(positions));
                 return true;
             }
 

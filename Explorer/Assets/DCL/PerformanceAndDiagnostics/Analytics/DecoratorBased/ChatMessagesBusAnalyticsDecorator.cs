@@ -58,7 +58,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 };
 
             if (timestamp > 0 && selfProfile is { OwnProfile: not null })
-                jsonObject.Add("message_id", ChatUtils.GetId(selfProfile.OwnProfile.UserId, timestamp));
+                jsonObject.Add("message_id", ChatUtils.GetId(selfProfile.OwnProfile.UserId.Value, timestamp));
 
             if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
                 jsonObject.Add("receiver_id", channel.Id.Id);

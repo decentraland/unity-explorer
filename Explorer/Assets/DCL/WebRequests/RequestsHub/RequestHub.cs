@@ -55,14 +55,14 @@ namespace DCL.WebRequests.RequestsHub
 
         public IDecentralandUrlsSource UrlsSource { get; }
 
-        private void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
+        private void Add<T, TWebRequest>(IDictionary<Key, object> mutableMap, InitializeRequest<T, TWebRequest> requestDelegate)
             where T: struct
             where TWebRequest: struct, ITypedWebRequest
         {
             InitializeRequest<T, TWebRequest> invokeWithTransformedUrl
                 = (string url, ref T arguments) => requestDelegate.Invoke(UrlsSource.TransformUrl(url), ref arguments);
 
-            map.Add(Key.NewKey<T, TWebRequest>(), invokeWithTransformedUrl);
+            mutableMap.Add(Key.NewKey<T, TWebRequest>(), invokeWithTransformedUrl);
         }
 
         public InitializeRequest<T, TWebRequest> RequestDelegateFor<T, TWebRequest>()

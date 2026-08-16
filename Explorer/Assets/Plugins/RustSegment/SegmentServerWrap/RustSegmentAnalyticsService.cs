@@ -32,8 +32,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private static readonly TimeSpan PUMP_DELAY = TimeSpan.FromMilliseconds(500);
 
-        // nullable service
-        private static readonly Mutex<RustSegmentAnalyticsService> CURRENT = new (null!); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        // null while no undisposed instance exists
+        private static readonly Mutex<RustSegmentAnalyticsService?> CURRENT = new (null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
 
         private readonly string anonId;
@@ -51,7 +51,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
-            using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
             if (string.IsNullOrWhiteSpace(writerKey))
                 throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
@@ -88,7 +88,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             while (cts.IsCancellationRequested == false)
             {
-                Int32 result = NativeMethods.SegmentServerPumpNextEvent();
+                int result = NativeMethods.SegmentServerPumpNextEvent();
                 if (result > 0) continue; // instantly jump to new iteration;
                 await UniTask.Delay(PUMP_DELAY);
             }
@@ -99,7 +99,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             lock (publicLock)
             {
-                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
                 cancellationTokenSource.Cancel();
                 cancellationTokenSource.Dispose();
@@ -144,7 +144,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ReportIfIdentityWasNotCalled();
 #endif
 
-                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get();
 
                 var mUserId = new MarshaledString(cachedUserId);
                 var mAnonId = new MarshaledString(anonId);
@@ -175,7 +175,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ReportIfIdentityWasNotCalled();
 #endif
 
-                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get();
 
                 var mUserId = new MarshaledString(cachedUserId);
                 var mAnonId = new MarshaledString(anonId);
@@ -213,8 +213,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ulong operationId = NativeMethods.SegmentServerFlush();
                 AlertIfInvalid(operationId);
 
-                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
-                afterClean[operationId] = (Operation.Flush, list!);
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get();
+                afterClean[operationId] = (Operation.Flush, list);
 
                 flushId++;
                 ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
@@ -253,11 +253,13 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             try
             {
-                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                using Mutex<RustSegmentAnalyticsService?>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
-                if (instanceGuard.Value == null) return;
+                RustSegmentAnalyticsService? current = instanceGuard.Value;
 
-                Operation type = instanceGuard.Value.afterClean[operationId].Item1;
+                if (current == null) return;
+
+                Operation type = current.afterClean[operationId].Item1;
 
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
@@ -266,7 +268,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 if (response is not NativeMethods.Response.Success)
                     ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment operation {operationId} {type} failed with: {response}");
 
-                instanceGuard.Value.CleanMemory(operationId);
+                current.CleanMemory(operationId);
             }
             catch
             {
@@ -294,7 +296,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private void ReportIfIdentityWasNotCalled()
         {
-            if (string.IsNullOrWhiteSpace(cachedUserId!) && string.IsNullOrWhiteSpace(anonId!))
+            if (string.IsNullOrWhiteSpace(cachedUserId) && string.IsNullOrWhiteSpace(anonId))
                 ReportHub.LogError(
                         ReportCategory.ANALYTICS,
                         $"Segment to track an event, you must call Identify first"

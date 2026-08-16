@@ -32,13 +32,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
     {
         private static readonly byte[] INPUT = { 0, 3, 5, 7, 10, 19, 20, 40, 76 };
 
-        private World world;
-        private MultiThreadSync multiThreadSync;
-        private CRDTWorldSynchronizer crdtWorldSynchronizer;
-        private ICRDTProtocol crdtProtocol;
-        private ICRDTDeserializer crdtDeserializer;
+        private World world = null!;
+        private MultiThreadSync multiThreadSync = null!;
+        private CRDTWorldSynchronizer crdtWorldSynchronizer = null!;
+        private ICRDTProtocol crdtProtocol = null!;
+        private ICRDTDeserializer crdtDeserializer = null!;
 
-        private EngineAPIImplementation engineAPIImplementation;
+        private EngineAPIImplementation engineApiImplementation = null!;
 
         [SetUp]
         public void SetUp()
@@ -58,7 +58,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
             instancePoolsProvider.GetDeserializationMessagesPool().Returns(_ => new List<CRDTMessage>());
 
-            engineAPIImplementation = new EngineAPIImplementation(
+            engineApiImplementation = new EngineAPIImplementation(
                 Substitute.For<ISharedPoolsProvider>(),
                 instancePoolsProvider,
                 crdtProtocol,
@@ -97,7 +97,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             multiThreadSync.Dispose();
 
             // The internal catch reports to the exceptions handler and returns normally
-            engineAPIImplementation.CrdtSendToRenderer(INPUT, false);
+            engineApiImplementation.CrdtSendToRenderer(INPUT, false);
 
             AssertRentSlotIsFree();
         }
@@ -113,14 +113,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                         .Returns(_ => throw new InvalidOperationException("Corrupted CRDT message"));
 
             // Propagates to the caller (the production wrapper swallows it there)
-            Assert.Throws<InvalidOperationException>(() => engineAPIImplementation.CrdtSendToRenderer(INPUT, false));
+            Assert.Throws<InvalidOperationException>(() => engineApiImplementation.CrdtSendToRenderer(INPUT, false));
 
             AssertRentSlotIsFree();
         }
 
         private void AssertRentSlotIsFree()
         {
-            IWorldSyncCommandBuffer recovered = null;
+            IWorldSyncCommandBuffer? recovered = null;
 
             // A leaked slot makes this rent wait the full RENT_WAIT_TIMEOUT (5 s)
             // and throw TimeoutException("Rent Wait Timeout: Couldn't rent command buffer")
@@ -129,7 +129,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 "The rent slot leaked: the failed CrdtSendToRenderer call did not release the sync command buffer");
 
             // Balance the probe rent so the synchronizer disposes cleanly
-            recovered.FinalizeAndDeserialize();
+            recovered!.FinalizeAndDeserialize();
             crdtWorldSynchronizer.ApplySyncCommandBuffer(recovered);
         }
 

@@ -20,10 +20,10 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 {
     public class TriggerAreaLayerUpdateShould : UnitySystemTestBase<TriggerAreaHandlerSystem>
     {
-        private World globalWorld;
-        private IECSToCRDTWriter ecsToCRDTWriter;
-        private IEntityCollidersSceneCache collidersSceneCache;
-        private ISceneData sceneData;
+        private World globalWorld = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
+        private IEntityCollidersSceneCache collidersSceneCache = null!;
+        private ISceneData sceneData = null!;
         private readonly List<PBTriggerAreaResult> capturedResults = new ();
         private Entity entity;
         private CRDTEntity crdtEntity;
@@ -311,7 +311,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
         private void SetupCRDTWriterCapture()
         {
             ecsToCRDTWriter
-               .AppendMessage<PBTriggerAreaResult, TriggerAreaHandlerSystem.ResultData>(
+               .AppendMessage(
                     Arg.Any<System.Action<PBTriggerAreaResult, TriggerAreaHandlerSystem.ResultData>>(),
                     Arg.Any<CRDTEntity>(), Arg.Any<int>(),
                     Arg.Any<TriggerAreaHandlerSystem.ResultData>())

@@ -140,7 +140,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         }
 
         private void Fetch(Action<IEmote> onElementFetched) =>
-            ElementProviderHelper.FetchElementByPointerAndExecuteAsync<ITrimmedEmote, IEmote, IEmoteProvider.OwnedEmotesRequestOptions, EmoteDTO>(
+            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(
                                       EMOTE_POINTER, emoteProvider, emoteStorage, equippedWearables, onElementFetched, CancellationToken.None, reportData)
                                  .Forget();
 

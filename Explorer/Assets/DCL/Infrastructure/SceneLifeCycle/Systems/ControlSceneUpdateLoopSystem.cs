@@ -56,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            ChangeSceneFPSQuery(World);
+            ChangeSceneFpsQuery(World);
             HandleNotCreatedScenesQuery(World);
             HandleSmartWearableScenesQuery(World);
         }
@@ -114,7 +114,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ChangeSceneFPS(ref ISceneFacade sceneFacade, in PartitionComponent partition)
+        private void ChangeSceneFps(ref ISceneFacade sceneFacade, in PartitionComponent partition)
         {
             if (!partition.IsDirty) return;
 

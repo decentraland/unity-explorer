@@ -2,7 +2,6 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;

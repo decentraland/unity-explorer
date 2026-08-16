@@ -112,17 +112,17 @@ namespace DCL.WebRequests
             }
         }
 
-        private static bool IsDNSLookupError(this UnityWebRequestException exception) =>
+        private static bool IsDnsLookupError(this UnityWebRequestException exception) =>
             exception.ResponseCode == 0 && exception.Message.Contains(CANNOT_CONNECT_ERROR);
 
         public static bool IsIrrecoverableError(this UnityWebRequestException exception)
         {
-            if (exception.IsDNSLookupError())
+            if (exception.IsDnsLookupError())
                 return false;
 
             return (exception.IsAborted() || IsIrrecoverableResponseCode(exception.ResponseCode))
-                   && !exception.IsUnableToCompleteSSLConnection()
-                   && !exception.IsSSLCACertificateError();
+                   && !exception.IsUnableToCompleteSslConnection()
+                   && !exception.IsSslCaCertificateError();
         }
 
         private static bool IsIrrecoverableResponseCode(long responseCode)
@@ -154,10 +154,10 @@ namespace DCL.WebRequests
             }
         }
 
-        private static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception) =>
+        private static bool IsUnableToCompleteSslConnection(this UnityWebRequestException exception) =>
             exception.Message.Contains("Unable to complete SSL connection");
 
-        private static bool IsSSLCACertificateError(this UnityWebRequestException exception) =>
+        private static bool IsSslCaCertificateError(this UnityWebRequestException exception) =>
             exception.Message.Contains("SSL CA certificate error");
 
         public static bool IsTimedOut(this UnityWebRequestException exception) =>

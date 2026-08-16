@@ -184,7 +184,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     ? PhysicsLayers.PLAYER_QUALIFYING_BITS
                     : ColliderLayer.ClPlayer;
 
-                return (mask & expected) != 0;
+                return ((uint)mask & (uint)expected) != 0;
             }
 
             return collidersSceneCache.TryGetEntity(entityCollider, out ColliderSceneEntityInfo entityInfo)
@@ -226,7 +226,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 ColliderLayer expected = isMainAvatar
                     ? PhysicsLayers.PLAYER_QUALIFYING_BITS
                     : ColliderLayer.ClPlayer;
-                if ((areaLayerMask & expected) == 0
+                if (((uint)areaLayerMask & (uint)expected) == 0
                     || !TryGetAvatarEntity(triggerEntityCollider.transform, out avatarEntity))
                     return;
             }
@@ -259,9 +259,9 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             if (avatarEntity == Entity.Null)
                 triggerLayers = entityInfo.SDKLayer;
             else if (isMainAvatar)
-                triggerLayers = PhysicsLayers.PLAYER_QUALIFYING_BITS & areaLayerMask;
+                triggerLayers = (ColliderLayer)((uint)PhysicsLayers.PLAYER_QUALIFYING_BITS & (uint)areaLayerMask);
             else
-                triggerLayers = ColliderLayer.ClPlayer & areaLayerMask;
+                triggerLayers = (ColliderLayer)((uint)ColliderLayer.ClPlayer & (uint)areaLayerMask);
 
             uint triggerEntity;
             if (avatarEntity != Entity.Null)

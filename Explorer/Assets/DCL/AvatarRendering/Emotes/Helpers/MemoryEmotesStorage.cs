@@ -1,10 +1,8 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.Wearables.Registry;
 using Utility.Multithreading;
@@ -79,7 +77,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             lock (lockObject)
             {
-                for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+                for (LinkedListNode<(URN key, long lastUsedFrame)>? node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
                 {
                     URN urn = node.Value.key;
 

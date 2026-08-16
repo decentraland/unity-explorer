@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using ECS.Prioritization.Components;
@@ -132,11 +131,11 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 // get metrics
 
-                string? metadataJSON;
+                string metadataJson;
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 {
-                    metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
+                    metadataJson = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text ?? string.Empty;
                 }
 
                 // Switch to thread pool to parse JSONs
@@ -147,12 +146,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 AssetBundleData[] dependencies;
                 var mainAsset = "";
 
-                if (!string.IsNullOrEmpty(metadataJSON))
+                if (!string.IsNullOrEmpty(metadataJson))
                 {
                     using PoolExtensions.Scope<AssetBundleMetadata> reusableMetadata = METADATA_POOL.AutoScope();
 
                     // Parse metadata
-                    JsonUtility.FromJsonOverwrite(metadataJSON, reusableMetadata.Value);
+                    JsonUtility.FromJsonOverwrite(metadataJson, reusableMetadata.Value);
                     mainAsset = reusableMetadata.Value.mainAsset;
                     dependencies = await LoadDependenciesAsync(intention, partition, reusableMetadata.Value, ct);
                 }
@@ -206,14 +205,14 @@ namespace ECS.StreamableLoading.AssetBundles
                     throw new StreamableLoadingException(LogType.Warning, nameof(LoadAssetBundleSystem), new AssetBundleContainsShaderException(assetBundle.name));
             }
 
-            Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
+            Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, asset, expectedObjType, dependencies,
                 version: version,
                 source: source));
         }
 
-        private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type? objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory, CancellationToken ct)
+        private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type? objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, CancellationToken ct)
         {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
@@ -236,12 +235,12 @@ namespace ECS.StreamableLoading.AssetBundles
         private async UniTask<AssetBundleData> WaitForDependencyAsync(
             string hash,
             AssetBundleManifestVersion assetBundleManifestVersion,
-            string parentEntityID,
+            string parentEntityId,
             URLSubdirectory customEmbeddedSubdirectory,
             IPartitionComponent partition, CancellationToken ct)
         {
             // Inherit partition from the parent promise
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory, isDependency : true), partition);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityId, customEmbeddedSubDirectory: customEmbeddedSubdirectory, isDependency : true), partition);
 
             try
             {
@@ -250,10 +249,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (!assetBundlePromise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> depResult))
                     throw new Exception($"Dependency {hash} is not resolved");
 
-                if (!depResult.Succeeded)
+                if (depResult is not { Succeeded: true, Asset: { } depAsset })
                     throw new Exception($"Dependency {hash} resolution failed", depResult.Exception);
 
-                return depResult.Asset;
+                return depAsset;
             }
             catch (OperationCanceledException)
             {

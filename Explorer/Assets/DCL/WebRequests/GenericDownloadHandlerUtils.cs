@@ -212,7 +212,8 @@ namespace DCL.WebRequests
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-                string text = null;
+                string text = string.Empty;
+                var textWasRead = false;
 
                 try
                 {
@@ -223,6 +224,7 @@ namespace DCL.WebRequests
                         )
                     {
                         text = downloadHandler.text;
+                        textWasRead = true;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await DCLTask.SwitchToThreadPool();
@@ -253,7 +255,7 @@ namespace DCL.WebRequests
                 }
                 catch (Exception ex)
                 {
-                    if (createCustomExceptionOnFailure != null && text != null)
+                    if (createCustomExceptionOnFailure != null && textWasRead)
                         throw createCustomExceptionOnFailure(ex, text);
                     else
                         throw;
@@ -310,7 +312,8 @@ namespace DCL.WebRequests
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-                string text = null;
+                string text = string.Empty;
+                var textWasRead = false;
 
                 try
                 {
@@ -321,6 +324,7 @@ namespace DCL.WebRequests
                         )
                     {
                         text = downloadHandler.text;
+                        textWasRead = true;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await DCLTask.SwitchToThreadPool();
@@ -351,7 +355,7 @@ namespace DCL.WebRequests
                 }
                 catch (Exception ex)
                 {
-                    if (createCustomExceptionOnFailure != null && text != null)
+                    if (createCustomExceptionOnFailure != null && textWasRead)
                         throw createCustomExceptionOnFailure(ex, text);
                     else
                         throw;

@@ -20,10 +20,10 @@ namespace DCL.Notifications.Tests
     {
         private static readonly TimeSpan POLL_OBSERVATION_TIMEOUT = TimeSpan.FromSeconds(15);
 
-        private NotificationsRequestController controller;
-        private IWebRequestController webRequestController;
-        private IWeb3IdentityCache identityCache;
-        private IDecentralandUrlsSource urlsSource;
+        private NotificationsRequestController controller = null!;
+        private IWebRequestController webRequestController = null!;
+        private IWeb3IdentityCache identityCache = null!;
+        private IDecentralandUrlsSource urlsSource = null!;
 
         private readonly List<List<INotification>> capturedTargets = new ();
         private readonly List<int> callTimeCounts = new ();

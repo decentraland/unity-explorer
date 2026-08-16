@@ -2,7 +2,6 @@ using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Unity.Transforms.Components;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
