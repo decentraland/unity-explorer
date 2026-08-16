@@ -8,6 +8,7 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -40,6 +41,15 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         private readonly DCLConcurrentDictionary<string, DCLConcurrentQueue<BufferedDataMessage>> topicBuffers = new ();
         private readonly DCLConcurrentDictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
 
+        private readonly object topicLookupLock = new ();
+
+        // Byte-keyed copy-on-write snapshot of topicBuffers (queues shared, not copied) so OnDataReceived
+        // can match the wire topic without materializing a string per message — Unity's BCL has no
+        // span-keyed dictionary lookup (GetAlternateLookup is .NET 9+). Writers rebuild under
+        // topicLookupLock and publish a new immutable array; the LiveKit-thread reader sees either
+        // the previous or the new snapshot, never a partial one.
+        private volatile TopicLookupEntry[] topicLookup = Array.Empty<TopicLookupEntry>();
+
         public CommsApiWrap(
             IRoomHub roomHub,
             ISceneCommunicationPipe sceneCommunicationPipe,
@@ -60,6 +70,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         {
             sceneCommunicationPipe.RemoveSceneMessageHandler(sceneId, ISceneCommunicationPipe.MsgType.CommsData, onDataReceivedCached);
             topicBuffers.Clear();
+            topicLookup = Array.Empty<TopicLookupEntry>();
             publishRateLimiters.Clear();
             commsWriter.Dispose();
         }
@@ -128,7 +139,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         /// Called from JS via ClearScript. Rate-limited to <see cref="MAX_MESSAGES_PER_SECOND"/> per topic.
         /// </summary>
         [UsedImplicitly]
-        public void PublishData(string topic, string data)
+        public void PublishData(string topic, string? data)
         {
             try
             {
@@ -191,7 +202,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         public void SubscribeToTopic(string topic)
         {
             // method is called relatively rare, allocation new Queue is acceptable, pooling not required
-            topicBuffers.TryAdd(topic, new DCLConcurrentQueue<BufferedDataMessage>());
+            if (topicBuffers.TryAdd(topic, new DCLConcurrentQueue<BufferedDataMessage>()))
+                RebuildTopicLookup();
         }
 
         /// <summary>
@@ -201,8 +213,10 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         [UsedImplicitly]
         public void UnsubscribeFromTopic(string topic)
         {
-            topicBuffers.TryRemove(topic, out DCLConcurrentQueue<BufferedDataMessage> _output);
-            // 'output' object is droped and will be collected by GC (it's assumed nothing else holds the reference)
+            if (topicBuffers.TryRemove(topic, out _))
+                RebuildTopicLookup();
+
+            // the removed queue is dropped and will be collected by GC (it's assumed nothing else holds the reference)
         }
 
         /// <summary>
@@ -248,13 +262,13 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         /// <summary>
         /// Runs on the LiveKit callback thread (ORIGIN_THREAD), not the main thread.
-        /// Only thread-safe types (DCLConcurrentQueue, Encoding) are used here.
+        /// Only thread-safe access is used here: a volatile read of the immutable topicLookup
+        /// snapshot, DCLConcurrentQueue and Encoding. Must not allocate for messages on
+        /// unsubscribed topics — all CommsData traffic for the scene reaches this handler.
         /// Decodes wire format: [topicLen 2 bytes LE][topic UTF-8][data UTF-8].
         /// </summary>
         private void OnDataReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-            // TODO: implement GetAlternateLookup on ReadOnlySpan<char/byte> to avoid allocation of temp string instances
-            // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2.getalternatelookup
             ReadOnlySpan<byte> span = message.Data;
 
             if (span.Length < TOPIC_LENGTH_PREFIX_BYTES) return;
@@ -263,10 +277,19 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
             if (span.Length < TOPIC_LENGTH_PREFIX_BYTES + topicLength) return;
 
-            string topic = Encoding.UTF8.GetString(span.Slice(TOPIC_LENGTH_PREFIX_BYTES, topicLength));
+            ReadOnlySpan<byte> topicSpan = span.Slice(TOPIC_LENGTH_PREFIX_BYTES, topicLength);
 
-            if (topicBuffers.TryGetValue(topic, out DCLConcurrentQueue<BufferedDataMessage> queue))
+            // Scenes subscribe to a handful of topics, so a linear scan over the snapshot
+            // beats hashing (which would require materializing a string key).
+            TopicLookupEntry[] lookup = topicLookup;
+
+            for (var i = 0; i < lookup.Length; i++)
             {
+                if (!topicSpan.SequenceEqual(lookup[i].Utf8Topic))
+                    continue;
+
+                DCLConcurrentQueue<BufferedDataMessage> queue = lookup[i].Queue;
+
                 // DROP OLD POLICY. Dequeues oldest item to insert new one
                 if (queue.Count >= TOPIC_BUFFER_MAX_MESSAGE_COUNT)
                 {
@@ -275,6 +298,20 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
                 string data = Encoding.UTF8.GetString(span[(TOPIC_LENGTH_PREFIX_BYTES + topicLength)..]);
                 queue.Enqueue(new BufferedDataMessage(message.FromWalletId, data));
+                return;
+            }
+        }
+
+        private void RebuildTopicLookup()
+        {
+            lock (topicLookupLock)
+            {
+                var entries = new List<TopicLookupEntry>(topicBuffers.Count);
+
+                foreach (KeyValuePair<string, DCLConcurrentQueue<BufferedDataMessage>> pair in topicBuffers)
+                    entries.Add(new TopicLookupEntry(Encoding.UTF8.GetBytes(pair.Key), pair.Value));
+
+                topicLookup = entries.ToArray();
             }
         }
 
@@ -301,6 +338,18 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
             publishRateLimiters[topic] = (limiter.count + 1, limiter.windowStartMs);
             return true;
+        }
+
+        private readonly struct TopicLookupEntry
+        {
+            public readonly byte[] Utf8Topic;
+            public readonly DCLConcurrentQueue<BufferedDataMessage> Queue;
+
+            public TopicLookupEntry(byte[] utf8Topic, DCLConcurrentQueue<BufferedDataMessage> queue)
+            {
+                Utf8Topic = utf8Topic;
+                Queue = queue;
+            }
         }
 
         private readonly struct BufferedDataMessage
