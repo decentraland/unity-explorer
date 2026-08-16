@@ -12,7 +12,9 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.ISceneFacade, ECS.SceneLifeCycle.Components.GetSceneFacadeIntention>;
 using Utility.Multithreading;
 
@@ -76,9 +78,28 @@ namespace ECS.SceneLifeCycle.Systems
             if (!promise.TryConsume(World, out var result) || !result.Succeeded) return;
 
             ISceneFacade scene = result.Asset!;
+
+            // At most one facade may own a parcel: a duplicate definition entity is left facade-less
+            // so its unload cannot remove the live scene's parcel mappings from the cache
+            if (!definitionComponent.IsPortableExperience && AnyParcelHasLiveScene(definitionComponent.Parcels))
+            {
+                ReportHub.LogWarning(GetReportData(), $"Duplicate scene definition for '{definitionComponent.Definition.GetLogSceneName()}': discarding its facade");
+                scene.DisposeAsync().Forget();
+                return;
+            }
+
             StartAndUpdateSceneAsync(definitionComponent, partition, scene).Forget();
 
             World.Add(entity, scene);
+        }
+
+        private bool AnyParcelHasLiveScene(IReadOnlyList<Vector2Int> parcels)
+        {
+            for (var i = 0; i < parcels.Count; i++)
+                if (scenesCache.TryGetByParcel(parcels[i], out _))
+                    return true;
+
+            return false;
         }
 
         [Query]

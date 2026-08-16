@@ -50,7 +50,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             try
             {
                 if (missingUrns.Count > 0)
+                {
                     await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct, result);
+
+                    // Failed pointers come back as unresolved placeholders (DTO == null); the outfit result is resolved-only.
+                    result.RemoveAll(static w => w.DTO == null);
+                }
 
                 foreach ((var baseUrn, var fullUrn, string tokenId) in tokenMappings)
                     // We don't strictly need transferredAt/price here; use safe defaults.
@@ -79,7 +84,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         {
             if (string.IsNullOrEmpty(urn)) return;
 
-            if (wearableStorage.TryGetElement(urn, out IWearable w))
+            // Storage may hold an unresolved placeholder (failed or in-flight DTO load); the outfit result is
+            // resolved-only, so anything else goes through the provider for a re-fetch.
+            if (wearableStorage.TryGetElement(urn, out IWearable w) && w.DTO != null)
                 result.Add(w);
             else
                 missingUrns.Add(urn);

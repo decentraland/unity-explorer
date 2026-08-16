@@ -19,11 +19,16 @@ namespace DCL.MapRenderer.ConsumerUtils
         private IMapCameraController cameraController;
         private Camera hudCamera;
 
+        // Resolution last applied to the camera's render texture; renters size the texture with
+        // GetPixelPerfectTextureResolution() right before Activate, so it starts in sync.
+        private Vector2Int lastResolution;
+
         private static Vector3[] worldCorners = new Vector3[4];
 
         public void Activate(IMapCameraController cameraController)
         {
             this.cameraController = cameraController;
+            lastResolution = GetPixelPerfectTextureResolution();
         }
 
         public void SetHudCamera(Camera hudCamera)
@@ -53,12 +58,31 @@ namespace DCL.MapRenderer.ConsumerUtils
             return new Vector2Int((int) screenSize.x, (int) screenSize.y);
         }
 
+        // Screen-resolution or canvas-scale changes (e.g. windowed -> fullscreen) alter the
+        // on-screen pixel size without changing the rect, so OnRectTransformDimensionsChange
+        // alone cannot keep the render texture pixel-perfect: poll every frame.
+        private void LateUpdate()
+        {
+            ApplyPixelPerfectResolution();
+        }
+
         private void OnRectTransformDimensionsChange()
+        {
+            ApplyPixelPerfectResolution();
+        }
+
+        private void ApplyPixelPerfectResolution()
         {
             if (cameraController == null)
                 return;
 
-            cameraController.ResizeTexture(GetPixelPerfectTextureResolution());
+            Vector2Int resolution = GetPixelPerfectTextureResolution();
+
+            if (resolution == lastResolution)
+                return;
+
+            lastResolution = resolution;
+            cameraController.ResizeTexture(resolution);
 
             targetImage.SetAllDirty();
         }

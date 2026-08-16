@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Utility
@@ -28,9 +29,7 @@ namespace Utility
                 var typedDelegate = (Action<T>)del;
 
                 if (invokeSubscribersOnMainThread && !PlayerLoopHelper.IsMainThread)
-
-                    // TODO find a way to prevent an allocation from capture
-                    PlayerLoopHelper.AddContinuation(PlayerLoopTiming.Update, () => typedDelegate?.Invoke(evt));
+                    PooledContinuation<T>.Schedule(typedDelegate, evt);
                 else
                     typedDelegate?.Invoke(evt);
             }
@@ -44,6 +43,49 @@ namespace Utility
                 handler
             );
             return new Unsubscriber<T>(this, handler);
+        }
+
+        /// <summary>
+        ///     Carries the delegate snapshot and event payload across the main-thread hop without a
+        ///     compiler-synthesized closure; entries are pooled so steady-state publishes allocate nothing.
+        ///     State is copied to locals and the entry recycled before the handlers run, so reentrant
+        ///     publishes are safe and class-typed payloads are not retained by the pool.
+        /// </summary>
+        private sealed class PooledContinuation<T>
+        {
+            private static readonly ConcurrentQueue<PooledContinuation<T>> POOL = new ();
+
+            private readonly Action run;
+            private Action<T>? typedDelegate;
+            private T evt = default!;
+
+            private PooledContinuation()
+            {
+                run = Run;
+            }
+
+            public static void Schedule(Action<T> typedDelegate, T evt)
+            {
+                if (!POOL.TryDequeue(out PooledContinuation<T>? continuation))
+                    continuation = new PooledContinuation<T>();
+
+                continuation.typedDelegate = typedDelegate;
+                continuation.evt = evt;
+                PlayerLoopHelper.AddContinuation(PlayerLoopTiming.Update, continuation.run);
+            }
+
+            private void Run()
+            {
+                if (typedDelegate is not { } invokeTarget)
+                    return;
+
+                T payload = evt;
+                typedDelegate = null;
+                evt = default!;
+                POOL.Enqueue(this);
+
+                invokeTarget.Invoke(payload);
+            }
         }
 
         private class Unsubscriber<T> : IDisposable

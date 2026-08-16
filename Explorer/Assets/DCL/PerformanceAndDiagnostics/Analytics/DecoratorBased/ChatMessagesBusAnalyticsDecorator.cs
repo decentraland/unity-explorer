@@ -10,7 +10,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class ChatMessagesBusAnalyticsDecorator : IChatMessagesBus
     {
-        private static readonly JArray MENTION_WALLET_IDS = new ();
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{1,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IChatMessagesBus core;
@@ -42,7 +41,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             core.Send(channel, message, origin, timestamp);
 
-            bool isMentionMessage = CheckIfIsMention(message);
+            // Local per-send array: the tracked JObject takes ownership of it, and queued events
+            // must keep their mentions untouched by later sends
+            JArray mentionWalletIds = new ();
+            bool isMentionMessage = CheckIfIsMention(message, mentionWalletIds);
 
             JObject jsonObject = new JObject
                 {
@@ -50,7 +52,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     { "length", message.Length },
                     { "origin", origin.ToStringValue() },
                     { "is_mention", isMentionMessage},
-                    { "mentions", MENTION_WALLET_IDS },
+                    { "mentions", mentionWalletIds },
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
                     // { "emoji_count", emoji_count },
                 };
@@ -67,9 +69,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics.Track(AnalyticsEvents.Ui.MESSAGE_SENT, jsonObject);
         }
 
-        private bool CheckIfIsMention(string message)
+        private bool CheckIfIsMention(string message, JArray mentionWalletIds)
         {
-            MENTION_WALLET_IDS.Clear();
             var isValidMention = false;
             var matches = USERNAME_REGEX.Matches(message);
 
@@ -83,7 +84,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
                 if (profile != null)
                 {
-                    MENTION_WALLET_IDS.Add(profile.Value.UserId);
+                    // JArray.Add takes object, so UserId's implicit string conversion does not apply:
+                    // the wire shape carries the wallet-address string, never the domain object
+                    mentionWalletIds.Add(profile.Value.UserId.Value);
                     //returning a valid mention only if at least one of the mentions are a real user
                     isValidMention = true;
                 }

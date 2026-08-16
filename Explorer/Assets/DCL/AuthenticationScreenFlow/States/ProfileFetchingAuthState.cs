@@ -19,6 +19,7 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<ProfileFetchingPayload>
     {
+        private const int PROFILE_FETCH_ATTEMPTS = 3;
         private static readonly TimeSpan PROFILE_FETCH_TIMEOUT = TimeSpan.FromSeconds(15);
 
         private readonly MVCStateMachine<AuthStateBase> machine;
@@ -110,9 +111,7 @@ namespace DCL.AuthenticationScreenFlow
                     });
 
                     // Timeout surfaces catalyst stalls as CONNECTION_ERROR instead of a frozen spinner.
-                    Profile? profile = await selfProfile.ProfileAsync(ct).Timeout(PROFILE_FETCH_TIMEOUT);
-
-                    if (profile != null)
+                    if (await FetchProfileWithTimeoutRetriesAsync(selfProfile, PROFILE_FETCH_TIMEOUT, PROFILE_FETCH_ATTEMPTS, ct) is { } profile)
                     {
                         // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
                         profile.IsDirty = true;
@@ -153,6 +152,35 @@ namespace DCL.AuthenticationScreenFlow
                     profileFetchException = e;
                     machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
                 }
+            }
+        }
+
+        /// <summary>
+        ///     Each attempt owns a linked token, so a timed-out attempt cancels its underlying request and the
+        ///     repository releases the ongoing-batch entry for this address instead of keeping a zombie fetch alive.
+        ///     Only exhausting all attempts surfaces as <see cref="TimeoutException" /> (CONNECTION_ERROR).
+        /// </summary>
+        internal static async UniTask<Profile?> FetchProfileWithTimeoutRetriesAsync(ISelfProfile selfProfile, TimeSpan attemptTimeout, int maxAttempts, CancellationToken ct)
+        {
+            for (var attempt = 1;; attempt++)
+            {
+                using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                using IDisposable timeoutTimer = timeoutCts.CancelAfterSlim(attemptTimeout);
+
+                if (await selfProfile.ProfileAsync(timeoutCts.Token) is { } profile)
+                    return profile;
+
+                // The repository suppresses cancellation into a null profile: a null caused by this attempt's own
+                // timeout must not be read as "no deployed profile" (which clears the cached identity on the cached flow)
+                bool attemptTimedOut = timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested;
+
+                if (!attemptTimedOut)
+                    return null;
+
+                ct.ThrowIfCancellationRequested();
+
+                if (attempt == maxAttempts)
+                    throw new TimeoutException($"Profile fetch timed out after {maxAttempts} attempts of {attemptTimeout.TotalSeconds:F0}s each");
             }
         }
 

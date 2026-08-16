@@ -132,8 +132,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private static void DisposeThumbnail(IWearable wearable)
         {
             IAvatarAttachment attachment = wearable;
-            if (attachment.ThumbnailAssetResult is { IsInitialized: true })
-                attachment.ThumbnailAssetResult.Value.Asset.RemoveReference();
+
+            // A reference was acquired only if the result succeeded; failed/cancelled results carry a default SpriteData
+            if (attachment.ThumbnailAssetResult is { Succeeded: true } thumbnail)
+                thumbnail.Asset.RemoveReference();
         }
 
         private void UpdateListedCachePriority(URN @for)

@@ -175,7 +175,11 @@ namespace DCL.Chat.ChatServices
         {
             string lowerUserId = userId.ToLower();
 
-            FriendshipStatus friendshipStatus = await friendsService!.GetFriendshipStatusAsync(userId, ct);
+            // friendsService is null when the Friends feature is disabled (e.g. local scene development):
+            // every user resolves as a non-friend and the flow below handles them through the non-friend branches
+            FriendshipStatus friendshipStatus = friendsService != null
+                ? await friendsService.GetFriendshipStatusAsync(userId, ct)
+                : FriendshipStatus.None;
             bool isUserConnected = UserIsConsideredAsOnline(userId);
 
             //If it's a friend we just return its connection status

@@ -31,6 +31,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using Utility;
+using Utility.Multithreading;
 
 namespace Global.Dynamic
 {
@@ -51,6 +52,7 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
+        private readonly DCLSemaphoreSlim realmChangeSemaphore = new (1, 1);
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
@@ -121,6 +123,17 @@ namespace Global.Dynamic
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
+        {
+            // Realm changes must be mutually exclusive: each one relies on its unload phase leaving no
+            // realm entity alive, so that at most one realm entity (and one ProcessedScenePointers
+            // scene-pointer dedup pipeline) exists afterwards
+            await realmChangeSemaphore.WaitAsync(ct);
+
+            try { await SetRealmExclusiveAsync(realm, ct); }
+            finally { realmChangeSemaphore.Release(); }
+        }
+
+        private async UniTask SetRealmExclusiveAsync(URLDomain realm, CancellationToken ct)
         {
             World world = globalWorld!.EcsWorld;
 

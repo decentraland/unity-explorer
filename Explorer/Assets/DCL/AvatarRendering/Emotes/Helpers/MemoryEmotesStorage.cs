@@ -139,8 +139,9 @@ namespace DCL.AvatarRendering.Emotes
 
         private static void DisposeThumbnail(IEmote wearable)
         {
-            if (wearable.ThumbnailAssetResult is { IsInitialized: true })
-                wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();
+            // A reference was acquired only if the result succeeded; failed/cancelled results carry a default SpriteData
+            if (wearable.ThumbnailAssetResult is { Succeeded: true } thumbnail)
+                thumbnail.Asset.RemoveReference();
         }
 
         private static void DisposeAudioClips(IEmote emote)

@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System;
 using System.Globalization;
+using System.Net;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -11,6 +12,9 @@ namespace DCL.WebRequests
     public static class WebRequestUtils
     {
         public const string CANNOT_CONNECT_ERROR = "Cannot connect to destination host";
+
+        private const string HTTP_SCHEME_PREFIX = "http://";
+        private const string HTTPS_SCHEME_PREFIX = "https://";
 
         public const int BAD_REQUEST = 400;
         public const int UNAUTHORIZED_ACCESS = 401;
@@ -167,6 +171,37 @@ namespace DCL.WebRequests
 
         public static string GetResponseContentEncoding(this UnityWebRequest unityWebRequest) =>
             unityWebRequest.GetResponseHeader("Content-Encoding");
+
+        /// <summary>
+        ///     Client-side transport-security policy, standing in for the player-level insecure-http
+        ///     block (which is global and cannot exempt loopback): cleartext http is permitted to
+        ///     loopback hosts only (local preview servers, sidecars); http to any other host is
+        ///     upgraded to https. Applied to the wire URL of the built request, never to URLs
+        ///     embedded inside it as data. Non-http URLs pass through unchanged (same reference).
+        /// </summary>
+        public static string EnforceSecureScheme(string url) =>
+            IsForbiddenCleartext(url)
+                ? string.Concat(HTTPS_SCHEME_PREFIX, url.Substring(HTTP_SCHEME_PREFIX.Length))
+                : url;
+
+        /// <summary>
+        ///     True only for the scheme/host combination the transport policy forbids: cleartext
+        ///     http to a non-loopback host. Unparsable http URLs are forbidden too — the policy
+        ///     fails closed on cleartext. Holds for final (post-redirect) URLs as much as for
+        ///     outgoing ones.
+        /// </summary>
+        public static bool IsForbiddenCleartext(string url) =>
+            !string.IsNullOrEmpty(url)
+            && url.StartsWith(HTTP_SCHEME_PREFIX, StringComparison.OrdinalIgnoreCase)
+            && !(Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && IsLoopbackHost(uri.Host));
+
+        /// <summary>
+        ///     Loopback means "localhost", 127.0.0.0/8 or [::1] — the hosts a local preview
+        ///     server or sidecar can be reached on.
+        /// </summary>
+        private static bool IsLoopbackHost(string host) =>
+            string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
+            || (IPAddress.TryParse(host, out IPAddress? ip) && IPAddress.IsLoopback(ip));
 
         public static bool IsLocalhost(string url) =>
             url.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase)

@@ -8,6 +8,7 @@ using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -104,6 +105,37 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             component = world.Get<GltfContainerComponent>(e);
             Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
+        }
+
+        [Test]
+        public void FinalizeWithErrorWhenAssetRootDestroyed()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            // A successfully-resolved result can reference an asset whose Root was destroyed
+            // while it awaited consumption
+            var asset = GltfContainerAsset.Create(new GameObject("root"), Substitute.For<IStreamableRefCountData>());
+            UnityEngine.Object.DestroyImmediate(asset.Root);
+
+            var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
+                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention(), PartitionComponent.TOP_PRIORITY));
+
+            component.State = LoadingState.Loading;
+
+            Entity e = world.Create(component, new CRDTEntity(100), new TransformComponent(), new PBGltfContainer());
+            world.Add(component.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+
+            // Without the destroyed-Root guard this throws EcsSystemException (NRE at Root.transform)
+            system!.Update(0);
+
+            component = world.Get<GltfContainerComponent>(e);
+            Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
+            Assert.That(component.RootGameObject, Is.Null);
+            Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(e, component)));
+
+            // The consumed promise reached a terminal state: the next frame must be a no-op,
+            // not an "AssetPromise is already consumed" throw
+            Assert.DoesNotThrow(() => system.Update(0));
         }
 
         [Test]

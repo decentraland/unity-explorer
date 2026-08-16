@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Diagnostics;
@@ -13,6 +14,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -181,9 +183,24 @@ namespace DCL.EmotesWheel
             view.Thumbnail.gameObject.SetActive(false);
             view.LoadingSpinner.SetActive(true);
 
-            Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
 
-            view.Thumbnail.sprite = sprite;
+                view.Thumbnail.sprite = sprite;
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+
+                if (ct.IsCancellationRequested) return;
+
+                // The failure path must still surface a sprite and release the spinner, otherwise
+                // the slot stays stuck on a load that already gave up.
+                view.Thumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
+            }
+
             view.Thumbnail.gameObject.SetActive(true);
             view.LoadingSpinner.SetActive(false);
         }

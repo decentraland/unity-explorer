@@ -49,9 +49,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private long trackId;
         private long flushId;
 
-        // temportal sentry budget fix. TODO remove once the core issue solved
-        private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
-
         public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
             using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -229,29 +226,27 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             try
             {
-                const string ONCE_PATTERN = "(will retry)";
-
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
-                bool isCaught = marshaled.Contains(ONCE_PATTERN);
 
-                if (isCaught && ONCE_PATTERN_ALREADY_CAUGHT)
-                {
-                    // Don't log if already was
-                    return;
-                }
-
-                ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
-
-                if (isCaught)
-                {
-                    ONCE_PATTERN_ALREADY_CAUGHT = true;
-                }
+                if (IsRetriedSendLoopError(marshaled))
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment error: {marshaled}");
+                else
+                    ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
             }
             catch
             {
                 // Ignore to avoid possibility of double exception
             }
         }
+
+        // The native send daemon retries a "(will retry)" send-loop failure without consuming the
+        // spooled item, so no events are lost and it must not bill the Sentry error budget.
+        // Every other native error is a potential loss signal and keeps exception-level reporting:
+        // instant_track_and_flush drops the event on send failure (bare "Network error", never
+        // spooled), a failed flush drops the already-extracted batch ("Cannot flush: ..."), and
+        // the "(will drop)" send-loop branch consumes the item.
+        private static bool IsRetriedSendLoopError(string message) =>
+            message.Contains("Error executing send loop (will retry)");
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
@@ -266,8 +261,10 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
+                // Native report_error always pairs a failed operation with an ErrorCallback delivery
+                // carrying the descriptive message — severity classification lives there.
                 if (response is not NativeMethods.Response.Success)
-                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment operation {operationId} {type} failed with: {response}");
 
                 instanceGuard.Value.CleanMemory(operationId);
             }

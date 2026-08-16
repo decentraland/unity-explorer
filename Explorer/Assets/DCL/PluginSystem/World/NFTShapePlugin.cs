@@ -77,7 +77,9 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
 
-            bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
+            // Gating on native support here keeps NFT content-info fetches consistent with the texture
+            // request path, which applies the same capability check.
+            bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION) && KtxNativeSupport.IsSupported;
 
             LoadNFTTypeSystem.InjectToWorld(ref builder, NoCache<NftTypeResult, GetNFTTypeIntention>.INSTANCE, webRequestController, isKtxEnabled, decentralandUrlsSource);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource), mediaFactory.CreateForScene(builder.World, sharedDependencies, systemsDependencies.RoomHub, placeholderSource: null));

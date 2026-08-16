@@ -12,13 +12,14 @@ namespace ECS.Unity.AssetLoad.Cache
     public class AssetPreLoadCache : IDisposable
     {
         /// <summary>
-        ///     The never-handed-out template plus its live clones, so every copy can be released on teardown.
+        ///     The never-handed-out template. Clones handed out by <see cref="TryGetGltfInstance" /> are owned
+        ///     by the containers that checked them out and are released through
+        ///     <see cref="IGltfContainerAssetsCache.Dereference" /> — this cache must never dispose them.
         /// </summary>
         private sealed class GltfTemplate
         {
             public readonly GltfContainerAsset Template;
             public readonly string Hash;
-            public readonly List<GltfContainerAsset> Copies = new ();
 
             public GltfTemplate(GltfContainerAsset template, string hash)
             {
@@ -47,7 +48,6 @@ namespace ECS.Unity.AssetLoad.Cache
             if (cache.TryGetValue(key, out object? value) && value is GltfTemplate gltfTemplate
                 && Utils.TryDuplicateGltfAssetFromTemplate(gltfTemplate.Template, gltfTemplate.Hash, out GltfContainerAsset? duplicate))
             {
-                gltfTemplate.Copies.Add(duplicate!);
                 instance = duplicate;
                 return true;
             }
@@ -56,13 +56,8 @@ namespace ECS.Unity.AssetLoad.Cache
             return false;
         }
 
-        public void ReleaseGltfInstance(string key, GltfContainerAsset instance)
-        {
-            if (cache.TryGetValue(key, out object? value) && value is GltfTemplate gltfTemplate)
-                gltfTemplate.Copies.Remove(instance);
-
+        public void ReleaseGltfInstance(string key, GltfContainerAsset instance) =>
             instance.Dispose();
-        }
 
         public bool TryAddVideo(string key, in VideoTemplateData data) =>
             videoCache.TryAdd(key, data);
@@ -112,10 +107,10 @@ namespace ECS.Unity.AssetLoad.Cache
             foreach(var kvp in cache)
                 switch (kvp.Value)
                 {
+                    // Only the never-handed-out template is released. Checked-out clones are owned by
+                    // containers whose lifetime this cache does not control (it is global, Clear runs per
+                    // scene teardown) — disposing them here would destroy live Roots under their owners.
                     case GltfTemplate gltfTemplate:
-                        foreach (GltfContainerAsset copy in gltfTemplate.Copies)
-                            copy.Dispose();
-
                         gltfCache.Dereference(kvp.Key, gltfTemplate.Template, handleAssetLoad: false);
                         break;
                     case AudioClipData audioClipData:

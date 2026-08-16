@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading.Assets;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
@@ -12,6 +13,13 @@ namespace DCL.AvatarRendering.Emotes
         public bool legacy { get; private set; }
 
         public AudioSource? audioSource;
+
+        /// <summary>
+        ///     Pins the source attachment while this instance plays: the instance shares meshes, materials and
+        ///     clips with the source, and the storage disposes assets whose ReferenceCount reaches 0.
+        ///     Set on acquire, dereferenced and cleared on pool release.
+        /// </summary>
+        public AttachmentRegularAsset? sourceAsset;
 
         public void Initialize(AnimationClip? animationClip, AnimationClip? propClip, Animator? animatorComp, Animation? animationComp, int propClipHash, bool legacy)
         {

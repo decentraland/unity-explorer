@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Animations;
 using Object = UnityEngine.Object;
 
@@ -42,12 +44,16 @@ namespace DCL.AvatarRendering.Emotes.Play
                     audioSourcePool.Release(references.audioSource);
 
                 references.audioSource = null;
+
+                references.sourceAsset?.Dereference();
+                references.sourceAsset = null;
             };
         }
 
-        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
+        public bool Play(AttachmentRegularAsset sourceAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
+            GameObject mainAsset = sourceAsset.MainAsset;
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
             if (IsSameLoopingEmote(emoteInUse, mainAsset, emoteComponent.EmoteLoop, isLooping))
@@ -55,6 +61,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
+
+            PinSourceAsset(emoteReferences, sourceAsset);
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
 
@@ -75,9 +83,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             return true;
         }
 
-        public bool PlayMasked(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
+        public bool PlayMasked(AttachmentRegularAsset sourceAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterMaskedEmoteComponent maskedEmote)
         {
+            GameObject mainAsset = sourceAsset.MainAsset;
             EmoteReferences? emoteInUse = maskedEmote.CurrentEmoteReference;
 
             if (IsSameLoopingEmote(emoteInUse, mainAsset, maskedEmote.EmoteLoop, isLooping))
@@ -85,6 +94,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
+
+            PinSourceAsset(emoteReferences, sourceAsset);
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
 
@@ -203,6 +214,40 @@ namespace DCL.AvatarRendering.Emotes.Play
             currentlyLooping &&
             isLooping;
 
+        /// <summary>
+        ///     While an acquired instance exists its source asset must stay referenced, so the storage
+        ///     cannot dispose the shared meshes/materials/clips mid-play. Balanced by the pool's release callback.
+        /// </summary>
+        private static void PinSourceAsset(EmoteReferences references, AttachmentRegularAsset sourceAsset)
+        {
+            sourceAsset.AddReference();
+            references.sourceAsset = sourceAsset;
+        }
+
+        /// <summary>
+        ///     Drops pools keyed by a destroyed source asset, destroying their pooled instances.
+        ///     A destroyed key implies no live instance of that pool exists: every live instance pins
+        ///     its source asset, which keeps the key alive.
+        /// </summary>
+        private void PruneDestroyedPools()
+        {
+            List<GameObject> deadKeys = ListPool<GameObject>.Get();
+
+            foreach (KeyValuePair<GameObject, GameObjectPool<EmoteReferences>> entry in pools)
+                if (!entry.Key)
+                    deadKeys.Add(entry.Key);
+
+            foreach (GameObject deadKey in deadKeys)
+            {
+                GameObjectPool<EmoteReferences> pool = pools[deadKey];
+                pool.Clear();
+                UnityObjectUtils.SafeDestroy(pool.ParentContainer.gameObject);
+                pools.Remove(deadKey);
+            }
+
+            ListPool<GameObject>.Release(deadKeys);
+        }
+
         private EmoteReferences? AcquireEmoteReferences(GameObject mainAsset,
             AudioClip? audioAsset,
             bool isLooping,
@@ -214,6 +259,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                 Stop(emoteInUse);
 
             view.StopLegacyAnimation();
+
+            PruneDestroyedPools();
 
             if (!pools.ContainsKey(mainAsset))
             {

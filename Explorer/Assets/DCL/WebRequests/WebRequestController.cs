@@ -89,6 +89,11 @@ namespace DCL.WebRequests
                         analyticsContainer.OnRequestFinished(request);
                     }
 
+                    // A redirect can hop from the sent https URL to cleartext http after the pre-send
+                    // scheme policy ran; a response with a forbidden-cleartext final URL is never consumed
+                    if (WebRequestUtils.IsForbiddenCleartext(wr.url))
+                        throw new InvalidOperationException($"Insecure connection not allowed: request to {envelope.CommonArguments.URL} was redirected to {wr.url}");
+
                     if (!realmClock.HasSample)
                         realmClock.TryRecordHttpDate(wr.GetResponseHeader(DATE_HEADER));
 
@@ -104,6 +109,11 @@ namespace DCL.WebRequests
                 catch (UnityWebRequestException exception)
                 {
                     analyticsContainer.OnException(request, exception);
+
+                    // An exchange whose final URL downgraded to forbidden cleartext fails permanently:
+                    // never ignored, never retried (a retry would re-send headers over cleartext)
+                    if (WebRequestUtils.IsForbiddenCleartext(wr.url))
+                        throw;
 
                     // No result can be concluded in this case
                     if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))

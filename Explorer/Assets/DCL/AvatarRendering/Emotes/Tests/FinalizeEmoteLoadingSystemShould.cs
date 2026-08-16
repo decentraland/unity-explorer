@@ -484,6 +484,37 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsTrue(cts.IsCancellationRequested, "Intention CTS should be cancelled after disposal.");
         }
 
+        [Test]
+        public void DereferenceResolutionReferenceWhenConsumingFinishedEmotePromise()
+        {
+            var emoteURN = new URN("urn:resolution:emote_referenced");
+            BodyShape bodyShape = BodyShape.MALE;
+
+            IEmote emote = new MockEmote(emoteURN, mockEmoteStorage) { IsLoading = false };
+            emote.AssetResults[bodyShape] = new StreamableLoadingResult<AttachmentRegularAsset>(mockAttachmentAsset);
+            mockEmoteStorage.Set(emoteURN, emote);
+
+            // LoadEmotesByPointersSystem adds one reference per pointer it marks successful; the consumer
+            // owns that reference and must return it, otherwise the storage can never unload the emote
+            // (MemoryEmotesStorage.Unload only disposes assets whose ReferenceCount is 0).
+            mockAttachmentAsset.AddReference();
+            Assert.AreEqual(1, mockAttachmentAsset.ReferenceCount);
+
+            var pointers = new List<URN> { emoteURN };
+            var intention = new GetEmotesByPointersIntention(pointers, bodyShape);
+            intention.SuccessfulPointers.Add(emoteURN);
+
+            var promise = EmoteResolutionPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            Entity promiseCarrierEntity = world.Create(promise);
+            world.Add(promise.Entity, new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
+
+            system.Update(0);
+
+            Assert.IsFalse(world.IsAlive(promiseCarrierEntity), "Carrier entity should be destroyed by the system.");
+            Assert.AreEqual(0, mockAttachmentAsset.ReferenceCount,
+                "Consuming the finished promise must dereference the asset referenced at resolution time.");
+        }
+
         private Entity CreateEmoteEntityWithPromise<TAsset, TIntention>(
             IEmote mockEmote,
             TIntention intention,

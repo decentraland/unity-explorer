@@ -25,14 +25,14 @@ namespace ECS.StreamableLoading.Common.Components
 
             /// <summary>
             ///     True when the request reached a terminal successful (or fallback-acceptable) state.
-            ///     False when the request failed or was cancelled; check <see cref="Cancelled"/>
-            ///     to distinguish a transient cancellation from a sticky failure.
+            ///     False when the request failed or was cancelled; either way the state covers a
+            ///     single attempt — consumers clear the slot and retry on the next explicit request.
             /// </summary>
             public readonly bool Succeeded;
 
             /// <summary>
-            ///     True when the request was cancelled mid-flight (transient state — consumers can
-            ///     clear the slot and retry). False for both genuine successes and sticky failures.
+            ///     True when the request was cancelled mid-flight. False for both genuine
+            ///     successes and failures (e.g. a consumer timeout).
             /// </summary>
             public readonly bool Cancelled;
 

@@ -101,6 +101,18 @@ namespace DCL.WebRequests
             TWebRequest request = initializeRequest(CommonArguments.URL, ref args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
 
+            // The scheme policy governs the wire URL of the request about to be sent; running it
+            // after per-request composition keeps origin URLs embedded in it as data (e.g. the
+            // media-converter's url query parameter) byte-identical
+            string wireUrl = unityWebRequest.url;
+            string secureUrl = WebRequestUtils.EnforceSecureScheme(wireUrl);
+
+            if (!ReferenceEquals(wireUrl, secureUrl))
+            {
+                ReportHub.LogWarning(ReportData, $"Cleartext http to a non-loopback host upgraded to https: {wireUrl}");
+                unityWebRequest.url = secureUrl;
+            }
+
             AssignTimeout(unityWebRequest);
             AssignHeaders(unityWebRequest, web3IdentityCache);
             AssignDownloadHandler(unityWebRequest);

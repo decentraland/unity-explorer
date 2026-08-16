@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
@@ -79,6 +80,19 @@ namespace ECS.Unity.GLTFContainer.Systems
                     component.RootGameObject = null;
                     eventsBuffer.Add(entity, component);
                     result.TryLogException(GetReportData());
+                    return;
+                }
+
+                // The asset's Root can be destroyed while the resolved result awaits consumption (it sits in
+                // global caches cleared by other scenes' teardowns). The promise is consumed at this point, so
+                // the component must still reach a terminal state — leaving it Loading would re-enter this
+                // query and throw "already consumed" on every subsequent frame.
+                if (result.Asset is not { } asset || asset.Root == null)
+                {
+                    ReportHub.LogError(GetReportData(), $"GltfContainerAsset '{component.Name}' ({component.Hash}) resolved with a destroyed Root");
+                    component.State = LoadingState.FinishedWithError;
+                    component.RootGameObject = null;
+                    eventsBuffer.Add(entity, component);
                     return;
                 }
 

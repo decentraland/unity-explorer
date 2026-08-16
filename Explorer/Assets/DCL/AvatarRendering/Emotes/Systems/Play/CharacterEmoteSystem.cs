@@ -341,9 +341,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
 
                     StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = assetResult.Value;
-                    GameObject? mainAsset;
 
-                    if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
+                    if (streamableAssetValue is { Succeeded: false } || streamableAssetValue.Asset is not { } sourceAsset || sourceAsset.MainAsset == null)
                     {
                         // We can't play emote, remove intent, otherwise there is no place to remove it
                         World.Remove<CharacterEmoteIntent>(entity);
@@ -382,7 +381,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         emoteComponent.EmoteUrn = emoteId;
                         emoteComponent.Mask = mask;
 
-                        if (!emotePlayer.Play(mainAsset, audioClip, isLooping, spatial, in view, ref emoteComponent))
+                        if (!emotePlayer.Play(sourceAsset, audioClip, isLooping, spatial, in view, ref emoteComponent))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                         else
                         {
@@ -421,7 +420,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         masked.EmoteUrn = emoteId;
                         masked.Mask = mask;
 
-                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping, spatial, in view, ref masked))
+                        if (!emotePlayer.PlayMasked(sourceAsset, audioClip, isLooping, spatial, in view, ref masked))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                         else
                         {
@@ -542,6 +541,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 messageBus.OnPlayerRemoved(profile.UserId);
         }
 
+        // Each promise is wrapped into its own entity so FinalizeEmoteLoadingSystem consumes the
+        // resolution and returns the loading-time asset reference; the emote itself is played from
+        // the storage once loaded.
         private void CreateEmotePromise(URN urn, BodyShape bodyShape, AvatarEmoteMask mask)
         {
             loadEmoteBuffer[0] = urn;
@@ -554,9 +556,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // Local scene preview path, this is needed if a remote client plays a scene emote this client has not yet played
                 if (localSceneDevelopment && TryResolveLocalSceneEmotePath(scene, emoteHash, out string emotePath))
                 {
-                    SceneEmoteFromLocalPromise.Create(World,
+                    World.Create(SceneEmoteFromLocalPromise.Create(World,
                         new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop, mask),
-                        PartitionComponent.TOP_PRIORITY);
+                        PartitionComponent.TOP_PRIORITY));
 
                     return;
                 }
@@ -565,14 +567,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (scene.SceneData.SceneEntityDefinition.assetBundleManifestVersion == null)
                     return;
 
-                SceneEmoteFromRealmPromise.Create(World,
+                World.Create(SceneEmoteFromRealmPromise.Create(World,
                     new GetSceneEmoteFromRealmIntention(sceneId, scene.SceneData.SceneEntityDefinition.assetBundleManifestVersion!, emoteHash, loop, bodyShape),
-                    PartitionComponent.TOP_PRIORITY);
+                    PartitionComponent.TOP_PRIORITY));
             }
             else
-                EmotePromise.Create(World,
+                World.Create(EmotePromise.Create(World,
                     EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
-                    PartitionComponent.TOP_PRIORITY);
+                    PartitionComponent.TOP_PRIORITY));
         }
 
         private bool TryParseSceneEmoteURN(URN urnToParse, out string sceneId, out string parsedEmoteHash, out bool parsedLoop, out ISceneFacade? resolvedScene, out bool isPortableExperience)

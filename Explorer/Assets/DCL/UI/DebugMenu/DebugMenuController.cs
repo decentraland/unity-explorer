@@ -150,6 +150,10 @@ namespace DCL.UI.DebugMenu
                 HideDebugPanelOwnToggle();
             }
 
+            // Logs pushed from other threads since last frame become visible here; a resulting
+            // LogsUpdated sets shouldRefreshConsole synchronously, so they render this same frame.
+            logsHistory.DrainPendingLogs();
+
             if (shouldRefreshConsole)
             {
                 shouldRefreshConsole = false;

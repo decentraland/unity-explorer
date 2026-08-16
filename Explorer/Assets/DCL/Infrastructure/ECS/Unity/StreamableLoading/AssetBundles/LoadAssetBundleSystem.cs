@@ -93,6 +93,27 @@ namespace ECS.StreamableLoading.AssetBundles
                     progressReporter: byteWeightedProgress ? state : null,
                     suppressErrors: true); // Suppress errors because here we have our own error handling
                 assetBundle = assetBundleResult.Value.AssetBundle;
+
+                if (assetBundle == null && intention.cacheHash.HasValue)
+                {
+                    // A corrupt entry in Unity's Caching completes the request without reaching the network yet fails
+                    // the native mount, and nothing else ever evicts it — the entry would poison this bundle across
+                    // sessions. Evicting turns the single re-request below into a real download that re-populates the
+                    // cache; for null bundles with non-cache causes it costs at most one extra attempt.
+                    await UniTask.SwitchToMainThread();
+                    CorruptAbCacheEvictor.TryEvict(intention.CommonArguments.URL, intention.cacheHash.Value);
+
+                    assetBundleResult = await webRequestController.GetAssetBundleAsync(
+                        intention.CommonArguments,
+                        new GetAssetBundleArguments(loadingMutex, intention.cacheHash),
+                        ct,
+                        GetReportCategory(),
+                        expectedContentLength: contentLength,
+                        progressReporter: byteWeightedProgress ? state : null,
+                        suppressErrors: true);
+
+                    assetBundle = assetBundleResult.Value.AssetBundle;
+                }
             }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock

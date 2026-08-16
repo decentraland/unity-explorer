@@ -266,6 +266,29 @@ namespace DCL.WebRequests
             }
         }
 
+        /// <summary>
+        ///     <see cref="JsonSerializer.Populate(JsonReader, object)" /> resolves the target's contract directly and never
+        ///     consults converters registered for the root type, so a matching root-level converter must be routed manually,
+        ///     receiving <paramref name="target" /> as its existing value to populate in place.
+        /// </summary>
+        public static void PopulateInto<T>(JsonReader reader, T target, JsonSerializer serializer)
+        {
+            IList<JsonConverter> converters = serializer.Converters;
+
+            for (var i = 0; i < converters.Count; i++)
+            {
+                JsonConverter converter = converters[i];
+
+                if (converter.CanRead && converter.CanConvert(typeof(T)))
+                {
+                    converter.ReadJson(reader, typeof(T), target, serializer);
+                    return;
+                }
+            }
+
+            serializer.Populate(reader, target);
+        }
+
         public struct OverwriteFromJsonAsyncOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
         {
             private readonly CreateExceptionOnParseFail? createCustomExceptionOnFailure;
@@ -322,7 +345,7 @@ namespace DCL.WebRequests
 
                             using var textReader = new StreamReader(stream, Encoding.UTF8);
                             using var jsonReader = new JsonTextReader(textReader);
-                            serializer.Populate(jsonReader, Target);
+                            PopulateInto(jsonReader, Target, serializer);
                         }
                     }
                 }

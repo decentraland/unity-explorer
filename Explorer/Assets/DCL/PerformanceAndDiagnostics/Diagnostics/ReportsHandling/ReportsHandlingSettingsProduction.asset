@@ -46,6 +46,8 @@ MonoBehaviour:
       Severity: 4
     - Category: ANALYTICS
       Severity: 4
+    - Category: ANALYTICS
+      Severity: 2
     - Category: ANIMATOR
       Severity: 4
     - Category: ASSET_BUNDLES
@@ -500,6 +502,8 @@ MonoBehaviour:
       Severity: 4
     - Category: ANALYTICS
       Severity: 4
+    - Category: ANALYTICS
+      Severity: 2
     - Category: ANIMATOR
       Severity: 4
     - Category: ASSET_BUNDLES

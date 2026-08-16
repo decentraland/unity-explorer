@@ -32,6 +32,15 @@ namespace DCL.AvatarRendering.Wearables
                 await UniTask.WaitWhile(() => element.IsLoading, cancellationToken: ct);
 
                 await UniTask.SwitchToMainThread();
+
+                // Storages keep placeholders whose DTO load failed or was cancelled (IsLoading == false, DTO == null);
+                // the callback contract is resolved elements only.
+                if (element.DTO == null)
+                {
+                    ReportHub.LogError(reportData, $"Couldn't fetch element of type {typeof(TElement)} for pointer: {pointer}");
+                    return;
+                }
+
                 onElementFetched(element);
 
                 return;
@@ -49,7 +58,7 @@ namespace DCL.AvatarRendering.Wearables
                 await elementProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct, results);
 
                 foreach (var result in results)
-                    if (result.GetUrn() == pointer)
+                    if (result.DTO != null && result.GetUrn() == pointer)
                     {
                         await UniTask.SwitchToMainThread();
                         onElementFetched(result);

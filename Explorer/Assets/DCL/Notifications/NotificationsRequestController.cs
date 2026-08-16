@@ -31,6 +31,10 @@ namespace DCL.Notifications
         private readonly URLParameter onlyUnreadParameter = new ("onlyUnread", "true");
         private readonly URLParameter limitParameter = new ("limit", "50");
         private readonly URLBuilder urlBuilder = new ();
+        private readonly URLDomain notificationsUrl;
+
+        // Reused across poll iterations: cleared before each request and never escapes the loop (items are dispatched individually)
+        private readonly List<INotification> pollNotificationsBuffer = new ();
         private CommonArguments commonArguments;
         private ulong unixTimestamp;
         private ulong lastPolledTimestamp;
@@ -52,6 +56,8 @@ namespace DCL.Notifications
 
             lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
+            notificationsUrl = URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications");
+
             commonArgumentsForSetRead = new CommonArguments(
                 new URLBuilder()
                    .AppendDomain(
@@ -70,7 +76,7 @@ namespace DCL.Notifications
 
             urlBuilder.Clear();
 
-            urlBuilder.AppendDomain(URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
+            urlBuilder.AppendDomain(notificationsUrl)
                       .AppendParameter(limitParameter);
 
             commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
@@ -101,7 +107,7 @@ namespace DCL.Notifications
 
                     urlBuilder.Clear();
 
-                    urlBuilder.AppendDomain(URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
+                    urlBuilder.AppendDomain(notificationsUrl)
                               .AppendParameter(onlyUnreadParameter)
                               .AppendParameter(new URLParameter("from", lastPolledTimestamp.ToString()));
 
@@ -109,7 +115,8 @@ namespace DCL.Notifications
 
                     unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-                    // TODO remove allocation of List on serialization
+                    pollNotificationsBuffer.Clear();
+
                     List<INotification> notifications =
                         await webRequestController.GetAsync(
                                                        commonArguments,
@@ -117,7 +124,7 @@ namespace DCL.Notifications
                                                        ReportCategory.UI,
                                                        signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
                                                        headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                                  .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
+                                                  .OverwriteFromNewtonsoftJsonAsync(pollNotificationsBuffer, serializerSettings: serializerSettings);
 
                     if (notifications.Count == 0)
                         continue;

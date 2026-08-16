@@ -117,14 +117,79 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
 
         [Query]
-        [All(typeof(PBTriggerArea), typeof(TriggerAreaComponent))]
-        private void UpdateTriggerArea(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        [All(typeof(TriggerAreaComponent))]
+        private void UpdateTriggerArea(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, in PBTriggerArea pbTriggerArea, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
+            if (pbTriggerArea.IsDirty)
+            {
+                pbTriggerArea.IsDirty = false;
+
+                ColliderLayer previousMask = triggerAreaComponent.LayerMask;
+                ColliderLayer newMask = pbTriggerArea.GetColliderLayer();
+
+                // Marks the component dirty so SDKEntityTriggerAreaHandlerSystem re-runs
+                // TryAssignArea (collider shape, gameObject layer, main-player fast path).
+                triggerAreaComponent.UpdateMaskAndMeshType(newMask, (SDKEntityTriggerAreaMeshType)pbTriggerArea.GetMeshType());
+
+                // Unity does not synthesize OnTriggerEnter/Exit when a live area's mask changes,
+                // so entities already inside must get synthetic ENTER/EXIT events here.
+                if (previousMask != newMask)
+                    ReEvaluateEntitiesInside(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent, previousMask, newMask);
+            }
+
             ProcessOnEnterTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
 
             // Only ENTER and EXIT results are emitted; TAET_STAY is intentionally never appended,
             // so the GOVS-capped TriggerAreaResult buffer is not flooded with per-frame messages.
             ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+        }
+
+        private void ReEvaluateEntitiesInside(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform,
+            ref SDKEntityTriggerAreaComponent triggerAreaComponent, ColliderLayer previousMask, ColliderLayer newMask)
+        {
+            foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
+            {
+                // A destroyed collider (Unity fake-null, its exit callback missed) matches no
+                // mask; dereferencing its gameObject would throw.
+                if (entityCollider == null) continue;
+
+                // A pending enter has not been reported yet — it is emitted (or filtered) under
+                // the new mask by ProcessOnEnterTriggerArea; a synthetic EXIT here would
+                // fabricate an exit for an entity the scene never saw enter.
+                if (triggerAreaComponent.IsEnterPending(entityCollider)) continue;
+
+                bool matchedPreviousMask = ColliderMatchesMask(triggerAreaEntity, entityCollider, previousMask);
+                bool matchesNewMask = ColliderMatchesMask(triggerAreaEntity, entityCollider, newMask);
+                if (matchedPreviousMask == matchesNewMask) continue;
+
+                PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform, entityCollider,
+                    matchedPreviousMask ? TriggerAreaEventType.TaetExit : TriggerAreaEventType.TaetEnter,
+                    matchedPreviousMask ? previousMask : newMask,
+                    triggerAreaComponent.IncrementalTick);
+            }
+        }
+
+        /// <summary>
+        ///     Mask-gate predicate mirroring the early-outs of <see cref="PropagateResultComponent" />:
+        ///     true iff a result for this collider would pass the layer-mask filtering.
+        /// </summary>
+        private bool ColliderMatchesMask(in Entity triggerAreaEntity, Collider entityCollider, ColliderLayer mask)
+        {
+            int colliderLayer = entityCollider.gameObject.layer;
+            bool isMainAvatar = colliderLayer == PhysicsLayers.CHARACTER_LAYER;
+
+            if (isMainAvatar || colliderLayer == PhysicsLayers.OTHER_AVATARS_LAYER)
+            {
+                ColliderLayer expected = isMainAvatar
+                    ? PhysicsLayers.PLAYER_QUALIFYING_BITS
+                    : ColliderLayer.ClPlayer;
+
+                return (mask & expected) != 0;
+            }
+
+            return collidersSceneCache.TryGetEntity(entityCollider, out ColliderSceneEntityInfo entityInfo)
+                   && triggerAreaEntity != entityInfo.EntityReference
+                   && PhysicsLayers.LayerMaskContainsTargetLayer(mask, entityInfo.SDKLayer);
         }
 
         private void ProcessOnEnterTriggerArea(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
