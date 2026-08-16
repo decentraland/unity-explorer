@@ -71,3 +71,25 @@ class NullableStates
         Button? debugButton = null)
     { }
 }
+
+class MinedRules
+{
+    private readonly ConcurrentDictionary<string, int> cache = new ConcurrentDictionary<string, int>();
+    private readonly DCLConcurrentDictionary<string, int> sanctioned = new DCLConcurrentDictionary<string, int>();
+
+    void F(string name, string other)
+    {
+        var url = "https://peer.decentraland.org/content/entities";
+        var external = "https://example.com/status";
+        if (name.ToLowerInvariant() == other.ToLowerInvariant()) return;
+        if (string.Equals(name, other, StringComparison.OrdinalIgnoreCase)) return;
+        var dir = Application.persistentDataPath + "/AvatarCache";
+        var combined = Path.Combine(Application.persistentDataPath, "AvatarCache");
+        try { F(name, other); }
+        catch (Exception) { }
+        try { F(name, other); }
+        catch (OperationCanceledException) { }
+        // Note that this ensures the cache is always warm.
+        // remove the corrupt entry so the next read rebuilds it
+    }
+}

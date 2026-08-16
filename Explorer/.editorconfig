@@ -823,6 +823,7 @@ dotnet_diagnostic.DCLA002.severity = warning # detached UniTask flow swallows ex
 dotnet_diagnostic.DCLA003.severity = warning # allocation in system Update
 dotnet_diagnostic.DCLA004.severity = warning # pooled rental provably leaks
 dotnet_diagnostic.DCLA005.severity = error # FFI enum without explicit underlying type
+dotnet_diagnostic.DCLA006.severity = warning # event subscription without matching unsubscription
 
 # Tests exercise structural-change scenarios deliberately; corruption-class
 # rules stay visible there but never fail the build.

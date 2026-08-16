@@ -146,6 +146,44 @@ rule WARN contextmenu '' "$EXCLUDE_NON_PROD" \
     '\[ContextMenu' \
     'Prefer [Button] from EasyButtons over [ContextMenu] (docs/code-style-guidelines.md § Attribute Usages)'
 
+# Rules below are mined from the 6-month human review record (2026-02..2026-08).
+# Each message cites the PR whose review stated the rule.
+
+# Raw ConcurrentDictionary silently fails the WebGL build; DCLConcurrentDictionary
+# (Utility.Multithreading) is the platform-safe stand-in. Multithreading/ dirs are
+# the threading-primitive layer itself and legitimately touch the raw type.
+rule BLOCK concurrent-dictionary '' "$EXCLUDE_NON_PROD|(^|/)Multithreading/" \
+    '(^|[^[:alnum:]_])(System\.Collections\.Concurrent\.)?ConcurrentDictionary<' \
+    'ConcurrentDictionary is prohibited (WebGL) - use DCLConcurrentDictionary (review rule, PR #7595)'
+
+rule WARN hardcoded-dcl-url '\.cs$' "$EXCLUDE_NON_PROD|DecentralandUrl|(^|/)Playground|StressTest" \
+    '"https?://[a-z0-9.-]+\.decentraland\.(org|zone|today)' \
+    'Resolve decentraland URLs through DecentralandUrlsSource, never hardcode (review rule, PR #8393)'
+
+rule WARN tolower-compare '' "$EXCLUDE_NON_PROD" \
+    '\.To(Lower|Upper)(Invariant)? *\( *\) *[=!]=|[=!]= *[A-Za-z_][A-Za-z0-9_.]*\.To(Lower|Upper)(Invariant)? *\( *\)' \
+    'Compare with string.Equals(..., StringComparison.OrdinalIgnoreCase), not ToLower/ToUpper round-trips (review idiom bar)'
+
+rule WARN path-concat-unity '' "$EXCLUDE_NON_PROD" \
+    '(persistentDataPath|dataPath|streamingAssetsPath|temporaryCachePath) *\+ *"' \
+    'Use Path.Combine on Unity path properties, not string concatenation (review idiom bar)'
+
+# Single-line form only; multi-line empty catches are invisible to a per-line
+# check and stay with reviewers. Any line naming OperationCanceledException is
+# carved out - swallowing OCE is the sanctioned cancellation pattern.
+rule WARN empty-catch '' "$EXCLUDE_NON_PROD" \
+    'catch[ \t]*(\([^)]*\))?[ \t]*[{][ \t]*[}]' \
+    'Empty catch silently swallows context - catch the specific exception and act, or let it propagate (review rule, PR #7347)' \
+    'OperationCanceledException'
+
+rule WARN ai-comment-opener '' "$EXCLUDE_NON_PROD" \
+    '// *(Note that|This ensures|This allows|We use this to|Importantly,|As mentioned)' \
+    'Reads as AI narration - state the invariant or delete the comment (review rule, PRs #9043 #9747; CLAUDE.md anti-patterns)'
+
+rule BLOCK manifest-branch-ref 'Explorer/Packages/manifest\.json$' '' \
+    'github\.com/[^"]*#(fix|feat|chore|refactor|wip)/' \
+    'Feature-branch ref left in manifest.json - repin to the mainline ref before review (review rule: PR scope discipline)'
+
 # Emit added lines as: <path>\t<line-number>\t<line-text>
 parse_diff() {
     awk '
@@ -165,11 +203,15 @@ GIT_DIFF=(git -c core.quotePath=off -c diff.noprefix=false diff
 # rules don't govern (mirrors filter-warnings.sh's ownership boundary).
 # Analyzers/ is Roslyn-host code with its own idioms (nullable locals are
 # idiomatic there) - governed by its own test suite, not these Unity rules.
+# manifest.json rides along for the manifest-branch-ref rule; the Packages
+# exclude is one level down so the top-level manifest stays linted while
+# vendored package contents stay out.
 PATHSPEC=('*.cs'
+    'Explorer/Packages/manifest.json'
     ':(exclude)scripts/lint/tests/**'
     ':(exclude)Analyzers/**'
     ':(exclude)Explorer/Assets/Plugins/**'
-    ':(exclude)Explorer/Packages/**')
+    ':(exclude)Explorer/Packages/*/**')
 
 added_lines() {
     case "$mode" in

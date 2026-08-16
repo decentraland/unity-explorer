@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "com.dcl.broken": "https://github.com/decentraland/pkg.git#fix/no_explicit_dispose",
+    "com.dcl.pinned": "https://github.com/decentraland/pkg.git#main",
+    "com.unity.textmeshpro": "3.0.6"
+  }
+}
