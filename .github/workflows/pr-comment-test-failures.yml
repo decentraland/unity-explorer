@@ -151,6 +151,13 @@ jobs:
             fi
           done
 
+          # The only unbounded list in this body. The composite's env transport
+          # rejects any single env string over 128KiB (E2BIG) before its own
+          # 20k truncation can run, so bound it at composition.
+          if [ "${#failed_list}" -gt 60000 ]; then
+            failed_list="${failed_list:0:60000}"$'\n'"- …list truncated — see the run for the full set."$'\n'
+          fi
+
           case "$status" in
             incomplete) badge="https://img.shields.io/badge/Tests-Incomplete-d29922?logo=codecov&logoColor=white&style=for-the-badge"; headline="$warnings" ;;
             failed)     badge="https://img.shields.io/badge/Tests-Failed!-ff0000?logo=codecov&logoColor=white&style=for-the-badge";     headline="Some Unity tests failed ❌" ;;

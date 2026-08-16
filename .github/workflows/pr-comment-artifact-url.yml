@@ -21,8 +21,11 @@ on:
       - "main"
   workflow_dispatch:
 permissions:
-  contents: read  
+  contents: read
   pull-requests: write
+  # ucb-build-links reads the build run's artifacts and jobs cross-run — the
+  # same reason the sibling comment workflows grant it.
+  actions: read
 
 jobs:
   pre-validation:
@@ -132,6 +135,32 @@ jobs:
 
             Build skipped — no changes detected under `Explorer/`.
 
+  # A cancelled run matches neither the success nor the failure gate, and the
+  # build job's live writer may have left an In-progress badge and rows up —
+  # without this the comment claims a build is running forever.
+  comment-cancelled:
+    needs: pre-validation
+    if: github.event.action == 'completed' && github.event.workflow_run.conclusion == 'cancelled' && needs.pre-validation.outputs.pr-number != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CI status action
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Post cancelled build section
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ needs.pre-validation.outputs.pr-number }}
+          section: build
+          github-token: ${{ github.token }}
+          body: |-
+            [![Build](https://img.shields.io/badge/Build-Cancelled-lightgrey?logo=unity&logoColor=white&style=for-the-badge)](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }})
+
+            Build cancelled — push a new commit or re-run the workflow to refresh this section.
+
   comment-success:
     needs: [pre-validation, check-build-ran]
     if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.player-artifacts == 'true'
@@ -218,6 +247,7 @@ jobs:
           echo "BUILD_DATE=$BUILD_DATE" >> "$GITHUB_ENV"
 
       - name: Download size reports
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
           OWNER: ${{ github.repository_owner }}
@@ -253,6 +283,7 @@ jobs:
           fi
 
       - name: Fetch Unity Cloud build links
+        continue-on-error: true
         id: ucb
         uses: ./.github/actions/ucb-build-links
         with:
@@ -265,6 +296,7 @@ jobs:
       # body so a link whose id could not be resolved is dropped instead of
       # rendering broken.
       - name: Compose platform rows
+        continue-on-error: true
         env:
           WINDOWS_CELL: ${{ steps.ucb.outputs.windows-cell }}
           MAC_CELL: ${{ steps.ucb.outputs.mac-cell }}
@@ -419,6 +451,7 @@ jobs:
           persist-credentials: false
 
       - name: Fetch Unity Cloud build links
+        continue-on-error: true
         id: ucb
         uses: ./.github/actions/ucb-build-links
         with:

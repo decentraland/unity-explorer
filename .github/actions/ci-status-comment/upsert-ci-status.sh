@@ -36,6 +36,12 @@ if [ -n "${SECTION_BODY_FILE:-}" ]; then
   SECTION_BODY="$(cat "$SECTION_BODY_FILE")"
 fi
 
+# Everything below matches markers as whole lines, which CRLF endings defeat —
+# and GitHub's web editor resubmits an edited comment with \r\n. Normalize the
+# body here and every API read below, so one manual edit cannot make each
+# writer append a duplicate fence beneath a stale, still-rendering one.
+SECTION_BODY="${SECTION_BODY//$'\r'/}"
+
 # GitHub caps an issue comment at 65536 chars across every section; keep one
 # writer — whichever path its body arrived by — from consuming the whole budget
 # and failing an unrelated section's PATCH with an opaque 422. Truncation is
@@ -190,6 +196,7 @@ for attempt in 1 2 3 4 5; do
 
   if [ -n "$COMMENT_ID" ]; then
     CURRENT_BODY=$(jq -r --arg id "$COMMENT_ID" '.[] | select(.id==($id|tonumber)) | .body' <<< "$(flatten_pages "$COMMENTS")")
+    CURRENT_BODY="${CURRENT_BODY//$'\r'/}"
   else
     CURRENT_BODY=""
   fi
@@ -215,13 +222,29 @@ for attempt in 1 2 3 4 5; do
 
   NEW_BODY="$(replace_section "$CURRENT_BODY")"
 
+  # Near GitHub's 65536-char comment cap the write starts 422ing; the per-
+  # section CAP cannot see the other sections, so at least say why.
+  if [ "${#NEW_BODY}" -gt 65000 ]; then
+    echo "::warning::Unified comment is ${#NEW_BODY} chars — at/over GitHub's 65536 cap; a section needs a tighter cap."
+  fi
+
+  # A failed write must land in the retry loop, not kill the script under
+  # set -e — that would fail this section's job and strand the section stale.
   if [ -z "$COMMENT_ID" ]; then
-    RESULT=$(jq -n --arg b "$NEW_BODY" '{body:$b}' \
-      | gh api -X POST "/repos/$REPO/issues/$PR_NUMBER/comments" --input -)
+    if ! RESULT=$(jq -n --arg b "$NEW_BODY" '{body:$b}' \
+      | gh api -X POST "/repos/$REPO/issues/$PR_NUMBER/comments" --input -); then
+      echo "Create failed (attempt $attempt); retrying."
+      sleep $((attempt * 2))
+      continue
+    fi
     COMMENT_ID=$(jq -r '.id' <<< "$RESULT")
   else
-    jq -n --arg b "$NEW_BODY" '{body:$b}' \
-      | gh api -X PATCH "/repos/$REPO/issues/comments/$COMMENT_ID" --input - >/dev/null
+    if ! jq -n --arg b "$NEW_BODY" '{body:$b}' \
+      | gh api -X PATCH "/repos/$REPO/issues/comments/$COMMENT_ID" --input - >/dev/null; then
+      echo "Update failed (attempt $attempt); retrying."
+      sleep $((attempt * 2))
+      continue
+    fi
   fi
 
   # Re-read and confirm our section landed on the surviving comment, and that no
@@ -231,6 +254,7 @@ for attempt in 1 2 3 4 5; do
   RIDS=()
   while IFS= read -r line; do [ -n "$line" ] && RIDS+=("$line"); done <<< "$(marker_ids "$RECHECK")"
   LIVE_BODY=$(jq -r --arg id "$COMMENT_ID" '.[] | select(.id==($id|tonumber)) | .body' <<< "$(flatten_pages "$RECHECK")")
+  LIVE_BODY="${LIVE_BODY//$'\r'/}"
 
   # A write that landed on a younger duplicate is doomed: GC keeps the oldest,
   # so this section's content would vanish with the duplicate. Retry on the

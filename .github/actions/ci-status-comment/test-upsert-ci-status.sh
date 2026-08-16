@@ -229,4 +229,21 @@ grep -q 'RACE-CONVERGED' <<< "$(body_of)" || fail "race: final body missing conv
 [ "$(cat "$WORK/stale-reads")" = 0 ] || fail "race: stale read was not consumed"
 pass "stale re-read retried until convergence"
 
+# --- 11. CRLF body normalized in place, fences not duplicated -----------------
+reset_store "$(python3 - <<'PY'
+import json
+body = ("<!-- ci-status -->\r\n### 🚦 CI Status\r\n"
+        "<!-- ci:build:start -->\r\nOLD-BUILD\r\n<!-- ci:build:end -->")
+print(json.dumps([{"id": 9, "user": {"login": "github-actions[bot]"}, "body": body}]))
+PY
+)"
+run_upsert build "CRLF-BUILD" >/dev/null
+[ "$(count)" = 1 ] || fail "crlf: expected 1 comment"
+BODY="$(body_of)"
+[ "$(grep -cF '<!-- ci:build:start -->' <<< "$BODY")" = 1 ] || fail "crlf: build fence duplicated"
+grep -q 'CRLF-BUILD' <<< "$BODY" || fail "crlf: new content missing"
+grep -q 'OLD-BUILD' <<< "$BODY" && fail "crlf: stale content still rendered"
+grep -q $'\r' <<< "$BODY" && fail "crlf: body still carries CR"
+pass "CRLF body replaced in place, no duplicate fences"
+
 [ "$FAILED" = 0 ] && echo "ALL PASS" || { echo "FAILURES PRESENT"; exit 1; }

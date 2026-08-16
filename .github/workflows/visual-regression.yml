@@ -197,8 +197,12 @@ jobs:
 
   run-suite:
     name: Run visual suite
-    needs: resolve
-    if: needs.resolve.outputs.authorized == 'true'
+    # automation-pending in needs: orders the two writers of the automation
+    # section — the "Running!" write must precede the suite (and so the final
+    # verdict), or a queue-delayed pending write can overwrite the verdict and
+    # stick. !cancelled() keeps the suite running when pending skips or fails.
+    needs: [resolve, automation-pending]
+    if: ${{ !cancelled() && needs.resolve.outputs.authorized == 'true' }}
     # @main pins us to the merged version of the reusable workflow so PRs to
     # explorer-automation that touch run-visual-suite.yml don't accidentally
     # affect every unity-explorer PR's visual run.
@@ -256,6 +260,15 @@ jobs:
           # passes neither, so keep the three in lockstep if that ever changes.
           REPORT_URL="${PUBLIC_URL_PREFIX}/@dcl/${REPO//\//-}/visual-regression/test/macos/${PR_NUMBER}/${COMMIT_SHA}/index.html"
 
+          # The callee only syncs a report to S3 when the suite produced one —
+          # probe before rendering the link so a dead run doesn't present a
+          # 404 as a working report.
+          if curl -sfIL --max-time 15 "$REPORT_URL" >/dev/null 2>&1; then
+            REPORT_ROW="| Allure report | [Open report]($REPORT_URL) |"
+          else
+            REPORT_ROW="| Allure report | not produced — see the workflow run |"
+          fi
+
           DELIM="EOF_${RANDOM}${RANDOM}_$$"
           {
             echo "body<<$DELIM"
@@ -266,7 +279,7 @@ jobs:
             echo "| Name | Link |"
             echo "| -------- | ----------------------- |"
             echo "| Commit | [\`$COMMIT_SHA\`](${GITHUB_SERVER_URL:-https://github.com}/${REPO}/commit/${COMMIT_SHA}) |"
-            echo "| Allure report | [Open report]($REPORT_URL) |"
+            echo "$REPORT_ROW"
             echo "| Workflow run | [View run]($RUN_URL) |"
             echo ""
             echo "<sub>Triggered via \`/visual-tests\` · the detailed per-platform comment is posted separately.</sub>"

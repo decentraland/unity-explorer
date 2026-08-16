@@ -709,17 +709,20 @@ def _github_api(path):
 
 
 def _build_section_of_status_comment():
-    """Current text between the build fences of the unified CI status comment, or ''.
+    """Current text between the build fences of the unified CI status comment.
 
     Oldest marker-bearing bot comment wins, matching upsert-ci-status.sh's
-    duplicate-collapse rule, so both read the same comment.
+    duplicate-collapse rule, so both read the same comment. Returns '' when the
+    comment genuinely does not exist, and None when it could not be determined
+    (API failure, or the page bound ran out) — writing on None would compose a
+    section without the sibling platform's row and wipe it.
     """
     repo = os.getenv('GITHUB_REPOSITORY')
     pr = os.getenv('PR_NUMBER')
-    for page in (1, 2, 3):
+    for page in range(1, 31):
         resp = _github_api(f'/repos/{repo}/issues/{pr}/comments?per_page=100&page={page}')
         if resp.status_code != 200:
-            return ''
+            return None
         comments = resp.json()
         for comment in comments:
             body = comment.get('body') or ''
@@ -728,8 +731,8 @@ def _build_section_of_status_comment():
                 end = body.find('<!-- ci:build:end -->')
                 return body[start:end] if 0 <= start < end else ''
         if len(comments) < 100:
-            break
-    return ''
+            return ''
+    return None
 
 
 def _platform_key():
@@ -776,12 +779,15 @@ def upsert_live_comment(build_id, only_if_missing=False):
     Each matrix job re-reads the section and carries the other target's live
     row along, so concurrent first writes converge on both rows instead of
     clobbering each other; write races on the comment itself are the upsert
-    script's problem. Returns whether a write was attempted.
+    script's problem. Returns True when a write landed, False when the row was
+    already present, and None when the read or the write failed.
     """
     platform = _platform_key()
     label = {'windows64': 'Windows', 'macos': 'Mac'}.get(platform, platform)
     marker = f'{LIVE_MARKER_PREFIX}{platform} -->'
     section = _build_section_of_status_comment()
+    if section is None:
+        return None
     if only_if_missing and marker in section:
         return False
 
@@ -819,11 +825,11 @@ def upsert_live_comment(build_id, only_if_missing=False):
                    SECTION='build',
                    SECTION_BODY='',
                    SECTION_BODY_FILE=body_file)
-        subprocess.run(['bash', CI_STATUS_SCRIPT], env=env, timeout=180, check=False)
+        result = subprocess.run(['bash', CI_STATUS_SCRIPT], env=env, timeout=180, check=False)
     finally:
         if body_file:
             os.unlink(body_file)
-    return True
+    return True if result.returncode == 0 else None
 
 
 def maybe_update_live_comment(build_id, reconcile=False, force=False):
@@ -850,10 +856,13 @@ def maybe_update_live_comment(build_id, reconcile=False, force=False):
         return
     try:
         _live_comment_last_attempt = time.time()
-        if upsert_live_comment(build_id, only_if_missing=reconcile):
+        outcome = upsert_live_comment(build_id, only_if_missing=reconcile)
+        if outcome is True:
             _live_comment_asserts += 1
             _live_comment_confirms = 0
-        elif reconcile:
+        elif outcome is False and reconcile:
+            # Only a confirmed present row spends the probe budget; a failed
+            # read or write (None) must leave both counters for the retry.
             _live_comment_confirms += 1
     except Exception as e:
         print(f'note: live status-comment update failed: {e}')
@@ -956,10 +965,12 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
 
         keep_polling, status, response_json = poll_build(id)
 
-        if dashboard_url is None:
+        # Both run every poll: record keeps retrying until the info file lands
+        # AND a dashboard href arrives, and reconcile self-heals the live row
+        # whether or not an href ever qualifies (it rate-limits internally).
+        if dashboard_url is None or not _build_link_info_written:
             record_build_link_info(id, response_json)
-        else:
-            maybe_update_live_comment(id, reconcile=True)
+        maybe_update_live_comment(id, reconcile=True)
 
         queued_reason = response_json.get('queuedReason')
         if queued_reason and status in QUEUE_STATUSES:

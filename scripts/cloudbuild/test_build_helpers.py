@@ -9,6 +9,7 @@ import re
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build  # noqa: E402
@@ -92,6 +93,11 @@ class LinkInfoFileTest(EnvMixin, unittest.TestCase):
         old_cwd = os.getcwd()
         self.addCleanup(os.chdir, old_cwd)
         os.chdir(tmp.name)
+        # Silence build.py's prints: its ::notice:: line is a live workflow
+        # command when the test job itself runs on the Actions runner.
+        silencer = mock.patch('builtins.print')
+        silencer.start()
+        self.addCleanup(silencer.stop)
         # PR_NUMBER unset keeps maybe_update_live_comment inert.
         self.set_env(TARGET='windows64-x', ORG_ID='org1', PROJECT_ID='proj1', PR_NUMBER=None)
         build.dashboard_url = None
