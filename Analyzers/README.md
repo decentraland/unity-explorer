@@ -14,7 +14,7 @@ analyzer's XML doc; severities are pinned in `Explorer/.editorconfig`.
 | DCLA003 | warning | Heap allocation in per-frame code: system `Update()`/`[Query]` bodies, plus any `[Utility.HotPath]` method in any assembly. Throw paths and `Exception` construction are exempt (error-path work). |
 | DCLA004 | warning | Pooled `Get()` rental that provably never escapes or releases. Any escape silences it, including self-release member calls on non-collection rentals. |
 | DCLA005 | error | Enum crossing a `[DllImport]` boundary (param, return, unmanaged-struct field) without an explicit underlying type. Source-declared enums only. |
-| DCLA006 | warning | Type owning a teardown method (Dispose/DisposeAsync/OnDestroy/OnDisable) subscribes (`+=`, or UnityEvent `AddListener`) to an event it does not own and never unsubscribes anywhere in the type. Own events, local/parameter-rooted receivers, and self-removing handlers stay silent; one `-=` of an event (or any RemoveListener/RemoveAllListeners) silences its subscriptions type-wide. |
+| DCLA006 | warning | Type owning a teardown method (Dispose/DisposeAsync/OnDestroy/OnDisable) subscribes (`+=`) to a C# event it does not own and never unsubscribes anywhere in the type. Corpus-calibrated silencers: own events, local-rooted receivers, parameters not retained by a constructor, create-and-dispose pairings (field new'd by the type and touched in teardown), and self-removing handlers; one `-=` of an event silences its subscriptions type-wide. UnityEvent AddListener is deliberately out of scope (serialized-child wiring is the standard idiom). |
 
 ## Integration
 

@@ -10,30 +10,12 @@ namespace DCL.Analyzers.Tests
         private const string STUB = @"
 using System;
 
-namespace UnityEngine.Events
-{
-    public abstract class UnityEventBase
-    {
-        public void RemoveAllListeners() { }
-    }
-
-    public class UnityEvent : UnityEventBase
-    {
-        public void AddListener(Action call) { }
-        public void RemoveListener(Action call) { }
-    }
-}
-
-public class Publisher
+public class Publisher : IDisposable
 {
     public event Action Changed;
     public static event Action GlobalChanged;
     public Publisher Inner => this;
-}
-
-public class ClickSource
-{
-    public UnityEngine.Events.UnityEvent onClick = new UnityEngine.Events.UnityEvent();
+    public void Dispose() { }
 }
 ";
 
@@ -133,10 +115,15 @@ public class DialogFlow : IDisposable
 }");
 
         [Test]
-        public Task CleanWhenReceiverIsParameter() =>
+        public Task CleanWhenReceiverIsUnstoredParameter() =>
             VerifyAsync(@"
 public class PooledItemWiring : IDisposable
 {
+    public PooledItemWiring(Publisher transient)
+    {
+        transient.Changed += OnChanged;
+    }
+
     public void WireOnce(Publisher item)
     {
         item.Changed += OnChanged;
@@ -145,6 +132,87 @@ public class PooledItemWiring : IDisposable
     private void OnChanged() { }
 
     public void Dispose() { }
+}");
+
+        [Test]
+        public Task ReportsWhenCtorParameterIsStoredToField() =>
+            VerifyAsync(@"
+public class InjectedDep : IDisposable
+{
+    private readonly Publisher publisher;
+
+    public InjectedDep(Publisher publisher)
+    {
+        this.publisher = publisher;
+        {|DCLA006:publisher.Changed += OnChanged|};
+    }
+
+    private void OnChanged() { }
+
+    public void Dispose() { }
+}");
+
+        [Test]
+        public Task CleanWhenSelfCreatedPublisherIsDisposedInTeardown() =>
+            VerifyAsync(@"
+public class OwnedBus : IDisposable
+{
+    private readonly Publisher bus;
+
+    public OwnedBus()
+    {
+        bus = new Publisher();
+        bus.Changed += OnChanged;
+    }
+
+    private void OnChanged() { }
+
+    public void Dispose()
+    {
+        bus.Dispose();
+    }
+}");
+
+        [Test]
+        public Task CleanWhenInitializerCreatedPublisherIsDisposedInTeardown() =>
+            VerifyAsync(@"
+public class OwnedBusViaInitializer : IDisposable
+{
+    private readonly Publisher bus = new Publisher();
+
+    public OwnedBusViaInitializer()
+    {
+        bus.Changed += OnChanged;
+    }
+
+    private void OnChanged() { }
+
+    public void Dispose()
+    {
+        bus.Dispose();
+    }
+}");
+
+        [Test]
+        public Task ReportsWhenSelfCreatedPublisherIsIgnoredByTeardown() =>
+            VerifyAsync(@"
+public class LeakyOwner : IDisposable
+{
+    private readonly Publisher bus;
+    private readonly Publisher other = new Publisher();
+
+    public LeakyOwner()
+    {
+        bus = new Publisher();
+        {|DCLA006:bus.Changed += OnChanged|};
+    }
+
+    private void OnChanged() { }
+
+    public void Dispose()
+    {
+        other.Dispose();
+    }
 }");
 
         [Test]
@@ -207,58 +275,6 @@ public class ChainWiring : IDisposable
     }
 
     private void OnChanged() { }
-
-    public void Dispose() { }
-}");
-
-        [Test]
-        public Task ReportsAddListenerNeverRemoved() =>
-            VerifyAsync(@"
-public class View : IDisposable
-{
-    private readonly ClickSource closeButton = new ClickSource();
-
-    public View()
-    {
-        {|DCLA006:closeButton.onClick.AddListener(OnClose)|};
-    }
-
-    private void OnClose() { }
-
-    public void Dispose() { }
-}");
-
-        [Test]
-        public Task CleanWhenRemoveAllListenersPresent() =>
-            VerifyAsync(@"
-public class View : IDisposable
-{
-    private readonly ClickSource closeButton = new ClickSource();
-
-    public View()
-    {
-        closeButton.onClick.AddListener(OnClose);
-    }
-
-    private void OnClose() { }
-
-    public void Dispose()
-    {
-        closeButton.onClick.RemoveAllListeners();
-    }
-}");
-
-        [Test]
-        public Task CleanAddListenerOnParameterReceiver() =>
-            VerifyAsync(@"
-public class ItemWiring : IDisposable
-{
-    public void WireOnce(ClickSource item)
-    {
-        item.onClick.AddListener(OnClick);
-    }
-
-    private void OnClick() { }
 
     public void Dispose() { }
 }");

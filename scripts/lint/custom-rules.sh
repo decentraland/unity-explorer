@@ -152,31 +152,43 @@ rule WARN contextmenu '' "$EXCLUDE_NON_PROD" \
 # Raw ConcurrentDictionary silently fails the WebGL build; DCLConcurrentDictionary
 # (Utility.Multithreading) is the platform-safe stand-in. Multithreading/ dirs are
 # the threading-primitive layer itself and legitimately touch the raw type.
+# Covers the whole raw System.Collections.Concurrent collection family - the
+# WebGL failure mode is shared and DCLConcurrent{Dictionary,Queue,Bag} wrappers
+# exist (Utility.Multithreading; corpus carries zero raw uses).
 rule BLOCK concurrent-dictionary '' "$EXCLUDE_NON_PROD|(^|/)Multithreading/" \
-    '(^|[^[:alnum:]_])(System\.Collections\.Concurrent\.)?ConcurrentDictionary<' \
-    'ConcurrentDictionary is prohibited (WebGL) - use DCLConcurrentDictionary (review rule, PR #7595)'
+    '(^|[^[:alnum:]_])(System\.Collections\.Concurrent\.)?Concurrent(Dictionary|Queue|Bag|Stack)<' \
+    'Raw System.Collections.Concurrent types are prohibited (WebGL) - use the DCLConcurrent* wrappers (review rule, PR #7595)'
 
-rule WARN hardcoded-dcl-url '\.cs$' "$EXCLUDE_NON_PROD|DecentralandUrl|(^|/)Playground|StressTest" \
-    '"https?://[a-z0-9.-]+\.decentraland\.(org|zone|today)' \
-    'Resolve decentraland URLs through DecentralandUrlsSource, never hardcode (review rule, PR #8393)'
+# Subdomain optional (root-domain marketplace/blog links are the same
+# centralization violation); comment-only lines carved out - a URL in a comment
+# is never a runtime request. UrlsSource classes ARE the choke point.
+rule WARN hardcoded-dcl-url '\.cs$' "$EXCLUDE_NON_PROD|DecentralandUrl|UrlsSource\.cs$|(^|/)Playground|StressTest" \
+    '"https?://([a-z0-9.-]+\.)?decentraland\.(org|zone|today)' \
+    'Resolve decentraland URLs through DecentralandUrlsSource, never hardcode (review rule, PR #8393)' \
+    '^[ \t]*(//|/\*|\*)'
 
 rule WARN tolower-compare '' "$EXCLUDE_NON_PROD" \
-    '\.To(Lower|Upper)(Invariant)? *\( *\) *[=!]=|[=!]= *[A-Za-z_][A-Za-z0-9_.]*\.To(Lower|Upper)(Invariant)? *\( *\)' \
-    'Compare with string.Equals(..., StringComparison.OrdinalIgnoreCase), not ToLower/ToUpper round-trips (review idiom bar)'
+    '\.To(Lower|Upper)(Invariant)? *\( *\) *[=!]=|[=!]= *[A-Za-z_][A-Za-z0-9_.]*\.To(Lower|Upper)(Invariant)? *\( *\)|\.To(Lower|Upper)(Invariant)? *\( *\) *\.(Contains|StartsWith|EndsWith|Equals) *\(|\.Equals *\( *[A-Za-z_][A-Za-z0-9_.]*\.To(Lower|Upper)(Invariant)? *\( *\) *\)' \
+    'Compare with string.Equals/StartsWith(..., StringComparison.OrdinalIgnoreCase), not ToLower/ToUpper round-trips (review idiom bar)'
 
+# Second branch catches interpolated paths ($"...{persistentDataPath}/...");
+# first branch takes any concat RHS - literal, const, or identifier.
 rule WARN path-concat-unity '' "$EXCLUDE_NON_PROD" \
-    '(persistentDataPath|dataPath|streamingAssetsPath|temporaryCachePath) *\+ *"' \
-    'Use Path.Combine on Unity path properties, not string concatenation (review idiom bar)'
+    '(persistentDataPath|dataPath|streamingAssetsPath|temporaryCachePath) *\+ *["A-Za-z_]|\$"[^"]*[{][^}]*(persistentDataPath|dataPath|streamingAssetsPath|temporaryCachePath)' \
+    'Use Path.Combine on Unity path properties, not concatenation or interpolation (review idiom bar)'
 
-# Single-line form only; multi-line empty catches are invisible to a per-line
-# check and stay with reviewers. Any line naming OperationCanceledException is
-# carved out - swallowing OCE is the sanctioned cancellation pattern.
+# Catch-ALL forms only (bare catch / Exception / System.Exception): an empty
+# catch of a SPECIFIC exception type is the sanctioned deliberate-no-op idiom
+# (ObjectDisposedException in Dispose, OperationCanceledException, documented
+# domain no-ops). Multi-line empty catches are invisible to a per-line check
+# and stay with reviewers.
 rule WARN empty-catch '' "$EXCLUDE_NON_PROD" \
-    'catch[ \t]*(\([^)]*\))?[ \t]*[{][ \t]*[}]' \
-    'Empty catch silently swallows context - catch the specific exception and act, or let it propagate (review rule, PR #7347)' \
-    'OperationCanceledException'
+    'catch[ \t]*(\( *(System\.)?Exception( +[A-Za-z_][A-Za-z0-9_]*)? *\))?[ \t]*[{][ \t]*[}]' \
+    'Empty catch-all silently swallows context - catch the specific exception and act, or let it propagate (review rule, PR #7347)'
 
-rule WARN ai-comment-opener '' "$EXCLUDE_NON_PROD" \
+# Generated protobuf docs (*.gen.cs) and the vendored BlueRaja priority queue
+# share the openers legitimately - calibrated excludes, 2026-08-16 corpus pass.
+rule WARN ai-comment-opener '' "$EXCLUDE_NON_PROD|\.gen\.cs$|(^|/)PriorityQueue/" \
     '// *(Note that|This ensures|This allows|We use this to|Importantly,|As mentioned)' \
     'Reads as AI narration - state the invariant or delete the comment (review rule, PRs #9043 #9747; CLAUDE.md anti-patterns)'
 

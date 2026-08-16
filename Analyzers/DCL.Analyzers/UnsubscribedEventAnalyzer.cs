@@ -5,31 +5,30 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 
 namespace DCL.Analyzers
 {
     /// <summary>
     ///     DCLA006: a type that owns a teardown method (Dispose/DisposeAsync/OnDestroy/OnDisable)
-    ///     subscribes with += to an event it does not own - an event reached through a field,
-    ///     property, chain, or a static event - and no -= for that event appears anywhere in the
-    ///     type (review rule: every acquire has a symmetric release; the same applies to
-    ///     UnityEvent AddListener without any RemoveListener/RemoveAllListeners in the type).
-    ///     Deliberately conservative: types without a teardown method are never analyzed
-    ///     (app-lifetime wiring is legitimate there); subscribing to the type's OWN event stays
-    ///     silent (subscriber and publisher die together); receivers rooted at a local or a
-    ///     parameter stay silent (locally-owned objects and the sanctioned wire-once pattern for
-    ///     pooled items); any -= of the event anywhere in the type - including a self-removing
-    ///     handler - silences every += of that event; and one RemoveListener/RemoveAllListeners
-    ///     silences every AddListener in the type, since listener pairs cannot be matched
-    ///     per-receiver without whole-program analysis.
+    ///     subscribes with += to a C# event it does not own - an event reached through a field,
+    ///     property chain, or a static event - and no -= for that event appears anywhere in the
+    ///     type (review rule: every acquire has a symmetric release).
+    ///     Calibrated against the live corpus (2026-08-16): UnityEvent AddListener is deliberately
+    ///     NOT covered - wiring a view's own serialized child components is the standard idiom and
+    ///     drowned the rule in false positives. Silencers, all corpus-derived: types without a
+    ///     teardown method are never analyzed (app-lifetime wiring is legitimate there); the
+    ///     type's OWN events stay silent (subscriber and publisher die together); receivers rooted
+    ///     at a local stay silent (locally-owned objects); receivers rooted at a parameter stay
+    ///     silent UNLESS a constructor stores that parameter into a field (a retained dependency
+    ///     must be torn down); a receiver field that the type itself assigns from an object
+    ///     creation AND references in a teardown method stays silent (create-and-dispose pairing -
+    ///     the publisher provably dies with the subscriber); and any -= of the event anywhere in
+    ///     the type - including a self-removing handler - silences every += of that event.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class UnsubscribedEventAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "DCLA006";
-
-        private const string UNITY_EVENT_BASE_METADATA_NAME = "UnityEngine.Events.UnityEventBase";
 
         private static readonly ImmutableHashSet<string> TEARDOWN_METHOD_NAMES = ImmutableHashSet.Create(
             "Dispose",
@@ -40,7 +39,7 @@ namespace DCL.Analyzers
         private static readonly DiagnosticDescriptor RULE = new (
             DiagnosticId,
             "Event subscription without matching unsubscription",
-            "'{0}' subscribes to '{1}' but never unsubscribes - pair the += with a -= in '{2}' (Subscribe->Unsubscribe, +=->-=, AddListener->RemoveListener)",
+            "'{0}' subscribes to '{1}' but never unsubscribes - pair the += with a -= in '{2}' (Subscribe->Unsubscribe, +=->-=)",
             "Correctness",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true,
@@ -49,6 +48,8 @@ namespace DCL.Analyzers
                          "subscriber, so the subscription keeps the dead subscriber reachable and its handler firing. " +
                          "Every acquire needs its symmetric, traceable release (review rule, unity-explorer PRs #9063 " +
                          "#9059; CLAUDE.md § Component Clean-up Patterns).");
+
+        private enum RootKind { Field, Parameter, LocalOrConditional, Other }
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(RULE);
 
@@ -63,10 +64,11 @@ namespace DCL.Analyzers
 
                 if (!HasTeardownMethod(type)) return;
 
-                var subscriptions = new ConcurrentBag<(IEventSymbol evt, Location location)>();
+                var subscriptions = new ConcurrentBag<(IEventSymbol evt, IFieldSymbol? rootField, IParameterSymbol? rootParameter, Location location)>();
                 var unsubscribedEvents = new ConcurrentBag<IEventSymbol>();
-                var listenerAdds = new ConcurrentBag<(IMethodSymbol method, Location location)>();
-                int listenerRemovals = 0;
+                var selfCreatedFields = new ConcurrentBag<IFieldSymbol>();
+                var teardownTouchedFields = new ConcurrentBag<IFieldSymbol>();
+                var ctorStoredParameters = new ConcurrentBag<IParameterSymbol>();
 
                 symbolStartContext.RegisterOperationAction(operationContext =>
                 {
@@ -84,49 +86,87 @@ namespace DCL.Analyzers
                     // lifetime, so the subscription cannot outlive its target
                     if (eventReference.Instance is IInstanceReferenceOperation) return;
 
-                    if (!eventReference.Event.IsStatic && ReceiverRootIsLocalOrParameter(eventReference.Instance)) return;
+                    IEventSymbol evt = eventReference.Event.OriginalDefinition;
+                    Location location = assignment.Syntax.GetLocation();
 
-                    subscriptions.Add((eventReference.Event.OriginalDefinition, assignment.Syntax.GetLocation()));
+                    if (eventReference.Event.IsStatic)
+                    {
+                        subscriptions.Add((evt, null, null, location));
+                        return;
+                    }
+
+                    (RootKind kind, IFieldSymbol? field, IParameterSymbol? parameter) = ReceiverRoot(eventReference.Instance);
+
+                    switch (kind)
+                    {
+                        case RootKind.LocalOrConditional:
+                            return;
+
+                        case RootKind.Parameter:
+                            subscriptions.Add((evt, null, parameter, location));
+                            return;
+
+                        default:
+                            subscriptions.Add((evt, field, null, location));
+                            return;
+                    }
                 }, OperationKind.EventAssignment);
 
                 symbolStartContext.RegisterOperationAction(operationContext =>
                 {
-                    var invocation = (IInvocationOperation)operationContext.Operation;
-                    IMethodSymbol method = invocation.TargetMethod;
+                    var initializer = (IFieldInitializerOperation)operationContext.Operation;
 
-                    if (!IsUnityEventMethod(method)) return;
+                    if (Unwrap(initializer.Value) is not IObjectCreationOperation) return;
 
-                    switch (method.Name)
+                    foreach (IFieldSymbol field in initializer.InitializedFields)
+                        selfCreatedFields.Add(field);
+                }, OperationKind.FieldInitializer);
+
+                symbolStartContext.RegisterOperationAction(operationContext =>
+                {
+                    var assignment = (ISimpleAssignmentOperation)operationContext.Operation;
+
+                    if (assignment.Target is not IFieldReferenceOperation { Instance: IInstanceReferenceOperation or null } fieldTarget) return;
+
+                    switch (Unwrap(assignment.Value))
                     {
-                        case "AddListener" when !ReceiverRootIsLocalOrParameter(invocation.Instance):
-                            listenerAdds.Add((method, invocation.Syntax.GetLocation()));
+                        case IObjectCreationOperation:
+                            selfCreatedFields.Add(fieldTarget.Field);
                             break;
 
-                        case "RemoveListener":
-                        case "RemoveAllListeners":
-                            Interlocked.Exchange(ref listenerRemovals, 1);
+                        case IParameterReferenceOperation parameterValue
+                            when operationContext.ContainingSymbol is IMethodSymbol { MethodKind: MethodKind.Constructor }:
+                            ctorStoredParameters.Add(parameterValue.Parameter);
                             break;
                     }
-                }, OperationKind.Invocation);
+                }, OperationKind.SimpleAssignment);
+
+                symbolStartContext.RegisterOperationAction(operationContext =>
+                {
+                    if (operationContext.ContainingSymbol is IMethodSymbol method && TEARDOWN_METHOD_NAMES.Contains(method.Name))
+                        teardownTouchedFields.Add(((IFieldReferenceOperation)operationContext.Operation).Field);
+                }, OperationKind.FieldReference);
 
                 symbolStartContext.RegisterSymbolEndAction(symbolEndContext =>
                 {
                     var removed = new HashSet<IEventSymbol>(unsubscribedEvents, SymbolEqualityComparer.Default);
+                    var selfCreated = new HashSet<IFieldSymbol>(selfCreatedFields, SymbolEqualityComparer.Default);
+                    var teardownTouched = new HashSet<IFieldSymbol>(teardownTouchedFields, SymbolEqualityComparer.Default);
+                    var stored = new HashSet<IParameterSymbol>(ctorStoredParameters, SymbolEqualityComparer.Default);
 
-                    foreach ((IEventSymbol evt, Location location) in subscriptions)
+                    foreach ((IEventSymbol evt, IFieldSymbol? rootField, IParameterSymbol? rootParameter, Location location) in subscriptions)
                     {
                         if (removed.Contains(evt)) continue;
 
+                        // parameter-rooted: only a dependency the constructor RETAINS must be torn down
+                        if (rootParameter != null && !stored.Contains(rootParameter)) continue;
+
+                        // create-and-dispose pairing: the type news up the publisher and touches it
+                        // in teardown - publisher and subscriber provably die together
+                        if (rootField != null && selfCreated.Contains(rootField) && teardownTouched.Contains(rootField)) continue;
+
                         symbolEndContext.ReportDiagnostic(Diagnostic.Create(
                             RULE, location, type.Name, evt.Name, TeardownMethodName(type)));
-                    }
-
-                    if (listenerRemovals != 0) return;
-
-                    foreach ((IMethodSymbol method, Location location) in listenerAdds)
-                    {
-                        symbolEndContext.ReportDiagnostic(Diagnostic.Create(
-                            RULE, location, type.Name, method.ContainingType.Name + "." + method.Name, TeardownMethodName(type)));
                     }
                 });
             }, SymbolKind.NamedType);
@@ -140,10 +180,10 @@ namespace DCL.Analyzers
 
         /// <summary>
         ///     Walks the receiver chain (fields, properties, invocation results, conversions) to
-        ///     its root. A local or parameter root means the subscription target is locally owned
-        ///     or of unknowable ownership - both stay silent.
+        ///     its root. The field adjacent to the root - the type's own handle on the publisher -
+        ///     is what the create-and-dispose ownership check keys on.
         /// </summary>
-        private static bool ReceiverRootIsLocalOrParameter(IOperation? instance)
+        private static (RootKind kind, IFieldSymbol? field, IParameterSymbol? parameter) ReceiverRoot(IOperation? instance)
         {
             IOperation? current = instance;
 
@@ -151,6 +191,9 @@ namespace DCL.Analyzers
             {
                 switch (current)
                 {
+                    case IFieldReferenceOperation { Instance: IInstanceReferenceOperation or null } baseField:
+                        return (RootKind.Field, baseField.Field, null);
+
                     case IMemberReferenceOperation memberReference:
                         current = memberReference.Instance;
                         break;
@@ -163,36 +206,25 @@ namespace DCL.Analyzers
                         current = conversion.Operand;
                         break;
 
-                    case IConditionalAccessInstanceOperation:
                     case ILocalReferenceOperation:
-                    case IParameterReferenceOperation:
-                        return true;
+                    case IConditionalAccessInstanceOperation:
+                        return (RootKind.LocalOrConditional, null, null);
+
+                    case IParameterReferenceOperation parameterReference:
+                        return (RootKind.Parameter, null, parameterReference.Parameter);
 
                     default:
-                        return false;
+                        return (RootKind.Other, null, null);
                 }
             }
         }
 
-        private static bool IsUnityEventMethod(IMethodSymbol method)
+        private static IOperation Unwrap(IOperation operation)
         {
-            for (INamedTypeSymbol? current = method.ContainingType; current != null; current = current.BaseType)
-            {
-                if (FullMetadataName(current.OriginalDefinition) == UNITY_EVENT_BASE_METADATA_NAME)
-                    return true;
-            }
+            while (operation is IConversionOperation conversion)
+                operation = conversion.Operand;
 
-            return false;
-        }
-
-        private static string FullMetadataName(INamedTypeSymbol type)
-        {
-            string name = type.MetadataName;
-
-            for (INamespaceSymbol? ns = type.ContainingNamespace; ns is { IsGlobalNamespace: false }; ns = ns.ContainingNamespace)
-                name = ns.Name + "." + name;
-
-            return name;
+            return operation;
         }
     }
 }

@@ -75,20 +75,32 @@ class NullableStates
 class MinedRules
 {
     private readonly ConcurrentDictionary<string, int> cache = new ConcurrentDictionary<string, int>();
+    private readonly ConcurrentQueue<int> pending = new ConcurrentQueue<int>();
     private readonly DCLConcurrentDictionary<string, int> sanctioned = new DCLConcurrentDictionary<string, int>();
+    private readonly DCLConcurrentQueue<int> sanctionedQueue = new DCLConcurrentQueue<int>();
 
     void F(string name, string other)
     {
         var url = "https://peer.decentraland.org/content/entities";
+        var root = "https://decentraland.org/marketplace/names/claim";
         var external = "https://example.com/status";
+        // see https://docs.decentraland.org/creator/scenes-sdk7/ for the cap
         if (name.ToLowerInvariant() == other.ToLowerInvariant()) return;
+        if (name.ToLower().StartsWith("wss://")) return;
+        if (name.Equals(other.ToLowerInvariant())) return;
         if (string.Equals(name, other, StringComparison.OrdinalIgnoreCase)) return;
         var dir = Application.persistentDataPath + "/AvatarCache";
+        var joined = Application.persistentDataPath + FOLDER_NAME;
+        var initJs = $"file://{Application.streamingAssetsPath}/Js/Init.js";
         var combined = Path.Combine(Application.persistentDataPath, "AvatarCache");
         try { F(name, other); }
         catch (Exception) { }
         try { F(name, other); }
+        catch { }
+        try { F(name, other); }
         catch (OperationCanceledException) { }
+        try { F(name, other); }
+        catch (ObjectDisposedException) { }
         // Note that this ensures the cache is always warm.
         // remove the corrupt entry so the next read rebuilds it
     }
