@@ -21,6 +21,8 @@ using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoa
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesDTOByPointersFromRealmIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
+using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
+using SceneEmoteFromLocalPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -39,6 +41,8 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeGltfLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
             ConsumeAndDisposeFinishedEmotePromiseQuery(World);
+            ConsumeAndDisposeFinishedSceneEmoteFromRealmPromiseQuery(World);
+            ConsumeAndDisposeFinishedSceneEmoteFromLocalPromiseQuery(World);
         }
 
         [Query]
@@ -51,8 +55,8 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (!promiseResult.Succeeded)
                 {
-                    foreach (var pointerID in promise.LoadingIntention.Pointers)
-                        ReportAndFinalizeWithError(pointerID);
+                    foreach (var pointerId in promise.LoadingIntention.Pointers)
+                        ReportAndFinalizeWithError(pointerId);
                 }
                 else
                     using (var list = promiseResult.Asset.ConsumeAttachments())
@@ -83,7 +87,7 @@ namespace DCL.AvatarRendering.Emotes
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 else
                 {
-                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO?.id} failed to load from the AB");
                     AssignFailedEmoteResult(emote, bodyShape);
                 }
 
@@ -108,7 +112,7 @@ namespace DCL.AvatarRendering.Emotes
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 else
                 {
-                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the GLTF");
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO?.id} failed to load from the GLTF");
                     AssignFailedEmoteResult(emote, bodyShape);
                 }
 
@@ -134,7 +138,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             var failedResult = new StreamableLoadingResult<AttachmentRegularAsset>(
                 GetReportData(),
-                new Exception($"Emote {emote.DTO.id} failed to load"));
+                new Exception($"Emote {emote.DTO?.id} failed to load"));
 
             if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
             {
@@ -186,12 +190,58 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         private void ConsumeAndDisposeFinishedEmotePromise(in Entity entity, ref EmotePromise promise)
         {
-            // The result is added into the emote storage at FinalizeEmoteDTO already, no need to do anything else
+            // The loaded emotes stay owned by the emote storage (added at FinalizeEmoteDTO); the promise only
+            // has to return the reference LoadEmotesByPointersSystem added per successful pointer, so the
+            // storage can unload the assets once nothing plays them.
             if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> result)) return;
+
+            foreach (URN urn in promise.LoadingIntention.SuccessfulPointers)
+            {
+                if (!storage.TryGetElement(urn, out IEmote emote)) continue;
+
+                emote.AssetResults[promise.LoadingIntention.BodyShape]?.Asset?.Dereference();
+            }
+
+            if (result.Succeeded)
+                result.Asset.ConsumeEmotes().Dispose();
 
             promise.LoadingIntention.Dispose();
 
             World.Destroy(entity);
+        }
+
+        [Query]
+        private void ConsumeAndDisposeFinishedSceneEmoteFromRealmPromise(in Entity entity, ref SceneEmoteFromRealmPromise promise)
+        {
+            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> result)) return;
+
+            DereferenceSceneEmote(promise.LoadingIntention.NewSceneEmoteURN(), promise.LoadingIntention.BodyShape, in result);
+
+            World.Destroy(entity);
+        }
+
+        [Query]
+        private void ConsumeAndDisposeFinishedSceneEmoteFromLocalPromise(in Entity entity, ref SceneEmoteFromLocalPromise promise)
+        {
+            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> result)) return;
+
+            DereferenceSceneEmote(promise.LoadingIntention.NewSceneEmoteURN(), promise.LoadingIntention.BodyShape, in result);
+
+            World.Destroy(entity);
+        }
+
+        /// <summary>
+        ///     Returns the reference LoadSceneEmotesSystem adds when it resolves an intention whose asset
+        ///     loaded successfully; the guard must mirror that condition exactly or the count goes negative.
+        /// </summary>
+        private void DereferenceSceneEmote(URN urn, BodyShape bodyShape, in StreamableLoadingResult<EmotesResolution> result)
+        {
+            if (!result.Succeeded) return;
+
+            if (storage.TryGetElement(urn, out IEmote emote) && emote.AssetResults[bodyShape] is { Succeeded: true } assetResult)
+                assetResult.Asset?.Dereference();
+
+            result.Asset.ConsumeEmotes().Dispose();
         }
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, in BodyShape bodyShape)

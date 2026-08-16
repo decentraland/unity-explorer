@@ -1,4 +1,7 @@
+using DCL.AvatarRendering.Loading.Assets;
 using UnityEngine;
+
+// ReSharper disable InconsistentNaming
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -13,13 +16,20 @@ namespace DCL.AvatarRendering.Emotes
 
         public AudioSource? audioSource;
 
-        public void Initialize(AnimationClip? animationClip, AnimationClip? propClip, Animator? animatorComp, Animation? animationComp, int propClipHash, bool legacy)
+        /// <summary>
+        ///     Pins the source attachment while this instance plays: the instance shares meshes, materials and
+        ///     clips with the source, and the storage disposes assets whose ReferenceCount reaches 0.
+        ///     Set on acquire, dereferenced and cleared on pool release.
+        /// </summary>
+        public AttachmentRegularAsset? sourceAsset;
+
+        public void Initialize(AnimationClip? animationClip, AnimationClip? propAnimationClip, Animator? animator, Animation? animation, int propAnimationClipHash, bool legacy)
         {
-            this.avatarClip = animationClip;
-            this.propClip = propClip;
-            this.animatorComp = animatorComp;
-            this.animationComp = animationComp;
-            this.propClipHash = propClipHash;
+            avatarClip = animationClip;
+            propClip = propAnimationClip;
+            animatorComp = animator;
+            animationComp = animation;
+            propClipHash = propAnimationClipHash;
             this.legacy = legacy;
         }
     }
