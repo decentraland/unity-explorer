@@ -2,7 +2,6 @@ using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Unity.Transforms.Components;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,7 +19,7 @@ namespace DCL.SDKEntityTriggerArea.Components
         private static readonly IReadOnlyCollection<Collider> EMPTY_COLLECTION = Array.Empty<Collider>();
         public SDKEntityTriggerArea? monoBehaviour { get; private set; }
 
-        private readonly bool targetOnlyMainPlayer;
+        private bool targetOnlyMainPlayer;
         private bool hasMonoBehaviour;
         private uint incrementalTick;
 
@@ -65,37 +64,40 @@ namespace DCL.SDKEntityTriggerArea.Components
         {
             bool useTransformScaleAsAreaSize = AreaSize == Vector3.zero;
 
-            if (!hasMonoBehaviour)
+            if (monoBehaviour is not { } area)
             {
-                SetMonoBehaviour(pool.Get());
+                area = pool.Get();
+                SetMonoBehaviour(area);
 
-                if (targetOnlyMainPlayer)
-                    monoBehaviour!.TargetTransform = mainPlayerTransform;
-
-                Transform triggerAreaTransform = monoBehaviour!.transform;
+                Transform triggerAreaTransform = area.transform;
                 triggerAreaTransform.SetParent(transformComponent.Transform, worldPositionStays: !useTransformScaleAsAreaSize);
                 triggerAreaTransform.localPosition = Vector3.zero;
                 triggerAreaTransform.localRotation = Quaternion.identity;
             }
 
+            // TargetTransform mirrors targetOnlyMainPlayer on every (re)assignment, so a mask
+            // update that toggles the main-player fast path rebinds or clears the filter;
+            // binding also evicts insiders that the filter stops tracking.
+            area.SetTargetTransform(targetOnlyMainPlayer ? mainPlayerTransform : null);
+
             switch (MeshType)
             {
                 case SDKEntityTriggerAreaMeshType.Box:
-                    monoBehaviour!.SphereCollider.enabled = false;
-                    monoBehaviour.BoxCollider.enabled = true;
-                    monoBehaviour.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
+                    area.SphereCollider.enabled = false;
+                    area.BoxCollider.enabled = true;
+                    area.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
                     break;
                 case SDKEntityTriggerAreaMeshType.Sphere:
-                    monoBehaviour!.BoxCollider.enabled = false;
-                    monoBehaviour.SphereCollider.enabled = true;
-                    monoBehaviour.SphereCollider.radius = useTransformScaleAsAreaSize ? 0.5f : AreaSize.magnitude / 2;
+                    area.BoxCollider.enabled = false;
+                    area.SphereCollider.enabled = true;
+                    area.SphereCollider.radius = useTransformScaleAsAreaSize ? 0.5f : AreaSize.magnitude / 2;
                     break;
             }
 
             // Route purely-avatar masks (CL_PLAYER and/or CL_MAIN_PLAYER, no other bits) to
             // SDK_AVATAR_TRIGGER_AREA. Any mixed mask falls back to SDK_ENTITY_TRIGGER_AREA so
             // the trigger box's matrix cells also reach the non-avatar layers the mask targets.
-            monoBehaviour!.gameObject.layer = PhysicsLayers.IsAvatarOnlyMask(LayerMask)
+            area.gameObject.layer = PhysicsLayers.IsAvatarOnlyMask(LayerMask)
                 ? PhysicsLayers.SDK_AVATAR_TRIGGER_AREA
                 : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
         }
@@ -105,6 +107,20 @@ namespace DCL.SDKEntityTriggerArea.Components
             AreaSize = size;
             IsDirty = true;
         }
+
+        public void UpdateMaskAndMeshType(ColliderLayer layerMask, SDKEntityTriggerAreaMeshType meshType)
+        {
+            LayerMask = layerMask;
+            MeshType = meshType;
+
+            // Same fast-path predicate as the mask evaluation at setup: only an EXACTLY
+            // CL_MAIN_PLAYER mask may filter colliders down to the local player transform.
+            targetOnlyMainPlayer = layerMask == ColliderLayer.ClMainPlayer;
+            IsDirty = true;
+        }
+
+        public readonly bool IsEnterPending(Collider entityCollider) =>
+            monoBehaviour?.IsEnterPending(entityCollider) ?? false;
 
         public void TryRelease(IComponentPool<SDKEntityTriggerArea> pool)
         {
