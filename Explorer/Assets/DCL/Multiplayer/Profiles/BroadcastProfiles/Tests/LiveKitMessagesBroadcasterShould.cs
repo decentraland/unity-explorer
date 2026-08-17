@@ -18,12 +18,10 @@ using System.Threading;
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles.Tests
 {
     /// <summary>
-    ///     Regression coverage for unity-explorer#9337 (announce-fallback + send-path skip,
-    ///     potential-fix.patch / Repair sites 1+2 in report.md's "## Patch" / "## Repair").
-    ///     Neither constructor overload used here (4-arg <see cref="LiveKitMessagesBroadcaster" /> ctor,
-    ///     <see cref="LiveKitMessagesBroadcaster.SendProfileAnnouncement{TInput,TMessage}" />) exists at
-    ///     the pin - this file only compiles once the patch is applied; the honest "PRE" state for every
-    ///     case here is a compile failure, not a runtime assertion failure. See report.md ## Test.
+    ///     Regression coverage for unity-explorer#9337: a wallet with a live <see cref="PeerIdCache" />
+    ///     session must be excluded from the targeted LiveKit fan-out (<see cref="LiveKitMessagesBroadcaster.Send{TInput,TMessage}" />),
+    ///     while <see cref="LiveKitMessagesBroadcaster.SendProfileAnnouncement{TInput,TMessage}" /> still
+    ///     reaches the whole room untargeted so peers missing from <c>announcedWallets</c> get materialized.
     /// </summary>
     [TestFixture]
     public class LiveKitMessagesBroadcasterShould
@@ -80,15 +78,14 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles.Tests
 
             peerIdCache = new PeerIdCache();
 
-            // TimeSpan.Zero: SendProfileAnnouncement always takes the untargeted/fallback branch
-            // (matches the report's own "Zero = always-fallback" test-seam note); the two Send-only
-            // cases below never call SendProfileAnnouncement, so the interval is inert for them.
+            // TimeSpan.Zero: SendProfileAnnouncement always takes the untargeted/fallback branch;
+            // the two Send-only cases below never call SendProfileAnnouncement, so the interval is inert for them.
             broadcaster = new LiveKitMessagesBroadcaster(sceneRoom, messagePipesHub, new PulseActivation(true), peerIdCache, TimeSpan.Zero);
         }
 
-        // Case (c): send-path skip. A wallet with a live PeerIdCache session (i.e. its Pulse join was
-        // actually processed) must not receive the *targeted* LiveKit announce/movement/emote path -
-        // that duplicate is exactly Attack 2's confirmed defect in review.md, closed by the repair.
+        // A wallet with a live PeerIdCache session (i.e. its Pulse join was actually processed) must not
+        // also receive the *targeted* LiveKit announce/movement/emote path, since MovementMessageBusProxy
+        // already fans out to both Pulse and LiveKit unconditionally.
         [Test]
         public void SkipPeerIdCacheLiveWalletInSendPath()
         {
@@ -101,10 +98,9 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles.Tests
             scenePipe.DidNotReceive().NewMessage<AnnounceProfileVersion>();
         }
 
-        // Self-heal companion to the skip case: proves the exclusion above is genuinely driven by the
-        // live PeerIdCache session (i.e. WALLET really was recruited via Add, not silently dropped) -
-        // once that Pulse session ends, the same recruited membership resumes receiving the targeted
-        // LiveKit fan-out (the repair's "self-corrects in both directions" claim, report.md line ~74).
+        // Companion to the skip case: proves the exclusion above is genuinely driven by the live
+        // PeerIdCache session (i.e. WALLET really was recruited via Add, not silently dropped) - once
+        // that Pulse session ends, the same recruited membership resumes receiving the targeted fan-out.
         [Test]
         public void ResumeTargetingWalletAfterPulseSessionEnds()
         {
@@ -141,10 +137,9 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles.Tests
             islandPipe.ClearReceivedCalls();
             scenePipe.ClearReceivedCalls();
 
-            // Receive side: the previously-missing peer is now materialized into announcedWallets
-            // ("the participant/announced set") - Add is unconditional recruitment, by design (report.md
-            // Repair: "Recruitment itself (Add) stays unconditional... membership is harmless once
-            // effective fan-out is filtered").
+            // Receive side: the previously-missing peer is now materialized into announcedWallets.
+            // Add is unconditional recruitment by design - membership alone is harmless once the
+            // targeted fan-out is filtered by the PeerIdCache check in Send.
             broadcaster.Add(WALLET_MISSING, RoomSource.Island);
 
             // ...but it is ALSO Pulse-live (its join was in fact processed by Pulse - it just never

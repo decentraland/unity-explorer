@@ -292,13 +292,11 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
         }
 
-        // Regression coverage for unity-explorer#9337 (join-epoch guard, potential-fix.patch site 3+4):
-        // a PlayerLeft for a superseded session (a wallet that already re-joined under a new subject id)
-        // must not delete the freshly re-joined avatar. At pin, HandlePlayerLeft enqueues the remove
-        // unconditionally from the dangling forward entry, and PeerIdCache.Remove(7) then deletes the
-        // *live* wallet->peerId reverse mapping too (peersByWallet[7] still resolves to the wallet even
-        // though walletsByPeerId[wallet] already points at 9) - exactly the "re-join cancels the stale
-        // pending leave" gap the report's [INVISIBLE_AVATAR] diagnosis (03b82789c) named.
+        // Regression coverage for unity-explorer#9337: a PlayerLeft for a superseded session (a wallet
+        // that already re-joined under a new peer id) must not delete the freshly re-joined avatar.
+        // Without the join-epoch guard, HandlePlayerLeft enqueues the remove unconditionally from the
+        // dangling forward entry, and removing the stale peer id then deletes the *live* wallet->peerId
+        // reverse mapping too, even though it already points at the new peer id.
         [Test]
         public void IgnoreStalePlayerLeftForSupersededSession()
         {
@@ -322,7 +320,7 @@ namespace DCL.Multiplayer.Movement.Tests
 
             Assert.IsTrue(peerIdCache.TryGetPeerId(new Web3Address(WALLET_1), out uint currentPeerId),
                 "The re-join's reverse mapping (wallet -> current peer id) must survive the stale leave; " +
-                "at pin, PeerIdCache.Remove(7) deletes the *live* session's wallet->peerId entry too.");
+                "removing peer id 7 must not delete the live session's wallet->peerId entry too.");
             Assert.AreEqual(9u, currentPeerId);
         }
 

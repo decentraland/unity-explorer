@@ -31,8 +31,11 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
         /// <summary>
         ///     While Pulse is active, messages are sent only to the peers that announced their profiles over
-        ///     LiveKit (the rest receive them over Pulse). When Pulse is absent — disabled or fallen back —
-        ///     messages are broadcast to every peer in the rooms.
+        ///     LiveKit, excluding any peer that currently has a live Pulse session (it already receives the
+        ///     message over Pulse). <see cref="SendProfileAnnouncement{TInput,TMessage}" /> periodically
+        ///     forces a full untargeted broadcast instead, so peers that were never explicitly announced to
+        ///     this client still get materialized. When Pulse is absent — disabled or fallen back — messages
+        ///     are always broadcast to every peer in the rooms.
         /// </summary>
         private readonly PulseActivation pulseActivation;
 
