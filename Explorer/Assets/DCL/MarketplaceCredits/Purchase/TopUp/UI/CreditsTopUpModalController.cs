@@ -299,6 +299,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                     viewInstance.FailedReasonText.text = reason;
                     viewInstance.RetryButton.gameObject.SetActive(allowRetry);
                     break;
+                case CreditsTopUpStage.Abandoned:
+                    viewInstance.FailedReasonText.text = "Purchase cancelled — you were not charged.";
+                    viewInstance.RetryButton.gameObject.SetActive(true);
+                    break;
             }
         }
 
@@ -357,6 +361,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 CreditsTopUpStage.PendingTimeout => ModalState.Pending,
                 CreditsTopUpStage.Credited => ModalState.Success,
                 CreditsTopUpStage.Failed => ModalState.Failed,
+                CreditsTopUpStage.Abandoned => ModalState.Failed,
                 _ => ModalState.PackSelection,
             };
 
