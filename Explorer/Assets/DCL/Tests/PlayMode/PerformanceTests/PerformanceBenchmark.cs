@@ -30,7 +30,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         protected SampleGroup? iterationDownloadedData;
 
         protected IWebRequestController? controller;
-        protected PerformanceTestWebRequestsAnalytics analytics;
+        protected PerformanceTestWebRequestsAnalytics analytics = null!;
 
         private MockedReportScope? reportScope;
 
@@ -40,10 +40,16 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             iterationTotalTime = new SampleGroup("Iteration Total Time", SampleUnit.Microsecond);
             iterationDownloadedData = new SampleGroup("Iteration Downloaded Data", SampleUnit.Megabyte);
             reportScope = new MockedReportScope();
+
+            // Benchmarks measure request routing, not machine capability: pinning the probe keeps
+            // SetKTXEnabled(true) deterministic on every machine and keeps the real probe (and any
+            // native-lib console logging) out of the test runner.
+            KtxNativeSupport.Reset();
+            KtxNativeSupport.probeOverride = static () => true;
         }
 
         [OneTimeSetUp]
-        public void SetupFF()
+        public void SetupFeatureFlags()
         {
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(new FeatureFlagsResultDto
             {
@@ -53,14 +59,17 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         }
 
         [OneTimeTearDown]
-        public void ResetFF()
+        public void ResetFeatureFlags()
         {
             FeatureFlagsConfiguration.Reset();
         }
 
         [TearDown]
-        public void TearDown() =>
+        public void TearDown()
+        {
             reportScope?.Dispose();
+            KtxNativeSupport.Reset();
+        }
 
         protected void EnableErrors()
         {
