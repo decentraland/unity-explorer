@@ -133,6 +133,7 @@ namespace Global.Dynamic
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
                 new AnrSimulateChatCommand(),
+                new SetProfileNameChatCommand(profileContainer.SelfProfile),
 
                 // Temporarily disabled (for dev only)
                 // new FloodReactionsChatCommand(currentChannelService),
