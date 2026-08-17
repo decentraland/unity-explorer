@@ -157,7 +157,11 @@ namespace DCL.Browser.DecentralandUrls.Tests
 
         // ---- Gateway routing: every supported service URL funnels through gateway.<domain> ----
 
-        private static IEnumerable<DecentralandUrl> GatewaySupportedUrls()
+        /// <summary>
+        ///     Supported URLs still carrying the "decentraland.{ENV}" token when the gateway transform runs,
+        ///     so they route through the gateway on any base domain.
+        /// </summary>
+        private static IEnumerable<DecentralandUrl> TemplatedGatewaySupportedUrls()
         {
             yield return DecentralandUrl.ApiPlaces;
             yield return DecentralandUrl.ApiWorlds;
@@ -189,6 +193,18 @@ namespace DCL.Browser.DecentralandUrls.Tests
             yield return DecentralandUrl.Members;
             yield return DecentralandUrl.MembersV2;
             yield return DecentralandUrl.ActiveCommunityVoiceChats;
+        }
+
+        /// <summary>
+        ///     Every SUPPORTED_URLS member, adding the ones RawUrl already resolved against the base domain —
+        ///     on the decentraland domain those still reach the gateway.
+        /// </summary>
+        private static IEnumerable<DecentralandUrl> GatewaySupportedUrls()
+        {
+            foreach (DecentralandUrl url in TemplatedGatewaySupportedUrls())
+                yield return url;
+
+            yield return DecentralandUrl.LocalGateKeeperSceneAdapter;
         }
 
         [TestCaseSource(nameof(GatewaySupportedUrls))]
@@ -282,12 +298,23 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual(expected, DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY, CUSTOM_DOMAIN).Url(url), $"{url} (custom-domain invariant)");
         }
 
-        [TestCaseSource(nameof(GatewaySupportedUrls))]
+        [TestCaseSource(nameof(TemplatedGatewaySupportedUrls))]
         public void RouteSupportedUrlThroughCustomGatewayDomain(DecentralandUrl url)
         {
             InitFlags(useGateway: true);
             string routed = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY, CUSTOM_DOMAIN).Url(url);
             StringAssert.StartsWith($"https://gateway.{CUSTOM_DOMAIN}/", routed, $"{url} should route through the custom gateway host");
+        }
+
+        [Test]
+        public void KeepLocalGatekeeperOnItsOwnHostUnderCustomGatewayDomain()
+        {
+            InitFlags(useGateway: true);
+            GatewayUrlsSource gateway = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY, CUSTOM_DOMAIN);
+
+            // RawUrl resolves this host against the base domain directly, leaving no "decentraland.{ENV}"
+            // token for the gateway transform to match (GatewayUrlsSource.IsGatewayTransformable).
+            Assert.AreEqual($"https://comms-gatekeeper-local.{CUSTOM_DOMAIN}/get-scene-adapter", gateway.Url(DecentralandUrl.LocalGateKeeperSceneAdapter));
         }
 
         [Test]

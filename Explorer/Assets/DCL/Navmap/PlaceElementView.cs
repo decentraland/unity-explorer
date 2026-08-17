@@ -37,6 +37,7 @@ namespace DCL.Navmap
         public GameObject LiveContainer { get; private set; }
 
         private ImageController? imageController;
+        private Sprite? placeholderImage;
 
         public Vector2Int coords;
 
@@ -46,11 +47,14 @@ namespace DCL.Navmap
 
         public void ConfigurePlaceImageController(ImageControllerProvider imageControllerProvider)
         {
+            // The prefab authors the placeholder thumbnail on the image itself; capture it before the first
+            // request overwrites it, so places that carry no thumbnail url still render something.
+            placeholderImage = placeImage.ImageSprite;
             imageController = imageControllerProvider.Create(placeImage);
         }
 
         public void SetPlaceImage(string imageUrl) =>
-            imageController?.RequestImage(imageUrl, true);
+            imageController?.RequestImage(imageUrl, true, defaultSprite: placeholderImage);
 
         public void OnPointerEnter(PointerEventData eventData)
         {

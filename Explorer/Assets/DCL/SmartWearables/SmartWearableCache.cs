@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
@@ -124,12 +125,12 @@ namespace Runtime.Wearables
             cache.Add(id, item);
 
             // Null DTO wearable, just consider it non-smart
-            if (wearable.DTO == null) return item;
+            if (wearable.DTO is not { } dto) return item;
 
-            item.IsSmart = IsSmart(wearable);
+            item.IsSmart = IsSmart(dto);
             if (!item.IsSmart) return item;
 
-            string contentUrl = GetContentUrl(wearable);
+            string contentUrl = GetContentUrl(dto);
             item.SceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), wearable, BodyShape.MALE);
 
             if (!item.SceneContent.TryGetContentUrl("scene.json", out URLAddress url))
@@ -159,9 +160,9 @@ namespace Runtime.Wearables
             return item;
         }
 
-        private bool IsSmart(IWearable wearable)
+        private static bool IsSmart(AvatarAttachmentDTO dto)
         {
-            foreach (var content in wearable.DTO!.content)
+            foreach (var content in dto.content)
             {
                 if (content.file.EndsWith("scene.json", StringComparison.OrdinalIgnoreCase))
                     return true;
@@ -169,11 +170,10 @@ namespace Runtime.Wearables
             return false;
         }
 
-        private string GetContentUrl(IWearable smartWearable)
-        {
-            string? dtoContentUrl = smartWearable.DTO!.ContentDownloadUrl;
-            return string.IsNullOrEmpty(dtoContentUrl) ? $"{decentralandUrlsSource.Url(DecentralandUrl.PeerContent)}/" : dtoContentUrl;
-        }
+        private string GetContentUrl(AvatarAttachmentDTO dto) =>
+            dto.ContentDownloadUrl is { Length: > 0 } dtoContentUrl
+                ? dtoContentUrl
+                : $"{decentralandUrlsSource.Url(DecentralandUrl.PeerContent)}/";
 
         private class CacheItem
         {

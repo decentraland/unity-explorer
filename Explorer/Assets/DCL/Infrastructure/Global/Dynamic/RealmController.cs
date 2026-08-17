@@ -197,13 +197,10 @@ namespace Global.Dynamic
 
         public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
-            FixedScenePointers fixedScenePointers = default;
+            await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out FixedScenePointers pointers)
+                                          && pointers.AllPromisesResolved, cancellationToken: ct);
 
-            await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
-                                          && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
-
-            // WaitUntil only completes once TryGet has populated the struct, so SceneResults is initialized
-            return fixedScenePointers.SceneResults!;
+            return GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmEntity).SceneResults;
         }
 
         public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)

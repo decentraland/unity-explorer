@@ -30,8 +30,11 @@ app arg, instead of only `decentraland.{org,zone,today}`.
   `decentraland.{ENV}` token (gateway host included) — so a `--base-domain`
   deployment routes supported hosts through `gateway.{base-domain}/…`, letting
   the catalyst gateway proxy them (comms-gatekeeper included). New tests pin the
-  gatekeeper family (`GateKeeperSceneAdapter`, `ChatAdapter`, `GatekeeperStatus`,
-  `BannedUsers`) routing through the gateway on both default and custom domains.
+  gatekeeper family (`GateKeeperSceneAdapter`, `ChatAdapter`,
+  `GatekeeperStatus`, `BannedUsers`) routing through the gateway on both default
+  and custom domains, plus `LocalGateKeeperSceneAdapter` — whose host `RawUrl`
+  resolves eagerly, so it routes through the gateway on the decentraland domain
+  and stays on its own host under a custom one.
 - **comms-gatekeeper** stays independently overridable via the existing
   `--gatekeeper-url` arg (top priority in `ResolveGatekeeperOverride`), which
   retargets both the main and local scene adapters regardless of base domain or
@@ -41,10 +44,12 @@ app arg, instead of only `decentraland.{org,zone,today}`.
   is a literal, not the `{ENV}` template), so a `--base-domain` deployment
   reaches its own local gatekeeper for the local-scene preview flow.
 - **Default "Empty place"** (`PlacesAPIResponse`) carries no image instead of a
-  hardcoded `peer.decentraland.org` content URL; consumers fall back to their
-  built-in placeholder sprite (the explore-grid cards already ship
-  `DefaultImagePlace.png`). The content hash was DCL-specific and could not be
-  repointed at another peer, so removing it is the only domain-neutral option.
+  hardcoded `peer.decentraland.org` content URL. The content hash was
+  DCL-specific and could not be repointed at another peer, so removing it is the
+  only domain-neutral option; every consumer instead passes the placeholder
+  sprite its own prefab already ships (`DefaultImagePlace.png`) as
+  `ImageController.RequestImage`'s `defaultSprite` — `PlaceInfoPanelController`,
+  `PlaceElementView` (search results) and `TeleportPromptController`.
 
 ## Out of scope (documented, not changed)
 

@@ -49,6 +49,9 @@ namespace DCL.Browser.DecentralandUrls
 
         private const string SCENE_ADAPTER_PATH = "/get-scene-adapter";
 
+        /// <summary>Sentinel returned instead of a URL when the producer had nothing to resolve.</summary>
+        private const string NOT_CONFIGURED = "<NOT_CONFIGURED>";
+
         private static readonly string FEATURE_FLAGS_RAW_URL = $"https://feature-flags.decentraland.{ENV}";
 
         private readonly Dictionary<DecentralandUrl, UrlData> cache = new ();
@@ -71,7 +74,7 @@ namespace DCL.Browser.DecentralandUrls
             string? customBaseDomain = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
-            this.customBaseDomain = string.IsNullOrWhiteSpace(customBaseDomain) ? null : customBaseDomain!.Trim();
+            this.customBaseDomain = customBaseDomain?.Trim() is { Length: > 0 } trimmedBaseDomain ? trimmedBaseDomain : null;
             isTodayEnvironment = environment == DecentralandEnvironment.Today;
             this.realmData = realmData;
             this.launchMode = launchMode;
@@ -148,8 +151,9 @@ namespace DCL.Browser.DecentralandUrls
         public string Probe(DecentralandUrl decentralandUrl)
         {
             if (cache.TryGetValue(decentralandUrl, out UrlData cached)
-                && (cached.Caching != CacheBehaviour.FlagsPending || FeatureFlagsConfiguration.Instance.IsEmpty))
-                return cached.Url!;
+                && (cached.Caching != CacheBehaviour.FlagsPending || FeatureFlagsConfiguration.Instance.IsEmpty)
+                && cached.Url is { } cachedUrl)
+                return cachedUrl;
 
             UrlData rawUrl = RawUrl(decentralandUrl);
 
@@ -181,18 +185,19 @@ namespace DCL.Browser.DecentralandUrls
             const string REALM_DEPENDENT = "<REALM_DEPENDENT>";
             const string FEATURE_FLAG_DEPENDENT = "<FEATURE_FLAG_DEPENDENT>";
 
-            if (cache.TryGetValue(decentralandUrl, out UrlData urlData))
+            if (cache.TryGetValue(decentralandUrl, out UrlData cached))
             {
                 // A FlagsPending entry is provisional: once flags land it is dropped and re-resolved so the
                 // final (possibly flag-driven) form replaces it. A RawUrl that observes loaded flags never
                 // produces FlagsPending, so entries cached as final are immune to the flags transition.
-                if (urlData.Caching != CacheBehaviour.FlagsPending || FeatureFlagsConfiguration.Instance.IsEmpty)
-                    return urlData.Url!;
+                if ((cached.Caching != CacheBehaviour.FlagsPending || FeatureFlagsConfiguration.Instance.IsEmpty)
+                    && cached.Url is { } cachedUrl)
+                    return cachedUrl;
 
                 cache.Remove(decentralandUrl);
             }
 
-            urlData = RawUrl(decentralandUrl);
+            UrlData urlData = RawUrl(decentralandUrl);
 
             switch (urlData.Caching)
             {
@@ -202,15 +207,16 @@ namespace DCL.Browser.DecentralandUrls
                 case CacheBehaviour.FeatureFlagsDependent when FeatureFlagsConfiguration.Instance.IsEmpty:
                     // Not cached — re-resolved on every call until flags load. ResolveDomain is idempotent,
                     // so the producer may hand over either a template or an already-resolved URL.
-                    return urlData.Url != null ? ResolveDomain(urlData.Url) : FEATURE_FLAG_DEPENDENT;
+                    return urlData.Url is { } pendingUrl ? ResolveDomain(pendingUrl) : FEATURE_FLAG_DEPENDENT;
 
                 default:
-                    urlData = new UrlData(urlData.Caching, ResolveDomain(urlData.Url!));
-                    cache[decentralandUrl] = urlData;
-                    break;
-            }
+                    if (urlData.Url is not { } rawUrl)
+                        return NOT_CONFIGURED;
 
-            return urlData.Url!;
+                    string resolvedUrl = ResolveDomain(rawUrl);
+                    cache[decentralandUrl] = new UrlData(urlData.Caching, resolvedUrl);
+                    return resolvedUrl;
+            }
         }
 
         public virtual string TransformUrl(string originalUrl) =>
@@ -270,9 +276,9 @@ namespace DCL.Browser.DecentralandUrls
             new (RawUrl(DecentralandUrl.AssetBundleRegistry).Caching, $"{Url(DecentralandUrl.AssetBundleRegistry)}{path}");
 
         public static string GetFeatureFlagsUrl(DecentralandEnvironment env, string? customBaseDomain = null) =>
-            string.IsNullOrWhiteSpace(customBaseDomain)
-                ? Probe(FEATURE_FLAGS_RAW_URL, env.ToString().ToLower())
-                : FEATURE_FLAGS_RAW_URL.Replace(DOMAIN_TOKEN, customBaseDomain!.Trim());
+            customBaseDomain?.Trim() is { Length: > 0 } trimmedBaseDomain
+                ? FEATURE_FLAGS_RAW_URL.Replace(DOMAIN_TOKEN, trimmedBaseDomain)
+                : Probe(FEATURE_FLAGS_RAW_URL, env.ToString().ToLower());
 
         protected virtual UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
@@ -409,7 +415,7 @@ namespace DCL.Browser.DecentralandUrls
                 new (CacheBehaviour.Static, rawUrl);
 
             public override string ToString() =>
-                Url ?? "<NOT_CONFIGURED>";
+                Url ?? NOT_CONFIGURED;
         }
     }
 }

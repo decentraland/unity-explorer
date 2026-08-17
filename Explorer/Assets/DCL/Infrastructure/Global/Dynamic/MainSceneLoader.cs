@@ -214,8 +214,13 @@ namespace Global.Dynamic
             // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
             IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
 
+            // The allowlist trusts hosts under the custom base domain, so the domain has to be registered
+            // before InitializeDeepLinks() evaluates the pending link's whitelisted-realm params.
+            applicationParametersParser.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? cliBaseDomain);
+            DeepLinkAllowlist.SetCustomBaseDomain(cliBaseDomain);
+
             if (applicationParametersParser.HasPendingDeepLink)
-                await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
+                await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, cliBaseDomain, ct);
 
             applicationParametersParser.InitializeDeepLinks();
 
@@ -257,8 +262,6 @@ namespace Global.Dynamic
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
-            applicationParametersParser.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? cliBaseDomain);
-            DeepLinkAllowlist.SetCustomBaseDomain(cliBaseDomain);
 
             if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
                 cliOptimizedAssetsUrl = launchSettings.LocalAssetBundlesBaseUrl();
@@ -538,10 +541,9 @@ namespace Global.Dynamic
 #endif
         }
 
-        private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
+        private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, string? cliBaseDomain, CancellationToken ct)
         {
             appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
-            appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? cliBaseDomain);
 
             string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
                 ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, cliBaseDomain)

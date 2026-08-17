@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using JetBrains.Annotations;
 using MVC;
@@ -73,8 +74,13 @@ namespace Runtime.Wearables
             (_, SceneMetadata? sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, CancellationToken.None);
             await UniTask.SwitchToMainThread();
 
-            // The popup is only shown for smart wearables, whose scene metadata is always cached
-            viewInstance.SetPermissions(sceneMetadata!.requiredPermissions);
+            if (sceneMetadata is not { } metadata)
+            {
+                ReportHub.LogError(ReportCategory.WEARABLE, $"No cached scene metadata for smart wearable '{wearable.GetName()}': its permissions cannot be listed");
+                return;
+            }
+
+            viewInstance.SetPermissions(metadata.requiredPermissions);
         }
 
         public static async UniTask<bool> RequestAuthorizationAsync(IMVCManager mvcManager, IWearable wearable, CancellationToken ct)
