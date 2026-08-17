@@ -29,20 +29,15 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string PACKS_LOAD_FAILED_REQUEST = "request_failed";
         private const string PACKS_LOAD_FAILED_EMPTY = "empty_response";
 
-        private static readonly TimeSpan DEFAULT_FOCUS_RETURN_GRACE_PERIOD = TimeSpan.FromSeconds(10);
-
         private readonly ICreditsTopUpService topUpService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ImageControllerProvider imageControllerProvider;
-        private readonly IApplicationFocusSource applicationFocusSource;
-        private readonly TimeSpan focusReturnGracePeriod;
 
         private ModalState currentState;
         private CreditsTopUpStage lastStage = CreditsTopUpStage.Idle;
         private bool isViewShown;
         private CancellationTokenSource? lifeCts;
-        private CancellationTokenSource? autoCancelCts;
         private CreditsTopUpPackItemView? purchasedPackItem;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -62,27 +57,18 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             ICreditsTopUpService topUpService,
             MarketplaceCreditsAPIClient creditsApiClient,
             IWeb3IdentityCache identityCache,
-            ImageControllerProvider imageControllerProvider,
-            IApplicationFocusSource applicationFocusSource,
-            TimeSpan? focusReturnGracePeriod = null)
+            ImageControllerProvider imageControllerProvider)
             : base(viewFactory)
         {
             this.topUpService = topUpService;
             this.creditsApiClient = creditsApiClient;
             this.identityCache = identityCache;
             this.imageControllerProvider = imageControllerProvider;
-            this.applicationFocusSource = applicationFocusSource;
-            this.focusReturnGracePeriod = focusReturnGracePeriod ?? DEFAULT_FOCUS_RETURN_GRACE_PERIOD;
             topUpService.StatusChanged += OnServiceStatusChanged;
         }
 
         public override void Dispose()
         {
-            // ControllerBase disposal does not go through OnViewClose, so the focus subscription
-            // and the grace timer must be torn down here as well to keep post-disposal focus
-            // events from touching disposed tokens.
-            applicationFocusSource.FocusChanged -= OnApplicationFocusChanged;
-            autoCancelCts?.SafeCancelAndDispose();
             topUpService.StatusChanged -= OnServiceStatusChanged;
             lifeCts?.SafeCancelAndDispose();
         }
@@ -99,15 +85,11 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             LoadAndBindPacksAsync(lifeCts.Token).Forget();
             LoadBalanceAsync(lifeCts.Token).Forget();
 
-            applicationFocusSource.FocusChanged += OnApplicationFocusChanged;
             ModalOpened?.Invoke(inputData.Source);
         }
 
         protected override void OnViewClose()
         {
-            applicationFocusSource.FocusChanged -= OnApplicationFocusChanged;
-            autoCancelCts?.SafeCancelAndDispose();
-
             isViewShown = false;
             purchasedPackItem = null;
 
@@ -258,47 +240,6 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
 
             RetryClicked?.Invoke(topUpService.CurrentStatus.Pack);
             topUpService.AcknowledgeTerminalState();
-        }
-
-        private void OnApplicationFocusChanged(bool hasFocus)
-        {
-            if (currentState is not (ModalState.WaitingForBrowser or ModalState.Pending))
-                return;
-
-            if (!hasFocus)
-            {
-                // The grace timer's premise is a user present in the app who abandoned the checkout;
-                // once focus leaves again the user may be back in the browser paying, so an armed
-                // timer must never fire while the app is unfocused.
-                autoCancelCts?.SafeCancelAndDispose();
-                return;
-            }
-
-            // Focus came back while the checkout was still unresolved in the browser. Give the
-            // payment poll a grace period to deliver a terminal state; restarting the source keeps
-            // exactly one grace timer alive across repeated focus regains.
-            autoCancelCts = autoCancelCts.SafeRestart();
-            WaitAndAutoCancelAsync(autoCancelCts.Token).Forget();
-        }
-
-        private async UniTaskVoid WaitAndAutoCancelAsync(CancellationToken ct)
-        {
-            try
-            {
-                bool wasCancelled = await UniTask.Delay(focusReturnGracePeriod, DelayType.Realtime, cancellationToken: ct)
-                                                 .SuppressCancellationThrow();
-
-                if (wasCancelled || currentState is not (ModalState.WaitingForBrowser or ModalState.Pending))
-                    return;
-
-                CreditsTopUpStatus status = topUpService.CurrentStatus;
-
-                if (status.OrderId is { } orderId)
-                    BuyCreditsCancelled?.Invoke(orderId, status.Pack);
-
-                topUpService.CancelTopUp();
-            }
-            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE)); }
         }
 
         private void OnServiceStatusChanged(CreditsTopUpStatus status)

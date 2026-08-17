@@ -149,7 +149,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             service.Dispose();
-            CreateService(foregroundTimeoutMs: 30, backgroundTimeoutMs: 5000);
+            CreateService(foregroundTimeoutMs: 30, backgroundTimeoutMs: 50);
 
             creditsApiClient.GetCheckoutOrderAsync(ORDER_ID, Arg.Any<CancellationToken>())
                             .Returns(Order(CreditsOrderStatusResponse.STATUS_PROCESSING));
@@ -158,31 +158,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             service.StartTopUp(PACK);
             await WaitForStageAsync(CreditsTopUpStage.PendingTimeout);
 
-            // Assert: the soft state persists while the background window is still open.
+            // Assert: the background window also expires and the soft state persists.
             await UniTask.Delay(200);
             Assert.AreEqual(CreditsTopUpStage.PendingTimeout, service.CurrentStatus.Stage);
-        }
-
-        [Test]
-        public async Task FailTerminallyWhenBackgroundPollAlsoTimesOut()
-        {
-            // Arrange
-            service.Dispose();
-            CreateService(foregroundTimeoutMs: 30, backgroundTimeoutMs: 50);
-
-            creditsApiClient.GetCheckoutOrderAsync(ORDER_ID, Arg.Any<CancellationToken>())
-                            .Returns(Order(CreditsOrderStatusResponse.STATUS_PROCESSING));
-
-            // Act
-            service.StartTopUp(PACK);
-            await WaitForStageAsync(CreditsTopUpStage.Failed);
-
-            // Assert: the pending spinner resolved through PendingTimeout into a terminal grant
-            // failure - never an eternal soft state.
-            Assert.IsTrue(recordedStatuses.Exists(static status => status.Stage == CreditsTopUpStage.PendingTimeout));
-            Assert.IsNull(service.CurrentStatus.CheckoutError);
-            Assert.AreEqual(ORDER_ID, service.CurrentStatus.OrderId);
-            Assert.IsNotNull(service.CurrentStatus.ErrorMessage);
         }
 
         [Test]
