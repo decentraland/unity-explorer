@@ -75,7 +75,11 @@ namespace DCL.SDKComponents.MediaStream
         internal static async UniTask SetPlaybackPropertiesAsync(MediaPlayerBackend control, float position, bool loop, float rate, bool isPlaying, bool isLiveStream = false)
         {
             // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
-            await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
+            // Exit early if an error or close arrives mid-wait so the loop does not hang forever.
+            await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0 || control.GetLastError() != ErrorCode.None);
+
+            if (control.GetLastError() != ErrorCode.None)
+                return;
 
             // The only way found to make the video initialization consistent and reliable even after a scene reload
             await UniTask.Delay(TimeSpan.FromSeconds(1f));
