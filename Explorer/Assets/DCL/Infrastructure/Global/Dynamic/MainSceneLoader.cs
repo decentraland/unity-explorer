@@ -258,8 +258,17 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
-            if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
-                cliOptimizedAssetsUrl = launchSettings.LocalAssetBundlesBaseUrl();
+            // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
+            // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
+            // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
+            // stream through it from the production upstream (abgen's ab-cdn read-through and registry
+            // pass-through), so no lane loses content. Only the loopback endpoint is reserved here — the
+            // URL sources below need it at construction; AbgenSidecarPlugin (registered from this value,
+            // absent otherwise) owns everything else: creation, launch, warm-up and disposal.
+            string? localAbBaseUrl = null;
+
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
+                cliOptimizedAssetsUrl = localAbBaseUrl = AbgenSidecar.ReserveBaseUrl();
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -301,6 +310,7 @@ namespace Global.Dynamic
                 world,
                 decentralandEnvironment,
                 dclVersion,
+                localAbBaseUrl,
                 destroyCancellationToken
             );
 
@@ -403,6 +413,12 @@ namespace Global.Dynamic
                 }
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
+
+                // Realm loading is what starts scene loading — and with it the scene's asset-bundle
+                // manifest request, whose bundles-vs-GLTFs verdict is final for the session. Hold it
+                // until the abgen sidecar is warm or has given up; completed immediately when the
+                // sidecar is not mounted.
+                await dynamicWorldContainer!.AbgenSidecarReadyAsync.AttachExternalCancellation(ct);
 
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);

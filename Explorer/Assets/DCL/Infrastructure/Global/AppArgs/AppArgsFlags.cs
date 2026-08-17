@@ -38,6 +38,13 @@ namespace Global.AppArgs
 
         // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
         public const string SIGNIN = "signin";
+
+        /// <summary>
+        ///     Referral attribution address (0x…) forwarded by the launcher.
+        ///     Untrusted input: consumers must validate it before use.
+        /// </summary>
+        public const string REFERRER = "referrer";
+
         // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
         public const string AUTH_REQUEST_ID = "authRequestId";
         // See: https://github.com/decentraland/unity-explorer/issues/9524
@@ -136,9 +143,9 @@ namespace Global.AppArgs
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
         /// <summary>
-        ///     Local scene development only: load assets as asset bundles served by the preview server at
-        ///     {realm}/optimized-assets instead of raw GLTFs. Carries no URL or port — the base is derived
-        ///     from the realm the client already has.
+        ///     Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's
+        ///     embedded abgen sidecar, reading the preview server's content. Carries no URL or port — the
+        ///     content base is derived from the realm the client already has.
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 

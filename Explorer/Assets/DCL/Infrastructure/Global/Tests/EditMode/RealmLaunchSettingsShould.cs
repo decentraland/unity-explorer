@@ -183,44 +183,23 @@ namespace Global.Tests.EditMode
             Assert.AreEqual(world, realmLaunchSettings.TargetWorld);
         }
 
-        [TestCase("http://127.0.0.1:8000", "http://127.0.0.1:8000/optimized-assets")]
-        [TestCase("http://127.0.0.1:8000/", "http://127.0.0.1:8000/optimized-assets")] // trailing slash must not double up
-        [TestCase("http://localhost:8001", "http://localhost:8001/optimized-assets")]
-        public void DeriveLocalAssetBundlesBaseUrlFromRealm(string realm, string expectedUrl)
-        {
-            //Arrange
-            var realmLaunchSettings = new RealmLaunchSettings();
-
-            ApplicationParametersParser applicationParametersParser = new (new[]
-            {
-                $"decentraland://?realm={realm}&position=100,100&local-scene=true&local-ab=true",
-            });
-
-            //Act
-            realmLaunchSettings.ApplyConfig(applicationParametersParser);
-
-            //Assert
-            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab must enable local asset bundles");
-            Assert.AreEqual(expectedUrl, realmLaunchSettings.LocalAssetBundlesBaseUrl());
-        }
-
         [Test]
-        public void NotDeriveLocalAssetBundlesBaseUrlOutsideLocalSceneDevelopment()
+        public void EnableLocalAssetBundlesFromLocalAbDeepLink()
         {
             //Arrange
             var realmLaunchSettings = new RealmLaunchSettings();
 
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
-                "--realm",
-                "https://peer.decentraland.org",
+                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true&local-ab=true",
             });
 
             //Act
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             //Assert
-            Assert.IsNull(realmLaunchSettings.LocalAssetBundlesBaseUrl());
+            Assert.AreEqual(LaunchMode.LocalSceneDevelopment, realmLaunchSettings.CurrentMode);
+            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab must enable local asset bundles");
         }
 
         [Test]
