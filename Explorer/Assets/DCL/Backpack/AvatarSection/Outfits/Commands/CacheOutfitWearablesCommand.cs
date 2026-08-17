@@ -81,28 +81,33 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         // whose DTO failed has no metadata to equip and is left out.
         private async UniTask FetchMissingDtosIntoResultAsync(List<URN> missingUrns, BodyShape bodyShape, List<IWearable> result, CancellationToken ct)
         {
+            // The background fetch and the settle-predicate can both run after this scope returns,
+            // once ExecuteAsync has returned missingUrns to the pool (where it may be cleared or
+            // reused). They read an owned snapshot so they never touch the released pooled list.
+            URN[] snapshot = missingUrns.ToArray();
+
             UniTask fullFetch = FullFetchAsync();
 
+            // fullFetch is the termination backstop: AllMissingDtosSettled can stay false forever for
+            // a pointer that never starts loading, but the full fetch always completes and ends the wait.
             await UniTask.WhenAny(fullFetch, UniTask.WaitUntil(AllMissingDtosSettled, cancellationToken: ct));
 
-            foreach (URN urn in missingUrns)
+            foreach (URN urn in snapshot)
                 if (TryGetStored(urn, out IWearable w) && w.DTO != null)
                     result.Add(w);
 
             return;
 
-            // The provider copies the pointers into its intention before its first await, so the
-            // background continuation never touches the pooled list after this scope ends.
             async UniTask FullFetchAsync()
             {
-                try { await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct); }
+                try { await wearablesProvider.GetByPointersAsync(snapshot, bodyShape, ct); }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.OUTFITS); }
             }
 
             bool AllMissingDtosSettled()
             {
-                foreach (URN urn in missingUrns)
+                foreach (URN urn in snapshot)
                 {
                     if (!TryGetStored(urn, out IWearable w))
                         return false;

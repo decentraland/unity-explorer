@@ -161,6 +161,36 @@ namespace DCL.Tests.Editor
             assetFetchNeverCompletes.TrySetCanceled();
         }
 
+        [Test]
+        public async Task DetachedFetchReceivesOwnedSnapshotNotThePooledList()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            IReadOnlyCollection<URN>? handedToFetch = null;
+
+            wearablesProvider.GetByPointersAsync(Arg.Any<IReadOnlyCollection<URN>>(), Arg.Any<BodyShape>(), Arg.Any<CancellationToken>(), Arg.Any<List<IWearable>?>())
+                             .Returns(callInfo =>
+                              {
+                                  handedToFetch = callInfo.Arg<IReadOnlyCollection<URN>>();
+                                  return UniTask.FromResult<IReadOnlyCollection<IWearable>?>(null);
+                              });
+
+            var result = new List<IWearable>();
+            var urns = new List<URN> { RESOLVED_URN, UNRESOLVED_URN };
+
+            await command.ExecuteAsync(urns, BodyShape.MALE, CancellationToken.None, result, useFullUrns: true);
+
+            // ExecuteAsync has returned, so its pooled missingUrns list is back in the pool and free to be
+            // cleared or reused by the next command. The detached fetch it launched must therefore read an
+            // owned snapshot (a URN[]), never the pooled List<URN>, so pool reuse cannot corrupt it.
+            Assert.IsNotNull(handedToFetch, "The provider fetch must have been launched for the missing pointer");
+            Assert.IsInstanceOf<URN[]>(handedToFetch, "The detached fetch must receive an owned snapshot, not the pooled List<URN>");
+
+            var handed = new List<URN>(handedToFetch);
+            Assert.AreEqual(1, handed.Count, "The snapshot must carry exactly the missing pointers");
+            Assert.AreEqual(UNRESOLVED_URN, handed[0].ToString(), "The snapshot must carry the unresolved pointer to the provider");
+        }
+
         private static async UniTask PumpAsync()
         {
             for (var i = 0; i < 120; i++)
