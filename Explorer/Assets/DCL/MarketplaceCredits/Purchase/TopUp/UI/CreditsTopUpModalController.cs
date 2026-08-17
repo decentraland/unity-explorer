@@ -26,6 +26,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string ANALYTICS_STEP_CHECKOUT = "checkout";
         private const string ANALYTICS_STEP_GRANT = "grant";
         private const string ANALYTICS_ERROR_GRANT_FAILED = "grant_failed";
+        private const string ANALYTICS_ABANDONED = "abandoned";
         private const string PACKS_LOAD_FAILED_REQUEST = "request_failed";
         private const string PACKS_LOAD_FAILED_EMPTY = "empty_response";
 
@@ -262,7 +263,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                             status.CheckoutError != null ? ANALYTICS_STEP_CHECKOUT : ANALYTICS_STEP_GRANT,
                             MapAnalyticsErrorCode(status),
                             status.Pack);
-
+                        break;
+                    case CreditsTopUpStage.Abandoned:
+                        BuyCreditsFailed?.Invoke(
+                            ANALYTICS_STEP_GRANT,
+                            ANALYTICS_ABANDONED,
+                            status.Pack);
                         break;
                 }
 

@@ -17,7 +17,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
             Failed,
             TimedOut,
             Cancelled,
-            Abandoned
+            Abandoned,
         }
 
         private static readonly TimeSpan FOREGROUND_POLL_INTERVAL = TimeSpan.FromSeconds(1.5);
