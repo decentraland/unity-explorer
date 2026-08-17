@@ -34,7 +34,7 @@ namespace DCL.Web3.Accounts
 
         private static byte[] LeftPad(byte[] value, int size)
         {
-            if (value.Length >= size)
+            if (value.Length == size)
                 return value;
 
             // Fresh array: the input is cached inside EthECKey and must not be mutated.
