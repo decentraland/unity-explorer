@@ -83,11 +83,10 @@ namespace DCL.McpServer.Tools
 
             float holdSec = Mathf.Clamp(arguments.GetFloat("holdSec", DEFAULT_HOLD_SEC), MIN_HOLD_SEC, MAX_HOLD_SEC);
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
-            string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
 
             var intent = new McpInputActionIntent(
                 action.ToInputAction(),
-                sceneId,
+                arguments["sceneId"] is { Type: JTokenType.String } sceneIdToken ? sceneIdToken.Value<string>() : null,
                 kind == PressKind.UP ? PointerEventType.PetUp : PointerEventType.PetDown,
                 kind == PressKind.PRESS ? holdSec : null);
 
