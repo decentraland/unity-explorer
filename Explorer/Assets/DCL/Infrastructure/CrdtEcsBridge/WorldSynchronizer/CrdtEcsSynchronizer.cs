@@ -4,7 +4,6 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Utility.Multithreading;
 
 namespace CrdtEcsBridge.WorldSynchronizer
@@ -26,7 +25,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         // We can't use a mutex as it must be acquired and released by the same thread
         // and it is not guaranteed as we use thread pools (in the most cases different threads are used for getting and applying command buffers)
-        private readonly DCLSemaphoreSlim semaphore = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphore = new ();
 
         private bool disposed;
 
@@ -87,6 +86,23 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 // Pairs with semaphore.Wait in GetSyncCommandBuffer; must release on every path,
                 // including the disposed early-return and any exception thrown by Apply,
                 // otherwise the slot leaks and subsequent Rents time out forever.
+                semaphore.Release();
+#endif
+            }
+        }
+
+        public void AbortSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
+        {
+            try
+            {
+                syncCommandBuffer.Dispose();
+            }
+            finally
+            {
+#if !UNITY_WEBGL
+                // Pairs with semaphore.Wait in GetSyncCommandBuffer for buffers that never reach
+                // ApplySyncCommandBuffer; must release even if Dispose throws, otherwise the slot
+                // leaks and subsequent Rents time out forever.
                 semaphore.Release();
 #endif
             }
