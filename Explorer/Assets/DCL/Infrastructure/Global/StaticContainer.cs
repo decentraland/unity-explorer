@@ -305,7 +305,7 @@ namespace Global
                 new AudioAnalysisPlugin(sharedDependencies),
                 assetBundlePlugin,
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.RealmData),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(sharedDependencies.FrameTimeBudget),
                 new TweenPlugin(),

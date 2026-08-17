@@ -253,7 +253,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
             if (font < styleFontDefinitions.Length)
                 labelToSetup.style.unityFontDefinition = styleFontDefinitions[font];
 
-            // An explicit textWrap is always honored; when it is unset the caller decides the default.
             bool wrap = model.HasTextWrap ? model.TextWrap == TextWrap.TwWrap : wrapUnsetByDefault;
             labelToSetup.style.whiteSpace = wrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
         }
@@ -264,7 +263,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Slices = model.GetBorder();
             imageToSetup.UVs = model.Uvs.ToDCLUVs();
             imageToSetup.ScaleMode = model.TextureMode.ToDCLImageScaleMode();
-            imageToSetup.Texture = texture!;
+            imageToSetup.Texture = texture;
         }
 
         public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, in PBUiInput model, in StyleFontDefinition[] styleFontDefinitions)

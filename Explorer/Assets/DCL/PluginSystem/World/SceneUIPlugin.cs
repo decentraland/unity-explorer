@@ -17,6 +17,7 @@ using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
 using DCL.SDKComponents.SceneUI.Systems.UIText;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
+using ECS;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -31,20 +32,28 @@ namespace DCL.PluginSystem.World
 {
     public class SceneUIPlugin : IDCLWorldPlugin<SceneUIPlugin.Settings>
     {
+        /// <summary>
+        ///     Deploy timestamp (Unix ms, 2026-08-16) from which `ui-text` without an explicit `textWrap` wraps.
+        ///     Scenes deployed before it were authored against the previous no-wrap default and would reflow if it changed under them.
+        /// </summary>
+        private const long TEXT_WRAP_DEFAULT_CHANGE_TIMESTAMP_MS = 1786838400000;
+
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly FrameTimeCapBudget frameTimeBudgetProvider;
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IComponentPool<UITransformComponent> transformsPool;
         private readonly IInputBlock inputBlock;
+        private readonly IRealmData realmData;
 
         private UIDocument uiDocument = null!;
         private StyleFontDefinition[] styleFontDefinitions;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, IRealmData realmData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
+            this.realmData = realmData;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
@@ -89,7 +98,7 @@ namespace DCL.PluginSystem.World
             UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
             sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot));
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions);
+            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions, ShouldWrapUnsetTextByDefault(realmData.IsLocalSceneDevelopment, sharedDependencies.SceneData.SceneEntityDefinition.timestamp));
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             finalizeWorldSystems.Add(UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
@@ -105,6 +114,12 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBUiBackground>.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
+
+        /// <summary>
+        ///     Local scene development carries no deploy timestamp, so it always previews the current default.
+        /// </summary>
+        public static bool ShouldWrapUnsetTextByDefault(bool isLocalSceneDevelopment, long sceneDeployTimestampMs) =>
+            isLocalSceneDevelopment || sceneDeployTimestampMs >= TEXT_WRAP_DEFAULT_CHANGE_TIMESTAMP_MS;
 
         [Serializable]
         public class Settings : IDCLPluginSettings

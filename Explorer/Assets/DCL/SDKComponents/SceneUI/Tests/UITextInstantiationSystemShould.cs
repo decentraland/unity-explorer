@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Act
             world.Add(entity, input);
-            system!.Update(0);
+            system.Update(0);
 
             // Assert
             ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
@@ -62,7 +62,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Arrange
             var input = new PBUiText();
             world.Add(entity, input);
-            system!.Update(0);
+            system.Update(0);
             const int NUMBER_OF_UPDATES = 3;
 
             for (var i = 0; i < NUMBER_OF_UPDATES; i++)
@@ -135,8 +135,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void WrapUnsetTextForLocalSceneDevelopmentDespiteOldTimestamp()
         {
-            // Arrange: a local-development scene with a missing deploy timestamp still wraps, overriding the date gate,
-            // whereas a deployed scene with the same timestamp keeps the legacy no-wrap default.
+            // Arrange
             bool wrapUnsetByDefault = SceneUIPlugin.ShouldWrapUnsetTextByDefault(isLocalSceneDevelopment: true, sceneDeployTimestampMs: 0);
             Assert.IsTrue(wrapUnsetByDefault);
             Assert.IsFalse(SceneUIPlugin.ShouldWrapUnsetTextByDefault(isLocalSceneDevelopment: false, sceneDeployTimestampMs: 0));
@@ -150,6 +149,19 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             Assert.AreEqual(WhiteSpace.Normal, label.style.whiteSpace.value);
+        }
+
+        [Test]
+        public void WrapUnsetTextForScenesDeployedAfterTheDefaultChanged()
+        {
+            // Arrange
+            long recentDeployTimestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            // Act
+            bool wrapUnsetByDefault = SceneUIPlugin.ShouldWrapUnsetTextByDefault(isLocalSceneDevelopment: false, recentDeployTimestampMs);
+
+            // Assert
+            Assert.IsTrue(wrapUnsetByDefault);
         }
     }
 }
