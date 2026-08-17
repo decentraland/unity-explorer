@@ -13,14 +13,21 @@ using NUnit.Framework;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using SceneRunner.Scene;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
 {
     public class SignedFetchWrapShould
     {
+        /// <summary>
+        ///     Player loop ticks granted to a dispatched request to resume after the main thread is released.
+        /// </summary>
+        private const int MAX_CONTINUATION_TICKS = 10;
+
         private IWebRequestController webController;
         private ISceneData sceneData;
         private IRealmData realmData;
@@ -189,7 +196,68 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             DoAssertions(metadata);
         }
 
+        /// <summary>
+        ///     Scene code calls signed fetch from the scene thread, so the request only reaches the web
+        ///     request controller after a hop to the main thread. The scene runtime owns <c>disposeCts</c> and
+        ///     disposes it while unloading, which can land inside that hop: reading <c>disposeCts.Token</c>
+        ///     from the continuation threw <see cref="ObjectDisposedException" /> and the request was lost.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DispatchRequestWithTokenCapturedBeforeMainThreadHop()
+        {
+            // Arrange
+            string url = "https://example.com/api";
+            string body = "";
+            string headers = "{}";
+            string method = "get";
 
+            CancellationToken tokenBeforeDisposal = disposeCts.Token;
+            CancellationToken dispatchedToken = default;
+            var dispatched = false;
+
+            webController.RequestHub.Returns(Substitute.For<IRequestHub>());
+
+            webController.When(controller =>
+                            controller.SendAsync<GenericGetRequest, GenericGetArguments, FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                                Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(),
+                                Arg.Any<FlatFetchResponse<GenericGetRequest>>(),
+                                Arg.Any<long>(),
+                                Arg.Any<IProgress<float>>()))
+                         .Do(callInfo =>
+                          {
+                              dispatchedToken = callInfo.Arg<RequestEnvelope<GenericGetRequest, GenericGetArguments>>().Ct;
+                              dispatched = true;
+                          });
+
+            Exception? dispatchFailure = null;
+
+            // The main thread stays parked on Join() for the whole dispatch, so the request cannot leave
+            // its hop to the main thread before the source is disposed.
+            var sceneThread = new Thread(() =>
+            {
+                try { signedFetchWrap.SignedFetch(url, body, headers, method); }
+                catch (ArgumentNullException)
+                {
+                    // The returned promise is built by ClearScript from the script engine running on this
+                    // thread, and no EditMode test has one; the request is dispatched before that happens.
+                }
+                catch (Exception e) { dispatchFailure = e; }
+
+                disposeCts.Dispose();
+            });
+
+            // Act
+            sceneThread.Start();
+            sceneThread.Join();
+
+            for (var i = 0; i < MAX_CONTINUATION_TICKS && !dispatched; i++)
+                yield return null;
+
+            // Assert
+            Assert.IsNull(dispatchFailure, $"Dispatching the request threw {dispatchFailure}");
+            Assert.IsTrue(dispatched, "The request never reached the web request controller.");
+            Assert.AreEqual(tokenBeforeDisposal, dispatchedToken, "The request must carry the token read before the source was disposed.");
+        }
     }
 }
 

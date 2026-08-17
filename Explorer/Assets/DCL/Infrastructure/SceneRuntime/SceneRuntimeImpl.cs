@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Assertions;
+using Utility.Multithreading;
 
 namespace SceneRuntime
 {
@@ -29,8 +30,8 @@ namespace SceneRuntime
         private readonly JSTaskResolverResetable resetableSource;
 
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
+        private readonly InterlockedFlag isDisposing = new ();
         private int nextUint8Array;
-        private bool isDisposing;
 
         private ScriptObject updateFunc;
         private ScriptObject startFunc;
@@ -133,12 +134,14 @@ namespace SceneRuntime
             jsApiBunch.AddHostObject(itemName, target);
         }
 
+        /// <remarks>
+        ///     Entered concurrently from more than one thread, so the single-entry guard is atomic.
+        /// </remarks>
         public void SetIsDisposing()
         {
-            if (isDisposing)
+            if (!isDisposing.Set())
                 return;
 
-            isDisposing = true;
             isDisposingTokenSource.Cancel();
             isDisposingTokenSource.Dispose();
         }
