@@ -50,12 +50,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             try
             {
                 if (missingUrns.Count > 0)
-                {
-                    await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct, result);
-
-                    // The outfit result must stay resolved-only (DTO != null) regardless of what the provider returns.
-                    result.RemoveAll(static w => w.DTO == null);
-                }
+                    await FetchMissingDtosIntoResultAsync(missingUrns, bodyShape, result, ct);
 
                 foreach ((var baseUrn, var fullUrn, string tokenId) in tokenMappings)
                     // We don't strictly need transferredAt/price here; use safe defaults.
@@ -79,6 +74,52 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.OUTFITS); }
         }
+
+        // The outfit equip event needs DTO metadata only, so the wait ends when every missing
+        // pointer's DTO settles (resolved or failed); the provider's full fetch keeps loading
+        // assets in the background. Result entries stay resolved-only (DTO != null): a pointer
+        // whose DTO failed has no metadata to equip and is left out.
+        private async UniTask FetchMissingDtosIntoResultAsync(List<URN> missingUrns, BodyShape bodyShape, List<IWearable> result, CancellationToken ct)
+        {
+            UniTask fullFetch = FullFetchAsync();
+
+            await UniTask.WhenAny(fullFetch, UniTask.WaitUntil(AllMissingDtosSettled, cancellationToken: ct));
+
+            foreach (URN urn in missingUrns)
+                if (TryGetStored(urn, out IWearable w) && w.DTO != null)
+                    result.Add(w);
+
+            return;
+
+            // The provider copies the pointers into its intention before its first await, so the
+            // background continuation never touches the pooled list after this scope ends.
+            async UniTask FullFetchAsync()
+            {
+                try { await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct); }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.OUTFITS); }
+            }
+
+            bool AllMissingDtosSettled()
+            {
+                foreach (URN urn in missingUrns)
+                {
+                    if (!TryGetStored(urn, out IWearable w))
+                        return false;
+
+                    if (w.DTO == null && w.Model.Exception == null)
+                        return false;
+                }
+
+                return true;
+            }
+        }
+
+        // The resolution pipeline keys the storage by shortened URN, so an unshortened pointer
+        // must fall back to its shortened form.
+        private bool TryGetStored(URN urn, out IWearable wearable) =>
+            wearableStorage.TryGetElement(urn, out wearable)
+            || wearableStorage.TryGetElement(urn.Shorten(), out wearable);
 
         private void TryAdd(URN urn, List<IWearable> result, List<URN> missingUrns)
         {
