@@ -127,6 +127,29 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await creditsApiClient.Received(1).GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
+        /// <summary>
+        /// The server has always reported `abandoned` for a checkout retired without payment, but the
+        /// client only recognised credited/failed — so a cancelled purchase looked exactly like one still
+        /// in flight and the modal span until the poll timed out (unity-explorer#9737).
+        /// </summary>
+        [Test]
+        public async Task TransitionToAbandonedWhenOrderIsRetired()
+        {
+            // Arrange
+            creditsApiClient.GetCheckoutOrderAsync(ORDER_ID, Arg.Any<CancellationToken>())
+                            .Returns(Order(CreditsOrderStatusResponse.STATUS_ABANDONED));
+
+            // Act
+            service.StartTopUp(PACK);
+            await WaitForStageAsync(CreditsTopUpStage.Abandoned);
+
+            // Assert
+            Assert.AreEqual(ORDER_ID, service.CurrentStatus.OrderId);
+            // Nobody was charged, so there is no balance to re-read and nothing to call an error.
+            Assert.IsNull(service.CurrentStatus.CheckoutError);
+            await creditsApiClient.DidNotReceive().GetUserCreditsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
         [Test]
         public async Task TransitionToFailedWhenOrderFails()
         {

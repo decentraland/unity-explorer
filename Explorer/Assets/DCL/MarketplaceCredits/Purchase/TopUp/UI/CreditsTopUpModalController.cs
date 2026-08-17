@@ -294,6 +294,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                     }
 
                     break;
+                case CreditsTopUpStage.Abandoned:
+                    // Nobody was charged and nothing broke, so this must not read as an error. Retry is
+                    // offered because starting again is exactly what the buyer is likely to want.
+                    viewInstance.FailedReasonText.text = "Purchase cancelled — you were not charged.";
+                    viewInstance.RetryButton.gameObject.SetActive(true);
+                    break;
                 case CreditsTopUpStage.Failed:
                     (string reason, bool allowRetry) = MapFailureCopy(status);
                     viewInstance.FailedReasonText.text = reason;
@@ -356,6 +362,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 CreditsTopUpStage.WaitingForPayment => ModalState.WaitingForBrowser,
                 CreditsTopUpStage.PendingTimeout => ModalState.Pending,
                 CreditsTopUpStage.Credited => ModalState.Success,
+                // Reuses the Failed panel rather than adding a state the prefab has no view for. The
+                // STAGE stays distinct so nothing downstream has to treat a cancellation as an error;
+                // only the presentation is shared, and the copy below says what actually happened.
+                CreditsTopUpStage.Abandoned => ModalState.Failed,
                 CreditsTopUpStage.Failed => ModalState.Failed,
                 _ => ModalState.PackSelection,
             };

@@ -15,6 +15,9 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
         {
             Credited,
             Failed,
+            // The ORDER was retired server-side. Distinct from Cancelled below, which means this local
+            // operation was aborted (the user closed the modal) and whoever aborted it owns the status.
+            Abandoned,
             TimedOut,
             Cancelled,
         }
@@ -153,6 +156,9 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                     case PollOutcome.Failed:
                         SetStatus(CreditsTopUpStatus.GrantFailed(pack, orderId, order.error));
                         break;
+                    case PollOutcome.Abandoned:
+                        SetStatus(CreditsTopUpStatus.Abandoned(pack, orderId));
+                        break;
                 }
             }
             catch (OperationCanceledException) { }
@@ -182,6 +188,8 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                             return (PollOutcome.Credited, result.Value);
                         case CreditsOrderStatusResponse.STATUS_FAILED:
                             return (PollOutcome.Failed, result.Value);
+                        case CreditsOrderStatusResponse.STATUS_ABANDONED:
+                            return (PollOutcome.Abandoned, result.Value);
                     }
                 }
                 else

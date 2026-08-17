@@ -7,6 +7,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
         WaitingForPayment,
         PendingTimeout,
         Credited,
+        Abandoned,
         Failed,
     }
 
@@ -52,5 +53,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
 
         public static CreditsTopUpStatus GrantFailed(CreditPack pack, string orderId, string? errorMessage) =>
             new (CreditsTopUpStage.Failed, pack, orderId, errorMessage: errorMessage);
+
+        /// <summary>
+        /// The checkout was retired without a payment. Kept apart from Failed on purpose: nothing went
+        /// wrong and nobody was charged, so the UI should say "cancelled" rather than raise an error.
+        /// </summary>
+        public static CreditsTopUpStatus Abandoned(CreditPack pack, string orderId) =>
+            new (CreditsTopUpStage.Abandoned, pack, orderId);
     }
 }
