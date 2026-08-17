@@ -81,16 +81,17 @@ namespace DCL.AuthenticationScreenFlow
         // misclassifying returning users whose cached identity expired.
         public bool IsCurrentlyNewAccount { get; internal set; }
 
-        public event Action DiscordButtonClicked;
-        public event Action<string, bool> OTPVerified;
-        public event Action OTPResend;
-        public event Action ProfileFinalized;
+        public event Action? DiscordButtonClicked;
+        public event Action<string, bool>? OTPVerified;
+        public event Action? OTPResend;
+        public event Action? ProfileFinalized;
 
         internal void RaiseProfileFinalized() =>
             ProfileFinalized?.Invoke();
 
-        private MVCStateMachine<AuthStateBase> fsm;
-        private AuthenticationScreenAudio audio;
+        // Null until OnViewInstantiated: the view is created lazily on first Show and may never be instantiated.
+        private MVCStateMachine<AuthStateBase>? fsm;
+        private AuthenticationScreenAudio? audio;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -138,8 +139,8 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController?.Dispose();
 
             CancelLoginProcess();
-            audio.Dispose();
-            fsm.Dispose();
+            audio?.Dispose();
+            fsm?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -191,6 +192,7 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
@@ -203,7 +205,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
@@ -214,10 +216,10 @@ namespace DCL.AuthenticationScreenFlow
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
+                    fsm!.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
                 else
                 {
-                    fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                    fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
                 }
             }
             catch (OperationCanceledException)
@@ -226,7 +228,7 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
@@ -235,18 +237,18 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewShow();
 
             BlockUnwantedInputs();
-            audio.OnShow();
+            audio!.OnShow();
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
 
-            fsm.CurrentState?.Exit();
+            fsm!.CurrentState?.Exit();
             CancelLoginProcess();
 
             UnblockUnwantedInputs();
-            audio.OnHide();
+            audio!.OnHide();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -285,7 +287,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
+                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
             }
         }
 
