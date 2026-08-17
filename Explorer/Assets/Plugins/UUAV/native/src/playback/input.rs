@@ -25,6 +25,23 @@ pub(super) struct Input {
     _cancel: ReadOnlyCancelToken,
 }
 
+/// HLS playlists delivered inline — the only self-contained carrier with the
+/// `file` protocol off the whitelist. Mirrors the media type the Explorer's
+/// HlsManifestBuilder (C#) stamps on the playlists it synthesizes.
+const HLS_DATA_URI_PREFIX: &str = "data:application/vnd.apple.mpegurl";
+
+/// FFmpeg's HLS probe rejects playlists whose URL carries neither an .m3u8
+/// extension nor an HLS mime type, and the data: protocol delivers no mime
+/// into the probe — inline playlists must name their demuxer explicitly.
+/// Every other URL keeps normal content probing.
+fn forced_input_format(url: &str) -> *const ff::AVInputFormat {
+    if url.starts_with(HLS_DATA_URI_PREFIX) {
+        unsafe { ff::av_find_input_format(c"hls".as_ptr()) }
+    } else {
+        ptr::null()
+    }
+}
+
 impl Input {
     /// Opens the media and probes its streams. Demuxer I/O is aborted
     /// through `cancel` (see [`interrupt_cb`]); `protocol_whitelist` bounds the
@@ -50,7 +67,12 @@ impl Input {
             // avformat_open_input frees the context on failure
             check(
                 "avformat_open_input",
-                ff::avformat_open_input(&mut fmt, url_c.as_ptr(), ptr::null(), opts.as_mut_ptr()),
+                ff::avformat_open_input(
+                    &mut fmt,
+                    url_c.as_ptr(),
+                    forced_input_format(url),
+                    opts.as_mut_ptr(),
+                ),
             )?;
 
             Self {
@@ -152,5 +174,18 @@ mod tests {
             "file: must be blocked before the filesystem, got: {msg}"
         );
         Ok(())
+    }
+
+    #[test]
+    fn inline_hls_playlists_force_the_hls_demuxer() {
+        // Non-null also asserts the linked FFmpeg still ships the hls
+        // demuxer, which inline playlist support silently depends on.
+        assert!(!forced_input_format("data:application/vnd.apple.mpegurl;base64,I0VYVE0zVQ==").is_null());
+    }
+
+    #[test]
+    fn other_urls_keep_content_probing() {
+        assert!(forced_input_format("https://example.com/video.mp4").is_null());
+        assert!(forced_input_format("data:video/mp4;base64,AAAA").is_null());
     }
 }

@@ -3,9 +3,9 @@ using AVPro = RenderHeads.Media.AVProVideo;
 
 namespace DCL.AvProSwitch
 {
-    // AVPro path: enables the real AVPro MediaPlayer + AudioOutput components
-    // serialized (disabled) on the prefab and forwards to them. AVPro creates
-    // its platform player lazily (Start or first OpenMedia), so the inner
+    // AVPro path: forwards to the real AVPro MediaPlayer + AudioOutput
+    // components serialized (disabled) on the prefab. AVPro creates its
+    // platform player lazily (Start or first OpenMedia), so the inner
     // Control/Info/TextureProducer are null until then and every forward
     // guards with an inert default.
     public sealed class AvProBackend
@@ -14,6 +14,7 @@ namespace DCL.AvProSwitch
         private static readonly TimeRanges BUFFERED = new TimeRanges(1);
 
         private readonly AVPro.MediaPlayer player;
+        private readonly AVPro.AudioOutput audioOutput;
         private readonly MediaPlayer.OptionsWindows optionsWindows;
         private readonly MediaPlayer.OptionsApple optionsApple;
 
@@ -25,7 +26,7 @@ namespace DCL.AvProSwitch
             if (!gameObject.TryGetComponent(out player))
                 player = gameObject.AddComponent<AVPro.MediaPlayer>();
 
-            if (!gameObject.TryGetComponent(out AVPro.AudioOutput audioOutput))
+            if (!gameObject.TryGetComponent(out audioOutput))
             {
                 audioOutput = gameObject.AddComponent<AVPro.AudioOutput>();
                 audioOutput.Player = player;
@@ -36,8 +37,11 @@ namespace DCL.AvProSwitch
             // The pooled prefab must never open its serialized MediaPath on its
             // own; enabling the component would honor a stray _autoOpen edit.
             player.AutoOpen = false;
-            player.enabled = true;
-            audioOutput.enabled = true;
+
+            // Deliberately still disabled: AVPro builds its Windows platform player
+            // in Start() from the videoApi held at that instant and never rebinds
+            // it, so enabling before ApplyOptions would lock in the prefab's Media
+            // Foundation default (no HLS/DASH support).
         }
 
         public AudioSource AudioSource => player.AudioSource;
@@ -60,6 +64,12 @@ namespace DCL.AvProSwitch
             // AVPro reads its own at platform-player creation, which OpenMedia
             // triggers, so this is the last moment to copy them across.
             ApplyOptions();
+
+            // Enabled only after ApplyOptions — AVPro reads the Windows videoApi
+            // solely at platform-player creation.
+            player.enabled = true;
+            audioOutput.enabled = true;
+
             return player.OpenMedia(ToAvPro(pathType), path, autoPlay);
         }
 

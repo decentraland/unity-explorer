@@ -14,15 +14,23 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///     HLS chosen over DASH because every AVPro backend supports it: AVFoundation (macOS/iOS),
     ///     Media Foundation (Windows), ExoPlayer (Android). DASH only works on a subset.
     ///
-    ///     Output: three plain-text playlists meant to be written into the same directory.
-    ///     - <c>master.m3u8</c> — multivariant playlist with one video stream + one audio rendition
-    ///     - <c>video.m3u8</c> — single-segment fMP4 playlist using EXT-X-MAP + EXT-X-BYTERANGE
-    ///     - <c>audio.m3u8</c> — same for audio
+    ///     Two output shapes:
+    ///     - <see cref="Build"/> — three plain-text playlists meant to be written into the same
+    ///       directory (<see cref="VIDEO_PLAYLIST_NAME"/> / <see cref="AUDIO_PLAYLIST_NAME"/> are
+    ///       the master's relative references, so the files must carry exactly these names).
+    ///     - <see cref="BuildDataUriMaster"/> — the same playlists packed into one self-contained
+    ///       <c>data:</c> URI (media playlists nested as <c>data:</c> URIs inside the master),
+    ///       for playback that cannot touch the filesystem.
     ///
     ///     Reference: RFC 8216 §4.3 (HLS playlist tags), §4.3.2.5 (EXT-X-MAP byte-range form).
     /// </summary>
     internal static class HlsManifestBuilder
     {
+        public const string VIDEO_PLAYLIST_NAME = "video.m3u8";
+        public const string AUDIO_PLAYLIST_NAME = "audio.m3u8";
+
+        private const string HLS_DATA_URI_PREFIX = "data:application/vnd.apple.mpegurl;base64,";
+
         private const int DEFAULT_PLAYLIST_LENGTH = 2048;
         private const int HEADER_PLAYLIST_LENGTH = 256;
         private const int SEGMENT_PLAYLIST_LENGTH = 128;
@@ -95,6 +103,42 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null,
             IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null)
         {
+            (string videoPlaylist, string audioPlaylist) = BuildMediaPlaylists(video, audio, durationSeconds, videoSegments, audioSegments);
+
+            return new PlaylistSet(
+                BuildMaster(video, audio, VIDEO_PLAYLIST_NAME, AUDIO_PLAYLIST_NAME),
+                videoPlaylist,
+                audioPlaylist);
+        }
+
+        /// <summary>
+        ///     Same synthesis as <see cref="Build"/>, packed into a single self-contained
+        ///     <c>data:</c> master whose media playlists are nested <c>data:</c> URIs — no
+        ///     filesystem involved. Segment references stay the absolute stream URLs.
+        ///     <see cref="HLS_DATA_URI_PREFIX"/> is a cross-component contract: native playback
+        ///     (UUAV's <c>playback/input.rs</c>) matches its media type to force FFmpeg's HLS
+        ///     demuxer, since content probing cannot type inline playlists.
+        /// </summary>
+        public static string BuildDataUriMaster(
+            AdaptiveFormatData video,
+            AdaptiveFormatData audio,
+            int durationSeconds,
+            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null,
+            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null)
+        {
+            (string videoPlaylist, string audioPlaylist) = BuildMediaPlaylists(video, audio, durationSeconds, videoSegments, audioSegments);
+
+            string master = BuildMaster(video, audio, ToDataUri(videoPlaylist), ToDataUri(audioPlaylist));
+            return ToDataUri(master);
+        }
+
+        private static (string video, string audio) BuildMediaPlaylists(
+            AdaptiveFormatData video,
+            AdaptiveFormatData audio,
+            int durationSeconds,
+            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments,
+            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments)
+        {
             bool segmented = videoSegments is { Count: > 0 }
                              && audioSegments is { Count: > 0 };
 
@@ -106,11 +150,11 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 ? BuildSegmentedMediaPlaylist(audio, audioSegments!)
                 : BuildMediaPlaylist(audio, durationSeconds);
 
-            return new PlaylistSet(
-                BuildMaster(video, audio),
-                videoPlaylist,
-                audioPlaylist);
+            return (videoPlaylist, audioPlaylist);
         }
+
+        private static string ToDataUri(string playlist) =>
+            HLS_DATA_URI_PREFIX + Convert.ToBase64String(Encoding.UTF8.GetBytes(playlist));
 
         private static AdaptiveFormatData? SelectBestVideo(IReadOnlyList<AdaptiveFormatData> adaptive)
         {
@@ -194,25 +238,25 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             return comma < 0 ? codecs : codecs.Substring(0, comma).Trim();
         }
 
-        private static string BuildMaster(AdaptiveFormatData video, AdaptiveFormatData audio)
+        private static string BuildMaster(AdaptiveFormatData video, AdaptiveFormatData audio, string videoPlaylistUri, string audioPlaylistUri)
         {
             string videoCodec = FirstCodec(ExtractCodec(video.MimeType));
             string audioCodec = FirstCodec(ExtractCodec(audio.MimeType));
             long combinedBandwidth = video.Bitrate + audio.Bitrate;
 
-            var sb = new StringBuilder(512);
+            var sb = new StringBuilder(512 + videoPlaylistUri.Length + audioPlaylistUri.Length);
             sb.Append("#EXTM3U\n");
             sb.Append("#EXT-X-VERSION:7\n");
             sb.Append("#EXT-X-INDEPENDENT-SEGMENTS\n");
             sb.Append('\n');
-            sb.Append("#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio0\",NAME=\"audio\",DEFAULT=YES,AUTOSELECT=YES,URI=\"audio.m3u8\"\n");
+            sb.Append("#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio0\",NAME=\"audio\",DEFAULT=YES,AUTOSELECT=YES,URI=\"").Append(audioPlaylistUri).Append("\"\n");
             sb.Append('\n');
             sb.Append("#EXT-X-STREAM-INF:BANDWIDTH=").Append(combinedBandwidth);
             sb.Append(",CODECS=\"").Append(videoCodec).Append(',').Append(audioCodec).Append('"');
             sb.Append(",RESOLUTION=").Append(video.Width!.Value).Append('x').Append(video.Height!.Value);
             if (video.Fps.HasValue) sb.Append(",FRAME-RATE=").Append(video.Fps.Value);
             sb.Append(",AUDIO=\"audio0\"\n");
-            sb.Append("video.m3u8\n");
+            sb.Append(videoPlaylistUri).Append('\n');
             return sb.ToString();
         }
 

@@ -447,8 +447,15 @@ namespace DCL.SDKComponents.MediaStream
 
                 lastOpenMediaTime = currentTime;
 
+                // Synthesized inline (data:) playlists run to hundreds of KB; logging them whole
+                // would flood the console and Sentry breadcrumbs.
+                string resolvedForLog = resolvedAddress.ToString();
+
+                if (resolvedForLog.Length > 160)
+                    resolvedForLog = $"{resolvedForLog[..160]}… ({resolvedForLog.Length} chars)";
+
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
+                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedForLog}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
 
                 Profiler.BeginSample(component.MediaPlayer.HasControl
                     ? "MediaPlayer.OpenMedia"

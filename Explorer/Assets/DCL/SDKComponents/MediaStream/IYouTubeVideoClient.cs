@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.AvProSwitch;
 using DCL.Diagnostics;
 using DCL.SDKComponents.MediaStream.YouTube;
 using DCL.WebRequests;
@@ -22,13 +23,17 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Returns a streaming manifest URL for the given video. Resolution order:
         ///     1. YouTube's native HLS manifest (if returned)
-        ///     2. YouTube's native DASH manifest (if returned)
-        ///     3. For VODs only — a locally synthesized HLS multivariant playlist written to
-        ///        <see cref="Application.temporaryCachePath"/> and exposed as a <c>file://</c>
-        ///        URL. Fixes A/V sync on embed-restricted videos that only get muxed itag=18.
-        ///        HLS chosen over DASH because every AVPro backend (AVFoundation/MediaFoundation/
-        ///        ExoPlayer) supports it natively; DASH support varies by platform.
-        ///     4. Empty string — caller falls through to muxed-MP4 selection.
+        ///     2. YouTube's native DASH manifest — only when the active playback backend can
+        ///        demux DASH (UUAV's FFmpeg, or AVPro's WinRT path on Windows; AVFoundation
+        ///        on macOS cannot).
+        ///     3. For VODs — a locally synthesized HLS multivariant playlist. Fixes A/V sync
+        ///        on embed-restricted videos that only get muxed itag=18, and keeps their
+        ///        quality above itag=18's ~360p. Shape depends on the backend: AVPro gets it
+        ///        written to <see cref="Application.temporaryCachePath"/> as a <c>file://</c>
+        ///        URL; UUAV gets one self-contained <c>data:</c> URI (its sandboxed helper
+        ///        deliberately refuses the <c>file</c> protocol — media URLs come from
+        ///        untrusted scenes).
+        ///     4. Empty string — no manifest playable by the active backend.
         /// </summary>
         UniTask<string> GetStreamingManifestUrlAsync(VideoId videoId, CancellationToken ct);
     }
@@ -38,8 +43,6 @@ namespace DCL.SDKComponents.MediaStream
         private const string TAG = nameof(YouTubeVideoClient);
         private const string SYNTH_HLS_DIR_PREFIX = "youtube_hls_";
         private const string MASTER_PLAYLIST_NAME = "master.m3u8";
-        private const string VIDEO_PLAYLIST_NAME = "video.m3u8";
-        private const string AUDIO_PLAYLIST_NAME = "audio.m3u8";
 
         // HLS spec requires UTF-8 without BOM (RFC 8216 §4).
         private static readonly UTF8Encoding HLS_ENCODING = new (encoderShouldEmitUTF8Identifier: false);
@@ -68,46 +71,52 @@ namespace DCL.SDKComponents.MediaStream
         {
             PlayerResponse response = await innerTube.FetchPlayerResponseAsync(videoId, ct);
 
-            // Native HLS — preferred (rock-solid AVPro support across all platforms).
+            // Native HLS — preferred: both backends demux it on every platform.
             if (!string.IsNullOrEmpty(response.HlsManifestUrl))
                 return response.HlsManifestUrl!;
 
-            // Native DASH — works on AVPro Pro on Windows/Android, limited on macOS.
-            if (!string.IsNullOrEmpty(response.DashManifestUrl))
+            if (!string.IsNullOrEmpty(response.DashManifestUrl) && CurrentBackendSupportsDash())
                 return response.DashManifestUrl!;
 
             // Synthesized HLS fallback — only for VODs. Live streams without HLS are unplayable
             // here (they'd need a different live format) so we don't synthesize for them.
             if (!response.IsLive && response.AdaptiveFormats.Count > 0)
             {
-                string? synthesizedPath = await TryWriteSynthesizedHlsAsync(videoId, response, ct);
+                string? synthesizedUrl = await TrySynthesizeHlsAsync(videoId, response, ct);
 
-                if (!string.IsNullOrEmpty(synthesizedPath))
-                {
-                    ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                        $"[{TAG}] Synthesized HLS playlist for {videoId.Value} at {synthesizedPath}");
-
-                    return "file://" + synthesizedPath;
-                }
+                if (!string.IsNullOrEmpty(synthesizedUrl))
+                    return synthesizedUrl;
             }
 
             return string.Empty;
         }
 
+        // DASH demuxing capability of the active playback backend:
+        // - UUAV: FFmpeg's dash demuxer, present in both shipped builds (requires libxml2).
+        // - AVPro: only the WinRT video API on Windows; AVFoundation (macOS) has no DASH support.
+        private static bool CurrentBackendSupportsDash()
+        {
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+            return true;
+#else
+            return MediaPlayerBackendSelection.UseCustomPlayer;
+#endif
+        }
+
         /// <summary>
         ///     Generates an HLS multivariant playlist (master + video + audio) from the response's
-        ///     adaptive streams, writes the 3 files into a per-video subdirectory of the temp
-        ///     cache, and returns the absolute path of the master playlist. Returns null on any
-        ///     failure (no usable streams, write error, etc.) so the caller falls through to the
-        ///     muxed path.
+        ///     adaptive streams and returns a URL the active backend can open: a <c>file://</c>
+        ///     master written into a per-video subdirectory of the temp cache for AVPro, or one
+        ///     self-contained <c>data:</c> URI for UUAV. Returns null on any failure (no usable
+        ///     streams, write error, etc.).
         ///
         ///     Pre-fetches the sidx (segment index) box for the selected video and audio streams
         ///     via byte-range HTTP requests; that lets the playlist enumerate one HLS segment per
-        ///     fmp4 fragment instead of a single segment over the entire file. AVPro can then
-        ///     start playback after fetching the first ~5-10s chunk rather than the whole body
-        ///     (issue #8350). If sidx fetch or parse fails, falls back to single-segment.
+        ///     fmp4 fragment instead of a single segment over the entire file, so playback can
+        ///     start after the first ~5-10s chunk rather than the whole body (issue #8350). If
+        ///     sidx fetch or parse fails, falls back to single-segment.
         /// </summary>
-        private async UniTask<string?> TryWriteSynthesizedHlsAsync(VideoId videoId, PlayerResponse response, CancellationToken ct)
+        private async UniTask<string?> TrySynthesizeHlsAsync(VideoId videoId, PlayerResponse response, CancellationToken ct)
         {
             try
             {
@@ -133,6 +142,17 @@ namespace DCL.SDKComponents.MediaStream
                 if (audioSidx != null)
                     SidxParser.TryParse(audioSidx, audioStream.IndexRangeEnd + 1, audioSegments);
 
+                if (MediaPlayerBackendSelection.UseCustomPlayer)
+                {
+                    // The UUAV helper refuses the file protocol, so it gets the playlists inline.
+                    string dataUri = HlsManifestBuilder.BuildDataUriMaster(videoStream, audioStream, response.DurationSeconds, videoSegments, audioSegments);
+
+                    ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                        $"[{TAG}] Synthesized inline HLS playlist for {videoId.Value} ({dataUri.Length} chars)");
+
+                    return dataUri;
+                }
+
                 HlsManifestBuilder.PlaylistSet playlists =
                     HlsManifestBuilder.Build(videoStream, audioStream, response.DurationSeconds, videoSegments, audioSegments);
 
@@ -142,13 +162,16 @@ namespace DCL.SDKComponents.MediaStream
                 string playlistDir = Path.Combine(Application.temporaryCachePath, SYNTH_HLS_DIR_PREFIX + videoId.Value);
                 Directory.CreateDirectory(playlistDir);
 
-                File.WriteAllText(Path.Combine(playlistDir, VIDEO_PLAYLIST_NAME), playlists.Video, HLS_ENCODING);
-                File.WriteAllText(Path.Combine(playlistDir, AUDIO_PLAYLIST_NAME), playlists.Audio, HLS_ENCODING);
+                File.WriteAllText(Path.Combine(playlistDir, HlsManifestBuilder.VIDEO_PLAYLIST_NAME), playlists.Video, HLS_ENCODING);
+                File.WriteAllText(Path.Combine(playlistDir, HlsManifestBuilder.AUDIO_PLAYLIST_NAME), playlists.Audio, HLS_ENCODING);
 
                 string masterPath = Path.Combine(playlistDir, MASTER_PLAYLIST_NAME);
                 File.WriteAllText(masterPath, playlists.Master, HLS_ENCODING);
 
-                return masterPath;
+                ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                    $"[{TAG}] Synthesized HLS playlist for {videoId.Value} at {masterPath}");
+
+                return "file://" + masterPath;
             }
             catch (OperationCanceledException) { return null; }
             catch (Exception ex)
