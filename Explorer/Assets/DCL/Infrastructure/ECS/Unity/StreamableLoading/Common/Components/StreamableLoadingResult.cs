@@ -23,8 +23,8 @@ namespace ECS.StreamableLoading.Common.Components
 
             /// <summary>
             ///     True when the request reached a terminal successful (or fallback-acceptable) state.
-            ///     False when the request failed or was cancelled; either way the state covers a
-            ///     single attempt — consumers clear the slot and retry on the next explicit request.
+            ///     False when the request failed or was cancelled; the value describes that single
+            ///     attempt only.
             /// </summary>
             public readonly bool Succeeded;
 

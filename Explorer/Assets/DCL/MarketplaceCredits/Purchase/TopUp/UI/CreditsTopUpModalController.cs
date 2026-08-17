@@ -262,8 +262,17 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
 
         private void OnApplicationFocusChanged(bool hasFocus)
         {
-            if (!hasFocus || currentState is not (ModalState.WaitingForBrowser or ModalState.Pending))
+            if (currentState is not (ModalState.WaitingForBrowser or ModalState.Pending))
                 return;
+
+            if (!hasFocus)
+            {
+                // The grace timer's premise is a user present in the app who abandoned the checkout;
+                // once focus leaves again the user may be back in the browser paying, so an armed
+                // timer must never fire while the app is unfocused.
+                autoCancelCts?.SafeCancelAndDispose();
+                return;
+            }
 
             // Focus came back while the checkout was still unresolved in the browser. Give the
             // payment poll a grace period to deliver a terminal state; restarting the source keeps

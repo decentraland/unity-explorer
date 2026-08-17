@@ -23,6 +23,8 @@ namespace DCL.Tests.Editor
     ///     These tests run on the matrix-bypassing DefaultReportLogger, which cannot observe
     ///     production filtering — the shipped ReportsHandlingSettings matrices must enable
     ///     (ANALYTICS, Warning) for the downgrade to stay visible, pinned by a dedicated test below.
+    ///     The same logger applies no debouncing either, so the volume bound on the ~5/sec retry
+    ///     flood is pinned directly against the report site's debouncer.
     /// </summary>
     public class RustSegmentErrorReportingShould
     {
@@ -37,8 +39,6 @@ namespace DCL.Tests.Editor
         [SetUp]
         public void ResetStaticState()
         {
-            // The once-pattern latch, when the field is present, must not leak state between tests
-            SERVICE_TYPE.GetField("ONCE_PATTERN_ALREADY_CAUGHT", PRIVATE_STATIC)?.SetValue(null, false);
             SetCurrentInstance(null);
         }
 
@@ -49,13 +49,44 @@ namespace DCL.Tests.Editor
         }
 
         [Test]
-        public void ReportEverySendLoopRetryAsWarning()
+        public void ReportEachDistinctSendLoopRetryAsWarning()
         {
-            LogAssert.Expect(LogType.Warning, new Regex("will retry"));
-            LogAssert.Expect(LogType.Warning, new Regex("will retry"));
+            LogAssert.Expect(LogType.Warning, new Regex("item_id: 1"));
+            LogAssert.Expect(LogType.Warning, new Regex("item_id: 2"));
 
-            InvokeErrorCallback("Error executing send loop (will retry): ClientError { message: \"error sending request\" }");
-            InvokeErrorCallback("Error executing send loop (will retry): ClientError { message: \"error sending request\" }");
+            InvokeErrorCallback("Error executing send loop (will retry): ClientError { message: \"error sending request\", item_id: 1 }");
+            InvokeErrorCallback("Error executing send loop (will retry): ClientError { message: \"error sending request\", item_id: 2 }");
+        }
+
+        [Test]
+        public void CarryDebouncerCoveringBothProductionSinksOnRetryReport()
+        {
+            ReportData retryReport = GetRetryReport();
+
+            Assert.That(retryReport.Debounce.Debouncer, Is.Not.Null,
+                "the (will retry) error re-emits at the native daemon cadence (~5/sec) for the whole outage, so its report site must carry a debouncer");
+
+            Assert.That(retryReport.Debounce.Debouncer!.AppliedTo, Is.EqualTo(ReportHandler.All),
+                "the retry flood hits both the player log and Sentry breadcrumbs, so the debouncer must apply to both handlers");
+        }
+
+        [Test]
+        public void DebounceRepeatedIdenticalRetryMessages()
+        {
+            IReportsDebouncer debouncer = GetRetryReport().Debounce.Debouncer!;
+
+            // Unique per run: the production debouncer is static state that outlives a reused test domain
+            var fingerprint = new ReportMessageFingerprint(
+                $"Segment error: Error executing send loop (will retry): ClientError {{ item_id: {Guid.NewGuid():N} }}");
+
+            Assert.That(debouncer.Debounce(fingerprint), Is.False, "the outage onset must stay visible");
+
+            var anyDebounced = false;
+
+            for (var i = 0; i < 16; i++)
+                anyDebounced |= debouncer.Debounce(fingerprint);
+
+            Assert.That(anyDebounced, Is.True, "repeated identical retry errors must be volume-bounded");
         }
 
         [Test]
@@ -129,12 +160,18 @@ namespace DCL.Tests.Editor
             finally { Marshal.FreeCoTaskMem(ptr); }
         }
 
+        private static ReportData GetRetryReport()
+        {
+            FieldInfo field = SERVICE_TYPE.GetField("RETRY_REPORT", PRIVATE_STATIC)!;
+            return (ReportData)field.GetValue(null)!;
+        }
+
         private static void SetCurrentInstance(RustSegmentAnalyticsService? service)
         {
             FieldInfo currentField = SERVICE_TYPE.GetField("CURRENT", PRIVATE_STATIC)!;
-            var current = (Mutex<RustSegmentAnalyticsService>)currentField.GetValue(null)!;
-            using Mutex<RustSegmentAnalyticsService>.Guard guard = current.Lock();
-            guard.Value = service!;
+            var current = (Mutex<RustSegmentAnalyticsService?>)currentField.GetValue(null)!;
+            using Mutex<RustSegmentAnalyticsService?>.Guard guard = current.Lock();
+            guard.Value = service;
         }
 
         private static RustSegmentAnalyticsService CreateServiceWithPendingOperation(ulong operationId, out object responseError)

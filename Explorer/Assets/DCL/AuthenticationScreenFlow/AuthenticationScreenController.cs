@@ -89,8 +89,7 @@ namespace DCL.AuthenticationScreenFlow
         internal void RaiseProfileFinalized() =>
             ProfileFinalized?.Invoke();
 
-        // Null until OnViewInstantiated: the view is created lazily on first Show, which never
-        // happens in sessions that skip the auth screen (cached identity + --skip-auth-screen).
+        // Null until OnViewInstantiated: the view is created lazily on first Show and may never be instantiated.
         private MVCStateMachine<AuthStateBase>? fsm;
         private AuthenticationScreenAudio? audio;
 
@@ -194,9 +193,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            if (fsm is not { } stateMachine)
-                return;
-
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
@@ -205,25 +201,25 @@ namespace DCL.AuthenticationScreenFlow
                 CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
 
-                TryAutoLoginAndProceedAsync(stateMachine, storedIdentity, loginCancellationTokenSource.Token).Forget();
+                TryAutoLoginAndProceedAsync(storedIdentity, loginCancellationTokenSource.Token).Forget();
             }
             else
             {
-                stateMachine.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
-        private async UniTaskVoid TryAutoLoginAndProceedAsync(MVCStateMachine<AuthStateBase> stateMachine, IWeb3Identity storedIdentity, CancellationToken ct)
+        private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)
         {
             try
             {
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    stateMachine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
+                    fsm!.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
                 else
                 {
-                    stateMachine.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                    fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
                 }
             }
             catch (OperationCanceledException)
@@ -232,7 +228,7 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                stateMachine.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
@@ -241,18 +237,18 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewShow();
 
             BlockUnwantedInputs();
-            audio?.OnShow();
+            audio!.OnShow();
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
 
-            fsm?.CurrentState?.Exit();
+            fsm!.CurrentState?.Exit();
             CancelLoginProcess();
 
             UnblockUnwantedInputs();
-            audio?.OnHide();
+            audio!.OnHide();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -291,7 +287,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
+                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
             }
         }
 

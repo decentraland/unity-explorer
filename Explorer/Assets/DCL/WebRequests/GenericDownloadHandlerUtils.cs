@@ -283,7 +283,14 @@ namespace DCL.WebRequests
 
                 if (converter.CanRead && converter.CanConvert(typeof(T)))
                 {
-                    converter.ReadJson(reader, typeof(T), target, serializer);
+                    // Converters expect the reader positioned at the value's first token, matching Newtonsoft's own invocation contract
+                    if (reader.TokenType == JsonToken.None)
+                        reader.Read();
+
+                    // A null result (e.g. a null token) legitimately leaves the target untouched; anything else must be the target itself or data is silently lost
+                    if (converter.ReadJson(reader, typeof(T), target, serializer) is { } result && !ReferenceEquals(result, target))
+                        throw new JsonSerializationException($"{converter.GetType().Name} did not populate the existing value in place; its result would be discarded.");
+
                     return;
                 }
             }

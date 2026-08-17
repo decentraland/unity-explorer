@@ -53,7 +53,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 {
                     await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct, result);
 
-                    // Failed pointers come back as unresolved placeholders (DTO == null); the outfit result is resolved-only.
+                    // The outfit result must stay resolved-only (DTO != null) regardless of what the provider returns.
                     result.RemoveAll(static w => w.DTO == null);
                 }
 
@@ -84,8 +84,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         {
             if (string.IsNullOrEmpty(urn)) return;
 
-            // Storage may hold an unresolved placeholder (failed or in-flight DTO load); the outfit result is
-            // resolved-only, so anything else goes through the provider for a re-fetch.
+            // Only resolved storage hits (DTO != null) go straight into the result; anything else is
+            // routed through the provider.
             if (wearableStorage.TryGetElement(urn, out IWearable w) && w.DTO != null)
                 result.Add(w);
             else

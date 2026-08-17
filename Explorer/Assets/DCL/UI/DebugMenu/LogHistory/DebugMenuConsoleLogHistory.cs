@@ -6,8 +6,10 @@ namespace DCL.UI.DebugMenu.LogHistory
 {
     /// <summary>
     ///     <see cref="AddLogMessage" /> is fed from the global log callback and may be invoked from any
-    ///     thread; it only enqueues into a capped pending queue. Every other member — the lists, the
-    ///     counters and <see cref="LogsUpdated" /> — is main-thread-only: entries become visible when
+    ///     thread; it only enqueues into a capped pending queue. <see cref="Paused" /> is written on the
+    ///     main thread and read on the logging threads: a stale read may admit or drop a borderline
+    ///     entry, which is acceptable for a pause toggle. Every other member — the lists, the counters
+    ///     and <see cref="LogsUpdated" /> — is main-thread-only: entries become visible when
     ///     <see cref="DrainPendingLogs" /> runs on the main thread.
     /// </summary>
     public class DebugMenuConsoleLogHistory

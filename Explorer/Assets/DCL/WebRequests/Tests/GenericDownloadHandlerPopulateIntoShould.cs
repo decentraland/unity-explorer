@@ -1,7 +1,9 @@
 using DCL.Notifications.Serialization;
 using DCL.NotificationsBus.NotificationTypes;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -53,6 +55,35 @@ namespace DCL.WebRequests.Tests
         }
 
         [Test]
+        public void ThrowWhenConverterReturnsFreshInstanceInsteadOfPopulatingTarget()
+        {
+            var buffer = new List<INotification>();
+
+            JsonSerializer serializer = JsonSerializer.CreateDefault(new JsonSerializerSettings
+            {
+                Converters = new JsonConverter[] { new FreshInstanceListConverter() },
+            });
+
+            using var textReader = new StringReader(NOTIFICATIONS_PAYLOAD);
+            using var jsonReader = new JsonTextReader(textReader);
+
+            Assert.Throws<JsonSerializationException>(() => GenericDownloadHandlerUtils.PopulateInto(jsonReader, buffer, serializer));
+        }
+
+        [Test]
+        public void LeaveBufferEmptyOnNullBodyViaConverterNullGuard()
+        {
+            var buffer = new List<INotification>();
+            JsonSerializer serializer = NewNotificationsSerializer();
+
+            using var textReader = new StringReader("null");
+            using var jsonReader = new JsonTextReader(textReader);
+            GenericDownloadHandlerUtils.PopulateInto(jsonReader, buffer, serializer);
+
+            Assert.That(buffer, Is.Empty);
+        }
+
+        [Test]
         public void FallBackToPopulateWhenNoConverterMatchesRootType()
         {
             var target = new PlainDto();
@@ -67,6 +98,19 @@ namespace DCL.WebRequests.Tests
 
             Assert.That(target.value, Is.EqualTo(42));
             Assert.That(target.name, Is.EqualTo("populated"));
+        }
+
+        // The standard converter shape: allocates a fresh result instead of filling existingValue
+        private class FreshInstanceListConverter : JsonConverter<List<INotification>>
+        {
+            public override List<INotification>? ReadJson(JsonReader reader, Type objectType, List<INotification>? existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                JObject.Load(reader);
+                return new List<INotification>();
+            }
+
+            public override void WriteJson(JsonWriter writer, List<INotification>? value, JsonSerializer serializer) =>
+                throw new NotSupportedException();
         }
 
         private class PlainDto

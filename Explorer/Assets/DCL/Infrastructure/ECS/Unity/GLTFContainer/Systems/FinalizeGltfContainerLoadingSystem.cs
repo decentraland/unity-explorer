@@ -83,10 +83,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                     return;
                 }
 
-                // The asset's Root can be destroyed while the resolved result awaits consumption (it sits in
-                // global caches cleared by other scenes' teardowns). The promise is consumed at this point, so
-                // the component must still reach a terminal state — leaving it Loading would re-enter this
-                // query and throw "already consumed" on every subsequent frame.
+                // A stale result can still reference an asset whose Root was already destroyed (e.g. drained
+                // by cache Unload/Remove). The promise is consumed at this point, so the component must still
+                // reach a terminal state — leaving it Loading would re-enter this query and throw
+                // "already consumed" on every subsequent frame.
                 if (result.Asset is not { } asset || asset.Root == null)
                 {
                     ReportHub.LogError(GetReportData(), $"GltfContainerAsset '{component.Name}' ({component.Hash}) resolved with a destroyed Root");
@@ -96,26 +96,26 @@ namespace ECS.Unity.GLTFContainer.Systems
                     return;
                 }
 
-                ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
-                ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
+                ConfigureGltfContainerColliders.SetupColliders(ref component, asset);
+                ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(in asset, in sceneCircumscribedPlanes, sceneHeight);
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);
 
                 // Store reference to the root GameObject
-                component.RootGameObject = result.Asset!.Root;
+                component.RootGameObject = asset.Root;
 
                 // Re-parent to the current transform
-                result.Asset!.Root.transform.SetParent(transformComponent.Transform);
-                result.Asset.Root.transform.ResetLocalTRS();
-                result.Asset.Root.SetActive(true);
+                asset.Root.transform.SetParent(transformComponent.Transform);
+                asset.Root.transform.ResetLocalTRS();
+                asset.Root.SetActive(true);
 
-                result.Asset.SetRenderersActive(true);
-                result.Asset.ToggleAnimationState(true);
+                asset.SetRenderersActive(true);
+                asset.ToggleAnimationState(true);
 
                 component.State = LoadingState.Finished;
                 eventsBuffer.Add(entity, component);
 
-                if (result.Asset!.Animations.Count > 0 && result.Asset!.Animators.Count == 0)
+                if (asset.Animations.Count > 0 && asset.Animators.Count == 0)
                     World.Add(entity, new LegacyGltfAnimation());
             }
         }

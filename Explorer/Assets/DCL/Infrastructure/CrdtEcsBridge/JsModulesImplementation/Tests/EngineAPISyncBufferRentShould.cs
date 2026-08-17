@@ -82,11 +82,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             // the resulting error log must not mask the assertion failure
             LogAssert.ignoreFailingMessages = true;
 
-            crdtWorldSynchronizer.Dispose();
-            multiThreadSync.Dispose();
-            world.Dispose();
-
-            LogAssert.ignoreFailingMessages = false;
+            try
+            {
+                crdtWorldSynchronizer.Dispose();
+                multiThreadSync.Dispose();
+                world.Dispose();
+            }
+            finally { LogAssert.ignoreFailingMessages = false; }
         }
 
         [Test]

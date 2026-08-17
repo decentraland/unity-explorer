@@ -17,6 +17,10 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         private const string ORDER_ID = "order-1";
         private const int GRACE_MS = 50;
 
+        // Negative tests keep the grace period comfortably above a runner stall between two
+        // consecutive calls, yet well inside NEGATIVE_WINDOW so a wrongly-armed timer still fires.
+        private const int NEGATIVE_GRACE_MS = 250;
+
         private static readonly CreditPack PACK = new ("pack_25", 24.99f, 235, true, string.Empty);
         private static readonly TimeSpan WAIT_TIMEOUT = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan NEGATIVE_WINDOW = TimeSpan.FromMilliseconds(500);
@@ -241,7 +245,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange
             topUpService.CurrentStatus.Returns(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
-            using TestableController fastController = CreateFocusController();
+            using TestableController fastController = CreateFocusController(NEGATIVE_GRACE_MS);
             fastController.BuyCreditsCancelled += (orderId, pack) => cancelled.Add((orderId, pack));
             fastController.Show();
             RaiseStatus(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
@@ -279,11 +283,33 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task NotAutoCancelWhenFocusIsLostAgainDuringGracePeriod()
+        {
+            // Arrange
+            topUpService.CurrentStatus.Returns(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+            using TestableController fastController = CreateFocusController(NEGATIVE_GRACE_MS);
+            fastController.BuyCreditsCancelled += (orderId, pack) => cancelled.Add((orderId, pack));
+            fastController.Show();
+            RaiseStatus(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
+
+            // Act: focus returns (the grace timer arms), then the user tabs back to the browser
+            // to finish paying before it elapses.
+            RaiseFocusRegained();
+            RaiseFocusLost();
+
+            // Assert: the armed timer must be disarmed by the focus loss, never cancelling
+            // an order out from under a user who is back in the checkout.
+            await WaitUntilOrTimeoutAsync(() => cancelled.Count > 0, NEGATIVE_WINDOW);
+            topUpService.DidNotReceive().CancelTopUp();
+            Assert.AreEqual(0, cancelled.Count);
+        }
+
+        [Test]
         public async Task NotAutoCancelWhenDisposedDuringGracePeriod()
         {
             // Arrange
             topUpService.CurrentStatus.Returns(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
-            TestableController fastController = CreateFocusController();
+            TestableController fastController = CreateFocusController(NEGATIVE_GRACE_MS);
             fastController.BuyCreditsCancelled += (orderId, pack) => cancelled.Add((orderId, pack));
             fastController.Show();
             RaiseStatus(CreditsTopUpStatus.WaitingForPayment(PACK, ORDER_ID));
@@ -308,6 +334,9 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private void RaiseFocusRegained() =>
             applicationFocusSource.FocusChanged += Raise.Event<Action<bool>>(true);
+
+        private void RaiseFocusLost() =>
+            applicationFocusSource.FocusChanged += Raise.Event<Action<bool>>(false);
 
         private static async Task WaitUntilOrTimeoutAsync(Func<bool> condition, TimeSpan timeout)
         {

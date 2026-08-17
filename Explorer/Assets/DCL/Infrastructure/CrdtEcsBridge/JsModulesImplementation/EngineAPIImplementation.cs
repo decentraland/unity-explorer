@@ -141,8 +141,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
             catch
             {
-                // The buffer holds the single rent slot: it must never leak, even though the
-                // exception propagates to the caller's swallowing handler
+                // The buffer holds the single rent slot: release it on failure before the exception propagates
                 crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
                 throw;
             }

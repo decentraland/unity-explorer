@@ -48,10 +48,12 @@ namespace DCL.AvatarRendering.Wearables.Tests
             emoteStorage.Set(EMOTE_POINTER, emote);
 
             var invocations = 0;
-            Fetch(_ => invocations++);
-            await PumpAsync();
+            var failures = 0;
+            Fetch(_ => invocations++, () => failures++);
+            await PumpAsync(() => failures > 0);
 
             Assert.AreEqual(0, invocations, "The callback must not be invoked for a stored element whose DTO load failed");
+            Assert.AreEqual(1, failures, "The failure callback must be invoked exactly once for a stored element whose DTO load failed");
         }
 
         [Test]
@@ -65,10 +67,12 @@ namespace DCL.AvatarRendering.Wearables.Tests
             emoteStorage.Set(EMOTE_POINTER, emote);
 
             var invocations = 0;
-            Fetch(_ => invocations++);
-            await PumpAsync();
+            var failures = 0;
+            Fetch(_ => invocations++, () => failures++);
+            await PumpAsync(() => failures > 0);
 
             Assert.AreEqual(0, invocations, "The callback must not be invoked for a stored element whose DTO load was cancelled");
+            Assert.AreEqual(1, failures, "The failure callback must be invoked exactly once for a stored element whose DTO load was cancelled");
         }
 
         [Test]
@@ -80,18 +84,20 @@ namespace DCL.AvatarRendering.Wearables.Tests
             emoteStorage.Set(EMOTE_POINTER, emote);
 
             var invocations = 0;
+            var failures = 0;
             IEmote? received = null;
 
             Fetch(e =>
             {
                 invocations++;
                 received = e;
-            });
+            }, () => failures++);
 
             await PumpAsync(() => invocations > 0);
 
             Assert.AreEqual(1, invocations, "The callback must be invoked exactly once for a resolved stored element");
             Assert.AreSame(emote, received);
+            Assert.AreEqual(0, failures, "The failure callback must not be invoked for a resolved stored element");
         }
 
         [Test]
@@ -99,17 +105,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             LogAssert.ignoreFailingMessages = true;
 
-            // Storage miss routes through the provider; a body shape must be equipped on that path.
-            var bodyShapeWearable = new Wearable(new StreamableLoadingResult<WearableDTO>(new WearableDTO
-            {
-                metadata = new WearableDTO.WearableMetadataDto
-                {
-                    id = BodyShape.MALE,
-                    data = new WearableDTO.WearableMetadataDto.DataDto { category = "body_shape" },
-                },
-            }));
-
-            equippedWearables.Wearable(Arg.Any<string>()).Returns(bodyShapeWearable);
+            EquipBodyShape();
 
             IEmote unresolved = IEmote.NewEmpty();
             unresolved.UpdateLoadingStatus(false);
@@ -125,23 +121,78 @@ namespace DCL.AvatarRendering.Wearables.Tests
                           });
 
             var invocations = 0;
+            var failures = 0;
             IEmote? received = null;
 
             Fetch(e =>
             {
                 invocations++;
                 received = e;
-            });
+            }, () => failures++);
 
             await PumpAsync(() => invocations > 0);
 
             Assert.AreEqual(1, invocations, "An unresolved provider result must be skipped, not abort the match loop");
             Assert.AreSame(resolved, received);
+            Assert.AreEqual(0, failures, "The failure callback must not be invoked when a resolved match is found");
         }
 
-        private void Fetch(Action<IEmote> onElementFetched) =>
+        [Test]
+        public async Task InvokeFailureCallbackWhenProviderReturnsNoMatch()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            EquipBodyShape();
+
+            emoteProvider.GetByPointersAsync(Arg.Any<IReadOnlyCollection<URN>>(), Arg.Any<BodyShape>(), Arg.Any<CancellationToken>(), Arg.Any<List<IEmote>?>())
+                         .Returns(callInfo => UniTask.FromResult<IReadOnlyCollection<IEmote>?>(callInfo.Arg<List<IEmote>>()));
+
+            var invocations = 0;
+            var failures = 0;
+            Fetch(_ => invocations++, () => failures++);
+            await PumpAsync(() => failures > 0);
+
+            Assert.AreEqual(0, invocations, "The callback must not be invoked when the provider returns no match");
+            Assert.AreEqual(1, failures, "The failure callback must be invoked exactly once when the provider returns no match");
+        }
+
+        [Test]
+        public async Task InvokeFailureCallbackWhenProviderThrows()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            EquipBodyShape();
+
+            emoteProvider.GetByPointersAsync(Arg.Any<IReadOnlyCollection<URN>>(), Arg.Any<BodyShape>(), Arg.Any<CancellationToken>(), Arg.Any<List<IEmote>?>())
+                         .Returns(UniTask.FromException<IReadOnlyCollection<IEmote>?>(new Exception("entities endpoint failed")));
+
+            var invocations = 0;
+            var failures = 0;
+            Fetch(_ => invocations++, () => failures++);
+            await PumpAsync(() => failures > 0);
+
+            Assert.AreEqual(0, invocations, "The callback must not be invoked when the provider throws");
+            Assert.AreEqual(1, failures, "The failure callback must be invoked exactly once when the provider throws");
+        }
+
+        // Storage misses route through the provider; a body shape must be equipped on that path.
+        private void EquipBodyShape()
+        {
+            var bodyShapeWearable = new Wearable(new StreamableLoadingResult<WearableDTO>(new WearableDTO
+            {
+                metadata = new WearableDTO.WearableMetadataDto
+                {
+                    id = BodyShape.MALE,
+                    data = new WearableDTO.WearableMetadataDto.DataDto { category = "body_shape" },
+                },
+            }));
+
+            equippedWearables.Wearable(Arg.Any<string>()).Returns(bodyShapeWearable);
+        }
+
+        private void Fetch(Action<IEmote> onElementFetched, Action? onFetchFailed = null) =>
             ElementProviderHelper.FetchElementByPointerAndExecuteAsync(
-                                      EMOTE_POINTER, emoteProvider, emoteStorage, equippedWearables, onElementFetched, CancellationToken.None, reportData)
+                                      EMOTE_POINTER, emoteProvider, emoteStorage, equippedWearables, onElementFetched, CancellationToken.None, reportData, onFetchFailed)
                                  .Forget();
 
         private static async Task PumpAsync(Func<bool>? until = null)

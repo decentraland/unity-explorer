@@ -1,7 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utility.Multithreading;
 
 namespace Utility
 {
@@ -50,10 +51,12 @@ namespace Utility
         ///     compiler-synthesized closure; entries are pooled so steady-state publishes allocate nothing.
         ///     State is copied to locals and the entry recycled before the handlers run, so reentrant
         ///     publishes are safe and class-typed payloads are not retained by the pool.
+        ///     The pool is a <see cref="DCLConcurrentQueue{T}" /> because Schedule takes entries
+        ///     from it on background threads while Run recycles them on the main thread.
         /// </summary>
         private sealed class PooledContinuation<T>
         {
-            private static readonly ConcurrentQueue<PooledContinuation<T>> POOL = new ();
+            private static readonly DCLConcurrentQueue<PooledContinuation<T>> POOL = new ();
 
             private readonly Action run;
             private Action<T>? typedDelegate;
@@ -76,8 +79,13 @@ namespace Utility
 
             private void Run()
             {
+                // Reachable only if the player loop ran the same continuation twice; recycling the
+                // entry on that path would double-enqueue it into the pool and corrupt it.
                 if (typedDelegate is not { } invokeTarget)
+                {
+                    ReportHub.LogError(ReportCategory.UNSPECIFIED, "EventBus pooled continuation ran without a stamped delegate: exactly-once scheduling was violated and an event was dropped");
                     return;
+                }
 
                 T payload = evt;
                 typedDelegate = null;

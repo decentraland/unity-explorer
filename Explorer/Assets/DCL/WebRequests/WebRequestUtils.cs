@@ -203,13 +203,15 @@ namespace DCL.WebRequests
             string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
             || (IPAddress.TryParse(host, out IPAddress? ip) && IPAddress.IsLoopback(ip));
 
+        /// <summary>
+        ///     Scheme-inclusive URL form of the single loopback definition (<see cref="IsLoopbackHost" />):
+        ///     true only for http/https URLs whose parsed host is loopback. Non-http(s) schemes and
+        ///     unparsable URLs are not localhost.
+        /// </summary>
         public static bool IsLocalhost(string url) =>
-            url.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://127.0.0.1", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("http://[::1]", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://[::1]", StringComparison.OrdinalIgnoreCase);
+            Uri.TryCreate(url, UriKind.Absolute, out Uri? uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            && IsLoopbackHost(uri.Host);
 
         /// <summary>
         ///     Does nothing with the web request

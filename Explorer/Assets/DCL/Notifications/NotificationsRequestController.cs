@@ -32,9 +32,6 @@ namespace DCL.Notifications
         private readonly URLParameter limitParameter = new ("limit", "50");
         private readonly URLBuilder urlBuilder = new ();
         private readonly URLDomain notificationsUrl;
-
-        // Reused across poll iterations: cleared before each request and never escapes the loop (items are dispatched individually)
-        private readonly List<INotification> pollNotificationsBuffer = new ();
         private CommonArguments commonArguments;
         private ulong unixTimestamp;
         private ulong lastPolledTimestamp;
@@ -96,6 +93,10 @@ namespace DCL.Notifications
 
         public async UniTask StartGettingNewNotificationsOverTimeAsync(CancellationToken ct)
         {
+            // Loop-local so a cancelled generation still parsing off-thread can never race the next generation's Clear();
+            // reused across iterations: cleared before each request and never escapes the loop (items are dispatched individually)
+            var pollNotificationsBuffer = new List<INotification>();
+
             do
             {
                 try

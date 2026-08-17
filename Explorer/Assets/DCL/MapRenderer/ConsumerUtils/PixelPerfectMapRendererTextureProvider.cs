@@ -19,12 +19,16 @@ namespace DCL.MapRenderer.ConsumerUtils
         private IMapCameraController? cameraController;
         private Camera? hudCamera;
 
-        // Resolution last applied to the camera's render texture; renters size the texture with
-        // GetPixelPerfectTextureResolution() right before Activate, so it starts in sync.
+        // Resolution last applied to the render texture; seeded in Activate so an unchanged
+        // size never triggers a redundant resize.
         private Vector2Int lastResolution;
 
         private static Vector3[] worldCorners = new Vector3[4];
 
+        /// <summary>
+        /// Arms pixel-perfect resizing. The controller's render texture must already be sized
+        /// with <see cref="GetPixelPerfectTextureResolution"/> when this is called.
+        /// </summary>
         public void Activate(IMapCameraController newCameraController)
         {
             cameraController = newCameraController;

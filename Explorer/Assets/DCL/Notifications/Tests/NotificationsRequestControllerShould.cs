@@ -80,26 +80,30 @@ namespace DCL.Notifications.Tests
         {
             LogAssert.ignoreFailingMessages = true;
 
-            var cts = new CancellationTokenSource();
-            UniTask loopTask = controller.StartGettingNewNotificationsOverTimeAsync(cts.Token);
+            try
+            {
+                var cts = new CancellationTokenSource();
+                UniTask loopTask = controller.StartGettingNewNotificationsOverTimeAsync(cts.Token);
 
-            // Two poll iterations at the loop's realtime 5s cadence
-            Stopwatch stopwatch = Stopwatch.StartNew();
+                // Two poll iterations at the loop's realtime 5s cadence
+                Stopwatch stopwatch = Stopwatch.StartNew();
 
-            while (capturedTargets.Count < 2 && stopwatch.Elapsed < POLL_OBSERVATION_TIMEOUT)
-                await UniTask.Yield();
+                while (capturedTargets.Count < 2 && stopwatch.Elapsed < POLL_OBSERVATION_TIMEOUT)
+                    await UniTask.Yield();
 
-            cts.Cancel();
-            await loopTask;
+                cts.Cancel();
+                await loopTask;
 
-            Assert.That(capturedTargets.Count, Is.GreaterThanOrEqualTo(2),
-                "the poll loop must parse into a reusable buffer via the Overwrite op instead of allocating a fresh List per poll");
+                Assert.That(capturedTargets.Count, Is.GreaterThanOrEqualTo(2),
+                    "the poll loop must parse into a reusable buffer via the Overwrite op instead of allocating a fresh List per poll");
 
-            Assert.That(capturedTargets[1], Is.SameAs(capturedTargets[0]),
-                "the same buffer instance must be reused across poll iterations");
+                Assert.That(capturedTargets[1], Is.SameAs(capturedTargets[0]),
+                    "the same buffer instance must be reused across poll iterations");
 
-            Assert.That(callTimeCounts, Is.All.EqualTo(0),
-                "the buffer must be cleared before each poll so already-dispatched notifications are not delivered again");
+                Assert.That(callTimeCounts, Is.All.EqualTo(0),
+                    "the buffer must be cleared before each poll so already-dispatched notifications are not delivered again");
+            }
+            finally { LogAssert.ignoreFailingMessages = false; }
         }
     }
 }

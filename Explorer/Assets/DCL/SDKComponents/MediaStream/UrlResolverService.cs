@@ -23,6 +23,17 @@ namespace DCL.SDKComponents.MediaStream
 
         public async UniTask<ResolvedMediaUrl> ResolveAsync(string url, ReportData reportData, CancellationToken ct)
         {
+            // The transport-security policy binds the resolved URL itself, not just the probes:
+            // reachability checks and playback must agree on one wire URL, and cleartext http
+            // stays loopback-only for both
+            string secureUrl = WebRequestUtils.EnforceSecureScheme(url);
+
+            if (!ReferenceEquals(url, secureUrl))
+            {
+                ReportHub.LogWarning(reportData, $"Cleartext http media URL to a non-loopback host upgraded to https: {url}");
+                url = secureUrl;
+            }
+
             // YouTube resolution
             if (url.IsYouTubeUrl())
                 return await ResolveYouTubeAsync(url, ct);
@@ -90,7 +101,9 @@ namespace DCL.SDKComponents.MediaStream
 
         private static async UniTask<bool> IsGetReachableAsync(string url, CancellationToken ct)
         {
-            UnityWebRequest request = UnityWebRequest.Get(url);
+            // This request bypasses IWebRequestController, so the pre-send transport-security
+            // policy the controller applies must hold here too: no cleartext to non-loopback hosts
+            UnityWebRequest request = UnityWebRequest.Get(WebRequestUtils.EnforceSecureScheme(url));
 
             try
             {

@@ -3,6 +3,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utility;
+using DCL.WebRequests;
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
@@ -81,8 +82,12 @@ namespace Global.Dynamic
         {
             BaseUrl = baseUrl;
             this.executablePath = executablePath;
-            this.realmRoot = realmRoot;
-            catalystContentUrl = realmRoot + CONTENT_PATH;
+
+            // The realm/catalyst fetches in this class bypass IWebRequestController, so the
+            // transport-security policy binds the realm root here: cleartext http stays
+            // loopback-only (the LSD preview server); any other http realm goes over https
+            this.realmRoot = WebRequestUtils.EnforceSecureScheme(realmRoot);
+            catalystContentUrl = this.realmRoot + CONTENT_PATH;
             this.upstreamCdnUrl = upstreamCdnUrl;
             this.cacheRoot = cacheRoot;
             this.jitContentDigest = jitContentDigest;

@@ -57,9 +57,6 @@ namespace ECS.Unity.AssetLoad.Cache
             return false;
         }
 
-        public void ReleaseGltfInstance(string key, GltfContainerAsset instance) =>
-            instance.Dispose();
-
         public bool TryAddVideo(string key, in VideoTemplateData data) =>
             videoCache.TryAdd(key, data);
 

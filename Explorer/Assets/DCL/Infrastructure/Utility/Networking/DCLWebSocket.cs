@@ -4,7 +4,11 @@ using Cysharp.Threading.Tasks;
 
 namespace Utility.Networking
 {
-    // Desktop / WebGL friendly implementation
+    /// <summary>
+    ///     Desktop / WebGL friendly implementation. CloseAsync, Abort and Dispose may run on a
+    ///     different thread than a pending ConnectAsync await; failing a pending connection
+    ///     completes that await instead of leaving it parked.
+    /// </summary>
     public class DCLWebSocket : IDisposable
     {
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
@@ -36,8 +40,7 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             ws.Dispose();
 #else
-            connectAbort.Cancel();
-            connectAbort.Dispose();
+            connectAbort.SafeCancelAndDispose();
             ws.Dispose();
 #endif
         }
@@ -94,10 +97,10 @@ namespace Utility.Networking
                 await ws.ConnectAsync(uri, cancellationToken);
 #else
                 // AttachExternalCancellation completes this await when connectAbort fires even
-                // though the BCL task stays parked; the abandoned task's eventual outcome is
-                // observed and discarded inside AttachExternalCancellation. The conversion must
-                // not touch the current SynchronizationContext: the V8 script-invoke thread this
-                // runs on has none that is TaskScheduler-compatible, and
+                // though the BCL task stays parked; the abandoned task's outcome must not
+                // surface as an unobserved fault. The conversion must not touch the current
+                // SynchronizationContext: the V8 script-invoke thread this runs on has none
+                // that is TaskScheduler-compatible, and
                 // TaskScheduler.FromCurrentSynchronizationContext() throws there (see
                 // DCLSemaphoreSlim.WaitAsync).
                 using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, connectAbort.Token);
@@ -122,12 +125,10 @@ namespace Utility.Networking
                 // itself connected internally before the upgrade completes and its close path derefs an
                 // inner socket that only exists after a successful upgrade, so closing a pending or
                 // already torn-down connection must abort it instead (WHATWG close() during CONNECTING
-                // fails the connection; close() on a closed socket is a no-op). Cancelling connectAbort
-                // is what completes a parked connect await; Abort() alone leaves it hanging on mono.
+                // fails the connection; close() on a closed socket is a no-op).
                 if (State is not (WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent))
                 {
-                    connectAbort.Cancel();
-                    ws.Abort();
+                    Abort();
                     return;
                 }
 
@@ -146,6 +147,15 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // Ignore, WebGL doesn't expose raw TCP sockets to hard interrupt
 #else
+            // Cancelling connectAbort is what completes a parked connect await; ws.Abort() alone
+            // leaves it hanging on mono. Cancelling after a completed connect is inert (the
+            // linked registration is gone once ConnectAsync returns).
+            try { connectAbort.Cancel(); }
+            catch (ObjectDisposedException)
+            {
+                // Abort must tolerate a racing Dispose() (scene teardown vs a JS close())
+            }
+
             ws.Abort();
 #endif
         }

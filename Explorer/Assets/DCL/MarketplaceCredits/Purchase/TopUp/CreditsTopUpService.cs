@@ -153,6 +153,13 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                     case PollOutcome.Failed:
                         SetStatus(CreditsTopUpStatus.GrantFailed(pack, orderId, order.error));
                         break;
+                    case PollOutcome.TimedOut:
+                        // Only the background poll can reach here (a foreground timeout re-polls above);
+                        // the pending spinner must resolve to a terminal state once that window expires too.
+                        SetStatus(CreditsTopUpStatus.GrantFailed(pack, orderId,
+                            "The payment confirmation timed out. If you completed the payment, your credits will appear shortly."));
+
+                        break;
                 }
             }
             catch (OperationCanceledException) { }

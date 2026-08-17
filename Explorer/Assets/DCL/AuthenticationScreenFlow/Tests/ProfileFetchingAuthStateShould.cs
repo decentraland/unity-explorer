@@ -36,6 +36,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 // through the fire-and-forget UniTaskVoid; those logs are irrelevant to the invariant under test
                 LogAssert.ignoreFailingMessages = true;
 
+                using var cts = new CancellationTokenSource();
                 var root = new GameObject(nameof(ProfileFetchingAuthStateShould));
 
                 try
@@ -67,8 +68,6 @@ namespace DCL.AuthenticationScreenFlow.Tests
                         selfProfile,
                         Substitute.For<IWeb3IdentityCache>());
 
-                    using var cts = new CancellationTokenSource();
-
                     state.Enter(new ProfileFetchingPayload(Substitute.For<IWeb3Identity>(), true, cts.Token));
 
                     float deadline = UnityEngine.Time.realtimeSinceStartup + OBSERVATION_SECONDS;
@@ -84,14 +83,82 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
                     Assert.That(selfProfile.CapturedTokens.Count, Is.GreaterThanOrEqualTo(2),
                         "a timed-out attempt must be retried before the login flow gives up");
-
-                    // Unblock the pending attempt so the flow finishes inside the ignore-failing-messages window
+                }
+                finally
+                {
+                    // Unblock the pending attempt (even on assertion failure) so the detached flow finishes
+                    // inside this test's ignore-failing-messages window instead of erroring into a later test
                     cts.Cancel();
 
                     for (var i = 0; i < 32; i++)
                         await UniTask.Yield();
+
+                    UnityEngine.Object.DestroyImmediate(root);
                 }
-                finally { UnityEngine.Object.DestroyImmediate(root); }
+            });
+
+        [UnityTest]
+        public IEnumerator SurfaceExternalCancellationInsteadOfMissingProfile() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var selfProfile = new StalledSelfProfile();
+                using var cts = new CancellationTokenSource();
+
+                UniTask<Profile?> fetch = ProfileFetchingAuthState.FetchProfileWithTimeoutRetriesAsync(
+                    selfProfile, TimeSpan.FromSeconds(ATTEMPT_TIMEOUT_SECONDS), maxAttempts: 3, cts.Token);
+
+                float deadline = UnityEngine.Time.realtimeSinceStartup + 5f;
+
+                while (selfProfile.CapturedTokens.Count == 0 && UnityEngine.Time.realtimeSinceStartup < deadline)
+                    await UniTask.Yield();
+
+                Assert.That(selfProfile.CapturedTokens.Count, Is.EqualTo(1), "the fetch must be in flight before the external cancel");
+
+                cts.Cancel();
+
+                try
+                {
+                    Profile? result = await fetch;
+
+                    Assert.Fail("cancelling the flow token must surface as OperationCanceledException, not be read as " +
+                                $"\"no deployed profile\" (got {(result == null ? "null" : "a profile")}); a null here wipes " +
+                                "a still-valid cached identity on the cached flow");
+                }
+                catch (OperationCanceledException) { }
+            });
+
+        [UnityTest]
+        public IEnumerator ThrowTimeoutOnlyAfterExhaustingAllAttempts() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var selfProfile = new StalledSelfProfile();
+
+                try
+                {
+                    await ProfileFetchingAuthState.FetchProfileWithTimeoutRetriesAsync(
+                        selfProfile, TimeSpan.FromSeconds(0.25), maxAttempts: 2, CancellationToken.None);
+
+                    Assert.Fail("exhausting all attempts must surface as TimeoutException");
+                }
+                catch (TimeoutException) { }
+
+                Assert.That(selfProfile.CapturedTokens.Count, Is.EqualTo(2), "every attempt up to the limit must run");
+
+                Assert.That(selfProfile.CapturedTokens.TrueForAll(t => t.IsCancellationRequested), Is.True,
+                    "each timed-out attempt must cancel its own request instead of abandoning it");
+            });
+
+        [UnityTest]
+        public IEnumerator ReturnNullWithoutRetryWhenProfileIsNotDeployed() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var selfProfile = new MissingProfileSelfProfile();
+
+                Profile? result = await ProfileFetchingAuthState.FetchProfileWithTimeoutRetriesAsync(
+                    selfProfile, TimeSpan.FromSeconds(ATTEMPT_TIMEOUT_SECONDS), maxAttempts: 3, CancellationToken.None);
+
+                Assert.That(result, Is.Null);
+                Assert.That(selfProfile.Calls, Is.EqualTo(1), "a genuine \"no deployed profile\" must not be retried");
             });
 
         private static void SetBackingField(object target, Type declaringType, string propertyName, object value)
@@ -118,6 +185,31 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
                 try { return await UniTask.Never<Profile?>(ct); }
                 catch (OperationCanceledException) { return null; }
+            }
+
+            public UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true) =>
+                UniTask.FromResult<Profile?>(null);
+
+            public UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct, bool updateAvatarInWorld = true) =>
+                UniTask.FromResult<Profile?>(null);
+
+            public void Dispose() { }
+        }
+
+        /// <summary>
+        ///     Simulates a responsive catalyst that has no deployed profile for the address:
+        ///     resolves to null immediately, without any cancellation involved.
+        /// </summary>
+        private class MissingProfileSelfProfile : ISelfProfile
+        {
+            public int Calls { get; private set; }
+
+            public event Action<Profile>? ProfilePropagated;
+
+            public UniTask<Profile?> ProfileAsync(CancellationToken ct)
+            {
+                Calls++;
+                return UniTask.FromResult<Profile?>(null);
             }
 
             public UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true) =>

@@ -68,6 +68,14 @@ namespace DCL.UI.DebugMenu
             abConversionButton.clicked += OnAbConversionButtonClicked;
             metricsButton.clicked += OnMetricsButtonClicked;
 
+            // debugPanelButton is wired and shown only while a builder exists: SetDebugContainerBuilder
+            // covers the builder arriving after enable, this covers re-enables once the builder is set.
+            if (debugContainerBuilder != null)
+            {
+                debugPanelButton.clicked += OnDebugPanelButtonClicked;
+                debugPanelButton.style.display = DisplayStyle.Flex;
+            }
+
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
 
@@ -135,11 +143,17 @@ namespace DCL.UI.DebugMenu
         {
             logsHistory.LogsUpdated -= OnLogsUpdated;
 
+            if (consoleButton != null)
+                consoleButton.clicked -= OnConsoleButtonClicked;
+
             if (abConversionButton != null)
                 abConversionButton.clicked -= OnAbConversionButtonClicked;
 
             if (metricsButton != null)
                 metricsButton.clicked -= OnMetricsButtonClicked;
+
+            if (debugPanelButton != null)
+                debugPanelButton.clicked -= OnDebugPanelButtonClicked;
 
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
 

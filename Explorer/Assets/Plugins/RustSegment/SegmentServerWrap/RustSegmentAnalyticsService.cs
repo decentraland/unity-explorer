@@ -32,6 +32,15 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private static readonly TimeSpan PUMP_DELAY = TimeSpan.FromMilliseconds(500);
 
+        // The native send daemon re-emits the "(will retry)" error every ~200ms for as long as an
+        // outage lasts; the debouncer bounds Player.log and Sentry-breadcrumb volume while keeping
+        // the outage onset and every distinct stuck item visible.
+        private static readonly ReportData RETRY_REPORT = new (ReportCategory.ANALYTICS,
+            new ReportDebounce(new ProgressiveWindowDebouncer(
+                initialWindow: TimeSpan.FromSeconds(1),
+                maxWindow: TimeSpan.FromMinutes(1),
+                cleanUpInterval: TimeSpan.FromMinutes(5))));
+
         // null while no undisposed instance exists
         private static readonly Mutex<RustSegmentAnalyticsService?> CURRENT = new (null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
@@ -229,7 +238,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
 
                 if (IsRetriedSendLoopError(marshaled))
-                    ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment error: {marshaled}");
+                    ReportHub.LogWarning(RETRY_REPORT, $"Segment error: {marshaled}");
                 else
                     ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
             }

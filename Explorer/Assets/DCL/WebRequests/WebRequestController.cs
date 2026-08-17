@@ -92,7 +92,7 @@ namespace DCL.WebRequests
                     // A redirect can hop from the sent https URL to cleartext http after the pre-send
                     // scheme policy ran; a response with a forbidden-cleartext final URL is never consumed
                     if (WebRequestUtils.IsForbiddenCleartext(wr.url))
-                        throw new InvalidOperationException($"Insecure connection not allowed: request to {envelope.CommonArguments.URL} was redirected to {wr.url}");
+                        throw new InvalidOperationException($"Insecure redirect blocked: request to {envelope.CommonArguments.URL} was redirected to {wr.url}");
 
                     if (!realmClock.HasSample)
                         realmClock.TryRecordHttpDate(wr.GetResponseHeader(DATE_HEADER));

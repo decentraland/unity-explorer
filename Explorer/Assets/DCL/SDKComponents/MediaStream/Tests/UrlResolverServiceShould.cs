@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
 using NSubstitute;
 using NUnit.Framework;
@@ -99,6 +100,31 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             Assert.That(result.DirectUrl, Is.EqualTo(url));
             Assert.That(result.IsReachable, Is.False);
+        }
+
+        // --- Transport-security policy (direct URLs) ---
+        // The substituted controller's SendAsync completes synchronously, so the HEAD probe
+        // reports reachable and the raw-UnityWebRequest GET fallback is never sent.
+
+        [Test]
+        public async Task ResolveAsync_WhenDirectHttpNonLoopbackUrl_UpgradesProbeAndPlaybackUrlToHttps()
+        {
+            const string URL = "http://media.example.org/video.mp4";
+            const string UPGRADED_URL = "https://media.example.org/video.mp4";
+
+            ResolvedMediaUrl result = await service.ResolveAsync(URL, ReportData.UNSPECIFIED, CancellationToken.None).AsTask();
+
+            Assert.That(result.DirectUrl, Is.EqualTo(UPGRADED_URL));
+            Assert.That(result.IsReachable, Is.True);
+        }
+
+        [TestCase("http://127.0.0.1:8000/video.mp4")]
+        [TestCase("http://localhost:8001/video.mp4")]
+        public async Task ResolveAsync_WhenDirectLoopbackHttpUrl_KeepsCleartextUrl(string url)
+        {
+            ResolvedMediaUrl result = await service.ResolveAsync(url, default, CancellationToken.None).AsTask();
+
+            Assert.That(result.DirectUrl, Is.EqualTo(url));
         }
 
         // --- Cancellation ---

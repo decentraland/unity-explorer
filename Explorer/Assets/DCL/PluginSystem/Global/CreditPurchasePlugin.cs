@@ -17,10 +17,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-// The settings prefab properties are Unity-serialized: their backing-field names are baked
-// into assets, so they keep their original casing.
-// ReSharper disable InconsistentNaming
-
 namespace DCL.PluginSystem.Global
 {
     public class CreditPurchasePlugin : IDCLGlobalPlugin<CreditPurchasePlugin.CreditPurchaseSettings>
@@ -28,7 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly ICreditsPurchaseService creditsPurchaseService;
-        private readonly MarketplaceCreditsAPIClient marketplaceCreditsApiClient;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly ImageControllerProvider imageControllerProvider;
@@ -42,7 +38,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             ICreditsPurchaseService creditsPurchaseService,
-            MarketplaceCreditsAPIClient marketplaceCreditsApiClient,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWeb3IdentityCache web3IdentityCache,
             UnityAppWebBrowser webBrowser,
             ImageControllerProvider imageControllerProvider)
@@ -50,7 +46,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.creditsPurchaseService = creditsPurchaseService;
-            this.marketplaceCreditsApiClient = marketplaceCreditsApiClient;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.web3IdentityCache = web3IdentityCache;
             this.webBrowser = webBrowser;
             this.imageControllerProvider = imageControllerProvider;
@@ -73,7 +69,7 @@ namespace DCL.PluginSystem.Global
             creditPurchaseModalController = new CreditPurchaseModalController(
                 CreditPurchaseModalController.CreateLazily(viewAsset, null),
                 creditsPurchaseService,
-                marketplaceCreditsApiClient,
+                marketplaceCreditsAPIClient,
                 web3IdentityCache,
                 webBrowser,
                 OpenGetCreditsPanelAsync,
@@ -81,7 +77,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(creditPurchaseModalController);
 
-            creditsTopUpService = new CreditsTopUpService(marketplaceCreditsApiClient, web3IdentityCache, webBrowser);
+            creditsTopUpService = new CreditsTopUpService(marketplaceCreditsAPIClient, web3IdentityCache, webBrowser);
             applicationFocusSource = new UnityApplicationFocusSource();
 
             CreditsTopUpModalView topUpViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CreditsTopUpPopupPrefab, ct: ct)).GetComponent<CreditsTopUpModalView>();
@@ -89,7 +85,7 @@ namespace DCL.PluginSystem.Global
             creditsTopUpModalController = new CreditsTopUpModalController(
                 CreditsTopUpModalController.CreateLazily(topUpViewAsset, null),
                 creditsTopUpService,
-                marketplaceCreditsApiClient,
+                marketplaceCreditsAPIClient,
                 web3IdentityCache,
                 imageControllerProvider,
                 applicationFocusSource);

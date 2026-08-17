@@ -85,6 +85,14 @@ namespace DCL.WebRequests.Tests
         }
 
         [Test]
+        public void ReportUnsupported_WhenProbeThrowsUnexpectedException()
+        {
+            KtxNativeSupport.probeOverride = static () => throw new InvalidOperationException("corrupted install");
+
+            Assert.That(KtxNativeSupport.IsSupported, Is.False);
+        }
+
+        [Test]
         public void StayUnsupported_AfterRuntimeTrip()
         {
             KtxNativeSupport.probeOverride = static () => true;

@@ -27,6 +27,7 @@ namespace Utility.Tests
         [Test]
         public async Task AbortInsteadOfThrowingWhenClosedDuringHandshake()
         {
+            // Arrange
             // Accepts the TCP connection but never answers the HTTP upgrade, so the client
             // stays parked mid-handshake with its inner managed socket unassigned.
             var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -48,8 +49,10 @@ namespace Utility.Tests
                 Assert.That(webSocket.State, Is.EqualTo(WebSocketState.Connecting),
                     "Precondition: the socket must be observed mid-handshake (the JS readyState CONNECTING window)");
 
+                // Act
                 Exception? thrown = await CaptureAsync(() => webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None));
 
+                // Assert
                 Assert.That(thrown, Is.Null,
                     $"CloseAsync during the connect handshake must fail the connection, not throw, but threw {thrown?.GetType()}: {thrown?.Message}");
 
@@ -68,8 +71,53 @@ namespace Utility.Tests
         }
 
         [Test]
+        public async Task UnparkAPendingConnectWhenAborted()
+        {
+            // Arrange
+            // Accepts the TCP connection but never answers the HTTP upgrade, so the client
+            // stays parked mid-handshake; the public Abort() must fail that pending connection
+            // the same way the CloseAsync gate does.
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            Task<Socket> serverAccept = listener.AcceptSocketAsync();
+            Task acceptObserved = serverAccept.ContinueWith(t => { _ = t.Exception; }, TaskScheduler.Default);
+
+            var webSocket = new DCLWebSocket();
+
+            try
+            {
+                Task connectTask = webSocket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/"), CancellationToken.None).AsTask();
+
+                // The parked connect surfaces its abort on a background continuation; observe it there
+                // so no unobserved fault leaks past this test.
+                Task connectObserved = connectTask.ContinueWith(t => { _ = t.Exception; }, TaskScheduler.Default);
+
+                Assert.That(webSocket.State, Is.EqualTo(WebSocketState.Connecting),
+                    "Precondition: the socket must be observed mid-handshake");
+
+                // Act
+                webSocket.Abort();
+
+                // Assert
+                Task completed = await Task.WhenAny(connectObserved, Task.Delay(TIMEOUT_MS));
+                Assert.That(completed, Is.SameAs(connectObserved), "Abort() must complete a parked connect instead of leaving it hanging");
+            }
+            finally
+            {
+                webSocket.Dispose();
+                listener.Stop();
+                await Task.WhenAny(acceptObserved, Task.Delay(TIMEOUT_MS));
+
+                if (serverAccept.Status == TaskStatus.RanToCompletion)
+                    serverAccept.Result.Dispose();
+            }
+        }
+
+        [Test]
         public async Task ConnectFromAThreadWithoutSynchronizationContext()
         {
+            // Arrange
             // The production caller is the ClearScript/V8 script-invoke thread, which carries no
             // TaskScheduler-compatible SynchronizationContext, so the whole connect/close path must
             // work with SynchronizationContext.Current == null.
@@ -86,6 +134,7 @@ namespace Utility.Tests
                 Task? connectTask = null;
                 Exception? synchronousThrow = null;
 
+                // Act
                 await Task.Run(() =>
                 {
                     SynchronizationContext.SetSynchronizationContext(null);
@@ -94,6 +143,7 @@ namespace Utility.Tests
                     catch (Exception e) { synchronousThrow = e; }
                 });
 
+                // Assert
                 Assert.That(synchronousThrow, Is.Null,
                     $"ConnectAsync must not throw on a thread without a SynchronizationContext, but threw {synchronousThrow?.GetType()}: {synchronousThrow?.Message}");
 
@@ -105,8 +155,10 @@ namespace Utility.Tests
                 Assert.That(webSocket.State, Is.EqualTo(WebSocketState.Connecting),
                     "Precondition: the socket must be observed mid-handshake");
 
+                // Act
                 Exception? thrown = await CaptureAsync(() => webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None));
 
+                // Assert
                 Assert.That(thrown, Is.Null,
                     $"CloseAsync after an off-context connect must fail the connection, not throw, but threw {thrown?.GetType()}: {thrown?.Message}");
 
@@ -127,6 +179,7 @@ namespace Utility.Tests
         [Test]
         public async Task CompleteCleanlyOnANeverConnectedSocket()
         {
+            // Arrange
             var webSocket = new DCLWebSocket();
 
             try
@@ -134,8 +187,10 @@ namespace Utility.Tests
                 Assert.That(webSocket.State, Is.EqualTo(WebSocketState.None),
                     "Precondition: no connect attempt was started");
 
+                // Act
                 Exception? thrown = await CaptureAsync(() => webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None));
 
+                // Assert
                 Assert.That(thrown, Is.Null,
                     $"CloseAsync on a never-connected socket must be a no-op abort, but threw {thrown?.GetType()}: {thrown?.Message}");
             }
@@ -148,6 +203,7 @@ namespace Utility.Tests
         [Test]
         public async Task StillPerformTheCloseHandshakeOnAnOpenSocket()
         {
+            // Arrange
             var listener = new TcpListener(IPAddress.Loopback, 0);
             listener.Start();
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
@@ -164,8 +220,10 @@ namespace Utility.Tests
 
                 Assert.That(webSocket.State, Is.EqualTo(WebSocketState.Open), "Precondition: the upgrade completed");
 
+                // Act
                 Exception? thrown = await CaptureAsync(() => webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None));
 
+                // Assert
                 Assert.That(thrown, Is.Null,
                     $"CloseAsync on an open socket must run the close handshake, but threw {thrown?.GetType()}: {thrown?.Message}");
 

@@ -53,6 +53,31 @@ namespace DCL.WebRequests.Tests
         }
 
         [Test]
+        public void KeepLoopbackTextureDirectWhenKtxEnabled()
+        {
+            // The loopback classification the converter reroute keys on must match the wire
+            // policy: a loopback origin the policy lets through as cleartext must never be
+            // rerouted to the public media converter, which cannot reach it
+            const string LOOPBACK_URL = "http://127.0.0.5:8000/a.png";
+
+            Assert.That(
+                TextureUrlAfterEnvelopeInitialization(LOOPBACK_URL, ktxEnabled: true),
+                Is.EqualTo(UnityCanonicalUrl(LOOPBACK_URL)));
+        }
+
+        [TestCase("http://127.0.0.5:8000/x", true)]
+        [TestCase("http://localhost:8001/x", true)]
+        [TestCase("https://localhost:3000/x", true)]
+        [TestCase("http://[::1]:8000/x", true)]
+        [TestCase("http://localhost.evil.com/x", false)]
+        [TestCase("http://peer.decentraland.org/x", false)]
+        [TestCase("file:///tmp/streaming-asset.bin", false)]
+        public void ClassifyLocalhostBySchemeAndLoopbackHost(string url, bool isLocalhost)
+        {
+            Assert.That(WebRequestUtils.IsLocalhost(url), Is.EqualTo(isLocalhost));
+        }
+
+        [Test]
         public void PreserveHttpOriginEmbeddedInConverterUrl()
         {
             const string HTTP_ORIGIN = "http://textures.example.com/a.png";

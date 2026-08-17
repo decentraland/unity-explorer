@@ -27,8 +27,8 @@ namespace DCL.MapRenderer.Tests.ConsumerUtils
             providerGo.AddComponent<RawImage>();
             provider = providerGo.AddComponent<PixelPerfectMapRendererTextureProvider>();
 
-            // null hud camera = overlay-canvas branch of WorldToScreenPoint: screen size == world size,
-            // deterministic in a headless EditMode run
+            // Null hud camera = overlay-canvas branch of WorldToScreenPoint: screen size == world size,
+            // deterministic in a headless EditMode run.
             cameraController = Substitute.For<IMapCameraController>();
             provider.Activate(cameraController);
             cameraController.ClearReceivedCalls();
@@ -46,9 +46,9 @@ namespace DCL.MapRenderer.Tests.ConsumerUtils
 
         private void ScaleCanvasBy2()
         {
-            // windowed -> fullscreen as production sees it: the scale-with-screen-size canvas absorbs
+            // Windowed -> fullscreen as production sees it: the scale-with-screen-size canvas absorbs
             // the new pixel resolution into its scale factor, the provider's own rect (canvas units)
-            // keeps identical dimensions, so Unity never sends OnRectTransformDimensionsChange
+            // keeps identical dimensions, so Unity never sends OnRectTransformDimensionsChange.
             root.transform.localScale = 2f * Vector3.one;
         }
 

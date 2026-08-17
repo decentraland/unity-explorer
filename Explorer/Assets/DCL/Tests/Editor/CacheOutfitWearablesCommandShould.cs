@@ -78,7 +78,8 @@ namespace DCL.Tests.Editor
                                   foreach (URN pointer in callInfo.Arg<IReadOnlyCollection<URN>>())
                                       requestedPointers.Add(pointer.ToString());
 
-                                  // A pointer that fails again comes back as an unresolved placeholder.
+                                  // The IWearablesProvider contract doesn't promise resolved-only results;
+                                  // simulate an unresolved placeholder coming back.
                                   List<IWearable> results = callInfo.Arg<List<IWearable>>();
                                   results.Add(unresolvedWearable);
                                   return UniTask.FromResult<IReadOnlyCollection<IWearable>?>(results);
@@ -100,7 +101,7 @@ namespace DCL.Tests.Editor
             for (var i = 0; i < result.Count; i++)
                 Assert.IsNotNull(result[i].DTO, $"Outfit result[{i}] holds an unresolved wearable (DTO == null)");
 
-            Assert.Contains(UNRESOLVED_URN, requestedPointers, "An unresolved storage hit must be re-fetched through the provider");
+            Assert.Contains(UNRESOLVED_URN, requestedPointers, "An unresolved storage hit must be re-requested through the provider");
         }
     }
 }
