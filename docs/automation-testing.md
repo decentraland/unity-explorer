@@ -36,6 +36,41 @@ The project follows the **Page Object Model (POM)** pattern. See the [explorer-a
 
 ---
 
+## Static Probes
+
+Some state is awkward to read through the UI hierarchy, and some — resolved feature flags, scene
+loading progress — isn't in it at all. The client exposes that state as plain static methods the
+tests call directly with `AltDriver.CallStaticMethod`, passing the type and its assembly:
+
+```csharp
+AltDriver.CallStaticMethod<bool>(
+    "DCL.FeatureFlags.AltTesterFeatureFlagsProbe", "IsFeatureEnabled",
+    "DCL.Network", new object[] { "MarketplaceCredits" });
+```
+
+| Type | Assembly | Exposes |
+|---|---|---|
+| `SceneRunner.Scene.AlttesterSceneReadinessProbe` | `SceneRunner.Scene` | whether the current scene finished loading, plus its name and base parcel |
+| `DCL.FeatureFlags.AltTesterFeatureFlagsProbe` | `DCL.Network` | remote flag state, resolved `FeatureId` state, variant payloads |
+| `DCL.PerformanceAndDiagnostics.AutoPilot.PerfSampler` | `DCL.Diagnostics.AutoPilot` | `Begin`/`End` around a test to write a perf CSV |
+
+Both probe types are gated by the `ALTTESTER` define and are therefore absent from release builds;
+`PerfSampler` is not gated. Note the inconsistent casing — `AltTesterFeatureFlagsProbe` against
+`AlttesterSceneReadinessProbe`. The driver resolves the type with `Assembly.GetType`, which is
+case-sensitive, so a probe renamed on this side silently becomes `componentNotFound` on the test
+side. That error means the assembly loaded but the type was not in it; a wrong *assembly* name
+reports `Assembly not found` instead.
+
+**Prefer a probe over re-deriving client state test-side.** Feature flags are the cautionary case:
+the remote document evaluates differently depending on request headers, and the client folds app
+arguments and editor overrides on top, so a suite that fetches the flags itself can get a different
+answer than the UI it is asserting against.
+
+When adding one: keep it static, return a primitive or a JSON string, gate it with `#if ALTTESTER`,
+and put it in an assembly that already sees the state being exposed.
+
+---
+
 ## CI Pipeline
 
 Non-release builds created by CI (for PRs and the dev branch) include AltTester instrumentation. The instrumented build:

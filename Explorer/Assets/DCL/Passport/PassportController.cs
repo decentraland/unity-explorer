@@ -89,7 +89,7 @@ namespace DCL.Passport
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly BadgesAPIClient badgesAPIClient;
+        private readonly BadgesAPIClient badgesApiClient;
         private readonly PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> commonPassportModules = new ();
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
@@ -101,7 +101,7 @@ namespace DCL.Passport
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IFriendsService? friendsService;
         private readonly IWebRequestController webRequestController;
-        private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
+        private readonly MarketplaceShopAPIClient marketplaceShopApiClient;
         private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
@@ -166,6 +166,7 @@ namespace DCL.Passport
         public event Action<string, bool>? BadgeSelected;
         public event Action<string, Vector2Int>? JumpToFriendClicked;
         public event Action? NameClaimRequested;
+        public event Action<string, string, string>? CreditsBuyFellBackToWeb;
 
         public PassportController(
             ViewFactoryMethod viewFactory,
@@ -184,7 +185,7 @@ namespace DCL.Passport
             IThumbnailProvider thumbnailProvider,
             UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            BadgesAPIClient badgesAPIClient,
+            BadgesAPIClient badgesApiClient,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
@@ -209,7 +210,7 @@ namespace DCL.Passport
             ImageControllerProvider imageControllerProvider,
             ColorPresetsSO colorPresets,
             IWebRequestController webRequestController,
-            MarketplaceShopAPIClient marketplaceShopAPIClient) : base(viewFactory)
+            MarketplaceShopAPIClient marketplaceShopApiClient) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -225,7 +226,7 @@ namespace DCL.Passport
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.badgesAPIClient = badgesAPIClient;
+            this.badgesApiClient = badgesApiClient;
             this.inputBlock = inputBlock;
             this.remoteMetadata = remoteMetadata;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -250,7 +251,7 @@ namespace DCL.Passport
             this.imageControllerProvider = imageControllerProvider;
             this.colorPresets = colorPresets;
             this.webRequestController = webRequestController;
-            this.marketplaceShopAPIClient = marketplaceShopAPIClient;
+            this.marketplaceShopApiClient = marketplaceShopApiClient;
 
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends);
@@ -319,32 +320,35 @@ namespace DCL.Passport
                 passportProfileInfoController));
 
             bool isCreditPurchaseEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase)
-                                           && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
+                                           && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits)
+                                           && CreditsFeatureAccess.Instance.IsUserAllowed();
 
-            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopAPIClient, webBrowser, isCreditPurchaseEnabled);
+            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopApiClient, webBrowser, isCreditPurchaseEnabled);
+            creditPurchaseBuyHandler.FellBackToWeb += OnCreditsBuyFellBackToWeb;
 
             overviewPassportModules.Add(new EquippedItemsPassportModuleController(
                 viewInstance.EquippedItemsModuleView,
                 world,
+                webRequestController,
+                webBrowser,
                 rarityBackgrounds,
                 rarityColors,
                 categoryIcons,
                 thumbnailProvider,
-                webBrowser,
                 decentralandUrlsSource,
                 passportErrorsController,
                 creditPurchaseBuyHandler));
 
             overviewPassportModules.Add(new BadgesOverviewPassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
-                badgesAPIClient,
+                badgesApiClient,
                 passportErrorsController,
                 imageControllerProvider));
 
             badgesDetailsPassportModuleController = new BadgesDetailsPassportModuleController(
                 viewInstance.BadgesDetailsModuleView,
                 viewInstance.BadgeInfoModuleView,
-                badgesAPIClient,
+                badgesApiClient,
                 passportErrorsController,
                 selfProfile,
                 badge3DPreviewCamera,
@@ -498,6 +502,9 @@ namespace DCL.Passport
 
         private void OnNameClaimRequested() =>
             NameClaimRequested?.Invoke();
+
+        private void OnCreditsBuyFellBackToWeb(string reason, string itemUrn, string source) =>
+            CreditsBuyFellBackToWeb?.Invoke(reason, itemUrn, source);
 
         private void ShowContextMenu()
         {
@@ -1122,10 +1129,10 @@ namespace DCL.Passport
         {
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 
-            ShowFriendRequestUIAsync(friendshipOperationCts.Token).Forget();
+            ShowFriendRequestUiAsync(friendshipOperationCts.Token).Forget();
             return;
 
-            async UniTaskVoid ShowFriendRequestUIAsync(CancellationToken ct)
+            async UniTaskVoid ShowFriendRequestUiAsync(CancellationToken ct)
             {
                 await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                 {

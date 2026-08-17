@@ -86,7 +86,7 @@ For embedded links you will need to place value after `=` sign, instead of space
 ## Scene & Environment Flags
 
 ### `scene-console`
-**Description:** Enables the scene console for debugging and development. Only available in debug mode or when running local scenes.
+**Description:** Enables the scene console (the debug menu's log view of the scene's own output) for debugging and development. Works for any realm — local scene development enables it implicitly, and the flag itself is accepted from deep links against production realms and worlds too, so creators and QA can inspect a deployed scene.
 
 **Usage:**
 ```bash

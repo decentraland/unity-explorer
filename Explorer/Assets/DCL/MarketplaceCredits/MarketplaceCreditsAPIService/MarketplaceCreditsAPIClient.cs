@@ -16,6 +16,8 @@ namespace DCL.MarketplaceCredits
     {
         private const string NO_DATA_STATE = "NO_DATA";
         private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
+        private const string PURCHASE_SOURCE = "client";
+
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
         public event Action<UserCreditsResponse> OnUserCreditsFetched;
 
@@ -90,13 +92,33 @@ namespace DCL.MarketplaceCredits
                                              .CreateFromJson<CreditPacksResponse>(WRJsonParser.Unity);
         }
 
-        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, CancellationToken ct)
+        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, string contractAddress, string itemId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
-            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdCreditBody { usdPriceCents = usdPriceCents, tradeId = tradeId });
+            string jsonBody = BuildAuthorizeBody(usdPriceCents, tradeId, contractAddress, itemId);
 
             return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                              .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);
+        }
+
+        private static string BuildAuthorizeBody(int usdPriceCents, string? tradeId, string? contractAddress, string? itemId)
+        {
+            bool hasItem = !string.IsNullOrEmpty(contractAddress) && !string.IsNullOrEmpty(itemId);
+
+            return hasItem
+                ? JsonUtility.ToJson(new AuthorizeUsdMintCreditBody
+                {
+                    usdPriceCents = usdPriceCents,
+                    contractAddress = contractAddress,
+                    itemId = itemId,
+                    source = PURCHASE_SOURCE,
+                })
+                : JsonUtility.ToJson(new AuthorizeUsdCreditBody
+                {
+                    usdPriceCents = usdPriceCents,
+                    tradeId = tradeId ?? string.Empty,
+                    source = PURCHASE_SOURCE,
+                });
         }
 
         public virtual async UniTask ReleaseUsdIntentsAsync(string[] salts, CancellationToken ct)
@@ -209,7 +231,7 @@ namespace DCL.MarketplaceCredits
         public virtual async UniTask<EnumResult<CheckoutResponse, CreditsCheckoutError>> CreateCheckoutAsync(string packId, CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/credits/checkout";
-            string jsonBody = JsonUtility.ToJson(new CheckoutRequestBody { packId = packId });
+            string jsonBody = JsonUtility.ToJson(new CheckoutRequestBody { packId = packId, source = PURCHASE_SOURCE });
 
             try
             {

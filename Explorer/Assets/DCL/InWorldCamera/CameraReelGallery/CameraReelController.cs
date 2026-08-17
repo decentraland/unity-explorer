@@ -88,7 +88,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void SetStorageStatus(CameraReelStorageStatus storageStatus)
         {
-            view.storageProgressBar.SetPercentageValue((storageStatus.ScreenshotsAmount * 1.0f / storageStatus.MaxScreenshots) * 100, 0 , storageStatus.MaxScreenshots);
+            view.storageProgressBar.SetPercentageValue(storageStatus.ScreenshotsAmount * 1.0f / storageStatus.MaxScreenshots * 100, 0 , storageStatus.MaxScreenshots);
             view.storageFullIcon.SetActive(!storageStatus.HasFreeSpace);
 
             if (storageStatus.ScreenshotsAmount == 0)

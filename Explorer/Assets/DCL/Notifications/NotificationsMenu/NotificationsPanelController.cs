@@ -41,6 +41,7 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationType.COMMUNITY_DEEP_LINK,
             NotificationType.INTERNAL_DEFAULT_SUCCESS,
             NotificationType.INTERNAL_SERVER_ERROR,
+            NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE,
         };
 
         private readonly NotificationsRequestController notificationsRequestController;

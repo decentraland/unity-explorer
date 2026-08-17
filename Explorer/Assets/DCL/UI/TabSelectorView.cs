@@ -39,7 +39,9 @@ namespace DCL.UI
         {
             tabAnimator.enabled = true;
 
-            if (tabAnimator != null)
+            // Animator.Update is only legal on an active-in-hierarchy object; tabs are
+            // frequently enabled while their panel is still hidden during UI bootstrap.
+            if (tabAnimator != null && tabAnimator.gameObject.activeInHierarchy)
             {
                 tabAnimator.Rebind();
                 tabAnimator.Update(0);

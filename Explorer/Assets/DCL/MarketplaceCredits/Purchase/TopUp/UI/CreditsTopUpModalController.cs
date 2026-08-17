@@ -6,6 +6,7 @@ using MVC;
 using System;
 using System.Globalization;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
@@ -25,9 +26,11 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string ANALYTICS_STEP_CHECKOUT = "checkout";
         private const string ANALYTICS_STEP_GRANT = "grant";
         private const string ANALYTICS_ERROR_GRANT_FAILED = "grant_failed";
+        private const string PACKS_LOAD_FAILED_REQUEST = "request_failed";
+        private const string PACKS_LOAD_FAILED_EMPTY = "empty_response";
 
         private readonly ICreditsTopUpService topUpService;
-        private readonly MarketplaceCreditsAPIClient creditsAPIClient;
+        private readonly MarketplaceCreditsAPIClient creditsApiClient;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ImageControllerProvider imageControllerProvider;
 
@@ -35,25 +38,30 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private CreditsTopUpStage lastStage = CreditsTopUpStage.Idle;
         private bool isViewShown;
         private CancellationTokenSource? lifeCts;
+        private CreditsTopUpPackItemView? purchasedPackItem;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
+        public event Action<string>? ModalOpened;
         public event Action<CreditPack, string>? BuyCreditsStarted;
         public event Action<string, CreditPack>? RedirectedToStripe;
         public event Action<string, CreditPack>? BuyCreditsCompleted;
         public event Action<CreditPack>? BuyCreditsPending;
         public event Action<string, string, CreditPack>? BuyCreditsFailed;
+        public event Action<string, CreditPack>? BuyCreditsCancelled;
+        public event Action<CreditPack>? RetryClicked;
+        public event Action<string>? PacksLoadFailed;
 
         public CreditsTopUpModalController(
             ViewFactoryMethod viewFactory,
             ICreditsTopUpService topUpService,
-            MarketplaceCreditsAPIClient creditsAPIClient,
+            MarketplaceCreditsAPIClient creditsApiClient,
             IWeb3IdentityCache identityCache,
             ImageControllerProvider imageControllerProvider)
             : base(viewFactory)
         {
             this.topUpService = topUpService;
-            this.creditsAPIClient = creditsAPIClient;
+            this.creditsApiClient = creditsApiClient;
             this.identityCache = identityCache;
             this.imageControllerProvider = imageControllerProvider;
             topUpService.StatusChanged += OnServiceStatusChanged;
@@ -76,11 +84,14 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             ApplyStatus(topUpService.CurrentStatus);
             LoadAndBindPacksAsync(lifeCts.Token).Forget();
             LoadBalanceAsync(lifeCts.Token).Forget();
+
+            ModalOpened?.Invoke(inputData.Source);
         }
 
         protected override void OnViewClose()
         {
             isViewShown = false;
+            purchasedPackItem = null;
 
             if (viewInstance != null)
             {
@@ -93,9 +104,13 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 viewInstance.RetryButton.onClick.RemoveListener(OnRetryClicked);
             }
 
-            if (currentState == ModalState.WaitingForBrowser)
-                topUpService.StopWaitingForBrowser();
-            else if (currentState is ModalState.Success or ModalState.Failed or ModalState.Pending)
+            if (currentState is ModalState.WaitingForBrowser or ModalState.Pending)
+            {
+                CreditsTopUpStatus status = topUpService.CurrentStatus;
+                BuyCreditsCancelled?.Invoke(status.OrderId!, status.Pack);
+                topUpService.CancelTopUp();
+            }
+            else if (currentState is ModalState.Success or ModalState.Failed)
                 topUpService.AcknowledgeTerminalState();
 
             lifeCts.SafeCancelAndDispose();
@@ -121,11 +136,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
 
             CreditPacksResponse response;
 
-            try { response = await creditsAPIClient.GetCreditPacksAsync(ct); }
+            try { response = await creditsApiClient.GetCreditPacksAsync(ct); }
             catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Top-up packs load failed: {e.Message}");
+                PacksLoadFailed?.Invoke(PACKS_LOAD_FAILED_REQUEST);
                 ShowPacksError();
                 return;
             }
@@ -135,6 +151,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
 
             if (response.packs == null || response.packs.Length == 0)
             {
+                PacksLoadFailed?.Invoke(PACKS_LOAD_FAILED_EMPTY);
                 ShowPacksError();
                 return;
             }
@@ -171,7 +188,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 packItem.BestValueBadge.SetActive(pack.BestValue);
 
                 packItem.BuyButton.onClick.RemoveAllListeners();
-                packItem.BuyButton.onClick.AddListener(() => OnPackClicked(pack));
+                packItem.BuyButton.onClick.AddListener(() => OnPackClicked(pack, packItem));
 
                 packItem.ConfigureImageController(imageControllerProvider);
                 packItem.SetupImage(pack.ImageUrl);
@@ -206,11 +223,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private static CreditPack ToCreditPack(in CreditPackData data) =>
             new (data.id, data.usd, data.credits, data.recommended, data.imageUrl);
 
-        private void OnPackClicked(CreditPack pack)
+        private void OnPackClicked(CreditPack pack, CreditsTopUpPackItemView packItem)
         {
             if (currentState != ModalState.PackSelection || topUpService.IsOrderInFlight)
                 return;
 
+            purchasedPackItem = packItem;
             BuyCreditsStarted?.Invoke(pack, inputData.Source);
             topUpService.StartTopUp(pack);
         }
@@ -220,6 +238,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             if (currentState != ModalState.Failed)
                 return;
 
+            RetryClicked?.Invoke(topUpService.CurrentStatus.Pack);
             topUpService.AcknowledgeTerminalState();
         }
 
@@ -266,6 +285,14 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 case CreditsTopUpStage.Credited:
                     viewInstance.BoughtCreditsAmount.text = status.Pack.Credits.ToString();
                     viewInstance.BalanceCreditsText.text = status.NewBalance.ToString();
+
+                    if (viewInstance.SuccessPackImage != null)
+                    {
+                        Sprite? packSprite = purchasedPackItem != null ? purchasedPackItem.PackImage.ImageSprite : null;
+                        viewInstance.SuccessPackImage.sprite = packSprite;
+                        viewInstance.SuccessPackImage.enabled = packSprite != null;
+                    }
+
                     break;
                 case CreditsTopUpStage.Failed:
                     (string reason, bool allowRetry) = MapFailureCopy(status);
@@ -283,21 +310,21 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 return;
 
             bool packsVisible = newState is ModalState.PackSelection or ModalState.CreatingCheckout;
-            bool fullScreenState = newState is ModalState.WaitingForBrowser or ModalState.Success;
+            bool fullScreenState = newState is ModalState.WaitingForBrowser or ModalState.Success or ModalState.Pending;
 
             viewInstance.HeaderContainer.SetActive(!fullScreenState);
             viewInstance.BalanceContainer.SetActive(!fullScreenState);
 
             viewInstance.PackSelectionContainer.SetActive(packsVisible);
-            viewInstance.WaitingForBrowserContainer.SetActive(newState == ModalState.WaitingForBrowser);
+            viewInstance.WaitingForBrowserContainer.SetActive(newState is ModalState.WaitingForBrowser  or ModalState.Pending);
             viewInstance.FailedContainer.SetActive(newState == ModalState.Failed);
             viewInstance.SuccessContainer.SetActive(newState == ModalState.Success);
 
             foreach (CreditsTopUpPackItemView packItem in viewInstance.PackItems)
                 packItem.BuyButton.interactable = newState == ModalState.PackSelection;
 
-            // Close is locked only while creating the checkout; during the browser wait the X acts as
-            // "stop waiting" and hands the order off to the background poll.
+            // Close is locked only while creating the checkout; during the browser wait or pending
+            // states the X cancels the top-up so the next open starts from pack selection.
             viewInstance.CloseButton.interactable = newState != ModalState.CreatingCheckout;
         }
 
@@ -308,12 +335,9 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             if (identity == null)
                 return;
 
-            if (viewInstance != null)
-                viewInstance.BalanceLoadingSpinner.SetActive(true);
-
             try
             {
-                UserCreditsResponse credits = await creditsAPIClient.GetUserCreditsAsync(identity.Address, ct);
+                UserCreditsResponse credits = await creditsApiClient.GetUserCreditsAsync(identity.Address, ct);
 
                 if (!ct.IsCancellationRequested && viewInstance != null)
                     viewInstance.BalanceCreditsText.text = credits.usd.credits.ToString();
@@ -322,11 +346,6 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Top-up balance load failed: {e.Message}");
-            }
-            finally
-            {
-                if (viewInstance != null)
-                    viewInstance.BalanceLoadingSpinner.SetActive(false);
             }
         }
 
