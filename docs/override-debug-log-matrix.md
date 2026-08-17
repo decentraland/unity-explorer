@@ -38,7 +38,7 @@ The format of the json is as follows:
 
 ```json
 {
-  "override": true,
+  "isOverride": true,
   "debugLogMatrix": [
     { "category": "VOICE_CHAT", "severity": "Warning" },
     { "category": "FRIENDS", "severity": "Warning" },
@@ -51,7 +51,21 @@ The format of the json is as follows:
 }
 ```
 
-Where `override` indicates if we should ONLY use the values from this file or use the original values defined in the scriptable object with the values on the file overriding the original ones. As you can see we can also override the sentryMatrix, to choose which logs send to Sentry, but it is not necessarily a use case right now.
+Where `isOverride` indicates if we should ONLY use the values from this file or use the original values defined in the scriptable object with the values on the file overriding the original ones. As you can see we can also override the sentryMatrix, to choose which logs send to Sentry, but it is not necessarily a use case right now.
+
+The keys must match the field names of `CategorySeverityMatrixDto` exactly — `JsonUtility` silently ignores anything else.
+
+### Enabling absolutely everything
+
+To get every category at every severity into the log file, set `allOverride` instead of listing entries:
+
+```json
+{
+  "allOverride": true
+}
+```
+
+`allOverride` wins over `isOverride` and over `debugLogMatrix`, and it only affects the log file — the Sentry matrix keeps whatever the scriptable object (or `sentryMatrix`) defines, so this cannot flood Sentry.
 
 **Example Files**
 * [test-log-matrix.json](https://github.com/user-attachments/files/24554325/test-log-matrix.json)

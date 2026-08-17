@@ -34,6 +34,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName CRASH = "Crash".AsWidgetName();
             public static readonly WidgetName MEMORY = "Memory".AsWidgetName();
             public static readonly WidgetName CURRENT_SCENE = "Current scene".AsWidgetName();
+            public static readonly WidgetName SCENE_CONTENT = "Scene content".AsWidgetName();
             public static readonly WidgetName REALM = "Realm".AsWidgetName();
             public static readonly WidgetName ENTITY_REQUESTS = "Entity Requests".AsWidgetName();
             public static readonly WidgetName ANALYTICS = "Analytics".AsWidgetName();
@@ -54,6 +55,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName QUALITY = "Quality".AsWidgetName();
             public static readonly WidgetName RENDERING = "Rendering".AsWidgetName();
             public static readonly WidgetName PARTICLES = "Particles".AsWidgetName();
+            public static readonly WidgetName MEDIA_PLAYER = "Media Player".AsWidgetName();
             public static readonly WidgetName BUG_REPORT = "Bug Report".AsWidgetName();
         }
     }

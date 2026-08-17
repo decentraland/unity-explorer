@@ -250,7 +250,6 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 RemoteEntities,
                 staticContainer.ScenesCache,
-                staticContainer.EmoteStorage,
                 staticContainer.CharacterDataPropagationUtility,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                 islandThroughputBunch,

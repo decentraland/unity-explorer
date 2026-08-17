@@ -73,6 +73,9 @@ namespace DCL.FeatureFlags
                 [FeatureId.ByteWeightedLoadingProgress] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HardwareFingerprint] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 [FeatureId.McpServer] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
+                [FeatureId.UseCustomMediaPlayerWindows] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_WINDOWS), requireDebug: false),
+                [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
+                [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
                 [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
@@ -213,6 +216,9 @@ namespace DCL.FeatureFlags
         CreditsWearablePurchase = 68,
         CreditsTopup = 69,
         McpServer = 70,
-        BugReport = 71,
+        UseCustomMediaPlayerWindows = 71,
+        UseCustomMediaPlayerMacSilicon = 72,
+        UseCustomMediaPlayerMacIntel = 73,
+        BugReport = 74,
     }
 }
