@@ -16,6 +16,7 @@ namespace DCL.Diagnostics.Sentry
         public delegate void ConfigureScope(Scope scope);
 
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
+        private const string UNKNOWN_SCENE_NAME = "unknown-scene";
 
         private readonly List<ConfigureScope> scopeConfigurators = new (10);
 
@@ -184,7 +185,7 @@ namespace DCL.Diagnostics.Sentry
             if (string.IsNullOrEmpty(exceptionMessage))
                 return;
 
-            scope.SetFingerprint(new[] { "scene-js", data.SceneShortInfo.Name, FirstLine(exceptionMessage) });
+            scope.SetFingerprint(new[] { "scene-js", data.SceneShortInfo.Name ?? UNKNOWN_SCENE_NAME, FirstLine(exceptionMessage) });
         }
 
         private static string FirstLine(string message)

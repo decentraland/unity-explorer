@@ -48,17 +48,15 @@ namespace DCL.Diagnostics.Tests
         }
 
         [Test]
-        public void SetFingerprintWithNullSceneNameWhenSceneShortInfoIsMissing()
+        public void SetFingerprintWithFallbackSceneNameWhenSceneShortInfoIsMissing()
         {
             // No sceneShortInfo supplied -> default(SceneShortInfo), Name == null.
-            // The patch does not special-case a missing scene: the null flows straight
-            // into the fingerprint array (documented residual risk in review.md #4).
             Scope scope = NewScope();
             var reportData = new ReportData(ReportCategory.JAVASCRIPT);
 
             SentryReportHandler.AddSceneJsFingerprint(scope, reportData, "Error: boom");
 
-            CollectionAssert.AreEqual(new[] { "scene-js", null, "Error: boom" }, scope.Fingerprint);
+            CollectionAssert.AreEqual(new[] { "scene-js", "unknown-scene", "Error: boom" }, scope.Fingerprint);
         }
     }
 }
