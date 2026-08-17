@@ -108,20 +108,28 @@ namespace DCL.Rendering.GPUInstancing
             this.Settings = settings;
 
             FrustumCullingAndLODGenComputeShader = settings.FrustumCullingAndLODGenComputeShader;
+            IndirectBufferGenerationComputeShader = settings.IndirectBufferGenerationComputeShader;
+            DrawArgsInstanceCountTransferComputeShader = settings.DrawArgsInstanceCountTransferComputeShader;
+
+            if (!SystemInfo.supportsComputeShaders)
+            {
+                IsEnabled = false;
+                ReportHub.Log(ReportCategory.GPU_INSTANCING, "GPU instancing disabled: compute shaders are not supported on this platform.");
+                return;
+            }
+
             FrustumCullingAndLODGenComputeShader_KernelIDs = FrustumCullingAndLODGenComputeShader.FindKernel(FrustumCullingAndLODGenComputeShader_KernelName);
             FrustumCullingAndLODGenComputeShader.GetKernelThreadGroupSizes(FrustumCullingAndLODGenComputeShader_KernelIDs,
                 out FrustumCullingAndLODGen_ThreadGroupSize_X,
                 out FrustumCullingAndLODGen_ThreadGroupSize_Y,
                 out FrustumCullingAndLODGen_ThreadGroupSize_Z);
 
-            IndirectBufferGenerationComputeShader = settings.IndirectBufferGenerationComputeShader;
             IndirectBufferGenerationComputeShader_KernelIDs = IndirectBufferGenerationComputeShader.FindKernel(IndirectBufferGenerationComputeShader_KernelName);
             IndirectBufferGenerationComputeShader.GetKernelThreadGroupSizes(IndirectBufferGenerationComputeShader_KernelIDs,
                 out IndirectBufferGeneration_ThreadGroupSize_X,
                 out IndirectBufferGeneration_ThreadGroupSize_Y,
                 out IndirectBufferGeneration_ThreadGroupSize_Z);
 
-            DrawArgsInstanceCountTransferComputeShader = settings.DrawArgsInstanceCountTransferComputeShader;
             DrawArgsInstanceCountTransferComputeShader_KernelIDs = DrawArgsInstanceCountTransferComputeShader.FindKernel(DrawArgsInstanceCountTransferComputeShader_KernelName);
             DrawArgsInstanceCountTransferComputeShader.GetKernelThreadGroupSizes(DrawArgsInstanceCountTransferComputeShader_KernelIDs,
                 out DrawArgsInstanceCountTransfer_ThreadGroupSize_X,
