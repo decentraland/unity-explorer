@@ -95,10 +95,16 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.UI);
-                texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task;
+
+                try { texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task; }
+                catch { texture = Texture2D.blackTexture; }
             }
 
             // Closing this in try catch, because SpriteRenderer on application closing is being disposed before this code executes.
