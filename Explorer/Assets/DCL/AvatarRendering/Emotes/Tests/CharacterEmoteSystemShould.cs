@@ -17,7 +17,9 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Utility.Animations;
 using Object = UnityEngine.Object;
 
@@ -27,6 +29,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
     {
         private const string SMART_WEARABLE_ENTITY_ID = "bafkreiwearable";
         private const string EMOTE_HASH = "bafkreiemotehash";
+        private const string SCENE_EMOTE_URN = "urn:decentraland:off-chain:scene-emote:test-scene-bafkreiemotehash-false";
 
         private ScenesCache scenesCache = null!;
         private IEmotesMessageBus messageBus = null!;
@@ -102,36 +105,26 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         /// <summary>
-        /// Regression for the "emote-lock-after-fish-catch" bug: a scene emote whose asset never resolves
-        /// (e.g. evicted from the memory-pressure cache sweep before it ever played, as happens with the
-        /// Genesis Plaza fishing catch/reveal emotes when the cinematic breaks) leaves a stranded
-        /// CharacterEmoteIntent on the player entity. UpdateEmoteInputSystem.TriggerEmote is
-        /// [None(typeof(CharacterEmoteIntent))], so a stranded intent silently blocks every user emote
-        /// (slot shortcuts and the wheel) until the #6531 play-timeout watchdog removes it.
+        /// Regression for https://github.com/decentraland/unity-explorer/issues/6531: an emote whose
+        /// per-body-shape asset never resolves keeps ConsumeEmoteIntent parked on the "loading not complete"
+        /// branch every frame, so the play timeout is the only thing that can release the intent (and with it
+        /// the props of the previously played emote).
         /// </summary>
         [Test]
         public void RemoveStrandedCharacterEmoteIntentAfterPlayTimeoutElapses()
         {
-            // The fixed watchdog path legitimately emits "[Error] Cant play emote ... timeout reached."
-            // (pre-existing ReportHub.LogError relocated by potential-fix.patch); without this the
-            // Unity Test Framework fails the test on the unhandled error log. Set inside the body:
-            // the framework resets LogAssert state after [SetUp], before the test body runs.
-            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
+            LogAssert.Expect(LogType.Error, new Regex("Cant play emote .* timeout reached"));
 
-            // Arrange: a full-body scene emote resolved in the storage but whose per-body-shape asset
-            // never arrived (AssetResults entry stays null), so ConsumeEmoteIntent keeps parking on the
-            // "Loading not complete" branch every frame instead of playing or failing outright.
             IAvatarView strandedAvatarView = Substitute.For<IAvatarView>();
 
-            // Grounded and not jumping/moving: bypasses the animator park gate so the query reaches the
-            // emote-storage branch below instead of parking earlier for an unrelated reason.
+            // Grounded and not moving, so the intent reaches the emote-storage branch instead of parking
+            // on the movement gate.
             strandedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
 
             IEmote emote = Substitute.For<IEmote>();
             emote.IsLoading.Returns(false);
 
-            // Empty results: the asset is not resident (e.g. evicted with a zero refcount before it ever
-            // played), so ConsumeEmoteIntent takes the "assetResult == null" return every frame.
+            // Empty results: the asset is not resident, so playback stops short of the avatar view every frame.
             emote.AssetResults.Returns(new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT]);
 
             emoteStorage.TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>())
@@ -145,24 +138,48 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 new CharacterEmoteComponent(),
                 new CharacterEmoteIntent
                 {
-                    EmoteId = new URN("urn:decentraland:off-chain:scene-emote:pond-fishing_catch-false"),
+                    EmoteId = new URN(SCENE_EMOTE_URN),
                     Mask = AvatarEmoteMask.AemFullBody,
                 },
                 strandedAvatarView,
                 new AvatarShapeComponent { BodyShape = BodyShape.MALE });
 
-            // Act: simulate more than StreamableLoadingDefaults.TIMEOUT seconds of frames, one second of
-            // dt at a time. A single call with a large dt would not reproduce the pin's bug (the very
-            // first call is unaffected by the precedence bug — see CharacterEmoteIntentShould), so the
-            // repeated small-dt calls are load-bearing for the regression.
             for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
                 system!.Update(1f);
 
-            // Assert
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
-                "A CharacterEmoteIntent whose asset never resolves must expire after StreamableLoadingDefaults.TIMEOUT " +
-                "seconds via the #6531 watchdog, instead of permanently blocking UpdateEmoteInputSystem.TriggerEmote's " +
-                "[None(CharacterEmoteIntent)] gate (the restart-only emote lock from emote-lock-after-fish-catch).");
+                "A CharacterEmoteIntent whose asset never resolves must expire after StreamableLoadingDefaults.TIMEOUT seconds of elapsed play time.");
+        }
+
+        /// <summary>
+        /// The play timeout must not count the time an intent spends waiting for the avatar to stop moving:
+        /// that wait is user driven and unbounded, so counting it would discard the queued emote of a player
+        /// who simply keeps running or jumping for StreamableLoadingDefaults.TIMEOUT seconds.
+        /// </summary>
+        [Test]
+        public void KeepCharacterEmoteIntentWhileTheAvatarKeepsMoving()
+        {
+            IAvatarView movingAvatarView = Substitute.For<IAvatarView>();
+            movingAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+            movingAvatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND).Returns(1f);
+
+            Entity movingEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                movingAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
+                system!.Update(1f);
+
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(movingEntity),
+                "An intent held back by the movement gate must survive: the avatar is moving, which is not a stuck state.");
+
+            emoteStorage.DidNotReceive().TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>());
         }
 
         private static ISceneFacade NewSceneFacadeWithName(string name)

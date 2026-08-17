@@ -280,17 +280,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try
             {
-                // Fixes https://github.com/decentraland/unity-explorer/issues/6531
-                // Rarely happens for an unknown reason that emote.AssetResults[bodyShape] is null, provoking the emote intent to never finish,
-                // thus props of the previous emote cannot be disposed either.
-                // By setting a timeout we force unstuck the process
-                if (emoteIntent.UpdatePlayTimeout(dt))
-                {
-                    ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} timeout reached.");
-                    World.Remove<CharacterEmoteIntent>(entity);
-                    return;
-                }
-
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
                 // We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
@@ -319,6 +308,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                     if (emote.DTO is { assetBundleManifestVersion: { assetBundleManifestRequestFailed: true, IsLSDAsset: false } })
                     {
                         ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
+
+                    // Fixes https://github.com/decentraland/unity-explorer/issues/6531
+                    // Rarely happens for an unknown reason that emote.AssetResults[bodyShape] is null, provoking the emote intent to never finish,
+                    // thus props of the previous emote cannot be disposed either.
+                    // By setting a timeout we force unstuck the process
+                    if (emoteIntent.UpdatePlayTimeout(dt))
+                    {
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} timeout reached.");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
