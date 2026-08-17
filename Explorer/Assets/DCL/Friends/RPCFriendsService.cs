@@ -640,9 +640,11 @@ namespace DCL.Friends
                    {
                        UpsertFriendshipResponse.ResponseOneofCase.Accepted => response.Accepted,
                        UpsertFriendshipResponse.ResponseOneofCase.InvalidFriendshipAction => throw new FriendshipActionRejectedException(
-                           response.InvalidFriendshipAction?.Message ?? "InvalidFriendshipAction"),
+                           string.IsNullOrEmpty(response.InvalidFriendshipAction.Message)
+                               ? nameof(UpsertFriendshipResponse.ResponseOneofCase.InvalidFriendshipAction)
+                               : response.InvalidFriendshipAction.Message),
                        UpsertFriendshipResponse.ResponseOneofCase.InternalServerError => throw new Exception(
-                           $"Cannot update friendship {response.ResponseCase}: {response.InternalServerError?.Message}"),
+                           $"Cannot update friendship {response.ResponseCase}: {response.InternalServerError.Message}"),
                        _ => throw new Exception($"Cannot update friendship {response.ResponseCase}"),
                    };
         }
