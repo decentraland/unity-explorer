@@ -113,6 +113,11 @@ rule WARN nameof-argument-exception '' '' \
     'new +(ArgumentNullException|ArgumentOutOfRangeException) *\( *"' \
     'Use nameof(...) for the parameter name (docs/code-style-guidelines.md)'
 
+# The trailing `;` is what tells a local declaration apart from a multi-line
+# parameter declaration (e.g. `DebugController? debugController = null,`),
+# which must not be flagged - deliberate, not incidental. It does mean a
+# nullable local split across two added lines evades detection; accepted,
+# narrower rules are preferable to a broad one that eats parameter lists.
 rule BLOCK nullable-local '' "$EXCLUDE_NON_PROD" \
     '^[ \t]*[A-Za-z_][A-Za-z0-9_.]*(<[^;={}]*>)?\? +[a-z_][A-Za-z0-9_]* *(=[^;]*)?;' \
     'Local variables must not be nullable - use pattern matching (is not { } x) to bind a non-nullable local (CLAUDE.md § Anti-Patterns)'
@@ -229,8 +234,12 @@ main() {
                 text = $0; sub(/^[^\t]*\t[^\t]*\t/, "", text)
                 if (inc != "" && path !~ inc) next
                 if (exc != "" && path ~ exc) next
-                if (text !~ pat) next
-                if (ant != "" && text ~ ant) next
+                if (!match(text, pat)) next
+                # Scoped to the match and everything before it, never text
+                # after: a sanctioned idiom in a later statement on the same
+                # physical line (e.g. two calls joined by ";") must not mask
+                # an earlier real violation this rule is supposed to catch.
+                if (ant != "" && substr(text, 1, RSTART + RLENGTH - 1) ~ ant) next
                 # same-line escape hatch: // lint-ignore: rule-a, rule-b
                 if (text ~ ("lint-ignore:[ a-z0-9,-]*" ENVIRON["ID"] "([^a-z0-9-]|$)")) next
                 printf "%s:%s  %s  %s  %s\n", path, ln, ENVIRON["SEV"], ENVIRON["ID"], ENVIRON["MSG"]

@@ -55,6 +55,8 @@ class NullableStates
         EventId forced = events[i]!;
         Process(target!);
         Target found = registry.Find(id)!.Target;
+        Process(maskTest!); string dtoLater = null!;
+        var leaked = world.Get<Movement>(entity); ref var scoped = ref world.Get<Movement>(entity);
         viewInstance!.Show();
         DCLInput.Instance!.Shortcuts.Register();
         MoveQuery(World!);

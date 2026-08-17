@@ -24,6 +24,8 @@ Explorer/Assets/DCL/Feature/Violations.cs:54  BLOCK  nullable-local
 Explorer/Assets/DCL/Feature/Violations.cs:55  BLOCK  null-forgiving-suppression
 Explorer/Assets/DCL/Feature/Violations.cs:56  BLOCK  null-forgiving-suppression
 Explorer/Assets/DCL/Feature/Violations.cs:57  BLOCK  null-forgiving-suppression
-Explorer/Assets/DCL/Feature/Violations.cs:61  BLOCK  world-get-copy
+Explorer/Assets/DCL/Feature/Violations.cs:58  BLOCK  null-forgiving-suppression
+Explorer/Assets/DCL/Feature/Violations.cs:59  BLOCK  world-get-copy
+Explorer/Assets/DCL/Feature/Violations.cs:63  BLOCK  world-get-copy
 Explorer/Assets/DCL/Infrastructure/SceneRunner/Impl.cs:5  BLOCK  thread-affinity-scene-runtime
 Explorer/Assets/DCL/Infrastructure/SceneRunner/Impl.cs:6  BLOCK  thread-affinity-scene-runtime
