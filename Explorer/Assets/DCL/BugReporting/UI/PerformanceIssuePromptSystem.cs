@@ -14,7 +14,7 @@ namespace DCL.BugReporting.UI
 {
     /// <summary>
     ///     Watches frame times and offers the bug report form when performance degrades. The offer
-    ///     is made at most once per session, and never again once the user opts out on the prompt.
+    ///     repeats on every detected issue until the user opts out on the prompt.
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     public partial class PerformanceIssuePromptSystem : BaseUnityLoopSystem
@@ -25,7 +25,8 @@ namespace DCL.BugReporting.UI
         private readonly PerformanceIssueDetector detector;
         private readonly Func<bool> isLoadingScreenOn;
 
-        private bool promptExhausted;
+        private bool optedOut;
+        private bool promptShowing;
         private bool wasPaused = true;
         private bool debugHiccupPending;
 
@@ -34,25 +35,27 @@ namespace DCL.BugReporting.UI
             this.mvcManager = mvcManager;
             this.detector = detector;
             this.isLoadingScreenOn = isLoadingScreenOn;
-            promptExhausted = DCLPlayerPrefs.GetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED);
+            optedOut = DCLPlayerPrefs.GetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED);
 
             // Debug trigger: the next unpaused frame is fed to the detector as a synthetic hiccup,
-            // so the whole production pipeline runs, detection, pause guards, the one-per-session
-            // offer and the opt-out included.
+            // so the whole production pipeline runs, detection, pause guards and the opt-out
+            // included.
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.BUG_REPORT)
-                       ?.AddSingleButton("Simulate Performance Hiccup", () => debugHiccupPending = true);
+                       ?.AddSingleButton("Simulate Performance Hiccup", () => debugHiccupPending = true)
+                        .AddSingleButton("Clear Prompt Opt-Out", ClearOptOut);
         }
 
         protected override void Update(float t)
         {
-            if (promptExhausted)
+            if (optedOut)
                 return;
 
             // A modal view, the loading screen or an unfocused window means either a flow the
             // prompt must not interrupt or a state whose frame times are not gameplay evidence.
             // The loading screen needs its own check: it lives on the Overlay layer, which does
-            // not count as modal.
-            if (mvcManager.IsAnyModalViewShowing() || isLoadingScreenOn() || !Application.isFocused)
+            // not count as modal. The in-flight prompt needs one too: it covers the frames between
+            // requesting the show and the view registering as a modal.
+            if (promptShowing || mvcManager.IsAnyModalViewShowing() || isLoadingScreenOn() || !Application.isFocused)
             {
                 detector.Reset();
                 wasPaused = true;
@@ -78,19 +81,33 @@ namespace DCL.BugReporting.UI
             if (!detector.OnFrame(frameSeconds, out PerformanceIssue issue))
                 return;
 
-            // One offer per session: a prompt the user ignored must not reappear minutes later.
-            promptExhausted = true;
             ShowPromptAsync(issue).Forget();
+        }
+
+        private void ClearOptOut()
+        {
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED, false, save: true);
+            optedOut = false;
         }
 
         private async UniTaskVoid ShowPromptAsync(PerformanceIssue issue)
         {
+            promptShowing = true;
+
             try
             {
                 await mvcManager.ShowAsync(PerformanceIssuePromptController.IssueCommand(new PerformanceIssuePromptParams(DescribeIssue(issue))));
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.UNSPECIFIED); }
+            finally
+            {
+                promptShowing = false;
+
+                // The prompt is where the opt-out is persisted, so its closing is the moment the
+                // stored preference can have changed.
+                optedOut = DCLPlayerPrefs.GetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED);
+            }
         }
 
         private static string DescribeIssue(PerformanceIssue issue) =>
