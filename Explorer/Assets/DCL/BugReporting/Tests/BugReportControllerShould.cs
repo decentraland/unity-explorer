@@ -113,7 +113,7 @@ namespace DCL.BugReporting.Tests
         public async Task IncludeProfileNameWhenAvailable()
         {
             // Arrange
-            var profile = new Profile("0x1", "Tester", new Avatar());
+            var profile = new Profile(UserId.New("0x1").Unwrap(), "Tester", new Avatar());
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>()).Returns(UniTask.FromResult<Profile?>(profile));
 
             // Act
