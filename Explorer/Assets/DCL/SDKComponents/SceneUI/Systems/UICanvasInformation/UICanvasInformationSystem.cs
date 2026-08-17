@@ -30,6 +30,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
             base.Initialize();
 
             interactableArea = new BorderRect { Bottom = 0, Left = Screen.width * 0.25f, Right = 0, Top = 0 };
+            lastDevicePixelRatio = GetDevicePixelRatio();
 
             WriteToCRDT();
         }
@@ -81,7 +82,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
                 component.InteractableArea = system.interactableArea;
                 component.Width = Screen.width;
                 component.Height = Screen.height;
-                component.DevicePixelRatio = system.GetDevicePixelRatio();
+                component.DevicePixelRatio = system.lastDevicePixelRatio;
             }, SpecialEntitiesID.SCENE_ROOT_ENTITY, this);
         }
     }
