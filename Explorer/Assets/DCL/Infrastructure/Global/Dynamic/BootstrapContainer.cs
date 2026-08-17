@@ -77,13 +77,13 @@ namespace Global.Dynamic
         {
             base.Dispose();
 
-            DiagnosticsContainer?.Dispose();
+            DiagnosticsContainer.Dispose();
 
             // CompositeWeb3Provider disposes both authenticators internally
             // Don't dispose Web3Authenticator/EthereumApi separately as they reference the same composite
             CompositeWeb3Provider?.Dispose();
             IdentityCache?.Dispose();
-            Analytics?.Dispose();
+            Analytics.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(
@@ -131,14 +131,17 @@ namespace Global.Dynamic
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
-                if (container.IdentityCache.Identity != null)
-                    UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
-
-                container.IdentityCache.OnIdentityChanged += () =>
+                if (container.IdentityCache != null)
                 {
                     if (container.IdentityCache.Identity != null)
                         UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
-                };
+
+                    container.IdentityCache.OnIdentityChanged += () =>
+                    {
+                        if (container.IdentityCache.Identity != null)
+                            UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
+                    };
+                }
 
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START));
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct);
@@ -150,7 +153,7 @@ namespace Global.Dynamic
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
-                    if (container.IdentityCache.Identity != null)
+                    if (container.IdentityCache?.Identity != null)
                         container.DiagnosticsContainer.Sentry!.AddIdentityToScope(scope, container.IdentityCache.Identity.Address);
                 }
             });
@@ -220,6 +223,8 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
+            string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
+
             var dappDeepLinkAuth = new DappDeepLinkAuthenticator(
                 webBrowser,
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
@@ -229,10 +234,11 @@ namespace Global.Dynamic
                 deeplinkSigninIdentityId,
                 deeplinkLoginAwaitingSigninRequestId,
 #if UNITY_EDITOR
-                true
+                true,
 #else
-                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY)
+                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY),
 #endif
+                referrer
             );
 
             var dappAuth = new DappWeb3EthereumApi(
@@ -285,8 +291,8 @@ namespace Global.Dynamic
     [Serializable]
     public class BootstrapSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsDevelopment { get; private set; }
-        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsProduction { get; private set; }
-        [field: SerializeField] public BuildData BuildData { get; private set; }
+        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsDevelopment { get; private set; } = null!;
+        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsProduction { get; private set; } = null!;
+        [field: SerializeField] public BuildData BuildData { get; private set; } = null!;
     }
 }
