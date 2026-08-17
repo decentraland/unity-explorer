@@ -82,6 +82,19 @@ _final_elapsed = None  # (queue_secs, build_secs), set once when the build reach
 # runs instead of after it. Purely cosmetic: every failure is swallowed.
 CI_STATUS_SCRIPT = os.path.join('.github', 'actions', 'ci-status-comment', 'upsert-ci-status.sh')
 LIVE_MARKER_PREFIX = '<!-- ucb-live:'
+# Reconcile budget for maybe_update_live_comment: give up re-asserting a row
+# after this many successful writes.
+MAX_LIVE_ASSERTS = 3
+# Reconcile budget: also give up once the row has stayed put this many
+# consecutive confirmation checks.
+MAX_LIVE_CONFIRMS = 3
+# Minimum spacing between reconcile probes, so self-healing doesn't spend the
+# comments-API budget on every poll of the (much shorter) build poll interval.
+LIVE_RECONCILE_INTERVAL_SECS = 240
+# Bound on upsert_live_comment's own read-compose-write-verify retries, for the
+# race where the sibling platform's row lands between this function's read and
+# upsert-ci-status.sh's write.
+LIVE_COMMENT_WRITE_ATTEMPTS = 3
 _live_comment_asserts = 0
 _live_comment_last_attempt = 0.0
 _live_comment_confirms = 0
@@ -776,20 +789,20 @@ def _own_job_url():
 def upsert_live_comment(build_id, only_if_missing=False):
     """Write this target's live links into the comment's build section.
 
-    Each matrix job re-reads the section and carries the other target's live
-    row along, so concurrent first writes converge on both rows instead of
-    clobbering each other; write races on the comment itself are the upsert
-    script's problem. Returns True when a write landed, False when the row was
-    already present, and None when the read or the write failed.
+    upsert-ci-status.sh's own retry loop only confirms that *this* write's body
+    landed — it has no way to notice a sibling row that arrived between this
+    function's read and that write. So each attempt here re-reads the section,
+    recomposes the row union from that fresh read, and after writing re-reads
+    once more to confirm every row it composed (including any sibling row it
+    carried along) survived; a mismatch means a concurrent write raced in and
+    it retries against a new read rather than trusting the stale union.
+    Bounded by LIVE_COMMENT_WRITE_ATTEMPTS. Returns True when a write landed
+    and its union was confirmed, False when the row was already present, and
+    None when a read/write failed or the union never settled.
     """
     platform = _platform_key()
     label = {'windows64': 'Windows', 'macos': 'Mac'}.get(platform, platform)
     marker = f'{LIVE_MARKER_PREFIX}{platform} -->'
-    section = _build_section_of_status_comment()
-    if section is None:
-        return None
-    if only_if_missing and marker in section:
-        return False
 
     parts = []
     job_url = _own_job_url()
@@ -801,35 +814,49 @@ def upsert_live_comment(build_id, only_if_missing=False):
     parts.append(f'[Unity Cloud #{build_id}]({link})' if link else f'Unity Cloud build {build_id}')
     own_row = f'| {label} | {" · ".join(parts)} {marker} |'
 
-    rows = [line for line in section.splitlines() if LIVE_MARKER_PREFIX in line and marker not in line]
-    rows.append(own_row)
-    rows.sort(key=lambda row: 0 if '| Windows |' in row else 1)
+    for _ in range(LIVE_COMMENT_WRITE_ATTEMPTS):
+        section = _build_section_of_status_comment()
+        if section is None:
+            return None
+        if only_if_missing and marker in section:
+            return False
 
-    server = os.getenv('GITHUB_SERVER_URL', 'https://github.com')
-    run_url = f"{server}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
-    body = '\n'.join([
-        f'[![Build](https://img.shields.io/badge/Build-In%20progress-1f6feb?logo=unity&logoColor=white&style=for-the-badge)]({run_url})',
-        '',
-        '| Platform | Links & timing |',
-        '| -------- | ----------------------- |',
-        *rows,
-    ])
+        rows = [line for line in section.splitlines() if LIVE_MARKER_PREFIX in line and marker not in line]
+        rows.append(own_row)
+        rows.sort(key=lambda row: 0 if '| Windows |' in row else 1)
 
-    body_file = None
-    try:
-        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
-            f.write(body)
-            body_file = f.name
-        env = dict(os.environ,
-                   REPO=os.getenv('GITHUB_REPOSITORY') or '',
-                   SECTION='build',
-                   SECTION_BODY='',
-                   SECTION_BODY_FILE=body_file)
-        result = subprocess.run(['bash', CI_STATUS_SCRIPT], env=env, timeout=180, check=False)
-    finally:
-        if body_file:
-            os.unlink(body_file)
-    return True if result.returncode == 0 else None
+        server = os.getenv('GITHUB_SERVER_URL', 'https://github.com')
+        run_url = f"{server}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
+        body = '\n'.join([
+            f'[![Build](https://img.shields.io/badge/Build-In%20progress-1f6feb?logo=unity&logoColor=white&style=for-the-badge)]({run_url})',
+            '',
+            '| Platform | Links & timing |',
+            '| -------- | ----------------------- |',
+            *rows,
+        ])
+
+        body_file = None
+        try:
+            with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+                f.write(body)
+                body_file = f.name
+            env = dict(os.environ,
+                       REPO=os.getenv('GITHUB_REPOSITORY') or '',
+                       SECTION='build',
+                       SECTION_BODY='',
+                       SECTION_BODY_FILE=body_file)
+            result = subprocess.run(['bash', CI_STATUS_SCRIPT], env=env, timeout=180, check=False)
+        finally:
+            if body_file:
+                os.unlink(body_file)
+        if result.returncode != 0:
+            return None
+
+        post_section = _build_section_of_status_comment()
+        if post_section is not None and all(row in post_section for row in rows):
+            return True
+
+    return None
 
 
 def maybe_update_live_comment(build_id, reconcile=False, force=False):
@@ -843,14 +870,14 @@ def maybe_update_live_comment(build_id, reconcile=False, force=False):
         # Re-assert a few times only: the Pending reset (or the other target's
         # first write racing ours) can land after us and drop this row. A zero
         # count still falls through, so a failed first write gets retried.
-        if _live_comment_asserts >= 3:
+        if _live_comment_asserts >= MAX_LIVE_ASSERTS:
             return
         # Every probe is a comments-API read drawn from the repo-shared rate
         # budget; once the row has stayed put this many consecutive checks,
         # stop probing for the rest of the build.
-        if _live_comment_confirms >= 3:
+        if _live_comment_confirms >= MAX_LIVE_CONFIRMS:
             return
-        if time.time() - _live_comment_last_attempt < 240:
+        if time.time() - _live_comment_last_attempt < LIVE_RECONCILE_INTERVAL_SECS:
             return
     elif _live_comment_asserts > 0 and not force:
         return

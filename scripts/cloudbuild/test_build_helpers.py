@@ -209,5 +209,76 @@ class LiveCommentReconcileTest(EnvMixin, unittest.TestCase):
         self.assertEqual(calls, [])
 
 
+class UpsertLiveCommentRaceTest(EnvMixin, unittest.TestCase):
+    """Pins the race mikhail-dcl flagged in review: upsert-ci-status.sh's own
+    retry loop only confirms that *this* write's body landed, so a sibling
+    platform's row arriving between upsert_live_comment's read and that write
+    is invisible to it. upsert_live_comment must notice its composed union did
+    not survive and retry against a fresh read instead of reporting success on
+    a stale one."""
+
+    WIN_ROW = '| Windows | Unity Cloud build 7 <!-- ucb-live:windows64 --> |'
+    MAC_ROW = '| Mac | Unity Cloud build 9 <!-- ucb-live:macos --> |'
+
+    def setUp(self):
+        self.set_env(TARGET='windows64-x', GITHUB_REPOSITORY='org/repo', GITHUB_RUN_ID='1',
+                     GITHUB_SERVER_URL='https://github.com', ORG_ID=None, PROJECT_ID=None)
+        build.dashboard_url = None
+        self.addCleanup(setattr, build, 'dashboard_url', None)
+
+    @staticmethod
+    def fake_run_capturing(bodies):
+        def fake_run(cmd, env, timeout, check):
+            with open(env['SECTION_BODY_FILE']) as f:
+                bodies.append(f.read())
+            return mock.Mock(returncode=0)
+        return fake_run
+
+    def test_sibling_row_landing_mid_write_is_recovered_on_retry(self):
+        # attempt 1 pre-write read: no rows yet.
+        # attempt 1 post-write verify: Mac's row raced in underneath us — the
+        # union this attempt wrote (Windows only) is now stale. The pre-fix
+        # code had no post-write read at all and would have reported success
+        # here, permanently dropping Mac's row from the next real write.
+        # attempt 2 pre-write read: fresh, carries Mac's row along.
+        # attempt 2 post-write verify: both rows confirmed present.
+        reads = ['', self.MAC_ROW, self.MAC_ROW, f'{self.MAC_ROW}\n{self.WIN_ROW}']
+        bodies = []
+        with mock.patch.object(build, '_build_section_of_status_comment', side_effect=reads), \
+             mock.patch.object(build, '_own_job_url', return_value=None), \
+             mock.patch.object(build.subprocess, 'run', side_effect=self.fake_run_capturing(bodies)):
+            result = build.upsert_live_comment(7)
+
+        self.assertTrue(result)
+        self.assertEqual(len(bodies), 2, 'a stale-union write must be retried, not accepted')
+        self.assertIn(self.WIN_ROW, bodies[0])
+        self.assertNotIn(self.MAC_ROW, bodies[0], "attempt 1's read had no sibling row yet")
+        self.assertIn(self.WIN_ROW, bodies[1])
+        self.assertIn(self.MAC_ROW, bodies[1], "retry's union must carry the sibling row along")
+
+    def test_gives_up_after_exhausting_attempts_instead_of_spinning(self):
+        # Pathological: the post-write read never reflects this attempt's own
+        # write (as if every attempt kept losing the race). Must terminate
+        # after LIVE_COMMENT_WRITE_ATTEMPTS, not retry forever.
+        reads = [''] * (2 * build.LIVE_COMMENT_WRITE_ATTEMPTS)
+        bodies = []
+        with mock.patch.object(build, '_build_section_of_status_comment', side_effect=reads), \
+             mock.patch.object(build, '_own_job_url', return_value=None), \
+             mock.patch.object(build.subprocess, 'run', side_effect=self.fake_run_capturing(bodies)):
+            result = build.upsert_live_comment(7)
+
+        self.assertIsNone(result)
+        self.assertEqual(len(bodies), build.LIVE_COMMENT_WRITE_ATTEMPTS)
+
+    def test_only_if_missing_short_circuits_on_first_fresh_read(self):
+        with mock.patch.object(build, '_build_section_of_status_comment', return_value=self.WIN_ROW), \
+             mock.patch.object(build, '_own_job_url', return_value=None), \
+             mock.patch.object(build.subprocess, 'run') as run:
+            result = build.upsert_live_comment(7, only_if_missing=True)
+
+        self.assertFalse(result)
+        run.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

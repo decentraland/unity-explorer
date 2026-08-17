@@ -301,6 +301,13 @@ jobs:
           WINDOWS_CELL: ${{ steps.ucb.outputs.windows-cell }}
           MAC_CELL: ${{ steps.ucb.outputs.mac-cell }}
           S3_BASE: ${{ format('{0}/{1}', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}
+          # Set by "Get Artifact and Pull request info" above via $GITHUB_ENV; listed
+          # here so the coupling between the two steps is visible without tracing it.
+          SUITE_ID: ${{ env.SUITE_ID }}
+          WINDOWS_ARTIFACT_ID: ${{ env.WINDOWS_ARTIFACT_ID }}
+          MAC_ARTIFACT_ID: ${{ env.MAC_ARTIFACT_ID }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           compose_row() {
