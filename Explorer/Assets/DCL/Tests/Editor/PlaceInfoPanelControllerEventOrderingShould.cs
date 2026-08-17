@@ -15,35 +15,9 @@ using UnityEngine.Pool;
 
 namespace DCL.Tests.Editor
 {
-    // Regression coverage for https://github.com/decentraland/unity-explorer/issues/9529:
-    // "Map -> Genesis Plaza -> Events tab: events out of order, order changes on every reopen".
-    //
-    // PlaceInfoPanelController's Events-tab loading skeleton (SetAsLoadingState(), a local
-    // function inside the private FetchAndShowEventsOfThePlace()) pulls rows from a
-    // stack-based UnityEngine.Pool.ObjectPool<EventElementView> without ever repositioning
-    // them under their parent, so a reused row keeps whatever transform-sibling slot it last
-    // occupied. Because the pool is LIFO, releasing N rows in list order and then
-    // re-acquiring N rows hands them back in the exact reverse order - so after any "reopen"
-    // the row the controller *thinks* is first (eventElements[0]) is not the GameObject that
-    // is actually first on screen (sibling index 0). The fix adds
-    // `element.transform.SetAsLastSibling()` right after every `eventElementPool.Get()` (both
-    // in this skeleton loop and in the main fetch-result loop) so on-screen order always
-    // tracks population order.
-    //
-    // This test drives the real, unmodified SetAsLoadingState()/FetchAndShowEventsOfThePlace()
-    // through reflection: FetchAndShowEventsOfThePlace is private but its name and signature
-    // are untouched by the patch (only its body changes), so reflecting into it is stable
-    // across both the unpatched and patched source - unlike its compiler-generated local
-    // functions, whose generated names could shift with the patch. The heavy constructor
-    // (~15 unrelated view/service dependencies) is bypassed via FormatterServices
-    // .GetUninitializedObject - already precedented in this repo, see
-    // NearbyAudioPerformanceManualTest.cs - and only the handful of private fields this one
-    // code path actually touches are injected.
-    //
-    // Scope: this covers the loading-skeleton half of the patch (SetAsLastSibling in
-    // SetAsLoadingState). The sort's order contract is covered separately by
-    // EventDisplayOrderComparerShould; driving the main fetch-result loop with real event
-    // data would additionally require a fully wired EventElementView hierarchy.
+    // Regression coverage for https://github.com/decentraland/unity-explorer/issues/9529: pooled
+    // event rows kept their stale transform-sibling slot on reopen, so on-screen order silently
+    // diverged from population order. Reflects into the private FetchAndShowEventsOfThePlace().
     [TestFixture]
     public class PlaceInfoPanelControllerEventOrderingShould
     {
@@ -77,12 +51,8 @@ namespace DCL.Tests.Editor
                 actionOnRelease: result => result.gameObject.SetActive(false),
                 defaultCapacity: SKELETON_ROW_COUNT);
 
-            // Hermetic double for the one HTTP fetch this code path performs, following the
-            // same IWebRequestController.SendAsync<...> generic-method stubbing idiom already
-            // used in DCL/Profiles/Tests/RealmProfileRepositoryShould.cs. The stubbed task is
-            // deliberately left forever-pending: this test only needs the synchronous
-            // pre-await portion of FetchAndShowEventsOfThePlace (the loading skeleton), so the
-            // event payload never has to arrive.
+            // Stub double for the one HTTP fetch this path performs; left forever-pending since this
+            // test only needs the synchronous loading-skeleton portion, before the awaited response.
             IWebRequestController webRequestController = Substitute.For<IWebRequestController>();
             webRequestController.RequestHub.Returns(Substitute.For<IRequestHub>());
 
@@ -101,9 +71,7 @@ namespace DCL.Tests.Editor
             PlaceInfoPanelView view = new GameObject("PlaceInfoPanelView").AddComponent<PlaceInfoPanelView>();
             SetPrivate(view, "EmptyEventsContainer", new GameObject("EmptyEventsContainer"));
 
-            // Bypasses PlaceInfoPanelController's heavy constructor (it wires ~15 view
-            // buttons/services unrelated to this code path) and instead injects only the
-            // fields FetchAndShowEventsOfThePlace()/SetAsLoadingState() actually touch.
+            // Bypasses the heavy constructor; injects only the fields this code path touches.
             controller = (PlaceInfoPanelController) FormatterServices.GetUninitializedObject(typeof(PlaceInfoPanelController));
             SetPrivate(controller, "view", view);
             SetPrivate(controller, "eventElementPool", pool);

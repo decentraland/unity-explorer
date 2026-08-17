@@ -434,9 +434,12 @@ namespace DCL.Navmap
             {
                 view.EmptyEventsContainer.SetActive(false);
 
+                if (place == null) return;
+                PlacesData.PlaceInfo placeInfo = place;
+
                 SetAsLoadingState();
 
-                EventDTO[] events = await eventsApiService.GetEventsByParcelAsync(place!.Positions, ct);
+                EventDTO[] events = await eventsApiService.GetEventsByParcelAsync(placeInfo.Positions, ct);
 
                 ClearEventElements();
 
