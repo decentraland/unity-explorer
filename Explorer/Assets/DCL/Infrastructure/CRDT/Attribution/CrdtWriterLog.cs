@@ -56,7 +56,7 @@ namespace CRDT.Attribution
             lock (scenes)
             {
                 SceneWrites sceneWrites = SceneOf(sceneId, nowMs);
-                Walk(batch, fromWalletId ?? string.Empty, isTrustedSource, viaStateSync, sceneWrites, nowMs);
+                Walk(batch, fromWalletId, isTrustedSource, viaStateSync, sceneWrites, nowMs);
             }
         }
 
@@ -213,9 +213,14 @@ namespace CRDT.Attribution
             return created;
         }
 
+        /// <summary>
+        ///     Reached only from <see cref="SceneOf" /> with the table at <see cref="MAX_SCENES" />, and every
+        ///     recorded timestamp is below the seed, so the first entry compared already replaces it: the search
+        ///     always names a scene that is in the table.
+        /// </summary>
         private void EvictLeastRecentlyWritten()
         {
-            string? oldest = null;
+            string oldest = string.Empty;
             long oldestAtMs = long.MaxValue;
 
             foreach (KeyValuePair<string, SceneWrites> entry in scenes)
@@ -225,8 +230,7 @@ namespace CRDT.Attribution
                     oldest = entry.Key;
                 }
 
-            if (oldest != null)
-                scenes.Remove(oldest);
+            scenes.Remove(oldest);
         }
 
         private static double SecondsSince(long atMs, long nowMs) =>

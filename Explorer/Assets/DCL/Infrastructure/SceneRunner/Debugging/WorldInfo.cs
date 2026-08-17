@@ -51,20 +51,25 @@ namespace SceneRunner.Debugging
             return result;
         }
 
-        public int? CrdtEntityId(int entityId)
+        public bool TryGetCrdtEntityId(int entityId, out int crdtEntityId)
         {
-            int? crdtEntityId = null;
+            var found = false;
+            var id = 0;
 
             world.Query(
                 new QueryDescription().WithAll<CRDTEntity>().WithNone<FindMarker>(),
                 entity =>
                 {
                     if (entity.Id == entityId && world.TryGet<CRDTEntity>(entity, out CRDTEntity crdtEntity))
-                        crdtEntityId = crdtEntity.Id;
+                    {
+                        id = crdtEntity.Id;
+                        found = true;
+                    }
                 }
             );
 
-            return crdtEntityId;
+            crdtEntityId = id;
+            return found;
         }
 
         public IReadOnlyList<int> EntityIds()

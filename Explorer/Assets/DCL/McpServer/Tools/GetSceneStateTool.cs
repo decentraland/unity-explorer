@@ -70,14 +70,15 @@ namespace DCL.McpServer.Tools
         {
             Vector2Int currentParcel = scenesCache.CurrentParcel.Value;
             ISceneFacade? scene = scenesCache.CurrentScene.Value;
-            string? sceneId = scene?.SceneData.SceneEntityDefinition.id;
 
             writersBuffer.Clear();
+            var droppedWriteRecords = 0;
 
-            if (sceneId != null)
+            if (scene?.SceneData.SceneEntityDefinition.id is { } sceneId)
             {
                 writerLog.SceneWriters(sceneId, writersBuffer);
                 writersBuffer.Sort(static (left, right) => left.LastWriteAgeSeconds.CompareTo(right.LastWriteAgeSeconds));
+                droppedWriteRecords = writerLog.DroppedWrites(sceneId);
             }
 
             var state = new JObject
@@ -100,7 +101,7 @@ namespace DCL.McpServer.Tools
                         ["runningStatus"] = currentSceneInfo.SceneStatus.Value?.ToString() ?? "Unknown",
                         ["authoritativeMultiplayer"] = scene.SceneData.SceneEntityDefinition.metadata?.authoritativeMultiplayer ?? false,
                         ["networkWriters"] = CrdtAttributionJson.Writers(writersBuffer),
-                        ["droppedWriteRecords"] = sceneId == null ? 0 : writerLog.DroppedWrites(sceneId),
+                        ["droppedWriteRecords"] = droppedWriteRecords,
                     },
             };
 

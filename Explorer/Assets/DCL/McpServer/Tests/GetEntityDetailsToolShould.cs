@@ -34,7 +34,12 @@ namespace DCL.McpServer.Tests
             worldInfo = Substitute.For<IWorldInfo>();
             worldInfoHub = Substitute.For<IWorldInfoHub>();
             worldInfoHub.WorldInfo(CURRENT_SCENE).Returns(worldInfo);
-            worldInfo.CrdtEntityId(5).Returns(CRDT_ENTITY);
+            worldInfo.TryGetCrdtEntityId(5, out Arg.Any<int>())
+                     .Returns(call =>
+                      {
+                          call[1] = CRDT_ENTITY;
+                          return true;
+                      });
 
             // Built before the Returns() call, never inside its argument: configuring one substitute while another
             // one's call is pending loses NSubstitute's record of which call it was meant to configure.
@@ -149,7 +154,7 @@ namespace DCL.McpServer.Tests
         {
             // Arrange
             worldInfo.EntityComponentsInfo(7).Returns("Entity not found: 7");
-            worldInfo.CrdtEntityId(7).Returns((int?)null);
+            worldInfo.TryGetCrdtEntityId(7, out Arg.Any<int>()).Returns(false);
 
             // Act
             McpToolResult result = Execute(7);

@@ -63,9 +63,12 @@ namespace DCL.McpServer.Tools
                 return UniTask.FromResult(McpToolResult.Error("No scene world found at the current parcel."));
 
             string dump = worldInfo.EntityComponentsInfo(entityId);
-            int? crdtEntityId = worldInfo.CrdtEntityId(entityId);
+            bool isCrdtEntity = worldInfo.TryGetCrdtEntityId(entityId, out int crdtEntityId);
 
-            CollectWrites(crdtEntityId);
+            writesBuffer.Clear();
+
+            if (isCrdtEntity)
+                CollectWrites(crdtEntityId);
 
             var output = new StringBuilder(MAX_CHARS + 512);
 
@@ -85,7 +88,7 @@ namespace DCL.McpServer.Tools
             var structured = new JObject
             {
                 ["entityId"] = entityId,
-                ["crdtEntityId"] = crdtEntityId.HasValue ? new JValue(crdtEntityId.Value) : JValue.CreateNull(),
+                ["crdtEntityId"] = isCrdtEntity ? new JValue(crdtEntityId) : JValue.CreateNull(),
                 ["networkWrites"] = CrdtAttributionJson.Writes(writesBuffer),
             };
 
@@ -93,19 +96,15 @@ namespace DCL.McpServer.Tools
         }
 
         /// <summary>
-        ///     Attribution is keyed by CRDT entity, so an entity the scene never registered as one — and every entity
-        ///     while no scene is current — has no rows rather than borrowing another entity's.
+        ///     Attribution is keyed by CRDT entity within one scene, so while no scene is current an entity has no
+        ///     rows rather than borrowing another scene's.
         /// </summary>
-        private void CollectWrites(int? crdtEntityId)
+        private void CollectWrites(int crdtEntityId)
         {
-            writesBuffer.Clear();
-
-            string? sceneId = scenesCache.CurrentScene.Value?.SceneData.SceneEntityDefinition.id;
-
-            if (sceneId == null || !crdtEntityId.HasValue)
+            if (scenesCache.CurrentScene.Value?.SceneData.SceneEntityDefinition.id is not { } sceneId)
                 return;
 
-            writerLog.EntityWrites(sceneId, crdtEntityId.Value, writesBuffer);
+            writerLog.EntityWrites(sceneId, crdtEntityId, writesBuffer);
             writesBuffer.Sort(static (left, right) => left.AgeSeconds.CompareTo(right.AgeSeconds));
         }
     }
