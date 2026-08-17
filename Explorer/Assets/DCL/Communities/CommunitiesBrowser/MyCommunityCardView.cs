@@ -39,7 +39,7 @@ namespace DCL.Communities.CommunitiesBrowser
             currentCommunityId = id;
 
         public void SetTitle(string title) =>
-            communityTitle.text = title;
+            communityTitle.text = RichTextSanitizer.EscapeAndTruncate(title, RichTextSanitizer.DEFAULT_NAME_LENGTH);
 
         public void SetUserRole(CommunityMemberRole role)
         {

@@ -99,6 +99,7 @@ namespace DCL.Communities.CommunityCreation
             creationPanelComplianceErrorModalEditCommunityButton.onClick.AddListener(() => GoBackToCreationEditionButtonClicked?.Invoke());
             creationPanelModerationAPIUnavailableModalCancelButton.onClick.AddListener(() => GoBackToCreationEditionButtonClicked?.Invoke());
             creationPanelModerationAPIUnavailableModalRetryButton.onClick.AddListener(CreateButtonClicked);
+            creationPanelCommunityNameInputField.onValidateInput = RejectCharactersTheDisplayPathRewrites;
             creationPanelCommunityNameInputField.onValueChanged.AddListener(CreationPanelCommunityNameInputChanged);
             creationPanelCommunityNameInputField.onSelect.AddListener(CreationPanelCommunityNameInputSelected);
             creationPanelCommunityNameInputField.onDeselect.AddListener(CreationPanelCommunityNameInputDeselected);
@@ -344,6 +345,15 @@ namespace DCL.Communities.CommunityCreation
             await UniTask.DelayFrame(1, cancellationToken: ct);
             creationPanelScrollRect.verticalNormalizedPosition = 0f;
         }
+
+        /// <summary>
+        ///     A community name is escaped before it reaches any label that renders it, so a character the escaper
+        ///     would rewrite is one the author would never see typed back the way they wrote it. Rejecting it at the
+        ///     keystroke keeps the two ends in step. This is a consistency measure, not a protection: the Communities
+        ///     API is open, so a name that skips this field entirely is exactly what the escaping is there for.
+        /// </summary>
+        private static char RejectCharactersTheDisplayPathRewrites(string text, int charIndex, char addedChar) =>
+            RichTextSanitizer.IsRewritten(addedChar) ? '\0' : addedChar;
 
         private void CreationPanelCommunityNameInputChanged(string text)
         {

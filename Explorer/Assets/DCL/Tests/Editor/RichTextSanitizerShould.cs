@@ -61,6 +61,24 @@ namespace DCL.Tests.Editor
         }
 
         [Test]
+        public void AgreeOnWhichCharactersAuthoringFieldsMustReject()
+        {
+            // Arrange — an authoring field asks IsRewritten per keystroke so a user cannot type a character the
+            // display path would then alter. If the two ever disagree, someone types "<3" and is shown "‹3".
+            const string TYPEABLE = "Guild of the Rising Sun 42! (¡olé!) \"quoted\" — ok";
+
+            // Act & Assert — everything Escape rewrites is rejected at input, and nothing else is.
+            foreach (char character in TYPEABLE)
+                Assert.IsFalse(RichTextSanitizer.IsRewritten(character), $"'{character}' is typeable but reported as rewritten");
+
+            foreach (char character in new[] { '<', '>', '\\' })
+            {
+                Assert.IsTrue(RichTextSanitizer.IsRewritten(character), $"'{character}' is rewritten but accepted at input");
+                Assert.AreNotEqual(character.ToString(), RichTextSanitizer.Escape(character.ToString()));
+            }
+        }
+
+        [Test]
         public void KeepTheReadableTextOfNeutralizedMarkup()
         {
             // Act

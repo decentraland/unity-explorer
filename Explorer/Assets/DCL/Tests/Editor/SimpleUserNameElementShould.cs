@@ -18,6 +18,10 @@ namespace DCL.Tests.Editor
         private const string PREFAB_PATH = "Assets/DCL/UI/Profiles/Assets/SimpleUserNameElement.prefab";
         private const string USER_ID = "0x79fdd6f8ba257bda1d5a2a413ae0b43ec300ed10";
 
+        // Unwrap is fine here and only here: the address above is a known-valid constant, so the Option cannot be
+        // empty. Production code models the absence instead.
+        private static readonly UserId USER = UserId.New(USER_ID).Unwrap();
+
         private GameObject canvasRoot = null!;
         private SimpleUserNameElement element = null!;
         private TMP_Text nameLabel = null!;
@@ -84,7 +88,7 @@ namespace DCL.Tests.Editor
         public void NotLetANameReachTheLabelAsMarkup(string name)
         {
             // Act
-            element.Setup(new Profile.CompactInfo(USER_ID, name));
+            element.Setup(new Profile.CompactInfo(USER, name));
 
             // Assert — TMP only begins parsing a tag at '<', so the absence of both brackets is what makes the name
             // inert no matter which prefab binds this element.
@@ -100,9 +104,9 @@ namespace DCL.Tests.Editor
             var longerName = new string('a', 40_000);
 
             // Act
-            element.Setup(new Profile.CompactInfo(USER_ID, longName));
+            element.Setup(new Profile.CompactInfo(USER, longName));
             int renderedLongLength = nameLabel.text.Length;
-            element.Setup(new Profile.CompactInfo(USER_ID, longerName));
+            element.Setup(new Profile.CompactInfo(USER, longerName));
 
             // Assert — the rendered length saturates instead of tracking the input, whatever the exact cap is.
             Assert.Less(renderedLongLength, longName.Length);
@@ -114,7 +118,7 @@ namespace DCL.Tests.Editor
         public void RenderAClaimedNameUnchanged()
         {
             // Act
-            element.Setup(new Profile.CompactInfo(USER_ID, "Guybrush", hasClaimedName: true));
+            element.Setup(new Profile.CompactInfo(USER, "Guybrush", hasClaimedName: true));
 
             // Assert — an ordinary name is not clipped, escaped into lookalikes, or given a suffix it never had.
             Assert.AreEqual("Guybrush", nameLabel.text);
@@ -125,7 +129,7 @@ namespace DCL.Tests.Editor
         public void RenderTheSuffixOfAnUnclaimedNameOnlyOnce()
         {
             // Act
-            element.Setup(new Profile.CompactInfo(USER_ID, "Guybrush"));
+            element.Setup(new Profile.CompactInfo(USER, "Guybrush"));
 
             // Assert — the #XXXX suffix belongs to the hashtag label. Reading the display name into the name label
             // would put a second copy of it there.

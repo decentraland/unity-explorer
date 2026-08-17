@@ -114,6 +114,15 @@ namespace DCL.UI
         private static int CutLength(string value, int maxLength) =>
             maxLength > 0 && char.IsHighSurrogate(value[maxLength - 1]) ? maxLength - 1 : maxLength;
 
+        /// <summary>
+        ///     True when <see cref="Escape"/> would rewrite this character. Authoring fields reject exactly these,
+        ///     so what a user is allowed to type stays in step with what the display path will render back to them —
+        ///     otherwise someone typing "&lt;3" into a name would be shown "‹3". Reading the set from here rather
+        ///     than repeating it is what keeps the two from drifting apart.
+        /// </summary>
+        public static bool IsRewritten(char character) =>
+            IsMarkup(character, escapeQuotes: false);
+
         private static string Sanitize(string? value, bool escapeQuotes)
         {
             if (string.IsNullOrEmpty(value))
@@ -145,13 +154,14 @@ namespace DCL.UI
             }
         }
 
+        private static bool IsMarkup(char character, bool escapeQuotes) =>
+            character is '<' or '>' or '\\' || (escapeQuotes && character == '"');
+
         private static int IndexOfMarkup(string value, bool escapeQuotes)
         {
             for (var i = 0; i < value.Length; i++)
             {
-                char character = value[i];
-
-                if (character is '<' or '>' or '\\' || (escapeQuotes && character == '"'))
+                if (IsMarkup(value[i], escapeQuotes))
                     return i;
             }
 

@@ -158,7 +158,7 @@ namespace DCL.Tests.Editor
             // everything but letters and digits already removed.
             var notification = new TipReceivedNotification
             {
-                SenderProfile = new Profile.CompactInfo(SENDER_ADDRESS, "<size=400%><link=\"https://evil\">Verified", hasClaimedName: true),
+                SenderProfile = new Profile.CompactInfo(UserId.New(SENDER_ADDRESS).Unwrap(), "<size=400%><link=\"https://evil\">Verified", hasClaimedName: true),
                 Metadata = new TipReceivedNotificationMetadata { TipAmount = 10 },
             };
 
