@@ -132,7 +132,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
                 // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
                 // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
-                await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct);
+                await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct, isLocalSceneDevelopment);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(

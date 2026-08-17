@@ -169,6 +169,9 @@ namespace DCL.Multiplayer.Movement
                 this.liveKitRemoveIntentions = liveKitRemoveIntentions;
             }
 
+            public bool NewBunchAvailable() =>
+                pulseRemoveIntentions.NewBunchAvailable() || liveKitRemoveIntentions.NewBunchAvailable();
+
             public OwnedBunch<RemoveIntention> Bunch()
             {
                 using OwnedBunch<RemoveIntention> pulse = pulseRemoveIntentions.Bunch();

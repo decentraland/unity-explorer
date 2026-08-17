@@ -25,13 +25,15 @@ namespace DCL.AuthenticationScreenFlow
         private readonly UnityAppWebBrowser webBrowser;
         private readonly bool enableEmailOTP;
         private readonly bool otherLoginMethodsEnabled;
+        private readonly bool isEpicBuild;
 
         public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState, SplashScreen splashScreen,
             ICompositeWeb3Provider compositeWeb3Provider, UnityAppWebBrowser webBrowser,
             bool enableEmailOTP,
-            bool otherLoginMethodsEnabled) : base(viewInstance)
+            bool otherLoginMethodsEnabled,
+            bool isEpicBuild) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionAuthView;
 
@@ -43,6 +45,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webBrowser = webBrowser;
             this.enableEmailOTP = enableEmailOTP;
             this.otherLoginMethodsEnabled = otherLoginMethodsEnabled;
+            this.isEpicBuild = isEpicBuild;
 
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
@@ -81,13 +84,16 @@ namespace DCL.AuthenticationScreenFlow
 
                 // ThirdWeb
                 view.EmailInputField.Submitted += OTPLogin;
+
+                if (isEpicBuild)
+                    view.OtherLoginOptionsDisclaimerLink.OnLinkClicked += webBrowser.OpenUrlMainThreadOnly;
             }
         }
 
         public override void Exit()
         {
             view.RestrictedUserContainer.SetActive(false);
-            view!.ErrorPopupRoot.SetActive(false);
+            view.ErrorPopupRoot.SetActive(false);
 
             view.LoginMetamaskButton.onClick.RemoveAllListeners();
             view.LoginGoogleButton.onClick.RemoveAllListeners();
@@ -111,6 +117,8 @@ namespace DCL.AuthenticationScreenFlow
 
             // ThirdWeb
             view.EmailInputField.Submitted -= OTPLogin;
+
+            view.OtherLoginOptionsDisclaimerLink.OnLinkClicked -= webBrowser.OpenUrlMainThreadOnly;
             base.Exit();
         }
 
@@ -140,7 +148,8 @@ namespace DCL.AuthenticationScreenFlow
             if (splashScreen != null) // it can be destroyed after first login
                 splashScreen.FadeOutAndHide();
 
-            view.Show(animHash, moreOptionsExpanded: !enableEmailOTP, otherLoginMethodsEnabled);
+            view.Show(animHash, moreOptionsExpanded: !enableEmailOTP, otherLoginMethodsEnabled,
+                otherLoginOptionsDisclaimer: isEpicBuild);
             Enter();
         }
 

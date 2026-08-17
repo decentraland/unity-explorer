@@ -1,15 +1,19 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
+using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Fields;
+using DCL.Passport.Modules.Creations;
 using DCL.Profiles;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using Runtime.Wearables;
@@ -33,6 +37,8 @@ namespace DCL.Passport.Modules
 
         private readonly EquippedItemsPassportModuleView view;
         private readonly World world;
+        private readonly IWebRequestController webRequestController;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
@@ -46,6 +52,8 @@ namespace DCL.Passport.Modules
         private readonly IObjectPool<EquippedItemPassportFieldView> emptyItemsPool;
         private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
         private readonly CreditPurchaseBuyHandler creditPurchaseBuyHandler;
+        private readonly List<(EquippedItemPassportFieldView view, string urn)> primaryListingCandidates = new ();
+        private readonly HashSet<string> onSaleUrns = new (StringComparer.OrdinalIgnoreCase);
 
         private Profile currentProfile;
         private CancellationTokenSource getEquippedItemsCts;
@@ -53,6 +61,8 @@ namespace DCL.Passport.Modules
         public EquippedItemsPassportModuleController(
             EquippedItemsPassportModuleView view,
             World world,
+            IWebRequestController webRequestController,
+            UnityAppWebBrowser webBrowser,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -63,6 +73,8 @@ namespace DCL.Passport.Modules
         {
             this.view = view;
             this.world = world;
+            this.webRequestController = webRequestController;
+            this.webBrowser = webBrowser;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
@@ -125,6 +137,7 @@ namespace DCL.Passport.Modules
         {
             getEquippedItemsCts.SafeCancelAndDispose();
             creditPurchaseBuyHandler.ClearCache();
+            primaryListingCandidates.Clear();
             ClearLoadingItems();
             ClearEquippedItems();
             ClearEmptyItems();
@@ -198,12 +211,19 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
-                equippedWearableItem.BuyButton.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != string.Empty);
+                equippedWearableItem.BuyButton.gameObject.SetActive(false);
                 equippedWearableItem.ViewButton.gameObject.SetActive(false);
-                equippedWearableItem.OnSaleFlap.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != string.Empty);
+                equippedWearableItem.OnSaleFlap.gameObject.SetActive(false);
                 string wearableUrn = wearable.GetUrn();
                 var wearableItemView = equippedWearableItem;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(wearableItemView, wearableUrn, marketPlaceLink, rarityName, raritySprite, rarityColor));
+
+                if (wearable.IsOnChain() && marketPlaceLink != string.Empty)
+                {
+                    equippedWearableItem.ViewButton.onClick.AddListener(() => webBrowser.OpenUrlMainThreadOnly(marketPlaceLink));
+                    primaryListingCandidates.Add((equippedWearableItem, wearableUrn));
+                }
+
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -225,12 +245,19 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage("emote");
                 string marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
-                equippedWearableItem.BuyButton.gameObject.SetActive(emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty);
+                equippedWearableItem.BuyButton.gameObject.SetActive(false);
                 equippedWearableItem.ViewButton.gameObject.SetActive(false);
-                equippedWearableItem.OnSaleFlap.gameObject.SetActive(emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty);
+                equippedWearableItem.OnSaleFlap.gameObject.SetActive(false);
                 string emoteUrn = emote.GetUrn();
                 var emoteItemView = equippedWearableItem;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(emoteItemView, emoteUrn, marketPlaceLink, rarityName, raritySprite, rarityColor));
+
+                if (emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty)
+                {
+                    equippedWearableItem.ViewButton.onClick.AddListener(() => webBrowser.OpenUrlMainThreadOnly(marketPlaceLink));
+                    primaryListingCandidates.Add((equippedWearableItem, emoteUrn));
+                }
+
                 WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -243,6 +270,60 @@ namespace DCL.Passport.Modules
                 var emptyItem = emptyItemsPool.Get();
                 emptyItem.gameObject.name = "EmptyItem";
                 instantiatedEmptyItems.Add(emptyItem);
+            }
+
+            if (primaryListingCandidates.Count > 0)
+                ResolvePrimaryListingsAsync(getEquippedItemsCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ResolvePrimaryListingsAsync(CancellationToken ct)
+        {
+            try
+            {
+                URLAddress url;
+
+                using (decentralandUrlsSource.BuildFromDomain(DecentralandUrl.MarketplaceServer, out URLBuilder urlBuilder))
+                {
+                    urlBuilder.AppendPath(new URLPath("v2/catalog"));
+                    urlBuilder.AppendParameter(new URLParameter("first", primaryListingCandidates.Count.ToString()));
+
+                    foreach ((_, string urn) in primaryListingCandidates)
+                        urlBuilder.AppendParameter(new URLParameter("urn", urn));
+
+                    url = urlBuilder.Build();
+                }
+
+                MarketplaceCatalogResponse response = await webRequestController.GetAsync(url, ct, ReportCategory.WEARABLE)
+                                                                                .CreateFromJson<MarketplaceCatalogResponse>(WRJsonParser.Unity);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                onSaleUrns.Clear();
+
+                if (response?.data != null)
+                    foreach (MarketplaceCatalogItem item in response.data)
+                        if (item is { isOnSale: true, urn: not null })
+                            onSaleUrns.Add(item.urn);
+
+                foreach ((EquippedItemPassportFieldView itemView, string urn) in primaryListingCandidates)
+                {
+                    bool isOnPrimarySale = onSaleUrns.Contains(urn);
+                    itemView.BuyButton.gameObject.SetActive(isOnPrimarySale);
+                    itemView.OnSaleFlap.gameObject.SetActive(isOnPrimarySale);
+                    itemView.ViewButton.gameObject.SetActive(!isOnPrimarySale);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.WEARABLE, $"There was an error while resolving primary listings for equipped items. ERROR: {e.Message}");
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                foreach ((EquippedItemPassportFieldView itemView, _) in primaryListingCandidates)
+                    itemView.ViewButton.gameObject.SetActive(true);
             }
         }
 
@@ -354,7 +435,7 @@ namespace DCL.Passport.Modules
 
         private string GetMarketplaceLink(string id)
         {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{{0}}/{{1}}";
+            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{{0}}/{{1}}&utm_source=client";
             ReadOnlySpan<char> idSpan = id.AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 
