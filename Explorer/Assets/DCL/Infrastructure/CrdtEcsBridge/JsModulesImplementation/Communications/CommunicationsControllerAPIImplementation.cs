@@ -25,29 +25,32 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-            int walletIdLength = Encoding.UTF8.GetByteCount(message.FromWalletId);
+            int maxWalletIdBytes = Encoding.UTF8.GetMaxByteCount(message.FromWalletId.Length);
+            var array = byteArrayPool.GetAPIRawDataPool(maxWalletIdBytes + 1 + IJsOperations.LIVEKIT_MAX_SIZE);
+            int walletIdLength = Encoding.UTF8.GetBytes(message.FromWalletId, array.Array.AsSpan(1));
 
             if (walletIdLength > 255)
+            {
+                array.Dispose();
                 throw new OverflowException("Wallet ID is too long");
+            }
 
+            array.Array[0] = (byte)walletIdLength;
             int dataOffset = walletIdLength + 1;
 
-            // The receive buffer also carries the locally prepended [len][walletId] header, so the
-            // peer-controlled payload is bounded by the same LIVEKIT_MAX_SIZE budget. The size is
-            // remote and untrusted: an oversized packet is dropped, not thrown, because throwing
-            // turns a routine network condition into a reported error for every such packet.
-            if (message.Data.Length > IJsOperations.LIVEKIT_MAX_SIZE)
+            // The locally prepended [len][walletId] header plus the peer-controlled payload must
+            // together fit the fixed LIVEKIT_MAX_SIZE Uint8Array that GetResult() writes into
+            // (SceneRuntimeImpl.GetTempUint8Array). An oversized combination is dropped, not
+            // thrown, because throwing turns a routine network condition into a reported error
+            // for every such packet.
+            if (dataOffset + message.Data.Length > IJsOperations.LIVEKIT_MAX_SIZE)
             {
+                array.Dispose();
                 ReportHub.LogWarning(ReportCategory.LIVEKIT,
                     $"Dropped oversized scene message ({message.Data.Length} bytes) from {message.FromWalletId}");
                 return;
             }
 
-            var array = byteArrayPool.GetAPIRawDataPool(dataOffset + IJsOperations.LIVEKIT_MAX_SIZE);
-
-            Encoding.UTF8.GetBytes(message.FromWalletId, array.Array.AsSpan(1));
-
-            array.Array[0] = (byte)walletIdLength;
             int totalLength = dataOffset;
 
             // At this point data is already without MsgType (Explorer routing is truncated a step above).

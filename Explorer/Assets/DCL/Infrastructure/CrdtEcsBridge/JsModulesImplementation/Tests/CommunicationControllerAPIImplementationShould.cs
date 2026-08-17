@@ -143,6 +143,36 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         }
 
         [Test]
+        public void DropReceivedMessageThatOverflowsOnlyWhenCombinedWithHeader()
+        {
+            // The [len][walletId] header is prepended locally on top of the peer-controlled
+            // payload before either reaches the fixed LIVEKIT_MAX_SIZE Uint8Array GetResult()
+            // writes into. A payload that is individually under LIVEKIT_MAX_SIZE but pushes the
+            // header-inclusive total over it must still be dropped, and GetResult() must not
+            // throw when draining whatever else is queued afterwards.
+            // https://decentraland.sentry.io/issues/7638559416/ (UNITY-EXPLORER-PJA)
+            const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"; // 42 bytes -> dataOffset = 43
+            const byte COMMS_REQ_CRDT_STATE = 2; // CommsMessageType.ReqCRDTState -> the unfiltered raw-copy path
+
+            RoomMetadataCurrentScene.InitializeTest();
+
+            int walletIdBytes = Encoding.UTF8.GetByteCount(WALLET_ID);
+            int dataOffset = walletIdBytes + 1;
+
+            // Individually under LIVEKIT_MAX_SIZE, but dataOffset + payload.Length overflows it.
+            var data = new byte[IJsOperations.LIVEKIT_MAX_SIZE - dataOffset + 1];
+            data[0] = COMMS_REQ_CRDT_STATE;
+
+            Assert.DoesNotThrow(() =>
+                sceneCommunicationPipe.onSceneMessage.Invoke(
+                    new ISceneCommunicationPipe.DecodedMessage(data.AsSpan(), WALLET_ID, isTrustedSource: true)));
+
+            Assert.AreEqual(0, api.EventsToProcess.Count, "a header-inclusive oversized message must be dropped, not enqueued");
+
+            Assert.DoesNotThrow(() => api.GetResult(), "GetResult() must not throw writing into the fixed-size destination array");
+        }
+
+        [Test]
         public void ApplyFilterToCRDTMessages()
         {
             // Tests that CRDT messages (type 1) are filtered to remove NO_SYNC_COMPONENT_ID
