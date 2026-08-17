@@ -7,7 +7,7 @@
   "issues": [
     {"number": 9735, "status": "fixed", "commit": "2995cdb66661eeb606527f68bb15af841da284c8", "note": "emit auth-chain headers by interpolation in SignedFetchWrap and AuthChainHeaderNames; removes fixed-size 5-element ceiling"},
     {"number": 9733, "status": "fixed", "commit": "2ca802a004ba97015c2d554c7631375471080f4c", "note": "return null instead of throwing when avatars field is absent or not an array in DeserializeProfileList"},
-    {"number": 9695, "status": "pending", "commit": null, "note": null},
+    {"number": 9695, "status": "fixed", "commit": "3ad38d10b821c7f8a4e3f1f08eae07fd25ae832a", "note": "break buffering WaitUntil on GetLastError != None to stop hang-forever when media errors or closes mid-wait"},
     {"number": 9679, "status": "pending", "commit": null, "note": null},
     {"number": 9745, "status": "pending", "commit": null, "note": null},
     {"number": 9671, "status": "skipped", "commit": null, "note": "already being fixed in open PR https://github.com/decentraland/unity-explorer/pull/9712"},
