@@ -59,10 +59,6 @@ namespace DCL.AvatarRendering.Emotes.Tests.PerformanceTests
 
             avatarView = Substitute.For<IAvatarView>();
             avatarView.IsLegacyAnimationPlaying.Returns(true);
-            // UpdateEmoteTags polls the int-layer overload (GetAnimatorCurrentStateTag(BASE_LAYER_INDEX),
-            // BASE_LAYER_INDEX is a const int) — not the string-layer one. NSubstitute keys returns per
-            // overload, so the counter must be registered on the int overload or the real polls go
-            // uncounted and every case reads 0.
             avatarView.GetAnimatorCurrentStateTag(Arg.Any<int>()).Returns(_ =>
             {
                 animatorTagPolls++;

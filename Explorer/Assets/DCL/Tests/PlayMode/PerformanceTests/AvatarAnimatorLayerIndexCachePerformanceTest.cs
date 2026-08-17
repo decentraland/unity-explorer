@@ -23,6 +23,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 #if UNITY_EDITOR
         private const string AVATAR_BASE_TEST_ASSET_PATH = "Assets/DCL/AvatarRendering/AvatarShape/Tests/Instantiate/TestAssets/AvatarBase_TestAsset.prefab";
         private const string ANIMATOR_CONTROLLER_PATH = "Assets/DCL/AvatarRendering/AvatarShape/Assets/Animator/CharacterAnimator.controller";
+        private const string BASE_LAYER_NAME = "Base Layer";
 
         private GameObject avatarGameObject = null!;
         private AvatarBase avatarBase = null!;
@@ -61,8 +62,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         [Performance]
         public void IntTagLookup_MatchesStringPath_AndIsFaster()
         {
-            Assert.AreEqual(0, animator.GetLayerIndex(AnimatorEmoteLayers.BASE_LAYER), "Base Layer must be index 0");
-            Assert.AreEqual(AnimatorEmoteLayers.BASE_LAYER_INDEX, animator.GetLayerIndex(AnimatorEmoteLayers.BASE_LAYER));
+            Assert.AreEqual(0, animator.GetLayerIndex(BASE_LAYER_NAME), "Base Layer must be index 0");
+            Assert.AreEqual(AnimatorEmoteLayers.BASE_LAYER_INDEX, animator.GetLayerIndex(BASE_LAYER_NAME));
 
             int upperBodyIndex = animator.GetLayerIndex(AnimatorEmoteLayers.UPPER_BODY_LAYER);
             Assert.AreEqual(upperBodyIndex, avatarBase.UpperBodyLayerIndex, "Cached UpperBodyLayerIndex must match the string lookup");
@@ -70,7 +71,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             for (int i = 0; i < animator.layerCount; i++)
             {
                 string layerName = animator.GetLayerName(i);
-                Assert.AreEqual(avatarBase.GetAnimatorCurrentStateTag(layerName), avatarBase.GetAnimatorCurrentStateTag(i),
+                Assert.AreEqual(StringPathTag(layerName), avatarBase.GetAnimatorCurrentStateTag(i),
                     $"int/string tag lookup diverged on layer {i} ({layerName})");
             }
 
@@ -82,7 +83,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 for (int i = 0; i < animator.layerCount; i++)
                 {
                     string layerName = animator.GetLayerName(i);
-                    Assert.AreEqual(avatarBase.GetAnimatorCurrentStateTag(layerName), avatarBase.GetAnimatorCurrentStateTag(i));
+                    Assert.AreEqual(StringPathTag(layerName), avatarBase.GetAnimatorCurrentStateTag(i));
                 }
             }
 
@@ -95,7 +96,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             for (int run = 0; run < 5; run++)
             {
                 var sw = Stopwatch.StartNew();
-                for (int k = 0; k < ITER; k++) avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+                for (int k = 0; k < ITER; k++) StringPathTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
                 sw.Stop();
                 bestString = System.Math.Min(bestString, sw.ElapsedTicks);
 
@@ -110,6 +111,9 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             Assert.Less(bestInt, bestString, $"int lookup ({bestInt} ticks) must beat string lookup ({bestString} ticks)");
         }
+
+        private int StringPathTag(string layerName) =>
+            animator.GetCurrentAnimatorStateInfo(animator.GetLayerIndex(layerName)).tagHash;
 #endif
     }
 }

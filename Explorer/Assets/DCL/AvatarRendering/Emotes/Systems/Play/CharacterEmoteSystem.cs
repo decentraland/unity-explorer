@@ -152,6 +152,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
+            // Untagged animator states report tagHash 0, and Reset() leaves the tag untouched: no reference plus a
+            // zero tag is already in sync, while a stale non-zero tag must keep polling until the animator clears it.
             if (emoteComponent.CurrentEmoteReference == null && emoteComponent.CurrentAnimationTag == 0)
                 return;
 

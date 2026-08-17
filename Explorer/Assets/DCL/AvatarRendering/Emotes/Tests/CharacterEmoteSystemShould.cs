@@ -12,7 +12,9 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
+using Utility.Animations;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Emotes.Tests
@@ -149,6 +151,74 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsTrue(updated.PendingStop.IsSet);
             Assert.AreEqual(EmoteState.EsInterrupted, updated.PendingStop.Reason);
             Assert.AreEqual(EMOTE_URN, updated.PendingStop.Urn.ToString());
+        }
+
+        [Test]
+        public void SkipAnimatorPollForAvatarsThatAreNotEmoting()
+        {
+            //Arrange: no emote reference and no animation tag left over from a previous emote.
+            IAvatarView idleAvatarView = Substitute.For<IAvatarView>();
+            world.Create(new CharacterEmoteComponent(), idleAvatarView);
+
+            //Act
+            system!.Update(0);
+
+            //Assert
+            idleAvatarView.DidNotReceive().GetAnimatorCurrentStateTag(Arg.Any<int>());
+        }
+
+        [Test]
+        public void PollAnimatorForAvatarsHoldingAnEmoteReference()
+        {
+            //Arrange
+            IAvatarView emotingAvatarView = Substitute.For<IAvatarView>();
+            emotingAvatarView.IsLegacyAnimationPlaying.Returns(true);
+            world.Create(new CharacterEmoteComponent { CurrentEmoteReference = emoteReferences }, emotingAvatarView);
+
+            //Act
+            system!.Update(0);
+
+            //Assert
+            emotingAvatarView.Received(1).GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
+        }
+
+        [Test]
+        public void PollAnimatorUntilAStaleAnimationTagIsCleared()
+        {
+            //Arrange: the emote reference is gone but the tag from its last poll is still set.
+            IAvatarView staleTagAvatarView = Substitute.For<IAvatarView>();
+            staleTagAvatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX).Returns(0);
+
+            var emoteComponent = new CharacterEmoteComponent();
+            emoteComponent.SetAnimationTag(AnimationHashes.EMOTE);
+            Entity entity = world.Create(emoteComponent, staleTagAvatarView);
+
+            //Act
+            system!.Update(0);
+
+            //Assert
+            staleTagAvatarView.Received(1).GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
+            Assert.AreEqual(0, world.Get<CharacterEmoteComponent>(entity).CurrentAnimationTag);
+        }
+
+        [TestCase("scene-QmHash", "scene", "QmHash")]
+        [TestCase("my-scene-QmHash", "my-scene", "QmHash")]
+        [TestCase("scene-", "scene", "")]
+        [TestCase("scene-Qm-hash-with-dashes", "scene", "Qm-hash-with-dashes")]
+        public void MatchSceneEmotePayloadAgainstCandidateName(string payload, string candidateName, string expectedHash)
+        {
+            Assert.IsTrue(CharacterEmoteSystem.TryMatchSceneEmotePayload(payload.AsSpan(), candidateName, out string parsedHash));
+            Assert.AreEqual(expectedHash, parsedHash);
+        }
+
+        [TestCase("scenex-QmHash", "scene")]
+        [TestCase("sce", "scene")]
+        [TestCase("scene", "scene")]
+        [TestCase("Scene-QmHash", "scene")]
+        public void RejectSceneEmotePayloadThatIsNotTheCandidateNameFollowedByADash(string payload, string candidateName)
+        {
+            Assert.IsFalse(CharacterEmoteSystem.TryMatchSceneEmotePayload(payload.AsSpan(), candidateName, out string parsedHash));
+            Assert.AreEqual(string.Empty, parsedHash);
         }
 
         private static ISceneFacade NewSceneFacadeWithName(string name)
