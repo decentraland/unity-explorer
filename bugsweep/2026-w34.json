@@ -9,7 +9,7 @@
     {"number": 9733, "status": "fixed", "commit": "2ca802a004ba97015c2d554c7631375471080f4c", "note": "return null instead of throwing when avatars field is absent or not an array in DeserializeProfileList"},
     {"number": 9695, "status": "fixed", "commit": "3ad38d10b821c7f8a4e3f1f08eae07fd25ae832a", "note": "break buffering WaitUntil on GetLastError != None to stop hang-forever when media errors or closes mid-wait"},
     {"number": 9679, "status": "fixed", "commit": "e032e50e3011455789c3590389cb2bf23c8d8f0b", "note": "re-throw OperationCanceledException immediately in SatelliteChunkController.LoadImageAsync; wrap Addressables fallback in its own try/catch so it cannot escape"},
-    {"number": 9745, "status": "pending", "commit": null, "note": null},
+    {"number": 9745, "status": "fixed", "commit": "e3c94e0c76c205c48903b9b08dc6cfe1373656d0", "note": "guard constructor with SystemInfo.supportsComputeShaders; assign shader fields before the check so readonly fields are always initialized, set IsEnabled=false and return early on unsupported platforms"},
     {"number": 9671, "status": "skipped", "commit": null, "note": "already being fixed in open PR https://github.com/decentraland/unity-explorer/pull/9712"},
     {"number": 9692, "status": "skipped", "commit": null, "note": "already being fixed in open PR https://github.com/decentraland/unity-explorer/pull/9765"},
     {"number": 9738, "status": "skipped", "commit": null, "note": "already being fixed in open PR https://github.com/decentraland/unity-explorer/pull/9765"},
