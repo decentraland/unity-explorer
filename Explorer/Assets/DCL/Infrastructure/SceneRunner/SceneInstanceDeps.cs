@@ -22,12 +22,10 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Profiling;
-using DCL.SceneRunner;
 using DCL.SceneRuntime.Apis.RestrictedActionsApi;
-using DCL.SDKComponents.MediaStream;
 using DCL.SkyBox;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
@@ -48,7 +46,6 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
-using RichTypes;
 
 namespace SceneRunner
 {
@@ -74,7 +71,7 @@ namespace SceneRunner
         internal readonly ISystemGroupsUpdateGate systemGroupThrottler;
         private readonly ISystemsUpdateGate systemsUpdateGate;
         private readonly ISceneData sceneData;
-        private readonly IJsApiPermissionsProvider permissionsProvider;
+        private readonly IJsApiPermissionsProvider permissionsProvider = null!;
 
         private readonly MultiThreadSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
@@ -126,7 +123,8 @@ namespace SceneRunner
         }
 #endif
 
-        public SceneInstanceDependencies(
+        private SceneInstanceDependencies(
+            URLAddress sceneCodeUrl,
             ISDKComponentsRegistry sdkComponentsRegistry,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneData sceneData,
@@ -137,6 +135,8 @@ namespace SceneRunner
         {
             this.sceneData = sceneData;
             this.permissionsProvider = permissionsProvider;
+
+            SceneCodeUrl = sceneCodeUrl;
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
             CRDTProtocol = new CRDTProtocol();
             SceneStateProvider = new SceneStateProvider();
@@ -162,11 +162,32 @@ namespace SceneRunner
 
             EcsExecutor = new SceneEcsExecutor(ECSWorldFacade.EcsWorld);
             entityCollidersGlobalCache.AddSceneInfo(EntityCollidersCache, EcsExecutor);
+        }
 
-            if (sceneData.IsSdk7()) // Create an instance of Scene Runtime on the thread pool
-                sceneData.TryGetMainScriptUrl(out SceneCodeUrl);
+        /// <summary>
+        ///     Fails instead of constructing when an SDK7 scene has no resolvable main script in its content manifest.
+        /// </summary>
+        public static Result<SceneInstanceDependencies> New(
+            ISDKComponentsRegistry sdkComponentsRegistry,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache,
+            ISceneData sceneData,
+            IJsApiPermissionsProvider permissionsProvider,
+            IPartitionComponent partitionProvider,
+            IECSWorldFactory ecsWorldFactory,
+            ISceneEntityFactory entityFactory)
+        {
+            URLAddress sceneCodeUrl;
+
+            if (sceneData.IsSdk7())
+            {
+                if (!sceneData.TryGetMainScriptUrl(out sceneCodeUrl))
+                    return Result<SceneInstanceDependencies>.ErrorResult($"Scene main script '{sceneData.SceneEntityDefinition.metadata.main}' not found in the content manifest of scene {sceneData.SceneShortInfo}");
+            }
             else
-                SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
+                sceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
+
+            return Result<SceneInstanceDependencies>.SuccessResult(
+                new SceneInstanceDependencies(sceneCodeUrl, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory));
         }
 
         public void Dispose()
