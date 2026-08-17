@@ -137,8 +137,8 @@ namespace DCL.Chat
             this.onMessageContextMenuClicked = onMessageContextMenuClicked;
             ChatEntryClicked = onProfileContextMenuClicked;
 
-            // Bind the picture to the profile-data property for every message; non-system entries load asynchronously,
-            // system entries carry a static sprite pushed below — both need the view bound to render.
+            // Bind for every message: CreateMessageViewModelCommand already seeded viewModel.ProfileData
+            // (the loaded system icon, or the in-flight/default state for a profile fetch) before this runs.
             ProfilePictureView.Bind(viewModel.ProfileData);
 
             if (!viewModel.Message.IsSystemMessage)
@@ -146,8 +146,6 @@ namespace DCL.Chat
                 if (!chatMessage.SenderWalletAddress.Equals(ViewDependencies.CurrentIdentity?.Address.ToString()))
                     ProfilePictureView.ConfigureThumbnailClickData(OnUsernameClicked, chatMessage.SenderWalletAddress);
             }
-            else
-                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromFallback(viewModel.ProfileData.Value.Sprite!));
 
             profileSubscription?.Dispose();
             profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
