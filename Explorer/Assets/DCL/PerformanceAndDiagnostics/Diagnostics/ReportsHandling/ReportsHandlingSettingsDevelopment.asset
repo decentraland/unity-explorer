@@ -94,6 +94,8 @@ MonoBehaviour:
       Severity: 0
     - Category: ANALYTICS
       Severity: 0
+    - Category: ANALYTICS
+      Severity: 2
     - Category: ANIMATOR
       Severity: 0
     - Category: ASSET_BUNDLES
