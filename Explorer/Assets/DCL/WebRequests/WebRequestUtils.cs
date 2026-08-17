@@ -176,8 +176,11 @@ namespace DCL.WebRequests
         ///     Client-side transport-security policy, standing in for the player-level insecure-http
         ///     block (which is global and cannot exempt loopback): cleartext http is permitted to
         ///     loopback hosts only (local preview servers, sidecars); http to any other host is
-        ///     upgraded to https. Applied to the wire URL of the built request, never to URLs
-        ///     embedded inside it as data. Non-http URLs pass through unchanged (same reference).
+        ///     upgraded to https. Applied where a policed URL is resolved (media resolution, sidecar
+        ///     realm root) and to the wire URL of signed requests — never to URLs embedded in a
+        ///     request as data, and never to unsigned wire URLs, whose cleartext scheme is a
+        ///     module-level decision (local-scene-development fetch). Non-http URLs pass through
+        ///     unchanged (same reference).
         /// </summary>
         public static string EnforceSecureScheme(string url) =>
             IsForbiddenCleartext(url)
@@ -194,6 +197,14 @@ namespace DCL.WebRequests
             !string.IsNullOrEmpty(url)
             && url.StartsWith(HTTP_SCHEME_PREFIX, StringComparison.OrdinalIgnoreCase)
             && !(Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && IsLoopbackHost(uri.Host));
+
+        /// <summary>
+        ///     True when an exchange left on an allowed scheme/host but its final (post-redirect)
+        ///     URL is forbidden cleartext. A request sent to forbidden cleartext in the first place
+        ///     is not a downgrade: that scheme is the sender's own policy decision.
+        /// </summary>
+        public static bool IsCleartextDowngrade(string sentUrl, string finalUrl) =>
+            !IsForbiddenCleartext(sentUrl) && IsForbiddenCleartext(finalUrl);
 
         /// <summary>
         ///     Loopback means "localhost", 127.0.0.0/8 or [::1] — the hosts a local preview

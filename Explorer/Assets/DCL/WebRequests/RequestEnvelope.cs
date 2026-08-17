@@ -98,16 +98,20 @@ namespace DCL.WebRequests
             TWebRequest request = initializeRequest(CommonArguments.URL, ref args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
 
-            // The scheme policy governs the wire URL of the request about to be sent; running it
-            // after per-request composition keeps origin URLs embedded in it as data (e.g. the
-            // media-converter's url query parameter) byte-identical
-            string wireUrl = unityWebRequest.url;
-            string secureUrl = WebRequestUtils.EnforceSecureScheme(wireUrl);
-
-            if (!ReferenceEquals(wireUrl, secureUrl))
+            if (signInfo.HasValue)
             {
-                ReportHub.LogWarning(ReportData, $"Cleartext http to a non-loopback host upgraded to https: {wireUrl}");
-                unityWebRequest.url = secureUrl;
+                // The identity auth chain attached below never travels over forbidden cleartext:
+                // a signed request's wire URL is secure-enforced before signing. Unsigned wire
+                // URLs are not policed here — their scheme policy binds at the resolution site
+                // (infra URLs) or in the issuing module (scene fetch)
+                string wireUrl = unityWebRequest.url;
+                string secureUrl = WebRequestUtils.EnforceSecureScheme(wireUrl);
+
+                if (!ReferenceEquals(wireUrl, secureUrl))
+                {
+                    ReportHub.LogWarning(ReportData, $"Cleartext http on a signed request upgraded to https: {wireUrl}");
+                    unityWebRequest.url = secureUrl;
+                }
             }
 
             AssignTimeout(unityWebRequest);

@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using NSubstitute;
 using NUnit.Framework;
@@ -11,21 +12,42 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Tests
 {
-    // Transport-security policy invariants: cleartext http is loopback-only; http to any
-    // other host is upgraded to https on the wire URL of the built request (after per-request
-    // URL composition, so URLs embedded in it as data survive); the player-level
+    // Transport-security policy invariants: cleartext http is loopback-only where the policy
+    // binds — at infra URL-resolution sites (media resolution, sidecar realm root) and on the
+    // wire URL of signed requests (the identity auth chain never travels over forbidden
+    // cleartext). Unsigned wire URLs pass through the envelope unchanged: their scheme is a
+    // module-level decision (local-scene-development fetch permits cleartext to any host).
+    // The redirect guard blocks only mid-flight downgrades, and the player-level
     // insecureHttpOption stays AlwaysAllowed so the client-side policy is the single
     // enforcement point.
     public class InsecureSchemePolicyShould
     {
         private const string MEDIA_CONVERTER_TEMPLATE = "https://metamorph-api.decentraland.org/convert?url={0}";
 
+        [TestCase("http://192.168.1.50:8000/api")]
+        [TestCase("http://peer.decentraland.org/x")]
+        public void PassNonLoopbackHttpThroughUnchangedWhenUnsigned(string url)
+        {
+            // A local-scene-development scene fetch is an unsigned request whose cleartext
+            // scheme is the fetch module's own vetted decision; the envelope must not rewrite it
+            Assert.That(UrlAfterEnvelopeInitialization(url), Is.EqualTo(UnityCanonicalUrl(url)));
+        }
+
         [Test]
-        public void UpgradeNonLoopbackHttpToHttps()
+        public void UpgradeNonLoopbackHttpToHttpsWhenSigned()
         {
             Assert.That(
-                UrlAfterEnvelopeInitialization("http://peer.decentraland.org/x"),
+                UrlAfterEnvelopeInitialization("http://peer.decentraland.org/x", new WebRequestSignInfo(string.Empty)),
                 Is.EqualTo(UnityCanonicalUrl("https://peer.decentraland.org/x")));
+        }
+
+        [TestCase("http://127.0.0.1:8000/content/contents/bafkreib")]
+        [TestCase("http://localhost:8001/x")]
+        public void PassLoopbackHttpThroughUnchangedWhenSigned(string url)
+        {
+            Assert.That(
+                UrlAfterEnvelopeInitialization(url, new WebRequestSignInfo(string.Empty)),
+                Is.EqualTo(UnityCanonicalUrl(url)));
         }
 
         [TestCase("http://127.0.0.1:8000/content/contents/bafkreib")]
@@ -45,11 +67,13 @@ namespace DCL.WebRequests.Tests
         }
 
         [Test]
-        public void UpgradeNonConvertedTextureUrlAtTheWire()
+        public void PassNonConvertedTextureUrlThroughUnchangedAtTheWire()
         {
+            const string HTTP_URL = "http://textures.example.com/a.png";
+
             Assert.That(
-                TextureUrlAfterEnvelopeInitialization("http://textures.example.com/a.png", ktxEnabled: false),
-                Is.EqualTo(UnityCanonicalUrl("https://textures.example.com/a.png")));
+                TextureUrlAfterEnvelopeInitialization(HTTP_URL, ktxEnabled: false),
+                Is.EqualTo(UnityCanonicalUrl(HTTP_URL)));
         }
 
         [Test]
@@ -93,9 +117,20 @@ namespace DCL.WebRequests.Tests
         [TestCase("http://[::1]:8000/x", false)]
         [TestCase("https://peer.decentraland.org/x", false)]
         [TestCase("file:///tmp/streaming-asset.bin", false)]
-        public void ClassifyForbiddenCleartextForTheRedirectGuard(string url, bool forbidden)
+        public void ClassifyForbiddenCleartext(string url, bool forbidden)
         {
             Assert.That(WebRequestUtils.IsForbiddenCleartext(url), Is.EqualTo(forbidden));
+        }
+
+        [TestCase("https://peer.decentraland.org/x", "http://peer.decentraland.org/x", true)]
+        [TestCase("http://127.0.0.1:8000/x", "http://192.168.1.50:8000/x", true)]
+        [TestCase("http://192.168.1.50:8000/api", "http://192.168.1.50:8000/api", false)]
+        [TestCase("http://192.168.1.50:8000/x", "http://10.0.0.7:9000/y", false)]
+        [TestCase("https://peer.decentraland.org/x", "https://cdn.decentraland.org/x", false)]
+        [TestCase("https://peer.decentraland.org/x", "http://127.0.0.1:8000/x", false)]
+        public void ClassifyCleartextDowngradeForTheRedirectGuard(string sentUrl, string finalUrl, bool downgrade)
+        {
+            Assert.That(WebRequestUtils.IsCleartextDowngrade(sentUrl, finalUrl), Is.EqualTo(downgrade));
         }
 
         [Test]
@@ -111,7 +146,7 @@ namespace DCL.WebRequests.Tests
         ///     (WebRequestController.SendAsync -> InitializedWebRequest) and returns the URL the
         ///     UnityWebRequest would actually be sent with. The request is never sent.
         /// </summary>
-        private static string UrlAfterEnvelopeInitialization(string url)
+        private static string UrlAfterEnvelopeInitialization(string url, WebRequestSignInfo? signInfo = null)
         {
             using var envelope = new RequestEnvelope<GenericGetRequest, GenericGetArguments>(
                 GenericGetRequest.Initialize,
@@ -120,9 +155,9 @@ namespace DCL.WebRequests.Tests
                 CancellationToken.None,
                 ReportData.UNSPECIFIED,
                 WebRequestHeadersInfo.NewEmpty(),
-                signInfo: null);
+                signInfo);
 
-            GenericGetRequest request = envelope.InitializedWebRequest(Substitute.For<IWeb3IdentityCache>());
+            GenericGetRequest request = envelope.InitializedWebRequest(SigningIdentityCache());
             using UnityWebRequest unityWebRequest = request.UnityWebRequest;
             return unityWebRequest.url;
         }
@@ -145,9 +180,23 @@ namespace DCL.WebRequests.Tests
                 WebRequestHeadersInfo.NewEmpty(),
                 signInfo: null);
 
-            GetTextureWebRequest request = envelope.InitializedWebRequest(Substitute.For<IWeb3IdentityCache>());
+            GetTextureWebRequest request = envelope.InitializedWebRequest(SigningIdentityCache());
             using UnityWebRequest unityWebRequest = request.UnityWebRequest;
             return unityWebRequest.url;
+        }
+
+        /// <summary>
+        ///     An identity cache whose identity signs any payload with an empty auth chain, so
+        ///     signed envelopes can be initialized without a real wallet.
+        /// </summary>
+        private static IWeb3IdentityCache SigningIdentityCache()
+        {
+            IWeb3Identity identity = Substitute.For<IWeb3Identity>();
+            identity.Sign(Arg.Any<string>()).Returns(_ => AuthChain.Create());
+
+            IWeb3IdentityCache cache = Substitute.For<IWeb3IdentityCache>();
+            cache.Identity.Returns(identity);
+            return cache;
         }
 
         /// <summary>

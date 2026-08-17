@@ -101,8 +101,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private static async UniTask<bool> IsGetReachableAsync(string url, CancellationToken ct)
         {
-            // This request bypasses IWebRequestController, so the pre-send transport-security
-            // policy the controller applies must hold here too: no cleartext to non-loopback hosts
+            // This request bypasses IWebRequestController, so the media transport-security policy
+            // (no cleartext to non-loopback hosts) binds directly at this send site
             UnityWebRequest request = UnityWebRequest.Get(WebRequestUtils.EnforceSecureScheme(url));
 
             try

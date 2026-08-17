@@ -72,6 +72,10 @@ namespace DCL.WebRequests
                 // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
                 using UnityWebRequest wr = request.UnityWebRequest;
 
+                // wr.url mutates to the final hop as redirects are followed; the as-sent form
+                // anchors the downgrade checks below
+                string sentUrl = wr.url;
+
                 try
                 {
                     analyticsContainer.OnBeforeBudgeting(in envelope, request);
@@ -89,10 +93,11 @@ namespace DCL.WebRequests
                         analyticsContainer.OnRequestFinished(request);
                     }
 
-                    // A redirect can hop from the sent https URL to cleartext http after the pre-send
-                    // scheme policy ran; a response with a forbidden-cleartext final URL is never consumed
-                    if (WebRequestUtils.IsForbiddenCleartext(wr.url))
-                        throw new InvalidOperationException($"Insecure redirect blocked: request to {envelope.CommonArguments.URL} was redirected to {wr.url}");
+                    // A redirect can hop from an allowed sent URL to forbidden cleartext; a response
+                    // from such a downgraded exchange is never consumed. An exchange sent as
+                    // cleartext on purpose (local-scene-development fetch) is not a downgrade
+                    if (WebRequestUtils.IsCleartextDowngrade(sentUrl, wr.url))
+                        throw new InvalidOperationException($"Insecure redirect blocked: request to {sentUrl} was redirected to {wr.url}");
 
                     if (!realmClock.HasSample)
                         realmClock.TryRecordHttpDate(wr.GetResponseHeader(DATE_HEADER));
@@ -110,9 +115,10 @@ namespace DCL.WebRequests
                 {
                     analyticsContainer.OnException(request, exception);
 
-                    // An exchange whose final URL downgraded to forbidden cleartext fails permanently:
-                    // never ignored, never retried (a retry would re-send headers over cleartext)
-                    if (WebRequestUtils.IsForbiddenCleartext(wr.url))
+                    // An exchange that downgraded from an allowed sent URL to forbidden cleartext
+                    // fails permanently: never ignored, never retried (a retry would re-send
+                    // headers over cleartext)
+                    if (WebRequestUtils.IsCleartextDowngrade(sentUrl, wr.url))
                         throw;
 
                     // No result can be concluded in this case
