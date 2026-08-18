@@ -54,6 +54,15 @@ impl Input {
         let url_c = CString::new(url).map_err(|_| anyhow!("url contains a NUL byte"))?;
         let mut opts = AvDict::from(protocol_whitelist);
 
+        // The HLS demuxer's segment-extension heuristic (extension_picky,
+        // default on since FFmpeg 7.1) rejects every segment whose URL has no
+        // path extension - the normal shape for tokenized CDN media, YouTube's
+        // googlevideo /videoplayback URLs included. It hardens an in-process
+        // parser against format confusion; here the parser already runs
+        // sandboxed on that exact assumption, so the heuristic only costs
+        // legitimate streams.
+        opts.set(c"extension_picky", c"0");
+
         let input = unsafe {
             let mut fmt = ff::avformat_alloc_context();
             if fmt.is_null() {
