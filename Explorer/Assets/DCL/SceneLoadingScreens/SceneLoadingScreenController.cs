@@ -104,6 +104,13 @@ namespace DCL.SceneLoadingScreens
             BlockUnwantedInputs();
             SetLoadProgress(0);
             viewInstance!.ClearTips();
+
+            // Fetched synchronously before the view shows, so `tips` is populated on every path
+            // that can reach OnViewClose and the release there needs no emptiness guard.
+            tips = sceneTipsProvider.Get();
+
+            if (tips.Random)
+                tips.Tips.Shuffle();
         }
 
         protected override void OnViewShow()
@@ -137,19 +144,12 @@ namespace DCL.SceneLoadingScreens
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
 
             viewInstance!.ClearTips();
-
-            // Tips is null until the first load completes: a close racing that load must not
-            // release a default instance, and a later close must not release the same tips twice.
-            if (tips.Tips != null)
-            {
-                tips.Release();
-                tips = default;
-            }
+            tips.Release();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            await LoadTipsAsync(ct);
+            await LoadTipsAsync();
 
             ShowTip(currentTip.Value);
 
@@ -193,13 +193,8 @@ namespace DCL.SceneLoadingScreens
             }
         }
 
-        private async UniTask LoadTipsAsync(CancellationToken ct)
+        private async UniTask LoadTipsAsync()
         {
-            tips = await sceneTipsProvider.GetAsync(ct);
-
-            if (tips.Random)
-                tips.Tips.Shuffle();
-
             using var scope = ListPool<UniTask<SceneTips.LoadedTip>>.Get(out var tasks);
             foreach (SceneTips.Tip tip in tips.Tips) tasks.Add(tip.LoadAsync());
             var loaded = await UniTask.WhenAll(tasks!);

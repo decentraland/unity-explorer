@@ -15,7 +15,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
@@ -53,11 +52,11 @@ namespace DCL.SceneLoadingScreens.Tests
         // suppression is still active, instead of leaking into an unrelated later test.
         private const int FLUSH_FRAME_COUNT = 30;
 
-        private World world;
+        private World? world;
         private SingleInstanceEntity inputMapEntity;
-        private IInputBlock inputBlock;
-        private SceneLoadingScreenView viewInstance;
-        private AudioMixerVolumesController audioMixerVolumesController;
+        private IInputBlock? inputBlock;
+        private SceneLoadingScreenView? viewInstance;
+        private AudioMixerVolumesController? audioMixerVolumesController;
         private bool originalIgnoreFailingMessages;
 
         [OneTimeSetUp]
@@ -119,7 +118,7 @@ namespace DCL.SceneLoadingScreens.Tests
             if (viewInstance != null)
                 Object.DestroyImmediate(viewInstance.gameObject);
 
-            world.Dispose();
+            world!.Dispose();
 
             // Reset the static field so later tests in the same run aren't left with a stale in-memory
             // prefs instance (mirrors the reset half of the same established pattern).
@@ -134,12 +133,7 @@ namespace DCL.SceneLoadingScreens.Tests
             // suppression - the flag must be raised inside the test body itself.
             LogAssert.ignoreFailingMessages = true;
 
-            ISceneTipsProvider tipsProvider = Substitute.For<ISceneTipsProvider>();
-
-            tipsProvider.GetAsync(Arg.Any<CancellationToken>())
-                        .Returns(UniTask.FromResult(new SceneTips(TimeSpan.Zero, false, new List<SceneTips.Tip>())));
-
-            SceneLoadingScreenController controller = CreateController(tipsProvider);
+            SceneLoadingScreenController controller = CreateController(EmptyTipsProvider());
 
             using var cts = new CancellationTokenSource();
             cts.Cancel();
@@ -168,50 +162,30 @@ namespace DCL.SceneLoadingScreens.Tests
         }
 
         [Test]
-        public async Task ReleaseInputBlockWhenCloseRacesTheInitialTipsLoadAsync()
+        public async Task ReleaseInputBlockWhenClosedWhileSceneIsStillLoadingAsync()
         {
             // The framework resets LogAssert state at test start, wiping any fixture/SetUp-scoped
             // suppression - the flag must be raised inside the test body itself.
             LogAssert.ignoreFailingMessages = true;
 
-            ISceneTipsProvider tipsProvider = Substitute.For<ISceneTipsProvider>();
+            SceneLoadingScreenController controller = CreateController(EmptyTipsProvider());
 
-            // The tips load never resolves during this test, so `tips` stays at its default value
-            // (Tips == null) for the whole run - exactly the close-races-the-initial-load scenario from
-            // review.md ("earliest-cancel variant... cold addressables make the tips window largest on
-            // first show") that made the first patch attempt's placement of the release - after
-            // tips.Release() - still leak, because tips.Release() throws on a default SceneTips before
-            // reaching it.
-            tipsProvider.GetAsync(Arg.Any<CancellationToken>()).Returns(UniTask.Never<SceneTips>(CancellationToken.None));
-
-            SceneLoadingScreenController controller = CreateController(tipsProvider);
-
-            // Deliberately not awaited: LaunchViewLifeCycleAsync runs synchronously through
-            // OnBeforeViewShow/OnViewShow and suspends inside LoadTipsAsync (awaiting a promise that
-            // never completes), so by the time control returns here the block has already been
-            // acquired and WaitForCloseIntentAsync is still in flight - matching the real
-            // MVCManager.ShowOverlayAsync race where the teardown's finally can call HideViewAsync while
-            // the orphaned lifecycle task is still suspended.
-            UniTask launch = controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), CompletedParams(), CancellationToken.None);
+            // A load report that never completes keeps WaitForCloseIntentAsync suspended waiting on it,
+            // so the fade-out (the unpatched code's only release) never runs. Deliberately not awaited:
+            // this matches the real MVCManager.ShowOverlayAsync race where the teardown's finally calls
+            // HideViewAsync while the orphaned lifecycle task is still suspended (teleport superseded
+            // mid-load - leak path 2 from report.md).
+            AsyncLoadProcessReport pendingReport = AsyncLoadProcessReport.Create(CancellationToken.None);
+            UniTask launch = controller.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new SceneLoadingScreenController.Params(pendingReport), CancellationToken.None);
 
             Assert.That(ActiveKinds(), Is.EqualTo(ALL_KINDS & ~BLOCKED_BY_LOADING_SCREEN),
                 "input should be blocked right after showing the loading screen");
 
-            try
-            {
-                await ((IController)controller).HideViewAsync(CancellationToken.None);
-            }
-            catch (NullReferenceException)
-            {
-                // Pre-existing, separate defect (review.md finding 1): unpatched OnViewClose() calls
-                // tips.Release() on a still-default `tips` and throws. That defect is not what is under
-                // test here - what matters is whether the input block was released before that
-                // statement could run at all, which is asserted below regardless of this exception.
-            }
+            await ((IController)controller).HideViewAsync(CancellationToken.None);
 
             Assert.That(ActiveKinds(), Is.EqualTo(ALL_KINDS),
-                "BLOCK_USER_INPUT must be released even when OnViewClose races the initial tips load - " +
-                "unpatched, this leaks +1 on the refcount forever (#9502)");
+                "BLOCK_USER_INPUT must be released even when the loading screen closes while the scene " +
+                "is still loading - unpatched, this leaks +1 on the refcount forever (#9502)");
 
             launch.Forget();
 
@@ -220,8 +194,15 @@ namespace DCL.SceneLoadingScreens.Tests
             await FlushDeferredViewLogsAsync();
         }
 
+        private static ISceneTipsProvider EmptyTipsProvider()
+        {
+            ISceneTipsProvider tipsProvider = Substitute.For<ISceneTipsProvider>();
+            tipsProvider.Get().Returns(new SceneTips(TimeSpan.Zero, false, new List<SceneTips.Tip>()));
+            return tipsProvider;
+        }
+
         private SceneLoadingScreenController CreateController(ISceneTipsProvider tipsProvider) =>
-            new (() => viewInstance, tipsProvider, TimeSpan.Zero, audioMixerVolumesController, inputBlock);
+            new (() => viewInstance!, tipsProvider, TimeSpan.Zero, audioMixerVolumesController!, inputBlock!);
 
         private static SceneLoadingScreenController.Params CompletedParams()
         {
@@ -231,7 +212,7 @@ namespace DCL.SceneLoadingScreens.Tests
         }
 
         private InputMapComponent.Kind ActiveKinds() =>
-            inputMapEntity.GetInputMapComponent(world).Active;
+            inputMapEntity.GetInputMapComponent(world!).Active;
 
         private static InputMapComponent.Kind AllKinds()
         {
