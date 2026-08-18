@@ -109,6 +109,54 @@ namespace DCL.Backpack.Gifting.Tests.UnitTests
                 "GiftToastView.UpdateSenderName (resolved-name variant) regressed to the old copy, which implied the gift already arrived.");
         }
 
+        [Test]
+        public void StateGiftIsOnItsWayInThePanelEntry_AddressVariant()
+        {
+            GiftNotificationView view = CreatePanelEntryView();
+
+            var notification = new GiftReceivedNotification
+            {
+                Metadata = new GiftReceivedNotificationMetadata { SenderAddress = "0x123456" },
+            };
+
+            view.Configure(notification);
+
+            string header = view.HeaderText.text;
+            const string oldHeader = "0x123456 sent you a something!";
+
+            Assert.That(header, Does.Contain(ON_ITS_WAY_SENTENCE),
+                "GiftNotificationView.Configure (short-address variant) must tell the recipient the gift is still on its way.");
+            Assert.That(header, Is.Not.EqualTo(oldHeader),
+                "GiftNotificationView.Configure (short-address variant) regressed to the old copy, which implied the gift already arrived.");
+        }
+
+        [Test]
+        public void StateGiftIsOnItsWayInThePanelEntry_ResolvedNameVariant()
+        {
+            GiftNotificationView view = CreatePanelEntryView();
+
+            view.UpdateSenderName("Alice", Color.white);
+
+            string header = view.HeaderText.text;
+            const string oldHeader = "<color=#FFFFFF>Alice</color> sent you something!";
+
+            Assert.That(header, Does.Contain(ON_ITS_WAY_SENTENCE),
+                "GiftNotificationView.UpdateSenderName (resolved-name variant, GiftingTextIds.GiftReceivedTitleFormat) must tell the recipient the gift is still on its way.");
+            Assert.That(header, Is.Not.EqualTo(oldHeader),
+                "GiftNotificationView.UpdateSenderName (resolved-name variant) regressed to the old copy, which implied the gift already arrived.");
+        }
+
+        private GiftNotificationView CreatePanelEntryView()
+        {
+            var go = new GameObject(nameof(GiftNotificationView), typeof(GiftNotificationView), typeof(TextMeshProUGUI));
+            spawned.Add(go);
+
+            GiftNotificationView view = go.GetComponent<GiftNotificationView>();
+            view.HeaderText = go.GetComponent<TextMeshProUGUI>();
+
+            return view;
+        }
+
         private GiftToastView CreateToastView()
         {
             Assert.IsNotNull(TITLE_TEXT_FIELD,
