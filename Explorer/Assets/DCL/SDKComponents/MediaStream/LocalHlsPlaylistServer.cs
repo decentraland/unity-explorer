@@ -4,7 +4,6 @@ using DCL.SDKComponents.MediaStream.YouTube;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Text;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -18,7 +17,6 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     internal static class LocalHlsPlaylistServer
     {
-        private const string MASTER_PLAYLIST_NAME = "master.m3u8";
         private const string HLS_CONTENT_TYPE = "application/vnd.apple.mpegurl";
 
         // Entries are tiny strings; the cap only guards against unbounded growth
@@ -28,9 +26,6 @@ namespace DCL.SDKComponents.MediaStream
         private const int PORT_RANGE_START = 41000;
         private const int PORT_RANGE_SIZE = 1000;
         private const int PORT_ATTEMPTS = 16;
-
-        // HLS spec requires UTF-8 without BOM (RFC 8216 §4).
-        private static readonly UTF8Encoding HLS_ENCODING = new (encoderShouldEmitUTF8Identifier: false);
 
         private static readonly object GATE = new ();
         private static readonly Dictionary<string, HlsManifestBuilder.PlaylistSet> ENTRIES = new ();
@@ -57,7 +52,7 @@ namespace DCL.SDKComponents.MediaStream
                 while (ENTRIES.Count > MAX_ENTRIES)
                     ENTRIES.Remove(EVICTION_ORDER.Dequeue());
 
-                return $"http://127.0.0.1:{port.ToString()}/{token}/{MASTER_PLAYLIST_NAME}";
+                return $"http://127.0.0.1:{port.ToString()}/{token}/{HlsManifestBuilder.MASTER_PLAYLIST_NAME}";
             }
         }
 
@@ -128,7 +123,7 @@ namespace DCL.SDKComponents.MediaStream
                 return;
             }
 
-            byte[] body = HLS_ENCODING.GetBytes(playlist);
+            byte[] body = HlsManifestBuilder.HLS_ENCODING.GetBytes(playlist);
             response.StatusCode = (int)HttpStatusCode.OK;
             response.ContentType = HLS_CONTENT_TYPE;
             response.ContentLength64 = body.Length;
@@ -153,7 +148,7 @@ namespace DCL.SDKComponents.MediaStream
 
             return parts[1] switch
                    {
-                       MASTER_PLAYLIST_NAME => playlists.Master,
+                       HlsManifestBuilder.MASTER_PLAYLIST_NAME => playlists.Master,
                        HlsManifestBuilder.VIDEO_PLAYLIST_NAME => playlists.Video,
                        HlsManifestBuilder.AUDIO_PLAYLIST_NAME => playlists.Audio,
                        _ => null,

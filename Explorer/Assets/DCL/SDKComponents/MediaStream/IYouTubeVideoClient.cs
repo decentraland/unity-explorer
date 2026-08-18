@@ -7,7 +7,6 @@ using DCL.Utility.Types;
 using DCL.WebRequests;
 using System;
 using System.IO;
-using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -43,13 +42,9 @@ namespace DCL.SDKComponents.MediaStream
     {
         private const string TAG = nameof(YouTubeVideoClient);
         private const string SYNTH_HLS_DIR_PREFIX = "youtube_hls_";
-        private const string MASTER_PLAYLIST_NAME = "master.m3u8";
 
         // Balances few, large requests (see HlsManifestBuilder.Coalesce) against seek granularity.
         private const float UUAV_TARGET_SEGMENT_SECONDS = 10f;
-
-        // HLS spec requires UTF-8 without BOM (RFC 8216 §4).
-        private static readonly UTF8Encoding HLS_ENCODING = new (encoderShouldEmitUTF8Identifier: false);
 
         private readonly InnerTubeClient innerTube = new ();
         private readonly IWebRequestController webRequestController;
@@ -217,11 +212,11 @@ namespace DCL.SDKComponents.MediaStream
                 string playlistDir = Path.Combine(Application.temporaryCachePath, SYNTH_HLS_DIR_PREFIX + videoId.Value);
                 Directory.CreateDirectory(playlistDir);
 
-                File.WriteAllText(Path.Combine(playlistDir, HlsManifestBuilder.VIDEO_PLAYLIST_NAME), playlists.Video, HLS_ENCODING);
-                File.WriteAllText(Path.Combine(playlistDir, HlsManifestBuilder.AUDIO_PLAYLIST_NAME), playlists.Audio, HLS_ENCODING);
+                File.WriteAllText(Path.Combine(playlistDir, HlsManifestBuilder.VIDEO_PLAYLIST_NAME), playlists.Video, HlsManifestBuilder.HLS_ENCODING);
+                File.WriteAllText(Path.Combine(playlistDir, HlsManifestBuilder.AUDIO_PLAYLIST_NAME), playlists.Audio, HlsManifestBuilder.HLS_ENCODING);
 
-                string masterPath = Path.Combine(playlistDir, MASTER_PLAYLIST_NAME);
-                File.WriteAllText(masterPath, playlists.Master, HLS_ENCODING);
+                string masterPath = Path.Combine(playlistDir, HlsManifestBuilder.MASTER_PLAYLIST_NAME);
+                File.WriteAllText(masterPath, playlists.Master, HlsManifestBuilder.HLS_ENCODING);
 
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
                     $"[{TAG}] Synthesized HLS playlist for {videoId.Value} at {masterPath}");

@@ -23,8 +23,12 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     /// </summary>
     internal static class HlsManifestBuilder
     {
+        public const string MASTER_PLAYLIST_NAME = "master.m3u8";
         public const string VIDEO_PLAYLIST_NAME = "video.m3u8";
         public const string AUDIO_PLAYLIST_NAME = "audio.m3u8";
+
+        // HLS spec requires UTF-8 without BOM (RFC 8216 §4).
+        public static readonly UTF8Encoding HLS_ENCODING = new (encoderShouldEmitUTF8Identifier: false);
 
         private const int DEFAULT_PLAYLIST_LENGTH = 2048;
         private const int HEADER_PLAYLIST_LENGTH = 256;

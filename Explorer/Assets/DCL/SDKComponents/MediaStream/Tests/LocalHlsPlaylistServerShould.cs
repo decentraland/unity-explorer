@@ -40,8 +40,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
             Assert.That(masterUrl, Is.Not.Null);
             Assert.That(masterUrl, Does.StartWith("http://127.0.0.1:"));
             Assert.That(Get(masterUrl!), Is.EqualTo("#EXTM3U master"));
-            Assert.That(Get(masterUrl!.Replace("master.m3u8", HlsManifestBuilder.VIDEO_PLAYLIST_NAME)), Is.EqualTo("#EXTM3U video"));
-            Assert.That(Get(masterUrl.Replace("master.m3u8", HlsManifestBuilder.AUDIO_PLAYLIST_NAME)), Is.EqualTo("#EXTM3U audio"));
+            Assert.That(Get(masterUrl!.Replace(HlsManifestBuilder.MASTER_PLAYLIST_NAME, HlsManifestBuilder.VIDEO_PLAYLIST_NAME)), Is.EqualTo("#EXTM3U video"));
+            Assert.That(Get(masterUrl.Replace(HlsManifestBuilder.MASTER_PLAYLIST_NAME, HlsManifestBuilder.AUDIO_PLAYLIST_NAME)), Is.EqualTo("#EXTM3U audio"));
         }
 
         [Test]
