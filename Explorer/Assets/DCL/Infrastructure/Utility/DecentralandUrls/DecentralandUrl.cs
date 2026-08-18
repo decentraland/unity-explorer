@@ -165,7 +165,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         MarketplaceServer = 101,
         ShopLink = 102,
 
-        IntercomTickets = 103,
-        IntercomTicketsOrigin = 104,
+        ReferralProgress = 103,
+        IntercomTickets = 104,
+        IntercomTicketsOrigin = 105,
     }
 }

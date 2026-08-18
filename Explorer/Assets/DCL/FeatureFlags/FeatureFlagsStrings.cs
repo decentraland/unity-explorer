@@ -82,6 +82,8 @@ namespace DCL.FeatureFlags
         public const string REPORT_USER = "alfa-report-user";
         public const string POINT_AT = "alfa-point-at";
         public const string NEARBY_VOICE_CHAT = "alfa-nearby-voice-chat";
+        public const string NEARBY_VOICE_CHAT_TIP = "alfa-nearby-voice-chat-tip";
+        public const string NEARBY_VOICE_CHAT_TIP_CONFIG_VARIANT = "config";
         public const string AVATAR_CONTEXT_MENU = "alfa-avatar-context-menu";
         public const string DOUBLE_CLICK_WALK = "alfa-double-click-walk";
         public const string BYTE_WEIGHTED_LOADING_PROGRESS = "alfa-byte-weighted-loading-progress";

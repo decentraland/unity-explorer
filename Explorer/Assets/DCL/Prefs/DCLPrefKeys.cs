@@ -107,6 +107,9 @@ namespace DCL.Prefs
         public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
 
         public const string NEARBY_VOICE_TIP_DISMISSED = "NearbyVoice_TipDismissed";
+        public const string NEARBY_VOICE_TIP_SHOWN_COUNT = "NearbyVoice_TipShownCount";
+        public const string NEARBY_VOICE_TIP_LAST_SHOWN_LAUNCH = "NearbyVoice_TipLastShownLaunch";
+        public const string NEARBY_VOICE_USED = "NearbyVoice_Used";
         public const string NEARBY_VOICE_CHAT_DISABLED = "NearbyVoice_Disabled";
         public const string SETTINGS_MUTE_MIC_IN_BACKGROUND = "Settings_MuteMicInBackground";
 

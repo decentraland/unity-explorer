@@ -65,6 +65,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly IMVCManager mvcManager;
+        private readonly string? referrer;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -113,7 +114,8 @@ namespace DCL.AuthenticationScreenFlow
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            string? referrer = null)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -134,6 +136,7 @@ namespace DCL.AuthenticationScreenFlow
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
             this.mvcManager = mvcManager;
+            this.referrer = referrer;
         }
 
         public override void Dispose()
@@ -180,7 +183,7 @@ namespace DCL.AuthenticationScreenFlow
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
-                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer)
             );
 
             if (enableEmailOTP)
