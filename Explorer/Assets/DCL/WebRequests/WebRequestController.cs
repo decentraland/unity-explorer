@@ -72,6 +72,10 @@ namespace DCL.WebRequests
                 // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
                 using UnityWebRequest wr = request.UnityWebRequest;
 
+                // wr.url mutates to the final hop as redirects are followed; the as-sent form
+                // anchors the downgrade checks below
+                string sentUrl = wr.url;
+
                 try
                 {
                     analyticsContainer.OnBeforeBudgeting(in envelope, request);
@@ -89,6 +93,12 @@ namespace DCL.WebRequests
                         analyticsContainer.OnRequestFinished(request);
                     }
 
+                    // A redirect can hop from an allowed sent URL to forbidden cleartext; a response
+                    // from such a downgraded exchange is never consumed. An exchange sent as
+                    // cleartext on purpose (local-scene-development fetch) is not a downgrade
+                    if (WebRequestUtils.IsCleartextDowngrade(sentUrl, wr.url))
+                        throw new InvalidOperationException($"Insecure redirect blocked: request to {sentUrl} was redirected to {wr.url}");
+
                     if (!realmClock.HasSample)
                         realmClock.TryRecordHttpDate(wr.GetResponseHeader(DATE_HEADER));
 
@@ -104,6 +114,12 @@ namespace DCL.WebRequests
                 catch (UnityWebRequestException exception)
                 {
                     analyticsContainer.OnException(request, exception);
+
+                    // An exchange that downgraded from an allowed sent URL to forbidden cleartext
+                    // fails permanently: never ignored, never retried (a retry would re-send
+                    // headers over cleartext)
+                    if (WebRequestUtils.IsCleartextDowngrade(sentUrl, wr.url))
+                        throw;
 
                     // No result can be concluded in this case
                     if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
