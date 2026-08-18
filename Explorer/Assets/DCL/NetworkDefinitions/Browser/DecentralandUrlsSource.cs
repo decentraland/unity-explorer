@@ -338,6 +338,10 @@ namespace DCL.Browser.DecentralandUrls
 
                 DecentralandUrl.SocialServiceMutes => $"https://social-api.decentraland.{ENV}/v1/mutes",
 
+                // The per-environment proxy only accepts requests whose Origin header matches its environment's web client origin.
+                DecentralandUrl.IntercomTickets => $"https://intercom-proxy.decentraland.{ENV}/intercom/tickets",
+                DecentralandUrl.IntercomTicketsOrigin => $"https://play.decentraland.{ENV}",
+
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
 
