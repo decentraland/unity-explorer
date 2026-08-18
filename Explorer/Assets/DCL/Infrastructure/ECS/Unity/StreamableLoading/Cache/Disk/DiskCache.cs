@@ -124,24 +124,32 @@ namespace ECS.StreamableLoading.Cache.Disk
                     length = (int)stream.Length;
                     data = new SlicedOwnedMemory<byte>(length);
 
-                    // The backing buffer is uninitialized memory and a single ReadAsync may legally
-                    // fill only part of it: keep reading until the whole file is consumed so partial
-                    // reads can never surface garbage bytes as valid cached content.
-                    while (totalRead < length)
+                    try
                     {
-                        int read = await stream.ReadAsync(data.Memory.Slice(totalRead), token);
+                        // The backing buffer is uninitialized memory and a single ReadAsync may legally
+                        // fill only part of it: keep reading until the whole file is consumed so partial
+                        // reads can never surface garbage bytes as valid cached content.
+                        while (totalRead < length)
+                        {
+                            int read = await stream.ReadAsync(data.Memory.Slice(totalRead), token);
 
-                        if (read == 0)
-                            break;
+                            if (read == 0)
+                                break;
 
-                        totalRead += read;
+                            totalRead += read;
+                        }
+                    }
+                    catch
+                    {
+                        data.Dispose();
+                        throw;
                     }
                 }
 
                 if (totalRead != length)
                 {
-                    // The entry cannot be read back in full: it is corrupt. Evict it and report a miss
-                    // so the asset is fetched from its source again instead of being served broken forever.
+                    // The entry cannot be read back in full: it is corrupt. Evict the file so the
+                    // next read does not encounter it, and report a miss.
                     data.Dispose();
                     DeleteNoThrow(path);
 
