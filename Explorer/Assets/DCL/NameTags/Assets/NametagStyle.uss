@@ -303,6 +303,56 @@
     transition-timing-function: ease-out-cubic;
 }
 
+.nametag__scene-tag-container {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    align-self: center;
+    translate: 0 -6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    max-width: 300px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 10px;
+    padding-left: 10px;
+    background-color: var(--dcl-color-shadow);
+    border-top-left-radius: 13px;
+    border-top-right-radius: 13px;
+    border-bottom-right-radius: 13px;
+    border-bottom-left-radius: 13px;
+    transition: opacity var(--message-transition-duration);
+}
+
+.nametag--scene-tag > .nametag__scene-tag-container {
+    display: flex;
+}
+
+.nametag--show-message > .nametag__scene-tag-container {
+    opacity: 0;
+}
+
+/* With the name hidden the chat bubble itself is invisible, so it must not take the plate down with it. */
+.nametag--name-hidden.nametag--show-message > .nametag__scene-tag-container {
+    opacity: 1;
+}
+
+.nametag__scene-tag-label {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nametag--name-hidden > .nametag__pointer-container,
+.nametag--name-hidden > .nametag__background,
+.nametag--name-hidden > .nametag__community-name-container,
+.nametag--name-hidden > .nametag__header,
+.nametag--name-hidden > .nametag__message-container {
+    display: none;
+}
+
 .nametag__debug-label {
     position: absolute;
     top: -26px;

@@ -64,8 +64,7 @@ namespace DCL.Nametags
 
         protected override void Update(float t)
         {
-            if (!nametagsData.showNameTags)
-                return;
+            bool showNameTags = nametagsData.showNameTags;
 
             CameraComponent cameraComponent = playerCamera.GetCameraComponent(World);
 
@@ -73,11 +72,24 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
-            AddTagForPlayerAvatarsQuery(World, cameraComponent);
-            AddTagForNonPlayerAvatarsQuery(World, cameraComponent);
+            // Nothing can gain a name while they are globally disabled, so skip the avatar-wide queries entirely.
+            if (showNameTags)
+            {
+                AddTagForPlayerAvatarsQuery(World, cameraComponent);
+                AddTagForNonPlayerAvatarsQuery(World, cameraComponent);
+            }
+
+            // Holders needed by a scene avatar tag rather than by a name. SceneAvatarTagComponent is part of the
+            // archetype, so these iterate nothing at all while no scene has tagged anyone.
+            AddSceneTagForPlayerAvatarsQuery(World, cameraComponent, showNameTags);
+            AddSceneTagForNonPlayerAvatarsQuery(World, cameraComponent, showNameTags);
+
             UpdateOwnTagQuery(World);
-            UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
+            UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp, showNameTags);
+            UpdateSceneTaggedElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp, showNameTags);
             ProcessChatBubbleComponentsQuery(World);
+            ProcessSceneAvatarTagsQuery(World);
+            RemoveOrphanSceneAvatarTagsQuery(World);
             UpdateNametagSpeakingStateQuery(World);
         }
 
@@ -87,19 +99,13 @@ namespace DCL.Nametags
         private void AddTagForPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
-            if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
-                return;
-
-            if (avatarShape.HiddenByModifierArea ||
-                avatarShape.NameTagHiddenByModifierArea ||
-                partitionComponent.IsBehind ||
-                (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) ||
-                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR))
+            if (avatarShape.NameTagHiddenByModifierArea
+                || !CanAddTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             MarkVoiceChatBadgeDirty(e);
-            NametagHolder nametagHolder = CreateNameTag(in avatarShape, profile);
-            World.Add(e, nametagHolder);
+            MarkSceneAvatarTagDirty(e);
+            AddNameTag(e, in avatarShape, nameVisible: true, profile);
         }
 
         [Query]
@@ -108,20 +114,48 @@ namespace DCL.Nametags
         private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
-                return;
-
-            if (avatarShape.HiddenByModifierArea ||
-                avatarShape.NameTagHiddenByModifierArea ||
-                partitionComponent.IsBehind ||
-                NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR) ||
-                string.IsNullOrEmpty(avatarShape.Name))
+            if (avatarShape.NameTagHiddenByModifierArea
+                || string.IsNullOrEmpty(avatarShape.Name)
+                || !CanAddTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
                 return;
 
             MarkVoiceChatBadgeDirty(e);
-            NametagHolder nametagHolder = CreateNameTag(in avatarShape);
-            World.Add(e, nametagHolder);
+            MarkSceneAvatarTagDirty(e);
+            AddNameTag(e, in avatarShape, nameVisible: true);
         }
+
+        [Query]
+        [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
+        [All(typeof(AvatarBase))]
+        private void AddSceneTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in bool showNameTags, Entity e, in AvatarShapeComponent avatarShape,
+            in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile, ref SceneAvatarTagComponent sceneTag)
+        {
+            if (sceneTag.IsRemoving || !CanAddTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
+                return;
+
+            MarkVoiceChatBadgeDirty(e);
+            sceneTag.IsDirty = true;
+            AddNameTag(e, in avatarShape, showNameTags && !avatarShape.NameTagHiddenByModifierArea, profile);
+        }
+
+        [Query]
+        [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
+        [All(typeof(PBAvatarShape), typeof(AvatarBase))]
+        private void AddSceneTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in bool showNameTags, Entity e, in AvatarShapeComponent avatarShape,
+            in CharacterTransform characterTransform, in PartitionComponent partitionComponent, ref SceneAvatarTagComponent sceneTag)
+        {
+            if (sceneTag.IsRemoving || !CanAddTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
+                return;
+
+            MarkVoiceChatBadgeDirty(e);
+            sceneTag.IsDirty = true;
+            AddNameTag(e, in avatarShape, showNameTags && !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name));
+        }
+
+        private bool CanAddTag(in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
+            in CharacterTransform characterTransform, in PartitionComponent partitionComponent) =>
+            (includeGhosts || avatarShape.InstantiatedWearables.Count > 0)
+            && !ShouldCullTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent);
 
         // The pool resets transient visual state on Release, so a fresh holder always starts clean.
         // Re-dirty any existing voice chat badge so UpdateNametagSpeakingState re-applies the current state to the new holder,
@@ -131,6 +165,15 @@ namespace DCL.Nametags
             ref VoiceChatNametagComponent voiceChat = ref World.TryGetRef<VoiceChatNametagComponent>(e, out bool exists);
             if (exists)
                 voiceChat.IsDirty = true;
+        }
+
+        // Same rationale as MarkVoiceChatBadgeDirty: a re-acquired holder starts with the plate hidden,
+        // so ProcessSceneAvatarTags must re-apply the current tag to it.
+        private void MarkSceneAvatarTagDirty(Entity e)
+        {
+            ref SceneAvatarTagComponent sceneTag = ref World.TryGetRef<SceneAvatarTagComponent>(e, out bool exists);
+            if (exists)
+                sceneTag.IsDirty = true;
         }
 
         [Query]
@@ -148,6 +191,34 @@ namespace DCL.Nametags
             nametagHolder.Nametag.DisplayMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.RecipientValidatedName, chatBubbleComponent.RecipientWalletId, chatBubbleComponent.RecipientNameColor, chatBubbleComponent.IsCommunityMessage, chatBubbleComponent.CommunityName);
 
             chatBubbleComponent.IsDirty = false;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void ProcessSceneAvatarTags(Entity e, in NametagHolder nametagHolder, ref SceneAvatarTagComponent sceneTag)
+        {
+            if (sceneTag.IsRemoving)
+            {
+                nametagHolder.Nametag.HideSceneAvatarTag();
+                World.Remove<SceneAvatarTagComponent>(e);
+                return;
+            }
+
+            if (!sceneTag.IsDirty)
+                return;
+
+            nametagHolder.Nametag.SetSceneAvatarTag(sceneTag.Text, sceneTag.TextColor, sceneTag.BackgroundColor);
+            sceneTag.IsDirty = false;
+        }
+
+        // A tag flagged for removal on an entity that currently has no holder (culled by distance, behind camera)
+        // would otherwise linger forever, as ProcessSceneAvatarTags only sees entities that do have one.
+        [Query]
+        [None(typeof(NametagHolder), typeof(DeleteEntityIntention))]
+        private void RemoveOrphanSceneAvatarTags(Entity e, in SceneAvatarTagComponent sceneTag)
+        {
+            if (sceneTag.IsRemoving)
+                World.Remove<SceneAvatarTagComponent>(e);
         }
 
         [Query]
@@ -173,23 +244,60 @@ namespace DCL.Nametags
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
+        [None(typeof(DeleteEntityIntention), typeof(SceneAvatarTagComponent))]
+        private void UpdateElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, [Data] in bool showNameTags, Entity e,
             NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
-            if (avatarShape.HiddenByModifierArea
+            // Without a scene avatar tag the name is the only reason for this holder to exist.
+            if (!showNameTags
                 || avatarShape.NameTagHiddenByModifierArea
-                || partitionComponent.IsBehind
-                || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR)
-                || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
-                || World.Has<HiddenPlayerComponent>(e))
+                || ShouldCullTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
             {
-                nametagHolderPool.Release(nametagHolder);
-                World.Remove<NametagHolder>(e);
+                ReleaseTag(e, nametagHolder);
                 return;
             }
 
+            nametagHolder.Nametag.NameVisible = true;
+            UpdateTagTransform(nametagHolder, e, in avatarBase, in characterTransform, in camera, fovScaleFactor, cameraForward, cameraUp);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateSceneTaggedElementTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, [Data] in bool showNameTags, Entity e,
+            NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
+            in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape, in SceneAvatarTagComponent sceneTag)
+        {
+            bool nameVisible = showNameTags && !avatarShape.NameTagHiddenByModifierArea;
+
+            if ((!nameVisible && sceneTag.IsRemoving)
+                || ShouldCullTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
+            {
+                ReleaseTag(e, nametagHolder);
+                return;
+            }
+
+            nametagHolder.Nametag.NameVisible = nameVisible;
+            UpdateTagTransform(nametagHolder, e, in avatarBase, in characterTransform, in camera, fovScaleFactor, cameraForward, cameraUp);
+        }
+
+        private bool ShouldCullTag(in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
+            in CharacterTransform characterTransform, in PartitionComponent partitionComponent) =>
+            avatarShape.HiddenByModifierArea
+            || partitionComponent.IsBehind
+            || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR)
+            || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
+            || World.Has<HiddenPlayerComponent>(e);
+
+        private void ReleaseTag(Entity e, NametagHolder nametagHolder)
+        {
+            nametagHolderPool.Release(nametagHolder);
+            World.Remove<NametagHolder>(e);
+        }
+
+        private void UpdateTagTransform(NametagHolder nametagHolder, Entity e, in AvatarBase avatarBase, in CharacterTransform characterTransform,
+            in CameraComponent camera, float fovScaleFactor, float3 cameraForward, float3 cameraUp)
+        {
             Vector3 nametagPosition = avatarBase.GetAdaptiveNametagPosition();
 
             if (World.Has<GliderPropEnabled>(e))
@@ -222,13 +330,14 @@ namespace DCL.Nametags
             nametagHolder.Nametag.style.opacity = opacity;
         }
 
-        private NametagHolder CreateNameTag(in AvatarShapeComponent avatarShape, Profile? profile = null)
+        private void AddNameTag(Entity e, in AvatarShapeComponent avatarShape, bool nameVisible, Profile? profile = null)
         {
             NametagHolder nametagHolder = nametagHolderPool.Get();
 
             TryRefreshNametag(nametagHolder, in avatarShape, profile);
+            nametagHolder.Nametag.NameVisible = nameVisible;
 
-            return nametagHolder;
+            World.Add(e, nametagHolder);
         }
 
         private void TryRefreshNametag(NametagHolder nametagHolder, in AvatarShapeComponent avatarShape, Profile? profile)

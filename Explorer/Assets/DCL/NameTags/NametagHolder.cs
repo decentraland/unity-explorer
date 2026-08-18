@@ -16,8 +16,13 @@ namespace DCL.Nametags
         public void ResetTransientVisualState()
         {
             if (Nametag != null)
+            {
                 Nametag.VoiceChat = Nametag.Speaking = Nametag.Hushed =
-                    Nametag.ShowMessage = Nametag.DM = Nametag.Mention = Nametag.Community = false;
+                    Nametag.ShowMessage = Nametag.DM = Nametag.Mention = Nametag.Community =
+                        Nametag.SceneAvatarTagVisible = false;
+
+                Nametag.NameVisible = true;
+            }
         }
     }
 }
