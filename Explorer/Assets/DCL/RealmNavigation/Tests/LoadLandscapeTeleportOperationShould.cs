@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.RealmNavigation;
 using DCL.Utilities;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
@@ -22,9 +21,9 @@ namespace DCL.RealmNavigation.TeleportOperations.Tests
     [TestFixture]
     public class LoadLandscapeTeleportOperationShould
     {
-        private ILoadingStatus loadingStatus;
-        private ILandscape landscape;
-        private CancellationTokenSource cts;
+        private ILoadingStatus loadingStatus = null!;
+        private ILandscape landscape = null!;
+        private CancellationTokenSource cts = null!;
 
         [SetUp]
         public void SetUp()
