@@ -29,6 +29,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string ANALYTICS_ABANDONED = "abandoned";
         private const string PACKS_LOAD_FAILED_REQUEST = "request_failed";
         private const string PACKS_LOAD_FAILED_EMPTY = "empty_response";
+        private const string PURCHASE_CANCELLED_TEXT = "Purchase cancelled — you were not charged.";
 
         private readonly ICreditsTopUpService topUpService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
@@ -306,7 +307,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                     viewInstance.RetryButton.gameObject.SetActive(allowRetry);
                     break;
                 case CreditsTopUpStage.Abandoned:
-                    viewInstance.FailedReasonText.text = "Purchase cancelled — you were not charged.";
+                    viewInstance.FailedReasonText.text = PURCHASE_CANCELLED_TEXT;
                     viewInstance.RetryButton.gameObject.SetActive(true);
                     break;
             }
