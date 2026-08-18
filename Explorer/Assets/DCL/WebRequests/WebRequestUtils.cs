@@ -176,11 +176,10 @@ namespace DCL.WebRequests
         ///     Client-side transport-security policy, standing in for the player-level insecure-http
         ///     block (which is global and cannot exempt loopback): cleartext http is permitted to
         ///     loopback hosts only (local preview servers, sidecars); http to any other host is
-        ///     upgraded to https. Applied where a policed URL is resolved (media resolution, sidecar
-        ///     realm root) and to the wire URL of signed requests — never to URLs embedded in a
-        ///     request as data, and never to unsigned wire URLs, whose cleartext scheme is a
-        ///     module-level decision (local-scene-development fetch). Non-http URLs pass through
-        ///     unchanged (same reference).
+        ///     upgraded to https. Binds on the wire URL of every envelope whose request did not opt
+        ///     into cleartext (<see cref="CommonArguments.AllowInsecureCleartext" />) and where a
+        ///     policed infra URL is resolved (media resolution, sidecar realm root) — never to URLs
+        ///     embedded in a request as data. Non-http URLs pass through unchanged (same reference).
         /// </summary>
         public static string EnforceSecureScheme(string url) =>
             IsForbiddenCleartext(url)

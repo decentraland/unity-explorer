@@ -12,32 +12,45 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Tests
 {
-    // Transport-security policy invariants: cleartext http is loopback-only where the policy
-    // binds — at infra URL-resolution sites (media resolution, sidecar realm root) and on the
-    // wire URL of signed requests (the identity auth chain never travels over forbidden
-    // cleartext). Unsigned wire URLs pass through the envelope unchanged: their scheme is a
-    // module-level decision (local-scene-development fetch permits cleartext to any host).
+    // Transport-security policy invariants: cleartext http is loopback-only, enforced on the
+    // wire URL of every envelope — signed and unsigned alike — and at infra URL-resolution
+    // sites (media resolution, sidecar realm root). The single exemption is an explicit
+    // per-request opt-in (CommonArguments.AllowInsecureCleartext), used only by the
+    // local-scene-development scene fetch, whose own module gate vets the dev-mode case.
     // The redirect guard blocks only mid-flight downgrades, and the player-level
     // insecureHttpOption stays AlwaysAllowed so the client-side policy is the single
-    // enforcement point.
+    // enforcement point — a default-deny policy is what justifies that setting.
     public class InsecureSchemePolicyShould
     {
         private const string MEDIA_CONVERTER_TEMPLATE = "https://metamorph-api.decentraland.org/convert?url={0}";
 
+        [TestCase("http://192.168.1.50:8000/api", "https://192.168.1.50:8000/api")]
+        [TestCase("http://peer.decentraland.org/x", "https://peer.decentraland.org/x")]
+        public void UpgradeNonLoopbackHttpToHttpsWhenUnsigned(string url, string expected)
+        {
+            // Unsigned envelope traffic (textures, asset bundles, catalyst content, thumbnails)
+            // gets the same default-deny enforcement as signed traffic
+            Assert.That(UrlAfterEnvelopeInitialization(url), Is.EqualTo(UnityCanonicalUrl(expected)));
+        }
+
         [TestCase("http://192.168.1.50:8000/api")]
         [TestCase("http://peer.decentraland.org/x")]
-        public void PassNonLoopbackHttpThroughUnchangedWhenUnsigned(string url)
+        public void PassNonLoopbackHttpThroughUnchangedWhenCleartextAllowed(string url)
         {
-            // A local-scene-development scene fetch is an unsigned request whose cleartext
-            // scheme is the fetch module's own vetted decision; the envelope must not rewrite it
-            Assert.That(UrlAfterEnvelopeInitialization(url), Is.EqualTo(UnityCanonicalUrl(url)));
+            // The local-scene-development scene fetch opts into cleartext explicitly; the
+            // envelope must not rewrite a request that carries the opt-in
+            Assert.That(
+                UrlAfterEnvelopeInitialization(url, allowInsecureCleartext: true),
+                Is.EqualTo(UnityCanonicalUrl(url)));
         }
 
         [Test]
         public void UpgradeNonLoopbackHttpToHttpsWhenSigned()
         {
+            // Enforcement precedes signing, so the signature covers the upgraded URL and the
+            // auth chain never travels over forbidden cleartext
             Assert.That(
-                UrlAfterEnvelopeInitialization("http://peer.decentraland.org/x", new WebRequestSignInfo(string.Empty)),
+                UrlAfterEnvelopeInitialization("http://peer.decentraland.org/x", signInfo: new WebRequestSignInfo(string.Empty)),
                 Is.EqualTo(UnityCanonicalUrl("https://peer.decentraland.org/x")));
         }
 
@@ -46,17 +59,23 @@ namespace DCL.WebRequests.Tests
         public void PassLoopbackHttpThroughUnchangedWhenSigned(string url)
         {
             Assert.That(
-                UrlAfterEnvelopeInitialization(url, new WebRequestSignInfo(string.Empty)),
+                UrlAfterEnvelopeInitialization(url, signInfo: new WebRequestSignInfo(string.Empty)),
                 Is.EqualTo(UnityCanonicalUrl(url)));
         }
 
-        [TestCase("http://127.0.0.1:8000/content/contents/bafkreib")]
-        [TestCase("http://127.0.0.5:8000/x")]
-        [TestCase("http://localhost:8001/x")]
-        [TestCase("http://[::1]:8000/x")]
-        public void PassLoopbackHttpThroughUnchanged(string url)
+        [Test]
+        public void PassLoopbackHttpThroughUnchanged(
+            [Values(
+                "http://127.0.0.1:8000/content/contents/bafkreib",
+                "http://127.0.0.5:8000/x",
+                "http://localhost:8001/x",
+                "http://[::1]:8000/x")]
+            string url,
+            [Values(false, true)] bool allowInsecureCleartext)
         {
-            Assert.That(UrlAfterEnvelopeInitialization(url), Is.EqualTo(UnityCanonicalUrl(url)));
+            Assert.That(
+                UrlAfterEnvelopeInitialization(url, allowInsecureCleartext: allowInsecureCleartext),
+                Is.EqualTo(UnityCanonicalUrl(url)));
         }
 
         [TestCase("https://peer.decentraland.org/lambdas/profiles")]
@@ -67,13 +86,13 @@ namespace DCL.WebRequests.Tests
         }
 
         [Test]
-        public void PassNonConvertedTextureUrlThroughUnchangedAtTheWire()
+        public void UpgradeNonConvertedTextureUrlAtTheWire()
         {
             const string HTTP_URL = "http://textures.example.com/a.png";
 
             Assert.That(
                 TextureUrlAfterEnvelopeInitialization(HTTP_URL, ktxEnabled: false),
-                Is.EqualTo(UnityCanonicalUrl(HTTP_URL)));
+                Is.EqualTo(UnityCanonicalUrl("https://textures.example.com/a.png")));
         }
 
         [Test]
@@ -146,11 +165,11 @@ namespace DCL.WebRequests.Tests
         ///     (WebRequestController.SendAsync -> InitializedWebRequest) and returns the URL the
         ///     UnityWebRequest would actually be sent with. The request is never sent.
         /// </summary>
-        private static string UrlAfterEnvelopeInitialization(string url, WebRequestSignInfo? signInfo = null)
+        private static string UrlAfterEnvelopeInitialization(string url, WebRequestSignInfo? signInfo = null, bool allowInsecureCleartext = false)
         {
             using var envelope = new RequestEnvelope<GenericGetRequest, GenericGetArguments>(
                 GenericGetRequest.Initialize,
-                new CommonArguments(URLAddress.FromString(url)),
+                new CommonArguments(URLAddress.FromString(url), allowInsecureCleartext: allowInsecureCleartext),
                 new GenericGetArguments(),
                 CancellationToken.None,
                 ReportData.UNSPECIFIED,

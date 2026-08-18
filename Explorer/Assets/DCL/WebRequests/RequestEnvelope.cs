@@ -98,18 +98,20 @@ namespace DCL.WebRequests
             TWebRequest request = initializeRequest(CommonArguments.URL, ref args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
 
-            if (signInfo.HasValue)
+            if (!CommonArguments.AllowInsecureCleartext)
             {
-                // The identity auth chain attached below never travels over forbidden cleartext:
-                // a signed request's wire URL is secure-enforced before signing. Unsigned wire
-                // URLs are not policed here — their scheme policy binds at the resolution site
-                // (infra URLs) or in the issuing module (scene fetch)
+                // Secure-scheme enforcement runs on the wire URL of every request — signed and
+                // unsigned alike — except those that explicitly opted into cleartext
+                // (local-scene-development scene fetch). Default-deny at the app level is the
+                // property that lets the player insecureHttpOption stay AlwaysAllowed. It runs
+                // before AssignHeaders so a signed request's signature covers the upgraded URL,
+                // and the identity auth chain never travels over forbidden cleartext.
                 string wireUrl = unityWebRequest.url;
                 string secureUrl = WebRequestUtils.EnforceSecureScheme(wireUrl);
 
                 if (!ReferenceEquals(wireUrl, secureUrl))
                 {
-                    ReportHub.LogWarning(ReportData, $"Cleartext http on a signed request upgraded to https: {wireUrl}");
+                    ReportHub.LogWarning(ReportData, $"Cleartext http to a non-loopback host upgraded to https: {wireUrl}");
                     unityWebRequest.url = secureUrl;
                 }
             }

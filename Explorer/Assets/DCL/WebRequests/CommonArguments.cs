@@ -19,12 +19,21 @@ namespace DCL.WebRequests
         public readonly int Timeout;
         public readonly RetryPolicy RetryPolicy;
 
+        /// <summary>
+        ///     Cleartext http to any host is permitted for this request only when set. Used solely
+        ///     by the local-scene-development scene fetch, whose own module gate already vets the
+        ///     dev-mode case; every other request keeps the default and gets the secure-scheme
+        ///     enforcement.
+        /// </summary>
+        public readonly bool AllowInsecureCleartext;
+
         [JsonConstructor]
-        public CommonArguments(URLAddress url, RetryPolicy? retryPolicy = null, int timeout = DEFAULT_TIMEOUT)
+        public CommonArguments(URLAddress url, RetryPolicy? retryPolicy = null, int timeout = DEFAULT_TIMEOUT, bool allowInsecureCleartext = false)
         {
             URL = url;
             Timeout = timeout;
             RetryPolicy = retryPolicy ?? RetryPolicy.DEFAULT;
+            AllowInsecureCleartext = allowInsecureCleartext;
         }
 
         public static implicit operator CommonArguments(URLAddress url) =>
