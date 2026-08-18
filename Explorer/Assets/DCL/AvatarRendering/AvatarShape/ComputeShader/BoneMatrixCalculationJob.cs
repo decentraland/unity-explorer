@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     [BurstCompile]
     public struct BoneMatrixCalculationJob : IJobParallelFor, IDisposable
     {
-        private readonly int boneCount;
+        private readonly int boneStride;
 
         [NativeDisableParallelForRestriction]
         private NativeArray<float4x4> bonesMatricesResult;
@@ -20,14 +20,17 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         [NativeDisableParallelForRestriction] public NativeArray<bool> UpdateAvatar;
 
+        [ReadOnly] [NativeDisableParallelForRestriction] public NativeArray<int> PerAvatarBoneCount;
+
         public NativeArray<float4x4> BonesMatricesResult => bonesMatricesResult;
 
-        public BoneMatrixCalculationJob(int boneCount, int bonesPerAvatarLength, NativeArray<float4x4> boneWorldMatrixArray)
+        public BoneMatrixCalculationJob(int boneStride, int bonesPerAvatarLength, NativeArray<float4x4> boneWorldMatrixArray)
         {
-            this.boneCount = boneCount;
+            this.boneStride = boneStride;
             bonesMatricesResult = new NativeArray<float4x4>(bonesPerAvatarLength, Allocator.Persistent);
             AvatarTransform = default;
             UpdateAvatar = default;
+            PerAvatarBoneCount = default;
 
             this.boneWorldMatrixArray = boneWorldMatrixArray;
         }
@@ -45,9 +48,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 return;
 
             float4x4 avatarMatrix = AvatarTransform[avatarIdx];
-            int offset = avatarIdx * boneCount;
+            int offset = avatarIdx * boneStride;
+            int count = math.min(PerAvatarBoneCount[avatarIdx], boneStride);
 
-            for (int b = 0; b < boneCount; b++)
+            for (int b = 0; b < count; b++)
                 bonesMatricesResult[offset + b] = math.mul(avatarMatrix, boneWorldMatrixArray[offset + b]);
         }
     }

@@ -87,15 +87,15 @@ namespace DCL.PluginSystem.Global
                     panelView.gameObject.SetActive(false);
                     return panelView;
                 },
-                mainUIView.SidebarView.marketplaceCreditsButton,
+                mainUIView.SidebarView.MarketplaceCreditsButton,
                 webBrowser,
                 inputBlock,
                 marketplaceCreditsAPIClient,
                 selfProfile,
                 webRequestController,
                 mvcManager,
-                mainUIView.SidebarView.marketplaceCreditsButtonAnimator,
-                mainUIView.SidebarView.marketplaceCreditsButtonAlertMark,
+                mainUIView.SidebarView.MarketplaceCreditsButtonAnimator,
+                mainUIView.SidebarView.MarketplaceCreditsButtonAlertMark,
                 realmData,
                 web3IdentityCache,
                 loadingStatus,

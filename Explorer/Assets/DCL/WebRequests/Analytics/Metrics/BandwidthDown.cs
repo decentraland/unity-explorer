@@ -22,7 +22,7 @@ namespace DCL.WebRequests.Analytics.Metrics
         {
             if (request.UnityWebRequest.result == UnityWebRequest.Result.Success)
             {
-                bandwidth += (request.UnityWebRequest.downloadedBytes);
+                bandwidth += request.UnityWebRequest.downloadedBytes;
             }
         }
     }

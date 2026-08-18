@@ -97,7 +97,7 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must still require a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen must still require a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES), "multi-instance must still require a loopback realm");
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must stay dropped for every realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive without a realm: it is not realm-gated");
         }
 
         [Test]
@@ -197,21 +197,18 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP_PORT), "mcp-port must be dropped when the link carries no realm at all");
         }
 
-        public void DeepLinkKeepsSceneConsoleForLoopbackRealm()
+        // scene-console is always permitted: creators and QA need the scene log console against production realms and
+        // worlds, and it unlocks no capability (read-only view of logs the scene already emits; the full debug panel
+        // still needs the never-permitted `debug`).
+        [TestCase("decentraland://?realm=http://127.0.0.1:8000&scene-console=true", TestName = "loopback realm")]
+        [TestCase("decentraland://?realm=https://peer.decentraland.org&scene-console=true", TestName = "production catalyst realm")]
+        [TestCase("decentraland://?realm=other-world.dcl.eth&scene-console=true", TestName = "non-whitelisted world realm")]
+        [TestCase("decentraland://?scene-console=true", TestName = "no realm")]
+        public void DeepLinkKeepsSceneConsoleForEveryRealm(string deepLink)
         {
-            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=http://127.0.0.1:8000&scene-console=true");
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(deepLink);
 
-            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for a loopback (local dev) realm");
-        }
-
-        [Test]
-        public void DeepLinkDropsSceneConsoleForRemoteRealm()
-        {
-            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=https://peer.decentraland.org&scene-console=true");
-
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a non-whitelisted remote realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for every realm");
         }
 
         [Test]
@@ -222,12 +219,13 @@ namespace Global.AppArgs.Tests
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&scene-console=true");
+                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&mcp=true&measure-loading-time=true");
 
             // Assert
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene must survive for a whitelisted world realm");
             Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv must survive for a whitelisted world realm");
-            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for a whitelisted world realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MCP), "mcp must survive for a whitelisted world realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must survive for a whitelisted world realm — the QA loading-benchmark flow targets a whitelisted world");
         }
 
         [Test]
@@ -252,11 +250,11 @@ namespace Global.AppArgs.Tests
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=other-world.dcl.eth&local-scene=true&scene-console=true");
+                "decentraland://?realm=other-world.dcl.eth&local-scene=true&mcp=true");
 
             // Assert
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped for a world that is not whitelisted");
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a world that is not whitelisted");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP), "mcp must be dropped for a world that is not whitelisted");
         }
 
         // IsRealmWhitelisted gates BOTH the whitelisted-realm dev params and skipping the realm-change consent prompt
@@ -397,6 +395,24 @@ namespace Global.AppArgs.Tests
                 "decentraland://?realm=https://peer.decentraland.org&local-scene=true&local-ab=true");
 
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_AB), "local-ab must be dropped for a non-loopback (remote) realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsMeasureLoadingTimeForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&measure-loading-time=true");
+
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must survive for a loopback (local dev) realm");
+        }
+
+        [Test]
+        public void DeepLinkDropsMeasureLoadingTimeForRemoteRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&measure-loading-time=true");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must be dropped for a non-whitelisted realm — it suppresses the sign-in screen and quits the client when no identity is cached");
         }
     }
 }

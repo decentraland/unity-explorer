@@ -92,6 +92,14 @@ on:
           - both
           - windows-only
           - macos-only
+      install_source:
+        description: 'Install source baked into the build'
+        required: true
+        default: 'launcher'
+        type: choice
+        options:
+          - launcher
+          - epic
   workflow_call:
     inputs:
       profile:
@@ -201,7 +209,7 @@ jobs:
   prebuild:
     name: Prebuild
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     # Skip when PR has 'perf_test' label (only performance tests should run)
     if: |
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
@@ -247,12 +255,24 @@ jobs:
       install_source: ${{ steps.set_defaults.outputs.install_source }}
       targets: ${{ steps.get_targets.outputs.targets }}
     steps:
+      - name: Plan checkout
+        id: plan
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]] || { [[ -z "${{ github.event.inputs.version }}" ]] && [[ -z "${{ inputs.version }}" ]]; }; then
+            echo "checkout=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkout=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout code
+        if: steps.plan.outputs.checkout == 'true'
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          filter: blob:none
 
       - name: Detect changes under Explorer/**
+        if: github.event_name == 'pull_request'
         id: changed_explorer
         uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
         with:
@@ -345,7 +365,7 @@ jobs:
           fi
 
       - name: Debug Commit SHA
-        if: steps.decide.outputs.should_build == 'true'
+        if: steps.decide.outputs.should_build == 'true' && steps.plan.outputs.checkout == 'true'
         run: |
           echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
           echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"
@@ -353,7 +373,7 @@ jobs:
 
       - name: Get version
         id: get_version
-        if: steps.decide.outputs.should_build == 'true' && github.event.inputs.version == '' && inputs.version == ''
+        if: steps.decide.outputs.should_build == 'true' && steps.plan.outputs.checkout == 'true'
         uses: ./.github/actions/version
         with:
           commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
@@ -573,6 +593,7 @@ jobs:
           POLL_TIME: 60
           QUEUE_POLL_TIME: 120
           STALE_POLL_THRESHOLD: 600
+          LOG_STALL_THRESHOLD: 900
           QUEUE_TIMEOUT: 14400
           BUILD_TIMEOUT: 10800
           TARGET: t_${{ matrix.target }}
@@ -599,6 +620,19 @@ jobs:
           PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
 
+      # Must run before any always() log/report steps: on cancellation GitHub grants a 5-minute
+      # grace window, and the DELETE that frees the Unity-side queue slot has to win that race
+      # (a large-log upload ahead of it can eat the whole window). Also runs on failure() so an
+      # outer-step timeout doesn't leave a Unity-side build holding a slot.
+      - name: Cancel Unity Cloud build
+        if: ${{ cancelled() || failure() }}
+        timeout-minutes: 2
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+        run: python -u scripts/cloudbuild/build.py --cancel || true
+
       - name: Locate Windows main executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
         run: |
@@ -611,6 +645,17 @@ jobs:
           MAIN_EXE_ABS=$(readlink -f "$MAIN_EXE")
           echo "MAIN_EXE=$MAIN_EXE_ABS" >> "$GITHUB_ENV"
           echo "Located: $MAIN_EXE_ABS"
+
+          # the UUAV media helper (deployed by HelperBuildPostprocessor)
+          # is a user-facing executable and must be signed like the game exe
+          HELPER_EXE=$(find build -path '*/Plugins/x86_64/uuav-helper.exe' | head -n1)
+          if [[ -z "$HELPER_EXE" ]]; then
+            echo "::error::uuav-helper.exe not found in build/ (HelperBuildPostprocessor regression?)"
+            exit 1
+          fi
+          HELPER_EXE_ABS=$(readlink -f "$HELPER_EXE")
+          echo "HELPER_EXE=$HELPER_EXE_ABS" >> "$GITHUB_ENV"
+          echo "Located: $HELPER_EXE_ABS"
 
       - name: Sign Windows executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
@@ -627,6 +672,21 @@ jobs:
           malware_block: 'false'
           environment_name: PROD
 
+      - name: Sign UUAV helper executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        uses: sslcom/esigner-codesign@b7f8ff36fc0de8690fbbab8e5b4421d29802f747 # develop @ 2025-06-23, pinned for supply-chain safety
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ env.HELPER_EXE }}
+          override: 'true'
+          malware_block: 'false'
+          environment_name: PROD
+
       - name: Verify Windows signature
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
         continue-on-error: true
@@ -634,9 +694,11 @@ jobs:
           set -euo pipefail
           sudo apt-get install -y -qq osslsigncode > /dev/null 2>&1
 
-          echo "Verifying signature on $MAIN_EXE ..."
-          osslsigncode verify -in "$MAIN_EXE"
-          echo "::notice::Signature verified for $MAIN_EXE"
+          for exe in "$MAIN_EXE" "$HELPER_EXE"; do
+            echo "Verifying signature on $exe ..."
+            osslsigncode verify -in "$exe"
+            echo "::notice::Signature verified for $exe"
+          done
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'
@@ -877,7 +939,11 @@ jobs:
             echo "[${ARTIFACT_URL}](${ARTIFACT_URL})"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Symbol artifacts have no downstream consumer (Sentry uploads from the on-disk build/
+      # folder below; release drafting attaches only the player zips) — keep them only where a
+      # human might need post-hoc symbolication, and never at default retention.
       - name: Upload debug symbols
+        if: ${{ inputs.is_release_build == true }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.artifact_name }}_debug_symbols
@@ -885,6 +951,7 @@ jobs:
             build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
+          retention-days: 7
           
       - name: Upload debug symbols to Sentry
         if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' }}
@@ -899,22 +966,22 @@ jobs:
             --project "$SENTRY_PROJECT" \
             "build"
 
-      # Will run always (even if failing)
+      # Runs even on failure, but only once a log actually exists (a run cancelled in-queue
+      # never writes one, and a guaranteed-failing upload would burn the cancellation grace window).
       - name: Upload cloud logs
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
           if-no-files-found: error
 
-      # Will run always (even if failing)
       - name: Print cloud logs
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         run: cat unity_cloud_log.log
 
       - name: Extract and display errors
-        if: always()
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         run: |
           echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
           grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
@@ -930,15 +997,6 @@ jobs:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
           if-no-files-found: warn
-
-      # Also runs on failure() so an outer-step timeout doesn't leave a Unity-side build holding a slot.
-      - name: Cancel Unity Cloud build
-        if: ${{ cancelled() || failure() }}
-        env:
-          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
-          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
-          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-        run: python -u scripts/cloudbuild/build.py --cancel || true
 
   build-gate:
     name: Build Gate (Windows + macOS)

@@ -1,4 +1,4 @@
-﻿#if AV_PRO_PRESENT
+#if false // Stale: targets the pre-MediaFactory API (MediaPlayerComponent.URL, pool-based system ctors); rewrite against MediaFactory/MultiMediaPlayer before re-enabling.
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -6,7 +6,7 @@ using ECS.TestSuite;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
-using RenderHeads.Media.AVProVideo;
+using DCL.AvProSwitch;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
