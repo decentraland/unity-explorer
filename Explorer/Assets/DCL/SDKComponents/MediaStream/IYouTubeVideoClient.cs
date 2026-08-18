@@ -92,7 +92,9 @@ namespace DCL.SDKComponents.MediaStream
 
         // DASH demuxing capability of the active playback backend:
         // - UUAV: FFmpeg's dash demuxer, present in both shipped builds (requires libxml2).
-        // - AVPro: only the WinRT video API on Windows; AVFoundation (macOS) has no DASH support.
+        // - AVPro: only the WinRT video API on Windows; AVFoundation (macOS) has no DASH
+        //   support. Windows answers true unconditionally — diagnostics setups that force
+        //   Media Foundation are knowingly ignored.
         private static bool CurrentBackendSupportsDash()
         {
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
@@ -194,7 +196,7 @@ namespace DCL.SDKComponents.MediaStream
                     HlsManifestBuilder.PlaylistSet loopbackPlaylists = HlsManifestBuilder.Build(
                         videoStream, audioStream, durationSeconds, videoSegments, audioSegments, UUAV_TARGET_SEGMENT_SECONDS);
 
-                    string? masterUrl = LocalHlsPlaylistServer.TryRegister(loopbackPlaylists);
+                    string? masterUrl = LocalHlsPlaylistServer.TryRegister(videoId.Value, loopbackPlaylists);
 
                     if (masterUrl != null)
                         ReportHub.Log(ReportCategory.MEDIA_STREAM,

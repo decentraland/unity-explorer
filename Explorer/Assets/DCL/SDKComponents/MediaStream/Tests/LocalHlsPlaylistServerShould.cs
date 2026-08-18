@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             var playlists = new HlsManifestBuilder.PlaylistSet("#EXTM3U master", "#EXTM3U video", "#EXTM3U audio");
 
-            string? masterUrl = LocalHlsPlaylistServer.TryRegister(playlists);
+            string? masterUrl = LocalHlsPlaylistServer.TryRegister("serve-test", playlists);
 
             Assert.That(masterUrl, Is.Not.Null);
             Assert.That(masterUrl, Does.StartWith("http://127.0.0.1:"));
@@ -45,10 +45,24 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void ReplaceEntryWhenKeyIsReRegistered()
+        {
+            var first = new HlsManifestBuilder.PlaylistSet("#EXTM3U v1", "v", "a");
+            var second = new HlsManifestBuilder.PlaylistSet("#EXTM3U v2", "v", "a");
+
+            string firstUrl = LocalHlsPlaylistServer.TryRegister("replace-test", first)!;
+            string secondUrl = LocalHlsPlaylistServer.TryRegister("replace-test", second)!;
+
+            Assert.That(secondUrl, Is.Not.EqualTo(firstUrl));
+            Assert.That(Get(secondUrl), Is.EqualTo("#EXTM3U v2"));
+            Assert.That(StatusOf(firstUrl), Is.EqualTo(HttpStatusCode.NotFound));
+        }
+
+        [Test]
         public void RejectUnknownTokensAndPlaylistNames()
         {
             var playlists = new HlsManifestBuilder.PlaylistSet("m", "v", "a");
-            string masterUrl = LocalHlsPlaylistServer.TryRegister(playlists)!;
+            string masterUrl = LocalHlsPlaylistServer.TryRegister("reject-test", playlists)!;
 
             string baseUrl = masterUrl[..(masterUrl.LastIndexOf('/') + 1)];
             string serverRoot = masterUrl[..masterUrl.IndexOf('/', "http://".Length)];

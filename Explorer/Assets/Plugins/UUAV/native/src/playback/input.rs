@@ -25,22 +25,6 @@ pub(super) struct Input {
     _cancel: ReadOnlyCancelToken,
 }
 
-/// Inline HLS playlists: the only self-contained carrier with the `file`
-/// protocol off the whitelist.
-const HLS_DATA_URI_PREFIX: &str = "data:application/vnd.apple.mpegurl";
-
-/// FFmpeg's HLS probe rejects playlists whose URL carries neither an .m3u8
-/// extension nor an HLS mime type, and the data: protocol delivers no mime
-/// into the probe — inline playlists must name their demuxer explicitly.
-/// Every other URL keeps normal content probing.
-fn forced_input_format(url: &str) -> *const ff::AVInputFormat {
-    if url.starts_with(HLS_DATA_URI_PREFIX) {
-        unsafe { ff::av_find_input_format(c"hls".as_ptr()) }
-    } else {
-        ptr::null()
-    }
-}
-
 impl Input {
     /// Opens the media and probes its streams. Demuxer I/O is aborted
     /// through `cancel` (see [`interrupt_cb`]); `protocol_whitelist` bounds the
@@ -56,10 +40,11 @@ impl Input {
         // The HLS demuxer's segment-extension heuristic (extension_picky,
         // default on since FFmpeg 7.1) rejects every segment whose URL has no
         // path extension - the normal shape for tokenized CDN media, YouTube's
-        // googlevideo /videoplayback URLs included. It hardens an in-process
-        // parser against format confusion; here the parser already runs
-        // sandboxed on that exact assumption, so the heuristic only costs
-        // legitimate streams.
+        // googlevideo /videoplayback URLs included. Deliberately unscoped:
+        // extensionless segments appear in playlists this layer cannot tell
+        // apart from scene input (YouTube's native HLS manifests among them),
+        // and the heuristic hardens an in-process parser - this one already
+        // runs sandboxed on the assumption it will be compromised.
         opts.set(c"extension_picky", c"0");
 
         let input = unsafe {
@@ -75,12 +60,7 @@ impl Input {
             // avformat_open_input frees the context on failure
             check(
                 "avformat_open_input",
-                ff::avformat_open_input(
-                    &mut fmt,
-                    url_c.as_ptr(),
-                    forced_input_format(url),
-                    opts.as_mut_ptr(),
-                ),
+                ff::avformat_open_input(&mut fmt, url_c.as_ptr(), ptr::null(), opts.as_mut_ptr()),
             )?;
 
             Self {
@@ -185,15 +165,9 @@ mod tests {
     }
 
     #[test]
-    fn inline_hls_playlists_force_the_hls_demuxer() {
-        // Non-null also asserts the linked FFmpeg still ships the hls
-        // demuxer, which inline playlist support silently depends on.
-        assert!(!forced_input_format("data:application/vnd.apple.mpegurl;base64,I0VYVE0zVQ==").is_null());
-    }
-
-    #[test]
-    fn other_urls_keep_content_probing() {
-        assert!(forced_input_format("https://example.com/video.mp4").is_null());
-        assert!(forced_input_format("data:video/mp4;base64,AAAA").is_null());
+    fn hls_demuxer_is_linked() {
+        // The hls demuxer is a build-configuration dependency with no other
+        // assertion — losing it would only surface as silent playback failures.
+        assert!(!unsafe { ff::av_find_input_format(c"hls".as_ptr()) }.is_null());
     }
 }

@@ -29,7 +29,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private static readonly object GATE = new ();
         private static readonly Dictionary<string, HlsManifestBuilder.PlaylistSet> ENTRIES = new ();
-        private static readonly Queue<string> EVICTION_ORDER = new ();
+        private static readonly Dictionary<string, string> TOKEN_BY_KEY = new ();
+        private static readonly Queue<(string Key, string Token)> EVICTION_ORDER = new ();
 
         private static HttpListener? listener;
         private static int port;
@@ -37,20 +38,34 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Registers a playlist set and returns the loopback URL of its master playlist,
         ///     or null when no listener could be started (all candidate ports taken).
+        ///     Re-registering a key replaces its previous entry instead of consuming
+        ///     extra capacity.
         /// </summary>
-        public static string? TryRegister(in HlsManifestBuilder.PlaylistSet playlists)
+        public static string? TryRegister(string key, in HlsManifestBuilder.PlaylistSet playlists)
         {
             lock (GATE)
             {
                 if (!TryEnsureStarted())
                     return null;
 
+                if (TOKEN_BY_KEY.TryGetValue(key, out string? previousToken))
+                    ENTRIES.Remove(previousToken);
+
                 var token = Guid.NewGuid().ToString("N");
                 ENTRIES[token] = playlists;
-                EVICTION_ORDER.Enqueue(token);
+                TOKEN_BY_KEY[key] = token;
+                EVICTION_ORDER.Enqueue((key, token));
 
+                // Replaced registrations leave dead queue pairs behind; dequeuing them is a
+                // no-op on ENTRIES, so keep dequeuing until enough live entries are gone.
                 while (ENTRIES.Count > MAX_ENTRIES)
-                    ENTRIES.Remove(EVICTION_ORDER.Dequeue());
+                {
+                    (string oldKey, string oldToken) = EVICTION_ORDER.Dequeue();
+                    ENTRIES.Remove(oldToken);
+
+                    if (TOKEN_BY_KEY.TryGetValue(oldKey, out string? liveToken) && liveToken == oldToken)
+                        TOKEN_BY_KEY.Remove(oldKey);
+                }
 
                 return $"http://127.0.0.1:{port.ToString()}/{token}/{HlsManifestBuilder.MASTER_PLAYLIST_NAME}";
             }
@@ -60,6 +75,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (listener is { IsListening: true })
                 return true;
+
+            // A dead listener still owns its port; release it before binding a fresh one.
+            listener?.Close();
+            listener = null;
 
             // Deterministic per-attempt ports would collide across Explorer instances;
             // random candidates spread them without any coordination.
@@ -101,10 +120,11 @@ namespace DCL.SDKComponents.MediaStream
             {
                 HttpListenerContext context;
 
-                // Stop/Close parks GetContextAsync into one of these; treat both as shutdown.
+                // Stop/Close parks GetContextAsync into one of these; treat all as shutdown.
                 try { context = await local.GetContextAsync(); }
                 catch (HttpListenerException) { break; }
                 catch (ObjectDisposedException) { break; }
+                catch (InvalidOperationException) { break; }
 
                 try { Serve(context); }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.MEDIA_STREAM); }
@@ -115,7 +135,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             using HttpListenerResponse response = context.Response;
 
-            string? playlist = Lookup(context.Request.Url?.AbsolutePath);
+            // Belt-and-braces on top of the 127.0.0.1-only binding.
+            string? playlist = context.Request.IsLocal
+                ? Lookup(context.Request.Url?.AbsolutePath)
+                : null;
 
             if (playlist == null)
             {
