@@ -23,8 +23,8 @@ namespace SceneRuntime.Factory.Tests
     {
         private readonly ISceneExceptionsHandler sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
 
-        private V8EngineFactory engineFactory;
-        private IWebJsSources webJsSources;
+        private V8EngineFactory engineFactory = null!;
+        private IWebJsSources webJsSources = null!;
 
         [SetUp]
         public void SetUp()
@@ -96,6 +96,26 @@ namespace SceneRuntime.Factory.Tests
 
                 await UniTask.Yield();
                 await sceneRuntime.UpdateScene(0.01f);
+            });
+
+        [UnityTest]
+        public IEnumerator CreateByPathThrowsClearErrorForEmptyUrl() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var factory = new SceneRuntimeFactory(new IRealmData.Fake(), engineFactory, webJsSources);
+                IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
+
+                try
+                {
+                    using SceneRuntimeImpl _ = await factory.CreateByPathAsync(URLAddress.EMPTY,
+                        instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+
+                    Assert.Fail("Expected an exception for an empty scene source URL");
+                }
+                catch (System.ArgumentException e)
+                {
+                    Assert.That(e.ParamName, Is.EqualTo("path"));
+                }
             });
 
         [Test]

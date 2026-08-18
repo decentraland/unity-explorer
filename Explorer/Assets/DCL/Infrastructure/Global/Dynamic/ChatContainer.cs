@@ -219,7 +219,7 @@ namespace Global.Dynamic
                 profileContainer.ThumbnailCache,
                 communitiesContainer.EventBus,
                 voiceChatContainer.VoiceChatOrchestrator,
-                uiShellContainer.MainUIView.SidebarView.unreadMessagesButton.transform,
+                uiShellContainer.MainUIView.SidebarView.UnreadMessagesButton.transform,
                 TranslationSettings,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 bootstrapContainer.DecentralandUrlsSource,

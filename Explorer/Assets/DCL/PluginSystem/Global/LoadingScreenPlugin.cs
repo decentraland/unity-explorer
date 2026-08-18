@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.Global
         {
             SceneLoadingScreenView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LoadingScreenPrefab, ct: ct)).Value;
 
-            ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>.ViewFactoryMethod? authScreenFactory =
+            ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>.ViewFactoryMethod authScreenFactory =
                 SceneLoadingScreenController.CreateLazily(prefab, null);
 
             var unityLocalizationSceneTipsProvider = new UnityLocalizationSceneTipsProvider(LocalizationSettings.StringDatabase, LocalizationSettings.AssetDatabase,
@@ -63,7 +63,7 @@ namespace DCL.PluginSystem.Global
             await unityLocalizationSceneTipsProvider.InitializeAsync(ct);
 
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
-                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock));
+                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock, mvcManager));
 
             loadingStatus.CurrentStage.Subscribe(stage => currentStageBinding.Value = stage.ToString());
             loadingStatus.AssetState.Subscribe(assetState => assetStateBinding.Value = assetState);
