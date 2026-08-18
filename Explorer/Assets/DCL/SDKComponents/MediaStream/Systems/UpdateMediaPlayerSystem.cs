@@ -137,7 +137,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
             {
-                ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
+                ConsumePromise(ref component, sdkComponent is { HasPlaying: true, Playing: true });
                 component.UpdateState();
 
                 // Keep last: may trigger an archetype move that invalidates component's ref.

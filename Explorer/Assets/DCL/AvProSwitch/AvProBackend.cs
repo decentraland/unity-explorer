@@ -10,8 +10,8 @@ namespace DCL.AvProSwitch
     // before it and every forward guards with an inert default.
     public sealed class AvProBackend
     {
-        private static readonly TimeRanges NOT_BUFFERED = new TimeRanges(0);
-        private static readonly TimeRanges BUFFERED = new TimeRanges(1);
+        private static readonly TimeRanges NOT_BUFFERED = new (0);
+        private static readonly TimeRanges BUFFERED = new (1);
 
         private readonly AVPro.MediaPlayer player;
         private readonly AVPro.AudioOutput audioOutput;

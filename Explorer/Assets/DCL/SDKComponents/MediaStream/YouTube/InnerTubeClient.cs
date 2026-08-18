@@ -157,9 +157,9 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
             Exception? lastError = null;
             PlayerResponse fallback = default;
-            bool hasFallback = false;
+            var hasFallback = false;
 
-            for (int i = 0; i < CONFIGS.Length; i++)
+            for (var i = 0; i < CONFIGS.Length; i++)
             {
                 if (ct.IsCancellationRequested) break;
 
@@ -294,7 +294,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             // First caller starts the warm-up; everyone else awaits the shared TCS.
             if (DCLInterlocked.CompareExchange(ref warmupState, 1, 0) == 0)
             {
-                bool cancelled = false;
+                var cancelled = false;
 
                 try
                 {
@@ -365,7 +365,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 try
                 {
                     JToken parsed = JToken.Parse(body);
-                    string? extracted = (string?)parsed?[0]?[2]?[0]?[0]?[13];
+                    var extracted = (string?)parsed?[0]?[2]?[0]?[0]?[13];
 
                     if (!string.IsNullOrEmpty(extracted))
                         visitorData = extracted;
