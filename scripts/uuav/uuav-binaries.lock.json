@@ -144,9 +144,9 @@
           "-C",
           "link-arg=-Wl,-rpath,@loader_path"
         ],
-        "source_digest": "23eeabf361ad469da2d94909ce9971c25c539f084b149c359daab3816c8e9176",
+        "source_digest": "4b25d555dffc36626835298ea0dcaf53d71a5fe186f27837459ebfa0b22a08cc",
         "source_files": 21,
-        "repo_commit": "6f426f8f5f04f0c428db89f123cc05ba9e2a3511"
+        "repo_commit": "03498b5ed90cf1636b48bbb666a67f5a85d6a654"
       },
       "ffmpeg": {
         "provenance": "built-from-source",
@@ -164,12 +164,12 @@
           "15-minute rebuild.",
           "Recompute with verify-binaries.py's build_script_sha256()."
         ],
-        "builder_sha256": "7c2a59d8637fc0288d93fc6b832299c9422669b1647301b6e131b55f2fb6eb0e",
+        "builder_sha256": "7b784b3acfd592e984221979f6fa08cec517695afb9c9ecc2ec7bda1524e4689",
         "configure_expected": [
-          "--disable-doc --disable-libxcb --disable-programs --disable-static --disable-xlib --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
+          "--disable-doc --disable-libxcb --disable-programs --disable-static --disable-xlib --enable-libxml2 --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
         ],
         "configure_observed": [
-          "--disable-doc --disable-libxcb --disable-programs --disable-static --disable-xlib --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
+          "--disable-doc --disable-libxcb --disable-programs --disable-static --disable-xlib --enable-libxml2 --enable-securetransport --enable-shared --enable-videotoolbox --install-name-dir=@rpath"
         ],
         "drift_acknowledged": false,
         "drift_note": "Universal (arm64 + x86_64) from-source LGPL shared build; the shipped dylibs match the recipe."
@@ -177,43 +177,43 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavcodec.62.dylib",
-          "sha256": "69fe9321d941d17544cc7988d08e7333d3c2dd5211cffb7a3017f809aa675f28",
+          "sha256": "64c69699d329fe138dfcb471cf1ee9d003a471428f57966331a73512f63f4221",
           "bytes": 28817024,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavdevice.62.dylib",
-          "sha256": "b606c92ac2c776a2cb605960a27d48b4f0d2b2a46a3e57f70dcff058331d46fb",
+          "sha256": "16efce0c6b57673decea5256f97ee405e442b320eb7e2e76cfd5e0418c9778b8",
           "bytes": 215216,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavfilter.11.dylib",
-          "sha256": "ec9f27500fddc79b0d77bafe7cbe8c2e58e6dcfaa25fcc3e03619388a2ce70f8",
+          "sha256": "88008d92ec0e364cba40a7bb559488e228f67d39c68f0679a1ba30e97e12ceac",
           "bytes": 8443024,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavformat.62.dylib",
-          "sha256": "5f8188f06a85d0b7695c16eb3a393e431c7e8d44e3964f2f95f05920831b59d6",
-          "bytes": 5147888,
+          "sha256": "70462fbbcb90760da12e7db86d0ddd50d290b0725e9641cf28295b7eaf242a88",
+          "bytes": 5248256,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libavutil.60.dylib",
-          "sha256": "ce122001d3421b2db9bb8c8a3529096c51e89b2c2927d04ba4a4d6282c3b7c78",
+          "sha256": "3716c5f01631a805ecd2961ffa821f41233517c99cfeab86997ed087e1901d88",
           "bytes": 1647360,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libswresample.6.dylib",
-          "sha256": "eadcd64bf8ee03625bb7c54bbbffdc12f2905331e46df3133af40b25ada2bf2e",
+          "sha256": "e1e6a98602c9f4241113e008fc9844ddb28ac7b67d601f966c978c4231ba845b",
           "bytes": 318608,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libswscale.9.dylib",
-          "sha256": "72d89cf869b95e69605a389853e62fe6be5b2fe3c7417a523029e00674c19208",
+          "sha256": "14879bda086dfe7c491cac5ac2f4d7d729b63b454b728a384e54e67825b22221",
           "bytes": 2708416,
           "produced_by": "ffmpeg"
         },
@@ -225,14 +225,14 @@
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/libuuav_core.dylib",
-          "sha256": "1ef45f1cb58c353870c59b1ed4c5cf53535633ccadf77dacefe8e2694a119ad1",
-          "bytes": 1265248,
+          "sha256": "038a165d2f0297f2bf974dc5e788089a9786fe3ea0ed0aba978745fc40440d06",
+          "bytes": 1265328,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/macOS/uuav-helper",
-          "sha256": "1d6cf17cb3ff8fba0171afbac6f8518a1e9c435babe8e776f008abf7548eb30f",
-          "bytes": 1713456,
+          "sha256": "5fb8aaa0263edd4aab2e320b479378faf018b9a3c0a387becb5d97e65764f789",
+          "bytes": 1713520,
           "produced_by": "cargo"
         }
       ]
@@ -244,13 +244,13 @@
         "profile": "release",
         "crate_version": "0.3.0",
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-        "source_digest": "23eeabf361ad469da2d94909ce9971c25c539f084b149c359daab3816c8e9176",
+        "source_digest": "4b25d555dffc36626835298ea0dcaf53d71a5fe186f27837459ebfa0b22a08cc",
         "source_files": 21,
-        "repo_commit": "ee42b24e4715054eb0eb71c70a3f677794a1e228",
+        "repo_commit": "03498b5ed90cf1636b48bbb666a67f5a85d6a654",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
-          "gcc": "gcc.exe (Rev5, Built by MSYS2 project) 16.1.0"
+          "gcc": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0"
         }
       },
       "ffmpeg": {
@@ -276,7 +276,7 @@
           "--ar=x86_64-w64-mingw32-gcc-ar --cross-prefix=x86_64-w64-mingw32- --cxx=x86_64-w64-mingw32-g++ --disable-avisynth --disable-debug --disable-frei0r --disable-libdavs2 --disable-libdrm --disable-libdvdnav --disable-libdvdread --disable-libfdk-aac --disable-libpulse --disable-librubberband --disable-libvidstab --disable-libx264 --disable-libx265 --disable-libxavs2 --disable-libxcb --disable-libxvid --disable-static --disable-w32threads --disable-whisper --disable-xlib --enable-amf --enable-chromaprint --enable-cuda-llvm --enable-ffnvcodec --enable-fontconfig --enable-gmp --enable-iconv --enable-libaom --enable-libaribb24 --enable-libaribcaption --enable-libass --enable-libbluray --enable-libdav1d --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libharfbuzz --enable-libjxl --enable-libkvazaar --enable-liblcevc-dec --enable-libmp3lame --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libplacebo --enable-librav1e --enable-librist --enable-libshaderc --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libuavs3d --enable-libvmaf --enable-libvorbis --enable-libvpl --enable-libvpx --enable-libvvenc --enable-libwebp --enable-libxml2 --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-lzma --enable-openal --enable-opencl --enable-pthreads --enable-schannel --enable-sdl2 --enable-shared --enable-vaapi --enable-version3 --enable-vulkan --enable-zlib --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-ldexeflags= --extra-ldflags=-pthread --extra-libs=-lgomp --extra-version=20260731 --nm=x86_64-w64-mingw32-gcc-nm --pkg-config-flags=--static --pkg-config=pkg-config --ranlib=x86_64-w64-mingw32-gcc-ranlib"
         ],
         "configure_observed": [
-          "--ar=x86_64-w64-mingw32-gcc-ar --cross-prefix=x86_64-w64-mingw32- --cxx=x86_64-w64-mingw32-g++ --disable-avisynth --disable-debug --disable-frei0r --disable-libdavs2 --disable-libdrm --disable-libdvdnav --disable-libdvdread --disable-libfdk-aac --disable-libpulse --disable-librubberband --disable-libvidstab --disable-libx264 --disable-libx265 --disable-libxavs2 --disable-libxcb --disable-libxvid --disable-static --disable-w32threads --disable-whisper --disable-xlib --enable-amf --enable-chromaprint --enable-cuda-llvm --enable-ffnvcodec --enable-fontconfig --enable-gmp --enable-iconv --enable-libaom --enable-libaribb24 --enable-libaribcaption --enable-libass --enable-libbluray --enable-libdav1d --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libharfbuzz --enable-libjxl --enable-libkvazaar --enable-liblcevc-dec --enable-libmp3lame --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libplacebo --enable-librav1e --enable-librist --enable-libshaderc --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libuavs3d --enable-libvmaf --enable-libvorbis --enable-libvpl --enable-libvpx --enable-libvvenc --enable-libwebp --enable-libxml2 --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-lzma --enable-openal --enable-opencl --enable-pthreads --enable-schannel --enable-sdl2 --enable-shared --enable-vaapi --enable-version3 --enable-vulkan --enable-zlib --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-ldexeflags= --extra-ldflags=-pthread --extra-libs=-lgomp --extra-version=20260723 --nm=x86_64-w64-mingw32-gcc-nm --pkg-config-flags=--static --pkg-config=pkg-config --ranlib=x86_64-w64-mingw32-gcc-ranlib"
+          "--ar=x86_64-w64-mingw32-gcc-ar --cross-prefix=x86_64-w64-mingw32- --cxx=x86_64-w64-mingw32-g++ --disable-avisynth --disable-debug --disable-frei0r --disable-libdavs2 --disable-libdrm --disable-libdvdnav --disable-libdvdread --disable-libfdk-aac --disable-libpulse --disable-librubberband --disable-libvidstab --disable-libx264 --disable-libx265 --disable-libxavs2 --disable-libxcb --disable-libxvid --disable-static --disable-w32threads --disable-whisper --disable-xlib --enable-amf --enable-chromaprint --enable-cuda-llvm --enable-ffnvcodec --enable-fontconfig --enable-gmp --enable-iconv --enable-libaom --enable-libaribb24 --enable-libaribcaption --enable-libass --enable-libbluray --enable-libdav1d --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libharfbuzz --enable-libjxl --enable-libkvazaar --enable-liblcevc-dec --enable-libmp3lame --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libplacebo --enable-librav1e --enable-librist --enable-libshaderc --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libuavs3d --enable-libvmaf --enable-libvorbis --enable-libvpl --enable-libvpx --enable-libvvenc --enable-libwebp --enable-libxml2 --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-lzma --enable-openal --enable-opencl --enable-pthreads --enable-schannel --enable-sdl2 --enable-shared --enable-vaapi --enable-version3 --enable-vulkan --enable-zlib --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-ldexeflags= --extra-ldflags=-pthread --extra-libs=-lgomp --extra-version=20260731 --nm=x86_64-w64-mingw32-gcc-nm --pkg-config-flags=--static --pkg-config=pkg-config --ranlib=x86_64-w64-mingw32-gcc-ranlib"
         ],
         "drift_acknowledged": false,
         "drift_note": "Stock BtbN win64 lgpl-shared 8.1 build, consumed as-is; only the four DLLs in uuav-helper's import closure ship."
@@ -284,44 +284,44 @@
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/avcodec-62.dll",
-          "sha256": "1b6ed0fec123e7e6aa80cb9ff0c10846b776c12af563da9ac8672224642250ff",
-          "bytes": 70875136,
+          "sha256": "4b9f8f2dcf6ff62f8a3136f31afdd31f90c24625ce8ea618951e356a7a5a8ce2",
+          "bytes": 70876672,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/avformat-62.dll",
-          "sha256": "74eb3e5e5d027cb7f45d4397a141718290393bcaba174490a3bfc1db0e9e5f8f",
+          "sha256": "148cfc25efafb0b63998740685e7789636309bb8a8304cbde3241bda66dbc77b",
           "bytes": 22070784,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/avutil-60.dll",
-          "sha256": "b54823377aa5b422d3ae2360816e44c493203b5569b18ba6272968266b4463b4",
+          "sha256": "93ba0919a68532a718edc8de25c5f4c48a68e5ce3609fd128602c129783fab73",
           "bytes": 2937856,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/swresample-6.dll",
-          "sha256": "60bd370d2e80c777d8cac6383726fced7b8a3d11591502c1f30813c91af02efa",
+          "sha256": "a7a66dffe5a5611ef7f7879ab4def1d9f18eaed5dafcdb0e9ac8191461f4dda5",
           "bytes": 723968,
           "produced_by": "ffmpeg"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav.dll",
-          "sha256": "88c1d7756b5d9015f56bb4b1c843d11e3e37bc1edb2feeb5e0f4656363c5cbe2",
-          "bytes": 1326592,
+          "sha256": "3406936a8dfe0c2477e70960f266babb14a20c213bcae8971edd629724e3d90c",
+          "bytes": 1326080,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav_core.dll",
-          "sha256": "b5f2a65a4d36dbff97029e5517cd9fd3de2119fbbb647213c2e94aff1bb12232",
-          "bytes": 1244672,
+          "sha256": "ef90ec66f2566e18858b53ba10e6e99c709cad85efbc4088f97f30b8eb0a5e02",
+          "bytes": 1244160,
           "produced_by": "cargo"
         },
         {
           "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/x86_64/uuav-helper.exe",
-          "sha256": "c9d5f62a26928b66d8346f3d28c70f64d6711a0c5c0a98c13f0f079f20f546c5",
-          "bytes": 1410560,
+          "sha256": "9f06afac5350d95745920e01bac9429e3cb91f97f9d66e0bfa35d7df3106e326",
+          "bytes": 1409024,
           "produced_by": "cargo"
         }
       ]
