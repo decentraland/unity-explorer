@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -238,6 +239,65 @@ namespace Utility.Tests
             }
         }
 
+        [Test]
+        public async Task ResumeOnTheCallerSynchronizationContextAfterConnecting()
+        {
+            // Arrange
+            // The social/comms RPC transports start their receive loop in the connect continuation,
+            // and that loop hands every incoming message to main-thread-only UI handlers. A connect
+            // issued on a SynchronizationContext (the Unity main thread in production) must therefore
+            // resume back on it, not on the socket's completion thread, or the loop and its handlers
+            // run off the main thread.
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            Task serverTask = ServeUpgradeThenEchoCloseAsync(listener);
+            _ = serverTask.ContinueWith(t => { _ = t.Exception; }, TaskScheduler.Default);
+
+            using var context = new SingleThreadSynchronizationContext();
+            var webSocket = new DCLWebSocket();
+
+            var resumeThreadId = 0;
+            Exception? failure = null;
+
+            try
+            {
+                var done = new TaskCompletionSource<bool>();
+
+                // Drive the connect from the dedicated context thread and record where it resumes.
+                context.Post(_ =>
+                {
+                    ConnectAndCaptureAsync().Forget();
+                    return;
+
+                    async UniTaskVoid ConnectAndCaptureAsync()
+                    {
+                        try
+                        {
+                            await webSocket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/"), CancellationToken.None);
+                            resumeThreadId = Thread.CurrentThread.ManagedThreadId;
+                        }
+                        catch (Exception e) { failure = e; }
+                        finally { done.TrySetResult(true); }
+                    }
+                }, null);
+
+                await AwaitWithTimeoutAsync(done.Task, "connect on a SynchronizationContext");
+
+                // Assert
+                Assert.That(failure, Is.Null, $"ConnectAsync on a SynchronizationContext must not fault, but threw {failure?.GetType()}: {failure?.Message}");
+                Assert.That(webSocket.State, Is.EqualTo(WebSocketState.Open), "Precondition: the upgrade completed");
+                Assert.That(resumeThreadId, Is.EqualTo(context.ThreadId),
+                    "ConnectAsync must resume on the caller's SynchronizationContext so the receive loop it starts stays on that thread");
+            }
+            finally
+            {
+                webSocket.Dispose();
+                listener.Stop();
+                await Task.WhenAny(serverTask, Task.Delay(TIMEOUT_MS));
+            }
+        }
+
         private static async Task<Exception?> CaptureAsync(Func<UniTask> operation)
         {
             try { await operation(); }
@@ -328,6 +388,42 @@ namespace Utility.Tests
                     throw new IOException("Connection closed mid-frame");
 
                 offset += read;
+            }
+        }
+
+        /// <summary>
+        ///     A pumped SynchronizationContext backed by one dedicated thread, standing in for Unity's
+        ///     single-threaded main-thread context: continuations posted to it run on that one thread,
+        ///     so a test can assert an await resumed on the context it was issued from.
+        /// </summary>
+        private sealed class SingleThreadSynchronizationContext : SynchronizationContext, IDisposable
+        {
+            private readonly BlockingCollection<(SendOrPostCallback callback, object? state)> queue = new ();
+            private readonly Thread thread;
+
+            public int ThreadId => thread.ManagedThreadId;
+
+            public SingleThreadSynchronizationContext()
+            {
+                thread = new Thread(Pump) { IsBackground = true, Name = nameof(SingleThreadSynchronizationContext) };
+                thread.Start();
+            }
+
+            public override void Post(SendOrPostCallback d, object? state) =>
+                queue.Add((d, state));
+
+            public override void Send(SendOrPostCallback d, object? state) =>
+                throw new NotSupportedException();
+
+            public void Dispose() =>
+                queue.CompleteAdding();
+
+            private void Pump()
+            {
+                SetSynchronizationContext(this);
+
+                foreach ((SendOrPostCallback callback, object? state) in queue.GetConsumingEnumerable())
+                    callback(state);
             }
         }
     }

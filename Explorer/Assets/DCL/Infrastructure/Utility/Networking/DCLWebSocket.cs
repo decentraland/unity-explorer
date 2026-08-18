@@ -98,13 +98,18 @@ namespace Utility.Networking
 #else
                 // AttachExternalCancellation completes this await when connectAbort fires even
                 // though the BCL task stays parked; the abandoned task's outcome must not
-                // surface as an unobserved fault. The conversion must not touch the current
-                // SynchronizationContext: the V8 script-invoke thread this runs on has none
-                // that is TaskScheduler-compatible, and
-                // TaskScheduler.FromCurrentSynchronizationContext() throws there (see
-                // DCLSemaphoreSlim.WaitAsync).
+                // surface as an unobserved fault.
+                //
+                // The receive loop that consumes this connection is started in this continuation, so
+                // the continuation must resume on the thread the connect was issued from. A connecting
+                // thread that has a SynchronizationContext (the Unity main thread, whose social/comms
+                // receive loops feed main-thread-only UI) keeps it so the loop stays on that thread; a
+                // connecting thread without one (the V8 script-invoke thread) skips it, since
+                // TaskScheduler.FromCurrentSynchronizationContext() throws with no current context
+                // (see DCLSemaphoreSlim.WaitAsync).
+                bool marshalBackToIssuingContext = SynchronizationContext.Current != null;
                 using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, connectAbort.Token);
-                await ws.ConnectAsync(uri, linked.Token).AsUniTask(useCurrentSynchronizationContext: false).AttachExternalCancellation(linked.Token);
+                await ws.ConnectAsync(uri, linked.Token).AsUniTask(useCurrentSynchronizationContext: marshalBackToIssuingContext).AttachExternalCancellation(linked.Token);
 #endif
             }
             catch (System.Net.WebSockets.WebSocketException e)
