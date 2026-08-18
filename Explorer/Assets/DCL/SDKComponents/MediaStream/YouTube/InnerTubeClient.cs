@@ -126,8 +126,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 clientScreen: "EMBED",
                 includeThirdPartyEmbedUrl: true),
 
-            // Fallback 3: TVHTML5 (Cobalt) — replaces TVHTML5_SIMPLY_EMBEDDED_PLAYER, which
-            // YouTube retired (yt-dlp removed it). May serve ciphered URLs our parser silently
+            // Fallback 3: TVHTML5 (Cobalt). May serve ciphered URLs our parser silently
             // skips — accepted tradeoff for not shipping a JS engine.
             new (
                 clientName: "TVHTML5",

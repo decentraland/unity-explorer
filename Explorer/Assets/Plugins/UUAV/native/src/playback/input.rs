@@ -25,9 +25,8 @@ pub(super) struct Input {
     _cancel: ReadOnlyCancelToken,
 }
 
-/// HLS playlists delivered inline — the only self-contained carrier with the
-/// `file` protocol off the whitelist. Mirrors the media type the Explorer's
-/// HlsManifestBuilder (C#) stamps on the playlists it synthesizes.
+/// Inline HLS playlists: the only self-contained carrier with the `file`
+/// protocol off the whitelist.
 const HLS_DATA_URI_PREFIX: &str = "data:application/vnd.apple.mpegurl";
 
 /// FFmpeg's HLS probe rejects playlists whose URL carries neither an .m3u8

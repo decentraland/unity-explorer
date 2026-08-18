@@ -4,10 +4,10 @@ using AVPro = RenderHeads.Media.AVProVideo;
 namespace DCL.AvProSwitch
 {
     // AVPro path: forwards to the real AVPro MediaPlayer + AudioOutput
-    // components serialized (disabled) on the prefab. AVPro creates its
-    // platform player lazily (Start or first OpenMedia), so the inner
-    // Control/Info/TextureProducer are null until then and every forward
-    // guards with an inert default.
+    // components serialized (disabled) on the prefab. The platform player
+    // only exists from the first OpenMedia (the components stay disabled
+    // until then), so the inner Control/Info/TextureProducer are null
+    // before it and every forward guards with an inert default.
     public sealed class AvProBackend
     {
         private static readonly TimeRanges NOT_BUFFERED = new TimeRanges(0);

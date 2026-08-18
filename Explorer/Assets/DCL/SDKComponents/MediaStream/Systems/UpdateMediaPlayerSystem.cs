@@ -447,8 +447,8 @@ namespace DCL.SDKComponents.MediaStream
 
                 lastOpenMediaTime = currentTime;
 
-                // Synthesized inline (data:) playlists run to hundreds of KB; logging them whole
-                // would flood the console and Sentry breadcrumbs.
+                // Resolved URLs can run very long (googlevideo manifests exceed a KB);
+                // logging them whole floods the console and Sentry breadcrumbs.
                 string resolvedForLog = resolvedAddress.ToString();
 
                 if (resolvedForLog.Length > 160)

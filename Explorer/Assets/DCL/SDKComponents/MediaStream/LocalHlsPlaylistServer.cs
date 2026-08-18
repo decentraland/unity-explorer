@@ -21,9 +21,8 @@ namespace DCL.SDKComponents.MediaStream
         private const string MASTER_PLAYLIST_NAME = "master.m3u8";
         private const string HLS_CONTENT_TYPE = "application/vnd.apple.mpegurl";
 
-        // Entries are tiny strings; the cap only guards against unbounded growth across a
-        // long session. Oldest-first eviction matches resolution order: an evicted entry's
-        // player has long since fetched its playlists (they are read once per OpenMedia).
+        // Entries are tiny strings; the cap only guards against unbounded growth
+        // across a long session.
         private const int MAX_ENTRIES = 64;
 
         private const int PORT_RANGE_START = 41000;

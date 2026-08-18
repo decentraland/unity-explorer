@@ -45,8 +45,7 @@ namespace DCL.SDKComponents.MediaStream
         private const string SYNTH_HLS_DIR_PREFIX = "youtube_hls_";
         private const string MASTER_PLAYLIST_NAME = "master.m3u8";
 
-        // Coarse segments keep the helper's range-request rate far below googlevideo's
-        // burst threshold while retaining ~10s seek granularity.
+        // Balances few, large requests (see HlsManifestBuilder.Coalesce) against seek granularity.
         private const float UUAV_TARGET_SEGMENT_SECONDS = 10f;
 
         // HLS spec requires UTF-8 without BOM (RFC 8216 §4).
@@ -194,10 +193,9 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (MediaPlayerBackendSelection.UseCustomPlayer)
                 {
-                    // The UUAV helper refuses the file protocol, so its playlists are served over
-                    // loopback HTTP. Fragments are coalesced into coarse segments: googlevideo
-                    // 403s bursty range-request patterns, and FFmpeg streams a large byte range
-                    // progressively, so coarse segments cost no startup latency there.
+                    // The UUAV helper refuses the file protocol, so its playlists are served
+                    // over loopback HTTP. Coalescing costs no startup latency on this backend:
+                    // FFmpeg streams a byte range progressively.
                     HlsManifestBuilder.PlaylistSet loopbackPlaylists = HlsManifestBuilder.Build(
                         videoStream, audioStream, durationSeconds, videoSegments, audioSegments, UUAV_TARGET_SEGMENT_SECONDS);
 
