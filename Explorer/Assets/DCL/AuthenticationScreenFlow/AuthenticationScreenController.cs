@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
+using DCL.BugReporting.UI;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -63,6 +64,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly IMVCManager mvcManager;
         private readonly string? referrer;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
@@ -73,7 +75,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
-        public string CurrentRequestID { get; internal set; } = string.Empty;
+        public string CurrentRequestId { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
 
         // Set by the Lobby states on Enter so analytics can tag LOGGED_IN / LOGGED_IN_CACHED with
@@ -90,7 +92,6 @@ namespace DCL.AuthenticationScreenFlow
         internal void RaiseProfileFinalized() =>
             ProfileFinalized?.Invoke();
 
-        // Null until OnViewInstantiated: the view is created lazily on first Show and may never be instantiated.
         private MVCStateMachine<AuthStateBase>? fsm;
         private AuthenticationScreenAudio? audio;
 
@@ -113,6 +114,7 @@ namespace DCL.AuthenticationScreenFlow
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
+            IMVCManager mvcManager,
             string? referrer = null)
             : base(viewFactory)
         {
@@ -133,6 +135,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.mvcManager = mvcManager;
             this.referrer = referrer;
         }
 
@@ -140,6 +143,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.Dispose();
             characterPreviewController?.Dispose();
+            viewInstance?.BugReportButton?.onClick.RemoveListener(OpenBugReport);
 
             CancelLoginProcess();
             audio?.Dispose();
@@ -162,6 +166,12 @@ namespace DCL.AuthenticationScreenFlow
 
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
+
+            bool bugReportEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            viewInstance.BugReportButton?.gameObject.SetActive(bugReportEnabled);
+
+            if (bugReportEnabled)
+                viewInstance.BugReportButton?.onClick.AddListener(OpenBugReport);
 
             // States
             fsm = new MVCStateMachine<AuthStateBase>();
@@ -195,7 +205,6 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
@@ -208,7 +217,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
@@ -219,10 +228,10 @@ namespace DCL.AuthenticationScreenFlow
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    fsm!.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
+                    fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
                 else
                 {
-                    fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                    fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
                 }
             }
             catch (OperationCanceledException)
@@ -231,7 +240,7 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
@@ -240,18 +249,18 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewShow();
 
             BlockUnwantedInputs();
-            audio!.OnShow();
+            audio?.OnShow();
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
 
-            fsm!.CurrentState?.Exit();
+            fsm?.CurrentState?.Exit();
             CancelLoginProcess();
 
             UnblockUnwantedInputs();
-            audio!.OnHide();
+            audio?.OnHide();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -290,7 +299,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm!.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
             }
         }
 
@@ -298,6 +307,16 @@ namespace DCL.AuthenticationScreenFlow
         {
             webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.SupportLink);
             DiscordButtonClicked?.Invoke();
+        }
+
+        private void OpenBugReport() =>
+            OpenBugReportAsync().Forget();
+
+        private async UniTaskVoid OpenBugReportAsync()
+        {
+            try { await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams())); }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
         }
 
         private void ExitApplication()
