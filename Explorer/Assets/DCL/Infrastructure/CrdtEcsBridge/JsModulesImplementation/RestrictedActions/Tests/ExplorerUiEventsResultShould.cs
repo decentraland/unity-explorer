@@ -22,8 +22,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     /// </summary>
     public class ExplorerUiEventsResultShould
     {
-        private OutgoingCRDTMessagesProvider provider;
-        private List<AppendedMessage> appendedMessages;
+        private OutgoingCRDTMessagesProvider provider = null!;
+        private List<AppendedMessage> appendedMessages = null!;
 
         [SetUp]
         public void SetUp()
@@ -104,9 +104,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.That(appendedMessages[1].Payload.Timestamp, Is.EqualTo(0u));
         }
 
-        private void Append(ExplorerUi ui, int tick, Action<PBExplorerUiEventsResult> setEvent)
+        private void Append(ExplorerUi ui, int tick, Action<PBExplorerUiEventsResult>? setEvent)
         {
-            provider.AppendMessage<PBExplorerUiEventsResult, (ExplorerUi ui, int tick, Action<PBExplorerUiEventsResult> setEvent)>(
+            provider.AppendMessage<PBExplorerUiEventsResult, (ExplorerUi ui, int tick, Action<PBExplorerUiEventsResult>? setEvent)>(
                 static (result, data) =>
                 {
                     result.Ui = data.ui;
@@ -117,7 +117,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
         private void Flush()
         {
-            using OutgoingCRDTMessagesSyncBlock syncBlock = provider.GetSerializationSyncBlock(null);
+            using OutgoingCRDTMessagesSyncBlock syncBlock = provider.GetSerializationSyncBlock(null!);
         }
 
         private readonly struct AppendedMessage

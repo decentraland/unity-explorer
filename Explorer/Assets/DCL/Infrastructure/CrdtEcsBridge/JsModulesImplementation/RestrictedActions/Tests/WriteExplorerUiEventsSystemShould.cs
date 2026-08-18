@@ -18,10 +18,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     /// </summary>
     public class WriteExplorerUiEventsSystemShould : UnitySystemTestBase<WriteExplorerUiEventsSystem>
     {
-        private Queue<ExplorerUiEvent> events;
-        private IECSToCRDTWriter ecsToCRDTWriter;
-        private ISceneStateProvider sceneStateProvider;
-        private List<PBExplorerUiEventsResult> written;
+        private Queue<ExplorerUiEvent> events = null!;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private List<PBExplorerUiEventsResult> written = null!;
 
         [SetUp]
         public void SetUp()

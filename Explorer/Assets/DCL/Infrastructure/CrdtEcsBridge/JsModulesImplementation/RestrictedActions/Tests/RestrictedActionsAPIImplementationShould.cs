@@ -27,14 +27,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 {
     public class RestrictedActionsAPIImplementationShould
     {
-        private RestrictedActionsAPIImplementation restrictedActionsAPIImplementation;
-        private IMVCManager mvcManager;
-        private ISceneStateProvider sceneStateProvider;
-        private IGlobalWorldActions globalWorldActions;
-        private ISceneData sceneData;
-        private ISystemClipboard systemClipboard;
-        private IExplorerUiActions explorerUiActions;
-        private World sceneWorld;
+        private RestrictedActionsAPIImplementation restrictedActionsAPIImplementation = null!;
+        private IMVCManager mvcManager = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private IGlobalWorldActions globalWorldActions = null!;
+        private ISceneData sceneData = null!;
+        private ISystemClipboard systemClipboard = null!;
+        private IExplorerUiActions explorerUiActions = null!;
+        private World sceneWorld = null!;
         private int clipboardNotificationsReceived;
 
         [SetUp]
@@ -163,7 +163,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             const string TEST_URN = "urn:decentraland:ethereum:erc721:0x06012c8cf97bead5deae237070f9587f8e7a266d:1540722";
 
             // Act
-            bool result = restrictedActionsAPIImplementation.TryOpenNftDialog(TEST_URN);
+            restrictedActionsAPIImplementation.TryOpenNftDialog(TEST_URN);
 
             // Assert
             mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("ethereum", "0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));

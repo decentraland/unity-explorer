@@ -23,9 +23,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     [TestFixture]
     public class ExplorerUiActionsShould
     {
-        private IMVCManager mvcManager;
-        private Queue<ExplorerUiEvent> events;
-        private ExplorerUiActions explorerUiActions;
+        private IMVCManager mvcManager = null!;
+        private Queue<ExplorerUiEvent> events = null!;
+        private ExplorerUiActions explorerUiActions = null!;
 
         [SetUp]
         public void SetUp()

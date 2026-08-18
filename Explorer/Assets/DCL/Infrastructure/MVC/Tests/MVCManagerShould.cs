@@ -11,11 +11,11 @@ namespace MVC.Tests
 {
     public class MVCManagerShould
     {
-        private IWindowsStackManager windowsStackManager;
-        private MVCManager mvcManager;
-        private IPopupCloserView popupCloserView;
-        private List<IController> showed;
-        private List<IController> closed;
+        private IWindowsStackManager windowsStackManager = null!;
+        private MVCManager mvcManager = null!;
+        private IPopupCloserView popupCloserView = null!;
+        private List<IController> showed = null!;
+        private List<IController> closed = null!;
 
         [SetUp]
         public void Setup()
@@ -30,6 +30,14 @@ namespace MVC.Tests
 
             mvcManager.OnViewShowed += showed.Add;
             mvcManager.OnViewClosed += closed.Add;
+        }
+
+        // The controllers are NSubstitute proxies built for both interfaces, so the cross-interface cast is
+        // valid at runtime even though no declared type inherits from both.
+        private static IReshowController<TestInputData> AsReshow(IController<ITestView, TestInputData> controller)
+        {
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            return (IReshowController<TestInputData>)controller;
         }
 
         [Test]
@@ -78,7 +86,7 @@ namespace MVC.Tests
             await mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>(input));
 
             // Assert
-            ((IReshowController<TestInputData>)controller).Received(1).OnReshowWhileVisible(input);
+            AsReshow(controller).Received(1).OnReshowWhileVisible(input);
             windowsStackManager.Received(1).PopPopup(popup);
             await popupCloserView.Received().HideAsync(Arg.Any<CancellationToken>());
             windowsStackManager.DidNotReceive().PushFullscreen(Arg.Any<IController>());
@@ -120,7 +128,7 @@ namespace MVC.Tests
             await mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>(new TestInputData()));
 
             // Assert
-            ((IReshowController<TestInputData>)controller).DidNotReceive().OnReshowWhileVisible(Arg.Any<TestInputData>());
+            AsReshow(controller).DidNotReceive().OnReshowWhileVisible(Arg.Any<TestInputData>());
             windowsStackManager.DidNotReceive().PopPopup(Arg.Any<IController>());
         }
 
@@ -141,7 +149,7 @@ namespace MVC.Tests
             await mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>(new TestInputData()));
 
             // Assert
-            ((IReshowController<TestInputData>)controller).DidNotReceive().OnReshowWhileVisible(Arg.Any<TestInputData>());
+            AsReshow(controller).DidNotReceive().OnReshowWhileVisible(Arg.Any<TestInputData>());
             windowsStackManager.DidNotReceive().PopPopup(Arg.Any<IController>());
         }
 
@@ -166,7 +174,7 @@ namespace MVC.Tests
             await mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>(new TestInputData()));
 
             // Assert
-            ((IReshowController<TestInputData>)controller).Received(1).OnReshowWhileVisible(Arg.Any<TestInputData>());
+            AsReshow(controller).Received(1).OnReshowWhileVisible(Arg.Any<TestInputData>());
             Assert.IsFalse(showedRaised);
             Assert.IsFalse(closedRaised);
         }

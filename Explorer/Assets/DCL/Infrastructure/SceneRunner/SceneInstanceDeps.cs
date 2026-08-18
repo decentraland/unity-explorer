@@ -7,7 +7,6 @@ using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ComponentWriter;
-using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
@@ -75,7 +74,6 @@ namespace SceneRunner
 
         private readonly MultiThreadSync ecsMultiThreadSync;
         private readonly ICRDTDeserializer crdtDeserializer;
-        private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         private readonly ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies;
 
@@ -97,7 +95,6 @@ namespace SceneRunner
             ISceneData sceneData,
             MultiThreadSync ecsMultiThreadSync,
             ICRDTDeserializer crdtDeserializer,
-            IECSToCRDTWriter ecsToCRDTWriter,
             ISystemGroupsUpdateGate systemGroupThrottler,
             ISystemsUpdateGate systemsUpdateGate,
             ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies)
@@ -116,7 +113,6 @@ namespace SceneRunner
             this.sceneData = sceneData;
             this.ecsMultiThreadSync = ecsMultiThreadSync;
             this.crdtDeserializer = crdtDeserializer;
-            this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.systemGroupThrottler = systemGroupThrottler;
             this.systemsUpdateGate = systemsUpdateGate;
             this.ecsWorldSharedDependencies = ecsWorldSharedDependencies;
@@ -146,7 +142,7 @@ namespace SceneRunner
             CRDTMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
             crdtDeserializer = new CRDTDeserializer(CRDTMemoryAllocator);
             OutgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider(sdkComponentsRegistry, CRDTProtocol, CRDTMemoryAllocator);
-            ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
+            var ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
             EntityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             ExceptionsHandler = SceneExceptionsHandler.Create(SceneStateProvider, sceneData.SceneShortInfo).EnsureNotNull();
             var entityEventsBuilder = new EntityEventsBuilder();

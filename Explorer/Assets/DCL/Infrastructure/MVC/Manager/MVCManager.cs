@@ -159,8 +159,7 @@ namespace MVC
             OverlayPushInfo overlayPushInfo = windowsStackManager.PushOverlay(controller);
 
             // Hide all popups in the stack and clear it
-            if (overlayPushInfo.PopupControllers != null)
-                CloseAllPopups(overlayPushInfo.PopupControllers);
+            CloseAllPopups(overlayPushInfo.PopupControllers);
 
             // Hide fullscreen UI if any
             if (overlayPushInfo.FullscreenController != null)
