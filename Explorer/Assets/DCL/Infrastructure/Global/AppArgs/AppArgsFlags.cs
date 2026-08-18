@@ -66,6 +66,7 @@ namespace Global.AppArgs
         public const string VOICE_CHAT = "voice-chat";
         public const string NEARBY_VOICE_CHAT = "nearby-voice-chat";
         public const string DONATIONS_UI = "donations-ui";
+        public const string BUG_REPORT = "bug-report";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
@@ -176,6 +177,12 @@ namespace Global.AppArgs
             public const string SESSION_ID = "session_id";
             public const string LAUNCHER_ID = "launcher_anonymous_id";
             public const string CAMPAIGN_ANON_USER_ID = "campaign_anon_user_id";
+        }
+
+        public static class Launcher
+        {
+            /// <summary>Version of the launcher that started the client; launchers older than the flag do not send it.</summary>
+            public const string VERSION = "launcher_version";
         }
     }
 }

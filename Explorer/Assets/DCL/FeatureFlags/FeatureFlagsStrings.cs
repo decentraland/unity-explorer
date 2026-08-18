@@ -95,6 +95,7 @@ namespace DCL.FeatureFlags
         public const string USE_CUSTOM_MEDIA_PLAYER_WINDOWS = "use-custom-media-player-windows";
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON = "use-custom-media-player-mac-silicon";
         public const string USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL = "use-custom-media-player-mac-intel";
+        public const string BUG_REPORT = "alfa-bug-report";
 
         public static class Endpoints
         {
@@ -183,7 +184,9 @@ namespace DCL.FeatureFlags
                 FeatureFlag.MarketplaceCredits => FeatureFlagsStrings.MARKETPLACE_CREDITS,
                 FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
                 FeatureFlag.AuthCodeValidation => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
+#pragma warning disable CS0618 // the mapping must stay complete while the obsolete flag is still declared
                 FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
+#pragma warning restore CS0618
                 FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
                 FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
                 FeatureFlag.GiftingEnabled => FeatureFlagsStrings.GIFTING_ENABLED,
