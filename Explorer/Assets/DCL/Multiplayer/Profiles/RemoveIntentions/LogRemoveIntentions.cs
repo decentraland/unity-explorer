@@ -13,6 +13,9 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             this.origin = origin;
         }
 
+        public bool NewBunchAvailable() =>
+            origin.NewBunchAvailable();
+
         public OwnedBunch<RemoveIntention> Bunch()
         {
             OwnedBunch<RemoveIntention> bunch = origin.Bunch();

@@ -44,6 +44,10 @@ HEADERS = utils.create_headers(os.getenv('API_KEY'))
 POLL_TIME = int(os.getenv('POLL_TIME', '60'))
 QUEUE_POLL_TIME = int(os.getenv('QUEUE_POLL_TIME', '120'))
 STALE_THRESHOLD = int(os.getenv('STALE_POLL_THRESHOLD', '600'))
+# If the build log has not grown for this many seconds while the build is active,
+# the build is presumed deadlocked and is cancelled so the retry lands on a fresh
+# builder VM.  15 min is generous enough to survive silent IL2CPP / shader phases.
+LOG_STALL_THRESHOLD = int(os.getenv('LOG_STALL_THRESHOLD', '900'))
 
 # Queue time and active build time use separate budgets so a long Unity Cloud
 # queue does not eat into the actual build window.
@@ -223,7 +227,7 @@ def set_parameters(params):
         sys.exit(99)
 
 def get_latest_build(target):
-    response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1})
+    response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1}, timeout=30)
     
     if response.status_code == 200:
         builds = response.json()
@@ -300,7 +304,7 @@ def cancel_build(id):
     except requests.exceptions.RequestException as e:
         print(f'Pre-cancel status check failed ({e}); attempting cancel anyway.')
 
-    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS, timeout=30)
 
     if response.status_code == 204:
         print('Build canceled successfully')
@@ -467,6 +471,48 @@ def download_log(id):
 
     print('Build log ready!')
 
+def get_log_byte_count(id):
+    """Return the current byte length of the build log, or None on any error.
+
+    Uses a HEAD request first (zero-body, cheapest).  If the server does not
+    honour HEAD, falls back to a single-byte Range request and reads the total
+    from the Content-Range response header.  Never downloads the full log.
+    """
+    url = f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}/log'
+    try:
+        # requests defaults HEAD to allow_redirects=False; the log endpoint may 302 to
+        # signed storage, so follow redirects or the HEAD branch is dead weight.
+        # timeout=10 (not 30): this runs on the poll loop's critical path.
+        resp = requests.head(url, headers=HEADERS, timeout=10, allow_redirects=True)
+        if resp.status_code == 200 and 'Content-Length' in resp.headers:
+            return int(resp.headers['Content-Length'])
+        # Range fallback: fetch exactly one byte; read the total from Content-Range.
+        resp = requests.get(
+            url,
+            headers={**HEADERS, 'Range': 'bytes=0-0'},
+            timeout=10,
+            stream=True,
+        )
+        resp.close()
+        if resp.status_code in (200, 206):
+            content_range = resp.headers.get('Content-Range', '')
+            m = re.search(r'/(\d+)$', content_range)
+            if m:
+                return int(m.group(1))
+            # Server returned 200 without Content-Range → use Content-Length.
+            if 'Content-Length' in resp.headers:
+                return int(resp.headers['Content-Length'])
+        if not get_log_byte_count._non_2xx_logged:
+            # Print once so a permanently dead probe (404 before the log exists, 401,
+            # redirect dead-end) is visible in the run output instead of a silent no-op.
+            print(f'Log size probe returned HTTP {resp.status_code}; stall watchdog inactive until the log endpoint responds.')
+            get_log_byte_count._non_2xx_logged = True
+    except requests.exceptions.RequestException as e:
+        print(f'Warning: log size probe failed ({e})')
+    return None
+get_log_byte_count._non_2xx_logged = False
+
+
 def delete_build(id):
     response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/artifacts', headers=HEADERS)
 
@@ -618,6 +664,10 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
     attempt can reattach via try_resume_build and keep the queue position.
     BUILD_TIMEOUT still cancels — a runaway active build should not keep
     holding a Unity Cloud slot.
+    LOG_STALL_THRESHOLD: if the build log has not grown for this many seconds
+    while the build is active, the build is cancelled and retried on a fresh
+    builder VM (exit 99).  This catches deadlocked builders that keep reporting
+    status=started while producing no output.
 
     Returns (final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed).
     """
@@ -630,6 +680,10 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
     last_status = None
     last_status_change = now
     last_poll = now
+    last_log_byte_count = None  # most recently observed log size in bytes
+    last_log_growth = None      # wall-clock time of the last log-size increase
+    log_growth_observed = False # stall cancel arms only after one real size increase
+    log_probe_logged = False    # first probe result printed once for visibility
 
     while True:
         now = time.time()
@@ -663,7 +717,44 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
 
         if build_start is None and status in ACTIVE_STATUSES:
             build_start = now
+            last_log_growth = now  # start the stall clock from when the build went active
             print(f'Build picked up by builder after {datetime.timedelta(seconds=int(now - queue_start))} in queue.')
+
+        # Log-stall watchdog: probe log size on every poll tick while the build
+        # is active.  A deadlocked builder keeps status=started but its log stops
+        # growing.  Cancel and retry (exit 99 → fresh builder VM) after the
+        # configured threshold.  The cancel only arms after at least one observed
+        # size *increase*: a probe that reports a constant value (proxy answering
+        # HEAD with Content-Length: 0, endpoint not live during the build) must
+        # read as "watchdog inactive", never as "stalled".  A size *decrease*
+        # (restarted builds can replace/truncate the log) resets the clock.
+        # Measured baseline for the threshold: the longest log silence across 18
+        # preserved warm builds is 99 s (IL2CPP), so 900 s has a ~9x margin.
+        if status in ACTIVE_STATUSES:
+            log_bytes = get_log_byte_count(id)
+            if not log_probe_logged:
+                print(f'Log-stall watchdog: first size probe returned {log_bytes!r}.')
+                log_probe_logged = True
+            if log_bytes:
+                if last_log_byte_count is None or log_bytes < last_log_byte_count:
+                    # First observation, or the log was reset (e.g. on `restarted`).
+                    last_log_byte_count = log_bytes
+                    last_log_growth = now
+                elif log_bytes > last_log_byte_count:
+                    last_log_byte_count = log_bytes
+                    last_log_growth = now
+                    log_growth_observed = True
+                elif log_growth_observed and (now - last_log_growth) > LOG_STALL_THRESHOLD:
+                    stall_duration = datetime.timedelta(seconds=int(now - last_log_growth))
+                    print(
+                        f'Build log has not grown for {stall_duration} '
+                        f'(threshold {datetime.timedelta(seconds=LOG_STALL_THRESHOLD)}). '
+                        f'Builder appears deadlocked — cancelling and retrying on a fresh VM.'
+                    )
+                    cancel_build(id)
+                    queue_elapsed = (build_start or now) - queue_start
+                    build_elapsed = now - (build_start or now)
+                    return 'log_stall', phase_durations, queue_reasons, queue_elapsed, build_elapsed
 
         if status != last_status:
             queue_elapsed = (build_start or now) - queue_start
@@ -707,6 +798,21 @@ elif args.resume or args.cancel:
     id = build_info["id"]
 
     if args.cancel:
+        if id is None:
+            # The runner died between the build POST and the id write; the queued build is
+            # findable only as the target's latest build. Cancel it only while it is still
+            # in a queue status: targets are shared (release pool; consecutive runs on one
+            # branch), so an already-started build may belong to a concurrent run — leaving
+            # it is at worst one wasted build, cancelling it would kill someone else's.
+            # A missing/unknown status is treated as not-cancellable for the same reason.
+            latest = get_latest_build(os.getenv('TARGET'))
+            if latest and latest.get('buildStatus') in QUEUE_STATUSES:
+                id = latest['build']
+                print(f'No build id persisted; cancelling latest queued build #{id} on {os.getenv("TARGET")}')
+            else:
+                print('No build id persisted and no queued build found; nothing to cancel.')
+                utils.delete_build_info()
+                sys.exit(0)
         cancel_build(id)
         utils.delete_build_info()
         sys.exit(0)
@@ -741,6 +847,9 @@ else:
             else:
                 raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
 
+        # Persist the target before the POST: if the runner dies mid-request, --cancel can still
+        # find the queued build via the target's latest-build lookup.
+        utils.persist_build_info(os.getenv('TARGET'), None)
         id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
         utils.persist_build_info(os.getenv('TARGET'), id)
         print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
@@ -752,14 +861,55 @@ final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = ru
 )
 write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed)
 
-if final_outcome in ('queue_timeout', 'build_timeout'):
-    if final_outcome == 'build_timeout':
+if final_outcome in ('queue_timeout', 'build_timeout', 'log_stall'):
+    if final_outcome in ('build_timeout', 'log_stall'):
         # Build was cancelled; the persisted info points to a dead build.
+        # Delete it so the next retry creates a fresh build on a different VM.
         utils.delete_build_info()
         try:
             download_log(id)
         except Exception as e:
-            print(f'Warning: could not download log after timeout: {e}')
+            print(f'Warning: could not download log after {final_outcome}: {e}')
+    sys.exit(RETRYABLE_EXIT_CODE)
+
+if final_outcome == 'canceled':
+    # This run's own cancellations exit through the watchdog/timeout branches above,
+    # so 'canceled' here came from outside.  Two different outsides, though:
+    #  - UBA giving up on builder provisioning (observed: 9 min in sentToBuilder, then a
+    #    platform-side cancel) — nothing else wants the target, so retry on a fresh build;
+    #  - a concurrent run superseding us via run_build's `already a build pending` cancel.
+    #    main/release/*/hotfix/* share one target but sit in different concurrency groups,
+    #    so re-POSTing here would cancel *their* build and hand them the same exit 99 —
+    #    both runs then burn a full queue+build cycle and one still ends red.
+    # Build numbers are monotonic per target: a newer build means we were superseded.
+    def probe_latest_build():
+        # Fail-open: a transient socket error here must not traceback past the
+        # cleanup below - it degrades to the retry path, same as a non-200 probe.
+        try:
+            return get_latest_build(os.getenv('TARGET'))
+        except requests.exceptions.RequestException as e:
+            print(f'Warning: latest-build probe failed ({e})')
+            return None
+
+    latest = probe_latest_build()
+    if latest and int(latest.get('build') or 0) <= int(id):
+        # run_build cancels the pending build and only re-POSTs ~30 s later, so a
+        # supersede can be invisible for that gap. Re-probe once past it before
+        # deciding to retry.
+        time.sleep(35)
+        latest = probe_latest_build() or latest
+    utils.delete_build_info()
+    try:
+        download_log(id)
+    except Exception as e:
+        print(f'Warning: could not download log after external cancel: {e}')
+    if latest and int(latest.get('build') or 0) > int(id):
+        print(
+            f'Build {id} was superseded by #{latest["build"]} on shared target '
+            f'{os.getenv("TARGET")} - not retrying (the successor owns the slot).'
+        )
+        sys.exit(1)
+    print('Build was canceled outside this run - retrying with a fresh build.')
     sys.exit(RETRYABLE_EXIT_CODE)
 
 utils.delete_build_info()

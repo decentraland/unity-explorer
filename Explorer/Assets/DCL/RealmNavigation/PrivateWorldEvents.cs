@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using System.Threading;
 
@@ -13,7 +14,11 @@ namespace DCL.PrivateWorlds
 
     public interface IWorldAccessGate
     {
-        UniTask<WorldAccessResult> CheckAccessAsync(string worldName, string? ownerAddress, CancellationToken ct);
+        /// <summary>
+        ///     Checks access to a world. <paramref name="realm" /> is the exact realm URL being navigated to;
+        ///     any validated password is scoped to it.
+        /// </summary>
+        UniTask<WorldAccessResult> CheckAccessAsync(string worldName, string? ownerAddress, URLDomain realm, CancellationToken ct);
     }
 
     public interface ICommunityMembershipChecker
