@@ -1,4 +1,5 @@
 ﻿using DCL.Audio;
+using DCL.Backpack.Gifting;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
 using System;
@@ -59,13 +60,13 @@ namespace DCL.Notifications.NotificationEntry
                 ? notification.Metadata.SenderAddress.Substring(0, 6) + "..."
                 : notification.Metadata.SenderAddress;
 
-            TitleText.text = $"{shortAddr} sent you something!";
+            TitleText.text = $"{shortAddr} sent you something! " + GiftingTextIds.GiftOnItsWayMessage;
         }
 
         public void UpdateSenderName(string name, Color nameColor)
         {
             string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
-            TitleText.text = $"<color=#{hexColor}><b>{name}</b></color> sent you something!";
+            TitleText.text = $"<color=#{hexColor}><b>{name}</b></color> sent you something! " + GiftingTextIds.GiftOnItsWayMessage;
         }
     }
 }
