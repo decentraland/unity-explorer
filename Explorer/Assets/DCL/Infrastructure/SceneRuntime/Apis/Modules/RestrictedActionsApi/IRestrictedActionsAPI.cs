@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using Decentraland.Kernel.Apis;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -23,6 +24,8 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
         bool TryOpenNftDialog(string urn);
 
         int TryOpenExplorerUi(int ui);
+
+        UniTask<OpenItemPurchaseResult> TryOpenItemPurchaseAsync(string itemUrn, CancellationToken ct);
 
         void TryCopyToClipboard(string text);
 

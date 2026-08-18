@@ -216,11 +216,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return (int)OpenExplorerUiResult.RejectedNotCurrentScene;
 
-            // Accept only calls made within USER_GESTURE_WINDOW_TICKS of the last recorded pointer gesture.
-            // The "== 0" guard is not redundant: 0 means "no input was ever recorded".
-            uint lastUserInputTick = sceneStateProvider.LastUserInputTick;
-
-            if (lastUserInputTick == 0 || lastUserInputTick + USER_GESTURE_WINDOW_TICKS < sceneStateProvider.TickNumber)
+            if (!HasRecentUserGesture())
             {
                 ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenExplorerUi: rejected, call did not originate from a recent user gesture");
                 return (int)OpenExplorerUiResult.RejectedNoUserGesture;
@@ -239,6 +235,36 @@ namespace CrdtEcsBridge.RestrictedActions
             }
 
             return (int)explorerUiActions.OpenSection(section);
+        }
+
+        public async UniTask<OpenItemPurchaseResult> TryOpenItemPurchaseAsync(string itemUrn, CancellationToken ct)
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return OpenItemPurchaseResult.OipRejectedNotCurrentScene;
+
+            if (!HasRecentUserGesture())
+            {
+                ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenItemPurchase: rejected, call did not originate from a recent user gesture");
+                return OpenItemPurchaseResult.OipRejectedNoUserGesture;
+            }
+
+            if (sceneData.IsPortableExperience())
+            {
+                ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenItemPurchase: rejected, a portable experience cannot offer purchases");
+                return OpenItemPurchaseResult.OipRejectedFeatureDisabled;
+            }
+
+            return await SceneItemPurchaseBridge.OpenAsync(itemUrn, ct);
+        }
+
+        /// <summary>
+        ///     Accepts only calls made within <see cref="USER_GESTURE_WINDOW_TICKS" /> of the last recorded
+        ///     pointer gesture. The "== 0" guard is not redundant: 0 means "no input was ever recorded".
+        /// </summary>
+        private bool HasRecentUserGesture()
+        {
+            uint lastUserInputTick = sceneStateProvider.LastUserInputTick;
+            return lastUserInputTick != 0 && lastUserInputTick + USER_GESTURE_WINDOW_TICKS >= sceneStateProvider.TickNumber;
         }
 
         public void Dispose()

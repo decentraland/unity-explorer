@@ -26,6 +26,7 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
             api.TryOpenExternalUrl(url);
 
         private CancellationTokenSource? movePlayerToCancellationToken;
+        private CancellationTokenSource? openItemPurchaseCancellationToken;
 
         [UsedImplicitly]
         public object MovePlayerTo(
@@ -98,6 +99,18 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
         [UsedImplicitly]
         public int OpenExplorerUi(int ui) =>
             api.TryOpenExplorerUi(ui);
+
+        [UsedImplicitly]
+        public object OpenItemPurchase(string itemUrn)
+        {
+            openItemPurchaseCancellationToken = openItemPurchaseCancellationToken.SafeRestart();
+            CancellationToken ct = openItemPurchaseCancellationToken.Token;
+
+            return OpenItemPurchaseAsync().ToDisconnectedPromise(this);
+
+            async UniTask<int> OpenItemPurchaseAsync() =>
+                (int)await api.TryOpenItemPurchaseAsync(itemUrn, ct);
+        }
 
         [UsedImplicitly]
         public object StopEmote()

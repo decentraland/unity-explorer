@@ -30,6 +30,17 @@ module.exports.OpenExplorerUiResult = makeEnum([
     ['REJECTED_NO_USER_GESTURE', 5],
 ]);
 
+module.exports.OpenItemPurchaseResult = makeEnum([
+    ['OIP_UNSPECIFIED', 0],
+    ['OIP_PURCHASED', 1],
+    ['OIP_DISMISSED', 2],
+    ['OIP_REJECTED_NOT_CURRENT_SCENE', 3],
+    ['OIP_REJECTED_NO_USER_GESTURE', 4],
+    ['OIP_REJECTED_FEATURE_DISABLED', 5],
+    ['OIP_REJECTED_NOT_PURCHASABLE', 6],
+    ['OIP_FAILED', 7],
+]);
+
 module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
@@ -94,6 +105,11 @@ module.exports.openNftDialog = async function(message) {
 module.exports.openExplorerUi = async function(message) {
     const openResult = UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
     return { openResult };
+}
+
+module.exports.openItemPurchase = async function(message) {
+    const result = await UnityRestrictedActionsApi.OpenItemPurchase(message.urn)
+    return { result };
 }
 
 module.exports.setCommunicationsAdapter = async function(message) {
