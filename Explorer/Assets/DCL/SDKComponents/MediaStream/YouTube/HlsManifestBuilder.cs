@@ -14,13 +14,10 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///     HLS chosen over DASH because every AVPro backend supports it: AVFoundation (macOS/iOS),
     ///     Media Foundation (Windows), ExoPlayer (Android). DASH only works on a subset.
     ///
-    ///     Two output shapes:
-    ///     - <see cref="Build"/> — three plain-text playlists meant to be written into the same
-    ///       directory (<see cref="VIDEO_PLAYLIST_NAME"/> / <see cref="AUDIO_PLAYLIST_NAME"/> are
-    ///       the master's relative references, so the files must carry exactly these names).
-    ///     - <see cref="BuildDataUriMaster"/> — the same playlists packed into one self-contained
-    ///       <c>data:</c> URI (media playlists nested as <c>data:</c> URIs inside the master),
-    ///       for playback that cannot touch the filesystem.
+    ///     Output: three plain-text playlists whose master references the media playlists by
+    ///     the relative names <see cref="VIDEO_PLAYLIST_NAME"/> / <see cref="AUDIO_PLAYLIST_NAME"/>,
+    ///     so wherever the set is exposed (files in one directory, one loopback URL path) the
+    ///     media playlists must sit next to the master under exactly these names.
     ///
     ///     Reference: RFC 8216 §4.3 (HLS playlist tags), §4.3.2.5 (EXT-X-MAP byte-range form).
     /// </summary>
@@ -28,8 +25,6 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     {
         public const string VIDEO_PLAYLIST_NAME = "video.m3u8";
         public const string AUDIO_PLAYLIST_NAME = "audio.m3u8";
-
-        private const string HLS_DATA_URI_PREFIX = "data:application/vnd.apple.mpegurl;base64,";
 
         private const int DEFAULT_PLAYLIST_LENGTH = 2048;
         private const int HEADER_PLAYLIST_LENGTH = 256;
@@ -101,46 +96,17 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             AdaptiveFormatData audio,
             int durationSeconds,
             IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null,
-            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null)
-        {
-            (string videoPlaylist, string audioPlaylist) = BuildMediaPlaylists(video, audio, durationSeconds, videoSegments, audioSegments);
-
-            return new PlaylistSet(
-                BuildMaster(video, audio, VIDEO_PLAYLIST_NAME, AUDIO_PLAYLIST_NAME),
-                videoPlaylist,
-                audioPlaylist);
-        }
-
-        /// <summary>
-        ///     Same synthesis as <see cref="Build"/>, packed into a single self-contained
-        ///     <c>data:</c> master whose media playlists are nested <c>data:</c> URIs — no
-        ///     filesystem involved. Segment references stay the absolute stream URLs.
-        ///     <see cref="HLS_DATA_URI_PREFIX"/> is a cross-component contract: native playback
-        ///     (UUAV's <c>playback/input.rs</c>) matches its media type to force FFmpeg's HLS
-        ///     demuxer, since content probing cannot type inline playlists.
-        /// </summary>
-        public static string BuildDataUriMaster(
-            AdaptiveFormatData video,
-            AdaptiveFormatData audio,
-            int durationSeconds,
-            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null,
-            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null)
-        {
-            (string videoPlaylist, string audioPlaylist) = BuildMediaPlaylists(video, audio, durationSeconds, videoSegments, audioSegments);
-
-            string master = BuildMaster(video, audio, ToDataUri(videoPlaylist), ToDataUri(audioPlaylist));
-            return ToDataUri(master);
-        }
-
-        private static (string video, string audio) BuildMediaPlaylists(
-            AdaptiveFormatData video,
-            AdaptiveFormatData audio,
-            int durationSeconds,
-            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments,
-            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments)
+            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null,
+            float targetSegmentDurationSeconds = 0f)
         {
             bool segmented = videoSegments is { Count: > 0 }
                              && audioSegments is { Count: > 0 };
+
+            if (segmented && targetSegmentDurationSeconds > 0f)
+            {
+                videoSegments = Coalesce(videoSegments!, targetSegmentDurationSeconds);
+                audioSegments = Coalesce(audioSegments!, targetSegmentDurationSeconds);
+            }
 
             string videoPlaylist = segmented
                 ? BuildSegmentedMediaPlaylist(video, videoSegments!)
@@ -150,11 +116,47 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 ? BuildSegmentedMediaPlaylist(audio, audioSegments!)
                 : BuildMediaPlaylist(audio, durationSeconds);
 
-            return (videoPlaylist, audioPlaylist);
+            return new PlaylistSet(
+                BuildMaster(video, audio, VIDEO_PLAYLIST_NAME, AUDIO_PLAYLIST_NAME),
+                videoPlaylist,
+                audioPlaylist);
         }
 
-        private static string ToDataUri(string playlist) =>
-            HLS_DATA_URI_PREFIX + Convert.ToBase64String(Encoding.UTF8.GetBytes(playlist));
+        /// <summary>
+        ///     Merges consecutive sidx fragments (contiguous by construction) into segments of at
+        ///     least <paramref name="targetDurationSeconds"/>. Fewer, larger byte ranges keep the
+        ///     request rate low — googlevideo rejects bursty range-request patterns with 403s —
+        ///     while still bounding seek granularity and per-request loss.
+        /// </summary>
+        internal static List<SidxParser.SegmentInfo> Coalesce(IReadOnlyList<SidxParser.SegmentInfo> fragments, float targetDurationSeconds)
+        {
+            var merged = new List<SidxParser.SegmentInfo>();
+            long offset = 0, size = 0;
+            double duration = 0;
+
+            for (var i = 0; i < fragments.Count; i++)
+            {
+                SidxParser.SegmentInfo fragment = fragments[i];
+
+                if (size == 0)
+                    offset = fragment.ByteOffset;
+
+                size += fragment.ByteSize;
+                duration += fragment.DurationSeconds;
+
+                if (duration >= targetDurationSeconds)
+                {
+                    merged.Add(new SidxParser.SegmentInfo(offset, size, duration));
+                    size = 0;
+                    duration = 0;
+                }
+            }
+
+            if (size > 0)
+                merged.Add(new SidxParser.SegmentInfo(offset, size, duration));
+
+            return merged;
+        }
 
         private static AdaptiveFormatData? SelectBestVideo(IReadOnlyList<AdaptiveFormatData> adaptive)
         {

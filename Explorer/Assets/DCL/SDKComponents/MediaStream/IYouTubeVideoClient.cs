@@ -31,9 +31,9 @@ namespace DCL.SDKComponents.MediaStream
         ///        on embed-restricted videos that only get muxed itag=18, and keeps their
         ///        quality above itag=18's ~360p. Shape depends on the backend: AVPro gets it
         ///        written to <see cref="Application.temporaryCachePath"/> as a <c>file://</c>
-        ///        URL; UUAV gets one self-contained <c>data:</c> URI (its sandboxed helper
-        ///        deliberately refuses the <c>file</c> protocol — media URLs come from
-        ///        untrusted scenes).
+        ///        URL; UUAV gets a loopback HTTP URL served by
+        ///        <see cref="LocalHlsPlaylistServer"/> (its sandboxed helper deliberately
+        ///        refuses the <c>file</c> protocol — media URLs come from untrusted scenes).
         ///     4. Empty string — no manifest playable by the active backend.
         /// </summary>
         UniTask<string> GetStreamingManifestUrlAsync(VideoId videoId, CancellationToken ct);
@@ -44,6 +44,10 @@ namespace DCL.SDKComponents.MediaStream
         private const string TAG = nameof(YouTubeVideoClient);
         private const string SYNTH_HLS_DIR_PREFIX = "youtube_hls_";
         private const string MASTER_PLAYLIST_NAME = "master.m3u8";
+
+        // Coarse segments keep the helper's range-request rate far below googlevideo's
+        // burst threshold while retaining ~10s seek granularity.
+        private const float UUAV_TARGET_SEGMENT_SECONDS = 10f;
 
         // HLS spec requires UTF-8 without BOM (RFC 8216 §4).
         private static readonly UTF8Encoding HLS_ENCODING = new (encoderShouldEmitUTF8Identifier: false);
@@ -107,9 +111,9 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Generates an HLS multivariant playlist (master + video + audio) from the response's
         ///     adaptive streams and returns a URL the active backend can open: a <c>file://</c>
-        ///     master written into a per-video subdirectory of the temp cache for AVPro, or one
-        ///     self-contained <c>data:</c> URI for UUAV. Returns null on any failure (no usable
-        ///     streams, write error, etc.).
+        ///     master written into a per-video subdirectory of the temp cache for AVPro, or a
+        ///     loopback HTTP URL for UUAV. Returns null on any failure (no usable streams,
+        ///     write error, no free loopback port, etc.).
         ///
         ///     Pre-fetches the sidx (segment index) box for the selected video and audio streams
         ///     via byte-range HTTP requests; that lets the playlist enumerate one HLS segment per
@@ -162,8 +166,8 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>
         ///     Parses the pre-fetched sidx boxes, builds the playlists and returns the URL for
         ///     the active backend: the absolute <c>file://</c> master written to the temp cache
-        ///     for AVPro, or one self-contained <c>data:</c> URI for UUAV. Returns null if any
-        ///     step fails. Synchronous on purpose — see <see cref="TrySynthesizeHlsAsync"/>.
+        ///     for AVPro, or a loopback HTTP URL for UUAV. Returns null if any step fails.
+        ///     Synchronous on purpose — see <see cref="TrySynthesizeHlsAsync"/>.
         /// </summary>
         private static string? SynthesizeHls(
             VideoId videoId,
@@ -190,13 +194,20 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (MediaPlayerBackendSelection.UseCustomPlayer)
                 {
-                    // The UUAV helper refuses the file protocol, so it gets the playlists inline.
-                    string dataUri = HlsManifestBuilder.BuildDataUriMaster(videoStream, audioStream, durationSeconds, videoSegments, audioSegments);
+                    // The UUAV helper refuses the file protocol, so its playlists are served over
+                    // loopback HTTP. Fragments are coalesced into coarse segments: googlevideo
+                    // 403s bursty range-request patterns, and FFmpeg streams a large byte range
+                    // progressively, so coarse segments cost no startup latency there.
+                    HlsManifestBuilder.PlaylistSet loopbackPlaylists = HlsManifestBuilder.Build(
+                        videoStream, audioStream, durationSeconds, videoSegments, audioSegments, UUAV_TARGET_SEGMENT_SECONDS);
 
-                    ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                        $"[{TAG}] Synthesized inline HLS playlist for {videoId.Value} ({dataUri.Length} chars)");
+                    string? masterUrl = LocalHlsPlaylistServer.TryRegister(loopbackPlaylists);
 
-                    return dataUri;
+                    if (masterUrl != null)
+                        ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                            $"[{TAG}] Synthesized loopback HLS playlist for {videoId.Value} at {masterUrl}");
+
+                    return masterUrl;
                 }
 
                 HlsManifestBuilder.PlaylistSet playlists =
