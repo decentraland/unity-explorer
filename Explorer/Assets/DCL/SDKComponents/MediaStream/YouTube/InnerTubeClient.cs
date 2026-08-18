@@ -71,7 +71,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             new ("\"visitorData\"\\s*:\\s*\"([^\"]+)\"",
                 System.Text.RegularExpressions.RegexOptions.Compiled);
 
-        // NOTE: client versions below track yt-dlp's current InnerTube config (as of 2026-01-15).
+        // NOTE: client versions below track yt-dlp's current InnerTube config (as of 2026-08-18).
         // YouTube deprecates old client versions periodically and responds with
         // "YouTube is no longer supported in this application or device" — when that happens,
         // bump these numbers to match yt-dlp's current values in
@@ -79,15 +79,14 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         private static readonly InnerTubeClientConfig[] CONFIGS =
         {
             // Primary: ANDROID_VR (Oculus Quest 3). No PoT, no signature cipher.
-            // Config matches YoutubeExplode's master/VideoController.cs exactly — same version,
-            // same User-Agent, same minimal payload. Extras like racyCheckOk / html5Preference
-            // cause YouTube to omit dashManifestUrl from the response for some videos.
+            // Keep the version at yt-dlp's pin: >1.65 may return SABR-only streams, and since
+            // 2026-07 YouTube intermittently enforces PoT on this client's non-HLS formats.
             new (
                 clientName: "ANDROID_VR",
-                clientVersion: "1.60.19",
+                clientVersion: "1.65.10",
                 clientNameId: "28",
                 apiKey: ANDROID_API_KEY,
-                userAgent: "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; Quest 3 Build/SQ3A.220605.009.A1) gzip",
+                userAgent: "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
                 deviceMake: "Oculus",
                 deviceModel: "Quest 3",
                 osName: "Android",
@@ -96,13 +95,14 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 clientScreen: null,
                 includeThirdPartyEmbedUrl: false),
 
-            // Fallback 1: MWEB — mobile web client. No PoT, generally un-ciphered.
+            // Fallback 1: MWEB — mobile web client. No PoT, generally un-ciphered. The iPad
+            // User-Agent matters: yt-dlp notes MWEB skips PoT enforcement only with this UA.
             new (
                 clientName: "MWEB",
-                clientVersion: "2.20260115.01.00",
+                clientVersion: "2.20260708.05.00",
                 clientNameId: "2",
                 apiKey: ANDROID_API_KEY,
-                userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+                userAgent: "Mozilla/5.0 (iPad; CPU OS 16_7_10 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1,gzip(gfe)",
                 deviceMake: null,
                 deviceModel: null,
                 osName: null,
@@ -114,7 +114,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             // Fallback 2: WEB_EMBEDDED_PLAYER — standard web embed. No PoT.
             new (
                 clientName: "WEB_EMBEDDED_PLAYER",
-                clientVersion: "1.20260115.01.00",
+                clientVersion: "2.20260708.00.00",
                 clientNameId: "56",
                 apiKey: ANDROID_API_KEY,
                 userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -126,22 +126,22 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 clientScreen: "EMBED",
                 includeThirdPartyEmbedUrl: true),
 
-            // Fallback 3: TVHTML5_SIMPLY_EMBEDDED_PLAYER — exact YoutubeExplode fallback for
-            // age-restricted content. May serve ciphered URLs our parser silently skips —
-            // accepted tradeoff for not shipping a JS engine.
+            // Fallback 3: TVHTML5 (Cobalt) — replaces TVHTML5_SIMPLY_EMBEDDED_PLAYER, which
+            // YouTube retired (yt-dlp removed it). May serve ciphered URLs our parser silently
+            // skips — accepted tradeoff for not shipping a JS engine.
             new (
-                clientName: "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
-                clientVersion: "2.0",
-                clientNameId: "85",
+                clientName: "TVHTML5",
+                clientVersion: "7.20260707.07.00",
+                clientNameId: "7",
                 apiKey: ANDROID_API_KEY,
-                userAgent: "Mozilla/5.0 (PlayStation; PlayStation 4/12.00) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15",
+                userAgent: "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold (unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)",
                 deviceMake: null,
                 deviceModel: null,
                 osName: null,
                 osVersion: null,
                 platform: null,
-                clientScreen: "EMBED",
-                includeThirdPartyEmbedUrl: true),
+                clientScreen: null,
+                includeThirdPartyEmbedUrl: false),
         };
 
         public async UniTask<PlayerResponse> FetchPlayerResponseAsync(VideoId videoId, CancellationToken ct)
