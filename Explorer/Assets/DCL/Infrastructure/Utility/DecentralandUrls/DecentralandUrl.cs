@@ -166,5 +166,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ShopLink = 102,
 
         ReferralProgress = 103,
+        IntercomTickets = 104,
+        IntercomTicketsOrigin = 105,
     }
 }
