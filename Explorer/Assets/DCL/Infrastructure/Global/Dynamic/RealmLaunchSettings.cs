@@ -208,8 +208,9 @@ namespace Global.Dynamic
                                            FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride)
                                        && parcelToTeleportOverride != null;
 
-            // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0")
-            if (HomeMarkerController.HasSerializedHome() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0";
+            // skipped when an explicit realm is requested, so a deep link cannot be overridden by the saved home)
+            if (HomeMarkerController.HasSerializedHome() && !HasAppArgRealm(appArgs) && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
             {
                 if (HomeMarkerController.HasSerializedWorldName())
                 {
@@ -248,5 +249,7 @@ namespace Global.Dynamic
         /// <param name="appArgs">The application arguments to check.</param>
         /// <returns>True if the POSITION flag is present in the arguments.</returns>
         private static bool HasAppArgPosition(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.POSITION);
+
+        private static bool HasAppArgRealm(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.REALM);
     }
 }
