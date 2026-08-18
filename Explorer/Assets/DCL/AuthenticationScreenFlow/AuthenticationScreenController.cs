@@ -140,6 +140,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.Dispose();
             characterPreviewController?.Dispose();
+            viewInstance?.BugReportButton?.onClick.RemoveListener(OpenBugReport);
 
             CancelLoginProcess();
             audio?.Dispose();

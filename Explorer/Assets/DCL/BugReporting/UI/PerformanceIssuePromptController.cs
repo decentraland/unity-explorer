@@ -69,10 +69,8 @@ namespace DCL.BugReporting.UI
         }
     }
 
-    /// <summary>Input for showing the performance issue prompt.</summary>
     public readonly struct PerformanceIssuePromptParams
     {
-        /// <summary>Auto-detected diagnostic line the bug report form opens with.</summary>
         public readonly string PrefilledDescription;
 
         public PerformanceIssuePromptParams(string prefilledDescription)

@@ -47,7 +47,6 @@ namespace DCL.Diagnostics.Sentry
             if (ct.IsCancellationRequested)
                 return Result<string>.CancelledResult();
 
-            // Every capture call is a silent no-op while the hub is disabled, so refuse to report success.
             if (!SentrySdk.IsEnabled)
                 return Result<string>.ErrorResult("Sentry is not initialized");
 
@@ -57,8 +56,7 @@ namespace DCL.Diagnostics.Sentry
             if (report.Image is { Length: > IMAGE_MAX_BYTES })
                 return Result<string>.ErrorResult($"The image exceeds {IMAGE_MAX_BYTES / (1024 * 1024)}MB");
 
-            // A feedback envelope keeps a single attachment, so the log travels on an event of its
-            // own, which the feedback points at through its associated event id.
+            // A feedback envelope keeps a single attachment, so the log travels on an associated event of its own.
             SentryId logEventId = CaptureLogEvent();
 
             SentryHint? hint = null;
@@ -78,16 +76,13 @@ namespace DCL.Diagnostics.Sentry
                 url: null,
                 associatedEventId: logEventId == SentryId.Empty ? null : logEventId);
 
-            // The Sentry.Unity facade returns void from CaptureFeedback: HubAdapter is the public
-            // surface that hands back the event id the deep link needs.
+            // HubAdapter instead of the Sentry.Unity facade: only it hands back the event id the deep link needs.
             SentryId feedbackId = HubAdapter.Instance.CaptureFeedback(feedback, out CaptureFeedbackResult result, configureScopeCached, hint);
 
             if (result != CaptureFeedbackResult.Success)
                 return Result<string>.ErrorResult($"Sentry rejected the feedback: {result}");
 
-            // The deep link resolves only once the envelope reaches Sentry, so delivery is awaited
-            // before the link is handed out. A timed-out flush still delivers later, so it is not an
-            // error, and a cancellation cannot recall the captured feedback: success is reported anyway.
+            // The deep link resolves only once the envelope reaches Sentry; a timed-out flush still delivers later, so it is not an error.
             await FlushAsync();
 
             return Result<string>.SuccessResult(string.Format(feedbackUrlTemplate, feedbackId));

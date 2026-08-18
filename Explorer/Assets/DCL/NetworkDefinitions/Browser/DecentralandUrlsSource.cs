@@ -337,8 +337,7 @@ namespace DCL.Browser.DecentralandUrls
 
                 DecentralandUrl.SocialServiceMutes => $"https://social-api.decentraland.{ENV}/v1/mutes",
 
-                // The proxy is deployed per environment (org and zone) and only accepts requests
-                // whose Origin header matches the web client origin of that same environment.
+                // The per-environment proxy only accepts requests whose Origin header matches its environment's web client origin.
                 DecentralandUrl.IntercomTickets => $"https://intercom-proxy.decentraland.{ENV}/intercom/tickets",
                 DecentralandUrl.IntercomTicketsOrigin => $"https://play.decentraland.{ENV}",
 

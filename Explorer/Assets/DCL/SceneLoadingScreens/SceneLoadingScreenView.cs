@@ -36,7 +36,6 @@ namespace DCL.SceneLoadingScreens
         [field: SerializeField]
         public Button ShowPreviousButton { get; private set; } = null!;
 
-        /// <summary>Nullable so prefabs predating the button keep working.</summary>
         [field: SerializeField]
         public Button? BugReportButton { get; private set; } = null!;
 

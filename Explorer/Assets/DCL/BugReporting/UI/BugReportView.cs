@@ -38,8 +38,7 @@ namespace DCL.BugReporting.UI
         {
             WireCharCounter(DescriptionInput, DescriptionCharCounter);
 
-            // The preview hangs from the left edge of its slot; SetScreenshot sizes it to the
-            // texture's aspect ratio.
+            // The preview hangs from the left edge of its slot; SetScreenshot sizes it to the texture's aspect ratio.
             RectTransform previewRect = ScreenshotPreview.rectTransform;
             previewRect.anchorMin = previewRect.anchorMax = previewRect.pivot = new Vector2(0f, 0.5f);
             previewRect.anchoredPosition = Vector2.zero;
@@ -51,10 +50,7 @@ namespace DCL.BugReporting.UI
             SuccessPanel.SetActive(state == BugReportViewState.Success);
         }
 
-        /// <summary>
-        ///     Deselection normally hides the counter, but the field can still be focused when the
-        ///     view closes, so a reopen starts from an explicit clean slate.
-        /// </summary>
+        /// <summary>The field can still be focused when the view closes, so a reopen hides the counter explicitly.</summary>
         public void HideCharCounter() =>
             DescriptionCharCounter.gameObject.SetActive(false);
 
@@ -79,9 +75,7 @@ namespace DCL.BugReporting.UI
             ScreenshotPreview.rectTransform.sizeDelta = new Vector2(height * aspect, height);
         }
 
-        // The counter shows only while its field is focused. It refreshes on focus as well as on
-        // typing because the controller fills the fields with SetTextWithoutNotify, which skips
-        // onValueChanged.
+        // Refreshes on focus as well as on typing: the controller fills the field with SetTextWithoutNotify, which skips onValueChanged.
         private static void WireCharCounter(TMP_InputField input, TMP_Text counter)
         {
             input.onValueChanged.AddListener(_ => RefreshCharCounter(input, counter));

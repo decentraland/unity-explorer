@@ -71,7 +71,6 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            // The detector exists only when InitializeAsync found the prompt prefab configured.
             if (performanceIssueDetector != null)
                 PerformanceIssuePromptSystem.InjectToWorld(ref builder, mvcManager, performanceIssueDetector, loadingStatus.IsLoadingScreenOn, debugBuilder);
         }
@@ -97,8 +96,6 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(bugReportController);
 
-            // The prompt ships behind the prefab assignment: with none configured the form stays
-            // reachable through its manual entry points only.
             if (settings.PerformanceIssuePromptPrefab.RuntimeKeyIsValid())
             {
                 var promptViewPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.PerformanceIssuePromptPrefab, ct))

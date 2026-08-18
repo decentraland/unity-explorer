@@ -50,8 +50,7 @@ namespace DCL.Diagnostics.Sentry
             options.TracesSampler = sentrySampler.Execute;
 
 #if UNITY_EDITOR
-            // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve
-            // one from the environment instead: with the variable unset, Sentry stays off as before.
+            // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve one from the environment instead.
             if (!IsValidConfiguration(options))
             {
                 string? editorDsn = Environment.GetEnvironmentVariable(EDITOR_DSN_ENV_VAR);

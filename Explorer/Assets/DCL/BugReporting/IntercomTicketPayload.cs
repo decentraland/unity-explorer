@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 namespace DCL.BugReporting
 {
-    /// <summary>Content of one ticket-creation call.</summary>
     public struct IntercomTicketData
     {
         public string Title;
@@ -17,26 +16,13 @@ namespace DCL.BugReporting
         public string GraphicCard;
         public string Ram;
         public string ClientVersion;
-
-        /// <summary>Sdk version of the scene the report was filed from. Omitted from the ticket when null.</summary>
         public string? SdkVersion;
-
-        /// <summary>Version of the launcher that started the client. Omitted from the ticket when null.</summary>
         public string? LauncherVersion;
 
-        /// <summary>
-        ///     Option id of the "Meets Minimum Requirements" list attribute: Intercom takes the id,
-        ///     never the label. Omitted from the ticket when null.
-        /// </summary>
+        /// <summary>Option id of the "Meets Minimum Requirements" list attribute: Intercom takes the id, never the label.</summary>
         public string? MeetsMinimumRequirementsOptionId;
 
-        /// <summary>
-        ///     Encoded image the proxy uploads to its public bucket and inlines into the ticket
-        ///     description. Null when the user attached none.
-        /// </summary>
         public byte[]? EvidenceImage;
-
-        /// <summary>Mime type of <see cref="EvidenceImage" />, e.g. "image/jpeg".</summary>
         public string? EvidenceContentType;
     }
 
@@ -48,10 +34,8 @@ namespace DCL.BugReporting
         private const string DEFAULT_EVIDENCE_CONTENT_TYPE = "image/jpeg";
 
         /// <summary>
-        ///     Builds the body of POST /intercom/tickets. The proxy accepts only ticket_attributes and
-        ///     evidence at the top level and only the attribute names the Bug Report ticket type
-        ///     declares: the ticket type is hardcoded server side, and the reporter's contact is set
-        ///     there from the verified Signed Fetch signer.
+        ///     Builds the body of POST /intercom/tickets. The proxy accepts only ticket_attributes and evidence
+        ///     at the top level, and only the attribute names the Bug Report ticket type declares.
         /// </summary>
         public static string BuildCreateTicketJson(in IntercomTicketData data)
         {
@@ -66,8 +50,7 @@ namespace DCL.BugReporting
                 ["Client version"] = data.ClientVersion,
             };
 
-            // Optional context attributes travel only when known: Intercom keeps an absent
-            // attribute empty, while an empty string would show as a filled-in blank.
+            // Intercom keeps an absent attribute empty, while an empty string would show as a filled-in blank.
             if (!string.IsNullOrEmpty(data.SdkVersion))
                 attributes["SDK version"] = data.SdkVersion;
 

@@ -22,13 +22,9 @@ namespace DCL.BugReporting.UI
     /// </summary>
     public class BugReportController : ControllerBase<BugReportView, BugReportParams>
     {
-        // The proxy HTML-escapes and formats the description (newlines become <br>, & becomes
-        // &amp;...) and enforces its 10,000 characters-per-attribute cap on that inflated text,
-        // with coordinates and the Sentry link appended by the service on top. The form's cap
-        // leaves room for that inflation even on escape-heavy input like pasted logs.
+        // Leaves headroom under the proxy's 10,000 characters-per-attribute cap for its HTML escaping and the appended metadata.
         internal const int DESCRIPTION_MAX_LENGTH = 2500;
 
-        // Well above the order overlays are pushed with (1), so the boosted form clears them all.
         private const int ABOVE_OVERLAYS_ORDER = 100;
 
         private readonly BugReportService bugReportService;
@@ -43,7 +39,7 @@ namespace DCL.BugReporting.UI
         private UniTaskCompletionSource? closeIntent;
         private CancellationTokenSource operationsCts = new ();
 
-        // Submissions run detached from the view lifecycle: closing the success popup must not abort the upload.
+        // Detached from the view lifecycle: closing the success popup must not abort the upload.
         private readonly CancellationTokenSource submissionsCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -137,9 +133,7 @@ namespace DCL.BugReporting.UI
         {
             inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
 
-            // The MVC stack keeps the form a popup (escape, modality), but a popup draws behind
-            // Overlay views: when the entry point lives on one, only the draw order is raised.
-            // The stack reassigns the popup ordering on every show, so this needs no undoing.
+            // Popups draw behind Overlay views, so only the draw order is raised; the MVC stack reassigns it on every show.
             if (inputData.ShowAboveOverlays)
                 viewInstance!.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, ABOVE_OVERLAYS_ORDER));
         }
@@ -228,7 +222,6 @@ namespace DCL.BugReporting.UI
             catch (OperationCanceledException) { return null; }
             catch (Exception e)
             {
-                // The name is optional on the report, so a failed lookup must not block the submission.
                 ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
                 return null;
             }
@@ -248,7 +241,6 @@ namespace DCL.BugReporting.UI
 
             if (ct.IsCancellationRequested)
             {
-                // The view is gone: a picked preview has no owner left to destroy it later.
                 if (picked.Success)
                     UnityEngine.Object.Destroy(picked.Value.Preview);
 
@@ -283,7 +275,6 @@ namespace DCL.BugReporting.UI
         }
     }
 
-    /// <summary>What the user typed into the form, captured at submit time.</summary>
     internal readonly struct BugReportDraft
     {
         public readonly int IssueTypeIndex;

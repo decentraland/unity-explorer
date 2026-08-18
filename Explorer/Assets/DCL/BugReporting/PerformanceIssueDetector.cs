@@ -54,10 +54,7 @@ namespace DCL.BugReporting
             return false;
         }
 
-        /// <summary>
-        ///     Discards the rolling window. Call it when detection was paused, so the frames that
-        ///     accumulated before the pause are not mixed with a window measured after it.
-        /// </summary>
+        /// <summary>Discards the rolling window so frames measured before a pause are not mixed with frames after it.</summary>
         public void Reset()
         {
             windowElapsed = 0f;

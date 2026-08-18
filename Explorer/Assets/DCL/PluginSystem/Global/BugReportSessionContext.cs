@@ -5,10 +5,6 @@ using Global.AppArgs;
 
 namespace DCL.PluginSystem.Global
 {
-    /// <summary>
-    ///     Resolves the report context from sources only the composition root sees: the scenes
-    ///     cache, the launcher's command line and the startup hardware check.
-    /// </summary>
     public class BugReportSessionContext : IBugReportSessionContext
     {
         private readonly IScenesCache scenesCache;

@@ -37,9 +37,7 @@ namespace DCL.BugReporting.UI
             this.isLoadingScreenOn = isLoadingScreenOn;
             optedOut = DCLPlayerPrefs.GetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED);
 
-            // Debug trigger: the next unpaused frame is fed to the detector as a synthetic hiccup,
-            // so the whole production pipeline runs, detection, pause guards and the opt-out
-            // included.
+            // Feeds the next unpaused frame to the detector as a synthetic hiccup, exercising the production pipeline.
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.BUG_REPORT)
                        ?.AddSingleButton("Simulate Performance Hiccup", () => debugHiccupPending = true)
                         .AddSingleButton("Clear Prompt Opt-Out", ClearOptOut);
@@ -50,11 +48,7 @@ namespace DCL.BugReporting.UI
             if (optedOut)
                 return;
 
-            // A modal view, the loading screen or an unfocused window means either a flow the
-            // prompt must not interrupt or a state whose frame times are not gameplay evidence.
-            // The loading screen needs its own check: it lives on the Overlay layer, which does
-            // not count as modal. The in-flight prompt needs one too: it covers the frames between
-            // requesting the show and the view registering as a modal.
+            // The loading screen lives on the Overlay layer (not modal) and the in-flight prompt is not yet registered as one, so both need their own check.
             if (promptShowing || mvcManager.IsAnyModalViewShowing() || isLoadingScreenOn() || !Application.isFocused)
             {
                 detector.Reset();
@@ -62,8 +56,7 @@ namespace DCL.BugReporting.UI
                 return;
             }
 
-            // The first frame after a pause carries the delta of whatever ended it (a refocus
-            // stall, the post-loading scene activation spike), which would read as a fake freeze.
+            // The first frame after a pause carries the delta of whatever ended it, which would read as a fake freeze.
             if (wasPaused)
             {
                 wasPaused = false;
@@ -103,9 +96,6 @@ namespace DCL.BugReporting.UI
             finally
             {
                 promptShowing = false;
-
-                // The prompt is where the opt-out is persisted, so its closing is the moment the
-                // stored preference can have changed.
                 optedOut = DCLPlayerPrefs.GetBool(DCLPrefKeys.BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED);
             }
         }

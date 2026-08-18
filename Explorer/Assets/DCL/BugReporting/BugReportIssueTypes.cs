@@ -2,10 +2,7 @@ using System;
 
 namespace DCL.BugReporting
 {
-    /// <summary>
-    ///     One option of the "Issue Type" list attribute on the Intercom "Bug Report" ticket type.
-    ///     Intercom takes the option id on writes, never the label.
-    /// </summary>
+    /// <summary>One option of the "Issue Type" list attribute on the Intercom "Bug Report" ticket type.</summary>
     public readonly struct BugReportIssueType : IEquatable<BugReportIssueType>
     {
         public readonly string Label;
@@ -27,9 +24,7 @@ namespace DCL.BugReporting
             HashCode.Combine(Label, OptionId);
     }
 
-    /// <summary>
-    ///     The options the "Bug Report" ticket type declares, read back from GET /ticket_types.
-    /// </summary>
+    /// <summary>The options the "Bug Report" ticket type declares, read back from GET /ticket_types.</summary>
     public static class BugReportIssueTypes
     {
         public static readonly BugReportIssueType PERFORMANCE = new ("Performance (Lag/FPS)", "84d3e47f-396f-40be-bb93-a8b36196cf97");
@@ -55,11 +50,7 @@ namespace DCL.BugReporting
         };
     }
 
-    /// <summary>
-    ///     The options of the "Meets Minimum Requirements" list attribute the client can tell
-    ///     apart. The startup hardware check is a boolean, so the recommended-spec options the
-    ///     type also declares are never sent.
-    /// </summary>
+    /// <summary>The options of the "Meets Minimum Requirements" list attribute the client can tell apart.</summary>
     public static class BugReportMinimumSpecOptions
     {
         public const string BELOW_MIN_SPEC = "bf4067b3-4d19-456b-b615-4d21f7695228";

@@ -6,10 +6,7 @@ using UnityEngine;
 
 namespace DCL.BugReporting.UI
 {
-    /// <summary>
-    ///     Picks the screenshot through the OS file browser (File Browser PRO), the same flow
-    ///     Communities uses for the profile picture.
-    /// </summary>
+    /// <summary>Picks the screenshot through the OS file browser (File Browser PRO).</summary>
     public class OsFileBrowserBugReportImageProvider : IBugReportImageProvider
     {
         private const string FILE_BROWSER_TITLE = "Select a screenshot";
@@ -47,10 +44,7 @@ namespace DCL.BugReporting.UI
             return Result<BugReportImage>.SuccessResult(new BugReportImage(data, ContentTypeFor(data), preview));
         }
 
-        /// <summary>
-        ///     From the content, not the file name: LoadImage accepting the bytes proves them to be
-        ///     one of the two formats, and a mislabeled extension must not mislead the uploads.
-        /// </summary>
+        // From the content, not the file name: a mislabeled extension must not mislead the uploads.
         private static string ContentTypeFor(byte[] data) =>
             data.Length >= 4 && data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47
                 ? "image/png"

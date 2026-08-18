@@ -100,7 +100,6 @@ namespace DCL.SceneLoadingScreens
         {
             try
             {
-                // The loading screen is an Overlay view, so the form asks to be drawn above it.
                 await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams(showAboveOverlays: true)));
             }
             catch (OperationCanceledException) { }

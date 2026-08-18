@@ -38,7 +38,6 @@ namespace DCL.BugReporting
                 input.Image,
                 input.ImageContentType);
 
-            // A Sentry failure never blocks the ticket: the description degrades to a note instead.
             Result<string> feedbackLink = await feedbackService.SubmitAsync(feedbackReport, ct);
 
             if (ct.IsCancellationRequested)
@@ -66,10 +65,6 @@ namespace DCL.BugReporting
             return await ticketClient.CreateTicketAsync(ticket, ct);
         }
 
-        /// <summary>
-        ///     The hardware check yields a boolean, so only the two spec options it can tell apart
-        ///     are ever sent; an unknown outcome leaves the attribute out of the ticket.
-        /// </summary>
         public static string? MinimumSpecOptionId(bool? meetsMinimumSpecs) =>
             meetsMinimumSpecs == null
                 ? null
@@ -77,10 +72,7 @@ namespace DCL.BugReporting
                     ? BugReportMinimumSpecOptions.MEETS_MIN_SPEC
                     : BugReportMinimumSpecOptions.BELOW_MIN_SPEC;
 
-        /// <summary>
-        ///     The proxy rejects the whole ticket over an oversized image, so one degrades to the
-        ///     Sentry copy instead: the description's diagnostics link still leads to it.
-        /// </summary>
+        /// <summary>The proxy rejects the whole ticket over an oversized image, so one degrades to the Sentry copy instead.</summary>
         public static byte[]? SelectEvidenceImage(byte[]? image)
         {
             if (image is not { Length: > IntercomTicketPayload.MAX_EVIDENCE_BYTES })
@@ -90,10 +82,6 @@ namespace DCL.BugReporting
             return null;
         }
 
-        /// <summary>
-        ///     Coordinates and the diagnostics link ride in the ticket body: the Bug Report ticket
-        ///     type declares no attribute for either.
-        /// </summary>
         public static string ComposeTicketDescription(string description, Vector2Int? coordinates, string? feedbackLink)
         {
             var builder = new StringBuilder(description);

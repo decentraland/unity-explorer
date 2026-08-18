@@ -34,8 +34,7 @@ namespace DCL.BugReporting.UI.Editor
 
             try
             {
-                // Root mirrors BlockedScreen: an own overlay canvas so MVCManager's SetDrawOrder
-                // can drive the sorting layer and order directly on the view.
+                // An own overlay canvas (mirroring BlockedScreen) so MVCManager's SetDrawOrder can drive the sorting directly on the view.
                 var canvas = root.AddComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
@@ -253,8 +252,7 @@ namespace DCL.BugReporting.UI.Editor
             return input;
         }
 
-        // TMP_DefaultControls can only build the stock component, so the wired field is rebuilt as
-        // a MultilineInputField (Enter keeps adding lines), keeping the references it created.
+        // TMP_DefaultControls can only build the stock component, so the wired field is rebuilt as a MultilineInputField.
         private static MultilineInputField ReplaceWithMultilineInputField(TMP_InputField stock)
         {
             GameObject go = stock.gameObject;
