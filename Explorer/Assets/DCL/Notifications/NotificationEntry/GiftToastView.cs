@@ -59,13 +59,13 @@ namespace DCL.Notifications.NotificationEntry
                 ? notification.Metadata.SenderAddress.Substring(0, 6) + "..."
                 : notification.Metadata.SenderAddress;
 
-            TitleText.text = $"{shortAddr} sent you something! It's on its way to your Backpack.";
+            TitleText.text = $"{shortAddr} sent you something! " + GiftingTextIds.GiftOnItsWayMessage;
         }
 
         public void UpdateSenderName(string name, Color nameColor)
         {
             string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
-            TitleText.text = $"<color=#{hexColor}><b>{name}</b></color> sent you something! It's on its way to your Backpack.";
+            TitleText.text = $"<color=#{hexColor}><b>{name}</b></color> sent you something! " + GiftingTextIds.GiftOnItsWayMessage;
         }
     }
 }
