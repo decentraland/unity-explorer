@@ -64,7 +64,7 @@ namespace DCL.UI.ProfileNames.Tests
         {
             // Arrange: the user's *non-unique* display name happens to be spelled the same as an
             // owned NFT name they haven't equipped yet (HasClaimedName == false) - the #9550 repro.
-            profile = Profile.Create("0x1234567890123456789012345678901234abcd", OWNED_NAME, new DCL.Profiles.Avatar());
+            profile = new Profile(UserId.New("0x1234567890123456789012345678901234abcd").Unwrap(), OWNED_NAME, new DCL.Profiles.Avatar());
             profile.HasClaimedName = false;
 
             using INftNamesProvider.PaginatedNamesResponse names = new (1, new[] { OWNED_NAME });
