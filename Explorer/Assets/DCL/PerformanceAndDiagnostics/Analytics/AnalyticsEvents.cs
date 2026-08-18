@@ -1,10 +1,6 @@
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    /// <summary>
-    ///     IMPORTANT!!
-    ///     After doing any change to the events here, we need to hit the "Refresh Events" button on the AnalyticsConfiguration Scriptable Object so the new events are recognized!!
-    ///     IMPORTANT!!
-    /// </summary>
+
     public static class AnalyticsEvents
     {
         public static class General
@@ -16,6 +12,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string ERROR = "error";
             public const string LOADING_ERROR = "loading_error";
             public const string MEETS_MINIMUM_REQUIREMENTS = "meets_minimum_requirements";
+            public const string TELEPORT_OPERATION_DURATION = "teleport_operation_duration";
         }
 
         public static class World
@@ -29,7 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string USED_EMOTE = "used_emote";
         }
 
-        public static class UI
+        public static class Ui
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
@@ -199,6 +196,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public static class MarketplaceCredits
         {
+            // Every credits event carries this property so the warehouse can split client events
+            // from the web shop's Segment events even where the event names are shared.
+            public const string PLATFORM_KEY = "platform";
+            public const string PLATFORM_VALUE = "explorer";
+
             public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
 
             // Credits top-up funnel: event names and property keys are shared with the web shop so
@@ -208,6 +210,24 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string SHOP_COMPLETED_BUY_CREDITS = "Shop Completed Buy Credits";
             public const string SHOP_BUY_CREDITS_PENDING = "Shop Buy Credits Pending";
             public const string SHOP_BUY_CREDITS_FAILED = "Shop Buy Credits Failed";
+            public const string SHOP_BUY_CREDITS_CANCELLED = "Shop Buy Credits Cancelled";
+
+            // Buy-with-credits item purchase funnel: names shared with the web shop where a web
+            // counterpart exists; the rest follow the same style so the funnel reads as one.
+            public const string SHOP_STARTED_CHECKOUT = "Shop Started Checkout";
+            public const string SHOP_BUY_CREDITS_PROMPTED = "Shop Buy Credits Prompted";
+            public const string SHOP_STARTED_PURCHASE = "Shop Started Purchase";
+            public const string SHOP_COMPLETED_PURCHASE = "Shop Completed Purchase";
+            public const string SHOP_PURCHASE_FAILED = "Shop Purchase Failed";
+            public const string SHOP_PURCHASE_CANCELLED = "Shop Purchase Cancelled";
+
+            // Client-only auxiliary moments with no web counterpart.
+            public const string CREDITS_TOPUP_OPENED = "credits_topup_opened";
+            public const string CREDITS_TOPUP_RETRY_CLICKED = "credits_topup_retry_clicked";
+            public const string CREDITS_TOPUP_PACKS_LOAD_FAILED = "credits_topup_packs_load_failed";
+            public const string CREDITS_PURCHASE_NAV_CLICKED = "credits_purchase_nav_clicked";
+            public const string CREDITS_PURCHASE_RETRY_CLICKED = "credits_purchase_retry_clicked";
+            public const string CREDITS_BUY_FALLBACK_WEB = "credits_buy_fallback_web";
         }
 
         public static class Settings
@@ -289,6 +309,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string PLACE_SHARED = "place_shared";
             public const string PLACE_LINK_COPIED = "place_link_copied";
             public const string PLACE_NAVIGATION_STARTED = "place_navigation_started";
+        }
+
+        public static class Profiling
+        {
+            public const string LOADING_TIMES = "synthetic_loading_times";
         }
     }
 }

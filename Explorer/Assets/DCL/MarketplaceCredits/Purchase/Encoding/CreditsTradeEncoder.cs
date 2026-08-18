@@ -11,8 +11,9 @@ namespace DCL.MarketplaceCredits.Purchase
 {
     /// <summary>
     ///     NOTE: AI generated based on the shop repo trade-encoding
-    ///     On-chain encoding for CreditsManager.useCredits(accept([trade])) and its gasless meta-transaction
-    ///     wrapper. Port of the shop web app's single source of truth for these bytes
+    ///     On-chain encoding for CreditsManager.useCredits(...) and its gasless meta-transaction wrapper,
+    ///     for BOTH rails: an offchain trade (accept([trade])) and a CollectionStore mint (buy([item])).
+    ///     Port of the shop web app's single source of truth for these bytes
     ///     (Server/shop/app/src/lib/trade-encoding.ts and buy-gasless.ts) — every normalization here fixed a
     ///     real on-chain failure there, so keep them byte-identical (guarded by golden-vector tests).
     /// </summary>
@@ -57,6 +58,15 @@ namespace DCL.MarketplaceCredits.Purchase
                 {""name"":""beneficiary"",""type"":""address""},
                 {""name"":""extra"",""type"":""bytes""}]}]}]}]";
 
+        // CollectionStore.buy's argument: ItemToBuy[] — one call mints many items across many collections, which
+        // is what lets a whole cart of mints settle in a single transaction. Mirrors the shop's
+        // ITEM_TO_BUY_TUPLE_ARRAY (Server/shop/app/src/lib/trade-encoding.ts).
+        private const string STORE_BUY_ABI = @"[{""name"":""buy"",""type"":""function"",""outputs"":[],""inputs"":[{""name"":""_itemsToBuy"",""type"":""tuple[]"",""components"":[
+            {""name"":""collection"",""type"":""address""},
+            {""name"":""ids"",""type"":""uint256[]""},
+            {""name"":""prices"",""type"":""uint256[]""},
+            {""name"":""beneficiaries"",""type"":""address[]""}]}]}]";
+
         private const string USE_CREDITS_ABI = @"[{""name"":""useCredits"",""type"":""function"",""outputs"":[],""inputs"":[{""name"":""_args"",""type"":""tuple"",""components"":[
             {""name"":""credits"",""type"":""tuple[]"",""components"":[
                 {""name"":""value"",""type"":""uint256""},
@@ -82,6 +92,7 @@ namespace DCL.MarketplaceCredits.Purchase
             {""name"":""_signer"",""type"":""address""}]}]";
 
         private static readonly FunctionABI ACCEPT_FUNCTION = DeserialiseFunction(ACCEPT_ABI);
+        private static readonly FunctionABI STORE_BUY_FUNCTION = DeserialiseFunction(STORE_BUY_ABI);
         private static readonly FunctionABI USE_CREDITS_FUNCTION = DeserialiseFunction(USE_CREDITS_ABI);
         private static readonly FunctionABI EXECUTE_META_TX_FUNCTION = DeserialiseFunction(EXECUTE_META_TX_ABI);
         private static readonly FunctionABI GET_NONCE_FUNCTION = DeserialiseFunction(GET_NONCE_ABI);
@@ -102,6 +113,36 @@ namespace DCL.MarketplaceCredits.Purchase
         }
 
         /// <summary>
+        ///     buy([item]) split into the (selector, data) pair consumed by the useCredits externalCall struct —
+        ///     the CollectionStore counterpart of <see cref="BuildAcceptCall" />.
+        ///     <para>
+        ///         The buyer is named EXPLICITLY as the beneficiary, which is what makes a mint relayable at all:
+        ///         the store never sees the buyer as msg.sender on either rail (the CreditsManager is the caller),
+        ///         so wrapping this in a meta-transaction changes only who transmits and who pays the gas.
+        ///     </para>
+        ///     <para>
+        ///         `priceWei` must be the LIVE on-chain price. CollectionStore.buy takes the prices as an argument
+        ///         and re-validates them against the item's current price, reverting if the creator moved it. A
+        ///         trade cannot fail this way — its price is signed into the order — so this is the one purchase
+        ///         path where a stale quote is a revert rather than a wrong number.
+        ///     </para>
+        /// </summary>
+        public static (byte[] selector, byte[] data) BuildStoreBuyCall(string collectionAddress, string itemId, string priceWei, string buyer)
+        {
+            var itemToBuy = new object[]
+            {
+                collectionAddress,
+                new[] { BigInteger.Parse(itemId) },
+                new[] { BigInteger.Parse(priceWei) },
+                new[] { buyer },
+            };
+
+            byte[] data = PARAMETERS_ENCODER.EncodeParameters(STORE_BUY_FUNCTION.InputParameters, new object[] { new object[] { itemToBuy } });
+            byte[] selector = STORE_BUY_FUNCTION.Sha3Signature.HexToByteArray();
+            return (selector, data);
+        }
+
+        /// <summary>
         ///     Full useCredits(UseCreditsArgs) calldata spending one authorized credit on one trade.
         ///     externalCallExpiresAt (unix seconds) and externalCallSalt (32 bytes) are injected by the caller
         ///     so the encoding stays deterministic for tests.
@@ -114,8 +155,45 @@ namespace DCL.MarketplaceCredits.Purchase
             long externalCallExpiresAt,
             byte[] externalCallSalt)
         {
-            (byte[] acceptSelector, byte[] acceptData) = BuildAcceptCall(trade, buyer);
+            (byte[] selector, byte[] data) = BuildAcceptCall(trade, buyer);
+            return BuildUseCreditsCalldata(trade.contract, selector, data, credit, maxCreditedValue, externalCallExpiresAt, externalCallSalt);
+        }
 
+        /// <summary>
+        ///     Full useCredits(UseCreditsArgs) calldata spending one authorized credit on one CollectionStore
+        ///     MINT — the primary-sale path for items that were never listed as a trade, and therefore have no
+        ///     tradeId and no order to fetch.
+        /// </summary>
+        public static string BuildStoreMintUseCreditsCalldata(
+            string collectionStoreAddress,
+            string collectionAddress,
+            string itemId,
+            string priceWei,
+            string buyer,
+            AuthorizedCredit credit,
+            string maxCreditedValue,
+            long externalCallExpiresAt,
+            byte[] externalCallSalt)
+        {
+            (byte[] selector, byte[] data) = BuildStoreBuyCall(collectionAddress, itemId, priceWei, buyer);
+            return BuildUseCreditsCalldata(collectionStoreAddress, selector, data, credit, maxCreditedValue, externalCallExpiresAt, externalCallSalt);
+        }
+
+        /// <summary>
+        ///     The shared useCredits envelope: the credit, its signature, the single external call and the value
+        ///     caps. Both rails go through here so they cannot drift on the part that moves the money — the trade
+        ///     and the mint differ ONLY in the (target, selector, data) triple. Mirrors the shop's
+        ///     `wrapInUseCredits`.
+        /// </summary>
+        private static string BuildUseCreditsCalldata(
+            string externalCallTarget,
+            byte[] externalCallSelector,
+            byte[] externalCallData,
+            AuthorizedCredit credit,
+            string maxCreditedValue,
+            long externalCallExpiresAt,
+            byte[] externalCallSalt)
+        {
             BigInteger maxCredited = BigInteger.Parse(maxCreditedValue);
             BigInteger uncredited = UncreditedValue(maxCreditedValue, credit.availableAmount);
 
@@ -128,7 +206,7 @@ namespace DCL.MarketplaceCredits.Purchase
             {
                 creditsTree,
                 new[] { credit.signature.HexToByteArray() },
-                new object[] { trade.contract, acceptSelector, acceptData, new BigInteger(externalCallExpiresAt), externalCallSalt },
+                new object[] { externalCallTarget, externalCallSelector, externalCallData, new BigInteger(externalCallExpiresAt), externalCallSalt },
                 Array.Empty<byte>(),
                 uncredited,
                 maxCredited,

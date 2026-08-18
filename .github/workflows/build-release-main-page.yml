@@ -56,7 +56,9 @@ jobs:
         uses: dawidd6/action-download-artifact@v6
         with:
           run_id: ${{ github.event.workflow_run.id }}
-          name: Decentraland_.*
+          # Anchored to the four player zips: Decentraland_.* also matched the multi-GB
+          # *_debug_symbols artifacts, downloading them only to discard them.
+          name: Decentraland_(windows64|macos)(_epic)?$
           name_is_regexp: true
           skip_unpack: true
 

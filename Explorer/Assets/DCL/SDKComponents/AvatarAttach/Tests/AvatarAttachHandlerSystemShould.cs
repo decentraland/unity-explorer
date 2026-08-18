@@ -587,7 +587,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 // Use different anchor points for each attachment
                 var anchorPoint = (AvatarAnchorPointType)(i % 3 == 0
                     ? AvatarAnchorPointType.AaptPosition
-                    : (i % 3 == 1 ? AvatarAnchorPointType.AaptLeftHand : AvatarAnchorPointType.AaptRightHand));
+                    : i % 3 == 1 ? AvatarAnchorPointType.AaptLeftHand : AvatarAnchorPointType.AaptRightHand);
 
                 var pbAvatarAttachComponent = new PBAvatarAttach
                 {

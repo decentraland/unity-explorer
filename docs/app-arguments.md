@@ -86,7 +86,7 @@ For embedded links you will need to place value after `=` sign, instead of space
 ## Scene & Environment Flags
 
 ### `scene-console`
-**Description:** Enables the scene console for debugging and development. Only available in debug mode or when running local scenes.
+**Description:** Enables the scene console (the debug menu's log view of the scene's own output) for debugging and development. Works for any realm — local scene development enables it implicitly, and the flag itself is accepted from deep links against production realms and worlds too, so creators and QA can inspect a deployed scene.
 
 **Usage:**
 ```bash
@@ -464,6 +464,17 @@ decentraland://?force-open-backpack=true
 **Usage:**
 ```bash
 --launcher_anonymous_id user123
+```
+
+---
+
+### `referrer`
+**Type:** String (Ethereum address, `0x` + 40 hex chars)
+**Description:** Referral attribution address forwarded by the launcher (originally captured by the installer from the download URL). For new accounts it is registered against the referral backend during onboarding, and it is appended to the deep link sign-in URL so the auth website can track the referral for wallet sign-ups. Invalid values are ignored.
+
+**Usage:**
+```bash
+--referrer 0x24e5f44999c151f08609f8e27b2238c773c4d020
 ```
 
 ---

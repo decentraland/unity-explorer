@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system = new WriteAvatarEquippedDataSystem(world, ecsToCRDTWriter);
 
             profile = new SDKProfile();
-            profile.OverrideWith(new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()));
+            profile.OverrideWith(new Profile(UserId.New(FAKE_USER_ID).Unwrap(), "fake user", CreateTestAvatar()));
 
             playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
@@ -63,7 +63,7 @@ namespace DCL.Multiplayer.SDK.Tests
         public void DispatchAvatarEquippedDataUpdateCorrectly()
         {
             world.Add(entity, profile);
-            system.Update(0);
+            system!.Update(0);
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.SDK.Tests
         public void HandleComponentRemovalCorrectly()
         {
             world.Add(entity, profile);
-            system.Update(0);
+            system!.Update(0);
 
             world.Add<DeleteEntityIntention>(entity);
 
