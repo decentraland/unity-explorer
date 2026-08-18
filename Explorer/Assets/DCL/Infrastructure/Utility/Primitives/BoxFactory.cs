@@ -232,10 +232,7 @@ namespace Utility.Primitives
 
         public static void UpdateMesh(ref Mesh mesh, RepeatedField<float> boxUVs = null)
         {
-            if (boxUVs is { Count: > 0 })
-                mesh.SetUVs(0, PrimitivesUtility.FloatArrayToV2List(boxUVs, mesh.uv), 0, VERTICES_NUM);
-            else
-                mesh.SetUVs(0, defaultUVs, 0, VERTICES_NUM);
+            PrimitivesUtility.ApplyUVs(mesh, boxUVs, defaultUVs, VERTICES_NUM);
         }
     }
 }

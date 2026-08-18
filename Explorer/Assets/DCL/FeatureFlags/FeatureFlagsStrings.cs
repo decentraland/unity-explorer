@@ -82,6 +82,8 @@ namespace DCL.FeatureFlags
         public const string REPORT_USER = "alfa-report-user";
         public const string POINT_AT = "alfa-point-at";
         public const string NEARBY_VOICE_CHAT = "alfa-nearby-voice-chat";
+        public const string NEARBY_VOICE_CHAT_TIP = "alfa-nearby-voice-chat-tip";
+        public const string NEARBY_VOICE_CHAT_TIP_CONFIG_VARIANT = "config";
         public const string AVATAR_CONTEXT_MENU = "alfa-avatar-context-menu";
         public const string DOUBLE_CLICK_WALK = "alfa-double-click-walk";
         public const string BYTE_WEIGHTED_LOADING_PROGRESS = "alfa-byte-weighted-loading-progress";
@@ -90,6 +92,9 @@ namespace DCL.FeatureFlags
         public const string HARDWARE_FINGERPRINT = "alfa-hardware-fingerprint";
         public const string OPTIMIZED_ASSETS = "optimized-assets";
         public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
+        public const string USE_CUSTOM_MEDIA_PLAYER_WINDOWS = "use-custom-media-player-windows";
+        public const string USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON = "use-custom-media-player-mac-silicon";
+        public const string USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL = "use-custom-media-player-mac-intel";
 
         public static class Endpoints
         {

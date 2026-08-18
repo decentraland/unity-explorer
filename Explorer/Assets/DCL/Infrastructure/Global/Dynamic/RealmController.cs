@@ -156,7 +156,8 @@ namespace Global.Dynamic
                     hostname,
                     isLocalSceneDevelopment,
                     worldManifest,
-                    skyboxFixedHour
+                    skyboxFixedHour,
+                    realm
                 );
 
                 UnityDiagnosticsCenter.Instance.SetRealmInfo(

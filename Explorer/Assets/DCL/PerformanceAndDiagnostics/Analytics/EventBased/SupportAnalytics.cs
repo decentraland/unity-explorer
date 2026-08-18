@@ -30,7 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         }
 
         private void OnSupportRequested() =>
-            analytics.Track(AnalyticsEvents.UI.OPEN_SUPPORT);
+            analytics.Track(AnalyticsEvents.Ui.OPEN_SUPPORT);
 
         private void OnPlacesOpened() =>
             analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "sidebar" } });

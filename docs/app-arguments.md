@@ -468,6 +468,17 @@ decentraland://?force-open-backpack=true
 
 ---
 
+### `referrer`
+**Type:** String (Ethereum address, `0x` + 40 hex chars)
+**Description:** Referral attribution address forwarded by the launcher (originally captured by the installer from the download URL). For new accounts it is registered against the referral backend during onboarding, and it is appended to the deep link sign-in URL so the auth website can track the referral for wallet sign-ups. Invalid values are ignored.
+
+**Usage:**
+```bash
+--referrer 0x24e5f44999c151f08609f8e27b2238c773c4d020
+```
+
+---
+
 ## Visual Test Determinism
 
 Visual regression tests need a deterministic scene: a fixed window, no time-of-day drift, no procedural terrain, and no overlapping HUD UI on top of the rendered output. The flags below are the canonical set passed to the Explorer when capturing or comparing reference frames.

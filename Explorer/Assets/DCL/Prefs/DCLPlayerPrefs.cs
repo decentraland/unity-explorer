@@ -184,7 +184,10 @@ namespace DCL.Prefs
         [MenuItem("Decentraland/PlayerPrefs/Reset Nearby Voice Intro Tip")]
         private static void ResetNearbyVoiceIntroTip()
         {
-            DeleteKey(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, save: true);
+            DeleteKey(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED);
+            DeleteKey(DCLPrefKeys.NEARBY_VOICE_TIP_SHOWN_COUNT);
+            DeleteKey(DCLPrefKeys.NEARBY_VOICE_TIP_LAST_SHOWN_LAUNCH);
+            DeleteKey(DCLPrefKeys.NEARBY_VOICE_USED, save: true);
             Debug.Log("Nearby Voice Intro Tip has been reset.");
         }
 #endif
