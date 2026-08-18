@@ -130,6 +130,7 @@ namespace DCL.PluginSystem.Global
                 webRequestController,
                 decentralandUrlsSource,
                 profileChangesBus,
+                mvcManager,
                 referrer);
 
             mvcManager.RegisterController(authenticationScreenController);
