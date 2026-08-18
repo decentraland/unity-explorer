@@ -184,7 +184,9 @@ namespace Global.Dynamic
                 realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
                     result.content.publicUrl);
             }
-            catch (OperationCanceledException) { }
+            // The previous realm is already unloaded at this point: cancellation must propagate
+            // so callers don't treat a half-configured realm as a successful change
+            catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
                 ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
@@ -202,7 +204,7 @@ namespace Global.Dynamic
             await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
                                           && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
 
-            return fixedScenePointers.SceneResults;
+            return fixedScenePointers.SceneResults!;
         }
 
         public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
@@ -310,19 +312,19 @@ namespace Global.Dynamic
             return parsed;
         }
 
-        private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
+        private void ComplimentWithVolatilePointers(World world, Entity entity)
         {
-            world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
+            world.Add(entity, VolatileScenePointers.Create(partitionComponentPool.Get()));
         }
 
-        private bool ComplimentWithStaticPointers(World world, Entity realmEntity)
+        private bool ComplimentWithStaticPointers(World world, Entity entity)
         {
             IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
 
             if (positions is { Count: > 0 })
             {
                 // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
-                world.Add(realmEntity, new StaticScenePointers(positions));
+                world.Add(entity, new StaticScenePointers(positions));
                 return true;
             }
 

@@ -205,28 +205,40 @@ namespace DCL.Landscape
 
                     IsTerrainShown = true;
                 }
+
+                // Marked only after a complete generation: a partial one is destroyed below and
+                // must not be treated as an existing terrain that can simply be shown again
+                IsTerrainGenerated = true;
             }
             catch (OperationCanceledException)
             {
-                if (TerrainRoot != null)
-                    UnityObjectUtils.SafeDestroyGameObject(TerrainRoot);
-
+                DestroyPartialTerrain();
+                throw;
             }
-            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
-            finally
+            catch (Exception e) when (e is not OperationCanceledException)
             {
-                float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-
-                IsTerrainGenerated = true;
-
-                float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-
-                ReportHub.Log(ReportCategory.LANDSCAPE,
-                    $"The landscape cleaning process cleaned {afterCleaning - beforeCleaning}MB of memory");
+                ReportHub.LogException(e, reportData);
+                DestroyPartialTerrain();
             }
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
+        }
+
+        /// <summary>
+        ///     Destroys everything an interrupted generation left behind, so the state reflects
+        ///     that no usable terrain exists. The occupancy map is intentionally kept alive:
+        ///     <see cref="OccupancyMapData" /> may still be read for height sampling.
+        /// </summary>
+        private void DestroyPartialTerrain()
+        {
+            if (TerrainRoot != null)
+                UnityObjectUtils.SafeDestroyGameObject(TerrainRoot);
+
+            if (Wind != null)
+                UnityObjectUtils.SafeDestroyGameObject(Wind);
+
+            IsTerrainShown = false;
         }
 
         internal static Texture2D CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,
