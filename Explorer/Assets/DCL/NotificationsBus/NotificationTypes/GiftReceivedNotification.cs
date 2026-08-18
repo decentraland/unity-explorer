@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System;
-using DCL.Backpack.Gifting;
 using DCL.Diagnostics;
 
 namespace DCL.NotificationsBus.NotificationTypes
@@ -8,8 +7,12 @@ namespace DCL.NotificationsBus.NotificationTypes
     [Serializable]
     public class GiftReceivedNotification : NotificationBase
     {
+        // Shared "on its way" copy lives here (not in GiftingTextIds) because DCL.Social
+        // already depends on DCL.SharedAPI, so the reverse reference would be circular.
+        public const string GIFT_ON_ITS_WAY_MESSAGE = "It's on its way to your Backpack.";
+
         private const string NOTIFICATION_HEADER = "Gift received";
-        private const string NOTIFICATION_TITLE = "sent you a gift! " + GiftingTextIds.GiftOnItsWayMessage;
+        private const string NOTIFICATION_TITLE = "sent you a gift! " + GIFT_ON_ITS_WAY_MESSAGE;
 
         [JsonProperty("metadata")]
         public GiftReceivedNotificationMetadata Metadata { get; set; }
