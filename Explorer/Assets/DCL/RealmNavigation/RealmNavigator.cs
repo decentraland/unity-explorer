@@ -167,6 +167,9 @@ namespace DCL.RealmNavigation
             ReportHub.LogWarning(ReportCategory.REALM, $"Realm is left unconfigured after a failed change, recovering to {recoveryRealm}");
 
             var recoveryOperation = DoChangeRealmAsync(recoveryRealm, null, currentParcel, false);
+
+            // CancellationToken.None on purpose: recovery must not inherit the already-cancelled teleport
+            // token, and the loading screen applies its own timeout so the operation stays bounded
             EnumResult<TaskError> recoveryResult = await loadingScreen.ShowWhileExecuteTaskAsync(recoveryOperation, CancellationToken.None);
 
             if (!recoveryResult.Success)

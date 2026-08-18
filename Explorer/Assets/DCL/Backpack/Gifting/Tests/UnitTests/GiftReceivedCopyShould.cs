@@ -4,7 +4,6 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using NUnit.Framework;
 using System.Collections.Generic;
-using System.Reflection;
 using TMPro;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -25,9 +24,6 @@ namespace DCL.Backpack.Gifting.Tests.UnitTests
         private const string OLD_GIFT_OPENED_TITLE = "ITEM OPENED";
 
         private const string ON_ITS_WAY_SENTENCE = "It's on its way to your Backpack.";
-
-        private static readonly FieldInfo? TITLE_TEXT_FIELD =
-            typeof(GiftToastView).GetField("<TitleText>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private readonly List<GameObject> spawned = new (2);
 
@@ -159,17 +155,11 @@ namespace DCL.Backpack.Gifting.Tests.UnitTests
 
         private GiftToastView CreateToastView()
         {
-            Assert.IsNotNull(TITLE_TEXT_FIELD,
-                "GiftToastView.TitleText backing field '<TitleText>k__BackingField' was not found via reflection - " +
-                "the field/property was likely renamed; update this test's field name before trusting its result.");
-
             var go = new GameObject(nameof(GiftToastView), typeof(GiftToastView), typeof(TextMeshProUGUI));
             spawned.Add(go);
 
             GiftToastView view = go.GetComponent<GiftToastView>();
-            TextMeshProUGUI titleText = go.GetComponent<TextMeshProUGUI>();
-
-            TITLE_TEXT_FIELD!.SetValue(view, titleText);
+            view.TitleText = go.GetComponent<TextMeshProUGUI>();
 
             return view;
         }

@@ -53,7 +53,7 @@ namespace DCL.Notifications.NotificationEntry
                 ? $"{notification.Metadata.SenderAddress.Substring(0, 4)}..." 
                 : notification.Metadata.SenderAddress;
 
-            HeaderText.text = $"{shortAddr} sent you something! " + GiftingTextIds.GiftOnItsWayMessage;
+            HeaderText.text = string.Format(GiftingTextIds.GiftReceivedSenderTitleFormat, shortAddr);
         }
         
         public void UpdateSenderName(string playerName, Color nameColor)

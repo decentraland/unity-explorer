@@ -35,6 +35,9 @@ namespace DCL.Backpack.Gifting
         public const string GiftReceivedTitleFormat =
             "<color=#{0}>{1}</color> sent you something! " + GiftOnItsWayMessage;
 
+        public const string GiftReceivedSenderTitleFormat =
+            "{0} sent you something! " + GiftOnItsWayMessage;
+
         public const string GiftReceivedFromFormat =
             "FROM <color=#{0}>{1}</color>";
         

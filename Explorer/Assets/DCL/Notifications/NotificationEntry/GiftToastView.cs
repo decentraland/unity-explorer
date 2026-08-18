@@ -18,7 +18,7 @@ namespace DCL.Notifications.NotificationEntry
 
         [field: SerializeField] public Image Background { get; private set; }
         [field: SerializeField] public Button MainButton { get; private set; }
-        [field: SerializeField] public TMP_Text TitleText { get; private set; }
+        [field: SerializeField] public TMP_Text TitleText { get; set; }
         [field: SerializeField] public ImageView NotificationImage { get; private set; }
         [field: SerializeField] public AudioClipConfig NotificationAudio { get; private set; }
 
@@ -60,13 +60,13 @@ namespace DCL.Notifications.NotificationEntry
                 ? notification.Metadata.SenderAddress.Substring(0, 6) + "..."
                 : notification.Metadata.SenderAddress;
 
-            TitleText.text = $"{shortAddr} sent you something! " + GiftingTextIds.GiftOnItsWayMessage;
+            TitleText.text = string.Format(GiftingTextIds.GiftReceivedSenderTitleFormat, shortAddr);
         }
 
         public void UpdateSenderName(string name, Color nameColor)
         {
             string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
-            TitleText.text = $"<color=#{hexColor}><b>{name}</b></color> sent you something! " + GiftingTextIds.GiftOnItsWayMessage;
+            TitleText.text = string.Format(GiftingTextIds.GiftReceivedSenderTitleFormat, $"<color=#{hexColor}><b>{name}</b></color>");
         }
     }
 }
