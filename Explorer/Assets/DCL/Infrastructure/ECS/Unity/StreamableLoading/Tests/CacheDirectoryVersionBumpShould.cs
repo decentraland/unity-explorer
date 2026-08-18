@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.Tests
         // becomes a stale sibling that gets swept away the next time a CacheDirectory is constructed.
         private const string LEGACY_VERSION_FOLDER = "DiskCacheV3";
 
-        private MockedReportScope mockedReportScope = null!;
+        private MockedReportScope? mockedReportScope;
 
         [SetUp]
         public void SetUp()
