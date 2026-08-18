@@ -4,6 +4,7 @@ using DCL.SDKComponents.MediaStream.YouTube;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using Utility.Multithreading;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -114,7 +115,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private static async UniTaskVoid RunAsync(HttpListener local)
         {
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             while (local.IsListening)
             {
