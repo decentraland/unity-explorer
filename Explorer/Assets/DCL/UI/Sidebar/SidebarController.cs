@@ -146,7 +146,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.skyboxButton.onClick.RemoveListener(OpenSkyboxSettingsPanel);
                 viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OnProfilePanelButtonClicked);
                 viewInstance.sidebarConfigButton.onClick.RemoveListener(OnSidebarConfigButtonClicked);
-                viewInstance.unreadMessagesButton.onClick.RemoveListener(OnUnreadMessagesButtonClicked);
+                viewInstance.UnreadMessagesButton.onClick.RemoveListener(OnUnreadMessagesButtonClicked);
                 viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
                 viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
                 viewInstance.smartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
@@ -160,7 +160,7 @@ namespace DCL.UI.Sidebar
                     viewInstance.friendsButton.onClick.RemoveListener(OnFriendsButtonClicked);
 
                 if (isMarketplaceCreditsFeatureEnabled)
-                    viewInstance.marketplaceCreditsButton.onClick.RemoveListener(OnMarketplaceCreditsButtonClicked);
+                    viewInstance.MarketplaceCreditsButton.onClick.RemoveListener(OnMarketplaceCreditsButtonClicked);
 
                 if (isBugReportFeatureEnabled)
                     viewInstance.bugReportButton?.onClick.RemoveListener(OnBugReportButtonClicked);
@@ -236,7 +236,7 @@ namespace DCL.UI.Sidebar
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsPanel);
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OnProfilePanelButtonClicked);
             viewInstance.sidebarConfigButton.onClick.AddListener(OnSidebarConfigButtonClicked);
-            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
+            viewInstance.UnreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
 
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
             viewInstance.smartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
@@ -321,9 +321,9 @@ namespace DCL.UI.Sidebar
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
             if (isUnfolded)
-                viewInstance?.unreadMessagesButton.Select();
+                viewInstance?.UnreadMessagesButton.Select();
             else
-                viewInstance?.unreadMessagesButton.Deselect();
+                viewInstance?.UnreadMessagesButton.Deselect();
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel) =>
@@ -354,7 +354,7 @@ namespace DCL.UI.Sidebar
 
         private async UniTaskVoid CheckForMarketplaceCreditsFeatureAsync(CancellationToken ct)
         {
-            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(false);
+            viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(false);
 
             await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
             Profile? ownProfile = await selfProfile.ProfileAsync(ct);
@@ -362,11 +362,11 @@ namespace DCL.UI.Sidebar
             if (ownProfile == null)
                 return;
 
-            isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId, ct);
-            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(isMarketplaceCreditsFeatureEnabled);
+            isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId.Value, ct);
+            viewInstance?.MarketplaceCreditsButton.gameObject.SetActive(isMarketplaceCreditsFeatureEnabled);
 
             if (isMarketplaceCreditsFeatureEnabled)
-                viewInstance?.marketplaceCreditsButton.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
+                viewInstance?.MarketplaceCreditsButton.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
         }
 
         private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
@@ -423,7 +423,7 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
 
         private void OnMarketplaceCreditsButtonClicked() =>
-            OpenPanelAsync(viewInstance!.marketplaceCreditsButton,
+            OpenPanelAsync(viewInstance!.MarketplaceCreditsButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
 
         private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();

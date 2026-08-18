@@ -2,7 +2,6 @@ using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utility;
 using Sentry;
-using Sentry.Extensibility;
 using Sentry.Unity;
 using System;
 using System.Collections.Generic;
@@ -132,7 +131,7 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.CaptureException(ecsSystemException);
         }
 
-        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
+        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object? context)
         {
             using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);

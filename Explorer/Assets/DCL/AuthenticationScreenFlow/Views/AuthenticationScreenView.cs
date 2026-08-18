@@ -45,6 +45,6 @@ namespace DCL.AuthenticationScreenFlow
 
         /// <summary>Nullable so prefabs predating the button keep working.</summary>
         [field: SerializeField]
-        public Button? BugReportButton { get; private set; }
+        public Button? BugReportButton { get; private set; } = null!;
     }
 }

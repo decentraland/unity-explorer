@@ -1,10 +1,12 @@
+using System;
+
 namespace DCL.BugReporting
 {
     /// <summary>
     ///     One option of the "Issue Type" list attribute on the Intercom "Bug Report" ticket type.
     ///     Intercom takes the option id on writes, never the label.
     /// </summary>
-    public readonly struct BugReportIssueType
+    public readonly struct BugReportIssueType : IEquatable<BugReportIssueType>
     {
         public readonly string Label;
         public readonly string OptionId;
@@ -14,6 +16,15 @@ namespace DCL.BugReporting
             Label = label;
             OptionId = optionId;
         }
+
+        public bool Equals(BugReportIssueType other) =>
+            Label == other.Label && OptionId == other.OptionId;
+
+        public override bool Equals(object? obj) =>
+            obj is BugReportIssueType other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Label, OptionId);
     }
 
     /// <summary>

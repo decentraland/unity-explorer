@@ -182,7 +182,9 @@ namespace DCL.FeatureFlags
                 FeatureFlag.MarketplaceCredits => FeatureFlagsStrings.MARKETPLACE_CREDITS,
                 FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
                 FeatureFlag.AuthCodeValidation => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
+#pragma warning disable CS0618 // the mapping must stay complete while the obsolete flag is still declared
                 FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
+#pragma warning restore CS0618
                 FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
                 FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
                 FeatureFlag.GiftingEnabled => FeatureFlagsStrings.GIFTING_ENABLED,

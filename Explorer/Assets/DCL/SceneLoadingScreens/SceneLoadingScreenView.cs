@@ -38,7 +38,7 @@ namespace DCL.SceneLoadingScreens
 
         /// <summary>Nullable so prefabs predating the button keep working.</summary>
         [field: SerializeField]
-        public Button? BugReportButton { get; private set; }
+        public Button? BugReportButton { get; private set; } = null!;
 
         [SerializeField]
         private Transform tipsParent = null!;
@@ -64,6 +64,7 @@ namespace DCL.SceneLoadingScreens
         private readonly List<TipBreadcrumb> tipsBreadcrumbs = new ();
 
 #if UNITY_EDITOR
+        [JetBrains.Annotations.UsedImplicitly] // Unity event function
         private void Awake()
         {
             // Copy material in editor so we don't get asset changes

@@ -5,6 +5,7 @@ using DCL.Input;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utility.Types;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -30,6 +31,8 @@ namespace DCL.BugReporting.Tests
         [SetUp]
         public void SetUp()
         {
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
             captured = default;
             bugReportService = Substitute.For<BugReportService>(null, null);
 
@@ -48,6 +51,7 @@ namespace DCL.BugReporting.Tests
         {
             controller.Dispose();
             World.Destroy(world);
+            EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
         [TestCase(-1, DESCRIPTION, true, false)]

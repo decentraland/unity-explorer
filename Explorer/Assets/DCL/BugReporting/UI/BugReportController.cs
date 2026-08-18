@@ -97,7 +97,9 @@ namespace DCL.BugReporting.UI
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.IssueTypeDropdown.options.Clear();
+            viewInstance!.Initialize();
+
+            viewInstance.IssueTypeDropdown.options.Clear();
 
             foreach (BugReportIssueType issueType in BugReportIssueTypes.ALL)
                 viewInstance.IssueTypeDropdown.options.Add(new TMP_Dropdown.OptionData(issueType.Label));

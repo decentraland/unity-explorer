@@ -14,26 +14,27 @@ namespace DCL.BugReporting.UI
     public class BugReportView : ViewBase, IView
     {
         [field: Header("Form")]
-        [field: SerializeField] internal TMP_Dropdown IssueTypeDropdown { get; private set; } = null!;
-        [field: SerializeField] internal TMP_InputField DescriptionInput { get; private set; } = null!;
-        [field: SerializeField] internal TMP_Text DescriptionCharCounter { get; private set; } = null!;
-        [field: SerializeField] internal Toggle ShareLogsToggle { get; private set; } = null!;
-        [field: SerializeField] internal Button SubmitButton { get; private set; } = null!;
-        [field: SerializeField] internal Button CancelButton { get; private set; } = null!;
-        [field: SerializeField] internal Button CloseButton { get; private set; } = null!;
+        [field: SerializeField] public TMP_Dropdown IssueTypeDropdown { get; private set; } = null!;
+        [field: SerializeField] public TMP_InputField DescriptionInput { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text DescriptionCharCounter { get; private set; } = null!;
+        [field: SerializeField] public Toggle ShareLogsToggle { get; private set; } = null!;
+        [field: SerializeField] public Button SubmitButton { get; private set; } = null!;
+        [field: SerializeField] public Button CancelButton { get; private set; } = null!;
+        [field: SerializeField] public Button CloseButton { get; private set; } = null!;
 
         [field: Header("Screenshot")]
-        [field: SerializeField] internal GameObject ScreenshotSection { get; private set; } = null!;
-        [field: SerializeField] internal RawImage ScreenshotPreview { get; private set; } = null!;
-        [field: SerializeField] internal Button AttachScreenshotButton { get; private set; } = null!;
-        [field: SerializeField] internal Button RemoveScreenshotButton { get; private set; } = null!;
+        [field: SerializeField] public GameObject ScreenshotSection { get; private set; } = null!;
+        [field: SerializeField] public RawImage ScreenshotPreview { get; private set; } = null!;
+        [field: SerializeField] public Button AttachScreenshotButton { get; private set; } = null!;
+        [field: SerializeField] public Button RemoveScreenshotButton { get; private set; } = null!;
 
         [field: Header("States")]
-        [field: SerializeField] internal GameObject FormPanel { get; private set; } = null!;
-        [field: SerializeField] internal GameObject SuccessPanel { get; private set; } = null!;
-        [field: SerializeField] internal Button SuccessDoneButton { get; private set; } = null!;
+        [field: SerializeField] public GameObject FormPanel { get; private set; } = null!;
+        [field: SerializeField] public GameObject SuccessPanel { get; private set; } = null!;
+        [field: SerializeField] public Button SuccessDoneButton { get; private set; } = null!;
 
-        private void Awake()
+        /// <summary>Called by the controller once, right after the view is instantiated.</summary>
+        public void Initialize()
         {
             WireCharCounter(DescriptionInput, DescriptionCharCounter);
 

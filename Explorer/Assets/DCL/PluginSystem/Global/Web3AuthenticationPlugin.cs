@@ -17,7 +17,6 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Global.AppArgs;
 using MVC;
 using System;
 using System.Threading;
@@ -43,7 +42,6 @@ namespace DCL.PluginSystem.Global
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly IInputBlock inputBlock;
         private readonly AudioClipConfig backgroundMusic;
-        private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -70,7 +68,6 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioClipConfig backgroundMusic,
             Arch.Core.World world,
-            IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -94,7 +91,6 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.backgroundMusic = backgroundMusic;
             this.world = world;
-            this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
