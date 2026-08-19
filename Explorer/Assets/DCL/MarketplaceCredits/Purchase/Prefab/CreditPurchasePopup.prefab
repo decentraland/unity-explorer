@@ -4327,6 +4327,7 @@ GameObject:
   - component: {fileID: 5124893310021147802}
   - component: {fileID: 5124893310021147803}
   - component: {fileID: 5124893310021147804}
+  - component: {fileID: 5124893310021147805}
   m_Layer: 5
   m_Name: TryOnPanel
   m_TagString: Untagged
@@ -4394,6 +4395,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!225 &5124893310021147805
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5124893310021147801}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &5124893310021147830
 GameObject:
   m_ObjectHideFlags: 0
@@ -6377,6 +6390,7 @@ MonoBehaviour:
   <ToBackpackButton>k__BackingField: {fileID: 218609277696955016}
   <TryOnButton>k__BackingField: {fileID: 5124893310021147854}
   <TryOnPanel>k__BackingField: {fileID: 5124893310021147801}
+  <TryOnPanelCanvasGroup>k__BackingField: {fileID: 5124893310021147805}
   <TryOnCloseButton>k__BackingField: {fileID: 5484615467442573134}
   <TryOnReplayEmoteButton>k__BackingField: {fileID: 5124893310021147834}
   <TryOnCharacterPreviewView>k__BackingField: {fileID: 7343867917063023409}

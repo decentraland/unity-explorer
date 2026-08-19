@@ -342,7 +342,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 return;
 
             tryOnPanelOpen = true;
-            viewInstance?.TryOnPanel.SetActive(true);
+            viewInstance?.ShowTryOnPanel();
             viewInstance?.TryOnReplayEmoteButton.gameObject.SetActive(false);
 
             tryOnCts = tryOnCts.SafeRestart();
@@ -405,7 +405,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             tryOnCts = null;
             tryOnPanelOpen = false;
             tryOnPreviewController?.OnHide();
-            viewInstance?.TryOnPanel.SetActive(false);
+            viewInstance?.HideTryOnPanel();
         }
 
         private bool IsTryOnAvailable() =>
