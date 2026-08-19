@@ -38,11 +38,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             array.Array[0] = (byte)walletIdLength;
             int dataOffset = walletIdLength + 1;
 
-            // The locally prepended [len][walletId] header plus the peer-controlled payload must
-            // together fit the fixed LIVEKIT_MAX_SIZE Uint8Array that GetResult() writes into
-            // (SceneRuntimeImpl.GetTempUint8Array). An oversized combination is dropped, not
-            // thrown, because throwing turns a routine network condition into a reported error
-            // for every such packet.
+            // The consumed Uint8Array is fixed at LIVEKIT_MAX_SIZE; an oversized peer payload is a routine network condition, so drop instead of throwing.
             if (dataOffset + message.Data.Length > IJsOperations.LIVEKIT_MAX_SIZE)
             {
                 array.Dispose();

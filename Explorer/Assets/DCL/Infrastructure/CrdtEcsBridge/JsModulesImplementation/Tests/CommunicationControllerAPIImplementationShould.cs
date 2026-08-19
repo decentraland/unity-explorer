@@ -116,16 +116,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         [Test]
         public void DropOversizedReceivedMessage()
         {
-            // The size of a received payload is peer-controlled and can exceed the pooled
-            // receive buffer (rented for LIVEKIT_MAX_SIZE); such a message must be dropped
-            // without throwing — an unchecked Span.CopyTo into the undersized buffer raises
-            // ArgumentException "Destination is too short.".
-            // https://decentraland.sentry.io/issues/7638559416/ (UNITY-EXPLORER-PJA)
+            // Regression: a peer-controlled payload larger than the rented receive buffer crashed the copy into it (UNITY-EXPLORER-PJA).
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
             const byte COMMS_REQ_CRDT_STATE = 2; // CommsMessageType.ReqCRDTState -> the unfiltered raw-copy path
 
-            // Bigger than any array that can back the pooled destination
-            // (LIVEKIT_MAX_SIZE rounded up to the next pow2 bucket by ArrayPool)
+            // Exceeds even the pow2 bucket ArrayPool can round the rental up to.
             var data = new byte[IJsOperations.LIVEKIT_MAX_SIZE + 4096];
             data[0] = COMMS_REQ_CRDT_STATE;
 
@@ -139,19 +134,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         [Test]
         public void DropReceivedMessageThatOverflowsOnlyWhenCombinedWithHeader()
         {
-            // The [len][walletId] header is prepended locally on top of the peer-controlled
-            // payload before either reaches the fixed LIVEKIT_MAX_SIZE Uint8Array GetResult()
-            // writes into. A payload that is individually under LIVEKIT_MAX_SIZE but pushes the
-            // header-inclusive total over it must still be dropped, and GetResult() must not
-            // throw when draining whatever else is queued afterwards.
-            // https://decentraland.sentry.io/issues/7638559416/ (UNITY-EXPLORER-PJA)
-            const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"; // 42 bytes -> dataOffset = 43
+            // Regression: a payload that fits LIVEKIT_MAX_SIZE alone but overflows it with the prepended wallet-id header must be dropped (UNITY-EXPLORER-PJA).
+            const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
             const byte COMMS_REQ_CRDT_STATE = 2; // CommsMessageType.ReqCRDTState -> the unfiltered raw-copy path
 
             int walletIdBytes = Encoding.UTF8.GetByteCount(WALLET_ID);
             int dataOffset = walletIdBytes + 1;
 
-            // Individually under LIVEKIT_MAX_SIZE, but dataOffset + payload.Length overflows it.
+            // Smallest payload that fits alone but overflows once the header is included.
             var data = new byte[IJsOperations.LIVEKIT_MAX_SIZE - dataOffset + 1];
             data[0] = COMMS_REQ_CRDT_STATE;
 
