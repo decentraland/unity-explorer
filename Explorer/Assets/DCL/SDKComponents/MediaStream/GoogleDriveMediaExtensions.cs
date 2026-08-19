@@ -12,10 +12,11 @@ namespace DCL.SDKComponents.MediaStream
         public static bool IsGoogleDriveUrl(this string url) =>
             url.IndexOf("drive.google.com/file/") >= 0 ||
             url.IndexOf("drive.google.com/open?") >= 0 ||
-            url.IndexOf("drive.google.com/uc?") >= 0;
+            url.IndexOf("drive.google.com/uc?") >= 0 ||
+            url.IndexOf("drive.google.com/drive/") >= 0;
 
         /// <summary>
-        ///     Rewrites a Google Drive sharing URL into a direct download URL that AVPro can stream.
+        ///     Rewrites a Google Drive sharing URL into a direct download URL that the media player can stream.
         ///     Returns null if the file ID cannot be extracted.
         /// </summary>
         public static string ResolveGoogleDriveDirectUrl(this string url)

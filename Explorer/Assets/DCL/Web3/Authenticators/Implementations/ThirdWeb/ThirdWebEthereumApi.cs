@@ -28,7 +28,7 @@ namespace DCL.Web3.Authenticators
 
         public TransactionConfirmationDelegate? TransactionConfirmationCallback { private get; set; }
 
-        private readonly DCLSemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new ();
         private readonly ThirdWebMetaTxService metaTxService;
 
         public ThirdWebEthereumApi(

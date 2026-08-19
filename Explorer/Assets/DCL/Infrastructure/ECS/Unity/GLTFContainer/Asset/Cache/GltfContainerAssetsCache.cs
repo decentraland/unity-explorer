@@ -151,6 +151,22 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             ProfilingCounters.GltfInCacheAmount.Value -= unloadedAmount;
         }
 
+        public void Remove(in string key)
+        {
+            if (cache.TryGetValue(key, out List<GltfContainerAsset> assets))
+            {
+                foreach (GltfContainerAsset asset in assets)
+                    asset.Dispose();
+
+                ProfilingCounters.GltfInCacheAmount.Value -= assets.Count;
+                assets.Clear();
+                cache.Remove(key);
+                unloadQueue.TryRemove(key);
+            }
+
+            IrrecoverableFailures.Remove(key);
+        }
+
         bool IEqualityComparer<string>.Equals(string x, string y) =>
             string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 
