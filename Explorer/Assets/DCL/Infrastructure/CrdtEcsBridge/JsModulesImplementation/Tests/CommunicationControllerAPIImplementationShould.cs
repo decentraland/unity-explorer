@@ -17,8 +17,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Utility;
-using RichTypes;
-using DCL.SceneBannedUsers;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
@@ -95,8 +93,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         {
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
 
-            RoomMetadataCurrentScene.InitializeTest();
-
             byte[] data = GetRandomBytes(50).Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
 
             // The first payload byte is the SDK comms routing type: 1 (CRDT) and 3 (ResCRDTState) get their payload rewritten by CRDTFilter
@@ -128,8 +124,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
             const byte COMMS_REQ_CRDT_STATE = 2; // CommsMessageType.ReqCRDTState -> the unfiltered raw-copy path
 
-            RoomMetadataCurrentScene.InitializeTest();
-
             // Bigger than any array that can back the pooled destination
             // (LIVEKIT_MAX_SIZE rounded up to the next pow2 bucket by ArrayPool)
             var data = new byte[IJsOperations.LIVEKIT_MAX_SIZE + 4096];
@@ -153,8 +147,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             // https://decentraland.sentry.io/issues/7638559416/ (UNITY-EXPLORER-PJA)
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"; // 42 bytes -> dataOffset = 43
             const byte COMMS_REQ_CRDT_STATE = 2; // CommsMessageType.ReqCRDTState -> the unfiltered raw-copy path
-
-            RoomMetadataCurrentScene.InitializeTest();
 
             int walletIdBytes = Encoding.UTF8.GetByteCount(WALLET_ID);
             int dataOffset = walletIdBytes + 1;
