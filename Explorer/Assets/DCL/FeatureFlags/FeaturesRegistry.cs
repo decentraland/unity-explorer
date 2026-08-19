@@ -76,6 +76,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.UseCustomMediaPlayerWindows] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_WINDOWS), requireDebug: false),
                 [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
                 [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
+                [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -83,6 +84,9 @@ namespace DCL.FeatureFlags
             SetFeatureState(FeatureId.VoiceChat, IsEnabled(FeatureId.Friends) && IsEnabled(FeatureId.FriendsUserBlocking) && (isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
             SetFeatureState(FeatureId.CommunityVoiceChat, IsEnabled(FeatureId.VoiceChat));
             SetFeatureState(FeatureId.NearbyVoiceChat, IsEnabled(FeatureId.VoiceChat) && appArgs.ResolveFeatureFlagArg(AppArgsFlags.NEARBY_VOICE_CHAT, featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT) || Application.isEditor));
+
+            // The intro tip is a kill switch: unlike the feature itself it stays off until the flag is explicitly enabled.
+            SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
         }
 
         /// <summary>
@@ -218,5 +222,7 @@ namespace DCL.FeatureFlags
         UseCustomMediaPlayerWindows = 71,
         UseCustomMediaPlayerMacSilicon = 72,
         UseCustomMediaPlayerMacIntel = 73,
+        NearbyVoiceChatTip = 74,
+        BugReport = 75,
     }
 }

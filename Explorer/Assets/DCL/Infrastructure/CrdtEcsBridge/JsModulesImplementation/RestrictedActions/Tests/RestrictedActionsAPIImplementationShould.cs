@@ -27,14 +27,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 {
     public class RestrictedActionsAPIImplementationShould
     {
-        private RestrictedActionsAPIImplementation restrictedActionsAPIImplementation;
-        private IMVCManager mvcManager;
-        private ISceneStateProvider sceneStateProvider;
-        private IGlobalWorldActions globalWorldActions;
-        private ISceneData sceneData;
-        private ISystemClipboard systemClipboard;
-        private IExplorerUiActions explorerUiActions;
-        private World sceneWorld;
+        private RestrictedActionsAPIImplementation restrictedActionsAPIImplementation = null!;
+        private IMVCManager mvcManager = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private IGlobalWorldActions globalWorldActions = null!;
+        private ISceneData sceneData = null!;
+        private ISystemClipboard systemClipboard = null!;
+        private IExplorerUiActions explorerUiActions = null!;
+        private World sceneWorld = null!;
         private int clipboardNotificationsReceived;
 
         [SetUp]
@@ -65,7 +65,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             });
             systemClipboard = Substitute.For<ISystemClipboard>();
             explorerUiActions = Substitute.For<IExplorerUiActions>();
-            explorerUiActions.OpenSection(Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.Opened);
+            explorerUiActions.OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.Opened);
             sceneWorld = World.Create();
             Entity scenePlayerEntity = sceneWorld.Create();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
@@ -163,7 +163,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             const string TEST_URN = "urn:decentraland:ethereum:erc721:0x06012c8cf97bead5deae237070f9587f8e7a266d:1540722";
 
             // Act
-            bool result = restrictedActionsAPIImplementation.TryOpenNftDialog(TEST_URN);
+            restrictedActionsAPIImplementation.TryOpenNftDialog(TEST_URN);
 
             // Assert
             mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("ethereum", "0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));
@@ -177,7 +177,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.Opened, result);
-            explorerUiActions.Received(1).OpenSection(ExploreSections.Navmap);
+            explorerUiActions.Received(1).OpenSection(ExplorerUi.EuMap, ExploreSections.Navmap);
         }
 
         [Test]
@@ -191,7 +191,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedNotCurrentScene, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
         }
 
         [Test]
@@ -208,14 +208,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedNoUserGesture, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
         }
 
         [Test]
         public void OpenExplorerUi_AlreadyOpen_ReturnsWasAlreadyOpen()
         {
             // Arrange
-            explorerUiActions.OpenSection(Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.WasAlreadyOpen);
+            explorerUiActions.OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.WasAlreadyOpen);
 
             // Act
             int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuMap);
@@ -232,7 +232,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
         }
 
         [Test]
@@ -249,7 +249,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
         }
 
         [Test]
@@ -258,7 +258,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Arrange
             // Communities availability is identity-dependent, so its gate lives inside the
             // IExplorerUiActions implementation; the API must return that rejection to the scene.
-            explorerUiActions.OpenSection(ExploreSections.Communities).Returns(OpenExplorerUiResult.RejectedFeatureDisabled);
+            explorerUiActions.OpenSection(ExplorerUi.EuCommunities, ExploreSections.Communities).Returns(OpenExplorerUiResult.RejectedFeatureDisabled);
 
             // Act
             int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuCommunities);

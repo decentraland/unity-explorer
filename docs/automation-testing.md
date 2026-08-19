@@ -44,18 +44,22 @@ tests call directly with `AltDriver.CallStaticMethod`, passing the type and its 
 
 ```csharp
 AltDriver.CallStaticMethod<bool>(
-    "DCL.FeatureFlags.AlttesterFeatureFlagsProbe", "IsFeatureEnabled",
+    "DCL.FeatureFlags.AltTesterFeatureFlagsProbe", "IsFeatureEnabled",
     "DCL.Network", new object[] { "MarketplaceCredits" });
 ```
 
 | Type | Assembly | Exposes |
 |---|---|---|
 | `SceneRunner.Scene.AlttesterSceneReadinessProbe` | `SceneRunner.Scene` | whether the current scene finished loading, plus its name and base parcel |
-| `DCL.FeatureFlags.AlttesterFeatureFlagsProbe` | `DCL.Network` | remote flag state, resolved `FeatureId` state, variant payloads |
+| `DCL.FeatureFlags.AltTesterFeatureFlagsProbe` | `DCL.Network` | remote flag state, resolved `FeatureId` state, variant payloads |
 | `DCL.PerformanceAndDiagnostics.AutoPilot.PerfSampler` | `DCL.Diagnostics.AutoPilot` | `Begin`/`End` around a test to write a perf CSV |
 
-The `Alttester*` probes are gated by the `ALTTESTER` define and are therefore absent from release
-builds; `PerfSampler` is not gated.
+Both probe types are gated by the `ALTTESTER` define and are therefore absent from release builds;
+`PerfSampler` is not gated. Note the inconsistent casing — `AltTesterFeatureFlagsProbe` against
+`AlttesterSceneReadinessProbe`. The driver resolves the type with `Assembly.GetType`, which is
+case-sensitive, so a probe renamed on this side silently becomes `componentNotFound` on the test
+side. That error means the assembly loaded but the type was not in it; a wrong *assembly* name
+reports `Assembly not found` instead.
 
 **Prefer a probe over re-deriving client state test-side.** Feature flags are the cautionary case:
 the remote document evaluates differently depending on request headers, and the client folds app
