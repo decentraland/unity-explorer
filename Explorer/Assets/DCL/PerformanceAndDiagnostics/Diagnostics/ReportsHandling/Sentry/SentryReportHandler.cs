@@ -133,7 +133,7 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object? context)
         {
-            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData, exception.Message);
+            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData, exception);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
@@ -195,21 +195,36 @@ namespace DCL.Diagnostics.Sentry
             }
         }
 
-        internal static void AddSceneJsFingerprint(Scope scope, in ReportData data, string? exceptionMessage)
+        internal static void AddSceneJsFingerprint(Scope scope, in ReportData data, Exception? exception)
         {
+            if (exception == null)
+                return;
+
             if (!data.Category.Equals(ReportCategory.JAVASCRIPT))
                 return;
 
-            if (string.IsNullOrEmpty(exceptionMessage))
+            // Exception.Message is a virtual getter that may build its string lazily, so it is
+            // only read after the category guard has passed
+            string message = exception.Message;
+
+            if (string.IsNullOrEmpty(message))
                 return;
 
-            scope.SetFingerprint(new[] { "scene-js", data.SceneShortInfo.Name ?? UNKNOWN_SCENE_NAME, FirstLine(exceptionMessage) });
+            scope.SetFingerprint("scene-js", data.SceneShortInfo.Name ?? UNKNOWN_SCENE_NAME, FirstLine(message));
         }
 
         private static string FirstLine(string message)
         {
-            int newLineIndex = message.IndexOf('\n');
-            return newLineIndex < 0 ? message : message.Substring(0, newLineIndex).TrimEnd('\r');
+            int end = message.IndexOf('\n');
+
+            if (end < 0)
+                return message;
+
+            // Fold a trailing '\r' (from "\r\n") into the slice instead of a second TrimEnd allocation
+            if (end > 0 && message[end - 1] == '\r')
+                end--;
+
+            return message.Substring(0, end);
         }
 
         private class PerReportScope
@@ -218,8 +233,8 @@ namespace DCL.Diagnostics.Sentry
 
             private readonly IReadOnlyList<ConfigureScope> scopeConfigurators;
 
-            internal ReportData reportData { private get; set; }
-            internal string? exceptionMessage { private get; set; }
+            private ReportData reportData { get; set; }
+            private Exception? exception { get; set; }
 
             private PerReportScope(IReadOnlyList<ConfigureScope> scopeConfigurators)
             {
@@ -239,7 +254,7 @@ namespace DCL.Diagnostics.Sentry
 
                 AddCategoryTag(scope, reportData);
                 AddSceneInfo(scope, reportData);
-                AddSceneJsFingerprint(scope, reportData, exceptionMessage);
+                AddSceneJsFingerprint(scope, reportData, exception);
             }
 
             private static void AddCategoryTag(Scope scope, ReportData data) =>
@@ -259,11 +274,11 @@ namespace DCL.Diagnostics.Sentry
                 public Pool(IReadOnlyList<ConfigureScope> scopeConfigurators) : base(
                     () => new PerReportScope(scopeConfigurators), defaultCapacity: 3, collectionCheck: PoolConstants.CHECK_COLLECTIONS) { }
 
-                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData, string? exceptionMessage = null)
+                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData, Exception? exception = null)
                 {
                     PoolExtensions.Scope<PerReportScope> scope = this.AutoScope();
                     scope.Value.reportData = reportData;
-                    scope.Value.exceptionMessage = exceptionMessage;
+                    scope.Value.exception = exception;
                     return scope;
                 }
             }
