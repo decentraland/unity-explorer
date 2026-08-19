@@ -387,7 +387,8 @@ namespace Global.Dynamic
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CheckDiskSpace))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
-                if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
+                if (!applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM)
+                    && !await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
                     splashScreen.Value.Hide();
 

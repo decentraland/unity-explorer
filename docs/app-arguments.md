@@ -116,6 +116,14 @@ For embedded links you will need to place value after `=` sign, instead of space
 --realm=https://peer-ap1.decentraland.zone/
 ```
 
+### `accept-untrusted-realm`
+**Description:** Accepts the initial custom realm without displaying the untrusted-realm confirmation. This is intended for controlled automated test launches against an explicitly selected fixture. It is a command-line-only flag and is not accepted from deep links.
+
+**Usage:**
+```bash
+--realm=https://fixture.example --accept-untrusted-realm
+```
+
 ---
 
 ### `local-scene`

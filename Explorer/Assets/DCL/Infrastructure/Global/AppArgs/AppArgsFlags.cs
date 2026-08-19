@@ -20,6 +20,11 @@ namespace Global.AppArgs
         public const string PROFILER_LOG_FILE = "raw";
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
+        /// <summary>
+        ///     Explicitly accepts the initial custom realm without showing the untrusted-realm confirmation.
+        ///     This is intended for controlled automated test launches; it is not permitted through deep links.
+        /// </summary>
+        public const string ACCEPT_UNTRUSTED_REALM = "accept-untrusted-realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string BASE_DOMAIN = "base-domain";
