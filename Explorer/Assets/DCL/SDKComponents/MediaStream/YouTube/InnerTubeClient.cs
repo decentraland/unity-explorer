@@ -35,7 +35,6 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         private const string ENDPOINT_BASE = "https://www.youtube.com/youtubei/v1/player?prettyPrint=false&key=";
 
         // Public InnerTube API keys — not secrets, baked into YouTube's client binaries.
-        private const string WEB_API_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
         private const string ANDROID_API_KEY = "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w";
 
         // Cookie consent acknowledgment. YouTube treats requests without this as
@@ -46,8 +45,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         // Cookies captured from YouTube response Set-Cookie headers (VISITOR_INFO1_LIVE, YSC, etc.)
         // and replayed on subsequent requests so we look like a persistent session instead of a
         // fresh client. Threadsafe via <see cref="cookieLock"/>.
-        private static readonly Dictionary<string, string> persistentCookies = new ();
-        private static readonly object cookieLock = new ();
+        private static readonly Dictionary<string, string> PERSISTENT_COOKIES = new ();
+        private static readonly object COOKIE_LOCK = new ();
 
         // Visitor data token extracted from the YouTube home page during session warm-up.
         // YouTube embeds it in the InnerTube context.client.visitorData field — requests
@@ -60,10 +59,10 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         // and our manifest-preferring fallback can hit up to 4 InnerTube clients per call.
         // Without this cache that's up to 12 network round-trips per resolve.
         private const double PLAYER_RESPONSE_CACHE_TTL_SECONDS = 60;
-        private static readonly Dictionary<string, (PlayerResponse Response, System.DateTime ExpiresAtUtc)> playerResponseCache = new ();
-        private static readonly object playerResponseCacheLock = new ();
+        private static readonly Dictionary<string, (PlayerResponse Response, DateTime ExpiresAtUtc)> PLAYER_RESPONSE_CACHE = new ();
+        private static readonly object PLAYER_RESPONSE_CACHE_LOCK = new ();
 
-        private static readonly UniTaskCompletionSource warmupCompletion = new ();
+        private static readonly UniTaskCompletionSource WARMUP_COMPLETION = new ();
         private static int warmupState; // 0 = not started, 1 = in flight, 2 = done
 
         // Matches the "visitorData":"<base64-ish>" field embedded in the YouTube home page.
@@ -146,10 +145,10 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         public async UniTask<PlayerResponse> FetchPlayerResponseAsync(VideoId videoId, CancellationToken ct)
         {
             // Cache hit short-circuits the entire fallback chain.
-            lock (playerResponseCacheLock)
+            lock (PLAYER_RESPONSE_CACHE_LOCK)
             {
-                if (playerResponseCache.TryGetValue(videoId.Value, out var cached)
-                    && cached.ExpiresAtUtc > System.DateTime.UtcNow)
+                if (PLAYER_RESPONSE_CACHE.TryGetValue(videoId.Value, out var cached)
+                    && cached.ExpiresAtUtc > DateTime.UtcNow)
                     return cached.Response;
             }
 
@@ -228,13 +227,13 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
         private static void CachePlayerResponse(string videoId, PlayerResponse response)
         {
-            lock (playerResponseCacheLock)
+            lock (PLAYER_RESPONSE_CACHE_LOCK)
             {
                 // Bound the cache size — same approach as YouTubeUrlResolver's url cache.
-                if (playerResponseCache.Count >= 50)
-                    playerResponseCache.Clear();
+                if (PLAYER_RESPONSE_CACHE.Count >= 50)
+                    PLAYER_RESPONSE_CACHE.Clear();
 
-                playerResponseCache[videoId] = (response, System.DateTime.UtcNow.AddSeconds(PLAYER_RESPONSE_CACHE_TTL_SECONDS));
+                PLAYER_RESPONSE_CACHE[videoId] = (response, DateTime.UtcNow.AddSeconds(PLAYER_RESPONSE_CACHE_TTL_SECONDS));
             }
         }
 
@@ -320,14 +319,14 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                     if (!cancelled)
                     {
                         warmupState = 2;
-                        warmupCompletion.TrySetResult();
+                        WARMUP_COMPLETION.TrySetResult();
                     }
                 }
             }
             else
             {
                 // Another caller is doing the warm-up — wait for it.
-                await warmupCompletion.Task.AttachExternalCancellation(ct);
+                await WARMUP_COMPLETION.Task.AttachExternalCancellation(ct);
             }
         }
 
@@ -336,11 +335,11 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             // Same endpoint and User-Agent YoutubeExplode uses (VideoController.ResolveVisitorDataAsync).
             // The Android UA matters here — switching to a desktop UA makes YouTube return a
             // home-page-shaped response instead of the structured array we expect.
-            const string warmupUrl = "https://www.youtube.com/sw.js_data";
-            const string warmupUserAgent = "com.google.android.youtube/20.10.38 (Linux; U; ANDROID 11) gzip";
+            const string WARMUP_URL = "https://www.youtube.com/sw.js_data";
+            const string WARMUP_USER_AGENT = "com.google.android.youtube/20.10.38 (Linux; U; ANDROID 11) gzip";
 
-            using var request = UnityWebRequest.Get(warmupUrl);
-            request.SetRequestHeader("User-Agent", warmupUserAgent);
+            using var request = UnityWebRequest.Get(WARMUP_URL);
+            request.SetRequestHeader("User-Agent", WARMUP_USER_AGENT);
             request.SetRequestHeader("Accept", "application/json");
             request.SetRequestHeader("Accept-Language", "en-US,en;q=0.9");
             request.SetRequestHeader("Cookie", BuildCookieHeader());
@@ -359,7 +358,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
             if (!string.IsNullOrEmpty(body))
             {
-                if (body!.StartsWith(")]}'"))
+                if (body.StartsWith(")]}'"))
                     body = body.Substring(4);
 
                 try
@@ -382,7 +381,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 await ExtractVisitorDataFromHomePageAsync(ct);
 
             ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                $"[{TAG}] Session warmed up (cookies={persistentCookies.Count}, visitorData={(visitorData == null ? "no" : "yes")})");
+                $"[{TAG}] Session warmed up (cookies={PERSISTENT_COOKIES.Count}, visitorData={(visitorData == null ? "no" : "yes")})");
         }
 
         private static async UniTask ExtractVisitorDataFromHomePageAsync(CancellationToken ct)
@@ -409,12 +408,12 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
         private static string BuildCookieHeader()
         {
-            lock (cookieLock)
+            lock (COOKIE_LOCK)
             {
-                var sb = new StringBuilder(SOCS_COOKIE.Length + persistentCookies.Count * 64);
+                var sb = new StringBuilder(SOCS_COOKIE.Length + (PERSISTENT_COOKIES.Count * 64));
                 sb.Append(SOCS_COOKIE);
 
-                foreach (KeyValuePair<string, string> kvp in persistentCookies)
+                foreach (KeyValuePair<string, string> kvp in PERSISTENT_COOKIES)
                     sb.Append("; ").Append(kvp.Key).Append('=').Append(kvp.Value);
 
                 return sb.ToString();
@@ -431,9 +430,9 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             string? setCookie = request.GetResponseHeader("Set-Cookie");
             if (string.IsNullOrEmpty(setCookie)) return;
 
-            lock (cookieLock)
+            lock (COOKIE_LOCK)
             {
-                foreach (string entry in setCookie!.Split(new[] { ", " }, StringSplitOptions.None))
+                foreach (string entry in setCookie.Split(new[] { ", " }, StringSplitOptions.None))
                 {
                     int semi = entry.IndexOf(';');
                     ReadOnlySpan<char> head = (semi >= 0 ? entry.AsSpan(0, semi) : entry.AsSpan()).Trim();
@@ -452,7 +451,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                     // Skip SOCS — we have our own hardcoded value above.
                     if (string.Equals(name, "SOCS", StringComparison.OrdinalIgnoreCase)) continue;
 
-                    persistentCookies[name] = value;
+                    PERSISTENT_COOKIES[name] = value;
                 }
             }
         }
@@ -697,7 +696,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 var bitrate = new Bitrate((long?)entry["bitrate"] ?? 0);
                 var resolution = new VideoResolution(width.Value, height.Value);
 
-                muxedTarget.Add(new MuxedStreamInfo(container, bitrate, url!, resolution));
+                muxedTarget.Add(new MuxedStreamInfo(container, bitrate, url, resolution));
             }
         }
 
@@ -736,7 +735,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
                 // Capture rich data for DASH synthesis (covers BOTH video and audio entries).
                 adaptiveTarget.Add(new AdaptiveFormatData(
-                    itag, url!, mimeType, bitrateValue,
+                    itag, url, mimeType, bitrateValue,
                     width, height, fps, audioSampleRate, audioChannels,
                     initStart, initEnd, indexStart, indexEnd, contentLength));
 
@@ -747,7 +746,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                     Container container = ContainerExtensions.ParseMimeType(mimeType);
                     var bitrate = new Bitrate(bitrateValue);
                     var resolution = new VideoResolution(width.Value, height.Value);
-                    videoOnlyTarget.Add(new VideoOnlyStreamInfo(container, bitrate, url!, resolution));
+                    videoOnlyTarget.Add(new VideoOnlyStreamInfo(container, bitrate, url, resolution));
                 }
             }
         }
