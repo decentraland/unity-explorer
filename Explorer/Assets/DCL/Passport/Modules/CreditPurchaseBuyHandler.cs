@@ -131,7 +131,8 @@ namespace DCL.Passport.Modules
                 visuals.RarityColor,
                 visuals.CategoryIcon,
                 marketplaceUrl,
-                source);
+                source,
+                itemUrn);
 
             try { await mvcManager.ShowAsync(CreditPurchaseModalController.IssueCommand(modalParams), ct); }
             catch (OperationCanceledException) { }

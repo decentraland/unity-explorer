@@ -1,3 +1,4 @@
+using DCL.CharacterPreview;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -51,5 +52,12 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public Button RetryButton { get; private set; } = null!;
         [field: SerializeField] public Button OpenMarketplaceButton { get; private set; } = null!;
         [field: SerializeField] public Button ToBackpackButton { get; private set; } = null!;
+
+        [field: Header("Try on")]
+        [field: SerializeField] public Button TryOnButton { get; private set; } = null!;
+        [field: SerializeField] public GameObject TryOnPanel { get; private set; } = null!;
+        [field: SerializeField] public Button TryOnCloseButton { get; private set; } = null!;
+        [field: SerializeField] public Button TryOnReplayEmoteButton { get; private set; } = null!;
+        [field: SerializeField] public CharacterPreviewView TryOnCharacterPreviewView { get; private set; } = null!;
     }
 }
