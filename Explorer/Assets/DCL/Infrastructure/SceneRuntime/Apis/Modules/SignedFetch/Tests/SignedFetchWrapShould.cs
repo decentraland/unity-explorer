@@ -197,10 +197,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         }
 
         /// <summary>
-        ///     Scene code calls signed fetch from the scene thread, so the request only reaches the web
-        ///     request controller after a hop to the main thread. The scene runtime owns <c>disposeCts</c> and
-        ///     disposes it while unloading, which can land inside that hop: reading <c>disposeCts.Token</c>
-        ///     from the continuation threw <see cref="ObjectDisposedException" /> and the request was lost.
+        ///     Regression: reading <c>disposeCts.Token</c> after the main-thread hop raced runtime disposal and dropped the request.
         /// </summary>
         [UnityTest]
         public IEnumerator DispatchRequestWithTokenCapturedBeforeMainThreadHop()
@@ -231,15 +228,13 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
 
             Exception? dispatchFailure = null;
 
-            // The main thread stays parked on Join() for the whole dispatch, so the request cannot leave
-            // its hop to the main thread before the source is disposed.
+            // Join() parks the main thread for the whole dispatch, so disposal always lands before the hop resumes
             var sceneThread = new Thread(() =>
             {
                 try { signedFetchWrap.SignedFetch(url, body, headers, method); }
                 catch (ArgumentNullException)
                 {
-                    // The returned promise is built by ClearScript from the script engine running on this
-                    // thread, and no EditMode test has one; the request is dispatched before that happens.
+                    // No script engine in EditMode to build the returned promise; the request is already dispatched by then
                 }
                 catch (Exception e) { dispatchFailure = e; }
 

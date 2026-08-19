@@ -167,11 +167,7 @@ namespace SceneRuntime.Tests
                 }
             });
 
-        // Regression coverage for UNITY-EXPLORER-NQG (Sentry): SceneFacade.Dispose() and
-        // SceneFacade.DisposeAsync() both call SetIsDisposing() unconditionally (no re-entry guard),
-        // and a double dispose (e.g. UnloadSceneSystem racing an in-progress dispose) reaches it twice.
-        // At pin the second call re-enters isDisposingTokenSource.Cancel() on an already-disposed CTS
-        // and throws ObjectDisposedException.
+        // Regression (Sentry UNITY-EXPLORER-NQG): a racing double dispose cancelled an already-disposed CTS
         [UnityTest]
         public IEnumerator NotThrowOnSecondSetIsDisposing() =>
             UniTask.ToCoroutine(async () =>

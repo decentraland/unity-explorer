@@ -174,6 +174,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 method ?? string.Empty
             );
 
+            // Read before the main-thread hop: disposeCts can be disposed while the request is still hopping
             CancellationToken token = disposeCts.Token;
 
             async UniTask<FlatFetchResponse> ExecuteRequestAsync()

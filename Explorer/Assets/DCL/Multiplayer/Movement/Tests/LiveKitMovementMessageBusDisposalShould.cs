@@ -11,13 +11,8 @@ using NUnit.Framework;
 namespace DCL.Multiplayer.Movement.Tests
 {
     /// <summary>
-    ///     Regression coverage for UNITY-EXPLORER-NQG (Sentry): on every clean app shutdown
-    ///     <see cref="LiveKitMovementMessageBus" /> is disposed twice — once by
-    ///     <c>MultiplayerMovementPlugin.Dispose()</c> and again by
-    ///     <c>LiveKitMultiplayerContainer.Dispose()</c> via <c>DynamicWorldContainer.Dispose()</c> — because
-    ///     the container has owned the bus since PR #7291 while the plugin still disposes it too. The second
-    ///     <c>Dispose()</c> called <c>cancellationTokenSource.Cancel()</c> on an already-disposed CTS,
-    ///     throwing <see cref="System.ObjectDisposedException" /> on every quit.
+    ///     Regression (Sentry UNITY-EXPLORER-NQG): the bus has two owners that both dispose it on shutdown,
+    ///     and the second call cancelled an already-disposed CTS.
     /// </summary>
     [TestFixture]
     public class LiveKitMovementMessageBusDisposalShould
@@ -55,9 +50,6 @@ namespace DCL.Multiplayer.Movement.Tests
         {
             bus.Dispose();
 
-            // At pin: the second Dispose() re-enters cancellationTokenSource.Cancel() on an already
-            // disposed CancellationTokenSource and throws ObjectDisposedException — exactly the shape
-            // of the shutdown-time NQG events (DynamicWorldContainer.Dispose -> ... -> CTS.Cancel).
             Assert.DoesNotThrow(() => bus.Dispose());
         }
     }
