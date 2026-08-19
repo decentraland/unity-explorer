@@ -301,6 +301,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Notifications => $"https://notifications.decentraland.{ENV}",
                 DecentralandUrl.Communities => $"https://social-api.decentraland.{ENV}/v1/communities",
                 DecentralandUrl.CommunitiesV2 => $"https://social-api.decentraland.{ENV}/v2/communities",
+                DecentralandUrl.ReferralProgress => $"https://social-api.decentraland.{ENV}/v1/referral-progress",
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.decentraland.{ENV}/social/communities/{{0}}/raw-thumbnail.png",
                 DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
                 DecentralandUrl.MembersV2 => $"https://social-api.decentraland.{ENV}/v2/members",
@@ -336,6 +337,10 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Content => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
 
                 DecentralandUrl.SocialServiceMutes => $"https://social-api.decentraland.{ENV}/v1/mutes",
+
+                // The per-environment proxy only accepts requests whose Origin header matches its environment's web client origin.
+                DecentralandUrl.IntercomTickets => $"https://intercom-proxy.decentraland.{ENV}/intercom/tickets",
+                DecentralandUrl.IntercomTicketsOrigin => $"https://play.decentraland.{ENV}",
 
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
