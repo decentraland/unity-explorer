@@ -41,6 +41,15 @@ namespace DCL.Web3
             return true;
         }
 
+        /// <summary>
+        ///     Returns the value as a lowercased <see cref="Web3Address" /> when it is a well-formed
+        ///     wallet address (see <see cref="IsValidWalletAddress" />), null otherwise. Meant for
+        ///     untrusted inputs (launch arguments, deep links, query params), since the constructor
+        ///     itself accepts any string and only lowercases it.
+        /// </summary>
+        public static Web3Address? FromUntrusted(string? address) =>
+            IsValidWalletAddress(address) ? new Web3Address(address) : null;
+
         public override string ToString() =>
             address;
 

@@ -317,7 +317,7 @@ namespace DCL.PluginSystem.Global
                     chatPanelView.TitlebarView.BackFromMemberList.transform,
                     chatPanelView.InputView.inputField.transform,
                     chatViewRectTransform,
-                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    mainUIView.SidebarView.UnreadMessagesButton.transform,
                     chatPanelView.ChatReactionButton.transform,
                     chatPanelView.EmojiPanelView.transform);
 

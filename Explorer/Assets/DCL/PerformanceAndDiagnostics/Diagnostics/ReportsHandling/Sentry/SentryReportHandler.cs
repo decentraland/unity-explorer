@@ -2,7 +2,6 @@ using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utility;
 using Sentry;
-using Sentry.Extensibility;
 using Sentry.Unity;
 using System;
 using System.Collections.Generic;
@@ -17,6 +16,10 @@ namespace DCL.Diagnostics.Sentry
 
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
         private const string UNKNOWN_SCENE_NAME = "unknown-scene";
+
+#if UNITY_EDITOR
+        private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
+#endif
 
         private readonly List<ConfigureScope> scopeConfigurators = new (10);
 
@@ -46,6 +49,21 @@ namespace DCL.Diagnostics.Sentry
 
             options.Enabled = true;
             options.TracesSampler = sentrySampler.Execute;
+
+#if UNITY_EDITOR
+            // The asset carries a placeholder DSN that only CI replaces, so editor sessions resolve one from the environment instead.
+            if (!IsValidConfiguration(options))
+            {
+                string? editorDsn = Environment.GetEnvironmentVariable(EDITOR_DSN_ENV_VAR);
+
+                if (!string.IsNullOrWhiteSpace(editorDsn))
+                {
+                    options.Dsn = editorDsn;
+                    options.Environment = "editor";
+                    options.CaptureInEditor = true;
+                }
+            }
+#endif
 
             if (!IsValidConfiguration(options))
             {
@@ -113,7 +131,7 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.CaptureException(ecsSystemException);
         }
 
-        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
+        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object? context)
         {
             using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData, exception.Message);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);

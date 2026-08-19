@@ -319,7 +319,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void AvatarWithoutAvatarBaseSkipped()
         {
             const string WALLET = "wallet-a";
-            Entity e = world.Create(new Profile(WALLET, WALLET, new Avatar()));
+            Entity e = world.Create(new Profile(UserId.New(WALLET).Unwrap(), WALLET, new Avatar()));
             registry.IsActiveSpeaker(WALLET).Returns(true);
 
             system.Update(0);
@@ -335,22 +335,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Entity e = CreateAvatarEntity(WALLET);
             world.Add<DeleteEntityIntention>(e);
             registry.IsActiveSpeaker(WALLET).Returns(true);
-
-            system.Update(0);
-
-            Assert.That(world.Has<VoiceChatNametagComponent>(e), Is.False);
-        }
-
-        [Test]
-        public void EmptyWalletIdSkipped()
-        {
-            var avatarGo = CreateTrackedGameObject("Avatar_empty");
-            AvatarBase avatarBase = avatarGo.AddComponent<AvatarBase>();
-            var anchorGo = CreateTrackedGameObject("HeadAnchor_empty");
-            anchorGo.transform.SetParent(avatarGo.transform);
-            HEAD_ANCHOR_FIELD.SetValue(avatarBase, anchorGo.transform);
-
-            Entity e = world.Create(new Profile("", "", new Avatar()), avatarBase);
 
             system.Update(0);
 
@@ -399,7 +383,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase);
         }
 
         private Entity CreateNametaggedAvatarEntity(string walletId, VoiceChatNametagComponent nametag)
