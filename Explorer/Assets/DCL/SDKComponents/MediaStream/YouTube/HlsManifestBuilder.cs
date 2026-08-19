@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.MediaStream.YouTube
 {
@@ -106,10 +107,17 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             bool segmented = videoSegments is { Count: > 0 }
                              && audioSegments is { Count: > 0 };
 
+            // Method-scoped rent: a branch-scoped using would return the lists to the
+            // pool while videoSegments/audioSegments still alias them.
+            using var _ = ListPool<SidxParser.SegmentInfo>.Get(out List<SidxParser.SegmentInfo> coalescedVideo);
+            using var __ = ListPool<SidxParser.SegmentInfo>.Get(out List<SidxParser.SegmentInfo> coalescedAudio);
+
             if (segmented && targetSegmentDurationSeconds > 0f)
             {
-                videoSegments = Coalesce(videoSegments!, targetSegmentDurationSeconds);
-                audioSegments = Coalesce(audioSegments!, targetSegmentDurationSeconds);
+                Coalesce(videoSegments!, targetSegmentDurationSeconds, coalescedVideo);
+                Coalesce(audioSegments!, targetSegmentDurationSeconds, coalescedAudio);
+                videoSegments = coalescedVideo;
+                audioSegments = coalescedAudio;
             }
 
             string videoPlaylist = segmented
@@ -128,13 +136,15 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
         /// <summary>
         ///     Merges consecutive sidx fragments (contiguous by construction) into segments of at
-        ///     least <paramref name="targetDurationSeconds"/>. Fewer, larger byte ranges keep the
+        ///     least <paramref name="targetDurationSeconds"/>, filling <paramref name="result"/>
+        ///     (cleared first) — the caller owns the buffer. Fewer, larger byte ranges keep the
         ///     request rate low — googlevideo rejects bursty range-request patterns with 403s —
         ///     while still bounding seek granularity and per-request loss.
         /// </summary>
-        internal static List<SidxParser.SegmentInfo> Coalesce(IReadOnlyList<SidxParser.SegmentInfo> fragments, float targetDurationSeconds)
+        internal static void Coalesce(IReadOnlyList<SidxParser.SegmentInfo> fragments, float targetDurationSeconds, List<SidxParser.SegmentInfo> result)
         {
-            var merged = new List<SidxParser.SegmentInfo>();
+            result.Clear();
+
             long offset = 0, size = 0;
             double duration = 0;
 
@@ -150,16 +160,14 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
                 if (duration >= targetDurationSeconds)
                 {
-                    merged.Add(new SidxParser.SegmentInfo(offset, size, duration));
+                    result.Add(new SidxParser.SegmentInfo(offset, size, duration));
                     size = 0;
                     duration = 0;
                 }
             }
 
             if (size > 0)
-                merged.Add(new SidxParser.SegmentInfo(offset, size, duration));
-
-            return merged;
+                result.Add(new SidxParser.SegmentInfo(offset, size, duration));
         }
 
         private static AdaptiveFormatData? SelectBestVideo(IReadOnlyList<AdaptiveFormatData> adaptive)

@@ -25,7 +25,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         public void MergeContiguousFragmentsUpToTargetDuration()
         {
             // 10 fragments × 5s → target 15s ⇒ groups of 3 (15s) + tail of 1 (5s)
-            List<SidxParser.SegmentInfo> merged = HlsManifestBuilder.Coalesce(Fragments(10, 100, 5), 15f);
+            var merged = new List<SidxParser.SegmentInfo>();
+            HlsManifestBuilder.Coalesce(Fragments(10, 100, 5), 15f, merged);
 
             Assert.That(merged, Has.Count.EqualTo(4));
             Assert.That(merged.Take(3).Select(s => s.ByteSize), Is.All.EqualTo(300));
@@ -37,7 +38,8 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void PreserveContiguousByteRanges()
         {
-            List<SidxParser.SegmentInfo> merged = HlsManifestBuilder.Coalesce(Fragments(6, 250, 4), 8f);
+            var merged = new List<SidxParser.SegmentInfo>();
+            HlsManifestBuilder.Coalesce(Fragments(6, 250, 4), 8f, merged);
 
             for (var i = 1; i < merged.Count; i++)
                 Assert.That(merged[i].ByteOffset, Is.EqualTo(merged[i - 1].ByteOffset + merged[i - 1].ByteSize));
@@ -46,9 +48,21 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
+        public void ClearTheResultBufferBeforeFilling()
+        {
+            var merged = new List<SidxParser.SegmentInfo> { new (999, 999, 999) };
+
+            HlsManifestBuilder.Coalesce(Fragments(2, 100, 5), 60f, merged);
+
+            Assert.That(merged, Has.Count.EqualTo(1));
+            Assert.That(merged[0].ByteOffset, Is.EqualTo(1000));
+        }
+
+        [Test]
         public void KeepSingleGroupWhenTargetExceedsTotalDuration()
         {
-            List<SidxParser.SegmentInfo> merged = HlsManifestBuilder.Coalesce(Fragments(4, 100, 5), 60f);
+            var merged = new List<SidxParser.SegmentInfo>();
+            HlsManifestBuilder.Coalesce(Fragments(4, 100, 5), 60f, merged);
 
             Assert.That(merged, Has.Count.EqualTo(1));
             Assert.That(merged[0].ByteSize, Is.EqualTo(400));
