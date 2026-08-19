@@ -73,8 +73,9 @@ namespace DCL.Diagnostics.Tests
         [Test]
         public void SetFingerprintWithFallbackSceneNameWhenSceneShortInfoIsMissing()
         {
-            // No sceneShortInfo supplied -> default(SceneShortInfo), Name == null.
             Scope scope = NewScope();
+
+            // Omitting sceneShortInfo leaves default(SceneShortInfo)'s null Name, the only state that triggers the fallback
             var reportData = new ReportData(ReportCategory.JAVASCRIPT);
 
             SentryReportHandler.AddSceneJsFingerprint(scope, reportData, new Exception("Error: boom"));

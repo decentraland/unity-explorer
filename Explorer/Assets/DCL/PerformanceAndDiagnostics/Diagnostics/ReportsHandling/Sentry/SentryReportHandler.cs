@@ -203,8 +203,7 @@ namespace DCL.Diagnostics.Sentry
             if (!data.Category.Equals(ReportCategory.JAVASCRIPT))
                 return;
 
-            // Exception.Message is a virtual getter that may build its string lazily, so it is
-            // only read after the category guard has passed
+            // Exception.Message is virtual and may build its string lazily, so reports filtered out above never pay for it
             string message = exception.Message;
 
             if (string.IsNullOrEmpty(message))
@@ -220,7 +219,7 @@ namespace DCL.Diagnostics.Sentry
             if (end < 0)
                 return message;
 
-            // Fold a trailing '\r' (from "\r\n") into the slice instead of a second TrimEnd allocation
+            // Excluding the '\r' of a "\r\n" ending here spares the extra string a TrimEnd would allocate
             if (end > 0 && message[end - 1] == '\r')
                 end--;
 
