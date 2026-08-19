@@ -20,6 +20,38 @@ jobs:
             const isAutoReview = /^(fix|chore)(\(.*?\))?!?:/i.test(title);
             core.setOutput('is-feature', (!isAutoReview).toString());
 
+  check-author:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      is-team-dev: ${{ steps.check.outputs.is-team-dev }}
+    steps:
+      - name: Checkout team config
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .github/auto_assign_config_dev.yml
+          fetch-depth: 1
+
+      # Inlined on purpose rather than a shared composite action: a local action
+      # is resolved from the checked-out tree, and we check out the team list at
+      # the PR BASE sha (trusted — so a PR can't add its own author to the list).
+      - name: Check if PR author is in explorer-devs
+        id: check
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          TEAM_DEVS=$(yq eval '.reviewGroups | .[] | .[]' .github/auto_assign_config_dev.yml)
+          echo "Team devs:"
+          echo "$TEAM_DEVS"
+          if echo "$TEAM_DEVS" | grep -qxF "$PR_AUTHOR"; then
+            echo "Author $PR_AUTHOR is in explorer-devs — skipping QA auto-assign"
+            echo "is-team-dev=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Author $PR_AUTHOR is NOT in explorer-devs — QA will be auto-assigned"
+            echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+          fi
+
   assign-devs:
     needs: detect-pr-type
     if: needs.detect-pr-type.outputs.is-feature == 'true'
@@ -30,6 +62,10 @@ jobs:
           configuration-path: '.github/auto_assign_config_dev.yml'
 
   assign-qa:
+    needs: check-author
+    if: |
+      needs.check-author.result == 'success' &&
+      needs.check-author.outputs.is-team-dev == 'false'
     runs-on: ubuntu-latest
     steps:
       - uses: kentaro-m/auto-assign-action@v2.0.0
