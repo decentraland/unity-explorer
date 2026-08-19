@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -10,6 +11,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -23,6 +25,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem.Global;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
@@ -110,19 +113,25 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             bool isolateScenesCommunication,
             bool enableAnalytics,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            string? localSceneDevelopmentRealm = null)
         {
             var entityParticipantTable = new EntityParticipantTable();
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
-            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
+            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController, localSceneDevelopmentRealm).WithLog();
+
+            Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HardwareFingerprint)
+                ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())
+                : Option<HardwareFingerprintProvider>.None;
 
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode,
                 bootstrapContainer.DecentralandUrlsSource,
                 playSceneMetaDataSource,
                 localDevelopmentMetaDataSource,
-                staticContainer.RealmData);
+                staticContainer.RealmData,
+                hardwareFingerprintProvider);
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
@@ -139,7 +148,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData
             );
 
-            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
+            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), hardwareFingerprintProvider);
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
@@ -241,7 +250,6 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 RemoteEntities,
                 staticContainer.ScenesCache,
-                staticContainer.EmoteStorage,
                 staticContainer.CharacterDataPropagationUtility,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                 islandThroughputBunch,

@@ -3,10 +3,16 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
+using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.ECSComponents;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.TeleportPrompt;
+using DCL.UI;
+using Decentraland.Kernel.Apis;
+using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -21,20 +27,33 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 {
     public class RestrictedActionsAPIImplementationShould
     {
-        private RestrictedActionsAPIImplementation restrictedActionsAPIImplementation;
-        private IMVCManager mvcManager;
-        private ISceneStateProvider sceneStateProvider;
-        private IGlobalWorldActions globalWorldActions;
-        private ISceneData sceneData;
-        private ISystemClipboard systemClipboard;
-        private World sceneWorld;
+        private RestrictedActionsAPIImplementation restrictedActionsAPIImplementation = null!;
+        private IMVCManager mvcManager = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
+        private IGlobalWorldActions globalWorldActions = null!;
+        private ISceneData sceneData = null!;
+        private ISystemClipboard systemClipboard = null!;
+        private IExplorerUiActions explorerUiActions = null!;
+        private World sceneWorld = null!;
+        private int clipboardNotificationsReceived;
 
         [SetUp]
         public void SetUp()
         {
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+            NotificationsBusController.Initialize(new NotificationsBusController());
+            clipboardNotificationsReceived = 0;
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE, _ => clipboardNotificationsReceived++);
+
             mvcManager = Substitute.For<IMVCManager>();
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
+
+            // Stamp a recent user gesture so the OpenExplorerUi gesture gate passes by default.
+            sceneStateProvider.TickNumber.Returns((uint)10);
+            sceneStateProvider.LastUserInputTick.Returns((uint)10);
+
             globalWorldActions = Substitute.For<IGlobalWorldActions>();
             sceneData = Substitute.For<ISceneData>();
             sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
@@ -45,6 +64,8 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 new Vector2Int(0, 2),
             });
             systemClipboard = Substitute.For<ISystemClipboard>();
+            explorerUiActions = Substitute.For<IExplorerUiActions>();
+            explorerUiActions.OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.Opened);
             sceneWorld = World.Create();
             Entity scenePlayerEntity = sceneWorld.Create();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
@@ -55,13 +76,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 new AllowEverythingJsApiPermissionsProvider(),
                 systemClipboard,
                 sceneWorld,
-                scenePlayerEntity);
+                scenePlayerEntity,
+                explorerUiActions);
         }
 
         [TearDown]
         public void TearDown()
         {
             World.Destroy(sceneWorld);
+            EcsTestsUtils.TearDownFeaturesRegistry();
+            NotificationsBusController.Reset();
         }
 
         [Test]
@@ -139,10 +163,108 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             const string TEST_URN = "urn:decentraland:ethereum:erc721:0x06012c8cf97bead5deae237070f9587f8e7a266d:1540722";
 
             // Act
-            bool result = restrictedActionsAPIImplementation.TryOpenNftDialog(TEST_URN);
+            restrictedActionsAPIImplementation.TryOpenNftDialog(TEST_URN);
 
             // Assert
             mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("ethereum", "0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));
+        }
+
+        [Test]
+        public void OpenExplorerUi_MapOpensNavmap()
+        {
+            // Act
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuMap);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.Opened, result);
+            explorerUiActions.Received(1).OpenSection(ExplorerUi.EuMap, ExploreSections.Navmap);
+        }
+
+        [Test]
+        public void OpenExplorerUi_NotCurrentScene_Rejects()
+        {
+            // Arrange
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            // Act
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuMap);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.RejectedNotCurrentScene, result);
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
+        }
+
+        [Test]
+        [TestCase(0)] // underflow-safe: no user gesture has ever been recorded
+        [TestCase(5)] // stale: the last gesture is older than the allowed window
+        public void OpenExplorerUi_NoRecentGesture_Rejects(int lastUserInputTick)
+        {
+            // Arrange
+            sceneStateProvider.TickNumber.Returns((uint)10);
+            sceneStateProvider.LastUserInputTick.Returns((uint)lastUserInputTick);
+
+            // Act
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuMap);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.RejectedNoUserGesture, result);
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
+        }
+
+        [Test]
+        public void OpenExplorerUi_AlreadyOpen_ReturnsWasAlreadyOpen()
+        {
+            // Arrange
+            explorerUiActions.OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.WasAlreadyOpen);
+
+            // Act
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuMap);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.WasAlreadyOpen, result);
+        }
+
+        [Test]
+        public void OpenExplorerUi_UnknownUiValue_Rejects()
+        {
+            // Act: 99 is not a member of the ExplorerUi enum, so the section mapping must fail.
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi(99);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
+        }
+
+        [Test]
+        public void OpenExplorerUi_FeatureDisabled_Rejects()
+        {
+            // Arrange
+            // CAMERA_REEL is force-enabled in the editor, so an app-args override is the only way
+            // to exercise the disabled branch of the features-registry gate.
+            EcsTestsUtils.TearDownFeaturesRegistry();
+            EcsTestsUtils.SetUpFeaturesRegistryWithAppArgs(new[] { "--camera-reel", "false" });
+
+            // Act
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuCameraReel);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExplorerUi>(), Arg.Any<ExploreSections>());
+        }
+
+        [Test]
+        public void OpenExplorerUi_CommunitiesRejectionPropagates()
+        {
+            // Arrange
+            // Communities availability is identity-dependent, so its gate lives inside the
+            // IExplorerUiActions implementation; the API must return that rejection to the scene.
+            explorerUiActions.OpenSection(ExplorerUi.EuCommunities, ExploreSections.Communities).Returns(OpenExplorerUiResult.RejectedFeatureDisabled);
+
+            // Act
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuCommunities);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
         }
 
         [Test]
@@ -156,6 +278,42 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Assert
             systemClipboard.Received(1).Set(TEST_TEXT);
+        }
+
+        [Test]
+        public void CopyToClipboard_NotifiesTheUser()
+        {
+            // Act
+            restrictedActionsAPIImplementation.TryCopyToClipboard("Ia Ia! Cthulhu Ftaghn!");
+
+            // Assert
+            Assert.AreEqual(1, clipboardNotificationsReceived);
+        }
+
+        [Test]
+        public void CopyToClipboard_NotifiesOnEveryWrite()
+        {
+            // Act: a scene calling from onUpdate writes on every tick
+            for (var i = 0; i < 10; i++)
+                restrictedActionsAPIImplementation.TryCopyToClipboard($"0xATTACKER{i}");
+
+            // Assert: the API reports every write; collapsing repeats into a single toast is the
+            // notification controller's job, so that it can uncollapse as soon as the toast is gone.
+            systemClipboard.Received(10).Set(Arg.Any<string>());
+            Assert.AreEqual(10, clipboardNotificationsReceived);
+        }
+
+        [Test]
+        public void CopyToClipboard_DoesNotNotify_WhenSceneIsNotCurrent()
+        {
+            // Arrange
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            // Act
+            restrictedActionsAPIImplementation.TryCopyToClipboard("This should not be copied");
+
+            // Assert
+            Assert.AreEqual(0, clipboardNotificationsReceived);
         }
 
         [Test]

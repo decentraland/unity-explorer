@@ -53,8 +53,8 @@ namespace DCL.RealmNavigation
         /// <summary>
         ///     If current scene is still loading it will block the teleport until its assets are resolved or timed out
         /// </summary>
-        public UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false) =>
-            TeleportAsync(parcel, loadReport, ct, landOnParcel: landOnParcel);
+        public UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false, string? spawnPointName = null) =>
+            TeleportAsync(parcel, loadReport, ct, landOnParcel: landOnParcel, spawnPointName: spawnPointName);
 
         /// <summary>
         ///     Debug Widget teleportation
@@ -65,11 +65,11 @@ namespace DCL.RealmNavigation
         public void StartTeleportToSpawnPoint(SceneEntityDefinition sceneDataSceneEntityDefinition, CancellationToken ct) =>
             world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDataSceneEntityDefinition, Vector2Int.zero, TeleportUtils.PickTargetWithOffset(sceneDataSceneEntityDefinition, sceneDataSceneEntityDefinition.metadata.scene.DecodedBase).targetWorldPosition, ct, isPositionSet: true));
 
-        private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool nullifySceneDef = false, bool landOnParcel = false)
+        private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool nullifySceneDef = false, bool landOnParcel = false, string? spawnPointName = null)
         {
             if (retrieveScene == null)
             {
-                world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, Vector3.zero, ct, loadReport, landOnParcel: landOnParcel));
+                world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, Vector3.zero, ct, loadReport, landOnParcel: landOnParcel, spawnPointName: spawnPointName));
                 loadReport.SetProgress(1f);
                 return null;
             }
@@ -78,6 +78,13 @@ namespace DCL.RealmNavigation
 
             if (sceneDef != null && !TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
+                // Honor the spawn point the creator placed in the requested parcel instead of aiming at its centre
+                if (landOnParcel && TeleportUtils.TryPickSpawnPointNameInParcel(sceneDef, parcel, out string parcelSpawnPointName))
+                {
+                    landOnParcel = false;
+                    spawnPointName ??= parcelSpawnPointName;
+                }
+
                 // When landing on the exact parcel, keep the requested parcel; otherwise snap to the
                 // scene base so the spawn point is used.
                 if (!landOnParcel)
@@ -89,7 +96,7 @@ namespace DCL.RealmNavigation
 
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
 
-            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, Vector3.zero, ct, loadReport, landOnParcel: landOnParcel));
+            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, Vector3.zero, ct, loadReport, landOnParcel: landOnParcel, spawnPointName: spawnPointName));
 
             if (sceneDef == null)
             {

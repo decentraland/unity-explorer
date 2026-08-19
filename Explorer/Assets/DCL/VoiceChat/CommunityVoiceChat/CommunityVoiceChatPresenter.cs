@@ -3,8 +3,10 @@ using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -94,8 +96,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             switch (status)
             {
-                case VoiceChatStatus.DISCONNECTED:
-                case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
+                case VoiceChatStatus.Disconnected:
+                case VoiceChatStatus.VoiceChatGenericError:
                     ClearPool();
                     break;
             }
@@ -137,7 +139,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnConnectionEstablished()
         {
-            if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.Community)
             {
                 view.SetConnectedPanel(true);
                 bool isModeratorOrOwner = VoiceChatRoleHelper.IsModeratorOrOwner(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value);
@@ -155,7 +157,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OpenListenersSection()
         {
-            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.Expanded);
 
             view.CommunityVoiceChatSearchView.gameObject.SetActive(true);
             view.CommunityVoiceChatInCallView.gameObject.SetActive(false);
@@ -163,7 +165,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnParticipantLeft(string participantId)
         {
-            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.Community) return;
 
             RemoveParticipant(participantId);
 
@@ -172,7 +174,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnParticipantJoined(string participantId, VoiceChatParticipantState participantState)
         {
-            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.Community) return;
 
             if (participantState.IsSpeaker)
                 AddSpeaker(participantState);
@@ -184,9 +186,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnParticipantStateRefreshed(List<(string participantId, VoiceChatParticipantState state)> joinedParticipants, List<string> leftParticipantIds)
         {
-            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.Community) return;
 
-            if (!usedPlayerEntriesPresenters.ContainsKey(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.WalletId))
+            Option<string> localWalletId = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.WalletId;
+
+            if (localWalletId.Has && !usedPlayerEntriesPresenters.ContainsKey(localWalletId.Value))
             {
                 if (voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker)
                     AddSpeaker(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
@@ -224,12 +228,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             switch (voiceChatType)
             {
-                case VoiceChatType.COMMUNITY:
-                    voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+                case VoiceChatType.Community:
+                    voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.Expanded);
                     view.Show();
                     break;
-                case VoiceChatType.PRIVATE:
-                case VoiceChatType.NONE:
+                case VoiceChatType.Private:
+                case VoiceChatType.None:
                 default:
                     contextMenuTask.TrySetResult();
                     popupCts.SafeCancelAndDispose();
@@ -246,18 +250,23 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void AddSpeaker(VoiceChatParticipantState participantState)
         {
-            VoiceChatParticipantEntryPresenter entryPresenter = GetAndConfigurePlayerEntry(participantState);
-            entryPresenter.ConfigureAsSpeaker();
+            VoiceChatParticipantEntryPresenter? entryPresenter = GetAndConfigurePlayerEntry(participantState);
+            entryPresenter?.ConfigureAsSpeaker();
         }
 
         private void AddListener(VoiceChatParticipantState participantState)
         {
-            VoiceChatParticipantEntryPresenter entryPresenter = GetAndConfigurePlayerEntry(participantState);
-            entryPresenter.ConfigureAsListener();
+            VoiceChatParticipantEntryPresenter? entryPresenter = GetAndConfigurePlayerEntry(participantState);
+            entryPresenter?.ConfigureAsListener();
         }
 
-        private VoiceChatParticipantEntryPresenter GetAndConfigurePlayerEntry(VoiceChatParticipantState participantState)
+        private VoiceChatParticipantEntryPresenter? GetAndConfigurePlayerEntry(VoiceChatParticipantState participantState)
         {
+            Option<string> walletId = participantState.WalletId;
+
+            if (!walletId.Has)
+                return null;
+
             playerEntriesPool.Get(out VoiceChatParticipantEntryView entryView);
 
             var newPresenter = new VoiceChatParticipantEntryPresenter(
@@ -279,34 +288,44 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             subscriptionsScope.Add(participantState.IsSpeaker.Subscribe(UpdateCounters));
             subscriptionsScope.Add(participantState.IsSpeaking.Subscribe(isSpeaking => OnParticipantIsSpeaking(isSpeaking, participantState)));
 
-            usedPlayerEntriesPresenters[participantState.WalletId] = newPresenter;
+            usedPlayerEntriesPresenters[walletId.Value] = newPresenter;
             return newPresenter;
         }
 
         private void OnParticipantIsSpeaking(bool isSpeaking, VoiceChatParticipantState participantState)
         {
+            Option<Profile.CompactInfo> profile = participantState.Profile;
+
+            if (!profile.Has)
+                return;
+
             if (isSpeaking)
-                currentlySpeakingUsers.TryAdd(participantState.WalletId, participantState.Name);
+                currentlySpeakingUsers.TryAdd(profile.Value.UserId.Value, profile.Value.Name);
             else
-                currentlySpeakingUsers.Remove(participantState.WalletId);
+                currentlySpeakingUsers.Remove(profile.Value.UserId.Value);
 
             inCallPresenter.SetTalkingStatus(currentlySpeakingUsers.Count, currentlySpeakingUsers.Count == 1 ? currentlySpeakingUsers.First().Value : string.Empty);
         }
 
         private void OnContextMenuButtonClicked(VoiceChatParticipantState participant, Vector2 buttonPosition)
         {
+            Option<string> walletId = participant.WalletId;
+
+            if (!walletId.Has)
+                return;
+
             popupCts = popupCts.SafeRestart();
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
 
             ViewDependencies.GlobalUIViews.ShowCommunityPlayerEntryContextMenuAsync(
-                participant.WalletId,
+                walletId.Value,
                 participant.IsSpeaker.Value,
                 buttonPosition,
                 default(Vector2),
                 popupCts.Token,
                 contextMenuTask.Task,
-                anchorPoint: MenuAnchorPoint.BOTTOM_RIGHT).Forget();
+                anchorPoint: MenuAnchorPoint.BottomRight).Forget();
         }
 
         private void OnUserIsRequestingToSpeak(string playerName)
@@ -345,11 +364,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             else
                 listeners++;
 
+            Option<string> localWalletId = localParticipant.WalletId;
 
             foreach (var participantEntry in usedPlayerEntriesPresenters)
             {
                 string? participantId = participantEntry.Key;
-                if (participantId == localParticipant?.WalletId) continue;
+                if (localWalletId.Has && participantId == localWalletId.Value) continue;
 
                 if (voiceChatOrchestrator.ParticipantsStateService.TryGetParticipantState(participantId, out var participantState))
                 {

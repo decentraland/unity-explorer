@@ -21,13 +21,13 @@ namespace DCL.Friends.UI.Requests
     {
         private enum ViewState
         {
-            SEND_NEW,
-            CANCEL,
-            RECEIVED,
-            CONFIRMED_ACCEPTED,
-            CONFIRMED_CANCELLED,
-            CONFIRMED_REJECTED,
-            CONFIRMED_SENT,
+            SendNew,
+            Cancel,
+            Received,
+            ConfirmedAccepted,
+            ConfirmedCancelled,
+            ConfirmedRejected,
+            ConfirmedSent,
         }
 
         private const int MUTUAL_PAGE_SIZE_BY_DESIGN = 3;
@@ -46,7 +46,7 @@ namespace DCL.Friends.UI.Requests
         private CancellationTokenSource? showPreCancelToastCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public FriendRequestController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
@@ -101,19 +101,19 @@ namespace DCL.Friends.UI.Requests
                 if (inputData.DestinationUser == null)
                     throw new Exception("Destination user must be set for new friend request");
 
-                Toggle(ViewState.SEND_NEW);
+                Toggle(ViewState.SendNew);
                 SetUpAsNew();
             }
             else
             {
                 if (selfAddress.ToString() == fr.From.Address)
                 {
-                    Toggle(ViewState.CANCEL);
+                    Toggle(ViewState.Cancel);
                     SetUpAsCancel();
                 }
                 else if (selfAddress.ToString() == fr.To.Address)
                 {
-                    Toggle(ViewState.RECEIVED);
+                    Toggle(ViewState.Received);
                     SetUpAsReceived();
                 }
             }
@@ -136,13 +136,13 @@ namespace DCL.Friends.UI.Requests
 
         private void Toggle(ViewState state)
         {
-            viewInstance!.send.Root.SetActive(state == ViewState.SEND_NEW);
-            viewInstance.cancel.Root.SetActive(state == ViewState.CANCEL);
-            viewInstance.received.Root.SetActive(state == ViewState.RECEIVED);
-            viewInstance.cancelledConfirmed.Root.SetActive(state == ViewState.CONFIRMED_CANCELLED);
-            viewInstance.acceptedConfirmed.Root.SetActive(state == ViewState.CONFIRMED_ACCEPTED);
-            viewInstance.rejectedConfirmed.Root.SetActive(state == ViewState.CONFIRMED_REJECTED);
-            viewInstance.sentConfirmed.Root.SetActive(state == ViewState.CONFIRMED_SENT);
+            viewInstance!.send.Root.SetActive(state == ViewState.SendNew);
+            viewInstance.cancel.Root.SetActive(state == ViewState.Cancel);
+            viewInstance.received.Root.SetActive(state == ViewState.Received);
+            viewInstance.cancelledConfirmed.Root.SetActive(state == ViewState.ConfirmedCancelled);
+            viewInstance.acceptedConfirmed.Root.SetActive(state == ViewState.ConfirmedAccepted);
+            viewInstance.rejectedConfirmed.Root.SetActive(state == ViewState.ConfirmedRejected);
+            viewInstance.sentConfirmed.Root.SetActive(state == ViewState.ConfirmedSent);
         }
 
         private void SetUpAsNew()
@@ -278,11 +278,11 @@ namespace DCL.Friends.UI.Requests
                         ct)
                                                      .SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                    if (result.Success)
+                    if (result is { Success: true, Value: { } friendRequest })
                     {
                         await ShowOperationConfirmationAsync(
-                            ViewState.CONFIRMED_SENT,
-                            viewInstance.sentConfirmed, result.Value.To,
+                            ViewState.ConfirmedSent,
+                            viewInstance.sentConfirmed, friendRequest.To,
                             FRIEND_REQUEST_SENT_FORMAT,
                             ct);
 
@@ -305,7 +305,7 @@ namespace DCL.Friends.UI.Requests
 
                 // Dont show confirmation on negative actions
                 // await ShowOperationConfirmationAsync(
-                //     ViewState.CONFIRMED_REJECTED,
+                //     ViewState.ConfirmedRejected,
                 //     viewInstance!.rejectedConfirmed, inputData.Request.From,
                 //     "Friend Request From <color=#FF8362>{0}</color> Rejected",
                 //     ct);
@@ -322,12 +322,12 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid AcceptThenCloseAsync(CancellationToken ct)
             {
-                EnumResult<TaskError> result = await friendsService.AcceptFriendshipAsync(target.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                var result = await friendsService.AcceptFriendshipAsync(target.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                if (result.Success)
+                if (result is { Success: true, Value: true })
                 {
                     await ShowOperationConfirmationAsync(
-                        ViewState.CONFIRMED_ACCEPTED,
+                        ViewState.ConfirmedAccepted,
                         viewInstance!.acceptedConfirmed, target,
                         FRIEND_REQUEST_ACCEPTED_FORMAT,
                         ct);
@@ -349,7 +349,7 @@ namespace DCL.Friends.UI.Requests
 
                 // Dont show confirmation on negative actions
                 // await ShowOperationConfirmationAsync(
-                //     ViewState.CONFIRMED_CANCELLED,
+                //     ViewState.ConfirmedCancelled,
                 //     viewInstance!.cancelledConfirmed, inputData.Request.To,
                 //     "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
                 //     ct);
@@ -379,10 +379,10 @@ namespace DCL.Friends.UI.Requests
             viewInstance!.send.MessageCharacterCountText.text = $"{text.Length}/140";
 
         private void BlockUnwantedInputs() =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
 
         private void UnblockUnwantedInputs() =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera, InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
 
         private async UniTask ShowOperationConfirmationAsync(
             ViewState state,
@@ -394,7 +394,7 @@ namespace DCL.Friends.UI.Requests
 
             if (config.MyThumbnail != null)
             {
-                Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct, IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct, IProfileRepository.FetchBehaviour.DelayUntilResolved);
 
                 if (myProfile != null)
                     config.MyThumbnail.SetupAsync(profileRepositoryWrapper, myProfile.UserNameColor, myProfile.Compact.FaceSnapshotUrl, myProfile.UserId, ct).Forget();

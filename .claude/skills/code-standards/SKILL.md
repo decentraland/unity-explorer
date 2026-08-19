@@ -27,6 +27,10 @@ user-invocable: false
 | Events | Past tense, no `On` prefix | `ViewShowingComplete` |
 | Unused parameters | `_`, `__`, `___` | `Update(float _)` |
 
+**Exception:** serialized JSON DTO fields keep their wire-format casing — see *Serialized JSON DTOs* below.
+
+**Namespaces are domain names, not folder paths** — never suppress a folder-namespace mismatch with `// ReSharper disable once CheckNamespace`; fix the namespace or leave the warning visible. Full rule: `docs/code-style-guidelines.md` § Namespaces.
+
 ## Member Ordering
 
 Within a class, group members in this order:
@@ -131,7 +135,17 @@ The project is migrating to nullable reference types. ~80 of ~153 assemblies alr
 - **Parameters that legitimately accept null** must be typed `T?` (e.g., `string? name`).
 - **Return types that may return null** must be typed `T?`.
 - **Fields and properties that can be null** must be typed `T?`.
-- **Never use the null-forgiving operator `!`** to silence warnings — fix the root cause instead. The only acceptable use is in test code where NSubstitute returns null proxies.
+- **Never use the null-forgiving operator `!`** to silence warnings — fix the root cause instead. The only acceptable uses are test code where NSubstitute returns null proxies, and schema-required serialized DTO fields (see below).
+
+## Serialized JSON DTOs (wire-format exceptions)
+
+Deserialized DTO fields follow the wire format, not local conventions:
+
+- **Naming:** field names keep the JSON key casing — suppress per file with `// ReSharper disable InconsistentNaming` above the namespace declaration.
+- **Nullability (CS8618):** schema-*required* fields are initialized `= null!` (`= default!` when the field's type is a generic parameter); schema-*optional* fields are declared `T?`. The DTO class must carry a schema-link comment (e.g. `// Server schema: <repo>/<file>#/SchemaName`).
+- **Guards follow the declaration:** never null-guard a `null!` field (see anti-pattern 4); an optional `T?` field keeps its guards.
+
+These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code. Authoritative rules, edge cases (strengthened contracts, fields absent from the schema), and the reference example: [`docs/code-style-guidelines.md` § Serialized JSON DTOs](../../../docs/code-style-guidelines.md#serialized-json-dtos-wire-format-exceptions).
 
 ## Comments
 
@@ -288,6 +302,31 @@ A loop that re-queues unresolved items will spin forever when the upstream sourc
 ### 7. Extracting when you should merge
 
 If `X` does nothing useful without `Y`, and there is no second consumer of `X`, merge them. Splits must pay for themselves in polymorphism, reuse, or test isolation.
+
+### 8. Accessing `Option<T>.Value` without checking `Has`
+
+`Option<T>.Value` (`Utility/Types/Result.cs`) is `default` — null for reference types — when `Has` is false. A blind read silently propagates an invalid value far from its source.
+
+```csharp
+// WRONG — Value is default/null when Has is false
+UserId userId = UserId.New(raw).Value;
+
+// WRONG in production — Unwrap() hides the absence case instead of modeling it
+UserId userId = UserId.New(raw).Unwrap();
+
+// RIGHT — branch on Has when the input may be invalid
+Option<UserId> userId = UserId.New(raw);
+if (!userId.Has) return;
+Use(userId.Value);
+
+// RIGHT — a factory that is valid by construction needs no Option at all
+UserId userId = UserId.NewRandom();
+
+// RIGHT in tests only — Unwrap() for known-valid constants; it throws loudly at the source
+UserId userId = UserId.New(KNOWN_CONSTANT).Unwrap();
+```
+
+In production code, handle `None` explicitly (early return, propagation) or use a by-construction-valid factory. `Unwrap()` is a test-only affordance — and in tests, known-valid constants go through `Unwrap()`, never bare `.Value`.
 
 ## PR Standards
 

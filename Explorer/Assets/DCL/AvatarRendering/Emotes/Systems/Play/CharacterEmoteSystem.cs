@@ -20,7 +20,6 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -28,6 +27,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
@@ -96,6 +96,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         /// <summary>
         /// Stops scene emotes when the player is no longer in the scene that triggered them.
+        /// PXs and smart wearables are exempt while their scene remains loaded
         /// </summary>
         [Query]
         [All(typeof(PlayerComponent))]
@@ -103,17 +104,19 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void CancelSceneEmotesBySceneChange(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             if (emoteComponent.CurrentEmoteReference == null) return;
-            if (!TryParseSceneEmoteURN(emoteComponent.EmoteUrn, out _, out _, out _, out ISceneFacade? emoteScene)) return;
-            if (emoteScene != null && emoteScene == scenesCache.CurrentScene.Value) return;
+            if (!TryParseSceneEmoteURN(emoteComponent.EmoteUrn, out _, out _, out _, out ISceneFacade? emoteScene, out bool isPortableExperience)) return;
 
-            StopEmote(entity, ref emoteComponent, avatarView);
+            //Skips this for Pxs and smart wearables as they are their own scenes
+            if (emoteScene != null && (isPortableExperience || emoteScene == scenesCache.CurrentScene.Value)) return;
+
+            StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
             messageBus.SendStop();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void CancelEmotesByDeletion(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(entity, ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
@@ -134,7 +137,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(entity, ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
 
         /// <summary>
         /// Stops emote playback when smooth movement with duration is initiated.
@@ -143,13 +146,13 @@ namespace DCL.AvatarRendering.Emotes.Play
         [All(typeof(PlayerMoveToWithDurationIntent))]
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMoveToWithDuration(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(entity, ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
-            int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
             emoteComponent.SetAnimationTag(currentStateTag);
         }
 
@@ -167,7 +170,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
             if (shouldCancelEmote)
             {
-                StopEmote(entity, ref emoteComponent, avatarView);
+                StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
                 return;
             }
 
@@ -175,7 +178,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (emoteReference.legacy)
             {
                 if (!avatarView.IsLegacyAnimationPlaying)
-                    StopEmote(entity, ref emoteComponent, avatarView);
+                    StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsFinished);
                 return;
             }
 
@@ -185,11 +188,12 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
-            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
             bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
+            // The animator left the emote tags on its own: the clip reached its natural end.
             if (isOnAnotherTag)
-                StopEmote(entity, ref emoteComponent, avatarView);
+                StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsFinished);
         }
 
         // Related issues:
@@ -220,13 +224,22 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReportHub.Log(ReportCategory.EMOTE, $"CancelEmotesByMovementInput() {profile.UserId} Stopping emote");
 
-            StopEmote(entity, ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
+        private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView, EmoteState reason)
         {
             if (emoteComponent.CurrentEmoteReference == null) return;
+
+            // Recorded before Reset() so AvatarEmoteCommandPropagationSystem can report the stop to the scene.
+            emoteComponent.PendingStop = new EmoteStopEvent
+            {
+                Urn = emoteComponent.EmoteUrn,
+                Loop = emoteComponent.EmoteLoop,
+                Reason = reason,
+                IsSet = true,
+            };
 
             emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
 
@@ -279,8 +292,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
-                //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                // We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                // Skipped while an emote plays: the disabled CharacterController makes grounded/blend readings stale, parking the intent forever and soft-locking movement.
                 if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody &&
+                    !emoteComponent.IsPlayingEmote &&
                     (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
                      !avatarView.GetAnimatorBool(AnimationHashes.GROUNDED) ||
                      avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
@@ -300,7 +315,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     // emote failed to load? remove intent
-                    if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } and { IsLSDAsset: false })
+                    if (emote.DTO is { assetBundleManifestVersion: { assetBundleManifestRequestFailed: true, IsLSDAsset: false } })
                     {
                         ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
@@ -319,12 +334,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
+                    StreamableLoadingResult<AttachmentRegularAsset>? assetResult = emote.AssetResults[bodyShape];
 
                     // Loading not complete
-                    if (emote.AssetResults[bodyShape] == null)
+                    if (assetResult == null)
                         return;
 
-                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
+                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = assetResult.Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
@@ -357,6 +373,12 @@ namespace DCL.AvatarRendering.Emotes.Play
                             emotePlayer.TryCancelMaskedEmote(ref masked, view);
                         }
 
+                        // Captured before the overwrite below: a new emote superseding a playing one is an
+                        // interruption of the previous playback and must be reported as such.
+                        URN previousUrn = emoteComponent.EmoteUrn;
+                        bool previousLoop = emoteComponent.EmoteLoop;
+                        bool wasPlaying = emoteComponent.CurrentEmoteReference != null;
+
                         emoteComponent.EmoteUrn = emoteId;
                         emoteComponent.Mask = mask;
 
@@ -364,6 +386,22 @@ namespace DCL.AvatarRendering.Emotes.Play
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                         else
                         {
+                            if (wasPlaying)
+                                emoteComponent.PendingStop = new EmoteStopEvent
+                                {
+                                    Urn = previousUrn,
+                                    Loop = previousLoop,
+                                    Reason = EmoteState.EsInterrupted,
+                                    IsSet = true,
+                                };
+
+                            emoteComponent.PendingStart = new EmoteStartEvent
+                            {
+                                Urn = emoteId,
+                                Loop = isLooping,
+                                IsSet = true,
+                            };
+
                             uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
                             World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
@@ -371,9 +409,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                     else
                     {
                         // Masked emotes for remote players are handled here in the global world.
-                        // Local player masked emotes go through SceneMaskedEmoteSystem instead.
+                        // Local player masked emotes go through SceneMaskedEmoteSystem instead — those get no
+                        // start/stop events in v1 (documented limitation).
                         if (emoteComponent.CurrentEmoteReference != null)
-                            StopEmote(entity, ref emoteComponent, view);
+                            StopEmote(entity, ref emoteComponent, view, EmoteState.EsInterrupted);
 
                         // After AddOrGet the query-provided refs (emoteIntent, avatarView,
                         // emoteComponent) are potentially dangling, use only local copies.
@@ -386,7 +425,20 @@ namespace DCL.AvatarRendering.Emotes.Play
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                         else
                         {
-                            uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+                            // Re-fetched because the AddOrGet above may have invalidated the query-provided ref.
+                            // Recording the start keeps parity with the previous intent-based reporting, which
+                            // included masked emotes.
+                            ref CharacterEmoteComponent freshEmoteComponent = ref World.Get<CharacterEmoteComponent>(entity);
+
+                            freshEmoteComponent.PendingStart = new EmoteStartEvent
+                            {
+                                Urn = emoteId,
+                                Loop = isLooping,
+                                IsSet = true,
+                            };
+
+                            // The duration comes from the masked emote's own clip; a looping emote has no end to report.
+                            uint durationMs = !isLooping ? (uint)(masked.PlayingEmoteDuration * 1000) : 0;
                             World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
                     }
@@ -471,7 +523,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             int prevTag = animationComponent.CurrentAnimationTag;
             if (prevTag == 0) return;
 
-            int currentTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            int currentTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER_INDEX);
 
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
@@ -494,7 +546,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             loadEmoteBuffer[0] = urn;
 
-            if (TryParseSceneEmoteURN(urn, out string sceneId, out string emoteHash, out bool loop, out ISceneFacade? scene))
+            if (TryParseSceneEmoteURN(urn, out string sceneId, out string emoteHash, out bool loop, out ISceneFacade? scene, out _))
             {
                 if (scene == null)
                     return;
@@ -523,12 +575,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                     PartitionComponent.TOP_PRIORITY);
         }
 
-        private bool TryParseSceneEmoteURN(URN urnToParse, out string sceneId, out string parsedEmoteHash, out bool parsedLoop, out ISceneFacade? resolvedScene)
+        private bool TryParseSceneEmoteURN(URN urnToParse, out string sceneId, out string parsedEmoteHash, out bool parsedLoop, out ISceneFacade? resolvedScene, out bool isPortableExperience)
         {
             sceneId = string.Empty;
             parsedEmoteHash = string.Empty;
             parsedLoop = false;
             resolvedScene = null;
+            isPortableExperience = false;
 
             ReadOnlySpan<char> urnStr = urnToParse.ToString().AsSpan();
             ReadOnlySpan<char> emotePrefixWithColon = (ReadOnlySpan<char>)SCENE_EMOTE_PREFIX_WITH_COLON;
@@ -553,7 +606,37 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // sceneId and emoteHash can contain '-' in local preview,
             // so we can't just split by "last two dashes". Instead, match against loaded scenes by prefix.
-            foreach (ISceneFacade facade in scenesCache.Scenes)
+            if (TryResolveSceneByNamePrefix(scenesCache.Scenes, payloadWithoutLoop, ref sceneId, ref parsedEmoteHash, ref resolvedScene))
+                return true;
+
+            if (TryResolveSceneByNamePrefix(scenesCache.PortableExperiencesScenes, payloadWithoutLoop, ref sceneId, ref parsedEmoteHash, ref resolvedScene))
+            {
+                isPortableExperience = true;
+                return true;
+            }
+
+            // Fallback: assume "{sceneKey}-{emoteHash}" split by first dash.
+            // This is primarily for deployed realm format where scene id has no '-'.
+            int firstDash = payloadWithoutLoop.IndexOf('-');
+
+            if (firstDash > 0 && firstDash < payloadWithoutLoop.Length - 1)
+            {
+                sceneId = payloadWithoutLoop.Slice(0, firstDash).ToString();
+                parsedEmoteHash = payloadWithoutLoop.Slice(firstDash + 1).ToString();
+
+                if (!scenesCache.TryGetBySceneId(sceneId, out resolvedScene) &&
+                    scenesCache.TryGetPortableExperienceBySceneUrn(sceneId, out resolvedScene))
+                    isPortableExperience = true;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryResolveSceneByNamePrefix(IReadOnlyCollection<ISceneFacade> scenes, ReadOnlySpan<char> payloadWithoutLoop, ref string sceneId, ref string parsedEmoteHash, ref ISceneFacade? resolvedScene)
+        {
+            foreach (ISceneFacade facade in scenes)
             {
                 string candidateName = facade.SceneData.SceneShortInfo.Name;
 
@@ -569,18 +652,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                     resolvedScene = facade;
                     return true;
                 }
-            }
-
-            // Fallback: assume "{sceneKey}-{emoteHash}" split by first dash.
-            // This is primarily for deployed realm format where scene id has no '-'.
-            int firstDash = payloadWithoutLoop.IndexOf('-');
-
-            if (firstDash > 0 && firstDash < payloadWithoutLoop.Length - 1)
-            {
-                sceneId = payloadWithoutLoop.Slice(0, firstDash).ToString();
-                parsedEmoteHash = payloadWithoutLoop.Slice(firstDash + 1).ToString();
-                scenesCache.TryGetBySceneId(sceneId, out resolvedScene);
-                return true;
             }
 
             return false;

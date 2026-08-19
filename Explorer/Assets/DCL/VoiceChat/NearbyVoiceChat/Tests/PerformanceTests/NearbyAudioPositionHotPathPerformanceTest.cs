@@ -2,8 +2,8 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.MutePersistence;
-using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
@@ -17,7 +17,7 @@ using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Per-piece breakdown of <c>NearbyAudioPositionSystem</c>'s per-entity hot path. Each test
@@ -101,7 +101,7 @@ namespace DCL.VoiceChat.Nearby
                 avatarBases[i] = avatarBase;
 
                 Entity avatarEntity = world.Create(
-                    new Profile(id, id, new Avatar()),
+                    new Profile(UserId.New(id).Unwrap(), id, new Avatar()),
                     avatarBase,
                     new CharacterTransform(avatarGo.transform));
 

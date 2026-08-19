@@ -7,7 +7,6 @@ using System;
 using System.Threading;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.WellKnownTypes;
-using Sentry;
 using Utility;
 
 namespace DCL.VoiceChat.Services
@@ -34,8 +33,7 @@ namespace DCL.VoiceChat.Services
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IWeb3IdentityCache identityCache;
         private CancellationTokenSource subscriptionCts = new ();
-        private bool isServiceDisabled;
-        private bool isListeningUpdatesFromServer;
+        private readonly bool isServiceDisabled;
 
         public RPCPrivateVoiceChatService(
             IRPCSocialServices socialServiceRPC,
@@ -45,7 +43,7 @@ namespace DCL.VoiceChat.Services
             this.socialServiceEventBus = socialServiceEventBus;
             this.identityCache = identityCache;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
             {
                 socialServiceEventBus.TransportClosed += OnTransportClosed;
                 socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
@@ -56,7 +54,7 @@ namespace DCL.VoiceChat.Services
 
         public override void Dispose()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)) return;
 
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
@@ -107,7 +105,7 @@ namespace DCL.VoiceChat.Services
                 },
             };
 
-            StartPrivateVoiceChatResponse? response = await socialServiceRPC.Module()!
+            StartPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                             .CallUnaryProcedure<StartPrivateVoiceChatResponse>(START_PRIVATE_VOICE_CHAT, payload)
                                                                             .AttachExternalCancellation(ct)
                                                                             .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -126,7 +124,7 @@ namespace DCL.VoiceChat.Services
                 CallId = callId,
             };
 
-            AcceptPrivateVoiceChatResponse? response = await socialServiceRPC.Module()!
+            AcceptPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                              .CallUnaryProcedure<AcceptPrivateVoiceChatResponse>(ACCEPT_PRIVATE_VOICE_CHAT, payload)
                                                                              .AttachExternalCancellation(ct)
                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -145,7 +143,7 @@ namespace DCL.VoiceChat.Services
                 CallId = callId,
             };
 
-            RejectPrivateVoiceChatResponse? response = await socialServiceRPC.Module()!
+            RejectPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                              .CallUnaryProcedure<RejectPrivateVoiceChatResponse>(REJECT_PRIVATE_VOICE_CHAT, payload)
                                                                              .AttachExternalCancellation(ct)
                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -164,7 +162,7 @@ namespace DCL.VoiceChat.Services
                 CallId = callId,
             };
 
-            EndPrivateVoiceChatResponse? response = await socialServiceRPC.Module()!
+            EndPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                           .CallUnaryProcedure<EndPrivateVoiceChatResponse>(END_PRIVATE_VOICE_CHAT, payload)
                                                                           .AttachExternalCancellation(ct)
                                                                           .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -178,7 +176,7 @@ namespace DCL.VoiceChat.Services
 
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            GetIncomingPrivateVoiceChatRequestResponse? response = await socialServiceRPC.Module()!
+            GetIncomingPrivateVoiceChatRequestResponse? response = await socialServiceRPC.Module()
                                                                                          .CallUnaryProcedure<GetIncomingPrivateVoiceChatRequestResponse>(GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST, new Empty())
                                                                                          .AttachExternalCancellation(ct)
                                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -188,30 +186,19 @@ namespace DCL.VoiceChat.Services
 
         private async UniTaskVoid TrySubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct)
         {
-            if (isListeningUpdatesFromServer) return;
-
-            try
-            {
-                isListeningUpdatesFromServer = true;
-                await KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
-            }
-            finally { isListeningUpdatesFromServer = false; }
+            await KeepServerStreamOpenAsync<PrivateVoiceChatUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, ct);
 
             return;
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream =
-                    socialServiceRPC.Module().CallServerStream<PrivateVoiceChatUpdate>(SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, new Empty());
-
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Successfully opened private voice chat updates stream");
 
-                await foreach (PrivateVoiceChatUpdate? response in stream)
+                await foreach (PrivateVoiceChatUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try { PrivateVoiceChatUpdateReceived?.Invoke(response); }
 
-                    // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    // It is not needed to handle OperationCancelledException nor WebSocketException because it is an internal sync call
+                    catch (OperationCanceledException) { }
                     catch (Exception e) { ReportHub.LogException(e, ReportCategory.VOICE_CHAT); }
                 }
             }

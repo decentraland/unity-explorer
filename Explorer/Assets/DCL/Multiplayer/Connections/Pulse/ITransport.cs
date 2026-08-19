@@ -26,11 +26,11 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public enum TransportState
         {
-            NONE,
-            CONNECTING,
-            CONNECTED,
-            DISCONNECTING,
-            DISCONNECTED,
+            None,
+            Connecting,
+            Connected,
+            Disconnecting,
+            Disconnected,
         }
     }
 }

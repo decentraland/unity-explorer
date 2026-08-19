@@ -36,7 +36,7 @@ namespace DCL.Chat.MessageBus
         {
             void CreateTestChatEntry()
             {
-                messagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DEBUG_PANEL);
+                messagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DebugPanel);
             }
 
             debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CHAT)?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);

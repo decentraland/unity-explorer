@@ -22,6 +22,34 @@ namespace DCL.Web3
             this.address = address.ToLower();
         }
 
+        /// <summary>
+        /// Checks that a value is shaped like an Ethereum wallet address: "0x" followed by 40 hex digits.
+        /// </summary>
+        /// <param name="walletAddress">The value to check. Null and malformed values return false.</param>
+        public static bool IsValidWalletAddress(string? walletAddress)
+        {
+            if (walletAddress == null || walletAddress.Length != ETH_ADDRESS_LENGTH) return false;
+
+            if (walletAddress[0] != '0' || (walletAddress[1] != 'x' && walletAddress[1] != 'X')) return false;
+
+            for (int i = 2; i < walletAddress.Length; i++)
+            {
+                if (walletAddress[i] is not (>= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F'))
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Returns the value as a lowercased <see cref="Web3Address" /> when it is a well-formed
+        ///     wallet address (see <see cref="IsValidWalletAddress" />), null otherwise. Meant for
+        ///     untrusted inputs (launch arguments, deep links, query params), since the constructor
+        ///     itself accepts any string and only lowercases it.
+        /// </summary>
+        public static Web3Address? FromUntrusted(string? address) =>
+            IsValidWalletAddress(address) ? new Web3Address(address) : null;
+
         public override string ToString() =>
             address;
 

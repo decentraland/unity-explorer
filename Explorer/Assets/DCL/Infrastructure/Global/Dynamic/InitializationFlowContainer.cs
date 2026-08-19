@@ -1,9 +1,8 @@
-﻿using DCL.ApplicationBlocklistGuard;
+﻿using DCL.ApplicationGuards;
 using DCL.Audio;
 using DCL.Character.Plugin;
 using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
@@ -44,17 +43,18 @@ namespace DCL.UserInAppInitializationFlow
             ModerationDataProvider moderationDataProvider,
             IPulseMultiplayerService pulseMultiplayerService,
             IProfilePropagation profilePropagation,
+            PulseActivation pulseActivation,
             IWorldPermissionsService worldPermissionsService,
             IChatHistory chatHistory)
         {
-            ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
+            ILoadingStatus loadingStatus = staticContainer.LoadingStatus;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource, moderationDataProvider);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
-            var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService, profilePropagation, selfProfile);
+            var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService, profilePropagation, selfProfile, pulseActivation);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, dynamicWorldParams.EditorPositionOverrideActive);
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, roomHub, dynamicWorldParams.EditorPositionOverrideActive);
 
             var loadingOperations = new List<IStartupOperation>
             {
@@ -67,11 +67,9 @@ namespace DCL.UserInAppInitializationFlow
 
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
             // More loading stage measurements for Local Scene Development at https://github.com/decentraland/unity-explorer/pull/3630
+            // TODO review why loadGlobalPxOperation is invoked on recovery
             if (!localSceneDevelopment)
-            {
-                // TODO review why loadGlobalPxOperation is invoked on recovery
                 loadingOperations.Add(new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController));
-            }
 
             var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,

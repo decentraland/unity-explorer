@@ -24,6 +24,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly Dictionary<ServerMessage.MessageOneofCase, IncomingMessageHandler> syncHandlers = new ();
 
+        private Action? beforeMessageHandler;
         private DisconnectHandler? disconnectHandler;
         private HandshakeHandler? handshakeHandler;
         private CancellationTokenSource? connectionLifeCycleCts;
@@ -53,6 +54,11 @@ namespace DCL.Multiplayer.Connections.Pulse
             syncHandlers[type] = handler;
         }
 
+        public void RegisterBeforeMessageHandler(Action handler)
+        {
+            beforeMessageHandler = handler;
+        }
+
         public void RegisterDisconnectHandler(DisconnectHandler handler)
         {
             disconnectHandler = handler;
@@ -66,16 +72,17 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void UnregisterAllHandlers()
         {
             syncHandlers.Clear();
+            beforeMessageHandler = null;
             disconnectHandler = null;
             handshakeHandler = null;
         }
 
-        public async UniTask ConnectAsync(CancellationToken ct)
+        public async UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue)
         {
-            if (transport.State is ITransport.TransportState.CONNECTED or ITransport.TransportState.CONNECTING)
-                return;
+            if (transport.State is ITransport.TransportState.Connected or ITransport.TransportState.Connecting)
+                return true;
 
-            await ConnectWithRetriesAsync(ct);
+            return await ConnectWithRetriesAsync(ct, maxAttempts);
         }
 
         public UniTask DisconnectAsync()
@@ -97,7 +104,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void Send(OutgoingMessage outgoingMessage)
         {
-            if (transport.State != ITransport.TransportState.CONNECTED)
+            if (transport.State != ITransport.TransportState.Connected)
             {
                 outgoingMessage.Dispose();
                 return;
@@ -106,7 +113,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             pipe.Send(outgoingMessage);
         }
 
-        private async UniTask ConnectWithRetriesAsync(CancellationToken ct)
+        private async UniTask<bool> ConnectWithRetriesAsync(CancellationToken ct, int maxAttempts)
         {
             var attempt = 1;
 
@@ -115,15 +122,26 @@ namespace DCL.Multiplayer.Connections.Pulse
                 try
                 {
                     await ConnectInternalAsync(ct);
-                    return;
+                    return true;
                 }
-                catch (TimeoutException)
+                catch (PulseHandshakeDisconnectedException e) when (!e.IsRetriable)
                 {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection failed terminally, no retry: {e.Message}");
+                    return false;
+                }
+                catch (Exception e) when (e is TimeoutException or PulseHandshakeDisconnectedException)
+                {
+                    if (attempt >= maxAttempts)
+                    {
+                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection won't be restored after attempt {attempt}");
+                        return false;
+                    }
+
                     (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attempt, CONNECTION_RETRY_POLICY, true, null);
 
                     if (canBeRepeated)
                     {
-                        ReportHub.Log(ReportCategory.MULTIPLAYER, $"Pulse connection attempt {attempt} timed out, retrying in {retryDelay}");
+                        ReportHub.Log(ReportCategory.MULTIPLAYER, $"Pulse connection attempt {attempt} failed ({e.Message}), retrying in {retryDelay}");
 
                         // Task instead of UniTask is used to respect the original thread / synchronization context to avoid continuation on the main thread
 
@@ -132,7 +150,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     else
                     {
                         ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection won't be restored after attempt {attempt}");
-                        return;
+                        return false;
                     }
                 }
 
@@ -157,18 +175,22 @@ namespace DCL.Multiplayer.Connections.Pulse
             };
 
             connectionLifeCycleCts = connectionLifeCycleCts.SafeRestartLinked(ct);
-            StartRouting(connectionLifeCycleCts.Token, ct);
+            StartRouting(handshakeCompletion, connectionLifeCycleCts.Token, ct);
 
             // Handshake exchange runs through the registered handler (PulseMultiplayerBus owns
             // request assembly, auth chain construction, response correlation). The handler is
             // expected to throw on a failed handshake — propagate the exception.
             if (handshakeHandler != null)
                 await handshakeHandler(handshakeCompletion, ct);
+            else
+                // No handshake to await — settle the completion so a later disconnect takes the
+                // reconnection path instead of the handshake-failure path.
+                handshakeCompletion.TrySetResult((true, null));
 
             isAuthenticated = true;
         }
 
-        private void StartRouting(CancellationToken connectionCt, CancellationToken parentCt)
+        private void StartRouting(UniTaskCompletionSource<(bool success, string? error)> handshakeCompletion, CancellationToken connectionCt, CancellationToken parentCt)
         {
             // RunOnThreadPool with configureAwait: false ensures all await continuations
             // stay on the thread pool — matching the ENet transport pattern.
@@ -183,6 +205,13 @@ namespace DCL.Multiplayer.Connections.Pulse
                             {
                                 if (evt.IsDisconnectEvent(out MessagePipeEvent.DisconnectEvent disconnectEvent))
                                 {
+                                    // The server may drop the connection before sending a HandshakeResponse.
+                                    // Fault the pending handshake instead of reconnecting from here — recovery is
+                                    // owned by the connection attempt awaiting it, and a competing reconnection
+                                    // would strand that attempt on a response that will never arrive.
+                                    if (handshakeCompletion.TrySetException(new PulseHandshakeDisconnectedException(disconnectEvent.Reason)))
+                                        break;
+
                                     (bool reconnectionAllowed, TimeSpan reconnectionDelay) = disconnectHandler?.Invoke(disconnectEvent) ?? (false, TimeSpan.Zero);
 
                                     if (reconnectionAllowed && !parentCt.IsCancellationRequested)
@@ -210,7 +239,10 @@ namespace DCL.Multiplayer.Connections.Pulse
                                 try
                                 {
                                     if (syncHandlers.TryGetValue(message.Message.MessageCase, out IncomingMessageHandler? handler))
+                                    {
+                                        beforeMessageHandler?.Invoke();
                                         handler(message);
+                                    }
                                 }
                                 catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
                                 finally { evt.Dispose(); }

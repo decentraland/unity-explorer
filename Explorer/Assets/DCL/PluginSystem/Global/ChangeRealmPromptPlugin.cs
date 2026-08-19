@@ -16,14 +16,14 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
-        private readonly Action<string> changeRealmCallback;
+        private readonly Action<string, Vector2Int?> changeRealmCallback;
         private ChangeRealmPromptController? changeRealmPromptController;
 
         public ChangeRealmPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             ICursor cursor,
-            Action<string> changeRealmCallback)
+            Action<string, Vector2Int?> changeRealmCallback)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(ChangeRealmPromptPlugin) + "." + nameof(ChangeRealmPromptSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject ChangeRealmPromptPrefab;
+            public AssetReferenceGameObject ChangeRealmPromptPrefab = null!;
         }
     }
 }

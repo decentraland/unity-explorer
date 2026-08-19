@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Profiles.Helpers;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using System;
@@ -75,7 +76,7 @@ namespace DCL.Profiles.Self
             Profile? profile = await profileRepository.GetAsync(
                 web3IdentityCache.Identity.Address,
                 ct,
-                batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET
+                batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet
             );
 
             if (profile == null) return null;
@@ -135,7 +136,12 @@ namespace DCL.Profiles.Self
                 if (previousProfile != null && newProfile.IsSameProfile(previousProfile))
                     throw new IdenticalProfileUpdateException();
 
-                newProfile.UserId = address;
+                Option<UserId> selfUserId = UserId.From(web3IdentityCache.Identity.Address);
+
+                if (!selfUserId.Has)
+                    throw new Web3IdentityMissingException("Web3 Identity has an empty address");
+
+                newProfile.UserId = selfUserId.Value;
                 newProfile.Version++;
 
                 if (!updateAvatarInWorld)
@@ -145,7 +151,7 @@ namespace DCL.Profiles.Self
                     Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
 
                         // force to fetch the profile: there are some fields that might change, like the profile picture url
-                        false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                        false, IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst | IProfileRepository.FetchBehaviour.DelayUntilResolved);
 
                     if (savedProfile != null)
                     {
@@ -169,7 +175,7 @@ namespace DCL.Profiles.Self
                     Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
 
                         // force to fetch the profile: there are some fields that might change, like the profile picture url
-                        false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                        false, IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst | IProfileRepository.FetchBehaviour.DelayUntilResolved);
 
                     if (savedProfile == null)
                         throw new Exception($"Profile not found after save for user {newProfile.UserId}");

@@ -4,10 +4,11 @@ namespace DCL.Prefs
     {
         public const string NEW_BADGES = "NewBadges";
 
-        public const string CRASH_DETECTOR_FLAG = "CrashDetector.flag";
-        public const string CRASH_DETECTOR_SESSION_ID = "CrashDetector.sessionID";
-
         public const string LAUNCH_COUNT = "LaunchCount";
+
+        // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
+        // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
+        public const string CREATOR_HUB_BIN_PATH = "CreatorHub.BinPath";
 
         public const string PREVIOUS_SEARCHES = "previous_searches";
 
@@ -106,10 +107,15 @@ namespace DCL.Prefs
         public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
 
         public const string NEARBY_VOICE_TIP_DISMISSED = "NearbyVoice_TipDismissed";
+        public const string NEARBY_VOICE_TIP_SHOWN_COUNT = "NearbyVoice_TipShownCount";
+        public const string NEARBY_VOICE_TIP_LAST_SHOWN_LAUNCH = "NearbyVoice_TipLastShownLaunch";
+        public const string NEARBY_VOICE_USED = "NearbyVoice_Used";
         public const string NEARBY_VOICE_CHAT_DISABLED = "NearbyVoice_Disabled";
         public const string SETTINGS_MUTE_MIC_IN_BACKGROUND = "Settings_MuteMicInBackground";
 
         public const string SETTINGS_CHAT_REACTIONS_ENABLED = "Settings_ChatReactionsEnabled";
         public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
+
+        public const string BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED = "BugReport_PerformancePromptDismissed";
     }
 }

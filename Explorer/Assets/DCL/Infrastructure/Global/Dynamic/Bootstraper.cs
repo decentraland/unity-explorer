@@ -5,7 +5,6 @@ using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.Optimization.PerformanceBudgeting;
@@ -100,28 +99,29 @@ namespace Global.Dynamic
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
             BootstrapContainer bootstrapContainer,
-            PluginSettingsContainer globalPluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             RealmData realmData,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            IAppArgs appArgs,
+            IAppArgs args,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
                 bootstrapContainer.Analytics,
                 bootstrapContainer.DecentralandUrlsSource,
                 realmData,
-                bootstrapContainer.AssetsProvisioner,
+                bootstrapContainer.AssetsProvisioner!,
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,
                 webRequestsContainer,
-                globalPluginSettingsContainer,
+                pluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
-                bootstrapContainer.IdentityCache,
-                bootstrapContainer.CompositeWeb3Provider,
+                bootstrapContainer.IdentityCache!,
+                bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
+                bootstrapContainer.UseLocalAssetBundles,
                 world,
                 playerEntity,
                 memoryCap,
@@ -130,19 +130,19 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 ct,
-                appArgs
+                args
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
             BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
-            PluginSettingsContainer scenePluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            IAppArgs appArgs,
+            IAppArgs args,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
             CancellationToken ct)
@@ -150,13 +150,13 @@ namespace Global.Dynamic
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
                 staticContainer.DebugContainerBuilder,
-                appArgs,
-                bootstrapContainer.AssetsProvisioner,
+                args,
+                bootstrapContainer.AssetsProvisioner!,
                 staticContainer,
-                scenePluginSettingsContainer,
+                pluginSettingsContainer,
                 dynamicSettings,
                 bootstrapContainer.CompositeWeb3Provider!,
-                bootstrapContainer.IdentityCache,
+                bootstrapContainer.IdentityCache!,
                 splashScreen,
                 worldInfoTool
             );
@@ -170,7 +170,7 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    StartParcel = new StartParcel(realmLaunchSettings.targetScene),
+                    StartParcel = new StartParcel(realmLaunchSettings.targetScene, realmLaunchSettings.spawnPointName),
                     EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
@@ -182,7 +182,7 @@ namespace Global.Dynamic
                 backgroundMusic,
                 world,
                 playerEntity,
-                appArgs,
+                args,
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
@@ -192,13 +192,13 @@ namespace Global.Dynamic
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
+            PluginSettingsContainer pluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct)
         {
             var anyFailure = false;
 
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Concat(dynamicWorldContainer.WorldPlugins).Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Concat(dynamicWorldContainer.WorldPlugins).Select(gp => pluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => pluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
@@ -223,10 +223,6 @@ namespace Global.Dynamic
         public void InitializeFeaturesRegistry()
         {
             FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
-
-            // Gate the v49 deps-digest cache-keying scheme behind the feature flag. Off by default means every
-            // manifest reports SupportsDepsDigests() == false and the entire pipeline takes the legacy code path.
-            AssetBundleManifestVersion.DepsDigestKeyingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.AB_DEPS_DIGEST_CACHE_KEY);
         }
 
         public GlobalWorld CreateGlobalWorld(
@@ -250,7 +246,7 @@ namespace Global.Dynamic
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
-                bootstrapContainer.IdentityCache,
+                bootstrapContainer.IdentityCache!,
                 staticContainer.WebRequestsContainer.SceneWebRequestController,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.ProfileRepository,

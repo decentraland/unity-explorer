@@ -4,6 +4,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Multiplayer.Movement;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
@@ -16,7 +17,7 @@ using Utility.PriorityQueue;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents the contract of <see cref="NearbyAudibleRangeSystem"/>: the avatar-level
@@ -356,7 +357,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
             var remoteMovement = new RemotePlayerMovementComponent(movementQueuePool) { Initialized = initialized };
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase, remoteMovement);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase, remoteMovement);
         }
 
         private void MoveAvatar(Entity entity, float distance)

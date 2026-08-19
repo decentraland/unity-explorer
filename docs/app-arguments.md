@@ -86,7 +86,7 @@ For embedded links you will need to place value after `=` sign, instead of space
 ## Scene & Environment Flags
 
 ### `scene-console`
-**Description:** Enables the scene console for debugging and development. Only available in debug mode or when running local scenes.
+**Description:** Enables the scene console (the debug menu's log view of the scene's own output) for debugging and development. Works for any realm — local scene development enables it implicitly, and the flag itself is accepted from deep links against production realms and worlds too, so creators and QA can inspect a deployed scene.
 
 **Usage:**
 ```bash
@@ -186,6 +186,18 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `login-bridge-only`
+**Description:** Forces the dapp deep-link login to complete through the deep-link bridge only, by appending `&bridgeOnly` to the auth website URL. Without it, confirming the login on the website can make the launcher spawn a second Explorer instance. See [issue #9524](https://github.com/decentraland/unity-explorer/issues/9524).
+
+Only affects player builds — the Editor always behaves as if the flag were set.
+
+**Usage:**
+```bash
+--login-bridge-only
+```
+
+---
+
 ## Avatar & Profile Flags
 
 ### `self-force-emotes`
@@ -252,6 +264,21 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+## UI Flags
+
+### `force-open-backpack`
+**Description:** Automatically opens the Backpack panel once the user lands in the world (after authentication and the loading screen). Presence-only: any value triggers it. Also works when a deep link reaches an already-running client — the Backpack opens immediately (or once loading completes).
+
+**Usage:**
+```bash
+--force-open-backpack
+```
+```
+decentraland://?force-open-backpack=true
+```
+
+---
+
 ## Performance & Caching Flags
 
 ### `disable-disk-cache`
@@ -311,6 +338,27 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+### `mcp`
+**Description:** Starts the embedded MCP (Model Context Protocol) server on `http://127.0.0.1:8123/unity-explorer-mcp` so coding agents can observe and drive the client (screenshots, player/scene state, scene logs, teleport/movement, chat commands). The listener binds to localhost only and rejects non-localhost browser Origins. See [MCP Automation](mcp-automation.md).
+
+**Usage:**
+```bash
+--mcp
+```
+
+---
+
+### `mcp-port`
+**Type:** String (integer port, 1024–65535)
+**Description:** Starts the embedded MCP server on a specific port (implies `mcp`). Use distinct ports when running multiple instances via `--multi-instance`.
+
+**Usage:**
+```bash
+--mcp-port 8124
+```
+
+---
+
 ### `launch-cdp-monitor-on-start`
 **Type:** Boolean
 **Description:** Launches the Chrome DevTools Protocol (CDP) monitor on application start. Enables remote debugging capabilities.
@@ -318,17 +366,6 @@ More detailed instructions on how to test can be found in the description of rel
 **Usage:**
 ```bash
 --launch-cdp-monitor-on-start
-```
-
----
-
-### `creator-hub-bin-path`
-**Type:** String (file path)
-**Description:** Specifies a custom path to the Creator Hub binary. Used when the Creator Hub needs to be launched from a non-standard location.
-
-**Usage:**
-```bash
---creator-hub-bin-path /path/to/creator-hub
 ```
 
 ---
@@ -365,6 +402,20 @@ More detailed instructions on how to test can be found in the description of rel
 ```bash
 --resolution 1920x1080
 --resolution 2560x1440
+```
+
+---
+
+## Multiplayer Flags
+
+### `pulse`
+**Type:** Bool (`true` / `false`)
+**Description:** Toggles the Pulse transport (an ENet-based UDP channel that runs alongside LiveKit), overriding the `pulse` remote feature flag. When **specified**, the value wins over the remote flag: `--pulse true` force-enables Pulse, `--pulse false` force-disables it (LiveKit-only, as if Pulse were never present). When **not specified**, Pulse is driven by the remote feature flag. Always ignored during local scene development.
+
+**Usage:**
+```bash
+--pulse true
+--pulse false
 ```
 
 ---
@@ -413,6 +464,17 @@ More detailed instructions on how to test can be found in the description of rel
 **Usage:**
 ```bash
 --launcher_anonymous_id user123
+```
+
+---
+
+### `referrer`
+**Type:** String (Ethereum address, `0x` + 40 hex chars)
+**Description:** Referral attribution address forwarded by the launcher (originally captured by the installer from the download URL). For new accounts it is registered against the referral backend during onboarding, and it is appended to the deep link sign-in URL so the auth website can track the referral for wallet sign-ups. Invalid values are ignored.
+
+**Usage:**
+```bash
+--referrer 0x24e5f44999c151f08609f8e27b2238c773c4d020
 ```
 
 ---

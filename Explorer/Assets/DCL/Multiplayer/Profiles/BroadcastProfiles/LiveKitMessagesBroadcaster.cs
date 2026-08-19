@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.Rooms;
 using Google.Protobuf;
 using LiveKit.Rooms;
@@ -28,23 +29,25 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
         private readonly IMessagePipesHub messagePipesHub;
 
         /// <summary>
-        ///     In the backward compatibility mode Profiles are only broadcasted to the peers that announced their profiles
+        ///     While Pulse is active, messages are sent only to the peers that announced their profiles over
+        ///     LiveKit (the rest receive them over Pulse). When Pulse is absent — disabled or fallen back —
+        ///     messages are broadcast to every peer in the rooms.
         /// </summary>
-        private readonly bool backwardCompatibilityMode;
+        private readonly PulseActivation pulseActivation;
 
         private readonly Dictionary<string, RoomSource> announcedWallets = new ();
 
-        public LiveKitMessagesBroadcaster(IGateKeeperSceneRoom sceneRoom, IMessagePipesHub messagePipesHub, bool backwardCompatibilityMode)
+        public LiveKitMessagesBroadcaster(IGateKeeperSceneRoom sceneRoom, IMessagePipesHub messagePipesHub, PulseActivation pulseActivation)
         {
             this.sceneRoom = sceneRoom;
             this.messagePipesHub = messagePipesHub;
-            this.backwardCompatibilityMode = backwardCompatibilityMode;
+            this.pulseActivation = pulseActivation;
         }
 
         public void Send<TInput, TMessage>(Action<TInput, TMessage> buildMessage, TInput args,
             LKDataPacketKind packetKind, CancellationToken ct) where TMessage: class, IMessage, new()
         {
-            if (backwardCompatibilityMode)
+            if (pulseActivation.IsActive)
             {
                 // Build up recipients lists for every room
 
@@ -53,10 +56,10 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
                 foreach ((string walletId, RoomSource rooms) in announcedWallets)
                 {
-                    if (EnumUtils.HasFlag(rooms, RoomSource.ISLAND))
+                    if (EnumUtils.HasFlag(rooms, RoomSource.Island))
                         islandList.Add(walletId);
 
-                    if (EnumUtils.HasFlag(rooms, RoomSource.GATEKEEPER))
+                    if (EnumUtils.HasFlag(rooms, RoomSource.Gatekeeper))
                         sceneList.Add(walletId);
                 }
 
@@ -103,7 +106,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
             {
                 currentSource.RemoveFlag(roomSource);
 
-                if (currentSource == RoomSource.NONE)
+                if (currentSource == RoomSource.None)
                     announcedWallets.Remove(walletId);
                 else
                     announcedWallets[walletId] = currentSource;

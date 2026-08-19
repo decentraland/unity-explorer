@@ -17,12 +17,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             /// <summary>
             ///     Message will be dropped silently if the scene is not connected
             /// </summary>
-            DROP_IF_NOT_CONNECTED = 0,
+            DropIfNotConnected = 0,
 
             /// <summary>
             ///     Additional information will be printed if the scene is not connected
             /// </summary>
-            DELIVERY_ASSERTED = 1,
+            DeliveryAsserted = 1,
         }
 
         public delegate void SceneMessageHandler(DecodedMessage message);

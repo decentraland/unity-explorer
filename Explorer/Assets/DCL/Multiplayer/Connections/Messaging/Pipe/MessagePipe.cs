@@ -76,7 +76,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             try
             {
-                Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
+                Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
                 var name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, topic, cts.Token).Forget();
             }
@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
                 var r = receiver.Value;
 
-                if (r.strict is IMessagePipe.ThreadStrict.MAIN_THREAD_ONLY)
+                if (r.strict is IMessagePipe.ThreadStrict.MainThreadOnly)
                     await UniTask.SwitchToMainThread();
 
                 foreach (Action<(Packet, LKParticipant, string)>? action in r.list)

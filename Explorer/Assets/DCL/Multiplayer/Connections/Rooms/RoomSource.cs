@@ -8,10 +8,10 @@ namespace DCL.Multiplayer.Connections.Rooms
     [Flags]
     public enum RoomSource : byte
     {
-        NONE = 0,
-        GATEKEEPER = 1,
-        ISLAND = 1 << 1,
-        CHAT = 1 << 2,
-        PULSE = 1 << 3,
+        None = 0,
+        Gatekeeper = 1,
+        Island = 1 << 1,
+        Chat = 1 << 2,
+        Pulse = 1 << 3,
     }
 }

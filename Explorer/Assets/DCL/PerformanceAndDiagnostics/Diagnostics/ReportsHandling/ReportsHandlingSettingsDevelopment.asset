@@ -708,6 +708,26 @@ MonoBehaviour:
       Severity: 2
     - Category: MULTIPLAYER
       Severity: 2
+    - Category: MCP
+      Severity: 3
+    - Category: MCP
+      Severity: 0
+    - Category: MCP
+      Severity: 4
+    - Category: MCP
+      Severity: 1
+    - Category: MCP
+      Severity: 2
+    - Category: CREDITS_PURCHASE
+      Severity: 3
+    - Category: CREDITS_PURCHASE
+      Severity: 2
+    - Category: CREDITS_PURCHASE
+      Severity: 0
+    - Category: CREDITS_PURCHASE
+      Severity: 4
+    - Category: CREDITS_PURCHASE
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

@@ -45,6 +45,8 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.EventInfo;
+using DCL.Credits;
+using DCL.Diagnostics;
 using DCL.Donations;
 using DCL.Events;
 using DCL.EventsApi;
@@ -58,6 +60,9 @@ using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.MarketplaceCredits;
+using DCL.MarketplaceCredits.Purchase;
+using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
@@ -71,9 +76,11 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.SkyBox;
 using DCL.UI;
+using DCL.UI.Credits;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -103,7 +110,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
@@ -111,7 +118,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -151,6 +158,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
         private readonly IPendingTransferService ownedNftFilter;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -163,6 +171,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
+        private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
         private readonly bool isVoiceChatFeatureEnabled;
         private readonly bool isChatTranslationFeatureEnabled;
 
@@ -198,12 +207,12 @@ namespace DCL.PluginSystem.Global
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
-            IWeb3Authenticator web3Authenticator,
+            ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             IRealmData realmData,
             IProfileCache profileCache,
@@ -252,7 +261,8 @@ namespace DCL.PluginSystem.Global
             IRendererFeaturesCache rendererFeaturesCache,
             SpringBoneSimulationSettings springBoneSimulationSettings,
             JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
-            IPendingTransferService ownedNftFilter
+            IPendingTransferService ownedNftFilter,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient
             )
         {
             this.eventBus = eventBus;
@@ -325,6 +335,7 @@ namespace DCL.PluginSystem.Global
             this.springBoneSimulationSettings = springBoneSimulationSettings;
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
             this.ownedNftFilter = ownedNftFilter;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
         }
 
         public void Dispose()
@@ -341,28 +352,30 @@ namespace DCL.PluginSystem.Global
             eventsController?.Dispose();
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
+            creditsPanelController.Dispose();
 
-            dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
             dclInput.Shortcuts.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
-            dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
+            dclInput.Shortcuts.Places.performed -= OnInputShortcutsPlacesPerformed;
+            dclInput.Shortcuts.Communities.performed -= OnInputShortcutsCommunitiesPerformed;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
-            dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.MainMenu.canceled += OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover))
                 dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel))
                 dclInput.Shortcuts.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
 
             var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider, selfProfile);
@@ -572,13 +585,16 @@ namespace DCL.PluginSystem.Global
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
             eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
-                webRequestController,
-                clipboard,
-                webBrowser,
-                eventsApiService,
                 eventsThumbnailLoader,
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
+
+            explorePanelView.CreditsPanelView.gameObject.SetActive(false);
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits))
+                EnableCreditsPanelIfUserAllowedAsync(explorePanelView.CreditsPanelView, ct)
+                   .SuppressToResultAsync(ReportCategory.CREDITS_PURCHASE)
+                   .Forget();
 
             explorePanelController = new
                 ExplorePanelController(
@@ -604,14 +620,30 @@ namespace DCL.PluginSystem.Global
                     inputBlock,
                     eventsApiService,
                     mvcManager,
-                    joinedCommunitiesVoiceLiveTracker);
+                    joinedCommunitiesVoiceLiveTracker,
+                    creditsPanelController);
 
             mvcManager.RegisterController(explorePanelController);
 
-            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true);
+            bool isCommunitiesFeatureEnabled = CommunitiesFeatureAccess.Instance.IsFeatureEnabled();
 
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;
+
+            if (appArgs.HasFlag(AppArgsFlags.FORCE_OPEN_BACKPACK))
+                BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, ct).Forget();
+        }
+
+        private async UniTask EnableCreditsPanelIfUserAllowedAsync(CreditsPanelView view, CancellationToken ct)
+        {
+            if (!await CreditsFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct))
+                return;
+
+            creditsPanelController = new CreditsPanelController(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
+                topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
+                openTopUpPanel: () => mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD))).Forget());
+
+            view.gameObject.SetActive(true);
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
@@ -651,26 +683,55 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
+        {
+            // While the panel is open its own hotkey handlers (RegisterHotkeys) own section switching and closing.
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
+        }
 
-        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings)));
+        }
 
-        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
+        }
 
-        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _) =>
+        private void OnInputShortcutsMainMenuCanceledAsync(InputAction.CallbackContext _)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(default(ExplorePanelParameter)));
+        }
 
-        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
+        }
 
-        private void OnInputShortcutsCommunitiesPerformed(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsCommunitiesPerformed(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Communities)));
+        }
 
-        private void OnInputShortcutsPlacesPerformed(InputAction.CallbackContext obj) =>
+        private void OnInputShortcutsPlacesPerformed(InputAction.CallbackContext obj)
+        {
+            if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
+
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Places)));
+        }
 
         private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPoolAsync(EventInfoPanelView view, CancellationToken ct)
         {

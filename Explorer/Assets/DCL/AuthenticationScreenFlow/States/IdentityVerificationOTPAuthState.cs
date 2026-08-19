@@ -75,7 +75,7 @@ namespace DCL.AuthenticationScreenFlow
                     Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
                 };
 
-                if (loginException is not OperationCanceledException)
+                if (loginException is not OperationCanceledException && loginException is not InvalidEmailException)
                     ReportHub.LogException(loginException, new ReportData(ReportCategory.AUTHENTICATION));
             }
 
@@ -94,13 +94,13 @@ namespace DCL.AuthenticationScreenFlow
         {
             try
             {
-                controller.CurrentRequestID = string.Empty;
+                controller.CurrentRequestId = string.Empty;
 
                 compositeWeb3Provider.OTPSendSucceeded += OnOTPSendSucceeded;
 
                 // awaits OTP code being entered
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
-                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (email, identity, false, ct));
+                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new ProfileFetchingPayload(email, identity, false, ct));
             }
             catch (OperationCanceledException e)
             {
@@ -125,12 +125,12 @@ namespace DCL.AuthenticationScreenFlow
             catch (InvalidEmailException e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.INVALID_EMAIL);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.InvalidEmail);
             }
             catch (Exception e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
             }
             finally{ compositeWeb3Provider.OTPSendSucceeded -= OnOTPSendSucceeded; }
         }

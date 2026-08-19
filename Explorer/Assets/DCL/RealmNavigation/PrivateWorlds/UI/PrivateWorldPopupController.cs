@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.PrivateWorlds;
 using MVC;
 using System;
 using System.Threading;
@@ -13,24 +12,26 @@ namespace DCL.PrivateWorlds.UI
     /// <summary>
     /// Controller for the private world access popup.
     /// Supports two modes: PasswordRequired and AccessDenied. Only manages view lifecycle; result is set on inputData.
-    /// The popup should mimize the chat automatically when open,
+    /// In PasswordRequired mode the popup requests a chat blur when it opens,
     /// preventing the chat input field from fighting for focus with the password input.
     /// </summary>
     public class PrivateWorldPopupController : ControllerBase<PrivateWorldPopupView, PrivateWorldPopupParams>
     {
         private readonly IInputBlock inputBlock;
         private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly Action requestChatBlur;
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource? validateCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public PrivateWorldPopupController(ViewFactoryMethod viewFactory, IInputBlock inputBlock,
-            IWorldPermissionsService worldPermissionsService) : base(viewFactory)
+            IWorldPermissionsService worldPermissionsService, Action requestChatBlur) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
             this.worldPermissionsService = worldPermissionsService;
+            this.requestChatBlur = requestChatBlur;
         }
 
         protected override void OnViewInstantiated()
@@ -49,7 +50,11 @@ namespace DCL.PrivateWorlds.UI
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
 
             if (inputData.Mode == PrivateWorldPopupMode.PasswordRequired)
+            {
+                // Blur the chat so its input field doesn't fight the password field for the EventSystem selection
+                requestChatBlur();
                 viewInstance!.FocusPasswordInput();
+            }
         }
 
         protected override void OnViewClose()
@@ -99,7 +104,7 @@ namespace DCL.PrivateWorlds.UI
             try
             {
                 ValidatePasswordResult result = await worldPermissionsService.ValidatePasswordAsync(
-                    inputData.WorldName, password ?? string.Empty, ct);
+                    inputData.WorldName, password, ct);
 
                 viewInstance.SetValidating(false);
 

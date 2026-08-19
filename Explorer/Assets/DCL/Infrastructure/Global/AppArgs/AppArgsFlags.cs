@@ -1,3 +1,4 @@
+// ReSharper disable once CheckNamespace
 namespace Global.AppArgs
 {
     public static class AppArgsFlags
@@ -13,6 +14,7 @@ namespace Global.AppArgs
         public const string SCENE_CONSOLE = "scene-console";
 
         public const string AUTOPILOT = "autopilot";
+        public const string MEASURE_LOADING_TIME = "measure-loading-time";
         public const string AUTOPILOT_CSV = "csv";
         public const string AUTOPILOT_SUMMARY = "summary";
         public const string PROFILER_LOG_FILE = "raw";
@@ -22,6 +24,7 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
+        public const string SPAWN_POINT = "spawnpoint";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
         public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
@@ -30,6 +33,23 @@ namespace Global.AppArgs
         /// The community received here (by its ID) will be shown through a notification inviting the user to click on it and open that community card.
         /// </summary>
         public const string COMMUNITY = "community";
+
+        public const string FORCE_OPEN_BACKPACK = "force-open-backpack";
+
+        // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
+        public const string SIGNIN = "signin";
+
+        /// <summary>
+        ///     Referral attribution address (0x…) forwarded by the launcher.
+        ///     Untrusted input: consumers must validate it before use.
+        /// </summary>
+        public const string REFERRER = "referrer";
+
+        // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
+        public const string AUTH_REQUEST_ID = "authRequestId";
+        // See: https://github.com/decentraland/unity-explorer/issues/9524
+        // ReSharper disable once UnusedMember.Global (used on non-editor build only)
+        public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
 
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
@@ -46,6 +66,7 @@ namespace Global.AppArgs
         public const string VOICE_CHAT = "voice-chat";
         public const string NEARBY_VOICE_CHAT = "nearby-voice-chat";
         public const string DONATIONS_UI = "donations-ui";
+        public const string BUG_REPORT = "bug-report";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
@@ -55,7 +76,6 @@ namespace Global.AppArgs
         public const string SIMULATE_MEMORY = "simulateMemory";
 
         public const string LAUNCH_CDP_MONITOR_ON_START = "launch-cdp-monitor-on-start";
-        public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
         public const string GRAPHICS = "graphics";
@@ -89,6 +109,8 @@ namespace Global.AppArgs
 
         public const string DOUBLE_JUMP = "double-jump";
 
+        public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
+
         public const string GLIDING = "gliding";
         public const string POINT_AT = "point-at";
 
@@ -96,6 +118,16 @@ namespace Global.AppArgs
 
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
         public const string ALTTESTER = "alttester";
+
+        /// <summary>
+        ///     Starts the embedded MCP (Model Context Protocol) server on 127.0.0.1 so coding agents can drive the client.
+        /// </summary>
+        public const string MCP = "mcp";
+
+        /// <summary>
+        ///     Overrides the port the embedded MCP server listens on (implies <see cref="MCP" />).
+        /// </summary>
+        public const string MCP_PORT = "mcp-port";
 
         public const string REPORT_USER = "report-user";
 
@@ -106,9 +138,19 @@ namespace Global.AppArgs
 
         public const string BYTE_WEIGHTED_LOADING_PROGRESS = "byte-weighted-loading-progress";
 
+        public const string HARDWARE_FINGERPRINT = "hardware-fingerprint";
+
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+        /// <summary>
+        ///     Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's
+        ///     embedded abgen sidecar, reading the preview server's content. Carries no URL or port — the
+        ///     content base is derived from the realm the client already has.
+        /// </summary>
+        public const string LOCAL_AB = "local-ab";
+
+        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
@@ -135,6 +177,12 @@ namespace Global.AppArgs
             public const string SESSION_ID = "session_id";
             public const string LAUNCHER_ID = "launcher_anonymous_id";
             public const string CAMPAIGN_ANON_USER_ID = "campaign_anon_user_id";
+        }
+
+        public static class Launcher
+        {
+            /// <summary>Version of the launcher that started the client; launchers older than the flag do not send it.</summary>
+            public const string VERSION = "launcher_version";
         }
     }
 }

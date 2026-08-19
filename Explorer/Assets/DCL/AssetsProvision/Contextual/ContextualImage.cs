@@ -31,7 +31,7 @@ namespace DCL.AssetsProvision
 
         private void OnEnable()
         {
-            if (asset.CurrentState is ContextualAsset<Sprite>.State.UNLOADED)
+            if (asset.CurrentState is ContextualAsset<Sprite>.State.Unloaded)
                 LoadAsync().Forget();
         }
 
@@ -64,9 +64,9 @@ namespace DCL.AssetsProvision
         public UniTask TriggerOrWaitReadyAsync(CancellationToken token) =>
             asset.CurrentState switch
             {
-                ContextualAsset<Sprite>.State.UNLOADED => LoadAsync(),
-                ContextualAsset<Sprite>.State.LOADING => UniTask.WaitWhile(() => asset.CurrentState is ContextualAsset<Sprite>.State.LOADING, cancellationToken: token),
-                ContextualAsset<Sprite>.State.LOADED => UniTask.CompletedTask,
+                ContextualAsset<Sprite>.State.Unloaded => LoadAsync(),
+                ContextualAsset<Sprite>.State.Loading => UniTask.WaitWhile(() => asset.CurrentState is ContextualAsset<Sprite>.State.Loading, cancellationToken: token),
+                ContextualAsset<Sprite>.State.Loaded => UniTask.CompletedTask,
                 _ => throw new ArgumentOutOfRangeException()
             };
     }

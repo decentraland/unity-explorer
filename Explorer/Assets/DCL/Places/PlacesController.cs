@@ -41,7 +41,7 @@ namespace DCL.Places
             PlaceCategoriesSO placesCategories,
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,
@@ -87,7 +87,7 @@ namespace DCL.Places
             view.ResetCurrentFilters();
             view.ResetFiltersDropdown();
             view.SetCategories(placesCategories.categories);
-            view.OpenSection(PlacesSection.BROWSE, force: true);
+            view.OpenSection(PlacesSection.Browse, force: true);
             cursor.Unlock();
         }
 
@@ -114,21 +114,21 @@ namespace DCL.Places
 
         public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true, bool resetCategory = false)
         {
-            view.SetFiltersVisible(section == PlacesSection.BROWSE);
+            view.SetFiltersVisible(section == PlacesSection.Browse);
             view.OpenSection(section, force, invokeEvent, cleanSearch, resetCategory);
         }
 
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
-            view.SetFiltersVisible(newFilters.Section == PlacesSection.BROWSE);
-            view.SetCategoriesVisible(newFilters.Section == PlacesSection.BROWSE && string.IsNullOrEmpty(newFilters.SearchText));
+            view.SetFiltersVisible(newFilters.Section == PlacesSection.Browse);
+            view.SetCategoriesVisible(newFilters.Section == PlacesSection.Browse && string.IsNullOrEmpty(newFilters.SearchText));
             FiltersChanged?.Invoke(newFilters);
         }
 
         private void DisableShortcutsInput() =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
 
         private void RestoreShortcutsInput() =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.Kind.Shortcuts, InputMapComponent.Kind.InWorldCamera);
     }
 }

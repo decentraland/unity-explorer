@@ -1,4 +1,4 @@
-﻿#if AV_PRO_PRESENT
+#if false // Stale: targets the pre-MediaFactory API (MediaPlayerComponent.URL, pool-based system ctors); rewrite against MediaFactory/MultiMediaPlayer before re-enabling.
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -7,7 +7,7 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using RenderHeads.Media.AVProVideo;
+using DCL.AvProSwitch;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -57,13 +57,18 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 Loop = loop,
             };
 
+            MediaAddress address = MediaAddress.New(src);
+            var openMediaPromise = new OpenMediaPromise();
+            openMediaPromise.SeedResolved(new VideoTemplateData(address, address, new ResolvedMediaUrl(src, isReachable: true)));
+
             Entity entity = world.Create(pbVideoPlayer,
                 new MediaPlayerComponent
                 {
                     MediaPlayer = mediaPlayerGameObject,
                     URL = src,
+                    MediaAddress = address,
                     Cts = new CancellationTokenSource(),
-                    OpenMediaPromise = new OpenMediaPromise { url = src, status = OpenMediaPromise.Status.Resolved, isReachable = true },
+                    OpenMediaPromise = openMediaPromise,
                 },
                 PartitionComponent.TOP_PRIORITY); // Create entity
 

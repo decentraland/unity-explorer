@@ -168,7 +168,7 @@ namespace DCL.Communities.CommunitiesBrowser
             bool isMember = communityData.role != CommunityMemberRole.none;
 
             // Setup card data
-            cardView.SetCommunityData(communityData.id, communityData.name, communityData.ownerName, communityData.description, isMember);
+            cardView.SetCommunityData(communityData.id, communityData.name, communityData.OwnerName, communityData.description, isMember);
 
             // Setup card data
             cardView.SetPrivacy(communityData.privacy);
@@ -177,14 +177,14 @@ namespace DCL.Communities.CommunitiesBrowser
             var isStreaming = false;
             var hasJoined = false;
 
-            if (activeViewSection == ActiveViewSection.STREAMING)
+            if (activeViewSection == ActiveViewSection.Streaming)
             {
                 isStreaming = true;
                 hasJoined = browserStateService.CurrentCommunityId.Value == communityData.id;
             }
 
             cardView.SetActionButtonsState(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none, isStreaming, hasJoined);
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(communityData.thumbnailUrl, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token, true).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(communityData.ThumbnailUrl, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token, true).Forget();
             cardView.SetActionLoadingActive(false);
 
             if (communityVoiceChatOrchestrator?.CurrentCommunityId.Value == communityData.id)
@@ -251,10 +251,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public enum ActiveViewSection
         {
-            STREAMING,
-            ALL_COMMUNITIES,
-            SEARCH_COMMUNITIES,
-            MY_COMMUNITIES
+            Streaming,
+            AllCommunities,
+            SearchCommunities,
+            MyCommunities
         }
     }
 }

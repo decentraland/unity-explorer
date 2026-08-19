@@ -79,9 +79,6 @@ namespace DCL.Profiles
 
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
-            if (string.IsNullOrEmpty(profile.UserId))
-                throw new ArgumentException("Can't set a profile with an empty UserId");
-
             currentProfile = profile;
 
             if (currentProfileResolutionTask != null)
@@ -133,7 +130,7 @@ namespace DCL.Profiles
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = Array.Empty<ContentDefinition>(),
-                pointers = new[] { profile.UserId },
+                pointers = new string[] { profile.UserId.Value },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };
@@ -250,8 +247,8 @@ namespace DCL.Profiles
 
             Assert.IsTrue(!versionSpecified || tier > ProfileTier.Kind.Compact, "Specifying version for compact profile is not supported by design");
 
-            bool delayBatchResolution = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
-            bool forceCatalyst = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST);
+            bool delayBatchResolution = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.DelayUntilResolved);
+            bool forceCatalyst = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ForceFetchFromCatalyst);
 
             // Compact Tiers are not supported on catalysts
             if (!useCentralizedProfiles || forceCatalyst)
@@ -283,7 +280,7 @@ namespace DCL.Profiles
                 {
                     // Two paths
                     // Forcing from catalyst dispatches the current batch. Its current usage is to retrieve an update profile, so we need it straight away
-                    if (forceCatalyst || EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
+                    if (forceCatalyst || EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.EnforceSingleGet))
                         return await EnforceSingleGetAsync();
                     else
                     {

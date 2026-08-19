@@ -2,16 +2,22 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
+using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
+using DCL.UI;
 using Utility.Arch;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.SceneRuntime.Apis.RestrictedActionsApi;
 using DCL.TeleportPrompt;
 using DCL.Utilities;
+using Decentraland.Kernel.Apis;
 using MVC;
 using SceneRunner.Scene;
-using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
@@ -22,12 +28,15 @@ namespace CrdtEcsBridge.RestrictedActions
 {
     public class RestrictedActionsAPIImplementation : IRestrictedActionsAPI
     {
+        private const uint USER_GESTURE_WINDOW_TICKS = 1;
+
         private readonly IMVCManager mvcManager;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly ISceneData sceneData;
         private readonly IJsApiPermissionsProvider permissionsProvider;
         private readonly ISystemClipboard systemClipboard;
+        private readonly IExplorerUiActions explorerUiActions;
         private readonly Arch.Core.World sceneWorld;
         private readonly Arch.Core.Entity scenePlayerEntity;
 
@@ -39,7 +48,8 @@ namespace CrdtEcsBridge.RestrictedActions
             IJsApiPermissionsProvider permissionsProvider,
             ISystemClipboard systemClipboard,
             Arch.Core.World sceneWorld,
-            Arch.Core.Entity scenePlayerEntity)
+            Arch.Core.Entity scenePlayerEntity,
+            IExplorerUiActions explorerUiActions)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
@@ -49,6 +59,7 @@ namespace CrdtEcsBridge.RestrictedActions
             this.systemClipboard = systemClipboard;
             this.sceneWorld = sceneWorld;
             this.scenePlayerEntity = scenePlayerEntity;
+            this.explorerUiActions = explorerUiActions;
         }
 
         public bool TryOpenExternalUrl(string url)
@@ -180,7 +191,7 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 EmoteId = urn,
                 Spatial = true,
-                TriggerSource = TriggerSource.SCENE,
+                TriggerSource = TriggerSource.Scene,
                 Mask = mask,
             });
         }
@@ -199,6 +210,38 @@ namespace CrdtEcsBridge.RestrictedActions
             OpenNftDialogAsync(chain, contractAddress, tokenId).Forget();
             return true;
         }
+
+        public int TryOpenExplorerUi(int ui)
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return (int)OpenExplorerUiResult.RejectedNotCurrentScene;
+
+            // Accept only calls made within USER_GESTURE_WINDOW_TICKS of the last recorded pointer gesture.
+            // The "== 0" guard is not redundant: 0 means "no input was ever recorded".
+            uint lastUserInputTick = sceneStateProvider.LastUserInputTick;
+
+            if (lastUserInputTick == 0 || lastUserInputTick + USER_GESTURE_WINDOW_TICKS < sceneStateProvider.TickNumber)
+            {
+                ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, "OpenExplorerUi: rejected, call did not originate from a recent user gesture");
+                return (int)OpenExplorerUiResult.RejectedNoUserGesture;
+            }
+
+            if (!TryMapExplorerUi((ExplorerUi)ui, out ExploreSections section, out FeatureId? gatingFeature))
+            {
+                ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, $"OpenExplorerUi: unsupported ui value '{ui}'");
+                return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
+            }
+
+            if (gatingFeature.HasValue && !FeaturesRegistry.Instance.IsEnabled(gatingFeature.Value))
+            {
+                ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, $"OpenExplorerUi: feature '{gatingFeature.Value}' is disabled");
+                return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
+            }
+
+            return (int)explorerUiActions.OpenSection((ExplorerUi)ui, section);
+        }
+
+        public void Dispose() { }
 
         public void TryCopyToClipboard(string text)
         {
@@ -252,6 +295,58 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             await UniTask.SwitchToMainThread();
             systemClipboard.Set(text);
+
+            // Raised on every write so a clipboard change driven by the scene, instead of by the user, is never
+            // silent: whatever the user had copied is gone and pasting now yields scene-controlled text. A scene
+            // can write on every tick, so the type is collapsible — the toast never queues more than one deep.
+            NotificationsBusController.Instance.AddNotification(new SceneClipboardWriteNotification());
+        }
+
+        /// <summary>
+        ///     Maps a protocol <see cref="ExplorerUi" /> value to its explore panel section and, when the
+        ///     section is behind a synchronous feature flag, the <see cref="FeatureId" /> that gates it.
+        ///     Returns false for unknown values so the caller can reject the request.
+        /// </summary>
+        private static bool TryMapExplorerUi(ExplorerUi ui, out ExploreSections section, out FeatureId? gatingFeature)
+        {
+            switch (ui)
+            {
+                case ExplorerUi.EuMap:
+                    section = ExploreSections.Navmap;
+                    gatingFeature = null;
+                    return true;
+                case ExplorerUi.EuSettings:
+                    section = ExploreSections.Settings;
+                    gatingFeature = null;
+                    return true;
+                case ExplorerUi.EuBackpack:
+                    section = ExploreSections.Backpack;
+                    gatingFeature = null;
+                    return true;
+                case ExplorerUi.EuCameraReel:
+                    section = ExploreSections.CameraReel;
+                    gatingFeature = FeatureId.CameraReel;
+                    return true;
+                case ExplorerUi.EuCommunities:
+                    section = ExploreSections.Communities;
+                    // FeatureId.Communities is never populated in FeaturesRegistry (its state is
+                    // identity-dependent), so the gate lives in the IExplorerUiActions implementation,
+                    // which can reach CommunitiesFeatureAccess.
+                    gatingFeature = null;
+                    return true;
+                case ExplorerUi.EuPlaces:
+                    section = ExploreSections.Places;
+                    gatingFeature = FeatureId.Discover;
+                    return true;
+                case ExplorerUi.EuEvents:
+                    section = ExploreSections.Events;
+                    gatingFeature = FeatureId.Discover;
+                    return true;
+                default:
+                    section = default(ExploreSections);
+                    gatingFeature = null;
+                    return false;
+            }
         }
     }
 }

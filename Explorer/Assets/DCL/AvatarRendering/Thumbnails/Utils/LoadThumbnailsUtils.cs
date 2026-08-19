@@ -4,9 +4,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
-using DCL.Utility;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -47,8 +47,9 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
-            var assetBundleManifestVersion = attachment.GetAssetBundleManifestVersion();
-            if (assetBundleManifestVersion != null && (assetBundleManifestVersion.IsLSDAsset || assetBundleManifestVersion.assetBundleManifestRequestFailed))
+            AssetBundleManifestVersion? assetBundleManifestVersion = attachment.GetAssetBundleManifestVersion();
+
+            if (assetBundleManifestVersion == null || assetBundleManifestVersion.IsLSDAsset || assetBundleManifestVersion.assetBundleManifestRequestFailed)
             {
                 ReportHub.Log(
                     ReportCategory.THUMBNAILS,
@@ -63,10 +64,10 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             var promise = AssetBundlePromise.Create(
                 world,
                 GetAssetBundleIntention.FromHash(
-                    hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
-                    typeof(Texture2D),
-                    permittedSources: AssetSource.ALL,
+                    hash: assetBundleManifestVersion.GetCdnRequestHash(thumbnailPath.Value),
                     assetBundleManifestVersion: assetBundleManifestVersion,
+                    expectedAssetType: typeof(Texture2D),
+                    permittedSources: AssetSource.All,
                     parentEntityID: attachment.GetEntityId(),
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),

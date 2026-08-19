@@ -123,7 +123,7 @@ namespace DCL.Character.CharacterMotion.Systems
             ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
 
             // External forces must run before gravity so ExternalAcceleration.y is available
-            ApplyExternalForce.Execute(settings, ref rigidTransform, dt);
+            ApplyExternalForce.Execute(settings, ref rigidTransform, in glideState, dt);
 
             // Vertical velocity (jump + gravity with effective gravity from external forces)
             ApplyJump.Execute(settings, ref rigidTransform, ref jumpState, ref jumpInput, in movementInput, viewerForward, viewerRight, physicsTick, dt);
@@ -131,7 +131,7 @@ namespace DCL.Character.CharacterMotion.Systems
             ApplyGliding.Execute(settings, in rigidTransform, jumpState, in jumpInput, ref glideState, physicsTick, dt);
 
             // External impulses must run after gravity so it nullify gravity velocity.y
-            ApplyExternalImpulse.Execute(settings, ref rigidTransform);
+            ApplyExternalImpulse.Execute(settings, ref rigidTransform, ref jumpState);
 
             // Drag
             ApplyHorizontalAirDrag.Execute(settings, ref rigidTransform, dt);

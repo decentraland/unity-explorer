@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility.Types;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
@@ -19,13 +20,15 @@ namespace DCL.Chat.Commands
         private const string WORLD_SUFFIX = ".dcl.eth";
 
         private readonly IRealmNavigator realmNavigator;
+        private readonly IScenesCache scenesCache;
         private readonly Dictionary<string, string> paramUrls;
         private readonly ChatEnvironmentValidator environmentValidator;
         private readonly URLDomain worldDomain;
 
-        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource)
+        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource, IScenesCache scenesCache)
         {
             this.realmNavigator = realmNavigator;
+            this.scenesCache = scenesCache;
             this.environmentValidator = environmentValidator;
             worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldServer));
 
@@ -40,7 +43,7 @@ namespace DCL.Chat.Commands
             };
         }
 
-        public async UniTask<string> TeleportToRealmAsync(string realm, CancellationToken ct)
+        public async UniTask<string> TeleportToRealmAsync(string realm, CancellationToken ct, string? spawnPointName = null)
         {
             ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
 
@@ -48,9 +51,14 @@ namespace DCL.Chat.Commands
                 return errorMessage;
 
             if (realmNavigator.IsAlreadyOnRealm(realmURL))
-                return $"🟡 You are already in {realm}!";
+            {
+                if (spawnPointName == null)
+                    return $"🟡 You are already in {realm}!";
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld, true);
+                return await TeleportToParcelAsync(scenesCache.CurrentParcel.Value, true, ct, spawnPointName);
+            }
+
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld, true, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -75,7 +83,7 @@ namespace DCL.Chat.Commands
         /// <summary>
         /// Parses the realm and teleports the player to it, with an optional target position.
         /// </summary>
-        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int targetPosition, CancellationToken ct)
+        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int targetPosition, CancellationToken ct, string? spawnPointName = null)
         {
             ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
 
@@ -83,9 +91,9 @@ namespace DCL.Chat.Commands
                 return errorMessage;
 
             if(realmNavigator.IsAlreadyOnRealm(realmURL))
-                return await TeleportToParcelAsync(targetPosition, true, ct);
+                return await TeleportToParcelAsync(targetPosition, true, ct, spawnPointName);
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, false);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -111,7 +119,7 @@ namespace DCL.Chat.Commands
 
             if (!environmentValidationResult.Success)
             {
-                errorMessage = environmentValidationResult.ErrorMessage;
+                errorMessage = environmentValidationResult.ErrorMessage!;
                 return false;
             }
 
@@ -154,9 +162,9 @@ namespace DCL.Chat.Commands
         /// <summary>
         /// Teleports the player to a parcel.
         /// </summary>
-        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct)
+        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, string? spawnPointName = null)
         {
-            var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local);
+            var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 You teleported to {targetPosition.x},{targetPosition.y}.";

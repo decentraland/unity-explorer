@@ -1,12 +1,12 @@
 using Arch.Core;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
-using RenderHeads.Media.AVProVideo;
+using DCL.AvProSwitch;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -36,12 +36,14 @@ namespace DCL.SDKComponents.MediaStream
             this.assetPreLoadCache = assetPreLoadCache;
             this.analyticsController = analyticsController;
 
-            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab, assetPreLoadCache);
+            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
         }
 
-        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub) =>
-            new (sceneDeps.SceneData, roomHub.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
+        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, AvatarPlaceHolderTextureSource? placeholderSource) =>
+            new (sceneDeps.SceneData, roomHub.StreamingRoom(),
+                () => roomHub.SceneRoom().CurrentState() == IConnectiveRoom.State.Running,
+                mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
                 volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
-                analyticsController);
+                analyticsController, placeholderSource);
     }
 }

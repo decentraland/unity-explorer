@@ -45,7 +45,7 @@ namespace DCL.VoiceChat.Nearby.Systems
                 return;
             }
 
-            localMicOpen = stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC;
+            localMicOpen = stateModel.State.Value == NearbyVoiceChatState.OpenMic;
 
             UpdateExistingNearbyNametagsQuery(World);
             AddMissingNearbyNametagsQuery(World);
@@ -55,8 +55,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         [None(typeof(DeleteEntityIntention))]
         private void FlagNearbyNametagsForRemoval(ref VoiceChatNametagComponent c)
         {
-            if (c is { Type: VoiceChatType.NEARBY, IsRemoving: false })
-                c = new VoiceChatNametagComponent(false, VoiceChatType.NEARBY) { IsRemoving = true };
+            if (c is { Type: VoiceChatType.Nearby, IsRemoving: false })
+                c = new VoiceChatNametagComponent(false, VoiceChatType.Nearby) { IsRemoving = true };
         }
 
         [Query]
@@ -64,10 +64,10 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase))]
         private void UpdateExistingNearbyNametags(Entity entity, in Profile profile, ref VoiceChatNametagComponent badgeComponent)
         {
-            if (badgeComponent.Type != VoiceChatType.NEARBY) return;
+            if (badgeComponent.Type != VoiceChatType.Nearby) return;
 
             VoiceChatNametagComponent next = Resolve(entity, profile.UserId)
-                                             ?? new VoiceChatNametagComponent(false, VoiceChatType.NEARBY) { IsRemoving = true };
+                                             ?? new VoiceChatNametagComponent(false, VoiceChatType.Nearby) { IsRemoving = true };
 
             if (badgeComponent.IsSpeaking != next.IsSpeaking || badgeComponent.IsHushed != next.IsHushed || badgeComponent.IsRemoving != next.IsRemoving)
                 badgeComponent = next;
@@ -86,8 +86,6 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private VoiceChatNametagComponent? Resolve(Entity entity, string walletId)
         {
-            if (string.IsNullOrEmpty(walletId)) return null;
-
             return entity == playerEntity
                 ? ResolveLocal(walletId)
                 : ResolveRemote(walletId);
@@ -98,7 +96,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (!localMicOpen) return null;
 
             bool isSpeaking = registry.IsActiveSpeaker(walletId);
-            return new VoiceChatNametagComponent(isSpeaking, VoiceChatType.NEARBY);
+            return new VoiceChatNametagComponent(isSpeaking, VoiceChatType.Nearby);
         }
 
         private VoiceChatNametagComponent? ResolveRemote(string walletId)
@@ -106,7 +104,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (!registry.IsActiveSpeaker(walletId)) return null;
 
             bool isHushed = muteService.IsMuted(walletId);
-            return new VoiceChatNametagComponent(isSpeaking: true, VoiceChatType.NEARBY, isHushed);
+            return new VoiceChatNametagComponent(isSpeaking: true, VoiceChatType.Nearby, isHushed);
         }
     }
 }

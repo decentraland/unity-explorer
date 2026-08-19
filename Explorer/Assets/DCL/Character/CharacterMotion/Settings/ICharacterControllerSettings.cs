@@ -36,6 +36,12 @@ namespace DCL.CharacterMotion.Settings
         public float GlideSpeed { get; }
         public float GlideMinGroundDistance { get; }
         public float GlideMaxGravity { get; }
+
+        /// <summary>
+        ///     Multiplier applied to external force acceleration while gliding: an open glider catches the airflow with a larger effective area.
+        /// </summary>
+        public float GlideWindResponse { get; }
+
         public float JumpToGlideTimeInterval { get; }
         public float GlideCooldown { get; }
         public float GlideAnimMaxAngle { get; }

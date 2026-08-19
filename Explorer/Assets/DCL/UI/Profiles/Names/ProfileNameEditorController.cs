@@ -16,7 +16,7 @@ namespace DCL.UI.ProfileNames
 {
     public class ProfileNameEditorController : ControllerBase<ProfileNameEditorView>
     {
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -26,13 +26,13 @@ namespace DCL.UI.ProfileNames
         private CancellationTokenSource? saveCancellationToken;
         private CancellationTokenSource? setupCancellationToken;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action? NameChanged;
         public event Action? NameClaimRequested;
 
         public ProfileNameEditorController(ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -85,7 +85,7 @@ namespace DCL.UI.ProfileNames
                 claimedConfig.saveButtonInteractable = i != -1;
             });
 
-            claimedConfig.clickeableLink.OnLinkClicked += url => webBrowser.OpenUrl(url);
+            claimedConfig.clickeableLink.OnLinkClicked += url => webBrowser.OpenUrlMainThreadOnly(url);
 
             viewInstance.OverlayCloseButton.onClick.AddListener(Close);
 
@@ -171,7 +171,7 @@ namespace DCL.UI.ProfileNames
 
             void SetUpNonClaimed(ProfileNameEditorView.NonClaimedNameConfig config, Profile profile)
             {
-                config.userHashLabel.text = $"#{profile.UserId[^4..]}";
+                config.userHashLabel.text = $"#{profile.UserId.Value[^4..]}";
                 config.saveButtonInteractable = false;
                 config.nameInputField.SetValue(profile.HasClaimedName ? string.Empty : profile.Name);
                 config.saveLoading.SetActive(false);
@@ -180,7 +180,7 @@ namespace DCL.UI.ProfileNames
 
         private void ClaimNewName()
         {
-            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
+            webBrowser.OpenUrlMainThreadOnly(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
             NameClaimRequested?.Invoke();
         }
 

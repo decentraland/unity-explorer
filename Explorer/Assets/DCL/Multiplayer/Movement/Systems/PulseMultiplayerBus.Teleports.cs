@@ -1,4 +1,3 @@
-using CrdtEcsBridge.Components.Conversion;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Web3;
@@ -13,6 +12,12 @@ namespace DCL.Multiplayer.Movement
     {
         public void BroadcastTeleport(Vector3 worldPosition)
         {
+            // RealmData is guaranteed to hold the destination realm by the time the teleport is broadcast
+            if (lastBroadcastRealm != null && lastBroadcastRealm != realmData.RealmName)
+                PurgeDifferentRealmPeers();
+
+            lastBroadcastRealm = realmData.RealmName;
+
             var outgoing = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Teleport);
 
             Vector2Int parcelIndex = worldPosition.ToParcel();
@@ -25,7 +30,9 @@ namespace DCL.Multiplayer.Movement
 
             TeleportRequest teleport = outgoing.Message.Teleport;
             teleport.ParcelIndex = parcelEncoder.Encode(parcelIndex);
-            teleport.Position = relativePosition.ToProtoVector();
+            teleport.PositionXQuantized = relativePosition.x;
+            teleport.PositionYQuantized = relativePosition.y;
+            teleport.PositionZQuantized = relativePosition.z;
             teleport.Realm = realmData.RealmName;
 
             pulseService.Send(outgoing);
@@ -43,9 +50,28 @@ namespace DCL.Multiplayer.Movement
 
             if (!peerIdCache.TryGetWallet(teleport.SubjectId, out Web3Address wallet))
             {
-                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Receiving teleport from unknown peer: {teleport.SubjectId}");
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving teleport from unknown peer: {teleport.SubjectId}");
                 return;
             }
+
+            // An empty realm violates the server contract, so it's dropped rather than misread as a realm change
+            if (teleport.Realm.Length == 0)
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Dropping teleport for {teleport.SubjectId}: empty realm");
+                return;
+            }
+
+            // A same-tick-range realm change is not re-announced with PlayerLeft, so the removal happens here
+            if (teleport.Realm != realmData.RealmName)
+            {
+                peerIdCache.Remove(teleport.SubjectId);
+                removeIntentions.Enqueue(wallet);
+                PurgeQueues(teleport.SubjectId);
+                return;
+            }
+
+            // Refreshing the realm is what keeps a co-teleporting peer (no PlayerJoined re-announcement) out of the purge
+            peerIdCache.Set(wallet, teleport.SubjectId, teleport.Realm);
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.SubjectId, teleport.ServerTick, isInstant: true);
             TryUpdateLastMovementAndCompleteResync(teleport.ServerTick, teleport.SubjectId, teleport.Sequence, movementMessage);

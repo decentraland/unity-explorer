@@ -41,6 +41,7 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationType.COMMUNITY_DEEP_LINK,
             NotificationType.INTERNAL_DEFAULT_SUCCESS,
             NotificationType.INTERNAL_SERVER_ERROR,
+            NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE,
         };
 
         private readonly NotificationsRequestController notificationsRequestController;
@@ -105,7 +106,7 @@ namespace DCL.Notifications.NotificationsMenu
                 InitialNotificationRequestAsync(lifeCycleCts.Token).SuppressCancellationThrow().Forget();
         }
 
-        public override CanvasOrdering.SortingLayer Layer { get; } = CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer { get; } = CanvasOrdering.SortingLayer.Popup;
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {

@@ -10,7 +10,7 @@ namespace ECS.StreamableLoading.Common.Components
     {
         public SubIntention(CommonLoadingArguments commonArguments)
         {
-            commonArguments.PermittedSources = AssetSource.NONE;
+            commonArguments.PermittedSources = AssetSource.None;
             CommonArguments = commonArguments;
         }
 

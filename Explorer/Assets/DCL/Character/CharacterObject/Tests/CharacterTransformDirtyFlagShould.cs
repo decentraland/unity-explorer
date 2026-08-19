@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
@@ -18,12 +17,13 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 using Avatar = DCL.Profiles.Avatar;
 
-namespace DCL.Character.Tests
+namespace DCL.Character.CharacterObject.Tests
 {
     public class CharacterTransformDirtyFlagShould : UnitySystemTestBase<PartitionGlobalAssetEntitiesSystem>
     {
@@ -98,7 +98,7 @@ namespace DCL.Character.Tests
             Assert.IsFalse(characterTransform.IsDirty, "IsDirty should be false initially");
 
             // Act - Move above threshold (0.01f)
-            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + (Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE);
             characterTransform.SetPositionWithDirtyCheck(newPosition);
 
             // Assert
@@ -118,7 +118,7 @@ namespace DCL.Character.Tests
             Assert.IsFalse(characterTransform.IsDirty, "IsDirty should be false initially");
 
             // Act - Move below threshold
-            Vector3 newPosition = testGameObject.transform.position + Vector3.one * (BELLOW_MINIMAL_DISTANCE_DIFFERENCE / 3);
+            Vector3 newPosition = testGameObject.transform.position + (Vector3.one * (BELLOW_MINIMAL_DISTANCE_DIFFERENCE / 3));
             characterTransform.SetPositionWithDirtyCheck(newPosition);
 
             // Assert
@@ -134,7 +134,7 @@ namespace DCL.Character.Tests
             var characterTransform = new CharacterTransform(testGameObjects[0].transform);
 
             // Act
-            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.forward * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + (Vector3.forward * ABOVE_MINIMAL_DISTANCE_DIFFERENCE);
             Quaternion newRotation = Quaternion.Euler(0, 90, 0);
             characterTransform.SetPositionAndRotationWithDirtyCheck(newPosition, newRotation);
 
@@ -178,7 +178,7 @@ namespace DCL.Character.Tests
             );
 
             // Make transform dirty
-            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + (Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE);
             characterTransform.SetPositionWithDirtyCheck(newPosition);
             globalWorld.Set(avatarEntity, characterTransform);
 
@@ -187,7 +187,7 @@ namespace DCL.Character.Tests
             Assert.IsTrue(dirtyTransform.IsDirty, "Transform should be dirty before system update");
 
             // Act - Run partition system
-            system.Update(0.1f);
+            system!.Update(0.1f);
 
             // Assert - Dirty flag should be cleared
             ref var clearedTransform = ref globalWorld.Get<CharacterTransform>(avatarEntity);
@@ -231,7 +231,7 @@ namespace DCL.Character.Tests
 
             // Act - Update with camera not dirty (should only process dirty entities)
             camSampling.IsDirty.Returns(false);
-            system.Update(0.1f);
+            system!.Update(0.1f);
 
             // Assert
             ref CharacterTransform dirtyAfter = ref globalWorld.Get<CharacterTransform>(dirtyEntity);
@@ -260,7 +260,7 @@ namespace DCL.Character.Tests
 
             // Act - Update with camera dirty (triggers RePartitionExistingEntityQuery)
             camSampling.IsDirty.Returns(true);
-            system.Update(0.1f);
+            system!.Update(0.1f);
 
             // Assert - CharacterTransform.IsDirty should remain unchanged since entity didn't move
             ref CharacterTransform afterTransform = ref globalWorld.Get<CharacterTransform>(entity);
@@ -371,7 +371,7 @@ namespace DCL.Character.Tests
                 rotationY = 45f,
                 velocity = Vector3.zero,
                 velocitySqrMagnitude = 0f,
-                movementKind = MovementKind.IDLE,
+                movementKind = MovementKind.Idle,
                 isInstant = false
             };
 
@@ -397,7 +397,7 @@ namespace DCL.Character.Tests
 
             Entity entity = globalWorld.Create(
                 characterTransform,
-                Profile.Create("Ia4Ia5Cth0ulhu2Ftaghn2", "fake user", new Avatar(
+                new Profile(UserId.New("Ia4Ia5Cth0ulhu2Ftaghn2").Unwrap(), "fake user", new Avatar(
                     BodyShape.MALE,
                     WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),
@@ -443,7 +443,7 @@ namespace DCL.Character.Tests
                 rotationY = 90f,
                 velocity = Vector3.zero,
                 velocitySqrMagnitude = 0f,
-                movementKind = MovementKind.IDLE,
+                movementKind = MovementKind.Idle,
                 isInstant = false
             };
 

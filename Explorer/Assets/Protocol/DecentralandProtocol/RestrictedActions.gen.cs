@@ -26,57 +26,72 @@ namespace Decentraland.Kernel.Apis {
           string.Concat(
             "CjFkZWNlbnRyYWxhbmQva2VybmVsL2FwaXMvcmVzdHJpY3RlZF9hY3Rpb25z",
             "LnByb3RvEhhkZWNlbnRyYWxhbmQua2VybmVsLmFwaXMaIWRlY2VudHJhbGFu",
-            "ZC9jb21tb24vdmVjdG9ycy5wcm90byKOAgoTTW92ZVBsYXllclRvUmVxdWVz",
-            "dBI7ChVuZXdfcmVsYXRpdmVfcG9zaXRpb24YASABKAsyHC5kZWNlbnRyYWxh",
-            "bmQuY29tbW9uLlZlY3RvcjMSOAoNY2FtZXJhX3RhcmdldBgCIAEoCzIcLmRl",
-            "Y2VudHJhbGFuZC5jb21tb24uVmVjdG9yM0gAiAEBEjgKDWF2YXRhcl90YXJn",
-            "ZXQYAyABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjNIAYgBARIV",
-            "CghkdXJhdGlvbhgEIAEoAkgCiAEBQhAKDl9jYW1lcmFfdGFyZ2V0QhAKDl9h",
-            "dmF0YXJfdGFyZ2V0QgsKCV9kdXJhdGlvbiJMChFUZWxlcG9ydFRvUmVxdWVz",
-            "dBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEoCzIcLmRlY2VudHJhbGFuZC5j",
-            "b21tb24uVmVjdG9yMiJLChNUcmlnZ2VyRW1vdGVSZXF1ZXN0EhgKEHByZWRl",
-            "ZmluZWRfZW1vdGUYASABKAkSEQoEbWFzaxgCIAEoDUgAiAEBQgcKBV9tYXNr",
-            "IkUKEkNoYW5nZVJlYWxtUmVxdWVzdBINCgVyZWFsbRgBIAEoCRIUCgdtZXNz",
-            "YWdlGAIgASgJSACIAQFCCgoIX21lc3NhZ2UiJQoWT3BlbkV4dGVybmFsVXJs",
-            "UmVxdWVzdBILCgN1cmwYASABKAkiIwoUT3Blbk5mdERpYWxvZ1JlcXVlc3QS",
-            "CwoDdXJuGAEgASgJIhcKFVVuYmxvY2tQb2ludGVyUmVxdWVzdCIwChNDb21t",
-            "c0FkYXB0ZXJSZXF1ZXN0EhkKEWNvbm5lY3Rpb25fc3RyaW5nGAEgASgJIl8K",
-            "GFRyaWdnZXJTY2VuZUVtb3RlUmVxdWVzdBILCgNzcmMYASABKAkSEQoEbG9v",
-            "cBgCIAEoCEgAiAEBEhEKBG1hc2sYAyABKA1IAYgBAUIHCgVfbG9vcEIHCgVf",
-            "bWFzayIiCg9TdWNjZXNzUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIWChRU",
-            "cmlnZ2VyRW1vdGVSZXNwb25zZSInChRNb3ZlUGxheWVyVG9SZXNwb25zZRIP",
-            "CgdzdWNjZXNzGAEgASgIIhQKElRlbGVwb3J0VG9SZXNwb25zZSImChZDb3B5",
-            "VG9DbGlwYm9hcmRSZXF1ZXN0EgwKBHRleHQYASABKAkiDwoNRW1wdHlSZXNw",
-            "b25zZSISChBTdG9wRW1vdGVSZXF1ZXN0MvUIChhSZXN0cmljdGVkQWN0aW9u",
-            "c1NlcnZpY2USbwoMTW92ZVBsYXllclRvEi0uZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLk1vdmVQbGF5ZXJUb1JlcXVlc3QaLi5kZWNlbnRyYWxhbmQua2Vy",
-            "bmVsLmFwaXMuTW92ZVBsYXllclRvUmVzcG9uc2UiABJpCgpUZWxlcG9ydFRv",
-            "EisuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXF1ZXN0",
-            "GiwuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXNwb25z",
-            "ZSIAEm8KDFRyaWdnZXJFbW90ZRItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
-            "cy5UcmlnZ2VyRW1vdGVSZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5h",
-            "cGlzLlRyaWdnZXJFbW90ZVJlc3BvbnNlIgASaAoLQ2hhbmdlUmVhbG0SLC5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuQ2hhbmdlUmVhbG1SZXF1ZXN0Giku",
-            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnAK",
-            "D09wZW5FeHRlcm5hbFVybBIwLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5P",
-            "cGVuRXh0ZXJuYWxVcmxSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5h",
-            "cGlzLlN1Y2Nlc3NSZXNwb25zZSIAEmwKDU9wZW5OZnREaWFsb2cSLi5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuT3Blbk5mdERpYWxvZ1JlcXVlc3QaKS5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdgoY",
-            "U2V0Q29tbXVuaWNhdGlvbnNBZGFwdGVyEi0uZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLkNvbW1zQWRhcHRlclJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2Vy",
-            "bmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdAoRVHJpZ2dlclNjZW5lRW1v",
-            "dGUSMi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlclNjZW5lRW1v",
-            "dGVSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NS",
-            "ZXNwb25zZSIAEm4KD0NvcHlUb0NsaXBib2FyZBIwLmRlY2VudHJhbGFuZC5r",
-            "ZXJuZWwuYXBpcy5Db3B5VG9DbGlwYm9hcmRSZXF1ZXN0GicuZGVjZW50cmFs",
-            "YW5kLmtlcm5lbC5hcGlzLkVtcHR5UmVzcG9uc2UiABJkCglTdG9wRW1vdGUS",
-            "Ki5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3RvcEVtb3RlUmVxdWVzdBop",
-            "LmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiAGIG",
-            "cHJvdG8z"));
+            "ZC9jb21tb24vdmVjdG9ycy5wcm90bxo0ZGVjZW50cmFsYW5kL3Nkay9jb21w",
+            "b25lbnRzL2NvbW1vbi9hdmF0YXJfbWFzay5wcm90bxo0ZGVjZW50cmFsYW5k",
+            "L3Nkay9jb21wb25lbnRzL2NvbW1vbi9leHBsb3Jlcl91aS5wcm90byKOAgoT",
+            "TW92ZVBsYXllclRvUmVxdWVzdBI7ChVuZXdfcmVsYXRpdmVfcG9zaXRpb24Y",
+            "ASABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSOAoNY2FtZXJh",
+            "X3RhcmdldBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yM0gA",
+            "iAEBEjgKDWF2YXRhcl90YXJnZXQYAyABKAsyHC5kZWNlbnRyYWxhbmQuY29t",
+            "bW9uLlZlY3RvcjNIAYgBARIVCghkdXJhdGlvbhgEIAEoAkgCiAEBQhAKDl9j",
+            "YW1lcmFfdGFyZ2V0QhAKDl9hdmF0YXJfdGFyZ2V0QgsKCV9kdXJhdGlvbiJM",
+            "ChFUZWxlcG9ydFRvUmVxdWVzdBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEo",
+            "CzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMiJ7ChNUcmlnZ2VyRW1v",
+            "dGVSZXF1ZXN0EhgKEHByZWRlZmluZWRfZW1vdGUYASABKAkSQQoEbWFzaxgC",
+            "IAEoDjIuLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uQXZh",
+            "dGFyTWFza0gAiAEBQgcKBV9tYXNrIkUKEkNoYW5nZVJlYWxtUmVxdWVzdBIN",
+            "CgVyZWFsbRgBIAEoCRIUCgdtZXNzYWdlGAIgASgJSACIAQFCCgoIX21lc3Nh",
+            "Z2UiJQoWT3BlbkV4dGVybmFsVXJsUmVxdWVzdBILCgN1cmwYASABKAkiIwoU",
+            "T3Blbk5mdERpYWxvZ1JlcXVlc3QSCwoDdXJuGAEgASgJIhcKFVVuYmxvY2tQ",
+            "b2ludGVyUmVxdWVzdCIwChNDb21tc0FkYXB0ZXJSZXF1ZXN0EhkKEWNvbm5l",
+            "Y3Rpb25fc3RyaW5nGAEgASgJIo8BChhUcmlnZ2VyU2NlbmVFbW90ZVJlcXVl",
+            "c3QSCwoDc3JjGAEgASgJEhEKBGxvb3AYAiABKAhIAIgBARJBCgRtYXNrGAMg",
+            "ASgOMi4uZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5BdmF0",
+            "YXJNYXNrSAGIAQFCBwoFX2xvb3BCBwoFX21hc2siIgoPU3VjY2Vzc1Jlc3Bv",
+            "bnNlEg8KB3N1Y2Nlc3MYASABKAgiFgoUVHJpZ2dlckVtb3RlUmVzcG9uc2Ui",
+            "JwoUTW92ZVBsYXllclRvUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIUChJU",
+            "ZWxlcG9ydFRvUmVzcG9uc2UiJgoWQ29weVRvQ2xpcGJvYXJkUmVxdWVzdBIM",
+            "CgR0ZXh0GAEgASgJIg8KDUVtcHR5UmVzcG9uc2UiEgoQU3RvcEVtb3RlUmVx",
+            "dWVzdCJTChVPcGVuRXhwbG9yZXJVaVJlcXVlc3QSOgoCdWkYASABKA4yLi5k",
+            "ZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9uLkV4cGxvcmVyVWki",
+            "XQoWT3BlbkV4cGxvcmVyVWlSZXNwb25zZRJDCgtvcGVuX3Jlc3VsdBgBIAEo",
+            "DjIuLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuRXhwbG9yZXJVaVJl",
+            "c3VsdCqmAQoUT3BlbkV4cGxvcmVyVWlSZXN1bHQSDwoLVU5TUEVDSUZJRUQQ",
+            "ABIKCgZPUEVORUQQARIUChBXQVNfQUxSRUFEWV9PUEVOEAISHgoaUkVKRUNU",
+            "RURfTk9UX0NVUlJFTlRfU0NFTkUQAxIdChlSRUpFQ1RFRF9GRUFUVVJFX0RJ",
+            "U0FCTEVEEAQSHAoYUkVKRUNURURfTk9fVVNFUl9HRVNUVVJFEAUy7AkKGFJl",
+            "c3RyaWN0ZWRBY3Rpb25zU2VydmljZRJvCgxNb3ZlUGxheWVyVG8SLS5kZWNl",
+            "bnRyYWxhbmQua2VybmVsLmFwaXMuTW92ZVBsYXllclRvUmVxdWVzdBouLmRl",
+            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9SZXNwb25zZSIA",
+            "EmkKClRlbGVwb3J0VG8SKy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVs",
+            "ZXBvcnRUb1JlcXVlc3QaLC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVs",
+            "ZXBvcnRUb1Jlc3BvbnNlIgASbwoMVHJpZ2dlckVtb3RlEi0uZGVjZW50cmFs",
+            "YW5kLmtlcm5lbC5hcGlzLlRyaWdnZXJFbW90ZVJlcXVlc3QaLi5kZWNlbnRy",
+            "YWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlckVtb3RlUmVzcG9uc2UiABJoCgtD",
+            "aGFuZ2VSZWFsbRIsLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5DaGFuZ2VS",
+            "ZWFsbVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vz",
+            "c1Jlc3BvbnNlIgAScAoPT3BlbkV4dGVybmFsVXJsEjAuZGVjZW50cmFsYW5k",
+            "Lmtlcm5lbC5hcGlzLk9wZW5FeHRlcm5hbFVybFJlcXVlc3QaKS5kZWNlbnRy",
+            "YWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbAoNT3Blbk5m",
+            "dERpYWxvZxIuLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuTmZ0RGlh",
+            "bG9nUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNz",
+            "UmVzcG9uc2UiABJ2ChhTZXRDb21tdW5pY2F0aW9uc0FkYXB0ZXISLS5kZWNl",
+            "bnRyYWxhbmQua2VybmVsLmFwaXMuQ29tbXNBZGFwdGVyUmVxdWVzdBopLmRl",
+            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJ0ChFU",
+            "cmlnZ2VyU2NlbmVFbW90ZRIyLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
+            "cmlnZ2VyU2NlbmVFbW90ZVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVs",
+            "LmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbgoPQ29weVRvQ2xpcGJvYXJkEjAu",
+            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkNvcHlUb0NsaXBib2FyZFJlcXVl",
+            "c3QaJy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuRW1wdHlSZXNwb25zZSIA",
+            "EmQKCVN0b3BFbW90ZRIqLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdG9w",
+            "RW1vdGVSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nl",
+            "c3NSZXNwb25zZSIAEnUKDk9wZW5FeHBsb3JlclVpEi8uZGVjZW50cmFsYW5k",
+            "Lmtlcm5lbC5hcGlzLk9wZW5FeHBsb3JlclVpUmVxdWVzdBowLmRlY2VudHJh",
+            "bGFuZC5rZXJuZWwuYXBpcy5PcGVuRXhwbG9yZXJVaVJlc3BvbnNlIgBiBnBy",
+            "b3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, global::DCL.ECSComponents.AvatarMaskReflection.Descriptor, global::DCL.ECSComponents.ExplorerUiReflection.Descriptor, },
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiResult), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToRequest), global::Decentraland.Kernel.Apis.MovePlayerToRequest.Parser, new[]{ "NewRelativePosition", "CameraTarget", "AvatarTarget", "Duration" }, new[]{ "CameraTarget", "AvatarTarget", "Duration" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToRequest), global::Decentraland.Kernel.Apis.TeleportToRequest.Parser, new[]{ "WorldCoordinates" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteRequest), global::Decentraland.Kernel.Apis.TriggerEmoteRequest.Parser, new[]{ "PredefinedEmote", "Mask" }, new[]{ "Mask" }, null, null, null),
@@ -92,12 +107,41 @@ namespace Decentraland.Kernel.Apis {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToResponse), global::Decentraland.Kernel.Apis.TeleportToResponse.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.CopyToClipboardRequest), global::Decentraland.Kernel.Apis.CopyToClipboardRequest.Parser, new[]{ "Text" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.EmptyResponse), global::Decentraland.Kernel.Apis.EmptyResponse.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.StopEmoteRequest), global::Decentraland.Kernel.Apis.StopEmoteRequest.Parser, null, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.StopEmoteRequest), global::Decentraland.Kernel.Apis.StopEmoteRequest.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiRequest), global::Decentraland.Kernel.Apis.OpenExplorerUiRequest.Parser, new[]{ "Ui" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiResponse), global::Decentraland.Kernel.Apis.OpenExplorerUiResponse.Parser, new[]{ "OpenResult" }, null, null, null, null)
           }));
     }
     #endregion
 
   }
+  #region Enums
+  /// <summary>
+  /// Verdict of an OpenExplorerUi request (enum rather than a bool so new outcomes stay expressible).
+  /// </summary>
+  public enum OpenExplorerUiResult {
+    [pbr::OriginalName("UNSPECIFIED")] Unspecified = 0,
+    [pbr::OriginalName("OPENED")] Opened = 1,
+    /// <summary>
+    /// a fullscreen panel is already open
+    /// </summary>
+    [pbr::OriginalName("WAS_ALREADY_OPEN")] WasAlreadyOpen = 2,
+    /// <summary>
+    /// the standard restricted-actions current-scene gate rejected the call
+    /// </summary>
+    [pbr::OriginalName("REJECTED_NOT_CURRENT_SCENE")] RejectedNotCurrentScene = 3,
+    /// <summary>
+    /// the requested section is hidden by feature flags or client doesn't have that feature
+    /// </summary>
+    [pbr::OriginalName("REJECTED_FEATURE_DISABLED")] RejectedFeatureDisabled = 4,
+    /// <summary>
+    /// rejected: the call did not originate from a user gesture
+    /// </summary>
+    [pbr::OriginalName("REJECTED_NO_USER_GESTURE")] RejectedNoUserGesture = 5,
+  }
+
+  #endregion
+
   #region Messages
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class MovePlayerToRequest : pb::IMessage<MovePlayerToRequest>
@@ -724,12 +768,12 @@ namespace Decentraland.Kernel.Apis {
 
     /// <summary>Field number for the "mask" field.</summary>
     public const int MaskFieldNumber = 2;
-    private readonly static uint MaskDefaultValue = 0;
+    private readonly static global::DCL.ECSComponents.AvatarMask MaskDefaultValue = global::DCL.ECSComponents.AvatarMask.AmUpperBody;
 
-    private uint mask_;
+    private global::DCL.ECSComponents.AvatarMask mask_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint Mask {
+    public global::DCL.ECSComponents.AvatarMask Mask {
       get { if ((_hasBits0 & 1) != 0) { return mask_; } else { return MaskDefaultValue; } }
       set {
         _hasBits0 |= 1;
@@ -799,7 +843,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasMask) {
         output.WriteRawTag(16);
-        output.WriteUInt32(Mask);
+        output.WriteEnum((int) Mask);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -817,7 +861,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasMask) {
         output.WriteRawTag(16);
-        output.WriteUInt32(Mask);
+        output.WriteEnum((int) Mask);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -833,7 +877,7 @@ namespace Decentraland.Kernel.Apis {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(PredefinedEmote);
       }
       if (HasMask) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -877,7 +921,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 16: {
-            Mask = input.ReadUInt32();
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }
@@ -904,7 +948,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 16: {
-            Mask = input.ReadUInt32();
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }
@@ -2008,12 +2052,12 @@ namespace Decentraland.Kernel.Apis {
 
     /// <summary>Field number for the "mask" field.</summary>
     public const int MaskFieldNumber = 3;
-    private readonly static uint MaskDefaultValue = 0;
+    private readonly static global::DCL.ECSComponents.AvatarMask MaskDefaultValue = global::DCL.ECSComponents.AvatarMask.AmUpperBody;
 
-    private uint mask_;
+    private global::DCL.ECSComponents.AvatarMask mask_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint Mask {
+    public global::DCL.ECSComponents.AvatarMask Mask {
       get { if ((_hasBits0 & 2) != 0) { return mask_; } else { return MaskDefaultValue; } }
       set {
         _hasBits0 |= 2;
@@ -2089,7 +2133,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasMask) {
         output.WriteRawTag(24);
-        output.WriteUInt32(Mask);
+        output.WriteEnum((int) Mask);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -2111,7 +2155,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasMask) {
         output.WriteRawTag(24);
-        output.WriteUInt32(Mask);
+        output.WriteEnum((int) Mask);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -2130,7 +2174,7 @@ namespace Decentraland.Kernel.Apis {
         size += 1 + 1;
       }
       if (HasMask) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2181,7 +2225,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 24: {
-            Mask = input.ReadUInt32();
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }
@@ -2212,7 +2256,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 24: {
-            Mask = input.ReadUInt32();
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }
@@ -3453,6 +3497,405 @@ namespace Decentraland.Kernel.Apis {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class OpenExplorerUiRequest : pb::IMessage<OpenExplorerUiRequest>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<OpenExplorerUiRequest> _parser = new pb::MessageParser<OpenExplorerUiRequest>(() => new OpenExplorerUiRequest());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<OpenExplorerUiRequest> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[16]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiRequest() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiRequest(OpenExplorerUiRequest other) : this() {
+      ui_ = other.ui_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiRequest Clone() {
+      return new OpenExplorerUiRequest(this);
+    }
+
+    /// <summary>Field number for the "ui" field.</summary>
+    public const int UiFieldNumber = 1;
+    private global::DCL.ECSComponents.ExplorerUi ui_ = global::DCL.ECSComponents.ExplorerUi.EuSettings;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.ExplorerUi Ui {
+      get { return ui_; }
+      set {
+        ui_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as OpenExplorerUiRequest);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(OpenExplorerUiRequest other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Ui != other.Ui) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) hash ^= Ui.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Ui);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Ui);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Ui);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(OpenExplorerUiRequest other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Ui != global::DCL.ECSComponents.ExplorerUi.EuSettings) {
+        Ui = other.Ui;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Ui = (global::DCL.ECSComponents.ExplorerUi) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Ui = (global::DCL.ECSComponents.ExplorerUi) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class OpenExplorerUiResponse : pb::IMessage<OpenExplorerUiResponse>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<OpenExplorerUiResponse> _parser = new pb::MessageParser<OpenExplorerUiResponse>(() => new OpenExplorerUiResponse());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<OpenExplorerUiResponse> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[17]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiResponse() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiResponse(OpenExplorerUiResponse other) : this() {
+      openResult_ = other.openResult_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiResponse Clone() {
+      return new OpenExplorerUiResponse(this);
+    }
+
+    /// <summary>Field number for the "open_result" field.</summary>
+    public const int OpenResultFieldNumber = 1;
+    private global::Decentraland.Kernel.Apis.OpenExplorerUiResult openResult_ = global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified;
+    /// <summary>
+    /// Carries only the verdict of the open action. 
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Apis.OpenExplorerUiResult OpenResult {
+      get { return openResult_; }
+      set {
+        openResult_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as OpenExplorerUiResponse);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(OpenExplorerUiResponse other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (OpenResult != other.OpenResult) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) hash ^= OpenResult.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) OpenResult);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) OpenResult);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) OpenResult);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(OpenExplorerUiResponse other) {
+      if (other == null) {
+        return;
+      }
+      if (other.OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) {
+        OpenResult = other.OpenResult;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            OpenResult = (global::Decentraland.Kernel.Apis.OpenExplorerUiResult) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            OpenResult = (global::Decentraland.Kernel.Apis.OpenExplorerUiResult) input.ReadEnum();
+            break;
+          }
         }
       }
     }

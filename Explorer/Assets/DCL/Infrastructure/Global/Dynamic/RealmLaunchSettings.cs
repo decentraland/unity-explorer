@@ -1,4 +1,6 @@
+using DCL.Browser;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System;
@@ -8,7 +10,6 @@ using SceneRunner.Scene;
 using System.Text.RegularExpressions;
 using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
-using DCL.Prefs;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utility;
 using Unity.Mathematics;
@@ -35,13 +36,17 @@ namespace Global.Dynamic
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles;
+        [SerializeField] [Tooltip("Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's "
+                                  + "embedded abgen sidecar (reading the preview server's content) instead of loading raw GLTFs; "
+                                  + "an explicit --optimized-assets-url overrides it")] internal bool useLocalAssetBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
 
-        [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
+        [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart = Array.Empty<string>();
 
         private bool isLocalSceneDevelopmentRealm;
+        internal string? spawnPointName;
 
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
 
@@ -75,7 +80,7 @@ namespace Global.Dynamic
             {
                 return new HybridSceneParams
                 {
-                    EnableHybridScene = useRemoteAssetsBundles,
+                    EnableHybridScene = useRemoteAssetsBundles && !useLocalAssetBundles,
                     HybridSceneContentServer = remoteHybridSceneContentServer,
                     World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World)
                         ? remoteHibridWorld
@@ -89,26 +94,42 @@ namespace Global.Dynamic
         public void ApplyConfig(IAppArgs applicationParameters)
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
-                ParseRealmAppParameter(applicationParameters, realm);
+                ParseRealmAppParameter(applicationParameters, realm!);
 
-            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
-                ParsePositionAppParameter(parcelToTeleportOverride);
+            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out string? parcelToTeleportOverride))
+                ParsePositionAppParameter(parcelToTeleportOverride!);
+
+            if (applicationParameters.TryGetValue(AppArgsFlags.SPAWN_POINT, out string? spawnPointOverride) && !string.IsNullOrEmpty(spawnPointOverride))
+                spawnPointName = spawnPointOverride;
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
         {
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
-            bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string localSceneParamValue)
-                                           && ParseLocalSceneParameter(localSceneParamValue)
-                                           && IsRealmAValidUrl(realmParamValue);
+            bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string? localSceneParamValue)
+                                           && ParseLocalSceneParameter(localSceneParamValue!)
+                                           && ExternalUrlPolicy.IsWebScheme(realmParamValue);
 
             if (isLocalSceneDevelopment)
             {
-                SetLocalSceneDevelopmentRealm(realmParamValue, appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles);
+                // The serialized checkbox is an Editor convenience only: player builds opt in
+                // exclusively through the app arg, so a box ticked (and accidentally committed)
+                // in the scene asset cannot ship enabled.
+                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || (Application.isEditor && useLocalAssetBundles);
+                bool useRemoteAB = appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles;
+
+                if (useLocalAB && useRemoteAB)
+                {
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"Both '{AppArgsFlags.LOCAL_AB}' and '{AppArgsFlags.LSD_USE_REMOTE_AB}' were provided: local asset bundles take precedence");
+                    useRemoteAB = false;
+                }
+
+                useLocalAssetBundles = useLocalAB;
+                SetLocalSceneDevelopmentRealm(realmParamValue, useRemoteAB);
 
                 if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_SERVER, out string? serverValue))
-                    ParseLSDRemoteABServer(serverValue);
+                    ParseLsdRemoteABServer(serverValue!);
 
                 if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_WORLD, out string? worldValue))
                 {
@@ -142,7 +163,7 @@ namespace Global.Dynamic
             isLocalSceneDevelopmentRealm = true;
         }
 
-        private void ParseLSDRemoteABServer(string serverValue)
+        private void ParseLsdRemoteABServer(string serverValue)
         {
             if (Enum.TryParse<HybridSceneContentServer>(serverValue, true, out var server))
                 remoteHybridSceneContentServer = server;
@@ -171,10 +192,6 @@ namespace Global.Dynamic
         private bool IsRealmAWorld(string realmParam) =>
             realmParam.IsEns();
 
-        private bool IsRealmAValidUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
-            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
             // Priority 1: App argument position (highest - from command line/Creator Hub)
@@ -191,8 +208,9 @@ namespace Global.Dynamic
                                            FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride)
                                        && parcelToTeleportOverride != null;
 
-            // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0")
-            if (HomeMarkerController.HasSerializedHome() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0";
+            // skipped when an explicit realm is requested, so a deep link cannot be overridden by the saved home)
+            if (HomeMarkerController.HasSerializedHome() && !HasAppArgRealm(appArgs) && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
             {
                 if (HomeMarkerController.HasSerializedWorldName())
                 {
@@ -231,5 +249,7 @@ namespace Global.Dynamic
         /// <param name="appArgs">The application arguments to check.</param>
         /// <returns>True if the POSITION flag is present in the arguments.</returns>
         private static bool HasAppArgPosition(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.POSITION);
+
+        private static bool HasAppArgRealm(IAppArgs appArgs) => appArgs.HasFlag(AppArgsFlags.REALM);
     }
 }

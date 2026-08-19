@@ -19,13 +19,33 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, IncomingMessageHandler handler);
 
+        /// <summary>
+        ///     Invoked on the routing thread before every dispatched message.
+        /// </summary>
+        public void RegisterBeforeMessageHandler(Action handler);
+
         public void RegisterDisconnectHandler(DisconnectHandler handler);
 
         public void RegisterHandshakeHandler(HandshakeHandler handler);
 
         public void UnregisterAllHandlers();
 
-        public UniTask ConnectAsync(CancellationToken ct);
+        /// <summary>
+        ///     Connects and authenticates against the Pulse server.
+        /// </summary>
+        /// <param name="maxAttempts">
+        ///     Upper bound on connection attempts before giving up on an unreachable server. The start-up
+        ///     operation passes a small bound so it can fall back to LiveKit; runtime reconnection uses the
+        ///     default to keep retrying.
+        /// </param>
+        /// <returns>
+        ///     <c>true</c> once connected and authenticated; <c>false</c> when the connection keeps
+        ///     failing transiently (unreachable, or dropped during the handshake for a retriable
+        ///     reason) across <paramref name="maxAttempts" /> attempts, or immediately when the
+        ///     handshake fails terminally (rejected, banned, or another non-retriable disconnect
+        ///     reason — see <see cref="PulseHandshakeDisconnectedException.IsRetriable" />).
+        /// </returns>
+        public UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue);
 
         public UniTask DisconnectAsync();
 
@@ -39,14 +59,16 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, IncomingMessageHandler handler) { }
 
+            public void RegisterBeforeMessageHandler(Action handler) { }
+
             public void RegisterDisconnectHandler(DisconnectHandler handler) { }
 
             public void RegisterHandshakeHandler(HandshakeHandler handler) { }
 
             public void UnregisterAllHandlers() { }
 
-            public UniTask ConnectAsync(CancellationToken ct) =>
-                UniTask.CompletedTask;
+            public UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue) =>
+                UniTask.FromResult(true);
 
             public UniTask DisconnectAsync() =>
                 UniTask.CompletedTask;

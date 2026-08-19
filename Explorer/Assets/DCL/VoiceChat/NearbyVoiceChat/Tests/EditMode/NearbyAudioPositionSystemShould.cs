@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
@@ -11,11 +12,10 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
-using Utility.Multithreading;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents the Nearby Audio Position System behavior — strict read+drive, no lifecycle responsibility:
@@ -425,7 +425,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // without per-test scaffolding. Inactive-state tests opt into the suspend/out-of-range
             // state explicitly (mutate IsSuspended or remove the tag).
             Entity entity = world.Create(
-                new Profile(walletId, walletId, new Avatar()),
+                new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()),
                 avatarBase,
                 new CharacterTransform(avatarGo.transform));
 

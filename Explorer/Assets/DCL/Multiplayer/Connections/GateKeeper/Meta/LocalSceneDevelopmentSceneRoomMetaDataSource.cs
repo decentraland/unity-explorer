@@ -9,27 +9,31 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 
+// ReSharper disable InconsistentNaming
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
     public class LocalSceneDevelopmentSceneRoomMetaDataSource : ISceneRoomMetaDataSource
     {
         private readonly IWebRequestController webRequestController;
+        private readonly string realm;
 
-        public LocalSceneDevelopmentSceneRoomMetaDataSource(IWebRequestController webRequestController)
+        // realm is the local scene development realm the client was launched with (the `realm` deep link
+        // parameter). The scene server only listens on the port it was started with, so falling back to the
+        // default would make this source unreachable for any `sdk-commands start --port` but the default one.
+        public LocalSceneDevelopmentSceneRoomMetaDataSource(IWebRequestController webRequestController, string? realm = null)
         {
             this.webRequestController = webRequestController;
+            this.realm = string.IsNullOrWhiteSpace(realm) ? IRealmNavigator.LOCALHOST : realm;
         }
 
         public bool ScenesCommunicationIsIsolated => false;
-
-        public bool MetadataIsDirty => false;
 
         public MetaData.Input GetMetadataInput() =>
             new ("LocalSceneDevelopment", Vector2Int.zero);
 
         public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
-            URLDomain baseUrl = URLDomain.FromString(IRealmNavigator.LOCALHOST);
+            URLDomain baseUrl = URLDomain.FromString(realm);
             URLAddress sceneDefinitionEndpoint = baseUrl.Append(URLSubdirectory.FromString("scene.json"));
             URLAddress idEndpoint = baseUrl.Append(URLSubdirectory.FromString("content/entities/active"));
 

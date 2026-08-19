@@ -39,15 +39,15 @@ namespace DCL.Chat.ChatInput
 
             if (currentChannelService.InputState.Success)
             {
-                Assert.IsTrue(currentChannelService.InputState.Value != PrivateConversationUserStateService.ChatUserState.CONNECTED);
+                Assert.IsTrue(currentChannelService.InputState.Value != PrivateConversationUserStateService.ChatUserState.Connected);
 
                 blockedReason = currentChannelService.InputState.Value switch
                 {
-                    PrivateConversationUserStateService.ChatUserState.BLOCKED_BY_OWN_USER => config.BlockedByOwnUserMessage,
-                    PrivateConversationUserStateService.ChatUserState.DISCONNECTED => config.UserOfflineMessage,
-                    PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => config.OnlyFriendsOwnUserMessage,
-                    PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED => config.OnlyFriendsMessage,
-                    PrivateConversationUserStateService.ChatUserState.OTHER_CLIENT => config.ConnectedFromAnotherClientMessage,
+                    PrivateConversationUserStateService.ChatUserState.BlockedByOwnUser => config.BlockedByOwnUserMessage,
+                    PrivateConversationUserStateService.ChatUserState.Disconnected => config.UserOfflineMessage,
+                    PrivateConversationUserStateService.ChatUserState.PrivateMessagesBlockedByOwnUser => config.OnlyFriendsOwnUserMessage,
+                    PrivateConversationUserStateService.ChatUserState.PrivateMessagesBlocked => config.OnlyFriendsMessage,
+                    PrivateConversationUserStateService.ChatUserState.OtherClient => config.ConnectedFromAnotherClientMessage,
                     _ => string.Empty
                 };
             }
@@ -55,7 +55,7 @@ namespace DCL.Chat.ChatInput
                 blockedReason = currentChannelService.InputState.ErrorMessage!;
 
             view.maskButton.onClick.RemoveListener(BlockedInputClicked);
-            if (currentChannelService.InputState is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER })
+            if (currentChannelService.InputState is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.PrivateMessagesBlockedByOwnUser })
                 view.maskButton.onClick.AddListener(BlockedInputClicked);
 
             view.SetBlocked(blockedReason);

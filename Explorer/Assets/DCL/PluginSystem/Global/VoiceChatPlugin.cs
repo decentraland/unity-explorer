@@ -19,7 +19,6 @@ using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using LiveKit.Rooms.Streaming;
-using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms;
 using System;
 using System.Collections.Generic;
@@ -35,7 +34,6 @@ using DCL.RealmNavigation;
 using DCL.SceneBannedUsers;
 using DCL.VoiceChat.UI;
 using Utility;
-using Utility.Multithreading;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
 
@@ -85,7 +83,6 @@ namespace DCL.PluginSystem.Global
         private NearbyMicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
-        private CancellationTokenSource? nearbyTipCts;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -139,7 +136,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            nearbyTipCts.SafeCancelAndDispose();
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -150,7 +146,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat))
             {
                 var listenerState = new NearbyListenerState();
 
@@ -183,7 +179,7 @@ namespace DCL.PluginSystem.Global
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
             pluginScope.Add(microphoneStateManager);
 
-            microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, VoiceChatType.COMMUNITY);
+            microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, VoiceChatType.Community);
 
             var callPlaybackSourcesHub = new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull());
             remoteListener = new RemoteTrackListener(
@@ -214,7 +210,7 @@ namespace DCL.PluginSystem.Global
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, roomHub.VoiceChatRoom().Room(), callPlaybackSourcesHub);
             pluginScope.Add(voiceChatDebugContainer);
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat))
             {
                 IRoom islandRoom = roomHub.IslandRoom();
 
@@ -231,8 +227,8 @@ namespace DCL.PluginSystem.Global
                 // Persist the user's on/off preference of the nearby chat.
                 stateModel.State.Subscribe(newState =>
                 {
-                    if (newState is NearbyVoiceChatState.DISABLED or NearbyVoiceChatState.IDLE)
-                        DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED, newState == NearbyVoiceChatState.DISABLED);
+                    if (newState is NearbyVoiceChatState.Disabled or NearbyVoiceChatState.Idle)
+                        DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED, newState == NearbyVoiceChatState.Disabled);
                 });
 
                 var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, stateModel);
@@ -260,16 +256,12 @@ namespace DCL.PluginSystem.Global
                 pluginScope.Add(nearbyWidgetController);
 
                 // Intro FLUX
-                nearbyTipCts = new CancellationTokenSource();
-                RunNearbyVoiceTipAsync(nearbyVoiceTipView, loadingStatus, nearbyVoiceChatButtonView, nearbyTipCts.Token).Forget();
-            }
-        }
+                NearbyVoiceTipSchedule tipSchedule = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChatTip)
+                    ? NearbyVoiceTipSchedule.FromFeatureFlags(FeatureFlagsConfiguration.Instance)
+                    : NearbyVoiceTipSchedule.Disabled;
 
-        private static async UniTaskVoid RunNearbyVoiceTipAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus,
-            NearbyVoiceChatButtonView buttonView, CancellationToken ct)
-        {
-            if (await NearbyVoiceTipFlow.WaitAndShowAsync(view, loadingStatus, ct))
-                buttonView.Button.onClick.Invoke();
+                pluginScope.Add(new NearbyVoiceTipController(nearbyVoiceTipView, nearbyVoiceChatButtonView, stateModel, chatSharedAreaEventBus, loadingStatus, tipSchedule));
+            }
         }
 
         [Serializable]
@@ -281,39 +273,6 @@ namespace DCL.PluginSystem.Global
             public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
             {
                 public VoiceChatConfigurationsReference(string guid) : base(guid) { }
-            }
-        }
-
-        private static class NearbyVoiceTipFlow
-        {
-            public static async UniTask<bool> WaitAndShowAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus, CancellationToken ct)
-            {
-                view.Hide();
-
-                if (DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED))
-                    return false;
-
-                try
-                {
-                    await UniTask.WaitUntil(
-                        () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed,
-                        cancellationToken: ct);
-
-                    view.Show();
-
-                    int winner = await UniTask.WhenAny(
-                        view.CloseButton.OnClickAsync(ct),
-                        view.TryItNowButton.OnClickAsync(ct));
-
-                    DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
-                    view.Hide();
-
-                    return winner == 1;
-                }
-                catch (OperationCanceledException)
-                {
-                    return false;
-                }
             }
         }
     }

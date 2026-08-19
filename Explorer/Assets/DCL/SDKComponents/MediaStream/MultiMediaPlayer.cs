@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
-using RenderHeads.Media.AVProVideo;
+using DCL.AvProSwitch;
 using REnum;
 using UnityEngine;
 
@@ -8,9 +8,9 @@ namespace DCL.SDKComponents.MediaStream
 {
     public enum PlayerState
     {
-        PAUSED,
-        PLAYING,
-        STOPPED,
+        Paused,
+        Playing,
+        Stopped,
     }
 
     public class AvProPlayer
@@ -29,9 +29,6 @@ namespace DCL.SDKComponents.MediaStream
         {
             this.AvProMediaPlayer = avProMediaPlayer;
             this.MediaPlayerCustomPool = mediaPlayerCustomPool;
-
-            if (AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
-                AvProMediaPlayer.SetAudioSource(audioSource);
         }
     }
 
@@ -42,7 +39,7 @@ namespace DCL.SDKComponents.MediaStream
     {
         public bool IsPlaying => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsPlaying(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.PLAYING
+            static livekitPlayer => livekitPlayer.State is PlayerState.Playing
         );
 
         public float CurrentTime => Match(
@@ -57,12 +54,12 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsFinished => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsFinished(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.STOPPED
+            static livekitPlayer => livekitPlayer.State is PlayerState.Stopped
         );
 
         public bool IsPaused => Match(
             static avPro => avPro.AvProMediaPlayer.Control.IsPaused(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.PAUSED
+            static livekitPlayer => livekitPlayer.State is PlayerState.Paused
         );
 
         public bool IsSeeking => Match(
@@ -76,12 +73,18 @@ namespace DCL.SDKComponents.MediaStream
         );
 
         public bool HasControl => Match(
-            static avPro => avPro.AvProMediaPlayer.Control != null,
+            static avPro => avPro.AvProMediaPlayer.HasControl,
             static _ => false
         );
 
+        // False when the AVPro MediaPlayer GameObject was destroyed (pool eviction / scene teardown). LiveKit is always valid.
+        public bool IsValid => Match(
+            static avPro => avPro.AvProMediaPlayer != null,
+            static _ => true
+        );
+
         public bool IsReady => Match(
-            static avPro => avPro.AvProMediaPlayer.TextureProducer != null,
+            static avPro => avPro.AvProMediaPlayer.IsReady,
             static _ => true
         );
 
@@ -95,18 +98,18 @@ namespace DCL.SDKComponents.MediaStream
                 float vScale = avPro.AvProMediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
                 return new Vector2(1, vScale);
             },
-            static _ => new Vector2(1, -1)
+            static livekitPlayer => livekitPlayer.CurrentTextureScale
         );
 
-        public bool IsSpatial => Match(static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f),
+        public bool IsSpatial => Match(static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource.spatialBlend, 1f),
             static _ => false);
 
         public float SpatialMaxDistance => Match(
-            static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE,
+            static avPro => avPro.AvProMediaPlayer.AudioSource.maxDistance,
             static _ => 0f);
 
         public float SpatialMinDistance => Match(
-            static avPro => avPro.AvProMediaPlayer.AudioSource?.minDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MIN_DISTANCE,
+            static avPro => avPro.AvProMediaPlayer.AudioSource.minDistance,
             static _ => 0f);
 
         public void Dispose(MediaAddress address)
@@ -116,7 +119,7 @@ namespace DCL.SDKComponents.MediaStream
                 onAvProPlayer: static (address, avPro) =>
                 {
                     if (address.IsUrlMediaAddress(out var url))
-                        avPro.MediaPlayerCustomPool.ReleaseMediaPlayer(url!.Url, avPro.AvProMediaPlayer);
+                        avPro.MediaPlayerCustomPool.ReleaseMediaPlayer(url.Url, avPro.AvProMediaPlayer);
                 },
                 onLivekitPlayer: static (_, livekitPlayer) => livekitPlayer.Dispose()
             );
@@ -158,7 +161,7 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, livekitPlayer) => livekitPlayer!.SetVolume(ctx));
         }
 
-        public readonly void CrossfadeVolume(float volume, float volumeDelta = 1)
+        public void CrossfadeVolume(float volume, float volumeDelta = 1)
         {
             Match(
                 (volume, volumeDelta),
@@ -170,7 +173,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (IsAvProPlayer(out var avProPlayer))
             {
-                MediaPlayer mediaPlayer = avProPlayer!.AvProMediaPlayer;
+                MediaPlayer mediaPlayer = avProPlayer.AvProMediaPlayer;
                 if (!mediaPlayer.MediaOpened) return;
                 mediaPlayer.UpdatePlaybackProperties(sdkVideoPlayer);
             }
@@ -187,33 +190,33 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        public readonly void SetLooping(bool isLooping) =>
+        public void SetLooping(bool isLooping) =>
             Match(
                 isLooping,
                 static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
                 static (_, _) => { });
 
-        public readonly async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false)
+        public async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false)
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
-                MediaPlayer avProPlayer = mediaPlayer!.AvProMediaPlayer;
+                MediaPlayer avProPlayer = mediaPlayer.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
                 mediaPlayer.WaitingForProperties = true;
-                await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer, isLiveStream);
+                await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control, sdkVideoPlayer, isLiveStream);
                 mediaPlayer.WaitingForProperties = false;
             }
 
             // Livekit streaming doesn't need to adjust playback properties
         }
 
-        public readonly void SetPlaybackProperties(CustomMediaStream customMediaStream)
+        public void SetPlaybackProperties(CustomMediaStream customMediaStream)
         {
-            if (IsAvProPlayer(out AvProPlayer mediaPlayer))
+            if (IsAvProPlayer(out var mediaPlayer))
             {
                 MediaPlayer avProPlayer = mediaPlayer.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
-                MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, MediaPlayerComponent.DEFAULT_POSITION, customMediaStream.Loop, MediaPlayerComponent.DEFAULT_PLAYBACK_RATE, true).Forget();
+                MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control, MediaPlayerComponent.DEFAULT_POSITION, customMediaStream.Loop, MediaPlayerComponent.DEFAULT_PLAYBACK_RATE, true).Forget();
             }
         }
 
@@ -230,7 +233,7 @@ namespace DCL.SDKComponents.MediaStream
                     if (ctx.player.IsAvProPlayer(out var avProPlayer) == false)
                         return false;
 
-                    MediaPlayer player = avProPlayer!.AvProMediaPlayer;
+                    MediaPlayer player = avProPlayer.AvProMediaPlayer;
 
                     //VideoPlayer may be reused
                     if (player.MediaOpened)
@@ -250,7 +253,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool TryGetAvProPlayer(out MediaPlayer? mediaPlayer)
         {
-            if (IsAvProPlayer(out AvProPlayer avProPlayer))
+            if (IsAvProPlayer(out var avProPlayer))
             {
                 mediaPlayer = avProPlayer.AvProMediaPlayer;
                 return true;
@@ -263,7 +266,7 @@ namespace DCL.SDKComponents.MediaStream
         public void TrySeek(double seekTime)
         {
             if (IsAvProPlayer(out var avProPlayer))
-                avProPlayer!.AvProMediaPlayer.Control.Seek(seekTime);
+                avProPlayer.AvProMediaPlayer.Control.Seek(seekTime);
 
             // Livekit streaming doesn't support seeking
         }

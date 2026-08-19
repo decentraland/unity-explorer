@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.Rendering;
 using Utility.Animations;
 using Object = UnityEngine.Object;
 
@@ -57,6 +56,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
+            emotesInUse.Add(emoteReferences, pools[mainAsset]);
+
             if (emoteReferences.legacy)
             {
                 if (!legacyAnimationsEnabled)
@@ -70,7 +71,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             else
                 PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
 
-            emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
             return true;
         }
@@ -86,6 +86,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
+            emotesInUse.Add(emoteReferences, pools[mainAsset]);
+
             if (emoteReferences.legacy)
             {
                 if (!PlayMaskedLegacyEmote(view, ref maskedEmote, emoteReferences, isLooping))
@@ -97,7 +99,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             else
                 PlayMaskedMecanimEmote(view, ref maskedEmote, emoteReferences, isLooping);
 
-            emotesInUse.Add(emoteReferences, pools[mainAsset]);
             maskedEmote.CurrentEmoteReference = emoteReferences;
             return true;
         }
@@ -106,7 +107,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (emoteReferences.avatarClip == null) return false;
 
-            if (!emoteMaskCatalog.TryGet(maskedEmote.Mask, out AvatarMask? avatarMask))
+            if (!emoteMaskCatalog.TryGet(maskedEmote.Mask, out UnityEngine.AvatarMask? avatarMask))
             {
                 ReportHub.LogError(ReportCategory.EMOTE,
                     $"{nameof(EmoteMaskCatalog)} has no entry for {maskedEmote.Mask}, masked legacy emote ignored.");
@@ -142,7 +143,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
             avatarView.SetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(mask);
+            int layer = avatarView.GetEmoteLayerIndex(mask);
             avatarView.SetLayerWeight(layer, 0);
 
             avatarView.ClearMaskedEmoteAnimationCache();
@@ -167,7 +168,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     shouldCancel = avatarView.HasMaskedLegacyEmoteFinished;
                 else if (masked.IsPlaying)
                 {
-                    string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+                    int layer = avatarView.GetEmoteLayerIndex(masked.Mask);
                     int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
                     shouldCancel = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
                 }
@@ -189,7 +190,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             // by HasMaskedLegacyEmoteFinished on the avatar view, not by tag transitions.
             if (avatarView.IsMaskedLegacyEmotePlaying || avatarView.HasMaskedLegacyEmoteFinished) return;
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int layer = avatarView.GetEmoteLayerIndex(masked.Mask);
             int currentStateTag = avatarView.GetAnimatorCurrentStateTag(layer);
             masked.SetAnimationTag(currentStateTag);
         }
@@ -392,7 +393,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE);
             view.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
 
-            string emoteLayer = AnimatorEmoteLayers.GetFromEmoteMask(maskedEmote.Mask);
+            int emoteLayer = view.GetEmoteLayerIndex(maskedEmote.Mask);
             view.SetLayerWeight(emoteLayer, 1);
 
             int targetLayerTag = view.GetAnimatorCurrentStateTag(emoteLayer);

@@ -22,20 +22,11 @@ namespace DCL.UI
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ToggleOnAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ToggleOffAudio { get; private set; }
-        
+
         [field: Header("Interactable color scheme")]
         [field: SerializeField] private CanvasGroup canvasGroup  { get; set; }
         [field: SerializeField] private float interactableAlpha { get; set; }
         [field: SerializeField] private float nonInteractableAlpha { get; set; }
-
-        /// <summary>
-        /// Gets or sets whether sound FXs will be played or not when interacting with the toggle.
-        /// </summary>
-        public bool IsSoundEnabled
-        {
-            get;
-            set;
-        }
 
         private void OnEnable()
         {
@@ -55,7 +46,7 @@ namespace DCL.UI
                 Toggle.SetIsOnWithoutNotify(isOn);
             else
                 Toggle.isOn = isOn;
-            
+
             OnToggle(isOn);
         }
 
@@ -72,14 +63,13 @@ namespace DCL.UI
         {
             if(canvasGroup != null)
                 canvasGroup.alpha = isInteractable ? interactableAlpha : nonInteractableAlpha;
-            
+
             Toggle.interactable = isInteractable;
         }
 
         private void OnToggle(bool toggle)
         {
-            if(IsSoundEnabled)
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
 
             if (autoToggleImagesOnToggle)
                 SetToggleGraphics(toggle);

@@ -24,6 +24,18 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("SECONDARY LOGINS")]
         [field: SerializeField]
+        public GameObject OtherLoginContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject OtherLoginOptionsDisclaimer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text_ClickeableLink OtherLoginOptionsDisclaimerLink { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject ContinueWithTextContainer { get; private set; } = null!;
+
+        [field: SerializeField]
         public Button LoginMetamaskButton { get; private set; } = null!;
 
         [field: SerializeField]
@@ -79,14 +91,14 @@ namespace DCL.AuthenticationScreenFlow
         public Button[] UseAnotherAccountButton { get; private set; } = null!;
 
         [Space]
-        [SerializeField] private GameObject moreOptionsPanel;
+        [SerializeField] private GameObject moreOptionsPanel = null!;
 
         [Space]
-        [SerializeField] private Animator animator;
-        [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] private Animator animator = null!;
+        [SerializeField] private CanvasGroup canvasGroup = null!;
 
-        [SerializeField] private GameObject loadingSpinner;
-        [SerializeField] private GameObject mainElementsPanel;
+        [SerializeField] private GameObject loadingSpinner = null!;
+        [SerializeField] private GameObject mainElementsPanel = null!;
 
         private int showAnimHash = UIAnimationHashes.OUT;
         private bool areOptionsExpanded;
@@ -103,13 +115,16 @@ namespace DCL.AuthenticationScreenFlow
             moreOptionsPanel.SetActive(isExpanded);
         }
 
-        public void Show(int animHash, bool moreOptionsExpanded)
+        public void Show(int animHash, bool moreOptionsExpanded, bool otherLoginMethodsEnabled, bool otherLoginOptionsDisclaimer)
         {
             showAnimHash = animHash;
             ShowAsync(CancellationToken.None).Forget();
 
             areOptionsExpanded = moreOptionsExpanded;
-            SetOptionsPanelVisibility(areOptionsExpanded);
+            OtherLoginContainer.SetActive(otherLoginMethodsEnabled);
+            ContinueWithTextContainer.SetActive(otherLoginMethodsEnabled && !moreOptionsExpanded);
+            OtherLoginOptionsDisclaimer.SetActive(otherLoginOptionsDisclaimer);
+            SetOptionsPanelVisibility(areOptionsExpanded && otherLoginMethodsEnabled);
 
             SetLoadingSpinnerVisibility(false);
         }

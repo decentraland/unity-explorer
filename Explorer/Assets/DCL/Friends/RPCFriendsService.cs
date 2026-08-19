@@ -1,10 +1,9 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
-using DCL.Utilities;
+using DCL.Utility.Types;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
@@ -58,16 +57,11 @@ namespace DCL.Friends
 
         public UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync<FriendshipUpdate>(ProcessUpdatesAsync, SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<FriendshipUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
-                    socialServiceRPC.Module()
-                                    .CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME,
-                                         new Empty());
-
-                await foreach (FriendshipUpdate? response in stream)
+                await foreach (FriendshipUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
                     {
@@ -94,12 +88,26 @@ namespace DCL.Friends
                             case FriendshipUpdate.UpdateOneofCase.Request:
                                 FriendshipUpdate.Types.RequestResponse? request = response.Request;
 
+                                if (request.Friend == null)
+                                {
+                                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Ignoring incoming friend request: server sent no friend profile");
+                                    break;
+                                }
+
+                                Option<Profile.CompactInfo> requesterProfile = ToClientFriendProfile(request.Friend);
+
+                                if (!requesterProfile.Has)
+                                {
+                                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Ignoring incoming friend request: server sent a friend profile without an address");
+                                    break;
+                                }
+
                                 Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
                                 var fr = new FriendRequest(
                                     request.Id,
                                     DateTimeOffset.FromUnixTimeMilliseconds(request.CreatedAt).DateTime,
-                                    ToClientFriendProfile(request.Friend),
+                                    requesterProfile.Value,
                                     myProfile!.Compact,
                                     request.HasMessage ? request.Message : string.Empty);
 
@@ -108,8 +116,7 @@ namespace DCL.Friends
                         }
                     }
 
-                    // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    // No need to handle OperationCancelledException because there are no async calls
+                    catch (OperationCanceledException) { }
                     catch (Exception e) { ReportHub.LogException(e, ReportCategory.FRIENDS); }
                 }
             }
@@ -117,28 +124,38 @@ namespace DCL.Friends
 
         public UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync<FriendConnectivityUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_CONNECTIVITY_UPDATES, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
-                    socialServiceRPC.Module()!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
-
-                // We could try stream.WithCancellation(ct) but the cancellation doesn't work.
-                await foreach (FriendConnectivityUpdate? response in stream)
+                await foreach (FriendConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
                     {
+                        if (response.Friend == null)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, $"Ignoring connectivity update with status {response.Status}: server sent no friend profile");
+                            continue;
+                        }
+
+                        Option<Profile.CompactInfo> friendProfile = ToClientFriendProfile(response.Friend);
+
+                        if (!friendProfile.Has)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, $"Ignoring connectivity update with status {response.Status}: server sent a friend profile without an address");
+                            continue;
+                        }
+
                         switch (response.Status)
                         {
                             case ConnectivityStatus.Away:
-                                eventBus.BroadcastFriendAsAway(ToClientFriendProfile(response.Friend));
+                                eventBus.BroadcastFriendAsAway(friendProfile.Value);
                                 break;
                             case ConnectivityStatus.Offline:
-                                eventBus.BroadcastFriendDisconnected(ToClientFriendProfile(response.Friend));
+                                eventBus.BroadcastFriendDisconnected(friendProfile.Value);
                                 break;
                             case ConnectivityStatus.Online:
-                                eventBus.BroadcastFriendConnected(ToClientFriendProfile(response.Friend));
+                                eventBus.BroadcastFriendConnected(friendProfile.Value);
                                 break;
                         }
                     }
@@ -151,14 +168,11 @@ namespace DCL.Friends
 
         public UniTask SubscribeToUserBlockUpdatersAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync<BlockUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<BlockUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<BlockUpdate> stream =
-                    socialServiceRPC.Module()!.CallServerStream<BlockUpdate>(SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, new Empty());
-
-                await foreach (BlockUpdate? response in stream)
+                await foreach (BlockUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
                     {
@@ -187,7 +201,7 @@ namespace DCL.Friends
                 },
             };
 
-            GetBlockedUsersResponse? response = await socialServiceRPC.Module()!
+            GetBlockedUsersResponse? response = await socialServiceRPC.Module()
                                                                       .CallUnaryProcedure<GetBlockedUsersResponse>(GET_BLOCKED_USERS, payload)
                                                                       .AttachExternalCancellation(ct)
                                                                       .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -209,7 +223,7 @@ namespace DCL.Friends
                 },
             };
 
-            BlockUserResponse? response = await socialServiceRPC.Module()!
+            BlockUserResponse? response = await socialServiceRPC.Module()
                                                                 .CallUnaryProcedure<BlockUserResponse>(BLOCK_USER, payload)
                                                                 .AttachExternalCancellation(ct)
                                                                 .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -235,15 +249,19 @@ namespace DCL.Friends
                 },
             };
 
-            UnblockUserResponse? response = await socialServiceRPC.Module()!
+            UnblockUserResponse? response = await socialServiceRPC.Module()
                                                                   .CallUnaryProcedure<UnblockUserResponse>(UNBLOCK_USER, payload)
                                                                   .AttachExternalCancellation(ct)
                                                                   .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
             if (response.ResponseCase == UnblockUserResponse.ResponseOneofCase.Ok)
             {
-                BlockedProfile blockedProfile = ToClientBlockedProfile(response.Ok.Profile);
-                eventBus.BroadcastYouUnblockedProfile(blockedProfile);
+                BlockedProfile? blockedProfile = ToClientBlockedProfile(response.Ok.Profile);
+
+                if (blockedProfile != null)
+                    eventBus.BroadcastYouUnblockedProfile(blockedProfile);
+                else
+                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping unblock broadcast: server sent a profile without a valid address");
             }
             else
                 throw new Exception($"Cannot unblock user {userId}: {response.ResponseCase}");
@@ -253,7 +271,7 @@ namespace DCL.Friends
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            GetBlockingStatusResponse? response = await socialServiceRPC.Module()!
+            GetBlockingStatusResponse? response = await socialServiceRPC.Module()
                                                                         .CallUnaryProcedure<GetBlockingStatusResponse>(GET_BLOCKING_STATUS, new Empty())
                                                                         .AttachExternalCancellation(ct)
                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -274,7 +292,7 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendsProfilesResponse? response = await socialServiceRPC.Module()!
+            PaginatedFriendsProfilesResponse? response = await socialServiceRPC.Module()
                                                                                .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_FRIENDS_PROCEDURE_NAME, payload)
                                                                                .AttachExternalCancellation(ct)
                                                                                .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -305,7 +323,7 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendsProfilesResponse? response = await socialServiceRPC.Module()!
+            PaginatedFriendsProfilesResponse? response = await socialServiceRPC.Module()
                                                                                .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_MUTUAL_FRIENDS_PROCEDURE_NAME, payload)
                                                                                .AttachExternalCancellation(ct)
                                                                                .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -330,7 +348,7 @@ namespace DCL.Friends
                 },
             };
 
-            GetFriendshipStatusResponse response = await socialServiceRPC.Module()!
+            GetFriendshipStatusResponse response = await socialServiceRPC.Module()
                                                                          .CallUnaryProcedure<GetFriendshipStatusResponse>(GET_FRIENDSHIP_STATUS_PROCEDURE_NAME, payload)
                                                                          .AttachExternalCancellation(ct)
                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -344,21 +362,21 @@ namespace DCL.Friends
                     switch (response.Accepted.Status)
                     {
                         case Decentraland.SocialService.V2.FriendshipStatus.Accepted:
-                            return FriendshipStatus.FRIEND;
+                            return FriendshipStatus.Friend;
                         case Decentraland.SocialService.V2.FriendshipStatus.Blocked:
-                            return FriendshipStatus.BLOCKED;
+                            return FriendshipStatus.Blocked;
                         case Decentraland.SocialService.V2.FriendshipStatus.RequestReceived:
-                            return FriendshipStatus.REQUEST_RECEIVED;
+                            return FriendshipStatus.RequestReceived;
                         case Decentraland.SocialService.V2.FriendshipStatus.RequestSent:
-                            return FriendshipStatus.REQUEST_SENT;
+                            return FriendshipStatus.RequestSent;
                         case Decentraland.SocialService.V2.FriendshipStatus.BlockedBy:
-                            return FriendshipStatus.BLOCKED_BY;
+                            return FriendshipStatus.BlockedBy;
                     }
 
                     break;
             }
 
-            return FriendshipStatus.NONE;
+            return FriendshipStatus.None;
         }
 
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize,
@@ -377,7 +395,7 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendshipRequestsResponse response = await socialServiceRPC.Module()!
+            PaginatedFriendshipRequestsResponse response = await socialServiceRPC.Module()
                                                                                  .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME,
                                                                                       payload)
                                                                                  .AttachExternalCancellation(ct)
@@ -390,10 +408,24 @@ namespace DCL.Friends
                 case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
                     foreach (FriendshipRequestResponse? rr in response.Requests.Requests)
                     {
+                        if (rr.Friend == null)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping received friend request: server sent no friend profile");
+                            continue;
+                        }
+
+                        Option<Profile.CompactInfo> requesterProfile = ToClientFriendProfile(rr.Friend);
+
+                        if (!requesterProfile.Has)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping received friend request: server sent a friend profile without an address");
+                            continue;
+                        }
+
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
-                            ToClientFriendProfile(rr.Friend),
+                            requesterProfile.Value,
                             myProfile!.Compact,
                             rr.Message);
 
@@ -425,7 +457,7 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendshipRequestsResponse response = await socialServiceRPC.Module()!
+            PaginatedFriendshipRequestsResponse response = await socialServiceRPC.Module()
                                                                                  .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME,
                                                                                       payload)
                                                                                  .AttachExternalCancellation(ct)
@@ -438,11 +470,25 @@ namespace DCL.Friends
                 case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
                     foreach (FriendshipRequestResponse? rr in response.Requests.Requests)
                     {
+                        if (rr.Friend == null)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping sent friend request: server sent no friend profile");
+                            continue;
+                        }
+
+                        Option<Profile.CompactInfo> recipientProfile = ToClientFriendProfile(rr.Friend);
+
+                        if (!recipientProfile.Has)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping sent friend request: server sent a friend profile without an address");
+                            continue;
+                        }
+
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
                             myProfile!.Compact,
-                            ToClientFriendProfile(rr.Friend),
+                            recipientProfile.Value,
                             rr.Message);
 
                         sentFriendRequestsBuffer.Add(fr);
@@ -461,16 +507,17 @@ namespace DCL.Friends
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
-            {
-                Reject = new UpsertFriendshipPayload.Types.RejectPayload
+            if (await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {
-                    User = new User
+                    Reject = new UpsertFriendshipPayload.Types.RejectPayload
                     {
-                        Address = friendId,
+                        User = new User
+                        {
+                            Address = friendId,
+                        },
                     },
-                },
-            }, ct);
+                }, ct) is null)
+                return;
 
             eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(friendId);
         }
@@ -479,25 +526,26 @@ namespace DCL.Friends
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
-            {
-                Cancel = new UpsertFriendshipPayload.Types.CancelPayload
+            if (await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {
-                    User = new User
+                    Cancel = new UpsertFriendshipPayload.Types.CancelPayload
                     {
-                        Address = friendId,
+                        User = new User
+                        {
+                            Address = friendId,
+                        },
                     },
-                },
-            }, ct);
+                }, ct) is null)
+                return;
 
             eventBus.BroadcastThatYouCancelledFriendRequestSentToOtherUser(friendId);
         }
 
-        public async UniTask AcceptFriendshipAsync(string friendId, CancellationToken ct)
+        public async UniTask<bool> AcceptFriendshipAsync(string friendId, CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            return ApplyAcceptedFriendship(await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Accept = new UpsertFriendshipPayload.Types.AcceptPayload
                 {
@@ -506,18 +554,26 @@ namespace DCL.Friends
                         Address = friendId,
                     },
                 },
-            }, ct);
+            }, ct), friendId);
+        }
+
+        internal bool ApplyAcceptedFriendship(UpsertFriendshipResponse.Types.Accepted? accepted, string friendId)
+        {
+            if (accepted == null)
+                return false;
 
             friendsCache.Add(friendId);
 
             eventBus.BroadcastThatYouAcceptedFriendRequestReceivedFromOtherUser(friendId);
+
+            return true;
         }
 
-        public async UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct)
+        public async UniTask<bool> DeleteFriendshipAsync(string friendId, CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            return ApplyDeletedFriendship(await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Delete = new UpsertFriendshipPayload.Types.DeletePayload
                 {
@@ -526,19 +582,27 @@ namespace DCL.Friends
                         Address = friendId,
                     },
                 },
-            }, ct);
+            }, ct), friendId);
+        }
+
+        internal bool ApplyDeletedFriendship(UpsertFriendshipResponse.Types.Accepted? accepted, string friendId)
+        {
+            if (accepted == null)
+                return false;
 
             friendsCache.Remove(friendId);
 
             eventBus.BroadcastThatYouRemovedFriend(friendId);
+
+            return true;
         }
 
-        public async UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody,
+        public async UniTask<FriendRequest?> RequestFriendshipAsync(string friendId, string messageBody,
             CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            UpsertFriendshipResponse.Types.Accepted response = await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            UpsertFriendshipResponse.Types.Accepted? response = await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Request = new UpsertFriendshipPayload.Types.RequestPayload
                 {
@@ -550,12 +614,23 @@ namespace DCL.Friends
                 },
             }, ct);
 
+            if (response == null)
+                return null;
+
+            if (response.Friend == null)
+                throw new InvalidOperationException("Cannot create friend request: server accepted the upsert but returned no friend profile");
+
+            Option<Profile.CompactInfo> friendProfile = ToClientFriendProfile(response.Friend);
+
+            if (!friendProfile.Has)
+                throw new InvalidOperationException("Cannot create friend request: server returned a friend profile without an address");
+
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
             var fr = new FriendRequest(response.Id,
                 DateTimeOffset.FromUnixTimeMilliseconds(response.CreatedAt).DateTime,
                 myProfile!.Compact,
-                ToClientFriendProfile(response.Friend),
+                friendProfile.Value,
                 messageBody);
 
             eventBus.BroadcastThatYouSentFriendRequestToOtherUser(fr);
@@ -563,21 +638,31 @@ namespace DCL.Friends
             return fr;
         }
 
-        private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
+        private async UniTask<UpsertFriendshipResponse.Types.Accepted?> UpdateFriendshipAsync(
             UpsertFriendshipPayload payload,
             CancellationToken ct)
         {
-            UpsertFriendshipResponse response = await socialServiceRPC.Module()!
+            UpsertFriendshipResponse response = await socialServiceRPC.Module()
                                                                       .CallUnaryProcedure<UpsertFriendshipResponse>(UPDATE_FRIENDSHIP_PROCEDURE_NAME, payload)
                                                                       .AttachExternalCancellation(ct)
                                                                       .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            return response.ResponseCase switch
-                   {
-                       UpsertFriendshipResponse.ResponseOneofCase.Accepted => response.Accepted,
-                       _ => throw new Exception($"Cannot update friendship {response.ResponseCase}"),
-                   };
+            UpsertFriendshipResponse.Types.Accepted? accepted = ToAccepted(response);
+
+            if (accepted == null)
+                ReportHub.LogWarning(ReportCategory.FRIENDS, $"Ignoring friendship update rejected as invalid ({response.ResponseCase}): {response.InvalidFriendshipAction?.Message}");
+
+            return accepted;
         }
+
+        internal static UpsertFriendshipResponse.Types.Accepted? ToAccepted(UpsertFriendshipResponse response) =>
+            response.ResponseCase switch
+            {
+                UpsertFriendshipResponse.ResponseOneofCase.Accepted => response.Accepted,
+                UpsertFriendshipResponse.ResponseOneofCase.InvalidFriendshipAction => null,
+                UpsertFriendshipResponse.ResponseOneofCase.InvalidRequest => null,
+                _ => throw new Exception($"Cannot update friendship {response.ResponseCase}"),
+            };
 
         private IReadOnlyList<Profile.CompactInfo> ToClientFriendProfiles(
             RepeatedField<FriendProfile> friends)
@@ -585,7 +670,14 @@ namespace DCL.Friends
             friendProfileBuffer.Clear();
 
             foreach (FriendProfile profile in friends)
-                friendProfileBuffer.Add(ToClientFriendProfile(profile));
+            {
+                Option<Profile.CompactInfo> compact = ToClientFriendProfile(profile);
+
+                if (compact.Has)
+                    friendProfileBuffer.Add(compact.Value);
+                else
+                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping friend entry: server sent a profile without an address");
+            }
 
             return friendProfileBuffer;
         }
@@ -596,24 +688,45 @@ namespace DCL.Friends
             blockedProfileBuffer.Clear();
 
             foreach (BlockedUserProfile profile in friends)
-                blockedProfileBuffer.Add(ToClientBlockedProfile(profile));
+            {
+                BlockedProfile? blockedProfile = ToClientBlockedProfile(profile);
+
+                if (blockedProfile != null)
+                    blockedProfileBuffer.Add(blockedProfile);
+                else
+                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping blocked-user entry: server sent a profile without an address");
+            }
 
             return blockedProfileBuffer;
         }
 
-        [Obsolete(IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE)]
-        private Profile.CompactInfo ToClientFriendProfile(FriendProfile profile) =>
-            new (profile.Address, profile.Name, profile.HasClaimedName, profile.ProfilePictureUrl);
-
-        private BlockedProfile ToClientBlockedProfile(BlockedUserProfile profile)
+        /// <remarks>
+        ///     Legacy bridge (<see cref="IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE" />):
+        ///     should be moved to the unified POST originated from the client. Not marked
+        ///     <see cref="ObsoleteAttribute" /> because every caller lives in this service and must
+        ///     keep using it until that migration lands.
+        /// </remarks>
+        private Option<Profile.CompactInfo> ToClientFriendProfile(FriendProfile profile)
         {
-            var fp = new BlockedProfile(new Web3Address(profile.Address),
+            Option<UserId> userId = UserId.New(profile.Address);
+
+            return userId.Has
+                ? Option<Profile.CompactInfo>.Some(new Profile.CompactInfo(userId.Value, profile.Name, profile.HasClaimedName, profile.ProfilePictureUrl))
+                : Option<Profile.CompactInfo>.None;
+        }
+
+        private BlockedProfile? ToClientBlockedProfile(BlockedUserProfile profile)
+        {
+            Option<UserId> userId = UserId.From(new Web3Address(profile.Address));
+
+            if (!userId.Has)
+                return null;
+
+            return new BlockedProfile(userId.Value,
                 profile.Name,
                 profile.HasClaimedName,
                 profile.ProfilePictureUrl,
                 DateTimeOffset.FromUnixTimeMilliseconds(profile.BlockedAt).DateTime);
-
-            return fp;
         }
     }
 }

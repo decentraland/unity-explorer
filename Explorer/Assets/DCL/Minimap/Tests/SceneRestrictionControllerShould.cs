@@ -57,69 +57,69 @@ namespace DCL.Minimap.Tests
 
 
             //Act
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Applied));
 
             //Assert
             Assert.IsTrue(sceneRestrictionsIcon.gameObject.activeSelf);
-            Assert.IsTrue(restrictionTexts[SceneRestrictions.AVATAR_HIDDEN].gameObject.activeSelf);
+            Assert.IsTrue(restrictionTexts[SceneRestrictions.AvatarHidden].gameObject.activeSelf);
 
             //Act
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Removed));
 
             //Assert
             Assert.IsFalse(sceneRestrictionsIcon.gameObject.activeSelf);
-            Assert.IsFalse(restrictionTexts[SceneRestrictions.AVATAR_HIDDEN].gameObject.activeSelf);
+            Assert.IsFalse(restrictionTexts[SceneRestrictions.AvatarHidden].gameObject.activeSelf);
 
             //Act
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.APPLIED));
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Applied));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Applied));
 
             //Assert
             Assert.IsTrue(sceneRestrictionsIcon.gameObject.activeSelf);
-            Assert.IsTrue(restrictionTexts[SceneRestrictions.AVATAR_HIDDEN].gameObject.activeSelf);
-            Assert.IsTrue(restrictionTexts[SceneRestrictions.CAMERA_LOCKED].gameObject.activeSelf);
+            Assert.IsTrue(restrictionTexts[SceneRestrictions.AvatarHidden].gameObject.activeSelf);
+            Assert.IsTrue(restrictionTexts[SceneRestrictions.CameraLocked].gameObject.activeSelf);
 
             //Act
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.REMOVED));
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Removed));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Removed));
 
             //Assert
             Assert.IsFalse(sceneRestrictionsIcon.gameObject.activeSelf);
-            Assert.IsFalse(restrictionTexts[SceneRestrictions.AVATAR_HIDDEN].gameObject.activeSelf);
-            Assert.IsFalse(restrictionTexts[SceneRestrictions.CAMERA_LOCKED].gameObject.activeSelf);
+            Assert.IsFalse(restrictionTexts[SceneRestrictions.AvatarHidden].gameObject.activeSelf);
+            Assert.IsFalse(restrictionTexts[SceneRestrictions.CameraLocked].gameObject.activeSelf);
 
             //Act
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.APPLIED));
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Applied));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Applied));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Applied));
 
             //Assert
             Assert.IsTrue(sceneRestrictionsIcon.gameObject.activeSelf);
-            Assert.IsTrue(restrictionTexts[SceneRestrictions.AVATAR_HIDDEN].gameObject.activeSelf);
-            Assert.IsTrue(restrictionTexts[SceneRestrictions.CAMERA_LOCKED].gameObject.activeSelf);
+            Assert.IsTrue(restrictionTexts[SceneRestrictions.AvatarHidden].gameObject.activeSelf);
+            Assert.IsTrue(restrictionTexts[SceneRestrictions.CameraLocked].gameObject.activeSelf);
 
             //Act
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Removed));
 
             //Assert
             Assert.IsTrue(sceneRestrictionsIcon.gameObject.activeSelf);
-            Assert.IsTrue(restrictionTexts[SceneRestrictions.AVATAR_HIDDEN].gameObject.activeSelf);
-            Assert.IsTrue(restrictionTexts[SceneRestrictions.CAMERA_LOCKED].gameObject.activeSelf);
+            Assert.IsTrue(restrictionTexts[SceneRestrictions.AvatarHidden].gameObject.activeSelf);
+            Assert.IsTrue(restrictionTexts[SceneRestrictions.CameraLocked].gameObject.activeSelf);
 
             //Act
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.Removed));
 
             //Assert
             Assert.IsTrue(sceneRestrictionsIcon.gameObject.activeSelf);
-            Assert.IsTrue(restrictionTexts[SceneRestrictions.AVATAR_HIDDEN].gameObject.activeSelf);
-            Assert.IsFalse(restrictionTexts[SceneRestrictions.CAMERA_LOCKED].gameObject.activeSelf);
+            Assert.IsTrue(restrictionTexts[SceneRestrictions.AvatarHidden].gameObject.activeSelf);
+            Assert.IsFalse(restrictionTexts[SceneRestrictions.CameraLocked].gameObject.activeSelf);
 
             //Act
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Removed));
 
             //Assert
             Assert.IsFalse(sceneRestrictionsIcon.gameObject.activeSelf);
-            Assert.IsFalse(restrictionTexts[SceneRestrictions.AVATAR_HIDDEN].gameObject.activeSelf);
+            Assert.IsFalse(restrictionTexts[SceneRestrictions.AvatarHidden].gameObject.activeSelf);
         }
     }
 }

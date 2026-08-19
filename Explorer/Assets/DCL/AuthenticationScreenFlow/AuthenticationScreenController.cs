@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
+using DCL.BugReporting.UI;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -12,19 +13,15 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Global.AppArgs;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.AuthenticationScreenFlow
@@ -49,10 +46,11 @@ namespace DCL.AuthenticationScreenFlow
 
         internal const int ANIMATION_DELAY = 300;
         internal const string LOADING_TRANSACTION_NAME = "loading_process";
+        private const string EPIC_STORE_INSTALL_SOURCE = "epic";
 
         private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly SplashScreen splashScreen;
@@ -66,6 +64,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly IMVCManager mvcManager;
+        private readonly string? referrer;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -73,9 +73,9 @@ namespace DCL.AuthenticationScreenFlow
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? loginCancellationTokenSource;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
-        public string CurrentRequestID { get; internal set; } = string.Empty;
+        public string CurrentRequestId { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
 
         // Set by the Lobby states on Enter so analytics can tag LOGGED_IN / LOGGED_IN_CACHED with
@@ -84,22 +84,22 @@ namespace DCL.AuthenticationScreenFlow
         // misclassifying returning users whose cached identity expired.
         public bool IsCurrentlyNewAccount { get; internal set; }
 
-        public event Action DiscordButtonClicked;
-        public event Action<string, bool> OTPVerified;
-        public event Action OTPResend;
-        public event Action ProfileFinalized;
+        public event Action? DiscordButtonClicked;
+        public event Action<string, bool>? OTPVerified;
+        public event Action? OTPResend;
+        public event Action? ProfileFinalized;
 
         internal void RaiseProfileFinalized() =>
             ProfileFinalized?.Invoke();
 
-        private MVCStateMachine<AuthStateBase> fsm;
-        private AuthenticationScreenAudio audio;
+        private MVCStateMachine<AuthStateBase>? fsm;
+        private AuthenticationScreenAudio? audio;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
             ICompositeWeb3Provider web3Authenticator,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             SplashScreen splashScreen,
@@ -113,7 +113,9 @@ namespace DCL.AuthenticationScreenFlow
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            IMVCManager mvcManager,
+            string? referrer = null)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -133,16 +135,19 @@ namespace DCL.AuthenticationScreenFlow
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.mvcManager = mvcManager;
+            this.referrer = referrer;
         }
 
         public override void Dispose()
         {
             base.Dispose();
             characterPreviewController?.Dispose();
+            viewInstance?.BugReportButton?.onClick.RemoveListener(OpenBugReport);
 
             CancelLoginProcess();
-            audio.Dispose();
-            fsm.Dispose();
+            audio?.Dispose();
+            fsm?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -150,24 +155,35 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewInstantiated();
 
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
-            bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
+            bool isEpicBuild = string.Equals(installSource, EPIC_STORE_INSTALL_SOURCE, StringComparison.OrdinalIgnoreCase);
+            // Epic builds only support emailOTP due to deeplink limitations
+            // See: https://github.com/decentraland/unity-explorer/issues/9554
+            bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth) || isEpicBuild;
+            bool otherLoginMethodsEnabled = !isEpicBuild;
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
 
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
+
+            bool bugReportEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            viewInstance.BugReportButton?.gameObject.SetActive(bugReportEnabled);
+
+            if (bugReportEnabled)
+                viewInstance.BugReportButton?.onClick.AddListener(OpenBugReport);
 
             // States
             fsm = new MVCStateMachine<AuthStateBase>();
 
             fsm.AddStates(
                 new InitAuthState(viewInstance, installSource),
-                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
+                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
+                    enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
-                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
+                new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
-                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer)
             );
 
             if (enableEmailOTP)
@@ -201,7 +217,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
@@ -212,10 +228,10 @@ namespace DCL.AuthenticationScreenFlow
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
+                    fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
                 else
                 {
-                    fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                    fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
                 }
             }
             catch (OperationCanceledException)
@@ -224,7 +240,7 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
@@ -233,18 +249,18 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewShow();
 
             BlockUnwantedInputs();
-            audio.OnShow();
+            audio?.OnShow();
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
 
-            fsm.CurrentState?.Exit();
+            fsm?.CurrentState?.Exit();
             CancelLoginProcess();
 
             UnblockUnwantedInputs();
-            audio.OnHide();
+            audio?.OnHide();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -283,14 +299,24 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
+                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
             }
         }
 
         private void OpenSupportUrl()
         {
-            webBrowser.OpenUrl(DecentralandUrl.SupportLink);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.SupportLink);
             DiscordButtonClicked?.Invoke();
+        }
+
+        private void OpenBugReport() =>
+            OpenBugReportAsync().Forget();
+
+        private async UniTaskVoid OpenBugReportAsync()
+        {
+            try { await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams())); }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
         }
 
         private void ExitApplication()

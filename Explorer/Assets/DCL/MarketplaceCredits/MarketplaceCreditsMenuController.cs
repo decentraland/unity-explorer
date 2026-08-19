@@ -29,7 +29,7 @@ namespace DCL.MarketplaceCredits
         public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action<bool> MarketplaceCreditsOpened;
 
@@ -46,7 +46,7 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
         private readonly Animator sidebarCreditsButtonAnimator;
@@ -73,7 +73,7 @@ namespace DCL.MarketplaceCredits
         public MarketplaceCreditsMenuController(
             ViewFactoryMethod viewFactory,
             HoverableAndSelectableButtonWithAnimator sidebarButton,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
@@ -156,7 +156,7 @@ namespace DCL.MarketplaceCredits
         protected override void OnBeforeViewShow()
         {
             closeTaskCompletionSource = new UniTaskCompletionSource();
-            OpenSection(MarketplaceCreditsSection.WELCOME);
+            OpenSection(MarketplaceCreditsSection.Welcome);
             SetSidebarButtonAnimationAsPaused(true);
             MarketplaceCreditsOpened.Invoke(inputData.IsOpenedFromNotification);
         }
@@ -185,16 +185,16 @@ namespace DCL.MarketplaceCredits
 
             switch (section)
             {
-                case MarketplaceCreditsSection.WELCOME:
+                case MarketplaceCreditsSection.Welcome:
                     viewInstance.SetInfoLinkButtonActive(false);
                     marketplaceCreditsWelcomeSubController?.OpenSection();
                     break;
-                case MarketplaceCreditsSection.VERIFY_EMAIL:
+                case MarketplaceCreditsSection.VerifyEmail:
                     haveJustClaimedCredits = false;
                     marketplaceCreditsVerifyEmailSubController?.OpenSection();
                     viewInstance.TotalCreditsWidget.gameObject.SetActive(false);
                     break;
-                case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
+                case MarketplaceCreditsSection.GoalsOfTheWeek:
                     if (marketplaceCreditsGoalsOfTheWeekSubController != null)
                     {
                         marketplaceCreditsGoalsOfTheWeekSubController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
@@ -202,12 +202,12 @@ namespace DCL.MarketplaceCredits
                     }
                     viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
-                case MarketplaceCreditsSection.WEEK_GOALS_COMPLETED:
+                case MarketplaceCreditsSection.WeekGoalsCompleted:
                     haveJustClaimedCredits = false;
                     marketplaceCreditsWeekGoalsCompletedSubController?.OpenSection();
                     viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
-                case MarketplaceCreditsSection.PROGRAM_ENDED:
+                case MarketplaceCreditsSection.ProgramEnded:
                     haveJustClaimedCredits = false;
                     viewInstance.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
                     marketplaceCreditsProgramEndedSubController?.OpenSection();
@@ -225,7 +225,7 @@ namespace DCL.MarketplaceCredits
             // We open the welcome section after closing the credits unlocked panel
             isCreditsUnlockedPanelOpen = false;
             haveJustClaimedCredits = true;
-            OpenSection(MarketplaceCreditsSection.WELCOME);
+            OpenSection(MarketplaceCreditsSection.Welcome);
         }
 
         public void ShowErrorNotification(string message)
@@ -274,10 +274,10 @@ namespace DCL.MarketplaceCredits
             viewInstance?.InfoLinkButtonTooltip.Show();
 
         private void OpenInfoLink() =>
-            webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
+            webBrowser.OpenUrlMainThreadOnly(WEEKLY_REWARDS_INFO_LINK);
 
         private void OpenGoShoppingLink() =>
-            webBrowser.OpenUrl(DecentralandUrl.GoShoppingWithMarketplaceCredits);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.GoShoppingWithMarketplaceCredits);
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
         {
@@ -296,8 +296,8 @@ namespace DCL.MarketplaceCredits
             SetSidebarButtonAsClaimIndicator(true);
 
             // If the user is in the Goals of the Week section, we need to refresh the information
-            if (currentSection == MarketplaceCreditsSection.GOALS_OF_THE_WEEK && !isCreditsUnlockedPanelOpen)
-                OpenSection(MarketplaceCreditsSection.WELCOME);
+            if (currentSection == MarketplaceCreditsSection.GoalsOfTheWeek && !isCreditsUnlockedPanelOpen)
+                OpenSection(MarketplaceCreditsSection.Welcome);
         }
 
         private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
@@ -335,8 +335,9 @@ namespace DCL.MarketplaceCredits
 
                 if (!creditsProgramProgressResponse.HasUserStartedProgram() || TrySetAsShownThisWeek(creditsProgramProgressResponse))
                 {
-                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
-                    await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
+                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City,
+                    // holding off while any other popup or fullscreen view is on screen (e.g. the backpack opened via force-open-backpack).
+                    await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis() && !mvcManager.IsAnyModalViewShowing(), cancellationToken: ct);
                     await mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: false)), ct);
                 }
 

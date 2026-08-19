@@ -105,6 +105,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46abfd8d700191d43b8892c99421c5a7
+    m_Address: PerformanceIssuePrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4ae49825f39c564478515b4c2ae201af
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Toon.mat
     m_ReadOnly: 0
@@ -200,6 +205,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c27dfc00496c5442a73aeede131877d
+    m_Address: Assets/Plugins/UUAV/Packages/UUAV/Runtime/Shaders/NV12ToRGB.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7f09a2d0d9adc4e43b67879ab9cdf360
     m_Address: LightSourcePrefab
     m_ReadOnly: 0
@@ -212,6 +222,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 81289e85b8c13dc4b8ea68b7940e76a5
     m_Address: LandscapeAudioSystemSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82655edf5bc71448d9d43617764bb7d8
+    m_Address: CreditsTopUpPopup
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -257,6 +272,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9c4c0e79124f01744a5f969e08ad0370
     m_Address: RemoteAvatarCollider
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab23199c8104ca44e837d8ac570fee44
+    m_Address: BugReportView
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -377,6 +397,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fa9a67059d8a204408ce435cc8827612
     m_Address: Assets/DCL/VoiceChat/VoiceChatMicrophoneAudioSource.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe492edbd0cef4457951fba2129d4c0a
+    m_Address: CreditsPurchaseModal
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

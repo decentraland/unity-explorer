@@ -129,7 +129,7 @@ namespace DCL.PluginSystem.Global
                 new HandPointAtComponent(),
                 new TorsoIKComponent());
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DOUBLE_CLICK_WALK))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DoubleClickWalk))
                 UpdatePointAndClickInputSystem.InjectToWorld(ref builder, destinationMarkerPrefab);
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
@@ -152,9 +152,9 @@ namespace DCL.PluginSystem.Global
             GroundDistanceSystem.InjectToWorld(ref builder);
             GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab, componentPoolsRegistry);
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.PointAt))
             {
-                HandPointAtSystem.InjectToWorld(ref builder);
+                HandPointAtSystem.InjectToWorld(ref builder, scenesCache);
                 PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache, settings.PointAtMarkerVisibilitySettings);
                 builder.World.Create(PointAtThumbnailCache.Create());
                 PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);

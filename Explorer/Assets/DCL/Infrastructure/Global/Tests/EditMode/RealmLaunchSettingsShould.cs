@@ -71,6 +71,61 @@ namespace Global.Tests.EditMode
             Assert.AreEqual(50, realmLaunchSettings.targetScene.y);
         }
 
+        [Test]
+        public void ApplySpawnPointFromDeeplink()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&spawnpoint=lobby"
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.AreEqual("lobby", realmLaunchSettings.spawnPointName);
+        }
+
+        [Test]
+        public void ApplySpawnPointFromAppArgs()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "--spawnpoint",
+                "lobby"
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.AreEqual("lobby", realmLaunchSettings.spawnPointName);
+        }
+
+        [Test]
+        public void IgnoreEmptySpawnPointFromAppArgs()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "--spawnpoint"
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.IsNull(realmLaunchSettings.spawnPointName);
+        }
+
         [TestCase("https://peer.decentraland.zone")]
         [TestCase("https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest")]
         public void ApplyStartingRealmFromAppArgs(string realm)
@@ -126,6 +181,25 @@ namespace Global.Tests.EditMode
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
             Assert.AreEqual(world, realmLaunchSettings.TargetWorld);
+        }
+
+        [Test]
+        public void EnableLocalAssetBundlesFromLocalAbDeepLink()
+        {
+            //Arrange
+            var realmLaunchSettings = new RealmLaunchSettings();
+
+            ApplicationParametersParser applicationParametersParser = new (new[]
+            {
+                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true&local-ab=true",
+            });
+
+            //Act
+            realmLaunchSettings.ApplyConfig(applicationParametersParser);
+
+            //Assert
+            Assert.AreEqual(LaunchMode.LocalSceneDevelopment, realmLaunchSettings.CurrentMode);
+            Assert.IsTrue(realmLaunchSettings.useLocalAssetBundles, "local-ab must enable local asset bundles");
         }
 
         [Test]

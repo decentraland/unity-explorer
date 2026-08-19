@@ -45,12 +45,22 @@ namespace ECS.SceneLifeCycle.Reporting
             }
 
             for (var i = 0; i < parcels.Count; i++)
-            {
                 if (TryDequeue(parcels[i], out report))
                     return true;
-            }
 
             report = null;
+            return false;
+        }
+
+        public bool HasReport(IReadOnlyList<Vector2Int> parcels)
+        {
+            if (queue.Count == 0)
+                return false;
+
+            for (var i = 0; i < parcels.Count; i++)
+                if (queue.ContainsKey(parcels[i]))
+                    return true;
+
             return false;
         }
 

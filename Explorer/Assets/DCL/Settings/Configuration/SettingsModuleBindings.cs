@@ -24,7 +24,7 @@ namespace DCL.Settings.Configuration
     public abstract class SettingsModuleBindingBase
     {
         [field: SerializeField]
-        public FeatureId FeatureId { get; set; } = FeatureId.NONE;
+        public FeatureId FeatureId { get; set; } = FeatureId.None;
 
         public abstract UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,

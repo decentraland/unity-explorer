@@ -28,7 +28,7 @@ namespace DCL.Chat.ChatCommands
             {
                 case ChatChannel.ChatChannelType.NEARBY:
                 case ChatChannel.ChatChannelType.COMMUNITY:
-                    return currentChannelService.InputState = Result<PrivateConversationUserStateService.ChatUserState>.SuccessResult(PrivateConversationUserStateService.ChatUserState.CONNECTED);
+                    return currentChannelService.InputState = Result<PrivateConversationUserStateService.ChatUserState>.SuccessResult(PrivateConversationUserStateService.ChatUserState.Connected);
                 case ChatChannel.ChatChannelType.USER:
                 {
                     var status = await getUserChatStatusCommand.ExecuteAsync(currentChannel.Id.Id, ct);

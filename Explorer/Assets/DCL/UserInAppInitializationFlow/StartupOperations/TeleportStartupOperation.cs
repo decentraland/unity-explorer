@@ -1,12 +1,11 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Ipfs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.Utilities;
 using DCL.Utility.Types;
-using ECS;
 using ECS.Prioritization.Components;
 using Global.AppArgs;
 using System.Threading;
@@ -28,9 +27,10 @@ namespace DCL.UserInAppInitializationFlow
             CameraSamplingData cameraSamplingData,
             StartParcel startParcel,
             IAppArgs appArgs,
+            IRoomHub roomHub,
             bool editorPositionOverrideActive = false,
             string reportCategory = ReportCategory.SCENE_LOADING)
-            : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, reportCategory)
+            : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, roomHub, reportCategory)
         {
             this.startParcel = startParcel;
             this.appArgs = appArgs;
@@ -47,18 +47,20 @@ namespace DCL.UserInAppInitializationFlow
             // --position flag or effective editor override → use default start parcel
             bool useDefault = appArgs.HasFlag(AppArgsFlags.POSITION) || editorOverride;
 
+            string? spawnPointName = startParcel.SpawnPointName;
+
             if (useDefault)
-                return await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+                return await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct, spawnPointName: spawnPointName);
 
             // World manifest spawn coordinate takes next priority
             if (realmController.RealmData.WorldManifest is { IsEmpty: false, spawn_coordinate: { } spawn })
-                return await InternalExecuteAsync(args, new Vector2Int(spawn.x, spawn.y), ct);
+                return await InternalExecuteAsync(args, new Vector2Int(spawn.x, spawn.y), ct, spawnPointName: spawnPointName);
 
             // Local scene development: use the scene's base parcel as spawn point
             return realmController.RealmData.IsLocalSceneDevelopment
                    && await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct) is { Value: { Count: > 0 } } sceneDefinitions
-                ? await InternalExecuteAsync(args, sceneDefinitions.Value[0].metadata.scene.DecodedBase, ct)
-                : await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+                ? await InternalExecuteAsync(args, sceneDefinitions.Value[0].metadata.scene.DecodedBase, ct, spawnPointName: spawnPointName)
+                : await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct, spawnPointName: spawnPointName);
         }
     }
 }

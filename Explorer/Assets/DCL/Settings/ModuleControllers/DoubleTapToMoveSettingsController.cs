@@ -12,13 +12,13 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.DOUBLE_CLICK_WALK))
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.DoubleClickWalk))
             {
                 view.SetActive(false);
                 return;
             }
 
-            bool value = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_DOUBLE_TAP_TO_MOVE, false);
+            bool value = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_DOUBLE_TAP_TO_MOVE);
             view.ToggleView.Toggle.SetIsOnWithoutNotify(value);
             view.ToggleView.Toggle.onValueChanged.AddListener(OnToggleValueChanged);
         }

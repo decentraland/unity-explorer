@@ -156,6 +156,17 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         LodGeneratorCDN = 94,
 
+        // v2 social-service endpoints (address-only payloads, profiles resolved client-side).
+        CommunitiesV2 = 95,
+        MembersV2 = 96,
+
         Pulse = 100,
+
+        MarketplaceServer = 101,
+        ShopLink = 102,
+
+        ReferralProgress = 103,
+        IntercomTickets = 104,
+        IntercomTicketsOrigin = 105,
     }
 }

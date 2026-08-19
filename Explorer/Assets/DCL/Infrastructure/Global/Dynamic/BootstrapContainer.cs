@@ -13,6 +13,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Time;
+using DCL.Utilities;
 using DCL.Utility;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -42,12 +43,16 @@ namespace Global.Dynamic
         public bool EnableAnalytics => Analytics.Enabled;
         public DiagnosticsContainer DiagnosticsContainer { get; private set; }
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
-        public IWebBrowser WebBrowser { get; private set; }
+        public UnityAppWebBrowser WebBrowser { get; private set; }
         public IWeb3AccountFactory Web3AccountFactory { get; private set; }
         public IAssetsProvisioner? AssetsProvisioner { get; private init; }
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
+        public ReactiveProperty<string?> DeeplinkSigninIdentityId { get; } = new (null);
+
+        // The auth request id this instance's login flow is waiting a signin deep link for (null when not logging in).
+        public ReactiveProperty<string?> DeeplinkLoginAwaitingSigninRequestId { get; } = new (null);
         public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -55,7 +60,16 @@ namespace Global.Dynamic
         public IAppArgs AppArgs { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
+        public bool UseLocalAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
+
+        /// <summary>
+        ///     The loopback endpoint reserved for the local-ab abgen server (the URL sources already point
+        ///     at it). Non-null only in local scene development with local asset bundles —
+        ///     DynamicWorldContainer registers AbgenSidecarPlugin, which owns the server's whole lifecycle,
+        ///     exclusively from this.
+        /// </summary>
+        public string? LocalAbBaseUrl { get; private set; }
         public RealmClock RealmClock { get; } = new ();
         public WebRequestsContainer WebRequestsContainer { get; private set; }
 
@@ -63,13 +77,13 @@ namespace Global.Dynamic
         {
             base.Dispose();
 
-            DiagnosticsContainer?.Dispose();
+            DiagnosticsContainer.Dispose();
 
             // CompositeWeb3Provider disposes both authenticators internally
             // Don't dispose Web3Authenticator/EthereumApi separately as they reference the same composite
             CompositeWeb3Provider?.Dispose();
             IdentityCache?.Dispose();
-            Analytics?.Dispose();
+            Analytics.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(
@@ -88,6 +102,7 @@ namespace Global.Dynamic
             World world,
             DecentralandEnvironment decentralandEnvironment,
             DCLVersion dclVersion,
+            string? localAbBaseUrl,
             CancellationToken ct)
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource, applicationParametersParser);
@@ -101,10 +116,12 @@ namespace Global.Dynamic
                 WebBrowser = browser,
                 LaunchMode = realmLaunchSettings,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
+                UseLocalAssetBundles = realmLaunchSettings.useLocalAssetBundles,
                 AppArgs = applicationParametersParser,
                 DebugSettings = debugSettings,
                 VolumeBus = new VolumeBus(),
-                Environment = decentralandEnvironment
+                Environment = decentralandEnvironment,
+                LocalAbBaseUrl = localAbBaseUrl
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
@@ -114,26 +131,29 @@ namespace Global.Dynamic
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
-                if (container.IdentityCache.Identity != null)
-                    UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
-
-                container.IdentityCache.OnIdentityChanged += () =>
+                if (container.IdentityCache != null)
                 {
                     if (container.IdentityCache.Identity != null)
                         UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
-                };
 
-                var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
+                    container.IdentityCache.OnIdentityChanged += () =>
+                    {
+                        if (container.IdentityCache.Identity != null)
+                            UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
+                    };
+                }
+
+                var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START));
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct);
                 container.WebRequestsContainer = webRequestsContainer;
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
-                    if (container.IdentityCache.Identity != null)
+                    if (container.IdentityCache?.Identity != null)
                         container.DiagnosticsContainer.Sentry!.AddIdentityToScope(scope, container.IdentityCache.Identity.Address);
                 }
             });
@@ -179,12 +199,14 @@ namespace Global.Dynamic
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IWeb3AccountFactory web3AccountFactory,
             IWeb3IdentityCache identityCache,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             AnalyticsContainer container,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment dclEnvironment,
             IAppArgs appArgs,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            ReactiveProperty<string?> deeplinkSigninIdentityId,
+            ReactiveProperty<string?> deeplinkLoginAwaitingSigninRequestId)
         {
             int? identityExpirationDuration = appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v)
                 ? int.Parse(v!)
@@ -201,8 +223,25 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
-            // Create Dapp authenticator (Browser wallet)
-            var dappAuth = new DappWeb3Authenticator(
+            string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
+
+            var dappDeepLinkAuth = new DappDeepLinkAuthenticator(
+                webBrowser,
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+                web3AccountFactory,
+                webRequestController,
+                deeplinkSigninIdentityId,
+                deeplinkLoginAwaitingSigninRequestId,
+#if UNITY_EDITOR
+                true,
+#else
+                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY),
+#endif
+                referrer
+            );
+
+            var dappAuth = new DappWeb3EthereumApi(
                 webBrowser,
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
@@ -212,11 +251,10 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 dclEnvironment,
-                new AuthCodeVerificationFeatureFlag(),
                 identityExpirationDuration
             );
 
-            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, identityCache, container.Controller);
+            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, dappDeepLinkAuth, identityCache, container.Controller);
 
             return result;
         }
@@ -250,16 +288,11 @@ namespace Global.Dynamic
         }
     }
 
-    internal class AuthCodeVerificationFeatureFlag : DappWeb3Authenticator.ICodeVerificationFeatureFlag
-    {
-        public bool ShouldWaitForCodeVerificationFromServer => FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION);
-    }
-
     [Serializable]
     public class BootstrapSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsDevelopment { get; private set; }
-        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsProduction { get; private set; }
-        [field: SerializeField] public BuildData BuildData { get; private set; }
+        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsDevelopment { get; private set; } = null!;
+        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsProduction { get; private set; } = null!;
+        [field: SerializeField] public BuildData BuildData { get; private set; } = null!;
     }
 }

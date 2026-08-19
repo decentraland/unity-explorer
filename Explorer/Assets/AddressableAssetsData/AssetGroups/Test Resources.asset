@@ -35,18 +35,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 75051ef81d8168741991242a9b201866
-    m_Address: Integration Tests World Container
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9893189605d84349b03f89a01d6abca
     m_Address: Test Report Settings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f13b19cfc3075014aaddb1fd403e2081
-    m_Address: Integration Tests Global Container
+    m_Address: Integration Tests Container
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -1,15 +1,16 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using Global.AppArgs;
 using System;
 using UnityEngine;
 #if ALTTESTER
-using DCL.Diagnostics;
 using System.IO;
 #endif
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Browser
 {
-    public class UnityAppWebBrowser : IWebBrowser
+    public class UnityAppWebBrowser
     {
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs? appArgs;
@@ -20,12 +21,24 @@ namespace DCL.Browser
             this.appArgs = appArgs;
         }
 
-        public void OpenUrl(string url)
+        /// <summary>
+        /// Opens a validated web URL in the system browser. Must be called from the main thread.
+        /// Escaping uses <see cref="Uri.AbsoluteUri"/> rather than <c>Uri.EscapeUriString</c>: the latter
+        /// percent-encodes '%', double-encoding URLs that already contain escaped sequences (e.g. a Stripe
+        /// checkout fragment's %2F becomes %252F, breaking Stripe's atob() decode), whereas AbsoluteUri
+        /// escapes only unescaped characters and preserves existing escapes.
+        /// </summary>
+        public virtual void OpenUrlMainThreadOnly(string url)
         {
-            var escaped = Uri.EscapeUriString(url);
+            if (!ExternalUrlPolicy.IsWebScheme(url))
+            {
+                ReportHub.LogWarning(ReportCategory.UI, "Refused to open non-web URL scheme");
+                return;
+            }
+
+            var escaped = Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ? uri.AbsoluteUri : url;
 
 #if ALTTESTER
-            // Suppress system browser only when --alttester runtime flag is set; Editor/QA builds carry the ALTTESTER define but still need wallet login.
             if (appArgs?.HasFlag(AppArgsFlags.ALTTESTER) == true)
             {
                 try
@@ -44,9 +57,9 @@ namespace DCL.Browser
             Application.OpenURL(escaped);
         }
 
-        public void OpenUrl(DecentralandUrl url)
+        public virtual void OpenUrlMainThreadOnly(DecentralandUrl url)
         {
-            OpenUrl(decentralandUrlsSource.Url(url));
+            OpenUrlMainThreadOnly(decentralandUrlsSource.Url(url));
         }
 
         public string GetUrl(DecentralandUrl url) =>

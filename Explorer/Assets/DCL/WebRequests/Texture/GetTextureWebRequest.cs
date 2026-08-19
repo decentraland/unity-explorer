@@ -89,32 +89,51 @@ namespace DCL.WebRequests
                 return UniTask.FromResult(texture);
             }
 
-            private async UniTask<Texture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private async UniTask<Texture2D> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
+                // TODO: .data creates an array
+                var data = webRequest.UnityWebRequest.downloadHandler?.data;
+
+                if (data == null)
+                    throw new Exception($"Texture content is empty: {webRequest.url}");
+
+                using var bufferWrapped = new ManagedNativeArray(data);
+
                 var ktxTexture = new KtxTexture();
 
-                // TODO: .data creates an array
-                using var bufferWrapped = new ManagedNativeArray(webRequest.UnityWebRequest.downloadHandler.data);
+                // Open() can throw before allocating native state; keep it outside the try so Dispose only runs once that state exists.
+                var openResult = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly());
 
-                var result = await ktxTexture.LoadFromBytes(
-                    bufferWrapped.nativeArray,
-                    webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
-                    0,
-                    0,
-                    0,
-                    true
-                );
+                try
+                {
+                    if (openResult != ErrorCode.Success)
+                        throw new Exception($"Failed to open ktx texture from data ({openResult}): {webRequest.url}");
 
-                if (result == null)
-                    throw new Exception($"Failed to load ktx texture from data: {webRequest.url}");
+                    // readable: true keeps the decoded texture CPU-readable.
+                    var result = await ktxTexture.LoadTexture2D(
+                        webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
+                        readable: true
+                    );
 
-                var finalTex = result.texture;
+                    if (result.errorCode != ErrorCode.Success)
+                    {
+                        // LoadTexture2D can allocate the Texture2D before failing (e.g. Apply/upload throws); destroy it so it doesn't leak.
+                        UnityObjectUtils.SafeDestroy(result.texture);
+                        throw new Exception($"Failed to load ktx texture from data ({result.errorCode}): {webRequest.url}");
+                    }
 
-                finalTex.wrapMode = wrapMode;
-                finalTex.filterMode = filterMode;
-                finalTex.SetDebugName(webRequest.url);
-                ProfilingCounters.TexturesAmount.Value++;
-                return finalTex;
+                    var finalTex = result.texture;
+
+                    finalTex.wrapMode = wrapMode;
+                    finalTex.filterMode = filterMode;
+                    finalTex.SetDebugName(webRequest.url);
+                    ProfilingCounters.TexturesAmount.Value++;
+                    return finalTex;
+                }
+                finally
+                {
+                    ktxTexture.Dispose();
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Friends
@@ -44,11 +45,31 @@ namespace DCL.Friends
             friendEventBus.OnYouRemovedFriend -= FriendRemoved;
             friendEventBus.OnOtherUserRemovedTheFriendship -= FriendRemoved;
 
-            // Cancel all pending debounce operations
-            foreach (var info in debounceInfo.Values)
-                info.CancellationTokenSource.SafeCancelAndDispose();
+            CancelPendingDebounces();
+        }
 
+        /// <summary>
+        ///     Forgets every cached status and cancels pending debounces, so subsequent updates
+        ///     are evaluated against an empty state and always raise their corresponding event.
+        /// </summary>
+        public void Reset()
+        {
+            friendsOnlineStatus.Clear();
+            CancelPendingDebounces();
+        }
+
+        private void CancelPendingDebounces()
+        {
+            if (debounceInfo.Count == 0) return;
+
+            using PooledObject<List<FriendStatusDebounceInfo>> scope = ListPool<FriendStatusDebounceInfo>.Get(out List<FriendStatusDebounceInfo> pendingDebounces);
+            pendingDebounces.AddRange(debounceInfo.Values);
+
+            // Empty the map before cancelling: cancellation continuations run synchronously and mutate it
             debounceInfo.Clear();
+
+            foreach (FriendStatusDebounceInfo info in pendingDebounces)
+                info.CancellationTokenSource.SafeCancelAndDispose();
         }
 
         private void FriendRemoved(string userid)
@@ -64,7 +85,7 @@ namespace DCL.Friends
         }
 
         public OnlineStatus GetFriendStatus(string friendAddress) =>
-            friendsOnlineStatus.GetValueOrDefault(friendAddress, OnlineStatus.OFFLINE);
+            friendsOnlineStatus.GetValueOrDefault(friendAddress, OnlineStatus.Offline);
 
         private bool FriendOnlineStatusChanged(Profile.CompactInfo friendProfile, OnlineStatus onlineStatus)
         {
@@ -76,13 +97,13 @@ namespace DCL.Friends
         }
 
         private void FriendBecameOnline(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.ONLINE, () => OnFriendBecameOnline?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Online, () => OnFriendBecameOnline?.Invoke(friendProfile));
 
         private void FriendBecameAway(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.AWAY, () => OnFriendBecameAway?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Away, () => OnFriendBecameAway?.Invoke(friendProfile));
 
         private void FriendBecameOffline(Profile.CompactInfo friendProfile) =>
-            DebounceStatusChange(friendProfile, OnlineStatus.OFFLINE, () => OnFriendBecameOffline?.Invoke(friendProfile));
+            DebounceStatusChange(friendProfile, OnlineStatus.Offline, () => OnFriendBecameOffline?.Invoke(friendProfile));
 
         private void DebounceStatusChange(Profile.CompactInfo friendProfile, OnlineStatus newStatus, Action onStatusChange)
         {

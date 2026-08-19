@@ -38,7 +38,9 @@ namespace DCL.UI
 
             if (isOn)
                 selectorToggle.tabAnimator.SetTrigger(UIAnimationHashes.ACTIVE);
-            else
+            // Animator.Update is only legal on an active-in-hierarchy object; non-selected
+            // tabs are frequently snapped to their resting frame while still hidden.
+            else if (selectorToggle.tabAnimator.gameObject.activeInHierarchy)
             {
                 selectorToggle.tabAnimator.Rebind();
                 selectorToggle.tabAnimator.Update(0);

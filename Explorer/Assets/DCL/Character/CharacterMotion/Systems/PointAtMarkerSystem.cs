@@ -89,8 +89,8 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (!pointAt.IsPointing
                 || string.IsNullOrEmpty(profile.UserId)
-                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.NONE && !isLocalPlayer)
-                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.FRIENDS_ONLY && !isLocalPlayer && (friendsCache == null || !friendsCache.Contains(profile.UserId))))
+                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.None && !isLocalPlayer)
+                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.FriendsOnly && !isLocalPlayer && (friendsCache == null || !friendsCache.Contains(profile.UserId))))
                 return;
 
             float distanceSqr = (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude;

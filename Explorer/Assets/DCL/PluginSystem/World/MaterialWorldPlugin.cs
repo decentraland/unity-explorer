@@ -36,7 +36,7 @@ namespace DCL.PluginSystem.World
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
-            ConfigureSceneMaterial.forceBackfaceCullingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FORCE_BACKFACE_CULLING);
+            ConfigureSceneMaterial.forceBackfaceCullingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ForceBackfaceCulling);
 
             this.mediaFactory = mediaFactory;
         }
@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget, mediaFactory.CreateForScene(builder.World, sharedDependencies, systemsDependencies.RoomHub));
+            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget, mediaFactory.CreateForScene(builder.World, sharedDependencies, systemsDependencies.RoomHub, placeholderSource: null));
 
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear. Consider revising it when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);

@@ -37,6 +37,7 @@ using DCL.Chat.ChatReactions.Debug;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.Commands;
 using DCL.ChatArea;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
@@ -99,6 +100,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMessagePipesHub messagePipesHub;
         private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
+        private readonly StreamReactionsChatCommand streamReactionsChatCommand;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
 
@@ -146,6 +148,7 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
+            StreamReactionsChatCommand streamReactionsChatCommand,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -184,6 +187,7 @@ namespace DCL.PluginSystem.Global
             this.messagePipesHub = messagePipesHub;
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
+            this.streamReactionsChatCommand = streamReactionsChatCommand;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -193,6 +197,8 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            streamReactionsChatCommand.Detach();
+
             if (messageReactionService != null && chatStorage != null)
                 messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
 
@@ -230,6 +236,9 @@ namespace DCL.PluginSystem.Global
                 pluginScope);
 
             messageReactionService = reactions.MessageReactionService;
+
+            // Hand the debug /streamreactions command a live control now that the reactions feature exists.
+            streamReactionsChatCommand.Attach(reactions.StreamControl);
 
             var chatReactionsAnalytics = new ChatReactionsAnalytics(analytics,
                 messageReactionService,
@@ -308,7 +317,7 @@ namespace DCL.PluginSystem.Global
                     chatPanelView.TitlebarView.BackFromMemberList.transform,
                     chatPanelView.InputView.inputField.transform,
                     chatViewRectTransform,
-                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    mainUIView.SidebarView.UnreadMessagesButton.transform,
                     chatPanelView.ChatReactionButton.transform,
                     chatPanelView.EmojiPanelView.transform);
 
@@ -434,7 +443,7 @@ namespace DCL.PluginSystem.Global
         }
 
         private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
-            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.CHAT)));
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.Chat)));
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {

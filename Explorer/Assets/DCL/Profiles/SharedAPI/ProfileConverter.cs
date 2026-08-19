@@ -47,44 +47,40 @@ namespace DCL.Profiles
                 return null;
 
             var jObject = JObject.Load(reader);
-            existingValue ??= Profile.Create();
-            DeserializeProfileList(jObject, existingValue);
-            return existingValue;
+            return DeserializeProfileList(jObject, existingValue);
         }
 
-        private void DeserializeProfileList(JToken root, Profile profile)
+        private Profile DeserializeProfileList(JObject root, Profile? profile)
         {
             // Temporary support two schemes: from catalyst and centralized
             // TODO remove before releasing
 
-            JToken? metadata = root["metadata"];
-
-            if (metadata != null)
+            if (root["metadata"] is JObject metadata)
                 root = metadata;
 
             JToken? avatars = root["avatars"];
 
-            if (avatars is { Type: JTokenType.Array })
-            {
-                foreach (JToken? item in avatars.Children())
-                {
-                    DeserializeProfile(item, profile);
-
-                    // We only care about the first element, it's never an array in reality
-                    break;
-                }
-            }
-            else
+            if (avatars is not { Type: JTokenType.Array })
                 throw new ArgumentException("\"avatars\" is not a JSON array");
 
+            // We only care about the first element, it's never an array in reality
+            foreach (JToken? item in avatars.Children())
+                return DeserializeProfile(item, profile);
 
+            throw new ArgumentException("\"avatars\" array is empty");
         }
 
-        private void DeserializeProfile(JToken? jObject, Profile profile)
+        private Profile DeserializeProfile(JToken? jToken, Profile? profile)
         {
-            if (jObject == null) return;
+            if (jToken is not JObject jObject)
+                throw new ArgumentException("The profile element is not a JSON object");
 
-            profile.GetCompact() = ProfileCompactInfoConverter.ReadJson(jObject);
+            Profile.CompactInfo compact = ProfileCompactInfoConverter.ReadJson(jObject);
+
+            if (profile == null)
+                profile = new Profile(compact);
+            else
+                profile.GetCompact() = compact;
 
             profile.Description = jObject["description"]?.Value<string>() ?? "";
             profile.TutorialStep = jObject["tutorialStep"]?.Value<int>() ?? 0;
@@ -113,6 +109,8 @@ namespace DCL.Profiles
             DeserializeLinks(jObject["links"]!, ref profile.links);
             DeserializeArrayToCollection(jObject["blocked"], ref profile.blocked, static s => s);
             DeserializeArrayToCollection(jObject["interests"], ref profile.interests, static s => s);
+
+            return profile;
         }
 
         private void DeserializeLinks(JToken? root, ref List<LinkJsonDto>? list)
@@ -128,33 +126,37 @@ namespace DCL.Profiles
             }
         }
 
-        private LinkJsonDto DeserializeLink(JToken item, LinkJsonDto link)
+        private LinkJsonDto DeserializeLink(JToken? jToken, LinkJsonDto link)
         {
+            if (jToken is not JObject item) return new LinkJsonDto { title = "", url = "" };
+
             link.title = item["title"]?.Value<string>() ?? "";
             link.url = item["url"]?.Value<string>() ?? "";
             return link;
         }
 
-        private void DeserializeAvatar(JToken jObject, ref Profile profile)
+        private void DeserializeAvatar(JToken? jToken, ref Profile profile)
         {
+            var jObject = jToken as JObject;
+
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             Avatar avatar = profile.Avatar ??= new Avatar();
 
-            avatar.EyesColor = JsonUtils.DeserializeColor(jObject["eyes"]?["color"], Color.black);
-            avatar.HairColor = JsonUtils.DeserializeColor(jObject["hair"]?["color"], Color.black);
-            avatar.SkinColor = JsonUtils.DeserializeColor(jObject["skin"]?["color"], Color.black);
+            avatar.EyesColor = JsonUtils.DeserializeColor(jObject?["eyes"]?["color"], Color.black);
+            avatar.HairColor = JsonUtils.DeserializeColor(jObject?["hair"]?["color"], Color.black);
+            avatar.SkinColor = JsonUtils.DeserializeColor(jObject?["skin"]?["color"], Color.black);
 
-            avatar.BodyShape = BodyShape.FromStringSafe(jObject["bodyShape"]?.Value<string>() ?? "");
+            avatar.BodyShape = BodyShape.FromStringSafe(jObject?["bodyShape"]?.Value<string>() ?? "");
 
-            DeserializeArrayToHashSet(jObject["wearables"], avatar.wearables, static s => new URN(s));
-            DeserializeArrayToHashSet(jObject["forceRender"], avatar.forceRender, static s => s);
+            DeserializeArrayToHashSet(jObject?["wearables"], avatar.wearables, static s => new URN(s));
+            DeserializeArrayToHashSet(jObject?["forceRender"], avatar.forceRender, static s => s);
 
-            DeserializeEmoteList(jObject["emotes"], avatar.emotes);
+            DeserializeEmoteList(jObject?["emotes"], avatar.emotes);
 
             ref Profile.CompactInfo compactInfo = ref profile.GetCompact();
 
-            compactInfo.FaceSnapshotUrl = URLAddress.FromString(jObject["snapshots"]?["face256"]?.Value<string>() ?? "");
-            avatar.BodySnapshotUrl = URLAddress.FromString(jObject["snapshots"]?["body"]?.Value<string>() ?? "");
+            compactInfo.FaceSnapshotUrl = URLAddress.FromString(jObject?["snapshots"]?["face256"]?.Value<string>() ?? "");
+            avatar.BodySnapshotUrl = URLAddress.FromString(jObject?["snapshots"]?["body"]?.Value<string>() ?? "");
         }
 
         private void DeserializeEmoteList(JToken? root, URN[] equippedEmotes)

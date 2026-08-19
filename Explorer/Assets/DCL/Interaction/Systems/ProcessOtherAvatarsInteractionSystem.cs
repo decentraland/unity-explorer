@@ -60,7 +60,7 @@ namespace DCL.Interaction.Systems
             this.mvcManager = mvcManager;
             this.cameraEntityProxy = cameraEntityProxy;
 
-            useContextMenu = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_CONTEXT_MENU);
+            useContextMenu = FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarContextMenu);
 
             if (useContextMenu)
             {
@@ -132,10 +132,7 @@ namespace DCL.Interaction.Systems
             if (context.control!.IsPressed() || currentProfileHovered == null)
                 return;
 
-            string userId = currentProfileHovered.UserId;
-
-            if (string.IsNullOrEmpty(userId))
-                return;
+            string userId = currentProfileHovered.UserId.Value;
 
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId))).Forget();
         }
@@ -145,10 +142,7 @@ namespace DCL.Interaction.Systems
             if (!context.control.IsPressed() || currentProfileHovered == null)
                 return;
 
-            string userId = currentProfileHovered.UserId;
-
-            if (string.IsNullOrEmpty(userId))
-                return;
+            string userId = currentProfileHovered.UserId.Value;
 
             wasCursorLockedWhenMenuOpened  = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
 
@@ -168,7 +162,7 @@ namespace DCL.Interaction.Systems
                 new Vector2(50, 0),
                 disposeCts.Token,
                 contextMenuTask.Task,
-                anchorPoint: MenuAnchorPoint.CENTER_RIGHT,
+                anchorPoint: MenuAnchorPoint.CenterRight,
                 isOpenedOnWorldAvatar: true,
                 onHide: OnContextMenuClosed).Forget();
         }

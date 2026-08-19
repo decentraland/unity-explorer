@@ -23,14 +23,14 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         private static readonly TimeSpan LONG_RUNNING_HINT_DELAY = TimeSpan.FromSeconds(10);
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private enum State { Waiting, Success, Failed }
 
         private State currentState;
 
         private readonly IEventBus eventBus;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
@@ -41,7 +41,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private CancellationTokenSource? delayCts;
 
         public GiftTransferController(ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IEventBus eventBus,
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -274,7 +274,7 @@ namespace DCL.Backpack.Gifting.Presenters
                     .ConfirmationDialogOpener
                     .OpenConfirmationDialogAsync(dialogParams, ct);
 
-                if (result == ConfirmationResult.CONFIRM)
+                if (result == ConfirmationResult.Confirm)
                 {
                     ReportHub.Log(ReportCategory.GIFTING, GiftingTextIds.RetryLogMessage);
                     await mvcManager.ShowAsync(IssueCommand(inputData), ct);
@@ -292,7 +292,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void LinkCallback(string url)
         {
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
         }
     }
 }
