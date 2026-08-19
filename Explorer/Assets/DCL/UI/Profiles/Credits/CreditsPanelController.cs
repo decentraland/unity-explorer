@@ -44,7 +44,6 @@ namespace DCL.Credits
             if (topUpEnabled)
             {
                 view.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
-                view.GetCreditsButton2.onClick.AddListener(OnGetCreditsClicked);
             }
 
             if (identityCache.Identity != null)
@@ -59,7 +58,6 @@ namespace DCL.Credits
             identityCache.OnIdentityChanged -= OnIdentityChanged;
             identityCache.OnIdentityCleared -= OnIdentityCleared;
             view.GetCreditsButton.onClick.RemoveListener(OnGetCreditsClicked);
-            view.GetCreditsButton2.onClick.RemoveListener(OnGetCreditsClicked);
         }
 
         private void OnGetCreditsClicked() =>

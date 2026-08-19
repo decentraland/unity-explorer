@@ -9,6 +9,7 @@ namespace DCL.MarketplaceCredits.Purchase
     public class ShopListingDto
     {
         public string tradeId = null!;
+        public string? acquisition;
         public string listingType = null!;
         public string source = null!;
         public string contractAddress = null!;

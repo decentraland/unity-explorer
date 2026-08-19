@@ -42,5 +42,8 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public MuteButtonView MuteButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button? BugReportButton { get; private set; } = null!;
     }
 }

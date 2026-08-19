@@ -103,7 +103,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
             Entity avatarEntity = world.Create(
-                new Profile(id, id, new Avatar()),
+                new Profile(UserId.New(id).Unwrap(), id, new Avatar()),
                 avatarBase,
                 new CharacterTransform(avatarGo.transform));
 

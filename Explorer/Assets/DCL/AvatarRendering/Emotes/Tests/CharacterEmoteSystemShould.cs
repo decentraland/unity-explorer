@@ -182,6 +182,64 @@ namespace DCL.AvatarRendering.Emotes.Tests
             emoteStorage.DidNotReceive().TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>());
         }
 
+        [Test]
+        public void RecordInterruptedStopWhenSceneEmoteSceneIsNoLongerLoaded()
+        {
+            //Arrange
+            URN emoteUrn = world.Get<CharacterEmoteComponent>(playerEntity).EmoteUrn;
+
+            //Act
+            system!.Update(0);
+
+            //Assert: a scene-change cancellation is an interruption, and it survives Reset().
+            CharacterEmoteComponent emoteComponent = world.Get<CharacterEmoteComponent>(playerEntity);
+            Assert.IsTrue(emoteComponent.PendingStop.IsSet);
+            Assert.AreEqual(EmoteState.EsInterrupted, emoteComponent.PendingStop.Reason);
+            Assert.AreEqual(emoteUrn, emoteComponent.PendingStop.Urn);
+        }
+
+        [Test]
+        public void RecordFinishedStopWhenLegacyEmoteEndsNaturally()
+        {
+            //Arrange: a non-scene emote whose legacy animation stopped on its own.
+            const string EMOTE_URN = "urn:decentraland:off-chain:base-emotes:wave";
+
+            ref CharacterEmoteComponent emoteComponent = ref world.Get<CharacterEmoteComponent>(playerEntity);
+            emoteComponent.EmoteUrn = EMOTE_URN;
+            avatarView.IsLegacyAnimationPlaying.Returns(false);
+
+            //Act
+            system!.Update(0);
+
+            //Assert
+            CharacterEmoteComponent updated = world.Get<CharacterEmoteComponent>(playerEntity);
+            Assert.IsNull(updated.CurrentEmoteReference);
+            Assert.IsTrue(updated.PendingStop.IsSet);
+            Assert.AreEqual(EmoteState.EsFinished, updated.PendingStop.Reason);
+            Assert.AreEqual(EMOTE_URN, updated.PendingStop.Urn.ToString());
+        }
+
+        [Test]
+        public void RecordInterruptedStopWhenStopIsRequested()
+        {
+            //Arrange: a non-scene emote explicitly asked to stop (e.g. remote stop or restricted action).
+            const string EMOTE_URN = "urn:decentraland:off-chain:base-emotes:dance";
+
+            ref CharacterEmoteComponent emoteComponent = ref world.Get<CharacterEmoteComponent>(playerEntity);
+            emoteComponent.EmoteUrn = EMOTE_URN;
+            emoteComponent.StopEmote = true;
+
+            //Act
+            system!.Update(0);
+
+            //Assert
+            CharacterEmoteComponent updated = world.Get<CharacterEmoteComponent>(playerEntity);
+            Assert.IsNull(updated.CurrentEmoteReference);
+            Assert.IsTrue(updated.PendingStop.IsSet);
+            Assert.AreEqual(EmoteState.EsInterrupted, updated.PendingStop.Reason);
+            Assert.AreEqual(EMOTE_URN, updated.PendingStop.Urn.ToString());
+        }
+
         private static ISceneFacade NewSceneFacadeWithName(string name)
         {
             ISceneData sceneData = Substitute.For<ISceneData>();

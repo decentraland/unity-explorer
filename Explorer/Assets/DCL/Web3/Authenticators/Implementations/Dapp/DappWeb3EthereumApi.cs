@@ -39,7 +39,7 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
-        private readonly DCLSemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new ();
         private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
         private readonly URLBuilder urlBuilder = new ();
 
@@ -298,7 +298,10 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> RequestEthMethodWithoutSignatureAsync(EthApiRequest request, CancellationToken ct)
         {
-            string reqJson = JsonConvert.SerializeObject(request);
+            long callerId = request.id;
+            request.id &= int.MaxValue;
+
+            string reqJson = JsonConvert.SerializeObject(new { jsonrpc = "2.0", request.id, request.method, request.@params });
             byte[] bytes = Encoding.UTF8.GetBytes(reqJson);
             await rpcWebSocket!.SendAsync(bytes, WebSocketMessageType.Text, true, ct);
 
@@ -317,7 +320,10 @@ namespace DCL.Web3.Authenticators
                         throw new Web3Exception($"RPC {request.method} failed: code {response.error.code} {response.error.message}");
 
                     if (response.id == request.id)
+                    {
+                        response.id = callerId;
                         return response;
+                    }
                 }
                 else if (result.MessageType == WebSocketMessageType.Close)
                 {

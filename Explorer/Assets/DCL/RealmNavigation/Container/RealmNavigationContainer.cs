@@ -29,8 +29,6 @@ namespace DCL.RealmNavigation
         /// </summary>
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
 
-        public IWorldAccessGate WorldAccessGate { get; private init; } = null!;
-
         public IWorldPermissionsService WorldPermissionsService { get; private init; } = null!;
 
         public IWorldInfoHub WorldInfoHub { get; private init; } = null!;
@@ -51,7 +49,7 @@ namespace DCL.RealmNavigation
             ILandscape landscape,
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen,
-            IPlacesAPIService placesAPIService,
+            IPlacesAPIService placesApiService,
             IWeb3IdentityCache identityCache,
             ICommunityMembershipChecker communityMembershipChecker,
             IMVCManager mvcManager)
@@ -75,7 +73,7 @@ namespace DCL.RealmNavigation
                     new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                     new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                     new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
-                    new ClearWorldsCacheTeleportOperation(placesAPIService),
+                    new ClearWorldsCacheTeleportOperation(placesApiService),
                     new ChangeRealmTeleportOperation(realmContainer.RealmController),
                     new AnalyticsFlushTeleportOperation(analytics),
                     new LoadLandscapeTeleportOperation(landscape),
@@ -115,8 +113,8 @@ namespace DCL.RealmNavigation
                     analytics,
                     realmChangeOperations,
                     teleportInSameRealmOperation,
-                    worldAccessGate),
-                WorldAccessGate = worldAccessGate,
+                    worldAccessGate,
+                    staticContainer.ScenesCache),
                 WorldPermissionsService = worldPermissionsService,
                 WorldInfoHub = worldInfoHub,
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder

@@ -94,7 +94,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             try
             {
-                controller.CurrentRequestID = string.Empty;
+                controller.CurrentRequestId = string.Empty;
 
                 compositeWeb3Provider.OTPSendSucceeded += OnOTPSendSucceeded;
 
