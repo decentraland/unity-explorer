@@ -4,7 +4,6 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using System;
 using System.Text;
-using RichTypes;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
