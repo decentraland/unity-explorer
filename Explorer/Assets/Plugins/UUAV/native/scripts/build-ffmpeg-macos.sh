@@ -35,6 +35,12 @@ if ! command -v nasm > /dev/null; then
     exit 1
 fi
 
+# configure resolves libxml2 (below) exclusively through pkg-config
+if ! command -v pkg-config > /dev/null; then
+    echo "error: pkg-config not found; install it with 'brew install pkg-config'" >&2
+    exit 1
+fi
+
 # consistent LC_BUILD_VERSION across both slices
 export MACOSX_DEPLOYMENT_TARGET=11.0
 
@@ -57,6 +63,33 @@ if ! (cd "$BUILD_DIR" && "$SRC_DIR/configure" --help | grep -q securetransport);
     echo "error: this FFmpeg has no --enable-securetransport; use --enable-openssl instead" >&2
     exit 1
 fi
+
+# The DASH demuxer hard-requires libxml2 (dash_demuxer_deps in configure);
+# without it this build silently ships unable to open .mpd manifests while
+# the BtbN Windows build (--enable-libxml2) can - a gap that only surfaces
+# as mac-only playback failures. macOS bundles libxml2 in the dyld shared
+# cache on every install and the SDK carries the headers and tbd, but no
+# pkg-config file; synthesize one pointing at the SDK so configure's
+# require_pkg_config resolves with zero Homebrew runtime dependency.
+SDKROOT="$(xcrun --show-sdk-path)"
+XML2_VERSION="$(awk -F'"' '/define LIBXML_DOTTED_VERSION/ {print $2}' "$SDKROOT/usr/include/libxml2/libxml/xmlversion.h")"
+if [[ -z "$XML2_VERSION" ]]; then
+    echo "error: could not read LIBXML_DOTTED_VERSION from the SDK's xmlversion.h" >&2
+    exit 1
+fi
+mkdir -p "$BUILD_DIR/pkgconfig"
+# Both include roots on purpose: the demuxer includes <libxml/parser.h>
+# (needs usr/include/libxml2) while configure's probe compiles
+# <libxml2/libxml/xmlversion.h> (needs usr/include, which the cross slice
+# may not have on its default search path).
+cat > "$BUILD_DIR/pkgconfig/libxml-2.0.pc" <<EOF
+Name: libXML
+Description: libxml2 from the macOS SDK
+Version: $XML2_VERSION
+Libs: -lxml2
+Cflags: -I$SDKROOT/usr/include/libxml2 -I$SDKROOT/usr/include
+EOF
+export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 
 # LGPL is the default (no --enable-gpl). Do NOT disable avdevice/avfilter:
 # ffmpeg-sys-next's default features link all seven libraries.
@@ -86,6 +119,7 @@ build_arch() {
         --disable-libxcb \
         --enable-videotoolbox \
         --enable-securetransport \
+        --enable-libxml2 \
         "$@"
 
     make -j"$(sysctl -n hw.ncpu)"

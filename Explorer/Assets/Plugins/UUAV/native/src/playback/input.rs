@@ -37,6 +37,16 @@ impl Input {
         let url_c = CString::new(url).map_err(|_| anyhow!("url contains a NUL byte"))?;
         let mut opts = AvDict::from(protocol_whitelist);
 
+        // The HLS demuxer's segment-extension heuristic (extension_picky,
+        // default on since FFmpeg 7.1) rejects every segment whose URL has no
+        // path extension - the normal shape for tokenized CDN media, YouTube's
+        // googlevideo /videoplayback URLs included. Deliberately unscoped:
+        // extensionless segments appear in playlists this layer cannot tell
+        // apart from scene input (YouTube's native HLS manifests among them),
+        // and the heuristic hardens an in-process parser - this one already
+        // runs sandboxed on the assumption it will be compromised.
+        opts.set(c"extension_picky", c"0");
+
         let input = unsafe {
             let mut fmt = ff::avformat_alloc_context();
             if fmt.is_null() {
@@ -152,5 +162,12 @@ mod tests {
             "file: must be blocked before the filesystem, got: {msg}"
         );
         Ok(())
+    }
+
+    #[test]
+    fn hls_demuxer_is_linked() {
+        // The hls demuxer is a build-configuration dependency with no other
+        // assertion — losing it would only surface as silent playback failures.
+        assert!(!unsafe { ff::av_find_input_format(c"hls".as_ptr()) }.is_null());
     }
 }
