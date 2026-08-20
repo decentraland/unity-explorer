@@ -72,7 +72,7 @@ namespace DCL.Notifications.Tests
                                      return UniTask.FromResult(op.Target);
                                  });
 
-            controller = new NotificationsRequestController(webRequestController, urlsSource, identityCache, TEST_POLL_INTERVAL);
+            controller = NotificationsRequestController.CreateForTest(webRequestController, urlsSource, identityCache, TEST_POLL_INTERVAL);
         }
 
         [Test]

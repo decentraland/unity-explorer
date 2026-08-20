@@ -43,7 +43,16 @@ namespace DCL.Notifications
             IWeb3IdentityCache web3IdentityCache
         ) : this(webRequestController, urlsSource, web3IdentityCache, NOTIFICATIONS_DELAY) { }
 
-        internal NotificationsRequestController(
+#if UNITY_INCLUDE_TESTS
+        public static NotificationsRequestController CreateForTest(
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource,
+            IWeb3IdentityCache web3IdentityCache,
+            TimeSpan pollInterval) =>
+            new (webRequestController, urlsSource, web3IdentityCache, pollInterval);
+#endif
+
+        private NotificationsRequestController(
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
             IWeb3IdentityCache web3IdentityCache,
