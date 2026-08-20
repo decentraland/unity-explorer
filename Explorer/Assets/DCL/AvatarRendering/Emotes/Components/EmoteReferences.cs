@@ -1,8 +1,6 @@
 using DCL.AvatarRendering.Loading.Assets;
 using UnityEngine;
 
-// ReSharper disable InconsistentNaming
-
 namespace DCL.AvatarRendering.Emotes
 {
     public class EmoteReferences : MonoBehaviour
@@ -23,13 +21,13 @@ namespace DCL.AvatarRendering.Emotes
         /// </summary>
         public AttachmentRegularAsset? sourceAsset;
 
-        public void Initialize(AnimationClip? animationClip, AnimationClip? propAnimationClip, Animator? animator, Animation? animation, int propAnimationClipHash, bool legacy)
+        public void Initialize(AnimationClip? animationClip, AnimationClip? propClip, Animator? animatorComp, Animation? animationComp, int propClipHash, bool legacy)
         {
-            avatarClip = animationClip;
-            propClip = propAnimationClip;
-            animatorComp = animator;
-            animationComp = animation;
-            propClipHash = propAnimationClipHash;
+            this.avatarClip = animationClip;
+            this.propClip = propClip;
+            this.animatorComp = animatorComp;
+            this.animationComp = animationComp;
+            this.propClipHash = propClipHash;
             this.legacy = legacy;
         }
     }

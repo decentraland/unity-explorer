@@ -460,7 +460,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             in CharacterAnimationComponent animation,
             in StunComponent stun,
             in MovementInputComponent input,
-            in HeadIKComponent headIk,
+            in HeadIKComponent headIK,
             in HandPointAtComponent pointAt)
         {
             var playerState = new NetworkMovementMessage
@@ -476,9 +476,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 isSliding = animation.States.IsSliding,
                 isPointingAt = pointAt.IsPointing,
                 pointAtWorldHitPoint = pointAt.WorldHitPoint,
-                headIKYawEnabled = headIk.YawEnabled,
-                headIKPitchEnabled = headIk.PitchEnabled,
-                headYawAndPitch = headIk.GetHeadYawAndPitch(),
+                headIKYawEnabled = headIK.YawEnabled,
+                headIKPitchEnabled = headIK.PitchEnabled,
+                headYawAndPitch = headIK.GetHeadYawAndPitch(),
                 movementKind = input.Kind,
                 animState = new AnimationStates
                 {
@@ -538,7 +538,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)
         {
             if (!deleteEntityIntention.DeferDeletion)
-                messageBus.OnPlayerRemoved(profile.UserId.Value);
+                messageBus.OnPlayerRemoved(profile.UserId);
         }
 
         // Each promise is wrapped into its own entity so FinalizeEmoteLoadingSystem consumes the

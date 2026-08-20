@@ -1,4 +1,5 @@
 using Arch.Core;
+using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
@@ -28,6 +29,7 @@ using UnityEngine.TestTools;
 // Define Promise types as aliases for clarity, similar to the system file
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>; // Corrected alias
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesDTOByPointersFromRealmIntention>;
 using EmoteResolutionPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
@@ -37,13 +39,13 @@ namespace DCL.AvatarRendering.Emotes.Tests
 {
     public class FinalizeEmoteLoadingSystemShould : UnitySystemTestBase<FinalizeEmoteLoadingSystem>
     {
-        private MockEmoteStorage mockEmoteStorage = null!;
-        private ListObjectPool<URN> urnPool = null!;
+        private MockEmoteStorage mockEmoteStorage;
+        private ListObjectPool<URN> urnPool;
 
         // Shared mock objects for assets
-        private GameObject mockGameObject = null!;
-        private AttachmentRegularAsset mockAttachmentAsset = null!;
-        private MockStreamableDataWithURN mockStreamableData = null!;
+        private GameObject mockGameObject;
+        private AttachmentRegularAsset mockAttachmentAsset;
+        private MockStreamableDataWithURN mockStreamableData;
 
         [SetUp]
         public void SetUp()
@@ -147,7 +149,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity emoteEntity = CreateEmoteEntityWithPromise<GLTFData, GetGLTFIntention>(mockEmote, intention, bodyShape, out GltfPromise promise);
 
             // Mocking promise result
-            var gltfData = new GLTFData(null!, mockGameObject);
+            var gltfData = new GLTFData(null, mockGameObject);
             var promiseResult = new StreamableLoadingResult<GLTFData>(gltfData);
             world.Add(promise.Entity, promiseResult);
 
@@ -159,7 +161,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(promise.Entity));
 
             Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue);
-            StreamableLoadingResult<AttachmentRegularAsset> resultValue = mockEmote.AssetResults[bodyShape].GetValueOrDefault();
+            StreamableLoadingResult<AttachmentRegularAsset> resultValue = mockEmote.AssetResults[bodyShape].Value;
             Assert.IsTrue(resultValue.Succeeded);
 
             AttachmentRegularAsset? resultingAttachment = resultValue.Asset;
@@ -172,7 +174,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         public void FinalizeGltfEmoteLoadingUnisexCorrectly()
         {
             var emoteURN = new URN("urn:gltf:emote_unisex");
-            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { MockHasSameClipForAllGendersValue = true };
+            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { MockIsUnisexValue = true, MockHasSameClipForAllGendersValue = true };
             mockEmote.ApplyAndMarkAsLoaded(CreateEmoteDTO(emoteURN, true)); // Mark as unisex for DTO properties
 
             BodyShape loadingBodyShape = BodyShape.MALE; // System will apply to both if unisex
@@ -180,7 +182,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity emoteEntity = CreateEmoteEntityWithPromise<GLTFData, GetGLTFIntention>(mockEmote, intention, loadingBodyShape, out GltfPromise promise);
             Entity resultHolderEntity = promise.Entity;
 
-            var gltfData = new GLTFData(null!, mockGameObject);
+            var gltfData = new GLTFData(null, mockGameObject);
             world.Add(resultHolderEntity, new StreamableLoadingResult<GLTFData>(gltfData));
 
             system.Update(0);
@@ -190,13 +192,13 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             // Check assets for both body shapes
             Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE].HasValue, "Male asset should be set for unisex.");
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE] is { Succeeded: true }, "Male asset should succeed.");
-            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.MALE]?.Asset?.MainAsset, "Male asset game object should match.");
+            Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE].Value.Succeeded, "Male asset should succeed.");
+            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.MALE].Value.Asset.MainAsset, "Male asset game object should match.");
 
             Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE].HasValue, "Female asset should be set for unisex.");
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE] is { Succeeded: true }, "Female asset should succeed.");
-            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.FEMALE]?.Asset?.MainAsset, "Female asset game object should match.");
-            Assert.AreSame(mockEmote.AssetResults[BodyShape.MALE]?.Asset, mockEmote.AssetResults[BodyShape.FEMALE]?.Asset, "Male and Female assets should be the same instance for unisex.");
+            Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE].Value.Succeeded, "Female asset should succeed.");
+            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.FEMALE].Value.Asset.MainAsset, "Female asset game object should match.");
+            Assert.AreSame(mockEmote.AssetResults[BodyShape.MALE].Value.Asset, mockEmote.AssetResults[BodyShape.FEMALE].Value.Asset, "Male and Female assets should be the same instance for unisex.");
 
             Assert.IsFalse(mockEmote.IsLoading, "Emote should not be loading after successful unisex load.");
         }
@@ -224,7 +226,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed by AssetPromise framework (even on failure).");
 
             Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue, "Asset result should be set to a failed result to prevent retry loops.");
-            Assert.IsTrue(mockEmote.AssetResults[bodyShape] is { Succeeded: false }, "Asset result should be marked as failed.");
+            Assert.IsFalse(mockEmote.AssetResults[bodyShape].Value.Succeeded, "Asset result should be marked as failed.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote should not be loading after a failed asset load attempt (status updated).");
         }
 
@@ -259,7 +261,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             var emoteURN = new URN("urn:ab:emote_female");
             var isUnisex = false;
 
-            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
+            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { MockIsUnisexValue = isUnisex };
             mockEmote.ApplyAndMarkAsLoaded(CreateEmoteDTO(emoteURN, isUnisex));
 
             // Main components needed for the system query to run on the Entity
@@ -268,7 +270,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
 
             // Mocking promise result
-            var assetBundleData = new AssetBundleData(null!, new Object[] { mockGameObject }, null, null!);
+            var assetBundleData = new AssetBundleData(null, new []{mockGameObject}, null, null);
             var promiseResult = new StreamableLoadingResult<AssetBundleData>(assetBundleData);
             world.Add(promise.Entity, promiseResult);
 
@@ -280,7 +282,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(promise.Entity));
 
             Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue);
-            StreamableLoadingResult<AttachmentRegularAsset> resultValue = mockEmote.AssetResults[bodyShape].GetValueOrDefault();
+            StreamableLoadingResult<AttachmentRegularAsset> resultValue = mockEmote.AssetResults[bodyShape].Value;
             Assert.IsTrue(resultValue.Succeeded);
 
             AttachmentRegularAsset? resultingAttachment = resultValue.Asset;
@@ -293,7 +295,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         public void FinalizeAssetBundleEmoteLoadingUnisexCorrectly()
         {
             var emoteURN = new URN("urn:ab:emote_unisex");
-            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { MockHasSameClipForAllGendersValue = true };
+            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { MockIsUnisexValue = true, MockHasSameClipForAllGendersValue = true };
             mockEmote.ApplyAndMarkAsLoaded(CreateEmoteDTO(emoteURN, true));
 
             BodyShape loadingBodyShape = BodyShape.FEMALE; // System will apply to both if unisex
@@ -301,7 +303,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, loadingBodyShape, out AssetBundlePromise promise);
             Entity resultHolderEntity = promise.Entity;
 
-            var assetBundleData = new AssetBundleData(null!, new Object[] { mockGameObject }, null, null!);
+            var assetBundleData = new AssetBundleData(null, new []{mockGameObject}, null, null);
             world.Add(resultHolderEntity, new StreamableLoadingResult<AssetBundleData>(assetBundleData));
 
             system.Update(0);
@@ -310,13 +312,13 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed.");
 
             Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE].HasValue, "Male asset should be set for unisex.");
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE] is { Succeeded: true }, "Male asset should succeed.");
-            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.MALE]?.Asset?.MainAsset, "Male asset game object should match.");
+            Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE].Value.Succeeded, "Male asset should succeed.");
+            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.MALE].Value.Asset.MainAsset, "Male asset game object should match.");
 
             Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE].HasValue, "Female asset should be set for unisex.");
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE] is { Succeeded: true }, "Female asset should succeed.");
-            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.FEMALE]?.Asset?.MainAsset, "Female asset game object should match.");
-            Assert.AreSame(mockEmote.AssetResults[BodyShape.MALE]?.Asset, mockEmote.AssetResults[BodyShape.FEMALE]?.Asset, "Male and Female assets should be the same instance for unisex.");
+            Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE].Value.Succeeded, "Female asset should succeed.");
+            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.FEMALE].Value.Asset.MainAsset, "Female asset game object should match.");
+            Assert.AreSame(mockEmote.AssetResults[BodyShape.MALE].Value.Asset, mockEmote.AssetResults[BodyShape.FEMALE].Value.Asset, "Male and Female assets should be the same instance for unisex.");
 
             Assert.IsFalse(mockEmote.IsLoading, "Emote should not be loading after successful unisex load.");
         }
@@ -345,7 +347,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed (even on failure).");
 
             Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue, "Asset result should be set to a failed result to prevent retry loops.");
-            Assert.IsTrue(mockEmote.AssetResults[bodyShape] is { Succeeded: false }, "Asset result should be marked as failed.");
+            Assert.IsFalse(mockEmote.AssetResults[bodyShape].Value.Succeeded, "Asset result should be marked as failed.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote loading status should be false after failure.");
         }
 
@@ -381,7 +383,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
             BodyShape bodyShape = BodyShape.MALE;
             var intention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var audioClipData = new AudioClipData(null!); // Mock AudioClipData
+            var audioClipData = new AudioClipData(null); // Mock AudioClipData
 
             Entity targetEntity = world.Create(mockEmote, bodyShape);
             var promise = AudioPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
@@ -393,8 +395,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(targetEntity));
             Assert.IsFalse(world.IsAlive(promise.Entity));
             Assert.IsTrue(mockEmote.AudioAssetResults[bodyShape].HasValue);
-            Assert.IsTrue(mockEmote.AudioAssetResults[bodyShape] is { Succeeded: true });
-            Assert.AreSame(audioClipData, mockEmote.AudioAssetResults[bodyShape]?.Asset);
+            Assert.IsTrue(mockEmote.AudioAssetResults[bodyShape].Value.Succeeded);
+            Assert.AreSame(audioClipData, mockEmote.AudioAssetResults[bodyShape].Value.Asset);
         }
 
         [Test]
@@ -561,7 +563,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             public readonly Dictionary<URN, IEmote> Emotes = new ();
             public readonly List<URN> GetOrAddByDTOCalls = new ();
-            public Action<MockEmote, bool>? OnUpdateLoadingStatusCalled;
+            public readonly List<URN> TryGetElementCalls = new ();
+            public Action<MockEmote, bool> OnUpdateLoadingStatusCalled;
             public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
 
             public IEmote GetOrAddByDTO(EmoteDTO dto, bool isDefault)
@@ -579,6 +582,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             public bool TryGetElement(URN urn, out IEmote element)
             {
+                TryGetElementCalls.Add(urn);
                 return Emotes.TryGetValue(urn, out element);
             }
 
@@ -614,7 +618,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 throw new NotImplementedException();
             }
 
-            public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry => throw new NotImplementedException();
+            public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
 
             public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns) =>
                 throw new NotImplementedException();
@@ -622,12 +626,14 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
         public class MockEmote : IEmote
         {
-            public readonly MockEmoteStorage? StorageRef;
+            public readonly MockEmoteStorage storageRef;
             public URN Urn { get; }
             public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
             public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
+            public StreamableLoadingResult<AudioClipData>?[] SocialEmoteOutcomeAudioAssetResults { get; set; }
+            public bool IsSocial { get; }
             public int Amount { get; set; }
-            public TrimmedEmoteDTO TrimmedDTO => throw new NotImplementedException();
+            public TrimmedEmoteDTO TrimmedDTO { get; }
 
             TrimmedAvatarAttachmentDTO ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
 
@@ -637,33 +643,34 @@ namespace DCL.AvatarRendering.Emotes.Tests
             }
 
             public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
-            public EmoteDTO? DTO { get; private set; }
+            public EmoteDTO DTO { get; private set; }
             public bool IsLoading { get; set; }
             public int ApplyAndMarkAsLoadedCallCount { get; private set; }
-            public EmoteDTO? LastAppliedDTO { get; private set; }
+            public EmoteDTO LastAppliedDTO { get; private set; }
+            public bool MockIsUnisexValue { get; set; }
             public bool MockHasSameClipForAllGendersValue { get; set; }
             public StreamableLoadingResult<EmoteDTO> Model { get; set; }
             public StreamableLoadingResult<TrimmedEmoteDTO> TrimmedModel { get; set; }
             public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
-            AvatarAttachmentDTO? IAvatarAttachment.DTO => DTO;
+            AvatarAttachmentDTO IAvatarAttachment.DTO => DTO;
 
-            public MockEmote(URN urn, MockEmoteStorage? storage = null)
+            public MockEmote(URN urn, MockEmoteStorage storage = null)
             {
                 Urn = urn;
-                StorageRef = storage;
+                storageRef = storage;
                 AssetResults = new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT];
                 AudioAssetResults = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
                 IsLoading = true;
             }
 
             public bool IsLooping() =>
-                DTO?.metadata.emoteDataADR74.loop ?? false;
+                DTO?.metadata?.emoteDataADR74?.loop ?? false;
 
             public void UpdateLoadingStatus(bool newStatus)
             {
                 IsLoading = newStatus;
-                StorageRef?.OnUpdateLoadingStatusCalled?.Invoke(this, newStatus);
+                storageRef?.OnUpdateLoadingStatusCalled?.Invoke(this, newStatus);
             }
 
             public void ApplyAndMarkAsLoaded(EmoteDTO dto)

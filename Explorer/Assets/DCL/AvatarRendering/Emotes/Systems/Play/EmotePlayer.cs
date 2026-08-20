@@ -274,7 +274,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (!emoteReferences) return null;
 
             Transform avatarTransform = view.GetTransform();
-            Transform emoteTransform = emoteReferences.transform;
+            Transform emoteTransform = emoteReferences!.transform;
             emoteTransform.SetParent(avatarTransform, false);
             emoteTransform.localPosition = Vector3.zero;
             emoteTransform.localRotation = Quaternion.identity;
