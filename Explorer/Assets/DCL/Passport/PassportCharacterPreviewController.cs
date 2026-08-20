@@ -52,13 +52,13 @@ namespace DCL.Passport
                 OnModelUpdated();
         }
 
-        public new void OnHide(bool triggerOnHideBusEvent = true)
+        public override void OnHide(bool triggerOnHideBusEvent = true)
         {
             emotePreviewCts.SafeCancelAndDispose();
             base.OnHide(triggerOnHideBusEvent);
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
             emotePreviewCts.SafeCancelAndDispose();
             base.Dispose();
