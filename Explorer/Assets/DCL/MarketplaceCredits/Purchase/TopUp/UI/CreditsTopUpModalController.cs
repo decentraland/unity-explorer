@@ -26,8 +26,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string ANALYTICS_STEP_CHECKOUT = "checkout";
         private const string ANALYTICS_STEP_GRANT = "grant";
         private const string ANALYTICS_ERROR_GRANT_FAILED = "grant_failed";
+        private const string ANALYTICS_ABANDONED = "abandoned";
         private const string PACKS_LOAD_FAILED_REQUEST = "request_failed";
         private const string PACKS_LOAD_FAILED_EMPTY = "empty_response";
+        private const string PURCHASE_CANCELLED_TEXT = "Purchase cancelled — you were not charged.";
 
         private readonly ICreditsTopUpService topUpService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
@@ -262,7 +264,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                             status.CheckoutError != null ? ANALYTICS_STEP_CHECKOUT : ANALYTICS_STEP_GRANT,
                             MapAnalyticsErrorCode(status),
                             status.Pack);
-
+                        break;
+                    case CreditsTopUpStage.Abandoned:
+                        BuyCreditsFailed?.Invoke(
+                            ANALYTICS_STEP_GRANT,
+                            ANALYTICS_ABANDONED,
+                            status.Pack);
                         break;
                 }
 
@@ -298,6 +305,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                     (string reason, bool allowRetry) = MapFailureCopy(status);
                     viewInstance.FailedReasonText.text = reason;
                     viewInstance.RetryButton.gameObject.SetActive(allowRetry);
+                    break;
+                case CreditsTopUpStage.Abandoned:
+                    viewInstance.FailedReasonText.text = PURCHASE_CANCELLED_TEXT;
+                    viewInstance.RetryButton.gameObject.SetActive(true);
                     break;
             }
         }
@@ -357,6 +368,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 CreditsTopUpStage.PendingTimeout => ModalState.Pending,
                 CreditsTopUpStage.Credited => ModalState.Success,
                 CreditsTopUpStage.Failed => ModalState.Failed,
+                CreditsTopUpStage.Abandoned => ModalState.Failed,
                 _ => ModalState.PackSelection,
             };
 
