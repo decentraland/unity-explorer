@@ -105,9 +105,9 @@ namespace DCL.WebRequests
                 ErrorCode openResult;
 
                 try { openResult = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly()); }
-                catch (DllNotFoundException)
+                catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
                 {
-                    // The OS failing to open the native plugin is per-machine-permanent, not transient.
+                    // The OS failing to open the native plugin (or resolve a symbol in it) is per-machine-permanent, not transient.
                     KtxNativeSupport.MarkUnsupported();
                     throw;
                 }

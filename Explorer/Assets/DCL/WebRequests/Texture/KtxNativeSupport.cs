@@ -59,7 +59,9 @@ namespace DCL.WebRequests
                 // loadable, so the throw below is the only unsupported signal; Dispose must not run if Open threw
                 // because native state only exists once Open returns. The error code is the expected healthy-lib
                 // outcome, but the package logs it at Error level; logging is paused so the deliberate garbage
-                // probe emits no error.
+                // probe emits no error. The pause is a blanket logEnabled toggle because Unity's filterLogType
+                // ranks Error above every other type and cannot mute errors alone; the blast radius is one
+                // synchronous sub-millisecond Open call on the main thread.
                 UnityEngine.ILogger unityLogger = UnityEngine.Debug.unityLogger;
                 bool logWasEnabled = unityLogger.logEnabled;
                 unityLogger.logEnabled = false;
