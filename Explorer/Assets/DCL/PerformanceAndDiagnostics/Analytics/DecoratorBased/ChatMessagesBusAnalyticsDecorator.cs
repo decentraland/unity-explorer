@@ -41,8 +41,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             core.Send(channel, message, origin, timestamp);
 
-            // Local per-send array: the tracked JObject takes ownership of it, and queued events
-            // must keep their mentions untouched by later sends
+            // Each tracked JObject takes ownership of its own mentions array
             JArray mentionWalletIds = new ();
             bool isMentionMessage = CheckIfIsMention(message, mentionWalletIds);
 
@@ -84,8 +83,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
                 if (profile != null)
                 {
-                    // JArray.Add takes object, so UserId's implicit string conversion does not apply:
-                    // the wire shape carries the wallet-address string, never the domain object
+                    // Extract the wallet-address string; JArray.Add(object) boxes without implicit conversion
                     mentionWalletIds.Add(profile.Value.UserId.Value);
                     //returning a valid mention only if at least one of the mentions are a real user
                     isValidMention = true;
