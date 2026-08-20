@@ -70,7 +70,12 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         {
             sceneCommunicationPipe.RemoveSceneMessageHandler(sceneId, ISceneCommunicationPipe.MsgType.CommsData, onDataReceivedCached);
             topicBuffers.Clear();
-            topicLookup = Array.Empty<TopicLookupEntry>();
+
+            lock (topicLookupLock)
+            {
+                topicLookup = Array.Empty<TopicLookupEntry>();
+            }
+
             publishRateLimiters.Clear();
             commsWriter.Dispose();
         }
