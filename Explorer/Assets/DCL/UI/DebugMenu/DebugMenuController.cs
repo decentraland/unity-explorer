@@ -22,20 +22,18 @@ namespace DCL.UI.DebugMenu
 
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
-        // Views and sidebar buttons are created in OnEnable, which Unity runs before Update,
-        // OnDisable and any UI callback: they are only null before the first enable.
-        private ConsolePanelView? consolePanelView;
-        private AbConversionPanelView? abConversionPanelView;
-        private MetricsPanelView? metricsPanelView;
+        private ConsolePanelView consolePanelView;
+        private AbConversionPanelView abConversionPanelView;
+        private MetricsPanelView metricsPanelView;
 
         private DebugPanelView? visiblePanel;
 
         private IInputBlock? inputBlock;
 
-        private Button? consoleButton;
-        private Button? abConversionButton;
-        private Button? metricsButton;
-        private Button? debugPanelButton;
+        private Button consoleButton;
+        private Button abConversionButton;
+        private Button metricsButton;
+        private Button debugPanelButton;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -67,16 +65,6 @@ namespace DCL.UI.DebugMenu
             consoleButton.clicked += OnConsoleButtonClicked;
             abConversionButton.clicked += OnAbConversionButtonClicked;
             metricsButton.clicked += OnMetricsButtonClicked;
-
-            // debugPanelButton is wired and shown only while a builder exists: SetDebugContainerBuilder
-            // covers the builder arriving after enable, this covers re-enables once the builder is set.
-            if (debugContainerBuilder != null)
-            {
-                // Idempotent: SetDebugContainerBuilder may have already wired this button while disabled
-                debugPanelButton.clicked -= OnDebugPanelButtonClicked;
-                debugPanelButton.clicked += OnDebugPanelButtonClicked;
-                debugPanelButton.style.display = DisplayStyle.Flex;
-            }
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
@@ -122,13 +110,10 @@ namespace DCL.UI.DebugMenu
         {
             debugContainerBuilder = builder;
 
-            if (debugPanelButton != null)
-            {
-                // Panel handled at DebugContainerBuilder
-                debugPanelButton.clicked -= OnDebugPanelButtonClicked;
-                debugPanelButton.clicked += OnDebugPanelButtonClicked;
-                debugPanelButton.style.display = DisplayStyle.Flex;
-            }
+            // Panel handled at DebugContainerBuilder
+            debugPanelButton.clicked -= OnDebugPanelButtonClicked;
+            debugPanelButton.clicked += OnDebugPanelButtonClicked;
+            debugPanelButton.style.display = DisplayStyle.Flex;
 
             // DebugPanel has its own separate toggle button (that must still be used when the
             // DebugMenu is not enabled), so we must hide that one.
@@ -138,25 +123,14 @@ namespace DCL.UI.DebugMenu
         private void SetInputBlock(IInputBlock block)
         {
             this.inputBlock = block;
-            consolePanelView?.SetInputBlock(block);
+            consolePanelView.SetInputBlock(block);
         }
 
         private void OnDisable()
         {
             logsHistory.LogsUpdated -= OnLogsUpdated;
-
-            if (consoleButton != null)
-                consoleButton.clicked -= OnConsoleButtonClicked;
-
-            if (abConversionButton != null)
-                abConversionButton.clicked -= OnAbConversionButtonClicked;
-
-            if (metricsButton != null)
-                metricsButton.clicked -= OnMetricsButtonClicked;
-
-            if (debugPanelButton != null)
-                debugPanelButton.clicked -= OnDebugPanelButtonClicked;
-
+            abConversionButton.clicked -= OnAbConversionButtonClicked;
+            metricsButton.clicked -= OnMetricsButtonClicked;
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
 
             if (metricsScene != null)
@@ -183,11 +157,11 @@ namespace DCL.UI.DebugMenu
             if (shouldRefreshConsole)
             {
                 shouldRefreshConsole = false;
-                consolePanelView?.Refresh();
+                consolePanelView.Refresh();
             }
 
             // Long-running abgen work (binary download, cold conversion) asks to be brought on screen.
-            if (AbgenConversionMetrics.INSTANCE.TryConsumePanelOpenRequest() && abConversionPanelView is { Visible: false })
+            if (AbgenConversionMetrics.INSTANCE.TryConsumePanelOpenRequest() && !abConversionPanelView.Visible)
             {
                 TogglePanel(abConversionPanelView);
                 abPanelAutoOpened = true;
@@ -211,7 +185,7 @@ namespace DCL.UI.DebugMenu
         {
             if (!abPanelAutoOpened) return;
 
-            if (abConversionPanelView is not { Visible: true })
+            if (!abConversionPanelView.Visible)
             {
                 abPanelAutoOpened = false;
                 return;
@@ -239,9 +213,6 @@ namespace DCL.UI.DebugMenu
         /// </summary>
         private void UpdateAbConversionAttention()
         {
-            if (abConversionPanelView == null || abConversionButton == null)
-                return;
-
             AbgenConversionMetrics metrics = AbgenConversionMetrics.INSTANCE;
 
             AbgenConversionMetrics.WarmUpStage warmUpStage = metrics.WarmUp;
@@ -270,9 +241,6 @@ namespace DCL.UI.DebugMenu
 
         private void UpdateMetricsPanel()
         {
-            if (metricsPanelView == null)
-                return;
-
             ISceneFacade? currentScene = scenesCache?.CurrentScene.Value;
 
             if (currentScene != metricsScene)
@@ -355,13 +323,11 @@ namespace DCL.UI.DebugMenu
 
             debugContainerBuilder.Container.TogglePanelVisibility();
 
-            debugPanelButton?.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
+            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
         }
 
-        private void TogglePanel(DebugPanelView? panelView)
+        private void TogglePanel(DebugPanelView panelView)
         {
-            if (panelView == null) return;
-
             if (panelView.Visible)
             {
                 panelView.Toggle();
@@ -380,7 +346,7 @@ namespace DCL.UI.DebugMenu
 
         private void OnLogsUpdated()
         {
-            if (consolePanelView is not { Visible: true }) return;
+            if (!consolePanelView.Visible) return;
             shouldRefreshConsole = true;
         }
     }
