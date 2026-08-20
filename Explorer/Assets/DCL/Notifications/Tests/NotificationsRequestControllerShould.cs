@@ -17,8 +17,8 @@ namespace DCL.Notifications.Tests
 {
     public class NotificationsRequestControllerShould
     {
-        private static readonly TimeSpan TEST_POLL_INTERVAL = TimeSpan.FromMilliseconds(10);
-        private static readonly TimeSpan POLL_OBSERVATION_TIMEOUT = TimeSpan.FromSeconds(10);
+        // Two real 5s poll ticks are expected within this window; the loop exits as soon as both are observed
+        private static readonly TimeSpan POLL_OBSERVATION_TIMEOUT = TimeSpan.FromSeconds(30);
 
         private NotificationsRequestController controller = null!;
         private IWebRequestController webRequestController = null!;
@@ -39,8 +39,6 @@ namespace DCL.Notifications.Tests
         [SetUp]
         public void SetUp()
         {
-            NotificationsRequestController.PollIntervalOverrideForTest = TEST_POLL_INTERVAL;
-
             NotificationsBusController.Initialize(new NotificationsBusController());
 
             capturedTargets.Clear();
@@ -77,17 +75,13 @@ namespace DCL.Notifications.Tests
             controller = new NotificationsRequestController(webRequestController, urlsSource, identityCache);
         }
 
-        [TearDown]
-        public void TearDown() =>
-            NotificationsRequestController.PollIntervalOverrideForTest = null;
-
         [Test]
         public async Task ReuseSingleListInstanceAcrossPollIterations()
         {
             var cts = new CancellationTokenSource();
             UniTask loopTask = controller.StartGettingNewNotificationsOverTimeAsync(cts.Token);
 
-            // Two poll iterations at the injected test cadence
+            // Two poll iterations at the loop's realtime 5s cadence
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             while (capturedTargets.Count < 2 && stopwatch.Elapsed < POLL_OBSERVATION_TIMEOUT)
