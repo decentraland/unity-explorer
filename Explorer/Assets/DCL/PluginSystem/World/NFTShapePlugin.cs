@@ -23,6 +23,8 @@ using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
+using ECS.StreamableLoading.Textures;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
