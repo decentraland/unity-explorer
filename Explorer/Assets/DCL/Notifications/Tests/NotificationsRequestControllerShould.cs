@@ -17,7 +17,7 @@ namespace DCL.Notifications.Tests
 {
     public class NotificationsRequestControllerShould
     {
-        // Two real 5s poll ticks are expected within this window; the loop exits as soon as both are observed
+        // Window for two real 5s poll ticks; the wait exits early once both are observed
         private static readonly TimeSpan POLL_OBSERVATION_TIMEOUT = TimeSpan.FromSeconds(30);
 
         private NotificationsRequestController controller = null!;
@@ -81,7 +81,6 @@ namespace DCL.Notifications.Tests
             var cts = new CancellationTokenSource();
             UniTask loopTask = controller.StartGettingNewNotificationsOverTimeAsync(cts.Token);
 
-            // Two poll iterations at the loop's realtime 5s cadence
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             while (capturedTargets.Count < 2 && stopwatch.Elapsed < POLL_OBSERVATION_TIMEOUT)

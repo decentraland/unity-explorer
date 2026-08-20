@@ -79,7 +79,7 @@ namespace DCL.Notifications
             commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            // Null when the identity disappears between the wait loop above and the signed request: the web request layer returns default without running the op
+            // Null when the identity disappears before the signed request runs
             List<INotification>? notifications =
                 await webRequestController.GetAsync(
                                                commonArguments,
@@ -94,8 +94,7 @@ namespace DCL.Notifications
 
         public async UniTask StartGettingNewNotificationsOverTimeAsync(CancellationToken ct)
         {
-            // Loop-local so a cancelled generation still parsing off-thread can never race the next generation's Clear();
-            // reused across iterations: cleared before each request and never escapes the loop (items are dispatched individually)
+            // Loop-local so a cancelled run can't race the next one's Clear(); reused across iterations and never escapes the loop
             var pollNotificationsBuffer = new List<INotification>();
 
             do
@@ -119,7 +118,7 @@ namespace DCL.Notifications
 
                     pollNotificationsBuffer.Clear();
 
-                    // Null when the identity disappears between the check above and the signed request: the web request layer returns default without running the op
+                    // Null when the identity disappears before the signed request runs
                     List<INotification>? notifications =
                         await webRequestController.GetAsync(
                                                        commonArguments,

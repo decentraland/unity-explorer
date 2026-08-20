@@ -213,7 +213,7 @@ namespace DCL.WebRequests
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
 
-                // Captured only on the text-based branch: Newtonsoft streaming failures rethrow raw, without the custom exception wrapper
+                // Non-null only on the text-based branch; streaming failures rethrow raw
                 string? text = null;
 
                 try
@@ -274,12 +274,8 @@ namespace DCL.WebRequests
         ///     receiving <paramref name="target" /> as its existing value to populate in place.
         /// </summary>
         /// <remarks>
-        ///     Root-converter routing deliberately diverges from Newtonsoft's full resolution semantics:
-        ///     only <see cref="JsonSerializer.Converters" /> are consulted (attribute- and contract-level converters on
-        ///     <typeparamref name="T" /> are not), the first converter with <see cref="JsonConverter.CanRead" /> that matches wins,
-        ///     matching is against the static <typeparamref name="T" /> (a buffer typed as a base or interface will not match a
-        ///     converter for the concrete type), and a matching converter that allocates a fresh result instead of filling
-        ///     <paramref name="target" /> throws rather than silently discarding data.
+        ///     Only <see cref="JsonSerializer.Converters" /> are consulted, matched against the static <typeparamref name="T" />;
+        ///     a matching converter that returns a fresh result instead of filling <paramref name="target" /> throws.
         /// </remarks>
         public static void PopulateInto<T>(JsonReader reader, T target, JsonSerializer serializer)
         {
@@ -291,8 +287,7 @@ namespace DCL.WebRequests
 
                 if (converter.CanRead && converter.CanConvert(typeof(T)))
                 {
-                    // Converters expect the reader positioned at the value's first token, matching Newtonsoft's own invocation contract.
-                    // An empty body has no first token: overwrite semantics make that a no-op that leaves the target untouched
+                    // Converters expect the reader at the value's first token; an empty body has none and is a no-op
                     if (reader.TokenType == JsonToken.None && !reader.Read())
                         return;
 
@@ -329,7 +324,7 @@ namespace DCL.WebRequests
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
 
-                // Captured only on the text-based branch: Newtonsoft streaming failures rethrow raw, without the custom exception wrapper
+                // Non-null only on the text-based branch; streaming failures rethrow raw
                 string? text = null;
 
                 try
