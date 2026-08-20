@@ -4,29 +4,16 @@ using System;
 namespace Global.Dynamic
 {
     /// <summary>
-    ///     Host policy for the startup trusted-realm gate: which realm hosts may be entered without the
-    ///     untrusted-realm consent prompt. Consulted by <c>MainSceneLoader.IsTrustedRealmAsync</c> before it falls
-    ///     back to the catalyst <c>lambdas/contracts/servers</c> lookup, so a match here also spares that request.
-    ///     <para>
-    ///         A realm reaching this policy is attacker-influenced by design: <c>realm</c> is one of the query params
-    ///         a <c>decentraland://</c> deep link may inject, and it sits on <c>DeepLinkAllowlist</c>'s
-    ///         always-permitted tier *because* this gate exists to catch it. Trusting a host here therefore removes a
-    ///         consent prompt for every user, not only for automation, so an entry must name infrastructure
-    ///         Decentraland controls end to end.
-    ///     </para>
+    ///     Realm hosts that may be entered without the untrusted-realm consent prompt. <c>realm</c> is
+    ///     deep-link injectable, so an entry here drops that prompt for every user, not only for automation:
+    ///     it must name infrastructure Decentraland controls end to end.
     /// </summary>
     public static class TrustedRealms
     {
         /// <summary>
-        ///     Hosts trusted verbatim, scheme-agnostic. Only two kinds of host belong here: loopback, which sits
-        ///     under no Decentraland domain and is served over plain http by local scene development and by a locally
-        ///     hosted E2E fixture; and individual production hosts, which have to be named one by one because
-        ///     <see cref="IDecentralandUrlsSource.ORG_DOMAIN" /> is intentionally not in <see cref="TRUSTED_DOMAINS" />.
-        ///     <para>
-        ///         A <see cref="IDecentralandUrlsSource.ZONE_DOMAIN" /> host never belongs here — the whole domain is
-        ///         already trusted below, so naming one of its hosts would only be dead weight that reads as if the
-        ///         rest of the domain were untrusted.
-        ///     </para>
+        ///     Trusted verbatim, any scheme. Loopback only, plus production hosts one by one —
+        ///     <see cref="IDecentralandUrlsSource.ORG_DOMAIN" /> must never join <see cref="TRUSTED_DOMAINS" />.
+        ///     Never add a <see cref="IDecentralandUrlsSource.ZONE_DOMAIN" /> host: the domain already covers it.
         /// </summary>
         private static readonly string[] TRUSTED_HOSTS =
         {
@@ -38,27 +25,17 @@ namespace Global.Dynamic
         };
 
         /// <summary>
-        ///     Domains whose every subdomain is Decentraland-controlled, and so are trusted without being named.
-        ///     <para>
-        ///         <see cref="IDecentralandUrlsSource.ZONE_DOMAIN" /> is the non-production environment. It hosts the
-        ///         ephemeral E2E Catalyst fixtures at <c>f-{id}.e2e-fixtures.decentraland.zone</c>, whose hostname is
-        ///         minted per run and therefore cannot be enumerated in <see cref="TRUSTED_HOSTS" />.
-        ///     </para>
-        ///     <para>
-        ///         <see cref="IDecentralandUrlsSource.ORG_DOMAIN" /> is deliberately absent. Production keeps
-        ///         per-host entries so that one production subdomain — or one dangling DNS record under it — cannot
-        ///         become a silent realm switch for every user.
-        ///     </para>
+        ///     Domains trusted down to every subdomain. <see cref="IDecentralandUrlsSource.ZONE_DOMAIN" /> covers
+        ///     the E2E fixtures at <c>f-{id}.e2e-fixtures.decentraland.zone</c>, minted per run and so impossible
+        ///     to enumerate. Production stays per-host: one subdomain of it — or one dangling DNS record under it
+        ///     — would otherwise be a silent realm switch for every user.
         /// </summary>
         private static readonly string[] TRUSTED_DOMAINS =
         {
             IDecentralandUrlsSource.ZONE_DOMAIN,
         };
 
-        /// <summary>
-        ///     True when <paramref name="realm" /> may be entered without asking the user to confirm it.
-        ///     Callers pass an already-parsed absolute uri, so malformed-realm handling stays with the caller.
-        /// </summary>
+        /// <summary>True when <paramref name="realm" />, an absolute uri, needs no consent prompt.</summary>
         public static bool IsTrusted(Uri realm)
         {
             string host = realm.Host;
@@ -67,9 +44,8 @@ namespace Global.Dynamic
                 if (string.Equals(host, trustedHost, StringComparison.OrdinalIgnoreCase))
                     return true;
 
-            // Domain-level trust is https-only: a remote realm reached over cleartext can be answered by a network
-            // attacker, so inheriting the domain's trust would hand out that trust to anyone on the path. The exact
-            // hosts above opt out of this because loopback has no meaningful network to attack.
+            // Domain trust is https-only: over cleartext a network attacker answers as any host under the
+            // domain. The exact hosts opt out — loopback has no meaningful network to attack.
             if (!string.Equals(realm.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
                 return false;
 
@@ -81,9 +57,8 @@ namespace Global.Dynamic
         }
 
         /// <summary>
-        ///     Suffix match anchored to a label boundary: the domain itself, or any host strictly below it. Requiring
-        ///     the dot is what keeps a look-alike registration such as <c>evildecentraland.zone</c> out, and requiring
-        ///     the suffix to be terminal is what keeps <c>decentraland.zone.example.com</c> out.
+        ///     The domain itself, or any host strictly below it. The dot rejects <c>evildecentraland.zone</c>;
+        ///     anchoring the suffix to the end rejects <c>decentraland.zone.example.com</c>.
         /// </summary>
         private static bool IsWithinDomain(string host, string domain) =>
             string.Equals(host, domain, StringComparison.OrdinalIgnoreCase)

@@ -5,31 +5,30 @@ using System;
 namespace Global.Tests.EditMode
 {
     /// <summary>
-    ///     Pins the realm host policy that decides whether the untrusted-realm consent prompt is shown. The negative
-    ///     cases matter more than the positive ones: each one is a host an attacker can register or reach, and a
-    ///     regression there turns a deep link into a silent realm switch.
+    ///     Pins the host policy behind the untrusted-realm consent prompt. A regression in the negative
+    ///     cases turns a deep link into a silent realm switch.
     /// </summary>
     public class TrustedRealmsShould
     {
-        // The E2E fixture pool. The subdomain is minted per run, so the policy has to cover it by domain.
+        // Fixture hosts are minted per run; only the domain tier covers them.
         [TestCase("https://f-9c24e0fe1464661d.e2e-fixtures.decentraland.zone")]
         [TestCase("https://f-0000000000000000.e2e-fixtures.decentraland.zone/")]
         [TestCase("https://f-9c24e0fe1464661d.e2e-fixtures.decentraland.zone:8443")]
         [TestCase("https://F-9C24E0FE1464661D.E2E-FIXTURES.DECENTRALAND.ZONE")]
-        // Any depth under the controlled non-production domain, including the apex.
+        // Any depth, apex included.
         [TestCase("https://decentraland.zone")]
         [TestCase("https://anything.decentraland.zone")]
         [TestCase("https://a.b.c.decentraland.zone")]
         public void TrustControlledZoneHosts(string realm) =>
             Assert.IsTrue(TrustedRealms.IsTrusted(new Uri(realm)), realm);
 
-        // Domain-level trust is https-only, so a cleartext realm inside the domain still needs consent.
+        // Domain trust is https-only.
         [TestCase("http://f-9c24e0fe1464661d.e2e-fixtures.decentraland.zone")]
         [TestCase("http://decentraland.zone")]
         public void NotTrustCleartextInsideAControlledDomain(string realm) =>
             Assert.IsFalse(TrustedRealms.IsTrusted(new Uri(realm)), realm);
 
-        // Suffix matching must be anchored to a label boundary at the end of the host.
+        // The suffix must end the host, on a label boundary.
         [TestCase("https://evildecentraland.zone")]
         [TestCase("https://xdecentraland.zone")]
         [TestCase("https://decentraland.zone.example.com")]
@@ -38,7 +37,7 @@ namespace Global.Tests.EditMode
         public void NotTrustLookAlikeDomains(string realm) =>
             Assert.IsFalse(TrustedRealms.IsTrusted(new Uri(realm)), realm);
 
-        // Production and 'today' are not generalised to whole domains: only the named hosts below are trusted.
+        // Never whole domains, only the named hosts below.
         [TestCase("https://anything.decentraland.org")]
         [TestCase("https://e2e-fixtures.decentraland.org")]
         [TestCase("https://decentraland.org")]
@@ -46,7 +45,7 @@ namespace Global.Tests.EditMode
         public void NotTrustWholeProductionOrTodayDomains(string realm) =>
             Assert.IsFalse(TrustedRealms.IsTrusted(new Uri(realm)), realm);
 
-        // The exact hosts that were trusted before the domain tier existed, including scheme-agnostic loopback.
+        // Pre-existing exact hosts; loopback is scheme-agnostic.
         [TestCase("http://127.0.0.1:8000")]
         [TestCase("http://localhost:8000")]
         [TestCase("https://localhost")]
@@ -59,12 +58,11 @@ namespace Global.Tests.EditMode
         public void KeepTrustingTheNamedHosts(string realm) =>
             Assert.IsTrue(TrustedRealms.IsTrusted(new Uri(realm)), realm);
 
-        // Uri.Host is the only input to the decision. A trusted-looking string anywhere else in the url --
-        // userinfo, query, fragment -- must not leak trust to the host that actually gets contacted.
+        // Only Uri.Host decides; userinfo, query and fragment must not leak trust.
         [TestCase("https://f-9c24e0fe1464661d.e2e-fixtures.decentraland.zone@evil.example.com")]
         [TestCase("https://evil.example.com#f-1.e2e-fixtures.decentraland.zone")]
         [TestCase("https://evil.example.com/?realm=f-1.e2e-fixtures.decentraland.zone")]
-        // The fully qualified form fails closed: cheaper to ask for consent than to assume the trailing dot is safe.
+        // Trailing dot fails closed.
         [TestCase("https://f-1.e2e-fixtures.decentraland.zone.")]
         public void NotBeSpoofedByOtherUriParts(string realm) =>
             Assert.IsFalse(TrustedRealms.IsTrusted(new Uri(realm)), realm);

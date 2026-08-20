@@ -839,7 +839,7 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realm)) return true;
 
             var uri = new Uri(realm);
-            // Hosts we control outright skip both the consent prompt and the contracts/servers lookup below.
+            // A controlled host skips the consent prompt and the contracts/servers lookup below.
             if (TrustedRealms.IsTrusted(uri)) return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
