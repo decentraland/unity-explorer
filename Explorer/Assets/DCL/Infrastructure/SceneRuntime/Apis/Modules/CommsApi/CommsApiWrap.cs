@@ -312,8 +312,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             {
                 var entries = new List<TopicLookupEntry>(topicBuffers.Count);
 
-                foreach (KeyValuePair<string, DCLConcurrentQueue<BufferedDataMessage>> pair in topicBuffers)
-                    entries.Add(new TopicLookupEntry(Encoding.UTF8.GetBytes(pair.Key), pair.Value));
+                foreach ((string topic, DCLConcurrentQueue<BufferedDataMessage> queue) in topicBuffers)
+                    entries.Add(new TopicLookupEntry(Encoding.UTF8.GetBytes(topic), queue));
 
                 topicLookup = entries.ToArray();
             }
