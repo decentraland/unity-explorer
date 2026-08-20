@@ -72,6 +72,8 @@ namespace DCL.UI.DebugMenu
             // covers the builder arriving after enable, this covers re-enables once the builder is set.
             if (debugContainerBuilder != null)
             {
+                // Idempotent: SetDebugContainerBuilder may have already wired this button while disabled
+                debugPanelButton.clicked -= OnDebugPanelButtonClicked;
                 debugPanelButton.clicked += OnDebugPanelButtonClicked;
                 debugPanelButton.style.display = DisplayStyle.Flex;
             }

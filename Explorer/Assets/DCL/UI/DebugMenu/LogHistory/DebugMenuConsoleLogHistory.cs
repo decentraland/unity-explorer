@@ -7,8 +7,9 @@ namespace DCL.UI.DebugMenu.LogHistory
     /// <summary>
     ///     <see cref="AddLogMessage" /> is fed from the global log callback and may be invoked from any
     ///     thread; it only enqueues into a capped pending queue. <see cref="Paused" /> is written on the
-    ///     main thread and read on the logging threads: a stale read may admit or drop a borderline
-    ///     entry, which is acceptable for a pause toggle. Every other member — the lists, the counters
+    ///     main thread and read on the logging threads through a volatile field: a toggle racing an
+    ///     enqueue may admit or drop a borderline entry, which is acceptable for a pause toggle. Every
+    ///     other member — the lists, the counters
     ///     and <see cref="LogsUpdated" /> — is main-thread-only: entries become visible when
     ///     <see cref="DrainPendingLogs" /> runs on the main thread.
     /// </summary>
@@ -18,9 +19,12 @@ namespace DCL.UI.DebugMenu.LogHistory
 
         public readonly List<DebugMenuConsoleLogEntry> FilteredLogMessages = new ();
         public event Action? LogsUpdated;
-        public bool Paused { get; set; }
+        public bool Paused { get => paused; set => paused = value; }
         public int LogEntryCount { get; private set; }
         public int ErrorEntryCount { get; private set; }
+
+        // volatile so a main-thread toggle becomes visible promptly on the logging threads
+        private volatile bool paused;
 
         private readonly object pendingLock = new ();
         private readonly Queue<DebugMenuConsoleLogEntry> pendingLogMessages = new ();
