@@ -32,6 +32,7 @@ namespace DCL.Notifications
         private readonly URLParameter limitParameter = new ("limit", "50");
         private readonly URLBuilder urlBuilder = new ();
         private readonly URLDomain notificationsUrl;
+        private readonly TimeSpan pollInterval;
         private CommonArguments commonArguments;
         private ulong unixTimestamp;
         private ulong lastPolledTimestamp;
@@ -40,8 +41,16 @@ namespace DCL.Notifications
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
             IWeb3IdentityCache web3IdentityCache
+        ) : this(webRequestController, urlsSource, web3IdentityCache, NOTIFICATIONS_DELAY) { }
+
+        internal NotificationsRequestController(
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource,
+            IWeb3IdentityCache web3IdentityCache,
+            TimeSpan pollInterval
         )
         {
+            this.pollInterval = pollInterval;
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
             this.web3IdentityCache = web3IdentityCache;
@@ -68,7 +77,7 @@ namespace DCL.Notifications
 
         public async UniTask<List<INotification>> GetMostRecentNotificationsAsync(CancellationToken ct)
         {
-            do await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
+            do await UniTask.Delay(pollInterval, DelayType.Realtime, cancellationToken: ct);
             while (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired);
 
             urlBuilder.Clear();
@@ -79,7 +88,8 @@ namespace DCL.Notifications
             commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            List<INotification> notifications =
+            // Null when the identity disappears between the wait loop above and the signed request: the web request layer returns default without running the op
+            List<INotification>? notifications =
                 await webRequestController.GetAsync(
                                                commonArguments,
                                                ct,
@@ -88,7 +98,7 @@ namespace DCL.Notifications
                                                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                           .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
-            return notifications;
+            return notifications ?? new List<INotification>();
         }
 
         public async UniTask StartGettingNewNotificationsOverTimeAsync(CancellationToken ct)
@@ -101,7 +111,7 @@ namespace DCL.Notifications
             {
                 try
                 {
-                    await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
+                    await UniTask.Delay(pollInterval, DelayType.Realtime, cancellationToken: ct);
 
                     if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
                         continue;
@@ -118,7 +128,8 @@ namespace DCL.Notifications
 
                     pollNotificationsBuffer.Clear();
 
-                    List<INotification> notifications =
+                    // Null when the identity disappears between the check above and the signed request: the web request layer returns default without running the op
+                    List<INotification>? notifications =
                         await webRequestController.GetAsync(
                                                        commonArguments,
                                                        ct,
@@ -127,7 +138,7 @@ namespace DCL.Notifications
                                                        headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                                   .OverwriteFromNewtonsoftJsonAsync(pollNotificationsBuffer, serializerSettings: serializerSettings);
 
-                    if (notifications.Count == 0)
+                    if (notifications == null || notifications.Count == 0)
                         continue;
 
                     lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();

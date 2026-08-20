@@ -84,6 +84,19 @@ namespace DCL.WebRequests.Tests
         }
 
         [Test]
+        public void LeaveBufferEmptyOnEmptyBody()
+        {
+            var buffer = new List<INotification>();
+            JsonSerializer serializer = NewNotificationsSerializer();
+
+            using var textReader = new StringReader(string.Empty);
+            using var jsonReader = new JsonTextReader(textReader);
+            GenericDownloadHandlerUtils.PopulateInto(jsonReader, buffer, serializer);
+
+            Assert.That(buffer, Is.Empty);
+        }
+
+        [Test]
         public void FallBackToPopulateWhenNoConverterMatchesRootType()
         {
             var target = new PlainDto();

@@ -212,8 +212,9 @@ namespace DCL.WebRequests
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-                string text = string.Empty;
-                var textWasRead = false;
+
+                // Captured only on the text-based branch: Newtonsoft streaming failures rethrow raw, without the custom exception wrapper
+                string? text = null;
 
                 try
                 {
@@ -224,7 +225,6 @@ namespace DCL.WebRequests
                         )
                     {
                         text = downloadHandler.text;
-                        textWasRead = true;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await DCLTask.SwitchToThreadPool();
@@ -255,7 +255,7 @@ namespace DCL.WebRequests
                 }
                 catch (Exception ex)
                 {
-                    if (createCustomExceptionOnFailure != null && textWasRead)
+                    if (createCustomExceptionOnFailure != null && text != null)
                         throw createCustomExceptionOnFailure(ex, text);
                     else
                         throw;
@@ -273,6 +273,14 @@ namespace DCL.WebRequests
         ///     consults converters registered for the root type, so a matching root-level converter must be routed manually,
         ///     receiving <paramref name="target" /> as its existing value to populate in place.
         /// </summary>
+        /// <remarks>
+        ///     Root-converter routing deliberately diverges from Newtonsoft's full resolution semantics:
+        ///     only <see cref="JsonSerializer.Converters" /> are consulted (attribute- and contract-level converters on
+        ///     <typeparamref name="T" /> are not), the first converter with <see cref="JsonConverter.CanRead" /> that matches wins,
+        ///     matching is against the static <typeparamref name="T" /> (a buffer typed as a base or interface will not match a
+        ///     converter for the concrete type), and a matching converter that allocates a fresh result instead of filling
+        ///     <paramref name="target" /> throws rather than silently discarding data.
+        /// </remarks>
         public static void PopulateInto<T>(JsonReader reader, T target, JsonSerializer serializer)
         {
             IList<JsonConverter> converters = serializer.Converters;
@@ -283,9 +291,10 @@ namespace DCL.WebRequests
 
                 if (converter.CanRead && converter.CanConvert(typeof(T)))
                 {
-                    // Converters expect the reader positioned at the value's first token, matching Newtonsoft's own invocation contract
-                    if (reader.TokenType == JsonToken.None)
-                        reader.Read();
+                    // Converters expect the reader positioned at the value's first token, matching Newtonsoft's own invocation contract.
+                    // An empty body has no first token: overwrite semantics make that a no-op that leaves the target untouched
+                    if (reader.TokenType == JsonToken.None && !reader.Read())
+                        return;
 
                     // A null result (e.g. a null token) legitimately leaves the target untouched; anything else must be the target itself or data is silently lost
                     if (converter.ReadJson(reader, typeof(T), target, serializer) is { } result && !ReferenceEquals(result, target))
@@ -319,8 +328,9 @@ namespace DCL.WebRequests
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-                string text = string.Empty;
-                var textWasRead = false;
+
+                // Captured only on the text-based branch: Newtonsoft streaming failures rethrow raw, without the custom exception wrapper
+                string? text = null;
 
                 try
                 {
@@ -331,7 +341,6 @@ namespace DCL.WebRequests
                         )
                     {
                         text = downloadHandler.text;
-                        textWasRead = true;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await DCLTask.SwitchToThreadPool();
@@ -362,7 +371,7 @@ namespace DCL.WebRequests
                 }
                 catch (Exception ex)
                 {
-                    if (createCustomExceptionOnFailure != null && textWasRead)
+                    if (createCustomExceptionOnFailure != null && text != null)
                         throw createCustomExceptionOnFailure(ex, text);
                     else
                         throw;
