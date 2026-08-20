@@ -85,7 +85,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 // A stale result can still reference an asset whose Root was already destroyed (e.g. drained
                 // by cache Unload/Remove). The promise is consumed at this point, so the component must still
-                // reach a terminal state — leaving it Loading would re-enter this query and throw
+                // reach a terminal state; leaving it Loading would re-enter this query and throw
                 // "already consumed" on every subsequent frame.
                 if (result.Asset is not { } asset || asset.Root == null)
                 {

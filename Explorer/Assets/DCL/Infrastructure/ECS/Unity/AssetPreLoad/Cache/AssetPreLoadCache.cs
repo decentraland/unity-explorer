@@ -6,7 +6,6 @@ using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace ECS.Unity.AssetLoad.Cache
 {
@@ -15,7 +14,7 @@ namespace ECS.Unity.AssetLoad.Cache
         /// <summary>
         ///     The never-handed-out template. Clones handed out by <see cref="TryGetGltfInstance" /> are owned
         ///     by the containers that checked them out and are released through
-        ///     <see cref="IGltfContainerAssetsCache.Dereference" /> — this cache must never dispose them.
+        ///     <see cref="IGltfContainerAssetsCache.Dereference" />; this cache must never dispose them.
         /// </summary>
         private sealed class GltfTemplate
         {
@@ -65,7 +64,7 @@ namespace ECS.Unity.AssetLoad.Cache
 
         public bool TryAdd<T>(string key, T asset)
         {
-            if (asset is not null && cache.TryAdd(key, asset))
+            if (cache.TryAdd(key, asset))
             {
                 switch (asset)
                 {
@@ -85,7 +84,7 @@ namespace ECS.Unity.AssetLoad.Cache
             return false;
         }
 
-        public bool TryGet<T>(string key, [MaybeNullWhen(false)] out T asset)
+        public bool TryGet<T>(string key, out T asset)
         {
             if (cache.TryGetValue(key, out object? value) && value is T typedValue)
             {
@@ -107,7 +106,7 @@ namespace ECS.Unity.AssetLoad.Cache
                 {
                     // Only the never-handed-out template is released. Checked-out clones are owned by
                     // containers whose lifetime this cache does not control (it is global, Clear runs per
-                    // scene teardown) — disposing them here would destroy live Roots under their owners.
+                    // scene teardown); disposing them here would destroy live Roots under their owners.
                     case GltfTemplate gltfTemplate:
                         gltfCache.Dereference(kvp.Key, gltfTemplate.Template, handleAssetLoad: false);
                         break;
