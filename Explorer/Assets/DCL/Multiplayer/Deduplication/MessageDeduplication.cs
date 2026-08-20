@@ -6,15 +6,27 @@ namespace DCL.Multiplayer.Deduplication
 {
     public class MessageDeduplication<T> : IMessageDeduplication<T> where T: IComparable<T>, IEquatable<T>
     {
+        /// <summary>
+        ///     Retain every key registered within the period. Callers whose key is derived from
+        ///     network-controlled data must pass an explicit capacity instead.
+        /// </summary>
+        public const int UNBOUNDED_CAPACITY = 0;
+
+        private const double DEFAULT_CLEAN_PERIOD_MINUTES = 5;
+
         private readonly ISet<RegisteredStamp> registeredStamps = new HashSet<RegisteredStamp>();
         private readonly TimeSpan cleanPerPeriod;
+        private readonly int capacity;
         private DateTime previousClean;
 
-        public MessageDeduplication() : this(TimeSpan.FromMinutes(5)) { }
+        public MessageDeduplication() : this(TimeSpan.FromMinutes(DEFAULT_CLEAN_PERIOD_MINUTES)) { }
 
-        public MessageDeduplication(TimeSpan cleanPerPeriod)
+        public MessageDeduplication(int capacity) : this(TimeSpan.FromMinutes(DEFAULT_CLEAN_PERIOD_MINUTES), capacity) { }
+
+        public MessageDeduplication(TimeSpan cleanPerPeriod, int capacity = UNBOUNDED_CAPACITY)
         {
             this.cleanPerPeriod = cleanPerPeriod;
+            this.capacity = capacity;
             previousClean = DateTime.Now;
         }
 
@@ -23,7 +35,12 @@ namespace DCL.Multiplayer.Deduplication
 
         public void Register(string walletId, T timestamp)
         {
-            if (DateTime.Now - previousClean > cleanPerPeriod)
+            bool isFull = capacity != UNBOUNDED_CAPACITY && registeredStamps.Count >= capacity;
+
+            // Reaching the capacity restarts the period: stamps carry no individual age, so the
+            // set can only be dropped as a whole. This bounds how much a sender can make the
+            // cache retain when every key it registers is distinct.
+            if (isFull || DateTime.Now - previousClean > cleanPerPeriod)
             {
                 previousClean = DateTime.Now;
                 registeredStamps.Clear();
