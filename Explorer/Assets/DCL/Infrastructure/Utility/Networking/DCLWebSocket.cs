@@ -16,10 +16,7 @@ namespace Utility.Networking
 #else
         private System.Net.WebSockets.ClientWebSocket ws = new ();
 
-        // Failing a pending connection requires abandoning the connect await: once the TCP
-        // connect succeeds, mono's ClientWebSocket keeps no registration that can unpark the
-        // HTTP-upgrade read, so neither Abort() nor a CancellationToken completes a parked
-        // ConnectAsync.
+        // Once TCP connects, neither Abort() nor a CancellationToken unparks mono's ConnectAsync, so failing a pending connection means abandoning its await via this token.
         private readonly CancellationTokenSource connectAbort = new ();
 #endif
 
@@ -30,7 +27,7 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 return ws.State;
 #else
-                return (WebSocketState) ws.State; // Direct mapping
+                return (WebSocketState) ws.State;
 #endif
             }
         }
@@ -96,19 +93,11 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.ConnectAsync(uri, cancellationToken);
 #else
-                // AttachExternalCancellation completes this await when connectAbort fires even
-                // though the BCL task stays parked; the abandoned task's outcome must not
-                // surface as an unobserved fault.
-                //
-                // The receive loop that consumes this connection is started in this continuation, so
-                // the continuation must resume on the thread the connect was issued from. A connecting
-                // thread that has a SynchronizationContext (the Unity main thread, whose social/comms
-                // receive loops feed main-thread-only UI) keeps it so the loop stays on that thread; a
-                // connecting thread without one (the V8 script-invoke thread) skips it, since
-                // TaskScheduler.FromCurrentSynchronizationContext() throws with no current context
-                // (see DCLSemaphoreSlim.WaitAsync).
+                // Main-thread callers need the continuation back on their context (their receive loops feed main-thread-only UI); context-less ones (the V8 script-invoke thread) would throw in TaskScheduler.FromCurrentSynchronizationContext.
                 bool marshalBackToIssuingContext = SynchronizationContext.Current != null;
                 using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, connectAbort.Token);
+
+                // Only AttachExternalCancellation can complete this await once the BCL task parks mid-upgrade (see connectAbort).
                 await ws.ConnectAsync(uri, linked.Token).AsUniTask(useCurrentSynchronizationContext: marshalBackToIssuingContext).AttachExternalCancellation(linked.Token);
 #endif
             }
@@ -126,11 +115,7 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.CloseAsync(status, description, cancellationToken);
 #else
-                // A close handshake requires an established connection: mono's ClientWebSocket marks
-                // itself connected internally before the upgrade completes and its close path derefs an
-                // inner socket that only exists after a successful upgrade, so closing a pending or
-                // already torn-down connection must abort it instead (WHATWG close() during CONNECTING
-                // fails the connection; close() on a closed socket is a no-op).
+                // Mono's close path derefs an inner socket that only exists after a successful upgrade; per WHATWG, close() outside an established connection aborts instead.
                 if (State is not (WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent))
                 {
                     Abort();
@@ -150,15 +135,13 @@ namespace Utility.Networking
         public void Abort()
         {
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-            // Ignore, WebGL doesn't expose raw TCP sockets to hard interrupt
+            // WebGL doesn't expose raw TCP sockets to hard-interrupt.
 #else
-            // Cancelling connectAbort is what completes a parked connect await; ws.Abort() alone
-            // leaves it hanging on mono. Cancelling after a completed connect is inert (the
-            // linked registration is gone once ConnectAsync returns).
+            // ws.Abort() alone leaves a parked connect hanging on mono; cancelling after a completed connect is inert.
             try { connectAbort.Cancel(); }
             catch (ObjectDisposedException)
             {
-                // Abort must tolerate a racing Dispose() (scene teardown vs a JS close())
+                // A racing Dispose() (scene teardown vs a JS close()) may have already disposed the CTS.
             }
 
             ws.Abort();

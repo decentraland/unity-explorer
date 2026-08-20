@@ -14,11 +14,9 @@ using Utility.Networking;
 namespace Utility.Tests
 {
     /// <summary>
-    ///     The JS WebSocket polyfill allows close() while the socket is still CONNECTING (WHATWG:
-    ///     close() during the handshake fails the connection). mono's ClientWebSocket reports itself
-    ///     Connected before the HTTP upgrade completes while its close path derefs an inner socket
-    ///     that only exists after a successful upgrade, so CloseAsync on a pending (or never started)
-    ///     connection must abort instead of entering the close handshake.
+    ///     The JS WebSocket polyfill allows close() while still CONNECTING (WHATWG: it fails the
+    ///     connection), but mono's close path derefs an inner socket that only exists after a
+    ///     successful upgrade — so CloseAsync on a pending connection must abort, not handshake.
     /// </summary>
     [TestFixture]
     public class DCLWebSocketCloseAsyncShould
@@ -29,8 +27,7 @@ namespace Utility.Tests
         public async Task AbortInsteadOfThrowingWhenClosedDuringHandshake()
         {
             // Arrange
-            // Accepts the TCP connection but never answers the HTTP upgrade, so the client
-            // stays parked mid-handshake with its inner managed socket unassigned.
+            // Never answering the HTTP upgrade parks the client mid-handshake with its inner managed socket unassigned.
             var listener = new TcpListener(IPAddress.Loopback, 0);
             listener.Start();
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
@@ -43,8 +40,7 @@ namespace Utility.Tests
             {
                 Task connectTask = webSocket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/"), CancellationToken.None).AsTask();
 
-                // The parked connect surfaces its abort on a background continuation; observe it there
-                // so no unobserved fault leaks past this test.
+                // Observe the abandoned connect's fault so it can't surface as unobserved.
                 Task connectObserved = connectTask.ContinueWith(t => { _ = t.Exception; }, TaskScheduler.Default);
 
                 Assert.That(webSocket.State, Is.EqualTo(WebSocketState.Connecting),
@@ -75,9 +71,7 @@ namespace Utility.Tests
         public async Task UnparkAPendingConnectWhenAborted()
         {
             // Arrange
-            // Accepts the TCP connection but never answers the HTTP upgrade, so the client
-            // stays parked mid-handshake; the public Abort() must fail that pending connection
-            // the same way the CloseAsync gate does.
+            // Never answering the HTTP upgrade parks the client mid-handshake.
             var listener = new TcpListener(IPAddress.Loopback, 0);
             listener.Start();
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
@@ -90,8 +84,7 @@ namespace Utility.Tests
             {
                 Task connectTask = webSocket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/"), CancellationToken.None).AsTask();
 
-                // The parked connect surfaces its abort on a background continuation; observe it there
-                // so no unobserved fault leaks past this test.
+                // Observe the abandoned connect's fault so it can't surface as unobserved.
                 Task connectObserved = connectTask.ContinueWith(t => { _ = t.Exception; }, TaskScheduler.Default);
 
                 Assert.That(webSocket.State, Is.EqualTo(WebSocketState.Connecting),
@@ -119,9 +112,7 @@ namespace Utility.Tests
         public async Task ConnectFromAThreadWithoutSynchronizationContext()
         {
             // Arrange
-            // The production caller is the ClearScript/V8 script-invoke thread, which carries no
-            // TaskScheduler-compatible SynchronizationContext, so the whole connect/close path must
-            // work with SynchronizationContext.Current == null.
+            // The production caller, the ClearScript/V8 script-invoke thread, carries no SynchronizationContext.
             var listener = new TcpListener(IPAddress.Loopback, 0);
             listener.Start();
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
@@ -210,7 +201,7 @@ namespace Utility.Tests
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
             Task serverTask = ServeUpgradeThenEchoCloseAsync(listener);
 
-            // Observed on a background continuation so no unobserved fault leaks if the test fails early
+            // Observed on a background continuation so no unobserved fault leaks if the test fails early.
             _ = serverTask.ContinueWith(t => { _ = t.Exception; }, TaskScheduler.Default);
 
             var webSocket = new DCLWebSocket();
@@ -243,11 +234,7 @@ namespace Utility.Tests
         public async Task ResumeOnTheCallerSynchronizationContextAfterConnecting()
         {
             // Arrange
-            // The social/comms RPC transports start their receive loop in the connect continuation,
-            // and that loop hands every incoming message to main-thread-only UI handlers. A connect
-            // issued on a SynchronizationContext (the Unity main thread in production) must therefore
-            // resume back on it, not on the socket's completion thread, or the loop and its handlers
-            // run off the main thread.
+            // The connect continuation starts receive loops that feed main-thread-only UI, so a connect issued on a SynchronizationContext must resume on it.
             var listener = new TcpListener(IPAddress.Loopback, 0);
             listener.Start();
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
@@ -264,7 +251,6 @@ namespace Utility.Tests
             {
                 var done = new TaskCompletionSource<bool>();
 
-                // Drive the connect from the dedicated context thread and record where it resumes.
                 context.Post(_ =>
                 {
                     ConnectAndCaptureAsync().Forget();
@@ -335,8 +321,7 @@ namespace Utility.Tests
 
             await stream.WriteAsync(response, 0, response.Length);
 
-            // Client close frame: FIN+opcode 0x8, masked payload. Echo the unmasked payload back
-            // so the client-side close handshake can complete.
+            // Echoing the client's masked close frame (FIN+opcode 0x8) back unmasked lets the client-side close handshake complete.
             var header = new byte[2];
             await ReadExactAsync(stream, header, header.Length);
             int payloadLength = header[1] & 0x7F;
@@ -392,9 +377,8 @@ namespace Utility.Tests
         }
 
         /// <summary>
-        ///     A pumped SynchronizationContext backed by one dedicated thread, standing in for Unity's
-        ///     single-threaded main-thread context: continuations posted to it run on that one thread,
-        ///     so a test can assert an await resumed on the context it was issued from.
+        ///     Stands in for Unity's single-threaded main-thread context: continuations posted here run
+        ///     on one dedicated thread, so a test can assert an await resumed where it was issued.
         /// </summary>
         private sealed class SingleThreadSynchronizationContext : SynchronizationContext, IDisposable
         {
