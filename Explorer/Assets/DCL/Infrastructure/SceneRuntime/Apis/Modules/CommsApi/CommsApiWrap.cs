@@ -305,6 +305,9 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         private void RebuildTopicLookup()
         {
+            // Allocates freely (list, byte[] per topic, final array): it only runs on subscribe/unsubscribe,
+            // which happens a handful of times per scene lifetime. COW trades allocation on this rare write
+            // path for allocation-free reads in OnDataReceived; published arrays are never mutated or reused.
             lock (topicLookupLock)
             {
                 var entries = new List<TopicLookupEntry>(topicBuffers.Count);
