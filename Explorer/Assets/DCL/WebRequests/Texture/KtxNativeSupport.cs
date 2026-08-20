@@ -58,20 +58,10 @@ namespace DCL.WebRequests
                 // Garbage input makes Open return an error code without throwing when the native library is
                 // loadable, so the throw below is the only unsupported signal; Dispose must not run if Open threw
                 // because native state only exists once Open returns. The error code is the expected healthy-lib
-                // outcome, but the package logs it at Error level; logging is paused so the deliberate garbage
-                // probe emits no error. The pause is a blanket logEnabled toggle because Unity's filterLogType
-                // ranks Error above every other type and cannot mute errors alone; the blast radius is one
-                // synchronous sub-millisecond Open call on the main thread.
-                UnityEngine.ILogger unityLogger = UnityEngine.Debug.unityLogger;
-                bool logWasEnabled = unityLogger.logEnabled;
-                unityLogger.logEnabled = false;
-
-                try
-                {
-                    ktxTexture.Open(probeBuffer.AsReadOnly());
-                    ktxTexture.Dispose();
-                }
-                finally { unityLogger.logEnabled = logWasEnabled; }
+                // outcome; the package logs it at Error level only under #if DEBUG (editor and development builds),
+                // where the "KTX error code" line from this deliberate garbage probe is expected and harmless.
+                ktxTexture.Open(probeBuffer.AsReadOnly());
+                ktxTexture.Dispose();
 
                 return true;
             }
