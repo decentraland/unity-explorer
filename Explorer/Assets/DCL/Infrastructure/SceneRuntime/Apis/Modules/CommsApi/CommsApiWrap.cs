@@ -43,11 +43,10 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         private readonly object topicLookupLock = new ();
 
-        // Byte-keyed copy-on-write snapshot of topicBuffers (queues shared, not copied) so OnDataReceived
-        // can match the wire topic without materializing a string per message — Unity's BCL has no
-        // span-keyed dictionary lookup (GetAlternateLookup is .NET 9+). Writers rebuild under
-        // topicLookupLock and publish a new immutable array; the LiveKit-thread reader sees either
-        // the previous or the new snapshot, never a partial one.
+        // Copy-on-write byte-keyed snapshot of topicBuffers (queues shared, not copied) so OnDataReceived
+        // can match the wire topic without allocating a string per message (Unity's BCL has no span-keyed
+        // dictionary lookup). Writers rebuild under topicLookupLock; the volatile publish guarantees the
+        // LiveKit-thread reader a complete snapshot, never a partial one.
         private volatile TopicLookupEntry[] topicLookup = Array.Empty<TopicLookupEntry>();
 
         public CommsApiWrap(
@@ -266,10 +265,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         }
 
         /// <summary>
-        /// Runs on the LiveKit callback thread (ORIGIN_THREAD), not the main thread.
-        /// Only thread-safe access is used here: a volatile read of the immutable topicLookup
-        /// snapshot, DCLConcurrentQueue and Encoding. Must not allocate for messages on
-        /// unsubscribed topics — all CommsData traffic for the scene reaches this handler.
+        /// Runs on the LiveKit callback thread (ORIGIN_THREAD) for all scene CommsData traffic;
+        /// must not allocate for messages on unsubscribed topics.
         /// Decodes wire format: [topicLen 2 bytes LE][topic UTF-8][data UTF-8].
         /// </summary>
         private void OnDataReceived(ISceneCommunicationPipe.DecodedMessage message)
@@ -284,8 +281,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
             ReadOnlySpan<byte> topicSpan = span.Slice(TOPIC_LENGTH_PREFIX_BYTES, topicLength);
 
-            // Scenes subscribe to a handful of topics, so a linear scan over the snapshot
-            // beats hashing (which would require materializing a string key).
+            // Scenes subscribe to a handful of topics; a linear scan avoids the string key a hash lookup would need.
             TopicLookupEntry[] lookup = topicLookup;
 
             for (var i = 0; i < lookup.Length; i++)
