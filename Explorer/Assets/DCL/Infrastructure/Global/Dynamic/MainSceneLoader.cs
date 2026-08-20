@@ -839,14 +839,8 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realm)) return true;
 
             var uri = new Uri(realm);
-            if (uri.Host == "127.0.0.1") return true;
-            if (uri.Host == "localhost") return true;
-            if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
+            // Hosts we control outright skip both the consent prompt and the contracts/servers lookup below.
+            if (TrustedRealms.IsTrusted(uri)) return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
