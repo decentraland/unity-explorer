@@ -1,11 +1,52 @@
 using DCL.Ipfs;
 using ECS.SceneLifeCycle;
 using NUnit.Framework;
+using System;
+using System.Text;
 
 namespace DCL.SceneLifeCycle.Tests
 {
     public class ECSReloadSceneShould
     {
+        [Test]
+        public void TreatHashWithEmbeddedMtimeAsContentVersioned()
+        {
+            //Arrange: the dev server encodes "{path}\0{mtimeMs}-{machineId}" — the NUL marks the versioned format
+            SceneEntityDefinition definition = CreateDefinition(
+                new ContentDefinition { file = "models/shark.glb", hash = VersionedHash("/project/models/shark.glb", 1_699_999_999_999, "machine-1") });
+
+            //Act & Assert
+            Assert.That(ECSReloadScene.IsContentVersioned(definition), Is.True);
+        }
+
+        [Test]
+        public void NotTreatPathOnlyHashAsContentVersioned()
+        {
+            //Arrange: older dev servers encode "{path}-{machineId}" with no NUL — an edit keeps the hash
+            SceneEntityDefinition definition = CreateDefinition(
+                new ContentDefinition { file = "models/shark.glb", hash = PathOnlyHash("/project/models/shark.glb", "machine-1") });
+
+            //Act & Assert
+            Assert.That(ECSReloadScene.IsContentVersioned(definition), Is.False);
+        }
+
+        [Test]
+        public void NotTreatMissingOrNonB64ContentAsContentVersioned()
+        {
+            Assert.That(ECSReloadScene.IsContentVersioned(null), Is.False);
+            Assert.That(ECSReloadScene.IsContentVersioned(CreateDefinition()), Is.False);
+
+            //production content-addressed hashes are not b64- prefixed
+            Assert.That(ECSReloadScene.IsContentVersioned(
+                CreateDefinition(new ContentDefinition { file = "models/shark.glb", hash = "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku" })), Is.False);
+        }
+
+        private static string PathOnlyHash(string path, string machineId) =>
+            "b64-" + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{path}-{machineId}"));
+
+        private static string VersionedHash(string path, long mtimeMs, string machineId) =>
+            "b64-" + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{path}\0{mtimeMs}-{machineId}"));
+
         [Test]
         public void TreatDefinitionWithoutManifestAsRawGltf()
         {

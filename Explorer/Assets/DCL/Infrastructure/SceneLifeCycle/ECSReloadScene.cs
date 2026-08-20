@@ -9,6 +9,8 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
+using System;
+using System.Buffers;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -102,22 +104,28 @@ namespace ECS.SceneLifeCycle
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
                     (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
 
-                if (changedModelSrc != null
-                    && TryResolveContentHash(definition, changedModelSrc, out string contentHash)
-                    && IsRawGltfModel(definition, contentHash))
+                // A content-versioned dev server embeds each file's mtime in its hash, so an edited file
+                // is served under a new hash and reloads through a natural cache miss while every
+                // unchanged asset stays warm — no eviction is needed for any file type. Only fall back
+                // to eviction when the hash is path-only (older dev servers), where an edit keeps the
+                // same hash and cache hits would return stale assets.
+                if (!IsContentVersioned(definition))
                 {
-                    // The dev server named the exact model that changed. In raw-GLTF development its
-                    // cache key is the bare content hash, so evict just that asset and let every other
-                    // cache stay warm across the reload.
-                    cacheCleaner.EvictGltfModel(contentHash);
-                }
-                else
-                {
-                    // Force-drain dereferenced caches on LSD reload. The local dev server derives hashes
-                    // from the file path, not content, so an updated model keeps the same hash and cache
-                    // hits would return stale assets. Draining guarantees fresh loads.
-                    cacheCleaner.UnloadCache(budgeted: false);
-                    _ = Resources.UnloadUnusedAssets();
+                    if (changedModelSrc != null
+                        && TryResolveContentHash(definition, changedModelSrc, out string contentHash)
+                        && IsRawGltfModel(definition, contentHash))
+                    {
+                        // The dev server named the exact model that changed. In raw-GLTF development its
+                        // cache key is the bare content hash, so evict just that asset and let every other
+                        // cache stay warm across the reload.
+                        cacheCleaner.EvictGltfModel(contentHash);
+                    }
+                    else
+                    {
+                        // Force-drain dereferenced caches on LSD reload to guarantee fresh loads.
+                        cacheCleaner.UnloadCache(budgeted: false);
+                        _ = Resources.UnloadUnusedAssets();
+                    }
                 }
 
                 await WaitUntilNewSceneIsFullyLoadedAsync();
@@ -150,6 +158,51 @@ namespace ECS.SceneLifeCycle
 
                     return isLoadCompleted;
                 }, cancellationToken: ct);
+            }
+        }
+
+        /// <summary>
+        ///     True when the dev server versions content hashes by embedding each file's modification
+        ///     time — a NUL byte separates the path from the version inside the base64 payload (see
+        ///     @dcl/sdk-commands <c>b64ContentVersionedHashingFunction</c>). A versioned hash changes
+        ///     when its file changes, so an edited file reloads through a natural cache miss and no
+        ///     eviction is required; a path-only hash (no NUL, older dev servers) still needs the drain
+        ///     because an edited file keeps its hash and would hit stale cache entries. The dev server
+        ///     hashes every file the same way, so the first entry decides for the whole scene.
+        /// </summary>
+        internal static bool IsContentVersioned(SceneEntityDefinition? definition)
+        {
+            ContentDefinition[]? content = definition?.content;
+
+            if (content == null || content.Length == 0)
+                return false;
+
+            return HashIsContentVersioned(content[0].hash);
+        }
+
+        private static bool HashIsContentVersioned(string? hash)
+        {
+            const string PREFIX = "b64-";
+
+            if (string.IsNullOrEmpty(hash) || !hash.StartsWith(PREFIX, StringComparison.Ordinal))
+                return false;
+
+            ReadOnlySpan<char> payload = hash.AsSpan(PREFIX.Length);
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(payload.Length);
+
+            try
+            {
+                // A path-only hash decodes to "{path}-{machineId}"; a versioned one to
+                // "{path}\0{mtimeMs}-{machineId}". The NUL cannot occur in a path or hostname, so its
+                // presence in the decoded bytes uniquely marks the versioned format.
+                if (!Convert.TryFromBase64Chars(payload, buffer, out int written))
+                    return false;
+
+                return Array.IndexOf(buffer, (byte)0, 0, written) >= 0;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
 
