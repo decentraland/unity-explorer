@@ -81,10 +81,10 @@ namespace DCL.AuthenticationScreenFlow
         // misclassifying returning users whose cached identity expired.
         public bool IsCurrentlyNewAccount { get; internal set; }
 
-        public event Action? DiscordButtonClicked;
-        public event Action<string, bool>? OTPVerified;
-        public event Action? OTPResend;
-        public event Action? ProfileFinalized;
+        public event Action DiscordButtonClicked;
+        public event Action<string, bool> OTPVerified;
+        public event Action OTPResend;
+        public event Action ProfileFinalized;
 
         internal void RaiseProfileFinalized() =>
             ProfileFinalized?.Invoke();
@@ -192,7 +192,6 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
