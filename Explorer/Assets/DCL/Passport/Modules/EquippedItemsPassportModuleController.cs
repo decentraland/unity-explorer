@@ -53,7 +53,7 @@ namespace DCL.Passport.Modules
         private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
         private readonly CreditPurchaseBuyHandler creditPurchaseBuyHandler;
         private readonly List<(EquippedItemPassportFieldView view, string urn)> primaryListingCandidates = new ();
-        private readonly HashSet<string> onSaleUrns = new (StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, int> onSalePrices = new (StringComparer.OrdinalIgnoreCase);
 
         private Profile currentProfile;
         private CancellationTokenSource getEquippedItemsCts;
@@ -214,6 +214,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.BuyButton.gameObject.SetActive(false);
                 equippedWearableItem.ViewButton.gameObject.SetActive(false);
                 equippedWearableItem.OnSaleFlap.gameObject.SetActive(false);
+                equippedWearableItem.ItemPriceContainer.SetActive(false);
                 string wearableUrn = wearable.GetUrn();
                 var wearableItemView = equippedWearableItem;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(wearableItemView, wearableUrn, marketPlaceLink, rarityName, raritySprite, rarityColor));
@@ -248,6 +249,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.BuyButton.gameObject.SetActive(false);
                 equippedWearableItem.ViewButton.gameObject.SetActive(false);
                 equippedWearableItem.OnSaleFlap.gameObject.SetActive(false);
+                equippedWearableItem.ItemPriceContainer.SetActive(false);
                 string emoteUrn = emote.GetUrn();
                 var emoteItemView = equippedWearableItem;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(emoteItemView, emoteUrn, marketPlaceLink, rarityName, raritySprite, rarityColor));
@@ -284,7 +286,7 @@ namespace DCL.Passport.Modules
 
                 using (decentralandUrlsSource.BuildFromDomain(DecentralandUrl.MarketplaceServer, out URLBuilder urlBuilder))
                 {
-                    urlBuilder.AppendPath(new URLPath("v2/catalog"));
+                    urlBuilder.AppendPath(new URLPath("v3/catalog/items"));
                     urlBuilder.AppendParameter(new URLParameter("first", primaryListingCandidates.Count.ToString()));
 
                     foreach ((_, string urn) in primaryListingCandidates)
@@ -299,19 +301,25 @@ namespace DCL.Passport.Modules
                 if (ct.IsCancellationRequested)
                     return;
 
-                onSaleUrns.Clear();
+                onSalePrices.Clear();
 
                 if (response?.data != null)
                     foreach (MarketplaceCatalogItem item in response.data)
                         if (item is { isOnSale: true, urn: not null })
-                            onSaleUrns.Add(item.urn);
+                            onSalePrices[item.urn] = item.priceCredits;
 
                 foreach ((EquippedItemPassportFieldView itemView, string urn) in primaryListingCandidates)
                 {
-                    bool isOnPrimarySale = onSaleUrns.Contains(urn);
+                    bool isOnPrimarySale = onSalePrices.TryGetValue(urn, out int priceCredits);
                     itemView.BuyButton.gameObject.SetActive(isOnPrimarySale);
                     itemView.OnSaleFlap.gameObject.SetActive(isOnPrimarySale);
                     itemView.ViewButton.gameObject.SetActive(!isOnPrimarySale);
+
+                    bool showPrice = isOnPrimarySale && priceCredits > 0;
+                    itemView.ItemPriceContainer.SetActive(showPrice);
+
+                    if (showPrice)
+                        itemView.ItemPrice.text = priceCredits.ToString();
                 }
             }
             catch (OperationCanceledException) { }
