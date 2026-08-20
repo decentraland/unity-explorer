@@ -77,7 +77,11 @@ namespace DCL.AvatarRendering.Wearables
                 await UniTask.SwitchToMainThread();
                 FailFetch();
             }
-            catch (OperationCanceledException) { onFetchFailed?.Invoke(); }
+            catch (OperationCanceledException)
+            {
+                await UniTask.SwitchToMainThread();
+                onFetchFailed?.Invoke();
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.EMOTE));
