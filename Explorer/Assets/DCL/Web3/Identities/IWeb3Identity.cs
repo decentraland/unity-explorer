@@ -24,6 +24,7 @@ namespace DCL.Web3.Identities
             Dapp,
             OTP,
             Deeplink,
+            Guest,
         }
 
         class Random : IWeb3Identity

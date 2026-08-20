@@ -98,6 +98,8 @@ namespace Global.AppArgs
 
         public const string EMAIL_OTP_AUTH = "email-otp-auth";
 
+        public const string GUEST_SESSION_ID = "guest-session-id";
+
         public const string AVATAR_HIGHLIGHT = "avatar-highlight";
 
         public const string CHAT_MESSAGE_RATE_LIMIT = "chat-message-rate-limit";

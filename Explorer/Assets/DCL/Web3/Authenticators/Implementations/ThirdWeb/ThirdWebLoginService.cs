@@ -23,6 +23,7 @@ namespace DCL.Web3.Authenticators
 
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
+        private readonly string? guestSessionIdOverride;
         public IThirdwebWallet? ActiveWallet { get; private set; }
         private InAppWallet? pendingWallet;
 
@@ -32,18 +33,23 @@ namespace DCL.Web3.Authenticators
         private UniTaskCompletionSource<bool>? loginCompletionSource;
         public event Action<string>? OTPSendSucceeded;
 
-        public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
+        private static string storageDirectoryPath => Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet");
+
+        public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null,
+            string? guestSessionIdOverride = null)
         {
             this.web3AccountFactory = web3AccountFactory;
             this.client = client;
             this.identityExpirationDuration = identityExpirationDuration;
+            this.guestSessionIdOverride = guestSessionIdOverride;
         }
 
         public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {
+            bool isGuest = DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE);
             string? email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, null);
 
-            if (string.IsNullOrEmpty(email))
+            if (!isGuest && string.IsNullOrEmpty(email))
                 return false;
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -54,11 +60,9 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(linkedCt);
 
-                InAppWallet? wallet = await InAppWallet.Create(
-                    client,
-                    email,
-                    storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"))
-                                                       .AsUniTask().AttachExternalCancellation(linkedCt);
+                InAppWallet wallet = isGuest
+                    ? await CreateGuestWalletAsync(linkedCt)
+                    : await CreateEmailWalletAsync(email, linkedCt);
 
                 ct.ThrowIfCancellationRequested();
                 if (linkedCt.IsCancellationRequested)
@@ -68,7 +72,13 @@ namespace DCL.Web3.Authenticators
                 }
 
                 if (!await wallet.IsConnected().AsUniTask().AttachExternalCancellation(linkedCt))
-                    return false;
+                {
+                    if (!isGuest)
+                        return false;
+
+                    // A deterministic session id resolves to the same wallet, so re-authenticating is idempotent.
+                    await LoginWithGuestAsync(wallet, linkedCt);
+                }
 
                 ActiveWallet = wallet;
                 ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb auto-login successful");
@@ -90,6 +100,7 @@ namespace DCL.Web3.Authenticators
         {
             ct.ThrowIfCancellationRequested();
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
 
             if (ActiveWallet != null)
                 try { await ActiveWallet.Disconnect().AsUniTask().AttachExternalCancellation(ct); }
@@ -99,11 +110,12 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            if (string.IsNullOrEmpty(payload.Email))
+            bool isGuest = payload.Method == LoginMethod.GUEST;
+
+            if (!isGuest && string.IsNullOrEmpty(payload.Email))
                 throw new ArgumentException("Email is required for OTP authentication", nameof(payload));
 
             await mutex.WaitAsync(ct);
-            string email = payload.Email;
 
 #if !UNITY_WEBGL
             SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -113,34 +125,16 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
-                ActiveWallet = await OTPLoginFlowAsync(email, ct);
+                InAppWallet wallet = isGuest
+                    ? await GuestLoginFlowAsync(ct)
+                    : await OTPLoginFlowAsync(payload.Email, ct);
 
-                string? sender = await ActiveWallet.GetAddress().AsUniTask().AttachExternalCancellation(ct);
+                ActiveWallet = wallet;
 
-                IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
-
-                DateTime sessionExpiration = identityExpirationDuration != null
-                    ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
-                    : DateTime.UtcNow.AddDays(7);
-
-                var ephemeralMessage =
-                    $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {sessionExpiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
-
-                string signature = await ActiveWallet!.PersonalSign(ephemeralMessage).AsUniTask().AttachExternalCancellation(ct);
-
-                var authChain = AuthChain.Create();
-                authChain.SetSigner(sender.ToLower());
-
-                authChain.Set(new AuthLink
-                {
-                    type = signature.Length == 132
-                        ? AuthLinkType.ECDSA_EPHEMERAL
-                        : AuthLinkType.ECDSA_EIP_1654_EPHEMERAL,
-                    payload = ephemeralMessage,
-                    signature = signature,
-                });
-
-                return new DecentralandIdentity(new Web3Address(sender), ephemeralAccount, sessionExpiration, authChain, IWeb3Identity.Web3IdentitySource.OTP);
+                return await BuildIdentityAsync(
+                    wallet,
+                    isGuest ? IWeb3Identity.Web3IdentitySource.Guest : IWeb3Identity.Web3IdentitySource.OTP,
+                    ct);
             }
             catch (Exception)
             {
@@ -162,13 +156,64 @@ namespace DCL.Web3.Authenticators
             }
         }
 
+        private async UniTask<IWeb3Identity> BuildIdentityAsync(IThirdwebWallet wallet, IWeb3Identity.Web3IdentitySource source, CancellationToken ct)
+        {
+            string sender = await wallet.GetAddress().AsUniTask().AttachExternalCancellation(ct);
+
+            IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
+
+            DateTime sessionExpiration = identityExpirationDuration != null
+                ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
+                : DateTime.UtcNow.AddDays(7);
+
+            var ephemeralMessage =
+                $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {sessionExpiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
+
+            string signature = await wallet.PersonalSign(ephemeralMessage).AsUniTask().AttachExternalCancellation(ct);
+
+            var authChain = AuthChain.Create();
+            authChain.SetSigner(sender.ToLower());
+
+            authChain.Set(new AuthLink
+            {
+                type = signature.Length == 132
+                    ? AuthLinkType.ECDSA_EPHEMERAL
+                    : AuthLinkType.ECDSA_EIP_1654_EPHEMERAL,
+                payload = ephemeralMessage,
+                signature = signature,
+            });
+
+            return new DecentralandIdentity(new Web3Address(sender), ephemeralAccount, sessionExpiration, authChain, source);
+        }
+
+        private async UniTask<InAppWallet> GuestLoginFlowAsync(CancellationToken ct)
+        {
+            InAppWallet wallet = await CreateGuestWalletAsync(ct);
+
+            await LoginWithGuestAsync(wallet, ct);
+
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb login: logged in as guest wallet {wallet.WalletId}");
+
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE, true, save: true);
+
+            return wallet;
+        }
+
+        private UniTask<InAppWallet> CreateGuestWalletAsync(CancellationToken ct) =>
+            InAppWallet.Create(client, authProvider: Thirdweb.AuthProvider.Guest, storageDirectoryPath: storageDirectoryPath)
+                       .AsUniTask().AttachExternalCancellation(ct);
+
+        private UniTask<InAppWallet> CreateEmailWalletAsync(string? email, CancellationToken ct) =>
+            InAppWallet.Create(client, email, storageDirectoryPath: storageDirectoryPath)
+                       .AsUniTask().AttachExternalCancellation(ct);
+
+        private UniTask<string> LoginWithGuestAsync(InAppWallet wallet, CancellationToken ct) =>
+            wallet.LoginWithGuest(GuestSessionIdProvider.Resolve(guestSessionIdOverride))
+                  .AsUniTask().AttachExternalCancellation(ct);
+
         private async UniTask<InAppWallet> OTPLoginFlowAsync(string? email, CancellationToken ct)
         {
-            pendingWallet = await InAppWallet.Create(
-                client,
-                email,
-                storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"))
-                                             .AsUniTask().AttachExternalCancellation(ct);
+            pendingWallet = await CreateEmailWalletAsync(email, ct);
 
             try { await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct); }
             catch (Exception ex) when (ContainsInvalidEmailError(ex))

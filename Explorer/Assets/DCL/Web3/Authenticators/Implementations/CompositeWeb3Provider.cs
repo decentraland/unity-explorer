@@ -32,8 +32,10 @@ namespace DCL.Web3.Authenticators
 
         public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
-        private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappLogin;
-        private IEthereumApi currentEthereumApi => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappEthereumApi;
+        private bool isThirdWebBacked => CurrentProvider is AuthProvider.ThirdWeb or AuthProvider.Guest;
+
+        private IWeb3Authenticator currentAuthenticator => isThirdWebBacked ? thirdWebAuth : dappLogin;
+        private IEthereumApi currentEthereumApi => isThirdWebBacked ? thirdWebAuth : dappEthereumApi;
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
@@ -67,6 +69,9 @@ namespace DCL.Web3.Authenticators
             if (identity.Source != IWeb3Identity.Web3IdentitySource.OTP)
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
 
+            if (identity.Source != IWeb3Identity.Web3IdentitySource.Guest)
+                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
+
             return identity;
         }
 
@@ -75,7 +80,7 @@ namespace DCL.Web3.Authenticators
             analytics.Identify(null);
 
             // ThirdWeb is the only provider holding a login session of its own.
-            if (IsThirdWebOTP)
+            if (isThirdWebBacked)
                 await thirdWebAuth.LogoutAsync(ct);
             else
                 // Abort any in-flight browser signature confirmation so an approval arriving
@@ -96,6 +101,12 @@ namespace DCL.Web3.Authenticators
         {
             if (OtpIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
+
+            if (DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE))
+            {
+                CurrentProvider = AuthProvider.Guest;
+                return thirdWebAuth.TryAutoLoginAsync(ct);
+            }
 
             string storedEmail = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
 

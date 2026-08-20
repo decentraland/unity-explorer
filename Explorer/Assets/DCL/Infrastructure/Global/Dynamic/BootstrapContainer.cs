@@ -212,6 +212,13 @@ namespace Global.Dynamic
                 ? int.Parse(v!)
                 : null;
 
+            // Overriding the guest session id defeats one-guest-per-machine, so it is refused on production.
+            string? guestSessionIdOverride = dclEnvironment != DecentralandEnvironment.Org
+                                             && appArgs.HasDebugFlag()
+                                             && appArgs.TryGetValue(AppArgsFlags.GUEST_SESSION_ID, out string? guestSessionId)
+                ? guestSessionId
+                : null;
+
             // Create ThirdWeb authenticator (Email + OTP)
             var thirdWebAuth = new ThirdWebAuthenticator(
                 decentralandUrlsSource,
@@ -220,7 +227,8 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 web3AccountFactory,
                 webRequestController,
-                identityExpirationDuration
+                identityExpirationDuration,
+                guestSessionIdOverride
             );
 
             string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
