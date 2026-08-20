@@ -74,8 +74,12 @@ namespace DCL.Passport
                 isEmoteLoading = true;
 
                 try { await ShowLoadingSpinnerAndUpdateAvatarAsync(ct); }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.EMOTE); }
+                catch (OperationCanceledException) { return; }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.EMOTE);
+                    return;
+                }
                 finally
                 {
                     previewAvatarModel.Emotes.Remove(urn);
