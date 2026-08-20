@@ -23,13 +23,13 @@ namespace DCL.AuthenticationScreenFlow.Tests
     public class ProfileFetchingAuthStateShould
     {
         // Mirrors ProfileFetchingAuthState.PROFILE_FETCH_TIMEOUT (private)
-        private const float ATTEMPT_TIMEOUT_SECONDS = 15f;
+        private const float FETCH_TIMEOUT_SECONDS = 15f;
 
-        // Long enough for the first attempt to time out and a retry to start, short enough to stay before a second timeout
+        // Long enough for the fetch timeout to fire and be observed
         private const float OBSERVATION_SECONDS = 16.5f;
 
         [UnityTest]
-        public IEnumerator CancelStalledFetchAndRetryOnTimeout() =>
+        public IEnumerator CancelStalledFetchOnTimeout() =>
             UniTask.ToCoroutine(async () =>
             {
                 // The state machine has no states registered: transitions attempted by the flow throw and are logged
@@ -75,14 +75,11 @@ namespace DCL.AuthenticationScreenFlow.Tests
                     while (UnityEngine.Time.realtimeSinceStartup < deadline)
                         await UniTask.Yield();
 
-                    Assert.That(selfProfile.CapturedTokens.Count, Is.GreaterThanOrEqualTo(1), "the profile fetch was never started");
+                    Assert.That(selfProfile.CapturedTokens.Count, Is.EqualTo(1), "the profile fetch must run exactly once (no retries)");
 
                     Assert.That(selfProfile.CapturedTokens[0].IsCancellationRequested, Is.True,
-                        $"the first fetch attempt's token must be cancelled once the {ATTEMPT_TIMEOUT_SECONDS}s attempt timeout elapses; " +
+                        $"the fetch's token must be cancelled once the {FETCH_TIMEOUT_SECONDS}s timeout elapses; " +
                         "an uncancelled token means the request was abandoned and keeps poisoning the repository's ongoing batch");
-
-                    Assert.That(selfProfile.CapturedTokens.Count, Is.GreaterThanOrEqualTo(2),
-                        "a timed-out attempt must be retried before the login flow gives up");
                 }
                 finally
                 {
@@ -104,8 +101,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 var selfProfile = new StalledSelfProfile();
                 using var cts = new CancellationTokenSource();
 
-                UniTask<Profile?> fetch = ProfileFetchingAuthState.FetchProfileWithTimeoutRetriesAsync(
-                    selfProfile, TimeSpan.FromSeconds(ATTEMPT_TIMEOUT_SECONDS), maxAttempts: 3, cts.Token);
+                UniTask<Profile?> fetch = ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                    selfProfile, TimeSpan.FromSeconds(FETCH_TIMEOUT_SECONDS), cts.Token);
 
                 float deadline = UnityEngine.Time.realtimeSinceStartup + 5f;
 
@@ -128,37 +125,37 @@ namespace DCL.AuthenticationScreenFlow.Tests
             });
 
         [UnityTest]
-        public IEnumerator ThrowTimeoutOnlyAfterExhaustingAllAttempts() =>
+        public IEnumerator ThrowTimeoutWhenFetchStalls() =>
             UniTask.ToCoroutine(async () =>
             {
                 var selfProfile = new StalledSelfProfile();
 
                 try
                 {
-                    await ProfileFetchingAuthState.FetchProfileWithTimeoutRetriesAsync(
-                        selfProfile, TimeSpan.FromSeconds(0.25), maxAttempts: 2, CancellationToken.None);
+                    await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                        selfProfile, TimeSpan.FromSeconds(0.25), CancellationToken.None);
 
-                    Assert.Fail("exhausting all attempts must surface as TimeoutException");
+                    Assert.Fail("a stalled fetch must surface as TimeoutException");
                 }
                 catch (TimeoutException) { }
 
-                Assert.That(selfProfile.CapturedTokens.Count, Is.EqualTo(2), "every attempt up to the limit must run");
+                Assert.That(selfProfile.CapturedTokens.Count, Is.EqualTo(1), "the fetch must run exactly once");
 
-                Assert.That(selfProfile.CapturedTokens.TrueForAll(t => t.IsCancellationRequested), Is.True,
-                    "each timed-out attempt must cancel its own request instead of abandoning it");
+                Assert.That(selfProfile.CapturedTokens[0].IsCancellationRequested, Is.True,
+                    "a timed-out fetch must cancel its own request instead of abandoning it");
             });
 
         [UnityTest]
-        public IEnumerator ReturnNullWithoutRetryWhenProfileIsNotDeployed() =>
+        public IEnumerator ReturnNullWhenProfileIsNotDeployed() =>
             UniTask.ToCoroutine(async () =>
             {
                 var selfProfile = new MissingProfileSelfProfile();
 
-                Profile? result = await ProfileFetchingAuthState.FetchProfileWithTimeoutRetriesAsync(
-                    selfProfile, TimeSpan.FromSeconds(ATTEMPT_TIMEOUT_SECONDS), maxAttempts: 3, CancellationToken.None);
+                Profile? result = await ProfileFetchingAuthState.FetchProfileWithTimeoutAsync(
+                    selfProfile, TimeSpan.FromSeconds(FETCH_TIMEOUT_SECONDS), CancellationToken.None);
 
                 Assert.That(result, Is.Null);
-                Assert.That(selfProfile.Calls, Is.EqualTo(1), "a genuine \"no deployed profile\" must not be retried");
+                Assert.That(selfProfile.Calls, Is.EqualTo(1), "a genuine \"no deployed profile\" must resolve on the single fetch");
             });
 
         private static void SetBackingField(object target, Type declaringType, string propertyName, object value)

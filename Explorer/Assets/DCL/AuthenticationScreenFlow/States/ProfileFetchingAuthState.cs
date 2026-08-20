@@ -19,7 +19,6 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<ProfileFetchingPayload>
     {
-        private const int PROFILE_FETCH_ATTEMPTS = 3;
         private static readonly TimeSpan PROFILE_FETCH_TIMEOUT = TimeSpan.FromSeconds(15);
 
         private readonly MVCStateMachine<AuthStateBase> machine;
@@ -111,7 +110,7 @@ namespace DCL.AuthenticationScreenFlow
                     });
 
                     // Timeout surfaces catalyst stalls as CONNECTION_ERROR instead of a frozen spinner.
-                    if (await FetchProfileWithTimeoutRetriesAsync(selfProfile, PROFILE_FETCH_TIMEOUT, PROFILE_FETCH_ATTEMPTS, ct) is { } profile)
+                    if (await FetchProfileWithTimeoutAsync(selfProfile, PROFILE_FETCH_TIMEOUT, ct) is { } profile)
                     {
                         // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
                         profile.IsDirty = true;
@@ -156,31 +155,27 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         /// <summary>
-        ///     Each attempt owns a linked token, so a timed-out attempt cancels its underlying request instead of
-        ///     abandoning it. Only exhausting all attempts surfaces as <see cref="TimeoutException" /> (CONNECTION_ERROR);
+        ///     The fetch runs under a linked token, so a timed-out fetch cancels its underlying request instead of
+        ///     abandoning it. Timeout surfaces as <see cref="TimeoutException" /> (CONNECTION_ERROR);
         ///     cancellation of <paramref name="ct" /> surfaces as <see cref="OperationCanceledException" />.
         /// </summary>
-        internal static async UniTask<Profile?> FetchProfileWithTimeoutRetriesAsync(ISelfProfile selfProfile, TimeSpan attemptTimeout, int maxAttempts, CancellationToken ct)
+        internal static async UniTask<Profile?> FetchProfileWithTimeoutAsync(ISelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
         {
-            for (var attempt = 1;; attempt++)
-            {
-                using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                using IDisposable timeoutTimer = timeoutCts.CancelAfterSlim(attemptTimeout);
+            using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            using IDisposable timeoutTimer = timeoutCts.CancelAfterSlim(timeout);
 
-                if (await selfProfile.ProfileAsync(timeoutCts.Token) is { } profile)
-                    return profile;
+            if (await selfProfile.ProfileAsync(timeoutCts.Token) is { } profile)
+                return profile;
 
-                // The repository suppresses cancellation into a null profile, including cancellation of the flow token.
-                // Surface external cancellation as OCE so it is classified as a user cancel, not as "no deployed profile"
-                // (which on the cached flow would clear a still-valid stored identity)
-                ct.ThrowIfCancellationRequested();
+            // The repository suppresses cancellation into a null profile, including cancellation of the flow token.
+            // Surface external cancellation as OCE so it is classified as a user cancel, not as "no deployed profile"
+            // (which on the cached flow would clear a still-valid stored identity)
+            ct.ThrowIfCancellationRequested();
 
-                if (!timeoutCts.IsCancellationRequested)
-                    return null; // genuine "no deployed profile"
+            if (timeoutCts.IsCancellationRequested)
+                throw new TimeoutException($"Profile fetch timed out after {timeout.TotalSeconds:F0}s");
 
-                if (attempt >= maxAttempts)
-                    throw new TimeoutException($"Profile fetch timed out after {maxAttempts} attempts of {attemptTimeout.TotalSeconds:F0}s each");
-            }
+            return null; // genuine "no deployed profile"
         }
 
         private Profile CreateRandomProfile(string identityAddress)
