@@ -20,11 +20,15 @@ namespace DCL.Notifications
 {
     public class NotificationsRequestController
     {
+        private static readonly TimeSpan NOTIFICATIONS_DELAY = TimeSpan.FromSeconds(5);
+
 #if UNITY_INCLUDE_TESTS
-        // Mutable only in test-including compilations so EditMode tests can shorten the poll cadence
-        public static TimeSpan NotificationsDelay = TimeSpan.FromSeconds(5);
+        // Set by EditMode tests to shorten the poll cadence; null falls back to NOTIFICATIONS_DELAY
+        public static TimeSpan? PollIntervalOverrideForTest;
+
+        private static TimeSpan pollDelay => PollIntervalOverrideForTest ?? NOTIFICATIONS_DELAY;
 #else
-        private static readonly TimeSpan NotificationsDelay = TimeSpan.FromSeconds(5);
+        private static TimeSpan pollDelay => NOTIFICATIONS_DELAY;
 #endif
 
         private readonly JsonSerializerSettings serializerSettings;
@@ -73,7 +77,7 @@ namespace DCL.Notifications
 
         public async UniTask<List<INotification>> GetMostRecentNotificationsAsync(CancellationToken ct)
         {
-            do await UniTask.Delay(NotificationsDelay, DelayType.Realtime, cancellationToken: ct);
+            do await UniTask.Delay(pollDelay, DelayType.Realtime, cancellationToken: ct);
             while (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired);
 
             urlBuilder.Clear();
@@ -107,7 +111,7 @@ namespace DCL.Notifications
             {
                 try
                 {
-                    await UniTask.Delay(NotificationsDelay, DelayType.Realtime, cancellationToken: ct);
+                    await UniTask.Delay(pollDelay, DelayType.Realtime, cancellationToken: ct);
 
                     if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
                         continue;
