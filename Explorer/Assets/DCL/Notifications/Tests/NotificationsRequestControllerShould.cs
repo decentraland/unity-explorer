@@ -24,6 +24,7 @@ namespace DCL.Notifications.Tests
         private IWebRequestController webRequestController = null!;
         private IWeb3IdentityCache identityCache = null!;
         private IDecentralandUrlsSource urlsSource = null!;
+        private TimeSpan originalNotificationsDelay;
 
         private readonly List<List<INotification>> capturedTargets = new ();
         private readonly List<int> callTimeCounts = new ();
@@ -39,6 +40,9 @@ namespace DCL.Notifications.Tests
         [SetUp]
         public void SetUp()
         {
+            originalNotificationsDelay = NotificationsRequestController.NotificationsDelay;
+            NotificationsRequestController.NotificationsDelay = TEST_POLL_INTERVAL;
+
             NotificationsBusController.Initialize(new NotificationsBusController());
 
             capturedTargets.Clear();
@@ -72,8 +76,12 @@ namespace DCL.Notifications.Tests
                                      return UniTask.FromResult(op.Target);
                                  });
 
-            controller = NotificationsRequestController.CreateForTest(webRequestController, urlsSource, identityCache, TEST_POLL_INTERVAL);
+            controller = new NotificationsRequestController(webRequestController, urlsSource, identityCache);
         }
+
+        [TearDown]
+        public void TearDown() =>
+            NotificationsRequestController.NotificationsDelay = originalNotificationsDelay;
 
         [Test]
         public async Task ReuseSingleListInstanceAcrossPollIterations()
