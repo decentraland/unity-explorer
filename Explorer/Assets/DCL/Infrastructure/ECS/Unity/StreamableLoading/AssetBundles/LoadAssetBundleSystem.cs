@@ -100,7 +100,9 @@ namespace ECS.StreamableLoading.AssetBundles
                     // sessions. Evicting turns the single re-request below into a real download that re-populates the
                     // cache; for null bundles with non-cache causes it costs at most one extra attempt.
                     await UniTask.SwitchToMainThread();
-                    CorruptAbCacheEvictor.TryEvict(intention.CommonArguments.URL, intention.cacheHash.Value);
+
+                    if (CorruptAbCacheEvictor.TryEvict(intention.CommonArguments.URL, intention.cacheHash.Value))
+                        ReportHub.Log(GetReportData(), $"Evicted corrupt cached AssetBundle for {intention.Hash}, retrying download");
 
                     assetBundleResult = await webRequestController.GetAssetBundleAsync(
                         intention.CommonArguments,
