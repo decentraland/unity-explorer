@@ -10,12 +10,6 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
     public interface IGltFastDownloadStrategy
     {
         IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget);
-
-        /// <summary>
-        ///     True while every external file the import fetched still resolves to the URL it was
-        ///     imported from, i.e. the cached data can be reused as-is.
-        /// </summary>
-        bool AreExternalDependenciesUpToDate(GLTFData data);
     }
 
     public struct GltFastSceneDownloadStrategy : IGltFastDownloadStrategy
@@ -29,9 +23,6 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 
         public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget) =>
             new GltFastSceneDownloadProvider(world, sceneData, partitionComponent, intention.Name!, reportData, webRequestController, acquiredBudget);
-
-        public bool AreExternalDependenciesUpToDate(GLTFData data) =>
-            GltfExternalDependency.AreUpToDate(data.ExternalDependencies, sceneData.SceneContent);
     }
 
     public struct GltFastGlobalDownloadStrategy : IGltFastDownloadStrategy
@@ -45,11 +36,6 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 
         public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget) =>
             new GltFastGlobalDownloadProvider(world, contentDownloadUrl, partitionComponent, reportData, webRequestController, acquiredBudget);
-
-        // Global content is content-addressed and immutable: a dependency cannot change while the
-        // GLTF's own hash stays the same.
-        public bool AreExternalDependenciesUpToDate(GLTFData data) =>
-            true;
     }
 
     public struct GltFastRealmDataDownloadStrategy : IGltFastDownloadStrategy
@@ -63,10 +49,5 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 
         public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget) =>
             new GltFastGlobalDownloadProvider(world, realmData.Ipfs.ContentBaseUrl.Value, partitionComponent, reportData, webRequestController, acquiredBudget);
-
-        // Realm content is content-addressed and immutable: a dependency cannot change while the
-        // GLTF's own hash stays the same.
-        public bool AreExternalDependenciesUpToDate(GLTFData data) =>
-            true;
     }
 }

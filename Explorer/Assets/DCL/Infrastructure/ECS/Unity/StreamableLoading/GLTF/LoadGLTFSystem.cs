@@ -134,15 +134,6 @@ namespace ECS.StreamableLoading.GLTF
         }
 
         /// <summary>
-        ///     A cached import embeds the external textures/buffers it fetched at import time. In local
-        ///     scene development the content mapping changes on hot reload, so a hit is only served while
-        ///     every external file still resolves to the URL it was imported from; otherwise the entry is
-        ///     evicted and the GLTF re-imports, fetching the edited file under its new hash.
-        /// </summary>
-        protected override bool IsCachedResultValid(in GetGLTFIntention intention, GLTFData asset) =>
-            !isLocalSceneDevelopment || downloadStrategy.AreExternalDependenciesUpToDate(asset);
-
-        /// <summary>
         /// LoadSystemBase invokes this when a successful result is abandoned (e.g. cancellation after Load completes
         /// but before any consumer's ApplyLoadedResult added a reference). If any consumer has already claimed it the
         /// ref count is > 0 and we leave teardown to them.

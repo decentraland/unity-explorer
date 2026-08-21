@@ -217,13 +217,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
 
-        /// <summary>
-        ///     Revalidates a cache hit before it is served. When false the entry is removed from the
-        ///     cache and the flow proceeds as a miss, downloading the asset afresh.
-        /// </summary>
-        protected virtual bool IsCachedResultValid(in TIntention intention, TAsset asset) =>
-            true;
-
         private void FinalizeLoading(Entity entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             StreamableLoadingState state)
@@ -390,13 +383,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 if (option.Has)
                 {
-                    if (!IsCachedResultValid(in intention, option.Value))
-                    {
-                        ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Stale Hit - Evicting: {intention.CommonArguments.URL}");
-                        cache.Remove(in intention);
-                        return null;
-                    }
-
                     ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Hit (Memory/Disk) for: {intention.CommonArguments.URL}");
                     return new StreamableLoadingResult<TAsset>(option.Value);
                 }

@@ -24,12 +24,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
+        private readonly GltfLoadCache gltfLoadCache;
         private readonly ISceneData sceneData;
         private readonly Options options;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, ISceneData sceneData, Options options) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, GltfLoadCache gltfLoadCache, ISceneData sceneData, Options options) : base(world)
         {
             this.cache = cache;
+            this.gltfLoadCache = gltfLoadCache;
             this.sceneData = sceneData;
             this.options = options;
         }
@@ -52,12 +54,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 // In LSD a raw-GLTF asset is only reusable while the external files its import fetched
                 // (textures, buffers) still resolve to the URLs it was imported from; a hot reload can
                 // republish one of them under a new content hash while the GLTF's own hash — the cache
-                // key — stays the same. TryGet pops the pooled instance, so a stale one must be disposed
-                // here, and the remaining instances under the key are equally stale.
+                // key — stays the same. Both layers are evicted (mirroring CacheCleaner.EvictGltfModel):
+                // the popped instance and its pool because they were built from the stale import, and the
+                // import itself so it re-runs and the fresh result can occupy the freed cache key.
                 if (options.LocalSceneDevelopment && IsStaleRawGltf(asset!))
                 {
                     asset!.Dispose();
                     cache.Remove(intention.CacheKey);
+                    gltfLoadCache.RemoveByHash(intention.Hash);
                 }
                 else
                 {
