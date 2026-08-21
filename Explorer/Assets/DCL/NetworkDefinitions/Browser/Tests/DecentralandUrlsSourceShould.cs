@@ -261,6 +261,27 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual(expectedBaseDomain, DecentralandUrlsSource.CreateForTest(environment, ILaunchMode.PLAY).BaseDomain);
         }
 
+        [TestCase("worlds-content-server." + CUSTOM_DOMAIN, true)]
+        [TestCase("a.b." + CUSTOM_DOMAIN, true)]                  // nested subdomains are still below it
+        [TestCase(CUSTOM_DOMAIN, false)]                          // the domain itself is not a subdomain of itself
+        [TestCase(CUSTOM_DOMAIN + ".attacker.com", false)]        // suffix-spoof
+        [TestCase("evil-" + CUSTOM_DOMAIN, false)]                // no '.' boundary
+        [TestCase("online", false)]                               // shorter than the domain
+        public void MatchOnlySubdomainsOfADomain(string host, bool expected)
+        {
+            Assert.AreEqual(expected, IDecentralandUrlsSource.IsSubdomainOf(host, CUSTOM_DOMAIN), host);
+        }
+
+        [TestCase("worlds-content-server." + CUSTOM_DOMAIN, true)]
+        [TestCase(CUSTOM_DOMAIN, true)]                           // the domain is a host in its own right here
+        [TestCase("WORLDS-CONTENT-SERVER.INTERCONNECTED.ONLINE", true)]
+        [TestCase(CUSTOM_DOMAIN + ".attacker.com", false)]
+        [TestCase("evil-" + CUSTOM_DOMAIN, false)]
+        public void MatchAnyHostWithinADomain(string host, bool expected)
+        {
+            Assert.AreEqual(expected, IDecentralandUrlsSource.IsHostWithinDomain(host, CUSTOM_DOMAIN), host);
+        }
+
         [TestCase(CUSTOM_DOMAIN, CUSTOM_DOMAIN)]
         [TestCase("  " + CUSTOM_DOMAIN + "  ", CUSTOM_DOMAIN)] // padded by a shell or launcher
         [TestCase("." + CUSTOM_DOMAIN, CUSTOM_DOMAIN)]         // written as a suffix

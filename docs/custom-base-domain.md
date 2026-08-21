@@ -52,6 +52,9 @@ newly added url with a hand-written domain is caught.
   custom base domain are trusted for realm switching exactly like `decentraland.*` hosts,
   and *instead of* them. Because that grants trust, the value is read while the deep link
   is still deferred, so only the command line can set it.
+- **The startup trusted-realm gate** (`MainSceneLoader.IsTrustedRealmAsync`): every host
+  under the custom base domain is trusted, so a `--realm` on that deployment — catalyst or
+  world — connects without the untrusted-realm confirmation. See below for why.
 - **The main-realm comms hostname** (`RealmController`): a custom deployment groups under
   its own `realm-provider.<base-domain>` rather than decentraland's main-realm island.
 - **comms-gatekeeper** stays independently overridable through `--gatekeeper-url`, which
@@ -68,9 +71,34 @@ These decisions are not domain-derived, and each carries an explicit `Custom` ar
 | Marketplace credits (`CreditsChainConfig`), donations (`DonationsService`) | Amoy | Same reason: no mainnet contracts. |
 | Stored identity slot (`PlayerPrefsIdentityProvider`) | the sepolia slot | The key is chain-scoped, so it must not overwrite the mainnet identity. |
 | Community-message router (`LiveKitChatMessagesBus`, `ChatReactionsFactory`) | `message-router-dev-0` | A custom deployment's comms-message-sfu has to join under this identity for relayed messages to authenticate. |
-| Genesis City manifest (`WorldManifestProvider`) | the production manifest | A static S3 artifact, not a host under the base domain. |
+| Genesis City manifest (`WorldManifestProvider`) | *no manifest* — the fetch is skipped | It describes decentraland's own Genesis City; a custom realm reusing one of its realm names is a different world. |
 
 A deployment that mirrors *mainnet* is therefore out of scope for this flag.
+
+## Realm trust under a custom base domain
+
+Three separate gates decide whether a realm is trusted, and all three treat the custom base
+domain the way they treat `decentraland.*`:
+
+| Gate | Rule |
+| --- | --- |
+| `MainSceneLoader.IsTrustedRealmAsync` (startup `--realm`) | any host under `BaseDomain` |
+| `DeepLinkAllowlist.IsRealmWhitelisted` (deep-link dev params) | any *subdomain* of `BaseDomain`, and the world must also be flag-whitelisted |
+| `ChatEnvironmentValidator` (in-session teleport) | any host under `BaseDomain` |
+
+The startup gate needs the domain rule rather than a host list because the fallback it would
+otherwise use — the deployment's catalyst server list — enumerates catalysts, not worlds
+servers. That is why decentraland's `worlds-content-server` is hardcoded there; without the
+domain rule a custom deployment's worlds would prompt for confirmation on every launch.
+
+Widening trust this way is safe because `--base-domain` is **command-line only** and never
+accepted from a deep link, so reaching these gates already required the operator to point the
+client at that deployment. The deep-link gate stays deliberately stricter — subdomains only,
+and still flag-gated on the world name — because the realm there is attacker-supplied.
+
+`IDecentralandUrlsSource.IsSubdomainOf` / `IsHostWithinDomain` hold the `.`-boundary check
+these gates share, so the rule that rejects `interconnected.online.attacker.com` and
+`evil-interconnected.online` lives in one place.
 
 ## Not covered
 

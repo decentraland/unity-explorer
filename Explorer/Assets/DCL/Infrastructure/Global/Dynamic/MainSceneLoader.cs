@@ -885,6 +885,15 @@ namespace Global.Dynamic
             var uri = new Uri(realm);
             if (uri.Host == "127.0.0.1") return true;
             if (uri.Host == "localhost") return true;
+
+            // A --base-domain deployment owns everything under its domain, so its realms and worlds carry the same
+            // trust the hardcoded decentraland hosts below do. Its worlds server in particular cannot be reached any
+            // other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers, which
+            // is exactly why decentraland's is hardcoded. Widening trust this way is safe because --base-domain is
+            // command-line only (never accepted from a deep link), so the operator already chose this deployment.
+            if (decentralandEnvironment == DecentralandEnvironment.Custom
+                && IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, dclUrls.BaseDomain))
+                return true;
             if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
             if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
             if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;

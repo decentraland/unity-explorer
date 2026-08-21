@@ -239,15 +239,17 @@ namespace Global.AppArgs
         // "decentraland.org.attacker.com" and "evil-decentraland.org".
         private static bool IsTrustedBaseDomainHost(string host)
         {
+            // Deliberately subdomains only: the registrable domain itself does not host realms, so it carries no
+            // trust here even though it sits under itself.
             if (trustedBaseDomain != null)
-                return IsSubdomainOf(host, trustedBaseDomain);
+                return IDecentralandUrlsSource.IsSubdomainOf(host, trustedBaseDomain);
 
             // Indexed loop, not foreach: enumerating the IReadOnlyList would allocate an enumerator.
             IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
 
             for (var i = 0; i < domains.Count; i++)
             {
-                if (IsSubdomainOf(host, domains[i]))
+                if (IDecentralandUrlsSource.IsSubdomainOf(host, domains[i]))
                     return true;
             }
 
@@ -267,11 +269,6 @@ namespace Global.AppArgs
 
             return false;
         }
-
-        private static bool IsSubdomainOf(string host, string domain) =>
-            host.Length > domain.Length
-            && host[host.Length - domain.Length - 1] == '.'
-            && host.EndsWith(domain, StringComparison.OrdinalIgnoreCase);
 
         // A world realm is either the bare ENS name (e.g. "myworld.dcl.eth") or a worlds-content-server URL whose
         // last path segment is that ENS. We reduce both the configured entries and the realm to that name and match
