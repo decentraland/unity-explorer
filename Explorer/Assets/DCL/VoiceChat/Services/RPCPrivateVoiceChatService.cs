@@ -68,11 +68,14 @@ namespace DCL.VoiceChat.Services
         {
             if (isServiceDisabled)
                 throw new InvalidOperationException("Voice chat service is disabled.");
+
+            if (identityCache.IsGuest())
+                throw new InvalidOperationException("Voice chat is not available for guest accounts.");
         }
 
         private void OnTransportConnected()
         {
-            if (isServiceDisabled || identityCache.Identity == null) return;
+            if (isServiceDisabled || identityCache.Identity == null || identityCache.IsGuest()) return;
 
             TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
         }
@@ -85,7 +88,7 @@ namespace DCL.VoiceChat.Services
 
         private void OnTransportReconnected()
         {
-            if (isServiceDisabled || identityCache.Identity == null) return;
+            if (isServiceDisabled || identityCache.Identity == null || identityCache.IsGuest()) return;
 
             Reconnected?.Invoke();
             TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();

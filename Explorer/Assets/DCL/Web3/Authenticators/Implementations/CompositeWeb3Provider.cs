@@ -102,6 +102,9 @@ namespace DCL.Web3.Authenticators
             if (OtpIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
 
+            if (GuestLoginIsDisabled())
+                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
+
             if (DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE))
             {
                 CurrentProvider = AuthProvider.Guest;
@@ -116,13 +119,13 @@ namespace DCL.Web3.Authenticators
                 CurrentProvider = AuthProvider.Dapp;
                 return UniTask.FromResult(true);
             }
-            else
-            {
-                CurrentProvider = AuthProvider.ThirdWeb;
-                return thirdWebAuth.TryAutoLoginAsync(ct);
-            }
+
+            CurrentProvider = AuthProvider.ThirdWeb;
+            return thirdWebAuth.TryAutoLoginAsync(ct);
 
             bool OtpIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
+
+            bool GuestLoginIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin);
         }
 
         // IEthereumApi

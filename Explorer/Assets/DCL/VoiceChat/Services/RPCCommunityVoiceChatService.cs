@@ -66,9 +66,15 @@ namespace DCL.VoiceChat.Services
             base.Dispose();
         }
 
+        private void ThrowIfGuest()
+        {
+            if (identityCache.IsGuest())
+                throw new InvalidOperationException("Voice chat is not available for guest accounts.");
+        }
+
         private void OnTransportConnected()
         {
-            if (identityCache.Identity == null) return;
+            if (identityCache.Identity == null || identityCache.IsGuest()) return;
 
             SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
 
@@ -84,6 +90,8 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new StartCommunityVoiceChatPayload
@@ -101,6 +109,8 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new JoinCommunityVoiceChatPayload
@@ -144,6 +154,8 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, bool isRequestingToSpeak, CancellationToken ct)
         {
+            ThrowIfGuest();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new RequestToSpeakInCommunityVoiceChatPayload

@@ -59,6 +59,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.CommunitiesAnnouncements] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) || isEditor,
                 [FeatureId.CommunitiesMembersCounter] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 [FeatureId.EmailOTPAuth] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
+                [FeatureId.GuestLogin] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GUEST_LOGIN, featureFlags.IsEnabled(FeatureFlagsStrings.GUEST_LOGIN)),
                 [FeatureId.CheckDiskSpace] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
                 [FeatureId.AvatarHighlight] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || isEditor, requireDebug: false),
                 [FeatureId.DoubleJump] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
@@ -224,5 +225,6 @@ namespace DCL.FeatureFlags
         UseCustomMediaPlayerMacIntel = 73,
         NearbyVoiceChatTip = 74,
         BugReport = 75,
+        GuestLogin = 76,
     }
 }
