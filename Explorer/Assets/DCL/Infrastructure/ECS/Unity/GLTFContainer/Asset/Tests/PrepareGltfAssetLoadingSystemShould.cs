@@ -1,4 +1,5 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Utility;
 using ECS.StreamableLoading.AssetBundles;
@@ -21,6 +22,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
     public class PrepareGltfAssetLoadingSystemShould : UnitySystemTestBase<PrepareGltfAssetLoadingSystem>
     {
         private IGltfContainerAssetsCache cache;
+        private GltfLoadCache gltfLoadCache;
         private ISceneData sceneData;
         private ISceneContent sceneContent;
 
@@ -28,16 +30,17 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         public void SetUp()
         {
             cache = Substitute.For<IGltfContainerAssetsCache>();
+            gltfLoadCache = new GltfLoadCache();
             sceneData = Substitute.For<ISceneData>();
             sceneContent = Substitute.For<ISceneContent>();
             sceneData.SceneContent.Returns(sceneContent);
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition());
-            system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, default);
+            system = new PrepareGltfAssetLoadingSystem(world, cache, gltfLoadCache, sceneData, default);
         }
 
         private void BuildSystem(PrepareGltfAssetLoadingSystem.Options options = default)
         {
-            system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, options);
+            system = new PrepareGltfAssetLoadingSystem(world, cache, gltfLoadCache, sceneData, options);
         }
 
         [Test]
@@ -58,7 +61,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void CreateGltfIntentionInLocalSceneDevelopment()
         {
-            system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, new PrepareGltfAssetLoadingSystem.Options
+            system = new PrepareGltfAssetLoadingSystem(world, cache, gltfLoadCache, sceneData, new PrepareGltfAssetLoadingSystem.Options
             {
                 LocalSceneDevelopment = true,
                 UseRemoteAssetBundles = false,
@@ -79,7 +82,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             sceneContent.IsRawAsset("TEST").Returns(false);
 
-            system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, new PrepareGltfAssetLoadingSystem.Options
+            system = new PrepareGltfAssetLoadingSystem(world, cache, gltfLoadCache, sceneData, new PrepareGltfAssetLoadingSystem.Options
             {
                 LocalSceneDevelopment = true,
                 UseRemoteAssetBundles = true,
@@ -99,7 +102,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             sceneContent.IsRawAsset("models/local_only.glb").Returns(true);
 
-            system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, new PrepareGltfAssetLoadingSystem.Options
+            system = new PrepareGltfAssetLoadingSystem(world, cache, gltfLoadCache, sceneData, new PrepareGltfAssetLoadingSystem.Options
             {
                 LocalSceneDevelopment = true,
                 UseRemoteAssetBundles = true,
@@ -258,6 +261,85 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.Has<GetGLTFIntention>(e), Is.True,
                 "LSD cache miss must still fall through to the raw GLTF load path");
+        }
+
+        [Test]
+        public void EvictStaleRawGltfOnCacheHitInLocalSceneDevelopment()
+        {
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
+
+            // The import fetched an external texture that has since been republished under a new
+            // content URL (content-versioned dev server), so the cached asset holds stale bytes.
+            var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Template"),
+                externalDependencies: new[] { new GltfExternalDependency("images/tex.png", "http://localhost/content/old-hash") });
+
+            gltfData.AcquireRef();
+            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: gltfData);
+
+            GetGLTFIntention importIntention = GetGLTFIntention.Create("TEST", "TEST_HASH");
+            gltfLoadCache.Add(importIntention, gltfData);
+
+            sceneContent.TryGetContentUrl("images/tex.png", out Arg.Any<URLAddress>())
+                        .Returns(c =>
+                         {
+                             c[1] = URLAddress.FromString("http://localhost/content/new-hash");
+                             return true;
+                         });
+
+            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>())
+                 .Returns(c =>
+                  {
+                      c[1] = asset;
+                      return true;
+                  });
+
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
+            Entity e = world.Create(intent);
+
+            system!.Update(0);
+
+            cache.Received(1).Remove("TEST_HASH");
+            Assert.That(gltfLoadCache.TryGet(importIntention, out _), Is.False,
+                "The stale import must be evicted so the re-import can occupy the cache key");
+            Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False,
+                "A stale cached asset must not be served");
+            Assert.That(world.Has<GetGLTFIntention>(e), Is.True,
+                "Eviction must fall through to a fresh raw GLTF load");
+        }
+
+        [Test]
+        public void ServeCachedRawGltfWhenDependenciesUnchangedInLocalSceneDevelopment()
+        {
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
+
+            var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Template"),
+                externalDependencies: new[] { new GltfExternalDependency("images/tex.png", "http://localhost/content/same-hash") });
+
+            gltfData.AcquireRef();
+            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: gltfData);
+
+            sceneContent.TryGetContentUrl("images/tex.png", out Arg.Any<URLAddress>())
+                        .Returns(c =>
+                         {
+                             c[1] = URLAddress.FromString("http://localhost/content/same-hash");
+                             return true;
+                         });
+
+            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>())
+                 .Returns(c =>
+                  {
+                      c[1] = asset;
+                      return true;
+                  });
+
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
+            Entity e = world.Create(intent);
+
+            system!.Update(0);
+
+            cache.DidNotReceive().Remove(Arg.Any<string>());
+            Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
+            Assert.That(result.Asset, Is.EqualTo(asset));
         }
 
         [Test]

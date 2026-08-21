@@ -24,12 +24,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
+        private readonly GltfLoadCache gltfLoadCache;
         private readonly ISceneData sceneData;
         private readonly Options options;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, ISceneData sceneData, Options options) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, GltfLoadCache gltfLoadCache, ISceneData sceneData, Options options) : base(world)
         {
             this.cache = cache;
+            this.gltfLoadCache = gltfLoadCache;
             this.sceneData = sceneData;
             this.options = options;
         }
@@ -44,16 +46,29 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Builder preview bypasses the cache so creators always see the latest collection state.
-            // LSD reuse is safe within a session and is invalidated on `/reload` by ECSReloadScene's
-            // eager cache drain — required because the LSD dev server's hash is path-based, not content-based.
             bool allowCaching = !options.PreviewingBuilderCollection;
 
             // Try loading from the cache
             if (allowCaching && cache.TryGet(intention.CacheKey, out GltfContainerAsset? asset))
             {
-                // Construct the result immediately
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
-                return;
+                // In LSD a raw-GLTF asset is only reusable while the external files its import fetched
+                // (textures, buffers) still resolve to the URLs it was imported from; a hot reload can
+                // republish one of them under a new content hash while the GLTF's own hash — the cache
+                // key — stays the same. Both layers are evicted (mirroring CacheCleaner.EvictGltfModel):
+                // the popped instance and its pool because they were built from the stale import, and the
+                // import itself so it re-runs and the fresh result can occupy the freed cache key.
+                if (options.LocalSceneDevelopment && IsStaleRawGltf(asset!))
+                {
+                    asset!.Dispose();
+                    cache.Remove(intention.CacheKey);
+                    gltfLoadCache.RemoveByHash(intention.Hash);
+                }
+                else
+                {
+                    // Construct the result immediately
+                    World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+                    return;
+                }
             }
 
             bool loadRawGltf = options.PreviewingBuilderCollection;
@@ -84,6 +99,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     sceneData.SceneEntityDefinition.id ?? string.Empty));
             }
         }
+
+        private bool IsStaleRawGltf(GltfContainerAsset asset) =>
+            asset.AssetData is GLTFData gltfData && !GltfExternalDependency.AreUpToDate(gltfData.ExternalDependencies, sceneData.SceneContent);
 
         public struct Options
         {
