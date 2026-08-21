@@ -1,9 +1,9 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
+using DCL.Diagnostics;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
 using System.Text;
-using RichTypes;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -24,17 +24,28 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-            var array = byteArrayPool.GetAPIRawDataPool(
-                IJsOperations.LIVEKIT_MAX_SIZE);
-
-            int walletIdLength = Encoding.UTF8.GetBytes(message.FromWalletId,
-                array.Array.AsSpan(1));
+            int maxWalletIdBytes = Encoding.UTF8.GetMaxByteCount(message.FromWalletId.Length);
+            var array = byteArrayPool.GetAPIRawDataPool(maxWalletIdBytes + 1 + IJsOperations.LIVEKIT_MAX_SIZE);
+            int walletIdLength = Encoding.UTF8.GetBytes(message.FromWalletId, array.Array.AsSpan(1));
 
             if (walletIdLength > 255)
+            {
+                array.Dispose();
                 throw new OverflowException("Wallet ID is too long");
+            }
 
             array.Array[0] = (byte)walletIdLength;
             int dataOffset = walletIdLength + 1;
+
+            // The consumed Uint8Array is fixed at LIVEKIT_MAX_SIZE; an oversized peer payload is a routine network condition, so drop instead of throwing.
+            if (dataOffset + message.Data.Length > IJsOperations.LIVEKIT_MAX_SIZE)
+            {
+                array.Dispose();
+                ReportHub.LogWarning(ReportCategory.LIVEKIT,
+                    $"Dropped oversized scene message ({message.Data.Length} bytes) from {message.FromWalletId}");
+                return;
+            }
+
             int totalLength = dataOffset;
 
             // At this point data is already without MsgType (Explorer routing is truncated a step above).
@@ -66,10 +77,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 sourceData.CopyTo(filteredUnbounded); // basically no filtering
                 totalLength += sourceData.Length;
             }
-
-
-            if (totalLength > IJsOperations.LIVEKIT_MAX_SIZE)
-                throw new Exception("Received a message larger than LIVEKIT_MAX_SIZE");
 
             array.SetLength(totalLength);
             base.Enqueue(array);
