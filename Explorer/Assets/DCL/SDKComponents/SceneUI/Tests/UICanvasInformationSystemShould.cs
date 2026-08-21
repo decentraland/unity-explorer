@@ -59,14 +59,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
                     publishedComponents.Add(component);
                 });
 
-            // ConstantPixelSize mirrors the shipped DCLScenePanelSettings.asset (m_ScaleMode: 0).
-            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
-            panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
-            panelSettings.scale = SCENE_PANEL_SCALE;
-
             canvasGameObject = new GameObject(nameof(UICanvasInformationSystemShould) + "_Canvas");
             canvas = canvasGameObject.AddComponent<UIDocument>();
-            canvas.panelSettings = panelSettings;
+            AttachNewPanelSettings(SCENE_PANEL_SCALE);
 
             Assert.That(canvas.rootVisualElement?.panel, Is.Not.Null,
                 "The scene UIDocument must be attached to a live panel, otherwise the system reports its unattached fallback instead of the panel ratio.");
@@ -78,6 +73,20 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system = UICanvasInformationSystem.InjectToWorld(ref builder, ecsToCRDTWriter, canvas);
 
             world.Create(new SceneRootComponent());
+        }
+
+        /// <summary>Attaching a fresh PanelSettings applies the scale immediately; mutating scale on a live panel only applies during the player loop, which never runs in these synchronous tests.</summary>
+        private void AttachNewPanelSettings(float scale)
+        {
+            PanelSettings previous = panelSettings;
+
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize; // mirrors the shipped DCLScenePanelSettings.asset (m_ScaleMode: 0)
+            panelSettings.scale = scale;
+            canvas.panelSettings = panelSettings;
+
+            if (previous != null)
+                UnityEngine.Object.DestroyImmediate(previous);
         }
 
         protected override void OnTearDown()
@@ -117,7 +126,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system.Update(0);
 
             int publishedAfterFirstUpdate = publishedComponents.Count;
-            panelSettings.scale = RESCALED_SCENE_PANEL_SCALE;
+            AttachNewPanelSettings(RESCALED_SCENE_PANEL_SCALE);
             system.Update(0);
 
             Assert.That(publishedComponents.Count, Is.EqualTo(publishedAfterFirstUpdate + 1));
