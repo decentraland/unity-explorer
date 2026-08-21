@@ -29,6 +29,7 @@ namespace Global.AppArgs
             [AppArgsFlags.LSD_REMOTE_AB_SERVER] = "Changes the server scene asset bundles are downloaded from.",
             [AppArgsFlags.LSD_REMOTE_AB_WORLD] = "Loads scene content from a world chosen by the link.",
             [AppArgsFlags.PULSE_MULTIPLAYER] = "Changes how this session connects to other players.",
+            [AppArgsFlags.GATEWAY] = "Changes which Decentraland endpoint this session's traffic is routed through.",
 
             // Skips a protective screen.
             [AppArgsFlags.SKIP_VERSION_CHECK] = "Skips the check for an outdated Explorer version.",

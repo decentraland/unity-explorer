@@ -203,6 +203,34 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
+        public void RouteThroughTheGatewayWhenTheArgForcesItOn()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliUseGateway: true);
+
+            Assert.AreEqual("https://gateway.decentraland.org/places/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
+        }
+
+        [Test]
+        public void KeepUrlsOffTheGatewayWhenTheArgForcesItOff()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliUseGateway: false);
+
+            Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
+        }
+
+        // The arg overrides the flag, never the environment: today has no gateway to route to.
+        [Test]
+        public void KeepTodayOffTheGatewayWhenTheArgForcesItOn()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Today, new IRealmData.Fake(), ILaunchMode.PLAY, cliUseGateway: true);
+
+            Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
+        }
+
+        [Test]
         public void KeepGatewayRoutingWhenOptimizedAssetsDisabled()
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: true);

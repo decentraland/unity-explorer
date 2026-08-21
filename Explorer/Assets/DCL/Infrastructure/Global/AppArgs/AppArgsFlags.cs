@@ -22,6 +22,13 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+
+        /// <summary>
+        ///     Forces gateway routing on (<c>--gateway</c>, <c>--gateway true</c>) or off (<c>--gateway false</c>),
+        ///     overriding the <c>use-gateway</c> feature flag. Command line only: it reroutes every supported backend
+        ///     url for the whole session, so it must never be settable from a deep link.
+        /// </summary>
+        public const string GATEWAY = "gateway";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SPAWN_POINT = "spawnpoint";

@@ -82,11 +82,14 @@ namespace DCL.Browser
         };
 
         private readonly bool envSupported;
+
+        // What --gateway declared: true and false both outrank the flag, null leaves the decision to it.
+        private readonly bool? cliUseGateway;
         private readonly List<string>? resolvedNonClientHosts;
         private readonly string? gatewayPrefix;
         private readonly string? domainSuffix;
 
-        private bool enabled => envSupported && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
+        private bool enabled => envSupported && (cliUseGateway ?? FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY));
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
@@ -95,9 +98,11 @@ namespace DCL.Browser
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null)
+            string? cliOptimizedAssetsUrl = null,
+            bool? cliUseGateway = null)
             : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl)
         {
+            this.cliUseGateway = cliUseGateway;
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
             if (envSupported)
