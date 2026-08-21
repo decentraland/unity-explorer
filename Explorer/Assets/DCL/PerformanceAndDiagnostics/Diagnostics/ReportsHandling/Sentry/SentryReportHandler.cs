@@ -15,6 +15,7 @@ namespace DCL.Diagnostics.Sentry
         public delegate void ConfigureScope(Scope scope);
 
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
+        private const string UNKNOWN_SCENE_NAME = "unknown-scene";
 
 #if UNITY_EDITOR
         private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
@@ -132,7 +133,7 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object? context)
         {
-            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
+            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData, exception);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
@@ -194,13 +195,45 @@ namespace DCL.Diagnostics.Sentry
             }
         }
 
+        internal static void AddSceneJsFingerprint(Scope scope, in ReportData data, Exception? exception)
+        {
+            if (exception == null)
+                return;
+
+            if (!data.Category.Equals(ReportCategory.JAVASCRIPT))
+                return;
+
+            // Exception.Message is virtual and may build its string lazily, so reports filtered out above never pay for it
+            string message = exception.Message;
+
+            if (string.IsNullOrEmpty(message))
+                return;
+
+            scope.SetFingerprint("scene-js", data.SceneShortInfo.Name ?? UNKNOWN_SCENE_NAME, FirstLine(message));
+        }
+
+        private static string FirstLine(string message)
+        {
+            int end = message.IndexOf('\n');
+
+            if (end < 0)
+                return message;
+
+            // Excluding the '\r' of a "\r\n" ending here spares the extra string a TrimEnd would allocate
+            if (end > 0 && message[end - 1] == '\r')
+                end--;
+
+            return message.Substring(0, end);
+        }
+
         private class PerReportScope
         {
             public readonly Action<Scope> ExecuteCached;
 
             private readonly IReadOnlyList<ConfigureScope> scopeConfigurators;
 
-            internal ReportData reportData { private get; set; }
+            private ReportData reportData { get; set; }
+            private Exception? exception { get; set; }
 
             private PerReportScope(IReadOnlyList<ConfigureScope> scopeConfigurators)
             {
@@ -220,6 +253,7 @@ namespace DCL.Diagnostics.Sentry
 
                 AddCategoryTag(scope, reportData);
                 AddSceneInfo(scope, reportData);
+                AddSceneJsFingerprint(scope, reportData, exception);
             }
 
             private static void AddCategoryTag(Scope scope, ReportData data) =>
@@ -239,10 +273,11 @@ namespace DCL.Diagnostics.Sentry
                 public Pool(IReadOnlyList<ConfigureScope> scopeConfigurators) : base(
                     () => new PerReportScope(scopeConfigurators), defaultCapacity: 3, collectionCheck: PoolConstants.CHECK_COLLECTIONS) { }
 
-                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData)
+                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData, Exception? exception = null)
                 {
                     PoolExtensions.Scope<PerReportScope> scope = this.AutoScope();
                     scope.Value.reportData = reportData;
+                    scope.Value.exception = exception;
                     return scope;
                 }
             }

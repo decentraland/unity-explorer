@@ -88,7 +88,8 @@
         "Collections.Pooled.dll",
         "Thirdweb.dll",
         "Nethereum.Signer.dll",
-        "Arch.SystemGroups.dll"
+        "Arch.SystemGroups.dll",
+        "Sentry.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
