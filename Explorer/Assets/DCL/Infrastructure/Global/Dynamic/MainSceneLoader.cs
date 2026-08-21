@@ -235,10 +235,12 @@ namespace Global.Dynamic
             // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
             IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
 
-            // Read while the deep link is still deferred, so only the command line can supply it: the base domain
-            // decides which realm hosts DeepLinkAllowlist trusts, and a link that could set it would hand an
-            // attacker-chosen domain that trust. It has to be registered before InitializeDeepLinks() evaluates the
-            // pending link's whitelisted-realm params against it.
+            // Read while the deep link is still deferred, so only the command line can supply it. The ordering is the
+            // reason, not the allowlist: the base domain gates which realms DeepLinkAllowlist trusts, so it has to be
+            // registered before InitializeDeepLinks() evaluates the pending link's whitelisted-realm params against
+            // it. A domain arriving in that same link could not be — its own params would need gating against a domain
+            // it has not supplied yet. (base-domain is denied by the allowlist, so a link carrying it still reaches
+            // the consent dialog; WarnIfBaseDomainCameFromTheDeepLink reports that accepting it changes nothing.)
             ApplyBaseDomainArg(applicationParametersParser);
 
             if (applicationParametersParser.HasPendingDeepLink)
@@ -257,6 +259,8 @@ namespace Global.Dynamic
                 ExitUtils.Exit();
                 return;
             }
+
+            WarnIfBaseDomainCameFromTheDeepLink(applicationParametersParser);
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -584,6 +588,19 @@ namespace Global.Dynamic
         ///     and, through <see cref="DecentralandUrlsSource.ResolveBaseDomain" />, the domain every backend host and
         ///     every realm-trust check resolves against.
         /// </summary>
+        /// <summary>
+        ///     <see cref="ApplyBaseDomainArg" /> reads the base domain before the deep link is processed, so a value the
+        ///     link carried is not applied — not even after the user accepts it in the denied-params dialog, since
+        ///     nothing reads the arg again. Report that rather than leaving it looking applied in the logged args.
+        /// </summary>
+        private void WarnIfBaseDomainCameFromTheDeepLink(IAppArgs appArgs)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? baseDomainArg)
+                && !string.IsNullOrWhiteSpace(baseDomainArg)
+                && !string.Equals(baseDomainArg!.Trim(), customBaseDomain, StringComparison.OrdinalIgnoreCase))
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.BASE_DOMAIN}={baseDomainArg} from the deep link: it is only applied from the command line, so the environment stays {decentralandEnvironment}");
+        }
+
         private void ApplyBaseDomainArg(IAppArgs appArgs)
         {
             if (appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? baseDomainArg) && !string.IsNullOrWhiteSpace(baseDomainArg))

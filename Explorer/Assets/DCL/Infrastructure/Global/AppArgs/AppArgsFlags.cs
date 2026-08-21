@@ -25,8 +25,10 @@ namespace Global.AppArgs
 
         /// <summary>
         ///     Points every backend host at a deployment served under this base domain instead of
-        ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Command-line only:
-        ///     the value also decides which realm hosts are trusted, so it must never be settable from a deep link.
+        ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
+        ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
+        ///     link is processed. It is denied by <c>DeepLinkAllowlist</c> like the other infrastructure-pointing
+        ///     params, and accepting it in the denied-params dialog has no effect.
         /// </summary>
         public const string BASE_DOMAIN = "base-domain";
         public const string LOCAL_SCENE = "local-scene";

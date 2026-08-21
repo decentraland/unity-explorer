@@ -18,15 +18,15 @@ place the base domain is decided, and `IDecentralandUrlsSource.BaseDomain` is th
 place to read it. Anything needing the domain as a *value* — a host-trust suffix, a comms
 hostname — reads it there rather than restating a literal.
 
-The domain is **composed into** each url rather than substituted afterwards: every template
-in `RawUrl` interpolates the `hostDomain` field (`$"https://peer.{hostDomain}/about"`), so
-there is no `decentraland.` literal repeated across the table, no placeholder token, and no
-replace pass on resolution. `Url()` only caches what `RawUrl` produced.
+The domain is **composed into** each url rather than substituted afterwards: every template in
+`RawUrl` interpolates `BaseDomain` (`$"https://peer.{BaseDomain}/about"`), so there is no
+`decentraland.` literal repeated across the table, no placeholder token, and no replace pass on
+resolution. `Url()` only caches what `RawUrl` produced.
 
-`hostDomain` equals `BaseDomain` except in the today environment, which resolves the handful
-of hosts it serves from `.today` in its constructor and then flips the field to org for
-everything resolved afterwards. That is the one reason urls must stay lazily resolved, and
-the one case where `BaseDomain` names the environment rather than where every host lives.
+`BaseDomain` is written only by the constructor, and the today environment is the reason it is
+writable at all: it resolves the handful of hosts it serves from `.today` while being built and
+then moves to org for everything resolved afterwards, so it reports org and urls must stay lazily
+resolved.
 
 `ResolveBaseDomain` rejects a `Custom` environment without a domain, a domain paired with
 any other environment, and anything that is not a bare domain (scheme, userinfo, port or
@@ -50,8 +50,7 @@ newly added url with a hand-written domain is caught.
   ones.
 - **Deep-link realm trust** (`DeepLinkAllowlist.SetTrustedBaseDomain`): hosts under the
   custom base domain are trusted for realm switching exactly like `decentraland.*` hosts,
-  and *instead of* them. Because that grants trust, the value is read while the deep link
-  is still deferred, so only the command line can set it.
+  and *instead of* them.
 - **The startup trusted-realm gate** (`MainSceneLoader.IsTrustedRealmAsync`): every host
   under the custom base domain is trusted, so a `--realm` on that deployment — catalyst or
   world — connects without the untrusted-realm confirmation. See below for why.
@@ -91,10 +90,19 @@ otherwise use — the deployment's catalyst server list — enumerates catalysts
 servers. That is why decentraland's `worlds-content-server` is hardcoded there; without the
 domain rule a custom deployment's worlds would prompt for confirmation on every launch.
 
-Widening trust this way is safe because `--base-domain` is **command-line only** and never
-accepted from a deep link, so reaching these gates already required the operator to point the
-client at that deployment. The deep-link gate stays deliberately stricter — subdomains only,
-and still flag-gated on the world name — because the realm there is attacker-supplied.
+Widening trust this way costs nothing, because whoever sets the base domain has already
+redirected *every* backend host — profiles, content, comms, feature flags. Trusting realms under
+that same domain adds no capability on top of that. The deep-link gate stays deliberately
+stricter — subdomains only, and still flag-gated on the world name — because the realm *it* sees
+is attacker-supplied while the base domain is not.
+
+`--base-domain` itself is applied from the command line only. That is an ordering constraint
+rather than a trust boundary: the domain gates which realms `DeepLinkAllowlist` trusts, so it
+must be registered before `InitializeDeepLinks()` evaluates a pending link's whitelisted-realm
+params — a domain arriving in that same link could not be, since the link's own params would
+need gating against a domain it has not supplied yet. The allowlist denies `base-domain` like
+the other infrastructure-pointing params, so a link carrying it still reaches the consent
+dialog; accepting it changes nothing, and the client logs a warning saying so.
 
 `IDecentralandUrlsSource.IsSubdomainOf` / `IsHostWithinDomain` hold the `.`-boundary check
 these gates share, so the rule that rejects `interconnected.online.attacker.com` and
@@ -102,12 +110,13 @@ these gates share, so the rule that rejects `interconnected.online.attacker.com`
 
 ## Not covered
 
-- The `MainSceneLoader` trusted-realm fast-path still lists decentraland hosts
-  explicitly. A custom realm is not short-circuited there and is validated against the
-  deployment's own catalyst server list instead (which does follow the base domain), so
-  the flow works — it just costs one request.
-- `LoadHybridSceneSystemLogic` / `IGetHash` (legacy SDK6 hybrid-scene content) and
-  `LocalIpfsRealm` (reached only by the test `IRealmData.Fake`) keep their decentraland
-  constants.
-- Intentionally decentraland: `ThirdWebAuthenticator` RPC endpoints, the goerli /
-  test-scene constants, and the marketplace / blog / docs links.
+- `LoadHybridSceneSystemLogic` / `IGetHash` (legacy SDK6 hybrid-scene content) keep static
+  goerli-plaza / genesis content urls, so SDK6 hybrid content still loads from decentraland.
+  Each needs the url source threaded into a static context.
+- `LocalIpfsRealm` keeps its hardcoded lambdas url; it is only ever constructed by
+  `IRealmData.Fake`, so it never runs in a shipped client.
+- Intentionally decentraland: `ThirdWebAuthenticator`'s `rpc.decentraland.org/{network}`
+  endpoints (decentraland's proxy to the actual chains — a custom deployment has no Ethereum of
+  its own), the goerli / test-scene constants, the off-platform links (Discord, X, the
+  newsletter, CoinGecko) and the `DecentralandWorlds` blog link. The marketplace, shop, docs and
+  help links are templated and *do* follow the base domain.
