@@ -22,6 +22,7 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+        public const string DCL_LISTS_URL = "dcl-lists-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SPAWN_POINT = "spawnpoint";

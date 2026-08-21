@@ -118,6 +118,20 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `dcl-lists-url`
+**Type:** String (URL)
+**Description:** Overrides the base URL used for dcl-lists requests such as
+the Points of Interest endpoint. This is intended for controlled local and
+end-to-end fixture runs; the production default remains
+`https://dcl-lists.decentraland.{env}`.
+
+**Usage:**
+```bash
+--dcl-lists-url https://fixture.example.com
+```
+
+---
+
 ### `local-scene`
 **Type:** Bool
 **Description:** Enables local scene development mode.

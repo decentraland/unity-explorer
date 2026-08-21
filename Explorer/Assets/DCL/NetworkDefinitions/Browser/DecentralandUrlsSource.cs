@@ -42,6 +42,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string decentralandDomain;
         private readonly string? gatekeeperBaseOverride;
         private readonly string? optimizedAssetsBaseOverride;
+        private readonly string? dclListsBaseOverride;
         private readonly bool isTodayEnvironment;
 
         public DecentralandUrlsSource(
@@ -51,7 +52,8 @@ namespace DCL.Browser.DecentralandUrls
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null)
+            string? cliOptimizedAssetsUrl = null,
+            string? cliDclListsUrl = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
             isTodayEnvironment = environment == DecentralandEnvironment.Today;
@@ -60,6 +62,7 @@ namespace DCL.Browser.DecentralandUrls
             gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
+            dclListsBaseOverride = cliDclListsUrl?.TrimEnd('/');
 
             if (isTodayEnvironment)
             {
@@ -248,7 +251,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.BuilderApiDtos => $"https://builder-api.decentraland.{ENV}/v1/collections/[COL-ID]/items",
                 DecentralandUrl.BuilderApiContent => $"https://builder-api.decentraland.{ENV}/v1/storage/contents/",
                 DecentralandUrl.BuilderApiNewsletter => $"https://builder-api.decentraland.{ENV}/v1/newsletter",
-                DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
+                DecentralandUrl.POI => $"{dclListsBaseOverride ?? $"https://dcl-lists.decentraland.{ENV}"}/pois",
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.decentraland.{ENV}"),

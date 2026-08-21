@@ -95,6 +95,19 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
+        public void ApplyCliOverrideForDclListsFixture()
+        {
+            InitializeFeatureFlags(optimizedAssets: false);
+            var urlsSource = new DecentralandUrlsSource(
+                DecentralandEnvironment.Org,
+                new IRealmData.Fake(),
+                ILaunchMode.PLAY,
+                cliDclListsUrl: "https://fixture.example.com");
+
+            Assert.AreEqual("https://fixture.example.com/pois", urlsSource.Url(DecentralandUrl.POI));
+        }
+
+        [Test]
         public void ComposeRegistryEndpointsForWearablesWorldsAndProfilesOffTheUnifiedBase()
         {
             InitializeFeatureFlags(optimizedAssets: true, assetBundleFallback: true);
