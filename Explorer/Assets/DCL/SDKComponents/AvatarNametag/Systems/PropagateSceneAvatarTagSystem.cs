@@ -15,6 +15,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.ColorComponent;
 using SceneRunner.Scene;
 using Utility.Arch;
+using static DCL.Nametags.SceneAvatarTagComponent;
 
 namespace DCL.SDKComponents.AvatarNametag.Systems
 {
@@ -118,8 +119,8 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             globalWorld.AddOrSet(target, new SceneAvatarTagComponent(
                 pbNametag.Label,
-                pbNametag.LabelColor?.ToUnityColor() ?? SceneAvatarTagComponent.NATIVE_TEXT_COLOR,
-                pbNametag.BackgroundColor?.ToUnityColor() ?? SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR));
+                pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
+                pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR)));
 
             pbNametag.IsDirty = false;
 

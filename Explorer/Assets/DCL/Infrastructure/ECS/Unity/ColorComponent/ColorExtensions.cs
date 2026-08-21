@@ -6,13 +6,11 @@ namespace ECS.Unity.ColorComponent
 {
     public static class ColorExtensions
     {
-        public static Color ToUnityColor(this Color3? color)
-        {
-            if (color != null)
-                return new Color(color.R, color.G, color.B);
+        public static Color ToUnityColor(this Color3? color) =>
+            color.ToUnityColor(Color.white);
 
-            return Color.white;
-        }
+        public static Color ToUnityColor(this Color3? color, Color fallback) =>
+            color != null ? new Color(color.R, color.G, color.B) : fallback;
 
         public static Color ToUnityColor(this Color4? color)
         {
