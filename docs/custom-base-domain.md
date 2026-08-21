@@ -173,15 +173,8 @@ dialog; accepting it changes nothing, and the client logs a warning saying so.
 these gates share, so the rule that rejects `interconnected.online.attacker.com` and
 `evil-interconnected.online` lives in one place.
 
-## Not covered
+## Stays on decentraland
 
-- `LoadHybridSceneSystemLogic` / `IGetHash` (legacy SDK6 hybrid-scene content) keep static
-  goerli-plaza / genesis content urls, so SDK6 hybrid content still loads from decentraland.
-  Each needs the url source threaded into a static context.
-- `LocalIpfsRealm` keeps its hardcoded lambdas url; it is only ever constructed by
-  `IRealmData.Fake`, so it never runs in a shipped client.
-- Intentionally decentraland: `ThirdWebAuthenticator`'s `rpc.decentraland.org/{network}`
-  endpoints (decentraland's proxy to the actual chains — a custom deployment has no Ethereum of
-  its own), the goerli / test-scene constants, the off-platform links (Discord, X, the
-  newsletter, CoinGecko) and the `DecentralandWorlds` blog link. The marketplace, shop, docs and
-  help links are templated and *do* follow the base domain.
+The off-platform links — Discord, X, the newsletter, CoinGecko — and the `DecentralandWorlds`
+blog link are decentraland's own surfaces and keep pointing there. The marketplace, shop, docs
+and help links *do* follow the base domain.
