@@ -55,7 +55,7 @@ namespace DCL.Web3.Authenticators
             if (rpcOverrides.TryGetValue(chainId, out string? rpcUrl))
                 return rpcUrl;
 
-            throw new Web3Exception($"No RPC endpoint configured for chain {chainId}. Add it to RPC_OVERRIDES in ThirdWebAuthenticator.");
+            throw new Web3Exception($"No RPC endpoint configured for chain {chainId}. Add it to ChainRpcOverrides in ThirdWebAuthenticator.");
         }
 
         public async UniTask<EthApiResponse> SendAsync(IThirdwebWallet? wallet, EthApiRequest request, Web3RequestSource source, CancellationToken ct)

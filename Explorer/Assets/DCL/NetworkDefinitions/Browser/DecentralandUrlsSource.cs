@@ -294,6 +294,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiDestinations => $"https://places.{BaseDomain}/api/destinations",
                 DecentralandUrl.ApiAuth => $"https://auth-api.{BaseDomain}",
                 DecentralandUrl.ApiRpc => $"wss://rpc.{BaseDomain}",
+                DecentralandUrl.ChainRpc => $"https://rpc.{BaseDomain}",
                 DecentralandUrl.MetaTransactionServer => $"https://transactions-api.{BaseDomain}/v1/transactions",
                 DecentralandUrl.AuthSignatureWebApp => $"https://{BaseDomain}/auth/requests",
                 DecentralandUrl.BuilderApiDtos => $"https://builder-api.{BaseDomain}/v1/collections/[COL-ID]/items",

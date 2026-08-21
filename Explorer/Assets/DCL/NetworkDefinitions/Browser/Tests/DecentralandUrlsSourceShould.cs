@@ -315,6 +315,8 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TestCase(DecentralandUrl.Genesis, "https://realm-provider-ea." + CUSTOM_DOMAIN + "/main")]
         [TestCase(DecentralandUrl.WorldServer, "https://worlds-content-server." + CUSTOM_DOMAIN + "/world")]
         [TestCase(DecentralandUrl.Pulse, "pulse-server." + CUSTOM_DOMAIN)]
+        [TestCase(DecentralandUrl.ApiRpc, "wss://rpc." + CUSTOM_DOMAIN)]
+        [TestCase(DecentralandUrl.ChainRpc, "https://rpc." + CUSTOM_DOMAIN)]
         public void MoveEveryHostOntoTheCustomBaseDomain(DecentralandUrl url, string expected)
         {
             InitializeFeatureFlags(optimizedAssets: false);

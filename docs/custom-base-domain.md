@@ -180,14 +180,21 @@ The login handshake follows the base domain, and both wallet paths are built on 
 | `ApiAuth` | `auth-api.<base-domain>` |
 | `AuthSignatureWebApp` | `https://<base-domain>/auth/requests` |
 | `ApiRpc` (external-wallet dapp path) | `wss://rpc.<base-domain>` |
-| `ThirdWebAuthenticator`'s chain RPC map | **unchanged** — `rpc.decentraland.org/{network}` |
+| `ChainRpc` (embedded-wallet chain map) | `https://rpc.<base-domain>/{network}` |
 
 So a custom deployment **must** serve the auth API and the signing web app, or login cannot
-complete. The chain RPC is deliberately inconsistent between the two paths and worth a
-decision: `DappWeb3EthereumApi` resolves `ApiRpc` and therefore needs `rpc.<base-domain>`
-over wss on the deployment, while the embedded-wallet path keeps reaching decentraland's chain
-proxy — which is arguably right (a custom deployment has no Ethereum of its own) but means the
-two disagree about where a chain lives.
+complete — and, if the embedded wallet is used, the chain RPC too.
+
+Both wallet paths reach the same RPC host over different transports: `DappWeb3EthereumApi`
+resolves `ApiRpc` over websocket, and `ThirdWebAuthenticator`'s per-chain map is built from
+`ChainRpc` over https, one entry per chain the client may transact on (mainnet, sepolia,
+polygon, amoy, arbitrum, optimism, avalanche, binance, fantom). One dependency configured
+twice, not two — so both follow the base domain and cannot disagree about where a chain lives.
+
+The chain map is `Probe`d rather than resolved through `Url`, so it stays the RPC host itself.
+`rpc` is a single-label subdomain, which gateway routing would otherwise rewrite to
+`gateway.<domain>/rpc` once that flag is on — a change of route for every chain call, on the
+default environments too. That is a separate decision from this one.
 
 Which chain those signatures are produced for, and which stored-identity slot the session uses,
 follow [the chain](#the-chain) — mainnet unless `--eth-network sepolia` says otherwise.
