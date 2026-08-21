@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System;
@@ -15,14 +16,16 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
     public class LocalSceneDevelopmentSceneRoomMetaDataSource : ISceneRoomMetaDataSource
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly string realm;
 
         // realm is the local scene development realm the client was launched with (the `realm` deep link
         // parameter). The scene server only listens on the port it was started with, so falling back to the
         // default would make this source unreachable for any `sdk-commands start --port` but the default one.
-        public LocalSceneDevelopmentSceneRoomMetaDataSource(IWebRequestController webRequestController, string? realm = null)
+        public LocalSceneDevelopmentSceneRoomMetaDataSource(IWebRequestController webRequestController, IWeb3IdentityCache identityCache, string? realm = null)
         {
             this.webRequestController = webRequestController;
+            this.identityCache = identityCache;
             this.realm = string.IsNullOrWhiteSpace(realm) ? IRealmNavigator.LOCALHOST : realm;
         }
 
@@ -82,7 +85,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             if (string.IsNullOrWhiteSpace(id!))
                 return Result<MetaData>.ErrorResult("Id is empty or null");
 
-            return Result<MetaData>.SuccessResult(new MetaData(id, Vector2Int.zero, new MetaData.Input("LocalPreview", Vector2Int.zero)));
+            return Result<MetaData>.SuccessResult(new MetaData(id, Vector2Int.zero, new MetaData.Input("LocalPreview", Vector2Int.zero), identityCache.IsGuest()));
         }
 
         [Serializable]

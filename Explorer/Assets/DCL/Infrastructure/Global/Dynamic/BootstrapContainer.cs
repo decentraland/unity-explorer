@@ -212,7 +212,7 @@ namespace Global.Dynamic
                 ? int.Parse(v!)
                 : null;
 
-            // Overriding the guest session id defeats one-guest-per-machine, so it is refused on production.
+            // Overriding the guest session id defeats one-guest-per-machine, so only allow it for developers & testing
             string? guestSessionIdOverride = dclEnvironment != DecentralandEnvironment.Org
                                              && appArgs.HasDebugFlag()
                                              && appArgs.TryGetValue(AppArgsFlags.GUEST_SESSION_ID, out string? guestSessionId)

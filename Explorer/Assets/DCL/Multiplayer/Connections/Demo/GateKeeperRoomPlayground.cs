@@ -50,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)), new RealmClock());
             var realmData = new IRealmData.Fake();
 
-            var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false, urlsSource));
+            var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false, urlsSource, identityCache));
             var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new RealmData(), Option<HardwareFingerprintProvider>.None);
 
             new GateKeeperSceneRoom(

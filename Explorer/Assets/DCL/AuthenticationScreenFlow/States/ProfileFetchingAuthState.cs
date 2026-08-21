@@ -114,8 +114,8 @@ namespace DCL.AuthenticationScreenFlow
                     {
                         // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
                         profile.IsDirty = true;
-                        // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-                        profile.HasConnectedWeb3 = true;
+                        // Catalysts don't manipulate this field, so at this point we derive it from the identity instead.
+                        profile.HasConnectedWeb3 = identity.Source != IWeb3Identity.Web3IdentitySource.Guest;
                         machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                     }
                     else if (isCached)
@@ -127,7 +127,7 @@ namespace DCL.AuthenticationScreenFlow
                     }
                     else
                     {
-                        profile = CreateRandomProfile(identity.Address.ToString());
+                        profile = CreateRandomProfile(identity);
                         machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
                     }
                 }
@@ -176,9 +176,9 @@ namespace DCL.AuthenticationScreenFlow
             return null; // genuine "no deployed profile"
         }
 
-        private Profile CreateRandomProfile(string identityAddress)
+        private Profile CreateRandomProfile(IWeb3Identity identity)
         {
-            var profile = Profile.NewRandomProfile(identityAddress);
+            var profile = Profile.NewRandomProfile(identity.Address.ToString());
             profile.HasClaimedName = false;
             profile.Description = string.Empty;
             profile.Country = string.Empty;
@@ -193,8 +193,7 @@ namespace DCL.AuthenticationScreenFlow
             profile.Hobbies = string.Empty;
             profile.TutorialStep = 0;
             profile.Version = 0;
-
-            profile.HasConnectedWeb3 = true;
+            profile.HasConnectedWeb3 = identity.Source != IWeb3Identity.Web3IdentitySource.Guest;
             profile.IsDirty = true;
 
             return profile;

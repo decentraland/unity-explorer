@@ -289,9 +289,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 parcel = $"{parcel.x},{parcel.y}",
                 tld = decentralandEnvironment,
                 network = "mainnet",
-
-                // TODO: support guest if required in the future
-                isGuest = false,
+                isGuest = identityCache.IsGuest(),
                 signer = "decentraland-kernel-scene",
 
                 // It is used for external servers to verify that the user is currently valid for that realm

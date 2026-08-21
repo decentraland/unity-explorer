@@ -66,7 +66,7 @@ namespace DCL.InWorldCamera
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
                     userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
-                    isGuest = false,
+                    isGuest = profile is { HasConnectedWeb3: false },
                     isEmoting = isEmoting,
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
                 });

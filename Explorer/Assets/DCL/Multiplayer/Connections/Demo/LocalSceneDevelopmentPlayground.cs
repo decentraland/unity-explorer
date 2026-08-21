@@ -46,7 +46,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var totalBudget = 15;
             var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)), new RealmClock());
 
-            var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(webRequests).WithLog();
+            var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(webRequests, identityCache).WithLog();
             var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new RealmData(), Option<HardwareFingerprintProvider>.None);
 
             new GateKeeperSceneRoom(

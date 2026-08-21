@@ -107,5 +107,8 @@ namespace DCL.Web3.Identities
 
             return cache.Identity;
         }
+
+        public static bool IsGuest(this IWeb3IdentityCache cache) =>
+            cache.Identity?.Source == IWeb3Identity.Web3IdentitySource.Guest;
     }
 }

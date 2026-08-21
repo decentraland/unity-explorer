@@ -76,7 +76,6 @@ namespace DCL.Web3.Authenticators
                     if (!isGuest)
                         return false;
 
-                    // A deterministic session id resolves to the same wallet, so re-authenticating is idempotent.
                     await LoginWithGuestAsync(wallet, linkedCt);
                 }
 
