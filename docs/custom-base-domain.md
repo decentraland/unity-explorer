@@ -76,9 +76,22 @@ A deployment that mirrors *mainnet* is therefore out of scope for this flag.
 
 ## World manifest, parcel loading and roads
 
-`RealmKind` is derived from the realm's own `/about`, not from decentraland: no fixed scene
-URNs means `GenesisCity`, otherwise `World` (`RealmData.Reconfigure`). A custom deployment's
-catalyst realm therefore classifies as `GenesisCity`, and two things follow from that.
+Two independent signals decide that a realm *is Genesis City*, and they key off different
+things — which matters because only one of them responds to how the deployment names its realm.
+
+**The manifest path is chosen by realm name, matched against decentraland's own list.**
+`WorldManifestProvider.MAIN_REALM_NAMES` is a hardcoded set — `main`, `baldr`, `hela`,
+`heimdallr`, `shiva`, `artemis`, `loki`, `dg`, `hephaestus`, `unicorn`, `marvel`, `nftworld` —
+compared against `configurations.realmName` from the deployment's `/about`. A custom deployment
+calling its main realm `main` collides with that list and takes the genesis branch; calling it
+anything else takes neither the genesis nor the `.dcl.eth` world branch. Both end at
+`WorldManifest.Empty` today, so the name does not change the outcome — but the list is
+decentraland's naming, and a deployment cannot opt out of matching it.
+
+**`RealmKind` ignores the name.** It comes from whether `/about` lists fixed scene URNs: none
+means `GenesisCity`, otherwise `World` (`RealmData.Reconfigure`). A custom catalyst realm
+therefore classifies as `GenesisCity` whatever it is called — so renaming away from `main` does
+not change what follows.
 
 **Roads.** `RoadsPresence` switches instanced road rendering purely on
 `RealmKind == GenesisCity`, and the geometry comes from `RoadSettingsAsset` — a local
