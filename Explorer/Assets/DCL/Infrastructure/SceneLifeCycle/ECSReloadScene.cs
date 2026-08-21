@@ -104,11 +104,7 @@ namespace ECS.SceneLifeCycle
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
                     (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
 
-                // A content-versioned dev server embeds each file's mtime in its hash, so an edited file
-                // is served under a new hash and reloads through a natural cache miss while every
-                // unchanged asset stays warm — no eviction is needed for any file type. Only fall back
-                // to eviction when the hash is path-only (older dev servers), where an edit keeps the
-                // same hash and cache hits would return stale assets.
+                // Content-versioned hashes self-invalidate on edit — skip eviction (see IsContentVersioned).
                 if (!IsContentVersioned(definition))
                 {
                     if (changedModelSrc != null
