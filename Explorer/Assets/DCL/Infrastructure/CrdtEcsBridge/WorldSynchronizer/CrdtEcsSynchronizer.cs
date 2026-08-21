@@ -90,5 +90,22 @@ namespace CrdtEcsBridge.WorldSynchronizer
 #endif
             }
         }
+
+        public void AbortSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
+        {
+            try
+            {
+                syncCommandBuffer.Dispose();
+            }
+            finally
+            {
+#if !UNITY_WEBGL
+                // Pairs with semaphore.Wait in GetSyncCommandBuffer for buffers that never reach
+                // ApplySyncCommandBuffer; must release even if Dispose throws, otherwise the slot
+                // leaks and subsequent Rents time out forever.
+                semaphore.Release();
+#endif
+            }
+        }
     }
 }
