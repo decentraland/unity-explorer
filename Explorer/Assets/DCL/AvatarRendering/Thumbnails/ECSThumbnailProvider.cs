@@ -31,12 +31,10 @@ namespace DCL.AvatarRendering.Wearables
                 if (existing.Succeeded)
                     return existing.Asset;
 
-                // A previous attempt was cancelled (e.g. page change). Clear so a fresh promise
-                // can spawn below. Sticky failures keep the slot and fall through to throw.
-                if (existing.Cancelled)
-                    avatarAttachment.ThumbnailAssetResult = null;
-                else
-                    throw new ThumbnailLoadFailedException();
+                // A previous attempt ended without a sprite (timeout or cancellation). Terminal
+                // non-success states are per-attempt, never sticky across explicit requests:
+                // clear the slot so a fresh promise can spawn below.
+                avatarAttachment.ThumbnailAssetResult = null;
             }
 
             CancellationTokenSource promiseCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -59,10 +57,9 @@ namespace DCL.AvatarRendering.Wearables
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                // Timed out: cancel the underlying promise so the resolver cleans it up, and record
-                // a sticky Failed on the attachment so subsequent calls don't immediately re-attempt
-                // a load that we already gave up on. (The resolver will see IsCancellationRequested
-                // but skip overwriting because the slot is now Failed, not Cancelled.)
+                // Timed out: cancel the underlying promise so the resolver cleans it up. Failed
+                // releases concurrent waiters on this attachment and keeps the resolver from
+                // stamping Cancelled over the slot; the next explicit GetAsync clears it and retries.
                 promiseCts.Cancel();
                 avatarAttachment.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed();
 
