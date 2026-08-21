@@ -258,9 +258,7 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
-            // No --debug required: an e2e fixture run has no feature-flags backend to enable the flag with, and the
-            // arg only picks between Decentraland's own gateway and its own service hosts.
-            bool? cliUseGateway = applicationParametersParser.ResolveFeatureFlagOverride(AppArgsFlags.GATEWAY, requireDebug: false);
+            applicationParametersParser.TryGetValue(AppArgsFlags.GATEWAY, out string? cliGatewayUrl);
 
             // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
             // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
@@ -282,7 +280,7 @@ namespace Global.Dynamic
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
                 cliOptimizedAssetsUrl,
-                cliUseGateway);
+                cliGatewayUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);

@@ -202,30 +202,34 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://gateway.decentraland.org/auth-api", urlsSource.Url(DecentralandUrl.ApiAuth));
         }
 
-        [Test]
-        public void RouteThroughTheGatewayWhenTheArgForcesItOn()
+        // Naming a base forces routing on, so the flag has no say either way, and a trailing slash is trimmed.
+        [TestCase(true, "https://gateway.localhost")]
+        [TestCase(false, "https://gateway.localhost")]
+        [TestCase(false, "https://gateway.localhost/")]
+        public void RouteThroughTheGatewayBaseTheArgNames(bool useGateway, string gatewayUrl)
         {
-            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
-            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliUseGateway: true);
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: useGateway);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayUrl: gatewayUrl);
 
-            Assert.AreEqual("https://gateway.decentraland.org/places/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
+            Assert.AreEqual("https://gateway.localhost/places/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
         }
 
+        // Signed fetch signs the un-gatewayed url, so the custom base has to reverse as cleanly as the default one.
         [Test]
-        public void KeepUrlsOffTheGatewayWhenTheArgForcesItOff()
-        {
-            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
-            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliUseGateway: false);
-
-            Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
-        }
-
-        // The arg overrides the flag, never the environment: today has no gateway to route to.
-        [Test]
-        public void KeepTodayOffTheGatewayWhenTheArgForcesItOn()
+        public void ReverseTheGatewayBaseForSignedFetch()
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
-            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Today, new IRealmData.Fake(), ILaunchMode.PLAY, cliUseGateway: true);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayUrl: "https://gateway.localhost");
+
+            Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.GetOriginalUrl(urlsSource.Url(DecentralandUrl.ApiPlaces)));
+        }
+
+        // The arg replaces the host and outranks the flag, never the environment: today is not gateway-routed.
+        [Test]
+        public void KeepTodayOffTheGatewayEvenWithAGatewayBase()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Today, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayUrl: "https://gateway.localhost");
 
             Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
         }

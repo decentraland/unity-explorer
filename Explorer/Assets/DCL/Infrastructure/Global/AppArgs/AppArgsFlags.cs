@@ -24,9 +24,10 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
 
         /// <summary>
-        ///     Forces gateway routing on (<c>--gateway</c>, <c>--gateway true</c>) or off (<c>--gateway false</c>),
-        ///     overriding the <c>use-gateway</c> feature flag. Command line only: it reroutes every supported backend
-        ///     url for the whole session, so it must never be settable from a deep link.
+        ///     Routes every supported backend url through this gateway base instead of
+        ///     <c>gateway.decentraland.{env}</c>, and forces routing on: naming a gateway is the opt-in the
+        ///     <c>use-gateway</c> feature flag would otherwise carry, so the flag is ignored. Command line only —
+        ///     it aims the session's whole backend traffic at the named host, so a deep link must never set it.
         /// </summary>
         public const string GATEWAY = "gateway";
         public const string LOCAL_SCENE = "local-scene";
