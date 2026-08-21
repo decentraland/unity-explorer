@@ -202,5 +202,29 @@ namespace DCL.ApplicationGuards
             // Assert: Verify the result is what we expect.
             Assert.AreEqual(expectedResult, isSufficient, $"Failed on VRAM actual: {actualVramMB}MB, required: {REQUIRED_VRAM_MB}MB");
         }
+
+        /// <summary>
+        ///     The requirements arrive in a feature-flag payload a deployment may not publish at all. No check may
+        ///     dereference the empty definition: the acceptability gates pass, and the integrated-GPU classifier -
+        ///     which only ever contributes a reason to reject - reports nothing.
+        /// </summary>
+        [Test]
+        public void FailOpenWhenTheRequirementsPayloadIsAbsent()
+        {
+            FeatureFlagsConfiguration.Reset();
+
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(new FeatureFlagsResultDto
+            {
+                flags = new Dictionary<string, bool>(),
+                variants = new Dictionary<string, FeatureFlagVariantDto>(),
+            }));
+
+            Assert.IsTrue(SystemSpecUtils.IsWindowsVersionAcceptable("Windows 11  (10.0.26100) 64bit"), "windows version");
+            Assert.IsTrue(SystemSpecUtils.IsMacOSVersionAcceptable("Mac OS X 10.15.7"), "macos version");
+            Assert.IsTrue(SystemSpecUtils.IsWindowsCpuAcceptable("Intel(R) Core(TM) i3-10100 CPU @ 3.60GHz"), "windows cpu");
+            Assert.IsTrue(SystemSpecUtils.IsWindowsGpuAcceptable("NVIDIA GeForce GTX 1060"), "windows gpu");
+            Assert.IsTrue(SystemSpecUtils.IsAppleSilicon("Intel Iris Pro Graphics"), "apple silicon gate");
+            Assert.IsFalse(SystemSpecUtils.IsIntegratedGpu("intel iris plus graphics"), "integrated-gpu classifier");
+        }
     }
 }
