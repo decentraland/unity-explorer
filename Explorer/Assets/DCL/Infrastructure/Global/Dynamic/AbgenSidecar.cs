@@ -1,11 +1,10 @@
-#nullable enable
-
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utility;
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
@@ -14,9 +13,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
-#if UNITY_EDITOR
-using System.Diagnostics;
-#elif !UNITY_STANDALONE_WIN
+#if !UNITY_EDITOR && !UNITY_STANDALONE_WIN
 using Plugins.DclNativeProcesses;
 using RichTypes;
 #endif
@@ -140,7 +137,7 @@ namespace Global.Dynamic
         /// </summary>
         public async UniTask<bool> StartAsync(CancellationToken ct)
         {
-            if (Launch(executablePath) && await WaitHealthyAsync(ct))
+            if (Launch() && await WaitHealthyAsync(ct))
             {
                 SuperviseAsync(ct).Forget();
                 return true;
@@ -182,7 +179,7 @@ namespace Global.Dynamic
                 AbgenConversionMetrics.INSTANCE.OnMilestone($"warm-up started — converting scene {entityId} in the background");
                 ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"abgen warm-up: converting scene {entityId} — asset bundles are being built in the background");
 
-                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                var stopwatch = Stopwatch.StartNew();
 
                 using UnityWebRequest manifestRequest = UnityWebRequest.Get($"{BaseUrl}/manifest/{entityId}{PlatformUtils.GetCurrentPlatform()}.json");
                 manifestRequest.timeout = 0; // a cold heavy scene converts for minutes; the server paces the build
@@ -564,7 +561,7 @@ namespace Global.Dynamic
             return System.Text.Encoding.UTF8.GetString(block, offset, end - offset);
         }
 
-        private bool Launch(string executablePath)
+        private bool Launch()
         {
             try
             {
@@ -584,7 +581,7 @@ namespace Global.Dynamic
                 // bundles, so pinning it off only trades encode throughput for a ~1s startup.
                 Environment.SetEnvironmentVariable("ABGEN_GPU_BACKEND", "off");
 
-                return LaunchChild(executablePath);
+                return LaunchChild();
             }
             catch (Exception e)
             {
@@ -593,7 +590,7 @@ namespace Global.Dynamic
             }
         }
 
-        private bool LaunchChild(string executablePath)
+        private bool LaunchChild()
         {
 #if UNITY_EDITOR
             var psi = new ProcessStartInfo
@@ -705,7 +702,7 @@ namespace Global.Dynamic
 
                 ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"abgen sidecar exited; restart {restarts}/{MAX_RESTARTS}");
 
-                if (!Launch(executablePath))
+                if (!Launch())
                 {
                     ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, "abgen sidecar restart failed; asset bundles fall back to direct CDN errors");
                     return;
