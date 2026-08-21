@@ -34,6 +34,7 @@ namespace DCL.SceneLoadingScreens
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
         private CancellationTokenSource? tipsFadeCancellationToken;
+        private bool inputsBlocked;
 
         // IntVariable causes deadlock occasionally.
         // There is a similar issue reported on the forum:https://discussions.unity.com/t/deadlock-freezing-issue-with-localizationsettings-stringdatabase-getlocalizedstring-under-multiple-concurrent-calls-on-mobile/1566794
@@ -127,6 +128,12 @@ namespace DCL.SceneLoadingScreens
             BlockUnwantedInputs();
             SetLoadProgress(0);
             viewInstance!.ClearTips();
+
+            // Fetched synchronously, so `tips` is populated before the view can show
+            tips = sceneTipsProvider.Get();
+
+            if (tips.Random)
+                tips.Tips.Shuffle();
         }
 
         protected override void OnViewShow()
@@ -146,6 +153,10 @@ namespace DCL.SceneLoadingScreens
         protected override void OnViewClose()
         {
             base.OnViewClose();
+
+            // Runs first, before any statement that can throw: input must be unblocked on every close path
+            UnblockUnwantedInputs();
+
             tipsRotationCancellationToken?.SafeCancelAndDispose();
             tipsFadeCancellationToken?.SafeCancelAndDispose();
 
@@ -159,7 +170,7 @@ namespace DCL.SceneLoadingScreens
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            await LoadTipsAsync(ct);
+            await LoadTipsAsync();
 
             ShowTip(currentTip.Value);
 
@@ -203,13 +214,8 @@ namespace DCL.SceneLoadingScreens
             }
         }
 
-        private async UniTask LoadTipsAsync(CancellationToken ct)
+        private async UniTask LoadTipsAsync()
         {
-            tips = await sceneTipsProvider.GetAsync(ct);
-
-            if (tips.Random)
-                tips.Tips.Shuffle();
-
             using var scope = ListPool<UniTask<SceneTips.LoadedTip>>.Get(out var tasks);
             foreach (SceneTips.Tip tip in tips.Tips) tasks.Add(tip.LoadAsync());
             var loaded = await UniTask.WhenAll(tasks!);
@@ -311,11 +317,17 @@ namespace DCL.SceneLoadingScreens
 
         private void BlockUnwantedInputs()
         {
+            if (inputsBlocked) return;
+
+            inputsBlocked = true;
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void UnblockUnwantedInputs()
         {
+            if (!inputsBlocked) return;
+
+            inputsBlocked = false;
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
     }
