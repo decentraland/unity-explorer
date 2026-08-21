@@ -48,6 +48,9 @@ namespace DCL.Multiplayer.Movement
 
         public void Dispose()
         {
+            if (isDisposed)
+                return;
+
             isDisposed = true;
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();

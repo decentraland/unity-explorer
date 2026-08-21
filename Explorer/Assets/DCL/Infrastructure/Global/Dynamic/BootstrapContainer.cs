@@ -128,7 +128,7 @@ namespace Global.Dynamic
             {
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
-                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
                 if (container.IdentityCache != null)

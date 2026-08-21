@@ -58,8 +58,11 @@ jobs:
           print(f"builder={target['ffmpeg']['builder']}")
           PY
 
-      - name: Install nasm
-        run: brew install nasm
+      # pkg-config: FFmpeg's configure only finds libxml2 (DASH demuxer)
+      # through pkg-config, against the .pc file build-ffmpeg-macos.sh
+      # synthesizes from the SDK
+      - name: Install nasm and pkg-config
+        run: brew install nasm pkg-config
 
       # In native/, always: rustup reads native/rust-toolchain.toml there, and
       # nowhere else in this checkout. At the repo root every rustc/cargo/rustup
