@@ -31,9 +31,9 @@ namespace Global.Dynamic
     ///     local scene and answers everything else from the production upstream (ab-cdn read-through and
     ///     registry pass-through), caching converted bundles on disk.
     ///     Two-step lifecycle: <see cref="ReserveBaseUrl" /> (synchronous — a loopback port only, so the
-    ///     URL can seed the URL sources built early in startup), then AbgenSidecarPlugin creates the
-    ///     instance on that URL (<see cref="TryCreate" />) and launches it (<see cref="StartAsync" />),
-    ///     owning it from there on.
+    ///     URL can seed the URL sources built early in startup), then <see cref="AbgenSidecarBootstrap" />
+    ///     creates the instance on that URL (<see cref="TryCreate" />) and launches it
+    ///     (<see cref="StartAsync" />), owning it from there on.
     ///     The binary is never embedded in the build: on first run the pinned release is downloaded
     ///     (<see cref="EnsurePinnedBinaryAsync" />) and verified against its compile-time sha256. Only the
     ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
@@ -42,7 +42,7 @@ namespace Global.Dynamic
     /// </summary>
     public sealed class AbgenSidecar : IDisposable
     {
-        private const string PINNED_VERSION = "0.16.0";
+        private const string PINNED_VERSION = "0.17.1";
         private const int MAX_RESTARTS = 3;
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
@@ -378,11 +378,11 @@ namespace Global.Dynamic
         private static (string target, string sha256)? Platform() =>
             Application.platform switch
             {
-                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "026c425d2d203c173876d7a33af66a292cd54e3db3d99677b05503f1a3826d1a"),
+                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "5caa24f99ba08f4fc529425bbd0725df81dc4334b713a09c83c6513313162ae2"),
                 RuntimePlatform.OSXPlayer or RuntimePlatform.OSXEditor => RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-                    ? ("aarch64-apple-darwin", "ccff87a8192d5f329f0427e68fa850a490d4cefa53839f11062f91afe8420278")
-                    : ("x86_64-apple-darwin", "8e3cb8957a8f1916b820e008d369be4cff0f1b024ff6764998f5c2bc5d151950"),
-                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "c155d8f27653bd357f42ca3cf7b848809d0c07804445f79011bce79c6a8594d3"),
+                    ? ("aarch64-apple-darwin", "42a27c30b5705c5d2eb91ef0e0c700e7e76d805dd176fa68d4316547c9372455")
+                    : ("x86_64-apple-darwin", "1454f96be9fe4d869812d1b5717b8970be4a11ec8581f5713658881b1ac08e0b"),
+                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "7cc35e7730096cd88f5c3c526ed7b4cd78ace690417a987a92c5740c17cd4ef8"),
                 _ => null,
             };
 
@@ -727,6 +727,10 @@ namespace Global.Dynamic
                     // Any HTTP response (even 404) proves the server is listening.
                     if (req.responseCode > 0) return true;
                 }
+
+                // A dead child can never answer — fail fast (supervision only starts after health passes).
+                if (!ChildAlive())
+                    return false;
 
                 await UniTask.Delay(HEALTH_POLL_MS, DelayType.Realtime, cancellationToken: ct).SuppressCancellationThrow();
             }
