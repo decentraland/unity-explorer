@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System;
 using System.Globalization;
+using System.Net;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -11,6 +12,9 @@ namespace DCL.WebRequests
     public static class WebRequestUtils
     {
         public const string CANNOT_CONNECT_ERROR = "Cannot connect to destination host";
+
+        private const string HTTP_SCHEME_PREFIX = "http://";
+        private const string HTTPS_SCHEME_PREFIX = "https://";
 
         public const int BAD_REQUEST = 400;
         public const int UNAUTHORIZED_ACCESS = 401;
@@ -108,17 +112,17 @@ namespace DCL.WebRequests
             }
         }
 
-        private static bool IsDNSLookupError(this UnityWebRequestException exception) =>
+        private static bool IsDnsLookupError(this UnityWebRequestException exception) =>
             exception.ResponseCode == 0 && exception.Message.Contains(CANNOT_CONNECT_ERROR);
 
         public static bool IsIrrecoverableError(this UnityWebRequestException exception)
         {
-            if (exception.IsDNSLookupError())
+            if (exception.IsDnsLookupError())
                 return false;
 
             return (exception.IsAborted() || IsIrrecoverableResponseCode(exception.ResponseCode))
-                   && !exception.IsUnableToCompleteSSLConnection()
-                   && !exception.IsSSLCACertificateError();
+                   && !exception.IsUnableToCompleteSslConnection()
+                   && !exception.IsSslCaCertificateError();
         }
 
         private static bool IsIrrecoverableResponseCode(long responseCode)
@@ -150,10 +154,10 @@ namespace DCL.WebRequests
             }
         }
 
-        private static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception) =>
+        private static bool IsUnableToCompleteSslConnection(this UnityWebRequestException exception) =>
             exception.Message.Contains("Unable to complete SSL connection");
 
-        private static bool IsSSLCACertificateError(this UnityWebRequestException exception) =>
+        private static bool IsSslCaCertificateError(this UnityWebRequestException exception) =>
             exception.Message.Contains("SSL CA certificate error");
 
         public static bool IsTimedOut(this UnityWebRequestException exception) =>
@@ -168,13 +172,56 @@ namespace DCL.WebRequests
         public static string GetResponseContentEncoding(this UnityWebRequest unityWebRequest) =>
             unityWebRequest.GetResponseHeader("Content-Encoding");
 
+        /// <summary>
+        ///     Client-side transport-security policy, standing in for the player-level insecure-http
+        ///     block (which is global and cannot exempt loopback): cleartext http is permitted to
+        ///     loopback hosts only (local preview servers, sidecars); http to any other host is
+        ///     upgraded to https. Binds on the wire URL of every envelope whose request did not opt
+        ///     into cleartext (<see cref="CommonArguments.AllowInsecureCleartext" />) and where a
+        ///     policed infra URL is resolved (media resolution, sidecar realm root) — never to URLs
+        ///     embedded in a request as data. Non-http URLs pass through unchanged (same reference).
+        /// </summary>
+        public static string EnforceSecureScheme(string url) =>
+            IsForbiddenCleartext(url)
+                ? string.Concat(HTTPS_SCHEME_PREFIX, url.Substring(HTTP_SCHEME_PREFIX.Length))
+                : url;
+
+        /// <summary>
+        ///     True only for the scheme/host combination the transport policy forbids: cleartext
+        ///     http to a non-loopback host. Unparsable http URLs are forbidden too — the policy
+        ///     fails closed on cleartext. Holds for final (post-redirect) URLs as much as for
+        ///     outgoing ones.
+        /// </summary>
+        public static bool IsForbiddenCleartext(string url) =>
+            !string.IsNullOrEmpty(url)
+            && url.StartsWith(HTTP_SCHEME_PREFIX, StringComparison.OrdinalIgnoreCase)
+            && !(Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && IsLoopbackHost(uri.Host));
+
+        /// <summary>
+        ///     True when an exchange left on an allowed scheme/host but its final (post-redirect)
+        ///     URL is forbidden cleartext. A request sent to forbidden cleartext in the first place
+        ///     is not a downgrade: that scheme is the sender's own policy decision.
+        /// </summary>
+        public static bool IsCleartextDowngrade(string sentUrl, string finalUrl) =>
+            !IsForbiddenCleartext(sentUrl) && IsForbiddenCleartext(finalUrl);
+
+        /// <summary>
+        ///     Loopback means "localhost", 127.0.0.0/8 or [::1] — the hosts a local preview
+        ///     server or sidecar can be reached on.
+        /// </summary>
+        private static bool IsLoopbackHost(string host) =>
+            string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
+            || (IPAddress.TryParse(host, out IPAddress? ip) && IPAddress.IsLoopback(ip));
+
+        /// <summary>
+        ///     Scheme-inclusive URL form of the single loopback definition (<see cref="IsLoopbackHost" />):
+        ///     true only for http/https URLs whose parsed host is loopback. Non-http(s) schemes and
+        ///     unparsable URLs are not localhost.
+        /// </summary>
         public static bool IsLocalhost(string url) =>
-            url.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://127.0.0.1", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("http://[::1]", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("https://[::1]", StringComparison.OrdinalIgnoreCase);
+            Uri.TryCreate(url, UriKind.Absolute, out Uri? uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            && IsLoopbackHost(uri.Host);
 
         /// <summary>
         ///     Does nothing with the web request

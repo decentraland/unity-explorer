@@ -8,6 +8,7 @@ using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -35,8 +36,8 @@ namespace ECS.Unity.GLTFContainer.Tests
     {
         private readonly GltfContainerTestResources resources = new ();
 
-        private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
-        private EntityEventBuffer<GltfContainerComponent> eventBuffer;
+        private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem = null!;
+        private EntityEventBuffer<GltfContainerComponent> eventBuffer = null!;
 
         //Required since all tests invoke TearDown, but not all used resources; therefore it could trigger a negative ref count
         private bool usedResources;
@@ -100,10 +101,41 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             LogAssert.ignoreFailingMessages = true;
 
-            system!.Update(0);
+            system.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
             Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
+        }
+
+        [Test]
+        public void FinalizeWithErrorWhenAssetRootDestroyed()
+        {
+            LogAssert.ignoreFailingMessages = true;
+
+            // A successfully-resolved result can reference an asset whose Root was destroyed
+            // while it awaited consumption
+            var asset = GltfContainerAsset.Create(new GameObject("root"), Substitute.For<IStreamableRefCountData>());
+            UnityEngine.Object.DestroyImmediate(asset.Root);
+
+            var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
+                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention(), PartitionComponent.TOP_PRIORITY));
+
+            component.State = LoadingState.Loading;
+
+            Entity e = world.Create(component, new CRDTEntity(100), new TransformComponent(), new PBGltfContainer());
+            world.Add(component.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+
+            // Without the destroyed-Root guard this throws EcsSystemException (NRE at Root.transform)
+            system.Update(0);
+
+            component = world.Get<GltfContainerComponent>(e);
+            Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
+            Assert.That(component.RootGameObject, Is.Null);
+            Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(e, component)));
+
+            // The consumed promise reached a terminal state: the next frame must be a no-op,
+            // not an "AssetPromise is already consumed" throw
+            Assert.DoesNotThrow(() => system.Update(0));
         }
 
         [Test]
@@ -152,7 +184,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH });
             AddTransformToEntity(e);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Get<GltfContainerComponent>(e).State, Is.EqualTo(LoadingState.Finished));
             Assert.That(asset.Renderers, Is.Not.Empty);
@@ -173,13 +205,18 @@ namespace ECS.Unity.GLTFContainer.Tests
             Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, IsDirty = true });
             AddTransformToEntity(e);
 
-            system!.Update(0);
+            system.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
-            GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
 
-            Assert.That(promiseAsset.DecodedVisibleSDKColliders.Count, Is.EqualTo(196));
-            Assert.That(promiseAsset.DecodedVisibleSDKColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
+            if (component.Promise.Result is not { Asset: { DecodedVisibleSDKColliders: { } visibleColliders } })
+            {
+                Assert.Fail("Expected a resolved asset with decoded visible SDK colliders");
+                return;
+            }
+
+            Assert.That(visibleColliders.Count, Is.EqualTo(196));
+            Assert.That(visibleColliders.All(c => c.Collider?.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
         }
 
         [Test]
@@ -197,15 +234,19 @@ namespace ECS.Unity.GLTFContainer.Tests
             Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH });
             AddTransformToEntity(e);
 
-            system!.Update(0);
+            system.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
 
-            GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
+            if (component.Promise.Result is not { Asset: { } promiseAsset })
+            {
+                Assert.Fail("Expected a resolved asset");
+                return;
+            }
 
             // 1 Collider
             Assert.That(promiseAsset.InvisibleColliders.All(c => c.IsActiveByEntity), Is.True);
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
+            Assert.That(promiseAsset.InvisibleColliders.All(c => c.Collider?.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
 
             // No visible colliders created
             Assert.That(promiseAsset.DecodedVisibleSDKColliders, Is.Null);

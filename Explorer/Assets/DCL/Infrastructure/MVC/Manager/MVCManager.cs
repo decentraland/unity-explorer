@@ -37,7 +37,12 @@ namespace MVC
         public void Dispose()
         {
             foreach (IController controllersValue in controllers.Values)
-                controllersValue.Dispose();
+            {
+                // One controller's failing Dispose must not abort disposal of the remaining
+                // controllers, the destruction CTS and the windows stack.
+                try { controllersValue.Dispose(); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.MVC); }
+            }
 
             destructionCancellationTokenSource.SafeCancelAndDispose();
             windowsStackManager.Dispose();

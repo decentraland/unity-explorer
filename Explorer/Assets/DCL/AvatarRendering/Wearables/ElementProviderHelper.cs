@@ -22,16 +22,34 @@ namespace DCL.AvatarRendering.Wearables
             IReadOnlyEquippedWearables equippedWearables,
             Action<TElement> onElementFetched,
             CancellationToken ct,
-            ReportData reportData)
+            ReportData reportData,
+            Action? onFetchFailed = null)
             where TElement: IAvatarAttachment<TElementDTO>
             where TElementDTO: AvatarAttachmentDTO
         {
             if (elementStorage.TryGetElement(pointer, out var element))
             {
-                // Element could be in the storage but still loading their data. Wait until they finish loading.
-                await UniTask.WaitWhile(() => element.IsLoading, cancellationToken: ct);
+                try
+                {
+                    // Element could be in the storage but still loading their data. Wait until they finish loading.
+                    await UniTask.WaitWhile(() => element.IsLoading, cancellationToken: ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    onFetchFailed?.Invoke();
+                    return;
+                }
 
                 await UniTask.SwitchToMainThread();
+
+                // The callback contract is resolved elements only; an unresolved placeholder
+                // (IsLoading == false, DTO == null) is a failed fetch, never a callback argument.
+                if (element.DTO == null)
+                {
+                    FailFetch();
+                    return;
+                }
+
                 onElementFetched(element);
 
                 return;
@@ -49,21 +67,33 @@ namespace DCL.AvatarRendering.Wearables
                 await elementProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct, results);
 
                 foreach (var result in results)
-                    if (result.GetUrn() == pointer)
+                    if (result.DTO != null && result.GetUrn() == pointer)
                     {
                         await UniTask.SwitchToMainThread();
                         onElementFetched(result);
                         return;
                     }
 
-                ReportHub.LogError(reportData, $"Couldn't fetch element of type {typeof(TElement)} for pointer: {pointer}");
+                await UniTask.SwitchToMainThread();
+                FailFetch();
             }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.EMOTE)); }
+            catch (OperationCanceledException) { onFetchFailed?.Invoke(); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.EMOTE));
+                await UniTask.SwitchToMainThread();
+                onFetchFailed?.Invoke();
+            }
             finally
             {
                 ListPool<URN>.Release(urnRequest);
                 ListPool<TElement>.Release(results);
+            }
+
+            void FailFetch()
+            {
+                ReportHub.LogError(reportData, $"Couldn't fetch element of type {typeof(TElement)} for pointer: {pointer}");
+                onFetchFailed?.Invoke();
             }
         }
     }

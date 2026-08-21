@@ -1,8 +1,6 @@
-﻿using AssetManagement;
-using DCL.Diagnostics;
+﻿using DCL.Diagnostics;
 using System;
 using UnityEngine;
-using System.Runtime.CompilerServices;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -25,14 +23,14 @@ namespace ECS.StreamableLoading.Common.Components
 
             /// <summary>
             ///     True when the request reached a terminal successful (or fallback-acceptable) state.
-            ///     False when the request failed or was cancelled; check <see cref="Cancelled"/>
-            ///     to distinguish a transient cancellation from a sticky failure.
+            ///     False when the request failed or was cancelled; the value describes that single
+            ///     attempt only.
             /// </summary>
             public readonly bool Succeeded;
 
             /// <summary>
-            ///     True when the request was cancelled mid-flight (transient state — consumers can
-            ///     clear the slot and retry). False for both genuine successes and sticky failures.
+            ///     True when the request was cancelled mid-flight. False for both genuine
+            ///     successes and failures (e.g. a consumer timeout).
             /// </summary>
             public readonly bool Cancelled;
 

@@ -291,7 +291,7 @@ namespace DCL.Backpack
             SetLoadingSlot(slot, true);
             ElementProviderHelper.FetchElementByPointerAndExecuteAsync(itemId, wearablesProvider, wearableStorage, equippedWearables,
                                       wearable => TryEquippingItemAsync(wearable, itemId, slot, CancellationToken.None).Forget(),
-                                      CancellationToken.None, wearableReportData)
+                                      CancellationToken.None, wearableReportData, () => SetLoadingSlot(slot, false))
                                  .Forget();
         }
 

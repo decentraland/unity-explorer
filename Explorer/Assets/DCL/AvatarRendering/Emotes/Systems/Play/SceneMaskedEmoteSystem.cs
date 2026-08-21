@@ -149,9 +149,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
 
             StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape]!.Value;
-            GameObject? mainAsset;
 
-            if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
+            if (streamableAssetValue is { Succeeded: false } || streamableAssetValue.Asset is not { } sourceAsset || sourceAsset.MainAsset == null)
             {
                 World.Remove<CharacterEmoteIntent>(entity);
                 return;
@@ -180,7 +179,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             bool isLooping = emote.IsLooping();
 
-            if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping, emoteIntent.Spatial, in avatarBase, ref masked))
+            if (!emotePlayer.PlayMasked(sourceAsset, audioClip, isLooping, emoteIntent.Spatial, in avatarBase, ref masked))
                 ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
             else
             {
@@ -237,7 +236,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (streamableAssetValue is { Succeeded: false } || streamableAssetValue.Asset?.MainAsset == null) return;
 
-            GameObject mainAsset = streamableAssetValue.Asset.MainAsset;
+            AttachmentRegularAsset sourceAsset = streamableAssetValue.Asset;
             StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
             AudioClip? audioClip = audioAssetResult?.Asset;
 
@@ -245,7 +244,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             IAvatarView avatarBase = mainPlayerAvatarBaseProxy.Object!;
 
-            if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping: true, isSpatial: true, in avatarBase, ref masked))
+            if (!emotePlayer.PlayMasked(sourceAsset, audioClip, isLooping: true, isSpatial: true, in avatarBase, ref masked))
                 return;
 
             // Reset stored tag so CancelMaskedEmotes doesn't fire on the next frame

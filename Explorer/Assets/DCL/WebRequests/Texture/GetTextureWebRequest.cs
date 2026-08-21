@@ -37,7 +37,7 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(string url, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
-            bool useKtx = textureArguments.UseKtx && ktxEnabled && !WebRequestUtils.IsLocalhost(url);
+            bool useKtx = textureArguments.UseKtx && ktxEnabled && KtxNativeSupport.IsSupported && !WebRequestUtils.IsLocalhost(url);
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
             UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
 
@@ -59,10 +59,10 @@ namespace DCL.WebRequests
             {
                 string? contentType = webRequest.UnityWebRequest.GetResponseHeader("Content-Type");
 
-                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest, ct) : ExecuteNoCompressionAsync(webRequest, ct);
+                return contentType == "image/ktx2" ? ExecuteKtxAsync(webRequest) : ExecuteNoCompressionAsync(webRequest);
             }
 
-            private UniTask<Texture2D> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private UniTask<Texture2D?> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest)
             {
                 Texture2D texture;
 
@@ -86,10 +86,10 @@ namespace DCL.WebRequests
                 texture.filterMode = filterMode;
                 texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.FromResult(texture);
+                return UniTask.FromResult<Texture2D?>(texture);
             }
 
-            private async UniTask<Texture2D> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private async UniTask<Texture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest)
             {
                 // TODO: .data creates an array
                 var data = webRequest.UnityWebRequest.downloadHandler?.data;
@@ -101,8 +101,16 @@ namespace DCL.WebRequests
 
                 var ktxTexture = new KtxTexture();
 
-                // Open() can throw before allocating native state; keep it outside the try so Dispose only runs once that state exists.
-                var openResult = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly());
+                // Open() can throw before allocating native state; keep it outside the try/finally so Dispose only runs once that state exists.
+                ErrorCode openResult;
+
+                try { openResult = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly()); }
+                catch (DllNotFoundException)
+                {
+                    // The OS failing to open the native plugin is per-machine-permanent, not transient.
+                    KtxNativeSupport.MarkUnsupported();
+                    throw;
+                }
 
                 try
                 {
