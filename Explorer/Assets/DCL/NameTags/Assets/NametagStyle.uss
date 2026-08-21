@@ -297,6 +297,7 @@
     font-size: 16px;
     white-space: normal;
     margin-top: 10px;
+    -unity-font-definition: url("project://database/Assets/DCL/UIToolkit/Fonts/Inter_18pt-SemiBold.ttf?fileID=12800000&guid=3d5604d303a734a85bf5000c0e2e5d92&type=3#Inter_18pt-SemiBold");
 }
 
 .safe-easing {

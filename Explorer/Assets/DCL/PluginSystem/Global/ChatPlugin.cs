@@ -290,7 +290,9 @@ namespace DCL.PluginSystem.Global
                 nametagsData,
                 settings.ChatSettingsAsset,
                 chatHistory,
-                communityDataService);
+                communityDataService,
+                chatEventBus,
+                translationSettings);
 
             var currentChannelService = externalCurrentChannelService ?? new CurrentChannelService();
 

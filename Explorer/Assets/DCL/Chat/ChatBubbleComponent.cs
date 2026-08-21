@@ -4,7 +4,8 @@ namespace DCL.Chat
 {
     public struct ChatBubbleComponent
     {
-        public readonly string ChatMessage;
+        public readonly string MessageId;
+        public string ChatMessage;
         public readonly bool IsMention;
         public readonly string SenderDisplayName;
         public readonly string RecipientValidatedName;
@@ -16,8 +17,11 @@ namespace DCL.Chat
         public readonly string CommunityName;
         public readonly bool IsOwnMessage;
         public bool IsDirty;
+
+        public bool IsTranslationUpdate;
         public readonly Color RecipientNameColor;
         public ChatBubbleComponent(
+            string messageId,
             string chatMessage,
             string senderDisplayName,
             string senderWalletId,
@@ -31,6 +35,7 @@ namespace DCL.Chat
             bool isCommunityMessage,
             string communityName)
         {
+            MessageId = messageId;
             ChatMessage = chatMessage;
             SenderDisplayName = senderDisplayName;
             SenderWalletId = senderWalletId;
@@ -42,6 +47,7 @@ namespace DCL.Chat
             RecipientWalletId = recipientWalletId;
             RecipientNameColor = recipientNameColor;
             IsDirty = true;
+            IsTranslationUpdate = false;
             IsCommunityMessage = isCommunityMessage;
             CommunityName = communityName;
         }
