@@ -280,6 +280,11 @@ namespace DCL.Passport
 
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
 
+            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView,
+                characterPreviewFactory,
+                world,
+                characterPreviewEventBus);
+
             characterPreviewController = new PassportCharacterPreviewController(
                 viewInstance.CharacterPreviewView,
                 characterPreviewFactory,
@@ -332,9 +337,7 @@ namespace DCL.Passport
                 thumbnailProvider,
                 decentralandUrlsSource,
                 passportErrorsController,
-                creditPurchaseBuyHandler,
-                characterPreviewController.PlayEmoteClicked,
-                characterPreviewController.StopEmotePreview));
+                creditPurchaseBuyHandler));
 
             overviewPassportModules.Add(new BadgesOverviewPassportModuleController(
                 viewInstance.BadgesOverviewModuleView,

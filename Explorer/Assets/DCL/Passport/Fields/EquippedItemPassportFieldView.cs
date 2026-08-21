@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
-using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -13,7 +12,7 @@ using Utility;
 
 namespace DCL.Passport.Fields
 {
-    public class EquippedItemPassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+    public class EquippedItemPassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
         private const float ANIMATION_TIME = 0.1f;
@@ -80,10 +79,6 @@ namespace DCL.Passport.Fields
 
         public URN ItemId { get; set; }
 
-        public Action<URN>? EmoteClicked;
-
-        public Action? WearableClicked;
-
         private CancellationTokenSource cts;
 
         private void Awake()
@@ -101,15 +96,6 @@ namespace DCL.Passport.Fields
         public void OnPointerExit(PointerEventData eventData)
         {
             AnimateExit();
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (eventData.button != PointerEventData.InputButton.Left)
-                return;
-
-            EmoteClicked?.Invoke(ItemId);
-            WearableClicked?.Invoke();
         }
 
         public void SetAsLoading(bool isLoading)

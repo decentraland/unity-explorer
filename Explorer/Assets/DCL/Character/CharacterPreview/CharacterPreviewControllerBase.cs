@@ -119,7 +119,7 @@ namespace DCL.CharacterPreview
             OnModelUpdated();
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             initialized = false;
             previewController?.Dispose();
@@ -223,7 +223,7 @@ namespace DCL.CharacterPreview
         /// Hides the character preview.
         /// </summary>
         /// <param name="triggerOnHideBusEvent">True for keeping the rest of preview controllers informed about this hiding.</param>
-        public virtual void OnHide(bool triggerOnHideBusEvent = true)
+        public void OnHide(bool triggerOnHideBusEvent = true)
         {
             if (initialized)
             {
