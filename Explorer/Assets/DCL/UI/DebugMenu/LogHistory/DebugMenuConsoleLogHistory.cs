@@ -4,16 +4,33 @@ using System.Linq;
 
 namespace DCL.UI.DebugMenu.LogHistory
 {
+    /// <summary>
+    ///     <see cref="AddLogMessage" /> is fed from the global log callback and may be invoked from any
+    ///     thread; it only enqueues into a capped pending queue. <see cref="Paused" /> is written on the
+    ///     main thread and read on the logging threads through a volatile field: a toggle racing an
+    ///     enqueue may admit or drop a borderline entry, which is acceptable for a pause toggle. Every
+    ///     other member — the lists, the counters
+    ///     and <see cref="LogsUpdated" /> — is main-thread-only: entries become visible when
+    ///     <see cref="DrainPendingLogs" /> runs on the main thread.
+    /// </summary>
     public class DebugMenuConsoleLogHistory
     {
-        public readonly List<DebugMenuConsoleLogEntry> FilteredLogMessages = new ();
-        public event Action LogsUpdated;
-        public bool Paused { get; set; }
-        public int LogEntryCount => allLogMessages.Count(logEntry => logEntry.Type == LogMessageType.Log);
-        public int ErrorEntryCount => allLogMessages.Count(logEntry => logEntry.Type == LogMessageType.Error);
+        private const int MAX_PENDING_LOGS = 10000;
 
+        public readonly List<DebugMenuConsoleLogEntry> FilteredLogMessages = new ();
+        public event Action? LogsUpdated;
+        public bool Paused { get => paused; set => paused = value; }
+        public int LogEntryCount { get; private set; }
+        public int ErrorEntryCount { get; private set; }
+
+        // volatile so a main-thread toggle becomes visible promptly on the logging threads
+        private volatile bool paused;
+
+        private readonly object pendingLock = new ();
+        private readonly Queue<DebugMenuConsoleLogEntry> pendingLogMessages = new ();
+        private readonly List<DebugMenuConsoleLogEntry> drainBuffer = new ();
         private readonly List<DebugMenuConsoleLogEntry> allLogMessages = new ();
-        private string textFilter;
+        private string? textFilter;
         private bool showErrorEntries = true;
         private bool showLogEntries = true;
 
@@ -21,18 +38,52 @@ namespace DCL.UI.DebugMenu.LogHistory
         {
             if (Paused) return;
 
-            allLogMessages.Add(logEntry);
+            lock (pendingLock)
+            {
+                if (pendingLogMessages.Count == MAX_PENDING_LOGS)
+                    pendingLogMessages.Dequeue();
 
-            if (!KeepAfterFilter(logEntry)) return;
+                pendingLogMessages.Enqueue(logEntry);
+            }
+        }
 
-            FilteredLogMessages.Add(logEntry);
+        public void DrainPendingLogs()
+        {
+            lock (pendingLock)
+            {
+                while (pendingLogMessages.Count > 0)
+                    drainBuffer.Add(pendingLogMessages.Dequeue());
+            }
+
+            if (drainBuffer.Count == 0) return;
+
+            for (var i = 0; i < drainBuffer.Count; i++)
+            {
+                DebugMenuConsoleLogEntry logEntry = drainBuffer[i];
+
+                allLogMessages.Add(logEntry);
+
+                if (logEntry.Type == LogMessageType.Log)
+                    LogEntryCount++;
+                else if (logEntry.Type == LogMessageType.Error)
+                    ErrorEntryCount++;
+
+                if (KeepAfterFilter(logEntry))
+                    FilteredLogMessages.Add(logEntry);
+            }
+
+            drainBuffer.Clear();
             LogsUpdated?.Invoke();
         }
 
         public void ClearLogMessages()
         {
+            lock (pendingLock) { pendingLogMessages.Clear(); }
+
             allLogMessages.Clear();
             FilteredLogMessages.Clear();
+            LogEntryCount = 0;
+            ErrorEntryCount = 0;
             LogsUpdated?.Invoke();
         }
 
