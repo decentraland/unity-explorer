@@ -52,6 +52,8 @@ namespace DCL.Passport.Modules
         private readonly IObjectPool<EquippedItemPassportFieldView> emptyItemsPool;
         private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
         private readonly CreditPurchaseBuyHandler creditPurchaseBuyHandler;
+        private readonly Action<URN> onEmoteClicked;
+        private readonly Action onWearableClicked;
         private readonly List<(EquippedItemPassportFieldView view, string urn)> primaryListingCandidates = new ();
         private readonly Dictionary<string, int> onSalePrices = new (StringComparer.OrdinalIgnoreCase);
 
@@ -69,7 +71,9 @@ namespace DCL.Passport.Modules
             IThumbnailProvider thumbnailProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             PassportErrorsController passportErrorsController,
-            CreditPurchaseBuyHandler creditPurchaseBuyHandler)
+            CreditPurchaseBuyHandler creditPurchaseBuyHandler,
+            Action<URN> onEmoteClicked,
+            Action onWearableClicked)
         {
             this.view = view;
             this.world = world;
@@ -82,6 +86,8 @@ namespace DCL.Passport.Modules
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
             this.creditPurchaseBuyHandler = creditPurchaseBuyHandler;
+            this.onEmoteClicked = onEmoteClicked;
+            this.onWearableClicked = onWearableClicked;
 
             loadingItemsPool = new ObjectPool<EquippedItemPassportFieldView>(
                 InstantiateEquippedItemPrefab,
@@ -112,6 +118,8 @@ namespace DCL.Passport.Modules
                     equippedItemView.gameObject.SetActive(false);
                     equippedItemView.BuyButton.onClick.RemoveAllListeners();
                     equippedItemView.ViewButton.onClick.RemoveAllListeners();
+                    equippedItemView.EmoteClicked = null;
+                    equippedItemView.WearableClicked = null;
                 });
 
             emptyItemsPool = new ObjectPool<EquippedItemPassportFieldView>(
@@ -218,6 +226,7 @@ namespace DCL.Passport.Modules
                 string wearableUrn = wearable.GetUrn();
                 var wearableItemView = equippedWearableItem;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(wearableItemView, wearableUrn, marketPlaceLink, rarityName, raritySprite, rarityColor));
+                equippedWearableItem.WearableClicked = onWearableClicked;
 
                 if (wearable.IsOnChain() && marketPlaceLink != string.Empty)
                 {
@@ -253,6 +262,7 @@ namespace DCL.Passport.Modules
                 string emoteUrn = emote.GetUrn();
                 var emoteItemView = equippedWearableItem;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(emoteItemView, emoteUrn, marketPlaceLink, rarityName, raritySprite, rarityColor));
+                equippedWearableItem.EmoteClicked = onEmoteClicked;
 
                 if (emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty)
                 {
