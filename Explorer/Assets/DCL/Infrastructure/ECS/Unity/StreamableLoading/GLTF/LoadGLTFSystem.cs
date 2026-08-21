@@ -118,7 +118,7 @@ namespace ECS.StreamableLoading.GLTF
                 // Ownership of gltfImport and rootContainer transfers to GLTFData — null out locals so the catch
                 // block does not double-dispose. Per-consumer ref counting: LoadSystemBase.ApplyLoadedResult
                 // calls cache.AddReference, and each consumer's GltfContainerAsset.Dispose dereferences.
-                var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
+                var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths, gltFastDownloadProvider.ExternalDependencies);
                 gltfImport = null;
                 rootContainer = null;
                 return new StreamableLoadingResult<GLTFData>(gltfData);
@@ -132,6 +132,15 @@ namespace ECS.StreamableLoading.GLTF
                 throw;
             }
         }
+
+        /// <summary>
+        ///     A cached import embeds the external textures/buffers it fetched at import time. In local
+        ///     scene development the content mapping changes on hot reload, so a hit is only served while
+        ///     every external file still resolves to the URL it was imported from; otherwise the entry is
+        ///     evicted and the GLTF re-imports, fetching the edited file under its new hash.
+        /// </summary>
+        protected override bool IsCachedResultValid(in GetGLTFIntention intention, GLTFData asset) =>
+            !isLocalSceneDevelopment || downloadStrategy.AreExternalDependenciesUpToDate(asset);
 
         /// <summary>
         /// LoadSystemBase invokes this when a successful result is abandoned (e.g. cancellation after Load completes

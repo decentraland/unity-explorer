@@ -15,6 +15,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using GLTFast.Loading;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
@@ -41,6 +42,8 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             this.webRequestController = webRequestController;
             this.acquiredBudget = acquiredBudget;
         }
+
+        public virtual IReadOnlyList<GltfExternalDependency>? ExternalDependencies => null;
 
         public void Dispose()
         {

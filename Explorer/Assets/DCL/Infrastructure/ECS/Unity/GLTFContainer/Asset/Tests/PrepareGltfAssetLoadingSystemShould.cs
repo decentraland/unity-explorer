@@ -1,4 +1,5 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Utility;
 using ECS.StreamableLoading.AssetBundles;
@@ -258,6 +259,80 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.Has<GetGLTFIntention>(e), Is.True,
                 "LSD cache miss must still fall through to the raw GLTF load path");
+        }
+
+        [Test]
+        public void EvictStaleRawGltfOnCacheHitInLocalSceneDevelopment()
+        {
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
+
+            // The import fetched an external texture that has since been republished under a new
+            // content URL (content-versioned dev server), so the cached asset holds stale bytes.
+            var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Template"),
+                externalDependencies: new[] { new GltfExternalDependency("images/tex.png", "http://localhost/content/old-hash") });
+
+            gltfData.AcquireRef();
+            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: gltfData);
+
+            sceneContent.TryGetContentUrl("images/tex.png", out Arg.Any<URLAddress>())
+                        .Returns(c =>
+                         {
+                             c[1] = URLAddress.FromString("http://localhost/content/new-hash");
+                             return true;
+                         });
+
+            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>())
+                 .Returns(c =>
+                  {
+                      c[1] = asset;
+                      return true;
+                  });
+
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
+            Entity e = world.Create(intent);
+
+            system!.Update(0);
+
+            cache.Received(1).Remove("TEST_HASH");
+            Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False,
+                "A stale cached asset must not be served");
+            Assert.That(world.Has<GetGLTFIntention>(e), Is.True,
+                "Eviction must fall through to a fresh raw GLTF load");
+        }
+
+        [Test]
+        public void ServeCachedRawGltfWhenDependenciesUnchangedInLocalSceneDevelopment()
+        {
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
+
+            var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Template"),
+                externalDependencies: new[] { new GltfExternalDependency("images/tex.png", "http://localhost/content/same-hash") });
+
+            gltfData.AcquireRef();
+            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: gltfData);
+
+            sceneContent.TryGetContentUrl("images/tex.png", out Arg.Any<URLAddress>())
+                        .Returns(c =>
+                         {
+                             c[1] = URLAddress.FromString("http://localhost/content/same-hash");
+                             return true;
+                         });
+
+            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>())
+                 .Returns(c =>
+                  {
+                      c[1] = asset;
+                      return true;
+                  });
+
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
+            Entity e = world.Create(intent);
+
+            system!.Update(0);
+
+            cache.DidNotReceive().Remove(Arg.Any<string>());
+            Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
+            Assert.That(result.Asset, Is.EqualTo(asset));
         }
 
         [Test]

@@ -44,16 +44,27 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Builder preview bypasses the cache so creators always see the latest collection state.
-            // LSD reuse is safe within a session and is invalidated on `/reload` by ECSReloadScene's
-            // eager cache drain — required because the LSD dev server's hash is path-based, not content-based.
             bool allowCaching = !options.PreviewingBuilderCollection;
 
             // Try loading from the cache
             if (allowCaching && cache.TryGet(intention.CacheKey, out GltfContainerAsset? asset))
             {
-                // Construct the result immediately
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
-                return;
+                // In LSD a raw-GLTF asset is only reusable while the external files its import fetched
+                // (textures, buffers) still resolve to the URLs it was imported from; a hot reload can
+                // republish one of them under a new content hash while the GLTF's own hash — the cache
+                // key — stays the same. TryGet pops the pooled instance, so a stale one must be disposed
+                // here, and the remaining instances under the key are equally stale.
+                if (options.LocalSceneDevelopment && IsStaleRawGltf(asset!))
+                {
+                    asset!.Dispose();
+                    cache.Remove(intention.CacheKey);
+                }
+                else
+                {
+                    // Construct the result immediately
+                    World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+                    return;
+                }
             }
 
             bool loadRawGltf = options.PreviewingBuilderCollection;
@@ -84,6 +95,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     sceneData.SceneEntityDefinition.id ?? string.Empty));
             }
         }
+
+        private bool IsStaleRawGltf(GltfContainerAsset asset) =>
+            asset.AssetData is GLTFData gltfData && !GltfExternalDependency.AreUpToDate(gltfData.ExternalDependencies, sceneData.SceneContent);
 
         public struct Options
         {
