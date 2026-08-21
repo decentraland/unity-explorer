@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
@@ -47,7 +48,7 @@ namespace DCL.Web3.Authenticators
 
         internal ThirdWebAuthenticator(
             IDecentralandUrlsSource decentralandUrlsSource,
-            DecentralandEnvironment environment,
+            EthereumNetwork ethereumNetwork,
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
             IWeb3AccountFactory web3AccountFactory,
@@ -66,7 +67,7 @@ namespace DCL.Web3.Authenticators
             );
 
             loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration);
-            ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, environment, RPC_OVERRIDES);
+            ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, ethereumNetwork, RPC_OVERRIDES);
         }
 
         public void Dispose()

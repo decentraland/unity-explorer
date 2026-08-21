@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Web3.Chains;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,7 @@ namespace DCL.Web3.Authenticators
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
             IDecentralandUrlsSource decentralandUrlsSource,
-            DecentralandEnvironment environment,
+            EthereumNetwork ethereumNetwork,
             Dictionary<BigInteger, string> rpcOverrides)
         {
             this.client = client;
@@ -44,7 +45,7 @@ namespace DCL.Web3.Authenticators
             this.readOnlyMethods = readOnlyMethods;
             this.rpcOverrides = rpcOverrides;
 
-            chainId = ChainUtils.GetChainIdAsInt(environment);
+            chainId = ChainUtils.GetChainIdAsInt(ethereumNetwork);
 
             metaTxService = new ThirdWebMetaTxService(client, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.MetaTransactionServer)), (request, targetChainId) => SendRpcRequestAsync(request, targetChainId, CancellationToken.None));
         }

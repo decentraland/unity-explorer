@@ -108,13 +108,28 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ### `base-domain`
 **Type:** String (bare domain)
-**Description:** Targets a deployment served under a base domain other than `decentraland.{org,zone,today}` — every backend host resolves under it (`peer.<domain>`, `comms-gatekeeper.<domain>`, `feature-flags.<domain>`, …). It selects the `Custom` environment, which is treated as a non-production stack: sepolia / Amoy chains, the sepolia identity slot, and `message-router-dev-0` as the community-message router identity. See [Custom base domain](custom-base-domain.md).
+**Description:** Targets a deployment served under a base domain other than `decentraland.{org,zone,today}` — every backend host resolves under it (`peer.<domain>`, `comms-gatekeeper.<domain>`, `feature-flags.<domain>`, …). It selects the `Custom` environment, whose chain is mainnet unless [`eth-network`](#eth-network) says otherwise, and whose community-message router identity is `message-router-dev-0`. See [Custom base domain](custom-base-domain.md).
 
 The value must be a bare domain — no scheme, port or path — and it takes precedence over `dclenv`. Hosts under it are trusted for deep-link realm switching, so it is **command-line only**: it is never accepted from a `decentraland://` link.
 
 **Usage:**
 ```bash
 --base-domain interconnected.online
+```
+
+---
+
+### `eth-network`
+**Type:** String (`mainnet` | `sepolia`)
+**Description:** The chain a [`base-domain`](#base-domain) deployment signs and transacts against. Each value carries the polygon network that pairs with it — `mainnet` with Polygon, `sepolia` with Amoy — because the identity, the credits contracts and the donation contract all have to sit on one chain. It also picks which stored-identity slot the session uses. Defaults to `mainnet`.
+
+Decentraland's own environments each answer for one chain — org and today mainnet, zone sepolia — and this flag **cannot move them**: paired with `--dclenv`, it is reported in the log and dropped.
+
+On a `base-domain` deployment, where the value *is* read, anything that does not name a known network makes the client report the problem and exit rather than fall back to the default. Command-line only: denied from `decentraland://` links, and accepting it in the denied-params dialog does not apply it.
+
+**Usage:**
+```bash
+--base-domain interconnected.online --eth-network sepolia
 ```
 
 ---

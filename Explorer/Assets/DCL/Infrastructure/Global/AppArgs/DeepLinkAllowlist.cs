@@ -42,7 +42,8 @@ namespace Global.AppArgs
     ///             (<c>creator-hub-bin-path</c>, <c>launch-cdp-monitor-on-start</c> — SEC-005); point the client at
     ///             attacker infrastructure (<c>comms-adapter</c>, <c>gatekeeper-url</c>, <c>friends-api-url</c> —
     ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>, <c>optimized-assets-url</c>,
-    ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>); bypass a version/specs screen
+    ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>); move the client onto another chain
+    ///             (<c>base-domain</c>, <c>eth-network</c>); bypass a version/specs screen
     ///             (<c>skip-version-check</c>, <c>skip-minimum-specs-screen</c>); or enable the remaining dev/test
     ///             modes (<c>debug</c>, <c>autopilot</c>, <c>alttester</c>, <c>simulate*</c>). A whitelisted realm
     ///             does not unlock these: unlike the tier above, a key that is in neither set is dropped for every

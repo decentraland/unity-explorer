@@ -323,6 +323,21 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.BASE_DOMAIN), $"keys: {string.Join(", ", output.Keys)}");
         }
 
+        /// <summary>
+        ///     Which chain the client signs against is not something a link may pick, so it is denied like any other
+        ///     unlisted param. Denial is only half of it: the value is read from the command line before the deep
+        ///     link is processed, so consenting to it in the denied-params dialog does not apply it either.
+        /// </summary>
+        [Test]
+        public void NeverPermitTheEthNetworkFromADeepLink()
+        {
+            Assert.IsFalse(DeepLinkAllowlist.IsPermitted(AppArgsFlags.ETH_NETWORK));
+            Assert.IsFalse(DeepLinkAllowlist.IsPermittedForWhitelistedRealm(AppArgsFlags.ETH_NETWORK));
+
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters($"decentraland://?realm=https://peer.decentraland.org&{AppArgsFlags.ETH_NETWORK}=mainnet");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.ETH_NETWORK), $"keys: {string.Join(", ", output.Keys)}");
+        }
+
         [Test]
         public void DeferDeepLinkUntilInitializeDeepLinksIsCalled()
         {

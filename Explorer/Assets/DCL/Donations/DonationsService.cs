@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Chains;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -63,7 +64,7 @@ namespace DCL.Donations
             IWebRequestController webRequestController,
             IRealmData realmData,
             IPlacesAPIService placesAPIService,
-            DecentralandEnvironment dclEnvironment,
+            EthereumNetwork ethereumNetwork,
             IDecentralandUrlsSource decentralandUrlsSource,
             bool isLocalSceneDevelopmentMode)
         {
@@ -75,23 +76,20 @@ namespace DCL.Donations
             this.manaUsdApiUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ManaUsdRateApiUrl));
             this.isLocalSceneDevelopmentMode = isLocalSceneDevelopmentMode;
 
-            switch (dclEnvironment)
+            // The MANA contract follows the resolved network: Polygon pairs with ethereum mainnet, Amoy with
+            // sepolia, so a donation can never move real funds on behalf of a test identity or the reverse.
+            switch (ethereumNetwork)
             {
-                case DecentralandEnvironment.Org:
-                case DecentralandEnvironment.Today:
-                        contractAddress = MATIC_CONTRACT_ADDRESS;
-                        networkName = MATIC_NETWORK;
-                        break;
-
-                // Zone, and a --base-domain deployment: only decentraland's own production environments are
-                // treated as mainnet, so an unverified custom deployment can never move real funds.
-                case DecentralandEnvironment.Zone:
-                case DecentralandEnvironment.Custom:
-                        contractAddress = AMOY_NET_CONTRACT_ADDRESS;
-                        networkName = AMOY_NETWORK;
-                        break;
+                case EthereumNetwork.Mainnet:
+                    contractAddress = MATIC_CONTRACT_ADDRESS;
+                    networkName = MATIC_NETWORK;
+                    break;
+                case EthereumNetwork.Sepolia:
+                    contractAddress = AMOY_NET_CONTRACT_ADDRESS;
+                    networkName = AMOY_NETWORK;
+                    break;
                 default:
-                        throw new ArgumentOutOfRangeException(nameof(dclEnvironment), dclEnvironment, null);
+                    throw new ArgumentOutOfRangeException(nameof(ethereumNetwork), ethereumNetwork, null);
             }
 
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;

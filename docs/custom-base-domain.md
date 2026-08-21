@@ -7,9 +7,10 @@ app arg.
 
 `--base-domain` selects a fourth environment, `DecentralandEnvironment.Custom`. Modelling
 it as an environment rather than as a silent override is deliberate: the domain is only
-one of the things an environment decides, and every other decision (chain, identity
-storage, message routing) gets an explicit arm for `Custom` instead of falling into a
-`default` branch whose value nobody chose.
+one of the things an environment decides, and every other decision gets an explicit arm
+for `Custom` instead of falling into a `default` branch whose value nobody chose. Where
+the domain cannot imply the answer — the chain — there is a flag for it rather than a
+guess.
 
 ## The domain seam
 
@@ -60,19 +61,66 @@ newly added url with a hand-written domain is caught.
   outranks both the base domain and gateway routing, for the main and the local scene
   adapter alike.
 
+## The chain
+
+A base domain says where the hosts are; it says nothing about which chain they are on, and
+nothing in a domain name can. So the chain is named, by
+[`--eth-network`](app-arguments.md#eth-network) — `mainnet` or `sepolia`, defaulting to
+mainnet.
+
+`ChainUtils.ResolveNetwork` is the single place it is decided, and the resolved
+`EthereumNetwork` is what everything downstream is handed. Four decisions used to make it
+separately from `DecentralandEnvironment`; none of them does now, so they cannot disagree:
+
+| Decision | Follows the resolved network |
+| --- | --- |
+| Ethereum net version / chain id / network id (`ChainUtils`) | mainnet or sepolia |
+| Marketplace credits (`CreditsChainConfig`) | Polygon with mainnet, Amoy with sepolia |
+| Donations MANA contract (`DonationsService`) | Polygon with mainnet, Amoy with sepolia |
+| Stored identity slot (`PlayerPrefsIdentityProvider`) | one slot per network |
+
+Each ethereum network carries exactly one polygon network because a deployment is on both or
+neither: an identity signed for mainnet has no business spending against test credits
+contracts, and a test identity has no business against the real ones.
+
+**Decentraland's own environments cannot be moved.** `ChainUtils.PinnedNetworkOf` fixes org
+and today to mainnet and zone to sepolia; `--eth-network` paired with one of them is reported
+in the log and dropped. Their contracts, identities and backends are all on that one chain, so
+a client pointed at zone signing against mainnet is simply wrong — there is no deployment for
+which that combination is what the operator meant. A custom base domain is the only stack the
+client knows nothing about, and the only one the flag speaks for.
+
+**A value the client cannot map is refused rather than defaulted**, because the default is
+mainnet: reaching it by accident is what puts real contracts and the production identity behind
+an operator who asked for a test chain. `--eth-network sepolai`, or the flag with no value at
+all, reports the problem and exits instead of launching. As everywhere in this client, the value
+is a separate token — `--eth-network sepolia`, never `--eth-network=sepolia`.
+
+Like `--base-domain`, it is applied **from the command line only**: a `decentraland://` link
+carrying it is denied, and accepting it in the denied-params dialog does not apply it (the
+client logs a warning saying so). A link is attacker-supplied and a consent dialog is a weak
+place to decide which chain a wallet signs for.
+
+**Open: the identity slot is keyed by chain, so a mainnet custom deployment shares the
+mainnet slot with org.** A session on either can reuse an identity signed on the other, and a
+login on either replaces it — so logging in to a custom deployment logs you out of org.
+`--eth-network sepolia` moves it to the sepolia slot, which zone also uses.
+
+This is not a property of the identity, which is a wallet signature over a locally generated
+ephemeral key and is not chain-scoped at all; the slot key just happens to be named by
+environment, and before the chain became explicit it stood in for *which stack minted the
+identity*. Scoping the slot by stack — a slot of its own for `Custom`, or one per base domain —
+would separate them again without touching which chain the deployment runs on. Worth deciding
+before a custom deployment is used against a signed-in production session.
+
 ## What `Custom` explicitly does *not* change
 
 These decisions are not domain-derived, and each carries an explicit `Custom` arm:
 
 | Decision | `Custom` resolves to | Why |
 | --- | --- | --- |
-| Ethereum network (`ChainUtils`) | sepolia | A `--base-domain` stack is unverified; mainnet would put real assets behind it. |
-| Marketplace credits (`CreditsChainConfig`), donations (`DonationsService`) | Amoy | Same reason: no mainnet contracts. |
-| Stored identity slot (`PlayerPrefsIdentityProvider`) | the sepolia slot | The key is chain-scoped, so it must not overwrite the mainnet identity. |
 | Community-message router (`LiveKitChatMessagesBus`, `ChatReactionsFactory`) | `message-router-dev-0` | A custom deployment's comms-message-sfu has to join under this identity for relayed messages to authenticate. |
 | Genesis City manifest (`WorldManifestProvider`) | *no manifest* — the fetch is skipped | It describes decentraland's own Genesis City; a custom realm reusing one of its realm names is a different world. |
-
-A deployment that mirrors *mainnet* is therefore out of scope for this flag.
 
 ## World manifest, parcel loading and roads
 
@@ -141,9 +189,8 @@ over wss on the deployment, while the embedded-wallet path keeps reaching decent
 proxy — which is arguably right (a custom deployment has no Ethereum of its own) but means the
 two disagree about where a chain lives.
 
-Two consequences of `Custom` being a non-production stack (see above): signatures are produced
-for **sepolia**, and the identity is stored in the **sepolia slot**, which zone also uses — so a
-custom session and a zone session share one cached identity.
+Which chain those signatures are produced for, and which stored-identity slot the session uses,
+follow [the chain](#the-chain) — mainnet unless `--eth-network sepolia` says otherwise.
 
 The signin deep link is unchanged: the `decentraland://` scheme is registered by the client, so
 a custom deployment's auth website must emit that same scheme with `signin` and `authRequestId`.
