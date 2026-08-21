@@ -12,6 +12,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.ColorComponent;
 using SceneRunner.Scene;
 using Utility.Arch;
@@ -21,9 +22,10 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 {
     /// <summary>
     ///     Turns the scene-authored <see cref="PBAvatarNametag" /> into the global-world
-    ///     <see cref="SceneAvatarTagComponent" /> that draws the plate above a player's nametag.
-    ///     Only player entities resolve to an avatar, which is what keeps V1 to players: a scene-spawned
-    ///     avatar carries neither the local player's CRDT id nor an <see cref="SDKProfile" />, so it is a no-op.
+    ///     <see cref="SceneAvatarTagComponent" /> that draws the plate above an avatar's nametag.
+    ///     A target resolves for the local player (by CRDT id), a remote player (by <see cref="SDKProfile" />
+    ///     wallet) or a scene-spawned avatar (by its <see cref="SDKAvatarShapeComponent" /> global-world twin);
+    ///     on any other entity the component is a no-op.
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]
@@ -139,6 +141,13 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             if (crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY)
             {
                 target = globalPlayerEntity;
+                return globalWorld.IsAlive(target);
+            }
+
+            // A scene-spawned avatar keeps a handle to its global-world twin on the very same scene entity.
+            if (World.TryGet(sceneEntity, out SDKAvatarShapeComponent sdkAvatarShape))
+            {
+                target = sdkAvatarShape.GlobalWorldEntity;
                 return globalWorld.IsAlive(target);
             }
 

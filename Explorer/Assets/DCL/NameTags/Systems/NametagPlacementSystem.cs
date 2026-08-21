@@ -268,7 +268,8 @@ namespace DCL.Nametags
             NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape, in SceneAvatarTagComponent sceneTag)
         {
-            bool nameVisible = showNameTags && !avatarShape.NameTagHiddenByModifierArea;
+            // A scene avatar may carry no name at all; the plate must not uncover an empty name box.
+            bool nameVisible = showNameTags && !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name);
 
             if ((!nameVisible && sceneTag.IsRemoving)
                 || ShouldCullTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))

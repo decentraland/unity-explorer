@@ -9,6 +9,7 @@ using DCL.Profiles;
 using DCL.SDKComponents.AvatarNametag.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
+using ECS.Unity.AvatarShape.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -19,6 +20,9 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
     public class PropagateSceneAvatarTagSystemShould : UnitySystemTestBase<PropagateSceneAvatarTagSystem>
     {
         private const string REMOTE_WALLET = "0xdeadbeef";
+
+        // An ordinary scene-owned entity id, past the reserved range player entities live in.
+        private const int SCENE_LOCAL_ENTITY = 512;
 
         // Assigned in SetUp before any test runs; null! keeps the fixture free of nullable-dereference noise.
         private World globalWorld = null!;
@@ -117,6 +121,43 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalRemoteEntity), Is.True);
             Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalRemoteEntity).Text, Is.EqualTo("Bronze"));
             Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalPlayerEntity), Is.False);
+        }
+
+        [Test]
+        public void ResolveASceneAvatarThroughItsGlobalTwin()
+        {
+            // Arrange
+            Entity globalNpcEntity = globalWorld.Create();
+            Entity sceneEntity = CreateSceneEntity(SCENE_LOCAL_ENTITY, new PBAvatarNametag { Label = "Boss", IsDirty = true });
+            world.Add(sceneEntity, new SDKAvatarShapeComponent(globalNpcEntity));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalNpcEntity), Is.True);
+            Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalNpcEntity).Text, Is.EqualTo("Boss"));
+            Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalPlayerEntity), Is.False);
+        }
+
+        [Test]
+        public void RetryUntilTheSceneAvatarGetsItsGlobalTwin()
+        {
+            // Arrange — the nametag arrives before AvatarShapeHandlerSystem has instantiated the avatar.
+            var pbNametag = new PBAvatarNametag { Label = "Boss", IsDirty = true };
+            Entity sceneEntity = CreateSceneEntity(SCENE_LOCAL_ENTITY, pbNametag);
+            system.Update(0);
+
+            Assert.That(pbNametag.IsDirty, Is.True, "an unresolved write must stay dirty to be retried");
+
+            // Act — the avatar appears; the pending write lands on the next update.
+            Entity globalNpcEntity = globalWorld.Create();
+            world.Add(sceneEntity, new SDKAvatarShapeComponent(globalNpcEntity));
+            system.Update(0);
+
+            // Assert
+            Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalNpcEntity), Is.True);
+            Assert.That(pbNametag.IsDirty, Is.False);
         }
 
         [Test]
