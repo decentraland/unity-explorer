@@ -72,17 +72,19 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
-            // Nothing can gain a name while they are globally disabled, so skip the avatar-wide queries entirely.
+            // The nametags toggle disables everything, name and scene plate alike, so while it is off
+            // no holder can be born and the avatar-wide queries are skipped entirely.
             if (showNameTags)
             {
                 AddTagForPlayerAvatarsQuery(World, cameraComponent);
                 AddTagForNonPlayerAvatarsQuery(World, cameraComponent);
-            }
 
-            // Holders needed by a scene avatar tag rather than by a name. SceneAvatarTagComponent is part of the
-            // archetype, so these iterate nothing at all while no scene has tagged anyone.
-            AddSceneTagForPlayerAvatarsQuery(World, cameraComponent, showNameTags);
-            AddSceneTagForNonPlayerAvatarsQuery(World, cameraComponent, showNameTags);
+                // Holders needed by a scene avatar tag while the name itself is hidden by a modifier area
+                // or missing. SceneAvatarTagComponent is part of the archetype, so these iterate nothing
+                // at all while no scene has tagged anyone.
+                AddSceneTagForPlayerAvatarsQuery(World, cameraComponent);
+                AddSceneTagForNonPlayerAvatarsQuery(World, cameraComponent);
+            }
 
             UpdateOwnTagQuery(World);
             UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp, showNameTags);
@@ -127,7 +129,7 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void AddSceneTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in bool showNameTags, Entity e, in AvatarShapeComponent avatarShape,
+        private void AddSceneTagForPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile, ref SceneAvatarTagComponent sceneTag)
         {
             if (sceneTag.IsRemoving || !CanAddTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
@@ -135,13 +137,13 @@ namespace DCL.Nametags
 
             MarkVoiceChatBadgeDirty(e);
             sceneTag.IsDirty = true;
-            AddNameTag(e, in avatarShape, showNameTags && !avatarShape.NameTagHiddenByModifierArea, profile);
+            AddNameTag(e, in avatarShape, nameVisible: !avatarShape.NameTagHiddenByModifierArea, profile);
         }
 
         [Query]
         [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape), typeof(AvatarBase))]
-        private void AddSceneTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in bool showNameTags, Entity e, in AvatarShapeComponent avatarShape,
+        private void AddSceneTagForNonPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, ref SceneAvatarTagComponent sceneTag)
         {
             if (sceneTag.IsRemoving || !CanAddTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
@@ -149,7 +151,7 @@ namespace DCL.Nametags
 
             MarkVoiceChatBadgeDirty(e);
             sceneTag.IsDirty = true;
-            AddNameTag(e, in avatarShape, showNameTags && !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name));
+            AddNameTag(e, in avatarShape, nameVisible: !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name));
         }
 
         private bool CanAddTag(in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
@@ -269,9 +271,11 @@ namespace DCL.Nametags
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape, in SceneAvatarTagComponent sceneTag)
         {
             // A scene avatar may carry no name at all; the plate must not uncover an empty name box.
-            bool nameVisible = showNameTags && !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name);
+            bool nameVisible = !avatarShape.NameTagHiddenByModifierArea && !string.IsNullOrEmpty(avatarShape.Name);
 
-            if ((!nameVisible && sceneTag.IsRemoving)
+            // The nametags toggle takes the plate down with the name; a modifier area hides the name only.
+            if (!showNameTags
+                || (!nameVisible && sceneTag.IsRemoving)
                 || ShouldCullTag(in camera, e, in avatarShape, in characterTransform, in partitionComponent))
             {
                 ReleaseTag(e, nametagHolder);
