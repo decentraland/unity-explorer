@@ -10,6 +10,18 @@ namespace DCL.Nametags
     /// </summary>
     public struct SceneAvatarTagComponent
     {
+        /// <summary>
+        ///     The plate label color the client uses natively: `--dcl-color-snow` (rgb(252, 252, 252)),
+        ///     inherited by `.nametag__scene-tag-label` from the `:root` block of CommonStyles.uss.
+        /// </summary>
+        public static readonly Color NATIVE_TEXT_COLOR = new (252f / 255f, 252f / 255f, 252f / 255f);
+
+        /// <summary>
+        ///     The plate background color the client uses natively: `--dcl-color-shadow` (#161518),
+        ///     set on `.nametag__scene-tag-container` by NametagStyle.uss and defined in CommonStyles.uss.
+        /// </summary>
+        public static readonly Color NATIVE_BACKGROUND_COLOR = new (22f / 255f, 21f / 255f, 24f / 255f);
+
         public readonly string Text;
         public readonly Color TextColor;
         public readonly Color BackgroundColor;

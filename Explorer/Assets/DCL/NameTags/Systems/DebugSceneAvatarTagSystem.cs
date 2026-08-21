@@ -13,7 +13,7 @@ namespace DCL.Nametags
 {
     /// <summary>
     ///     Drives <see cref="SceneAvatarTagComponent" /> from the "Nametags" debug widget
-    ///     until the PBNametag SDK component provides the production data path.
+    ///     alongside the PBAvatarNametag SDK path, to exercise the plate without a scene.
     ///     Widget fields: tag text, text color (html string), background color (html string).
     /// </summary>
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
@@ -21,11 +21,9 @@ namespace DCL.Nametags
     [LogCategory(ReportCategory.AVATAR)]
     public partial class DebugSceneAvatarTagSystem : BaseUnityLoopSystem
     {
-        private static readonly Color DEFAULT_BACKGROUND_COLOR = new (0.086f, 0.082f, 0.102f);
-
         private string pendingText = string.Empty;
-        private Color pendingTextColor = Color.white;
-        private Color pendingBackgroundColor = DEFAULT_BACKGROUND_COLOR;
+        private Color pendingTextColor = SceneAvatarTagComponent.NATIVE_TEXT_COLOR;
+        private Color pendingBackgroundColor = SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR;
         private bool applyRequested;
         private bool removeRequested;
 
@@ -57,10 +55,10 @@ namespace DCL.Nametags
             pendingText = fields[0] ?? string.Empty;
 
             if (string.IsNullOrEmpty(fields[1]) || !ColorUtility.TryParseHtmlString(fields[1], out pendingTextColor))
-                pendingTextColor = Color.white;
+                pendingTextColor = SceneAvatarTagComponent.NATIVE_TEXT_COLOR;
 
             if (string.IsNullOrEmpty(fields[2]) || !ColorUtility.TryParseHtmlString(fields[2], out pendingBackgroundColor))
-                pendingBackgroundColor = DEFAULT_BACKGROUND_COLOR;
+                pendingBackgroundColor = SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR;
 
             applyRequested = true;
         }
