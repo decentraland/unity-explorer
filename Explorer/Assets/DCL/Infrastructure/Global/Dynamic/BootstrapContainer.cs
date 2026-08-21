@@ -71,13 +71,6 @@ namespace Global.Dynamic
         /// </summary>
         public EthereumNetwork EthereumNetwork { get; private set; }
 
-        /// <summary>
-        ///     The loopback endpoint reserved for the local-ab abgen server (the URL sources already point
-        ///     at it). Non-null only in local scene development with local asset bundles —
-        ///     DynamicWorldContainer registers AbgenSidecarPlugin, which owns the server's whole lifecycle,
-        ///     exclusively from this.
-        /// </summary>
-        public string? LocalAbBaseUrl { get; private set; }
         public RealmClock RealmClock { get; } = new ();
         public WebRequestsContainer WebRequestsContainer { get; private set; }
 
@@ -111,7 +104,6 @@ namespace Global.Dynamic
             DecentralandEnvironment decentralandEnvironment,
             EthereumNetwork ethereumNetwork,
             DCLVersion dclVersion,
-            string? localAbBaseUrl,
             CancellationToken ct)
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource, applicationParametersParser);
@@ -131,7 +123,6 @@ namespace Global.Dynamic
                 VolumeBus = new VolumeBus(),
                 Environment = decentralandEnvironment,
                 EthereumNetwork = ethereumNetwork,
-                LocalAbBaseUrl = localAbBaseUrl
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
