@@ -70,7 +70,7 @@ namespace DCL.AuthenticationScreenFlow
                                     ProfileNotFoundException ex => new SpanErrorInfo($"Profile not found during {nameof(ProfileFetchingAuthState)}", ex),
                                     NotAllowedUserException ex => new SpanErrorInfo(ex.Message, ex),
                                     TimeoutException ex => new SpanErrorInfo($"Profile fetch timed out during {nameof(ProfileFetchingAuthState)}", ex),
-                                    Exception ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
+                                    { } ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
                                 };
 
                 if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException and not NotAllowedUserException)
@@ -110,9 +110,7 @@ namespace DCL.AuthenticationScreenFlow
                     });
 
                     // Timeout surfaces catalyst stalls as CONNECTION_ERROR instead of a frozen spinner.
-                    Profile? profile = await selfProfile.ProfileAsync(ct).Timeout(PROFILE_FETCH_TIMEOUT);
-
-                    if (profile != null)
+                    if (await FetchProfileWithTimeoutAsync(selfProfile, PROFILE_FETCH_TIMEOUT, ct) is { } profile)
                     {
                         // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
                         profile.IsDirty = true;
@@ -154,6 +152,30 @@ namespace DCL.AuthenticationScreenFlow
                     machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
                 }
             }
+        }
+
+        /// <summary>
+        ///     The fetch runs under a linked token, so a timed-out fetch cancels its underlying request instead of
+        ///     abandoning it. Timeout surfaces as <see cref="TimeoutException" /> (CONNECTION_ERROR);
+        ///     cancellation of <paramref name="ct" /> surfaces as <see cref="OperationCanceledException" />.
+        /// </summary>
+        internal static async UniTask<Profile?> FetchProfileWithTimeoutAsync(ISelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
+        {
+            using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            using IDisposable timeoutTimer = timeoutCts.CancelAfterSlim(timeout);
+
+            if (await selfProfile.ProfileAsync(timeoutCts.Token) is { } profile)
+                return profile;
+
+            // The repository suppresses cancellation into a null profile, including cancellation of the flow token.
+            // Surface external cancellation as OCE so it is classified as a user cancel, not as "no deployed profile"
+            // (which on the cached flow would clear a still-valid stored identity)
+            ct.ThrowIfCancellationRequested();
+
+            if (timeoutCts.IsCancellationRequested)
+                throw new TimeoutException($"Profile fetch timed out after {timeout.TotalSeconds:F0}s");
+
+            return null; // genuine "no deployed profile"
         }
 
         private Profile CreateRandomProfile(string identityAddress)
