@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -10,6 +11,7 @@ namespace Global.AppArgs.Tests
         {
             // Reset the cached/overridden world whitelist so tests don't leak state into one another.
             DeepLinkAllowlist.SetWhitelistedWorlds(null);
+            DeepLinkAllowlist.SetTrustedBaseDomain(null);
         }
 
         [Test]
@@ -279,6 +281,46 @@ namespace Global.AppArgs.Tests
 
             // Act & Assert
             Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [TestCase("https://worlds-content-server.interconnected.online/world/test-world.dcl.eth", true, TestName = "a host under the custom base domain is trusted like decentraland's")]
+        [TestCase("https://interconnected.online.attacker.com/world/test-world.dcl.eth", false, TestName = "suffix-lookalike of the custom base domain is rejected")]
+        [TestCase("https://worlds-content-server.decentraland.org/world/test-world.dcl.eth", false, TestName = "a custom deployment does not inherit trust in decentraland hosts")]
+        [TestCase("http://127.0.0.1:8000", true, TestName = "loopback stays trusted")]
+        public void ClassifyRealmAsWhitelistedUnderACustomBaseDomain(string realm, bool expected)
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetTrustedBaseDomain("interconnected.online");
+
+            // Act & Assert
+            Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [Test]
+        public void KeepTheDecentralandFamilyTrustedWhenTheBaseDomainIsOneOfItsOwn()
+        {
+            // Arrange: passing a decentraland domain must not narrow trust to that single environment.
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetTrustedBaseDomain(IDecentralandUrlsSource.ORG_DOMAIN);
+
+            // Act & Assert
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted("https://worlds-content-server.decentraland.org/world/test-world.dcl.eth"));
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted("https://worlds-content-server.decentraland.zone/world/test-world.dcl.eth"));
+        }
+
+        /// <summary>
+        ///     The base domain decides which realm hosts are trusted, so a deep link must never be able to set it:
+        ///     it stays a command-line-only flag, denied (and surfaced for consent) like any other unlisted param.
+        /// </summary>
+        [Test]
+        public void NeverPermitTheBaseDomainFromADeepLink()
+        {
+            Assert.IsFalse(DeepLinkAllowlist.IsPermitted(AppArgsFlags.BASE_DOMAIN));
+            Assert.IsFalse(DeepLinkAllowlist.IsPermittedForWhitelistedRealm(AppArgsFlags.BASE_DOMAIN));
+
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters($"decentraland://?realm=https://peer.decentraland.org&{AppArgsFlags.BASE_DOMAIN}=evil.example");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.BASE_DOMAIN), $"keys: {string.Join(", ", output.Keys)}");
         }
 
         [Test]

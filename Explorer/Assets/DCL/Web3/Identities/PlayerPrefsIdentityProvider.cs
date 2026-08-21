@@ -12,12 +12,20 @@ namespace DCL.Web3.Identities
         public event Action? OnIdentityCleared;
         public event Action? OnIdentityChanged;
 
-        private string GetIdentityKey()
-        {
-            return dclEnv == DecentralandEnvironment.Zone
-                ? DCLPrefKeys.WEB3_IDENTITY_ZONE
-                : DCLPrefKeys.WEB3_IDENTITY;
-        }
+        /// <summary>
+        ///     The stored identity is chain-scoped, so the key follows <c>ChainUtils</c>: the mainnet environments
+        ///     share one slot and the sepolia ones the other. A <c>--base-domain</c> deployment signs against
+        ///     sepolia, so it must not overwrite the mainnet identity.
+        /// </summary>
+        private string GetIdentityKey() =>
+            dclEnv switch
+            {
+                DecentralandEnvironment.Org => DCLPrefKeys.WEB3_IDENTITY,
+                DecentralandEnvironment.Today => DCLPrefKeys.WEB3_IDENTITY,
+                DecentralandEnvironment.Zone => DCLPrefKeys.WEB3_IDENTITY_ZONE,
+                DecentralandEnvironment.Custom => DCLPrefKeys.WEB3_IDENTITY_ZONE,
+                _ => throw new ArgumentOutOfRangeException(nameof(dclEnv), dclEnv, null),
+            };
 
         public IWeb3Identity? Identity
         {

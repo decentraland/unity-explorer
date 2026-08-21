@@ -97,11 +97,24 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ### `dclenv`
 **Type:** String
-**Description:** Sets the Decentraland environment (e.g., `org`, `zone`, `today`). Determines which API endpoints and services the application connects to.
+**Description:** Sets the Decentraland environment (e.g., `org`, `zone`, `today`). Determines which API endpoints and services the application connects to. `custom` is not accepted here — it is selected by [`base-domain`](#base-domain), which also supplies the domain it needs.
 
 **Usage:**
 ```bash
 --dclenv org
+```
+
+---
+
+### `base-domain`
+**Type:** String (bare domain)
+**Description:** Targets a deployment served under a base domain other than `decentraland.{org,zone,today}` — every backend host resolves under it (`peer.<domain>`, `comms-gatekeeper.<domain>`, `feature-flags.<domain>`, …). It selects the `Custom` environment, which is treated as a non-production stack: sepolia / Amoy chains, the sepolia identity slot, and `message-router-dev-0` as the community-message router identity. See [Custom base domain](custom-base-domain.md).
+
+The value must be a bare domain — no scheme, port or path — and it takes precedence over `dclenv`. Hosts under it are trusted for deep-link realm switching, so it is **command-line only**: it is never accepted from a `decentraland://` link.
+
+**Usage:**
+```bash
+--base-domain interconnected.online
 ```
 
 ---

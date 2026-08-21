@@ -12,6 +12,8 @@ namespace DCL.Browser.DecentralandUrls.Tests
 {
     public class DecentralandUrlsSourceShould
     {
+        private const string CUSTOM_DOMAIN = "interconnected.online";
+
         // The feature-flag singleton takes one Initialize per Reset; clear it around every test
         [SetUp]
         public void SetUp() => FeatureFlagsConfiguration.Reset();
@@ -229,12 +231,132 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TestCase("https://sub.decentraland.org@evil.example.com")]
         [TestCase("https://x.decentraland.evil.example.com")]
         [TestCase("https://gk.decentraland.org.")]
-        public void KeepNonEnvShapedDecentralandHostsOffTheGateway(string customHost)
+        public void KeepHostsOutsideTheBaseDomainShapeOffTheGateway(string customHost)
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
             var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatekeeperUrl: customHost);
 
             Assert.AreEqual($"{customHost}/get-scene-adapter", urlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter));
+        }
+
+        [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN)]
+        [TestCase(DecentralandEnvironment.Zone, IDecentralandUrlsSource.ZONE_DOMAIN)]
+        [TestCase(DecentralandEnvironment.Today, IDecentralandUrlsSource.TODAY_DOMAIN)]
+        public void SelectTheEnvironmentsOwnDomain(DecentralandEnvironment environment, string expectedBaseDomain)
+        {
+            Assert.AreEqual(expectedBaseDomain, DecentralandUrlsSource.ResolveBaseDomain(environment, null));
+        }
+
+        /// <summary>
+        ///     What a constructed source reports is the domain it resolves urls against, which is not always the
+        ///     domain the environment selects: today pins the handful of hosts it serves from .today while it is being
+        ///     built and serves everything afterwards from org, so org is what it settles on.
+        /// </summary>
+        [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN)]
+        [TestCase(DecentralandEnvironment.Zone, IDecentralandUrlsSource.ZONE_DOMAIN)]
+        [TestCase(DecentralandEnvironment.Today, IDecentralandUrlsSource.ORG_DOMAIN)]
+        public void ReportTheDomainUrlsResolveAgainst(DecentralandEnvironment environment, string expectedBaseDomain)
+        {
+            InitializeFeatureFlags(optimizedAssets: false);
+            Assert.AreEqual(expectedBaseDomain, DecentralandUrlsSource.CreateForTest(environment, ILaunchMode.PLAY).BaseDomain);
+        }
+
+        [TestCase(CUSTOM_DOMAIN, CUSTOM_DOMAIN)]
+        [TestCase("  " + CUSTOM_DOMAIN + "  ", CUSTOM_DOMAIN)] // padded by a shell or launcher
+        [TestCase("." + CUSTOM_DOMAIN, CUSTOM_DOMAIN)]         // written as a suffix
+        public void TakeBaseDomainFromTheCustomEnvironment(string customBaseDomain, string expectedBaseDomain)
+        {
+            InitializeFeatureFlags(optimizedAssets: false);
+            Assert.AreEqual(expectedBaseDomain, DecentralandUrlsSource.CreateForTest(customBaseDomain, ILaunchMode.PLAY).BaseDomain);
+        }
+
+        [TestCase(DecentralandEnvironment.Custom, null)]                            // Custom has no domain of its own
+        [TestCase(DecentralandEnvironment.Custom, "   ")]
+        [TestCase(DecentralandEnvironment.Custom, "https://" + CUSTOM_DOMAIN)]      // a url, not a domain
+        [TestCase(DecentralandEnvironment.Custom, CUSTOM_DOMAIN + "/path")]
+        [TestCase(DecentralandEnvironment.Custom, CUSTOM_DOMAIN + ":8443")]
+        [TestCase(DecentralandEnvironment.Custom, "evil.example@" + CUSTOM_DOMAIN)] // userinfo smuggled into the domain
+        [TestCase(DecentralandEnvironment.Org, CUSTOM_DOMAIN)]                      // a base domain the environment would ignore
+        [TestCase(DecentralandEnvironment.Zone, CUSTOM_DOMAIN)]
+        public void RejectAMisconfiguredBaseDomain(DecentralandEnvironment environment, string? customBaseDomain)
+        {
+            Assert.Throws<ArgumentException>(() => DecentralandUrlsSource.ResolveBaseDomain(environment, customBaseDomain));
+        }
+
+        [TestCase(DecentralandUrl.Host, "https://" + CUSTOM_DOMAIN)]
+        [TestCase(DecentralandUrl.PeerAbout, "https://peer." + CUSTOM_DOMAIN + "/about")]
+        [TestCase(DecentralandUrl.PeerContent, "https://peer." + CUSTOM_DOMAIN + "/content/contents")]
+        [TestCase(DecentralandUrl.Servers, "https://peer." + CUSTOM_DOMAIN + "/lambdas/contracts/servers")]
+        [TestCase(DecentralandUrl.FeatureFlags, "https://feature-flags." + CUSTOM_DOMAIN)]
+        [TestCase(DecentralandUrl.Gatekeeper, "https://comms-gatekeeper." + CUSTOM_DOMAIN)]
+        [TestCase(DecentralandUrl.GateKeeperSceneAdapter, "https://comms-gatekeeper." + CUSTOM_DOMAIN + "/get-scene-adapter")]
+        [TestCase(DecentralandUrl.LocalGateKeeperSceneAdapter, "https://comms-gatekeeper-local." + CUSTOM_DOMAIN + "/get-scene-adapter")]
+        [TestCase(DecentralandUrl.Genesis, "https://realm-provider-ea." + CUSTOM_DOMAIN + "/main")]
+        [TestCase(DecentralandUrl.WorldServer, "https://worlds-content-server." + CUSTOM_DOMAIN + "/world")]
+        [TestCase(DecentralandUrl.Pulse, "pulse-server." + CUSTOM_DOMAIN)]
+        public void MoveEveryHostOntoTheCustomBaseDomain(DecentralandUrl url, string expected)
+        {
+            InitializeFeatureFlags(optimizedAssets: false);
+            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(CUSTOM_DOMAIN, ILaunchMode.PLAY);
+
+            Assert.AreEqual(expected, urlsSource.Url(url));
+        }
+
+        /// <summary>
+        ///     The whole point of the base-domain seam: nothing may still resolve to a decentraland host, and no
+        ///     template may leak its unsubstituted token. A new url added with a hand-written domain fails here.
+        /// </summary>
+        [Test]
+        public void LeaveNoDecentralandHostBehindOnACustomBaseDomain()
+        {
+            InitializeFeatureFlags(optimizedAssets: false);
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Custom, Substitute.For<IRealmData>(), ILaunchMode.PLAY, customBaseDomain: CUSTOM_DOMAIN);
+
+            foreach (DecentralandUrl url in Enum.GetValues(typeof(DecentralandUrl)))
+            {
+                string resolved = urlsSource.Probe(url);
+
+                // Off-platform links that are decentraland's own marketing surface, not a backend host a custom
+                // deployment could serve.
+                if (url == DecentralandUrl.DecentralandWorlds)
+                    continue;
+
+                foreach (string domain in IDecentralandUrlsSource.ALL_DOMAINS)
+                    Assert.IsTrue(resolved.IndexOf(domain, StringComparison.OrdinalIgnoreCase) < 0, $"{url} still resolves to {domain}: {resolved}");
+            }
+        }
+
+        [TestCase(DecentralandEnvironment.Org, null, "https://feature-flags." + IDecentralandUrlsSource.ORG_DOMAIN)]
+        [TestCase(DecentralandEnvironment.Zone, null, "https://feature-flags." + IDecentralandUrlsSource.ZONE_DOMAIN)]
+        [TestCase(DecentralandEnvironment.Custom, CUSTOM_DOMAIN, "https://feature-flags." + CUSTOM_DOMAIN)]
+        public void ResolveThePreLoginFeatureFlagsHost(DecentralandEnvironment environment, string? customBaseDomain, string expected)
+        {
+            Assert.AreEqual(expected, DecentralandUrlsSource.GetFeatureFlagsUrl(environment, customBaseDomain));
+        }
+
+        [Test]
+        public void RouteACustomBaseDomainThroughItsOwnGateway()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(CUSTOM_DOMAIN, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://gateway." + CUSTOM_DOMAIN + "/auth-api", urlsSource.Url(DecentralandUrl.ApiAuth));
+            Assert.AreEqual("https://gateway." + CUSTOM_DOMAIN + "/comms-gatekeeper/get-scene-adapter", urlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter));
+            Assert.AreEqual("https://gateway." + CUSTOM_DOMAIN + "/comms-gatekeeper/private-messages/token", urlsSource.Url(DecentralandUrl.ChatAdapter));
+
+            // Its host is composed from the base domain like any other, so it routes through the gateway here
+            // exactly as it does on org.
+            Assert.AreEqual("https://gateway." + CUSTOM_DOMAIN + "/comms-gatekeeper-local/get-scene-adapter", urlsSource.Url(DecentralandUrl.LocalGateKeeperSceneAdapter));
+        }
+
+        [Test]
+        public void KeepTheGatekeeperOverrideAboveTheCustomBaseDomain()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Custom, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatekeeperUrl: "https://gk.example.com", customBaseDomain: CUSTOM_DOMAIN);
+
+            Assert.AreEqual("https://gk.example.com/get-scene-adapter", urlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter));
+            Assert.AreEqual("https://gk.example.com/get-scene-adapter", urlsSource.Url(DecentralandUrl.LocalGateKeeperSceneAdapter));
         }
     }
 }

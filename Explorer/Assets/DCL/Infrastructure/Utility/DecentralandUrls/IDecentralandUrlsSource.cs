@@ -30,6 +30,21 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         const string LOCAL_MCP_ENDPOINT_URL = "http://127.0.0.1:{0}/unity-explorer-mcp";
 
         /// <summary>
+        ///     The base domain every backend host of this client sits under: one of <see cref="ORG_DOMAIN" />,
+        ///     <see cref="ZONE_DOMAIN" />, <see cref="TODAY_DOMAIN" /> or, for
+        ///     <see cref="DecentralandEnvironment.Custom" />, the domain supplied via <c>--base-domain</c>.
+        ///     Anything that needs the domain as a value - a host-trust suffix check, a comms hostname - must read
+        ///     it here rather than restate a literal, so a custom deployment is not silently compared against
+        ///     <c>decentraland.*</c>.
+        ///     <para>
+        ///         <see cref="DecentralandEnvironment.Today" /> reports <see cref="ORG_DOMAIN" />: it serves a handful
+        ///         of endpoints from <see cref="TODAY_DOMAIN" />, which are resolved and pinned while the source is
+        ///         built, and everything after that from org.
+        ///     </para>
+        /// </summary>
+        string BaseDomain { get; }
+
+        /// <summary>
         ///     Get a raw url without caching at any moment (without dependency on FF)
         /// </summary>
         public string Probe(DecentralandUrl decentralandUrl);

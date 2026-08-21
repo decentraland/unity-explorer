@@ -80,7 +80,9 @@ namespace DCL.PlacesAPIService
                 id = EMPTY_PLACE_ID;
                 title = "Empty place";
                 description = "No description";
-                image = "https://peer.decentraland.org/content/contents/bafkreidj26s7aenyxfthfdibnqonzqm5ptc4iamml744gmcyuokewkr76y";
+                // Carries no thumbnail: the only default available was a content hash pinned to
+                // peer.decentraland.org, which a deployment under another base domain cannot serve.
+                image = string.Empty;
                 owner = "no owner";
                 tags = Array.Empty<string>();
                 world_name = "";

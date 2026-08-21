@@ -1,4 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using System;
 
 namespace DCL.MarketplaceCredits.Purchase
 {
@@ -43,21 +44,30 @@ namespace DCL.MarketplaceCredits.Purchase
 
         public CreditsChainConfig(DecentralandEnvironment environment)
         {
-            if (environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today)
+            switch (environment)
             {
-                ChainId = POLYGON_CHAIN_ID;
-                ReadonlyNetwork = POLYGON_READONLY_NETWORK;
-                CreditsManagerAddress = POLYGON_CREDITS_MANAGER_ADDRESS;
-                CollectionStoreAddress = POLYGON_COLLECTION_STORE_ADDRESS;
-                OffChainMarketplaceAddress = POLYGON_OFFCHAIN_MARKETPLACE_ADDRESS;
-            }
-            else
-            {
-                ChainId = AMOY_CHAIN_ID;
-                ReadonlyNetwork = AMOY_READONLY_NETWORK;
-                CreditsManagerAddress = AMOY_CREDITS_MANAGER_ADDRESS;
-                CollectionStoreAddress = AMOY_COLLECTION_STORE_ADDRESS;
-                OffChainMarketplaceAddress = AMOY_OFFCHAIN_MARKETPLACE_ADDRESS;
+                case DecentralandEnvironment.Org:
+                case DecentralandEnvironment.Today:
+                    ChainId = POLYGON_CHAIN_ID;
+                    ReadonlyNetwork = POLYGON_READONLY_NETWORK;
+                    CreditsManagerAddress = POLYGON_CREDITS_MANAGER_ADDRESS;
+                    CollectionStoreAddress = POLYGON_COLLECTION_STORE_ADDRESS;
+                    OffChainMarketplaceAddress = POLYGON_OFFCHAIN_MARKETPLACE_ADDRESS;
+                    break;
+
+                // Only decentraland's own production environments run against Polygon mainnet; zone and a
+                // --base-domain deployment stay on Amoy, so an unverified custom deployment is never handed the
+                // mainnet credits contracts.
+                case DecentralandEnvironment.Zone:
+                case DecentralandEnvironment.Custom:
+                    ChainId = AMOY_CHAIN_ID;
+                    ReadonlyNetwork = AMOY_READONLY_NETWORK;
+                    CreditsManagerAddress = AMOY_CREDITS_MANAGER_ADDRESS;
+                    CollectionStoreAddress = AMOY_COLLECTION_STORE_ADDRESS;
+                    OffChainMarketplaceAddress = AMOY_OFFCHAIN_MARKETPLACE_ADDRESS;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(environment), environment, null);
             }
         }
     }

@@ -59,6 +59,14 @@ namespace DCL.UI
 
                 view.IsLoading = true;
 
+                // Nothing to fetch (e.g. a place that carries no thumbnail url): show the placeholder rather than
+                // firing a request that can only fail.
+                if (string.IsNullOrEmpty(uri))
+                {
+                    TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
+                    return;
+                }
+
                 Sprite? sprite = null;
 
                 var textureRef = await imageControllerProvider.LoadTextureAsync(uri, ct);

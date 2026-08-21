@@ -165,6 +165,23 @@ namespace Global.AppArgs
         // means loopback-only — the safe default when feature flags are unavailable (e.g. before they are fetched).
         private static HashSet<string> whitelistedWorlds = new();
 
+        // The one base domain a realm has to sit under to carry trust, or null for the decentraland family. Set from
+        // IDecentralandUrlsSource.BaseDomain; see SetTrustedBaseDomain.
+        private static string? trustedBaseDomain;
+
+        /// <summary>
+        ///     Declares the base domain this client is deployed under — pass
+        ///     <see cref="IDecentralandUrlsSource.BaseDomain" />, the single source for it. A domain of the
+        ///     decentraland family keeps the whole family trusted (they are one deployment); any other domain
+        ///     <i>replaces</i> it, because a client pointed at a custom deployment has no reason to trust
+        ///     decentraland-hosted realms. Passing null resets to the decentraland family.
+        /// </summary>
+        public static void SetTrustedBaseDomain(string? baseDomain)
+        {
+            string? domain = baseDomain?.Trim();
+            trustedBaseDomain = domain is { Length: > 0 } && !IsDecentralandDomain(domain) ? domain : null;
+        }
+
         public static bool IsPermitted(string key) =>
             PERMITTED_KEYS.Contains(key);
 
@@ -210,32 +227,51 @@ namespace Global.AppArgs
                 // name is read from the path — handing an attacker the dev params and (worse) a consent-free realm
                 // switch. Uri.Host is the parsed host, so userinfo ("https://x.decentraland.org@evil.example") and port
                 // tricks cannot spoof it.
-                if (!IsDecentralandHost(uri.Host))
+                if (!IsTrustedBaseDomainHost(uri.Host))
                     return false;
             }
 
             return whitelistedWorlds.Count > 0 && whitelistedWorlds.Contains(ExtractWorldName(realm));
         }
 
-        // A subdomain of a Decentraland domain (worlds-content-server.decentraland.org, ...). The '.' boundary check
-        // is what rejects lookalikes such as "decentraland.org.attacker.com" and "evil-decentraland.org".
-        private static bool IsDecentralandHost(string host)
+        // A subdomain of the base domain this client is deployed under (worlds-content-server.decentraland.org,
+        // worlds-content-server.{custom-base-domain}, ...). The '.' boundary check is what rejects lookalikes such as
+        // "decentraland.org.attacker.com" and "evil-decentraland.org".
+        private static bool IsTrustedBaseDomainHost(string host)
+        {
+            if (trustedBaseDomain != null)
+                return IsSubdomainOf(host, trustedBaseDomain);
+
+            // Indexed loop, not foreach: enumerating the IReadOnlyList would allocate an enumerator.
+            IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
+
+            for (var i = 0; i < domains.Count; i++)
+            {
+                if (IsSubdomainOf(host, domains[i]))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsDecentralandDomain(string domain)
         {
             // Indexed loop, not foreach: enumerating the IReadOnlyList would allocate an enumerator.
             IReadOnlyList<string> domains = IDecentralandUrlsSource.ALL_DOMAINS;
 
             for (var i = 0; i < domains.Count; i++)
             {
-                string domain = domains[i];
-
-                if (host.Length > domain.Length
-                    && host[host.Length - domain.Length - 1] == '.'
-                    && host.EndsWith(domain, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(domain, domains[i], StringComparison.OrdinalIgnoreCase))
                     return true;
             }
 
             return false;
         }
+
+        private static bool IsSubdomainOf(string host, string domain) =>
+            host.Length > domain.Length
+            && host[host.Length - domain.Length - 1] == '.'
+            && host.EndsWith(domain, StringComparison.OrdinalIgnoreCase);
 
         // A world realm is either the bare ENS name (e.g. "myworld.dcl.eth") or a worlds-content-server URL whose
         // last path segment is that ENS. We reduce both the configured entries and the realm to that name and match

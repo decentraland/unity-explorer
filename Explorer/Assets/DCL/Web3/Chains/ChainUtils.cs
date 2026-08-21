@@ -1,4 +1,5 @@
 ﻿using DCL.Multiplayer.Connections.DecentralandUrls;
+using System;
 using System.Numerics;
 
 namespace DCL.Web3.Authenticators
@@ -19,16 +20,31 @@ namespace DCL.Web3.Authenticators
         private const string SEPOLIA_CHAIN_ID = "0xaa36a7";
 
         public static string GetNetVersion(DecentralandEnvironment env) =>
-            env is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
+            IsMainnet(env) ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
 
         public static string GetChainId(DecentralandEnvironment env) =>
-            env is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
+            IsMainnet(env) ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
 
         public static BigInteger GetChainIdAsInt(DecentralandEnvironment environment) =>
-            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? new BigInteger(MAINNET_NET_VERSION_INT) : new BigInteger(SEPOLIA_NET_VERSION_INT);
+            IsMainnet(environment) ? new BigInteger(MAINNET_NET_VERSION_INT) : new BigInteger(SEPOLIA_NET_VERSION_INT);
 
         public static string GetNetworkId(DecentralandEnvironment env) =>
-            env is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? NETWORK_MAINNET : NETWORK_SEPOLIA;
+            IsMainnet(env) ? NETWORK_MAINNET : NETWORK_SEPOLIA;
+
+        /// <summary>
+        ///     The one place the ethereum network is decided, so the four accessors above cannot drift apart. Only
+        ///     decentraland's own production environments are mainnet: a <c>--base-domain</c> deployment is an
+        ///     alternate, unverified stack, and signing its requests against mainnet would put real assets behind it.
+        /// </summary>
+        private static bool IsMainnet(DecentralandEnvironment env) =>
+            env switch
+            {
+                DecentralandEnvironment.Org => true,
+                DecentralandEnvironment.Today => true,
+                DecentralandEnvironment.Zone => false,
+                DecentralandEnvironment.Custom => false,
+                _ => throw new ArgumentOutOfRangeException(nameof(env), env, null),
+            };
 
         public static string GetNetworkNameById(int chainId) =>
             chainId switch

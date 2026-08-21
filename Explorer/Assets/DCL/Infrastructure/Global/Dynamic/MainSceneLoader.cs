@@ -69,6 +69,9 @@ namespace Global.Dynamic
         [Space]
         [SerializeField] private DecentralandEnvironment decentralandEnvironment;
 
+        // Non-null only for DecentralandEnvironment.Custom; set from the command line by ApplyBaseDomainArg.
+        private string? customBaseDomain;
+
         [Space]
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
@@ -192,8 +195,26 @@ namespace Global.Dynamic
 
         private void ParseEnvironment(string environment)
         {
-            if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
-                decentralandEnvironment = env;
+            // --base-domain already selected Custom, and it is command-line only while --dclenv can arrive from a
+            // deep link. Letting the link win would move the client back onto a decentraland domain behind the
+            // operator's back, so the base domain is authoritative and the mismatch is reported.
+            if (customBaseDomain != null)
+            {
+                ReportHub.Log(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: --{AppArgsFlags.BASE_DOMAIN}={customBaseDomain} pins the environment to {nameof(DecentralandEnvironment.Custom)}");
+                return;
+            }
+
+            if (!Enum.TryParse(environment, true, out DecentralandEnvironment env))
+                return;
+
+            // Custom has no domain of its own to derive; only --base-domain can select it.
+            if (env == DecentralandEnvironment.Custom)
+            {
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: {nameof(DecentralandEnvironment.Custom)} is selected by --{AppArgsFlags.BASE_DOMAIN} instead");
+                return;
+            }
+
+            decentralandEnvironment = env;
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
@@ -213,6 +234,12 @@ namespace Global.Dynamic
             // initialized until later in bootstrap, so for a deep-link launch we preemptively fetch just the whitelist
             // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
             IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
+
+            // Read while the deep link is still deferred, so only the command line can supply it: the base domain
+            // decides which realm hosts DeepLinkAllowlist trusts, and a link that could set it would hand an
+            // attacker-chosen domain that trust. It has to be registered before InitializeDeepLinks() evaluates the
+            // pending link's whitelisted-realm params against it.
+            ApplyBaseDomainArg(applicationParametersParser);
 
             if (applicationParametersParser.HasPendingDeepLink)
                 await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
@@ -277,7 +304,8 @@ namespace Global.Dynamic
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
-                cliOptimizedAssetsUrl);
+                cliOptimizedAssetsUrl,
+                customBaseDomain);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
@@ -551,12 +579,28 @@ namespace Global.Dynamic
 #endif
         }
 
+        /// <summary>
+        ///     Applies <see cref="AppArgsFlags.BASE_DOMAIN" />: it selects <see cref="DecentralandEnvironment.Custom" />
+        ///     and, through <see cref="DecentralandUrlsSource.ResolveBaseDomain" />, the domain every backend host and
+        ///     every realm-trust check resolves against.
+        /// </summary>
+        private void ApplyBaseDomainArg(IAppArgs appArgs)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? baseDomainArg) && !string.IsNullOrWhiteSpace(baseDomainArg))
+            {
+                customBaseDomain = baseDomainArg.Trim();
+                decentralandEnvironment = DecentralandEnvironment.Custom;
+            }
+
+            DeepLinkAllowlist.SetTrustedBaseDomain(DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain));
+        }
+
         private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
         {
             appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
 
             string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
-                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment)
+                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, customBaseDomain)
                 : featureFlagsOverride.TrimEnd('/');
 
             IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);

@@ -89,6 +89,11 @@ namespace DCL.Chat.MessageBus
                                    DecentralandEnvironment.Org => "prd",
                                    DecentralandEnvironment.Today => "prd",
                                    DecentralandEnvironment.Zone => "dev",
+
+                                   // A --base-domain deployment is treated as a non-production stack, like zone: its
+                                   // comms-message-sfu has to join as message-router-dev-0 for relayed messages to
+                                   // authenticate. Explicit, so it is not silently routed as a local dev server.
+                                   DecentralandEnvironment.Custom => "dev",
                                    _ => "local",
                                };
 

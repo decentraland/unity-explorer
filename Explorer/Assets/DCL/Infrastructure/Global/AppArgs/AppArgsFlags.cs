@@ -22,6 +22,13 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+
+        /// <summary>
+        ///     Points every backend host at a deployment served under this base domain instead of
+        ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Command-line only:
+        ///     the value also decides which realm hosts are trusted, so it must never be settable from a deep link.
+        /// </summary>
+        public const string BASE_DOMAIN = "base-domain";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SPAWN_POINT = "spawnpoint";

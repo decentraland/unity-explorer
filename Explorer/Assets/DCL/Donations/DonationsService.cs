@@ -82,10 +82,16 @@ namespace DCL.Donations
                         contractAddress = MATIC_CONTRACT_ADDRESS;
                         networkName = MATIC_NETWORK;
                         break;
-                default:
+
+                // Zone, and a --base-domain deployment: only decentraland's own production environments are
+                // treated as mainnet, so an unverified custom deployment can never move real funds.
+                case DecentralandEnvironment.Zone:
+                case DecentralandEnvironment.Custom:
                         contractAddress = AMOY_NET_CONTRACT_ADDRESS;
                         networkName = AMOY_NETWORK;
                         break;
+                default:
+                        throw new ArgumentOutOfRangeException(nameof(dclEnvironment), dclEnvironment, null);
             }
 
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
