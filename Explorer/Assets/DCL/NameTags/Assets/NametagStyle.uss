@@ -322,20 +322,10 @@
     border-top-right-radius: 13px;
     border-bottom-right-radius: 13px;
     border-bottom-left-radius: 13px;
-    transition: opacity var(--message-transition-duration);
 }
 
 .nametag--scene-tag > .nametag__scene-tag-container {
     display: flex;
-}
-
-.nametag--show-message > .nametag__scene-tag-container {
-    opacity: 0;
-}
-
-/* With the name hidden the chat bubble itself is invisible, so it must not take the plate down with it. */
-.nametag--name-hidden.nametag--show-message > .nametag__scene-tag-container {
-    opacity: 1;
 }
 
 .nametag__scene-tag-label {
@@ -351,6 +341,15 @@
 .nametag--name-hidden > .nametag__header,
 .nametag--name-hidden > .nametag__message-container {
     display: none;
+}
+
+/* With every name element hidden, the plate drops onto the anchor line the name occupied instead of
+   staying stacked above a collapsed root. Anchoring by top keeps it there while the chat bubble
+   animates the root's padding, since insets resolve against the padding box, not the content box. */
+.nametag--name-hidden > .nametag__scene-tag-container {
+    top: 0;
+    bottom: auto;
+    translate: 0 0;
 }
 
 .nametag__debug-label {
