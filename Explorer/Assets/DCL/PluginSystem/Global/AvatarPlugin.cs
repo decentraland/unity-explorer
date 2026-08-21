@@ -202,6 +202,7 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
+            DebugSceneAvatarTagSystem.InjectToWorld(ref builder, debugContainerBuilder);
 #if UNITY_EDITOR
             PlayableDirectorUpdatingSystem.InjectToWorld(ref builder);
 #endif

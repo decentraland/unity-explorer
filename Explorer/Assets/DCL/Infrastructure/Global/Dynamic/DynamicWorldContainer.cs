@@ -45,6 +45,7 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
+using DCL.SDKComponents.AvatarNametag;
 using DCL.SkyBox;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
@@ -429,6 +430,7 @@ namespace Global.Dynamic
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
                 new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub),
+                new AvatarNametagWorldPlugin(globalWorld, playerEntity, commsContainer.EntityParticipantTable),
             };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();

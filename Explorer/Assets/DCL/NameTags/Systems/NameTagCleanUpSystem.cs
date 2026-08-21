@@ -25,10 +25,7 @@ namespace DCL.Nametags
         protected override void Update(float t)
         {
             if (!nametagsData.showNameTags)
-            {
                 RemoveAllTagsQuery(World);
-                return;
-            }
 
             RemoveTagQuery(World);
         }
@@ -40,7 +37,10 @@ namespace DCL.Nametags
                 nametagHolderPool.Release(nametagHolder);
         }
 
+        // Holders backing an active scene avatar tag survive the global name tag toggle:
+        // NametagPlacementSystem keeps positioning them with the name part hidden.
         [Query]
+        [None(typeof(SceneAvatarTagComponent))]
         private void RemoveAllTags(Entity e, NametagHolder nametagHolder)
         {
             nametagHolderPool.Release(nametagHolder);

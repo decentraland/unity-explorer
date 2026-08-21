@@ -17,6 +17,8 @@ namespace DCL.Nametags
         private const string USS_DM = USS_BLOCK + "--dm";
         private const string USS_MENTION = USS_BLOCK + "--mention";
         private const string USS_COMMUNITY = USS_BLOCK + "--community";
+        private const string USS_SCENE_TAG = USS_BLOCK + "--scene-tag";
+        private const string USS_NAME_HIDDEN = USS_BLOCK + "--name-hidden";
 
         private const string USS_BACKGROUND = USS_BLOCK + "__background";
         private const string USS_BACKGROUND_CENTER = USS_BLOCK + "__background-center";
@@ -41,6 +43,9 @@ namespace DCL.Nametags
 
         private const string USS_MESSAGE = USS_BLOCK + "__message";
         private const string USS_MESSAGE_CONTAINER = USS_BLOCK + "__message-container";
+
+        private const string USS_SCENE_TAG_CONTAINER = USS_BLOCK + "__scene-tag-container";
+        private const string USS_SCENE_TAG_LABEL = USS_BLOCK + "__scene-tag-label";
 
         private const string USS_DEBUG_LABEL = USS_BLOCK + "__debug-label";
 
@@ -128,6 +133,33 @@ namespace DCL.Nametags
         }
 
         [UxmlAttribute]
+        public bool SceneAvatarTagVisible
+        {
+            get => ClassListContains(USS_SCENE_TAG);
+            set => EnableInClassList(USS_SCENE_TAG, value);
+        }
+
+        /// <summary>
+        ///     When false, hides every name-related sub-element (background, header, chat bubble, pointer)
+        ///     while keeping the scene avatar tag plate visible.
+        /// </summary>
+        [UxmlAttribute]
+        public bool NameVisible
+        {
+            get => nameVisible;
+
+            // Written every frame by NametagPlacementSystem, so keep repeated assignments off the class list.
+            set
+            {
+                if (nameVisible == value)
+                    return;
+
+                nameVisible = value;
+                EnableInClassList(USS_NAME_HIDDEN, !value);
+            }
+        }
+
+        [UxmlAttribute]
         public string CommunityName
         {
             get => communityName.text;
@@ -183,6 +215,11 @@ namespace DCL.Nametags
 
         private readonly VisualElement messageContainer;
         private readonly Label messageLabel;
+
+        private readonly VisualElement sceneTagContainer;
+        private readonly Label sceneTagLabel;
+
+        private bool nameVisible = true;
 
         private readonly IVisualElementScheduledItem hideMessage;
 
@@ -299,6 +336,17 @@ namespace DCL.Nametags
                 hideMessage.Pause();
             }
 
+            Add(sceneTagContainer = new VisualElement { name = "scene-tag-container" });
+            sceneTagContainer.AddToClassList(USS_SCENE_TAG_CONTAINER);
+
+            {
+                sceneTagContainer.Add(sceneTagLabel = new Label { name = "scene-tag" });
+                sceneTagLabel.AddToClassList(USS_SCENE_TAG_LABEL);
+
+                // Scene-provided text must not be able to inject markup.
+                sceneTagLabel.enableRichText = false;
+            }
+
             debugLabel = new Label { name = "debug-text" };
             debugLabel.AddToClassList(USS_DEBUG_LABEL);
         }
@@ -325,6 +373,17 @@ namespace DCL.Nametags
             ShowMessage = true;
             hideMessage.ExecuteLater(NametagViewConstants.CHAT_BUBBLE_DELAY);
         }
+
+        public void SetSceneAvatarTag(string text, Color textColor, Color backgroundColor)
+        {
+            sceneTagLabel.text = text;
+            sceneTagLabel.style.color = textColor;
+            sceneTagContainer.style.backgroundColor = backgroundColor;
+            SceneAvatarTagVisible = true;
+        }
+
+        public void HideSceneAvatarTag() =>
+            SceneAvatarTagVisible = false;
 
         private void SetMessageSize(bool hide)
         {
