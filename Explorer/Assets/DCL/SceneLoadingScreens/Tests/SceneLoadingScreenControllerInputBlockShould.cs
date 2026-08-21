@@ -6,6 +6,7 @@ using DCL.Input.Component;
 using DCL.Prefs;
 using DCL.Utilities;
 using ECS.Abstract;
+using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -50,11 +51,17 @@ namespace DCL.SceneLoadingScreens.Tests
             // Late fire-and-forget localization logs can land between tests, so suppression spans the whole fixture
             originalIgnoreFailingMessages = LogAssert.ignoreFailingMessages;
             LogAssert.ignoreFailingMessages = true;
+
+            // OnViewInstantiated reads FeaturesRegistry.Instance (BugReport button gating); the editor
+            // domain may still hold an initialized registry from a play-mode session
+            EcsTestsUtils.TearDownFeaturesRegistry();
+            EcsTestsUtils.SetUpFeaturesRegistry();
         }
 
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
+            EcsTestsUtils.TearDownFeaturesRegistry();
             LogAssert.ignoreFailingMessages = originalIgnoreFailingMessages;
         }
 
