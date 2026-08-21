@@ -29,7 +29,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
         /// <summary>Panel scale applied mid-test to move the ratio and trip the dirty check.</summary>
         private const float RESCALED_SCENE_PANEL_SCALE = 1.5f;
 
-        /// <summary>Tolerance for comparing a reported ratio against the panel scale that produced it.</summary>
         private const float RATIO_TOLERANCE = 0.001f;
 
         private readonly List<PBUiCanvasInformation> publishedComponents = new ();
@@ -45,8 +44,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             publishedComponents.Clear();
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
-            // The system never touches the message itself: it hands the writer a static delegate that
-            // fills a rented instance, so the delegate has to be run to observe what would be written.
+            // PutMessage receives a delegate that fills a rented message; run it to observe what would be written
             ecsToCRDTWriter
                .When(x => x.PutMessage(
                     Arg.Any<Action<PBUiCanvasInformation, UICanvasInformationSystem>>(),
@@ -75,8 +73,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
-            // SyncedInitializationSystemGroup is a custom group: InjectToWorld throws GroupNotFoundException
-            // unless it is injected first, as production does in ECSWorldFactory.
+            // The custom group must be injected first or InjectToWorld throws GroupNotFoundException
             builder.InjectCustomGroup(new SyncedInitializationSystemGroup(Substitute.For<ISceneStateProvider>()));
             system = UICanvasInformationSystem.InjectToWorld(ref builder, ecsToCRDTWriter, canvas);
 

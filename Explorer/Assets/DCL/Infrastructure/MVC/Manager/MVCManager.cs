@@ -38,8 +38,7 @@ namespace MVC
         {
             foreach (IController controllersValue in controllers.Values)
             {
-                // One controller's failing Dispose must not abort disposal of the remaining
-                // controllers, the destruction CTS and the windows stack.
+                // One failing Dispose must not abort disposal of the remaining controllers and the windows stack
                 try { controllersValue.Dispose(); }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.MVC); }
             }

@@ -269,14 +269,9 @@ namespace DCL.WebRequests
         }
 
         /// <summary>
-        ///     <see cref="JsonSerializer.Populate(JsonReader, object)" /> resolves the target's contract directly and never
-        ///     consults converters registered for the root type, so a matching root-level converter must be routed manually,
-        ///     receiving <paramref name="target" /> as its existing value to populate in place.
+        ///     <see cref="JsonSerializer.Populate(JsonReader, object)" /> never consults root-level converters, so a converter
+        ///     matching <typeparamref name="T" /> is routed manually, receiving <paramref name="target" /> to populate in place.
         /// </summary>
-        /// <remarks>
-        ///     Only <see cref="JsonSerializer.Converters" /> are consulted, matched against the static <typeparamref name="T" />;
-        ///     a matching converter that returns a fresh result instead of filling <paramref name="target" /> throws.
-        /// </remarks>
         public static void PopulateInto<T>(JsonReader reader, T target, JsonSerializer serializer)
         {
             IList<JsonConverter> converters = serializer.Converters;

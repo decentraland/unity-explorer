@@ -195,8 +195,7 @@ namespace DCL.EmotesWheel
 
                 if (ct.IsCancellationRequested) return;
 
-                // The failure path must still surface a sprite and release the spinner, otherwise
-                // the slot stays stuck on a load that already gave up.
+                // The failure path must still surface a sprite, otherwise the slot stays stuck on a load that already gave up
                 view.Thumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
             }
 

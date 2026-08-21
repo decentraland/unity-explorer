@@ -5,13 +5,8 @@ using System.Linq;
 namespace DCL.UI.DebugMenu.LogHistory
 {
     /// <summary>
-    ///     <see cref="AddLogMessage" /> is fed from the global log callback and may be invoked from any
-    ///     thread; it only enqueues into a capped pending queue. <see cref="Paused" /> is written on the
-    ///     main thread and read on the logging threads through a volatile field: a toggle racing an
-    ///     enqueue may admit or drop a borderline entry, which is acceptable for a pause toggle. Every
-    ///     other member — the lists, the counters
-    ///     and <see cref="LogsUpdated" /> — is main-thread-only: entries become visible when
-    ///     <see cref="DrainPendingLogs" /> runs on the main thread.
+    ///     <see cref="AddLogMessage" /> may run on any thread and only enqueues into a capped pending queue;
+    ///     every other member is main-thread-only, with entries surfacing via <see cref="DrainPendingLogs" />.
     /// </summary>
     public class DebugMenuConsoleLogHistory
     {

@@ -47,12 +47,8 @@ namespace Utility
         }
 
         /// <summary>
-        ///     Carries the delegate snapshot and event payload across the main-thread hop without a
-        ///     compiler-synthesized closure; entries are pooled so steady-state publishes allocate nothing.
-        ///     State is copied to locals and the entry recycled before the handlers run, so reentrant
-        ///     publishes are safe and class-typed payloads are not retained by the pool.
-        ///     The pool is a <see cref="DCLConcurrentQueue{T}" /> because Schedule takes entries
-        ///     from it on background threads while Run recycles them on the main thread.
+        ///     Pooled, closure-free carrier for the main-thread hop. State is copied to locals and the
+        ///     entry recycled before handlers run, so reentrant publishes are safe and payloads are not retained.
         /// </summary>
         private sealed class PooledContinuation<T>
         {
@@ -60,6 +56,7 @@ namespace Utility
 
             private readonly Action run;
             private Action<T>? typedDelegate;
+            // Stamped by Schedule() before Run() reads it; default! suppresses the unconstrained-T nullable warning
             private T evt = default!;
 
             private PooledContinuation()
@@ -79,8 +76,7 @@ namespace Utility
 
             private void Run()
             {
-                // Reachable only if the player loop ran the same continuation twice; recycling the
-                // entry on that path would double-enqueue it into the pool and corrupt it.
+                // Reachable only if the player loop ran the same continuation twice; recycling here would double-enqueue the entry.
                 if (typedDelegate is not { } invokeTarget)
                 {
                     ReportHub.LogError(ReportCategory.UNSPECIFIED, "EventBus pooled continuation ran without a stamped delegate: exactly-once scheduling was violated and an event was dropped");

@@ -6,12 +6,8 @@ using Unity.Collections;
 namespace DCL.WebRequests
 {
     /// <summary>
-    ///     Local capability check for the ktx_unity native decoder. KTX2 conversion is toggled by a remote feature
-    ///     flag, so machines where the OS cannot open the native plugin (AV quarantine, missing VC++ runtime,
-    ///     corrupted install) must degrade to unconverted texture URLs instead of failing every converted request
-    ///     with <see cref="DllNotFoundException" />.
-    ///     Not thread-safe: all reads and writes are expected on the main thread; a racing double probe is
-    ///     benign (same cached result).
+    ///     Local capability check for the ktx_unity native decoder: machines where the OS cannot open the plugin
+    ///     degrade to unconverted texture URLs. Main-thread only; a racing double probe is benign.
     /// </summary>
     public static class KtxNativeSupport
     {
@@ -31,8 +27,7 @@ namespace DCL.WebRequests
         }
 
         /// <summary>
-        ///     A native load failure observed at runtime is per-machine-permanent: the capability stays off for the
-        ///     rest of the session.
+        ///     A runtime native load failure is per-machine-permanent: the capability stays off for the session.
         /// </summary>
         internal static void MarkUnsupported()
         {
@@ -55,11 +50,7 @@ namespace DCL.WebRequests
                 using var probeBuffer = new NativeArray<byte>(PROBE_BUFFER_SIZE, Allocator.Temp);
                 var ktxTexture = new KtxTexture();
 
-                // Garbage input makes Open return an error code without throwing when the native library is
-                // loadable, so the throw below is the only unsupported signal; Dispose must not run if Open threw
-                // because native state only exists once Open returns. The error code is the expected healthy-lib
-                // outcome; the package logs it at Error level only under #if DEBUG (editor and development builds),
-                // where the "KTX error code" line from this deliberate garbage probe is expected and harmless.
+                // On a healthy lib, garbage input makes Open return an error code without throwing; Dispose must only run after Open succeeds.
                 ktxTexture.Open(probeBuffer.AsReadOnly());
                 ktxTexture.Dispose();
 
@@ -67,8 +58,7 @@ namespace DCL.WebRequests
             }
             catch (Exception e)
             {
-                // A broken native install can fail in shapes beyond DllNotFound; the probe never throws and
-                // fails closed instead, with the exception type named in the warning to keep it visible.
+                // A broken native install can fail in shapes beyond DllNotFound; fail closed on any exception.
                 ReportHub.LogWarning(ReportCategory.TEXTURE_WEB_REQUEST, $"ktx_unity probe failed ({e.GetType().Name}: {e.Message}); KTX2 conversion is disabled and textures fall back to unconverted URLs");
                 return false;
             }

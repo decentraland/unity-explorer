@@ -12,22 +12,12 @@ namespace Utility.Tests
         private const int WARMUP_PUBLISHES = 20_000;
         private const int MEASURED_PUBLISHES = 10_000;
 
-        // Rounds published while the main thread is parked (blocked, never yielding): each forces
-        // MEASURED_PUBLISHES continuations in flight simultaneously, priming the pooled-hop free
-        // list to >= the window size. Two rounds are needed because every physical buffer of
-        // UniTask's continuation queue must have grown past the window before measuring,
-        // regardless of how the editor pumped the initial burst.
+        // Rounds published while the main thread is parked: they prime the pooled-hop free list and
+        // grow UniTask's continuation-queue buffers past the window size before measuring.
         private const int PARKED_ROUNDS = 2;
 
-        // The window counts GC.Alloc profiler samples on the publishing thread — allocation events,
-        // not bytes, because byte counters are unreliable on the Boehm editor runtime
-        // (GC.GetAllocatedBytesForCurrentThread is inert; GC.GetTotalMemory hides small-object
-        // churn behind lazy sweep). The unpooled hop emits 2 events per publish (closure + delegate,
-        // ~20k over the window); the pooled hop emits none — its worst case is ~10 regrowth events
-        // if an unrelated editor continuation forces a queue-buffer regrowth between the parked
-        // rounds; pool misses are impossible because the rounds prime the pool deterministically.
-        // The budget sits between the two, so the assertion discriminates under every editor-pump
-        // schedule.
+        // Counts GC.Alloc events, not bytes (byte counters are unreliable on the Boehm editor runtime).
+        // The unpooled hop emits ~2 events per publish (~20k over the window), the pooled hop near zero; the budget sits between.
         private const int ALLOC_SAMPLE_BUDGET = 2_000;
 
         // Must all register on the GC.Alloc recorder for the budget assertion to be meaningful.
@@ -40,8 +30,7 @@ namespace Utility.Tests
         [UnityTest]
         public IEnumerator NotAllocatePerOffMainThreadPublish()
         {
-            //Arrange — a main-thread-invoking bus with one subscriber; publishing from a dedicated
-            // thread guarantees every Publish takes the thread-hop (AddContinuation) branch.
+            // Publishing from a dedicated thread guarantees every Publish takes the thread-hop (AddContinuation) branch.
             invoked = 0;
             var bus = new EventBus(invokeSubscribersOnMainThread: true);
             using IDisposable subscription = bus.Subscribe<TestEvent>(_ => Interlocked.Increment(ref invoked));
@@ -63,7 +52,7 @@ namespace Utility.Tests
             {
                 try
                 {
-                    // Warm-up burst: JITs the publish path; the editor may drain it on any schedule.
+                    // Warm-up burst: JITs the publish path.
                     for (var i = 0; i < WARMUP_PUBLISHES; i++)
                         bus.Publish(new TestEvent { Value = i });
 
@@ -72,8 +61,7 @@ namespace Utility.Tests
                     if (!warmupDrained.Wait(PUMP_TIMEOUT))
                         throw new TimeoutException("main thread never drained the warm-up publishes");
 
-                    // Parked rounds: the main thread is blocked (no drains can run), so the whole
-                    // round is in flight at once when it finishes.
+                    // The main thread is blocked, so the whole round is in flight at once when it finishes.
                     for (var round = 0; round < PARKED_ROUNDS; round++)
                     {
                         for (var i = 0; i < MEASURED_PUBLISHES; i++)
@@ -85,17 +73,13 @@ namespace Utility.Tests
                             throw new TimeoutException($"main thread never drained parked round {round}");
                     }
 
-                    // Same recorder pattern as UnityEngine.TestTools' AllocatingGCMemory
-                    // constraint, run on the publishing thread: FilterToCurrentThread binds it to
-                    // this thread and the enabled toggle resets the sample count. The whole window
-                    // sits inside one editor frame because the main thread is parked in Join.
+                    // FilterToCurrentThread binds the recorder to this thread; the enabled toggle resets the sample count.
                     Recorder gcAllocRecorder = Recorder.Get("GC.Alloc");
                     gcAllocRecorder.FilterToCurrentThread();
                     gcAllocRecorder.enabled = false;
                     gcAllocRecorder.enabled = true;
 
-                    // Canary allocations: the budget assertion would be vacuous on a recorder that
-                    // does not register events from this thread.
+                    // Canary allocations prove the recorder registers events from this thread.
                     object? canarySink = null;
 
                     for (var i = 0; i < CANARY_ALLOCS; i++)
@@ -115,7 +99,6 @@ namespace Utility.Tests
             {
                 publisher.Start();
 
-                // Pump the editor loop until the warm-up continuations have all run on the main thread.
                 DateTime deadline = DateTime.UtcNow + PUMP_TIMEOUT;
 
                 while ((!warmupPublished.IsSet || Volatile.Read(ref invoked) < WARMUP_PUBLISHES) && DateTime.UtcNow < deadline)
@@ -147,19 +130,17 @@ namespace Utility.Tests
                     roundDrained[round].Set();
                 }
 
-                //Act — the recorder is bound to the publishing thread and needs no pumping; the bounded
-                // Join parks the main thread so no drain, recycle, or buffer swap can land inside the window.
+                // Join parks the main thread so no drain, recycle, or buffer swap can land inside the measured window.
                 Assert.IsTrue(publisher.Join(PUMP_TIMEOUT), "publisher thread did not finish");
                 Assert.IsNull(threadError, threadError?.ToString());
 
-                //Assert
                 Assert.GreaterOrEqual(measuredAllocSamples, CANARY_ALLOCS,
                     "GC.Alloc recorder registered fewer events than the canary allocated — environment failure, not the allocation regression under test");
 
                 Assert.Less(measuredAllocSamples, ALLOC_SAMPLE_BUDGET,
                     $"off-main-thread Publish emitted {measuredAllocSamples} GC.Alloc events over {MEASURED_PUBLISHES} publishes");
 
-                // Drain the measured publishes: exactly-once delivery — nothing lost or duplicated by the hop.
+                // Exactly-once delivery: nothing lost or duplicated by the hop.
                 const int TOTAL_PUBLISHES = WARMUP_PUBLISHES + ((PARKED_ROUNDS + 1) * MEASURED_PUBLISHES);
                 deadline = DateTime.UtcNow + PUMP_TIMEOUT;
 
@@ -170,9 +151,8 @@ namespace Utility.Tests
             }
             finally
             {
-                // Set before Join before Dispose: setting every event releases the publisher from any
-                // Wait it is parked in on an early (assert-failure) exit, and an event may only be
-                // disposed once no other thread can still touch it.
+                // Set releases the publisher from any Wait on an early exit; Dispose only after Join,
+                // once no other thread can still touch the events.
                 warmupPublished.Set();
                 warmupDrained.Set();
 

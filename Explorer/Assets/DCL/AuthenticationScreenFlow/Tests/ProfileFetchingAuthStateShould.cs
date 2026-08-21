@@ -32,8 +32,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
         public IEnumerator CancelStalledFetchOnTimeout() =>
             UniTask.ToCoroutine(async () =>
             {
-                // The state machine has no states registered: transitions attempted by the flow throw and are logged
-                // through the fire-and-forget UniTaskVoid; those logs are irrelevant to the invariant under test
+                // No states registered: transitions throw and log via the fire-and-forget flow; those logs are irrelevant here
                 LogAssert.ignoreFailingMessages = true;
 
                 using var cts = new CancellationTokenSource();
@@ -83,8 +82,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 }
                 finally
                 {
-                    // Unblock the pending attempt (even on assertion failure) so the detached flow finishes
-                    // inside this test's ignore-failing-messages window instead of erroring into a later test
+                    // Unblock the pending attempt so the detached flow finishes inside this test's ignore-failing-messages window
                     cts.Cancel();
 
                     for (var i = 0; i < 32; i++)
@@ -166,9 +164,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
         }
 
         /// <summary>
-        ///     Simulates a stalled catalyst request. Mirrors the production contract of
-        ///     <see cref="SelfProfile.ProfileAsync" />: cancellation is suppressed into a null profile
-        ///     (RealmProfileRepository's suppressing GetAsync extension), never surfaced as an exception.
+        ///     Stalled catalyst request. Mirrors <see cref="SelfProfile.ProfileAsync" />: cancellation is
+        ///     suppressed into a null profile, never surfaced as an exception.
         /// </summary>
         private class StalledSelfProfile : ISelfProfile
         {
@@ -194,8 +191,7 @@ namespace DCL.AuthenticationScreenFlow.Tests
         }
 
         /// <summary>
-        ///     Simulates a responsive catalyst that has no deployed profile for the address:
-        ///     resolves to null immediately, without any cancellation involved.
+        ///     Responsive catalyst with no deployed profile: resolves to null immediately, no cancellation involved.
         /// </summary>
         private class MissingProfileSelfProfile : ISelfProfile
         {

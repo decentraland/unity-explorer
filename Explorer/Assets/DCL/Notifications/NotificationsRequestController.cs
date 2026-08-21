@@ -94,7 +94,7 @@ namespace DCL.Notifications
 
         public async UniTask StartGettingNewNotificationsOverTimeAsync(CancellationToken ct)
         {
-            // Loop-local so a cancelled run can't race the next one's Clear(); reused across iterations and never escapes the loop
+            // Loop-local so a cancelled run can't race the next one's Clear()
             var pollNotificationsBuffer = new List<INotification>();
 
             do

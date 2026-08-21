@@ -8,10 +8,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
         [Test]
         public void NotThrowOnDisposeWhenViewWasNeverShown()
         {
-            // Registered-but-never-shown lifecycle: the view factory is never invoked, so
-            // OnViewInstantiated never runs and the lazily-created members stay null
-            // (sessions with --skip-auth-screen + a valid cached identity).
-            // The constructor only stores its dependencies; none are dereferenced before the view exists.
+            // Never-shown lifecycle (--skip-auth-screen with a cached identity): OnViewInstantiated never runs,
+            // so lazily-created members stay null; the constructor only stores dependencies, so null! args are safe.
             var controller = new AuthenticationScreenController(
                 () => null!,
                 null!,

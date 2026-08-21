@@ -264,9 +264,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
-            // The rent slot is released by the synchronizer's ApplySyncCommandBuffer once it is entered;
-            // on any throw before that (e.g. mutex acquisition) the buffer must be aborted here instead —
-            // exactly one of the two must run, otherwise the slot either leaks or is double-released
+            // Exactly one of the synchronizer's ApplySyncCommandBuffer or the abort below must release the rent slot:
+            // abort only on a throw before delegation (e.g. mutex acquisition)
             var delegated = false;
 
             try

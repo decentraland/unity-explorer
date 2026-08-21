@@ -124,9 +124,8 @@ namespace Global.Dynamic
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
         {
-            // Realm changes must be mutually exclusive: each one relies on its unload phase leaving no
-            // realm entity alive, so that at most one realm entity (and one ProcessedScenePointers
-            // scene-pointer dedup pipeline) exists afterwards
+            // Realm changes must be mutually exclusive: overlapping changes can leave more than one
+            // realm entity (and scene-pointer dedup pipeline) alive after the unload phase
             await realmChangeSemaphore.WaitAsync(ct);
 
             try { await SetRealmExclusiveAsync(realm, ct); }

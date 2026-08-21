@@ -22,9 +22,7 @@ namespace DCL.Web3.Accounts
 
             Address = new Web3Address(key.GetPublicAddress()!);
 
-            // secp256k1 private keys are 32-byte big-endian scalars; Nethereum's
-            // GetPrivateKeyAsBytes() returns the scalar unsigned-trimmed, without leading
-            // zero bytes, while RustEthSignServer.Initialize demands exactly 32 bytes.
+            // Nethereum's GetPrivateKeyAsBytes() trims leading zero bytes; RustEthSignServer.Initialize demands exactly 32.
             byte[] bytes = LeftPad(key.GetPrivateKeyAsBytes().EnsureNotNull(), PRIVATE_KEY_SIZE);
             PrivateKey = ToHex(bytes, true);
 
@@ -34,7 +32,7 @@ namespace DCL.Web3.Accounts
 
         private static byte[] LeftPad(byte[] value, int size)
         {
-            if (value.Length == size)
+            if (value.Length >= size)
                 return value;
 
             // Fresh array: the input is cached inside EthECKey and must not be mutated.

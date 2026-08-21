@@ -8,8 +8,7 @@ namespace DCL.Web3.Tests
     [TestFixture]
     public class RustEthereumAccountShould
     {
-        // Scalar with a 0x00 top byte: Nethereum's GetPrivateKeyAsBytes() returns the
-        // scalar unsigned-trimmed, so this key materializes as 31 bytes (~1/256 of keys).
+        // 0x00 top byte: GetPrivateKeyAsBytes() trims it, so this key materializes as 31 bytes.
         private const string LEADING_ZERO_PRIVATE_KEY = "0x0011223344556677889900112233445566778899001122334455667788990011";
 
         [Test]

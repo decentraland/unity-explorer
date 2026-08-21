@@ -26,9 +26,8 @@ namespace DCL.UI.DebugMenu.Tests
         [Test]
         public void AddLogMessage_FromWorkerThread_DoesNotBreakMainThreadEnumeration()
         {
-            // AddLogMessage is fed by the global Unity log callback, which fires on arbitrary
-            // threads while the main thread reads the counters and enumerates FilteredLogMessages
-            // (ConsolePanelView.Refresh / ListView binding / copy-all).
+            // The global Unity log callback fires AddLogMessage on arbitrary threads while the main
+            // thread reads the counters and enumerates FilteredLogMessages
             const int ENTRY_COUNT = 50000;
 
             Exception? mainThreadException = null;
@@ -67,24 +66,19 @@ namespace DCL.UI.DebugMenu.Tests
         [Test]
         public void AddLogMessage_FromWorkerThread_IsInvisibleUntilDrained()
         {
-            // Arrange
             int eventCallCount = 0;
             logHistory.LogsUpdated += () => eventCallCount++;
 
-            // Act
             var worker = new Thread(() => logHistory.AddLogMessage(new DebugMenuConsoleLogEntry(LogMessageType.Log, "Worker message")));
             worker.Start();
             worker.Join();
 
-            // Assert: nothing surfaces on the ingestion thread
             Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(0));
             Assert.That(logHistory.LogEntryCount, Is.EqualTo(0));
             Assert.That(eventCallCount, Is.EqualTo(0));
 
-            // Act: main thread drains
             logHistory.DrainPendingLogs();
 
-            // Assert
             Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(1));
             Assert.That(logHistory.FilteredLogMessages[0].Message, Does.Contain("Worker message"));
             Assert.That(logHistory.LogEntryCount, Is.EqualTo(1));
@@ -94,31 +88,25 @@ namespace DCL.UI.DebugMenu.Tests
         [Test]
         public void DrainPendingLogs_WithNothingPending_ShouldNotFireEvent()
         {
-            // Arrange
             bool eventFired = false;
             logHistory.LogsUpdated += () => eventFired = true;
 
-            // Act
             logHistory.DrainPendingLogs();
 
-            // Assert
             Assert.That(eventFired, Is.False);
         }
 
         [Test]
         public void AddLogMessage_BeyondPendingCap_ShouldDropOldestPendingEntries()
         {
-            // Arrange: 5 entries beyond the pending cap (10000)
             const int PENDING_CAP = 10000;
             const int OVERFLOW = 5;
 
             for (var i = 0; i < PENDING_CAP + OVERFLOW; i++)
                 logHistory.AddLogMessage(new DebugMenuConsoleLogEntry(LogMessageType.Log, $"entry #{i:D5}"));
 
-            // Act
             logHistory.DrainPendingLogs();
 
-            // Assert: oldest OVERFLOW entries were dropped, newest survive in order
             Assert.That(logHistory.FilteredLogMessages.Count, Is.EqualTo(PENDING_CAP));
             Assert.That(logHistory.LogEntryCount, Is.EqualTo(PENDING_CAP));
             Assert.That(logHistory.FilteredLogMessages[0].Message, Does.Contain($"entry #{OVERFLOW:D5}"));
@@ -346,7 +334,7 @@ namespace DCL.UI.DebugMenu.Tests
             logHistory.AddLogMessage(logEntry2);
             logHistory.DrainPendingLogs();
 
-            // Assert: a drained batch fires a single update
+            // Assert
             Assert.That(eventCallCount, Is.EqualTo(1));
         }
 

@@ -31,9 +31,7 @@ namespace DCL.AvatarRendering.Wearables
                 if (existing.Succeeded)
                     return existing.Asset;
 
-                // A previous attempt ended without a sprite (timeout or cancellation). Terminal
-                // non-success states are per-attempt, never sticky across explicit requests:
-                // clear the slot so a fresh promise can spawn below.
+                // Terminal non-success (timeout or cancellation) is per-attempt, never sticky: clear the slot so a fresh promise can spawn
                 avatarAttachment.ThumbnailAssetResult = null;
             }
 
@@ -57,9 +55,8 @@ namespace DCL.AvatarRendering.Wearables
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                // Timed out: cancel the underlying promise so the resolver cleans it up. Failed
-                // releases concurrent waiters on this attachment and keeps the resolver from
-                // stamping Cancelled over the slot; the next explicit GetAsync clears it and retries.
+                // Timed out: cancel the underlying promise so the resolver cleans it up. Failed releases
+                // concurrent waiters and keeps the resolver from stamping Cancelled over the slot.
                 promiseCts.Cancel();
                 avatarAttachment.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed();
 

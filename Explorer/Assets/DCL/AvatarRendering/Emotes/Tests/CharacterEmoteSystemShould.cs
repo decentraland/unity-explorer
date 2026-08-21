@@ -105,10 +105,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         /// <summary>
-        /// Regression for https://github.com/decentraland/unity-explorer/issues/6531: an emote whose
-        /// per-body-shape asset never resolves keeps ConsumeEmoteIntent parked on the "loading not complete"
-        /// branch every frame, so the play timeout is the only thing that can release the intent (and with it
-        /// the props of the previously played emote).
+        /// Regression for https://github.com/decentraland/unity-explorer/issues/6531: an emote whose asset
+        /// never resolves must be released by the play timeout instead of parking the intent forever.
         /// </summary>
         [Test]
         public void RemoveStrandedCharacterEmoteIntentAfterPlayTimeoutElapses()
@@ -117,8 +115,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             IAvatarView strandedAvatarView = Substitute.For<IAvatarView>();
 
-            // Grounded and not moving, so the intent reaches the emote-storage branch instead of parking
-            // on the movement gate.
+            // Grounded and not moving: the intent reaches the emote-storage branch instead of the movement gate.
             strandedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
 
             IEmote emote = Substitute.For<IEmote>();
@@ -152,9 +149,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         /// <summary>
-        /// The play timeout must not count the time an intent spends waiting for the avatar to stop moving:
-        /// that wait is user driven and unbounded, so counting it would discard the queued emote of a player
-        /// who simply keeps running or jumping for StreamableLoadingDefaults.TIMEOUT seconds.
+        /// The play timeout must not count time spent waiting for the avatar to stop moving:
+        /// that wait is user driven and unbounded.
         /// </summary>
         [Test]
         public void KeepCharacterEmoteIntentWhileTheAvatarKeepsMoving()

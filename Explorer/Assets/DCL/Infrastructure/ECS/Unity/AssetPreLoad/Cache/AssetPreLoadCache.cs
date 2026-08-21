@@ -13,8 +13,7 @@ namespace ECS.Unity.AssetLoad.Cache
     {
         /// <summary>
         ///     The never-handed-out template. Clones handed out by <see cref="TryGetGltfInstance" /> are owned
-        ///     by the containers that checked them out and are released through
-        ///     <see cref="IGltfContainerAssetsCache.Dereference" />; this cache must never dispose them.
+        ///     by their containers; this cache must never dispose them.
         /// </summary>
         private sealed class GltfTemplate
         {
@@ -104,9 +103,7 @@ namespace ECS.Unity.AssetLoad.Cache
             foreach(var kvp in cache)
                 switch (kvp.Value)
                 {
-                    // Only the never-handed-out template is released. Checked-out clones are owned by
-                    // containers whose lifetime this cache does not control (it is global, Clear runs per
-                    // scene teardown); disposing them here would destroy live Roots under their owners.
+                    // Checked-out clones are owned by their containers; disposing them here would destroy live Roots.
                     case GltfTemplate gltfTemplate:
                         gltfCache.Dereference(kvp.Key, gltfTemplate.Template, handleAssetLoad: false);
                         break;

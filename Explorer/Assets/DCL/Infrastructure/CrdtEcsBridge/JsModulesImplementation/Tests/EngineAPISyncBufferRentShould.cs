@@ -23,10 +23,8 @@ using Utility.Multithreading;
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
     /// <summary>
-    ///     The synchronizer holds a single rent slot: every buffer obtained by
-    ///     <see cref="EngineAPIImplementation.CrdtSendToRenderer" /> must free it on every path,
-    ///     including the failure ones, otherwise the scene is permanently wedged — each subsequent
-    ///     rent waits the full timeout and throws "Rent Wait Timeout".
+    ///     The synchronizer holds a single rent slot: <see cref="EngineAPIImplementation.CrdtSendToRenderer" />
+    ///     must free it on every path, including failures, or subsequent rents time out ("Rent Wait Timeout").
     /// </summary>
     public class EngineAPISyncBufferRentShould
     {
@@ -67,8 +65,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 crdtWorldSynchronizer,
                 Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
-
-                // Swallows like the production pipeline (EngineApiWrapper reports and continues)
                 Substitute.For<ISceneExceptionsHandler>(),
                 multiThreadSync,
                 new MultiThreadSync.Owner("TEST"),
@@ -78,8 +74,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         [TearDown]
         public void TearDown()
         {
-            // A run that failed with the slot leaked also leaks the pooled collections;
-            // the resulting error log must not mask the assertion failure
+            // A leaked slot also leaks pooled collections; their error logs must not mask the assertion failure
             LogAssert.ignoreFailingMessages = true;
 
             try
@@ -94,8 +89,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         [Test]
         public void ReleaseRentSlotWhenMutexAcquisitionFails()
         {
-            // Deterministic stand-in for the production acquisition failures (10 s MultiThreadSync
-            // timeout / disposal race): a disposed sync throws ObjectDisposedException at the same site
+            // A disposed sync throws ObjectDisposedException at the same site as the production acquisition failures
             multiThreadSync.Dispose();
 
             // The internal catch reports to the exceptions handler and returns normally
@@ -114,7 +108,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             crdtProtocol.ProcessMessage(Arg.Any<CRDTMessage>())
                         .Returns(_ => throw new InvalidOperationException("Corrupted CRDT message"));
 
-            // Propagates to the caller (the production wrapper swallows it there)
             Assert.Throws<InvalidOperationException>(() => engineApiImplementation.CrdtSendToRenderer(INPUT, false));
 
             AssertRentSlotIsFree();
@@ -124,8 +117,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         {
             IWorldSyncCommandBuffer? recovered = null;
 
-            // A leaked slot makes this rent wait the full RENT_WAIT_TIMEOUT (5 s)
-            // and throw TimeoutException("Rent Wait Timeout: Couldn't rent command buffer")
+            // A leaked slot makes this rent wait the full RENT_WAIT_TIMEOUT and throw TimeoutException
             Assert.DoesNotThrow(
                 () => recovered = crdtWorldSynchronizer.GetSyncCommandBuffer(),
                 "The rent slot leaked: the failed CrdtSendToRenderer call did not release the sync command buffer");

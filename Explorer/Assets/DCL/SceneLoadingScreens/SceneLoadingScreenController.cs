@@ -129,8 +129,7 @@ namespace DCL.SceneLoadingScreens
             SetLoadProgress(0);
             viewInstance!.ClearTips();
 
-            // Fetched synchronously before the view shows, so `tips` is populated on every path
-            // that can reach OnViewClose and the release there needs no emptiness guard.
+            // Fetched synchronously, so `tips` is populated before the view can show
             tips = sceneTipsProvider.Get();
 
             if (tips.Random)
@@ -155,9 +154,7 @@ namespace DCL.SceneLoadingScreens
         {
             base.OnViewClose();
 
-            // The blocked inputs must be restored on every close path, so the release runs first,
-            // before any statement that can throw: the fade-out is skipped when the close intent
-            // is cancelled or fails, while OnViewClose is guaranteed by the MVC teardown.
+            // Runs first, before any statement that can throw: input must be unblocked on every close path
             UnblockUnwantedInputs();
 
             tipsRotationCancellationToken?.SafeCancelAndDispose();

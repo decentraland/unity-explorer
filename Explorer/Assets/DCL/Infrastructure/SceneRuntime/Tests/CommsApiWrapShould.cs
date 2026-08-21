@@ -178,21 +178,18 @@ namespace SceneRuntime.Tests
         [Test]
         public void ReceiveForUnsubscribedTopicDoesNotAllocate()
         {
-            // GC.GetAllocatedBytesForCurrentThread is inert on the editor Mono runtime, and the
-            // strict AllocatingGCMemory constraint trips on runtime noise outside OnDataReceived —
-            // so this uses the budgeted GC.Alloc Recorder idiom with a liveness canary: the bug
-            // allocates at least one sample per message, the budget stays far under one per message.
+            // Budgeted GC.Alloc Recorder with a liveness canary: GetAllocatedBytesForCurrentThread is inert
+            // on editor Mono, and the strict AllocatingGCMemory constraint trips on noise outside OnDataReceived.
             const int MEASURED_INVOKES = 1000;
             const int CANARY_ALLOCS = 16;
             const int ALLOC_SAMPLE_BUDGET = 100;
 
-            //Arrange — capture real wire bytes via PublishData (round-trip pattern); topic is never subscribed.
+            // Capture real wire bytes via a PublishData round-trip; the topic is never subscribed.
             commsApi.PublishData("never-subscribed-topic", "{\"type\":\"noise\"}");
             Assert.AreEqual(1, pipe.sendMessageCalls.Count);
             byte[] wireBytes = pipe.sendMessageCalls[0];
 
-            // SceneCommunicationPipe.DecodeMessage strips byte[0] (MsgType) before the handler sees it.
-            // DecodedMessage is a ref struct, so the span is rebuilt per call instead of captured.
+            // AsSpan(1) skips the MsgType byte that SceneCommunicationPipe.DecodeMessage strips.
             // Warm-up: JIT the receive path outside the measured region.
             for (var i = 0; i < 64; i++)
                 pipe.sceneMessageHandler.Invoke(new ISceneCommunicationPipe.DecodedMessage(wireBytes.AsSpan(1), "0xSENDER", isTrustedSource: true));
@@ -202,7 +199,6 @@ namespace SceneRuntime.Tests
             gcAllocRecorder.enabled = false;
             gcAllocRecorder.enabled = true;
 
-            //Act
             for (var i = 0; i < MEASURED_INVOKES; i++)
                 pipe.sceneMessageHandler.Invoke(new ISceneCommunicationPipe.DecodedMessage(wireBytes.AsSpan(1), "0xSENDER", isTrustedSource: true));
 
@@ -218,8 +214,6 @@ namespace SceneRuntime.Tests
             Assert.GreaterOrEqual(measured, CANARY_ALLOCS,
                 "GC.Alloc recorder did not observe the deliberate canary allocations — the probe is inert on this runtime.");
 
-            //Assert — OnDataReceived runs on the LiveKit callback thread for ALL scene CommsData
-            // traffic; the unsubscribed-topic path must not allocate (e.g. a temp topic string).
             Assert.Less(measured, ALLOC_SAMPLE_BUDGET,
                 $"OnDataReceived allocated GC memory for messages on a topic that was never subscribed ({measured} GC.Alloc samples over {MEASURED_INVOKES} messages).");
         }
@@ -227,13 +221,11 @@ namespace SceneRuntime.Tests
         [Test]
         public void ResubscribeAfterUnsubscribeReceivesAgain()
         {
-            //Arrange
             const string TOPIC = "flip-flop";
 
             commsApi.SubscribeToTopic(TOPIC);
             SimulateIncomingMessage(TOPIC, "{\"v\":1}", "sender1");
 
-            //Act — unsubscribe drops both the buffer and delivery; resubscribe restores delivery.
             commsApi.UnsubscribeFromTopic(TOPIC);
             SimulateIncomingMessage(TOPIC, "{\"v\":2}", "sender2");
             commsApi.SubscribeToTopic(TOPIC);
@@ -241,7 +233,6 @@ namespace SceneRuntime.Tests
 
             string json = commsApi.ConsumeMessages(TOPIC);
 
-            //Assert — only the post-resubscribe message survives.
             Assert.That(json, Does.Not.Contain("sender1"));
             Assert.That(json, Does.Not.Contain("sender2"));
             Assert.That(json, Does.Contain("sender3"));

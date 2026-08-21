@@ -41,8 +41,6 @@ namespace MVC.Tests
 
             Assert.DoesNotThrow(mvcManager.Dispose);
 
-            // Order-independent: whichever controller is disposed first, both must be reached
-            // and the windows stack must be disposed after the loop.
             otherController.Received(1).Dispose();
             windowsStackManager.Received(1).Dispose();
         }

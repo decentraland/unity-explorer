@@ -22,9 +22,8 @@ namespace ECS.StreamableLoading.Common.Components
             private readonly bool initialized;
 
             /// <summary>
-            ///     True when the request reached a terminal successful (or fallback-acceptable) state.
-            ///     False when the request failed or was cancelled; the value describes that single
-            ///     attempt only.
+            ///     True when the request reached a terminal successful (or fallback-acceptable) state;
+            ///     false when it failed or was cancelled. Describes that single attempt only.
             /// </summary>
             public readonly bool Succeeded;
 

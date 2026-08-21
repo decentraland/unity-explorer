@@ -43,10 +43,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         private readonly object topicLookupLock = new ();
 
-        // Copy-on-write byte-keyed snapshot of topicBuffers (queues shared, not copied) so OnDataReceived
-        // can match the wire topic without allocating a string per message (Unity's BCL has no span-keyed
-        // dictionary lookup). Writers rebuild under topicLookupLock; the volatile publish guarantees the
-        // LiveKit-thread reader a complete snapshot, never a partial one.
+        // Copy-on-write byte-keyed snapshot of topicBuffers so OnDataReceived can match the wire topic
+        // without allocating a string per message; the volatile publish gives readers a complete snapshot.
         private volatile TopicLookupEntry[] topicLookup = Array.Empty<TopicLookupEntry>();
 
         public CommsApiWrap(
@@ -305,9 +303,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         private void RebuildTopicLookup()
         {
-            // Allocates freely (list, byte[] per topic, final array): it only runs on subscribe/unsubscribe,
-            // which happens a handful of times per scene lifetime. COW trades allocation on this rare write
-            // path for allocation-free reads in OnDataReceived; published arrays are never mutated or reused.
+            // Runs only on subscribe/unsubscribe (rare), so allocating here is fine; published arrays are never mutated.
             lock (topicLookupLock)
             {
                 var entries = new List<TopicLookupEntry>(topicBuffers.Count);

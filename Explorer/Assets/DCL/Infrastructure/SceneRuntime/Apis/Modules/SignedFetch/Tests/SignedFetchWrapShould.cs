@@ -202,7 +202,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         [UnityTest]
         public IEnumerator DispatchRequestWithTokenCapturedBeforeMainThreadHop()
         {
-            // Arrange
             string url = "https://example.com/api";
             string body = "";
             string headers = "{}";
@@ -241,14 +240,12 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
                 disposeCts.Dispose();
             });
 
-            // Act
             sceneThread.Start();
             sceneThread.Join();
 
             for (var i = 0; i < MAX_CONTINUATION_TICKS && !dispatched; i++)
                 yield return null;
 
-            // Assert
             Assert.IsNull(dispatchFailure, $"Dispatching the request threw {dispatchFailure}");
             Assert.IsTrue(dispatched, "The request never reached the web request controller.");
             Assert.AreEqual(tokenBeforeDisposal, dispatchedToken, "The request must carry the token read before the source was disposed.");

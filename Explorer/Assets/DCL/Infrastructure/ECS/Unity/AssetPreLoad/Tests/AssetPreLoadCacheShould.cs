@@ -29,8 +29,7 @@ namespace ECS.Unity.AssetLoad.Tests
             gltfCache = Substitute.For<IGltfContainerAssetsCache>();
             cache = new AssetPreLoadCache(gltfCache);
 
-            // The template is built the same way the loading pipeline does: from an AssetBundleData
-            // exposing a source GameObject under the asset hash
+            // Template built the way the loading pipeline does: an AssetBundleData exposing a source GameObject under the asset hash
             sourceAsset = new GameObject(HASH);
             assetBundleData = new AssetBundleData(null!, new Object[] { sourceAsset }, typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleData.AcquireRef();
@@ -53,11 +52,8 @@ namespace ECS.Unity.AssetLoad.Tests
 
             cache.Clear();
 
-            // The clone is owned by the container that checked it out; clearing the cache must not
-            // destroy its Root under that owner
             Assert.That(clone!.Root == null, Is.False, "checked-out clone's Root must survive Clear()");
 
-            // The template itself is released back to the assets cache
             gltfCache.Received(1).Dereference(KEY, template, false, false);
             Assert.That(cache.ContainsGltf(KEY), Is.False);
 

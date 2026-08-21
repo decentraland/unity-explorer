@@ -17,8 +17,6 @@ using System.Linq;
 using UnityEngine;
 using Utility;
 
-// ReSharper disable InconsistentNaming
-
 namespace DCL.Chat.ChatServices
 {
     /// <summary>
@@ -173,8 +171,7 @@ namespace DCL.Chat.ChatServices
         {
             string lowerUserId = userId.ToLower();
 
-            // friendsService is null when the Friends feature is disabled (e.g. local scene development):
-            // every user resolves as a non-friend and the flow below handles them through the non-friend branches
+            // friendsService is null when the Friends feature is disabled (e.g. local scene development)
             FriendshipStatus friendshipStatus = friendsService != null
                 ? await friendsService.GetFriendshipStatusAsync(userId, ct)
                 : FriendshipStatus.None;

@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -80,11 +81,10 @@ namespace ECS.SceneLifeCycle.Systems
             ISceneFacade scene = result.Asset!;
 
             // At most one facade may own a parcel: a duplicate definition entity is left facade-less
-            // so its unload cannot remove the live scene's parcel mappings from the cache
             if (!definitionComponent.IsPortableExperience && AnyParcelHasLiveScene(definitionComponent.Parcels))
             {
                 ReportHub.LogWarning(GetReportData(), $"Duplicate scene definition for '{definitionComponent.Definition.GetLogSceneName()}': discarding its facade");
-                scene.DisposeAsync().Forget();
+                scene.DisposeAsync().SuppressToResultAsync(ReportCategory.SCENE_LOADING).Forget();
                 return;
             }
 

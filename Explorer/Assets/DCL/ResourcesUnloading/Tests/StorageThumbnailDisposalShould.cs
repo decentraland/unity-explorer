@@ -11,9 +11,8 @@ using NUnit.Framework;
 namespace DCL.ResourcesUnloading.Tests
 {
     /// <summary>
-    ///     Storage Unload must evict entries whose terminal thumbnail result never acquired a
-    ///     refcounted reference (failed/cancelled carry a default <see cref="SpriteData" />),
-    ///     and must release exactly one reference for succeeded thumbnails.
+    ///     Unload must evict entries whose thumbnail never acquired a reference (failed/cancelled carry
+    ///     a default <see cref="SpriteData" />) and release exactly one reference for succeeded thumbnails.
     /// </summary>
     public class StorageThumbnailDisposalShould
     {

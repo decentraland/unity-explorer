@@ -19,11 +19,8 @@ using UnityEngine.TestTools;
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     /// <summary>
-    ///     Covers the recovery invariant for corrupt entries in Unity's built-in <see cref="Caching" />:
-    ///     a corrupt cached archive completes its web request successfully (cache hit, no network) yet
-    ///     yields a null bundle from the native mount ("Unable to open archive file"), and since nothing
-    ///     evicts the entry, the bundle stays broken for the user across sessions. The load flow must
-    ///     evict the entry and re-request once so the cache is re-populated with a whole archive.
+    ///     A corrupt entry in Unity's <see cref="Caching" /> mounts to a null bundle and is never evicted;
+    ///     the load flow must evict it and re-request once so the cache is re-populated with a whole archive.
     /// </summary>
     [TestFixture]
     public class CorruptAbCacheRecoveryShould
@@ -77,16 +74,13 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             system = new ExposedLoadAssetBundleSystem(world, cache, IWebRequestController.TEST);
 
-            // Without the eviction retry this await faults with NullReferenceException: the corrupt entry is
-            // served from the cache, DownloadHandlerAssetBundle.GetContent returns null and no recovery exists,
-            // while the corrupt entry stays cached for every future attempt.
+            // Without the eviction retry this await faults with NullReferenceException (cache-served null bundle)
             StreamableLoadingResult<AssetBundleData> result = await system.FlowAsync(
                 NewWebIntention(bundleUrl, cacheHash), StreamableLoadingState.Create(), PartitionComponent.TOP_PRIORITY, CancellationToken.None);
 
             Assert.That(result.Succeeded, Is.True, result.Exception?.ToString());
             Assert.That(result.Asset, Is.Not.Null);
 
-            // The corrupt entry was evicted and re-downloaded: the cached archive is whole again
             Assert.That(Caching.IsVersionCached(bundleUrl, cacheHash), Is.True);
 
             byte[] repaired = File.ReadAllBytes(FindCachedDataFile());

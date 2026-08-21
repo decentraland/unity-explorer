@@ -5,9 +5,8 @@ using Cysharp.Threading.Tasks;
 namespace Utility.Networking
 {
     /// <summary>
-    ///     Desktop / WebGL friendly implementation. CloseAsync, Abort and Dispose may run on a
-    ///     different thread than a pending ConnectAsync await; failing a pending connection
-    ///     completes that await instead of leaving it parked.
+    ///     Desktop / WebGL friendly implementation. Failing a pending connection (CloseAsync, Abort,
+    ///     Dispose, from any thread) completes the pending ConnectAsync await instead of leaving it parked.
     /// </summary>
     public class DCLWebSocket : IDisposable
     {
@@ -93,7 +92,7 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.ConnectAsync(uri, cancellationToken);
 #else
-                // Main-thread callers need the continuation back on their context (their receive loops feed main-thread-only UI); context-less ones (the V8 script-invoke thread) would throw in TaskScheduler.FromCurrentSynchronizationContext.
+                // Resume on the caller's context when there is one; a context-less thread would throw in TaskScheduler.FromCurrentSynchronizationContext.
                 bool marshalBackToIssuingContext = SynchronizationContext.Current != null;
                 using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, connectAbort.Token);
 
@@ -141,7 +140,7 @@ namespace Utility.Networking
             try { connectAbort.Cancel(); }
             catch (ObjectDisposedException)
             {
-                // A racing Dispose() (scene teardown vs a JS close()) may have already disposed the CTS.
+                // A racing Dispose() may have already disposed the CTS.
             }
 
             ws.Abort();

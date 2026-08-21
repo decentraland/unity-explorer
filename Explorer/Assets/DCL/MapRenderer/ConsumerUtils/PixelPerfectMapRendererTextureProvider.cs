@@ -19,15 +19,12 @@ namespace DCL.MapRenderer.ConsumerUtils
         private IMapCameraController? cameraController;
         private Camera? hudCamera;
 
-        // Resolution last applied to the render texture; seeded in Activate so an unchanged
-        // size never triggers a redundant resize.
         private Vector2Int lastResolution;
 
         private static Vector3[] worldCorners = new Vector3[4];
 
         /// <summary>
-        /// Arms pixel-perfect resizing. The controller's render texture must already be sized
-        /// with <see cref="GetPixelPerfectTextureResolution"/> when this is called.
+        /// Arms pixel-perfect resizing; the controller's render texture must already be sized with <see cref="GetPixelPerfectTextureResolution"/>.
         /// </summary>
         public void Activate(IMapCameraController newCameraController)
         {
@@ -59,9 +56,8 @@ namespace DCL.MapRenderer.ConsumerUtils
             return new Vector2Int((int) screenSize.x, (int) screenSize.y);
         }
 
-        // Screen-resolution or canvas-scale changes (e.g. windowed -> fullscreen) alter the
-        // on-screen pixel size without changing the rect, so OnRectTransformDimensionsChange
-        // alone cannot keep the render texture pixel-perfect: poll every frame.
+        // Screen-resolution or canvas-scale changes (e.g. windowed -> fullscreen) alter the on-screen
+        // pixel size without a rect change, so OnRectTransformDimensionsChange alone is not enough
         private void LateUpdate()
         {
             ApplyPixelPerfectResolution();

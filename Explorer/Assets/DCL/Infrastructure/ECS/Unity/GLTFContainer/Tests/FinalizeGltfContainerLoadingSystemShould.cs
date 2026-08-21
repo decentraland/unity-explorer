@@ -112,8 +112,6 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             LogAssert.ignoreFailingMessages = true;
 
-            // A successfully-resolved result can reference an asset whose Root was destroyed
-            // while it awaited consumption
             var asset = GltfContainerAsset.Create(new GameObject("root"), Substitute.For<IStreamableRefCountData>());
             UnityEngine.Object.DestroyImmediate(asset.Root);
 
@@ -133,8 +131,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.RootGameObject, Is.Null);
             Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(e, component)));
 
-            // The consumed promise reached a terminal state: the next frame must be a no-op,
-            // not an "AssetPromise is already consumed" throw
+            // A second update on the consumed promise must be a no-op, not an "already consumed" throw
             Assert.DoesNotThrow(() => system!.Update(0));
         }
 

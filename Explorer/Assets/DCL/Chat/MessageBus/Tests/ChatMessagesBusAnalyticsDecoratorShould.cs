@@ -10,10 +10,8 @@ using System.Collections.Generic;
 namespace DCL.Chat.MessageBus.Tests
 {
     /// <summary>
-    ///     Regression coverage for the "mentions" field of the <see cref="AnalyticsEvents.Ui.MESSAGE_SENT" /> event:
-    ///     it must carry wallet-address strings (JArray.Add takes object, so <see cref="UserId" />'s implicit
-    ///     string conversion never applies), and each tracked payload must own its mentions array so
-    ///     later sends cannot mutate events already queued for flush.
+    ///     Regression coverage for the "mentions" field of <see cref="AnalyticsEvents.Ui.MESSAGE_SENT" />:
+    ///     it must carry wallet-address strings and each tracked payload must own its mentions array.
     /// </summary>
     [TestFixture]
     public class ChatMessagesBusAnalyticsDecoratorShould
@@ -95,8 +93,7 @@ namespace DCL.Chat.MessageBus.Tests
 
             Assert.That(trackedPayloads, Has.Count.EqualTo(2));
 
-            // The analytics queue holds payload references until flush: the first event's mentions
-            // must survive the second send unchanged
+            // The analytics queue holds payload references until flush
             var firstMentions = (JArray)trackedPayloads[0]["mentions"]!;
             Assert.That(firstMentions, Has.Count.EqualTo(1));
             Assert.That(firstMentions[0].Value<string>(), Is.EqualTo(FIRST_WALLET));

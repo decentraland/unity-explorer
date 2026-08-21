@@ -155,9 +155,8 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         /// <summary>
-        ///     The fetch runs under a linked token, so a timed-out fetch cancels its underlying request instead of
-        ///     abandoning it. Timeout surfaces as <see cref="TimeoutException" /> (CONNECTION_ERROR);
-        ///     cancellation of <paramref name="ct" /> surfaces as <see cref="OperationCanceledException" />.
+        ///     Runs the fetch under a linked token so a timeout cancels the underlying request. Timeout throws
+        ///     <see cref="TimeoutException" />; cancellation of <paramref name="ct" /> throws <see cref="OperationCanceledException" />.
         /// </summary>
         internal static async UniTask<Profile?> FetchProfileWithTimeoutAsync(ISelfProfile selfProfile, TimeSpan timeout, CancellationToken ct)
         {
@@ -167,9 +166,8 @@ namespace DCL.AuthenticationScreenFlow
             if (await selfProfile.ProfileAsync(timeoutCts.Token) is { } profile)
                 return profile;
 
-            // The repository suppresses cancellation into a null profile, including cancellation of the flow token.
-            // Surface external cancellation as OCE so it is classified as a user cancel, not as "no deployed profile"
-            // (which on the cached flow would clear a still-valid stored identity)
+            // The repository suppresses cancellation into a null profile; rethrow external cancellation as OCE
+            // so it is not misread as "no deployed profile"
             ct.ThrowIfCancellationRequested();
 
             if (timeoutCts.IsCancellationRequested)

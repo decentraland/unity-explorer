@@ -95,10 +95,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 if (assetBundle == null && intention.cacheHash.HasValue)
                 {
-                    // A corrupt entry in Unity's Caching completes the request without reaching the network yet fails
-                    // the native mount, and nothing else ever evicts it — the entry would poison this bundle across
-                    // sessions. Evicting turns the single re-request below into a real download that re-populates the
-                    // cache; for null bundles with non-cache causes it costs at most one extra attempt.
+                    // A corrupt Caching entry mounts to a null bundle and is never evicted, poisoning this bundle
+                    // across sessions; evict so the single re-request below re-populates the cache.
                     await UniTask.SwitchToMainThread();
 
                     if (CorruptAbCacheEvictor.TryEvict(intention.CommonArguments.URL, intention.cacheHash.Value))

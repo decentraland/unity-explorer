@@ -24,13 +24,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
         void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer);
 
         /// <summary>
-        ///     Disposes a rented command buffer that will never be applied and frees the rent slot.
-        ///     Every buffer obtained from <see cref="GetSyncCommandBuffer" /> must reach exactly one of
-        ///     <see cref="ApplySyncCommandBuffer" /> or this method, otherwise the single rent slot leaks
-        ///     and all subsequent rents time out.
-        ///     Can be called from the background thread
+        ///     Disposes a rented command buffer that will never be applied and frees the single rent slot.
+        ///     Every rented buffer must reach exactly one of <see cref="ApplySyncCommandBuffer" /> or this method. Can be called from the background thread
         /// </summary>
-        /// <param name="syncCommandBuffer"></param>
         void AbortSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer);
     }
 }

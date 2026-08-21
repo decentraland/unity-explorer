@@ -100,9 +100,8 @@ namespace CrdtEcsBridge.WorldSynchronizer
             finally
             {
 #if !UNITY_WEBGL
-                // Pairs with semaphore.Wait in GetSyncCommandBuffer for buffers that never reach
-                // ApplySyncCommandBuffer; must release even if Dispose throws, otherwise the slot
-                // leaks and subsequent Rents time out forever.
+                // Pairs with semaphore.Wait in GetSyncCommandBuffer; must release even if Dispose throws,
+                // otherwise the slot leaks and subsequent Rents time out forever.
                 semaphore.Release();
 #endif
             }

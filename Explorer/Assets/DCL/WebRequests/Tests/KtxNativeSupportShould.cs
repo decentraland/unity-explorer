@@ -7,9 +7,8 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Tests
 {
-    // Regression coverage for UNITY-EXPLORER-NQS (#7832): KTX2 conversion is enabled by a remote feature
-    // flag, so a machine whose OS cannot open the ktx_unity native plugin must route texture requests to
-    // the original URL instead of the media converter.
+    // Regression coverage for UNITY-EXPLORER-NQS (#7832): a machine whose OS cannot open the ktx_unity
+    // native plugin must route texture requests to the original URL instead of the media converter.
     public class KtxNativeSupportShould
     {
         private const string ORIGINAL_URL = "https://peer.decentraland.org/content/contents/bafytexture";
