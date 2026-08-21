@@ -37,7 +37,11 @@ namespace MVC
         public void Dispose()
         {
             foreach (IController controllersValue in controllers.Values)
-                controllersValue.Dispose();
+            {
+                // One failing Dispose must not abort disposal of the remaining controllers and the windows stack
+                try { controllersValue.Dispose(); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.MVC); }
+            }
 
             destructionCancellationTokenSource.SafeCancelAndDispose();
             windowsStackManager.Dispose();
@@ -74,6 +78,10 @@ namespace MVC
             var info = windowsStackManager.GetNonPersistentControllersInfo();
             return info.PopupControllers.Count > 0 || info.FullscreenController != null;
         }
+
+        public bool IsShowing<TView, TInputData>() where TView: IView =>
+            controllers.TryGetValue(typeof(IController<TView, TInputData>), out IController controller)
+            && controller.State != ControllerState.ViewHidden;
 
         public void CloseAllNonPersistentViews(CancellationToken ct = default)
         {
@@ -135,13 +143,16 @@ namespace MVC
                         await ShowOverlayAsync(command, controller, ct);
                         break;
                 }
-
-                OnViewClosed?.Invoke(controller);
             }
             catch (OperationCanceledException)
             {
                 // TODO (Vit) : handle revert of command. Proposal - extend WizardCommands interface with Revert method and call it in case of cancellation.
                 ReportHub.LogWarning(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
+            }
+            finally
+            {
+                // Raised here so that every OnViewShowed is followed by exactly one OnViewClosed
+                OnViewClosed?.Invoke(controller);
             }
         }
 
@@ -152,8 +163,7 @@ namespace MVC
             OverlayPushInfo overlayPushInfo = windowsStackManager.PushOverlay(controller);
 
             // Hide all popups in the stack and clear it
-            if (overlayPushInfo.PopupControllers != null)
-                CloseAllPopups(overlayPushInfo.PopupControllers);
+            CloseAllPopups(overlayPushInfo.PopupControllers);
 
             // Hide fullscreen UI if any
             if (overlayPushInfo.FullscreenController != null)

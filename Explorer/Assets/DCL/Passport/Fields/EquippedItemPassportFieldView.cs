@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -12,66 +13,76 @@ using Utility;
 
 namespace DCL.Passport.Fields
 {
-    public class EquippedItemPassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class EquippedItemPassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
         private const float ANIMATION_TIME = 0.1f;
 
         [field: SerializeField]
-        public RectTransform ContainerTransform { get; private set; }
+        public RectTransform ContainerTransform { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform SubContainerTransform { get; private set; }
+        public RectTransform SubContainerTransform { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform HoverBackgroundTransform { get; private set; }
+        public RectTransform HoverBackgroundTransform { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button BuyButton { get; private set; }
+        public Button BuyButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button ViewButton { get; private set; }
+        public Button ViewButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject OnSaleFlap { get; private set; }
+        public GameObject OnSaleFlap { get; private set; } = null!;
 
         [field: SerializeField]
-        public Image CategoryImage { get; private set; }
+        public GameObject ItemPriceContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        public Image EquippedItemThumbnail { get; private set; }
+        public TMP_Text ItemPrice { get; private set; } = null!;
 
         [field: SerializeField]
-        public Image RarityBackground { get; private set; }
+        public Image CategoryImage { get; private set; } = null!;
 
         [field: SerializeField]
-        public Image RarityBackground2 { get; private set; }
+        public Image EquippedItemThumbnail { get; private set; } = null!;
 
         [field: SerializeField]
-        public Image FlapBackground { get; private set; }
+        public Image RarityBackground { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform RarityLabelContainer { get; private set; }
+        public Image RarityBackground2 { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text RarityLabelText { get; private set; }
+        public Image FlapBackground { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text AssetNameText { get; private set; }
+        public RectTransform RarityLabelContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        public LoadingBrightView LoadingView { get; private set; }
+        public TMP_Text RarityLabelText { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject FullEquippedItemItem { get; private set; }
+        public TMP_Text AssetNameText { get; private set; } = null!;
 
         [field: SerializeField]
-        public AudioClipConfig BuyAudio { get; private set; }
+        public LoadingBrightView LoadingView { get; private set; } = null!;
 
         [field: SerializeField]
-        public AudioClipConfig HoverAudio { get; private set; }
+        public GameObject FullEquippedItemItem { get; private set; } = null!;
+
+        [field: SerializeField]
+        public AudioClipConfig BuyAudio { get; private set; } = null!;
+
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio { get; private set; } = null!;
 
         public URN ItemId { get; set; }
+
+        public Action<URN>? EmoteClicked;
+
+        public Action? WearableClicked;
 
         private CancellationTokenSource cts;
 
@@ -92,6 +103,15 @@ namespace DCL.Passport.Fields
             AnimateExit();
         }
 
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button != PointerEventData.InputButton.Left)
+                return;
+
+            EmoteClicked?.Invoke(ItemId);
+            WearableClicked?.Invoke();
+        }
+
         public void SetAsLoading(bool isLoading)
         {
             AssetNameText.gameObject.SetActive(!isLoading);
@@ -110,8 +130,7 @@ namespace DCL.Passport.Fields
         {
             cts?.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-            bool hasActionButton = BuyButton.gameObject.activeSelf || ViewButton.gameObject.activeSelf;
-            var hoverBackgroundScale = new Vector3(1, hasActionButton ? 1 : 0.85f, 1);
+            var hoverBackgroundScale = Vector3.one;
             HoverBackgroundTransform.localScale = hoverBackgroundScale;
             HoverBackgroundTransform.gameObject.SetActive(true);
             ContainerTransform.DOScale(hoveredScale, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
