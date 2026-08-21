@@ -6,13 +6,15 @@ namespace DCL.SDKEntityTriggerArea
 {
     public class SDKEntityTriggerArea : MonoBehaviour, IDisposable
     {
-        [field: SerializeField] public BoxCollider BoxCollider { get; internal set; }
-        [field: SerializeField] public SphereCollider SphereCollider { get; internal set; }
+        [field: SerializeField] public BoxCollider BoxCollider { get; internal set; } = null!;
+        [field: SerializeField] public SphereCollider SphereCollider { get; internal set; } = null!;
 
         private readonly HashSet<Collider> currentEntitiesInside = new ();
         private readonly HashSet<Collider> enteredEntitiesToBeProcessed = new ();
         private readonly HashSet<Collider> exitedEntitiesToBeProcessed = new ();
-        [NonSerialized] public Transform? TargetTransform;
+        private Predicate<Collider>? isNotTargetEntity;
+
+        public Transform? TargetTransform { get; private set; }
 
         public IReadOnlyCollection<Collider> EnteredEntitiesToBeProcessed => enteredEntitiesToBeProcessed;
         public IReadOnlyCollection<Collider> ExitedEntitiesToBeProcessed => exitedEntitiesToBeProcessed;
@@ -31,9 +33,13 @@ namespace DCL.SDKEntityTriggerArea
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            exitedEntitiesToBeProcessed.Add(other);
             enteredEntitiesToBeProcessed.Remove(other);
-            currentEntitiesInside.Remove(other);
+
+            // Only a tracked presence can produce an exit event: a collider admitted by physics
+            // while the target filter was bound was never tracked, so it has no ENTER to balance.
+            if (!currentEntitiesInside.Remove(other)) return;
+
+            exitedEntitiesToBeProcessed.Add(other);
         }
 
         public void Dispose()
@@ -58,5 +64,24 @@ namespace DCL.SDKEntityTriggerArea
 
         public void ClearExitedEntitiesToBeProcessed() =>
             exitedEntitiesToBeProcessed.Clear();
+
+        public bool IsEnterPending(Collider entityCollider) =>
+            enteredEntitiesToBeProcessed.Contains(entityCollider);
+
+        public void SetTargetTransform(Transform? targetTransform)
+        {
+            TargetTransform = targetTransform;
+
+            if (targetTransform == null) return;
+
+            // Invariant: the sets only hold colliders that pass the target filter. Binding a
+            // filter re-applies it to colliders tracked while unfiltered — their callbacks are
+            // swallowed from now on, so they could never be removed again. A destroyed
+            // (fake-null) collider can no longer match the target either.
+            isNotTargetEntity ??= entityCollider => entityCollider == null || entityCollider.transform != TargetTransform;
+            currentEntitiesInside.RemoveWhere(isNotTargetEntity);
+            enteredEntitiesToBeProcessed.RemoveWhere(isNotTargetEntity);
+            exitedEntitiesToBeProcessed.RemoveWhere(isNotTargetEntity);
+        }
     }
 }
