@@ -2130,6 +2130,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DCL.MarketplaceCredits.Purchase::DCL.MarketplaceCredits.Purchase.TopUp.UI.CreditsTopUpModalView
   <canvas>k__BackingField: {fileID: 1975820729051496160}
   <raycaster>k__BackingField: {fileID: 6235405414018787488}
+  <ContainerTransform>k__BackingField: {fileID: 2699698443393570032}
   <HeaderContainer>k__BackingField: {fileID: 126423628841791003}
   <PackItems>k__BackingField:
   - {fileID: 348082945293474340}

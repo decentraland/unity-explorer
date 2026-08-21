@@ -75,6 +75,16 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             lifeCts?.SafeCancelAndDispose();
         }
 
+        protected override void OnBeforeViewShow()
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.PacksLoadingSpinner.SetActive(true);
+            viewInstance.PacksErrorContainer.SetActive(false);
+            HideAllPackItems();
+        }
+
         protected override void OnViewShow()
         {
             lifeCts = new CancellationTokenSource();
@@ -194,13 +204,13 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
 
                 packItem.ConfigureImageController(imageControllerProvider);
                 packItem.SetupImage(pack.ImageUrl);
-
-                packItem.gameObject.SetActive(true);
             }
 
             if (packsData.Length > slots.Length)
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE,
                     $"Server returned {packsData.Length} credit packs but only {slots.Length} UI slots exist; extra packs are not shown.");
+
+            viewInstance.AnimatePackItemsPopIn(count);
         }
 
         private void HideAllPackItems()
