@@ -37,7 +37,7 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(string url, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
-            bool useKtx = textureArguments.UseKtx && ktxEnabled && !WebRequestUtils.IsLocalhost(url);
+            bool useKtx = textureArguments.UseKtx && ktxEnabled && KtxNativeSupport.IsSupported && !WebRequestUtils.IsLocalhost(url);
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
             UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
 
@@ -101,8 +101,16 @@ namespace DCL.WebRequests
 
                 var ktxTexture = new KtxTexture();
 
-                // Open() can throw before allocating native state; keep it outside the try so Dispose only runs once that state exists.
-                var openResult = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly());
+                // Open() can throw before allocating native state; keep it outside the try/finally so Dispose only runs once that state exists.
+                ErrorCode openResult;
+
+                try { openResult = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly()); }
+                catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
+                {
+                    // The OS failing to open the native plugin (or resolve a symbol in it) is per-machine-permanent, not transient.
+                    KtxNativeSupport.MarkUnsupported();
+                    throw;
+                }
 
                 try
                 {
