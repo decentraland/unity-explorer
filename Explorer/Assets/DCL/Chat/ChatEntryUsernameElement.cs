@@ -1,3 +1,4 @@
+using DCL.UI;
 using JetBrains.Annotations;
 using System;
 using TMPro;
@@ -29,7 +30,8 @@ namespace DCL.Chat
 
         public void SetUsername(string username, string? walletId, bool isOfficial)
         {
-            userName.text = username;
+            // The label's richText is off in the prefab, so another user's name only needs bounding here.
+            userName.text = RichTextSanitizer.Truncate(username, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             walletIdText.text = walletId;
 
             bool hasWalletId = !string.IsNullOrEmpty(walletId);

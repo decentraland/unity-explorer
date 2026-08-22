@@ -158,10 +158,11 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetCommunityData(string id, string title, string owner, string description, bool isMember)
         {
             CommunityId = id;
-            communityTitle.text = title;
+            // Title, owner and description are all written by whoever owns the community.
+            communityTitle.text = RichTextSanitizer.EscapeAndTruncate(title, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             currentCommunityName = title;
-            communityOwner.text = owner;
-            communityDescription.text = description;
+            communityOwner.text = RichTextSanitizer.EscapeAndTruncate(owner, RichTextSanitizer.DEFAULT_NAME_LENGTH);
+            communityDescription.text = RichTextSanitizer.Truncate(description, RichTextSanitizer.DEFAULT_BODY_LENGTH);
             this.isMember = isMember;
         }
 

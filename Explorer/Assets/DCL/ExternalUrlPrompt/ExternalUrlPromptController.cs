@@ -36,11 +36,18 @@ namespace DCL.ExternalUrlPrompt
         protected override void OnViewShow()
         {
             if (inputData.Uri == null)
+            {
+                // Refused by the http(s) scheme policy (SEC-008). Blank the fields so the previous prompt's
+                // destination is not left on screen, and drop the callback so the buttons cannot re-approve it.
+                resultCallback = null;
+                viewInstance!.DomainText.text = string.Empty;
+                viewInstance.UrlText.text = string.Empty;
                 return;
+            }
 
             Uri uri = inputData.Uri;
 
-            if (ExternalUrlPolicy.TryGetTrustKey(uri, out string trustKey) && trustedKeys.Contains(trustKey))
+            if (IsTrusted(uri))
             {
                 webBrowser.OpenUrlMainThreadOnly(uri.OriginalString);
                 viewInstance!.CloseButton.OnClickAsync(CancellationToken.None).Forget();
@@ -67,13 +74,13 @@ namespace DCL.ExternalUrlPrompt
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            if (inputData.Uri != null
-                && ExternalUrlPolicy.TryGetTrustKey(inputData.Uri, out string trustKey)
-                && trustedKeys.Contains(trustKey))
+            // Nothing left to consent to: the URL was refused by the scheme policy, or its (scheme, host) is
+            // already trusted and was opened in OnViewShow. Either way, close instead of showing the dialog.
+            if (inputData.Uri == null || IsTrusted(inputData.Uri))
                 return UniTask.CompletedTask;
 
             return UniTask.WhenAny(
-                viewInstance.CloseButton.OnClickAsync(ct),
+                viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
                 viewInstance.ContinueButton.OnClickAsync(ct));
         }
@@ -83,11 +90,18 @@ namespace DCL.ExternalUrlPrompt
             trustedKeys.Clear();
         }
 
+        private bool IsTrusted(Uri uri) =>
+            ExternalUrlPolicy.TryGetTrustKey(uri, out string trustKey) && trustedKeys.Contains(trustKey);
+
         private void RequestOpenUrl(Uri uri, Action<ExternalUrlPromptResultType> result)
         {
             resultCallback = result;
             viewInstance!.DomainText.text = uri.Host;
-            viewInstance.UrlText.text = uri.OriginalString;
+
+            // AbsoluteUri, not OriginalString: it is the canonical form UnityAppWebBrowser hands to
+            // Application.OpenURL, so the user consents to exactly the string that gets opened, and its
+            // percent-escaping is a second barrier against markup smuggled into the raw URL (SEC-008).
+            viewInstance.UrlText.text = uri.AbsoluteUri;
             viewInstance.TrustToggle.isOn = false;
         }
 

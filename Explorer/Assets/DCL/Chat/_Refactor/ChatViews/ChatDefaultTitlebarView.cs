@@ -82,7 +82,9 @@ namespace DCL.Chat.ChatViews
         {
             currentTitlebarViewModel = model;
             currentViewMode = model.ViewMode;
-            textChannelName.text = model.Username;
+            // Whoever named the channel chose this: a community name for a community channel, the other party's
+            // name for a DM. Neither is ours, so neither reaches the label as markup.
+            textChannelName.text = RichTextSanitizer.EscapeAndTruncate(model.Username, RichTextSanitizer.DEFAULT_NAME_LENGTH);
 
             bool shouldShowMembersButton = model.ViewMode == TitlebarViewMode.Nearby ||
                                            model.ViewMode == TitlebarViewMode.Community;

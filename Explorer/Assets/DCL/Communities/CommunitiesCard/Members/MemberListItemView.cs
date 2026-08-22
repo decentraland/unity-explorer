@@ -1,4 +1,5 @@
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using System;
@@ -103,7 +104,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             Color userColor = memberProfile.GetUserNameColor();
 
-            userName.text = memberProfile.Name;
+            // Rich text is off on this label and the colour below is applied as a property rather than as
+            // markup, so the escape is belt-and-braces; the cap bounds the layout pass.
+            userName.text = RichTextSanitizer.EscapeAndTruncate(memberProfile.Name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
             userName.color = userColor;
             userNameTag.text = $"#{memberProfile.Address[^4..]}";
             userNameTag.gameObject.SetActive(!memberProfile.HasClaimedName);

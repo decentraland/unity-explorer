@@ -25,12 +25,18 @@ namespace DCL.UI
             if (linkIndex == -1) return;
             TMP_LinkInfo linkInfo = text.textInfo.linkInfo[linkIndex];
 
-            string url = linkInfo.GetLinkID();
-
-            OnLinkClicked?.Invoke(url);
+            ActivateLink(linkInfo.GetLinkID());
         }
 
         public void ClearHookedEvents() =>
             OnLinkClicked = null;
+
+        /// <summary>
+        ///     Hands an activated link's id to the subscribers. <see cref="OnPointerClick" /> calls it once the pointer
+        ///     has been hit-tested against the laid-out text; kept separate — and visible to the EditMode tests — so
+        ///     what a subscriber does with a link can be covered without a rendered canvas to click on.
+        /// </summary>
+        internal void ActivateLink(string linkId) =>
+            OnLinkClicked?.Invoke(linkId);
     }
 }

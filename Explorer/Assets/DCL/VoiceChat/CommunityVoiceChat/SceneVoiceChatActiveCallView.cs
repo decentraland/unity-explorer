@@ -15,7 +15,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void SetCommunityName(string communityName)
         {
-            CommunityName.text = communityName;
+            CommunityName.text = RichTextSanitizer.EscapeAndTruncate(communityName, RichTextSanitizer.DEFAULT_NAME_LENGTH);
         }
 
         public void SetParticipantCount(int participantCount)

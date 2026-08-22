@@ -29,40 +29,40 @@ namespace DCL.Notifications.NotificationEntry
         public Color HoveredColor { get; private set; }
 
         [field: SerializeField]
-        public Image Background { get; private set; }
+        public Image Background { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject UnreadImage { get; set; }
+        public GameObject UnreadImage { get; set; } = null!;
 
         [field: SerializeField]
-        public Button MainButton { get; private set; }
+        public Button MainButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CloseButton { get; set; }
+        public Button CloseButton { get; set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text HeaderText { get; set; }
+        public TMP_Text HeaderText { get; set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text TitleText { get; set; }
+        public TMP_Text TitleText { get; set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text TimeText { get; set; }
+        public TMP_Text TimeText { get; set; } = null!;
 
         [field: SerializeField]
-        public ImageView NotificationImage { get; set; }
+        public ImageView NotificationImage { get; set; } = null!;
 
         [field: SerializeField]
-        public Image NotificationImageBackground { get; set; }
+        public Image NotificationImageBackground { get; set; } = null!;
 
         [field: SerializeField]
-        public Image NotificationTypeImage { get; set; }
+        public Image NotificationTypeImage { get; set; } = null!;
 
         [field: SerializeField]
-        public AudioClipConfig RequestNotificationAudio { get; private set; }
+        public AudioClipConfig RequestNotificationAudio { get; private set; } = null!;
 
         [field: SerializeField]
-        public AudioClipConfig AcceptedNotificationAudio { get; private set; }
+        public AudioClipConfig AcceptedNotificationAudio { get; private set; } = null!;
 
         public void PlayRequestNotificationAudio() =>
             UIAudioEventsBus.Instance.SendPlayAudioEvent(RequestNotificationAudio);
@@ -88,7 +88,8 @@ namespace DCL.Notifications.NotificationEntry
 
             if (notification.SenderProfile.HasValue)
             {
-                userName = notification.SenderProfile.Value.Name;
+                // The filtered name carries no # part, which the unclaimed template appends separately.
+                userName = notification.SenderProfile.Value.ValidatedNameOrRaw;
                 userAddress = notification.SenderProfile.Value.Address;
                 userColor = notification.SenderProfile.Value.UserNameColor;
                 hasClaimedName = notification.SenderProfile.Value.HasClaimedName;
@@ -102,6 +103,10 @@ namespace DCL.Notifications.NotificationEntry
             }
 
             NotificationImageBackground.color = userColor;
+
+            // The templates are markup, so the label stays rich text and the sender-chosen name is
+            // neutralized and bounded before it is interpolated into them.
+            userName = RichTextSanitizer.EscapeAndTruncate(userName, RichTextSanitizer.DEFAULT_NAME_LENGTH);
 
             TitleText.SetText(hasClaimedName
                 ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), userName,
@@ -124,9 +129,13 @@ namespace DCL.Notifications.NotificationEntry
 
         private void SetTitleText(NotificationBase notification, FriendRequestProfile sender, Color userColor)
         {
+            // FriendRequestProfile is the raw notification payload and exposes no filtered name, so escaping
+            // is what keeps a sender-chosen name from being read as markup once inside the templates.
+            string senderName = RichTextSanitizer.EscapeAndTruncate(sender.Name, RichTextSanitizer.DEFAULT_NAME_LENGTH);
+
             TitleText.SetText(sender.HasClaimedName
-                ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), sender.Name, notification.GetTitle())
-                : string.Format(FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), sender.Name, sender.Address[^4..], notification.GetTitle()));
+                ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), senderName, notification.GetTitle())
+                : string.Format(FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), senderName, sender.Address[^4..], notification.GetTitle()));
         }
 
         private void Start()
