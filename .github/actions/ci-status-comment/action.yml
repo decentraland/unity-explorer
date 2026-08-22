@@ -1,19 +1,26 @@
 name: Upsert CI Status Comment
 description: >-
   Create or update the single unified CI status comment on a PR, replacing only
-  the given section (build | lint | tests). Seeds a skeleton with all three
-  sections the first time it runs, and re-reads/retries so concurrent writers
-  (build vs. Unity Test) never clobber each other's section.
+  the given section (build | lint | tests | performance | automation). Seeds a
+  skeleton with every section the first time it runs, appends a missing section
+  fence to older comments, and re-reads/retries so concurrent writers (build
+  vs. Unity Test) never clobber each other's section.
 
 inputs:
   pr-number:
     description: Pull request number to comment on.
     required: true
   section:
-    description: Which section to replace — one of build, lint, tests.
+    description: Which section to replace — one of build, lint, tests, performance, automation.
     required: true
   body:
-    description: Markdown for this section (inline badge + message). Rendered as-is between the section markers.
+    description: >-
+      Markdown for this section (inline badge + message). Rendered between the
+      section markers after dropping marker-shaped lines; bodies over 20000
+      chars are truncated with fences/<details> re-closed and a truncation note.
+      Callers must keep it under ~120KB: it travels as one env string, and
+      Linux rejects any single env entry over 128KiB (E2BIG) before the
+      truncation here can run.
     required: true
   github-token:
     description: Token with pull-requests:write used to read and upsert the comment.
