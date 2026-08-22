@@ -22,6 +22,14 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+
+        /// <summary>
+        ///     Routes every supported backend url through this gateway base instead of
+        ///     <c>gateway.decentraland.{env}</c>, and forces routing on: naming a gateway is the opt-in the
+        ///     <c>use-gateway</c> feature flag would otherwise carry, so the flag is ignored. Command line only —
+        ///     it aims the session's whole backend traffic at the named host, so a deep link must never set it.
+        /// </summary>
+        public const string GATEWAY = "gateway";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SPAWN_POINT = "spawnpoint";

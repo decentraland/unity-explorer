@@ -82,11 +82,15 @@ namespace DCL.Browser
         };
 
         private readonly bool envSupported;
+
+        // The base --gateway named, trailing slash trimmed, or null to use gateway.decentraland.{env}. Naming
+        // one is itself the opt-in, so it also stands in for the flag.
+        private readonly string? cliGatewayBase;
         private readonly List<string>? resolvedNonClientHosts;
         private readonly string? gatewayPrefix;
         private readonly string? domainSuffix;
 
-        private bool enabled => envSupported && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
+        private bool enabled => envSupported && (cliGatewayBase != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY));
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
@@ -95,9 +99,11 @@ namespace DCL.Browser
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null)
+            string? cliOptimizedAssetsUrl = null,
+            string? cliGatewayUrl = null)
             : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl)
         {
+            cliGatewayBase = cliGatewayUrl is { Length: > 0 } ? cliGatewayUrl.TrimEnd('/') : null;
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
             if (envSupported)
@@ -108,7 +114,7 @@ namespace DCL.Browser
                 foreach (string pattern in SUPPORTED_URLS_OF_NON_CLIENT_ORIGIN)
                     resolvedNonClientHosts.Add(pattern.Replace(ENV, envDomain));
 
-                gatewayPrefix = $"https://{GATEWAY_SUBDOMAIN}.decentraland.{envDomain}/";
+                gatewayPrefix = cliGatewayBase != null ? $"{cliGatewayBase}/" : $"https://{GATEWAY_SUBDOMAIN}.decentraland.{envDomain}/";
                 domainSuffix = $".decentraland.{envDomain}";
             }
         }
@@ -225,9 +231,10 @@ namespace DCL.Browser
 
         /// <summary>
         ///     Transform: https://{subdomain}.{domain}/{path}
-        ///     to: https://gateway.{domain}/{subdomain}/{path}
+        ///     to: https://gateway.{domain}/{subdomain}/{path}, or to {--gateway base}/{subdomain}/{path} when one
+        ///     was named.
         /// </summary>
-        private static string TransformToGateway(string url)
+        private string TransformToGateway(string url)
         {
             int firstDot = url.IndexOf('.', HTTPS_PREFIX_LENGTH);
 
@@ -243,6 +250,9 @@ namespace DCL.Browser
             int domainEnd = pathStart >= 0 ? pathStart : url.Length;
             int domainLength = domainEnd - firstDot;
             int pathLength = url.Length - domainEnd;
+
+            if (cliGatewayBase != null)
+                return string.Concat(cliGatewayBase, "/", url.Substring(HTTPS_PREFIX_LENGTH, subdomainLength), url.Substring(domainEnd, pathLength));
 
             int resultLength = HTTPS_PREFIX_LENGTH + GATEWAY_SUBDOMAIN.Length + domainLength + 1 + subdomainLength + pathLength;
 

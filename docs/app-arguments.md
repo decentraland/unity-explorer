@@ -106,6 +106,17 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `gateway`
+**Type:** String (URL)
+**Description:** Routes every supported backend url through this gateway base — `https://{subdomain}.decentraland.{env}/{path}` becomes `<gateway>/{subdomain}/{path}` — instead of the default `gateway.decentraland.{env}`. Specifying it also **forces routing on**: naming a gateway is the opt-in the `use-gateway` remote feature flag would otherwise carry, so the flag is ignored. Without it, the flag decides and the default host is used. Only `org` and `zone` are ever routed — `today` has no gateway, and this arg does not change that. Command line only: never accepted from a deep link, since it aims the session's whole backend traffic at the named host.
+
+**Usage:**
+```bash
+--gateway https://gateway.localhost
+```
+
+---
+
 ### `realm`
 **Type:** String (URL)
 **Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://).

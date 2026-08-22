@@ -258,6 +258,8 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
+            applicationParametersParser.TryGetValue(AppArgsFlags.GATEWAY, out string? cliGatewayUrl);
+
             // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
             // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
             // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
@@ -277,7 +279,8 @@ namespace Global.Dynamic
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
-                cliOptimizedAssetsUrl);
+                cliOptimizedAssetsUrl,
+                cliGatewayUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
@@ -839,14 +842,8 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realm)) return true;
 
             var uri = new Uri(realm);
-            if (uri.Host == "127.0.0.1") return true;
-            if (uri.Host == "localhost") return true;
-            if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
+            // A controlled host skips the consent prompt and the contracts/servers lookup below.
+            if (TrustedRealms.IsTrusted(uri)) return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
