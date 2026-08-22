@@ -68,7 +68,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 if (parsedRequestMethod == RequestMethod.INVALID)
                     throw new ArgumentException("Invalid request method.");
 
-                var commonArguments = new CommonArguments(URLAddress.FromString(url), RetryPolicy.HEADER_REQUIRED, timeout: timeout);
+                var commonArguments = new CommonArguments(URLAddress.FromString(url), RetryPolicy.HEADER_REQUIRED, timeout: timeout, allowInsecureCleartext: isLocalSceneDevelopment);
                 WebRequestHeadersInfo webRequestHeaders = HeadersFromJsObject(headers);
 
                 await UniTask.SwitchToMainThread();

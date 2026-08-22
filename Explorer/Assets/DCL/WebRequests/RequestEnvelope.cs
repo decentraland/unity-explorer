@@ -1,17 +1,14 @@
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests.RequestsHub;
-using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
-using UnityEngine.Pool;
 
 namespace DCL.WebRequests
 {
@@ -100,6 +97,24 @@ namespace DCL.WebRequests
         {
             TWebRequest request = initializeRequest(CommonArguments.URL, ref args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
+
+            if (!CommonArguments.AllowInsecureCleartext)
+            {
+                // Secure-scheme enforcement runs on the wire URL of every request — signed and
+                // unsigned alike — except those that explicitly opted into cleartext
+                // (local-scene-development scene fetch). Default-deny at the app level is the
+                // property that lets the player insecureHttpOption stay AlwaysAllowed. It runs
+                // before AssignHeaders so a signed request's signature covers the upgraded URL,
+                // and the identity auth chain never travels over forbidden cleartext.
+                string wireUrl = unityWebRequest.url;
+                string secureUrl = WebRequestUtils.EnforceSecureScheme(wireUrl);
+
+                if (!ReferenceEquals(wireUrl, secureUrl))
+                {
+                    ReportHub.LogWarning(ReportData, $"Cleartext http to a non-loopback host upgraded to https: {wireUrl}");
+                    unityWebRequest.url = secureUrl;
+                }
+            }
 
             AssignTimeout(unityWebRequest);
             AssignHeaders(unityWebRequest, web3IdentityCache);
