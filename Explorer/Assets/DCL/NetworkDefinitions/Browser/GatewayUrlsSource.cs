@@ -86,7 +86,9 @@ namespace DCL.Browser
         private readonly string? gatewayPrefix;
         private readonly string? domainSuffix;
 
-        private bool enabled => envSupported && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
+        // TEST (abgen pipeline): gateway hard-disabled so the abgen CDN/registry hosts are hit
+        // directly. Restore the flag check after testing.
+        private bool enabled => false;
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
