@@ -25,6 +25,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 Substitute.For<MarketplaceCreditsAPIClient>(null, null),
                 Substitute.For<IWeb3IdentityCache>(),
                 null!,
+                null!,
+                null!,
+                null!,
+                null!,
+                null!,
                 _ => UniTask.CompletedTask,
                 _ => UniTask.CompletedTask);
         }
