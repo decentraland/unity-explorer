@@ -9,6 +9,9 @@ namespace DCL.ApplicationGuards
     /// <summary>
     ///     Contains pure, static logic functions for checking hardware specifications.
     ///     All requirements are defined as constants and arrays at the top for easy editing.
+    ///     The requirements come from a feature-flag payload, which a deployment may not publish at all (a
+    ///     --base-domain deployment running its own flags backend, for instance). Every check therefore resolves an
+    ///     absent or partial payload to its non-blocking result instead of dereferencing the empty definition.
     /// </summary>
     public static class SystemSpecUtils
     {
@@ -16,25 +19,32 @@ namespace DCL.ApplicationGuards
 
         public static bool IsWindowsCpuAcceptable(string cpu)
         {
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+            if (!TryGetRequirements(out MinimumRequirementsDefinition minimumRequirements))
+                return true;
 
             cpu = cpu.ToLowerInvariant();
 
-            foreach (string keyword in minimumRequirements.always_accepted_cpus)
+            foreach (string keyword in minimumRequirements.always_accepted_cpus ?? Array.Empty<string>())
             {
                 if (cpu.Contains(keyword))
                     return true;
             }
 
-            var ryzenMatch = Regex.Match(cpu, minimumRequirements.ryzen_supported_cpu_regex);
+            // No cpu rule configured at all: nothing to judge the cpu against, so it is not rejected.
+            if (minimumRequirements.ryzen_supported_cpu_regex == null
+                && minimumRequirements.intel_ultra_cpu_supported_version_regex == null
+                && minimumRequirements.intel_cpu_supported_version_regex == null)
+                return true;
+
+            Match ryzenMatch = MatchIfPatternPresent(cpu, minimumRequirements.ryzen_supported_cpu_regex);
             if (ryzenMatch.Success && int.TryParse(ryzenMatch.Groups[1].Value, out int model))
                 return model >= minimumRequirements.ryzen_supported_minimum_series;
 
-            var intelUltraMatch = Regex.Match(cpu, minimumRequirements.intel_ultra_cpu_supported_version_regex);
+            Match intelUltraMatch = MatchIfPatternPresent(cpu, minimumRequirements.intel_ultra_cpu_supported_version_regex);
             if (intelUltraMatch.Success && int.TryParse(intelUltraMatch.Groups[1].Value, out int ultraSeries))
                 return ultraSeries >= minimumRequirements.intel_ultra_supported_minimum_generation;
 
-            var intelMatch = Regex.Match(cpu, minimumRequirements.intel_cpu_supported_version_regex);
+            Match intelMatch = MatchIfPatternPresent(cpu, minimumRequirements.intel_cpu_supported_version_regex);
             if (intelMatch.Success)
             {
                 if (int.TryParse(intelMatch.Groups[1].Value, out int series) &&
@@ -53,10 +63,13 @@ namespace DCL.ApplicationGuards
             if (string.IsNullOrEmpty(gpuName))
                 return false;
 
+            // A classifier, not a gate: with no list to match against, no gpu is reported as integrated.
+            if (!TryGetRequirements(out MinimumRequirementsDefinition minimumRequirements))
+                return false;
+
             string lowerGpuName = gpuName.ToLowerInvariant();
 
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
-            foreach (string keyword in minimumRequirements.integrated_gpu_supported_versions)
+            foreach (string keyword in minimumRequirements.integrated_gpu_supported_versions ?? Array.Empty<string>())
             {
                 if (lowerGpuName.Contains(keyword))
                     return true;
@@ -67,19 +80,26 @@ namespace DCL.ApplicationGuards
 
         public static bool IsWindowsGpuAcceptable(string gpu)
         {
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+            if (!TryGetRequirements(out MinimumRequirementsDefinition minimumRequirements))
+                return true;
+
+            // No gpu rule configured at all: nothing to judge the gpu against, so it is not rejected.
+            if (minimumRequirements.rtx_gpu_supported_version_regex == null
+                && minimumRequirements.rx_gpu_supported_version_regex == null
+                && minimumRequirements.arc_gpu_supported_version_regex == null)
+                return true;
 
             gpu = gpu.ToLowerInvariant();
 
-            var rtxMatch = Regex.Match(gpu, minimumRequirements.rtx_gpu_supported_version_regex);
+            Match rtxMatch = MatchIfPatternPresent(gpu, minimumRequirements.rtx_gpu_supported_version_regex);
             if (rtxMatch.Success && int.TryParse(rtxMatch.Groups[1].Value, out int rtxModel))
                 return rtxModel >= minimumRequirements.minimum_rtx_supported_version;
 
-            var rxMatch = Regex.Match(gpu, minimumRequirements.rx_gpu_supported_version_regex);
+            Match rxMatch = MatchIfPatternPresent(gpu, minimumRequirements.rx_gpu_supported_version_regex);
             if (rxMatch.Success && int.TryParse(rxMatch.Groups[1].Value, out int rxModel))
                 return rxModel >= minimumRequirements.minimum_rx_supported_version;
 
-            var arcMatch = Regex.Match(gpu, minimumRequirements.arc_gpu_supported_version_regex);
+            Match arcMatch = MatchIfPatternPresent(gpu, minimumRequirements.arc_gpu_supported_version_regex);
             if (arcMatch.Success && int.TryParse(arcMatch.Groups[1].Value, out int arcModel))
                 return arcModel >= minimumRequirements.minimum_arc_supported_version;
 
@@ -104,7 +124,10 @@ namespace DCL.ApplicationGuards
 
         public static bool IsWindowsVersionAcceptable(string os)
         {
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+            // An explicitly empty list still rejects; only an absent one fails open.
+            if (!TryGetRequirements(out MinimumRequirementsDefinition minimumRequirements) || minimumRequirements.windows_supported_versions == null)
+                return true;
+
             foreach (string version in minimumRequirements.windows_supported_versions)
             {
                 if (os.IndexOf(version, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -115,8 +138,12 @@ namespace DCL.ApplicationGuards
 
         public static bool IsMacOSVersionAcceptable(string os)
         {
-            bool isMac = false;
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+            // An explicitly empty list still rejects; only an absent one fails open.
+            if (!TryGetRequirements(out MinimumRequirementsDefinition minimumRequirements) || minimumRequirements.mac_supported_versions == null)
+                return true;
+
+            var isMac = false;
+
             foreach (string keyword in minimumRequirements.mac_supported_versions)
             {
                 if (os.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -129,7 +156,10 @@ namespace DCL.ApplicationGuards
             if (!isMac)
                 return false;
 
-            var match = Regex.Match(os, minimumRequirements.macos_supported_version_regex);
+            if (minimumRequirements.macos_supported_version_regex == null)
+                return true;
+
+            Match match = Regex.Match(os, minimumRequirements.macos_supported_version_regex);
             if (match.Success && int.TryParse(match.Groups[1].Value, out int majorVersion))
             {
                 return majorVersion >= minimumRequirements.minimum_macos_major_version;
@@ -140,7 +170,9 @@ namespace DCL.ApplicationGuards
 
         public static bool IsAppleSilicon(string deviceName)
         {
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+            // Serves as both the cpu and the gpu gate on mac, so an absent pattern must not reject the machine.
+            if (!TryGetRequirements(out MinimumRequirementsDefinition minimumRequirements) || minimumRequirements.apple_silicon_supported_regex == null)
+                return true;
 
             return Regex.IsMatch(deviceName, minimumRequirements.apple_silicon_supported_regex, RegexOptions.IgnoreCase);
         }
@@ -180,29 +212,42 @@ namespace DCL.ApplicationGuards
             return roundedActualGB >= requiredGB;
         }
 
+        private static bool TryGetRequirements(out MinimumRequirementsDefinition minimumRequirements) =>
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out minimumRequirements);
+
+        /// <summary>
+        ///     An absent pattern never matches, so the caller falls through to the next rule.
+        /// </summary>
+        private static Match MatchIfPatternPresent(string input, string? pattern) =>
+            string.IsNullOrEmpty(pattern) ? Match.Empty : Regex.Match(input, pattern);
+
+        /// <summary>
+        ///     Wire format of the "minimum_requirements" feature-flag variant. Every field is optional on the wire;
+        ///     absent fields deserialize to null / zero.
+        /// </summary>
         [Serializable]
         private struct MinimumRequirementsDefinition
         {
-            public string[] windows_supported_versions;
-            public string[] mac_supported_versions;
-            public string[] integrated_gpu_supported_versions;
-            public string[] always_accepted_cpus;
+            public string[]? windows_supported_versions;
+            public string[]? mac_supported_versions;
+            public string[]? integrated_gpu_supported_versions;
+            public string[]? always_accepted_cpus;
             public int minimum_macos_major_version;
-            public string macos_supported_version_regex;
-            public string ryzen_supported_cpu_regex;
+            public string? macos_supported_version_regex;
+            public string? ryzen_supported_cpu_regex;
             public int ryzen_supported_minimum_series;
             public int intel_supported_minimum_series;
             public int intel_supported_minimum_generation;
             public int intel_ultra_supported_minimum_generation;
-            public string intel_cpu_supported_version_regex;
-            public string intel_ultra_cpu_supported_version_regex;
-            public string rtx_gpu_supported_version_regex;
-            public string rx_gpu_supported_version_regex;
-            public string arc_gpu_supported_version_regex;
+            public string? intel_cpu_supported_version_regex;
+            public string? intel_ultra_cpu_supported_version_regex;
+            public string? rtx_gpu_supported_version_regex;
+            public string? rx_gpu_supported_version_regex;
+            public string? arc_gpu_supported_version_regex;
             public int minimum_rtx_supported_version;
             public int minimum_rx_supported_version;
             public int minimum_arc_supported_version;
-            public string apple_silicon_supported_regex;
+            public string? apple_silicon_supported_regex;
         }
     }
 }

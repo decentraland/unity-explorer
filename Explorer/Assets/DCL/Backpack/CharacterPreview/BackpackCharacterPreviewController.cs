@@ -77,7 +77,7 @@ namespace DCL.Backpack.CharacterPreview
             }
         }
 
-        public override void Dispose()
+        public new void Dispose()
         {
             base.Dispose();
 
