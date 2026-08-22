@@ -805,7 +805,7 @@ jobs:
           TEST_MODE: ${{ matrix.testMode }}
         run: |
           python3 - <<'PY'
-          import glob, json, os, xml.etree.ElementTree as ET
+          import glob, json, math, os, xml.etree.ElementTree as ET
 
           artifacts_path = os.environ["ARTIFACTS_PATH"]
           test_mode = os.environ["TEST_MODE"]
@@ -814,6 +814,8 @@ jobs:
           total = 0
           passed = 0
           failed = []
+          duration = 0.0
+          timings = []
 
           for path in xml_files:
               try:
@@ -825,16 +827,37 @@ jobs:
                   if case_result is None:
                       continue
                   total += 1
+                  try:
+                      seconds = float(test_case.get("duration") or 0)
+                  except ValueError:
+                      seconds = 0.0
+                  # float() admits nan/inf/1e999 without raising, and json.dump
+                  # would then emit bare NaN/Infinity — invalid JSON that aborts
+                  # the consumer's very first jq read of this file.
+                  if not math.isfinite(seconds):
+                      seconds = 0.0
+                  duration += seconds
+                  timings.append((seconds, test_case.get("fullname") or test_case.get("name")))
                   if case_result == "Passed":
                       passed += 1
                   elif case_result == "Failed":
-                      failed.append(test_case.get("fullname") or test_case.get("name"))
+                      # "(unnamed)" keeps the set homogeneous — one None among
+                      # strings makes sorted() raise and kills the whole file.
+                      failed.append(test_case.get("fullname") or test_case.get("name") or "(unnamed)")
 
           result = {
               "hasResults": len(xml_files) > 0,
               "total": total,
               "passed": passed,
               "failed": sorted(set(failed)),
+              # The per-case clamp keeps each addend (and the slowest list)
+              # finite, but a sum of finite doubles can still overflow to inf —
+              # clamp again at the one point the accumulator is serialised.
+              "duration": round(duration, 1) if math.isfinite(duration) else 0.0,
+              "slowest": [
+                  {"name": name, "seconds": round(seconds, 1)}
+                  for seconds, name in sorted(timings, key=lambda t: -t[0])[:10]
+              ],
           }
 
           with open(f"failed-tests-{test_mode}.json", "w") as f:

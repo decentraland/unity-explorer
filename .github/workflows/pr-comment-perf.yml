@@ -1,0 +1,120 @@
+# pr-comment-perf.yml
+---
+name: Comment Performance Results on PR
+
+# Runs in the trusted base-repo context after the (possibly fork) "Unity
+# Performance Test" run completes, and writes the "performance" section of the
+# unified CI status comment. Mirrors pr-comment-test-failures.yml.
+#
+# "Unity Performance Test" fires on every PR event but its job gates on the
+# 'perf_test' label, so most runs conclude 'success' with the job skipped —
+# those must not touch the section (it belongs to the bare-metal benchmark
+# status written by pr-comment-artifact-url.yml on label-less PRs).
+on:
+  workflow_run:
+    types:
+      - "completed"
+    workflows:
+      - "Unity Performance Test"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve PR number
+        id: pr
+        env:
+          WORKFLOW_RUN_EVENT_OBJ: ${{ toJSON(github.event.workflow_run) }}
+        run: |
+          PR_NUMBER=$(jq -r '.pull_requests[0].number' <<< "$WORKFLOW_RUN_EVENT_OBJ")
+          echo "PR number: $PR_NUMBER"
+          if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" ]]; then
+            echo "No PR associated with this run, skipping."
+            echo "pr-number=" >> "$GITHUB_OUTPUT"
+          else
+            echo "pr-number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check the performance job actually ran
+        id: ran
+        if: steps.pr.outputs.pr-number != ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          CONCLUSION=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/jobs?per_page=100" \
+            --jq '[.jobs[] | select(.name | startswith("Performance Test"))][0].conclusion // "absent"')
+          echo "Performance job conclusion: $CONCLUSION"
+          if [ "$CONCLUSION" = "skipped" ] || [ "$CONCLUSION" = "absent" ]; then
+            echo "ran=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ran=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compose comment body
+        id: body
+        if: steps.pr.outputs.pr-number != '' && steps.ran.outputs.ran == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          set -euo pipefail
+          BADGE_STYLE="?logo=speedtest&logoColor=white&style=for-the-badge"
+          case "$CONCLUSION" in
+            success) BADGE="https://img.shields.io/badge/Performance-Passed!-3fb950${BADGE_STYLE}"; MSG="✅ Unity performance suite finished." ;;
+            failure) BADGE="https://img.shields.io/badge/Performance-Failed!-ff0000${BADGE_STYLE}"; MSG="❌ Unity performance suite failed." ;;
+            *)       BADGE="https://img.shields.io/badge/Performance-Cancelled-lightgrey${BADGE_STYLE}"; MSG="Unity performance suite did not finish (\`$CONCLUSION\`)." ;;
+          esac
+
+          # Artifact download links come from the trusted Actions API.
+          ARTS_JSON=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100" 2>/dev/null || echo '{"artifacts":[]}')
+          links=""
+          for entry in "results (JSON):Performance test results (JSON)" "benchmark report (PDF):Performance benchmark report (PDF)"; do
+            label="${entry%%:*}"
+            art_name="${entry#*:}"
+            art_id=$(jq -r --arg n "$art_name" '.artifacts[]? | select(.name==$n) | .id // empty' <<< "$ARTS_JSON" | head -1)
+            [ -n "$art_id" ] && links="$links · [$label](https://github.com/$REPO/actions/runs/$RUN_ID/artifacts/$art_id)"
+          done
+
+          DELIM="EOF_${RANDOM}${RANDOM}_$$"
+          {
+            echo "body<<$DELIM"
+            echo "[![Performance]($BADGE)]($RUN_URL)"
+            echo ""
+            echo "$MSG The benchmark report is rendered on the [run summary]($RUN_URL)."
+            echo ""
+            if [ -n "$links" ]; then
+              echo "<sub>Download:${links#" ·"}</sub>"
+            else
+              echo "<sub>No result artifacts were produced — check the [run]($RUN_URL).</sub>"
+            fi
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout CI status action
+        if: steps.body.outcome == 'success' && steps.ran.outputs.ran == 'true'
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Update performance section
+        if: steps.body.outcome == 'success' && steps.ran.outputs.ran == 'true'
+        uses: ./.github/actions/ci-status-comment
+        with:
+          pr-number: ${{ steps.pr.outputs.pr-number }}
+          section: performance
+          github-token: ${{ github.token }}
+          body: ${{ steps.body.outputs.body }}
