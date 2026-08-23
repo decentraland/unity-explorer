@@ -95,6 +95,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
             }
+            catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.UI);
@@ -115,6 +116,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
                 atlasChunk.MainSpriteRenderer.sprite.name = chunkId.ToString();
             }
+            catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.UI);
