@@ -274,7 +274,9 @@ namespace Global
             });
 
             var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
-            if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
+            if (!SystemInfo.supportsComputeShaders)
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "Compute shaders not supported on this platform; GPU instancing disabled.");
+            else if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
             {
                 container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
                 renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
