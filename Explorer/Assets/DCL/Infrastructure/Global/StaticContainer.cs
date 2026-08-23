@@ -274,7 +274,7 @@ namespace Global
             });
 
             var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
-            if (!SystemInfo.supportsComputeShaders)
+            if (!UnityEngine.SystemInfo.supportsComputeShaders)
                 ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "Compute shaders not supported on this platform; GPU instancing disabled.");
             else if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
             {
