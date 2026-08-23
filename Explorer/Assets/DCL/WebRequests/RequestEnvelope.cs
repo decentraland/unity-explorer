@@ -192,18 +192,28 @@ namespace DCL.WebRequests
     /// </remarks>
     internal static class AuthChainHeaderNames
     {
-        private static readonly string[] AUTH_CHAIN_HEADER_NAMES;
+        private static string[] names = Build(Enum.GetNames(typeof(AuthLinkType)).Length);
 
-        static AuthChainHeaderNames()
+        private static string[] Build(int count)
         {
-            int maxAuthChainHeaders = Enum.GetNames(typeof(AuthLinkType)).Length;
-            AUTH_CHAIN_HEADER_NAMES = new string[maxAuthChainHeaders];
+            var result = new string[count];
 
-            for (var i = 0; i < maxAuthChainHeaders; i++)
-                AUTH_CHAIN_HEADER_NAMES[i] = $"x-identity-auth-chain-{i}";
+            for (var i = 0; i < count; i++)
+                result[i] = $"x-identity-auth-chain-{i}";
+
+            return result;
         }
 
-        public static string Get(int index) =>
-            AUTH_CHAIN_HEADER_NAMES[index];
+        public static string Get(int index)
+        {
+            string[] snapshot = names;
+
+            if (index < snapshot.Length)
+                return snapshot[index];
+
+            var grown = Build(index + 1);
+            names = grown;
+            return grown[index];
+        }
     }
 }
