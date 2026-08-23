@@ -30,6 +30,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Feature Flags](feature-flags.md)** — Fetching and checking feature flags at runtime
 - **[Features Registry](features-registry.md)** — Centralized feature state registry
 - **[App Arguments](app-arguments.md)** — Command-line flags and launch parameters
+- **[Custom Base Domain](custom-base-domain.md)** — Targeting a non-`decentraland.*` deployment with `--base-domain`
 
 ## Core Systems
 - **[Asset Promises](asset-promises.md)** — Asynchronous asset loading with ECS promises
