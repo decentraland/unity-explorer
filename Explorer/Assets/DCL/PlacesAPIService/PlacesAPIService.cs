@@ -123,7 +123,14 @@ namespace DCL.PlacesAPIService
             if (worldsByCoords.TryGetValue(coords, out PlacesData.PlaceInfo? cachedPlace))
                 return cachedPlace;
 
-            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync($"{coords.x},{coords.y}", realmName, ct);
+            PlacesData.PlacesAPIResponse response;
+
+            try { response = await client.GetWorldAsync($"{coords.x},{coords.y}", realmName, ct); }
+            catch (NotAPlaceException)
+            {
+                worldsByCoords[coords] = null;
+                return null;
+            }
 
             if (!response.ok)
                 return null;
