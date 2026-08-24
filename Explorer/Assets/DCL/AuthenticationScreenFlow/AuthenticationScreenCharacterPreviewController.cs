@@ -39,7 +39,7 @@ namespace DCL.AuthenticationScreenFlow
             PlayEmote(settings.IntroEmoteURN);
         }
 
-        public override void OnHide(bool triggerOnHideBusEvent = true)
+        public new void OnHide(bool triggerOnHideBusEvent = true)
         {
             playEmotesCts.SafeCancelAndDispose();
             base.OnHide(triggerOnHideBusEvent);
@@ -47,7 +47,7 @@ namespace DCL.AuthenticationScreenFlow
             view.gameObject.SetActive(false);
         }
 
-        public override void Dispose()
+        public new void Dispose()
         {
             playEmotesCts.SafeCancelAndDispose();
             base.Dispose();
