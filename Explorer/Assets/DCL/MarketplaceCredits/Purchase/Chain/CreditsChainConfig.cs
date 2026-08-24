@@ -1,4 +1,5 @@
-using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Web3.Chains;
+using System;
 
 namespace DCL.MarketplaceCredits.Purchase
 {
@@ -41,23 +42,31 @@ namespace DCL.MarketplaceCredits.Purchase
 
         public string CreditsManagerEip712Version => CREDITS_MANAGER_EIP712_VERSION;
 
-        public CreditsChainConfig(DecentralandEnvironment environment)
+        /// <summary>
+        ///     Polygon is the network that pairs with ethereum mainnet and Amoy the one that pairs with sepolia, so
+        ///     the credits contracts follow the resolved <see cref="EthereumNetwork" /> rather than deciding a chain
+        ///     of their own: an identity signed for one chain can never spend against the other's contracts.
+        /// </summary>
+        public CreditsChainConfig(EthereumNetwork ethereumNetwork)
         {
-            if (environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today)
+            switch (ethereumNetwork)
             {
-                ChainId = POLYGON_CHAIN_ID;
-                ReadonlyNetwork = POLYGON_READONLY_NETWORK;
-                CreditsManagerAddress = POLYGON_CREDITS_MANAGER_ADDRESS;
-                CollectionStoreAddress = POLYGON_COLLECTION_STORE_ADDRESS;
-                OffChainMarketplaceAddress = POLYGON_OFFCHAIN_MARKETPLACE_ADDRESS;
-            }
-            else
-            {
-                ChainId = AMOY_CHAIN_ID;
-                ReadonlyNetwork = AMOY_READONLY_NETWORK;
-                CreditsManagerAddress = AMOY_CREDITS_MANAGER_ADDRESS;
-                CollectionStoreAddress = AMOY_COLLECTION_STORE_ADDRESS;
-                OffChainMarketplaceAddress = AMOY_OFFCHAIN_MARKETPLACE_ADDRESS;
+                case EthereumNetwork.Mainnet:
+                    ChainId = POLYGON_CHAIN_ID;
+                    ReadonlyNetwork = POLYGON_READONLY_NETWORK;
+                    CreditsManagerAddress = POLYGON_CREDITS_MANAGER_ADDRESS;
+                    CollectionStoreAddress = POLYGON_COLLECTION_STORE_ADDRESS;
+                    OffChainMarketplaceAddress = POLYGON_OFFCHAIN_MARKETPLACE_ADDRESS;
+                    break;
+                case EthereumNetwork.Sepolia:
+                    ChainId = AMOY_CHAIN_ID;
+                    ReadonlyNetwork = AMOY_READONLY_NETWORK;
+                    CreditsManagerAddress = AMOY_CREDITS_MANAGER_ADDRESS;
+                    CollectionStoreAddress = AMOY_COLLECTION_STORE_ADDRESS;
+                    OffChainMarketplaceAddress = AMOY_OFFCHAIN_MARKETPLACE_ADDRESS;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(ethereumNetwork), ethereumNetwork, null);
             }
         }
     }
