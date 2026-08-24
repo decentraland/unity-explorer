@@ -1,0 +1,99 @@
+name: Avatar Preview Renderer Deploy Production
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Avatar Preview Renderer Build run ID whose artifact to promote. Empty takes the latest successful dev build.'
+        required: false
+        default: ''
+        type: string
+
+concurrency:
+  group: avatar-preview-renderer-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy_production:
+    name: Vercel Production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout repo (for project link/config)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Resolve source build run
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          RUN_ID="${{ github.event.inputs.run_id }}"
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/avatar-preview-renderer-build.yml/runs?status=success&branch=dev&per_page=1" \
+              --jq '.workflow_runs[0].id // empty')
+            [ -n "$RUN_ID" ] || { echo "::error::No successful Avatar Preview Renderer Build run found on dev."; exit 1; }
+          fi
+          COMMIT_SHA=$(gh api "repos/${{ github.repository }}/actions/runs/$RUN_ID" --jq '.head_sha')
+          echo "Promoting run $RUN_ID (commit $COMMIT_SHA)"
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Download built artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: avatar-preview-renderer
+          path: .vercel/output/static
+          run-id: ${{ steps.resolve.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Flatten artifact to static root
+        run: |
+          set -euo pipefail
+          ROOT=".vercel/output/static"
+          shopt -s dotglob nullglob
+          for d in "avatar-preview-renderer" "AvatarPreviewRenderer" "build" "Build"; do
+            if [ -d "$ROOT/$d" ] && [ -f "$ROOT/$d/index.html" ]; then
+              echo "Flattening $ROOT/$d -> $ROOT"
+              mv "$ROOT/$d"/* "$ROOT"/
+              rmdir "$ROOT/$d" || true
+              break
+            fi
+          done
+          test -f "$ROOT/index.html" || { echo "::error::index.html not found at $ROOT"; exit 1; }
+
+      - name: Copy vercel.json into static folder
+        run: cp avatar-preview-renderer/vercel.json .vercel/output/static/vercel.json
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel environment (production)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy static folder to Vercel (Production)
+        id: vercel_deploy
+        run: |
+          url=$(vercel deploy .vercel/output/static --prod --yes --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Production URL: $url"
+
+      - name: Write job summary
+        run: |
+          {
+            echo '## Avatar Preview Renderer deployed to production'
+            echo
+            echo '| Field      | Value |'
+            echo '| ---------- | ----- |'
+            echo '| Production | ${{ steps.vercel_deploy.outputs.url }} |'
+            echo '| Source run | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.resolve.outputs.run_id }} |'
+            echo '| Commit     | `${{ steps.resolve.outputs.commit_sha }}` |'
+          } >> "$GITHUB_STEP_SUMMARY"
