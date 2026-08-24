@@ -40,6 +40,7 @@ def read_build_info():
 def delete_build_info():
     if not os.path.exists(BUILD_INFO_PATH):
         print('No build_info file found, ignoring delete...')
-    
+        return
+
     os.remove(BUILD_INFO_PATH)
     print('build_info file deleted')

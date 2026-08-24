@@ -1,9 +1,5 @@
 name: Avatar Preview Renderer Release
 
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
 on:
   workflow_dispatch:
     inputs:
@@ -205,6 +201,11 @@ jobs:
     name: Vercel Production
     needs: [prepare, build]
     runs-on: ubuntu-latest
+    # Vercel secrets are scoped to this job — no other job talks to Vercel.
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - name: Checkout repo (for project link/config)
         uses: actions/checkout@v6
@@ -216,7 +217,7 @@ jobs:
         run: npm i -g vercel@latest
 
       - name: Pull Vercel environment (production)
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production
 
       - name: Download built artifact
         uses: actions/download-artifact@v7
@@ -245,7 +246,7 @@ jobs:
       - name: Deploy static folder to Vercel (Production)
         id: vercel_deploy
         run: |
-          url=$(vercel deploy .vercel/output/static --prod --yes --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy .vercel/output/static --prod --yes)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Production URL: $url"
 

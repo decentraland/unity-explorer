@@ -1,9 +1,5 @@
 name: Avatar Preview Renderer Build
 
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -211,6 +207,11 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    # Vercel secrets are scoped to this job — no other job talks to Vercel.
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     outputs:
       preview_url: ${{ steps.vercel_deploy.outputs.url }}
 
@@ -225,7 +226,7 @@ jobs:
         run: npm i -g vercel@latest
 
       - name: Pull Vercel environment (preview)
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=preview
 
       - name: Download built artifact
         uses: actions/download-artifact@v7
@@ -260,7 +261,7 @@ jobs:
       - name: Deploy static folder to Vercel (Preview)
         id: vercel_deploy
         run: |
-          url=$(vercel deploy .vercel/output/static --yes --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy .vercel/output/static --yes)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Preview URL: $url"
 
