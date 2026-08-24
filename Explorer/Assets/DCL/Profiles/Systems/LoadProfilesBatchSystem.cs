@@ -97,8 +97,11 @@ namespace DCL.Profiles
                     {
                         bool batched = result.Value.Count > 1;
 
-                        foreach (Profile dto in result.Value)
+                        foreach (Profile? dto in result.Value)
                         {
+                            // ProfileConverter deserializes malformed profile entries to null
+                            if (dto == null) continue;
+
                             intention.Ids.Remove(dto.UserId);
                             profileRepository.ResolveProfile(dto.UserId, dto, batched);
                         }

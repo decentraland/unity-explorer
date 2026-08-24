@@ -131,6 +131,10 @@ namespace Utility.Networking
                 await ws.CloseAsync(statusType, description, cancellationToken);
 #endif
             }
+            catch (System.Net.WebSockets.WebSocketException e) when (e.InnerException is ObjectDisposedException)
+            {
+                // Mono surfaces the Dispose() race as a WebSocketException wrapping the ObjectDisposedException.
+            }
             catch (System.Net.WebSockets.WebSocketException e)
             {
                 throw new WebSocketException(e);

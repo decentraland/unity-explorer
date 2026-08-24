@@ -101,10 +101,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 await webSocket.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, ct);
             }
-            catch (Exception e) when (e is OperationCanceledException or ObjectDisposedException
-                                      || e.InnerException is ObjectDisposedException)
+            catch (OperationCanceledException)
             {
-                // Expected during scene teardown when Dispose races with a pending close.
+                // Expected during scene teardown when the close is cancelled mid-flight.
             }
         }
 
