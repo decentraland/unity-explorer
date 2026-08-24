@@ -13,11 +13,10 @@
       "hash": "e4587451389b6cf93b084ae434d0cc3d32a45076"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git#main",
+      "version": "file:../../unity-shared-dependencies",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f040030e82c51bdddce67ae18149e22b5b4c4c0d"
+      "source": "local",
+      "dependencies": {}
     },
     "com.unity.burst": {
       "version": "1.8.28",
