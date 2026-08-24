@@ -23,6 +23,12 @@ namespace ECS.StreamableLoading.Cache.Disk
         /// </summary>
         public const string TEMP_FILE_SUFFIX = ".tmp";
 
+        /// <summary>
+        ///     False when the store discards writes and never returns content (<see cref="Fake" />),
+        ///     letting callers skip the work of preparing data for it — e.g. serializing a texture.
+        /// </summary>
+        bool Enabled => true;
+
         UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator;
 
         UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token);
@@ -31,6 +37,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         class Fake : IDiskCache
         {
+            public bool Enabled => false;
+
             public UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator =>
                 UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's fake"));
 

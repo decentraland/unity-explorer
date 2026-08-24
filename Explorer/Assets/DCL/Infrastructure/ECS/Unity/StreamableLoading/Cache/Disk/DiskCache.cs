@@ -187,6 +187,11 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token)
         {
+            // Serialization is the expensive half of a put (e.g. reading a texture's pixels, which
+            // throws once the CPU mirror is dropped) — skip it entirely when the store discards writes.
+            if (!diskCache.Enabled)
+                return EnumResult<TaskError>.SuccessResult();
+
             using var iterator = serializer.Serialize(data);
             return await diskCache.PutAsync(key, extension, iterator, token);
         }
