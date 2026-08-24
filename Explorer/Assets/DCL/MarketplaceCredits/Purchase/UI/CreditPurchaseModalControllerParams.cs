@@ -6,6 +6,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
     {
         public const string SOURCE_PASSPORT_EQUIPPED = "passport_equipped";
         public const string SOURCE_PASSPORT_CREATIONS = "passport_creations";
+        public const string SOURCE_EVENT_FEATURED_ITEMS = "event_featured_items";
 
         public readonly ShopListingDto Listing;
         public readonly string ItemName;

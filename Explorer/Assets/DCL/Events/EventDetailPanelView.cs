@@ -41,6 +41,10 @@ namespace DCL.Communities.EventInfo
         [SerializeField] private TMP_Text placeNameText = null!;
         [SerializeField] private GameObject liveBadge = null!;
 
+        [field: Header("Featured Items")]
+        [field: SerializeField]
+        public EventFeaturedItemsView FeaturedItemsSection { get; private set; } = null!;
+
         public event Action<IEventDTO>? InterestedButtonClicked;
         public event Action<IEventDTO>? JumpInButtonClicked;
         public event Action<IEventDTO>? AddToCalendarButtonClicked;

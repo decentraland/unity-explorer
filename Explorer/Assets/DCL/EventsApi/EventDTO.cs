@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+// ReSharper disable InconsistentNaming
+
 namespace DCL.EventsApi
 {
     public interface IEventDTO : ISerializationCallbackReceiver
@@ -32,6 +34,7 @@ namespace DCL.EventsApi
         bool World {get; set; }
         int X {get; set; }
         int Y {get; set; }
+        string Featured_item {get; set; }
     }
 
     [Serializable]
@@ -65,6 +68,7 @@ namespace DCL.EventsApi
         public string[] connected_addresses;
         public string community_id;
         public string image_vertical;
+        public string featured_item;
 
         public string Id
         {
@@ -228,6 +232,12 @@ namespace DCL.EventsApi
         {
             get => y;
             set => y = value;
+        }
+
+        public string Featured_item
+        {
+            get => "urn:decentraland:matic:collections-v2:0xb0d0d31910da4a14d4e05a9d51b6e9a99a85d676";//featured_item;
+            set => featured_item = value;
         }
 
         //No need to serialize anything more than the already present fields

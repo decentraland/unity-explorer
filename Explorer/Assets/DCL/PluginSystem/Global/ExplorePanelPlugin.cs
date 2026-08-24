@@ -159,6 +159,7 @@ namespace DCL.PluginSystem.Global
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
         private readonly IPendingTransferService ownedNftFilter;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
+        private readonly MarketplaceShopAPIClient marketplaceShopApiClient;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -262,7 +263,8 @@ namespace DCL.PluginSystem.Global
             SpringBoneSimulationSettings springBoneSimulationSettings,
             JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
             IPendingTransferService ownedNftFilter,
-            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
+            MarketplaceShopAPIClient marketplaceShopApiClient
             )
         {
             this.eventBus = eventBus;
@@ -336,6 +338,7 @@ namespace DCL.PluginSystem.Global
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
             this.ownedNftFilter = ownedNftFilter;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
+            this.marketplaceShopApiClient = marketplaceShopApiClient;
         }
 
         public void Dispose()
@@ -582,11 +585,25 @@ namespace DCL.PluginSystem.Global
             eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
                 eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendsService, communitiesDataProvider);
 
+            (NFTColorsSO eventRarityColorMappings, NftTypeIconSO eventCategoryIconsMapping, NftTypeIconSO eventRarityBackgroundsMapping) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.EventRarityColorMappings, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.EventCategoryIconsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.EventRarityBackgroundsMapping, ct));
+
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
             eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
                 eventsThumbnailLoader,
-                eventCardActionsController);
+                eventCardActionsController,
+                webRequestController,
+                decentralandUrlsSource,
+                eventRarityBackgroundsMapping,
+                eventRarityColorMappings,
+                eventCategoryIconsMapping,
+                webBrowser,
+                imageControllerProvider,
+                mvcManager,
+                marketplaceShopApiClient);
             mvcManager.RegisterController(eventDetailPanelController);
 
             explorePanelView.CreditsPanelView.gameObject.SetActive(false);
@@ -784,6 +801,9 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
             [field: Header("Place Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
             [field: Header("Event Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
+            [field: SerializeField] public AssetReferenceT<NFTColorsSO> EventRarityColorMappings { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EventCategoryIconsMapping { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EventRarityBackgroundsMapping { get; private set; } = null!;
             [field: Header("Quality Settings")] [field: SerializeField] internal QualityPresetsAsset QualityPresets { get; private set; }
         }
     }

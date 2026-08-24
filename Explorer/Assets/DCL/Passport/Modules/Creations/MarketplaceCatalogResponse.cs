@@ -1,5 +1,7 @@
 using System;
 
+// ReSharper disable InconsistentNaming
+
 namespace DCL.Passport.Modules.Creations
 {
     // Server schema: https://marketplace-api.decentraland.{ENV}/v3/catalog/items (GET, response.data[] — /v1/items shape plus priceCredits)
@@ -17,6 +19,7 @@ namespace DCL.Passport.Modules.Creations
         public string? thumbnail;
         public string? url;
         public string? urn;
+        public string? category;
         public string? rarity;
         public bool isOnSale;
         public int priceCredits;

@@ -92,6 +92,8 @@ namespace Global.AppArgs
 
         public const string DISCOVER = "discover";
 
+        public const string EVENT_FEATURED_ITEMS = "event-featured-items";
+
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
         public const string NAME_COLOR_CHANGE = "name-color-change";
