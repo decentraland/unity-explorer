@@ -22,7 +22,7 @@ public class Bootstrap : MonoBehaviour
         CommonAssets.FacialFeaturesMaterial = facialFeaturesMat;
 
         var url = Application.isEditor ? debugUrl : Application.absoluteURL;
-        AangConfiguration.RecreateFrom(url);
+        PreviewConfiguration.RecreateFrom(url);
 
         // The preview is near-static, so we cap the frame rate to keep GPU/CPU cost low on
         // consumers. Defaults to 60, overridable via the fps URL parameter (e.g. 30) for
@@ -30,7 +30,7 @@ public class Bootstrap : MonoBehaviour
         // while it is on (QualitySettings.vSyncCount != 0) Application.targetFrameRate is ignored
         // and rendering is tied to the display refresh (120Hz+ on ProMotion / high-refresh screens).
         QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = AangConfiguration.Instance.Fps;
+        Application.targetFrameRate = PreviewConfiguration.Instance.Fps;
 
         // Small viewports (e.g. marketplace thumbnails) get supersampled for extra quality since the
         // absolute shaded pixel count stays bounded (under 1600x1600 -> under 3200x3200). Both
@@ -42,13 +42,13 @@ public class Bootstrap : MonoBehaviour
             urpAsset.renderScale = 2f;
         }
 
-        if (AangConfiguration.Instance.UninterruptedDeferAgent)
+        if (PreviewConfiguration.Instance.UninterruptedDeferAgent)
         {
             // Sets uninterrupted defer agent for fastest loading
             GltfImport.SetDefaultDeferAgent(new UninterruptedDeferAgent());
         }
 
-        if (AangConfiguration.Instance.Mode == PreviewMode.Configurator)
+        if (PreviewConfiguration.Instance.Mode == PreviewMode.Configurator)
         {
             configuratorController.gameObject.SetActive(true);
             previewController.gameObject.SetActive(false);

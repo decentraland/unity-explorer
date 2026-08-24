@@ -1,4 +1,4 @@
-# Aang Renderer
+# Avatar Preview Renderer
 
 This project is responsible for rendering previews of the user profile and wearables used on the Decentraland Marketplace, Authentication screen, Profile page, Builder, and Configurator.
 

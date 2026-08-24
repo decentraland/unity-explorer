@@ -294,7 +294,7 @@ namespace Preview
 
             debugPanel.Q<Button>("HideButton").clicked += () => debugPanel.style.display = DisplayStyle.None;
             debugPanel.Q<Label>("VersionLabel").text = Application.version;
-            debugPanel.Q<Button>("PrintConfigButton").clicked += () => Debug.Log(AangConfiguration.Instance.ToString());
+            debugPanel.Q<Button>("PrintConfigButton").clicked += () => Debug.Log(PreviewConfiguration.Instance.ToString());
             
             debugPanel.Q<Button>("RandomProfileButton").clicked += () =>
             {

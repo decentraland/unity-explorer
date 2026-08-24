@@ -11,9 +11,9 @@
 //     /// </summary>
 //     public static class URLParser
 //     {
-//         public static AangConfiguration Parse(string url)
+//         public static PreviewConfiguration Parse(string url)
 //         {
-//             var config = new AangConfiguration();
+//             var config = new PreviewConfiguration();
 //
 //             if (string.IsNullOrEmpty(url) || !url.Contains('?')) return config;
 //
@@ -112,7 +112,7 @@
 //         /// Converts the preview configuration into the matching set of url parameters.
 //         /// Used for testing
 //         /// </summary>
-//         public static string GetUrlParameters(AangConfiguration config)
+//         public static string GetUrlParameters(PreviewConfiguration config)
 //         {
 //             var sb = new StringBuilder("?");
 //

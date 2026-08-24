@@ -67,13 +67,13 @@ namespace Loading
                 {
                     var task = GLTFLoader.LoadModel(bodyShape, def, transform);
                     modelLoadTasks.Add(task);
-                    if (!AangConfiguration.Instance.ConcurrentLoad) await task;
+                    if (!PreviewConfiguration.Instance.ConcurrentLoad) await task;
                 }
                 else if (def.Type is EntityType.FacialFeature)
                 {
                     var task = GLTFLoader.LoadFacialFeature(bodyShape, def);
                     facialFeaturesLoadTasks.Add(task);
-                    if (!AangConfiguration.Instance.ConcurrentLoad) await task;
+                    if (!PreviewConfiguration.Instance.ConcurrentLoad) await task;
                 }
                 else
                 {

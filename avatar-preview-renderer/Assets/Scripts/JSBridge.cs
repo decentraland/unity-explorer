@@ -21,71 +21,71 @@ public class JSBridge : MonoBehaviour
     [SerializeField] private ConfiguratorUIPresenter configuratorUIPresenter;
 
     [UsedImplicitly]
-    public void ParseFromURL() => AangConfiguration.RecreateFrom(Application.absoluteURL);
+    public void ParseFromURL() => PreviewConfiguration.RecreateFrom(Application.absoluteURL);
 
     [UsedImplicitly]
-    public void ParseFromString(string url) => AangConfiguration.RecreateFrom(url);
+    public void ParseFromString(string url) => PreviewConfiguration.RecreateFrom(url);
 
     [UsedImplicitly]
-    public void SetMode(string value) => AangConfiguration.Instance.SetMode(value);
+    public void SetMode(string value) => PreviewConfiguration.Instance.SetMode(value);
 
     [UsedImplicitly]
-    public void SetType(string value) => AangConfiguration.Instance.SetType(value);
+    public void SetType(string value) => PreviewConfiguration.Instance.SetType(value);
 
     [UsedImplicitly]
-    public void SetProfile(string value) => AangConfiguration.Instance.Profile = value;
+    public void SetProfile(string value) => PreviewConfiguration.Instance.Profile = value;
 
     [UsedImplicitly]
-    public void SetEmote(string value) => AangConfiguration.Instance.Emote = value;
+    public void SetEmote(string value) => PreviewConfiguration.Instance.Emote = value;
 
     [UsedImplicitly]
-    public void AddBase64(string value) => AangConfiguration.Instance.AddBase64(value);
+    public void AddBase64(string value) => PreviewConfiguration.Instance.AddBase64(value);
 
     [UsedImplicitly]
-    public void ClearBase64() => AangConfiguration.Instance.Base64.Clear();
+    public void ClearBase64() => PreviewConfiguration.Instance.Base64.Clear();
 
     [UsedImplicitly]
     public void SetUrns(string value) =>
-        AangConfiguration.Instance.Urns = value.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(URNUtils.SanitizeURN).ToList();
+        PreviewConfiguration.Instance.Urns = value.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(URNUtils.SanitizeURN).ToList();
 
     [UsedImplicitly]
-    public void SetBackground(string value) => AangConfiguration.Instance.SetBackground(value);
+    public void SetBackground(string value) => PreviewConfiguration.Instance.SetBackground(value);
 
     [UsedImplicitly]
-    public void SetSkinColor(string value) => AangConfiguration.Instance.SetSkinColor(value);
+    public void SetSkinColor(string value) => PreviewConfiguration.Instance.SetSkinColor(value);
 
     [UsedImplicitly]
-    public void SetHairColor(string value) => AangConfiguration.Instance.SetHairColor(value);
+    public void SetHairColor(string value) => PreviewConfiguration.Instance.SetHairColor(value);
 
     [UsedImplicitly]
-    public void SetEyeColor(string value) => AangConfiguration.Instance.SetEyeColor(value);
+    public void SetEyeColor(string value) => PreviewConfiguration.Instance.SetEyeColor(value);
 
     [UsedImplicitly]
-    public void SetBodyShape(string value) => AangConfiguration.Instance.BodyShape = value;
+    public void SetBodyShape(string value) => PreviewConfiguration.Instance.BodyShape = value;
 
     [UsedImplicitly]
-    public void SetShowAnimationReference(string value) => AangConfiguration.Instance.ShowAnimationReference = bool.Parse(value);
+    public void SetShowAnimationReference(string value) => PreviewConfiguration.Instance.ShowAnimationReference = bool.Parse(value);
 
     [UsedImplicitly]
-    public void SetProjection(string value) => AangConfiguration.Instance.Projection = value;
+    public void SetProjection(string value) => PreviewConfiguration.Instance.Projection = value;
 
     [UsedImplicitly]
-    public void SetContract(string value) => AangConfiguration.Instance.Contract = value;
+    public void SetContract(string value) => PreviewConfiguration.Instance.Contract = value;
 
     [UsedImplicitly]
-    public void SetItemID(string value) => AangConfiguration.Instance.ItemID = value;
+    public void SetItemID(string value) => PreviewConfiguration.Instance.ItemID = value;
 
     [UsedImplicitly]
-    public void SetTokenID(string value) => AangConfiguration.Instance.TokenID = value;
+    public void SetTokenID(string value) => PreviewConfiguration.Instance.TokenID = value;
 
     [UsedImplicitly]
-    public void SetDisableLoader(string value) => AangConfiguration.Instance.DisableLoader = bool.Parse(value);
+    public void SetDisableLoader(string value) => PreviewConfiguration.Instance.DisableLoader = bool.Parse(value);
 
     [UsedImplicitly]
-    public void SetDisableSwitcher(string value) => AangConfiguration.Instance.DisableSwitcher = bool.Parse(value);
+    public void SetDisableSwitcher(string value) => PreviewConfiguration.Instance.DisableSwitcher = bool.Parse(value);
 
     [UsedImplicitly]
-    public void SetUsername(string value) => AangConfiguration.Instance.Username = value;
+    public void SetUsername(string value) => PreviewConfiguration.Instance.Username = value;
 
     [UsedImplicitly]
     public void SetSpringBonesParams(string value)

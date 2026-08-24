@@ -144,8 +144,8 @@ namespace Preview
             {
                 _shouldReload = false;
 
-                // We store the instance in case it gets recreated by a call to AangConfiguration.RecreateFrom
-                var config = AangConfiguration.Instance;
+                // We store the instance in case it gets recreated by a call to PreviewConfiguration.RecreateFrom
+                var config = PreviewConfiguration.Instance;
 
                 avatarRotator.enabled = false;
                 wearableRotator.enabled = false;
@@ -315,7 +315,7 @@ namespace Preview
                 Array.Empty<string>(),
                 colors);
 
-            if (AangConfiguration.Instance.DisableFace)
+            if (PreviewConfiguration.Instance.DisableFace)
             {
                 avatarLoader.HideFacialFeatures();
             }
@@ -323,7 +323,7 @@ namespace Preview
 
         private async Awaitable<(bool emoteOverride, bool emoteOverrideAudio, bool validRepresentation,
                 bool showsItemAlone, BodyShape avatarBodyShape)>
-            LoadForMarketplace(AangConfiguration config, List<string> urns)
+            LoadForMarketplace(PreviewConfiguration config, List<string> urns)
         {
             var profileID = config.Profile;
             var defaultEmote = config.Emote;
@@ -437,7 +437,7 @@ namespace Preview
         /// Which view the marketplace preview opens in. An explicit request from the caller always wins;
         /// only when there is none do we fall back to the view the user last picked.
         /// </summary>
-        private static bool ShouldShowAvatar(AangConfiguration config) =>
+        private static bool ShouldShowAvatar(PreviewConfiguration config) =>
             config.Type switch
             {
                 PreviewViewType.Avatar => true,
@@ -456,7 +456,7 @@ namespace Preview
                 EntityDefinition.FromEmbeddedEmote(defaultEmote, loop), avatar.forceRender, avatar.GetAvatarColors());
         }
 
-        private async Awaitable<List<string>> LoadUrns(AangConfiguration config)
+        private async Awaitable<List<string>> LoadUrns(PreviewConfiguration config)
         {
             if (config.Urns.Count > 0) return config.Urns;
 

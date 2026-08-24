@@ -6,11 +6,11 @@ using Services;
 using UnityEngine;
 using Utils;
 
-public class AangConfiguration
+public class PreviewConfiguration
 {
-    public static AangConfiguration Instance { get; private set; } = new();
+    public static PreviewConfiguration Instance { get; private set; } = new();
 
-    private AangConfiguration()
+    private PreviewConfiguration()
     {
     }
 
@@ -269,7 +269,7 @@ public class AangConfiguration
 
     public static void RecreateFrom(string url)
     {
-        Instance = new AangConfiguration();
+        Instance = new PreviewConfiguration();
 
         if (string.IsNullOrEmpty(url) || !url.Contains('?')) return;
 

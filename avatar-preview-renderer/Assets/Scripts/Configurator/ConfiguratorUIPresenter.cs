@@ -178,7 +178,7 @@ namespace Configurator
 
             // Debug FPS Counter
             _fpsCounter = root.Q<Label>("FPSCounter");
-            _fpsCounter.SetDisplay(_showingFPS = AangConfiguration.Instance.ShowFPS);
+            _fpsCounter.SetDisplay(_showingFPS = PreviewConfiguration.Instance.ShowFPS);
 
             // To allow live reload during runtime in the editor
             if (_viewData.HasValue)

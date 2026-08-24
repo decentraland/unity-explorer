@@ -269,19 +269,19 @@ namespace Configurator
 
             // Wait for the username
             Debug.Log("Waiting for username...");
-            while (string.IsNullOrEmpty(AangConfiguration.Instance.Username))
+            while (string.IsNullOrEmpty(PreviewConfiguration.Instance.Username))
             {
                 await Awaitable.NextFrameAsync();
             }
 
-            Debug.Log($"Username received: {AangConfiguration.Instance.Username}");
+            Debug.Log($"Username received: {PreviewConfiguration.Instance.Username}");
 
-            uiPresenter.SetUsername(AangConfiguration.Instance.Username);
+            uiPresenter.SetUsername(PreviewConfiguration.Instance.Username);
 
             platform.SetActive(true);
             uiPresenter.LoadCompleted();
 
-            if (AangConfiguration.Instance.UseBrowserPreload)
+            if (PreviewConfiguration.Instance.UseBrowserPreload)
             {
                 EntityService.PreloadCachedEntityAssets();
                 JSBridge.NativeCalls.PreloadURLs(
