@@ -309,8 +309,6 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 result = await TryLoadFromCacheAsync(intention, ct);
 
-                bool fromCache = result != null;
-
                 if (result == null)
                 {
                     // If result is null, it means we are about to start a fresh download loop
@@ -319,18 +317,18 @@ namespace ECS.StreamableLoading.Common.Systems
                     result = await RepeatLoopAsync(intention, state, partition, intentionId, ct);
                 }
 
+                // // Try load from cache first
+                // result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, intentionId, ct);
+
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
 
                 // before firing the continuation of the ongoing request
                 // Add result to the cache
-                // Only freshly downloaded assets are put: a memory hit is already stored, a disk hit is
-                // promoted to memory by GenericCache.ContentAsync, and re-serializing an asset that was
-                // handed to consumers can fail outright (e.g. a texture made non-readable after upload).
                 // The write is detached from the intention's lifetime on purpose: once the asset is in memory
                 // the disk write should run to completion, otherwise a short-lived consumer (e.g. an entity
                 // destroyed mid-write) interrupts the stream and the entry is lost
-                if (!fromCache && result is { Succeeded: true })
+                if (result is { Succeeded: true })
                     genericCache
                        .PutAsync(intention, result.Value.Asset!, intention.IsQualifiedForDiskCache(), cancellationTokenSource.Token)
                        .Forget(static e =>
