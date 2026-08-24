@@ -88,8 +88,12 @@ namespace DCL.Browser
         private readonly List<string>? resolvedNonClientHosts;
         private readonly string? gatewayPrefix;
         private readonly string? domainSuffix;
+        private readonly bool hasCliGatewayOverride;
 
-        private bool enabled => envSupported && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
+        // An explicit gateway origin is an infrastructure override, so it must be effective while the URL source
+        // is being constructed and diagnostic consumers probe/cache URLs before remote feature flags are loaded.
+        private bool enabled => envSupported &&
+                                (hasCliGatewayOverride || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY));
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
@@ -104,6 +108,7 @@ namespace DCL.Browser
             : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
+            hasCliGatewayOverride = !string.IsNullOrWhiteSpace(cliGatewayUrl);
 
             if (envSupported)
             {

@@ -375,7 +375,10 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [Test]
         public void RouteACustomBaseDomainThroughTheCliGatewayOrigin()
         {
-            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            // A CLI override must work before the remote feature-flags document has loaded. URL diagnostics probe
+            // and cache service URLs during source construction, so waiting for use-gateway would leave direct
+            // service subdomains cached and fail on fixture certificates.
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
             var urlsSource = new GatewayUrlsSource(
                 DecentralandEnvironment.Custom,
                 new IRealmData.Fake(),
