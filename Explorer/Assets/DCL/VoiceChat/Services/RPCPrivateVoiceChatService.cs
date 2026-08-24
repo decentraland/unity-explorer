@@ -48,6 +48,8 @@ namespace DCL.VoiceChat.Services
                 socialServiceEventBus.TransportClosed += OnTransportClosed;
                 socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
                 socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
+                identityCache.OnIdentityChanged += OnIdentityChanged;
+                identityCache.OnIdentityCleared += OnIdentityChanged;
             }
             else { isServiceDisabled = true; }
         }
@@ -59,6 +61,8 @@ namespace DCL.VoiceChat.Services
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
             socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
+            identityCache.OnIdentityChanged -= OnIdentityChanged;
+            identityCache.OnIdentityCleared -= OnIdentityChanged;
             subscriptionCts.SafeCancelAndDispose();
 
             base.Dispose();
@@ -68,16 +72,28 @@ namespace DCL.VoiceChat.Services
         {
             if (isServiceDisabled)
                 throw new InvalidOperationException("Voice chat service is disabled.");
+        }
 
+        private void ThrowIfGuest()
+        {
             if (identityCache.IsGuest())
                 throw new InvalidOperationException("Voice chat is not available for guest accounts.");
         }
 
-        private void OnTransportConnected()
+        private void TrySubscribe()
         {
             if (isServiceDisabled || identityCache.Identity == null || identityCache.IsGuest()) return;
 
             TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+        }
+
+        private void OnTransportConnected() =>
+            TrySubscribe();
+
+        private void OnIdentityChanged()
+        {
+            subscriptionCts = subscriptionCts.SafeRestart();
+            TrySubscribe();
         }
 
         private void OnTransportClosed()
@@ -91,12 +107,13 @@ namespace DCL.VoiceChat.Services
             if (isServiceDisabled || identityCache.Identity == null || identityCache.IsGuest()) return;
 
             Reconnected?.Invoke();
-            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+            TrySubscribe();
         }
 
         public async UniTask<StartPrivateVoiceChatResponse> StartPrivateVoiceChatAsync(string userId, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
+            ThrowIfGuest();
 
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
@@ -119,6 +136,7 @@ namespace DCL.VoiceChat.Services
         public async UniTask<AcceptPrivateVoiceChatResponse> AcceptPrivateVoiceChatAsync(string callId, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
+            ThrowIfGuest();
 
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
@@ -176,6 +194,7 @@ namespace DCL.VoiceChat.Services
         public async UniTask<GetIncomingPrivateVoiceChatRequestResponse> GetIncomingPrivateVoiceChatRequestAsync(CancellationToken ct)
         {
             ThrowIfServiceDisabled();
+            ThrowIfGuest();
 
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
