@@ -241,11 +241,12 @@ jobs:
           echo "Tree after download:"
           find "$ROOT" -maxdepth 3 -print | sed 's/^/OUT: /'
           shopt -s dotglob nullglob
-          for d in "avatar-preview-renderer" "AvatarPreviewRenderer" "build" "Build"; do
-            if [ -d "$ROOT/$d" ] && [ -f "$ROOT/$d/index.html" ]; then
-              echo "Flattening $ROOT/$d -> $ROOT"
-              mv "$ROOT/$d"/* "$ROOT"/
-              rmdir "$ROOT/$d" || true
+          # UCB names the output folder after its build target (still aang-renderer), so detect instead of hardcoding.
+          for d in "$ROOT"/*/; do
+            if [ -f "${d}index.html" ]; then
+              echo "Flattening $d -> $ROOT"
+              mv "$d"* "$ROOT"/
+              rmdir "$d" || true
               break
             fi
           done
