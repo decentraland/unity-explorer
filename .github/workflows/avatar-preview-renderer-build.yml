@@ -266,6 +266,11 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Preview URL: $url"
 
+      # Keeps the historical aang-renderer URL pointing at the latest dev build.
+      - name: Alias dev deployment (merges to dev only)
+        if: ${{ github.event_name == 'push' }}
+        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" aang-renderer.vercel.app
+
       - name: Write job summary
         run: |
           {
