@@ -23,13 +23,14 @@ namespace ECS.StreamableLoading.Cache.Disk
         /// </summary>
         public const string TEMP_FILE_SUFFIX = ".tmp";
 
-        /// <summary>
-        ///     False when the store discards writes and never returns content (<see cref="Fake" />),
-        ///     letting callers skip the work of preparing data for it — e.g. serializing a texture.
-        /// </summary>
-        bool Enabled => true;
-
         UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator;
+
+        /// <summary>
+        ///     Serializes and persists the value. Serialization is owned by the store so that an
+        ///     implementation that discards writes never invokes the serializer — preparing the bytes
+        ///     can be expensive or outright invalid (e.g. reading a texture whose CPU mirror was dropped).
+        /// </summary>
+        UniTask<EnumResult<TaskError>> PutAsync<T, Ts>(HashKey key, string extension, T data, IDiskSerializer<T, Ts> serializer, CancellationToken token) where Ts: IMemoryIterator;
 
         UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token);
 
@@ -37,9 +38,12 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         class Fake : IDiskCache
         {
-            public bool Enabled => false;
-
             public UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator =>
+                UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's fake"));
+
+            // The serializer is deliberately never invoked: the write is discarded, so the bytes
+            // must not be prepared.
+            public UniTask<EnumResult<TaskError>> PutAsync<T, Ts>(HashKey key, string extension, T data, IDiskSerializer<T, Ts> serializer, CancellationToken token) where Ts: IMemoryIterator =>
                 UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's fake"));
 
             public UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token) =>
