@@ -1,0 +1,418 @@
+name: Unity Cloud Build
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'Assets/**'
+      - 'Packages/**'
+      - 'ProjectSettings/**'
+      - 'UIElementsSchema/**'
+      - 'package.json'
+      - '.github/workflows/**'
+      - '.github/scripts/**'
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'README.md'
+      - 'Readme.md'
+      - '.github/**'
+  workflow_dispatch:
+    inputs:
+      development_build:
+        description: 'Development Build'
+        required: false
+        default: true
+        type: boolean
+      clean_build:
+        description: 'Clean Build'
+        required: false
+        default: false
+        type: boolean
+      cache_strategy:
+        description: 'Select cache strategy'
+        required: true
+        default: 'library'
+        type: choice
+        options:
+          - none
+          - library
+          - workspace
+          - inherit
+
+jobs:
+  prebuild:
+    name: Prebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
+      options: ${{ steps.get_options.outputs.options }}
+      version: ${{ steps.get_version.outputs.version }}
+      clean_build: ${{ steps.set_defaults.outputs.clean_build }}
+      cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Get commit SHA
+        id: get_commit_sha
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "commit_sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "commit_sha=$GITHUB_SHA" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Debug Commit SHA
+        run: |
+          echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
+          echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"
+          echo "HEAD Commit: $(git rev-parse HEAD)"
+
+      - name: Get version
+        id: get_version
+        run: |
+          TAG=$(git describe --tags --abbrev=0)
+          VERSION=${TAG#v}
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION_OUT="version=$VERSION"
+          else
+            COMMIT_SHA="${{ steps.get_commit_sha.outputs.commit_sha }}"
+            SHORT_SHA=${COMMIT_SHA:0:7}
+            VERSION_OUT="version=$VERSION-$SHORT_SHA"
+          fi
+
+          echo "TAG: $TAG"
+          echo "VERSION: $VERSION"
+          echo "VERSION_OUT: $VERSION_OUT"
+
+          echo $VERSION_OUT >> $GITHUB_OUTPUT
+
+      - name: Set default values
+        id: set_defaults
+        run: |
+          # Clean build logic
+          if [ "${{ github.event.inputs.clean_build }}" ]; then
+            clean_build=${{ github.event.inputs.clean_build }}
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            clean_build=true
+          else
+            clean_build=false
+          fi
+          echo "Set clean_build to: $clean_build"
+          echo "clean_build=${clean_build}" >> $GITHUB_OUTPUT
+
+          if [ "${{ github.event.inputs.cache_strategy }}" ]; then
+            cache_strategy=${{ github.event.inputs.cache_strategy }}
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            cache_strategy='none'
+          else
+            cache_strategy='library'
+          fi
+          echo "Set cache_strategy to: $cache_strategy"
+          echo "cache_strategy=${cache_strategy}" >> $GITHUB_OUTPUT
+
+      - name: Get BuildOptions
+        id: get_options
+        run: |
+          #!/bin/bash
+
+          #options=("DetailedBuildReport")
+          options=()
+
+          # development build - enabled for PRs or when explicitly requested
+          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event.inputs.development_build }}" == "true" ]; then
+            options+=("Development")
+          fi
+
+          # Write the array as a comma-separated string
+          # Set the Internal Field Separator to comma
+          IFS=,
+          echo "options=${options[*]}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: prebuild
+    timeout-minutes: 360
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12.3
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/scripts/requirements.txt
+
+      - name: Execute Unity Cloud build
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 180  # matches your GLOBAL_TIMEOUT = 10800s
+          max_attempts: 3
+          retry_on: any
+          retry_wait_seconds: 30
+          on_retry_command: |
+            echo "::warning::🔁 Unity Cloud Build retry triggered at $(date '+%Y-%m-%d %H:%M:%S')"
+          command: |
+            echo "🔧 Starting Unity Cloud Build attempt at $(date '+%Y-%m-%d %H:%M:%S')"
+            python -u .github/scripts/build.py
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+          POLL_TIME: 60  # Set the polling time in seconds
+          GLOBAL_TIMEOUT: 10800  # Set the global timeout in seconds (e.g., 3 hours)
+          TARGET: t_web
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
+          BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
+          CLEAN_BUILD: ${{ needs.prebuild.outputs.clean_build }}
+          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }}
+          IS_RELEASE_BUILD: ${{ startsWith(github.ref, 'refs/tags/') }}
+          TAG_VERSION: ${{ needs.prebuild.outputs.version }}
+          #Possible values: { none, library, workspace, inherit }
+          # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
+          # (The "PARAM_" prefix exists to allow any future values config-free)
+          # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
+          # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
+          PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
+          #PARAM_BUILD_VERSION: 0.0.1-test
+          PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
+
+      - name: Set artifact name
+        id: set_artifact_name
+        run: |
+          echo "artifact_name=aang-renderer" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.artifact_name }}
+          path: build
+          if-no-files-found: error
+
+      - name: Zip Build Output
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          zip -r build.zip build/
+          mv build.zip aang-renderer-${{ github.ref_name }}.zip
+
+      - name: Create GitHub Release and upload asset
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          name: Release ${{ github.ref_name }}
+          body: Release for ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: aang-renderer-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set SHA, branch, and build prefix
+        run: |
+          echo "SHA_SHORT=$(echo ${{ needs.prebuild.outputs.commit_sha }} | cut -c1-7)" >> $GITHUB_ENV
+          echo "SAFE_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> $GITHUB_ENV
+
+          EVENT_NAME="${{ github.event_name }}"
+          echo "Detected event: $EVENT_NAME"
+          case "$EVENT_NAME" in
+            pull_request) echo "BUILD_PREFIX=pr" >> $GITHUB_ENV ;;
+            push) echo "BUILD_PREFIX=pu" >> $GITHUB_ENV ;;
+            merge_group) echo "BUILD_PREFIX=mg" >> $GITHUB_ENV ;;
+            workflow_dispatch) echo "BUILD_PREFIX=wd" >> $GITHUB_ENV ;;
+            workflow_call) echo "BUILD_PREFIX=wc" >> $GITHUB_ENV ;;
+            schedule) echo "BUILD_PREFIX=sc" >> $GITHUB_ENV ;;
+            *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
+          esac
+
+      - name: Upload cloud logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: web_unity_log
+          path: unity_cloud_log.log
+          if-no-files-found: error
+
+      - name: Print cloud logs
+        if: always()
+        run: cat unity_cloud_log.log
+
+      - name: Extract and display errors
+        if: always()
+        run: |
+          echo "=== Extracted Errors ==="
+          grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in log."
+
+      - name: Cancel Unity Cloud build
+        if: ${{ failure() || cancelled() }}
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+        run: python -u .github/scripts/build.py --cancel
+
+  deploy_preview:
+    name: Vercel Preview (PR only)
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      preview_url: ${{ steps.vercel_deploy.outputs.url }}
+
+    steps:
+      - name: Checkout repo (for project link/config)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel environment (preview)
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Download built artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: aang-renderer
+          path: .vercel/output/static
+
+      - name: Flatten artifact to static root (handles /aang-renderer, /build, /Build)
+        run: |
+          set -euo pipefail
+          ROOT=".vercel/output/static"
+          echo "Tree after download:"
+          find "$ROOT" -maxdepth 3 -print | sed 's/^/OUT: /'
+          shopt -s dotglob nullglob
+          for d in "aang-renderer" "build" "Build"; do
+            if [ -d "$ROOT/$d" ] && [ -f "$ROOT/$d/index.html" ]; then
+              echo "Flattening $ROOT/$d -> $ROOT"
+              mv "$ROOT/$d"/* "$ROOT"/
+              rmdir "$ROOT/$d" || true
+              break
+            fi
+          done
+          ls -la "$ROOT" | sed 's/^/static: /'
+          test -f "$ROOT/index.html" || { echo "::error::index.html not found at $ROOT"; exit 1; }
+
+      - name: Copy vercel.json into static folder
+        run: |
+          cp vercel.json .vercel/output/static/vercel.json
+          echo "Using vercel.json:"
+          cat .vercel/output/static/vercel.json
+
+      - name: Deploy static folder to Vercel (Preview)
+        id: vercel_deploy
+        run: |
+          url=$(vercel deploy .vercel/output/static --yes --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Preview URL: $url"
+
+      - name: Write job summary
+        run: |
+          {
+            echo '![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">'
+            echo
+            echo '## Vercel Preview is ready!'
+            echo
+            echo '| Field   | Value |'
+            echo '| ------- | ----- |'
+            echo '| Preview | ${{ steps.vercel_deploy.outputs.url }} |'
+            echo '| Commit  | `${{ github.sha }}` |'
+            echo '| Logs    | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |'
+            echo
+            echo '[badge]: https://img.shields.io/badge/Preview-Ready!-3fb950?logo=vercel&style=for-the-badge'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  comment-preview-success:
+    name: Comment (Vercel preview link)
+    needs: [prebuild, deploy_preview]
+    if: ${{ github.event_name == 'pull_request' && needs.deploy_preview.result == 'success' && needs.deploy_preview.outputs.preview_url != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Find existing comment
+        uses: peter-evans/find-comment@v2
+        id: find
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Vercel Preview'
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find.outputs.comment-id }}
+          edit-mode: replace
+          body: |-
+            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+
+            ## Vercel Preview is ready!
+
+            | Field   | Value |
+            | ------- | ----- |
+            | Preview | ${{ needs.deploy_preview.outputs.preview_url }} |
+            | Commit  | `${{ needs.prebuild.outputs.commit_sha }}` |
+            | Logs    | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |
+
+            [badge]: https://img.shields.io/badge/Preview-Ready!-3fb950?logo=vercel&style=for-the-badge
+
+  comment-preview-failed:
+    name: Comment (Vercel preview failed)
+    needs: deploy_preview
+    if: ${{ github.event_name == 'pull_request' && (needs.deploy_preview.result == 'failure' || needs.deploy_preview.result == 'cancelled') }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Find existing comment
+        uses: peter-evans/find-comment@v2
+        id: find
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Vercel Preview'
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find.outputs.comment-id }}
+          edit-mode: replace
+          body: |-
+            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+
+            ## Vercel Preview failed
+
+            Please check the logs of **Vercel Preview (PR only)**:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            [badge]: https://img.shields.io/badge/Preview-Failed!-ff0000?logo=vercel&style=for-the-badge
