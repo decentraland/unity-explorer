@@ -134,6 +134,17 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
+### `gateway-url`
+**Type:** URL (`http://` or `https://`)
+**Description:** Overrides the origin used for gateway-routed requests. The client still appends the service path produced by gateway routing, so a fixture can expose routes such as `https://fixture.example/realm-provider-ea/main/about` without requiring a `gateway.<base-domain>` certificate. This is a command-line-only infrastructure override.
+
+**Usage:**
+```bash
+--base-domain interconnected.online --gateway-url https://fixture.example
+```
+
+---
+
 ### `realm`
 **Type:** String (URL)
 **Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://).

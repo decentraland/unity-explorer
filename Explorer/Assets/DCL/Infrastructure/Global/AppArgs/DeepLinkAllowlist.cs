@@ -40,7 +40,7 @@ namespace Global.AppArgs
     ///         <item>
     ///             <b>Never permitted</b> — everything else, in particular params that launch code
     ///             (<c>creator-hub-bin-path</c>, <c>launch-cdp-monitor-on-start</c> — SEC-005); point the client at
-    ///             attacker infrastructure (<c>comms-adapter</c>, <c>gatekeeper-url</c>, <c>friends-api-url</c> —
+    ///             attacker infrastructure (<c>comms-adapter</c>, <c>gateway-url</c>, <c>gatekeeper-url</c>, <c>friends-api-url</c> —
     ///             SEC-052, <c>feature-flags-url</c>/<c>-hostname</c>, <c>optimized-assets-url</c>,
     ///             <c>lsd-remote-ab-server</c>/<c>-world</c>, <c>pulse</c>); move the client onto another chain
     ///             (<c>base-domain</c>, <c>eth-network</c>); bypass a version/specs screen

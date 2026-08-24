@@ -99,7 +99,8 @@ namespace DCL.Browser
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
             string? cliOptimizedAssetsUrl = null,
-            string? customBaseDomain = null)
+            string? customBaseDomain = null,
+            string? cliGatewayUrl = null)
             : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
@@ -111,7 +112,7 @@ namespace DCL.Browser
                 foreach (string subdomain in SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN)
                     resolvedNonClientHosts.Add($"{subdomain}.{BaseDomain}");
 
-                gatewayPrefix = $"https://{GATEWAY_SUBDOMAIN}.{BaseDomain}/";
+                gatewayPrefix = NormalizeGatewayPrefix(cliGatewayUrl) ?? $"https://{GATEWAY_SUBDOMAIN}.{BaseDomain}/";
                 domainSuffix = $".{BaseDomain}";
             }
         }
@@ -121,6 +122,21 @@ namespace DCL.Browser
 
         public new static GatewayUrlsSource CreateForTest(string customBaseDomain, ILaunchMode launchMode) =>
             new (DecentralandEnvironment.Custom, new IRealmData.Fake(), launchMode, customBaseDomain: customBaseDomain);
+
+        private static string? NormalizeGatewayPrefix(string? gatewayUrl)
+        {
+            if (string.IsNullOrWhiteSpace(gatewayUrl))
+                return null;
+
+            if (!Uri.TryCreate(gatewayUrl.Trim(), UriKind.Absolute, out Uri? uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
+                string.IsNullOrEmpty(uri.Host) ||
+                !string.IsNullOrEmpty(uri.Query) ||
+                !string.IsNullOrEmpty(uri.Fragment))
+                throw new ArgumentException($"'{gatewayUrl}' is not a valid gateway URL", nameof(gatewayUrl));
+
+            return uri.ToString().TrimEnd('/') + "/";
+        }
 
         /// <summary>
         ///     Transforms a 3rd party URL, DecentralandURLs are already transformed by <see cref="RawUrl" />
@@ -234,43 +250,39 @@ namespace DCL.Browser
 
         /// <summary>
         ///     Transform: https://{subdomain}.{domain}/{path}
-        ///     to: https://gateway.{domain}/{subdomain}/{path}
+        ///     to: {gateway origin}/{subdomain}/{path}
         /// </summary>
-        private static string TransformToGateway(string url)
+        private string TransformToGateway(string url)
         {
+            if (gatewayPrefix == null)
+                return url;
+
+            string gatewayPrefixValue = gatewayPrefix;
+
             int firstDot = url.IndexOf('.', HTTPS_PREFIX_LENGTH);
 
             if (firstDot < 0)
                 return url;
 
             // Already a gateway URL — don't double-transform
-            if (url.AsSpan(HTTPS_PREFIX_LENGTH, firstDot - HTTPS_PREFIX_LENGTH).Equals(GATEWAY_SUBDOMAIN.AsSpan(), StringComparison.OrdinalIgnoreCase))
+            if (url.StartsWith(gatewayPrefix, StringComparison.OrdinalIgnoreCase))
                 return url;
 
             int subdomainLength = firstDot - HTTPS_PREFIX_LENGTH;
             int pathStart = url.IndexOf('/', firstDot);
             int domainEnd = pathStart >= 0 ? pathStart : url.Length;
-            int domainLength = domainEnd - firstDot;
             int pathLength = url.Length - domainEnd;
 
-            int resultLength = HTTPS_PREFIX_LENGTH + GATEWAY_SUBDOMAIN.Length + domainLength + 1 + subdomainLength + pathLength;
+            int resultLength = gatewayPrefixValue.Length + subdomainLength + pathLength;
 
-            return string.Create(resultLength, (url, firstDot, domainLength, subdomainLength, pathStart, pathLength), static (span, state) =>
+            return string.Create(resultLength, (url, gatewayPrefixValue, subdomainLength, pathStart, pathLength), static (span, state) =>
             {
                 ReadOnlySpan<char> src = state.url.AsSpan();
 
                 var pos = 0;
 
-                "https://".AsSpan().CopyTo(span);
-                pos += 8;
-
-                GATEWAY_SUBDOMAIN.AsSpan().CopyTo(span.Slice(pos));
-                pos += GATEWAY_SUBDOMAIN.Length;
-
-                src.Slice(state.firstDot, state.domainLength).CopyTo(span.Slice(pos));
-                pos += state.domainLength;
-
-                span[pos++] = '/';
+                state.gatewayPrefixValue.AsSpan().CopyTo(span);
+                pos += state.gatewayPrefixValue.Length;
 
                 src.Slice(8, state.subdomainLength).CopyTo(span.Slice(pos));
                 pos += state.subdomainLength;

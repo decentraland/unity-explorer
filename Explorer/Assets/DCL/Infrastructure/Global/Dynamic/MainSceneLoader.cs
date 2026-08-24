@@ -306,6 +306,7 @@ namespace Global.Dynamic
             var realmData = new RealmData();
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
+            applicationParametersParser.TryGetValue(AppArgsFlags.GATEWAY_URL, out string? cliGatewayUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
             // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
@@ -328,7 +329,8 @@ namespace Global.Dynamic
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
                 cliOptimizedAssetsUrl,
-                customBaseDomain);
+                customBaseDomain,
+                cliGatewayUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);

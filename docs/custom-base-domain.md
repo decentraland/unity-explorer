@@ -42,10 +42,12 @@ newly added url with a hand-written domain is caught.
   host (`GetFeatureFlagsUrl`), the catalyst server list (`RealmNamesMap`) and the
   smart-wearable content fallback (`SmartWearableCache`).
 - **Gateway routing** (`GatewayUrlsSource`): supported hosts route through
-  `gateway.<base-domain>/…`. `IsGatewayTransformable` accepts exactly a single-label
-  subdomain under this client's own `BaseDomain`, so an overridden or flag-driven host — or
-  another environment's domain — passes through untouched. It only engages when the
-  `use-gateway` flag served by *that deployment's* feature-flags backend enables it.
+  `gateway.<base-domain>/…` by default. `--gateway-url` can override that origin for
+  deployments whose gateway is exposed on a shared origin or path. `IsGatewayTransformable`
+  accepts exactly a single-label subdomain under this client's own `BaseDomain`, so an
+  overridden or flag-driven host — or another environment's domain — passes through untouched.
+  It only engages when the `use-gateway` flag served by *that deployment's* feature-flags
+  backend enables it.
 - **Teleport validation** (`ChatEnvironmentValidator`): realms must sit under the base
   domain — a custom deployment neither rejects its own realms nor accepts decentraland
   ones.

@@ -373,6 +373,22 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
+        public void RouteACustomBaseDomainThroughTheCliGatewayOrigin()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            var urlsSource = new GatewayUrlsSource(
+                DecentralandEnvironment.Custom,
+                new IRealmData.Fake(),
+                ILaunchMode.PLAY,
+                customBaseDomain: CUSTOM_DOMAIN,
+                cliGatewayUrl: "https://fixture.example/edge");
+
+            Assert.AreEqual("https://fixture.example/edge/auth-api", urlsSource.Url(DecentralandUrl.ApiAuth));
+            Assert.AreEqual("https://fixture.example/edge/comms-gatekeeper/get-scene-adapter", urlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter));
+            Assert.AreEqual("https://auth-api." + CUSTOM_DOMAIN, urlsSource.GetOriginalUrl("https://fixture.example/edge/auth-api"));
+        }
+
+        [Test]
         public void KeepTheGatekeeperOverrideAboveTheCustomBaseDomain()
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: true);

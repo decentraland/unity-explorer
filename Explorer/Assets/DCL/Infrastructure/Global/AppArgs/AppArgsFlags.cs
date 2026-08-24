@@ -24,6 +24,13 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
 
         /// <summary>
+        ///     Overrides the origin used by <see cref="DCL.Browser.GatewayUrlsSource" /> for gateway-routed
+        ///     requests. This is useful for deployments whose gateway is exposed on the realm origin rather than
+        ///     at <c>gateway.&lt;base-domain&gt;</c>.
+        /// </summary>
+        public const string GATEWAY_URL = "gateway-url";
+
+        /// <summary>
         ///     Points every backend host at a deployment served under this base domain instead of
         ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
         ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
