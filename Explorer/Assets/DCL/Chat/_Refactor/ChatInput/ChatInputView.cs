@@ -23,6 +23,10 @@ namespace DCL.Chat.ChatInput
             [field: SerializeField] internal EmojiPanelView emojiPanel { get; private set; }
             [field: SerializeField] internal AudioClipConfig addEmojiAudio { get; private set; }
             [field: SerializeField] internal AudioClipConfig openEmojiPanelAudio { get; private set; }
+
+            [field: SerializeField]
+            [field: Tooltip("Space kept between the input field's top edge and the emoji panel's bottom edge.")]
+            internal float emojiPanelGap { get; private set; } = 5f;
         }
 
         [field: SerializeField] public CustomInputField inputField { get; private set; }

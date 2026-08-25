@@ -32,6 +32,8 @@ using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DG.Tweening;
@@ -68,6 +70,13 @@ namespace Global.Dynamic
 
         [Space]
         [SerializeField] private DecentralandEnvironment decentralandEnvironment;
+
+        // Non-null only for DecentralandEnvironment.Custom; set from the command line by ApplyBaseDomainArg.
+        private string? customBaseDomain;
+
+        // The validated --eth-network value, or null when it was not passed on the command line. Captured by
+        // CaptureEthNetworkArg and turned into a network by ResolveEthereumNetwork once the environment is settled.
+        private string? ethNetworkArg;
 
         [Space]
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
@@ -192,8 +201,26 @@ namespace Global.Dynamic
 
         private void ParseEnvironment(string environment)
         {
-            if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
-                decentralandEnvironment = env;
+            // --base-domain already selected Custom, and it is command-line only while --dclenv can arrive from a
+            // deep link. Letting the link win would move the client back onto a decentraland domain behind the
+            // operator's back, so the base domain is authoritative and the mismatch is reported.
+            if (customBaseDomain != null)
+            {
+                ReportHub.Log(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: --{AppArgsFlags.BASE_DOMAIN}={customBaseDomain} pins the environment to {nameof(DecentralandEnvironment.Custom)}");
+                return;
+            }
+
+            if (!Enum.TryParse(environment, true, out DecentralandEnvironment env))
+                return;
+
+            // Custom has no domain of its own to derive; only --base-domain can select it.
+            if (env == DecentralandEnvironment.Custom)
+            {
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: {nameof(DecentralandEnvironment.Custom)} is selected by --{AppArgsFlags.BASE_DOMAIN} instead");
+                return;
+            }
+
+            decentralandEnvironment = env;
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
@@ -214,6 +241,22 @@ namespace Global.Dynamic
             // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
             IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
 
+            // Read while the deep link is still deferred, so only the command line can supply it. The ordering is the
+            // reason, not the allowlist: the base domain gates which realms DeepLinkAllowlist trusts, so it has to be
+            // registered before InitializeDeepLinks() evaluates the pending link's whitelisted-realm params against
+            // it. A domain arriving in that same link could not be — its own params would need gating against a domain
+            // it has not supplied yet. (base-domain is denied by the allowlist, so a link carrying it still reaches
+            // the consent dialog; WarnIfCommandLineOnlyArgCameFromTheDeepLink reports that accepting it changes nothing.)
+            ApplyBaseDomainArg(applicationParametersParser);
+
+            // Read while the deep link is still deferred for the same reason as the base domain: which chain the
+            // client signs against is not something a link may pick, not even through the denied-params dialog.
+            if (!CaptureEthNetworkArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
             if (applicationParametersParser.HasPendingDeepLink)
                 await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
 
@@ -231,6 +274,9 @@ namespace Global.Dynamic
                 return;
             }
 
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
+
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
@@ -245,6 +291,10 @@ namespace Global.Dynamic
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
+
+            // Resolved after ApplyConfig, not where the arg was captured: --dclenv is able to move the environment up
+            // to this point, and the environment is what decides whether the override is read at all.
+            EthereumNetwork ethereumNetwork = ResolveEthereumNetwork();
 
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
@@ -277,7 +327,8 @@ namespace Global.Dynamic
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
-                cliOptimizedAssetsUrl);
+                cliOptimizedAssetsUrl,
+                customBaseDomain);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
@@ -287,7 +338,7 @@ namespace Global.Dynamic
                 InstantiateAltTester(applicationParametersParser);
 
             var web3AccountFactory = new Web3AccountFactory();
-            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
+            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, ethereumNetwork);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
@@ -309,6 +360,7 @@ namespace Global.Dynamic
                 partialsDiskCache,
                 world,
                 decentralandEnvironment,
+                ethereumNetwork,
                 dclVersion,
                 localAbBaseUrl,
                 destroyCancellationToken
@@ -551,12 +603,96 @@ namespace Global.Dynamic
 #endif
         }
 
+        /// <summary>
+        ///     Reports a value the deep link carried for an arg that was already read from the command line, where
+        ///     the link's own value is therefore not applied - not even after the user accepts it in the
+        ///     denied-params dialog, since nothing reads the arg again. Without this it would sit in the logged args
+        ///     looking applied.
+        /// </summary>
+        private static void WarnIfCommandLineOnlyArgCameFromTheDeepLink(IAppArgs appArgs, string flag, string? commandLineValue)
+        {
+            if (appArgs.TryGetValue(flag, out string? linkValue)
+                && !string.IsNullOrWhiteSpace(linkValue)
+                && !string.Equals(linkValue.Trim(), commandLineValue, StringComparison.OrdinalIgnoreCase))
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{flag}={linkValue} from the deep link: it is only applied from the command line");
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.ETH_NETWORK" /> into <see cref="ethNetworkArg" />, rejecting a value
+        ///     that would otherwise leave the run on the default chain with nothing said. Returns false when the
+        ///     launch must be abandoned; the reason is already reported.
+        ///     <para>
+        ///         Rejecting rather than defaulting is the whole point on a <c>--base-domain</c> deployment: mainnet
+        ///         is the default, so every way of mistyping this flag ends with real contracts and the production
+        ///         identity slot behind an operator who asked for a test chain.
+        ///     </para>
+        /// </summary>
+        private bool CaptureEthNetworkArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.ETH_NETWORK, out string? value))
+                return true;
+
+            // Only a Custom environment reads the value, and only --base-domain selects Custom, so this is already
+            // final here even though --dclenv has not been applied yet.
+            bool valueIsRead = decentralandEnvironment == DecentralandEnvironment.Custom;
+
+            if (valueIsRead && !ChainUtils.TryParseNetwork(value, out _))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.ETH_NETWORK} '{value}' names no known network. Expected {ChainUtils.GetNetworkId(EthereumNetwork.Mainnet)} or {ChainUtils.GetNetworkId(EthereumNetwork.Sepolia)}");
+                return false;
+            }
+
+            ethNetworkArg = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            return true;
+        }
+
+        /// <summary>
+        ///     Turns the captured <see cref="ethNetworkArg" /> into the chain this run uses. Only a
+        ///     <c>--base-domain</c> deployment can answer for its own chain, so an override paired with a
+        ///     decentraland environment is reported and dropped rather than silently having no effect. The rule
+        ///     itself lives in <see cref="ChainUtils.ResolveNetwork" />; this reports what it discarded.
+        /// </summary>
+        private EthereumNetwork ResolveEthereumNetwork()
+        {
+            EthereumNetwork ethereumNetwork = ChainUtils.ResolveNetwork(decentralandEnvironment, ethNetworkArg);
+
+            if (ethNetworkArg != null && ChainUtils.PinnedNetworkOf(decentralandEnvironment) is { } pinned)
+            {
+                if (!ChainUtils.TryParseNetwork(ethNetworkArg, out EthereumNetwork requested))
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ETH_NETWORK}={ethNetworkArg}: it names no known network, and the {decentralandEnvironment} environment runs on {ChainUtils.GetNetworkId(pinned)} regardless");
+                else if (requested != pinned)
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ETH_NETWORK}={ethNetworkArg}: the {decentralandEnvironment} environment always runs on {ChainUtils.GetNetworkId(pinned)}");
+            }
+
+            // Logged unconditionally: a custom deployment defaults to mainnet, which puts the production contracts
+            // and identity slot behind it, and that has to be answerable from a log after the fact.
+            ReportHub.Log(ReportCategory.STARTUP, $"Chain: {ChainUtils.GetNetworkId(ethereumNetwork)} (environment {decentralandEnvironment})");
+
+            return ethereumNetwork;
+        }
+
+        /// <summary>
+        ///     Applies <see cref="AppArgsFlags.BASE_DOMAIN" />: it selects <see cref="DecentralandEnvironment.Custom" />
+        ///     and, through <see cref="DecentralandUrlsSource.ResolveBaseDomain" />, the domain every backend host and
+        ///     every realm-trust check resolves against.
+        /// </summary>
+        private void ApplyBaseDomainArg(IAppArgs appArgs)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? baseDomainArg) && !string.IsNullOrWhiteSpace(baseDomainArg))
+            {
+                customBaseDomain = baseDomainArg.Trim();
+                decentralandEnvironment = DecentralandEnvironment.Custom;
+            }
+
+            DeepLinkAllowlist.SetTrustedBaseDomain(DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain));
+        }
+
         private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
         {
             appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
 
             string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
-                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment)
+                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, customBaseDomain)
                 : featureFlagsOverride.TrimEnd('/');
 
             IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);
@@ -841,6 +977,15 @@ namespace Global.Dynamic
             var uri = new Uri(realm);
             if (uri.Host == "127.0.0.1") return true;
             if (uri.Host == "localhost") return true;
+
+            // A --base-domain deployment owns everything under its domain, so its realms and worlds carry the same
+            // trust the hardcoded decentraland hosts below do. Its worlds server in particular cannot be reached any
+            // other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers, which
+            // is exactly why decentraland's is hardcoded. Widening trust this way is safe because --base-domain is
+            // command-line only (never accepted from a deep link), so the operator already chose this deployment.
+            if (decentralandEnvironment == DecentralandEnvironment.Custom
+                && IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, dclUrls.BaseDomain))
+                return true;
             if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
             if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
             if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
