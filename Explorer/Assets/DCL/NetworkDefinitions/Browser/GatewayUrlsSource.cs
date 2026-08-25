@@ -86,8 +86,8 @@ namespace DCL.Browser
 
         private readonly bool envSupported;
 
-        // The origin --gateway named, normalized to a trailing slash, or null to use gateway.{BaseDomain}.
-        // Naming one is itself the opt-in, so it also stands in for the flag.
+        // The origin --gateway named, already normalized by TryNormalizeGatewayPrefix, or null to use
+        // gateway.{BaseDomain}. Naming one is itself the opt-in, so it also stands in for the flag.
         private readonly string? cliGatewayPrefix;
         private readonly List<string>? resolvedNonClientHosts;
         private readonly string? gatewayPrefix;
@@ -104,10 +104,10 @@ namespace DCL.Browser
             string? cliGatekeeperUrl = null,
             string? cliOptimizedAssetsUrl = null,
             string? customBaseDomain = null,
-            string? cliGatewayUrl = null)
+            string? cliGatewayPrefix = null)
             : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain)
         {
-            cliGatewayPrefix = NormalizeGatewayPrefix(cliGatewayUrl);
+            this.cliGatewayPrefix = cliGatewayPrefix;
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
             if (envSupported)
@@ -129,24 +129,24 @@ namespace DCL.Browser
             new (DecentralandEnvironment.Custom, new IRealmData.Fake(), launchMode, customBaseDomain: customBaseDomain);
 
         /// <summary>
-        ///     <paramref name="gatewayUrl" /> as a prefix ending in '/', or null when no gateway was named. A value
-        ///     that is not an absolute http(s) url with a host, and without query or fragment, ends the launch
-        ///     instead of being coerced: a mistyped gateway silently routes every supported service somewhere
-        ///     unintended.
+        ///     <paramref name="gatewayUrl" /> reduced to the prefix every gatewayed url is built from, or false when
+        ///     it is not an absolute http(s) url with a host and without query or fragment. The caller reports and
+        ///     abandons the launch rather than coercing a value into something plausible: this arg forces routing on,
+        ///     so a misread one sends every supported service to a host nobody named.
         /// </summary>
-        private static string? NormalizeGatewayPrefix(string? gatewayUrl)
+        public static bool TryNormalizeGatewayPrefix(string gatewayUrl, out string prefix)
         {
-            if (string.IsNullOrWhiteSpace(gatewayUrl))
-                return null;
+            prefix = string.Empty;
 
             if (!Uri.TryCreate(gatewayUrl.Trim(), UriKind.Absolute, out Uri? uri)
                 || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
                 || string.IsNullOrEmpty(uri.Host)
                 || !string.IsNullOrEmpty(uri.Query)
                 || !string.IsNullOrEmpty(uri.Fragment))
-                throw new ArgumentException($"'{gatewayUrl}' is not a valid gateway URL", nameof(gatewayUrl));
+                return false;
 
-            return uri.ToString().TrimEnd('/') + "/";
+            prefix = uri.ToString().TrimEnd('/') + "/";
+            return true;
         }
 
         /// <summary>

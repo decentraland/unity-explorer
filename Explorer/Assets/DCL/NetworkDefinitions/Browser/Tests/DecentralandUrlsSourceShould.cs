@@ -204,23 +204,31 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://gateway.decentraland.org/auth-api", urlsSource.Url(DecentralandUrl.ApiAuth));
         }
 
-        // Naming a gateway forces routing on, so the flag has no say either way, and the origin is normalized.
-        [TestCase(true, "https://gateway.localhost", "https://gateway.localhost/places/api/places")]
-        [TestCase(false, "https://gateway.localhost", "https://gateway.localhost/places/api/places")]
+        // Naming a gateway forces routing on, so the flag has no say either way.
+        [TestCase(true, "https://gateway.localhost/", "https://gateway.localhost/places/api/places")]
         [TestCase(false, "https://gateway.localhost/", "https://gateway.localhost/places/api/places")]
-        [TestCase(false, "  https://gateway.localhost  ", "https://gateway.localhost/places/api/places")]
-        [TestCase(false, "http://127.0.0.1:8080", "http://127.0.0.1:8080/places/api/places")]
-        [TestCase(false, "https://edge.localhost/gw", "https://edge.localhost/gw/places/api/places")]
-        public void RouteThroughTheGatewayOriginTheArgNames(bool useGateway, string gatewayUrl, string expected)
+        [TestCase(false, "https://edge.localhost/gw/", "https://edge.localhost/gw/places/api/places")]
+        public void RouteThroughTheGatewayOriginTheArgNames(bool useGateway, string gatewayPrefix, string expected)
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: useGateway);
-            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayUrl: gatewayUrl);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayPrefix: gatewayPrefix);
 
             Assert.AreEqual(expected, urlsSource.Url(DecentralandUrl.ApiPlaces));
         }
 
-        // A mistyped gateway would route every supported service somewhere unintended, so it ends the launch
-        // instead of being coerced into something plausible.
+        [TestCase("https://gateway.localhost", "https://gateway.localhost/")]
+        [TestCase("https://gateway.localhost/", "https://gateway.localhost/")]
+        [TestCase("  https://gateway.localhost  ", "https://gateway.localhost/")]
+        [TestCase("http://127.0.0.1:8080", "http://127.0.0.1:8080/")]
+        [TestCase("https://edge.localhost/gw", "https://edge.localhost/gw/")]
+        public void NormalizeAGatewayOrigin(string gatewayUrl, string expected)
+        {
+            Assert.IsTrue(GatewayUrlsSource.TryNormalizeGatewayPrefix(gatewayUrl, out string prefix), gatewayUrl);
+            Assert.AreEqual(expected, prefix);
+        }
+
+        // A mistyped gateway would send every supported service somewhere unintended, so MainSceneLoader reports and
+        // ends the launch instead of coercing it into something plausible.
         [TestCase("not-a-url")]
         [TestCase("gateway.localhost")]
         [TestCase("ftp://gateway.localhost")]
@@ -228,9 +236,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TestCase("https://gateway.localhost#fragment")]
         public void RejectAGatewayUrlThatIsNotAnOrigin(string gatewayUrl)
         {
-            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
-
-            Assert.Throws<ArgumentException>(() => _ = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayUrl: gatewayUrl));
+            Assert.IsFalse(GatewayUrlsSource.TryNormalizeGatewayPrefix(gatewayUrl, out _), gatewayUrl);
         }
 
         // Signed fetch signs the un-gatewayed url, so the custom base has to reverse as cleanly as the default one.
@@ -238,7 +244,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         public void ReverseTheGatewayBaseForSignedFetch()
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
-            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayUrl: "https://gateway.localhost");
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayPrefix: "https://gateway.localhost/");
 
             Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.GetOriginalUrl(urlsSource.Url(DecentralandUrl.ApiPlaces)));
         }
@@ -248,7 +254,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         public void KeepTodayOffTheGatewayEvenWithAGatewayOrigin()
         {
             InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
-            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Today, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayUrl: "https://gateway.localhost");
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Today, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayPrefix: "https://gateway.localhost/");
 
             Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
         }

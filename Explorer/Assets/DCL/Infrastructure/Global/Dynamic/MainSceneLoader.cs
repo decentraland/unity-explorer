@@ -73,7 +73,8 @@ namespace Global.Dynamic
 
         // Non-null only for DecentralandEnvironment.Custom; set from the command line by ApplyBaseDomainArg.
         private string? customBaseDomain;
-        private string? cliGatewayUrl;
+        private string? cliGatewayArg;
+        private string? cliGatewayPrefix;
 
         // The validated --eth-network value, or null when it was not passed on the command line. Captured by
         // CaptureEthNetworkArg and turned into a network by ResolveEthereumNetwork once the environment is settled.
@@ -261,8 +262,11 @@ namespace Global.Dynamic
             // Read while the deep link is still deferred, for the same reason as the two above: where a session's
             // supported-service traffic goes is not something a link may pick, not even through the denied-params
             // dialog.
-            if (applicationParametersParser.TryGetValue(AppArgsFlags.GATEWAY, out string? gatewayArg) && !string.IsNullOrWhiteSpace(gatewayArg))
-                cliGatewayUrl = gatewayArg.Trim();
+            if (!CaptureGatewayArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
 
             if (applicationParametersParser.HasPendingDeepLink)
                 await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
@@ -283,7 +287,7 @@ namespace Global.Dynamic
 
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
-            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayUrl);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -337,7 +341,7 @@ namespace Global.Dynamic
                 cliGatekeeperUrl,
                 cliOptimizedAssetsUrl,
                 customBaseDomain,
-                cliGatewayUrl);
+                cliGatewayPrefix);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
@@ -652,6 +656,31 @@ namespace Global.Dynamic
             }
 
             ethNetworkArg = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            return true;
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.GATEWAY" /> into <see cref="cliGatewayArg" /> and its normalized form
+        ///     into <see cref="cliGatewayPrefix" />. Returns false when the launch must be abandoned; the reason is
+        ///     already reported.
+        ///     <para>
+        ///         Rejecting rather than ignoring: naming a gateway forces routing on, so a value that cannot be read
+        ///         as an origin would otherwise send every supported service to a host nobody named.
+        ///     </para>
+        /// </summary>
+        private bool CaptureGatewayArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.GATEWAY, out string? value) || string.IsNullOrWhiteSpace(value))
+                return true;
+
+            if (!GatewayUrlsSource.TryNormalizeGatewayPrefix(value, out string prefix))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.GATEWAY} '{value}' is not a gateway origin. Expected an absolute http or https url with a host and no query or fragment");
+                return false;
+            }
+
+            cliGatewayArg = value.Trim();
+            cliGatewayPrefix = prefix;
             return true;
         }
 
