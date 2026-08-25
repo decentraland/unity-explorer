@@ -27,7 +27,9 @@ Two transports are active at the same time: **LiveKit** (Archipelago Island room
 
 Both transports send the same `NetworkMovementMessage` / emote / profile-announcement payloads. On the receive side, incoming items from both transports are de-duplicated by wallet ID so the rest of the ECS pipeline is transport-oblivious.
 
-Pulse is gated by the `FeatureId.PULSE` feature flag, resolved once into a shared `PulseActivation`. When inactive, Pulse is replaced with no-op dummies and only LiveKit carries traffic, with `LiveKitMessagesBroadcaster` broadcasting to all peers. When active, the broadcaster sends only to peers that announced over LiveKit (the rest receive over Pulse). If the Pulse server is unreachable at start-up, the client falls back fully to LiveKit. See [Transport Selection & Wiring](#transport-selection--wiring) below.
+Pulse is gated by the `FeatureId.Pulse` feature flag, resolved once into a shared `PulseActivation`. When inactive, Pulse is replaced with no-op dummies and only LiveKit carries traffic, with `LiveKitMessagesBroadcaster` broadcasting to all peers. When active, the broadcaster sends only to peers that announced over LiveKit (the rest receive over Pulse). If the Pulse server is unreachable at start-up, the client falls back fully to LiveKit. See [Transport Selection & Wiring](#transport-selection--wiring) below.
+
+This dual-transport split also applies to local scene development: Pulse carries player state while the local gatekeeper LiveKit room keeps carrying Scene Messages (SDK `MessageBus` and client↔client CRDT sync). Concurrent dev processes are kept apart by a per-process Pulse realm — see [Pulse → Realm](pulse.md#realm--ipulserealm).
 
 ---
 
@@ -67,12 +69,12 @@ All transport-neutral interfaces live under `Explorer/Assets/DCL/Multiplayer/`. 
 
 ### Feature flag decision points
 
-Pulse is gated by `FeatureId.PULSE`, read once in `MultiplayerContainer.CreateAsync` into a shared `PulseActivation` (the session-wide "is Pulse the active transport" flag):
+Pulse is gated by `FeatureId.Pulse`, read once in `MultiplayerContainer.CreateAsync` into a shared `PulseActivation` (the session-wide "is Pulse the active transport" flag):
 
 - `Movement/Systems/PulseContainer.cs` receives the `PulseActivation` and, during init, chooses between the real `PulseMultiplayerService` / `PulseProfilePropagationBus` and their `Dummy` counterparts based on `IsActive`.
 - `Movement/Systems/LiveKitMultiplayerContainer.cs` passes the same `PulseActivation` to `LiveKitMessagesBroadcaster`, which reads `IsActive` live: when active it targets only LiveKit-announced peers, when inactive it broadcasts to all.
-- `StartPulseMultiplayerStartupOperation` calls `PulseActivation.Deactivate()` if Pulse is unreachable at start-up (full fallback to LiveKit). Runtime reconnection failures never deactivate.
-- The `--pulse true` / `--pulse false` program argument overrides the remote flag at launch; when absent, the remote flag drives it.
+- `StartPulseMultiplayerStartupOperation` calls `PulseActivation.Deactivate()` if the realm cannot be resolved, or if Pulse is unreachable at start-up (full fallback to LiveKit). Runtime reconnection failures never deactivate.
+- The `--pulse true` / `--pulse false` program argument overrides the remote flag at launch; when absent, the remote flag drives it — except in local scene development, which has no remote flags and defaults Pulse on.
 
 ### Construction order
 

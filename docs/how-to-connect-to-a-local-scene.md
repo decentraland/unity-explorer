@@ -68,6 +68,47 @@ Run the build from a console/terminal specifying the needed parameters, for exam
 open Decentraland.app --args --realm http://127.0.0.1:8000 --position 0,0 --local-scene true --debug --skip-version-check true
 ```
 
+## Multiplayer in a local scene
+
+Local scene development runs **two transports at once**, and both are on by default:
+
+| Traffic | Transport |
+|---|---|
+| Player state — movement, emotes, teleports, profile-version announcements | **Pulse** (`pulse-server.decentraland.org`) |
+| Scene Messages — the SDK `MessageBus`, and client↔client CRDT sync | **LiveKit**, via the local gatekeeper scene room |
+
+So two Explorers pointed at the same `npm run start` server see each other move *and* exchange scene
+messages. Nothing was removed to make this work — the gatekeeper room is still there.
+
+**Concurrent dev processes stay isolated.** Pulse has no rooms; it partitions by an exact realm
+string, and each local session derives one from the preview entity id its dev server serves
+(`lsd:b64-…`). Two scenes running out of two different project folders — or the same folder on two
+machines — land in different realms and never see each other. Nothing is exchanged to arrange this:
+every party derives the same key from the same id. The full contract, including the hashed form used
+when the key would exceed 255 characters, is in [Pulse → Realm](pulse.md#realm--ipulserealm).
+
+Because the id is path-based, the realm survives content edits, `/reload`, and restarting the dev
+server. Editing your scene does not reshuffle who you can see.
+
+### Things worth knowing
+
+- **The scene must sit inside Genesis City bounds** (`-150,-150` to `163,158`). Pulse rejects parcel
+  indices outside them and disconnects the peer, so player state would silently stop syncing. The
+  client logs a warning naming the parcel if it detects this. (`sdk-commands` refuses to start such a
+  scene in the first place.)
+- **Pulse needs to reach the internet.** If it is unreachable — or the local dev server is — the
+  client logs a warning, falls back to LiveKit only, and carries on. Local scene development keeps
+  working exactly as it did before Pulse.
+- **`--pulse false` opts out**, restoring the LiveKit-only behaviour:
+
+```
+Decentraland.exe --realm http://127.0.0.1:8000 --position 0,0 --local-scene true --debug --pulse false
+```
+
+- **Authoritative-server previews are not on Pulse yet.** A bevy-headless server has no Pulse
+  transport in server mode (decentraland/sdk-multiplayer-server#132); that scenario still runs over
+  LiveKit.
+
 ## Local asset bundles
 
 By default a local scene loads raw GLTFs. To preview it with real asset bundles, start the scene

@@ -93,7 +93,7 @@ namespace DCL.Multiplayer.Movement.Tests
             bus = new PulseMultiplayerBus(pulseService, peerIdCache, movementInbox,
                 new ParcelEncoder(LandscapeData.terrainData), incomingProfiles, removeIntentions,
                 Substitute.For<IWeb3IdentityCache>(), new PulseMultiplayerBus.ReconnectionSettings(),
-                Substitute.For<ISelfProfile>(), realmData);
+                Substitute.For<ISelfProfile>(), new RealmDataPulseRealm(realmData));
 
             bus.SubscribeToIncomingMessages();
         }

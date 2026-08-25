@@ -4,7 +4,6 @@ using DCL.Profiles.Self;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
-using ECS;
 using Google.Protobuf;
 using Newtonsoft.Json;
 using Pulse.Transport;
@@ -17,7 +16,7 @@ namespace DCL.Multiplayer.Movement
     public partial class PulseMultiplayerBus
     {
         private readonly ISelfProfile selfProfile;
-        private readonly IRealmData realmData;
+        private readonly IPulseRealm pulseRealm;
 
         private readonly Dictionary<string, string> authChainBuffer = new ();
 

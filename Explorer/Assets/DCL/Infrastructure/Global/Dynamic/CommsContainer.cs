@@ -120,7 +120,7 @@ namespace Global.Dynamic
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
-            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController, localSceneDevelopmentRealm).WithLog();
+            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(new LocalSceneEntityIdSource(staticContainer.WebRequestsContainer.WebRequestController, localSceneDevelopmentRealm)).WithLog();
 
             Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HardwareFingerprint)
                 ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())
