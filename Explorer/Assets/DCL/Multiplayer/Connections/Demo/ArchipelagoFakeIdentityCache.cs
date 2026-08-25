@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Authenticators;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using System.Threading;
 
@@ -12,7 +13,7 @@ namespace DCL.Multiplayer.Connections.Demo
         public static async UniTask<IWeb3IdentityCache> NewAsync(
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3AccountFactory web3AccountFactory,
-            DecentralandEnvironment dclEnvironment
+            EthereumNetwork ethereumNetwork
         )
         {
             IWeb3IdentityCache identityCache = new ProxyIdentityCache(
@@ -21,13 +22,13 @@ namespace DCL.Multiplayer.Connections.Demo
                     new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
                         web3AccountFactory
                     ),
-                    dclEnvironment
+                    ethereumNetwork
                 )
             );
 
             if (identityCache.Identity is null)
             {
-                IWeb3Identity? identity = await new DappWeb3EthereumApi.Default(identityCache, decentralandUrlsSource, web3AccountFactory, dclEnvironment)
+                IWeb3Identity? identity = await new DappWeb3EthereumApi.Default(identityCache, decentralandUrlsSource, web3AccountFactory, ethereumNetwork)
                    .LoginAsync(LoginPayload.ForDappFlow(LoginMethod.ANY), CancellationToken.None);
 
                 identityCache.Identity = identity;

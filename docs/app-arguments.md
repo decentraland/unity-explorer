@@ -97,7 +97,7 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ### `dclenv`
 **Type:** String
-**Description:** Sets the Decentraland environment (e.g., `org`, `zone`, `today`). Determines which API endpoints and services the application connects to.
+**Description:** Sets the Decentraland environment (e.g., `org`, `zone`, `today`). Determines which API endpoints and services the application connects to. `custom` is not accepted here — it is selected by [`base-domain`](#base-domain), which also supplies the domain it needs.
 
 **Usage:**
 ```bash
@@ -108,11 +108,39 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ### `gateway`
 **Type:** String (URL)
-**Description:** Routes every supported backend url through this gateway base — `https://{subdomain}.decentraland.{env}/{path}` becomes `<gateway>/{subdomain}/{path}` — instead of the default `gateway.decentraland.{env}`. Specifying it also **forces routing on**: naming a gateway is the opt-in the `use-gateway` remote feature flag would otherwise carry, so the flag is ignored. Without it, the flag decides and the default host is used. Only `org` and `zone` are ever routed — `today` has no gateway, and this arg does not change that. Command line only: never accepted from a deep link, since it aims the session's whole backend traffic at the named host.
+**Description:** Routes every supported service through this gateway origin — `https://{subdomain}.{base-domain}/{path}` becomes `<gateway>/{subdomain}/{path}` — instead of the default `gateway.{base-domain}`. Specifying it also **forces routing on**: naming a gateway is the opt-in the `use-gateway` remote feature flag would otherwise carry, so the flag is ignored. Without it, the flag decides and the default host is used. The value must be an absolute `http`/`https` url with a host and no query or fragment; anything else ends the launch rather than being coerced. `today` has no gateway and is never routed, with or without this arg. Command line only: never accepted from a deep link, since it aims the session's whole supported-service traffic at the named host.
 
 **Usage:**
 ```bash
 --gateway https://gateway.localhost
+```
+
+---
+
+### `base-domain`
+**Type:** String (bare domain)
+**Description:** Targets a deployment served under a base domain other than `decentraland.{org,zone,today}` — every backend host resolves under it (`peer.<domain>`, `comms-gatekeeper.<domain>`, `feature-flags.<domain>`, …). It selects the `Custom` environment, whose chain is mainnet unless [`eth-network`](#eth-network) says otherwise, and whose community-message router identity is `message-router-dev-0`. See [Custom base domain](custom-base-domain.md).
+
+The value must be a bare domain — no scheme, port or path — and it takes precedence over `dclenv`. Hosts under it are trusted for deep-link realm switching, so it is **command-line only**: it is never accepted from a `decentraland://` link.
+
+**Usage:**
+```bash
+--base-domain interconnected.online
+```
+
+---
+
+### `eth-network`
+**Type:** String (`mainnet` | `sepolia`)
+**Description:** The chain a [`base-domain`](#base-domain) deployment signs and transacts against. Each value carries the polygon network that pairs with it — `mainnet` with Polygon, `sepolia` with Amoy — because the identity, the credits contracts and the donation contract all have to sit on one chain. It also picks which stored-identity slot the session uses. Defaults to `mainnet`.
+
+Decentraland's own environments each answer for one chain — org and today mainnet, zone sepolia — and this flag **cannot move them**: paired with `--dclenv`, it is reported in the log and dropped.
+
+On a `base-domain` deployment, where the value *is* read, anything that does not name a known network makes the client report the problem and exit rather than fall back to the default. Command-line only: denied from `decentraland://` links, and accepting it in the denied-params dialog does not apply it.
+
+**Usage:**
+```bash
+--base-domain interconnected.online --eth-network sepolia
 ```
 
 ---

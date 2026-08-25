@@ -14,10 +14,12 @@ namespace DCL.Browser
     public class GatewayUrlsSource : DecentralandUrlsSource
     {
         private const string GATEWAY_SUBDOMAIN = "gateway";
-        private const string TRANSFORMABLE_DOMAIN_MARKER = ".decentraland.";
         private const int HTTPS_PREFIX_LENGTH = 8; // "https://".Length
 
-        private static readonly DecentralandEnvironment[] SUPPORTED_ENVS = { DecentralandEnvironment.Org, DecentralandEnvironment.Zone };
+        // Today is excluded on purpose: its org/today host mixture is pinned at construction and would not survive
+        // the rewrite. Custom is included, but a custom deployment only routes through a gateway when the
+        // "use-gateway" flag its own feature-flags backend serves says so, so opting in stays that deployment's call.
+        private static readonly DecentralandEnvironment[] SUPPORTED_ENVS = { DecentralandEnvironment.Org, DecentralandEnvironment.Zone, DecentralandEnvironment.Custom };
 
         private static readonly HashSet<DecentralandUrl> SUPPORTED_URLS = new (EnumUtils.GetEqualityComparer<DecentralandUrl>())
         {
@@ -74,23 +76,24 @@ namespace DCL.Browser
         };
 
         /// <summary>
-        ///     Routing via the Gateway enables multiplexing over HTTP/2 even for resources originated from the backend services
+        ///     Routing via the Gateway enables multiplexing over HTTP/2 even for resources originated from the backend
+        ///     services. Subdomains, not whole hosts: they are composed against this client's base domain.
         /// </summary>
-        private static readonly HashSet<string> SUPPORTED_URLS_OF_NON_CLIENT_ORIGIN = new (StringComparer.OrdinalIgnoreCase)
+        private static readonly string[] SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN =
         {
-            $"profile-images.decentraland.{ENV}",
+            "profile-images",
         };
 
         private readonly bool envSupported;
 
-        // The base --gateway named, trailing slash trimmed, or null to use gateway.decentraland.{env}. Naming
-        // one is itself the opt-in, so it also stands in for the flag.
-        private readonly string? cliGatewayBase;
+        // The origin --gateway named, normalized to a trailing slash, or null to use gateway.{BaseDomain}.
+        // Naming one is itself the opt-in, so it also stands in for the flag.
+        private readonly string? cliGatewayPrefix;
         private readonly List<string>? resolvedNonClientHosts;
         private readonly string? gatewayPrefix;
         private readonly string? domainSuffix;
 
-        private bool enabled => envSupported && (cliGatewayBase != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY));
+        private bool enabled => envSupported && (cliGatewayPrefix != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY));
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
@@ -100,27 +103,51 @@ namespace DCL.Browser
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
             string? cliOptimizedAssetsUrl = null,
+            string? customBaseDomain = null,
             string? cliGatewayUrl = null)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain)
         {
-            cliGatewayBase = cliGatewayUrl is { Length: > 0 } ? cliGatewayUrl.TrimEnd('/') : null;
+            cliGatewayPrefix = NormalizeGatewayPrefix(cliGatewayUrl);
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
             if (envSupported)
             {
-                string envDomain = environment.ToString()!.ToLower();
-                resolvedNonClientHosts = new List<string>(SUPPORTED_URLS_OF_NON_CLIENT_ORIGIN.Count);
+                resolvedNonClientHosts = new List<string>(SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN.Length);
 
-                foreach (string pattern in SUPPORTED_URLS_OF_NON_CLIENT_ORIGIN)
-                    resolvedNonClientHosts.Add(pattern.Replace(ENV, envDomain));
+                foreach (string subdomain in SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN)
+                    resolvedNonClientHosts.Add($"{subdomain}.{BaseDomain}");
 
-                gatewayPrefix = cliGatewayBase != null ? $"{cliGatewayBase}/" : $"https://{GATEWAY_SUBDOMAIN}.decentraland.{envDomain}/";
-                domainSuffix = $".decentraland.{envDomain}";
+                gatewayPrefix = cliGatewayPrefix ?? $"https://{GATEWAY_SUBDOMAIN}.{BaseDomain}/";
+                domainSuffix = $".{BaseDomain}";
             }
         }
 
         public new static GatewayUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode) =>
             new (environment, new IRealmData.Fake(), launchMode);
+
+        public new static GatewayUrlsSource CreateForTest(string customBaseDomain, ILaunchMode launchMode) =>
+            new (DecentralandEnvironment.Custom, new IRealmData.Fake(), launchMode, customBaseDomain: customBaseDomain);
+
+        /// <summary>
+        ///     <paramref name="gatewayUrl" /> as a prefix ending in '/', or null when no gateway was named. A value
+        ///     that is not an absolute http(s) url with a host, and without query or fragment, ends the launch
+        ///     instead of being coerced: a mistyped gateway silently routes every supported service somewhere
+        ///     unintended.
+        /// </summary>
+        private static string? NormalizeGatewayPrefix(string? gatewayUrl)
+        {
+            if (string.IsNullOrWhiteSpace(gatewayUrl))
+                return null;
+
+            if (!Uri.TryCreate(gatewayUrl.Trim(), UriKind.Absolute, out Uri? uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+                || string.IsNullOrEmpty(uri.Host)
+                || !string.IsNullOrEmpty(uri.Query)
+                || !string.IsNullOrEmpty(uri.Fragment))
+                throw new ArgumentException($"'{gatewayUrl}' is not a valid gateway URL", nameof(gatewayUrl));
+
+            return uri.ToString().TrimEnd('/') + "/";
+        }
 
         /// <summary>
         ///     Transforms a 3rd party URL, DecentralandURLs are already transformed by <see cref="RawUrl" />
@@ -163,12 +190,14 @@ namespace DCL.Browser
         }
 
         /// <summary>
-        ///     True only for a bare https://{subdomain}.decentraland.{tld} authority (single-label sub + tld, no port or
-        ///     userinfo); any custom host passes through untouched.
+        ///     True only for a bare <c>https://{subdomain}.{BaseDomain}</c> authority: a single-label subdomain under
+        ///     this client's own base domain, with no port or userinfo. Any other host — a <c>--gatekeeper-url</c>
+        ///     override, a flag-driven assets host, another environment's domain — passes through untouched, because
+        ///     the gateway only fronts this deployment's own services.
         /// </summary>
-        private static bool IsGatewayTransformable(string url)
+        private bool IsGatewayTransformable(string url)
         {
-            if (!url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            if (domainSuffix == null || !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 return false;
 
             int hostEnd = url.IndexOf('/', HTTPS_PREFIX_LENGTH);
@@ -177,13 +206,14 @@ namespace DCL.Browser
             if (authority.IndexOfAny(':', '@') >= 0)
                 return false;
 
-            int marker = authority.IndexOf(TRANSFORMABLE_DOMAIN_MARKER.AsSpan(), StringComparison.OrdinalIgnoreCase);
+            ReadOnlySpan<char> suffix = domainSuffix.AsSpan();
 
-            if (marker <= 0 || authority.Slice(0, marker).IndexOf('.') >= 0)
+            if (authority.Length <= suffix.Length || !authority.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            ReadOnlySpan<char> tld = authority.Slice(marker + TRANSFORMABLE_DOMAIN_MARKER.Length);
-            return tld.Length > 0 && tld.IndexOf('.') < 0;
+            // Single-label subdomain: "peer.decentraland.org" routes, "a.b.decentraland.org" does not.
+            ReadOnlySpan<char> subdomain = authority.Slice(0, authority.Length - suffix.Length);
+            return subdomain.IndexOf('.') < 0;
         }
 
         public override string GetOriginalUrl(string url)
@@ -231,49 +261,41 @@ namespace DCL.Browser
 
         /// <summary>
         ///     Transform: https://{subdomain}.{domain}/{path}
-        ///     to: https://gateway.{domain}/{subdomain}/{path}, or to {--gateway base}/{subdomain}/{path} when one
-        ///     was named.
+        ///     to: {gateway origin}/{subdomain}/{path} — gateway.{BaseDomain} unless <c>--gateway</c> named another.
         /// </summary>
         private string TransformToGateway(string url)
         {
+            if (gatewayPrefix == null)
+                return url;
+
+            string prefix = gatewayPrefix;
+
             int firstDot = url.IndexOf('.', HTTPS_PREFIX_LENGTH);
 
             if (firstDot < 0)
                 return url;
 
             // Already a gateway URL — don't double-transform
-            if (url.AsSpan(HTTPS_PREFIX_LENGTH, firstDot - HTTPS_PREFIX_LENGTH).Equals(GATEWAY_SUBDOMAIN.AsSpan(), StringComparison.OrdinalIgnoreCase))
+            if (url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return url;
 
             int subdomainLength = firstDot - HTTPS_PREFIX_LENGTH;
             int pathStart = url.IndexOf('/', firstDot);
             int domainEnd = pathStart >= 0 ? pathStart : url.Length;
-            int domainLength = domainEnd - firstDot;
             int pathLength = url.Length - domainEnd;
 
-            if (cliGatewayBase != null)
-                return string.Concat(cliGatewayBase, "/", url.Substring(HTTPS_PREFIX_LENGTH, subdomainLength), url.Substring(domainEnd, pathLength));
+            int resultLength = prefix.Length + subdomainLength + pathLength;
 
-            int resultLength = HTTPS_PREFIX_LENGTH + GATEWAY_SUBDOMAIN.Length + domainLength + 1 + subdomainLength + pathLength;
-
-            return string.Create(resultLength, (url, firstDot, domainLength, subdomainLength, pathStart, pathLength), static (span, state) =>
+            return string.Create(resultLength, (url, prefix, subdomainLength, pathStart, pathLength), static (span, state) =>
             {
                 ReadOnlySpan<char> src = state.url.AsSpan();
 
                 var pos = 0;
 
-                "https://".AsSpan().CopyTo(span);
-                pos += 8;
+                state.prefix.AsSpan().CopyTo(span);
+                pos += state.prefix.Length;
 
-                GATEWAY_SUBDOMAIN.AsSpan().CopyTo(span.Slice(pos));
-                pos += GATEWAY_SUBDOMAIN.Length;
-
-                src.Slice(state.firstDot, state.domainLength).CopyTo(span.Slice(pos));
-                pos += state.domainLength;
-
-                span[pos++] = '/';
-
-                src.Slice(8, state.subdomainLength).CopyTo(span.Slice(pos));
+                src.Slice(HTTPS_PREFIX_LENGTH, state.subdomainLength).CopyTo(span.Slice(pos));
                 pos += state.subdomainLength;
 
                 if (state.pathLength > 0)
