@@ -96,6 +96,8 @@ namespace DCL.Passport.Fields
 
         private void OnDisable()
         {
+            cts?.SafeCancelAndDispose();
+            cts = null;
             ContainerTransform.localScale = Vector3.one;
             HoverBackgroundTransform.localScale = Vector3.zero;
             HoverBackgroundTransform.gameObject.SetActive(false);
