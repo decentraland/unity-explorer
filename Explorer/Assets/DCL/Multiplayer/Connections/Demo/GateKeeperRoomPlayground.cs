@@ -13,6 +13,7 @@ using DCL.Time;
 using DCL.Utility;
 using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
@@ -43,7 +44,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var launchMode = ILaunchMode.PLAY;
             var urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, launchMode);
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Zone);
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), EthereumNetwork.Sepolia);
             var character = new ExposedTransform();
             var totalBudget = 15;
 
