@@ -9,7 +9,6 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
-using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -91,7 +90,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             try
             {
-                currentOwnedTexture = await textureTask!;
+                currentOwnedTexture = await textureTask;
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
             }

@@ -1,6 +1,5 @@
 using System;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
@@ -11,11 +10,9 @@ using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Deduplication;
-using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.Rfc4;
-using LiveKit.Proto;
 using UnityEngine;
 using Utility;
 
@@ -108,15 +105,15 @@ namespace DCL.Chat.ChatReactions.Networking
 
             switch (routing.ChannelType)
             {
-                case History.ChatChannel.ChatChannelType.NEARBY:
+                case ChatChannel.ChatChannelType.NEARBY:
                     SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.IslandPipe());
                     SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.ScenePipe());
                     break;
-                case History.ChatChannel.ChatChannelType.USER:
+                case ChatChannel.ChatChannelType.USER:
                     SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.ChatPipe(),
                         topic: routing.ChannelId, recipient: routing.ChannelId);
                     break;
-                case History.ChatChannel.ChatChannelType.COMMUNITY:
+                case ChatChannel.ChatChannelType.COMMUNITY:
                     SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.ChatPipe(),
                         topic: routing.ChannelId, recipient: routingUser);
                     break;

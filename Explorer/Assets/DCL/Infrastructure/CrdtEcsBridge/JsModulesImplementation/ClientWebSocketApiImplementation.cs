@@ -9,7 +9,6 @@ using System.Threading;
 using Microsoft.ClearScript.JavaScript;
 using Utility.Multithreading;
 using Utility.Networking;
-using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation
 {
@@ -279,7 +278,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private class WebSocketRental : IDisposable
         {
-            public readonly DCLSemaphoreSlim SendLock = new (1, 1);
+            public readonly DCLSemaphoreSlim SendLock = new ();
             public readonly DCLWebSocket WebSocket = new ();
 
             public void Dispose()

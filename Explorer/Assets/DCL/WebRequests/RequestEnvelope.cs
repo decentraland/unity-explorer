@@ -1,17 +1,14 @@
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests.RequestsHub;
-using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
-using UnityEngine.Pool;
 
 namespace DCL.WebRequests
 {

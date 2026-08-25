@@ -26,7 +26,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
         private Texture2D? currentOwnedTexture;
         private readonly AtlasChunk atlasChunk;
 
-        private string CHUNKS_API => decentralandUrlsSource.Url(DecentralandUrl.ApiChunks);
+        private string chunksApi => decentralandUrlsSource.Url(DecentralandUrl.ApiChunks);
 
         public ParcelChunkController(
             IWebRequestController webRequestController,
@@ -62,7 +62,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
         {
             atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
 
-            var url = $"{CHUNKS_API}?center={mapPosition.x},{mapPosition.y}&width={chunkSize}&height={chunkSize}&size={parcelSize}";
+            var url = $"{chunksApi}?center={mapPosition.x},{mapPosition.y}&width={chunkSize}&height={chunkSize}&size={parcelSize}";
             var textureTask = webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
                 new GetTextureArguments(TextureType.Albedo),
@@ -78,7 +78,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
 
             try
             {
-                currentOwnedTexture = await textureTask!;
+                currentOwnedTexture = await textureTask;
                 await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture;
             }

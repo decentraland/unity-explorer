@@ -84,7 +84,7 @@ namespace DCL.Passport.Fields
 
         public Action? WearableClicked;
 
-        private CancellationTokenSource cts;
+        private CancellationTokenSource? cts;
 
         private void Awake()
         {

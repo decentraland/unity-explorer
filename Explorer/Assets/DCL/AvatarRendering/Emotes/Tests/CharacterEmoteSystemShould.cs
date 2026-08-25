@@ -85,7 +85,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             scenesCache.AddPortableExperienceScene(portableExperienceScene, SMART_WEARABLE_ENTITY_ID);
 
             //Act
-            system!.Update(0);
+            system.Update(0);
 
             //Assert
             Assert.IsNotNull(world.Get<CharacterEmoteComponent>(playerEntity).CurrentEmoteReference);
@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         public void StopSceneEmoteWhenItsSceneIsNoLongerLoaded()
         {
             //Act
-            system!.Update(0);
+            system.Update(0);
 
             //Assert
             Assert.IsNull(world.Get<CharacterEmoteComponent>(playerEntity).CurrentEmoteReference);
@@ -142,7 +142,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 new AvatarShapeComponent { BodyShape = BodyShape.MALE });
 
             for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
-                system!.Update(1f);
+                system.Update(1f);
 
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
                 "A CharacterEmoteIntent whose asset never resolves must expire after StreamableLoadingDefaults.TIMEOUT seconds of elapsed play time.");
@@ -170,7 +170,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 new AvatarShapeComponent { BodyShape = BodyShape.MALE });
 
             for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
-                system!.Update(1f);
+                system.Update(1f);
 
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(movingEntity),
                 "An intent held back by the movement gate must survive: the avatar is moving, which is not a stuck state.");
@@ -185,7 +185,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             URN emoteUrn = world.Get<CharacterEmoteComponent>(playerEntity).EmoteUrn;
 
             //Act
-            system!.Update(0);
+            system.Update(0);
 
             //Assert: a scene-change cancellation is an interruption, and it survives Reset().
             CharacterEmoteComponent emoteComponent = world.Get<CharacterEmoteComponent>(playerEntity);
@@ -205,7 +205,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             avatarView.IsLegacyAnimationPlaying.Returns(false);
 
             //Act
-            system!.Update(0);
+            system.Update(0);
 
             //Assert
             CharacterEmoteComponent updated = world.Get<CharacterEmoteComponent>(playerEntity);
@@ -226,7 +226,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             emoteComponent.StopEmote = true;
 
             //Act
-            system!.Update(0);
+            system.Update(0);
 
             //Assert
             CharacterEmoteComponent updated = world.Get<CharacterEmoteComponent>(playerEntity);

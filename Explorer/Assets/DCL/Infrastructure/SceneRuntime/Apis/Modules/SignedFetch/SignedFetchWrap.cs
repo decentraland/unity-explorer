@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Security.Cryptography;
 using UnityEngine;
-using Utility;
 using Utility.Times;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch
@@ -290,6 +289,8 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             return JsonUtility.ToJson(metadata);
         }
 
+        // Wire format serialized with JsonUtility: field names must match the JSON keys.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         internal struct SignatureMetadata
         {
@@ -312,5 +313,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 public string serverName;
             }
         }
+
+        // ReSharper restore InconsistentNaming
     }
 }

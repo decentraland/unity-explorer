@@ -64,7 +64,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             byte[] data = Array.Empty<byte>();
             string error = string.Empty;
             string text = string.Empty;
-            bool success = false;
+            bool success;
 
             DownloadHandler? downloadHandler = null;
 
