@@ -181,6 +181,7 @@ namespace DCL.AuthenticationScreenFlow
                 new InitAuthState(viewInstance, installSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
                     enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
+                new LoginSelectionWelcomeAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
@@ -218,8 +219,16 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                EnterLoginEntryState(UIAnimationHashes.IN);
             }
+        }
+
+        private void EnterLoginEntryState(int animHash)
+        {
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
+                fsm?.Enter<LoginSelectionWelcomeAuthState>(true);
+            else
+                fsm?.Enter<LoginSelectionAuthState, int>(animHash, true);
         }
 
         private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)
@@ -232,7 +241,7 @@ namespace DCL.AuthenticationScreenFlow
                     fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
                 else
                 {
-                    fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                    EnterLoginEntryState(UIAnimationHashes.IN);
                 }
             }
             catch (OperationCanceledException)
@@ -241,7 +250,7 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                EnterLoginEntryState(UIAnimationHashes.IN);
             }
         }
 
@@ -300,7 +309,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
+                EnterLoginEntryState(UIAnimationHashes.SLIDE);
             }
         }
 

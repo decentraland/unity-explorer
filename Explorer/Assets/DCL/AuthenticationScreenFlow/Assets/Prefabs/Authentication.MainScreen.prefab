@@ -888,6 +888,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4635346258636800684}
+  - {fileID: 4695435503195640928}
   - {fileID: 4467899340765049217}
   - {fileID: 2058660919588094189}
   - {fileID: 2955286010541638715}
@@ -989,6 +990,7 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 8454101078806804241}
   <VersionText>k__BackingField: {fileID: 4613417570274952093}
   <CharacterPreviewView>k__BackingField: {fileID: 8185437588405162452}
+  <LoginSelectionWelcomeAuthView>k__BackingField: {fileID: 8051144860011413377}
   <LoginSelectionAuthView>k__BackingField: {fileID: 3626083524348347871}
   <VerificationDappAuthView>k__BackingField: {fileID: 5988428590248281739}
   <VerificationOTPAuthView>k__BackingField: {fileID: 1435686278016238798}
@@ -1907,8 +1909,12 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1151621360254823839, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 229
+      objectReference: {fileID: 0}
+    - target: {fileID: 1151621360254823839, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -138.5
+      value: -264.03827
       objectReference: {fileID: 0}
     - target: {fileID: 2034299800128287215, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1917,6 +1923,14 @@ PrefabInstance:
     - target: {fileID: 2034299800128287215, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_AnchorMin.y
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034299800128287215, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 229
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034299800128287215, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -58
       objectReference: {fileID: 0}
     - target: {fileID: 2545835288679838424, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_Pivot.x
@@ -2045,6 +2059,22 @@ PrefabInstance:
     - target: {fileID: 4913758806071701223, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -23
+      objectReference: {fileID: 0}
+    - target: {fileID: 5781027346591425177, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5781027346591425177, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5781027346591425177, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 229
+      objectReference: {fileID: 0}
+    - target: {fileID: 5781027346591425177, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -131
       objectReference: {fileID: 0}
     - target: {fileID: 6072945466760093846, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_Name
@@ -2965,3 +2995,124 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b71d4207f4194f9096bce9cd29f99852, type: 3}
   m_Name: 
   m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.NewUserLobbyScreenSubView
+--- !u!1001 &7096852788198614712
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9199866600602126572}
+    m_Modifications:
+    - target: {fileID: 791263216646571193, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_text
+      value: LOGIN OR SIGNUP
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6072945466760093846, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_Name
+      value: LoginSelection.Welcome.Screen
+      objectReference: {fileID: 0}
+    - target: {fileID: 6072945466760093846, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+--- !u!224 &4695435503195640928 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2545835288679838424, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+  m_PrefabInstance: {fileID: 7096852788198614712}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8051144860011413377 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 992621047954053433, guid: b50d33cba68b54ca4a0a1c7e99131392, type: 3}
+  m_PrefabInstance: {fileID: 7096852788198614712}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d43bf80b0eb433ba43979d4c2b6b569, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.UI.Flows::DCL.AuthenticationScreenFlow.LoginSelectionWelcomeAuthView
