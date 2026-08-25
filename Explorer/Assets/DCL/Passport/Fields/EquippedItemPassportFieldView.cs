@@ -80,11 +80,13 @@ namespace DCL.Passport.Fields
 
         public URN ItemId { get; set; }
 
+        public bool CanHover { get; set; } = true;
+
         public Action<URN>? EmoteClicked;
 
         public Action? WearableClicked;
 
-        private CancellationTokenSource cts;
+        private CancellationTokenSource? cts;
 
         private void Awake()
         {
@@ -92,14 +94,25 @@ namespace DCL.Passport.Fields
             ViewButton.onClick.AddListener(() => UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio));
         }
 
+        private void OnDisable()
+        {
+            ContainerTransform.localScale = Vector3.one;
+            HoverBackgroundTransform.localScale = Vector3.zero;
+            HoverBackgroundTransform.gameObject.SetActive(false);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (!CanHover) return;
+
             AnimateHover();
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (!CanHover) return;
+
             AnimateExit();
         }
 
