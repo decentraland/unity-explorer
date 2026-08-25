@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "arch.systemgroups.visualiser": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
-    "com.alttester.sdk": "2.3.0",
+    "com.alttester.sdk": "2.3.2",
     "com.arch.systemgroups": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
     "com.atteneder.draco": "4.0.2",
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
