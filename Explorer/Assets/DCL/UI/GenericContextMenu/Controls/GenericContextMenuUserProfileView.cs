@@ -151,7 +151,8 @@ namespace DCL.UI.Controls
             else
             {
                 userAddressRectTransform.gameObject.SetActive(true);
-                UserAddress.text = $"{userData.UserId[..5]}...{userData.UserId[^5..]}";
+                string userId = userData.UserId.Value;
+                UserAddress.text = $"{userId[..5]}...{userId[^5..]}";
             }
 
             UserNameTag.gameObject.SetActive(!userData.HasClaimedName);
@@ -197,7 +198,7 @@ namespace DCL.UI.Controls
             CancelFriendButton.gameObject.SetActive(false);
             AcceptFriendButton.gameObject.SetActive(false);
 
-            Button buttonToActivate = settings.friendshipStatus switch
+            Button? buttonToActivate = settings.friendshipStatus switch
                                       {
                                           UserProfileContextMenuControlSettings.FriendshipStatus.None => AddFriendButton,
                                           UserProfileContextMenuControlSettings.FriendshipStatus.Friend => RemoveFriendButton,

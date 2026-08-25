@@ -5,6 +5,9 @@ name: Comment Test Failures on PR
 # Runs in the trusted base-repo context after the (possibly fork) "Unity Test"
 # run completes, so it can comment with write permissions without exposing them
 # to the untrusted test job. Mirrors pr-comment-warnings.yml.
+#
+# Writes only the "tests" section of the unified CI status comment via the
+# ci-status-comment composite action (build / lint / tests live in one comment).
 on:
   workflow_run:
     types:
@@ -124,8 +127,7 @@ jobs:
           DELIM="EOF_$(uuidgen)"
           {
             echo "body<<$DELIM"
-            echo "<!-- test-failures -->"
-            echo "![badge]"
+            echo "![Tests]($badge)"
             echo ""
             printf '%s\n' "$headline"
             echo ""
@@ -140,25 +142,24 @@ jobs:
               echo ""
               echo "</details>"
             fi
-            echo ""
-            echo "[badge]: $badge"
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Find existing comment
+      - name: Checkout CI status action
         if: steps.body.outcome == 'success'
-        uses: peter-evans/find-comment@v2
-        id: find-comment
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- test-failures -->'
+          sparse-checkout: .github/actions/ci-status-comment
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+          # Own path so checkout's workspace-clean can't wipe the already-downloaded failed-tests/.
+          path: ci-status-action
 
-      - name: Upsert comment
+      - name: Update tests section
         if: steps.body.outcome == 'success'
-        uses: peter-evans/create-or-update-comment@v3
+        uses: ./ci-status-action/.github/actions/ci-status-comment
         with:
-          issue-number: ${{ steps.pr.outputs.pr-number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+          pr-number: ${{ steps.pr.outputs.pr-number }}
+          section: tests
+          github-token: ${{ github.token }}
           body: ${{ steps.body.outputs.body }}

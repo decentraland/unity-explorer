@@ -38,6 +38,13 @@ namespace ECS.StreamableLoading.Cache
         /// </summary>
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
 
+        /// <summary>
+        ///     Evict a single entry by key, disposing its asset when it is no longer referenced.
+        ///     Mirrors <see cref="Unload" /> scoped to one key, so an edited asset can be dropped
+        ///     without draining the whole cache. Default is a no-op for caches that hold nothing.
+        /// </summary>
+        void Remove(in TLoadingIntention key) { }
+
 #region Referencing
         /// <summary>
         ///     Base implementation is empty as not every asset requires reference counting

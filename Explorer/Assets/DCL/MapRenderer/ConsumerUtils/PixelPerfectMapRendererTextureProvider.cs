@@ -10,25 +10,31 @@ namespace DCL.MapRenderer.ConsumerUtils
     public class PixelPerfectMapRendererTextureProvider : MonoBehaviour
     {
         [NonSerialized]
-        private RectTransform cachedRectTransform;
+        private RectTransform? cachedRectTransform;
         private RectTransform rectTransform => cachedRectTransform ??= (RectTransform)transform;
 
-        private RawImage rawImage;
+        private RawImage? rawImage;
         private RawImage targetImage => rawImage ??= GetComponent<RawImage>();
 
-        private IMapCameraController cameraController;
-        private Camera hudCamera;
+        private IMapCameraController? cameraController;
+        private Camera? hudCamera;
+
+        private Vector2Int lastResolution;
 
         private static Vector3[] worldCorners = new Vector3[4];
 
-        public void Activate(IMapCameraController cameraController)
+        /// <summary>
+        /// Arms pixel-perfect resizing; the controller's render texture must already be sized with <see cref="GetPixelPerfectTextureResolution"/>.
+        /// </summary>
+        public void Activate(IMapCameraController newCameraController)
         {
-            this.cameraController = cameraController;
+            cameraController = newCameraController;
+            lastResolution = GetPixelPerfectTextureResolution();
         }
 
-        public void SetHudCamera(Camera hudCamera)
+        public void SetHudCamera(Camera newHudCamera)
         {
-            this.hudCamera = hudCamera;
+            hudCamera = newHudCamera;
         }
 
         public void Deactivate()
@@ -40,9 +46,6 @@ namespace DCL.MapRenderer.ConsumerUtils
         {
             // assumes CanvasScale Match Height = 1;
 
-            var rectSize = rectTransform.rect.size;
-            var ratio = rectSize.x / rectSize.y;
-
             // translate rect to screen space
             rectTransform.GetWorldCorners(worldCorners);
 
@@ -53,12 +56,30 @@ namespace DCL.MapRenderer.ConsumerUtils
             return new Vector2Int((int) screenSize.x, (int) screenSize.y);
         }
 
+        // Screen-resolution or canvas-scale changes (e.g. windowed -> fullscreen) alter the on-screen
+        // pixel size without a rect change, so OnRectTransformDimensionsChange alone is not enough
+        private void LateUpdate()
+        {
+            ApplyPixelPerfectResolution();
+        }
+
         private void OnRectTransformDimensionsChange()
+        {
+            ApplyPixelPerfectResolution();
+        }
+
+        private void ApplyPixelPerfectResolution()
         {
             if (cameraController == null)
                 return;
 
-            cameraController.ResizeTexture(GetPixelPerfectTextureResolution());
+            Vector2Int resolution = GetPixelPerfectTextureResolution();
+
+            if (resolution == lastResolution)
+                return;
+
+            lastResolution = resolution;
+            cameraController.ResizeTexture(resolution);
 
             targetImage.SetAllDirty();
         }

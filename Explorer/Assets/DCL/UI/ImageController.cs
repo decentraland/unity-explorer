@@ -1,7 +1,5 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.WebRequests;
 using DG.Tweening;
 using System;
 using Utility;
@@ -21,7 +19,7 @@ namespace DCL.UI
         private Texture2DRef? currentTextureRef;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
-        
+
         public ImageController(ImageView view, ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
@@ -61,8 +59,16 @@ namespace DCL.UI
 
                 view.IsLoading = true;
 
+                // Nothing to fetch (e.g. a place that carries no thumbnail url): show the placeholder rather than
+                // firing a request that can only fail.
+                if (string.IsNullOrEmpty(uri))
+                {
+                    TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
+                    return;
+                }
+
                 Sprite? sprite = null;
-                
+
                 var textureRef = await imageControllerProvider.LoadTextureAsync(uri, ct);
 
                 if (textureRef.HasValue)
@@ -80,13 +86,13 @@ namespace DCL.UI
                         false
                     );
                 }
-                
+
                 if (sprite != null)
                 {
                     view.SetImage(sprite, fitAndCenterImage);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
-                    view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
+                    _ = view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
                 }
                 else if (defaultSprite != null)
                     TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
@@ -112,7 +118,7 @@ namespace DCL.UI
         {
             if (currentTextureRef != null)
                 currentTextureRef.Value.Dispose();
-            
+
             currentTextureRef = null;
         }
 
@@ -135,6 +141,7 @@ namespace DCL.UI
         {
             cts.SafeCancelAndDispose();
             DisposeCurrentTexture();
+            view.Image.DOKill(true);
             view.IsLoading = false;
         }
 

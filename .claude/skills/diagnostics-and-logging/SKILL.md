@@ -97,7 +97,7 @@ Drop a `.json` file in the build root folder, launch with `--use-log-matrix "fil
 
 ```json
 {
-    "override": true,
+    "isOverride": true,
     "debugLogMatrix": [
         { "category": "VOICE_CHAT", "severity": "Warning" }
     ],
@@ -107,8 +107,10 @@ Drop a `.json` file in the build root folder, launch with `--use-log-matrix "fil
 }
 ```
 
-- `"override": true` — Only use file values (replaces entire matrix)
-- `"override": false` — Merge with existing matrix values
+Keys must match `CategorySeverityMatrixDto` field names — `JsonUtility` ignores unknown ones. `{ "allOverride": true }` enables every category at every severity in the log file only, and takes precedence over `isOverride`/`debugLogMatrix`. A log captured under `allOverride` contains resolved media stream URLs with signed `sig`/`expire` query params — do not attach it to a public issue.
+
+- `"isOverride": true` — Only use file values (replaces entire matrix)
+- `"isOverride": false` — Merge with existing matrix values
 
 ### Use Cases
 

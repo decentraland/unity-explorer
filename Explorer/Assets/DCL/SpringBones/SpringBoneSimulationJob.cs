@@ -79,7 +79,7 @@ namespace DCL.SpringBones
                 float len = math.length(headToTail);
 
                 nextTail = len > 0.0001f
-                    ? head.Position + (headToTail / len) * scaledLength
+                    ? head.Position + headToTail / len * scaledLength
                     : head.Position + math.mul(math.mul(parentRotation, config.LocalRotation), config.BoneAxis) * scaledLength;
 
                 NextTails[idx] = nextTail;

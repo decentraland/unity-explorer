@@ -105,37 +105,46 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // as we no longer wait for a buffer to apply the thread should be frozen
             IWorldSyncCommandBuffer worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
 
-            // Reconcile CRDT state
-            for (var i = 0; i < messages.Count; i++)
+            try
             {
-                CRDTMessage message = messages[i];
-
-                // Skip Creator Hub components leaked from main.composite (inspector::*,
-                // specific asset-packs:: tooling metadata, composite::root) and phantom
-                // Creator Hub tags (custom components with empty data, e.g. cube-id).
-                if (message.Type is CRDTMessageType.PUT_COMPONENT
-                        or CRDTMessageType.DELETE_COMPONENT
-                        or CRDTMessageType.APPEND_COMPONENT
-                    && CreatorHubComponentFilter.ShouldFilter(in message))
+                // Reconcile CRDT state
+                for (var i = 0; i < messages.Count; i++)
                 {
-                    message.Data.Dispose();
-                    continue;
+                    CRDTMessage message = messages[i];
+
+                    // Skip Creator Hub components leaked from main.composite (inspector::*,
+                    // specific asset-packs:: tooling metadata, composite::root) and phantom
+                    // Creator Hub tags (custom components with empty data, e.g. cube-id).
+                    if (message.Type is CRDTMessageType.PUT_COMPONENT
+                            or CRDTMessageType.DELETE_COMPONENT
+                            or CRDTMessageType.APPEND_COMPONENT
+                        && CreatorHubComponentFilter.ShouldFilter(in message))
+                    {
+                        message.Data.Dispose();
+                        continue;
+                    }
+
+                    crdtProcessMessagesSampler.Begin();
+
+                    CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
+
+                    crdtProcessMessagesSampler.End();
+
+                    // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
+
+                    // Prepare the message to be synced with the ECS World
+                    worldSyncBuffer.SyncCRDTMessage(in message, reconciliationResult.Effect);
                 }
 
-                crdtProcessMessagesSampler.Begin();
-
-                CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
-
-                crdtProcessMessagesSampler.End();
-
-                // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
-
-                // Prepare the message to be synced with the ECS World
-                worldSyncBuffer.SyncCRDTMessage(in message, reconciliationResult.Effect);
+                // Deserialize messages
+                worldSyncBuffer.FinalizeAndDeserialize();
             }
-
-            // Deserialize messages
-            worldSyncBuffer.FinalizeAndDeserialize();
+            catch
+            {
+                // The buffer holds the single rent slot: release it on failure before the exception propagates
+                crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
+                throw;
+            }
 
             worldSyncBufferSampler.End();
 
@@ -255,6 +264,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
+            // Exactly one of the synchronizer's ApplySyncCommandBuffer or the abort below must release the rent slot:
+            // abort only on a throw before delegation (e.g. mutex acquisition)
+            var delegated = false;
+
             try
             {
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
@@ -262,6 +275,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 applyBufferSampler.Begin();
 
                 // Apply changes to the ECS World on the main thread
+                delegated = true;
                 crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
                 applyBufferSampler.End();
 
@@ -269,7 +283,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
                 systemGroupsUpdateGate.Open();
             }
-            catch (Exception e) { exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE); }
+            catch (Exception e)
+            {
+                if (!delegated)
+                    crdtWorldSynchronizer.AbortSyncCommandBuffer(worldSyncBuffer);
+
+                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

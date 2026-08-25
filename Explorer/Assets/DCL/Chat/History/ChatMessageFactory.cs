@@ -76,8 +76,7 @@ namespace DCL.Chat.History
                 false,
                 GetUserHash(profile),
                 sentTimestamp,
-                isMention,
-                false
+                isMention
             );
 
             string GetUserHash(Profile.CompactInfo? profile)

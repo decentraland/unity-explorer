@@ -9,6 +9,7 @@ using DCL.VoiceChat.UI;
 using MVC;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.UI.Sidebar
@@ -68,8 +69,13 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator helpButton { get; private set; } = null!;
         [field: SerializeField] public HelpMenuView HelpMenu { get; private set; } = null!;
 
+        [field: Header("Bug Report")]
+        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator? bugReportButton { get; private set; } = null!;
+
         [field: Header("Chat")]
-        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator unreadMessagesButton { get; private set; } = null!;
+        [field: SerializeField]
+        [field: FormerlySerializedAs("<unreadMessagesButton>k__BackingField")]
+        public HoverableAndSelectableButtonWithAnimator UnreadMessagesButton { get; private set; } = null!;
         [field: SerializeField] internal NumericBadgeUIElement chatUnreadMessagesNumber { get; private set; } = null!;
 
         [field: Header("Nearby Voice Chat")]
@@ -78,9 +84,17 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public NearbyVoiceTipView NearbyVoiceTip { get; private set; } = null!;
 
         [field: Header("Marketplace Credits")]
-        [field: SerializeField] public HoverableAndSelectableButtonWithAnimator marketplaceCreditsButton { get; private set; } = null!;
-        [field: SerializeField] public Animator marketplaceCreditsButtonAnimator { get; private set; } = null!;
-        [field: SerializeField] public GameObject marketplaceCreditsButtonAlertMark { get; private set; } = null!;
+        [field: SerializeField]
+        [field: FormerlySerializedAs("<marketplaceCreditsButton>k__BackingField")]
+        public HoverableAndSelectableButtonWithAnimator MarketplaceCreditsButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        [field: FormerlySerializedAs("<marketplaceCreditsButtonAnimator>k__BackingField")]
+        public Animator MarketplaceCreditsButtonAnimator { get; private set; } = null!;
+
+        [field: SerializeField]
+        [field: FormerlySerializedAs("<marketplaceCreditsButtonAlertMark>k__BackingField")]
+        public GameObject MarketplaceCreditsButtonAlertMark { get; private set; } = null!;
 
         public void BlockSidebar()
         {

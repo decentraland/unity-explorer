@@ -178,8 +178,8 @@ namespace DCL.Chat.ChatReactions.Rendering
 
         private static float WorldSizePerPixel(Camera cam, float depth) =>
             cam.orthographic
-                ? (2f * cam.orthographicSize) / cam.pixelHeight
-                : (2f * depth * Mathf.Tan(cam.fieldOfView * Mathf.Deg2Rad * 0.5f)) / cam.pixelHeight;
+                ? 2f * cam.orthographicSize / cam.pixelHeight
+                : 2f * depth * Mathf.Tan(cam.fieldOfView * Mathf.Deg2Rad * 0.5f) / cam.pixelHeight;
 
         private void WriteBatchSlot(int slot, Vector3 worldPos, float startSize, float endSize, int emojiIndex, float t)
         {

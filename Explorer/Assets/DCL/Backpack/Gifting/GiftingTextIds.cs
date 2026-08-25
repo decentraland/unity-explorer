@@ -1,3 +1,5 @@
+using DCL.NotificationsBus.NotificationTypes;
+
 namespace DCL.Backpack.Gifting
 {
     public static class GiftingTextIds
@@ -29,8 +31,16 @@ namespace DCL.Backpack.Gifting
         public const string GiftSentTextFormat =
             "Gift Sent to <color=#{0}>{1}</color>!";
 
+        // Aliased from DCL.SharedAPI: this assembly depends on it, so the copy's single
+        // definition cannot live here without creating a circular assembly reference.
+        public const string GiftOnItsWayMessage =
+            GiftReceivedNotification.GIFT_ON_ITS_WAY_MESSAGE;
+
         public const string GiftReceivedTitleFormat =
-            "<color=#{0}>{1}</color> sent you something!";
+            "<color=#{0}>{1}</color> sent you something! " + GiftOnItsWayMessage;
+
+        public const string GiftReceivedSenderTitleFormat =
+            "{0} sent you something! " + GiftOnItsWayMessage;
 
         public const string GiftReceivedFromFormat =
             "FROM <color=#{0}>{1}</color>";
@@ -58,7 +68,7 @@ namespace DCL.Backpack.Gifting
             "Just now.";
         
         public const string GiftOpenedTitle =
-            "ITEM OPENED";
+            "ON ITS WAY TO YOUR BACKPACK";
 
         public const string GiftLoading =
             "Loading...";

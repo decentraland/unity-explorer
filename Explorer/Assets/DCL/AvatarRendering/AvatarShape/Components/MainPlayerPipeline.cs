@@ -24,6 +24,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private NativeArray<float4x4> avatarMatrix;
         private NativeArray<bool> updateFlag;
 
+        private NativeArray<int> perAvatarBoneCount;
+
         public BoneMatrixCalculationJob Job;
 
         internal MainPlayerPipeline(int bonesArrayLength)
@@ -34,7 +36,17 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             bonesCombined = new NativeArray<float4x4>(bonesArrayLength, Allocator.Persistent);
             avatarMatrix = new NativeArray<float4x4>(1, Allocator.Persistent);
             updateFlag = new NativeArray<bool>(1, Allocator.Persistent);
+            perAvatarBoneCount = new NativeArray<int>(1, Allocator.Persistent) { [0] = bonesArrayLength };
             Job = new BoneMatrixCalculationJob(bonesArrayLength, bonesArrayLength, bonesCombined);
+        }
+
+        /// <summary>
+        ///     Refreshes the matrix count for the main player from the authoritative
+        ///     AvatarCustomSkinningComponent.BoneCount. Called every frame before ScheduleAndComplete.
+        /// </summary>
+        public void SetBoneCount(int boneCount)
+        {
+            perAvatarBoneCount[0] = boneCount;
         }
 
         public void Register(Transform rootTransform, BoneArray bones, Transform dummyTransform)
@@ -76,6 +88,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             Job.AvatarTransform = avatarMatrix;
             Job.UpdateAvatar = updateFlag;
+            Job.PerAvatarBoneCount = perAvatarBoneCount;
             var calcHandle = Job.Schedule(1, 1, gatherHandle);
             calcHandle.Complete(); // Fast — 1 avatar, 62 bones. Unlocks main player transforms.
         }
@@ -85,6 +98,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             bonesCombined.Dispose();
             avatarMatrix.Dispose();
             updateFlag.Dispose();
+            perAvatarBoneCount.Dispose();
             Job.Dispose();
 
             if (bonesTA.isCreated) bonesTA.Dispose();

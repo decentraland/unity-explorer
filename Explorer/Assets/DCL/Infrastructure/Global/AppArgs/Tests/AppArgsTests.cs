@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -10,6 +11,7 @@ namespace Global.AppArgs.Tests
         {
             // Reset the cached/overridden world whitelist so tests don't leak state into one another.
             DeepLinkAllowlist.SetWhitelistedWorlds(null);
+            DeepLinkAllowlist.SetTrustedBaseDomain(null);
         }
 
         [Test]
@@ -97,7 +99,7 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must still require a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen must still require a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES), "multi-instance must still require a loopback realm");
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must stay dropped for every realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive without a realm: it is not realm-gated");
         }
 
         [Test]
@@ -197,21 +199,18 @@ namespace Global.AppArgs.Tests
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP_PORT), "mcp-port must be dropped when the link carries no realm at all");
         }
 
-        public void DeepLinkKeepsSceneConsoleForLoopbackRealm()
+        // scene-console is always permitted: creators and QA need the scene log console against production realms and
+        // worlds, and it unlocks no capability (read-only view of logs the scene already emits; the full debug panel
+        // still needs the never-permitted `debug`).
+        [TestCase("decentraland://?realm=http://127.0.0.1:8000&scene-console=true", TestName = "loopback realm")]
+        [TestCase("decentraland://?realm=https://peer.decentraland.org&scene-console=true", TestName = "production catalyst realm")]
+        [TestCase("decentraland://?realm=other-world.dcl.eth&scene-console=true", TestName = "non-whitelisted world realm")]
+        [TestCase("decentraland://?scene-console=true", TestName = "no realm")]
+        public void DeepLinkKeepsSceneConsoleForEveryRealm(string deepLink)
         {
-            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=http://127.0.0.1:8000&scene-console=true");
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(deepLink);
 
-            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for a loopback (local dev) realm");
-        }
-
-        [Test]
-        public void DeepLinkDropsSceneConsoleForRemoteRealm()
-        {
-            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=https://peer.decentraland.org&scene-console=true");
-
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a non-whitelisted remote realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for every realm");
         }
 
         [Test]
@@ -222,12 +221,13 @@ namespace Global.AppArgs.Tests
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&scene-console=true");
+                "decentraland://?realm=test-world.dcl.eth&local-scene=true&dclenv=zone&mcp=true&measure-loading-time=true");
 
             // Assert
             Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene must survive for a whitelisted world realm");
             Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv must survive for a whitelisted world realm");
-            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SCENE_CONSOLE), "scene-console must survive for a whitelisted world realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MCP), "mcp must survive for a whitelisted world realm");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must survive for a whitelisted world realm — the QA loading-benchmark flow targets a whitelisted world");
         }
 
         [Test]
@@ -252,11 +252,11 @@ namespace Global.AppArgs.Tests
 
             // Act
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=other-world.dcl.eth&local-scene=true&scene-console=true");
+                "decentraland://?realm=other-world.dcl.eth&local-scene=true&mcp=true");
 
             // Assert
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped for a world that is not whitelisted");
-            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SCENE_CONSOLE), "scene-console must be dropped for a world that is not whitelisted");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MCP), "mcp must be dropped for a world that is not whitelisted");
         }
 
         // IsRealmWhitelisted gates BOTH the whitelisted-realm dev params and skipping the realm-change consent prompt
@@ -281,6 +281,61 @@ namespace Global.AppArgs.Tests
 
             // Act & Assert
             Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [TestCase("https://worlds-content-server.interconnected.online/world/test-world.dcl.eth", true, TestName = "a host under the custom base domain is trusted like decentraland's")]
+        [TestCase("https://interconnected.online.attacker.com/world/test-world.dcl.eth", false, TestName = "suffix-lookalike of the custom base domain is rejected")]
+        [TestCase("https://worlds-content-server.decentraland.org/world/test-world.dcl.eth", false, TestName = "a custom deployment does not inherit trust in decentraland hosts")]
+        [TestCase("http://127.0.0.1:8000", true, TestName = "loopback stays trusted")]
+        public void ClassifyRealmAsWhitelistedUnderACustomBaseDomain(string realm, bool expected)
+        {
+            // Arrange
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetTrustedBaseDomain("interconnected.online");
+
+            // Act & Assert
+            Assert.AreEqual(expected, DeepLinkAllowlist.IsRealmWhitelisted(realm));
+        }
+
+        [Test]
+        public void KeepTheDecentralandFamilyTrustedWhenTheBaseDomainIsOneOfItsOwn()
+        {
+            // Arrange: passing a decentraland domain must not narrow trust to that single environment.
+            DeepLinkAllowlist.SetWhitelistedWorlds(new[] { "test-world.dcl.eth" });
+            DeepLinkAllowlist.SetTrustedBaseDomain(IDecentralandUrlsSource.ORG_DOMAIN);
+
+            // Act & Assert
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted("https://worlds-content-server.decentraland.org/world/test-world.dcl.eth"));
+            Assert.IsTrue(DeepLinkAllowlist.IsRealmWhitelisted("https://worlds-content-server.decentraland.zone/world/test-world.dcl.eth"));
+        }
+
+        /// <summary>
+        ///     The base domain decides which realm hosts are trusted, so a deep link must never be able to set it:
+        ///     it stays a command-line-only flag, denied (and surfaced for consent) like any other unlisted param.
+        /// </summary>
+        [Test]
+        public void NeverPermitTheBaseDomainFromADeepLink()
+        {
+            Assert.IsFalse(DeepLinkAllowlist.IsPermitted(AppArgsFlags.BASE_DOMAIN));
+            Assert.IsFalse(DeepLinkAllowlist.IsPermittedForWhitelistedRealm(AppArgsFlags.BASE_DOMAIN));
+
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters($"decentraland://?realm=https://peer.decentraland.org&{AppArgsFlags.BASE_DOMAIN}=evil.example");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.BASE_DOMAIN), $"keys: {string.Join(", ", output.Keys)}");
+        }
+
+        /// <summary>
+        ///     Which chain the client signs against is not something a link may pick, so it is denied like any other
+        ///     unlisted param. Denial is only half of it: the value is read from the command line before the deep
+        ///     link is processed, so consenting to it in the denied-params dialog does not apply it either.
+        /// </summary>
+        [Test]
+        public void NeverPermitTheEthNetworkFromADeepLink()
+        {
+            Assert.IsFalse(DeepLinkAllowlist.IsPermitted(AppArgsFlags.ETH_NETWORK));
+            Assert.IsFalse(DeepLinkAllowlist.IsPermittedForWhitelistedRealm(AppArgsFlags.ETH_NETWORK));
+
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters($"decentraland://?realm=https://peer.decentraland.org&{AppArgsFlags.ETH_NETWORK}=mainnet");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.ETH_NETWORK), $"keys: {string.Join(", ", output.Keys)}");
         }
 
         [Test]
@@ -397,6 +452,24 @@ namespace Global.AppArgs.Tests
                 "decentraland://?realm=https://peer.decentraland.org&local-scene=true&local-ab=true");
 
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_AB), "local-ab must be dropped for a non-loopback (remote) realm");
+        }
+
+        [Test]
+        public void DeepLinkKeepsMeasureLoadingTimeForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&measure-loading-time=true");
+
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must survive for a loopback (local dev) realm");
+        }
+
+        [Test]
+        public void DeepLinkDropsMeasureLoadingTimeForRemoteRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&measure-loading-time=true");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MEASURE_LOADING_TIME), "measure-loading-time must be dropped for a non-whitelisted realm — it suppresses the sign-in screen and quits the client when no identity is cached");
         }
     }
 }

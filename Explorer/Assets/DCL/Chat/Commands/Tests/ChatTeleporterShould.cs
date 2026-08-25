@@ -33,6 +33,7 @@ namespace DCL.Chat.Commands.Tests
 
             IDecentralandUrlsSource urlsSource = Substitute.For<IDecentralandUrlsSource>();
             urlsSource.Url(Arg.Any<DecentralandUrl>()).Returns("https://peer.decentraland.org");
+            urlsSource.BaseDomain.Returns(IDecentralandUrlsSource.ORG_DOMAIN);
 
             IReadonlyReactiveProperty<Vector2Int> currentParcel = Substitute.For<IReadonlyReactiveProperty<Vector2Int>>();
             currentParcel.Value.Returns(CURRENT_PARCEL);
@@ -40,7 +41,7 @@ namespace DCL.Chat.Commands.Tests
             IScenesCache scenesCache = Substitute.For<IScenesCache>();
             scenesCache.CurrentParcel.Returns(currentParcel);
 
-            chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(DecentralandEnvironment.Org), urlsSource, scenesCache);
+            chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(DecentralandEnvironment.Org, urlsSource), urlsSource, scenesCache);
         }
 
         [Test]

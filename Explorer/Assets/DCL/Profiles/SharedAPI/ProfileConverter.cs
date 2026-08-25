@@ -47,12 +47,10 @@ namespace DCL.Profiles
                 return null;
 
             var jObject = JObject.Load(reader);
-            existingValue ??= Profile.Create();
-            DeserializeProfileList(jObject, existingValue);
-            return existingValue;
+            return DeserializeProfileList(jObject, existingValue);
         }
 
-        private void DeserializeProfileList(JObject root, Profile profile)
+        private Profile DeserializeProfileList(JObject root, Profile? profile)
         {
             // Temporary support two schemes: from catalyst and centralized
             // TODO remove before releasing
@@ -62,27 +60,27 @@ namespace DCL.Profiles
 
             JToken? avatars = root["avatars"];
 
-            if (avatars is { Type: JTokenType.Array })
-            {
-                foreach (JToken? item in avatars.Children())
-                {
-                    DeserializeProfile(item, profile);
-
-                    // We only care about the first element, it's never an array in reality
-                    break;
-                }
-            }
-            else
+            if (avatars is not { Type: JTokenType.Array })
                 throw new ArgumentException("\"avatars\" is not a JSON array");
 
+            // We only care about the first element, it's never an array in reality
+            foreach (JToken? item in avatars.Children())
+                return DeserializeProfile(item, profile);
 
+            throw new ArgumentException("\"avatars\" array is empty");
         }
 
-        private void DeserializeProfile(JToken? jToken, Profile profile)
+        private Profile DeserializeProfile(JToken? jToken, Profile? profile)
         {
-            if (jToken is not JObject jObject) return;
+            if (jToken is not JObject jObject)
+                throw new ArgumentException("The profile element is not a JSON object");
 
-            profile.GetCompact() = ProfileCompactInfoConverter.ReadJson(jObject);
+            Profile.CompactInfo compact = ProfileCompactInfoConverter.ReadJson(jObject);
+
+            if (profile == null)
+                profile = new Profile(compact);
+            else
+                profile.GetCompact() = compact;
 
             profile.Description = jObject["description"]?.Value<string>() ?? "";
             profile.TutorialStep = jObject["tutorialStep"]?.Value<int>() ?? 0;
@@ -111,6 +109,8 @@ namespace DCL.Profiles
             DeserializeLinks(jObject["links"]!, ref profile.links);
             DeserializeArrayToCollection(jObject["blocked"], ref profile.blocked, static s => s);
             DeserializeArrayToCollection(jObject["interests"], ref profile.interests, static s => s);
+
+            return profile;
         }
 
         private void DeserializeLinks(JToken? root, ref List<LinkJsonDto>? list)

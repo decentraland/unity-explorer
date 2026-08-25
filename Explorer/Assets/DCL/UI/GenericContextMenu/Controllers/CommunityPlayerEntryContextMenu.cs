@@ -138,7 +138,8 @@ namespace DCL.UI
 
             var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
 
-            bool targetIsLocalParticipant = targetProfile.UserId.Equals(localParticipant.WalletId, StringComparison.InvariantCultureIgnoreCase);
+            Option<string> localWalletId = localParticipant.WalletId;
+            bool targetIsLocalParticipant = localWalletId.Has && string.Equals(targetProfile.UserId, localWalletId.Value, StringComparison.InvariantCultureIgnoreCase);
             bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantCommunityRole.Moderator or VoiceChatParticipantCommunityRole.Owner;
 
             closeContextMenuTask.TrySetResult();
@@ -338,6 +339,10 @@ namespace DCL.UI
 
             if (!voiceChatOrchestrator.ParticipantsStateService.TryGetParticipantState(walletId, out var participant)) return;
 
+            Option<Profile.CompactInfo> participantProfile = participant.Profile;
+
+            if (!participantProfile.Has) return;
+
             string communityName = community.communityName;
 
             cts = cts.SafeRestart();
@@ -347,12 +352,12 @@ namespace DCL.UI
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
                 Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
-                                                                                         string.Format(BAN_MEMBER_TEXT_FORMAT, participant.Name, communityName),
+                                                                                         string.Format(BAN_MEMBER_TEXT_FORMAT, participantProfile.Value.Name, communityName),
                                                                                          BAN_MEMBER_CANCEL_TEXT,
                                                                                          BAN_MEMBER_CONFIRM_TEXT,
                                                                                          voiceChatContextMenuSettings.BanUserPopupSprite,
                                                                                          false, false,
-                                                                                         userInfo: participant.Profile),
+                                                                                         userInfo: participantProfile.Value),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

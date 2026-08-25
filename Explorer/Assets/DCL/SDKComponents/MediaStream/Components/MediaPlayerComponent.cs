@@ -1,6 +1,5 @@
 using DCL.ECSComponents;
-using RenderHeads.Media.AVProVideo;
-using System;
+using DCL.AvProSwitch;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -32,9 +31,8 @@ namespace DCL.SDKComponents.MediaStream
         private float frozenTimestamp;
         private float lastPlayTimestamp;
         private bool isFrozen;
-        private bool isSpatial;
 
-        public readonly MultiMediaPlayer MediaPlayer;
+        public MultiMediaPlayer MediaPlayer;
         public readonly bool IsFromContentServer;
 
         public MediaAddress MediaAddress;
@@ -154,15 +152,15 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
         {
-            AudioSource? AudioSource = MediaPlayer.AnyExposedAudioSource();
+            AudioSource? audioSource = MediaPlayer.AnyExposedAudioSource();
 
-            if (AudioSource == null)
+            if (audioSource == null)
             {
                 output = null;
                 return false;
             }
 
-            return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(AudioSource, out output);
+            return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(audioSource, out output);
         }
 
         public void EnsureLastAudioFrameReadFilterIsRemoved() 

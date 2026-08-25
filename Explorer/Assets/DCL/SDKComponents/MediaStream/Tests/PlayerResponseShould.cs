@@ -1,4 +1,3 @@
-#if AV_PRO_PRESENT
 using DCL.SDKComponents.MediaStream.YouTube;
 using NUnit.Framework;
 using System;
@@ -24,45 +23,45 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void Throw_WhenPlayabilityStatusIsError()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""playabilityStatus"": { ""status"": ""ERROR"", ""reason"": ""Video unavailable"" }
             }";
 
-            Assert.That(() => PlayerResponse.Parse(json), Throws.TypeOf<InvalidOperationException>());
+            Assert.That(() => PlayerResponse.Parse(JSON), Throws.TypeOf<InvalidOperationException>());
         }
 
         [Test]
         public void Throw_WhenPlayabilityStatusIsLoginRequired()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""playabilityStatus"": { ""status"": ""LOGIN_REQUIRED"" }
             }";
 
-            Assert.That(() => PlayerResponse.Parse(json), Throws.TypeOf<InvalidOperationException>());
+            Assert.That(() => PlayerResponse.Parse(JSON), Throws.TypeOf<InvalidOperationException>());
         }
 
         [Test]
         public void NotThrow_WhenPlayabilityStatusIsOk()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""playabilityStatus"": { ""status"": ""OK"" },
                 ""videoDetails"": { ""isLive"": false, ""lengthSeconds"": ""212"" },
                 ""streamingData"": { }
             }";
 
-            Assert.That(() => PlayerResponse.Parse(json), Throws.Nothing);
+            Assert.That(() => PlayerResponse.Parse(JSON), Throws.Nothing);
         }
 
         [Test]
         public void NotThrow_WhenPlayabilityStatusIsMissing()
         {
             // Some responses omit playabilityStatus entirely — treat as OK.
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""isLive"": false, ""lengthSeconds"": ""100"" },
                 ""streamingData"": { }
             }";
 
-            Assert.That(() => PlayerResponse.Parse(json), Throws.Nothing);
+            Assert.That(() => PlayerResponse.Parse(JSON), Throws.Nothing);
         }
 
         // -------------------------------------------------------------------------
@@ -72,12 +71,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void DetectLive_WhenIsLiveIsTrue()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""isLive"": true, ""lengthSeconds"": ""0"" },
                 ""streamingData"": { ""hlsManifestUrl"": ""https://manifest.googlevideo.com/hls/x.m3u8"" }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.IsLive, Is.True);
         }
@@ -85,12 +84,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void DetectLive_WhenLengthIsZero()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""0"" },
                 ""streamingData"": { }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.IsLive, Is.True);
         }
@@ -100,12 +99,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             // HLS manifest presence alone does NOT imply live — many VODs also expose HLS.
             // Only videoDetails.isLive / isLiveContent / lengthSeconds=="0" are live signals.
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""100"" },
                 ""streamingData"": { ""hlsManifestUrl"": ""https://manifest.googlevideo.com/hls/x.m3u8"" }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.IsLive, Is.False);
             Assert.That(response.HlsManifestUrl, Is.EqualTo("https://manifest.googlevideo.com/hls/x.m3u8"));
@@ -114,12 +113,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void NotLive_ForOrdinaryVod()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""isLive"": false, ""lengthSeconds"": ""212"" },
                 ""streamingData"": { }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.IsLive, Is.False);
             Assert.That(response.HlsManifestUrl, Is.Null.Or.Empty);
@@ -132,7 +131,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void ExtractMuxedStreams_FromFormatsArray()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" },
                 ""streamingData"": {
                     ""formats"": [
@@ -148,7 +147,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.MuxedStreams, Has.Count.EqualTo(1));
             Assert.That(response.VideoOnlyStreams, Is.Empty);
@@ -165,7 +164,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void ExtractVideoOnlyStreams_FromAdaptiveFormatsArray()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" },
                 ""streamingData"": {
                     ""adaptiveFormats"": [
@@ -181,7 +180,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.MuxedStreams, Is.Empty);
             Assert.That(response.VideoOnlyStreams, Has.Count.EqualTo(1));
@@ -197,7 +196,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             // Audio-only adaptive formats lack width/height — our parser drops them because
             // callers only need video streams.
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" },
                 ""streamingData"": {
                     ""adaptiveFormats"": [
@@ -211,7 +210,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.VideoOnlyStreams, Is.Empty);
         }
@@ -221,7 +220,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             // Entries that only expose signatureCipher (no plaintext url) can't be used —
             // we don't implement the decipher.
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" },
                 ""streamingData"": {
                     ""formats"": [
@@ -237,7 +236,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.MuxedStreams, Is.Empty);
         }
@@ -245,11 +244,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void HandleMissingStreamingData_Gracefully()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.MuxedStreams, Is.Empty);
             Assert.That(response.VideoOnlyStreams, Is.Empty);
@@ -263,7 +262,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         [Test]
         public void HasUsableContent_True_WhenMuxedStreamPresent()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" },
                 ""streamingData"": {
                     ""formats"": [
@@ -272,29 +271,29 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 }
             }";
 
-            Assert.That(PlayerResponse.Parse(json).HasUsableContent, Is.True);
+            Assert.That(PlayerResponse.Parse(JSON).HasUsableContent, Is.True);
         }
 
         [Test]
         public void HasUsableContent_True_WhenHlsManifestPresent()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""0"" },
                 ""streamingData"": { ""hlsManifestUrl"": ""https://manifest.googlevideo.com/hls/x.m3u8"" }
             }";
 
-            Assert.That(PlayerResponse.Parse(json).HasUsableContent, Is.True);
+            Assert.That(PlayerResponse.Parse(JSON).HasUsableContent, Is.True);
         }
 
         [Test]
         public void HasUsableContent_False_WhenNoStreamsAndNoHls()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" },
                 ""streamingData"": { }
             }";
 
-            Assert.That(PlayerResponse.Parse(json).HasUsableContent, Is.False);
+            Assert.That(PlayerResponse.Parse(JSON).HasUsableContent, Is.False);
         }
 
         [Test]
@@ -302,7 +301,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             // Response with only signatureCipher entries is effectively empty for us — the
             // fallback chain should move to the next client config.
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" },
                 ""streamingData"": {
                     ""formats"": [
@@ -315,13 +314,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 }
             }";
 
-            Assert.That(PlayerResponse.Parse(json).HasUsableContent, Is.False);
+            Assert.That(PlayerResponse.Parse(JSON).HasUsableContent, Is.False);
         }
 
         [Test]
         public void HandleMultipleMuxedStreams()
         {
-            const string json = @"{
+            const string JSON = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""212"" },
                 ""streamingData"": {
                     ""formats"": [
@@ -331,10 +330,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 }
             }";
 
-            PlayerResponse response = PlayerResponse.Parse(json);
+            PlayerResponse response = PlayerResponse.Parse(JSON);
 
             Assert.That(response.MuxedStreams, Has.Count.EqualTo(2));
         }
     }
 }
-#endif

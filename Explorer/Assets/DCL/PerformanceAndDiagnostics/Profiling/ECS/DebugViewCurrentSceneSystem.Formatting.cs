@@ -1,7 +1,5 @@
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Utilities;
-using SceneRunner.Scene;
 using System.Globalization;
 using UnityEngine;
 
@@ -9,6 +7,63 @@ namespace DCL.Profiling.ECS
 {
     public partial class DebugViewCurrentSceneSystem
     {
+        private readonly struct ContentStatsBindings
+        {
+            public readonly ElementBinding<string> Entities;
+            public readonly ElementBinding<string> Triangles;
+            public readonly ElementBinding<string> Bodies;
+            public readonly ElementBinding<string> Geometries;
+            public readonly ElementBinding<string> Materials;
+            public readonly ElementBinding<string> Textures;
+            public readonly ElementBinding<string> Colliders;
+            public readonly ElementBinding<string> Videos;
+
+            private ContentStatsBindings(
+                ElementBinding<string> entities,
+                ElementBinding<string> triangles,
+                ElementBinding<string> bodies,
+                ElementBinding<string> geometries,
+                ElementBinding<string> materials,
+                ElementBinding<string> textures,
+                ElementBinding<string> colliders,
+                ElementBinding<string> videos)
+            {
+                Entities = entities;
+                Triangles = triangles;
+                Bodies = bodies;
+                Geometries = geometries;
+                Materials = materials;
+                Textures = textures;
+                Colliders = colliders;
+                Videos = videos;
+            }
+
+            public static ContentStatsBindings Create() =>
+                new (
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty));
+        }
+
+        private static void UpdateContentStatsBindings(in ContentStatsBindings bindings, SceneContentStats stats, in SceneContentCaps caps)
+        {
+            SceneContentStatsFormatter.Format(stats, in caps, out SceneContentStatsText text);
+
+            bindings.Entities.Value = text.Entities;
+            bindings.Triangles.Value = text.Triangles;
+            bindings.Bodies.Value = text.Bodies;
+            bindings.Geometries.Value = text.Geometries;
+            bindings.Materials.Value = text.Materials;
+            bindings.Textures.Value = text.Textures;
+            bindings.Colliders.Value = text.Colliders;
+            bindings.Videos.Value = text.Videos;
+        }
+
         private readonly struct StringBindings
         {
             public readonly ElementBinding<string> RealFps;

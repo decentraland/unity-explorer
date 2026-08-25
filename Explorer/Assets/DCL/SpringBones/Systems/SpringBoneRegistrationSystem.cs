@@ -168,7 +168,7 @@ namespace DCL.SpringBones
             for (int j = 0; j < joints.Count; j++)
             {
                 var config = configs[j];
-                Transform tail = (j + 1 < joints.Count) ? joints[j + 1] : null;
+                Transform tail = j + 1 < joints.Count ? joints[j + 1] : null;
 
                 if (tail != null)
                 {

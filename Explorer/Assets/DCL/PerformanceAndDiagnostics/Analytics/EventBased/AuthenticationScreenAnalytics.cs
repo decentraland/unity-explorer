@@ -52,7 +52,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 case AuthStatus.VerificationRequested:
                     analytics.Track(Authentication.VERIFICATION_REQUESTED, new JObject
                     {
-                        { "requestID", controller.CurrentRequestID },
+                        { "requestID", controller.CurrentRequestId },
                     });
                     break;
 

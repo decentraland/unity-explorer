@@ -64,7 +64,7 @@ namespace Editor
             }
 
             if (Parameters.TryGetValue("IS_RELEASE_BUILD", out object isReleaseBuild)
-                && (isReleaseBuild as string) == "true")
+                && isReleaseBuild as string == "true")
             {
                 Debug.Log("[ALTTESTER]: Release build — removing AltTester scripting define");
                 AltBuilder.RemoveAltTesterFromScriptingDefineSymbols(BuildTargetGroup.Standalone);

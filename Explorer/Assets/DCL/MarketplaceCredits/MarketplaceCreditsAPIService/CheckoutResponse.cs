@@ -14,5 +14,6 @@ namespace DCL.MarketplaceCredits
     public struct CheckoutRequestBody
     {
         public string packId;
+        public string source;
     }
 }

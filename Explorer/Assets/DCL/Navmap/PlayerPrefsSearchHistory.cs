@@ -28,7 +28,7 @@ namespace DCL.Navmap
 
         public string[] Get()
         {
-            string previousSearchesStr = DCLPlayerPrefs.GetString(DCLPrefKeys.PREVIOUS_SEARCHES, "");
+            string previousSearchesStr = DCLPlayerPrefs.GetString(DCLPrefKeys.PREVIOUS_SEARCHES);
             return string.IsNullOrEmpty(previousSearchesStr) ? Array.Empty<string>() : previousSearchesStr.Split('|');
         }
     }

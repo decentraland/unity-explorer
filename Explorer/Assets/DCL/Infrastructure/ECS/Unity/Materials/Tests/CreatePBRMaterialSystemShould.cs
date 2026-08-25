@@ -92,7 +92,7 @@ namespace ECS.Unity.Materials.Tests
             new (MaterialData.CreatePBRMaterial(
                 new TextureComponent("albedo",string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
                 new TextureComponent("alpha",string.Empty, TextureWrapMode.Mirror, FilterMode.Trilinear),
-                new TextureComponent("emissive",string.Empty, TextureWrapMode.Mirror, FilterMode.Bilinear),
+                new TextureComponent("emissive",string.Empty, TextureWrapMode.Mirror),
                 new TextureComponent("bump",string.Empty, TextureWrapMode.Mirror, FilterMode.Point, TextureType.NormalMap),
                 0.5f,
                 true,

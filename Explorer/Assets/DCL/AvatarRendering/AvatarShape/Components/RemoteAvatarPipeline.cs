@@ -30,6 +30,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private QuickArray<bool> updateAvatar;
         private QuickArray<float4x4> bonesCombined;
 
+        private QuickArray<int> perAvatarBoneCount;
+
         private Transform[] flatBones;
         private Transform[] flatRoots;
 
@@ -60,6 +62,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             matrixFromAllAvatars = new QuickArray<float4x4>(initialCapacity);
             updateAvatar = new QuickArray<bool>(initialCapacity);
+
+            perAvatarBoneCount = new QuickArray<int>(initialCapacity);
+            FillWithStride(perAvatarBoneCount, 0, initialCapacity, bonesArrayLength);
 
             flatBones = new Transform[initialCapacity * bonesArrayLength];
             flatRoots = new Transform[initialCapacity];
@@ -152,6 +157,19 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             avatarTransformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Unassign();
         }
 
+        /// <summary>
+        ///     Refreshes the per-avatar matrix count for a live slot from the authoritative
+        ///     AvatarCustomSkinningComponent.BoneCount. Called every frame (before Schedule) so a
+        ///     wearable re-equip that changes the bone count is reflected without needing a re-register.
+        /// </summary>
+        public void SetBoneCount(int validIndex, int boneCount)
+        {
+            if (validIndex < 0 || validIndex >= perAvatarBoneCount.Length)
+                return;
+
+            perAvatarBoneCount[validIndex] = boneCount;
+        }
+
         public void Schedule(int batchCount)
         {
             if (avatarIndex == 0)
@@ -173,6 +191,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             Job.AvatarTransform = matrixFromAllAvatars.InnerNativeArray();
             Job.UpdateAvatar = updateAvatar.InnerNativeArray();
+            Job.PerAvatarBoneCount = perAvatarBoneCount.InnerNativeArray();
             handle = Job.Schedule(avatarIndex, batchCount, combinedGatherHandle);
         }
 
@@ -203,6 +222,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             matrixFromAllAvatars.ReAlloc(newCapacity);
             updateAvatar.ReAlloc(newCapacity);
 
+            int oldCapacity = currentAvatarAmountSupported;
+            perAvatarBoneCount.ReAlloc(newCapacity);
+            FillWithStride(perAvatarBoneCount, oldCapacity, newCapacity - oldCapacity, bonesArrayLength);
+
             int oldBonesLength = flatBones.Length;
             int oldRootsLength = flatRoots.Length;
 
@@ -225,6 +248,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 array[i] = dummy;
         }
 
+        private static void FillWithStride(QuickArray<int> array, int startIndex, int count, int value)
+        {
+            for (int i = startIndex; i < startIndex + count; i++)
+                array[i] = value;
+        }
+
         public void Dispose()
         {
             // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
@@ -243,6 +272,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             updateAvatar.Dispose();
             stopwatch.LogStep("updateAvatar.Dispose");
+
+            perAvatarBoneCount.Dispose();
+            stopwatch.LogStep("perAvatarBoneCount.Dispose");
 
             Job.Dispose();
             stopwatch.LogStep("job.Dispose");

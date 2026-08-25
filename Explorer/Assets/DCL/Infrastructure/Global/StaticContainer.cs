@@ -239,7 +239,7 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = webRequestsContainer;
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
-            container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
+            container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController, decentralandUrlsSource);
             container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
@@ -299,6 +299,7 @@ namespace Global
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles),
                 new PrimitivesRenderingPlugin(sharedDependencies),
+                new SceneContentStatsPlugin(),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
                 new AudioAnalysisPlugin(sharedDependencies),
@@ -306,9 +307,9 @@ namespace Global
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
-                new AnimatorPlugin(),
+                new AnimatorPlugin(sharedDependencies.FrameTimeBudget),
                 new TweenPlugin(),
-                container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
+                container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData, container.DebugContainerBuilder),
                 new SDKEntityTriggerAreaPlugin(
                     globalWorld,
                     container.MainPlayerAvatarBaseProxy,

@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -35,11 +34,11 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly HashSet<string> whitelistMethods;
         private readonly HashSet<string> readOnlyMethods;
-        private readonly DecentralandEnvironment environment;
+        private readonly EthereumNetwork ethereumNetwork;
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
-        private readonly DCLSemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new ();
         private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
         private readonly URLBuilder urlBuilder = new ();
 
@@ -57,7 +56,7 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
-            DecentralandEnvironment environment,
+            EthereumNetwork ethereumNetwork,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -68,7 +67,7 @@ namespace DCL.Web3.Authenticators
             this.web3AccountFactory = web3AccountFactory;
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
-            this.environment = environment;
+            this.ethereumNetwork = ethereumNetwork;
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
@@ -104,7 +103,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "eth_chainId"))
             {
-                string chainId = ChainUtils.GetChainId(environment);
+                string chainId = ChainUtils.GetChainId(ethereumNetwork);
 
                 return new EthApiResponse
                 {
@@ -116,7 +115,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "net_version"))
             {
-                string netVersion = ChainUtils.GetNetVersion(environment);
+                string netVersion = ChainUtils.GetNetVersion(ethereumNetwork);
 
                 return new EthApiResponse
                 {
@@ -239,7 +238,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(request.readonlyNetwork ?? ChainUtils.GetNetworkId(environment), ct)
+                await ConnectToRpcAsync(request.readonlyNetwork ?? ChainUtils.GetNetworkId(ethereumNetwork), ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
@@ -298,7 +297,10 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> RequestEthMethodWithoutSignatureAsync(EthApiRequest request, CancellationToken ct)
         {
-            string reqJson = JsonConvert.SerializeObject(request);
+            long callerId = request.id;
+            request.id &= int.MaxValue;
+
+            string reqJson = JsonConvert.SerializeObject(new { jsonrpc = "2.0", request.id, request.method, request.@params });
             byte[] bytes = Encoding.UTF8.GetBytes(reqJson);
             await rpcWebSocket!.SendAsync(bytes, WebSocketMessageType.Text, true, ct);
 
@@ -317,7 +319,10 @@ namespace DCL.Web3.Authenticators
                         throw new Web3Exception($"RPC {request.method} failed: code {response.error.code} {response.error.message}");
 
                     if (response.id == request.id)
+                    {
+                        response.id = callerId;
                         return response;
+                    }
                 }
                 else if (result.MessageType == WebSocketMessageType.Close)
                 {

@@ -6,6 +6,7 @@ using DCL.Chat.ChatReactions.Simulation.UI;
 using DCL.Chat.ChatReactions.Simulation.World;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -155,11 +156,25 @@ namespace DCL.Chat.ChatReactions.Core
             ChatReactionsConfig reactionsConfig,
             int maxValidEmojiIndex)
         {
+            // Gated here rather than only in the UI: subscribing the pipes would let any
+            // co-located peer drive reaction decoding and retention on a client that cannot
+            // show reactions at all.
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+            {
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[ChatPlugin] Chat reactions disabled — using NullReactionMessageBus (no pipes subscribed)");
+                return new NullReactionMessageBus();
+            }
+
             string serverEnv = environment switch
             {
                 DecentralandEnvironment.Org => "prd",
                 DecentralandEnvironment.Today => "prd",
                 DecentralandEnvironment.Zone => "dev",
+
+                // A --base-domain deployment is treated as a non-production stack, like zone: its
+                // comms-message-sfu has to join as message-router-dev-0 for relayed reactions to
+                // authenticate. Explicit, so it is not silently routed as a local dev server.
+                DecentralandEnvironment.Custom => "dev",
                 _ => "local",
             };
 

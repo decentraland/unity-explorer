@@ -101,7 +101,7 @@ namespace ECS.StreamableLoading.Tests
                 + "If 0, the mock setup doesn't match the generic method signature.");
 
 
-            webRequestTcsA.TrySetCanceled(default);
+            webRequestTcsA.TrySetCanceled();
 
             // Verify B hit the mock for its recursive web request
             Assert.That(sendCallCount, Is.EqualTo(2),

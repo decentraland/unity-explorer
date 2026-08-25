@@ -57,6 +57,21 @@ namespace DCL.McpServer.Core
             return AddField(name, field, isRequired);
         }
 
+        /// <summary>Adds an array field whose items are objects described by their own <paramref name="itemSchema" /> builder.</summary>
+        public McpJsonSchema ObjectArray(string name, McpJsonSchema itemSchema, string? description = null, bool isRequired = false)
+        {
+            var field = new JObject
+            {
+                ["type"] = "array",
+                ["items"] = itemSchema.Build(),
+            };
+
+            if (description != null)
+                field["description"] = description;
+
+            return AddField(name, field, isRequired);
+        }
+
         /// <summary>Adds an array field whose items are all integers.</summary>
         public McpJsonSchema IntegerArray(string name, string? description = null, bool isRequired = false)
         {

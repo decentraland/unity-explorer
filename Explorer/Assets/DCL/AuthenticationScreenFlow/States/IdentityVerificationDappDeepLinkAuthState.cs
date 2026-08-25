@@ -44,7 +44,7 @@ namespace DCL.AuthenticationScreenFlow
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             NativeWindowManager.RequestTemporaryWindowMode();
 
-            controller.CurrentRequestID = string.Empty;
+            controller.CurrentRequestId = string.Empty;
 
             currentState.Value = AuthStatus.VerificationRequested;
             AuthenticateAsync(payload.method, payload.ct).Forget();

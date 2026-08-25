@@ -516,13 +516,14 @@ By running the build from a console/terminal you can specify the pertinent param
 
 ## Test media streaming
 
-In the current project, **media streaming** is implemented via external package, namely AVPro. This package is imported during the build process on CI. In order to test media streaming in editor:
-1. Import AVPro package. Trial/preview version of it can be downloaded from the official [GitHub repository](https://github.com/RenderHeads/UnityPlugin-AVProVideo/releases). At the moment of writing this documentation AVPro version used in this project was 2.8.0.
-2. Add `csc.rsp` file to the `Assets` folder with only one line `-define:AV_PRO_PRESENT` in this file.
-3. Close and re-open Unity Editor, so the define symbols are updated.
-4. Verify that symbol is recognized by checking `DCL.Plugins.asmdef` in inspector (the `AV_PRO_PRESENT` define lives there; the MediaStream code itself compiles into `ECS.Unity`). You should not see red sign in front of the `AV_PRO_PRESENT` define there.
+**Media streaming** is served by two switchable backends behind the `AvProSwitch` assembly (`Explorer/Assets/DCL/AvProSwitch`):
 
-After importing trial package you can:
+* **AVPro** (default) — the `com.renderheads.avpro.video-ultra` package, resolved from `decentraland/unity-explorer-packages`. No manual import is needed.
+* **UUAV** — the in-house player (`Explorer/Assets/Plugins/UUAV`), used when the `use-custom-media-player` feature flag is enabled or the `--use-custom-media-player` launch argument is passed (`--use-custom-media-player false` forces AVPro).
+
+The backend is chosen once at startup (`MediaPlayerContainer` reads `FeaturesRegistry` and sets `MediaPlayerBackendSelection.UseCustomPlayer`); the startup log prints `Media player backend: AVPro|UUAV`. The media systems are always compiled in (except on Linux, where they are excluded per platform define). `AvProSwitch` references the AVPro package assembly directly, so removing the package from the manifest also requires updating `AvProSwitch` (the asmdef reference and `AvProBackend`).
+
+To test media streaming you can:
 1. Run `MediaStreaming` sdk-scene from `StaticSceneLoader.unity` scene to verify that media streaming is working. This scene includes both audio- and video streams.
 2. Run `Main.unity` scene on `https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main` realm and run to coordinates (-12,-3) to observe video played on the big screen (in the open cinema scene)
 

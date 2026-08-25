@@ -278,11 +278,11 @@ namespace DCL.Friends.UI.Requests
                         ct)
                                                      .SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                    if (result.Success)
+                    if (result is { Success: true, Value: { } friendRequest })
                     {
                         await ShowOperationConfirmationAsync(
                             ViewState.ConfirmedSent,
-                            viewInstance.sentConfirmed, result.Value.To,
+                            viewInstance.sentConfirmed, friendRequest.To,
                             FRIEND_REQUEST_SENT_FORMAT,
                             ct);
 
@@ -322,9 +322,9 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid AcceptThenCloseAsync(CancellationToken ct)
             {
-                EnumResult<TaskError> result = await friendsService.AcceptFriendshipAsync(target.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                var result = await friendsService.AcceptFriendshipAsync(target.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                if (result.Success)
+                if (result is { Success: true, Value: true })
                 {
                     await ShowOperationConfirmationAsync(
                         ViewState.ConfirmedAccepted,

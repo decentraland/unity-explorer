@@ -91,6 +91,12 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             system.Update(0);
 
             //Act
+            // Sphere primitives share a single immutable mesh, so the re-instantiated mesh is the same
+            // object as the initial one. Clear the recorded calls so the assertion below counts only the
+            // Execute triggered by re-instantiation and not the initial setup (which the mesh argument can
+            // no longer disambiguate).
+            setupMeshes[input.MeshCase].ClearReceivedCalls();
+
             input.IsDirty = true;
             world.Get<PrimitiveMeshRendererComponent>(entity).PrimitiveMesh = null;
             system.Update(0);

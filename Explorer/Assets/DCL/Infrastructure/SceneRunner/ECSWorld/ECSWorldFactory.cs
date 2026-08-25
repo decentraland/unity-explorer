@@ -19,6 +19,7 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.EngineInfo;
+using ECS.Unity.ExplorerUiEvents;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
@@ -82,6 +83,7 @@ namespace SceneRunner.ECSWorld
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), persistentEntities.SceneRoot);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+            WriteExplorerUiEventsSystem.InjectToWorld(ref builder, sharedDependencies.ExplorerUiEvents, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
 
             ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);
             ResetRaycastResultSystem.InjectToWorld(ref builder);

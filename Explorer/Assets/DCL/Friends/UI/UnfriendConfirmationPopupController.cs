@@ -89,9 +89,9 @@ namespace DCL.Friends.UI
 
             async UniTaskVoid UnfriendAsync(CancellationToken ct)
             {
-                EnumResult<TaskError> result = await friendsService.DeleteFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                var result = await friendsService.DeleteFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                if (result.Success)
+                if (result is { Success: true, Value: true })
                     Close();
             }
         }

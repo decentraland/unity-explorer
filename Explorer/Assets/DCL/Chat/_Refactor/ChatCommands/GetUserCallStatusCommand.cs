@@ -22,6 +22,10 @@ namespace DCL.Chat.ChatCommands
                                                .SuppressCancellationThrow()
                                                .SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
 
+            // result.Value is default on cancellation or failure and must not be decoded as a user state
+            if (ct.IsCancellationRequested || !result.Success)
+                return CallButtonPresenter.OtherUserCallStatus.UserOffline;
+
             switch (result.Value.Result.ChatUserState)
             {
                 case PrivateConversationUserStateService.ChatUserState.Connected:

@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Profiles.Helpers;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using System;
@@ -135,7 +136,12 @@ namespace DCL.Profiles.Self
                 if (previousProfile != null && newProfile.IsSameProfile(previousProfile))
                     throw new IdenticalProfileUpdateException();
 
-                newProfile.UserId = address;
+                Option<UserId> selfUserId = UserId.From(web3IdentityCache.Identity.Address);
+
+                if (!selfUserId.Has)
+                    throw new Web3IdentityMissingException("Web3 Identity has an empty address");
+
+                newProfile.UserId = selfUserId.Value;
                 newProfile.Version++;
 
                 if (!updateAvatarInWorld)

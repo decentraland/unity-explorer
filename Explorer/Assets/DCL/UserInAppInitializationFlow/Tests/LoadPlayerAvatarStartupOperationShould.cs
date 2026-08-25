@@ -5,6 +5,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
@@ -21,6 +22,14 @@ namespace DCL.UserInAppInitializationFlow.Tests
         private ObjectProxy<AvatarBase> avatarBaseProxy;
         private GameObject avatarGameObject;
         private CancellationTokenSource cts;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void SetUp()
@@ -53,7 +62,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         [Test]
         public void AddsProfileToPlayerEntityWhenNotPresent()
         {
-            var profile = new Profile();
+            var profile = Profile.NewRandomProfile("0x8a5b1234567890abcdef1234567890abcdef1234");
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
                 .Returns(UniTask.FromResult<Profile?>(profile));
 
@@ -68,8 +77,8 @@ namespace DCL.UserInAppInitializationFlow.Tests
         [Test]
         public void SetsProfileOnPlayerEntityWhenAlreadyPresent()
         {
-            var oldProfile = new Profile();
-            var newProfile = new Profile();
+            var oldProfile = Profile.NewRandomProfile("0x1a2b1234567890abcdef1234567890abcdef1234");
+            var newProfile = Profile.NewRandomProfile("0x3c4d1234567890abcdef1234567890abcdef1234");
             selfProfile.ProfileAsync(Arg.Any<CancellationToken>())
                 .Returns(UniTask.FromResult<Profile?>(newProfile));
 

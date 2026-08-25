@@ -27,20 +27,47 @@ namespace DCL.ECSComponents {
             "CjZkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX2Vtb3RlX2Nv",
             "bW1hbmQucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo0ZGVj",
             "ZW50cmFsYW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9hdmF0YXJfbWFzay5w",
-            "cm90byKWAQoUUEJBdmF0YXJFbW90ZUNvbW1hbmQSEQoJZW1vdGVfdXJuGAEg",
+            "cm90byLdAQoUUEJBdmF0YXJFbW90ZUNvbW1hbmQSEQoJZW1vdGVfdXJuGAEg",
             "ASgJEgwKBGxvb3AYAiABKAgSEQoJdGltZXN0YW1wGAMgASgNEkEKBG1hc2sY",
             "BCABKA4yLi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9uLkF2",
-            "YXRhck1hc2tIAIgBAUIHCgVfbWFza0IUqgIRRENMLkVDU0NvbXBvbmVudHNi",
-            "BnByb3RvMw=="));
+            "YXRhck1hc2tIAIgBARI7CgVzdGF0ZRgFIAEoDjInLmRlY2VudHJhbGFuZC5z",
+            "ZGsuY29tcG9uZW50cy5FbW90ZVN0YXRlSAGIAQFCBwoFX21hc2tCCAoGX3N0",
+            "YXRlKkEKCkVtb3RlU3RhdGUSDgoKRVNfU1RBUlRFRBAAEg8KC0VTX0ZJTklT",
+            "SEVEEAESEgoORVNfSU5URVJSVVBURUQQAkIUqgIRRENMLkVDU0NvbXBvbmVu",
+            "dHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.AvatarMaskReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarEmoteCommand), global::DCL.ECSComponents.PBAvatarEmoteCommand.Parser, new[]{ "EmoteUrn", "Loop", "Timestamp", "Mask" }, new[]{ "Mask" }, null, null, null)
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.EmoteState), }, null, new pbr::GeneratedClrTypeInfo[] {
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarEmoteCommand), global::DCL.ECSComponents.PBAvatarEmoteCommand.Parser, new[]{ "EmoteUrn", "Loop", "Timestamp", "Mask", "State" }, new[]{ "Mask", "State" }, null, null, null)
           }));
     }
     #endregion
 
   }
+  #region Enums
+  /// <summary>
+  /// EmoteState describes the lifecycle state of an emote playback.
+  /// </summary>
+  public enum EmoteState {
+    /// <summary>
+    /// ES_STARTED indicates the emote started playing.
+    /// This is the zero value and is used for backward compatibility — entries
+    /// written by older explorers (field absent) read as "started".
+    /// </summary>
+    [pbr::OriginalName("ES_STARTED")] EsStarted = 0,
+    /// <summary>
+    /// ES_FINISHED indicates a non-looping emote completed naturally.
+    /// </summary>
+    [pbr::OriginalName("ES_FINISHED")] EsFinished = 1,
+    /// <summary>
+    /// ES_INTERRUPTED indicates playback was cancelled (movement, teleport,
+    /// another emote superseding it, explicit stop, or scene change).
+    /// </summary>
+    [pbr::OriginalName("ES_INTERRUPTED")] EsInterrupted = 2,
+  }
+
+  #endregion
+
   #region Messages
   /// <summary>
   /// AvatarEmoteCommand is a grow only value set, written by the explorer to report
@@ -88,6 +115,7 @@ namespace DCL.ECSComponents {
       loop_ = other.loop_;
       timestamp_ = other.timestamp_;
       mask_ = other.mask_;
+      state_ = other.state_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -163,6 +191,37 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~1;
     }
 
+    /// <summary>Field number for the "state" field.</summary>
+    public const int StateFieldNumber = 5;
+    private readonly static global::DCL.ECSComponents.EmoteState StateDefaultValue = global::DCL.ECSComponents.EmoteState.EsStarted;
+
+    private global::DCL.ECSComponents.EmoteState state_;
+    /// <summary>
+    /// state describes the lifecycle event for this emote entry.
+    /// When absent (older explorers), defaults to ES_STARTED.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.EmoteState State {
+      get { if ((_hasBits0 & 2) != 0) { return state_; } else { return StateDefaultValue; } }
+      set {
+        _hasBits0 |= 2;
+        state_ = value;
+      }
+    }
+    /// <summary>Gets whether the "state" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasState {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "state" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearState() {
+      _hasBits0 &= ~2;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -182,6 +241,7 @@ namespace DCL.ECSComponents {
       if (Loop != other.Loop) return false;
       if (Timestamp != other.Timestamp) return false;
       if (Mask != other.Mask) return false;
+      if (State != other.State) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -193,6 +253,7 @@ namespace DCL.ECSComponents {
       if (Loop != false) hash ^= Loop.GetHashCode();
       if (Timestamp != 0) hash ^= Timestamp.GetHashCode();
       if (HasMask) hash ^= Mask.GetHashCode();
+      if (HasState) hash ^= State.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -227,6 +288,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(32);
         output.WriteEnum((int) Mask);
       }
+      if (HasState) {
+        output.WriteRawTag(40);
+        output.WriteEnum((int) State);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -253,6 +318,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(32);
         output.WriteEnum((int) Mask);
       }
+      if (HasState) {
+        output.WriteRawTag(40);
+        output.WriteEnum((int) State);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -274,6 +343,9 @@ namespace DCL.ECSComponents {
       }
       if (HasMask) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Mask);
+      }
+      if (HasState) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) State);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -298,6 +370,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasMask) {
         Mask = other.Mask;
+      }
+      if (other.HasState) {
+        State = other.State;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -334,6 +409,10 @@ namespace DCL.ECSComponents {
             Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
+          case 40: {
+            State = (global::DCL.ECSComponents.EmoteState) input.ReadEnum();
+            break;
+          }
         }
       }
     #endif
@@ -367,6 +446,10 @@ namespace DCL.ECSComponents {
           }
           case 32: {
             Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
+            break;
+          }
+          case 40: {
+            State = (global::DCL.ECSComponents.EmoteState) input.ReadEnum();
             break;
           }
         }
