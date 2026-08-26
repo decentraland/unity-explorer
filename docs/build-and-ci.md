@@ -136,6 +136,21 @@ To change the template defaults, run the template config (`@T_<TARGET_NAME>`) ma
 If a build fails, the auto-generated config build is not removed from the cloud, which allows any re-runs from GitHub to use the exact same cache and settings as before.
 If you need to run a clean build you can trigger the build with the `CLEAN_BUILD` param.
 
+## App-local Visual C++ runtime (Windows)
+
+Five prebuilt package binaries — `ktx_unity.dll`, `dracodec_unity.dll`, `dracoenc_unity.dll`, `rust_audio.dll`, `rust_eth.dll` — import the MSVC CRT, so without it they throw `DllNotFoundException` on a clean Windows install. None can be rebuilt here. Instead of requiring the machine-wide redistributable (admin rights, UAC prompt), we ship the runtime with the player:
+
+- `Explorer/Assets/Plugins/.VCRedist/x64/` holds `msvcp140.dll`, `vcruntime140.dll`, `vcruntime140_1.dll`. Dot-prefixed so Unity's importer skips them — otherwise Unity treats them as native plugins and deploys them on its own schedule.
+- `Explorer/Assets/Editor/VCRedistBuildPostprocessor.cs` copies them next to the built `.exe`, where Windows looks before `System32`. It fails the build if one is missing.
+- The *Verify app-local VC++ runtime* step in `build-unitycloud.yml` re-checks the artifact on every Windows build.
+
+### Refreshing
+
+Copy a newer **release** `Microsoft.VC143.CRT` x64 set over the folder, note what you pulled in `.VCRedist/README.md`, and verify on a clean Windows 11 VM.
+
+- Never the debug variants (`*d.dll`) — not redistributable.
+- Never downgrade. An app-local copy older than the toolset a plugin was built against fails with "entry point not found".
+
 ---
 
 See also: [Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md) | [Unity Upgrades](unity-upgrades.md)
