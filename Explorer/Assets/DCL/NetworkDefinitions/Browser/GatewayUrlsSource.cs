@@ -290,14 +290,14 @@ namespace DCL.Browser
             if (url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return url;
 
-            int subdomainLength = firstDot - HTTPS_PREFIX_LENGTH;
+            int subdomainLength = firstDot - schemeLength;
             int pathStart = url.IndexOf('/', firstDot);
             int domainEnd = pathStart >= 0 ? pathStart : url.Length;
             int pathLength = url.Length - domainEnd;
 
             int resultLength = prefix.Length + subdomainLength + pathLength;
 
-            return string.Create(resultLength, (url, prefix, subdomainLength, pathStart, pathLength), static (span, state) =>
+            return string.Create(resultLength, (url, prefix, schemeLength, subdomainLength, pathStart, pathLength), static (span, state) =>
             {
                 ReadOnlySpan<char> src = state.url.AsSpan();
 
@@ -306,7 +306,7 @@ namespace DCL.Browser
                 state.prefix.AsSpan().CopyTo(span);
                 pos += state.prefix.Length;
 
-                src.Slice(HTTPS_PREFIX_LENGTH, state.subdomainLength).CopyTo(span.Slice(pos));
+                src.Slice(state.schemeLength, state.subdomainLength).CopyTo(span.Slice(pos));
                 pos += state.subdomainLength;
 
                 if (state.pathLength > 0)
