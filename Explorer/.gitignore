@@ -89,5 +89,11 @@ Assets/AddressableAssetsData/link.xml.meta
 Assets/Resources/PerformanceTestRunInfo.*
 Assets/Resources/PerformanceTestRunSettings.*
 
+# GPUI Pro auto-creates this registry (empty) at its default Resources path during
+# editor sessions; a committed copy shadows the canonical registry at
+# Assets/DCL/Landscape/Assets/GPUI and terrain rocks/trees render magenta
+Assets/GPUInstancerPro/Resources/
+Assets/GPUInstancerPro/Resources.meta
+
 # Disk caching 
 DiskCache/
