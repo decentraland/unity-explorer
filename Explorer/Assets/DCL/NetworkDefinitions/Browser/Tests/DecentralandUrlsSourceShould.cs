@@ -228,6 +228,8 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("http://127.0.0.1:8080/worlds-content-server/world/{0}/permissions", urlsSource.Url(DecentralandUrl.WorldPermissions));
             Assert.AreEqual("http://127.0.0.1:8080/worlds-content-server/worlds/{0}/comms", urlsSource.Url(DecentralandUrl.WorldComms));
             Assert.AreEqual("http://127.0.0.1:8080/worlds-content-server/worlds/{0}/scenes/{1}/comms", urlsSource.Url(DecentralandUrl.WorldCommsAdapter));
+            Assert.AreEqual("ws://127.0.0.1:8080/rpc-social-service-ea", urlsSource.Url(DecentralandUrl.ApiFriends));
+            Assert.AreEqual("http://127.0.0.1:8080/social-api/v1/mutes", urlsSource.Url(DecentralandUrl.SocialServiceMutes));
         }
 
         [TestCase("https://gateway.localhost", "https://gateway.localhost/")]
