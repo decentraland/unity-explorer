@@ -165,7 +165,7 @@ namespace DCL.Tests.Editor
         }
 
         [Test]
-        public void GPUIShaderBindingsMustBeTheSinglePopulatedRegistry()
+        public void GpuiShaderBindingsMustBeTheSinglePopulatedRegistry()
         {
             const string CANONICAL_PATH = "Assets/DCL/Landscape/Assets/GPUI/GPUIShaderBindings.asset";
 
