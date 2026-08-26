@@ -225,7 +225,9 @@ jobs:
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
 
-      # Merges to dev deploy to production so unity-explorer-aang-renderer.vercel.app tracks the latest dev build.
+      # Merges to dev deploy to production so unity-explorer-aang-renderer.vercel.app (the Vercel
+      # project's production domain — pre-rename name, kept deliberately) tracks the latest dev build.
+      # See docs/build-and-ci.md § Avatar Preview Renderer.
       - name: Pull Vercel environment
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then

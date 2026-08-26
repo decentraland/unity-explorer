@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: 'Avatar Preview Renderer Build run ID whose artifact to promote. Empty takes the latest successful dev build.'
+        description: 'Avatar Preview Renderer Build or Release run ID whose artifact to promote. Empty takes the latest successful dev build.'
         required: false
         default: ''
         type: string
