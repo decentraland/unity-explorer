@@ -14,7 +14,6 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Multiplayer.Movement;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
@@ -49,8 +48,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private static readonly string SCENE_EMOTE_PREFIX_WITH_COLON = GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
 
-        // todo: use this to add nice Debug UI to trigger any emote?
-        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
 
         private readonly IEmoteStorage emoteStorage;
@@ -64,14 +61,12 @@ namespace DCL.AvatarRendering.Emotes.Play
             IEmoteStorage emoteStorage,
             IEmotesMessageBus messageBus,
             EmotePlayer emotePlayer,
-            IDebugContainerBuilder debugContainerBuilder,
             bool localSceneDevelopment,
             IScenesCache scenesCache) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.emotePlayer = emotePlayer;
-            this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
             this.localSceneDevelopment = localSceneDevelopment;
         }
@@ -493,7 +488,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             in CharacterAnimationComponent animation,
             in StunComponent stun,
             in MovementInputComponent input,
-            in HeadIKComponent headIK,
+            in HeadIKComponent headIk,
             in HandPointAtComponent pointAt)
         {
             var playerState = new NetworkMovementMessage
@@ -509,9 +504,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 isSliding = animation.States.IsSliding,
                 isPointingAt = pointAt.IsPointing,
                 pointAtWorldHitPoint = pointAt.WorldHitPoint,
-                headIKYawEnabled = headIK.YawEnabled,
-                headIKPitchEnabled = headIK.PitchEnabled,
-                headYawAndPitch = headIK.GetHeadYawAndPitch(),
+                headIKYawEnabled = headIk.YawEnabled,
+                headIKPitchEnabled = headIk.PitchEnabled,
+                headYawAndPitch = headIk.GetHeadYawAndPitch(),
                 movementKind = input.Kind,
                 animState = new AnimationStates
                 {
@@ -571,7 +566,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)
         {
             if (!deleteEntityIntention.DeferDeletion)
-                messageBus.OnPlayerRemoved(profile.UserId);
+                messageBus.OnPlayerRemoved(profile.UserId.Value);
         }
 
         private void CreateEmotePromise(URN urn, BodyShape bodyShape, AvatarEmoteMask mask)

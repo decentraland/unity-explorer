@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
-using DCL.DebugUtilities;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Emotes;
@@ -132,7 +131,6 @@ namespace Global.Dynamic
             StaticContainer staticContainer,
             BootstrapContainer bootstrapContainer,
             IAssetsProvisioner assetsProvisioner,
-            IDebugContainerBuilder debugBuilder,
             UIShellContainer uiShellContainer,
             ProfileContainer profileContainer,
             CommsContainer commsContainer,
@@ -144,7 +142,6 @@ namespace Global.Dynamic
                 staticContainer.EmoteStorage,
                 staticContainer.RealmData,
                 emotesMessageBus,
-                debugBuilder,
                 assetsProvisioner,
                 profileContainer.SelfProfile,
                 uiShellContainer.MvcManager,

@@ -8,7 +8,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
@@ -54,8 +53,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             messageBus = Substitute.For<IEmotesMessageBus>();
             emoteStorage = Substitute.For<IEmoteStorage>();
 
-            system = new CharacterEmoteSystem(world, emoteStorage, messageBus, emotePlayer,
-                Substitute.For<IDebugContainerBuilder>(), localSceneDevelopment: false, scenesCache);
+            system = new CharacterEmoteSystem(world, emoteStorage, messageBus, emotePlayer, localSceneDevelopment: false, scenesCache);
 
             avatarView = Substitute.For<IAvatarView>();
             avatarView.IsLegacyAnimationPlaying.Returns(true);
