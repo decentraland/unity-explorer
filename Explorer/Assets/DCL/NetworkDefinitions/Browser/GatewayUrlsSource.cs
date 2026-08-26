@@ -27,6 +27,8 @@ namespace DCL.Browser
             DecentralandUrl.ApiPlaces,
             DecentralandUrl.ApiWorlds,
             DecentralandUrl.ApiDestinations,
+            DecentralandUrl.ApiEvents,
+            DecentralandUrl.POI,
             DecentralandUrl.Map,
             DecentralandUrl.ContentModerationReport,
 
@@ -46,7 +48,11 @@ namespace DCL.Browser
 
             // Content Servers
             DecentralandUrl.AssetBundlesCDN,
+            DecentralandUrl.WorldServer,
             DecentralandUrl.WorldContentServer,
+            DecentralandUrl.WorldPermissions,
+            DecentralandUrl.WorldComms,
+            DecentralandUrl.WorldCommsAdapter,
 
             DecentralandUrl.Genesis,
             DecentralandUrl.Badges,
