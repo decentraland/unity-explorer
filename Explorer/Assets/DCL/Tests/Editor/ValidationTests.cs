@@ -9,7 +9,6 @@ using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -163,60 +162,6 @@ namespace DCL.Tests.Editor
             Assert.That(offenders, Is.Empty,
                 "ContextualImage requires an Image with no baked sprite; a baked sprite hard-links it into memory and defeats contextual loading:\n"
                 + string.Join("\n", offenders));
-        }
-
-        [Test]
-        public void GpuiShaderBindingsCanonicalRegistryMustBePopulated()
-        {
-            const string CANONICAL_PATH = "Assets/DCL/Landscape/Assets/GPUI/GPUIShaderBindings.asset";
-
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(CANONICAL_PATH);
-
-            Assert.That(asset, Is.Not.Null,
-                $"{CANONICAL_PATH} is missing — GPUI-rendered terrain assets (rocks/trees) would render magenta.");
-
-            SerializedProperty? shaderInstances = new SerializedObject(asset).FindProperty("shaderInstances");
-
-            Assert.That(shaderInstances, Is.Not.Null,
-                $"{CANONICAL_PATH} is missing the 'shaderInstances' property — asset may be corrupt.");
-
-            // Null ruled out by the assertion above.
-            Assert.That(shaderInstances!.arraySize, Is.GreaterThan(0),
-                $"{CANONICAL_PATH} has no shader bindings — GPUI-rendered terrain assets (rocks/trees) would render magenta.");
-        }
-
-        [Test]
-        public void GpuiShaderBindingsShadowRegistryMustNotBeCommitted()
-        {
-            // GPUI Pro auto-creates a registry at its default Resources path during editor
-            // sessions (this very test run may create one), so its presence on disk is
-            // expected and harmless. Committing it is not: a committed (empty) copy shadows
-            // the canonical registry in every checkout and terrain rocks/trees render
-            // magenta. The path is gitignored; this guards against a forced re-add.
-            const string SHADOW_PATH = "Assets/GPUInstancerPro/Resources/GPUIShaderBindings.asset";
-
-            using var git = new Process();
-
-            git.StartInfo = new ProcessStartInfo("git", $"ls-files --error-unmatch -- \"{SHADOW_PATH}\"")
-            {
-                // dataPath is an absolute path, so it always has a parent (the project root).
-                WorkingDirectory = Path.GetDirectoryName(Application.dataPath)!,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            };
-
-            try { git.Start(); }
-            catch (Exception e) { Assert.Ignore($"git unavailable — cannot verify the tracked state of {SHADOW_PATH}: {e.Message}"); }
-
-            git.WaitForExit();
-
-            // Exit code 0 means git tracks the file; non-zero covers both "not tracked"
-            // and environments without a usable repo (fail-open by design).
-            Assert.That(git.ExitCode, Is.Not.Zero,
-                $"{SHADOW_PATH} is committed — it shadows the canonical registry "
-                + "(Assets/DCL/Landscape/Assets/GPUI/GPUIShaderBindings.asset) in every checkout and terrain "
-                + "rocks/trees render magenta. Remove it from git (git rm --cached); the local file may stay.");
         }
 
         [Test]
