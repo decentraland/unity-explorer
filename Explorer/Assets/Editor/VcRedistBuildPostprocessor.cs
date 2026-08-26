@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Editor
 {
-    internal sealed class VCRedistBuildPostprocessor : IPostprocessBuildWithReport
+    internal sealed class VcRedistBuildPostprocessor : IPostprocessBuildWithReport
     {
         private const string SOURCE_DIRECTORY = "Assets/Plugins/.VCRedist/x64";
         private const string DOCS = "docs/build-and-ci.md";
