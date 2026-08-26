@@ -59,7 +59,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 // import itself so it re-runs and the fresh result can occupy the freed cache key.
                 if (options.LocalSceneDevelopment && IsStaleRawGltf(asset!))
                 {
-                    asset!.Dispose();
+                    asset!.Dispose(); // TryGet guarantees non-null on true return
                     cache.Remove(intention.CacheKey);
                     gltfLoadCache.RemoveByHash(intention.Hash);
                 }
