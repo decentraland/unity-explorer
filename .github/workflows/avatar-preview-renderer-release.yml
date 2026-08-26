@@ -230,7 +230,7 @@ jobs:
           set -euo pipefail
           ROOT=".vercel/output/static"
           shopt -s dotglob nullglob
-          # UCB names the output folder after its build target (still aang-renderer), so detect instead of hardcoding.
+          # UCB names the output folder after its project/target config, so detect instead of hardcoding.
           for d in "$ROOT"/*/; do
             if [ -f "${d}index.html" ]; then
               echo "Flattening $d -> $ROOT"

@@ -1,5 +1,15 @@
 # CLAUDE.md
 
+## Repository layout
+
+Three sibling Unity roots share this repo:
+
+- [`Explorer/`](Explorer/) — the desktop client. **Everything below (startup, linting, code standards) is written for this project.**
+- [`avatar-preview-renderer/`](avatar-preview-renderer/README.md) — standalone Unity WebGL project rendering avatar/wearable previews for the Marketplace, Builder, authentication screen, and Profile. A plain MonoBehaviour project — the ECS rules below do not apply to it. Its builds are consumed by the [wearable-preview](https://github.com/decentraland/wearable-preview) repo, which hardcodes the `avatar-preview-renderer.*` build file names — renaming the Unity Cloud Build project/target requires a lockstep change there.
+- [`unity-shared-dependencies/`](unity-shared-dependencies/README.md) — UPM package consumed by both projects via local `file:../../unity-shared-dependencies` manifest references. Largely vendored/derived code (e.g. Unity Toon Shader); it is excluded from the lint ratchet in [`scripts/lint/filter-warnings.sh`](scripts/lint/filter-warnings.sh). A change here triggers CI for **both** projects.
+
+CI is path-scoped: each project's workflows run on its own root + `unity-shared-dependencies/**` (`test.yml`/`build-unitycloud.yml` for Explorer, `avatar-preview-renderer-*.yml` for the renderer). Releases are independent: Explorer `v*` tags from `main` own the repo's *Latest*; the renderer tags `avatar-preview-renderer/vX.Y.Z` from `dev` via manual dispatch.
+
 ## Startup
 
 At the start of every conversation, read [`docs/README.md`](docs/README.md) to load the project documentation map. Skills are automatically loaded by Claude Code from `.claude/skills/` — do not manually read them.

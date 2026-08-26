@@ -241,7 +241,7 @@ jobs:
           echo "Tree after download:"
           find "$ROOT" -maxdepth 3 -print | sed 's/^/OUT: /'
           shopt -s dotglob nullglob
-          # UCB names the output folder after its build target (still aang-renderer), so detect instead of hardcoding.
+          # UCB names the output folder after its project/target config, so detect instead of hardcoding.
           for d in "$ROOT"/*/; do
             if [ -f "${d}index.html" ]; then
               echo "Flattening $d -> $ROOT"
@@ -269,7 +269,7 @@ jobs:
       # Stable URL that always points at the latest dev build.
       - name: Alias dev deployment (merges to dev only)
         if: ${{ github.event_name == 'push' }}
-        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" unity-explorer-aang-renderer.vercel.app
+        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" unity-explorer-avatar-preview-renderer.vercel.app
 
       - name: Write job summary
         run: |
