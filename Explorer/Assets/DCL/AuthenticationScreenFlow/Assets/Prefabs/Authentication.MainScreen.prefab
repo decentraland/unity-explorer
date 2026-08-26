@@ -1764,7 +1764,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5609746862316879584}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ea1b65aaa149fa438425d71fd8122ab, type: 3}
+  m_Script: {fileID: 11500000, guid: ccb518956bdb80a43a6725ce85d9fa79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: AltTester.AltTesterUnitySDK::AltTester.AltTesterUnitySDK.AltId
   altID: f658ab9f-18ac-4281-a0a9-dd030d8224d6
