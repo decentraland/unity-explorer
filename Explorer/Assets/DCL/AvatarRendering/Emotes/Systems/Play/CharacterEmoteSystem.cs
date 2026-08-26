@@ -223,9 +223,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
         }
 
-        // User input wins over a scene emote that never started: a parked intent disables every cancel query,
-        // leaving a looping emote holding the CharacterController off with no escape (#9485).
-        // Scene full-body only: user-queued emotes may legitimately wait out movement, masked ones don't lock it.
+        // A parked intent disables every cancel query, so a looping emote soft-locks the player until it consumes (#9485).
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
         private void CancelParkedSceneEmoteIntentByMovementInput(
@@ -320,9 +318,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                      avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
                     return;
 
-                // Bounds every load-related park (IsLoading, unresolved asset slot, promise never created):
-                // a stranded intent disables all cancel queries and soft-locks the player (#6531, #9485).
-                // Below the settle guard on purpose — that wait is user-driven and unbounded (#9626 review).
+                // Bounds every load-related park; deliberately below the settle guard, whose wait is user-driven and unbounded (#6531, #9485, #9626 review).
                 if (emoteIntent.UpdatePlayTimeout(dt))
                 {
                     ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} timeout reached.");
@@ -356,8 +352,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (assetResult == null)
                     {
-                        // The memory sweep strips unreferenced asset slots and nothing restores them on its own —
-                        // without a re-request the intent parks here forever (#6531, #9485).
+                        // Nothing restores an asset slot stripped by the memory sweep — without a re-request the intent parks forever (#6531, #9485).
                         if (!emoteIntent.AssetReloadRequested)
                         {
                             emoteIntent.AssetReloadRequested = true;

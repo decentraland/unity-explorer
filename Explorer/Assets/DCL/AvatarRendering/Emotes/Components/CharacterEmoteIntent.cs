@@ -19,7 +19,6 @@ namespace DCL.AvatarRendering.Emotes
         public TriggerSource TriggerSource;
         public AvatarEmoteMask Mask;
 
-        // One-shot latch for the missing-asset re-request: retrying every frame would flood the world with load promises.
         public bool AssetReloadRequested;
 
         private LoadTimeout? playTimeout;

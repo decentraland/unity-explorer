@@ -298,7 +298,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             //Act
             system!.Update(0);
 
-            //Assert: user input discards the not-yet-started scene emote and stops the playing loop.
+            //Assert
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(parkedEntity));
             CharacterEmoteComponent emoteComponent = world.Get<CharacterEmoteComponent>(parkedEntity);
             Assert.IsNull(emoteComponent.CurrentEmoteReference);
@@ -324,7 +324,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         [Test]
         public void KeepParkedSelfEmoteIntentOnMovementInput()
         {
-            //Arrange: a user-queued emote must survive movement — queue-while-moving is a supported UX.
+            //Arrange
             Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Self, AvatarEmoteMask.AemFullBody,
                 new MovementInputComponent { Axes = Vector2.up }, new JumpInputComponent());
 
@@ -339,7 +339,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         [Test]
         public void KeepParkedMaskedSceneEmoteIntentOnMovementInput()
         {
-            //Arrange: masked emotes never lock movement, so movement must not discard them.
+            //Arrange
             Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Scene, AvatarEmoteMask.AemUpperBody,
                 new MovementInputComponent { Axes = Vector2.up }, new JumpInputComponent());
 
