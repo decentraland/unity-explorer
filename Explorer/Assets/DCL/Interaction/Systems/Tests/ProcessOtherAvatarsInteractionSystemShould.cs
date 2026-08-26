@@ -1,4 +1,5 @@
 using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.CharacterCamera.Components;
 using DCL.FeatureFlags;
@@ -8,14 +9,19 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Profiles;
 using DCL.Utilities;
+using DCL.Web3;
 using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using UnityEngine.InputSystem;
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Interaction.Systems.Tests
 {
@@ -107,6 +113,27 @@ namespace DCL.Interaction.Systems.Tests
         private int CountContextMenuCalls() =>
             menusAccessFacade.ReceivedCalls()
                 .Count(c => c.GetMethodInfo().Name == nameof(IMVCManagerMenusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync));
+
+        /// <summary>
+        ///     Makes the facade behave like a shown menu: its task stays pending until the returned source completes.
+        ///     Without it the substitute returns a completed task, i.e. a menu that was never shown.
+        /// </summary>
+        private UniTaskCompletionSource KeepContextMenuOpen()
+        {
+            var menuLifetime = new UniTaskCompletionSource();
+
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(Arg.Any<Web3Address>(), Arg.Any<Vector3>(), Arg.Any<Vector2>(), Arg.Any<CancellationToken>(),
+                                  Arg.Any<UniTask>(), Arg.Any<Action>(), Arg.Any<MenuAnchorPoint>(), Arg.Any<Action>(), Arg.Any<bool>())
+                             .Returns(menuLifetime.Task);
+
+            return menuLifetime;
+        }
+
+        private void ApplyPendingPointerLockIntention()
+        {
+            world.Remove<PointerLockIntention>(cameraEntity);
+            world.Set(cameraEntity, new CursorComponent { CursorState = CursorState.LockedWithUi });
+        }
 
         // ==========================================================
         // Hover feedback tests (shared behavior for both modes)
@@ -312,6 +339,7 @@ namespace DCL.Interaction.Systems.Tests
         {
             // Arrange
             SetUpWithFeatureFlag(true);
+            KeepContextMenuOpen();
             world.Set(cameraEntity, new CursorComponent { CursorState = CursorState.Locked });
             SetupValidAvatarHit();
             system.Update(0);
@@ -325,6 +353,63 @@ namespace DCL.Interaction.Systems.Tests
             var intention = world.Get<PointerLockIntention>(cameraEntity);
             Assert.That(intention.Locked, Is.True);
             Assert.That(intention.WithUI, Is.True);
+        }
+
+        [Test]
+        public void FreeCursorWhenContextMenuClosesWhileLockedWithUi()
+        {
+            // Arrange
+            SetUpWithFeatureFlag(true);
+            UniTaskCompletionSource menuLifetime = KeepContextMenuOpen();
+            world.Set(cameraEntity, new CursorComponent { CursorState = CursorState.Locked });
+            SetupValidAvatarHit();
+            system.Update(0);
+            Press(mouse.rightButton);
+            ApplyPendingPointerLockIntention();
+
+            // Act
+            menuLifetime.TrySetResult();
+
+            // Assert
+            Assert.That(world.Get<CursorComponent>(cameraEntity).CursorState, Is.EqualTo(CursorState.Free));
+        }
+
+        [Test]
+        public void KeepCursorLockedWhenContextMenuIsNeverShown()
+        {
+            // Arrange - the substitute completes right away, like the facade does when the profile is unknown
+            SetUpWithFeatureFlag(true);
+            world.Set(cameraEntity, new CursorComponent { CursorState = CursorState.Locked });
+            SetupValidAvatarHit();
+            system.Update(0);
+
+            // Act
+            Press(mouse.rightButton);
+
+            // Assert
+            Assert.That(world.Has<PointerLockIntention>(cameraEntity), Is.False);
+            Assert.That(world.Get<CursorComponent>(cameraEntity).CursorState, Is.EqualTo(CursorState.Locked));
+        }
+
+        [Test]
+        public void FreeCursorWhenSecondRightClickHappensWhileMenuIsOpen()
+        {
+            // Arrange - first menu is open with the cursor parked in LockedWithUi
+            SetUpWithFeatureFlag(true);
+            UniTaskCompletionSource firstMenuLifetime = KeepContextMenuOpen();
+            world.Set(cameraEntity, new CursorComponent { CursorState = CursorState.Locked });
+            SetupValidAvatarHit();
+            system.Update(0);
+            Press(mouse.rightButton);
+            ApplyPendingPointerLockIntention();
+            Release(mouse.rightButton);
+
+            // Act - second right click while the first menu closes
+            Press(mouse.rightButton);
+            firstMenuLifetime.TrySetResult();
+
+            // Assert
+            Assert.That(world.Get<CursorComponent>(cameraEntity).CursorState, Is.EqualTo(CursorState.Free));
         }
 
         [Test]
