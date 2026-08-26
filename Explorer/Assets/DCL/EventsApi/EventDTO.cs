@@ -236,7 +236,7 @@ namespace DCL.EventsApi
 
         public string Featured_item
         {
-            get => "urn:decentraland:matic:collections-v2:0xb0d0d31910da4a14d4e05a9d51b6e9a99a85d676";//featured_item;
+            get => featured_item; //"urn:decentraland:matic:collections-v2:0xb0d0d31910da4a14d4e05a9d51b6e9a99a85d676";
             set => featured_item = value;
         }
 

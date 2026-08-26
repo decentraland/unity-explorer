@@ -2436,7 +2436,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 19.14}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &556385740016130169
 CanvasRenderer:
@@ -3425,7 +3425,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 234.76}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &8557169947398794813
 MonoBehaviour:
@@ -3445,10 +3445,10 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_StartCorner: 3
+  m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 150, y: 214}
-  m_Spacing: {x: 24, y: 28}
+  m_Spacing: {x: 7, y: 15}
   m_Constraint: 0
   m_ConstraintCount: 2
 --- !u!1 &6775702601078993331
@@ -4314,7 +4314,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 175607292521401437}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.9181091
+  m_Size: 0.87956405
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -4860,9 +4860,9 @@ MonoBehaviour:
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
-  m_ChildControlHeight: 0
+  m_ChildControlHeight: 1
   m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
+  m_ChildScaleHeight: 1
   m_ReverseArrangement: 0
 --- !u!114 &7273483735237401164
 MonoBehaviour:
@@ -5907,8 +5907,36 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1373563927012688146, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7288982597331355815}
   m_SourcePrefab: {fileID: 100100000, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+--- !u!1 &7124839330703713090 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1373563927012688146, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+  m_PrefabInstance: {fileID: 8209888958179598928}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7288982597331355815
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7124839330703713090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: 214
+  m_PreferredWidth: -1
+  m_PreferredHeight: 214
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!224 &7951464924873157187 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2285055341844006931, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
@@ -5919,7 +5947,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 703957334523193357, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
   m_PrefabInstance: {fileID: 8209888958179598928}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 7124839330703713090}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc8527c2d5424ceb9172fa2b42efea3f, type: 3}
