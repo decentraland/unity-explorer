@@ -271,7 +271,7 @@ jobs:
       # to a personal Vercel scope, so the team token gets "Not authorized" setting it.
       - name: Alias dev deployment (merges to dev only)
         if: ${{ github.event_name == 'push' }}
-        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" unity-explorer-avatar-preview-renderer.vercel.app
+        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" avatar-preview-renderer.vercel.app
 
       - name: Write job summary
         run: |
