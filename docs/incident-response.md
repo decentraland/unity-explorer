@@ -53,7 +53,7 @@ Tag the right team when reporting or escalating an incident.
 
 | Area | Examples | Handle |
 | --- | --- | --- |
-| **Explorer / Unity client, launcher, aang-renderer (wearable preview)** | Client crash, rendering issues, login failure, teleport broken, avatar sync, voice chat, wearable not displayed properly in Marketplace, launcher not starting the client | @explorer-support |
+| **Explorer / Unity client, launcher, avatar-preview-renderer (wearable preview)** | Client crash, rendering issues, login failure, teleport broken, avatar sync, voice chat, wearable not displayed properly in Marketplace, launcher not starting the client | @explorer-support |
 | **Marketplace, dApps, website, backend services** | Marketplace down, credits not updating, wallet connection, API failures, asset bundle pipeline, catalysts | @core-support |
 | **Creator Tools** | Creator Hub bugs, SDK issues, scene deployments | @creatorstoolteam |
 | **QA** | Any report, verification, or severity classification | @qa-team |
