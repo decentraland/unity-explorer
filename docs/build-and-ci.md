@@ -136,6 +136,18 @@ To change the template defaults, run the template config (`@T_<TARGET_NAME>`) ma
 If a build fails, the auto-generated config build is not removed from the cloud, which allows any re-runs from GitHub to use the exact same cache and settings as before.
 If you need to run a clean build you can trigger the build with the `CLEAN_BUILD` param.
 
+## Avatar Preview Renderer
+
+The `avatar-preview-renderer/` sibling root has its own workflows, all path-scoped so Explorer changes never touch them:
+
+- **`avatar-preview-renderer-build.yml`** — PR and dev builds via Unity Cloud Build + a Vercel *preview* deployment (PR comment with the URL). Triggers on `avatar-preview-renderer/**` and `unity-shared-dependencies/**`. On merges to dev the deployment is also aliased to a stable URL that always serves the latest dev build.
+- **`avatar-preview-renderer-release.yml`** — clean UCB build → tag `avatar-preview-renderer/vX.Y.Z` → GitHub release with a zip (`make_latest: false` — the repo's *Latest* belongs to Explorer) → Vercel *production* deploy. Runs two ways:
+  - **Auto (the normal path):** every merge to dev that touches `avatar-preview-renderer/**` cuts a release. Changes only in `Explorer/` or `unity-shared-dependencies/**` deliberately do **not** release. Versioning: **major is pinned at `3`** (the monorepo era — the standalone repo left off at `v2.8.0`), **minor increments once per releasing merge**, patch stays `0`; the first auto release is `3.1.0`. The next minor is computed from the highest existing `avatar-preview-renderer/v3.*` tag, so it self-heals around skipped or failed runs.
+  - **Manual dispatch (escape hatch):** dev-only; pick a semver bump or pass an explicit `X.Y.Z` when a specific version is needed (e.g. a patch on the current minor). Auto-releases resume from whatever the highest `v3.*` tag is afterwards.
+- **`avatar-preview-renderer-deploy.yml`** — manual dispatch: redeploys any successful build run's artifact to Vercel production without cutting a release (rollbacks, re-promotes).
+
+Renderer releases are consumed by the [wearable-preview](https://github.com/decentraland/wearable-preview) repo, which vendors the newest `avatar-preview-renderer/v*` release via its `npm run update-unity` script — the release assets (and their exact file names) are load-bearing for it.
+
 ---
 
 See also: [Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md) | [Unity Upgrades](unity-upgrades.md)

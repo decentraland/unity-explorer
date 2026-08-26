@@ -1,6 +1,15 @@
 name: Avatar Preview Renderer Release
 
 on:
+  # Auto-release: every merge to dev that touches the renderer cuts a release
+  # (versioning scheme: docs/build-and-ci.md § Avatar Preview Renderer).
+  # Explorer/ and unity-shared-dependencies/ changes deliberately do NOT release.
+  push:
+    branches:
+      - dev
+    paths:
+      - 'avatar-preview-renderer/**'
+  # Manual escape hatch: cut a release with an explicit version or semver bump.
   workflow_dispatch:
     inputs:
       bump:
@@ -49,23 +58,33 @@ jobs:
         id: get_version
         run: |
           set -euo pipefail
-          # The fallback covers the window before the first monorepo release tag exists
-          # (the standalone repo left off at v2.8.0).
-          LAST_TAG=$(git describe --tags --match 'avatar-preview-renderer/v*' --abbrev=0 2>/dev/null || echo 'avatar-preview-renderer/v2.8.0')
-          LAST=${LAST_TAG#avatar-preview-renderer/v}
-          echo "Last released version: $LAST"
-
-          EXPLICIT="${{ github.event.inputs.version }}"
-          if [ -n "$EXPLICIT" ]; then
-            [[ "$EXPLICIT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Version '$EXPLICIT' is not X.Y.Z"; exit 1; }
-            NEXT="$EXPLICIT"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Auto-release scheme (docs/build-and-ci.md § Avatar Preview Renderer):
+            # major pinned at 3 (the monorepo era; the standalone repo left off at
+            # v2.8.0), minor increments once per releasing merge, patch stays 0.
+            # First auto release is 3.1.0.
+            LAST_MINOR=$(git tag -l 'avatar-preview-renderer/v3.*' \
+              | sed -E 's|^avatar-preview-renderer/v3\.([0-9]+)\..*|\1|' | sort -n | tail -1)
+            NEXT="3.$(( ${LAST_MINOR:-0} + 1 )).0"
           else
-            IFS=. read -r MAJOR MINOR PATCH <<< "$LAST"
-            case "${{ github.event.inputs.bump }}" in
-              major) NEXT="$((MAJOR + 1)).0.0" ;;
-              minor) NEXT="$MAJOR.$((MINOR + 1)).0" ;;
-              patch) NEXT="$MAJOR.$MINOR.$((PATCH + 1))" ;;
-            esac
+            # The fallback covers the window before the first monorepo release tag exists
+            # (the standalone repo left off at v2.8.0).
+            LAST_TAG=$(git describe --tags --match 'avatar-preview-renderer/v*' --abbrev=0 2>/dev/null || echo 'avatar-preview-renderer/v2.8.0')
+            LAST=${LAST_TAG#avatar-preview-renderer/v}
+            echo "Last released version: $LAST"
+
+            EXPLICIT="${{ github.event.inputs.version }}"
+            if [ -n "$EXPLICIT" ]; then
+              [[ "$EXPLICIT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Version '$EXPLICIT' is not X.Y.Z"; exit 1; }
+              NEXT="$EXPLICIT"
+            else
+              IFS=. read -r MAJOR MINOR PATCH <<< "$LAST"
+              case "${{ github.event.inputs.bump }}" in
+                major) NEXT="$((MAJOR + 1)).0.0" ;;
+                minor) NEXT="$MAJOR.$((MINOR + 1)).0" ;;
+                patch) NEXT="$MAJOR.$MINOR.$((PATCH + 1))" ;;
+              esac
+            fi
           fi
 
           if git rev-parse -q --verify "refs/tags/avatar-preview-renderer/v$NEXT" >/dev/null; then

@@ -16,7 +16,7 @@ This repository hosts three sibling Unity roots:
 
 CI is **path-scoped**: each project's workflows trigger on changes to its own root plus `unity-shared-dependencies/**`, so a shared-deps change builds both projects while a renderer-only change never touches Explorer CI.
 
-Releases are **independent**: Explorer tags `v*` from `main` and owns the repo's *Latest* release (consumed by the launcher); the renderer releases from `dev` via manual dispatch of `avatar-preview-renderer-release.yml`, tagging `avatar-preview-renderer/vX.Y.Z` (never marked *Latest*).
+Releases are **independent**: Explorer tags `v*` from `main` and owns the repo's *Latest* release (consumed by the launcher); the renderer **auto-releases on every merge to `dev` that touches `avatar-preview-renderer/**`**, tagging `avatar-preview-renderer/v3.X.0` with an auto-incrementing minor (never marked *Latest*; manual dispatch of `avatar-preview-renderer-release.yml` remains available for explicit versions). Details in [Build & CI § Avatar Preview Renderer](docs/build-and-ci.md#avatar-preview-renderer).
 
 ## 🌟 Features
 
