@@ -63,6 +63,9 @@ jobs:
 
       - name: Compute version
         id: get_version
+        env:
+          # env (not inline ${{ }}) so the input reaches the shell as data, never as script text.
+          VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "push" ]; then
@@ -80,7 +83,7 @@ jobs:
             LAST=${LAST_TAG#avatar-preview-renderer/v}
             echo "Last released version: $LAST"
 
-            EXPLICIT="${{ github.event.inputs.version }}"
+            EXPLICIT="$VERSION_INPUT"
             if [ -n "$EXPLICIT" ]; then
               [[ "$EXPLICIT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Version '$EXPLICIT' is not X.Y.Z"; exit 1; }
               NEXT="$EXPLICIT"
