@@ -42,7 +42,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string decentralandDomain;
         private readonly string? gatekeeperBaseOverride;
         private readonly string? optimizedAssetsBaseOverride;
-        private readonly bool? abgenPipelineOverride;
+        private readonly bool abgenPipelineForced;
         private readonly bool isTodayEnvironment;
 
         public DecentralandUrlsSource(
@@ -53,7 +53,7 @@ namespace DCL.Browser.DecentralandUrls
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
             string? cliOptimizedAssetsUrl = null,
-            bool? abgenPipelineOverride = null)
+            bool abgenPipelineForced = false)
         {
             decentralandDomain = environment.ToString()!.ToLower();
             isTodayEnvironment = environment == DecentralandEnvironment.Today;
@@ -62,7 +62,7 @@ namespace DCL.Browser.DecentralandUrls
             gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
-            this.abgenPipelineOverride = abgenPipelineOverride;
+            this.abgenPipelineForced = abgenPipelineForced;
 
             if (isTodayEnvironment)
             {
@@ -226,14 +226,14 @@ namespace DCL.Browser.DecentralandUrls
 
         /// <summary>
         ///     The abgen parallel pipeline: registry and CDN must flip together — the abgen registry's versions and
-        ///     statuses describe abgen-cdn's content. The "--abgen-pipeline" arg overrides the feature flag.
+        ///     statuses describe abgen-cdn's content. The "--abgen-pipeline" arg forces it on without the flag.
         ///     FeatureFlagsDependent both defers caching until flags load and keeps the abgen hosts off the gateway
         ///     (they resolve to their own origins).
         /// </summary>
         private UrlData ResolveAbgenPipelineUrl(string regularHost, string abgenHost)
         {
-            if (abgenPipelineOverride is bool forced)
-                return new UrlData(CacheBehaviour.FeatureFlagsDependent, (forced ? abgenHost : regularHost).Replace(ENV, decentralandDomain));
+            if (abgenPipelineForced)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost.Replace(ENV, decentralandDomain));
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 

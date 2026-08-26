@@ -214,19 +214,13 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
-        public void LetTheAbgenPipelineArgOverrideTheFlagBothWays()
+        public void ForceTheAbgenPipelineOnWithTheLaunchArg()
         {
             InitializeFeatureFlags(optimizedAssets: false, abgenPipeline: false);
-            var forcedOn = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenPipelineOverride: true);
+            var forcedOn = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenPipelineForced: true);
 
             Assert.AreEqual("https://abgen-cdn.decentraland.org", forcedOn.Url(DecentralandUrl.AssetBundlesCDN));
             Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", forcedOn.Url(DecentralandUrl.AssetBundleRegistry));
-
-            InitializeFeatureFlags(optimizedAssets: false, abgenPipeline: true);
-            var forcedOff = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenPipelineOverride: false);
-
-            Assert.AreEqual("https://ab-cdn.decentraland.org", forcedOff.Url(DecentralandUrl.AssetBundlesCDN));
-            Assert.AreEqual("https://asset-bundle-registry.decentraland.org", forcedOff.Url(DecentralandUrl.AssetBundleRegistry));
         }
 
         [Test]

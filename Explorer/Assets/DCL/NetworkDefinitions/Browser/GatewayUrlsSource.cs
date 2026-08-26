@@ -99,8 +99,8 @@ namespace DCL.Browser
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
             string? cliOptimizedAssetsUrl = null,
-            bool? abgenPipelineOverride = null)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, abgenPipelineOverride)
+            bool abgenPipelineForced = false)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, abgenPipelineForced)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
