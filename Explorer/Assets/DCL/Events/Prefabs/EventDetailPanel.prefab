@@ -3445,7 +3445,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_StartCorner: 0
+  m_StartCorner: 3
   m_StartAxis: 0
   m_CellSize: {x: 150, y: 214}
   m_Spacing: {x: 7, y: 15}
@@ -5792,6 +5792,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6269458030333335193}
     m_Modifications:
+    - target: {fileID: 429641943514755500, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 429641943514755500, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 429641943514755500, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 429641943514755500, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -289.454
+      objectReference: {fileID: 0}
+    - target: {fileID: 579035246384696396, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 96.45401
+      objectReference: {fileID: 0}
     - target: {fileID: 1373563927012688146, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
       propertyPath: m_Name
       value: EquippedItem_PassportField
@@ -5866,7 +5886,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2285055341844006931, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2285055341844006931, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5878,6 +5898,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2285055341844006931, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5972749663160943742, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6412169956273907539, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
@@ -5903,6 +5927,38 @@ PrefabInstance:
     - target: {fileID: 6771175964468428875, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
       propertyPath: m_SizeDelta.x
       value: -66.96
+      objectReference: {fileID: 0}
+    - target: {fileID: 7437738808918702716, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7437738808918702716, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7437738808918702716, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 167.42825
+      objectReference: {fileID: 0}
+    - target: {fileID: 7437738808918702716, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -220.36
+      objectReference: {fileID: 0}
+    - target: {fileID: 8608554782592785814, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8608554782592785814, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8608554782592785814, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 8608554782592785814, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -110.18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

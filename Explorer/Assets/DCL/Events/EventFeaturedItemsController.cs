@@ -24,6 +24,7 @@ namespace DCL.Communities.EventInfo
     {
         private const int ITEMS_POOL_DEFAULT_CAPACITY = 8;
         private const int COLLECTION_ITEMS_LIMIT = 20;
+        private const int GRID_ITEMS_PER_ROW = 5;
         private const string URN_PREFIX = "urn:";
         private const string CONTRACT_ADDRESS_PREFIX = "0x";
         private const string EMOTE_CATEGORY = "emote";
@@ -39,7 +40,9 @@ namespace DCL.Communities.EventInfo
         private readonly CreditPurchaseBuyHandler creditPurchaseBuyHandler;
         private readonly bool isFeatureEnabled;
         private readonly IObjectPool<EquippedItemPassportFieldView> itemsPool;
+        private readonly IObjectPool<EquippedItemPassportFieldView> emptyItemsPool;
         private readonly List<EquippedItemPassportFieldView> instantiatedItems = new ();
+        private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
         private readonly List<Texture2DRef> loadedThumbnails = new ();
         private readonly Dictionary<EquippedItemPassportFieldView, MarketplaceCatalogItem> boundItems = new ();
 
@@ -74,7 +77,7 @@ namespace DCL.Communities.EventInfo
                 actionOnGet: itemView =>
                 {
                     itemView.gameObject.SetActive(true);
-                    itemView.gameObject.transform.SetAsLastSibling();
+                    itemView.gameObject.transform.SetAsFirstSibling();
                     itemView.ItemPriceContainer.SetActive(false);
                     itemView.SetAsLoading(true);
                 },
@@ -90,6 +93,17 @@ namespace DCL.Communities.EventInfo
                     boundItems.Remove(itemView);
                     itemView.gameObject.SetActive(false);
                 });
+
+            emptyItemsPool = new ObjectPool<EquippedItemPassportFieldView>(
+                () => Object.Instantiate(view.ItemPrefab, view.ItemsContainer),
+                defaultCapacity: GRID_ITEMS_PER_ROW - 1,
+                actionOnGet: emptyItemView =>
+                {
+                    emptyItemView.gameObject.SetActive(true);
+                    emptyItemView.SetInvisible(true);
+                    emptyItemView.gameObject.transform.SetAsFirstSibling();
+                },
+                actionOnRelease: emptyItemView => emptyItemView.gameObject.SetActive(false));
         }
 
         public void Dispose() =>
@@ -119,6 +133,11 @@ namespace DCL.Communities.EventInfo
                 itemsPool.Release(item);
 
             instantiatedItems.Clear();
+
+            foreach (EquippedItemPassportFieldView emptyItem in instantiatedEmptyItems)
+                emptyItemsPool.Release(emptyItem);
+
+            instantiatedEmptyItems.Clear();
 
             foreach (Texture2DRef thumbnail in loadedThumbnails)
                 thumbnail.Dispose();
@@ -185,6 +204,11 @@ namespace DCL.Communities.EventInfo
                     SetupItemView(itemView, item, ct);
                     instantiatedItems.Add(itemView);
                 }
+
+                int missingEmptyItems = CalculateMissingEmptyItems(instantiatedItems.Count);
+
+                for (var i = 0; i < missingEmptyItems; i++)
+                    instantiatedEmptyItems.Add(emptyItemsPool.Get());
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -270,6 +294,12 @@ namespace DCL.Communities.EventInfo
                 return string.Empty;
 
             return $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}{item.url}";
+        }
+
+        private static int CalculateMissingEmptyItems(int totalItems)
+        {
+            int remainder = totalItems % GRID_ITEMS_PER_ROW;
+            return remainder == 0 ? 0 : GRID_ITEMS_PER_ROW - remainder;
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(string? thumbnailUrl, EquippedItemPassportFieldView itemView, CancellationToken ct)
