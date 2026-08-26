@@ -28,7 +28,7 @@ namespace Editor
             var buildRoot = Path.GetDirectoryName(report.summary.outputPath)!;
 
             foreach (string dll in RUNTIME_DLLS)
-                Copy(Path.GetFullPath($"{SOURCE_DIRECTORY}/{dll}"), Path.Combine(buildRoot, dll));
+                Copy(Path.GetFullPath(Path.Combine(SOURCE_DIRECTORY, dll)), Path.Combine(buildRoot, dll));
         }
 
         private static void Copy(string source, string destination)
