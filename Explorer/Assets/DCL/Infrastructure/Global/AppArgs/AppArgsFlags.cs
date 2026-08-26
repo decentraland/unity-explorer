@@ -152,6 +152,9 @@ namespace Global.AppArgs
 
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 
+        /// <summary>"true"/"false" forces the abgen pipeline on or off, overriding the abgen-pipeline feature flag.</summary>
+        public const string ABGEN_PIPELINE = "abgen-pipeline";
+
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
         public const string NATIVE_SHUTDOWN_STOPWATCH = "native-shutdown-stopwatch";

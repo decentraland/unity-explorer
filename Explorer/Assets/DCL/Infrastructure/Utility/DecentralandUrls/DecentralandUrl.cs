@@ -168,5 +168,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ReferralProgress = 103,
         IntercomTickets = 104,
         IntercomTicketsOrigin = 105,
+
+        LodAssetBundlesCDN = 106,
     }
 }

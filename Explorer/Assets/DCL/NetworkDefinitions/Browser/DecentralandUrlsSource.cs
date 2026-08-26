@@ -42,6 +42,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string decentralandDomain;
         private readonly string? gatekeeperBaseOverride;
         private readonly string? optimizedAssetsBaseOverride;
+        private readonly bool? abgenPipelineOverride;
         private readonly bool isTodayEnvironment;
 
         public DecentralandUrlsSource(
@@ -51,7 +52,8 @@ namespace DCL.Browser.DecentralandUrls
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null)
+            string? cliOptimizedAssetsUrl = null,
+            bool? abgenPipelineOverride = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
             isTodayEnvironment = environment == DecentralandEnvironment.Today;
@@ -60,6 +62,7 @@ namespace DCL.Browser.DecentralandUrls
             gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
+            this.abgenPipelineOverride = abgenPipelineOverride;
 
             if (isTodayEnvironment)
             {
@@ -72,6 +75,7 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.AssetBundleRegistry);
                 Url(DecentralandUrl.AssetBundleRegistryVersion);
                 Url(DecentralandUrl.AssetBundlesCDN);
+                Url(DecentralandUrl.LodAssetBundlesCDN);
                 Url(DecentralandUrl.Profiles);
                 Url(DecentralandUrl.ProfilesMetadata);
                 Url(DecentralandUrl.EntitiesActive);
@@ -195,7 +199,7 @@ namespace DCL.Browser.DecentralandUrls
         ///     The "--optimized-assets-url" arg or the flag variant payload override the base url, otherwise
         ///     https://abcdn.decentraland.{ENV}. FeatureFlagsDependent means it is re-resolved (not cached) until flags load.
         /// </summary>
-        private UrlData ResolveOptimizedAssetsUrl(string dedicatedHostUrl)
+        private UrlData ResolveOptimizedAssetsUrl(UrlData dedicatedHost)
         {
             if (optimizedAssetsBaseOverride is { Length: > 0 })
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, optimizedAssetsBaseOverride);
@@ -204,11 +208,11 @@ namespace DCL.Browser.DecentralandUrls
 
             if (featureFlags.IsEmpty)
                 return isTodayEnvironment
-                    ? dedicatedHostUrl // Static — pinned on construction before the domain switches to org
-                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHostUrl.Replace(ENV, decentralandDomain));
+                    ? dedicatedHost // pinned on construction before the domain switches to org
+                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHost.Url!.Replace(ENV, decentralandDomain));
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
-                return dedicatedHostUrl;
+                return dedicatedHost;
 
             if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.OPTIMIZED_ASSETS, FeatureFlagsStrings.OPTIMIZED_ASSETS_BASE_URL_VARIANT, out string? customBaseUrl) && customBaseUrl is { Length: > 0 })
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, customBaseUrl.TrimEnd('/'));
@@ -219,6 +223,29 @@ namespace DCL.Browser.DecentralandUrls
         /// <summary>Registry-composed endpoints inherit the registry base's caching so a flag-driven base is not cached early.</summary>
         private UrlData ComposeRegistryUrl(string path) =>
             new (RawUrl(DecentralandUrl.AssetBundleRegistry).Caching, $"{Url(DecentralandUrl.AssetBundleRegistry)}{path}");
+
+        /// <summary>
+        ///     The abgen parallel pipeline: registry and CDN must flip together — the abgen registry's versions and
+        ///     statuses describe abgen-cdn's content. The "--abgen-pipeline" arg overrides the feature flag.
+        ///     FeatureFlagsDependent both defers caching until flags load and keeps the abgen hosts off the gateway
+        ///     (they resolve to their own origins).
+        /// </summary>
+        private UrlData ResolveAbgenPipelineUrl(string regularHost, string abgenHost)
+        {
+            if (abgenPipelineOverride is bool forced)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, (forced ? abgenHost : regularHost).Replace(ENV, decentralandDomain));
+
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            if (featureFlags.IsEmpty)
+                return isTodayEnvironment
+                    ? regularHost // Static — pinned on construction before the domain switches to org
+                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost.Replace(ENV, decentralandDomain));
+
+            return featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_PIPELINE)
+                ? new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost)
+                : regularHost;
+        }
 
         public static string GetFeatureFlagsUrl(DecentralandEnvironment env) =>
             Probe(FEATURE_FLAGS_RAW_URL, env.ToString().ToLower());
@@ -273,9 +300,10 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Account => $"https://decentraland.{ENV}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
-                // TEST (abgen pipeline): abgen CDN + registry pair — must swap together (the abgen
-                // registry's statuses describe abgen-cdn's content). Deployed on zone only.
-                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://abgen-cdn.decentraland.{ENV}"),
+                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.decentraland.{ENV}", $"https://abgen-cdn.decentraland.{ENV}")),
+
+                // LOD bundles are only produced by the regular pipeline, so they never follow the abgen flip
+                DecentralandUrl.LodAssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.decentraland.{ENV}"),
                 DecentralandUrl.LodGeneratorCDN => ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.decentraland.{ENV}"),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",
@@ -288,7 +316,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
-                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl($"https://asset-bundle-registry-abgen.decentraland.{ENV}"),
+                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.decentraland.{ENV}", $"https://asset-bundle-registry-abgen.decentraland.{ENV}")),
 
                 DecentralandUrl.AssetBundleRegistryVersion => ComposeRegistryUrl("/entities/versions"),
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
@@ -321,8 +349,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.SceneAdmins => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/scene-admin",
                 DecentralandUrl.Pulse => $"pulse-server.decentraland.{ENV}",
 
-                DecentralandUrl.Profiles => ComposeRegistryUrl("/profiles"),
-                DecentralandUrl.ProfilesMetadata => ComposeRegistryUrl("/profiles/metadata"),
+                // Profiles are served by the regular registry regardless of the abgen pipeline flip
+                DecentralandUrl.Profiles => $"https://asset-bundle-registry.decentraland.{ENV}/profiles",
+                DecentralandUrl.ProfilesMetadata => $"https://asset-bundle-registry.decentraland.{ENV}/profiles/metadata",
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/scenes/{{1}}/comms",
 
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :

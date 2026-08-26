@@ -44,6 +44,7 @@ namespace DCL.Browser
 
             // Content Servers
             DecentralandUrl.AssetBundlesCDN,
+            DecentralandUrl.LodAssetBundlesCDN,
             DecentralandUrl.WorldContentServer,
 
             DecentralandUrl.Genesis,
@@ -56,6 +57,8 @@ namespace DCL.Browser
 
             DecentralandUrl.AssetBundleRegistry,
             DecentralandUrl.AssetBundleRegistryVersion,
+            DecentralandUrl.Profiles,
+            DecentralandUrl.ProfilesMetadata,
 
             DecentralandUrl.MediaConverter,
 
@@ -86,9 +89,7 @@ namespace DCL.Browser
         private readonly string? gatewayPrefix;
         private readonly string? domainSuffix;
 
-        // TEST (abgen pipeline): gateway hard-disabled so the abgen CDN/registry hosts are hit
-        // directly. Restore the flag check after testing.
-        private bool enabled => false;
+        private bool enabled => envSupported && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
@@ -97,8 +98,9 @@ namespace DCL.Browser
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl)
+            string? cliOptimizedAssetsUrl = null,
+            bool? abgenPipelineOverride = null)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, abgenPipelineOverride)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
