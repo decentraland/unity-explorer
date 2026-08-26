@@ -21,7 +21,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
         [TearDown]
         public void TearDown() => FeatureFlagsConfiguration.Reset();
 
-        private static void InitializeFeatureFlags(bool optimizedAssets, string? customBaseUrl = null, bool useGateway = false, bool assetBundleFallback = false)
+        private static void InitializeFeatureFlags(bool optimizedAssets, string? customBaseUrl = null, bool useGateway = false, bool assetBundleFallback = false, bool abgenPipeline = false)
         {
             var dto = new FeatureFlagsResultDto
             {
@@ -30,6 +30,7 @@ namespace DCL.Browser.DecentralandUrls.Tests
                     [FeatureFlagsStrings.OPTIMIZED_ASSETS] = optimizedAssets,
                     [FeatureFlagsStrings.USE_GATEWAY] = useGateway,
                     [FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK] = assetBundleFallback,
+                    [FeatureFlagsStrings.ABGEN_PIPELINE] = abgenPipeline,
                 },
                 variants = new Dictionary<string, FeatureFlagVariantDto>(),
             };
@@ -97,18 +98,26 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
-        public void ComposeRegistryEndpointsForWearablesWorldsAndProfilesOffTheUnifiedBase()
+        public void ComposeRegistryEndpointsForWearablesAndWorldsOffTheUnifiedBase()
         {
             InitializeFeatureFlags(optimizedAssets: true, assetBundleFallback: true);
             DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             Assert.AreEqual("https://abcdn.decentraland.org/entities/active", urlsSource.Url(DecentralandUrl.EntitiesActiveElements));
-            Assert.AreEqual("https://abcdn.decentraland.org/profiles", urlsSource.Url(DecentralandUrl.Profiles));
-            Assert.AreEqual("https://abcdn.decentraland.org/profiles/metadata", urlsSource.Url(DecentralandUrl.ProfilesMetadata));
 
             // Realm-dependent, so Url() gates them on a configured realm; probe to resolve without one
             Assert.AreEqual("https://abcdn.decentraland.org/entities/active", urlsSource.Probe(DecentralandUrl.EntitiesActive));
             Assert.AreEqual("https://abcdn.decentraland.org/entities/active?world_name={0}", urlsSource.Probe(DecentralandUrl.WorldEntitiesActive));
+        }
+
+        [Test]
+        public void PinProfilesToTheRegularRegistryRegardlessOfAssetFlags()
+        {
+            InitializeFeatureFlags(optimizedAssets: true, assetBundleFallback: true, abgenPipeline: true);
+            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://asset-bundle-registry.decentraland.org/profiles", urlsSource.Url(DecentralandUrl.Profiles));
+            Assert.AreEqual("https://asset-bundle-registry.decentraland.org/profiles/metadata", urlsSource.Url(DecentralandUrl.ProfilesMetadata));
         }
 
         [Test]
@@ -170,12 +179,10 @@ namespace DCL.Browser.DecentralandUrls.Tests
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
             DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
-            Assert.AreEqual("https://asset-bundle-registry.decentraland.org/profiles", urlsSource.Url(DecentralandUrl.Profiles));
             Assert.AreEqual("https://asset-bundle-registry.decentraland.org/entities/active", urlsSource.Url(DecentralandUrl.EntitiesActiveElements));
 
             InitializeFeatureFlags(optimizedAssets: true);
 
-            Assert.AreEqual("https://abcdn.decentraland.org/profiles", urlsSource.Url(DecentralandUrl.Profiles));
             Assert.AreEqual("https://abcdn.decentraland.org/entities/active", urlsSource.Url(DecentralandUrl.EntitiesActiveElements));
         }
 
@@ -190,6 +197,45 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://ab-cdn.decentraland.today", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
             Assert.AreEqual("https://asset-bundle-registry.decentraland.today", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
             Assert.AreEqual("https://asset-bundle-registry.decentraland.today/profiles", urlsSource.Url(DecentralandUrl.Profiles));
+        }
+
+        [TestCase(DecentralandEnvironment.Org)]
+        [TestCase(DecentralandEnvironment.Zone)]
+        public void FlipCdnAndRegistryTogetherWhenAbgenPipelineEnabled(DecentralandEnvironment environment)
+        {
+            InitializeFeatureFlags(optimizedAssets: false, abgenPipeline: true);
+            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(environment, ILaunchMode.PLAY);
+            string env = environment.ToString().ToLower();
+
+            Assert.AreEqual($"https://abgen-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual($"https://asset-bundle-registry-abgen.decentraland.{env}", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+            Assert.AreEqual($"https://asset-bundle-registry-abgen.decentraland.{env}/entities/versions", urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
+
+            // LOD bundles are only produced by the regular pipeline
+            Assert.AreEqual($"https://ab-cdn.decentraland.{env}", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
+        }
+
+        [Test]
+        public void ForceTheAbgenPipelineOnWithTheLaunchArg()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, abgenPipeline: false);
+            var forcedOn = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, abgenPipelineForced: true);
+
+            Assert.AreEqual("https://abgen-cdn.decentraland.org", forcedOn.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", forcedOn.Url(DecentralandUrl.AssetBundleRegistry));
+        }
+
+        [Test]
+        public void KeepAbgenHostsOffTheGatewayButLodsAndProfilesOnIt()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true, abgenPipeline: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://abgen-cdn.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            Assert.AreEqual("https://asset-bundle-registry-abgen.decentraland.org", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
+
+            Assert.AreEqual("https://gateway.decentraland.org/ab-cdn", urlsSource.Url(DecentralandUrl.LodAssetBundlesCDN));
+            Assert.AreEqual("https://gateway.decentraland.org/asset-bundle-registry/profiles", urlsSource.Url(DecentralandUrl.Profiles));
         }
 
         [Test]
