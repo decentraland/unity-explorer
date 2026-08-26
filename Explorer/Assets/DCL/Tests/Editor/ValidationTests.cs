@@ -16,6 +16,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TextCore.Text;
 using static Utility.Tests.TestsCategories;
 using Object = UnityEngine.Object;
 
@@ -161,6 +162,53 @@ namespace DCL.Tests.Editor
 
             Assert.That(offenders, Is.Empty,
                 "ContextualImage requires an Image with no baked sprite; a baked sprite hard-links it into memory and defeats contextual loading:\n"
+                + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void UiToolkitFontAssetsMustNotBeStatic()
+        {
+            // The Advanced Text Generator, the default UI Toolkit text system since Unity 6.5, cannot render
+            // static font assets: https://docs.unity3d.com/Manual/ui-systems/migrate-static-font-assets.html
+            // The TextMesh Pro font assets are deliberately out of scope: uGUI text uses its own generator.
+            const string FONTS_FOLDER = "Assets/DCL/UIToolkit/Fonts";
+
+            var scanned = new List<string>();
+            var offenders = new List<string>();
+
+            foreach (string guid in AssetDatabase.FindAssets("t:FontAsset", new[] { FONTS_FOLDER }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var fontAsset = AssetDatabase.LoadAssetAtPath<FontAsset>(path);
+
+                if (fontAsset == null)
+                    continue;
+
+                scanned.Add(path);
+
+                // DynamicOS resolves its face through the operating system, so it carries neither of the two below.
+                if (fontAsset.atlasPopulationMode == AtlasPopulationMode.DynamicOS)
+                    continue;
+
+                // Compared against Dynamic rather than Static: Unity 6.5 deprecated AtlasPopulationMode.Static,
+                // so naming it here would raise CS0618.
+                if (fontAsset.atlasPopulationMode != AtlasPopulationMode.Dynamic)
+                {
+                    offenders.Add($"{path} :: atlas population mode is Static");
+                    continue;
+                }
+
+                if (fontAsset.sourceFontFile == null)
+                    offenders.Add($"{path} :: Dynamic, but without a source font file no glyph can be rasterized");
+
+                if (fontAsset.atlasTexture != null && !fontAsset.atlasTexture.isReadable)
+                    offenders.Add($"{path} :: Dynamic, but its atlas texture is not readable, so no glyph can be added to it");
+            }
+
+            Assert.That(scanned, Is.Not.Empty, $"No font asset was found in {FONTS_FOLDER}, so this test cannot pass on its own merit.");
+
+            Assert.That(offenders, Is.Empty,
+                "The Advanced Text Generator can only render font assets that populate their atlas dynamically:\n"
                 + string.Join("\n", offenders));
         }
 
