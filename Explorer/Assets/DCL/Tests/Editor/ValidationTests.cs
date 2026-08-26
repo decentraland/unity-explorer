@@ -180,8 +180,13 @@ namespace DCL.Tests.Editor
                 + "Delete the extra registry:\n" + string.Join("\n", registries));
 
             var registry = new SerializedObject(AssetDatabase.LoadAssetAtPath<ScriptableObject>(CANONICAL_PATH));
+            SerializedProperty? shaderInstances = registry.FindProperty("shaderInstances");
 
-            Assert.That(registry.FindProperty("shaderInstances")!.arraySize, Is.GreaterThan(0),
+            Assert.That(shaderInstances, Is.Not.Null,
+                $"{CANONICAL_PATH} is missing the 'shaderInstances' property — asset may be corrupt.");
+
+            // Null ruled out by the assertion above.
+            Assert.That(shaderInstances!.arraySize, Is.GreaterThan(0),
                 $"{CANONICAL_PATH} has no shader bindings — GPUI-rendered terrain assets (rocks/trees) would render magenta.");
         }
 
