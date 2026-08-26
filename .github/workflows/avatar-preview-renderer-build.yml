@@ -266,10 +266,12 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Preview URL: $url"
 
-      # Stable URL that always points at the latest dev build.
+      # Stable URL that always points at the latest dev build. Must be a subdomain the
+      # decentraland team owns: the old unity-explorer-aang-renderer.vercel.app belongs
+      # to a personal Vercel scope, so the team token gets "Not authorized" setting it.
       - name: Alias dev deployment (merges to dev only)
         if: ${{ github.event_name == 'push' }}
-        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" unity-explorer-aang-renderer.vercel.app
+        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" unity-explorer-avatar-preview-renderer.vercel.app
 
       - name: Write job summary
         run: |

@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: 'Semver bump from the latest avatar-preview-renderer/v* tag'
+        description: 'Semver bump from the latest avatar-preview-renderer/v* tag. ⚠ "major" also requires raising AUTO_RELEASE_MAJOR in this workflow file, or auto-releases keep tagging the old major.'
         required: true
         default: 'patch'
         type: choice
@@ -22,10 +22,17 @@ on:
           - minor
           - major
       version:
-        description: 'Explicit version (X.Y.Z) — overrides bump when set'
+        description: 'Explicit version (X.Y.Z) — overrides bump when set. ⚠ If it changes the major, also raise AUTO_RELEASE_MAJOR in this workflow file.'
         required: false
         default: ''
         type: string
+
+env:
+  # Major used by auto-releases on dev merges (auto versions are
+  # AUTO_RELEASE_MAJOR.minor.0 with an auto-incrementing minor). When a manual
+  # dispatch moves to a new major, raise this too — otherwise the next auto
+  # release still tags the old major. The compute step warns on that mismatch.
+  AUTO_RELEASE_MAJOR: '3'
 
 concurrency:
   group: avatar-preview-renderer-release
@@ -60,12 +67,12 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "push" ]; then
             # Auto-release scheme (docs/build-and-ci.md § Avatar Preview Renderer):
-            # major pinned at 3 (the monorepo era; the standalone repo left off at
-            # v2.8.0), minor increments once per releasing merge, patch stays 0.
-            # First auto release is 3.1.0.
-            LAST_MINOR=$(git tag -l 'avatar-preview-renderer/v3.*' \
-              | sed -E 's|^avatar-preview-renderer/v3\.([0-9]+)\..*|\1|' | sort -n | tail -1)
-            NEXT="3.$(( ${LAST_MINOR:-0} + 1 )).0"
+            # major pinned via AUTO_RELEASE_MAJOR (the monorepo era started at 3; the
+            # standalone repo left off at v2.8.0), minor increments once per releasing
+            # merge, patch stays 0. First auto release is 3.1.0.
+            LAST_MINOR=$(git tag -l "avatar-preview-renderer/v${AUTO_RELEASE_MAJOR}.*" \
+              | sed -E "s|^avatar-preview-renderer/v${AUTO_RELEASE_MAJOR}\.([0-9]+)\..*|\1|" | sort -n | tail -1)
+            NEXT="${AUTO_RELEASE_MAJOR}.$(( ${LAST_MINOR:-0} + 1 )).0"
           else
             # The fallback covers the window before the first monorepo release tag exists
             # (the standalone repo left off at v2.8.0).
@@ -90,6 +97,14 @@ jobs:
           if git rev-parse -q --verify "refs/tags/avatar-preview-renderer/v$NEXT" >/dev/null; then
             echo "::error::Tag avatar-preview-renderer/v$NEXT already exists."
             exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${NEXT%%.*}" != "$AUTO_RELEASE_MAJOR" ]; then
+            echo "::warning title=Auto-release major mismatch::Releasing v$NEXT, but auto-releases on dev merges are pinned to major $AUTO_RELEASE_MAJOR — the next merge will tag v$AUTO_RELEASE_MAJOR.x.0. If this major change is permanent, raise AUTO_RELEASE_MAJOR at the top of avatar-preview-renderer-release.yml."
+            {
+              echo "> [!WARNING]"
+              echo "> **Auto-release major mismatch:** this release is \`v$NEXT\`, but auto-releases on dev merges are pinned to major \`$AUTO_RELEASE_MAJOR\` (next merge tags \`v$AUTO_RELEASE_MAJOR.x.0\`). If the major change is permanent, raise \`AUTO_RELEASE_MAJOR\` at the top of \`avatar-preview-renderer-release.yml\`."
+            } >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "Releasing version: $NEXT from $GITHUB_SHA"
