@@ -35,9 +35,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         public const string NAV_DESTINATION_MARKETPLACE = "marketplace";
 
         private const string CANNOT_AFFORD_TEXT = "Add <b>{0} Credits</b> to complete your purchase.";
-        private const float NORMAL_HEIGHT = 491;
+        private const float NORMAL_HEIGHT = 813;
         private const float PURCHASING_HEIGHT = 371;
-        private const float INSUFFICIENT_CREDITS_HEIGHT = 622;
+        private const float INSUFFICIENT_CREDITS_HEIGHT = 950;
         private const float COMPLETED_HEIGHT = 571;
 
         private const string ANALYTICS_STEP_QUOTE = "quote";
@@ -70,8 +70,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private float purchaseStartedAt;
         private CreditsPurchaseState lastPurchaseState;
         private CreditPurchaseTryOnCharacterPreviewController? tryOnPreviewController;
-        private CancellationTokenSource? tryOnCts;
-        private bool tryOnPanelOpen;
+        private CancellationTokenSource? characterPreviewCts;
+        private bool characterPreviewShown;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -117,7 +117,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         {
             purchaseService.StateChanged -= OnPurchaseStateChanged;
             lifeCts?.SafeCancelAndDispose();
-            tryOnCts?.SafeCancelAndDispose();
+            characterPreviewCts?.SafeCancelAndDispose();
             tryOnPreviewController?.Dispose();
             disposalCts.SafeCancelAndDispose();
         }
@@ -170,14 +170,13 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
                 viewInstance.ItemCategoryBackground.color = inputData.RarityColor;
                 viewInstance.ItemCategoryBackgroundCompleted.color = inputData.RarityColor;
+                viewInstance.TryOnCharacterPreviewView.gameObject.SetActive(IsTryOnAvailable());
 
                 viewInstance.ConfirmButton.onClick.AddListener(OnConfirmClicked);
                 viewInstance.RetryButton.onClick.AddListener(OnRetryClicked);
                 viewInstance.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
                 viewInstance.OpenMarketplaceButton.onClick.AddListener(OnOpenMarketplaceClicked);
                 viewInstance.ToBackpackButton.onClick.AddListener(OnToBackpackClicked);
-                viewInstance.TryOnButton.onClick.AddListener(OnTryOnClicked);
-                viewInstance.TryOnCloseButton.onClick.AddListener(CloseTryOnPanel);
                 viewInstance.TryOnReplayEmoteButton.onClick.AddListener(OnReplayEmoteClicked);
             }
 
@@ -188,7 +187,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         protected override void OnViewClose()
         {
-            CloseTryOnPanel();
+            ResetCharacterPreview();
 
             if (viewInstance != null)
             {
@@ -197,8 +196,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.GetCreditsButton.onClick.RemoveListener(OnGetCreditsClicked);
                 viewInstance.OpenMarketplaceButton.onClick.RemoveListener(OnOpenMarketplaceClicked);
                 viewInstance.ToBackpackButton.onClick.RemoveListener(OnToBackpackClicked);
-                viewInstance.TryOnButton.onClick.RemoveListener(OnTryOnClicked);
-                viewInstance.TryOnCloseButton.onClick.RemoveListener(CloseTryOnPanel);
                 viewInstance.TryOnReplayEmoteButton.onClick.RemoveListener(OnReplayEmoteClicked);
             }
 
@@ -336,20 +333,19 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             }
         }
 
-        private void OnTryOnClicked()
+        private void ShowCharacterPreview()
         {
-            if (tryOnPanelOpen || currentState is not (ModalState.ReadyToConfirm or ModalState.InsufficientCredits))
+            if (characterPreviewShown)
                 return;
 
-            tryOnPanelOpen = true;
-            viewInstance?.ShowTryOnPanel();
+            characterPreviewShown = true;
             viewInstance?.TryOnReplayEmoteButton.gameObject.SetActive(false);
 
-            tryOnCts = tryOnCts.SafeRestart();
-            ShowTryOnPreviewAsync(tryOnCts.Token).Forget();
+            characterPreviewCts = characterPreviewCts.SafeRestart();
+            LoadCharacterPreviewAsync(characterPreviewCts.Token).Forget();
         }
 
-        private async UniTask ShowTryOnPreviewAsync(CancellationToken ct)
+        private async UniTask LoadCharacterPreviewAsync(CancellationToken ct)
         {
             CreditPurchaseTryOnCharacterPreviewController? previewController = tryOnPreviewController;
 
@@ -368,7 +364,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 if (profile == null)
                 {
                     ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "Try-on preview aborted: own profile is unavailable.");
-                    CloseTryOnPanel();
+                    ResetCharacterPreview();
                     return;
                 }
 
@@ -386,26 +382,26 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                CloseTryOnPanel();
+                ResetCharacterPreview();
             }
         }
 
         private void OnReplayEmoteClicked()
         {
-            if (tryOnPanelOpen && inputData.IsEmote)
+            if (characterPreviewShown && inputData.IsEmote)
                 tryOnPreviewController?.ReplayEmote(new URN(inputData.ItemUrn).Shorten());
         }
 
-        private void CloseTryOnPanel()
+        private void ResetCharacterPreview()
         {
-            if (!tryOnPanelOpen)
+            if (!characterPreviewShown)
                 return;
 
-            tryOnCts?.SafeCancelAndDispose();
-            tryOnCts = null;
-            tryOnPanelOpen = false;
+            characterPreviewCts?.SafeCancelAndDispose();
+            characterPreviewCts = null;
+            characterPreviewShown = false;
             tryOnPreviewController?.OnHide();
-            viewInstance?.HideTryOnPanel();
+            viewInstance?.TryOnReplayEmoteButton.gameObject.SetActive(false);
         }
 
         private bool IsTryOnAvailable() =>
@@ -599,11 +595,12 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
 
-            bool tryOnVisible = newState is ModalState.ReadyToConfirm or ModalState.InsufficientCredits && IsTryOnAvailable();
-            viewInstance.TryOnButton.gameObject.SetActive(tryOnVisible);
+            bool previewVisible = newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits && IsTryOnAvailable();
 
-            if (!tryOnVisible)
-                CloseTryOnPanel();
+            if (previewVisible)
+                ShowCharacterPreview();
+            else
+                ResetCharacterPreview();
         }
 
         private void RequestClose() =>

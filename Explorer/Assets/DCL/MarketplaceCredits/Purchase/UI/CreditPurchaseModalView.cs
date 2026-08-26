@@ -13,10 +13,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
     {
         private const float POPUP_SHOW_ANIMATION_TIME = 0.3f;
         private const float POPUP_HIDE_ANIMATION_TIME = 0.2f;
-        private const float TRY_ON_ANIMATION_TIME = 0.25f;
-        private const float TRY_ON_SLIDE_OFFSET = 60f;
-
-        private Vector2? tryOnPanelBasePosition;
 
         [field: SerializeField] public RectTransform ContainerTransform { get; private set; } = null!;
 
@@ -64,43 +60,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public Button ToBackpackButton { get; private set; } = null!;
 
         [field: Header("Try on")]
-        [field: SerializeField] public Button TryOnButton { get; private set; } = null!;
-        [field: SerializeField] public GameObject TryOnPanel { get; private set; } = null!;
-        [field: SerializeField] public CanvasGroup TryOnPanelCanvasGroup { get; private set; } = null!;
-        [field: SerializeField] public Button TryOnCloseButton { get; private set; } = null!;
         [field: SerializeField] public Button TryOnReplayEmoteButton { get; private set; } = null!;
         [field: SerializeField] public CharacterPreviewView TryOnCharacterPreviewView { get; private set; } = null!;
-
-        public void ShowTryOnPanel()
-        {
-            TryOnPanel.SetActive(true);
-
-            var rectTransform = (RectTransform)TryOnPanel.transform;
-            rectTransform.DOKill();
-            TryOnPanelCanvasGroup.DOKill();
-
-            tryOnPanelBasePosition ??= rectTransform.anchoredPosition;
-            Vector2 basePosition = tryOnPanelBasePosition.Value;
-
-            rectTransform.anchoredPosition = basePosition + new Vector2(TRY_ON_SLIDE_OFFSET, 0);
-            TryOnPanelCanvasGroup.alpha = 0;
-
-            rectTransform.DOAnchorPos(basePosition, TRY_ON_ANIMATION_TIME).SetEase(Ease.OutCubic);
-            TryOnPanelCanvasGroup.DOFade(1f, TRY_ON_ANIMATION_TIME);
-        }
-
-        public void HideTryOnPanel()
-        {
-            var rectTransform = (RectTransform)TryOnPanel.transform;
-            rectTransform.DOKill();
-            TryOnPanelCanvasGroup.DOKill();
-
-            if (tryOnPanelBasePosition != null)
-                rectTransform.anchoredPosition = tryOnPanelBasePosition.Value;
-
-            TryOnPanelCanvasGroup.alpha = 1;
-            TryOnPanel.SetActive(false);
-        }
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
