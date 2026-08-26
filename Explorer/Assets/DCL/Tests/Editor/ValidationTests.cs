@@ -203,6 +203,10 @@ namespace DCL.Tests.Editor
 
                 if (fontAsset.atlasTexture != null && !fontAsset.atlasTexture.isReadable)
                     offenders.Add($"{path} :: Dynamic, but its atlas texture is not readable, so no glyph can be added to it");
+
+                // Read through SerializedObject: only the serialized field name is stable across Unity versions.
+                if (!new SerializedObject(fontAsset).FindProperty("m_IsMultiAtlasTexturesEnabled").boolValue)
+                    offenders.Add($"{path} :: Dynamic, but multi-atlas textures are off, so its atlas cannot grow past the first page");
             }
 
             Assert.That(scanned, Is.Not.Empty, $"No font asset was found in {FONTS_FOLDER}, so this test cannot pass on its own merit.");
