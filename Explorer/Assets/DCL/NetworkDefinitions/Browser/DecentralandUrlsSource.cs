@@ -47,6 +47,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly DecentralandEnvironment environment;
         private readonly string? gatekeeperBaseOverride;
         private readonly string? optimizedAssetsBaseOverride;
+        private readonly bool abgenPipelineForced;
         private readonly bool isTodayEnvironment;
 
         /// <summary>
@@ -65,7 +66,8 @@ namespace DCL.Browser.DecentralandUrls
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
             string? cliOptimizedAssetsUrl = null,
-            string? customBaseDomain = null)
+            string? customBaseDomain = null,
+            bool abgenPipelineForced = false)
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
@@ -75,6 +77,7 @@ namespace DCL.Browser.DecentralandUrls
             gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
+            this.abgenPipelineForced = abgenPipelineForced;
 
             if (isTodayEnvironment)
             {
@@ -87,6 +90,7 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.AssetBundleRegistry);
                 Url(DecentralandUrl.AssetBundleRegistryVersion);
                 Url(DecentralandUrl.AssetBundlesCDN);
+                Url(DecentralandUrl.LodAssetBundlesCDN);
                 Url(DecentralandUrl.Profiles);
                 Url(DecentralandUrl.ProfilesMetadata);
                 Url(DecentralandUrl.EntitiesActive);
@@ -242,7 +246,7 @@ namespace DCL.Browser.DecentralandUrls
         ///     The "--optimized-assets-url" arg or the flag variant payload override the base url, otherwise
         ///     https://abcdn.{BaseDomain}. FeatureFlagsDependent means it is re-resolved (not cached) until flags load.
         /// </summary>
-        private UrlData ResolveOptimizedAssetsUrl(string dedicatedHostUrl)
+        private UrlData ResolveOptimizedAssetsUrl(UrlData dedicatedHost)
         {
             if (optimizedAssetsBaseOverride is { Length: > 0 })
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, optimizedAssetsBaseOverride);
@@ -251,11 +255,11 @@ namespace DCL.Browser.DecentralandUrls
 
             if (featureFlags.IsEmpty)
                 return isTodayEnvironment
-                    ? dedicatedHostUrl // Static — pinned on construction, before the host domain switches to org
-                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHostUrl);
+                    ? dedicatedHost // Static — pinned on construction, before the host domain switches to org
+                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHost.Url!);
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
-                return dedicatedHostUrl;
+                return dedicatedHost;
 
             if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.OPTIMIZED_ASSETS, FeatureFlagsStrings.OPTIMIZED_ASSETS_BASE_URL_VARIANT, out string? customBaseUrl) && customBaseUrl is { Length: > 0 })
                 return new UrlData(CacheBehaviour.FeatureFlagsDependent, customBaseUrl.TrimEnd('/'));
@@ -266,6 +270,29 @@ namespace DCL.Browser.DecentralandUrls
         /// <summary>Registry-composed endpoints inherit the registry base's caching so a flag-driven base is not cached early.</summary>
         private UrlData ComposeRegistryUrl(string path) =>
             new (RawUrl(DecentralandUrl.AssetBundleRegistry).Caching, $"{Url(DecentralandUrl.AssetBundleRegistry)}{path}");
+
+        /// <summary>
+        ///     The abgen parallel pipeline: registry and CDN must flip together — the abgen registry's versions and
+        ///     statuses describe abgen-cdn's content. The "--abgen-pipeline" arg forces it on without the flag.
+        ///     FeatureFlagsDependent both defers caching until flags load and keeps the abgen hosts off the gateway
+        ///     (they resolve to their own origins).
+        /// </summary>
+        private UrlData ResolveAbgenPipelineUrl(string regularHost, string abgenHost)
+        {
+            if (abgenPipelineForced)
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost);
+
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            if (featureFlags.IsEmpty)
+                return isTodayEnvironment
+                    ? regularHost // Static — pinned on construction, before the host domain switches to org
+                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost);
+
+            return featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_PIPELINE)
+                ? new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost)
+                : regularHost;
+        }
 
         /// <summary>
         ///     Composes the feature-flags host before any instance exists (the pre-login whitelist fetch), from the
@@ -327,7 +354,10 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Account => $"https://{BaseDomain}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.{BaseDomain}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.{BaseDomain}",
-                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"),
+                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://ab-cdn.{BaseDomain}", $"https://abgen-cdn.{BaseDomain}")),
+
+                // LOD bundles are only produced by the regular pipeline, so they never follow the abgen flip
+                DecentralandUrl.LodAssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.{BaseDomain}"),
                 DecentralandUrl.LodGeneratorCDN => ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.{BaseDomain}"),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.{BaseDomain}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.{BaseDomain}/hot-scenes",
@@ -340,7 +370,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelLink => $"https://reels.{BaseDomain}",
                 DecentralandUrl.Blocklist => $"https://config.{BaseDomain}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.{BaseDomain}",
-                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl($"https://asset-bundle-registry.{BaseDomain}"),
+                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl(ResolveAbgenPipelineUrl($"https://asset-bundle-registry.{BaseDomain}", $"https://asset-bundle-registry-abgen.{BaseDomain}")),
 
                 DecentralandUrl.AssetBundleRegistryVersion => ComposeRegistryUrl("/entities/versions"),
                 DecentralandUrl.MarketplaceClaimName => $"https://{BaseDomain}/marketplace/names/claim",
@@ -373,8 +403,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.SceneAdmins => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/scene-admin",
                 DecentralandUrl.Pulse => $"pulse-server.{BaseDomain}",
 
-                DecentralandUrl.Profiles => ComposeRegistryUrl("/profiles"),
-                DecentralandUrl.ProfilesMetadata => ComposeRegistryUrl("/profiles/metadata"),
+                // Profiles are served by the regular registry regardless of the abgen pipeline flip
+                DecentralandUrl.Profiles => $"https://asset-bundle-registry.{BaseDomain}/profiles",
+                DecentralandUrl.ProfilesMetadata => $"https://asset-bundle-registry.{BaseDomain}/profiles/metadata",
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.{BaseDomain}/worlds/{{0}}/scenes/{{1}}/comms",
 
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :

@@ -46,6 +46,7 @@ namespace DCL.Browser
 
             // Content Servers
             DecentralandUrl.AssetBundlesCDN,
+            DecentralandUrl.LodAssetBundlesCDN,
             DecentralandUrl.WorldContentServer,
 
             DecentralandUrl.Genesis,
@@ -58,6 +59,8 @@ namespace DCL.Browser
 
             DecentralandUrl.AssetBundleRegistry,
             DecentralandUrl.AssetBundleRegistryVersion,
+            DecentralandUrl.Profiles,
+            DecentralandUrl.ProfilesMetadata,
 
             DecentralandUrl.MediaConverter,
 
@@ -99,8 +102,9 @@ namespace DCL.Browser
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
             string? cliOptimizedAssetsUrl = null,
-            string? customBaseDomain = null)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain)
+            string? customBaseDomain = null,
+            bool abgenPipelineForced = false)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain, abgenPipelineForced)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
