@@ -269,7 +269,7 @@ jobs:
       # Stable URL that always points at the latest dev build.
       - name: Alias dev deployment (merges to dev only)
         if: ${{ github.event_name == 'push' }}
-        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" unity-explorer-avatar-preview-renderer.vercel.app
+        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" unity-explorer-aang-renderer.vercel.app
 
       - name: Write job summary
         run: |
