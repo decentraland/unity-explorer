@@ -119,7 +119,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             URN emoteId = emoteIntent.EmoteId;
 
-            // Above every early return so any park is bounded — a stranded intent blocks masked emotes forever (#9485).
             if (emoteIntent.UpdatePlayTimeout(dt))
             {
                 ReportHub.LogError(GetReportData(), $"Cant play masked emote {emoteId} timeout reached.");

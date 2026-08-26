@@ -239,7 +239,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool wantsToMove = movementInputComponent.Axes.sqrMagnitude > HORIZONTAL_THRESHOLD_SQ || jumpInputComponent.IsPressed;
             if (!wantsToMove) return;
 
-            // Ref writes before the structural change that invalidates them.
             StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
             World.Remove<CharacterEmoteIntent>(entity);
         }
@@ -318,7 +317,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                      avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
                     return;
 
-                // Bounds every load-related park; deliberately below the settle guard, whose wait is user-driven and unbounded (#6531, #9485, #9626 review).
                 if (emoteIntent.UpdatePlayTimeout(dt))
                 {
                     ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} timeout reached.");
@@ -352,7 +350,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (assetResult == null)
                     {
-                        // Nothing restores an asset slot stripped by the memory sweep — without a re-request the intent parks forever (#6531, #9485).
+                        // Nothing restores an asset slot stripped by the memory sweep — without a re-request the intent parks forever
                         if (!emoteIntent.AssetReloadRequested)
                         {
                             emoteIntent.AssetReloadRequested = true;
