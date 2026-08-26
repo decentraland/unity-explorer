@@ -15,8 +15,15 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareGlobalAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
+        private readonly URLDomain lodAssetBundlesURL;
 
-        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL) { }
+        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL, URLDomain lodAssetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
+        {
+            this.lodAssetBundlesURL = lodAssetBundlesURL;
+        }
+
+        protected override URLDomain ResolveAssetBundlesUrl(in GetAssetBundleIntention assetBundleIntention) =>
+            assetBundleIntention.AssetBundleManifest.IsLODAsset ? lodAssetBundlesURL : base.ResolveAssetBundlesUrl(in assetBundleIntention);
 
         protected override void Update(float t)
         {
