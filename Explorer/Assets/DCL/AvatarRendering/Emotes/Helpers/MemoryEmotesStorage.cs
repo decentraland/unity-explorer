@@ -84,6 +84,11 @@ namespace DCL.AvatarRendering.Emotes
                     if (!emotes.TryGetValue(urn, out IEmote emote))
                         continue;
 
+                    // An in-flight load owns the asset slots: stripping or evicting the emote now orphans the
+                    // pending promise and strands any play intent waiting on it (#9485).
+                    if (emote.IsLoading)
+                        continue;
+
                     if (!TryUnloadAllWearableAssets(emote)) continue;
 
                     DisposeThumbnail(emote);

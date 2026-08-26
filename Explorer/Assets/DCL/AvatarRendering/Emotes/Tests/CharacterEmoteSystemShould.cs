@@ -248,6 +248,48 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 "A CharacterEmoteIntent whose emote never arrives in storage must expire after StreamableLoadingDefaults.TIMEOUT seconds.");
         }
 
+        /// <summary>
+        /// Regression for https://github.com/decentraland/unity-explorer/issues/9485: the memory sweep can strip
+        /// a stored emote's asset slot; the intent must re-request the asset instead of parking forever.
+        /// </summary>
+        [Test]
+        public void RequestAssetReloadOnceWhenStoredEmoteAssetIsMissing()
+        {
+            IAvatarView parkedAvatarView = Substitute.For<IAvatarView>();
+            parkedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+
+            IEmote emote = Substitute.For<IEmote>();
+            emote.IsLoading.Returns(false);
+            emote.AssetResults.Returns(new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT]);
+
+            emoteStorage.TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>())
+                        .Returns(call =>
+                         {
+                             call[1] = emote;
+                             return true;
+                         });
+
+            Entity parkedEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN("urn:decentraland:off-chain:base-emotes:dance"),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                parkedAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var i = 0; i < 3; i++)
+                system!.Update(0.1f);
+
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(parkedEntity),
+                "The intent must stay parked while the asset reload is pending.");
+
+            var reloadPromises = new QueryDescription().WithAll<GetEmotesByPointersIntention>();
+            Assert.AreEqual(1, world.CountEntities(in reloadPromises),
+                "The missing-asset reload must be requested exactly once per intent.");
+        }
+
         [Test]
         public void CancelParkedSceneEmoteIntentOnMovementInput()
         {

@@ -359,9 +359,18 @@ namespace DCL.AvatarRendering.Emotes.Play
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
                     StreamableLoadingResult<AttachmentRegularAsset>? assetResult = emote.AssetResults[bodyShape];
 
-                    // Loading not complete
                     if (assetResult == null)
+                    {
+                        // The memory sweep strips unreferenced asset slots and nothing restores them on its own —
+                        // without a re-request the intent parks here forever (#6531, #9485).
+                        if (!emoteIntent.AssetReloadRequested)
+                        {
+                            emoteIntent.AssetReloadRequested = true;
+                            CreateEmotePromise(emoteId, bodyShape, emoteIntent.Mask);
+                        }
+
                         return;
+                    }
 
                     StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = assetResult.Value;
                     GameObject? mainAsset;
