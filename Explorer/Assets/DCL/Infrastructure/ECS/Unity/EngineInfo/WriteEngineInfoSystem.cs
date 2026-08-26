@@ -16,11 +16,13 @@ namespace ECS.Unity.EngineInfo
     {
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly Func<bool> isLoadingScreenOn;
 
-        internal WriteEngineInfoSystem(World world, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        internal WriteEngineInfoSystem(World world, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter, Func<bool> isLoadingScreenOn) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.isLoadingScreenOn = isLoadingScreenOn;
         }
 
         public override void Initialize()
@@ -35,12 +37,13 @@ namespace ECS.Unity.EngineInfo
 
         private void PropagateToScene()
         {
-            ecsToCRDTWriter.PutMessage<PBEngineInfo, ISceneStateProvider>(static (component, provider) =>
+            ecsToCRDTWriter.PutMessage<PBEngineInfo, (ISceneStateProvider provider, bool sceneHidden)>(static (component, data) =>
             {
-                component.TickNumber = provider.TickNumber;
-                component.FrameNumber = (uint)(MultithreadingUtility.FrameCount - provider.EngineStartInfo.FrameNumber);
-                component.TotalRuntime = (float)(DateTime.Now - provider.EngineStartInfo.Timestamp).TotalSeconds;
-            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, sceneStateProvider);
+                component.TickNumber = data.provider.TickNumber;
+                component.FrameNumber = (uint)(MultithreadingUtility.FrameCount - data.provider.EngineStartInfo.FrameNumber);
+                component.TotalRuntime = (float)(DateTime.Now - data.provider.EngineStartInfo.Timestamp).TotalSeconds;
+                component.SceneHidden = data.sceneHidden;
+            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (sceneStateProvider, isLoadingScreenOn()));
         }
     }
 }
