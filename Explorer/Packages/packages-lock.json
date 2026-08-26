@@ -523,7 +523,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "a6b7d2dbd865a99d30bc3e43697cc8b5e4e043fe"
+      "hash": "1691b33df2ea7eb61eb648ff67b7c9f9feabfb7b"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
