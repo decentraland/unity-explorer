@@ -216,6 +216,22 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual(expected, urlsSource.Url(DecentralandUrl.ApiPlaces));
         }
 
+        [Test]
+        public void RouteEventsPoiAndWorldServerThroughTheGatewayOrigin()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
+            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayPrefix: "http://127.0.0.1:8080/");
+
+            Assert.AreEqual("http://127.0.0.1:8080/events/api/events", urlsSource.Url(DecentralandUrl.ApiEvents));
+            Assert.AreEqual("http://127.0.0.1:8080/dcl-lists/pois", urlsSource.Url(DecentralandUrl.POI));
+            Assert.AreEqual("http://127.0.0.1:8080/worlds-content-server/world", urlsSource.Url(DecentralandUrl.WorldServer));
+            Assert.AreEqual("http://127.0.0.1:8080/worlds-content-server/world/{0}/permissions", urlsSource.Url(DecentralandUrl.WorldPermissions));
+            Assert.AreEqual("http://127.0.0.1:8080/worlds-content-server/worlds/{0}/comms", urlsSource.Url(DecentralandUrl.WorldComms));
+            Assert.AreEqual("http://127.0.0.1:8080/worlds-content-server/worlds/{0}/scenes/{1}/comms", urlsSource.Url(DecentralandUrl.WorldCommsAdapter));
+            Assert.AreEqual("ws://127.0.0.1:8080/rpc-social-service-ea", urlsSource.Url(DecentralandUrl.ApiFriends));
+            Assert.AreEqual("http://127.0.0.1:8080/social-api/v1/mutes", urlsSource.Url(DecentralandUrl.SocialServiceMutes));
+        }
+
         [TestCase("https://gateway.localhost", "https://gateway.localhost/")]
         [TestCase("https://gateway.localhost/", "https://gateway.localhost/")]
         [TestCase("  https://gateway.localhost  ", "https://gateway.localhost/")]

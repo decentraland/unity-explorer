@@ -27,6 +27,8 @@ namespace DCL.Browser
             DecentralandUrl.ApiPlaces,
             DecentralandUrl.ApiWorlds,
             DecentralandUrl.ApiDestinations,
+            DecentralandUrl.ApiEvents,
+            DecentralandUrl.POI,
             DecentralandUrl.Map,
             DecentralandUrl.ContentModerationReport,
 
@@ -46,7 +48,11 @@ namespace DCL.Browser
 
             // Content Servers
             DecentralandUrl.AssetBundlesCDN,
+            DecentralandUrl.WorldServer,
             DecentralandUrl.WorldContentServer,
+            DecentralandUrl.WorldPermissions,
+            DecentralandUrl.WorldComms,
+            DecentralandUrl.WorldCommsAdapter,
 
             DecentralandUrl.Genesis,
             DecentralandUrl.Badges,
@@ -73,6 +79,8 @@ namespace DCL.Browser
             DecentralandUrl.Members,
             DecentralandUrl.MembersV2,
             DecentralandUrl.ActiveCommunityVoiceChats,
+            DecentralandUrl.ApiFriends,
+            DecentralandUrl.SocialServiceMutes,
         };
 
         /// <summary>
@@ -197,11 +205,11 @@ namespace DCL.Browser
         /// </summary>
         private bool IsGatewayTransformable(string url)
         {
-            if (domainSuffix == null || !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            if (domainSuffix == null || !TryGetSchemePrefixLength(url, out int schemeLength))
                 return false;
 
-            int hostEnd = url.IndexOf('/', HTTPS_PREFIX_LENGTH);
-            ReadOnlySpan<char> authority = url.AsSpan(HTTPS_PREFIX_LENGTH, (hostEnd < 0 ? url.Length : hostEnd) - HTTPS_PREFIX_LENGTH);
+            int hostEnd = url.IndexOf('/', schemeLength);
+            ReadOnlySpan<char> authority = url.AsSpan(schemeLength, (hostEnd < 0 ? url.Length : hostEnd) - schemeLength);
 
             if (authority.IndexOfAny(':', '@') >= 0)
                 return false;
@@ -268,9 +276,12 @@ namespace DCL.Browser
             if (gatewayPrefix == null)
                 return url;
 
-            string prefix = gatewayPrefix;
+            if (!TryGetSchemePrefixLength(url, out int schemeLength))
+                return url;
 
-            int firstDot = url.IndexOf('.', HTTPS_PREFIX_LENGTH);
+            string prefix = GatewayPrefixForScheme(gatewayPrefix, schemeLength);
+
+            int firstDot = url.IndexOf('.', schemeLength);
 
             if (firstDot < 0)
                 return url;
@@ -279,14 +290,14 @@ namespace DCL.Browser
             if (url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return url;
 
-            int subdomainLength = firstDot - HTTPS_PREFIX_LENGTH;
+            int subdomainLength = firstDot - schemeLength;
             int pathStart = url.IndexOf('/', firstDot);
             int domainEnd = pathStart >= 0 ? pathStart : url.Length;
             int pathLength = url.Length - domainEnd;
 
             int resultLength = prefix.Length + subdomainLength + pathLength;
 
-            return string.Create(resultLength, (url, prefix, subdomainLength, pathStart, pathLength), static (span, state) =>
+            return string.Create(resultLength, (url, prefix, schemeLength, subdomainLength, pathStart, pathLength), static (span, state) =>
             {
                 ReadOnlySpan<char> src = state.url.AsSpan();
 
@@ -295,12 +306,52 @@ namespace DCL.Browser
                 state.prefix.AsSpan().CopyTo(span);
                 pos += state.prefix.Length;
 
-                src.Slice(HTTPS_PREFIX_LENGTH, state.subdomainLength).CopyTo(span.Slice(pos));
+                src.Slice(state.schemeLength, state.subdomainLength).CopyTo(span.Slice(pos));
                 pos += state.subdomainLength;
 
                 if (state.pathLength > 0)
                     src.Slice(state.pathStart, state.pathLength).CopyTo(span.Slice(pos));
             });
+        }
+
+        private static bool TryGetSchemePrefixLength(string url, out int length)
+        {
+            if (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                length = 8;
+                return true;
+            }
+
+            if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                length = 7;
+                return true;
+            }
+
+            if (url.StartsWith("wss://", StringComparison.OrdinalIgnoreCase))
+            {
+                length = 6;
+                return true;
+            }
+
+            if (url.StartsWith("ws://", StringComparison.OrdinalIgnoreCase))
+            {
+                length = 5;
+                return true;
+            }
+
+            length = 0;
+            return false;
+        }
+
+        private static string GatewayPrefixForScheme(string prefix, int schemeLength)
+        {
+            bool websocket = schemeLength is 5 or 6;
+            if (!websocket)
+                return prefix;
+
+            string websocketScheme = prefix.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? "wss://" : "ws://";
+            return websocketScheme + prefix[(prefix.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? 8 : 7)..];
         }
     }
 }
