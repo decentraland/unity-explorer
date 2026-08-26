@@ -22,6 +22,26 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+
+        /// <summary>
+        ///     Points every backend host at a deployment served under this base domain instead of
+        ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
+        ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
+        ///     link is processed. It is denied by <c>DeepLinkAllowlist</c> like the other infrastructure-pointing
+        ///     params, and accepting it in the denied-params dialog has no effect.
+        /// </summary>
+        public const string BASE_DOMAIN = "base-domain";
+
+        /// <summary>
+        ///     The chain a <c>--base-domain</c> deployment signs and transacts against: "mainnet" or "sepolia", each
+        ///     carrying the polygon network that pairs with it. Defaults to mainnet. Every decentraland environment
+        ///     answers for one chain of its own - org and today mainnet, zone sepolia - and this cannot move them:
+        ///     paired with one of those it is reported and dropped (<c>ChainUtils.ResolveNetwork</c>). Where the value
+        ///     is read, anything not naming a known network ends the launch instead of falling back to the default
+        ///     (<c>MainSceneLoader.CaptureEthNetworkArg</c>). Command line only, like <see cref="BASE_DOMAIN" />.
+        /// </summary>
+        public const string ETH_NETWORK = "eth-network";
+
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SPAWN_POINT = "spawnpoint";
@@ -151,6 +171,9 @@ namespace Global.AppArgs
         public const string LOCAL_AB = "local-ab";
 
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
+
+        /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
+        public const string ABGEN_PIPELINE = "abgen-pipeline";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 

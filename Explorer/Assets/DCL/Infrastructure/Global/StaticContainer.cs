@@ -1,5 +1,4 @@
 using Arch.Core;
-using DCL.SceneRunner.Scene;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
@@ -7,25 +6,18 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Emotes.Play;
-using DCL.Multiplayer.Emotes;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
-using DCL.Landscape.Utils;
 using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.PerformanceAndDiagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -72,6 +64,8 @@ using Global.Dynamic;
 using Utility;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
+
+#pragma warning disable CS8618 // two-phase init: all members are assigned in CreateAsync before the container is returned
 
 namespace Global
 {
@@ -239,14 +233,14 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = webRequestsContainer;
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
-            container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
+            container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController, decentralandUrlsSource);
             container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
 
-            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), container.GltfContainerAssetsCache, launchMode);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.LodAssetBundlesCDN)), container.GltfContainerAssetsCache, launchMode);
 
             var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, container.ProfilesContainer.Repository);

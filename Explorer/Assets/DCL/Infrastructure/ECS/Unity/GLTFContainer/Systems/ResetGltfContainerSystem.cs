@@ -57,6 +57,9 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             TryReleaseAsset(ref component);
             component.Promise.ForgetLoading(World);
+
+            // Clear the cached result so no other release path can dereference the returned asset again
+            component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
             ecsToCRDTWriter.DeleteMessage<PBGltfContainerLoadingState>(sdkEntity);
             RemoveAnimationMarker(entity);
         }
