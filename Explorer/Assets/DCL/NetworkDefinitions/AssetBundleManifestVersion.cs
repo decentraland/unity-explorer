@@ -35,7 +35,7 @@ public class AssetBundleManifestVersion
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
 
-        //LOD bundles are only produced by the regular pipeline; loading keys the CDN base on this.
+        // LOD bundles are only produced by the regular pipeline; loading keys the CDN base on this.
         public bool IsLODAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
 
