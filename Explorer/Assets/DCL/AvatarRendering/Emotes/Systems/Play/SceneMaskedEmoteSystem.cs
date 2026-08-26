@@ -119,6 +119,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             URN emoteId = emoteIntent.EmoteId;
 
+            // Above every early return so any park is bounded — a stranded intent blocks masked emotes forever (#9485).
+            if (emoteIntent.UpdatePlayTimeout(dt))
+            {
+                ReportHub.LogError(GetReportData(), $"Cant play masked emote {emoteId} timeout reached.");
+                World.Remove<CharacterEmoteIntent>(entity);
+                return;
+            }
+
             if (!emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote)) return;
 
             if (emote.IsLoading)
@@ -126,13 +134,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emote.Model is { IsInitialized: true, Succeeded: false })
             {
-                World.Remove<CharacterEmoteIntent>(entity);
-                return;
-            }
-
-            if (emoteIntent.UpdatePlayTimeout(dt))
-            {
-                ReportHub.LogError(GetReportData(), $"Cant play masked emote {emoteId} timeout reached.");
                 World.Remove<CharacterEmoteIntent>(entity);
                 return;
             }

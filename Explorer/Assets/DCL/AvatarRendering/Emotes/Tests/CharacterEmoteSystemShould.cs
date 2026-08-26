@@ -5,7 +5,9 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes.Play;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -176,6 +178,158 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 "An intent held back by the movement gate must survive: the avatar is moving, which is not a stuck state.");
 
             emoteStorage.DidNotReceive().TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>());
+        }
+
+        /// <summary>
+        /// Regression for https://github.com/decentraland/unity-explorer/issues/9485: an emote stuck in
+        /// IsLoading must be released by the play timeout instead of parking the intent forever.
+        /// </summary>
+        [Test]
+        public void RemoveIntentAfterTimeoutWhenEmoteNeverFinishesLoading()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("Cant play emote .* timeout reached"));
+
+            IAvatarView strandedAvatarView = Substitute.For<IAvatarView>();
+            strandedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+
+            IEmote emote = Substitute.For<IEmote>();
+            emote.IsLoading.Returns(true);
+
+            emoteStorage.TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>())
+                        .Returns(call =>
+                         {
+                             call[1] = emote;
+                             return true;
+                         });
+
+            Entity strandedEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                strandedAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
+                system!.Update(1f);
+
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
+                "A CharacterEmoteIntent whose emote never finishes loading must expire after StreamableLoadingDefaults.TIMEOUT seconds.");
+        }
+
+        /// <summary>
+        /// The exact https://github.com/decentraland/unity-explorer/issues/9485 shape: the emote never lands in
+        /// storage and its promise can silently never be created (scene gone), so only the timeout can unpark.
+        /// </summary>
+        [Test]
+        public void RemoveIntentAfterTimeoutWhenEmoteNeverArrivesInStorage()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("Cant play emote .* timeout reached"));
+
+            IAvatarView strandedAvatarView = Substitute.For<IAvatarView>();
+            strandedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+
+            Entity strandedEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                strandedAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
+                system!.Update(1f);
+
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
+                "A CharacterEmoteIntent whose emote never arrives in storage must expire after StreamableLoadingDefaults.TIMEOUT seconds.");
+        }
+
+        [Test]
+        public void CancelParkedSceneEmoteIntentOnMovementInput()
+        {
+            //Arrange
+            Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Scene, AvatarEmoteMask.AemFullBody,
+                new MovementInputComponent { Axes = Vector2.up }, new JumpInputComponent());
+
+            //Act
+            system!.Update(0);
+
+            //Assert: user input discards the not-yet-started scene emote and stops the playing loop.
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(parkedEntity));
+            CharacterEmoteComponent emoteComponent = world.Get<CharacterEmoteComponent>(parkedEntity);
+            Assert.IsNull(emoteComponent.CurrentEmoteReference);
+            Assert.IsTrue(emoteComponent.PendingStop.IsSet);
+            Assert.AreEqual(EmoteState.EsInterrupted, emoteComponent.PendingStop.Reason);
+        }
+
+        [Test]
+        public void CancelParkedSceneEmoteIntentOnJumpInput()
+        {
+            //Arrange
+            Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Scene, AvatarEmoteMask.AemFullBody,
+                new MovementInputComponent(), new JumpInputComponent { IsPressed = true });
+
+            //Act
+            system!.Update(0);
+
+            //Assert
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(parkedEntity));
+            Assert.IsNull(world.Get<CharacterEmoteComponent>(parkedEntity).CurrentEmoteReference);
+        }
+
+        [Test]
+        public void KeepParkedSelfEmoteIntentOnMovementInput()
+        {
+            //Arrange: a user-queued emote must survive movement — queue-while-moving is a supported UX.
+            Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Self, AvatarEmoteMask.AemFullBody,
+                new MovementInputComponent { Axes = Vector2.up }, new JumpInputComponent());
+
+            //Act
+            system!.Update(0);
+
+            //Assert
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(parkedEntity));
+            Assert.IsNotNull(world.Get<CharacterEmoteComponent>(parkedEntity).CurrentEmoteReference);
+        }
+
+        [Test]
+        public void KeepParkedMaskedSceneEmoteIntentOnMovementInput()
+        {
+            //Arrange: masked emotes never lock movement, so movement must not discard them.
+            Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Scene, AvatarEmoteMask.AemUpperBody,
+                new MovementInputComponent { Axes = Vector2.up }, new JumpInputComponent());
+
+            //Act
+            system!.Update(0);
+
+            //Assert
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(parkedEntity));
+        }
+
+        private Entity NewParkedIntentEntity(TriggerSource triggerSource, AvatarEmoteMask mask, MovementInputComponent movementInput, JumpInputComponent jumpInput)
+        {
+            var playingEmoteComponent = new CharacterEmoteComponent
+            {
+                EmoteUrn = "urn:decentraland:off-chain:base-emotes:dance",
+                CurrentEmoteReference = emoteReferences,
+            };
+
+            return world.Create(
+                playingEmoteComponent,
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    TriggerSource = triggerSource,
+                    Mask = mask,
+                },
+                Substitute.For<IAvatarView>(),
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE },
+                movementInput,
+                jumpInput);
         }
 
         [Test]
