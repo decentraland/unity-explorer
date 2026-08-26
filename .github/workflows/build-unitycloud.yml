@@ -652,6 +652,10 @@ jobs:
               echo "::error::$dll missing from build/ (VCRedistBuildPostprocessor regression?)"
               exit 1
             fi
+            if [[ "$(head -c2 "build/$dll")" != "MZ" ]]; then
+              echo "::error::$dll is not a PE image (Git LFS pointer?)"
+              exit 1
+            fi
           done
 
       - name: Locate Windows main executable
