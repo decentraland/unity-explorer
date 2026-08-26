@@ -71,6 +71,23 @@ public class PreviewConfiguration
     public string Emote { get; set; } = "idle";
 
     /// <summary>
+    /// Whether the emote should loop in Profile/Authentication mode. Default false (unchanged
+    /// behaviour). The Outfit Studio sets this true so a single-frame "pose" holds its frame on a
+    /// profile avatar (Builder mode already loops embedded emotes; see PreviewController).
+    /// </summary>
+    public bool EmoteLoop { get; set; } = false;
+
+    /// <summary>
+    /// Categories that render even when another equipped wearable hides them (same meaning as a
+    /// profile's <c>forceRender</c>, which Profile mode already honors). Builder mode has no such
+    /// field of its own, so the Outfit Studio sets this to override hides on a custom outfit; there
+    /// is deliberately no query parameter for it, so a URL-loaded avatar always keeps its hides.
+    /// Never null — empty and null are not equivalent in WearableUtils.ResolveHidingConflicts, and
+    /// empty is what a profile without force-render resolves to.
+    /// </summary>
+    public string[] ForceRender { get; set; } = Array.Empty<string>();
+
+    /// <summary>
     /// The base64 encoded GLB to load.
     /// </summary>
     public List<byte[]> Base64 { get; } = new();
@@ -266,6 +283,17 @@ public class PreviewConfiguration
     /// If true, facial features (eyes, eyebrows, mouth) will be hidden on the avatar.
     /// </summary>
     public bool DisableFace { get; set; }
+
+    /// <summary>
+    /// If true, the body shape's geometry is hidden after loading, leaving only the equipped
+    /// wearables visible. The avatar skeleton is untouched, so wearables still skin, pose and
+    /// spring-bone normally — this hides meshes, it does not render a wearable standalone.
+    ///
+    /// Used by the Outfit Studio's Single-Item mode to shoot one isolated wearable. Deliberately
+    /// has no query-string parameter (unlike <see cref="DisableFace"/>): it is an editor-tool
+    /// concern, and leaving it out of <see cref="RecreateFrom"/> keeps deployed behaviour identical.
+    /// </summary>
+    public bool HideBodyShape { get; set; }
 
     public static void RecreateFrom(string url)
     {

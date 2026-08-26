@@ -209,7 +209,18 @@ namespace Loading
             {
                 propClip = clips.FirstOrDefault(c => c != avatarClip);
             }
-            
+
+            // Last resort: no clip follows the _Avatar/_Prop convention at all (e.g. emotes exported
+            // with default Blender clip names like "Base Layer" / "Base Layer.001"). Fall back to
+            // positional assignment - first clip is the avatar, second (if exactly two) is the prop -
+            // rather than throwing and taking down the whole avatar load.
+            if (avatarClip == null && clips.Length >= 1)
+            {
+                avatarClip = clips[0];
+                if (propClip == null && clips.Length == 2)
+                    propClip = clips[1];
+            }
+
             if (avatarClip == null) throw new InvalidOperationException("Failed to determine animation clip assignment from names: " + clips.Select(c => c.name).Aggregate((a, b) => a + ", " + b));
             
             return (avatarClip, propClip);
@@ -234,7 +245,11 @@ namespace Loading
                     child.SetParent(root, true);
                 }
 
-                Object.Destroy(sceneChild.gameObject);
+                // DestroyImmediate is required outside play mode (editor previews); Destroy would error
+                if (Application.isPlaying)
+                    Object.Destroy(sceneChild.gameObject);
+                else
+                    Object.DestroyImmediate(sceneChild.gameObject);
             }
 
         }

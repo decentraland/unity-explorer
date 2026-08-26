@@ -209,7 +209,14 @@ public class EmoteAnimationController : MonoBehaviour
         if (!_loadedEmote.HasValue) return;
 
         StopEmote(false);
-        avatarAnimation.RemoveClip(_loadedEmote.Value.Clip);
+
+        // PlayEmote registers the clip under the emote's URN via AddClip(clip, name) — a custom
+        // name, not the clip's own .name. RemoveClip(AnimationClip) looks up the entry to remove
+        // by clip.name, which a custom-named registration never matches, so it always failed here
+        // (for every emote/pose, not just one). Removing by the URN string is the correct overload
+        // for a clip that was added under a custom name.
+        avatarAnimation.RemoveClip(_loadedEmote.Value.Entity.URN);
+
         _loadedEmote = null;
         _emoteAudioClip = null;
         _propAnimation = null;

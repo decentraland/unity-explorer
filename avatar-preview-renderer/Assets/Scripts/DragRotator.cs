@@ -104,4 +104,17 @@ public class DragRotator : MonoBehaviour
         _verticalVel = 0;
         _lastDragTime = 0;
     }
+
+    /// <summary>
+    /// Smoothly rotates to <paramref name="yawDegrees"/> around the world Y axis, relative to the
+    /// initial spawn orientation (0 = <see cref="ResetRotation"/>'s target). Free-drag orbiting via
+    /// <see cref="OnDrag"/> keeps working once the snap settles.
+    /// </summary>
+    public void SnapRotation(float yawDegrees)
+    {
+        _targetRotation = Quaternion.AngleAxis(yawDegrees, Vector3.up) * _initialRotation;
+        _horizontalVel = 0;
+        _verticalVel = 0;
+        _lastDragTime = 0;
+    }
 }

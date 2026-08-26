@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Data;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Services
 {
@@ -31,8 +30,10 @@ namespace Services
                     (await APIService.GetActiveEntities(missingEntities))
                     .Select(EntityDefinition.FromActiveEntity).ToList();
 
-                Assert.AreEqual(missingEntities.Length, results.Count, "API did not return all requested entities.");
-                
+                // Note: the API can legitimately return fewer entities than requested (e.g.
+                // third-party/linked wearables or unpublished items) — the shortfall is logged
+                // below and callers receive only the resolved entities.
+
                 foreach (var ed in results)
                     CACHED_ENTITIES[ed.URN] = ed;
 

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42d4eb02b58b4ac5893915700fb8a9a3, type: 3}
+  m_Name: MatcapPresets
+  m_EditorClassIdentifier:
+  presets:
+  - name: matcap_01
+    texture: {fileID: 2800000, guid: 1dfe3c2fb07b463ca1d69ebffe4441a8, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    blur: 0
+  - name: matcap_02
+    texture: {fileID: 2800000, guid: 8bf4d40512eb480c9dbef3ab867fc0ef, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    blur: 0
+  - name: matcap_03
+    texture: {fileID: 2800000, guid: 98e8b0f2dd8445348fa50898eb2c604c, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    blur: 0
+  - name: matcap_04
+    texture: {fileID: 2800000, guid: 5e772ad6fc7a4a4d92ffa94ea004bcce, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    blur: 0
+  - name: matcap_05
+    texture: {fileID: 2800000, guid: 4a7d465f9dae46e0b57f1c8a2888695d, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    blur: 0
+  - name: matcap_06
+    texture: {fileID: 2800000, guid: 274f331ac2454840b01d911e0142f3e3, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    blur: 0

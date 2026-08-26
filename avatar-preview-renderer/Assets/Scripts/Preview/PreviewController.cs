@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Data;
 using Loading;
+using Runtime.Wearables;
 using Services;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -43,6 +44,7 @@ namespace Preview
         private bool _loading;
         private bool _shouldReload;
         private bool _shouldCleanup;
+        private PreviewMode? _lastMode;
 
         private void Start()
         {
@@ -140,137 +142,155 @@ namespace Preview
             avatarLoader.enabled = false; // Disables Update for Outline
             wearableLoader.enabled = false; // Disables Update for Outline
 
-            do
+            try
             {
-                _shouldReload = false;
-
-                // We store the instance in case it gets recreated by a call to PreviewConfiguration.RecreateFrom
-                var config = PreviewConfiguration.Instance;
-
-                avatarRotator.enabled = false;
-                wearableRotator.enabled = false;
-                avatarRotator.ResetRotation();
-                wearableRotator.ResetRotation();
-
-                animationReference.SetActive(config.ShowAnimationReference);
-                platform.SetActive(config.Mode is PreviewMode.Authentication);
-                mainCamera.backgroundColor = config.Background;
-                mainCamera.orthographic = config.Projection == "orthographic";
-                previewUIPresenter.EnableLoader(!config.DisableLoader);
-                previewCameraController.SetMode(config.Mode);
-                confirmationVFX.gameObject.SetActive(config.Mode is PreviewMode.Jesus);
-
-                var hasEmoteOverride = false;
-                var hasWearableOverride = false;
-                var hasEmoteAudio = false;
-                var showingAvatar = false;
-
-                try
+                do
                 {
-                    await EntityService.PreloadBodyEntities();
+                    _shouldReload = false;
 
-                    switch (config.Mode)
+                    // We store the instance in case it gets recreated by a call to PreviewConfiguration.RecreateFrom
+                    var config = PreviewConfiguration.Instance;
+
+                    // Only reset the orbit rotation when actually switching modes, not on every reload within
+                    // the same mode (e.g. adding/removing a wearable in Builder mode shouldn't undo the user's view)
+                    var isModeChange = _lastMode != config.Mode;
+                    _lastMode = config.Mode;
+
+                    avatarRotator.enabled = false;
+                    wearableRotator.enabled = false;
+                    if (isModeChange)
                     {
-                        case PreviewMode.Marketplace:
-                            // With no urns there is nothing to override, so the profile avatar is the
-                            // whole preview.
-                            var urns = await LoadUrns(config);
-                            var result = await LoadForMarketplace(config, urns);
-
-                            previewUIPresenter.EnableEmoteControls(result.emoteOverride);
-
-                            if (result.validRepresentation)
-                            {
-                                // When there is no single item to show on its own (an emote, or several
-                                // urns at once) the avatar is the only view that exists.
-                                showingAvatar = !result.showsItemAlone || ShouldShowAvatar(config);
-                                previewUIPresenter.SetSwitcherState(
-                                    showingAvatar
-                                        ? PreviewUIPresenter.SwitcherState.Avatar
-                                        : PreviewUIPresenter.SwitcherState.Wearable, result.avatarBodyShape);
-                            }
-                            else
-                            {
-                                previewUIPresenter.SetSwitcherState(PreviewUIPresenter.SwitcherState.WearableLocked,
-                                    result.avatarBodyShape);
-                            }
-
-                            hasEmoteOverride = result.emoteOverride;
-                            hasWearableOverride = result.showsItemAlone;
-                            hasEmoteAudio = result.emoteOverrideAudio;
-                            break;
-                        case PreviewMode.Authentication:
-                        case PreviewMode.Profile:
-                            showingAvatar = true;
-                            await LoadForProfile(config.Profile, config.Emote);
-                            break;
-                        case PreviewMode.Builder:
-                            await LoadForBuilder(config.BodyShape,
-                                config.EyeColor,
-                                config.HairColor,
-                                config.SkinColor,
-                                config.Urns.ToArray(),
-                                config.Emote,
-                                config.Base64);
-                            break;
-                        case PreviewMode.Jesus:
-                            showingAvatar = true;
-                            confirmationVFX.Play();
-                            await LoadForProfile(config.Profile, "character/Particles_Anim", true);
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
+                        avatarRotator.ResetRotation();
+                        wearableRotator.ResetRotation();
                     }
-                }
-                catch (Exception e)
-                {
-                    JSBridge.NativeCalls.OnError(e.Message);
-                    throw;
-                }
 
-                // Wait for 1 frame for animation to kick in before re-centering the object on screen
-                await Awaitable.NextFrameAsync();
+                    animationReference.SetActive(config.ShowAnimationReference);
+                    platform.SetActive(config.Mode is PreviewMode.Authentication);
+                    mainCamera.backgroundColor = config.Background;
+                    mainCamera.orthographic = config.Projection == "orthographic";
+                    previewUIPresenter.EnableLoader(!config.DisableLoader);
+                    previewCameraController.SetMode(config.Mode);
+                    confirmationVFX.gameObject.SetActive(config.Mode is PreviewMode.Jesus);
 
-                if (hasWearableOverride)
-                {
-                    GameObjectUtils.CenterAndFit(wearableLoader.transform, mainCamera, wearablePadding);
-                    wearableLoader.transform.position += wearableOffset;
-                }
-                else if (hasEmoteOverride)
-                {
-                    GameObjectUtils.CenterAndFit(avatarLoader.transform, mainCamera, wearablePadding);
-                }
+                    var hasEmoteOverride = false;
+                    var hasWearableOverride = false;
+                    var hasEmoteAudio = false;
+                    var showingAvatar = false;
 
-                if (config.Mode is PreviewMode.Marketplace)
-                {
-                    previewCameraController.ShowMarketplaceWearable(!showingAvatar);
-                }
-                else if (config.Mode is PreviewMode.Builder)
-                {
-                    avatarRotator.DragSpeed = 2f;
-                }
+                    try
+                    {
+                        await EntityService.PreloadBodyEntities();
 
-                avatarRotator.enabled = true;
-                wearableRotator.enabled = true;
-                avatarRotator.EnableAutoRotate = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;
+                        switch (config.Mode)
+                        {
+                            case PreviewMode.Marketplace:
+                                // With no urns there is nothing to override, so the profile avatar is the
+                                // whole preview.
+                                var urns = await LoadUrns(config);
+                                var result = await LoadForMarketplace(config, urns);
 
-                previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
-                previewUIPresenter.EnableZoom(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
-                previewUIPresenter.EnableSwitcher(hasWearableOverride && !config.DisableSwitcher);
-                previewUIPresenter.EnableAudioControls(hasEmoteAudio);
-            } while (_shouldReload);
+                                previewUIPresenter.EnableEmoteControls(result.emoteOverride);
 
-            previewUIPresenter.ShowLoader(false);
-            _loading = false;
-            mainCamera.cullingMask = -1; // Render everything
-            avatarLoader.enabled = true; // Enables Update for Outline
-            wearableLoader.enabled = true;
+                                if (result.validRepresentation)
+                                {
+                                    // When there is no single item to show on its own (an emote, or several
+                                    // urns at once) the avatar is the only view that exists.
+                                    showingAvatar = !result.showsItemAlone || ShouldShowAvatar(config);
+                                    previewUIPresenter.SetSwitcherState(
+                                        showingAvatar
+                                            ? PreviewUIPresenter.SwitcherState.Avatar
+                                            : PreviewUIPresenter.SwitcherState.Wearable, result.avatarBodyShape);
+                                }
+                                else
+                                {
+                                    previewUIPresenter.SetSwitcherState(PreviewUIPresenter.SwitcherState.WearableLocked,
+                                        result.avatarBodyShape);
+                                }
 
-            if (_shouldCleanup)
+                                hasEmoteOverride = result.emoteOverride;
+                                hasWearableOverride = result.showsItemAlone;
+                                hasEmoteAudio = result.emoteOverrideAudio;
+                                break;
+                            case PreviewMode.Authentication:
+                            case PreviewMode.Profile:
+                                showingAvatar = true;
+                                await LoadForProfile(config.Profile, config.Emote, config.EmoteLoop);
+                                break;
+                            case PreviewMode.Builder:
+                                await LoadForBuilder(config.BodyShape,
+                                    config.EyeColor,
+                                    config.HairColor,
+                                    config.SkinColor,
+                                    config.Urns.ToArray(),
+                                    config.Emote,
+                                    config.Base64);
+                                break;
+                            case PreviewMode.Jesus:
+                                showingAvatar = true;
+                                confirmationVFX.Play();
+                                await LoadForProfile(config.Profile, "character/Particles_Anim", true);
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        JSBridge.NativeCalls.OnError(e.Message);
+                        throw;
+                    }
+
+                    // Wait for 1 frame for animation to kick in before re-centering the object on screen
+                    await Awaitable.NextFrameAsync();
+
+                    if (hasWearableOverride)
+                    {
+                        GameObjectUtils.CenterAndFit(wearableLoader.transform, mainCamera, wearablePadding);
+                        wearableLoader.transform.position += wearableOffset;
+                    }
+                    else if (hasEmoteOverride)
+                    {
+                        GameObjectUtils.CenterAndFit(avatarLoader.transform, mainCamera, wearablePadding);
+                    }
+
+                    if (config.Mode is PreviewMode.Marketplace)
+                    {
+                        previewCameraController.ShowMarketplaceWearable(!showingAvatar);
+                    }
+                    else if (config.Mode is PreviewMode.Builder)
+                    {
+                        avatarRotator.DragSpeed = 2f;
+                    }
+
+                    avatarRotator.enabled = true;
+                    wearableRotator.enabled = true;
+                    avatarRotator.EnableAutoRotate = config.Mode is PreviewMode.Marketplace && !hasEmoteOverride;
+
+                    previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
+                    previewUIPresenter.EnableZoom(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
+                    previewUIPresenter.EnableSwitcher(hasWearableOverride && !config.DisableSwitcher);
+                    previewUIPresenter.EnableAudioControls(hasEmoteAudio);
+                } while (_shouldReload);
+            }
+            finally
             {
-                Cleanup();
+                // Always restore render state, even if a load throws (e.g. an emote whose
+                // animation clips can't be assigned). Otherwise the camera is left culling
+                // everything and _loading stays true, which blocks every subsequent reload.
+                previewUIPresenter.ShowLoader(false);
+                _loading = false;
+                mainCamera.cullingMask = -1; // Render everything
+                avatarLoader.enabled = true; // Enables Update for Outline
+                wearableLoader.enabled = true;
+
+                if (_shouldCleanup)
+                {
+                    Cleanup();
+                }
             }
 
+            // Only reached on success; an exception propagates out of the try/finally above
+            // (after OnError was already reported) without signalling load completion.
             JSBridge.NativeCalls.OnLoadComplete();
         }
 
@@ -307,18 +327,42 @@ namespace Preview
             var colors = new AvatarColors(eyeColor ?? Color.black, hairColor ?? Color.black,
                 skinColor ?? DEFAULT_SKIN_COLOR);
 
-            var emoteEntity = base64Emote ?? (emoteName == "idle" ? null : EntityDefinition.FromEmbeddedEmote(emoteName, true));
+            var emoteEntity = base64Emote ?? await ResolveBuilderEmote(emoteName);
 
             await avatarLoader.LoadAvatar(bodyShape,
                 wearableEntities,
                 emoteEntity,
-                Array.Empty<string>(),
+                PreviewConfiguration.Instance.ForceRender,
                 colors);
 
             if (PreviewConfiguration.Instance.DisableFace)
             {
                 avatarLoader.HideFacialFeatures();
             }
+
+            // Re-applied on every load by design: LoadAvatar reactivates every model root it owns,
+            // so a hide asserted once would be undone by the next reload.
+            if (PreviewConfiguration.Instance.HideBodyShape)
+            {
+                avatarLoader.TryHideCategory(WearableCategories.Categories.BODY_SHAPE, true);
+            }
+        }
+
+        /// <summary>
+        /// Resolves the builder-mode emote: null for idle, an active entity for emote URNs
+        /// (e.g. picked from the marketplace) or an embedded StreamingAssets emote otherwise.
+        /// </summary>
+        private static async Awaitable<EntityDefinition> ResolveBuilderEmote(string emoteName)
+        {
+            if (string.IsNullOrEmpty(emoteName) || emoteName == "idle") return null;
+
+            if (emoteName.StartsWith("urn:", StringComparison.OrdinalIgnoreCase))
+            {
+                var entities = await EntityService.GetEntities(new[] { emoteName });
+                return entities.FirstOrDefault(e => e.Type == EntityType.Emote);
+            }
+
+            return EntityDefinition.FromEmbeddedEmote(emoteName, true);
         }
 
         private async Awaitable<(bool emoteOverride, bool emoteOverrideAudio, bool validRepresentation,
@@ -452,8 +496,22 @@ namespace Preview
             var avatar = await APIService.GetAvatar(profileID);
             var entities = await EntityService.GetEntities(avatar.wearables);
 
+            // A URN means a real (published) emote entity — e.g. picked from a marketplace catalog —
+            // rather than one of the embedded StreamingAssets clips; resolve it instead of treating
+            // the URN string itself as an embedded clip name.
+            EntityDefinition emoteDefinition;
+            if (!string.IsNullOrEmpty(defaultEmote) && defaultEmote.StartsWith("urn:", StringComparison.OrdinalIgnoreCase))
+            {
+                var emoteEntities = await EntityService.GetEntities(new[] { defaultEmote });
+                emoteDefinition = emoteEntities.FirstOrDefault(e => e.Type == EntityType.Emote);
+            }
+            else
+            {
+                emoteDefinition = EntityDefinition.FromEmbeddedEmote(defaultEmote, loop);
+            }
+
             await avatarLoader.LoadAvatar(avatar.GetBodyShape(), entities,
-                EntityDefinition.FromEmbeddedEmote(defaultEmote, loop), avatar.forceRender, avatar.GetAvatarColors());
+                emoteDefinition, avatar.forceRender, avatar.GetAvatarColors());
         }
 
         private async Awaitable<List<string>> LoadUrns(PreviewConfiguration config)

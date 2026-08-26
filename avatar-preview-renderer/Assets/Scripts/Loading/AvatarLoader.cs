@@ -31,11 +31,34 @@ namespace Loading
         [SerializeField] private Vector3 highlightCenter = new(0, 0.18f, 0);
         [SerializeField] private Vector2 highlightSize = new(0.57f, 2.3f);
 
+        /// <summary>
+        /// When true, the per-frame population of <see cref="RendererFeature_AvatarOutline"/> is
+        /// skipped so the avatar renders without its outline. Set by the Outfit Studio (editor tool)
+        /// for clean "card" beauty shots; the outline feature clears its list each frame, so simply
+        /// not adding leaves it empty. Runtime-static (resets on domain reload); the studio re-applies
+        /// it from its poller. Also honoured by <see cref="WearableLoader"/>.
+        /// </summary>
+        public static bool OutlineSuppressed;
+
+        /// <summary>
+        /// When true, the loaded emote's prop renderers join the avatar's in the outline pass.
+        /// Off in production — props ship without a contour. Set by the Outfit Studio's DCL_Emotes
+        /// mode, and only while its "Use Emote shader on props" knob is also on — that's when the
+        /// prop is flattened to the same white as the avatar and would otherwise merge into it as
+        /// one blank shape. Same runtime-static, studio-driven shape as
+        /// <see cref="OutlineSuppressed"/>, which still wins over it.
+        /// </summary>
+        public static bool OutlineEmoteProps;
+
         private BodyShape? _loadedBodyShape;
 
         private readonly Dictionary<string, LoadedModel> _loadedModels = new();
         private readonly Dictionary<string, LoadedFacialFeature> _loadedFacialFeatures = new();
         private LoadedEmote? _loadedEmote;
+
+        // Cached when the emote changes so the per-frame outline fill doesn't walk the prop
+        // hierarchy. Only read while OutlineEmoteProps is on.
+        private readonly List<Renderer> _emotePropRenderers = new();
 
         // JSBridge spring-bone overrides keyed by itemId; these take precedence over the
         // params declared in the wearable definition and are re-applied after every reload.
@@ -99,6 +122,10 @@ namespace Loading
             if (emoteChanged)
             {
                 _loadedEmote = emoteLoadResult;
+
+                _emotePropRenderers.Clear();
+                var prop = _loadedEmote?.Prop;
+                if (prop != null) prop.GetComponentsInChildren(true, _emotePropRenderers);
             }
 
             var newModels = modelLoadResults.ToList();
@@ -229,6 +256,37 @@ namespace Loading
             UpdateHighlight();
         }
 
+        public Camera MainCamera => mainCamera;
+
+        /// <summary>
+        /// Looks up a body-skeleton bone by its glTF node name (e.g. "Avatar_Head"). These
+        /// transforms are the fixed base-body skeleton wearables get remapped onto by name in
+        /// <see cref="AvatarUtils.SetupWearable"/>, so the same names apply here.
+        /// </summary>
+        [CanBeNull]
+        public Transform GetBone(string name) => avatarBones?.FirstOrDefault(b => b != null && b.name == name);
+
+        /// <summary>The base skeleton's head bone. Falls back to a name-suffix match in case the
+        /// imported node name doesn't exactly match the "Avatar_Head" convention.</summary>
+        [CanBeNull]
+        public Transform HeadBone => GetBone("Avatar_Head") ??
+            avatarBones?.FirstOrDefault(b => b != null && b.name.EndsWith("Head", StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>The base skeleton's neck bone (parent of <see cref="HeadBone"/>). Same
+        /// exact-then-suffix fallback as <see cref="HeadBone"/>.</summary>
+        [CanBeNull]
+        public Transform NeckBone => GetBone("Avatar_Neck") ??
+            avatarBones?.FirstOrDefault(b => b != null && b.name.EndsWith("Neck", StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>
+        /// Stops the currently playing pose/emote clip so its bones stop being re-driven every
+        /// frame, leaving them exactly where they are right now. Used by the Outfit Studio's
+        /// "Look at Camera" action: without this, the legacy <see cref="Animation"/> component
+        /// would re-sample the head/neck rotation from the clip on the very next frame and undo
+        /// the look-at adjustment immediately.
+        /// </summary>
+        public void FreezePose() => avatarAnimation.Stop();
+
         public void SetSpringBonesParams(SpringBones.SpringBonesParamsPayload payload)
         {
             if (payload == null || string.IsNullOrEmpty(payload.itemId)) return;
@@ -308,6 +366,7 @@ namespace Loading
                 _loadedEmote.Value.Disposable?.Dispose();
                 Destroy(_loadedEmote.Value.Prop);
                 _loadedEmote = null;
+                _emotePropRenderers.Clear();
             }
         }
 
@@ -326,14 +385,73 @@ namespace Loading
             }
         }
 
-        private void Update()
+        /// <summary>
+        /// Re-populates <see cref="RendererFeature_AvatarOutline"/>'s renderer list for a one-off
+        /// manual camera render — specifically the Outfit Studio still capture, which issues an extra
+        /// <c>SubmitRenderRequest</c>. <see cref="Update"/> fills the list every frame, but the outline
+        /// pass clears it after each camera render (OnCameraCleanup), so a capture render that runs
+        /// after the Game-view render in the same frame would otherwise draw no outline. Clears first
+        /// so it's safe to call regardless of the list's current state.
+        /// </summary>
+        public void RefreshOutlineRenderers()
         {
+            var list = RendererFeature_AvatarOutline.m_AvatarOutlineRenderers;
+            list.Clear();
+            if (OutlineSuppressed) return;
+
             foreach (var (_, root, _, outlineRenderers) in _loadedModels.Values)
             {
                 if (root.activeInHierarchy)
+                    list.AddRange(outlineRenderers);
+            }
+
+            AddEmotePropOutlines(list);
+        }
+
+        /// <summary>
+        /// Appends the emote prop's renderers to an outline list, when the studio asked for it
+        /// (<see cref="OutlineEmoteProps"/>). Appended last on purpose: the outline pass reads the
+        /// FIRST entry's material to resolve the "Outline" pass index for the whole batch, and a
+        /// wearable is the safer thing for it to read.
+        ///
+        /// Skips props whose material has no such pass. A prop is born on the scene shader and only
+        /// becomes outline-capable once the studio's poll swaps it, so for a fraction of a second
+        /// after every emote load it isn't — and drawing it at another shader's pass 0 would put a
+        /// stray copy of the prop on screen, which a still captured in that window would keep.
+        /// </summary>
+        private void AddEmotePropOutlines(List<Renderer> list)
+        {
+            if (!OutlineEmoteProps) return;
+
+            foreach (var renderer in _emotePropRenderers)
+            {
+                if (renderer == null || !renderer.gameObject.activeInHierarchy) continue;
+
+                var material = renderer.sharedMaterial;
+                if (material == null || material.FindPass("Outline") < 0) continue;
+
+                list.Add(renderer);
+            }
+        }
+
+        private void Update()
+        {
+            if (OutlineSuppressed)
+            {
+                // Clear rather than just skip, in case the feature doesn't reset the list itself.
+                RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.Clear();
+            }
+            else
+            {
+                foreach (var (_, root, _, outlineRenderers) in _loadedModels.Values)
                 {
-                    RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(outlineRenderers);
+                    if (root.activeInHierarchy)
+                    {
+                        RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(outlineRenderers);
+                    }
                 }
+
+                AddEmotePropOutlines(RendererFeature_AvatarOutline.m_AvatarOutlineRenderers);
             }
 
             // Update character bounds every frame for dynamic positioning

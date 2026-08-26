@@ -20,20 +20,26 @@ namespace Preview
 
         private float _targetFOV;
         private float _initialFOV;
+        private PreviewMode? _lastMode;
 
         private void Awake()
         {
             _targetFOV = _initialFOV = marketplaceAvatarCamera.Lens.FieldOfView;
-            
+
             // We prioritize this one because we want to have a cut to any other camera after this for the first time
             authProfileCamera.Prioritize();
         }
 
         public void SetMode(PreviewMode mode)
         {
-            // Reset FOV when switching modes
-            marketplaceAvatarCamera.Lens.FieldOfView = marketplaceWearableCamera.Lens.FieldOfView =
-                builderCamera.Lens.FieldOfView = _targetFOV = _initialFOV;
+            // Only reset FOV when actually switching modes, not on every reload within the same mode
+            // (e.g. adding/removing a wearable in Builder mode shouldn't undo the user's zoom)
+            if (_lastMode != mode)
+            {
+                marketplaceAvatarCamera.Lens.FieldOfView = marketplaceWearableCamera.Lens.FieldOfView =
+                    builderCamera.Lens.FieldOfView = _targetFOV = _initialFOV;
+                _lastMode = mode;
+            }
 
             switch (mode)
             {

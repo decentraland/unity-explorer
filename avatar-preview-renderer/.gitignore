@@ -18,6 +18,11 @@
 # Recordings can get excessive in size
 /[Rr]ecordings/
 
+# Outfit Studio writes its exports here (OutfitCapture.DEFAULT_OUTPUT_FOLDER).
+# .gitattributes LFS-tracks *.png and *.mp4, so captures would otherwise be
+# pushed to LFS for good.
+/[Cc]aptures/
+
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
 

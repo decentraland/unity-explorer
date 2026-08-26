@@ -87,7 +87,7 @@ namespace Loading
 
         private void Update()
         {
-            if (gameObject.activeInHierarchy)
+            if (!AvatarLoader.OutlineSuppressed && gameObject.activeInHierarchy)
             {
                 RendererFeature_AvatarOutline.m_AvatarOutlineRenderers.AddRange(_outlineRenderers);
             }

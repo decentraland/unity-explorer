@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86f2bb7de6e3d1d40afe55a10091a63f, type: 3}
+  m_Name: StudioToonShaderPreset_01
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::OutfitStudio.Editor.StudioToonShaderPreset
+  floats:
+  - property: _RimLightIntensity
+    value: 10
+  - property: _RimLight_Power
+    value: 0.8
+  - property: _RimLight_InsideMask
+    value: 0.5
+  - property: _GI_Intensity
+    value: 0
+  - property: _BumpScale
+    value: 1
+  - property: _StylizedMetalStrength
+    value: 1
+  - property: _BlurLevelMatcap
+    value: 0
+  - property: _Outline_Width
+    value: 3
+  colors:
+  - property: _RimLightColor
+    value: {r: 0.8, g: 0.7176471, b: 0.46666667, a: 1}
+  - property: _MatCapColor
+    value: {r: 1, g: 1, b: 1, a: 1}
+  - property: _Outline_Color
+    value: {r: 0.72156864, g: 0.36078432, b: 0.16470589, a: 1}

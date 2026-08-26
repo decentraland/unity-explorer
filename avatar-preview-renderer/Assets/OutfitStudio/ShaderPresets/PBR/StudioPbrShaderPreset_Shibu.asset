@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47bdc9edf36027a41b0d184a8c13e567, type: 3}
+  m_Name: StudioPbrShaderPreset_Shibu
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::OutfitStudio.Editor.StudioPbrShaderPreset
+  floats:
+  - property: _RimLightIntensity
+    value: 0.36
+  - property: _RimLight_Power
+    value: 0.694
+  - property: _RimLight_InsideMask
+    value: 0.774
+  - property: _RimSharpness
+    value: 1
+  - property: _DiffuseWrap
+    value: 0.815
+  - property: _ShadowSharpness
+    value: 0.943
+  - property: _SpecularSoftness
+    value: 3.95
+  - property: _Specular
+    value: 0.506
+  - property: _Sheen
+    value: 0.72
+  - property: _SheenTint
+    value: 0.143
+  - property: _Clearcoat
+    value: 0
+  - property: _ClearcoatGloss
+    value: 0.539
+  - property: _GI_Intensity
+    value: 5
+  - property: _EmissionStrength
+    value: 0.03
+  - property: _MatcapMetalBlend
+    value: 0.48
+  - property: _StylizedMetalStrength
+    value: 0.02
+  - property: _BlurLevelMatcap
+    value: 4
+  - property: _BumpScale
+    value: 1.11
+  - property: _Outline_Width
+    value: 1.89
+  colors:
+  - property: _RimLightColor
+    value: {r: 0.94509804, g: 0.94509804, b: 0.94509804, a: 1}
+  - property: _MatCapColor
+    value: {r: 1, g: 1, b: 1, a: 1}
+  - property: _Outline_Color
+    value: {r: 0, g: 0, b: 0, a: 1}
