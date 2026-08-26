@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using NUnit.Framework;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Tests
