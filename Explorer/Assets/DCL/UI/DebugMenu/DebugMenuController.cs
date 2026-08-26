@@ -150,6 +150,9 @@ namespace DCL.UI.DebugMenu
                 HideDebugPanelOwnToggle();
             }
 
+            // Drain before the shouldRefreshConsole check so logs pushed from other threads render this same frame
+            logsHistory.DrainPendingLogs();
+
             if (shouldRefreshConsole)
             {
                 shouldRefreshConsole = false;

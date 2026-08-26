@@ -169,6 +169,12 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         IntercomTickets = 104,
         IntercomTicketsOrigin = 105,
 
-        LodAssetBundlesCDN = 106,
+        /// <summary>
+        ///     The chain RPC proxy, over https and without a chain path: the embedded-wallet path appends one per
+        ///     chain. Same host as <see cref="ApiRpc" />, which the external-wallet path speaks websocket to.
+        /// </summary>
+        ChainRpc = 106,
+
+        LodAssetBundlesCDN = 107,
     }
 }

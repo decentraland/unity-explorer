@@ -10,6 +10,10 @@ namespace DCL.Emoji
 {
     public class EmojiPanelView : MonoBehaviour
     {
+        // Index of the top-left corner in the array RectTransform.GetWorldCorners fills
+        // (bottom-left, top-left, top-right, bottom-right).
+        private const int TOP_LEFT_CORNER = 1;
+
         public event Action<int, bool>? SectionSelected;
         public event Action<string>? SearchTextChanged;
         public event Action? SearchInputFocused;
@@ -34,11 +38,7 @@ namespace DCL.Emoji
         private RectTransform rectTransform;
         private bool isInitialized;
 
-        /// <summary>
-        /// The panel's default anchored position captured before any consumer moves it.
-        /// Uses anchoredPosition (not world position) so it stays correct across resolutions.
-        /// </summary>
-        public Vector2 DefaultAnchoredPosition { get; private set; }
+        private readonly Vector3[] anchorCorners = new Vector3[4];
 
         public bool IsVisible => isInitialized && canvasGroup.alpha > 0f;
 
@@ -104,8 +104,6 @@ namespace DCL.Emoji
             if (canvasGroup == null)
                 canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
-            DefaultAnchoredPosition = rectTransform.anchoredPosition;
-
             if (!gameObject.activeSelf)
                 gameObject.SetActive(true);
 
@@ -127,22 +125,23 @@ namespace DCL.Emoji
         }
 
         /// <summary>
-        /// Resets the panel to its default anchored position (the chat-input position).
+        /// Puts the panel's bottom-left corner <paramref name="gap" /> above <paramref name="anchor" />'s top-left
+        /// corner, measured through the current layout rather than from a stored position, so the result is the
+        /// same whatever size the surrounding panels happen to have.
         /// </summary>
-        public void ResetToDefaultPosition()
+        public void PositionAbove(RectTransform anchor, float gap)
         {
             EnsureInitialized();
-            rectTransform.anchoredPosition = DefaultAnchoredPosition;
-        }
 
-        /// <summary>
-        /// Moves the panel to the given world position.
-        /// Callers should pre-apply any desired offset before calling.
-        /// </summary>
-        public void MoveTo(Vector3 worldPosition)
-        {
-            EnsureInitialized();
-            rectTransform.position = worldPosition;
+            anchor.GetWorldCorners(anchorCorners);
+
+            var parent = (RectTransform)rectTransform.parent;
+            Vector3 anchorTopLeft = parent.InverseTransformPoint(anchorCorners[TOP_LEFT_CORNER]);
+            Rect rect = rectTransform.rect;
+
+            // rect.xMin/yMin are the panel's edges relative to its pivot, so subtracting them turns the wanted
+            // corner position into a pivot position.
+            rectTransform.localPosition = new Vector3(anchorTopLeft.x - rect.xMin, anchorTopLeft.y + gap - rect.yMin, 0f);
         }
     }
 }

@@ -17,6 +17,8 @@ on:
 
 jobs:
   upload-to-epic-store:
+    # Avatar Preview Renderer releases live in this repo too but never ship to Epic.
+    if: ${{ github.event_name == 'workflow_dispatch' || !startsWith(github.event.release.tag_name, 'avatar-preview-renderer/') }}
     runs-on: windows-latest
 
 
