@@ -3,7 +3,6 @@ using CRDT;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Ipfs;
-using DCL.Multiplayer.Connections.Messaging.Pipe;
 using ECS;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
@@ -17,18 +16,15 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Utility;
-using RichTypes;
-using DCL.SceneBannedUsers;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
     public class CommunicationControllerAPIImplementationShould
     {
-        private CommunicationsControllerAPIImplementation api;
-        private TestSceneCommunicationPipe sceneCommunicationPipe;
-        private IMessagePipe messagePipe;
-        private IJsOperations jsOperations;
-        private V8ScriptEngine engine;
+        private CommunicationsControllerAPIImplementation api = null!;
+        private TestSceneCommunicationPipe sceneCommunicationPipe = null!;
+        private IJsOperations jsOperations = null!;
+        private V8ScriptEngine engine = null!;
 
         [SetUp]
         public void SetUp()
@@ -95,8 +91,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         {
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
 
-            RoomMetadataCurrentScene.InitializeTest();
-
             byte[] data = GetRandomBytes(50).Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
 
             // The first payload byte is the SDK comms routing type: 1 (CRDT) and 3 (ResCRDTState) get their payload rewritten by CRDTFilter
@@ -115,6 +109,47 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             CollectionAssert.AreEqual(expectedMessage,
                 api.EventsToProcess[0].Array.Take(api.EventsToProcess[0].Length));
+        }
+
+        [Test]
+        public void DropOversizedReceivedMessage()
+        {
+            // Regression: a peer-controlled payload larger than the rented receive buffer crashed the copy into it (UNITY-EXPLORER-PJA).
+            const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+            const byte COMMS_REQ_CRDT_STATE = 2; // CommsMessageType.ReqCRDTState -> the unfiltered raw-copy path
+
+            // Exceeds even the pow2 bucket ArrayPool can round the rental up to.
+            var data = new byte[IJsOperations.LIVEKIT_MAX_SIZE + 4096];
+            data[0] = COMMS_REQ_CRDT_STATE;
+
+            Assert.DoesNotThrow(() =>
+                sceneCommunicationPipe.onSceneMessage.Invoke(
+                    new ISceneCommunicationPipe.DecodedMessage(data.AsSpan(), WALLET_ID, isTrustedSource: true)));
+
+            Assert.AreEqual(0, api.EventsToProcess.Count, "an oversized message must be dropped, not enqueued");
+        }
+
+        [Test]
+        public void DropReceivedMessageThatOverflowsOnlyWhenCombinedWithHeader()
+        {
+            // Regression: a payload that fits LIVEKIT_MAX_SIZE alone but overflows it with the prepended wallet-id header must be dropped (UNITY-EXPLORER-PJA).
+            const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+            const byte COMMS_REQ_CRDT_STATE = 2; // CommsMessageType.ReqCRDTState -> the unfiltered raw-copy path
+
+            int walletIdBytes = Encoding.UTF8.GetByteCount(WALLET_ID);
+            int dataOffset = walletIdBytes + 1;
+
+            // Smallest payload that fits alone but overflows once the header is included.
+            var data = new byte[IJsOperations.LIVEKIT_MAX_SIZE - dataOffset + 1];
+            data[0] = COMMS_REQ_CRDT_STATE;
+
+            Assert.DoesNotThrow(() =>
+                sceneCommunicationPipe.onSceneMessage.Invoke(
+                    new ISceneCommunicationPipe.DecodedMessage(data.AsSpan(), WALLET_ID, isTrustedSource: true)));
+
+            Assert.AreEqual(0, api.EventsToProcess.Count, "a header-inclusive oversized message must be dropped, not enqueued");
+
+            Assert.DoesNotThrow(() => api.GetResult(), "GetResult() must not throw writing into the fixed-size destination array");
         }
 
         [Test]
@@ -137,9 +172,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             int contentLength = 0; // No payload content for simplicity
 
             int crdtTotalLength = 1 // comms type
-                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // VALID1
-                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // NO_SYNC (dropped)
-                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength; // VALID2
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH // VALID1
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH // NO_SYNC (dropped)
+                                   + PUT_NETWORK_MESSAGE_HEADER_LENGTH; // VALID2
 
             var crdtMessage = new byte[crdtTotalLength];
             var crdtWrite = crdtMessage.AsSpan();
@@ -147,36 +182,33 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             var crdtBody = crdtWrite.Slice(1);
 
             // VALID1 frame (PUT_COMPONENT_NETWORK + valid component id)
-            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength);
+            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH);
             crdtBody.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
             crdtBody.Write(111); // entity id
             crdtBody.Write(1000u); // component id -> should be kept
             crdtBody.Write(1); // timestamp
             crdtBody.Write(1); // network id
             crdtBody.Write(contentLength); // content length
-            crdtBody = crdtBody.Slice(contentLength);
 
             // Droppable frame (PUT_COMPONENT_NETWORK + NO_SYNC component id)
-            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength);
+            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH);
             crdtBody.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
             crdtBody.Write(222); // entity id
             crdtBody.Write(NO_SYNC_COMPONENT_ID); // component id -> this should trigger drop
             crdtBody.Write(2); // timestamp
             crdtBody.Write(2); // network id
             crdtBody.Write(contentLength); // content length
-            crdtBody = crdtBody.Slice(contentLength);
 
             // VALID2 frame (PUT_COMPONENT_NETWORK + different valid component id)
-            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength);
+            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH);
             crdtBody.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
             crdtBody.Write(333); // entity id
             crdtBody.Write(2000u); // component id -> should be kept
             crdtBody.Write(3); // timestamp
             crdtBody.Write(3); // network id
             crdtBody.Write(contentLength); // content length
-            crdtBody = crdtBody.Slice(contentLength);
 
-            var inputs = new PoolableByteArray[]
+            var inputs = new[]
             {
                 new PoolableByteArray(crdtMessage, crdtMessage.Length, null),
             };
@@ -196,7 +228,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             // Verify CRDT message was filtered (should contain VALID1 and VALID2, but not NO_SYNC)
             CollectionAssert.AreEqual(expectedCrdtEncoded, sceneCommunicationPipe.sendMessageCalls[0], "CRDT message should be filtered");
             // Verify exactly one frame was removed: original had 3 frames, filtered should have 2
-            int expectedFilteredSize = 1 + (2 * (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength)); // type byte + 2 valid frames
+            int expectedFilteredSize = 1 + (2 * PUT_NETWORK_MESSAGE_HEADER_LENGTH); // type byte + 2 valid frames
             Assert.AreEqual(expectedFilteredSize, filteredWrite, "Filtered CRDT should contain exactly 2 frames (VALID1 and VALID2)");
         }
 
@@ -219,42 +251,39 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             int contentLength = 0; // No payload content for simplicity
 
-            int crdtDataLength = PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // VALID1
-                               + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength // NO_SYNC (dropped)
-                               + PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength; // VALID2
+            int crdtDataLength = PUT_NETWORK_MESSAGE_HEADER_LENGTH // VALID1
+                               + PUT_NETWORK_MESSAGE_HEADER_LENGTH // NO_SYNC (dropped)
+                               + PUT_NETWORK_MESSAGE_HEADER_LENGTH; // VALID2
 
             var crdtData = new byte[crdtDataLength];
             var crdtBody = crdtData.AsSpan();
 
             // VALID1 frame (PUT_COMPONENT_NETWORK + valid component id)
-            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength);
+            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH);
             crdtBody.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
             crdtBody.Write(111); // entity id
             crdtBody.Write(1000u); // component id -> should be kept
             crdtBody.Write(1); // timestamp
             crdtBody.Write(1); // network id
             crdtBody.Write(contentLength); // content length
-            crdtBody = crdtBody.Slice(contentLength);
 
             // Droppable frame (PUT_COMPONENT_NETWORK + NO_SYNC component id)
-            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength);
+            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH);
             crdtBody.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
             crdtBody.Write(222); // entity id
             crdtBody.Write(NO_SYNC_COMPONENT_ID); // component id -> this should trigger drop
             crdtBody.Write(2); // timestamp
             crdtBody.Write(2); // network id
             crdtBody.Write(contentLength); // content length
-            crdtBody = crdtBody.Slice(contentLength);
 
             // VALID2 frame (PUT_COMPONENT_NETWORK + different valid component id)
-            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength);
+            crdtBody.Write(PUT_NETWORK_MESSAGE_HEADER_LENGTH);
             crdtBody.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
             crdtBody.Write(333); // entity id
             crdtBody.Write(2000u); // component id -> should be kept
             crdtBody.Write(3); // timestamp
             crdtBody.Write(3); // network id
             crdtBody.Write(contentLength); // content length
-            crdtBody = crdtBody.Slice(contentLength);
 
             // RES_CRDT_STATE: Format is [type byte] + [1 byte: address length] + [address bytes] + [raw CRDT messages]
             string testAddress = "0x123";
@@ -268,7 +297,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             addressBytes.CopyTo(resSpan.Slice(2));
             crdtData.CopyTo(resSpan.Slice(2 + addressLength));
 
-            var inputs = new PoolableByteArray[]
+            var inputs = new[]
             {
                 new PoolableByteArray(resMessage, resMessage.Length, null),
             };
@@ -288,7 +317,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             // Verify RES_CRDT_STATE was filtered and address preserved
             CollectionAssert.AreEqual(expectedResEncoded, sceneCommunicationPipe.sendMessageCalls[0], "RES_CRDT_STATE should be filtered");
             // Verify exactly one frame was removed from RES_CRDT_STATE: original had address + 3 frames, filtered should have address + 2 frames
-            int expectedStateFilteredSize = 1 + 1 + addressLength + (2 * (PUT_NETWORK_MESSAGE_HEADER_LENGTH + contentLength)); // type + addr_len + addr + 2 valid frames
+            int expectedStateFilteredSize = 1 + 1 + addressLength + (2 * PUT_NETWORK_MESSAGE_HEADER_LENGTH); // type + addr_len + addr + 2 valid frames
             Assert.AreEqual(expectedStateFilteredSize, filteredStateWrite, "Filtered RES_CRDT_STATE should contain exactly 2 frames (VALID1 and VALID2)");
             // Verify address is still present in the filtered output
             Assert.AreEqual(addressLength, filteredStateBuffer[1], "Address length should be preserved");
@@ -354,16 +383,16 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         private class TestSceneCommunicationPipe : ISceneCommunicationPipe
         {
             internal readonly List<byte[]> sendMessageCalls = new ();
-            internal ISceneCommunicationPipe.SceneMessageHandler onSceneMessage;
+            internal ISceneCommunicationPipe.SceneMessageHandler onSceneMessage = null!;
 
-            public void AddSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
+            public void AddSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler handler)
             {
-                this.onSceneMessage = onSceneMessage;
+                onSceneMessage = handler;
             }
 
-            public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage) { }
+            public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler handler) { }
 
-            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string specialRecipient = null)
+            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)
             {
                 sendMessageCalls.Add(message.ToArray());
             }

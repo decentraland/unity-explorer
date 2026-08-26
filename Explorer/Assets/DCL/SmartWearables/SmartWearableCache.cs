@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SmartWearables;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Common.Components;
@@ -29,12 +30,14 @@ namespace Runtime.Wearables
         private const string NULL_DTO_WEARABLE_ID = "null-dto-wearable-id";
 
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly Dictionary<string, CacheItem> cache = new ();
 
-        public SmartWearableCache(IWebRequestController webRequestController)
+        public SmartWearableCache(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public bool CurrentSceneAllowsSmartWearables { get; set; }
@@ -168,9 +171,8 @@ namespace Runtime.Wearables
 
         private string GetContentUrl(IWearable smartWearable)
         {
-            const string DEFAULT_CONTENT_URL = "https://peer.decentraland.org/content/contents/";
             string? dtoContentUrl = smartWearable.DTO.ContentDownloadUrl;
-            return string.IsNullOrEmpty(dtoContentUrl) ? DEFAULT_CONTENT_URL : dtoContentUrl;
+            return string.IsNullOrEmpty(dtoContentUrl) ? $"{decentralandUrlsSource.Url(DecentralandUrl.PeerContent)}/" : dtoContentUrl;
         }
 
         private class CacheItem

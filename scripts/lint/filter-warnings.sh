@@ -16,8 +16,9 @@ excluded_rules=(
     'CheckNamespace'     # namespaces are domain names, not folder paths (docs/code-style-guidelines.md § Namespaces)
 )
 
-# vendored / third-party code we don't own
-excluded_paths='^(Packages/|Assets/Plugins/(DOTween|SocketIO)/)'
+# vendored / third-party code we don't own; ../unity-shared-dependencies is the local UPM
+# package (never counted while consumed via git under Packages/ — same scope, new path)
+excluded_paths='^(Packages/|\.\./unity-shared-dependencies/|Assets/Plugins/(DOTween|SocketIO)/)'
 
 if [ ! -f "$report" ]; then
     echo "filter-warnings: report not found at '$report'" >&2

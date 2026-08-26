@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
+using DCL.Web3.Chains;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
@@ -38,7 +38,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public void SetUp()
         {
             ethereumApi = Substitute.For<IEthereumApi>();
-            reader = new ManaUsdRateReader(ethereumApi, new CreditsChainConfig(DecentralandEnvironment.Zone));
+            reader = new ManaUsdRateReader(ethereumApi, new CreditsChainConfig(EthereumNetwork.Sepolia));
             sentCalldata = new List<string>();
 
             answer = MANA_USD_RATE;
@@ -107,7 +107,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         {
             // Arrange: a zero TTL expires every read; the aggregator address and decimals never change, so
             // only latestRoundData goes back on the wire.
-            reader = new ManaUsdRateReader(ethereumApi, new CreditsChainConfig(DecentralandEnvironment.Zone), TimeSpan.Zero);
+            reader = new ManaUsdRateReader(ethereumApi, new CreditsChainConfig(EthereumNetwork.Sepolia), TimeSpan.Zero);
 
             // Act
             await reader.ReadAsync(MARKETPLACE, CancellationToken.None);

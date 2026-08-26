@@ -25,14 +25,14 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ci1kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvZW5naW5lX2luZm8ucHJv",
-            "dG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyJQCgxQQkVuZ2luZUlu",
+            "dG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyJmCgxQQkVuZ2luZUlu",
             "Zm8SFAoMZnJhbWVfbnVtYmVyGAEgASgNEhUKDXRvdGFsX3J1bnRpbWUYAiAB",
-            "KAISEwoLdGlja19udW1iZXIYAyABKA1CFKoCEURDTC5FQ1NDb21wb25lbnRz",
-            "YgZwcm90bzM="));
+            "KAISEwoLdGlja19udW1iZXIYAyABKA0SFAoMc2NlbmVfaGlkZGVuGAQgASgI",
+            "QhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBEngineInfo), global::DCL.ECSComponents.PBEngineInfo.Parser, new[]{ "FrameNumber", "TotalRuntime", "TickNumber" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBEngineInfo), global::DCL.ECSComponents.PBEngineInfo.Parser, new[]{ "FrameNumber", "TotalRuntime", "TickNumber", "SceneHidden" }, null, null, null, null)
           }));
     }
     #endregion
@@ -83,6 +83,7 @@ namespace DCL.ECSComponents {
       frameNumber_ = other.frameNumber_;
       totalRuntime_ = other.totalRuntime_;
       tickNumber_ = other.tickNumber_;
+      sceneHidden_ = other.sceneHidden_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -137,6 +138,21 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "scene_hidden" field.</summary>
+    public const int SceneHiddenFieldNumber = 4;
+    private bool sceneHidden_;
+    /// <summary>
+    /// visibility state of the scene regarding Explorer fullscreen UI
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool SceneHidden {
+      get { return sceneHidden_; }
+      set {
+        sceneHidden_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -155,6 +171,7 @@ namespace DCL.ECSComponents {
       if (FrameNumber != other.FrameNumber) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(TotalRuntime, other.TotalRuntime)) return false;
       if (TickNumber != other.TickNumber) return false;
+      if (SceneHidden != other.SceneHidden) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -165,6 +182,7 @@ namespace DCL.ECSComponents {
       if (FrameNumber != 0) hash ^= FrameNumber.GetHashCode();
       if (TotalRuntime != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(TotalRuntime);
       if (TickNumber != 0) hash ^= TickNumber.GetHashCode();
+      if (SceneHidden != false) hash ^= SceneHidden.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -195,6 +213,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(24);
         output.WriteUInt32(TickNumber);
       }
+      if (SceneHidden != false) {
+        output.WriteRawTag(32);
+        output.WriteBool(SceneHidden);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -217,6 +239,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(24);
         output.WriteUInt32(TickNumber);
       }
+      if (SceneHidden != false) {
+        output.WriteRawTag(32);
+        output.WriteBool(SceneHidden);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -235,6 +261,9 @@ namespace DCL.ECSComponents {
       }
       if (TickNumber != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TickNumber);
+      }
+      if (SceneHidden != false) {
+        size += 1 + 1;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -256,6 +285,9 @@ namespace DCL.ECSComponents {
       }
       if (other.TickNumber != 0) {
         TickNumber = other.TickNumber;
+      }
+      if (other.SceneHidden != false) {
+        SceneHidden = other.SceneHidden;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -288,6 +320,10 @@ namespace DCL.ECSComponents {
             TickNumber = input.ReadUInt32();
             break;
           }
+          case 32: {
+            SceneHidden = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -317,6 +353,10 @@ namespace DCL.ECSComponents {
           }
           case 24: {
             TickNumber = input.ReadUInt32();
+            break;
+          }
+          case 32: {
+            SceneHidden = input.ReadBool();
             break;
           }
         }

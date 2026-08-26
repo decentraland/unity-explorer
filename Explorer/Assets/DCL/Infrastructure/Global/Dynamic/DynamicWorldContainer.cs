@@ -398,7 +398,7 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData,
                 placesAndEventsContainer.PlacesAPIService,
-                bootstrapContainer.Environment,
+                bootstrapContainer.EthereumNetwork,
                 bootstrapContainer.Analytics.Controller,
                 localSceneDevelopment,
                 dynamicWorldParams.EnableAnalytics);
@@ -440,7 +440,7 @@ namespace Global.Dynamic
             MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var marketplaceShopApiClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.Environment);
+            var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.EthereumNetwork);
 
             CreditsFeatureAccess.Initialize(new CreditsFeatureAccess(identityCache, ct));
 
