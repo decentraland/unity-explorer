@@ -4,7 +4,6 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Utils;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Components
@@ -28,6 +27,9 @@ namespace DCL.SDKComponents.SceneUI.Components
         public ScrollView? InnerScrollView { get; set; }
 
         public bool IsHidden;
+
+        public bool StylesApplied;
+
         public PointerEventType? PointerEventTriggered;
         public bool IsRoot { get; private set; }
         public int? ZIndex = null;
@@ -46,6 +48,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         {
             this.rootTransform ??= root;
             IsHidden = false;
+            StylesApplied = false;
             PointerEventTriggered = null;
             ZIndex = null;
             RelationData.parent = Entity.Null;
@@ -58,6 +61,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             reusableTransform ??= new VisualElement();
             Transform.name = UiElementUtils.BuildElementName(componentName, entity);
             IsHidden = false;
+            StylesApplied = false;
             IsRoot = false;
             PointerEventTriggered = null;
             ZIndex = null;

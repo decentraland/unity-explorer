@@ -45,9 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void NewlyInstantiatedUITransformIsHiddenUntilParented()
         {
-            // Assert - a freshly instantiated element is added straight to the fullscreen
-            // canvas root (parenting is deferred to UITransformParentingSystem), so until it is
-            // actually parented it must stay invisible instead of floating over the world.
+            // Assert - the element sits on the shared canvas root until parented, so it must not be visible yet.
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
             Assert.AreEqual(Visibility.Hidden, uiTransformComponent.Transform.style.visibility.value);
         }

@@ -81,16 +81,11 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void AttachChildOnceUnresolvedParentAppearsInEntitiesMap()
         {
-            // Arrange — the parent's Arch entity + UITransformComponent already exist in the
-            // world (as they would once WorldSyncCommandBuffer creates it for the parent's CRDT
-            // batch), but its entitiesMap registration is DELAYED — reproducing the tick window
-            // where a child's PBUiTransform PUT lands before its parent's first component PUT
-            // is reflected in entitiesMap (report.md step 4).
+            // Arrange - the parent entity exists in the world but its entitiesMap registration lands a tick later than the child's model.
             var parentSdkEntity = new CRDTEntity(300);
             var parentUiTransformComponent = new UITransformComponent();
             parentUiTransformComponent.InitializeAsRoot(new VisualElement());
             Entity parentEntity = world.Create(parentSdkEntity, parentUiTransformComponent);
-            // entitiesMap.Add(parentSdkEntity, parentEntity) intentionally NOT called yet.
 
             var childUiTransformComponent = new UITransformComponent();
             childUiTransformComponent.InitializeAsChild("Child", new CRDTEntity(400), new CRDTEntity(0));
@@ -99,31 +94,22 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Entity childEntity = world.Create(childSdkEntity, childModel, childUiTransformComponent);
             entitiesMap[childSdkEntity] = childEntity;
 
-            // Act 1 — pump while the parent is still unresolved in entitiesMap: the dirty pass
-            // (and, with the fix, the retry pass) both miss entitiesMap.TryGetValue, so the
-            // child stays unattached.
+            // Act
             system.Update(0);
 
             Assert.That(childUiTransformComponent.RelationData.parent, Is.EqualTo(Entity.Null),
-                "parent is not resolvable yet — child must still be unattached after the first pump");
+                "child must still be unattached while its parent is not resolvable");
 
-            // Simulate ResetDirtyFlagSystem<PBUiTransform>, which unconditionally clears IsDirty
-            // at the end of every frame regardless of whether any consumer succeeded
-            // (SceneUIPlugin.cs:104, ResetDirtyFlagSystem.cs:28-32).
+            // The dirty flag is reset at the end of every frame whether or not parenting succeeded.
             childModel.IsDirty = false;
 
-            // The parent's entitiesMap entry now appears (its CRDT batch lands a tick later) —
-            // WITHOUT re-dirtying the child's PBUiTransform, exactly as happens in the real race.
+            // The parent resolves later without the child's model being re-dirtied.
             entitiesMap[parentSdkEntity] = parentEntity;
 
-            // Act 2
+            // Act
             system.Update(0);
 
-            // Assert — the child must now be attached under the parent's ContentContainer.
-            // At the pin this FAILS: DoUITransformParenting's early return on !sdkModel.IsDirty
-            // skips the child forever (no retry path exists), so RelationData.parent stays
-            // Entity.Null and the transform is never added to the parent's ContentContainer —
-            // reproducing the permanently orphaned quest-timer digits.
+            // Assert
             Assert.That(childUiTransformComponent.RelationData.parent, Is.EqualTo(parentEntity));
             Assert.That(parentUiTransformComponent.ContentContainer.Contains(childUiTransformComponent.Transform), Is.True);
         }
@@ -131,10 +117,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void RestoreVisibilityOnceChildIsAttached()
         {
-            // Arrange — a child whose Transform was left Hidden by instantiation (this is what
-            // the patched UITransformInstantiationSystem does before the element is parented;
-            // reproduced by hand here so this test stays inside the lightweight harness used by
-            // the rest of this fixture, with no UIDocument/canvas needed).
+            // Arrange - the Hidden state left by UITransformInstantiationSystem, reproduced by hand to keep this fixture free of a UIDocument.
             var childUiTransformComponent = new UITransformComponent();
             childUiTransformComponent.InitializeAsChild("Child", new CRDTEntity(2), new CRDTEntity(0));
             childUiTransformComponent.Transform.style.visibility = Visibility.Hidden;
@@ -150,17 +133,15 @@ namespace DCL.SDKComponents.SceneUI.Tests
             entitiesMap[childSdkEntity] = childEntity;
 
             Assert.That(childUiTransformComponent.Transform.style.visibility.value, Is.EqualTo(Visibility.Hidden),
-                "sanity: element starts Hidden, as InstantiateUITransform leaves it before it is parented");
+                "element must start Hidden for the restore to be observable");
 
-            // Act — a normal, resolvable-parent attach.
+            // Act
             system.Update(0);
 
-            // Assert — attach succeeded (pre-existing behavior) ...
+            // Assert
             Assert.That(parentComponent.ContentContainer.Contains(childUiTransformComponent.Transform), Is.True);
 
-            // ... and, only with the fix, visibility was restored. At the pin nothing under
-            // SceneUI ever touches style.visibility, so the element remains Hidden forever even
-            // though it is now correctly parented.
+            // A cleared inline visibility (StyleKeyword.Null) hands control back to the stylesheet.
             Assert.That(childUiTransformComponent.Transform.style.visibility.keyword, Is.EqualTo(StyleKeyword.Null));
         }
     }

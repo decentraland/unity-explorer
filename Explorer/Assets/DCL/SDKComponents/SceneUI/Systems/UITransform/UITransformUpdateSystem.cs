@@ -43,7 +43,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [Query]
         private void UpdateUITransform(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
-            if (!sdkModel.IsDirty)
+            // The dirty flag is reset at the end of the frame even when this system didn't run for that tick, so it cannot gate the first application.
+            if (!sdkModel.IsDirty && uiTransformComponent.StylesApplied)
                 return;
 
             bool zIndexChanged = false;
@@ -61,6 +62,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             UiElementUtils.SetupTransformVisualElement(uiTransformComponent.Transform, ref sdkModel);
             UiElementUtils.EnsureScrollMode(uiTransformComponent, in sdkModel);
+            uiTransformComponent.StylesApplied = true;
 
             // If zIndex changed, mark the parent layout as dirty.
             // This is needed to trigger UITransformSortingSystem.ApplySorting

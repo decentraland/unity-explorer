@@ -45,6 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             newTransform.InitializeAsChild(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
 
+            // Invisible until parenting succeeds: the element sits on the shared canvas root in the meantime.
             newTransform.Transform.style.visibility = Visibility.Hidden;
 
             canvas.rootVisualElement.Add(newTransform.Transform);
