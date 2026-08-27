@@ -174,5 +174,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ///     chain. Same host as <see cref="ApiRpc" />, which the external-wallet path speaks websocket to.
         /// </summary>
         ChainRpc = 106,
+
+        LodAssetBundlesCDN = 107,
     }
 }

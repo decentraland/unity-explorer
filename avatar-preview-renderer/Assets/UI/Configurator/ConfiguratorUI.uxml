@@ -1,0 +1,89 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="WearableCategoryPicker" src="project://database/Assets/UI/Configurator/WearableCategoryPicker.uxml?fileID=9197481963319205126&amp;guid=ee3d5b15e073b48fdbb6cc9bf63bb2ff&amp;type=3#WearableCategoryPicker"/>
+    <Style src="project://database/Assets/UI/Configurator/ConfiguratorStyle.uss?fileID=7433441132597879392&amp;guid=83de1c6279f824cdcbe4149342d94f6f&amp;type=3#ConfiguratorStyle"/>
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement picking-mode="Ignore" name="Loader" class="loader" style="display: none;">
+            <ui:VisualElement picking-mode="Ignore" name="Icon" class="loader__icon"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="CustomizeContainer" picking-mode="Ignore" class="customize-container">
+            <ui:VisualElement name="CustomizationWindow" class="customization-window">
+                <ui:VisualElement name="Header" class="customization-window__header">
+                    <ui:Label text="1." name="StageNumber" class="customization-window__header-number"/>
+                    <ui:Label text="Choose [username]&apos;s starting look" name="StageTitle" class="customization-window__header-title"/>
+                    <ui:VisualElement name="Bar" class="customization-window__header-bar"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="Body" class="customization-window__body">
+                    <ui:VisualElement name="Content" class="customization-window__content">
+                        <ui:VisualElement name="Presets" usage-hints="DynamicTransform" class="presets-content customization-window__content-item">
+                            <ui:ScrollView mode="Horizontal" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden" name="Body" class="presets-content__body">
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                                <UI.Elements.PreviewButtonElement/>
+                            </ui:ScrollView>
+                        </ui:VisualElement>
+                        <ui:Instance template="WearableCategoryPicker" name="HeadWearables" usage-hints="DynamicTransform" class="customization-window__content-item customization-window__content-item--hide-right"/>
+                        <ui:Instance template="WearableCategoryPicker" name="BodyWearables" usage-hints="DynamicTransform" class="customization-window__content-item customization-window__content-item--hide-right"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Buttons" class="customization-window__buttons-container">
+                        <UI.Elements.DCLButtonElement text="BACK" button-type="Secondary" button-icon="Back" name="BackButton"/>
+                        <ui:VisualElement name="Spreader" style="flex-grow: 1;"/>
+                        <UI.Elements.DCLButtonElement text="SKIP" button-type="Secondary" button-icon="None" name="SecondaryButton"/>
+                        <UI.Elements.DCLButtonElement text="START" button-type="Primary" button-icon="Forward" name="PrimaryButton"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="CharacterArea" class="customize-container__character-area">
+                <UI.Elements.DCLDropdownElement hidden="true" name="BodyTypeDropdown" class="dcl-dropdown--bodyshape" style="margin-bottom: 12px;">
+                    <ui:VisualElement name="BodyTypePopup" class="popup-bodytype dcl-dropdown-popup">
+                        <ui:Label name="Title" text="&lt;font-weight=600&gt;BODY TYPE" class="dcl-dropdown-popup__title"/>
+                        <ui:VisualElement name="ButtonContainer" class="popup-bodytype__button-container">
+                            <UI.Elements.PreviewButtonElement name="FemaleBodyButton" class="popup-bodytype__button popup-bodytype__button--female"/>
+                            <UI.Elements.PreviewButtonElement name="MaleBodyButton" class="popup-bodytype__button popup-bodytype__button--male"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="CloseButton" class="dcl-dropdown-popup__close dcl-clickable"/>
+                    </ui:VisualElement>
+                </UI.Elements.DCLDropdownElement>
+                <UI.Elements.DCLDropdownElement hidden="true" name="SkinColorDropdown">
+                    <ui:VisualElement name="ColorPopup" class="popup-color dcl-dropdown-popup">
+                        <ui:Label name="Title" text="&lt;font-weight=600&gt;SKIN COLOR" class="dcl-dropdown-popup__title"/>
+                        <ui:Label text="&lt;font-weight=600&gt;PRESETS" class="popup-color__presets-label"/>
+                        <ui:VisualElement name="PresetsContainer" class="popup-color__presets-container">
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                            <ui:VisualElement class="popup-color__preset"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="CloseButton" class="dcl-dropdown-popup__close dcl-clickable"/>
+                    </ui:VisualElement>
+                </UI.Elements.DCLDropdownElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="ConfirmationContainer" picking-mode="Ignore" class="confirmation-container confirmation-container--hidden">
+            <ui:Label text="&lt;font-weight=600&gt;UserName is Ready to Jump In!" name="Title" class="confirmation-container__title"/>
+            <ui:VisualElement name="CharacterArea" picking-mode="Ignore" class="confirmation-container__character-area"/>
+            <ui:VisualElement name="ButtonsContainer" class="confirmation-container__buttons">
+                <UI.Elements.DCLButtonElement text="BACK TO CUSTOMIZATION" button-type="Secondary" name="ConfirmationBackButton" class="confirmation-container__back-button"/>
+                <UI.Elements.DCLButtonElement text="LET&apos;S GO" button-type="Primary" name="JumpInButton" button-icon="Forward" class="confirmation-container__jump-in-button"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="dcl-dropdown-popup-root" picking-mode="Ignore" style="top: 0; bottom: 0; right: 0; left: 0; display: none;"/>
+    </ui:VisualElement>
+    <ui:Label text="123" name="FPSCounter" style="position: absolute; right: 0; bottom: 0; font-size: 24px; color: rgb(255, 255, 255); border-top-left-radius: 8px; background-color: rgb(0, 0, 0); padding-top: 7px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-left: 8px; width: 62px; -unity-text-align: upper-right; padding-right: 8px; display: none;"/>
+</ui:UXML>
