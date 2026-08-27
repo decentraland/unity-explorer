@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: 'Avatar Preview Renderer Build run ID whose artifact to promote. Empty takes the latest successful dev build.'
+        description: 'Avatar Preview Renderer Build or Release run ID whose artifact to promote. Empty takes the latest successful dev build.'
         required: false
         default: ''
         type: string
@@ -35,9 +35,11 @@ jobs:
         id: resolve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # env (not inline ${{ }}) so the input reaches the shell as data, never as script text.
+          RUN_ID_INPUT: ${{ github.event.inputs.run_id }}
         run: |
           set -euo pipefail
-          RUN_ID="${{ github.event.inputs.run_id }}"
+          RUN_ID="$RUN_ID_INPUT"
           if [ -z "$RUN_ID" ]; then
             RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/avatar-preview-renderer-build.yml/runs?status=success&branch=dev&per_page=1" \
               --jq '.workflow_runs[0].id // empty')
@@ -61,7 +63,7 @@ jobs:
           set -euo pipefail
           ROOT=".vercel/output/static"
           shopt -s dotglob nullglob
-          # UCB names the output folder after its build target (still aang-renderer), so detect instead of hardcoding.
+          # UCB names the output folder after its project/target config, so detect instead of hardcoding.
           for d in "$ROOT"/*/; do
             if [ -f "${d}index.html" ]; then
               echo "Flattening $d -> $ROOT"

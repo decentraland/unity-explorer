@@ -1,10 +1,19 @@
 name: Avatar Preview Renderer Release
 
 on:
+  # Auto-release: every merge to dev that touches the renderer cuts a release
+  # (versioning scheme: docs/build-and-ci.md § Avatar Preview Renderer).
+  # Explorer/ and unity-shared-dependencies/ changes deliberately do NOT release.
+  push:
+    branches:
+      - dev
+    paths:
+      - 'avatar-preview-renderer/**'
+  # Manual escape hatch: cut a release with an explicit version or semver bump.
   workflow_dispatch:
     inputs:
       bump:
-        description: 'Semver bump from the latest avatar-preview-renderer/v* tag'
+        description: 'Semver bump from the latest avatar-preview-renderer/v* tag. ⚠ "major" also requires raising AUTO_RELEASE_MAJOR in this workflow file, or auto-releases keep tagging the old major.'
         required: true
         default: 'patch'
         type: choice
@@ -13,10 +22,17 @@ on:
           - minor
           - major
       version:
-        description: 'Explicit version (X.Y.Z) — overrides bump when set'
+        description: 'Explicit version (X.Y.Z) — overrides bump when set. ⚠ If it changes the major, also raise AUTO_RELEASE_MAJOR in this workflow file.'
         required: false
         default: ''
         type: string
+
+env:
+  # Major used by auto-releases on dev merges (auto versions are
+  # AUTO_RELEASE_MAJOR.minor.0 with an auto-incrementing minor). When a manual
+  # dispatch moves to a new major, raise this too — otherwise the next auto
+  # release still tags the old major. The compute step warns on that mismatch.
+  AUTO_RELEASE_MAJOR: '3'
 
 concurrency:
   group: avatar-preview-renderer-release
@@ -47,30 +63,51 @@ jobs:
 
       - name: Compute version
         id: get_version
+        env:
+          # env (not inline ${{ }}) so the input reaches the shell as data, never as script text.
+          VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
-          # The fallback covers the window before the first monorepo release tag exists
-          # (the standalone repo left off at v2.8.0).
-          LAST_TAG=$(git describe --tags --match 'avatar-preview-renderer/v*' --abbrev=0 2>/dev/null || echo 'avatar-preview-renderer/v2.8.0')
-          LAST=${LAST_TAG#avatar-preview-renderer/v}
-          echo "Last released version: $LAST"
-
-          EXPLICIT="${{ github.event.inputs.version }}"
-          if [ -n "$EXPLICIT" ]; then
-            [[ "$EXPLICIT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Version '$EXPLICIT' is not X.Y.Z"; exit 1; }
-            NEXT="$EXPLICIT"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Auto-release scheme (docs/build-and-ci.md § Avatar Preview Renderer):
+            # major pinned via AUTO_RELEASE_MAJOR (the monorepo era started at 3; the
+            # standalone repo left off at v2.8.0), minor increments once per releasing
+            # merge, patch stays 0. First auto release is 3.1.0.
+            LAST_MINOR=$(git tag -l "avatar-preview-renderer/v${AUTO_RELEASE_MAJOR}.*" \
+              | sed -E "s|^avatar-preview-renderer/v${AUTO_RELEASE_MAJOR}\.([0-9]+)\..*|\1|" | sort -n | tail -1)
+            NEXT="${AUTO_RELEASE_MAJOR}.$(( ${LAST_MINOR:-0} + 1 )).0"
           else
-            IFS=. read -r MAJOR MINOR PATCH <<< "$LAST"
-            case "${{ github.event.inputs.bump }}" in
-              major) NEXT="$((MAJOR + 1)).0.0" ;;
-              minor) NEXT="$MAJOR.$((MINOR + 1)).0" ;;
-              patch) NEXT="$MAJOR.$MINOR.$((PATCH + 1))" ;;
-            esac
+            # The fallback covers the window before the first monorepo release tag exists
+            # (the standalone repo left off at v2.8.0).
+            LAST_TAG=$(git describe --tags --match 'avatar-preview-renderer/v*' --abbrev=0 2>/dev/null || echo 'avatar-preview-renderer/v2.8.0')
+            LAST=${LAST_TAG#avatar-preview-renderer/v}
+            echo "Last released version: $LAST"
+
+            EXPLICIT="$VERSION_INPUT"
+            if [ -n "$EXPLICIT" ]; then
+              [[ "$EXPLICIT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Version '$EXPLICIT' is not X.Y.Z"; exit 1; }
+              NEXT="$EXPLICIT"
+            else
+              IFS=. read -r MAJOR MINOR PATCH <<< "$LAST"
+              case "${{ github.event.inputs.bump }}" in
+                major) NEXT="$((MAJOR + 1)).0.0" ;;
+                minor) NEXT="$MAJOR.$((MINOR + 1)).0" ;;
+                patch) NEXT="$MAJOR.$MINOR.$((PATCH + 1))" ;;
+              esac
+            fi
           fi
 
           if git rev-parse -q --verify "refs/tags/avatar-preview-renderer/v$NEXT" >/dev/null; then
             echo "::error::Tag avatar-preview-renderer/v$NEXT already exists."
             exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${NEXT%%.*}" != "$AUTO_RELEASE_MAJOR" ]; then
+            echo "::warning title=Auto-release major mismatch::Releasing v$NEXT, but auto-releases on dev merges are pinned to major $AUTO_RELEASE_MAJOR — the next merge will tag v$AUTO_RELEASE_MAJOR.x.0. If this major change is permanent, raise AUTO_RELEASE_MAJOR at the top of avatar-preview-renderer-release.yml."
+            {
+              echo "> [!WARNING]"
+              echo "> **Auto-release major mismatch:** this release is \`v$NEXT\`, but auto-releases on dev merges are pinned to major \`$AUTO_RELEASE_MAJOR\` (next merge tags \`v$AUTO_RELEASE_MAJOR.x.0\`). If the major change is permanent, raise \`AUTO_RELEASE_MAJOR\` at the top of \`avatar-preview-renderer-release.yml\`."
+            } >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "Releasing version: $NEXT from $GITHUB_SHA"
@@ -196,68 +233,3 @@ jobs:
           files: avatar-preview-renderer-v${{ needs.prepare.outputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy_production:
-    name: Vercel Production
-    needs: [prepare, build]
-    runs-on: ubuntu-latest
-    # Vercel secrets are scoped to this job — no other job talks to Vercel.
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-    steps:
-      - name: Checkout repo (for project link/config)
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-          clean: false
-
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-
-      - name: Pull Vercel environment (production)
-        run: vercel pull --yes --environment=production
-
-      - name: Download built artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: avatar-preview-renderer
-          path: .vercel/output/static
-
-      - name: Flatten artifact to static root
-        run: |
-          set -euo pipefail
-          ROOT=".vercel/output/static"
-          shopt -s dotglob nullglob
-          # UCB names the output folder after its build target (still aang-renderer), so detect instead of hardcoding.
-          for d in "$ROOT"/*/; do
-            if [ -f "${d}index.html" ]; then
-              echo "Flattening $d -> $ROOT"
-              mv "$d"* "$ROOT"/
-              rmdir "$d" || true
-              break
-            fi
-          done
-          test -f "$ROOT/index.html" || { echo "::error::index.html not found at $ROOT"; exit 1; }
-
-      - name: Copy vercel.json into static folder
-        run: cp avatar-preview-renderer/vercel.json .vercel/output/static/vercel.json
-
-      - name: Deploy static folder to Vercel (Production)
-        id: vercel_deploy
-        run: |
-          url=$(vercel deploy .vercel/output/static --prod --yes)
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "Production URL: $url"
-
-      - name: Write job summary
-        run: |
-          {
-            echo '## Avatar Preview Renderer v${{ needs.prepare.outputs.version }} deployed to production'
-            echo
-            echo '| Field      | Value |'
-            echo '| ---------- | ----- |'
-            echo '| Production | ${{ steps.vercel_deploy.outputs.url }} |'
-            echo '| Commit     | `${{ needs.prepare.outputs.commit_sha }}` |'
-          } >> "$GITHUB_STEP_SUMMARY"

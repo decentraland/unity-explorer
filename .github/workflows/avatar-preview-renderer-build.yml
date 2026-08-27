@@ -225,8 +225,16 @@ jobs:
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
 
-      - name: Pull Vercel environment (preview)
-        run: vercel pull --yes --environment=preview
+      # Merges to dev deploy to production so unity-explorer-aang-renderer.vercel.app (the Vercel
+      # project's production domain — pre-rename name, kept deliberately) tracks the latest dev build.
+      # See docs/build-and-ci.md § Avatar Preview Renderer.
+      - name: Pull Vercel environment
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            vercel pull --yes --environment=production
+          else
+            vercel pull --yes --environment=preview
+          fi
 
       - name: Download built artifact
         uses: actions/download-artifact@v7
@@ -241,7 +249,7 @@ jobs:
           echo "Tree after download:"
           find "$ROOT" -maxdepth 3 -print | sed 's/^/OUT: /'
           shopt -s dotglob nullglob
-          # UCB names the output folder after its build target (still aang-renderer), so detect instead of hardcoding.
+          # UCB names the output folder after its project/target config, so detect instead of hardcoding.
           for d in "$ROOT"/*/; do
             if [ -f "${d}index.html" ]; then
               echo "Flattening $d -> $ROOT"
@@ -259,17 +267,16 @@ jobs:
           echo "Using vercel.json:"
           cat .vercel/output/static/vercel.json
 
-      - name: Deploy static folder to Vercel (Preview)
+      - name: Deploy static folder to Vercel
         id: vercel_deploy
         run: |
-          url=$(vercel deploy .vercel/output/static --yes)
+          if [ "${{ github.event_name }}" = "push" ]; then
+            url=$(vercel deploy .vercel/output/static --prod --yes)
+          else
+            url=$(vercel deploy .vercel/output/static --yes)
+          fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "Preview URL: $url"
-
-      # Stable URL that always points at the latest dev build.
-      - name: Alias dev deployment (merges to dev only)
-        if: ${{ github.event_name == 'push' }}
-        run: vercel alias set "${{ steps.vercel_deploy.outputs.url }}" unity-explorer-aang-renderer.vercel.app
+          echo "Deployment URL: $url"
 
       - name: Write job summary
         run: |
