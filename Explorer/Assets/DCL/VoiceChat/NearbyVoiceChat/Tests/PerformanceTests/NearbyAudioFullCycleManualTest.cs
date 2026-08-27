@@ -162,7 +162,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             positionSystem?.Dispose();
             bindingSystem?.Dispose();
 
-            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include))
             {
                 if (src == null) continue;
                 src.Stop();
@@ -236,7 +236,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             headAnchorGo.transform.localPosition = new Vector3(0, 1.6f, 0);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            Entity entity = world.Create(new Profile(wallet, wallet, new Avatar()), avatarBase);
+            Entity entity = world.Create(new Profile(UserId.New(wallet).Unwrap(), wallet, new Avatar()), avatarBase);
             registry.Add(wallet, "sid");
 
             avatars.Add(new AvatarHandle { Wallet = wallet, Entity = entity, AvatarGo = avatarGo });
@@ -268,7 +268,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
         private Camera EnsureCameraAndListener()
         {
-            Camera camera = Camera.main;
+            Camera? camera = Camera.main;
             if (camera == null)
             {
                 var camGo = new GameObject("Main Camera") { tag = "MainCamera" };

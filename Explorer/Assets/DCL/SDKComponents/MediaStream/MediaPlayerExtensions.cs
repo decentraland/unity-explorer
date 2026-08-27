@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
-using RenderHeads.Media.AVProVideo;
+using DCL.AvProSwitch;
 using System;
 using UnityEngine;
 
@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.MediaStream
             if (!mediaPlayer.MediaOpened)
                 return;
 
-            IMediaControl control = mediaPlayer.Control!;
+            MediaPlayerBackend control = mediaPlayer.Control;
 
             if (hasPlaying)
             {
@@ -64,7 +64,7 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.Stop();
         }
 
-        internal static UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false) =>
+        internal static UniTask SetPlaybackPropertiesAsync(MediaPlayerBackend control, PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false) =>
             SetPlaybackPropertiesAsync(control,
                 sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION,
                 sdkVideoPlayer is { HasLoop: true, Loop: true },
@@ -72,7 +72,7 @@ namespace DCL.SDKComponents.MediaStream
                 sdkVideoPlayer is { HasPlaying: true, Playing: true },
                 isLiveStream);
 
-        internal static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, float position, bool loop, float rate, bool isPlaying, bool isLiveStream = false)
+        internal static async UniTask SetPlaybackPropertiesAsync(MediaPlayerBackend control, float position, bool loop, float rate, bool isPlaying, bool isLiveStream = false)
         {
             // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
             await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
@@ -96,7 +96,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!mediaPlayer.MediaOpened) return;
 
-            IMediaControl control = mediaPlayer.Control;
+            MediaPlayerBackend control = mediaPlayer.Control;
 
             if (sdkVideoPlayer.HasLoop && sdkVideoPlayer.Loop != control.IsLooping())
                 control.SetLooping(sdkVideoPlayer.Loop);

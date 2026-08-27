@@ -13,6 +13,7 @@ using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Pool;
 using DCL.LiveKit.Public;
+using DCL.Utility.Types;
 using Utility.Multithreading;
 
 namespace DCL.VoiceChat
@@ -353,7 +354,11 @@ namespace DCL.VoiceChat
         {
             string newIdentityId = identityCache.Identity?.Address ?? string.Empty;
             LocalParticipantId = newIdentityId;
-            LocalParticipantState.Profile = new Profile.CompactInfo(newIdentityId);
+            Option<UserId> newUserId = UserId.New(newIdentityId);
+
+            LocalParticipantState.Profile = newUserId.Has
+                ? Option<Profile.CompactInfo>.Some(new Profile.CompactInfo(newUserId.Value))
+                : Option<Profile.CompactInfo>.None;
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Identity changed, updated LocalParticipantId to: {LocalParticipantId}");
         }
 
@@ -464,7 +469,15 @@ namespace DCL.VoiceChat
 
         private void UpdateParticipantStateFromMetadata(string participantId, ParticipantCallMetadata metadata, VoiceChatParticipantState participantState)
         {
-            participantState.Profile = new Profile.CompactInfo(participantId, metadata.name!, metadata.hasClaimedName, metadata.profilePictureUrl!);
+            Option<UserId> participantUserId = UserId.New(participantId);
+
+            if (!participantUserId.Has)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Ignoring metadata for a participant with an empty id");
+                return;
+            }
+
+            participantState.Profile = Option<Profile.CompactInfo>.Some(new Profile.CompactInfo(participantUserId.Value, metadata.name!, metadata.hasClaimedName, metadata.profilePictureUrl!));
             participantState.IsRequestingToSpeak.Value = metadata.isRequestingToSpeak;
             participantState.IsSpeaker.Value = metadata.isSpeaker;
             participantState.Role.Value = metadata.Role;
@@ -478,7 +491,7 @@ namespace DCL.VoiceChat
 
         private void ResetLocalParticipantState()
         {
-            LocalParticipantState.Profile = new Profile.CompactInfo(string.Empty);
+            LocalParticipantState.Profile = Option<Profile.CompactInfo>.None;
             LocalParticipantState.IsSpeaking.Value = false;
             LocalParticipantState.IsRequestingToSpeak.Value = false;
             LocalParticipantState.IsSpeaker.Value = false;

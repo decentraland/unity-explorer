@@ -18,6 +18,7 @@ using DCL.Utility;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
@@ -62,6 +63,21 @@ namespace Global.Dynamic
         public bool UseRemoteAssetBundles { get; private set; }
         public bool UseLocalAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
+
+        /// <summary>
+        ///     The chain this run signs and transacts against, resolved once from the environment and
+        ///     <c>--eth-network</c>. Anything needing a chain reads it here instead of deriving one from
+        ///     <see cref="Environment" />.
+        /// </summary>
+        public EthereumNetwork EthereumNetwork { get; private set; }
+
+        /// <summary>
+        ///     The loopback endpoint reserved for the local-ab abgen server (the URL sources already point
+        ///     at it). Non-null only in local scene development with local asset bundles —
+        ///     DynamicWorldContainer registers AbgenSidecarPlugin, which owns the server's whole lifecycle,
+        ///     exclusively from this.
+        /// </summary>
+        public string? LocalAbBaseUrl { get; private set; }
         public RealmClock RealmClock { get; } = new ();
         public WebRequestsContainer WebRequestsContainer { get; private set; }
 
@@ -69,13 +85,13 @@ namespace Global.Dynamic
         {
             base.Dispose();
 
-            DiagnosticsContainer?.Dispose();
+            DiagnosticsContainer.Dispose();
 
             // CompositeWeb3Provider disposes both authenticators internally
             // Don't dispose Web3Authenticator/EthereumApi separately as they reference the same composite
             CompositeWeb3Provider?.Dispose();
             IdentityCache?.Dispose();
-            Analytics?.Dispose();
+            Analytics.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(
@@ -93,7 +109,9 @@ namespace Global.Dynamic
             IDiskCache<PartialLoadingState> partialsDiskCache,
             World world,
             DecentralandEnvironment decentralandEnvironment,
+            EthereumNetwork ethereumNetwork,
             DCLVersion dclVersion,
+            string? localAbBaseUrl,
             CancellationToken ct)
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
@@ -111,36 +129,41 @@ namespace Global.Dynamic
                 AppArgs = applicationParametersParser,
                 DebugSettings = debugSettings,
                 VolumeBus = new VolumeBus(),
-                Environment = decentralandEnvironment
+                Environment = decentralandEnvironment,
+                EthereumNetwork = ethereumNetwork,
+                LocalAbBaseUrl = localAbBaseUrl
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
-                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
-                if (container.IdentityCache.Identity != null)
-                    UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
-
-                container.IdentityCache.OnIdentityChanged += () =>
+                if (container.IdentityCache != null)
                 {
                     if (container.IdentityCache.Identity != null)
                         UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
-                };
+
+                    container.IdentityCache.OnIdentityChanged += () =>
+                    {
+                        if (container.IdentityCache.Identity != null)
+                            UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
+                    };
+                }
 
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START));
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct);
                 container.WebRequestsContainer = webRequestsContainer;
-                var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
+                var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController, decentralandUrlsSource), decentralandUrlsSource);
 
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, ethereumNetwork, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
-                    if (container.IdentityCache.Identity != null)
+                    if (container.IdentityCache?.Identity != null)
                         container.DiagnosticsContainer.Sentry!.AddIdentityToScope(scope, container.IdentityCache.Identity.Address);
                 }
             });
@@ -189,7 +212,7 @@ namespace Global.Dynamic
             UnityAppWebBrowser webBrowser,
             AnalyticsContainer container,
             IDecentralandUrlsSource decentralandUrlsSource,
-            DecentralandEnvironment dclEnvironment,
+            EthereumNetwork ethereumNetwork,
             IAppArgs appArgs,
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
@@ -202,13 +225,15 @@ namespace Global.Dynamic
             // Create ThirdWeb authenticator (Email + OTP)
             var thirdWebAuth = new ThirdWebAuthenticator(
                 decentralandUrlsSource,
-                dclEnvironment,
+                ethereumNetwork,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 web3AccountFactory,
                 webRequestController,
                 identityExpirationDuration
             );
+
+            string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
 
             var dappDeepLinkAuth = new DappDeepLinkAuthenticator(
                 webBrowser,
@@ -219,10 +244,11 @@ namespace Global.Dynamic
                 deeplinkSigninIdentityId,
                 deeplinkLoginAwaitingSigninRequestId,
 #if UNITY_EDITOR
-                true
+                true,
 #else
-                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY)
+                appArgs.HasFlag(AppArgsFlags.AUTH_BRIDGE_ONLY),
 #endif
+                referrer
             );
 
             var dappAuth = new DappWeb3EthereumApi(
@@ -234,7 +260,7 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
-                dclEnvironment,
+                ethereumNetwork,
                 identityExpirationDuration
             );
 
@@ -275,8 +301,8 @@ namespace Global.Dynamic
     [Serializable]
     public class BootstrapSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsDevelopment { get; private set; }
-        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsProduction { get; private set; }
-        [field: SerializeField] public BuildData BuildData { get; private set; }
+        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsDevelopment { get; private set; } = null!;
+        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsProduction { get; private set; } = null!;
+        [field: SerializeField] public BuildData BuildData { get; private set; } = null!;
     }
 }

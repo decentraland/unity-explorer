@@ -19,7 +19,7 @@ PrefabInstance:
     - target: {fileID: 565513630802350116, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: fb395579b9bab46d5bf9eb47377fb219, type: 3}
+      objectReference: {fileID: 21300000, guid: 9f225046deabd4ea1bcec48a6ebb0a8f, type: 3}
     - target: {fileID: 1450107832291094929, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_text
       value: ' Press <color=#FFBE47>C</color> to open the camera'
@@ -121,8 +121,20 @@ PrefabInstance:
       value: 244.31653
       objectReference: {fileID: 0}
     - target: {fileID: 7423570456732473033, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 57
+      objectReference: {fileID: 0}
+    - target: {fileID: 7423570456732473033, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 57
+      objectReference: {fileID: 0}
+    - target: {fileID: 7423570456732473033, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 33
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 7423570456732473033, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.0000017881
       objectReference: {fileID: 0}
     - target: {fileID: 7510907615130953338, guid: dfee83d4e12e048269f60e1c7b26f595, type: 3}
       propertyPath: m_text

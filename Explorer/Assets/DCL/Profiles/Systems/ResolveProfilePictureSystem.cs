@@ -34,7 +34,7 @@ namespace DCL.Profiles
             {
                 try
                 {
-                    // Guard: the Profile may have been pooled and reused for a different user by the time the texture resolved.
+                    // Guard: the promise may target a different user if the profile's compact info was replaced in place by the time the texture resolved.
                     if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
                         profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
                     else

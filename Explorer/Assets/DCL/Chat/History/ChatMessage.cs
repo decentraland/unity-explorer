@@ -59,8 +59,7 @@ namespace DCL.Chat.History
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,
                 chatMessage.SentTimestampRaw,
-                chatMessage.IsMention,
-                false);
+                chatMessage.IsMention);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
@@ -68,7 +67,7 @@ namespace DCL.Chat.History
 
         public bool Equals(ChatMessage other) => MessageId == other.MessageId;
         public override bool Equals(object? obj) => obj is ChatMessage other && Equals(other);
-        public override int GetHashCode() => (MessageId != null ? MessageId.GetHashCode() : 0);
+        public override int GetHashCode() => MessageId != null ? MessageId.GetHashCode() : 0;
 
         public override string ToString() =>
             IsSystemMessage ? $"[System] {Message}" :

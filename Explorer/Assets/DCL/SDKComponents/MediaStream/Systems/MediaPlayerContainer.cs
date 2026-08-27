@@ -1,18 +1,20 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.DebugUtilities;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.CharacterCamera;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.World;
 using DCL.ResourcesUnloading;
-using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
-using RenderHeads.Media.AVProVideo;
+using DCL.AvProSwitch;
+using DCL.Platforms;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -46,12 +48,17 @@ namespace DCL.SDKComponents.MediaStream
 
         internal MediaFactoryBuilder mediaFactoryBuilder { get; private set; } = null!;
 
-        public MediaPlayerPlugin CreatePlugin(ExposedCameraData exposedCameraData) =>
-            new (frameBudget, exposedCameraData, mediaFactoryBuilder);
+        public MediaPlayerPlugin CreatePlugin(ExposedCameraData exposedCameraData, IDebugContainerBuilder debugBuilder) =>
+            new (frameBudget, exposedCameraData, mediaFactoryBuilder, debugBuilder);
 
-        protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
+        protected override async UniTask InitializeInternalAsync(Settings containerSettings, CancellationToken ct)
         {
-            MediaPlayer mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value;
+            // Every MediaPlayer instance picks its backend at Awake from this
+            // selection, so it must be installed before the first player is created.
+            MediaPlayerBackendSelection.Install(FeaturesRegistry.Instance.IsEnabled(CurrentPlatformMediaPlayerFeature()));
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Media player backend: {(MediaPlayerBackendSelection.UseCustomPlayer ? "UUAV" : "AVPro")}");
+
+            MediaPlayer mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(containerSettings.MediaPlayerPrefab, ct: ct)).Value;
 
             var videoTexturesPool = new ExtendedObjectPool<RenderTexture>(
                 () => new RenderTexture(1, 1, 0, RenderTextureFormat.BGRA32),
@@ -74,6 +81,16 @@ namespace DCL.SDKComponents.MediaStream
         public override void Dispose() =>
             mediaVolume.Dispose();
 
+        private static FeatureId CurrentPlatformMediaPlayerFeature()
+        {
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
+                return SystemInfo.processorType.Contains("apple", StringComparison.OrdinalIgnoreCase)
+                    ? FeatureId.UseCustomMediaPlayerMacSilicon
+                    : FeatureId.UseCustomMediaPlayerMacIntel;
+
+            return FeatureId.UseCustomMediaPlayerWindows;
+        }
+
         [Serializable]
         public class MediaPlayerReference : ComponentReference<MediaPlayer>
         {
@@ -84,7 +101,7 @@ namespace DCL.SDKComponents.MediaStream
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public MediaPlayerReference MediaPlayerPrefab { get; private set; }
+            public MediaPlayerReference MediaPlayerPrefab { get; private set; } = null!;
         }
     }
 }

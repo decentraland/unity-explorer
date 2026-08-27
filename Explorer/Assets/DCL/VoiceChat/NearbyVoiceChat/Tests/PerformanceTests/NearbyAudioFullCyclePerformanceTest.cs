@@ -113,7 +113,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 
             // Defensive: LivekitAudioSource keeps invoking OnAudioFilterRead on the audio thread
             // even after disposal — reap any straggler not caught above to avoid NREs between runs.
-            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include))
             {
                 if (src == null) continue;
                 src.Stop();
@@ -421,7 +421,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             headAnchorGo.transform.localPosition = new Vector3(0, 1.6f, 0);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase);
             registry.Add(walletId, "sid");
             return avatarGo.transform;
         }
@@ -460,7 +460,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             headAnchorGo.transform.localPosition = new Vector3(0, 1.6f, 0);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase);
             registry.Add(walletId, "sid");
         }
 
@@ -512,7 +512,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
             headAnchorGo.transform.localPosition = new Vector3(0, 1.6f, 0);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase);
         }
 
         private GameObject CreateTrackedGameObject(string name)

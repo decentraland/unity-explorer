@@ -27,6 +27,12 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
 
+        /// <summary>
+        ///     Guards the exhaustion warning so it is reported once per exhaustion episode
+        ///     instead of once per entity per frame
+        /// </summary>
+        private bool reservedEntitiesExhaustionReported;
+
         public PlayerCRDTEntitiesHandlerSystem(World world, IScenesCache scenesCache) : base(world)
         {
             this.scenesCache = scenesCache;
@@ -52,8 +58,20 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             // Reserve entity straight-away, numeration will be preserved across all scenes
             int crdtEntityId = World.Has<PlayerComponent>(entity) ? SpecialEntitiesID.PLAYER_ENTITY : ReserveNextFreeEntity();
 
-            // All reserved entities are taken
-            if (crdtEntityId == -1) return;
+            // All reserved entities are taken: this player can't be exposed to any scene at all
+            if (crdtEntityId == -1)
+            {
+                if (!reservedEntitiesExhaustionReported)
+                {
+                    reservedEntitiesExhaustionReported = true;
+
+                    ReportHub.LogWarning(GetReportData(),
+                        $"All {reservedEntities.Length} reserved CRDT entities are taken: remote players can't be exposed to scenes anymore. "
+                        + "Newly connected players will stay invisible to every scene until a slot is released.");
+                }
+
+                return;
+            }
 
             var playerCRDTEntity = new PlayerCRDTEntity(crdtEntityId);
 
@@ -119,13 +137,18 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             {
                 if (playerCRDTEntity.SceneWorldEntity != Entity.Null)
                     RemovePlayerFromScene(playerCRDTEntity.SceneWorldEntity, playerCRDTEntity.CRDTEntity, playerCRDTEntity.SceneFacade);
-
-                if (noLongerExists)
-                    FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
             }
 
             if (noLongerExists)
+            {
+                // The reservation is bound to the component, not to the scene assignment: it is taken unconditionally
+                // in `AddPlayerCRDTEntity` so it must be released whenever the component goes away, otherwise players
+                // that disconnect while being in no scene (hidden spawn position, roads, empty parcels, LOD, realm change)
+                // leak their slot forever
+                FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
+
                 World.Remove<PlayerCRDTEntity>(entity);
+            }
         }
 
         private static void RemovePlayerFromScene(Entity sceneWorldEntity, CRDTEntity crdtEntity, ISceneFacade sceneFacade)
@@ -163,11 +186,16 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         private void FreeReservedEntity(int entityId)
         {
+            // Ids outside the reserved range (e.g. the local player's PLAYER_ENTITY) are not pooled
             entityId -= SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM;
             if (entityId >= reservedEntities.Length || entityId < 0) return;
 
+            // Idempotent on purpose: releasing an already free slot must not corrupt the count
+            if (!reservedEntities[entityId]) return;
+
             reservedEntities[entityId] = false;
             currentReservedEntitiesCount--;
+            reservedEntitiesExhaustionReported = false;
         }
 
         private void ClearReservedEntities()
@@ -175,6 +203,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             for (var i = 0; i < reservedEntities.Length; i++) { reservedEntities[i] = false; }
 
             currentReservedEntitiesCount = 0;
+            reservedEntitiesExhaustionReported = false;
         }
     }
 }

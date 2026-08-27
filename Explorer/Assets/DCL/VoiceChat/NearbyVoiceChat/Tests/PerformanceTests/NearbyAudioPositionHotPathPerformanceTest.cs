@@ -101,7 +101,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
                 avatarBases[i] = avatarBase;
 
                 Entity avatarEntity = world.Create(
-                    new Profile(id, id, new Avatar()),
+                    new Profile(UserId.New(id).Unwrap(), id, new Avatar()),
                     avatarBase,
                     new CharacterTransform(avatarGo.transform));
 

@@ -23,8 +23,14 @@ namespace DCL.UI
         {
             Button.onClick.AddListener(OnClick);
             ButtonAnimator.enabled = true;
-            ButtonAnimator.Rebind();
-            ButtonAnimator.Update(0);
+
+            // Animator.Update is only legal on an active-in-hierarchy object; these buttons
+            // are often enabled while their panel is still hidden during UI bootstrap.
+            if (ButtonAnimator.gameObject.activeInHierarchy)
+            {
+                ButtonAnimator.Rebind();
+                ButtonAnimator.Update(0);
+            }
         }
 
         private void OnDisable()

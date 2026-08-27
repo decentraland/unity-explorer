@@ -2,6 +2,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Optimization.ThreadSafePool;
+using DCL.Utility.Types;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -13,10 +14,6 @@ namespace DCL.Profiles
 {
     public partial class Profile : IDirtyMarker, IDisposable
     {
-        internal static readonly ThreadSafeObjectPool<Profile> POOL = new (
-            () => new Profile(),
-            actionOnRelease: profile => profile.Clear());
-
         internal HashSet<string>? blocked;
         internal List<string>? interests;
         internal List<LinkJsonDto>? links;
@@ -69,41 +66,25 @@ namespace DCL.Profiles
 
         public CompactInfo Compact => compact;
 
-        public Profile()
-        {
-            compact = new CompactInfo();
-            Avatar = new Avatar();
-        }
-
-        public Profile(string userId, string name, Avatar avatar)
+        public Profile(UserId userId, string name, Avatar avatar)
         {
             compact = new CompactInfo(userId, name);
             Avatar = avatar;
         }
 
+        /// <summary>
+        ///     Wraps an already validated <see cref="CompactInfo" />, used by deserialization
+        ///     which parses the compact slice before the rest of the profile.
+        /// </summary>
+        internal Profile(in CompactInfo compact)
+        {
+            this.compact = compact;
+            Avatar = new Avatar();
+        }
+
         public void Dispose()
         {
             GetCompact().Dispose();
-            POOL.Release(this);
-        }
-
-        public static Profile Create() =>
-            POOL.Get();
-
-        public static Profile Create(string userId, string name, Avatar avatar)
-        {
-            Profile profile = Create();
-            profile.GetCompact().UserId = userId;
-            profile.GetCompact().Name = name;
-            profile.Avatar = avatar;
-            return profile;
-        }
-
-        public void Clear()
-        {
-            // Replace the struct instead of calling Compact.Clear() which operates on a copy
-            GetCompact().Dispose();
-            compact = new CompactInfo();
 
             if (blocked != null)
             {
@@ -122,36 +103,14 @@ namespace DCL.Profiles
                 ThreadSafeCollectionPool<List<LinkJsonDto>, LinkJsonDto>.SHARED.Release(links);
                 links = null;
             }
-            Birthdate = null;
-
-            // Avatars on the pool should always have an empty avatar for reusage.
-            // We cannot just clear its values because Profile may not be the original avatar owner
-            // To be fully safe to clear it, the scope should be tighter
-            Avatar = new Avatar();
-            Country = null;
-            Email = null;
-            Gender = null;
-            Description = null;
-            Hobbies = null;
-            Language = null;
-            Profession = null;
-            Pronouns = null;
-            Version = default(int);
-            EmploymentStatus = null;
-            RealName = null;
-            RelationshipStatus = null;
-            SexualOrientation = null;
-            TutorialStep = default(int);
-            HasConnectedWeb3 = default(bool);
-            IsDirty = false;
         }
 
-        public static Profile NewRandomProfile(string? userId)
+        public static Profile NewRandomProfile(string? userId = null)
         {
             BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
             return new Profile(
-                userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
+                userId: UserIdOrGuest(userId),
                 name: IProfileRepository.PLAYER_RANDOM_ID,
                 avatar: new Avatar(
                     bodyShape,
@@ -165,10 +124,25 @@ namespace DCL.Profiles
 
         public static Profile NewProfileWithAvatar(string? userId, Avatar avatar) =>
             new (
-                userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
+                UserIdOrGuest(userId),
                 IProfileRepository.PLAYER_RANDOM_ID,
                 avatar
             );
+
+        private static UserId UserIdOrGuest(string? raw)
+        {
+            Option<UserId> userId = UserId.New(raw);
+
+            if (userId.Has)
+                return userId.Value;
+
+            Option<UserId> guest = UserId.New(IProfileRepository.GUEST_RANDOM_ID);
+
+            if (!guest.Has)
+                throw new InvalidOperationException($"{nameof(IProfileRepository.GUEST_RANDOM_ID)} must be a non-empty constant");
+
+            return guest.Value;
+        }
 
         public void ClearLinks()
         {

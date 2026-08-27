@@ -43,7 +43,7 @@ namespace DCL.ApplicationGuards
 
         protected override void OnViewShow()
         {
-            analytics.Track(AnalyticsEvents.UI.MINIMUM_REQUIREMENTS_SCREEN_SHOWN);
+            analytics.Track(AnalyticsEvents.Ui.MINIMUM_REQUIREMENTS_SCREEN_SHOWN);
         }
 
         private void OnToggleChanged(bool dontShowAgain)
@@ -65,7 +65,7 @@ namespace DCL.ApplicationGuards
         private void OnContinueClicked()
         {
             DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, viewInstance!.DontShowAgainToggle.isOn, true);
-            analytics.Track(AnalyticsEvents.UI.SKIP_MINIMUM_REQUIREMENTS_SCREEN);
+            analytics.Track(AnalyticsEvents.Ui.SKIP_MINIMUM_REQUIREMENTS_SCREEN);
             HoldingTask.TrySetResult();
         }
 

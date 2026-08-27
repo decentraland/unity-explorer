@@ -154,7 +154,11 @@ namespace DCL.Utility.Types
     /// </summary>
     public readonly struct Option<T>
     {
+        /// <summary>
+        ///     Make sure to check Has first before accessing the field directly, otherwise - undefined behaviour
+        /// </summary>
         public readonly T Value;
+
         public readonly bool Has;
 
         public static Option<T> None => new ();
@@ -167,6 +171,15 @@ namespace DCL.Utility.Types
             this.Value = value;
             this.Has = has;
         }
+
+        /// <summary>
+        ///     The only safe way to read <see cref="Value" /> without branching on <see cref="Has" />:
+        ///     throws when there is no value instead of silently returning <c>default</c>
+        /// </summary>
+        public T Unwrap() =>
+            Has
+                ? Value
+                : throw new InvalidOperationException($"Cannot unwrap Option<{typeof(T).Name}>: it has no value");
     }
 
     public enum TaskError

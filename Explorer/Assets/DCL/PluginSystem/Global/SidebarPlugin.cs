@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.Global
         private NearbyVoicePanelController? nearbyVoicePanelController;
         private HelpMenuController? helpMenuController;
 
-        private CancellationTokenSource controlsShortcutCts;
+        private CancellationTokenSource? controlsShortcutCts;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -176,7 +176,7 @@ namespace DCL.PluginSystem.Global
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
-            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
+            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget);
             helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
 
             sidebarController = new SidebarController(() =>
@@ -196,7 +196,6 @@ namespace DCL.PluginSystem.Global
                 globalWorld,
                 chatEventBus,
                 eventsApiService,
-                helpMenuController,
                 communitiesLiveTracker
                 );
 

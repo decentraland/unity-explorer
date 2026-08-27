@@ -1,10 +1,6 @@
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    /// <summary>
-    ///     IMPORTANT!!
-    ///     After doing any change to the events here, we need to hit the "Refresh Events" button on the AnalyticsConfiguration Scriptable Object so the new events are recognized!!
-    ///     IMPORTANT!!
-    /// </summary>
+
     public static class AnalyticsEvents
     {
         public static class General
@@ -16,6 +12,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string ERROR = "error";
             public const string LOADING_ERROR = "loading_error";
             public const string MEETS_MINIMUM_REQUIREMENTS = "meets_minimum_requirements";
+            public const string TELEPORT_OPERATION_DURATION = "teleport_operation_duration";
         }
 
         public static class World
@@ -29,7 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string USED_EMOTE = "used_emote";
         }
 
-        public static class UI
+        public static class Ui
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
@@ -312,6 +309,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string PLACE_SHARED = "place_shared";
             public const string PLACE_LINK_COPIED = "place_link_copied";
             public const string PLACE_NAVIGATION_STARTED = "place_navigation_started";
+        }
+
+        public static class Profiling
+        {
+            public const string LOADING_TIMES = "synthetic_loading_times";
         }
     }
 }

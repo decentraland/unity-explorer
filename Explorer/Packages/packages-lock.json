@@ -8,7 +8,7 @@
       "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
     "com.alttester.sdk": {
-      "version": "2.3.0",
+      "version": "2.3.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -20,7 +20,7 @@
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.nuget.newtonsoft-json": "3.1.0",
         "com.unity.test-framework": "1.1.33",
-        "com.unity.ugui": "2.0.0"
+        "com.unity.ugui": "1.0.0"
       },
       "url": "https://package.openupm.com"
     },
@@ -101,11 +101,11 @@
       "hash": "222d67ccc289337dadb5e8d96ee5b633dfb905b6"
     },
     "com.decentraland.pulse.transport": {
-      "version": "https://github.com/decentraland/Pulse.git?path=src/DCLPulse.Transport.Shared#536d308a96cd5dce1011b012e7d0b39c27b01993",
+      "version": "https://github.com/decentraland/Pulse.git?path=src/DCLPulse.Transport/Package",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "536d308a96cd5dce1011b012e7d0b39c27b01993"
+      "hash": "994b07ee161c63bf3d2508902ec77c4fad3d4009"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -136,11 +136,10 @@
       "hash": "dc9994994637d30b0a61e2354eb2bbb8e963fa33"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "file:../../unity-shared-dependencies",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f040030e82c51bdddce67ae18149e22b5b4c4c0d"
+      "source": "local",
+      "dependencies": {}
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -524,7 +523,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
+      "hash": "1691b33df2ea7eb61eb648ff67b7c9f9feabfb7b"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",

@@ -31,6 +31,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using Utility;
+using Utility.Multithreading;
 
 namespace Global.Dynamic
 {
@@ -51,6 +52,7 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
+        private readonly DCLSemaphoreSlim realmChangeSemaphore = new ();
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
@@ -122,6 +124,16 @@ namespace Global.Dynamic
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
         {
+            // Realm changes must be mutually exclusive: overlapping changes can leave more than one
+            // realm entity (and scene-pointer dedup pipeline) alive after the unload phase
+            await realmChangeSemaphore.WaitAsync(ct);
+
+            try { await SetRealmExclusiveAsync(realm, ct); }
+            finally { realmChangeSemaphore.Release(); }
+        }
+
+        private async UniTask SetRealmExclusiveAsync(URLDomain realm, CancellationToken ct)
+        {
             World world = globalWorld!.EcsWorld;
 
             try { await UnloadCurrentRealmAsync(); }
@@ -156,7 +168,8 @@ namespace Global.Dynamic
                     hostname,
                     isLocalSceneDevelopment,
                     worldManifest,
-                    skyboxFixedHour
+                    skyboxFixedHour,
+                    realm
                 );
 
                 UnityDiagnosticsCenter.Instance.SetRealmInfo(
@@ -183,7 +196,9 @@ namespace Global.Dynamic
                 realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
                     result.content.publicUrl);
             }
-            catch (OperationCanceledException) { }
+            // The previous realm is already unloaded at this point: cancellation must propagate
+            // so callers don't treat a half-configured realm as a successful change
+            catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
                 ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
@@ -196,12 +211,10 @@ namespace Global.Dynamic
 
         public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
-            FixedScenePointers fixedScenePointers = default;
-
-            await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
+            await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out FixedScenePointers fixedScenePointers)
                                           && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
 
-            return fixedScenePointers.SceneResults;
+            return GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmEntity).SceneResults;
         }
 
         public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
@@ -309,19 +322,19 @@ namespace Global.Dynamic
             return parsed;
         }
 
-        private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
+        private void ComplimentWithVolatilePointers(World world, Entity targetRealmEntity)
         {
-            world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
+            world.Add(targetRealmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
         }
 
-        private bool ComplimentWithStaticPointers(World world, Entity realmEntity)
+        private bool ComplimentWithStaticPointers(World world, Entity targetRealmEntity)
         {
             IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
 
             if (positions is { Count: > 0 })
             {
                 // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
-                world.Add(realmEntity, new StaticScenePointers(positions));
+                world.Add(targetRealmEntity, new StaticScenePointers(positions));
                 return true;
             }
 
@@ -367,13 +380,24 @@ namespace Global.Dynamic
                 var uri = new Uri(realm.Value);
                 hostname = $"{uri.Host}{uri.AbsolutePath}";
             }
+            else if (about.comms != null)
+                hostname = new Uri(realm.Value).Host;
             else
-                hostname = about.comms == null
+            {
+                // Consider it as the "main" realm which shares the comms with many catalysts
+                string realmProviderDomain = environment switch
+                                             {
+                                                 // A custom deployment runs its own realm provider; grouping its comms
+                                                 // under decentraland.org would drop its players into decentraland's
+                                                 // main-realm island.
+                                                 DecentralandEnvironment.Custom => decentralandUrlsSource.BaseDomain,
 
-                    // Consider it as the "main" realm which shares the comms with many catalysts
-                    // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
-                    ? "realm-provider." + IDecentralandUrlsSource.ORG_DOMAIN
-                    : new Uri(realm.Value).Host;
+                                                 // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
+                                                 _ => IDecentralandUrlsSource.ORG_DOMAIN,
+                                             };
+
+                hostname = "realm-provider." + realmProviderDomain;
+            }
 
             return hostname;
         }

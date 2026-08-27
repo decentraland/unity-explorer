@@ -54,6 +54,41 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
+        public void WrapTextWhenTextWrapIsAbsent()
+        {
+            // Arrange
+            var input = new PBUiText();
+            world.Add(entity, input);
+            system.Update(0);
+
+            // Act
+            input.IsDirty = true;
+            system.Update(0);
+
+            // Assert
+            ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
+            Assert.AreEqual(WhiteSpace.Normal, uiTextComponent.Label.style.whiteSpace.value);
+        }
+
+        [Test]
+        public void NotWrapTextWhenTextWrapIsExplicitlyNoWrap()
+        {
+            // Arrange
+            var input = new PBUiText();
+            world.Add(entity, input);
+            system.Update(0);
+
+            // Act
+            input.TextWrap = TextWrap.TwNoWrap;
+            input.IsDirty = true;
+            system.Update(0);
+
+            // Assert
+            ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
+            Assert.AreEqual(WhiteSpace.NoWrap, uiTextComponent.Label.style.whiteSpace.value);
+        }
+
+        [Test]
         public void UpdateUIText()
         {
             // Arrange

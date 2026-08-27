@@ -8,8 +8,6 @@ using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.PerformanceAndDiagnostics
@@ -196,7 +194,7 @@ namespace DCL.PerformanceAndDiagnostics
                 currentSpan.Finish();
             }
 
-            ISpan parentSpan = (spanStack.Count == spanData.Depth && spanStack.Count > 0) ? spanStack.Peek() : transaction;
+            ISpan parentSpan = spanStack.Count == spanData.Depth && spanStack.Count > 0 ? spanStack.Peek() : transaction;
             ISpan newSpan = parentSpan.StartChild(spanData.SpanOperation, spanData.SpanName);
 
             spanStack.Push(newSpan);

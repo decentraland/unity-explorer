@@ -104,27 +104,6 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True);
         }
 
-        [Test]
-        public void AddStreamingSkipsAvatarWithEmptyWalletId()
-        {
-            // Avatar with empty UserId. Poison the empty-string slot with a non-null sids array
-            // so an impl which fails to short-circuit on empty walletId would mistakenly attach
-            // the component. The empty-walletId guard is the observable behavior.
-            var avatarGo = CreateTrackedGameObject("Avatar_empty");
-            AvatarBase avatarBase = avatarGo.AddComponent<AvatarBase>();
-            var anchorGo = CreateTrackedGameObject("HeadAnchor_empty");
-            anchorGo.transform.SetParent(avatarGo.transform);
-            HEAD_ANCHOR_FIELD.SetValue(avatarBase, anchorGo.transform);
-
-            registry.GetAudioSidsArray("").Returns(new[] { "sid-poison" });
-
-            Entity e = world.Create(new Profile("", "", new Avatar()), avatarBase);
-
-            system.Update(0);
-
-            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.False);
-        }
-
         // ── UpdateStreaming query ───────────────────────────────────
 
         [Test]
@@ -375,7 +354,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase);
         }
 
         private GameObject CreateTrackedGameObject(string name)

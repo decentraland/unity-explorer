@@ -454,7 +454,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase);
         }
 
         private LivekitAudioSource CreateLivekitAudioSource(StreamKey key)

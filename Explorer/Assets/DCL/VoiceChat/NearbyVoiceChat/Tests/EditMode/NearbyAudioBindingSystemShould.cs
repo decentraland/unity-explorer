@@ -110,7 +110,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         public void AvatarWithoutAvatarBaseIsSkipped()
         {
             const string WALLET = "wallet-alice";
-            Entity avatarEntity = world.Create(new Profile(WALLET, WALLET, new Avatar()));
+            Entity avatarEntity = world.Create(new Profile(UserId.New(WALLET).Unwrap(), WALLET, new Avatar()));
             world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { "sid-1" }));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.SeedActiveStream(WALLET, "sid-1");
@@ -417,7 +417,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            return world.Create(new Profile(UserId.New(walletId).Unwrap(), walletId, new Avatar()), avatarBase);
         }
 
         // After B2.1 the binding query is gated by StreamingAudioComponent + InAudibleRangeTag;

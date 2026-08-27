@@ -1,0 +1,19 @@
+# The compiler is an input to the shipped bytes, so it is pinned rather than
+# inherited. rustup honours this file automatically, which is what lets the
+# reproduction gate in .github/workflows/uuav-native.yml compare a CI rebuild
+# against the committed binaries at all - a hosted runner otherwise brings
+# whatever rustc its image happens to carry.
+#
+# Bumping this is a rebuild-and-relock event for both targets, not a routine
+# edit: scripts/uuav/uuav-binaries.lock.json hashes it as a build input.
+[toolchain]
+channel = "1.97.1"
+# clippy is a component, not part of the bare toolchain: without this line
+# rustup installs rustc/cargo only and the uuav-verify.yml rust job dies at
+# `cargo clippy --version` before checking anything.
+components = ["clippy"]
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-gnu",
+]

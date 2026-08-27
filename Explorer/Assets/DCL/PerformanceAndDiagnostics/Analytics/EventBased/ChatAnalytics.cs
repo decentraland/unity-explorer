@@ -25,10 +25,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         }
 
         private void OnConversationClosed() =>
-            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_CLOSED);
+            analytics.Track(AnalyticsEvents.Ui.CHAT_CONVERSATION_CLOSED);
 
         private void OnConversationOpened(bool wasAlreadyOpen) =>
-            analytics.Track(AnalyticsEvents.UI.CHAT_CONVERSATION_OPENED, new JObject
+            analytics.Track(AnalyticsEvents.Ui.CHAT_CONVERSATION_OPENED, new JObject
             {
                 { "was_already_open", wasAlreadyOpen },
             });

@@ -26,6 +26,11 @@ namespace DCL.Chat.MessageBus
 {
     public class LiveKitChatMessagesBus : IChatMessagesBus
     {
+        // Hard ceiling on the dedup stamps retained per period. A flood of distinct timestamps
+        // restarts the window instead of growing it, bounding the memory a sender can make this
+        // cache hold.
+        private const int MAX_DEDUP_ENTRIES = 2048;
+
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
@@ -52,7 +57,7 @@ namespace DCL.Chat.MessageBus
             IRoomHub roomHub)
         {
             this.messagePipesHub = messagePipesHub;
-            messageDeduplication = new MessageDeduplication<double>();
+            messageDeduplication = new MessageDeduplication<double>(MAX_DEDUP_ENTRIES);
             this.userBlockingCache = userBlockingCache;
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
@@ -84,6 +89,11 @@ namespace DCL.Chat.MessageBus
                                    DecentralandEnvironment.Org => "prd",
                                    DecentralandEnvironment.Today => "prd",
                                    DecentralandEnvironment.Zone => "dev",
+
+                                   // A --base-domain deployment is treated as a non-production stack, like zone: its
+                                   // comms-message-sfu has to join as message-router-dev-0 for relayed messages to
+                                   // authenticate. Explicit, so it is not silently routed as a local dev server.
+                                   DecentralandEnvironment.Custom => "dev",
                                    _ => "local",
                                };
 

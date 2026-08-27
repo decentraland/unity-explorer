@@ -51,34 +51,41 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             });
         }
 
-        public async UniTask AcceptFriendshipAsync(string friendId, CancellationToken ct)
+        public async UniTask<bool> AcceptFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await core.AcceptFriendshipAsync(friendId, ct);
+            bool result = await core.AcceptFriendshipAsync(friendId, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.REQUEST_ACCEPTED, new JObject
-            {
-                {"receiver_id", friendId}
-            });
+            if (result)
+                analytics.Track(AnalyticsEvents.Friends.REQUEST_ACCEPTED, new JObject
+                {
+                    {"receiver_id", friendId}
+                });
+
+            return result;
         }
 
-        public async UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct)
+        public async UniTask<bool> DeleteFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await core.DeleteFriendshipAsync(friendId, ct);
+            bool result = await core.DeleteFriendshipAsync(friendId, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.FRIENDSHIP_DELETED, new JObject
-            {
-                {"receiver_id", friendId}
-            });
+            if (result)
+                analytics.Track(AnalyticsEvents.Friends.FRIENDSHIP_DELETED, new JObject
+                {
+                    {"receiver_id", friendId}
+                });
+
+            return result;
         }
 
-        public async UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken ct)
+        public async UniTask<FriendRequest?> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken ct)
         {
-            FriendRequest result = await core.RequestFriendshipAsync(friendId, messageBody, ct);
+            FriendRequest? result = await core.RequestFriendshipAsync(friendId, messageBody, ct);
 
-            analytics.Track(AnalyticsEvents.Friends.REQUEST_SENT, new JObject
-            {
-                {"receiver_id", friendId}
-            });
+            if (result != null)
+                analytics.Track(AnalyticsEvents.Friends.REQUEST_SENT, new JObject
+                {
+                    {"receiver_id", friendId}
+                });
 
             return result;
         }

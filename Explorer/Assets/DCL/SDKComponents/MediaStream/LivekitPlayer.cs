@@ -37,13 +37,14 @@ namespace DCL.SDKComponents.MediaStream
         private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
         private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
 
+        private readonly Func<bool> isRoomRunning;
         private readonly IRoom room;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private PlayerState playerState;
 
         private LivekitAddress? playingAddress;
 
-        private CurrentVideoStreamInfo? cvs = null;
+        private CurrentVideoStreamInfo? cvs;
 
         private readonly Dictionary<StreamKey, (LivekitAudioSource source, Weak<AudioStream> stream)> audioSources = new ();
         private Vector3 audioPosition;
@@ -57,6 +58,11 @@ namespace DCL.SDKComponents.MediaStream
         // trackPublication.Track stays null until subscription completes — see LiveKit Streams.ActiveStream).
         private volatile bool pendingVideoRediscovery;
         private volatile bool pendingAudioRediscovery;
+
+        // Set on Connected/Reconnected (FFI thread), consumed on the main thread: any video stream held
+        // across a connection change belongs to the torn-down connection and must be dropped AND evicted
+        // from the room's stream cache (see EnsureVideoIsPlaying).
+        private volatile bool pendingVideoReset;
 
         public bool MediaOpened =>
             // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
@@ -76,8 +82,16 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool isAudioOpened => audioSources.Count > 0;
 
-        public LivekitPlayer(IRoom streamingRoom, AvatarPlaceHolderTextureSource? placeholderSource)
+        // Both checks needed: connective state catches synchronous teardown start,
+        // FFI connection state catches the async disconnect completion.
+        // (Delegate, not the connective room type: ECS.Unity -> DCL.Multiplayer is an asmdef cycle.)
+        private bool canOpenStreams =>
+            isRoomRunning()
+            && room.Info.ConnectionState == LKConnectionState.ConnConnected;
+
+        public LivekitPlayer(IRoom streamingRoom, Func<bool> isRoomRunning, AvatarPlaceHolderTextureSource? placeholderSource)
         {
+            this.isRoomRunning = isRoomRunning;
             room = streamingRoom;
             this.placeholderSource = placeholderSource;
 
@@ -91,6 +105,26 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (State != PlayerState.Playing) return;
             if (playingAddress == null) return;
+
+            // Room is tearing down — skip to avoid opening streams with invalid FFI handles,
+            // which would poison the reusable stream cache. Pending flags stay set for reconnect.
+            if (!canOpenStreams)
+            {
+                EnsureAudioIsPlaying(); // still releases audio sources whose streams died with the room
+                return;
+            }
+
+            if (pendingVideoReset)
+            {
+                pendingVideoReset = false;
+
+                // Evict the stale stream from the room's cache so re-open gets a fresh instance.
+                if (cvs.HasValue)
+                {
+                    room.VideoStreams.Release(cvs.Value.key);
+                    cvs = null;
+                }
+            }
 
             // Consume the flag even when IsVideoOpened: prevents stale-flag pile-up while the stream is healthy.
             // We deliberately do NOT re-open an established stream here — TryFollowVideoStreamToActiveSpeaker
@@ -155,6 +189,14 @@ namespace DCL.SDKComponents.MediaStream
 
         private void OpenVideoStream(LivekitAddress livekitAddress)
         {
+            // Room not ready — defer the open; EnsureVideoIsPlaying will retry once connected.
+            if (!canOpenStreams)
+            {
+                cvs = null;
+                playingAddress = livekitAddress;
+                return;
+            }
+
             StreamKey? streamKey = livekitAddress.Match(
                 this,
                 onUserStream: static (self, userStream) => new StreamKey(userStream.Identity, userStream.Sid),
@@ -176,6 +218,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private void OpenMissingAudioStreams()
         {
+            if (!canOpenStreams) return;
+
             foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
             {
                 var participant = room.Participants.RemoteParticipant(identity);
@@ -423,6 +467,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (update is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
             {
+                pendingVideoReset = true;
                 pendingVideoRediscovery = true;
                 pendingAudioRediscovery = true;
             }

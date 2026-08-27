@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Utilities;
 using ECS;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -62,7 +64,7 @@ namespace DCL.SceneLifeCycle.Tests
 
             Entity e = world.Create(promise, PartitionComponent.TOP_PRIORITY, sceneDefinitionComponent);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -72,7 +74,7 @@ namespace DCL.SceneLifeCycle.Tests
         }
 
         [Test]
-        public async Task StartSceneWithCorrectFPS()
+        public async Task StartSceneWithCorrectFps()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
 
@@ -93,7 +95,7 @@ namespace DCL.SceneLifeCycle.Tests
             Entity e = world.Create(promise, partition, sceneDefinitionComponent);
             realmPartitionSettings.GetSceneUpdateFrequency(in partition).Returns(15);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -107,7 +109,7 @@ namespace DCL.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: true);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -120,7 +122,7 @@ namespace DCL.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: true, hasReadinessReport: true);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -133,7 +135,7 @@ namespace DCL.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: false);
 
-            system?.Update(0f);
+            system.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -142,7 +144,7 @@ namespace DCL.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void ChangeSceneFPS()
+        public void ChangeSceneFps()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
 
@@ -151,9 +153,98 @@ namespace DCL.SceneLifeCycle.Tests
 
             world.Create(scene, partition, new SceneDefinitionComponent());
 
-            system?.Update(0f);
+            system.Update(0f);
 
             scene.Received(1).SetTargetFPS(15);
+        }
+
+        [Test]
+        public async Task DiscardDuplicateSceneForSameParcelsKeepingLiveFacade()
+        {
+            var scenesCache = new ScenesCache();
+
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, scenesCache, sceneReadinessReportQueue,
+                realmData, sceneRoomStatus);
+
+            ISceneFacade scene1 = Substitute.For<ISceneFacade>();
+            ISceneFacade scene2 = Substitute.For<ISceneFacade>();
+
+            Entity e1 = CreateResolvedSceneEntity(scene1);
+            Entity e2 = CreateResolvedSceneEntity(scene2);
+
+            // a structural World.Add during query iteration can defer the sibling entity to the next update
+            system.Update(0f);
+            system.Update(0f);
+
+            // let the started scene switch to the thread pool
+            await Task.Delay(100);
+
+            // whichever entity was consumed first owns the parcel; the sibling must be discarded
+            bool firstEntityKept = world.Has<ISceneFacade>(e1);
+            (Entity discardedEntity, ISceneFacade keptScene, ISceneFacade discardedScene) = firstEntityKept ? (e2, scene1, scene2) : (e1, scene2, scene1);
+
+            Assert.That(world.Has<ISceneFacade>(discardedEntity), Is.False);
+
+            discardedScene.Received(1).DisposeAsync().Forget();
+            await discardedScene.DidNotReceive().StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+
+            keptScene.DidNotReceive().DisposeAsync().Forget();
+            await keptScene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+
+            Assert.That(scenesCache.Scenes.Count, Is.EqualTo(1));
+            Assert.That(scenesCache.TryGetByParcel(Vector3.zero.ToParcel(), out ISceneFacade cached), Is.True);
+            Assert.That(cached, Is.SameAs(keptScene));
+        }
+
+        [Test]
+        public async Task KeepLiveSceneCacheMappingWhenDuplicateEntityUnloads()
+        {
+            var scenesCache = new ScenesCache();
+
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, scenesCache, sceneReadinessReportQueue,
+                realmData, sceneRoomStatus);
+
+            ISceneFacade scene1 = Substitute.For<ISceneFacade>();
+            ISceneFacade scene2 = Substitute.For<ISceneFacade>();
+
+            Entity e1 = CreateResolvedSceneEntity(scene1);
+            Entity e2 = CreateResolvedSceneEntity(scene2);
+
+            // a structural World.Add during query iteration can defer the sibling entity to the next update
+            system.Update(0f);
+            system.Update(0f);
+
+            // let the started scene switch to the thread pool
+            await Task.Delay(100);
+
+            bool firstEntityKept = world.Has<ISceneFacade>(e1);
+            (Entity discardedEntity, ISceneFacade keptScene) = firstEntityKept ? (e2, scene1) : (e1, scene2);
+
+            var unloadSystem = new UnloadSceneSystem(world, scenesCache, false);
+            world.Add(discardedEntity, new DeleteEntityIntention());
+            unloadSystem.Update(0f);
+
+            Assert.That(scenesCache.TryGetByParcel(Vector3.zero.ToParcel(), out ISceneFacade cached), Is.True);
+            Assert.That(cached, Is.SameAs(keptScene));
+            Assert.That(scenesCache.Scenes.Count, Is.EqualTo(1));
+        }
+
+        private Entity CreateResolvedSceneEntity(ISceneFacade scene)
+        {
+            var promise = AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world, new GetSceneFacadeIntention(), PartitionComponent.TOP_PRIORITY);
+
+            SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition
+            {
+                metadata = new SceneMetadata
+                {
+                    scene = new SceneMetadataScene
+                        { DecodedParcels = new[] { Vector3.zero.ToParcel() } },
+                },
+            }, new IpfsPath());
+
+            world.Add(promise.Entity, new StreamableLoadingResult<ISceneFacade>(scene));
+
+            return world.Create(promise, PartitionComponent.TOP_PRIORITY, sceneDefinitionComponent);
         }
 
         private ISceneFacade CreateWorldScenePendingStart(bool isRoomSettled, bool hasReadinessReport)

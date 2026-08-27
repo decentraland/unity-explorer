@@ -1,16 +1,27 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes.Play;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
-using DCL.DebugUtilities;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using ECS.SceneLifeCycle;
+using ECS.StreamableLoading;
+using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.TestTools;
+using Utility.Animations;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Emotes.Tests
@@ -19,9 +30,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
     {
         private const string SMART_WEARABLE_ENTITY_ID = "bafkreiwearable";
         private const string EMOTE_HASH = "bafkreiemotehash";
+        private const string SCENE_EMOTE_URN = "urn:decentraland:off-chain:scene-emote:test-scene-bafkreiemotehash-false";
 
         private ScenesCache scenesCache = null!;
         private IEmotesMessageBus messageBus = null!;
+        private IEmoteStorage emoteStorage = null!;
         private IAvatarView avatarView = null!;
         private GameObject poolRoot = null!;
         private GameObject audioSourcePrefab = null!;
@@ -38,9 +51,9 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             scenesCache = new ScenesCache();
             messageBus = Substitute.For<IEmotesMessageBus>();
+            emoteStorage = Substitute.For<IEmoteStorage>();
 
-            system = new CharacterEmoteSystem(world, Substitute.For<IEmoteStorage>(), messageBus, emotePlayer,
-                Substitute.For<IDebugContainerBuilder>(), localSceneDevelopment: false, scenesCache);
+            system = new CharacterEmoteSystem(world, emoteStorage, messageBus, emotePlayer, localSceneDevelopment: false, scenesCache);
 
             avatarView = Substitute.For<IAvatarView>();
             avatarView.IsLegacyAnimationPlaying.Returns(true);
@@ -72,7 +85,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             scenesCache.AddPortableExperienceScene(portableExperienceScene, SMART_WEARABLE_ENTITY_ID);
 
             //Act
-            system!.Update(0);
+            system.Update(0);
 
             //Assert
             Assert.IsNotNull(world.Get<CharacterEmoteComponent>(playerEntity).CurrentEmoteReference);
@@ -83,12 +96,338 @@ namespace DCL.AvatarRendering.Emotes.Tests
         public void StopSceneEmoteWhenItsSceneIsNoLongerLoaded()
         {
             //Act
-            system!.Update(0);
+            system.Update(0);
 
             //Assert
             Assert.IsNull(world.Get<CharacterEmoteComponent>(playerEntity).CurrentEmoteReference);
             avatarView.Received().StopLegacyAnimation();
             messageBus.Received().SendStop();
+        }
+
+        /// <summary>
+        /// Regression for https://github.com/decentraland/unity-explorer/issues/6531: an emote whose asset
+        /// never resolves must be released by the play timeout instead of parking the intent forever.
+        /// </summary>
+        [Test]
+        public void RemoveStrandedCharacterEmoteIntentAfterPlayTimeoutElapses()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("Cant play emote .* timeout reached"));
+
+            IAvatarView strandedAvatarView = Substitute.For<IAvatarView>();
+
+            // Grounded and not moving: the intent reaches the emote-storage branch instead of the movement gate.
+            strandedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+
+            IEmote emote = Substitute.For<IEmote>();
+            emote.IsLoading.Returns(false);
+
+            // Empty results: the asset is not resident, so playback stops short of the avatar view every frame.
+            emote.AssetResults.Returns(new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT]);
+
+            emoteStorage.TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>())
+                        .Returns(call =>
+                         {
+                             call[1] = emote;
+                             return true;
+                         });
+
+            Entity strandedEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                strandedAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
+                system.Update(1f);
+
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
+                "A CharacterEmoteIntent whose asset never resolves must expire after StreamableLoadingDefaults.TIMEOUT seconds of elapsed play time.");
+        }
+
+        /// <summary>
+        /// The play timeout must not count time spent waiting for the avatar to stop moving:
+        /// that wait is user driven and unbounded.
+        /// </summary>
+        [Test]
+        public void KeepCharacterEmoteIntentWhileTheAvatarKeepsMoving()
+        {
+            IAvatarView movingAvatarView = Substitute.For<IAvatarView>();
+            movingAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+            movingAvatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND).Returns(1f);
+
+            Entity movingEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                movingAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
+                system.Update(1f);
+
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(movingEntity),
+                "An intent held back by the movement gate must survive: the avatar is moving, which is not a stuck state.");
+
+            emoteStorage.DidNotReceive().TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>());
+        }
+
+        /// <summary>
+        /// Regression for https://github.com/decentraland/unity-explorer/issues/9485: an emote stuck in
+        /// IsLoading must be released by the play timeout instead of parking the intent forever.
+        /// </summary>
+        [Test]
+        public void RemoveIntentAfterTimeoutWhenEmoteNeverFinishesLoading()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("Cant play emote .* timeout reached"));
+
+            IAvatarView strandedAvatarView = Substitute.For<IAvatarView>();
+            strandedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+
+            IEmote emote = Substitute.For<IEmote>();
+            emote.IsLoading.Returns(true);
+
+            emoteStorage.TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>())
+                        .Returns(call =>
+                         {
+                             call[1] = emote;
+                             return true;
+                         });
+
+            Entity strandedEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                strandedAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
+                system.Update(1f);
+
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
+                "A CharacterEmoteIntent whose emote never finishes loading must expire after StreamableLoadingDefaults.TIMEOUT seconds.");
+        }
+
+        /// <summary>
+        /// The exact https://github.com/decentraland/unity-explorer/issues/9485 shape: the emote never lands in
+        /// storage and its promise can silently never be created (scene gone), so only the timeout can unpark.
+        /// </summary>
+        [Test]
+        public void RemoveIntentAfterTimeoutWhenEmoteNeverArrivesInStorage()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("Cant play emote .* timeout reached"));
+
+            IAvatarView strandedAvatarView = Substitute.For<IAvatarView>();
+            strandedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+
+            Entity strandedEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                strandedAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
+                system.Update(1f);
+
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
+                "A CharacterEmoteIntent whose emote never arrives in storage must expire after StreamableLoadingDefaults.TIMEOUT seconds.");
+        }
+
+        /// <summary>
+        /// Regression for https://github.com/decentraland/unity-explorer/issues/9485: the memory sweep can strip
+        /// a stored emote's asset slot; the intent must re-request the asset instead of parking forever.
+        /// </summary>
+        [Test]
+        public void RequestAssetReloadOnceWhenStoredEmoteAssetIsMissing()
+        {
+            IAvatarView parkedAvatarView = Substitute.For<IAvatarView>();
+            parkedAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+
+            IEmote emote = Substitute.For<IEmote>();
+            emote.IsLoading.Returns(false);
+            emote.AssetResults.Returns(new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT]);
+
+            emoteStorage.TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>())
+                        .Returns(call =>
+                         {
+                             call[1] = emote;
+                             return true;
+                         });
+
+            Entity parkedEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN("urn:decentraland:off-chain:base-emotes:dance"),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                parkedAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+
+            for (var i = 0; i < 3; i++)
+                system.Update(0.1f);
+
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(parkedEntity),
+                "The intent must stay parked while the asset reload is pending.");
+
+            var reloadPromises = new QueryDescription().WithAll<GetEmotesByPointersIntention>();
+            Assert.AreEqual(1, world.CountEntities(in reloadPromises),
+                "The missing-asset reload must be requested exactly once per intent.");
+        }
+
+        [Test]
+        public void CancelParkedSceneEmoteIntentOnMovementInput()
+        {
+            //Arrange
+            Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Scene, AvatarEmoteMask.AemFullBody,
+                new MovementInputComponent { Axes = Vector2.up }, new JumpInputComponent());
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(parkedEntity));
+            CharacterEmoteComponent emoteComponent = world.Get<CharacterEmoteComponent>(parkedEntity);
+            Assert.IsNull(emoteComponent.CurrentEmoteReference);
+            Assert.IsTrue(emoteComponent.PendingStop.IsSet);
+            Assert.AreEqual(EmoteState.EsInterrupted, emoteComponent.PendingStop.Reason);
+        }
+
+        [Test]
+        public void CancelParkedSceneEmoteIntentOnJumpInput()
+        {
+            //Arrange
+            Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Scene, AvatarEmoteMask.AemFullBody,
+                new MovementInputComponent(), new JumpInputComponent { IsPressed = true });
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            Assert.IsFalse(world.Has<CharacterEmoteIntent>(parkedEntity));
+            Assert.IsNull(world.Get<CharacterEmoteComponent>(parkedEntity).CurrentEmoteReference);
+        }
+
+        [Test]
+        public void KeepParkedSelfEmoteIntentOnMovementInput()
+        {
+            //Arrange
+            Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Self, AvatarEmoteMask.AemFullBody,
+                new MovementInputComponent { Axes = Vector2.up }, new JumpInputComponent());
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(parkedEntity));
+            Assert.IsNotNull(world.Get<CharacterEmoteComponent>(parkedEntity).CurrentEmoteReference);
+        }
+
+        [Test]
+        public void KeepParkedMaskedSceneEmoteIntentOnMovementInput()
+        {
+            //Arrange
+            Entity parkedEntity = NewParkedIntentEntity(TriggerSource.Scene, AvatarEmoteMask.AemUpperBody,
+                new MovementInputComponent { Axes = Vector2.up }, new JumpInputComponent());
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(parkedEntity));
+        }
+
+        private Entity NewParkedIntentEntity(TriggerSource triggerSource, AvatarEmoteMask mask, MovementInputComponent movementInput, JumpInputComponent jumpInput)
+        {
+            var playingEmoteComponent = new CharacterEmoteComponent
+            {
+                EmoteUrn = "urn:decentraland:off-chain:base-emotes:dance",
+                CurrentEmoteReference = emoteReferences,
+            };
+
+            return world.Create(
+                playingEmoteComponent,
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN(SCENE_EMOTE_URN),
+                    TriggerSource = triggerSource,
+                    Mask = mask,
+                },
+                Substitute.For<IAvatarView>(),
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE },
+                movementInput,
+                jumpInput);
+        }
+
+        [Test]
+        public void RecordInterruptedStopWhenSceneEmoteSceneIsNoLongerLoaded()
+        {
+            //Arrange
+            URN emoteUrn = world.Get<CharacterEmoteComponent>(playerEntity).EmoteUrn;
+
+            //Act
+            system.Update(0);
+
+            //Assert: a scene-change cancellation is an interruption, and it survives Reset().
+            CharacterEmoteComponent emoteComponent = world.Get<CharacterEmoteComponent>(playerEntity);
+            Assert.IsTrue(emoteComponent.PendingStop.IsSet);
+            Assert.AreEqual(EmoteState.EsInterrupted, emoteComponent.PendingStop.Reason);
+            Assert.AreEqual(emoteUrn, emoteComponent.PendingStop.Urn);
+        }
+
+        [Test]
+        public void RecordFinishedStopWhenLegacyEmoteEndsNaturally()
+        {
+            //Arrange: a non-scene emote whose legacy animation stopped on its own.
+            const string EMOTE_URN = "urn:decentraland:off-chain:base-emotes:wave";
+
+            ref CharacterEmoteComponent emoteComponent = ref world.Get<CharacterEmoteComponent>(playerEntity);
+            emoteComponent.EmoteUrn = EMOTE_URN;
+            avatarView.IsLegacyAnimationPlaying.Returns(false);
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            CharacterEmoteComponent updated = world.Get<CharacterEmoteComponent>(playerEntity);
+            Assert.IsNull(updated.CurrentEmoteReference);
+            Assert.IsTrue(updated.PendingStop.IsSet);
+            Assert.AreEqual(EmoteState.EsFinished, updated.PendingStop.Reason);
+            Assert.AreEqual(EMOTE_URN, updated.PendingStop.Urn.ToString());
+        }
+
+        [Test]
+        public void RecordInterruptedStopWhenStopIsRequested()
+        {
+            //Arrange: a non-scene emote explicitly asked to stop (e.g. remote stop or restricted action).
+            const string EMOTE_URN = "urn:decentraland:off-chain:base-emotes:dance";
+
+            ref CharacterEmoteComponent emoteComponent = ref world.Get<CharacterEmoteComponent>(playerEntity);
+            emoteComponent.EmoteUrn = EMOTE_URN;
+            emoteComponent.StopEmote = true;
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            CharacterEmoteComponent updated = world.Get<CharacterEmoteComponent>(playerEntity);
+            Assert.IsNull(updated.CurrentEmoteReference);
+            Assert.IsTrue(updated.PendingStop.IsSet);
+            Assert.AreEqual(EmoteState.EsInterrupted, updated.PendingStop.Reason);
+            Assert.AreEqual(EMOTE_URN, updated.PendingStop.Urn.ToString());
         }
 
         private static ISceneFacade NewSceneFacadeWithName(string name)

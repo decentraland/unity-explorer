@@ -4,6 +4,7 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
+using DCL.Utility.Types;
 using DG.Tweening;
 using SuperScrollView;
 using System;
@@ -56,7 +57,8 @@ namespace DCL.Events
             public ScrollRect scrollRect;
         }
 
-        private readonly Dictionary<int, List<string>> currentEventsIds = new ();
+        // Null entries are placeholder slots rendered as empty filler cards.
+        private readonly Dictionary<int, List<EventId?>> currentEventsIds = new ();
         private readonly Dictionary<int, float> currentOccupancies = new (5);
         private readonly Dictionary<int, Tweener> activeScrollTweens = new ();
         private DateTime currentFromDate;
@@ -149,7 +151,10 @@ namespace DCL.Events
                 List<EventsStateService.EventWithPlaceAndFriendsData> eventsData = new ();
                 foreach (EventDTO eventInfo in eventsInfo)
                 {
-                    var eventData = eventsStateService.GetEventDataById(eventInfo.id);
+                    Option<EventId> eventId = EventId.New(eventInfo.id);
+                    if (!eventId.Has) continue;
+
+                    var eventData = eventsStateService.GetEventDataById(eventId.Value);
                     if (eventData != null)
                         eventsData.Add(eventData);
                 }
@@ -207,7 +212,7 @@ namespace DCL.Events
         {
             for (var listIndex = 0; listIndex < eventsLists.Count; listIndex++)
             {
-                if (!currentEventsIds.TryGetValue(listIndex, out List<string> eventIds))
+                if (!currentEventsIds.TryGetValue(listIndex, out List<EventId?> eventIds))
                     continue;
 
                 LoopListView2 loopList = eventsLists[listIndex].eventsLoopList;
@@ -217,8 +222,8 @@ namespace DCL.Events
                     LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
                     if (item == null) continue;
 
-                    string eventId = eventIds[i];
-                    if (string.IsNullOrEmpty(eventId)) continue;
+                    EventId? eventId = eventIds[i];
+                    if (eventId == null) continue;
 
                     var eventData = eventsStateService.GetEventDataById(eventId);
                     if (eventData == null) continue;
@@ -233,7 +238,7 @@ namespace DCL.Events
         {
             for (var listIndex = 0; listIndex < eventsLists.Count; listIndex++)
             {
-                if (!currentEventsIds.TryGetValue(listIndex, out List<string> eventIds))
+                if (!currentEventsIds.TryGetValue(listIndex, out List<EventId?> eventIds))
                     continue;
 
                 LoopListView2 loopList = eventsLists[listIndex].eventsLoopList;
@@ -244,8 +249,8 @@ namespace DCL.Events
                     LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
                     if (item == null) continue;
 
-                    string eventId = eventIds[i];
-                    if (string.IsNullOrEmpty(eventId)) continue;
+                    EventId? eventId = eventIds[i];
+                    if (eventId == null) continue;
 
                     var eventData = eventsStateService.GetEventDataById(eventId);
                     if (eventData == null) continue;
@@ -271,8 +276,8 @@ namespace DCL.Events
                         LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
                         if (item == null) continue;
 
-                        string eventId = eventIds[i];
-                        if (string.IsNullOrEmpty(eventId)) continue;
+                        EventId? eventId = eventIds[i];
+                        if (eventId == null) continue;
 
                         var eventData = eventsStateService.GetEventDataById(eventId);
                         if (eventData == null) continue;
@@ -287,10 +292,13 @@ namespace DCL.Events
         public void SetEvents(IReadOnlyList<EventDTO> events, int eventsListIndex, bool resetPos)
         {
             currentEventsIds.Remove(eventsListIndex);
-            currentEventsIds.Add(eventsListIndex, new List<string>());
+            currentEventsIds.Add(eventsListIndex, new List<EventId?>());
 
             foreach (EventDTO eventInfo in events)
-                currentEventsIds[eventsListIndex].Add(eventInfo.id);
+            {
+                Option<EventId> eventId = EventId.New(eventInfo.id);
+                currentEventsIds[eventsListIndex].Add(eventId.Has ? eventId.Value : null);
+            }
 
             FillWithEmptyCards(events, eventsListIndex);
 
@@ -312,7 +320,8 @@ namespace DCL.Events
         private LoopListViewItem2 SetupEventCardByIndex(LoopListView2 loopListView, int eventIndex)
         {
             int eventsListIndex = loopListView.transform.GetSiblingIndex();
-            var eventData = eventsStateService.GetEventDataById(currentEventsIds[eventsListIndex][eventIndex]);
+            EventId? eventId = currentEventsIds[eventsListIndex][eventIndex];
+            var eventData = eventId != null ? eventsStateService.GetEventDataById(eventId) : null;
             int itemPrefabIndex = GetCardPrefabIndex(eventData);
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[itemPrefabIndex].mItemPrefab.name);
             EventCardView cardView = listItem.GetComponent<EventCardView>();
@@ -354,7 +363,8 @@ namespace DCL.Events
 
             foreach (EventDTO eventInfo in events)
             {
-                var eventData = eventsStateService.GetEventDataById(eventInfo.id);
+                Option<EventId> eventId = EventId.New(eventInfo.id);
+                var eventData = eventId.Has ? eventsStateService.GetEventDataById(eventId.Value) : null;
                 int cardPrefabIndex = GetCardPrefabIndex(eventData);
                 switch (cardPrefabIndex)
                 {
@@ -375,7 +385,7 @@ namespace DCL.Events
                                      };
 
             for (var i = 0; i < numberOfEmptyCards; i++)
-                currentEventsIds[eventsListIndex].Add(string.Empty);
+                currentEventsIds[eventsListIndex].Add(null);
         }
 
         private void OnEventsScrollValueChanged(int eventsListIndex)

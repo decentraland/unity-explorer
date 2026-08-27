@@ -3,7 +3,8 @@ name: Visual Regression
 # Slash-command-driven visual regression runner. The actual mechanics live in
 # decentraland/explorer-automation's `run-visual-suite.yml` reusable workflow;
 # this file only handles trigger validation, branch matching, and dispatching
-# to that workflow.
+# to that workflow. Build resolution and branch matching are shared with
+# in-world-tests.yml via .github/actions/resolve-explorer-build.
 #
 # Trigger:
 #   Comment "/visual-tests" on a PR. Restricted to OWNER / MEMBER /
@@ -26,16 +27,20 @@ name: Visual Regression
 # on this repo even though the dispatcher itself doesn't reference them:
 #   - secrets.ALTTESTER_LICENSE
 #   - secrets.REPOS_READ_ONLY_TOKEN
-#   - secrets.DEV_EXPLORER_TEAM_S3_BUCKET
-#   - secrets.DEV_EXPLORER_TEAM_AWS_DEFAULT_REGION
-#   - secrets.DEV_EXPLORER_TEAM_AWS_ACCESS_KEY_ID
-#   - secrets.DEV_EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY
+#   - secrets.EXPLORER_TEAM_S3_BUCKET
+#   - secrets.EXPLORER_TEAM_AWS_DEFAULT_REGION
+#   - secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID
+#   - secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY
 
 on:
   issue_comment:
     types: [created]
 
 permissions:
+  # `actions: read` for the build lookup. It resolves anyway while this repo is
+  # public — GITHUB_TOKEN keeps read access to public data whatever the block
+  # says — but the grant should not hinge on that.
+  actions: read
   contents: write
   pull-requests: write
 
@@ -53,8 +58,8 @@ jobs:
     outputs:
       authorized: ${{ steps.gate.outputs.authorized }}
       pr_number: ${{ steps.pr.outputs.number }}
-      build_url: ${{ steps.pr.outputs.build_url }}
-      tests_ref: ${{ steps.match.outputs.tests_ref }}
+      build_url: ${{ steps.resolve.outputs.build-url }}
+      tests_ref: ${{ steps.resolve.outputs.tests-ref }}
       head_sha: ${{ steps.pr.outputs.head_sha }}
       head_short_sha: ${{ steps.pr.outputs.head_short_sha }}
       head_ref: ${{ steps.pr.outputs.head_ref }}
@@ -85,83 +90,44 @@ jobs:
             "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
             -f content=eyes >/dev/null
 
-      - name: Resolve PR head + build URL
+      - name: Resolve PR head
         id: pr
         if: steps.gate.outputs.authorized == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.issue.number }}
-          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
           set -euo pipefail
-
-          # 1. Fetch PR head — issue_comment events don't carry it in the payload.
+          # issue_comment events don't carry the PR head in the payload.
           PR_JSON=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}")
           HEAD_SHA=$(echo "$PR_JSON" | jq -r '.head.sha')
           HEAD_REF=$(echo "$PR_JSON" | jq -r '.head.ref')
-          SHORT_SHA="${HEAD_SHA:0:7}"
-
-          # 2. Find the most recent successful Unity Cloud Build run for this
-          #    SHA, scoped to the build workflow file — a repo-wide head_sha
-          #    listing gets crowded out by bot runs sharing the SHA (90+ on a
-          #    typical release commit) and the build falls past the first page.
-          #    Only pull_request/push builds qualify — dispatch builds can
-          #    carry non-default options (e.g. profiling) that break the
-          #    determinism visual tests rely on.
-          RUN_JSON=$(gh api "repos/${{ github.repository }}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
-            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")] | .[0]')
-          if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
-            echo "::error::No successful Unity Cloud Build run found for SHA ${SHORT_SHA}. Is the build still in progress, or did it fail?"
-            exit 1
-          fi
-          RUN_NUMBER=$(echo "$RUN_JSON" | jq -r '.run_number')
-          ORIGINAL_EVENT=$(echo "$RUN_JSON" | jq -r '.event')
-          RUN_BRANCH=$(echo "$RUN_JSON" | jq -r '.head_branch')
-
-          # The S3 prefix and branch segment depend on the event and branch of
-          # the run that produced the build (see build-unitycloud.yml), not on
-          # this PR. Derive both from the run so /visual-tests also works on
-          # PRs whose only build for the SHA ran on another trigger — e.g.
-          # bot-created release PRs, whose tip is built by the push to dev.
-          case "$ORIGINAL_EVENT" in
-            pull_request) BUILD_PREFIX="pr" ;;
-            push) BUILD_PREFIX="pu" ;;
-            merge_group) BUILD_PREFIX="mg" ;;
-            workflow_dispatch) BUILD_PREFIX="wd" ;;
-            workflow_call) BUILD_PREFIX="wc" ;;
-            schedule) BUILD_PREFIX="sc" ;;
-            *) BUILD_PREFIX="gn" ;;
-          esac
-
-          ARTIFACT_PATH="@dcl/${{ github.event.repository.name }}/branch/${RUN_BRANCH}/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
-          BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
-
           {
             echo "number=${PR_NUMBER}"
             echo "head_sha=${HEAD_SHA}"
-            echo "head_short_sha=${SHORT_SHA}"
+            echo "head_short_sha=${HEAD_SHA:0:7}"
             echo "head_ref=${HEAD_REF}"
-            echo "build_url=${BUILD_URL}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Look up matching explorer-automation branch
-        id: match
+      # `uses: ./…` resolves against $GITHUB_WORKSPACE, so the action has to be
+      # on disk. Sparse, because the full tree is ~21k files and nothing else
+      # here is read.
+      - name: Fetch the resolver action
         if: steps.gate.outputs.authorized == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
-          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
-        run: |
-          set -euo pipefail
-          # 200 = branch exists on explorer-automation, use it as tests_ref.
-          # 404 = no matching branch, fall back to default (empty string =>
-          # metaforge resolves to main).
-          if gh api "repos/decentraland/explorer-automation/branches/${HEAD_REF}" --silent >/dev/null 2>&1; then
-            echo "tests_ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
-            echo "::notice::Using matching explorer-automation branch '${HEAD_REF}'."
-          else
-            echo "tests_ref=" >> "$GITHUB_OUTPUT"
-            echo "::notice::No matching explorer-automation branch '${HEAD_REF}' — using default."
-          fi
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions/resolve-explorer-build
+
+      - name: Resolve build URL and tests ref
+        id: resolve
+        if: steps.gate.outputs.authorized == 'true'
+        uses: ./.github/actions/resolve-explorer-build
+        with:
+          head-ref: ${{ steps.pr.outputs.head_ref }}
+          head-sha: ${{ steps.pr.outputs.head_sha }}
+          public-url-prefix: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          automation-token: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
 
   run-suite:
     name: Run visual suite

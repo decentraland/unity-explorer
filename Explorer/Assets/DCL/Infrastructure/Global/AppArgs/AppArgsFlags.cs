@@ -14,6 +14,7 @@ namespace Global.AppArgs
         public const string SCENE_CONSOLE = "scene-console";
 
         public const string AUTOPILOT = "autopilot";
+        public const string MEASURE_LOADING_TIME = "measure-loading-time";
         public const string AUTOPILOT_CSV = "csv";
         public const string AUTOPILOT_SUMMARY = "summary";
         public const string PROFILER_LOG_FILE = "raw";
@@ -21,6 +22,26 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+
+        /// <summary>
+        ///     Points every backend host at a deployment served under this base domain instead of
+        ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
+        ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
+        ///     link is processed. It is denied by <c>DeepLinkAllowlist</c> like the other infrastructure-pointing
+        ///     params, and accepting it in the denied-params dialog has no effect.
+        /// </summary>
+        public const string BASE_DOMAIN = "base-domain";
+
+        /// <summary>
+        ///     The chain a <c>--base-domain</c> deployment signs and transacts against: "mainnet" or "sepolia", each
+        ///     carrying the polygon network that pairs with it. Defaults to mainnet. Every decentraland environment
+        ///     answers for one chain of its own - org and today mainnet, zone sepolia - and this cannot move them:
+        ///     paired with one of those it is reported and dropped (<c>ChainUtils.ResolveNetwork</c>). Where the value
+        ///     is read, anything not naming a known network ends the launch instead of falling back to the default
+        ///     (<c>MainSceneLoader.CaptureEthNetworkArg</c>). Command line only, like <see cref="BASE_DOMAIN" />.
+        /// </summary>
+        public const string ETH_NETWORK = "eth-network";
+
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SPAWN_POINT = "spawnpoint";
@@ -37,6 +58,13 @@ namespace Global.AppArgs
 
         // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
         public const string SIGNIN = "signin";
+
+        /// <summary>
+        ///     Referral attribution address (0x…) forwarded by the launcher.
+        ///     Untrusted input: consumers must validate it before use.
+        /// </summary>
+        public const string REFERRER = "referrer";
+
         // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
         public const string AUTH_REQUEST_ID = "authRequestId";
         // See: https://github.com/decentraland/unity-explorer/issues/9524
@@ -58,6 +86,7 @@ namespace Global.AppArgs
         public const string VOICE_CHAT = "voice-chat";
         public const string NEARBY_VOICE_CHAT = "nearby-voice-chat";
         public const string DONATIONS_UI = "donations-ui";
+        public const string BUG_REPORT = "bug-report";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
@@ -100,6 +129,8 @@ namespace Global.AppArgs
 
         public const string DOUBLE_JUMP = "double-jump";
 
+        public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
+
         public const string GLIDING = "gliding";
         public const string POINT_AT = "point-at";
 
@@ -133,13 +164,16 @@ namespace Global.AppArgs
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
         /// <summary>
-        ///     Local scene development only: load assets as asset bundles served by the preview server at
-        ///     {realm}/optimized-assets instead of raw GLTFs. Carries no URL or port — the base is derived
-        ///     from the realm the client already has.
+        ///     Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's
+        ///     embedded abgen sidecar, reading the preview server's content. Carries no URL or port — the
+        ///     content base is derived from the realm the client already has.
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
+
+        /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
+        public const string ABGEN_PIPELINE = "abgen-pipeline";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
@@ -166,6 +200,12 @@ namespace Global.AppArgs
             public const string SESSION_ID = "session_id";
             public const string LAUNCHER_ID = "launcher_anonymous_id";
             public const string CAMPAIGN_ANON_USER_ID = "campaign_anon_user_id";
+        }
+
+        public static class Launcher
+        {
+            /// <summary>Version of the launcher that started the client; launchers older than the flag do not send it.</summary>
+            public const string VERSION = "launcher_version";
         }
     }
 }

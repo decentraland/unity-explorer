@@ -10,7 +10,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class ChatMessagesBusAnalyticsDecorator : IChatMessagesBus
     {
-        private static readonly JArray MENTION_WALLET_IDS = new ();
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{1,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IChatMessagesBus core;
@@ -18,7 +17,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IProfileCache profileCache;
         private readonly SelfProfile selfProfile;
 
-        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
         public ChatMessagesBusAnalyticsDecorator(IChatMessagesBus core, IAnalyticsController analytics, IProfileCache profileCache, SelfProfile selfProfile)
         {
@@ -42,7 +41,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             core.Send(channel, message, origin, timestamp);
 
-            bool isMentionMessage = CheckIfIsMention(message);
+            // Each tracked JObject takes ownership of its own mentions array
+            JArray mentionWalletIds = new ();
+            bool isMentionMessage = CheckIfIsMention(message, mentionWalletIds);
 
             JObject jsonObject = new JObject
                 {
@@ -50,13 +51,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     { "length", message.Length },
                     { "origin", origin.ToStringValue() },
                     { "is_mention", isMentionMessage},
-                    { "mentions", MENTION_WALLET_IDS },
+                    { "mentions", mentionWalletIds },
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
                     // { "emoji_count", emoji_count },
                 };
 
             if (timestamp > 0 && selfProfile is { OwnProfile: not null })
-                jsonObject.Add("message_id", ChatUtils.GetId(selfProfile.OwnProfile.UserId, timestamp));
+                jsonObject.Add("message_id", ChatUtils.GetId(selfProfile.OwnProfile.UserId.Value, timestamp));
 
             if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
                 jsonObject.Add("receiver_id", channel.Id.Id);
@@ -64,12 +65,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (channel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
                 jsonObject.Add("community_id", ChatChannel.GetCommunityIdFromChannelId(channel.Id));
 
-            analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
+            analytics.Track(AnalyticsEvents.Ui.MESSAGE_SENT, jsonObject);
         }
 
-        private bool CheckIfIsMention(string message)
+        private bool CheckIfIsMention(string message, JArray mentionWalletIds)
         {
-            MENTION_WALLET_IDS.Clear();
             var isValidMention = false;
             var matches = USERNAME_REGEX.Matches(message);
 
@@ -83,7 +83,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
                 if (profile != null)
                 {
-                    MENTION_WALLET_IDS.Add(profile.Value.UserId);
+                    // Extract the wallet-address string; JArray.Add(object) boxes without implicit conversion
+                    mentionWalletIds.Add(profile.Value.UserId.Value);
                     //returning a valid mention only if at least one of the mentions are a real user
                     isValidMention = true;
                 }

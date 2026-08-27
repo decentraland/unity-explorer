@@ -33,6 +33,8 @@ namespace DCL.Landscape.Systems
         private readonly MaterialPropertyBlock materialProperties;
         private readonly GrassIndirectRenderer? grassIndirectRenderer;
 
+        private (NativeArray<int> instanceCounts, NativeList<Matrix4x4> transforms)? nativeContainers;
+
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
         private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
         private static readonly int OCCUPANCY_MAP_ID = Shader.PropertyToID("_OccupancyMap");
@@ -99,11 +101,31 @@ namespace DCL.Landscape.Systems
                 return;
             }
 
-            NativeArray<int> instanceCounts = new NativeArray<int>(
-                landscapeData.GroundMeshes.Length, Allocator.TempJob);
+            // Allocated once and never resized: instanceCounts holds one slot per ground mesh kind,
+            // and GroundMeshes is enum-indexed (GroundMeshPiece) with a private setter, so its length
+            // is fixed for the lifetime of the app. transforms is a NativeList and grows on demand.
+            NativeArray<int> instanceCounts;
+            NativeList<Matrix4x4> transforms;
 
-            NativeList<Matrix4x4> transforms = new NativeList<Matrix4x4>(
-                landscapeData.GroundInstanceCapacity, Allocator.TempJob);
+            if (nativeContainers == null)
+            {
+                instanceCounts = new NativeArray<int>(
+                    landscapeData.GroundMeshes.Length, Allocator.Persistent);
+
+                transforms = new NativeList<Matrix4x4>(
+                    landscapeData.GroundInstanceCapacity, Allocator.Persistent);
+
+                nativeContainers = (instanceCounts, transforms);
+            }
+            else
+            {
+                (instanceCounts, transforms) = nativeContainers.Value;
+
+                for (int i = 0; i < instanceCounts.Length; i++)
+                    instanceCounts[i] = 0;
+
+                transforms.Clear();
+            }
 
             var generateGroundJob = new GenerateGroundJob
             {
@@ -160,7 +182,14 @@ namespace DCL.Landscape.Systems
 
                 startInstance += instanceCount;
             }
+        }
 
+        protected override void OnDispose()
+        {
+            if (nativeContainers == null)
+                return;
+
+            (NativeArray<int> instanceCounts, NativeList<Matrix4x4> transforms) = nativeContainers.Value;
             instanceCounts.Dispose();
             transforms.Dispose();
         }

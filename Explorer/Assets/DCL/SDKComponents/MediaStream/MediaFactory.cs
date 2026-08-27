@@ -15,6 +15,7 @@ using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using LiveKit.Rooms;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -32,6 +33,11 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly ISceneData sceneData;
         private readonly IRoom streamingRoom;
+
+        // Lets LivekitPlayer synchronously detect that the room is stopping (realm change) before the FFI
+        // teardown invalidates track handles. A delegate because this assembly (ECS.Unity) cannot
+        // reference the connective room types without an asmdef cycle; MediaFactoryBuilder supplies it.
+        private readonly Func<bool> streamingRoomRunning;
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -44,12 +50,13 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly IUrlResolverService urlResolverService;
 
-        public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
+        public MediaFactory(ISceneData sceneData, IRoom streamingRoom, Func<bool> streamingRoomRunning, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
             AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, AvatarPlaceHolderTextureSource? placeholderSource)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
+            this.streamingRoomRunning = streamingRoomRunning;
             this.placeholderSource = placeholderSource;
             this.mediaPlayerPool = mediaPlayerPool;
             this.videoTexturesPool = videoTexturesPool;
@@ -167,9 +174,9 @@ namespace DCL.SDKComponents.MediaStream
 
             // Fresh player per call: a shared MediaPlayer caused the use-after-destroy crash (UNITY-EXPLORER-MV2).
             MultiMediaPlayer player = address.Match(
-                (streamingRoom, mediaPlayerPool, placeholderSource),
+                (streamingRoom, streamingRoomRunning, mediaPlayerPool, placeholderSource),
                 onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.placeholderSource))
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.streamingRoomRunning, ctx.placeholderSource))
             );
 
             var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))

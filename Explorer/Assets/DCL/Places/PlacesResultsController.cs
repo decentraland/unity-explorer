@@ -185,7 +185,8 @@ namespace DCL.Places
 
         private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo, PlaceCardView placeCardView)
         {
-            var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(placeInfo.id);
+            Option<PlaceId> placeId = PlaceId.New(placeInfo.id);
+            PlacesStateService.PlaceInfoWithConnectedFriends? placeInfoWithConnectedFriends = placeId.Has ? placesStateService.GetPlaceInfoById(placeId.Value) : null;
             mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends?.ConnectedFriends, placeInfoWithConnectedFriends?.LiveEvent))).Forget();
             PlaceClicked?.Invoke(placeInfo, placeCardView, currentPlacesTotalAmount, currentFilters);
         }
