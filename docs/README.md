@@ -2,6 +2,8 @@
 
 Welcome to the official documentation for Unity Explorer — the Decentraland client built on Unity. This wiki covers architecture, development standards, feature guides, and tooling.
 
+> This documentation covers the **`Explorer/`** project. The repository also hosts two sibling roots with their own READMEs: [`avatar-preview-renderer/`](../avatar-preview-renderer/README.md) (Unity WebGL avatar/wearable preview used by the Marketplace, Builder, and authentication screen) and [`unity-shared-dependencies/`](../unity-shared-dependencies/README.md) (UPM package shared by both projects). See the root [README](../README.md#%EF%B8%8F-repository-layout) for the layout, path-scoped CI, and the two release streams.
+
 ---
 
 ## Getting Started

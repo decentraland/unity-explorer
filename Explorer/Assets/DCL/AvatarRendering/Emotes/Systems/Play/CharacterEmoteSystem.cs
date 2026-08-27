@@ -14,7 +14,6 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Multiplayer.Movement;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
@@ -45,10 +44,10 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
+        private const float HORIZONTAL_THRESHOLD_SQ = 0.1f * 0.1f;
+
         private static readonly string SCENE_EMOTE_PREFIX_WITH_COLON = GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
 
-        // todo: use this to add nice Debug UI to trigger any emote?
-        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
 
         private readonly IEmoteStorage emoteStorage;
@@ -62,14 +61,12 @@ namespace DCL.AvatarRendering.Emotes.Play
             IEmoteStorage emoteStorage,
             IEmotesMessageBus messageBus,
             EmotePlayer emotePlayer,
-            IDebugContainerBuilder debugContainerBuilder,
             bool localSceneDevelopment,
             IScenesCache scenesCache) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.emotePlayer = emotePlayer;
-            this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
             this.localSceneDevelopment = localSceneDevelopment;
         }
@@ -82,6 +79,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMoveToWithDurationQuery(World);
             CancelEmotesByMovementInputQuery(World);
+            CancelParkedSceneEmoteIntentByMovementInputQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World, t);
             BroadcastEmoteOnLocalPlayerQuery(World);
@@ -215,8 +213,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (!emoteComponent.IsPlayingEmote) return;
 
-            const float HORIZONTAL_THRESHOLD_SQ = 0.1f * 0.1f;
-
             float horizontalSpeedSq = movementInputComponent.Axes.sqrMagnitude;
             bool shouldCancelEmote = horizontalSpeedSq > HORIZONTAL_THRESHOLD_SQ || jumpInputComponent.IsPressed;
 
@@ -225,6 +221,26 @@ namespace DCL.AvatarRendering.Emotes.Play
             ReportHub.Log(ReportCategory.EMOTE, $"CancelEmotesByMovementInput() {profile.UserId} Stopping emote");
 
             StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
+        }
+
+        // A parked intent disables every cancel query, so a looping emote soft-locks the player until it consumes (#9485).
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
+        private void CancelParkedSceneEmoteIntentByMovementInput(
+            Entity entity,
+            ref CharacterEmoteComponent emoteComponent,
+            ref CharacterEmoteIntent emoteIntent,
+            in IAvatarView avatarView,
+            ref JumpInputComponent jumpInputComponent,
+            ref MovementInputComponent movementInputComponent)
+        {
+            if (emoteIntent.TriggerSource != TriggerSource.Scene || emoteIntent.Mask != AvatarEmoteMask.AemFullBody) return;
+
+            bool wantsToMove = movementInputComponent.Axes.sqrMagnitude > HORIZONTAL_THRESHOLD_SQ || jumpInputComponent.IsPressed;
+            if (!wantsToMove) return;
+
+            StopEmote(entity, ref emoteComponent, avatarView, EmoteState.EsInterrupted);
+            World.Remove<CharacterEmoteIntent>(entity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -301,6 +317,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                      avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
                     return;
 
+                if (emoteIntent.UpdatePlayTimeout(dt))
+                {
+                    ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} timeout reached.");
+                    World.Remove<CharacterEmoteIntent>(entity);
+                    return;
+                }
+
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
                     if (emote.IsLoading)
@@ -322,23 +345,20 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
-                    // Fixes https://github.com/decentraland/unity-explorer/issues/6531
-                    // Rarely happens for an unknown reason that emote.AssetResults[bodyShape] is null, provoking the emote intent to never finish,
-                    // thus props of the previous emote cannot be disposed either.
-                    // By setting a timeout we force unstuck the process
-                    if (emoteIntent.UpdatePlayTimeout(dt))
-                    {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} timeout reached.");
-                        World.Remove<CharacterEmoteIntent>(entity);
-                        return;
-                    }
-
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
                     StreamableLoadingResult<AttachmentRegularAsset>? assetResult = emote.AssetResults[bodyShape];
 
-                    // Loading not complete
                     if (assetResult == null)
+                    {
+                        // Nothing restores an asset slot stripped by the memory sweep — without a re-request the intent parks forever
+                        if (!emoteIntent.AssetReloadRequested)
+                        {
+                            emoteIntent.AssetReloadRequested = true;
+                            CreateEmotePromise(emoteId, bodyShape, emoteIntent.Mask);
+                        }
+
                         return;
+                    }
 
                     StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = assetResult.Value;
                     GameObject? mainAsset;
@@ -461,7 +481,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             in CharacterAnimationComponent animation,
             in StunComponent stun,
             in MovementInputComponent input,
-            in HeadIKComponent headIK,
+            in HeadIKComponent headIk,
             in HandPointAtComponent pointAt)
         {
             var playerState = new NetworkMovementMessage
@@ -477,9 +497,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 isSliding = animation.States.IsSliding,
                 isPointingAt = pointAt.IsPointing,
                 pointAtWorldHitPoint = pointAt.WorldHitPoint,
-                headIKYawEnabled = headIK.YawEnabled,
-                headIKPitchEnabled = headIK.PitchEnabled,
-                headYawAndPitch = headIK.GetHeadYawAndPitch(),
+                headIKYawEnabled = headIk.YawEnabled,
+                headIKPitchEnabled = headIk.PitchEnabled,
+                headYawAndPitch = headIk.GetHeadYawAndPitch(),
                 movementKind = input.Kind,
                 animState = new AnimationStates
                 {
@@ -539,7 +559,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)
         {
             if (!deleteEntityIntention.DeferDeletion)
-                messageBus.OnPlayerRemoved(profile.UserId);
+                messageBus.OnPlayerRemoved(profile.UserId.Value);
         }
 
         private void CreateEmotePromise(URN urn, BodyShape bodyShape, AvatarEmoteMask mask)

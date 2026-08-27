@@ -308,6 +308,8 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
+            bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
+
             // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
             // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
             // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
@@ -328,7 +330,8 @@ namespace Global.Dynamic
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
                 cliOptimizedAssetsUrl,
-                customBaseDomain);
+                customBaseDomain,
+                cliAbgenPipeline);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);

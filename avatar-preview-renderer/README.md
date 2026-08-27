@@ -1,5 +1,7 @@
 # Avatar Preview Renderer
 
+Part of the [unity-explorer monorepo](../README.md#%EF%B8%8F-repository-layout): every merge to `dev` touching this folder auto-releases a `avatar-preview-renderer/vX.Y.Z` tag, which [wearable-preview](https://github.com/decentraland/wearable-preview) vendors via `npm run update-unity` (see [Build & CI § Avatar Preview Renderer](../docs/build-and-ci.md#avatar-preview-renderer)).
+
 This project is responsible for rendering previews of the user profile and wearables used on the Decentraland Marketplace, Authentication screen, Profile page, Builder, and Configurator.
 
 It builds as a Web target, uses WebGPU as it's rendering backend, and shares the Toon and Scene shaders with the Explorer client so we get the same visual representation as the users will see in the game
