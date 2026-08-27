@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -17,6 +18,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
+        private readonly SplashScreen splashScreen;
         private readonly LoginSelectionWelcomeAuthView view;
 
         private Exception? loginException;
@@ -26,7 +28,8 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider,
+            SplashScreen splashScreen) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionWelcomeAuthView;
 
@@ -34,11 +37,16 @@ namespace DCL.AuthenticationScreenFlow
             this.controller = controller;
             this.currentState = currentState;
             this.compositeWeb3Provider = compositeWeb3Provider;
+            this.splashScreen = splashScreen;
         }
 
         public new void Enter()
         {
             base.Enter();
+
+            if (splashScreen != null)
+                splashScreen.FadeOutAndHide();
+
             loginException = null;
 
             currentState.Value = AuthStatus.LoginSelectionScreen;
