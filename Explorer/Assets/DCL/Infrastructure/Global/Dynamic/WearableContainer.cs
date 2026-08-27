@@ -33,7 +33,7 @@ namespace Global.Dynamic
 
         public IThirdPartyNftProviderSource ThirdPartyNftProviderSource { get; }
 
-        public URLDomain BuilderContentURL { get; }
+        public URLDomain BuilderContentUrl { get; }
 
         public IEventBus EmotesEventBus { get; }
 
@@ -50,7 +50,7 @@ namespace Global.Dynamic
             IEmoteProvider emoteProvider,
             ApplicationParametersWearablesProvider wearablesProvider,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
-            URLDomain builderContentURL,
+            URLDomain builderContentUrl,
             IEventBus emotesEventBus,
             EmoteWheelShortcutHandler emoteWheelShortcutHandler,
             IBackpackEventBus backpackEventBus,
@@ -62,7 +62,7 @@ namespace Global.Dynamic
             EmoteProvider = emoteProvider;
             WearablesProvider = wearablesProvider;
             ThirdPartyNftProviderSource = thirdPartyNftProviderSource;
-            BuilderContentURL = builderContentURL;
+            BuilderContentUrl = builderContentUrl;
             EmotesEventBus = emotesEventBus;
             EmoteWheelShortcutHandler = emoteWheelShortcutHandler;
             BackpackEventBus = backpackEventBus;
@@ -85,8 +85,8 @@ namespace Global.Dynamic
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics.Controller)
                 : coreBackpackEventBus;
 
-            var builderDTOsURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiDtos));
-            var builderContentURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiContent));
+            var builderDtosUrl = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiDtos));
+            var builderContentUrl = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiContent));
 
             // If we have many undesired delays when using the third-party providers, it might be useful to cache it at app's bootstrap
             // So far, the chance of using it is quite low, so it's preferable to do it lazy avoiding extra requests & memory allocations
@@ -97,10 +97,10 @@ namespace Global.Dynamic
             staticContainer.CacheCleaner.Register(trimmedEmoteCatalog);
 
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
-                new EcsEmoteProvider(globalWorld, identityCache), builderDTOsURL.Value);
+                new EcsEmoteProvider(globalWorld, identityCache), builderDtosUrl.Value);
 
             var wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
-                new ECSWearablesProvider(identityCache, globalWorld), builderDTOsURL.Value);
+                new ECSWearablesProvider(identityCache, globalWorld), builderDtosUrl.Value);
 
             return new WearableContainer(
                 new WearableStorage(),
@@ -109,7 +109,7 @@ namespace Global.Dynamic
                 emoteProvider,
                 wearablesProvider,
                 thirdPartyNftProviderSource,
-                builderContentURL,
+                builderContentUrl,
                 emotesEventBus,
                 new EmoteWheelShortcutHandler(emotesEventBus),
                 backpackEventBus,
@@ -125,7 +125,7 @@ namespace Global.Dynamic
                 WearableCatalog,
                 trimmedWearableCatalog,
                 bootstrapContainer.Analytics.EntitiesAnalytics,
-                BuilderContentURL.Value);
+                BuilderContentUrl.Value);
 
         public EmotePlugin CreateEmotePlugin(
             StaticContainer staticContainer,
@@ -151,7 +151,7 @@ namespace Global.Dynamic
                 staticContainer.InputBlock,
                 globalWorld,
                 playerEntity,
-                BuilderContentURL.Value,
+                BuilderContentUrl.Value,
                 ThumbnailProvider,
                 staticContainer.ScenesCache,
                 bootstrapContainer.DecentralandUrlsSource,

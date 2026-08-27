@@ -76,7 +76,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             Entity entity = CreateSuspendedMaskedEmote(loop: false);
 
-            system!.Update(0);
+            system.Update(0);
 
             CharacterMaskedEmoteComponent masked = world.Get<CharacterMaskedEmoteComponent>(entity);
 
@@ -92,7 +92,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             Entity entity = CreateSuspendedMaskedEmote(loop: true);
 
-            system!.Update(0);
+            system.Update(0);
 
             CharacterMaskedEmoteComponent masked = world.Get<CharacterMaskedEmoteComponent>(entity);
 
@@ -118,7 +118,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 });
 
             for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
-                system!.Update(1f);
+                system.Update(1f);
 
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(strandedEntity),
                 "A masked CharacterEmoteIntent whose emote never arrives in storage must expire after StreamableLoadingDefaults.TIMEOUT seconds.");
