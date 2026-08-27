@@ -45,7 +45,7 @@ namespace DCL.InWorldCamera.Systems
         private ScreenshotMetadata? metadata;
         private string currentSource;
 
-        private CaptureScreenshotSystem(
+        internal CaptureScreenshotSystem(
             World world,
             ScreenRecorder recorder,
             Entity playerEntity,
@@ -100,30 +100,36 @@ namespace DCL.InWorldCamera.Systems
             metadata = metadataBuilder.GetMetadataAndReset();
 
             if (screenshot == null)
+            {
+                hudController.SetViewCanvasActive(true);
                 return;
+            }
 
 
             ProcessCapturedScreenshotAsync(screenshot, metadata!, currentSource, ctx.Token).Forget();
             return;
 
-            async UniTaskVoid ProcessCapturedScreenshotAsync(Texture2D capture, ScreenshotMetadata meta, string scene, CancellationToken ct)
+            async UniTaskVoid ProcessCapturedScreenshotAsync(Texture2D capture, ScreenshotMetadata meta, string source, CancellationToken ct)
             {
                 try
                 {
-                    await cameraReelStorageService.UploadScreenshotAsync(capture, meta, scene, ct);
+                    await cameraReelStorageService.UploadScreenshotAsync(capture, meta, source, ct);
 
+                    hudController.SetViewCanvasActive(true);
                     hudController.PlayScreenshotFX(capture, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
                     hudController.DebugCapture(capture, meta);
                 }
                 catch (OperationCanceledException) { }
                 catch (ScreenshotLimitReachedException)
                 {
-                    // Swallowed since the UI already shows that the user reached their limit; this just prevents the camera from closing
+                    hudController.SetViewCanvasActive(true);
                 }
                 catch (Exception e)
                 {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(SCREENSHOT_UPLOAD_ERROR_MESSAGE));
                     ReportHub.LogException(e, ReportCategory.CAMERA_REEL);
+
+                    hudController.SetViewCanvasActive(true);
 
                     // Wait for cleanup query
                     await UniTask.Yield();
@@ -132,10 +138,6 @@ namespace DCL.InWorldCamera.Systems
                         return;
 
                     RequestDisableInWorldCamera();
-                }
-                finally
-                {
-                    hudController.SetViewCanvasActive(true);
                 }
             }
         }
