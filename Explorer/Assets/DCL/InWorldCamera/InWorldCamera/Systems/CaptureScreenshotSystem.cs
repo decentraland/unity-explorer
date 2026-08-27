@@ -107,6 +107,10 @@ namespace DCL.InWorldCamera.Systems
 
 
             ProcessCapturedScreenshotAsync(screenshot, metadata!, currentSource, ctx.Token).Forget();
+            hudController.SetViewCanvasActive(true);
+            hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
+            hudController.DebugCapture(screenshot, metadata);
+
             return;
 
             async UniTaskVoid ProcessCapturedScreenshotAsync(Texture2D capture, ScreenshotMetadata meta, string source, CancellationToken ct)
@@ -114,22 +118,16 @@ namespace DCL.InWorldCamera.Systems
                 try
                 {
                     await cameraReelStorageService.UploadScreenshotAsync(capture, meta, source, ct);
-
-                    hudController.SetViewCanvasActive(true);
-                    hudController.PlayScreenshotFX(capture, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
-                    hudController.DebugCapture(capture, meta);
                 }
                 catch (OperationCanceledException) { }
                 catch (ScreenshotLimitReachedException)
                 {
-                    hudController.SetViewCanvasActive(true);
+                    // Swallowed since the UI already shows that the user reached their limit; this just prevents the camera from closing
                 }
                 catch (Exception e)
                 {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(SCREENSHOT_UPLOAD_ERROR_MESSAGE));
                     ReportHub.LogException(e, ReportCategory.CAMERA_REEL);
-
-                    hudController.SetViewCanvasActive(true);
 
                     // Wait for cleanup query
                     await UniTask.Yield();
