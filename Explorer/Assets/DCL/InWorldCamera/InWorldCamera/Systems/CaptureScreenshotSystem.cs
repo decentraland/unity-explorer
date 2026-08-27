@@ -105,8 +105,8 @@ namespace DCL.InWorldCamera.Systems
                 return;
             }
 
-
             ProcessCapturedScreenshotAsync(screenshot, metadata!, currentSource, ctx.Token).Forget();
+
             hudController.SetViewCanvasActive(true);
             hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
             hudController.DebugCapture(screenshot, metadata);
