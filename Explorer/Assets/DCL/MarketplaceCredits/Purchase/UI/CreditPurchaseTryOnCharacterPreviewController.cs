@@ -4,7 +4,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
 using System.Collections.Generic;
-using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.MarketplaceCredits.Purchase.UI
@@ -47,7 +46,11 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             previewAvatarModel.Wearables = shortenedWearables;
             previewAvatarModel.Emotes?.Clear();
 
-            Initialize(avatar, Vector3.zero);
+            Initialize(avatar, CharacterPreviewUtils.CREDIT_PURCHASE_PREVIEW_POSITION);
+
+            if (!string.IsNullOrEmpty(purchasedCategory))
+                previewAvatarModel.ForceRenderCategories.Add(purchasedCategory);
+
             OnShow();
         }
 
@@ -63,7 +66,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             previewAvatarModel.Emotes.Clear();
             previewAvatarModel.Emotes.Add(emoteUrn);
 
-            Initialize(avatar, Vector3.zero);
+            Initialize(avatar, CharacterPreviewUtils.CREDIT_PURCHASE_PREVIEW_POSITION);
             OnShow();
             PlayEmote(emoteUrn);
         }

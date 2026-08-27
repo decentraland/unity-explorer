@@ -40,16 +40,18 @@ namespace DCL.Passport.Modules
         private readonly IMVCManager mvcManager;
         private readonly MarketplaceShopAPIClient shopApiClient;
         private readonly UnityAppWebBrowser webBrowser;
+        private readonly Action stopEmotePreview;
         private readonly bool isEnabled;
         private readonly Dictionary<string, ShopListingDto?> listingCache = new ();
 
         public event Action<string, string, string>? FellBackToWeb;
 
-        public CreditPurchaseBuyHandler(IMVCManager mvcManager, MarketplaceShopAPIClient shopApiClient, UnityAppWebBrowser webBrowser, bool isEnabled)
+        public CreditPurchaseBuyHandler(IMVCManager mvcManager, MarketplaceShopAPIClient shopApiClient, UnityAppWebBrowser webBrowser, Action stopEmotePreview, bool isEnabled)
         {
             this.mvcManager = mvcManager;
             this.shopApiClient = shopApiClient;
             this.webBrowser = webBrowser;
+            this.stopEmotePreview = stopEmotePreview;
             this.isEnabled = isEnabled;
         }
 
@@ -133,6 +135,8 @@ namespace DCL.Passport.Modules
                 marketplaceUrl,
                 source,
                 itemUrn);
+
+            stopEmotePreview();
 
             try { await mvcManager.ShowAsync(CreditPurchaseModalController.IssueCommand(modalParams), ct); }
             catch (OperationCanceledException) { }

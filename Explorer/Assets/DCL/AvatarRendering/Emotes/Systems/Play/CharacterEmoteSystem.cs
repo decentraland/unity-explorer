@@ -324,6 +324,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                     return;
                 }
 
+                // The AvatarBase is attached before wearables and skinning are instantiated: the intent stays parked
+                // until then so the clip never drives (and the Animator never rebinds on) a half-built avatar.
+                if (avatarShapeComponent.IsDirty)
+                    return;
+
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
                     if (emote.IsLoading)
