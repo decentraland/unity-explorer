@@ -49,6 +49,7 @@ namespace Global.Tests.EditMode
         [TestCase("http://127.0.0.1:8000")]
         [TestCase("http://localhost:8000")]
         [TestCase("https://localhost")]
+        [TestCase("http://[::1]:8000")]
         [TestCase("https://sdk-team-cdn.decentraland.org")]
         [TestCase("https://sdk-test-scenes.decentraland.zone")]
         [TestCase("https://realm-provider-ea.decentraland.org/main")]

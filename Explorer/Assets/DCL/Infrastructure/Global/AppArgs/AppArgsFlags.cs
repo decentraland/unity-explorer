@@ -24,6 +24,13 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
 
         /// <summary>
+        ///     Lets a realm's comms adapter be served over cleartext http, as an e2e fixture's is, provided it
+        ///     resolves to loopback. Command line only, and deliberately absent from the deep-link allowlist:
+        ///     it lowers a transport guarantee, which is never a link's call to make.
+        /// </summary>
+        public const string ACCEPT_UNTRUSTED_REALM = "accept-untrusted-realm";
+
+        /// <summary>
         ///     Routes every supported service through this gateway origin instead of <c>gateway.{base-domain}</c>,
         ///     and forces routing on: naming a gateway is the opt-in the <c>use-gateway</c> feature flag would
         ///     otherwise carry, so the flag is ignored. Command line only — it aims the session's whole

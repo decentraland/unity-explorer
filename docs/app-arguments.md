@@ -157,6 +157,19 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
+### `accept-untrusted-realm`
+**Type:** Bool (presence flag)
+**Description:** Lets the realm's global comms adapter be served over cleartext `http://`, which an e2e fixture's is (`fixed-adapter:signed-login:http://127.0.0.1:8080/...`). The adapter must still resolve to loopback — `localhost`, `127.0.0.1` or `[::1]` — so a remote `http://` adapter stays rejected, and a host that merely reads as loopback (`127.0.0.1.example.com`, `127.0.0.1@example.com`) does not qualify. It changes nothing else: TLS validation, the untrusted-realm consent prompt and the `https`/`wss` paths are all untouched.
+
+**Command-line only.** It lowers a transport guarantee, which is never a link's call to make, so it is absent from the deep-link allowlist and dropped from `decentraland://` links.
+
+**Usage:**
+```bash
+--accept-untrusted-realm
+```
+
+---
+
 ### `local-scene`
 **Type:** Bool
 **Description:** Enables local scene development mode.

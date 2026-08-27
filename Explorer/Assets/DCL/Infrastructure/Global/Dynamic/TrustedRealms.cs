@@ -1,5 +1,6 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
+using Utility.Networking;
 
 namespace Global.Dynamic
 {
@@ -11,14 +12,13 @@ namespace Global.Dynamic
     public static class TrustedRealms
     {
         /// <summary>
-        ///     Trusted verbatim, any scheme. Loopback only, plus production hosts one by one —
+        ///     Trusted verbatim, any scheme: production hosts one by one —
         ///     <see cref="IDecentralandUrlsSource.ORG_DOMAIN" /> must never join <see cref="TRUSTED_DOMAINS" />.
         ///     Never add a <see cref="IDecentralandUrlsSource.ZONE_DOMAIN" /> host: the domain already covers it.
+        ///     Loopback is not listed: <see cref="LoopbackUrls" /> already answers for it.
         /// </summary>
         private static readonly string[] TRUSTED_HOSTS =
         {
-            "127.0.0.1",
-            "localhost",
             "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN,
             "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN,
             "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN,
@@ -40,12 +40,16 @@ namespace Global.Dynamic
         {
             string host = realm.Host;
 
+            // Loopback answers only to whoever already runs on this machine, so it needs no scheme condition.
+            if (LoopbackUrls.IsLoopbackHost(host))
+                return true;
+
             foreach (string trustedHost in TRUSTED_HOSTS)
                 if (string.Equals(host, trustedHost, StringComparison.OrdinalIgnoreCase))
                     return true;
 
             // Domain trust is https-only: over cleartext a network attacker answers as any host under the
-            // domain. The exact hosts opt out — loopback has no meaningful network to attack.
+            // domain. Loopback and the exact hosts are matched above, so they keep any scheme.
             if (!string.Equals(realm.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
                 return false;
 
