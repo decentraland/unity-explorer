@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -12,7 +13,7 @@ using Utility;
 
 namespace DCL.Passport.Fields
 {
-    public class EquippedItemPassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class EquippedItemPassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
         private const float ANIMATION_TIME = 0.1f;
@@ -79,7 +80,13 @@ namespace DCL.Passport.Fields
 
         public URN ItemId { get; set; }
 
-        private CancellationTokenSource cts;
+        public bool CanHover { get; set; } = true;
+
+        public Action<URN>? EmoteClicked;
+
+        public Action? WearableClicked;
+
+        private CancellationTokenSource? cts;
 
         private void Awake()
         {
@@ -87,15 +94,37 @@ namespace DCL.Passport.Fields
             ViewButton.onClick.AddListener(() => UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio));
         }
 
+        private void OnDisable()
+        {
+            cts?.SafeCancelAndDispose();
+            cts = null;
+            ContainerTransform.localScale = Vector3.one;
+            HoverBackgroundTransform.localScale = Vector3.zero;
+            HoverBackgroundTransform.gameObject.SetActive(false);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (!CanHover) return;
+
             AnimateHover();
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (!CanHover) return;
+
             AnimateExit();
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button != PointerEventData.InputButton.Left)
+                return;
+
+            EmoteClicked?.Invoke(ItemId);
+            WearableClicked?.Invoke();
         }
 
         public void SetAsLoading(bool isLoading)

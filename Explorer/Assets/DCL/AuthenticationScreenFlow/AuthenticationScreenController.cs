@@ -92,6 +92,7 @@ namespace DCL.AuthenticationScreenFlow
         internal void RaiseProfileFinalized() =>
             ProfileFinalized?.Invoke();
 
+        // Null until OnViewInstantiated: the view is created lazily on first Show and may never be instantiated.
         private MVCStateMachine<AuthStateBase>? fsm;
         private AuthenticationScreenAudio? audio;
 

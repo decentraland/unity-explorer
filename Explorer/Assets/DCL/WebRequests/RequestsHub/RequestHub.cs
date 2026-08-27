@@ -77,7 +77,8 @@ namespace DCL.WebRequests.RequestsHub
 
         public void SetKTXEnabled(bool enabled)
         {
-            ktxEnabled = enabled;
+            // The remote flag cannot know whether this machine can load the ktx_unity native plugin; && keeps the probe lazy while off.
+            ktxEnabled = enabled && KtxNativeSupport.IsSupported;
         }
     }
 }

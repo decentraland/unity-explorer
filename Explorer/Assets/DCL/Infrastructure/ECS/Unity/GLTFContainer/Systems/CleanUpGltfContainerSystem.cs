@@ -10,6 +10,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -77,6 +78,10 @@ namespace ECS.Unity.GLTFContainer.Systems
 
             component.RootGameObject = null;
             component.Promise.ForgetLoading(World);
+
+            // Clear the cached result so a repeated release (per-frame delete intention, scene teardown)
+            // cannot dereference the returned asset a second time and dispose it while it is in use
+            component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
         }
 
     }

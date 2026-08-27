@@ -398,7 +398,7 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData,
                 placesAndEventsContainer.PlacesAPIService,
-                bootstrapContainer.Environment,
+                bootstrapContainer.EthereumNetwork,
                 bootstrapContainer.Analytics.Controller,
                 localSceneDevelopment,
                 dynamicWorldParams.EnableAnalytics);
@@ -440,7 +440,7 @@ namespace Global.Dynamic
             MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var marketplaceShopApiClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.Environment);
+            var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.EthereumNetwork);
 
             CreditsFeatureAccess.Initialize(new CreditsFeatureAccess(identityCache, ct));
 
@@ -532,7 +532,7 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, uiShellContainer.EventSystem, staticContainer.ScenesCache, uiShellContainer.MvcManager, menusAccessFacade, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 wearableContainer.CreateWearablePlugin(staticContainer, bootstrapContainer),
-                wearableContainer.CreateEmotePlugin(staticContainer, bootstrapContainer, assetsProvisioner, debugBuilder, uiShellContainer, profileContainer, commsContainer,
+                wearableContainer.CreateEmotePlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, profileContainer, commsContainer,
                     multiplayerEmotesMessageBus, globalWorld, playerEntity),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
@@ -894,7 +894,7 @@ namespace Global.Dynamic
                     localSceneDevelopment));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
-                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
+                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
