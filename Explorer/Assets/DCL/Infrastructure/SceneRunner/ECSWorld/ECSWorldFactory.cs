@@ -21,6 +21,7 @@ using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.EngineInfo;
 using ECS.Unity.ExplorerUiEvents;
 using ECS.Unity.Systems;
+using System;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
 using Utility.Multithreading;
@@ -34,6 +35,7 @@ namespace SceneRunner.ECSWorld
         private readonly IPartitionSettings partitionSettings;
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
+        private readonly Func<bool> isLoadingScreenOn;
 
         public ECSWorldFactory(
             ECSWorldSingletonSharedDependencies sharedDependencies,
@@ -48,6 +50,7 @@ namespace SceneRunner.ECSWorld
             this.systemsDependencies = systemsDependencies;
             this.partitionSettings = partitionSettings;
             this.cameraSamplingData = cameraSamplingData;
+            isLoadingScreenOn = systemsDependencies.LoadingStatus.IsLoadingScreenOn;
         }
 
         public ECSWorldFacade CreateWorld(in ECSWorldFactoryArgs args)
@@ -82,7 +85,7 @@ namespace SceneRunner.ECSWorld
             // Prioritization
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), persistentEntities.SceneRoot);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
-            WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+            WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, isLoadingScreenOn);
             WriteExplorerUiEventsSystem.InjectToWorld(ref builder, sharedDependencies.ExplorerUiEvents, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
 
             ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);
