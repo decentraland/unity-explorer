@@ -641,6 +641,23 @@ jobs:
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/cloudbuild/build.py --cancel || true
 
+      # the app-local Visual C++ runtime (deployed by VCRedistBuildPostprocessor)
+      # is what lets the player start without the VC++ Redistributable installed
+      - name: Verify app-local VC++ runtime
+        if: matrix.target == 'windows64'
+        run: |
+          set -euo pipefail
+          for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+            if [[ ! -f "build/$dll" ]]; then
+              echo "::error::$dll missing from build/ (VCRedistBuildPostprocessor regression?)"
+              exit 1
+            fi
+            if [[ "$(head -c2 "build/$dll")" != "MZ" ]]; then
+              echo "::error::$dll is not a PE image (Git LFS pointer?)"
+              exit 1
+            fi
+          done
+
       - name: Locate Windows main executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
         run: |
