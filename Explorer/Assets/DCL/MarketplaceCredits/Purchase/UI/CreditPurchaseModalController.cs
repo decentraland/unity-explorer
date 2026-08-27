@@ -401,7 +401,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             try
             {
-                previewController.OnBeforeShow();
 
                 Profile? profile = await selfProfile.ProfileAsync(ct);
 
