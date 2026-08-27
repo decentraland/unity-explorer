@@ -13,6 +13,7 @@ using DCL.Time;
 using DCL.Utility;
 using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
@@ -42,7 +43,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var launchMode = ILaunchMode.LOCAL_SCENE_DEVELOPMENT;
             var urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, launchMode);
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Org);
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), EthereumNetwork.Mainnet);
             var totalBudget = 15;
             var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)), new RealmClock());
 

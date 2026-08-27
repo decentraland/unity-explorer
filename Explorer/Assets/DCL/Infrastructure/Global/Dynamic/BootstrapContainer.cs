@@ -18,6 +18,7 @@ using DCL.Utility;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
@@ -64,6 +65,13 @@ namespace Global.Dynamic
         public DecentralandEnvironment Environment { get; private set; }
 
         /// <summary>
+        ///     The chain this run signs and transacts against, resolved once from the environment and
+        ///     <c>--eth-network</c>. Anything needing a chain reads it here instead of deriving one from
+        ///     <see cref="Environment" />.
+        /// </summary>
+        public EthereumNetwork EthereumNetwork { get; private set; }
+
+        /// <summary>
         ///     The loopback endpoint reserved for the local-ab abgen server (the URL sources already point
         ///     at it). Non-null only in local scene development with local asset bundles —
         ///     DynamicWorldContainer registers AbgenSidecarPlugin, which owns the server's whole lifecycle,
@@ -101,6 +109,7 @@ namespace Global.Dynamic
             IDiskCache<PartialLoadingState> partialsDiskCache,
             World world,
             DecentralandEnvironment decentralandEnvironment,
+            EthereumNetwork ethereumNetwork,
             DCLVersion dclVersion,
             string? localAbBaseUrl,
             CancellationToken ct)
@@ -121,6 +130,7 @@ namespace Global.Dynamic
                 DebugSettings = debugSettings,
                 VolumeBus = new VolumeBus(),
                 Environment = decentralandEnvironment,
+                EthereumNetwork = ethereumNetwork,
                 LocalAbBaseUrl = localAbBaseUrl
             };
 
@@ -146,10 +156,10 @@ namespace Global.Dynamic
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START));
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct);
                 container.WebRequestsContainer = webRequestsContainer;
-                var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
+                var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController, decentralandUrlsSource), decentralandUrlsSource);
 
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, ethereumNetwork, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -202,7 +212,7 @@ namespace Global.Dynamic
             UnityAppWebBrowser webBrowser,
             AnalyticsContainer container,
             IDecentralandUrlsSource decentralandUrlsSource,
-            DecentralandEnvironment dclEnvironment,
+            EthereumNetwork ethereumNetwork,
             IAppArgs appArgs,
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
@@ -222,7 +232,7 @@ namespace Global.Dynamic
             // Create ThirdWeb authenticator (Email + OTP)
             var thirdWebAuth = new ThirdWebAuthenticator(
                 decentralandUrlsSource,
-                dclEnvironment,
+                ethereumNetwork,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 web3AccountFactory,
@@ -258,7 +268,7 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
-                dclEnvironment,
+                ethereumNetwork,
                 identityExpirationDuration
             );
 

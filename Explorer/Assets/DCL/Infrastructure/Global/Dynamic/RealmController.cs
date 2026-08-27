@@ -196,7 +196,9 @@ namespace Global.Dynamic
                 realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
                     result.content.publicUrl);
             }
-            catch (OperationCanceledException) { }
+            // The previous realm is already unloaded at this point: cancellation must propagate
+            // so callers don't treat a half-configured realm as a successful change
+            catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
                 ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
@@ -378,13 +380,24 @@ namespace Global.Dynamic
                 var uri = new Uri(realm.Value);
                 hostname = $"{uri.Host}{uri.AbsolutePath}";
             }
+            else if (about.comms != null)
+                hostname = new Uri(realm.Value).Host;
             else
-                hostname = about.comms == null
+            {
+                // Consider it as the "main" realm which shares the comms with many catalysts
+                string realmProviderDomain = environment switch
+                                             {
+                                                 // A custom deployment runs its own realm provider; grouping its comms
+                                                 // under decentraland.org would drop its players into decentraland's
+                                                 // main-realm island.
+                                                 DecentralandEnvironment.Custom => decentralandUrlsSource.BaseDomain,
 
-                    // Consider it as the "main" realm which shares the comms with many catalysts
-                    // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
-                    ? "realm-provider." + IDecentralandUrlsSource.ORG_DOMAIN
-                    : new Uri(realm.Value).Host;
+                                                 // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
+                                                 _ => IDecentralandUrlsSource.ORG_DOMAIN,
+                                             };
+
+                hostname = "realm-provider." + realmProviderDomain;
+            }
 
             return hostname;
         }

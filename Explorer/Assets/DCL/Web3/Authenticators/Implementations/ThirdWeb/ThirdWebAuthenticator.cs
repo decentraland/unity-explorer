@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
+using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
@@ -18,22 +19,6 @@ namespace DCL.Web3.Authenticators
         private const string BUNDLE_ID = "com.Decentraland";
         private const string SDK_VERSION = "6.0.5";
 
-        /// <summary>
-        ///     RPC overrides for different chains. Uses Decentraland RPC endpoints.
-        /// </summary>
-        private static readonly Dictionary<BigInteger, string> RPC_OVERRIDES = new ()
-        {
-            { 1, "https://rpc.decentraland.org/mainnet" }, // Ethereum Mainnet
-            { 11155111, "https://rpc.decentraland.org/sepolia" }, // Ethereum Sepolia
-            { 137, "https://rpc.decentraland.org/polygon" }, // Polygon Mainnet
-            { 80002, "https://rpc.decentraland.org/amoy" }, // Polygon Amoy
-            { 42161, "https://rpc.decentraland.org/arbitrum" }, // Arbitrum Mainnet
-            { 10, "https://rpc.decentraland.org/optimism" }, // Optimism Mainnet
-            { 43114, "https://rpc.decentraland.org/avalanche" }, // Avalanche Mainnet
-            { 56, "https://rpc.decentraland.org/binance" }, // BSC Mainnet
-            { 250, "https://rpc.decentraland.org/fantom" }, // Fantom Mainnet
-        };
-
         private readonly ThirdWebLoginService loginService;
         private readonly ThirdWebEthereumApi ethereumApi;
 
@@ -47,7 +32,7 @@ namespace DCL.Web3.Authenticators
 
         internal ThirdWebAuthenticator(
             IDecentralandUrlsSource decentralandUrlsSource,
-            DecentralandEnvironment environment,
+            EthereumNetwork ethereumNetwork,
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
             IWeb3AccountFactory web3AccountFactory,
@@ -55,6 +40,8 @@ namespace DCL.Web3.Authenticators
             int? identityExpirationDuration = null,
             string? guestSessionIdOverride = null)
         {
+            Dictionary<BigInteger, string> rpcOverrides = ChainRpcOverrides(decentralandUrlsSource);
+
             var thirdwebClient = ThirdwebClient.Create(
                 CLIENT_ID,
                 bundleId: BUNDLE_ID,
@@ -63,11 +50,40 @@ namespace DCL.Web3.Authenticators
                 sdkOs: Application.platform.ToString(),
                 sdkPlatform: "unity",
                 sdkVersion: SDK_VERSION,
-                rpcOverrides: RPC_OVERRIDES
+                rpcOverrides: rpcOverrides
             );
 
             loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration, guestSessionIdOverride);
-            ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, environment, RPC_OVERRIDES);
+            ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, ethereumNetwork, rpcOverrides);
+        }
+
+        /// <summary>
+        ///     Where the embedded wallet reaches each chain it may transact on, keyed by chain id. These are
+        ///     Decentraland's own RPC proxy rather than a chain's public node, so they follow the base domain like
+        ///     every other backend host: a <c>--base-domain</c> deployment serves its chains from
+        ///     <c>rpc.&lt;its domain&gt;</c>.
+        ///     <para>
+        ///         Probed rather than resolved through <c>Url</c> so the endpoint stays the RPC host itself. It is a
+        ///         single-label subdomain, which would otherwise be rewritten to the gateway once that flag is on -
+        ///         a change of route for every chain call, on the default environments too.
+        ///     </para>
+        /// </summary>
+        private static Dictionary<BigInteger, string> ChainRpcOverrides(IDecentralandUrlsSource decentralandUrlsSource)
+        {
+            string chainRpc = decentralandUrlsSource.Probe(DecentralandUrl.ChainRpc);
+
+            return new Dictionary<BigInteger, string>
+            {
+                { 1, $"{chainRpc}/mainnet" }, // Ethereum Mainnet
+                { 11155111, $"{chainRpc}/sepolia" }, // Ethereum Sepolia
+                { 137, $"{chainRpc}/polygon" }, // Polygon Mainnet
+                { 80002, $"{chainRpc}/amoy" }, // Polygon Amoy
+                { 42161, $"{chainRpc}/arbitrum" }, // Arbitrum Mainnet
+                { 10, $"{chainRpc}/optimism" }, // Optimism Mainnet
+                { 43114, $"{chainRpc}/avalanche" }, // Avalanche Mainnet
+                { 56, $"{chainRpc}/binance" }, // BSC Mainnet
+                { 250, $"{chainRpc}/fantom" }, // Fantom Mainnet
+            };
         }
 
         public void Dispose()
