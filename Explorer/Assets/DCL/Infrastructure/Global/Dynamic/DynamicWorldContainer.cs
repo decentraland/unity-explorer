@@ -47,6 +47,7 @@ using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SkyBox;
 using DCL.SyntheticInput.Systems;
+using DCL.SyntheticInput.UiSimulation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
@@ -879,7 +880,10 @@ namespace Global.Dynamic
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
             {
-                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache));
+                var uiAutomation = new UiAutomationServices(globalWorld, playerEntity,
+                    UnityEngine.EventSystems.EventSystem.current.EnsureNotNull(), staticContainer.ScenesCache);
+
+                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, uiAutomation));
 
                 globalPlugins.Add(new McpServerPlugin(
                     appArgs,
@@ -892,6 +896,7 @@ namespace Global.Dynamic
                     realmContainer.ReloadSceneController,
                     bootstrapContainer.DiagnosticsContainer,
                     exposedGlobalDataContainer.ExposedCameraData,
+                    uiAutomation,
                     coroutineRunner,
                     globalWorld,
                     localSceneDevelopment));

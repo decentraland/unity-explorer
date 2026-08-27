@@ -10,6 +10,7 @@ using DCL.McpServer.Utils;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.SyntheticInput;
+using DCL.SyntheticInput.UiSimulation;
 using DCL.UI.DebugMenu.MessageBus;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
@@ -51,6 +52,8 @@ namespace DCL.McpServer.Systems
         private readonly ECSReloadScene reloadSceneController;
         private readonly bool localSceneDevelopment;
 
+        private readonly UiAutomationServices uiAutomation;
+
         private readonly SceneLogBuffer logBuffer;
         private readonly DebugMenuConsoleLogEntryBus logEntryBus;
 
@@ -70,6 +73,7 @@ namespace DCL.McpServer.Systems
             ECSReloadScene reloadSceneController,
             DiagnosticsContainer diagnosticsContainer,
             ExposedCameraData exposedCameraData,
+            UiAutomationServices uiAutomation,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
             bool localSceneDevelopment)
@@ -88,6 +92,7 @@ namespace DCL.McpServer.Systems
             this.worldInfoHub = worldInfoHub;
             this.reloadSceneController = reloadSceneController;
             this.exposedCameraData = exposedCameraData;
+            this.uiAutomation = uiAutomation;
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
             this.localSceneDevelopment = localSceneDevelopment;
@@ -136,6 +141,11 @@ namespace DCL.McpServer.Systems
                           .Add(new ClickAtTool(syntheticInput))
                           .Add(new HoverEntityTool(syntheticInput))
                           .Add(new PressInputTool(syntheticInput))
+                          .Add(new UiListTool(uiAutomation))
+                          .Add(new UiClickTool(uiAutomation))
+                          .Add(new UiSetTextTool(uiAutomation))
+                          .Add(new UiScrollTool(uiAutomation))
+                          .Add(new UiDragTool(uiAutomation))
                           .Build();
 
             server = new McpHttpServer(toolsRegistry, port);

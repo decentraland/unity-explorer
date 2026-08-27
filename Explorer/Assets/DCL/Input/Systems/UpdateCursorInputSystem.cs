@@ -10,6 +10,7 @@ using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Utils;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.SyntheticInput.UiSimulation;
 using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
@@ -342,7 +343,9 @@ namespace DCL.Input.Systems
                 pos.x = pos.x / Screen.width * 100f;
                 pos.y = pos.y / Screen.height * 100f;
                 crosshairCanvas.SetPosition(pos);
-                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+
+                if (!SyntheticCursorState.SuppressOsWarp)
+                    Mouse.current.WarpCursorPosition(cursorComponent.Position);
             }
             else
                 crosshairCanvas.ResetPosition();
@@ -360,7 +363,9 @@ namespace DCL.Input.Systems
                 // Todo: extract the +1 to sensitivity settings for controllers
                 float fastCursor = uiActions.ControllerFastCursor.ReadValue<float>() + 1;
                 cursorComponent.Position += controllerDelta * fastCursor;
-                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+
+                if (!SyntheticCursorState.SuppressOsWarp)
+                    Mouse.current.WarpCursorPosition(cursorComponent.Position);
             }
             else
                 cursorComponent.Position = mousePos;
