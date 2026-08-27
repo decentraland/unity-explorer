@@ -148,6 +148,21 @@ The `avatar-preview-renderer/` sibling root has its own workflows, all path-scop
 
 Renderer releases are consumed by the [wearable-preview](https://github.com/decentraland/wearable-preview) repo, which vendors the newest `avatar-preview-renderer/v*` release via its `npm run update-unity` script — the release assets (and their exact file names) are load-bearing for it.
 
+## App-local Visual C++ runtime (Windows)
+
+Five prebuilt package binaries — `ktx_unity.dll`, `dracodec_unity.dll`, `dracoenc_unity.dll`, `rust_audio.dll`, `rust_eth.dll` — import the MSVC CRT, so without it they throw `DllNotFoundException` on a clean Windows install. None can be rebuilt here. Instead of requiring the machine-wide redistributable (admin rights, UAC prompt), we ship the runtime with the player:
+
+- `Explorer/Assets/Plugins/.VCRedist/x64/` holds `msvcp140.dll`, `vcruntime140.dll`, `vcruntime140_1.dll`. Dot-prefixed so Unity's importer skips them — otherwise Unity treats them as native plugins and deploys them on its own schedule.
+- `Explorer/Assets/Editor/VCRedistBuildPostprocessor.cs` copies them next to the built `.exe`, where Windows looks before `System32`. It fails the build if one is missing.
+- The *Verify app-local VC++ runtime* step in `build-unitycloud.yml` re-checks the artifact on every Windows build.
+
+### Refreshing
+
+Copy a newer **release** `Microsoft.VC143.CRT` x64 set over the folder, note what you pulled in `.VCRedist/README.md`, and verify on a clean Windows 11 VM.
+
+- Never the debug variants (`*d.dll`) — not redistributable.
+- Never downgrade. An app-local copy older than the toolset a plugin was built against fails with "entry point not found".
+
 ---
 
 See also: [Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md) | [Unity Upgrades](unity-upgrades.md)
