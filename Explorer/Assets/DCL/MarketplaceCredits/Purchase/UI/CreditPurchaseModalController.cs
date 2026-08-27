@@ -49,6 +49,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private const string ANALYTICS_DETAIL_BALANCE_LOAD_FAILED = "balance_load_failed";
         private const string ANALYTICS_DETAIL_UNHANDLED_EXCEPTION = "unhandled_exception";
         private const int UNKNOWN_MISSING_CREDITS = -1;
+        private const string EMOTE_PLAY_LABEL = "Play";
+        private const string EMOTE_STOP_LABEL = "Stop";
 
         private readonly ICreditsPurchaseService purchaseService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
@@ -77,6 +79,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private CreditPurchaseTryOnCharacterPreviewController? tryOnPreviewController;
         private CancellationTokenSource? characterPreviewCts;
         private bool characterPreviewShown;
+        private bool emotePlayingShown;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -197,7 +200,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
                 viewInstance.OpenMarketplaceButton.onClick.AddListener(OnOpenMarketplaceClicked);
                 viewInstance.ToBackpackButton.onClick.AddListener(OnToBackpackClicked);
-                viewInstance.TryOnReplayEmoteButton.onClick.AddListener(OnReplayEmoteClicked);
+                viewInstance.TryOnEmoteToggleButton.onClick.AddListener(OnEmoteToggleClicked);
             }
 
             LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
@@ -217,7 +220,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.GetCreditsButton.onClick.RemoveListener(OnGetCreditsClicked);
                 viewInstance.OpenMarketplaceButton.onClick.RemoveListener(OnOpenMarketplaceClicked);
                 viewInstance.ToBackpackButton.onClick.RemoveListener(OnToBackpackClicked);
-                viewInstance.TryOnReplayEmoteButton.onClick.RemoveListener(OnReplayEmoteClicked);
+                viewInstance.TryOnEmoteToggleButton.onClick.RemoveListener(OnEmoteToggleClicked);
             }
 
             if (!purchaseSucceeded && !navigatedAway)
@@ -388,7 +391,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 return;
 
             characterPreviewShown = true;
-            viewInstance?.TryOnReplayEmoteButton.gameObject.SetActive(false);
+            viewInstance?.TryOnEmoteToggleButton.gameObject.SetActive(false);
 
             characterPreviewCts = characterPreviewCts.SafeRestart();
             LoadCharacterPreviewAsync(characterPreviewCts.Token).Forget();
@@ -419,7 +422,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 if (inputData.IsEmote)
                 {
                     previewController.TryOnEmote(profile.Avatar, shortenedItemUrn);
-                    viewInstance?.TryOnReplayEmoteButton.gameObject.SetActive(true);
+                    SetEmoteToggleLabel(playing: true);
+                    viewInstance?.TryOnEmoteToggleButton.gameObject.SetActive(true);
+                    TrackEmotePlaybackAsync(previewController, ct).Forget();
                 }
                 else
                     previewController.TryOnWearable(profile.Avatar, shortenedItemUrn, inputData.Listing.wearableCategory, wearableStorage);
@@ -432,10 +437,45 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             }
         }
 
-        private void OnReplayEmoteClicked()
+        private void OnEmoteToggleClicked()
         {
-            if (characterPreviewShown && inputData.IsEmote)
-                tryOnPreviewController?.ReplayEmote(shortenedItemUrn);
+            if (!characterPreviewShown || !inputData.IsEmote || tryOnPreviewController == null)
+                return;
+
+            if (tryOnPreviewController.IsPlayingEmote())
+            {
+                tryOnPreviewController.StopEmotes();
+                SetEmoteToggleLabel(playing: false);
+            }
+            else
+            {
+                tryOnPreviewController.PlayTryOnEmote(shortenedItemUrn);
+                SetEmoteToggleLabel(playing: true);
+            }
+        }
+
+        // Mirrors the preview emote state onto the toggle label so a non-looping emote that ends on its
+        // own flips back to "Play". Only transitions update the label, so the optimistic value set on click
+        // survives the frames between the play intent and the animator entering the emote state.
+        private async UniTask TrackEmotePlaybackAsync(CreditPurchaseTryOnCharacterPreviewController previewController, CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                bool playing = previewController.IsPlayingEmote();
+
+                if (playing != emotePlayingShown)
+                    SetEmoteToggleLabel(playing);
+
+                await UniTask.Yield(PlayerLoopTiming.PostLateUpdate, ct).SuppressCancellationThrow();
+            }
+        }
+
+        private void SetEmoteToggleLabel(bool playing)
+        {
+            emotePlayingShown = playing;
+
+            if (viewInstance != null)
+                viewInstance.TryOnEmoteToggleButtonText.text = playing ? EMOTE_STOP_LABEL : EMOTE_PLAY_LABEL;
         }
 
         private void ResetCharacterPreview()
@@ -446,8 +486,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             characterPreviewCts?.SafeCancelAndDispose();
             characterPreviewCts = null;
             characterPreviewShown = false;
+            emotePlayingShown = false;
             tryOnPreviewController?.OnHide();
-            viewInstance?.TryOnReplayEmoteButton.gameObject.SetActive(false);
+            viewInstance?.TryOnEmoteToggleButton.gameObject.SetActive(false);
         }
 
         private bool IsTryOnAvailable() =>

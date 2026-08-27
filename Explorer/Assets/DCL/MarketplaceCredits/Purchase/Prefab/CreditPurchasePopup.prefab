@@ -4678,7 +4678,7 @@ GameObject:
   - component: {fileID: 5124893310021147834}
   - component: {fileID: 5124893310021147835}
   m_Layer: 5
-  m_Name: TryOnReplayEmoteButton
+  m_Name: TryOnEmoteToggleButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4866,7 +4866,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: PLAY EMOTE
+  m_text: Play
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -6460,7 +6460,8 @@ MonoBehaviour:
   <RetryButton>k__BackingField: {fileID: 566756525056964189}
   <OpenMarketplaceButton>k__BackingField: {fileID: 2801647614867380972}
   <ToBackpackButton>k__BackingField: {fileID: 218609277696955016}
-  <TryOnReplayEmoteButton>k__BackingField: {fileID: 5124893310021147834}
+  <TryOnEmoteToggleButton>k__BackingField: {fileID: 5124893310021147834}
+  <TryOnEmoteToggleButtonText>k__BackingField: {fileID: 5124893310021147843}
   <TryOnCharacterPreviewView>k__BackingField: {fileID: 7343867917063023409}
 --- !u!1 &7168514027167349400
 GameObject:

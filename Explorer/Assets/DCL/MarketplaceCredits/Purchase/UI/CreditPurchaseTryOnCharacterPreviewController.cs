@@ -71,7 +71,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             PlayEmote(emoteUrn);
         }
 
-        public void ReplayEmote(URN emoteUrn) =>
-            PlayEmote(emoteUrn);
+        public void PlayTryOnEmote(URN emoteUrn) =>
+            base.PlayEmote(emoteUrn);
     }
 }

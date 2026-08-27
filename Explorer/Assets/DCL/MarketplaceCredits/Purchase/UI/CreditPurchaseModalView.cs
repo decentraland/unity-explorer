@@ -62,7 +62,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public Button ToBackpackButton { get; private set; } = null!;
 
         [field: Header("Try on")]
-        [field: SerializeField] public Button TryOnReplayEmoteButton { get; private set; } = null!;
+        [field: SerializeField] public Button TryOnEmoteToggleButton { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text TryOnEmoteToggleButtonText { get; private set; } = null!;
         [field: SerializeField] public CharacterPreviewView TryOnCharacterPreviewView { get; private set; } = null!;
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
