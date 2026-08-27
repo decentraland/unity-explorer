@@ -30,6 +30,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 null!,
                 null!,
                 null!,
+                null!,
                 _ => UniTask.CompletedTask,
                 _ => UniTask.CompletedTask);
         }

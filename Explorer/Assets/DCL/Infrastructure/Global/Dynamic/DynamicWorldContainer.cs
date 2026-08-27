@@ -784,6 +784,7 @@ namespace Global.Dynamic
                     characterPreviewFactory,
                     characterPreviewEventBus,
                     profileContainer.SelfProfile,
+                    profileContainer.ProfileRepositoryWrapper,
                     globalWorld,
                     wearableContainer.WearableCatalog),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),

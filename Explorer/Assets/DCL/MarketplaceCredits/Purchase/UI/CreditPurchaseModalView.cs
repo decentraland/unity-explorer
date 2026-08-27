@@ -23,6 +23,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         [field: SerializeField] public Image ItemCategory { get; private set; } = null!;
         [field: SerializeField] public Image ItemCategoryBackground { get; private set; } = null!;
         [field: SerializeField] public TMP_Text ItemName { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text CreatorName { get; private set; } = null!;
         [field: SerializeField] public TMP_Text RarityLabel { get; private set; } = null!;
         [field: SerializeField] public Image RarityBackground { get; private set; } = null!;
 

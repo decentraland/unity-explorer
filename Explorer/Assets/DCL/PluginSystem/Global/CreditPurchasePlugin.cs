@@ -13,6 +13,7 @@ using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -34,6 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Arch.Core.World world;
         private readonly IWearableStorage wearableStorage;
 
@@ -52,6 +54,7 @@ namespace DCL.PluginSystem.Global
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
             Arch.Core.World world,
             IWearableStorage wearableStorage)
         {
@@ -65,6 +68,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewFactory = characterPreviewFactory;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.world = world;
             this.wearableStorage = wearableStorage;
         }
@@ -91,6 +95,7 @@ namespace DCL.PluginSystem.Global
                 characterPreviewFactory,
                 characterPreviewEventBus,
                 selfProfile,
+                profileRepositoryWrapper,
                 world,
                 wearableStorage,
                 OpenGetCreditsPanelAsync,

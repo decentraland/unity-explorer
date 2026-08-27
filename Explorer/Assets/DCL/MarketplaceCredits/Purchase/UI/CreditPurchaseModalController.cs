@@ -7,6 +7,7 @@ using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using MVC;
 using Plugins.NativeWindowManager;
@@ -55,6 +56,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly World world;
         private readonly IWearableStorage wearableStorage;
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
@@ -93,6 +95,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             ICharacterPreviewFactory characterPreviewFactory,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
             IWearableStorage wearableStorage,
             Func<CancellationToken, UniTask> openGetCreditsPanelAsync,
@@ -106,6 +109,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             this.characterPreviewFactory = characterPreviewFactory;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.world = world;
             this.wearableStorage = wearableStorage;
             this.openGetCreditsPanelAsync = openGetCreditsPanelAsync;
@@ -146,6 +150,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             if (viewInstance != null)
             {
                 viewInstance.ItemName.text = inputData.ItemName;
+                viewInstance.CreatorName.text = string.Empty;
                 viewInstance.RarityLabel.text = inputData.RarityName;
                 viewInstance.RarityLabel.color = inputData.RarityColor;
                 viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
@@ -181,6 +186,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             }
 
             LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
+            LoadCreatorNameAsync(lifeCts.Token).Forget();
 
             ModalOpened?.Invoke(inputData.Listing, inputData.Source);
         }
@@ -287,6 +293,34 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 ShowFailure("Could not load your credits balance.", allowRetry: true);
             }
         }
+
+        private async UniTask LoadCreatorNameAsync(CancellationToken ct)
+        {
+            string creator = inputData.Listing.creator;
+
+            try
+            {
+                Profile.CompactInfo? profile = await profileRepositoryWrapper.GetProfileAsync(creator, ct);
+
+                if (ct.IsCancellationRequested || viewInstance == null)
+                    return;
+
+                viewInstance.CreatorName.text = profile is { ValidatedName: { Length: > 0 } } compact
+                    ? compact.ValidatedName
+                    : ShortenWallet(creator);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Creator profile lookup failed for {creator}: {e.Message}");
+
+                if (!ct.IsCancellationRequested && viewInstance != null)
+                    viewInstance.CreatorName.text = ShortenWallet(creator);
+            }
+        }
+
+        private static string ShortenWallet(string wallet) =>
+            wallet.Length > 10 ? string.Concat(wallet[..6], "...", wallet[^4..]) : wallet;
 
         private void OnConfirmClicked()
         {
