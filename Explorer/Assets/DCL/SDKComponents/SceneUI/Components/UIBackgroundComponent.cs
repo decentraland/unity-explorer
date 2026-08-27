@@ -22,7 +22,6 @@ namespace DCL.SDKComponents.SceneUI.Components
         public void Dispose()
         {
             IsDisposed = true;
-            Image = null;
             Status = 0;
         }
     }

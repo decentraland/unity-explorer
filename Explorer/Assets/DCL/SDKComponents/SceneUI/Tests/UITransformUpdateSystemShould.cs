@@ -75,7 +75,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         public void CheckUITransformOutOfScene(bool isCurrentScene)
         {
             // Arrange
-            PBUiTransform input = CreateUITransform();
+            CreateUITransform();
             sceneStateProvider.IsCurrent = isCurrentScene;
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
             uiTransformComponent.IsHidden = isCurrentScene;

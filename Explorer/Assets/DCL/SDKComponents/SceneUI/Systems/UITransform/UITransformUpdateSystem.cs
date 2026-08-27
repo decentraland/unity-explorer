@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             // Treat zIndex=0 as "not set" — the SDK always sends zIndex:0 in its defaults
             // even when the user didn't specify one, making it indistinguishable from "absent".
             // In CSS semantics, z-index:0 is the default stacking order (same as not setting it).
-            int? newZIndex = sdkModel.HasZIndex && sdkModel.ZIndex != 0 ? sdkModel.ZIndex : (int?)null;
+            int? newZIndex = sdkModel.HasZIndex && sdkModel.ZIndex != 0 ? sdkModel.ZIndex : null;
 
             if (uiTransformComponent.ZIndex != newZIndex)
             {

@@ -32,14 +32,14 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public PointerEventType? PointerEventTriggered;
         public bool IsRoot { get; private set; }
-        public int? ZIndex = null;
+        public int? ZIndex;
 
         public UITransformRelationLinkedData RelationData;
 
-        internal EventCallback<PointerDownEvent> currentOnPointerDownCallback;
-        internal EventCallback<PointerUpEvent> currentOnPointerUpCallback;
-        internal EventCallback<PointerEnterEvent> currentOnPointerEnterCallback;
-        internal EventCallback<PointerLeaveEvent> currentOnPointerLeaveCallback;
+        internal EventCallback<PointerDownEvent>? currentOnPointerDownCallback;
+        internal EventCallback<PointerUpEvent>? currentOnPointerUpCallback;
+        internal EventCallback<PointerEnterEvent>? currentOnPointerEnterCallback;
+        internal EventCallback<PointerLeaveEvent>? currentOnPointerLeaveCallback;
 
         private VisualElement rootTransform;
         private VisualElement reusableTransform;
@@ -86,7 +86,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             int i = 0;
 
-            for (UITransformRelationLinkedData.Node node = RelationData.head; node != null; node = node.Next)
+            for (UITransformRelationLinkedData.Node? node = RelationData.head; node != null; node = node.Next)
             {
                 var childEntityId = node.EntityId;
 

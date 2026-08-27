@@ -19,12 +19,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UIBackgroundInstantiationSystemShould : UnitySystemTestBase<UIBackgroundInstantiationSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-        private ISceneData sceneData;
-        private IPerformanceBudget frameTimeBudgetProvider;
-        private IPerformanceBudget memoryBudgetProvider;
+        private IComponentPoolsRegistry poolsRegistry = null!;
+        private ISceneData sceneData = null!;
+        private IPerformanceBudget frameTimeBudgetProvider = null!;
+        private IPerformanceBudget memoryBudgetProvider = null!;
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
+        private UITransformComponent uiTransformComponent = null!;
 
         [SetUp]
         public void SetUp()

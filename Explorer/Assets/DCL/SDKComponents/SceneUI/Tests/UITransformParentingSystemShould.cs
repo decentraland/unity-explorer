@@ -14,7 +14,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITransformParentingSystemShould : UnitySystemTestBase<UITransformParentingSystem>
     {
-        private Dictionary<CRDTEntity, Entity> entitiesMap;
+        private Dictionary<CRDTEntity, Entity> entitiesMap = null!;
 
         [SetUp]
         public void SetUp()
