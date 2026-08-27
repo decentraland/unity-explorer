@@ -4,12 +4,12 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
-using DCL.Interaction.Utility;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using DCL.McpServer.Utils;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
+using DCL.SyntheticInput;
 using DCL.UI.DebugMenu.MessageBus;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
@@ -44,7 +44,6 @@ namespace DCL.McpServer.Systems
 
         private readonly Arch.Core.World globalWorld;
         private readonly IGlobalWorldActions globalWorldActions;
-        private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly IWorldInfoHub worldInfoHub;
 
         private readonly IScenesCache scenesCache;
@@ -71,7 +70,6 @@ namespace DCL.McpServer.Systems
             ECSReloadScene reloadSceneController,
             DiagnosticsContainer diagnosticsContainer,
             ExposedCameraData exposedCameraData,
-            IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
             bool localSceneDevelopment)
@@ -90,7 +88,6 @@ namespace DCL.McpServer.Systems
             this.worldInfoHub = worldInfoHub;
             this.reloadSceneController = reloadSceneController;
             this.exposedCameraData = exposedCameraData;
-            this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
             this.localSceneDevelopment = localSceneDevelopment;
@@ -111,8 +108,7 @@ namespace DCL.McpServer.Systems
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
-            McpPointerEventSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
+            var syntheticInput = new SyntheticInputAgent(globalWorld, arguments.PlayerEntity);
 
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
 
@@ -126,16 +122,20 @@ namespace DCL.McpServer.Systems
                           .Add(new GetSceneLogsTool(logBuffer))
                           .Add(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
                           .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity))
-                          .Add(new LookAtTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Add(new LookAtTool(syntheticInput, exposedCameraData))
+                          .Add(new CameraLookTool(syntheticInput, exposedCameraData))
                           .Add(new SetCameraModeTool(globalWorld, exposedCameraData))
                           .Add(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
-                          .Add(new WalkTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new WalkTool(syntheticInput, globalWorld, arguments.PlayerEntity))
                           .Add(new SendChatTool(chatMessagesBus))
                           .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
                           .Add(new ListSceneEntitiesTool(worldInfoHub))
                           .Add(new GetEntityDetailsTool(worldInfoHub))
                           .Add(new TriggerEmoteTool(globalWorldActions))
-                          .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new ClickEntityTool(syntheticInput))
+                          .Add(new ClickAtTool(syntheticInput))
+                          .Add(new HoverEntityTool(syntheticInput))
+                          .Add(new PressInputTool(syntheticInput))
                           .Build();
 
             server = new McpHttpServer(toolsRegistry, port);

@@ -7,8 +7,8 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
-using DCL.McpServer.Components;
-using DCL.McpServer.Core;
+using DCL.SyntheticInput.Components;
+using DCL.SyntheticInput.Core;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
@@ -19,12 +19,12 @@ using UnityEngine;
 using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 using RaycastHit = UnityEngine.RaycastHit;
 
-namespace DCL.McpServer.Systems
+namespace DCL.SyntheticInput.Systems
 {
     /// <summary>
     ///     <para>
     ///         Delivers a single agent-requested pointer event through the real reticle pipeline while a
-    ///         <see cref="McpPointerEventIntent" /> is present on the player entity. Instead of imitating the
+    ///         <see cref="SyntheticPointerEventIntent" /> is present on the player entity. Instead of imitating the
     ///         pipeline, the system posts a <see cref="SyntheticPointerInput" /> (an aim point plus a button edge)
     ///         that <see cref="PlayerOriginatedRaycastSystem" /> and
     ///         <see cref="DCL.Interaction.Systems.ProcessPointerEventsSystem" /> consume the same frame, so
@@ -33,16 +33,21 @@ namespace DCL.McpServer.Systems
     ///         hover state, before the next raycast overwrites them.
     ///     </para>
     ///     <para>
-    ///         A release that follows a press (<see cref="McpPointerEventIntent.Press" />) is posted only once
+    ///         A release that follows a press (<see cref="SyntheticPointerEventIntent.Press" />) is posted only once
     ///         the scene has advanced past the press tick, so the scene observes PetDown on an earlier tick than
-    ///         PetUp; the click_entity tool composes a full click from two such intents. While the release waits,
+    ///         PetUp; SyntheticInputAgent composes a full click from two such intents. While the release waits,
     ///         the aim is re-posted every frame so the hover does not leave the target mid-click.
+    ///     </para>
+    ///     <para>
+    ///         Hover-only intents re-post the aim without a button until their hold expires, producing the same
+    ///         hover enter/leave flow as a real cursor. Aimless intents post only the button edge: the cursor ray
+    ///         stays in charge and the edge fans out entity-bound or globally exactly like a real key press.
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PlayerOriginatedRaycastSystem))]
-    [LogCategory(ReportCategory.MCP)]
-    public partial class McpPointerEventSystem : BaseUnityLoopSystem
+    [LogCategory(ReportCategory.SYNTHETIC_INPUT)]
+    public partial class SyntheticPointerEventSystem : BaseUnityLoopSystem
     {
         private static readonly QueryDescription ALL_ENTITIES = new ();
         private static readonly QueryDescription PIPELINE_ENTITY = new QueryDescription().WithAll<SyntheticPointerInput>();
@@ -54,7 +59,7 @@ namespace DCL.McpServer.Systems
         private SingleInstanceEntity playerCamera;
         private SingleInstanceEntity pipelineEntity;
 
-        internal McpPointerEventSystem(World world,
+        internal SyntheticPointerEventSystem(World world,
             IScenesCache scenesCache,
             IEntityCollidersGlobalCache collidersGlobalCache,
             Entity playerEntity) : base(world)
@@ -73,7 +78,7 @@ namespace DCL.McpServer.Systems
 
         protected override void Update(float t)
         {
-            ref McpPointerEventIntent intent = ref World.TryGetRef<McpPointerEventIntent>(playerEntity, out bool exists);
+            ref SyntheticPointerEventIntent intent = ref World.TryGetRef<SyntheticPointerEventIntent>(playerEntity, out bool exists);
 
             if (!exists)
                 return;
@@ -90,7 +95,7 @@ namespace DCL.McpServer.Systems
         }
 
         /// <summary>Picks the world the pointer event must be delivered to, or completes the request with the reason no delivery is possible.</summary>
-        private bool TryResolve(in McpPointerEventIntent intent, ISceneFacade? scene, out World? sceneWorld)
+        private bool TryResolve(in SyntheticPointerEventIntent intent, ISceneFacade? scene, out World? sceneWorld)
         {
             sceneWorld = null;
 
@@ -121,16 +126,17 @@ namespace DCL.McpServer.Systems
         }
 
         /// <summary>The intent is copied out before the structural removal, so the caller's ref must not be touched afterwards.</summary>
-        private void CompleteAndRemove(in McpPointerEventIntent intent, McpPointerClickResult result, McpPressHandoff? press = null)
+        private void CompleteAndRemove(in SyntheticPointerEventIntent intent, SyntheticPointerResult result, SyntheticPressHandoff? press = null)
         {
             // Whatever rejected a release that follows a delivered press, the scene observed only the PetDown.
-            if (intent.Press.HasValue && !result.Hit)
+            // An aimless release has no target to miss, so the flag stays clear.
+            if (intent.Press.HasValue && intent.HasAimTarget && !result.Hit)
                 result.UpRayMissed = true;
 
-            McpEcsRequest.CompleteAndRemove(World, playerEntity, intent, new McpPointerEventOutcome { Result = result, Press = press });
+            EcsRequest.CompleteAndRemove(World, playerEntity, intent, new SyntheticPointerOutcome { Result = result, Press = press });
         }
 
-        private static McpPointerClickResult Failure(in McpPointerEventIntent intent, string reason) =>
+        private static SyntheticPointerResult Failure(in SyntheticPointerEventIntent intent, string reason) =>
             new ()
             {
                 Hit = false,
@@ -138,12 +144,14 @@ namespace DCL.McpServer.Systems
                 SceneEntityId = intent.TargetEntityId,
             };
 
-        /// <summary>Posts the synthetic aim and button edge the pipeline will consume later this frame.</summary>
-        private void Inject(ref McpPointerEventIntent intent, ISceneFacade scene, World sceneWorld)
+        /// <summary>Posts the synthetic aim and/or button edge the pipeline will consume later this frame.</summary>
+        private void Inject(ref SyntheticPointerEventIntent intent, ISceneFacade scene, World sceneWorld)
         {
             if (intent.Press is { } press)
             {
-                if (!sceneWorld.IsAlive(press.Entity))
+                bool pressLandedOnEntity = press.Entity != Entity.Null;
+
+                if (pressLandedOnEntity && !sceneWorld.IsAlive(press.Entity))
                 {
                     CompleteAndRemove(in intent, Failure(in intent, "the target entity was destroyed mid-click"));
                     return;
@@ -153,12 +161,20 @@ namespace DCL.McpServer.Systems
                 // ambiguous; hold the aim meanwhile so the hover does not leave the target.
                 if (scene.SceneStateProvider.TickNumber <= press.Tick)
                 {
-                    PostSyntheticInput(ResolveAimPoint(in intent, sceneWorld, press.Entity));
+                    if (pressLandedOnEntity)
+                        PostSyntheticInput(ResolveAimPoint(in intent, sceneWorld, press.Entity));
+
                     return;
                 }
             }
 
-            if (!TryResolveAimPoint(in intent, sceneWorld, out Vector3 aimPoint, out McpPointerClickResult resolveFailure))
+            if (!intent.HasAimTarget)
+            {
+                InjectAimless(ref intent, scene);
+                return;
+            }
+
+            if (!TryResolveAimPoint(in intent, sceneWorld, out Vector3 aimPoint, out SyntheticPointerResult resolveFailure))
             {
                 CompleteAndRemove(in intent, resolveFailure);
                 return;
@@ -172,6 +188,13 @@ namespace DCL.McpServer.Systems
                 return;
             }
 
+            // The hover hold: keep the aim alive without observing; the outcome is read once the hold expires.
+            if (intent.IsHover && UnityEngine.Time.time < intent.HoldEndTime)
+            {
+                PostSyntheticInput(aimPoint);
+                return;
+            }
+
             PostSyntheticInput(aimPoint,
                 intent.EventType == PointerEventType.PetDown ? intent.Button : null,
                 intent.EventType == PointerEventType.PetUp ? intent.Button : null);
@@ -181,23 +204,45 @@ namespace DCL.McpServer.Systems
             intent.InjectedAimPoint = aimPoint;
         }
 
+        /// <summary>
+        ///     An aimless button edge keeps the cursor ray: the pipeline appends it entity-bound if a qualified
+        ///     entity happens to be hovered, and PrepareGlobalInputEventsSystem fans it out to the scene root
+        ///     otherwise — exactly the split a real key press goes through.
+        /// </summary>
+        private void InjectAimless(ref SyntheticPointerEventIntent intent, ISceneFacade scene)
+        {
+            PostSyntheticInput(null,
+                intent.EventType == PointerEventType.PetDown ? intent.Button : null,
+                intent.EventType == PointerEventType.PetUp ? intent.Button : null);
+
+            intent.Injected = true;
+            intent.InjectedTick = scene.SceneStateProvider.TickNumber;
+            intent.InjectedAimPoint = Vector3.zero;
+        }
+
         /// <summary>Reads the pipeline's answer for the injected frame and completes the request.</summary>
-        private void Observe(ref McpPointerEventIntent intent, World sceneWorld)
+        private void Observe(ref SyntheticPointerEventIntent intent, World sceneWorld)
         {
             // The pipeline has not consumed the posted input yet (paused simulation?); the stamp is renewed
-            // so the post stays valid until it does, and the tool-side timeout bounds the wait.
+            // so the post stays valid until it does, and the driver-side timeout bounds the wait.
             ref SyntheticPointerInput pending = ref World.Get<SyntheticPointerInput>(pipelineEntity);
 
-            if (pending.AimPoint.HasValue)
+            if (pending.AimPoint.HasValue || pending.PressButton.HasValue || pending.ReleaseButton.HasValue)
             {
                 pending.PostedAtFrame = UnityEngine.Time.frameCount;
                 return;
             }
 
-            McpPointerClickResult result = BuildResult(in intent, sceneWorld,
+            if (!intent.HasAimTarget)
+            {
+                CompleteAimless(ref intent, sceneWorld);
+                return;
+            }
+
+            SyntheticPointerResult result = BuildResult(in intent, sceneWorld,
                 in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
                 in World.Get<HoverStateComponent>(pipelineEntity),
-                out McpPressHandoff? press);
+                out SyntheticPressHandoff? press);
 
             // A press is usually followed by a release intent installed later this frame: hold the aim so the
             // hover does not leave the target in the gap between the two legs.
@@ -207,9 +252,50 @@ namespace DCL.McpServer.Systems
             CompleteAndRemove(in intent, result, press);
         }
 
-        private McpPointerClickResult BuildResult(in McpPointerEventIntent intent, World sceneWorld,
+        /// <summary>
+        ///     An aimless button edge has no target to validate: it entered the pipeline the moment it was
+        ///     consumed, so the result only reports, opportunistically, what the cursor ray was hovering.
+        /// </summary>
+        private void CompleteAimless(ref SyntheticPointerEventIntent intent, World sceneWorld)
+        {
+            SyntheticPressHandoff? press = null;
+
+            if (intent.EventType == PointerEventType.PetDown)
+                press = new SyntheticPressHandoff
+                {
+                    World = sceneWorld,
+                    Entity = Entity.Null,
+                    Tick = intent.InjectedTick,
+                };
+
+            var result = new SyntheticPointerResult
+            {
+                Hit = false,
+                SceneEntityId = -1,
+            };
+
+            ref readonly PlayerOriginRaycastResultForSceneEntities raycastResult = ref World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity);
+            ref readonly HoverStateComponent hoverState = ref World.Get<HoverStateComponent>(pipelineEntity);
+
+            if (raycastResult is { IsValidHit: true, EntityInfo: { } entityInfo }
+                && hoverState.HasCollider && hoverState.LastHitCollider == raycastResult.Collider && hoverState.IsAtDistance)
+            {
+                // The edge also landed entity-bound on the hovered target (which suppresses the global broadcast
+                // for that scene, exactly as a real key press would).
+                result.Hit = true;
+                result.SceneEntityId = entityInfo.ColliderSceneEntityInfo.EntityReference.Id;
+                result.CrdtEntityId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id;
+                result.HoverText = FirstTooltipText();
+                result.HitPoint = raycastResult.RaycastHit.point;
+                result.Distance = raycastResult.GetDistance();
+            }
+
+            CompleteAndRemove(in intent, result, press);
+        }
+
+        private SyntheticPointerResult BuildResult(in SyntheticPointerEventIntent intent, World sceneWorld,
             in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState,
-            out McpPressHandoff? press)
+            out SyntheticPressHandoff? press)
         {
             press = null;
 
@@ -229,7 +315,7 @@ namespace DCL.McpServer.Systems
 
             if (!IsExpectedTarget(in intent, hitEntity))
             {
-                McpPointerClickResult blocked = Failure(in intent, "another collider blocks the line of sight to the target");
+                SyntheticPointerResult blocked = Failure(in intent, "another collider blocks the line of sight to the target");
                 blocked.BlockedByEntityId = hitEntity.Id;
                 blocked.BlockedByCrdtId = hitCrdtId;
                 blocked.BlockedByColliderName = raycastResult.Collider.name;
@@ -239,14 +325,14 @@ namespace DCL.McpServer.Systems
             if (hoverState.HasCollider && hoverState.LastHitCollider == raycastResult.Collider && hoverState.IsAtDistance)
             {
                 if (intent.EventType == PointerEventType.PetDown)
-                    press = new McpPressHandoff
+                    press = new SyntheticPressHandoff
                     {
                         World = sceneWorld,
                         Entity = hitEntity,
                         Tick = intent.InjectedTick,
                     };
 
-                return new McpPointerClickResult
+                return new SyntheticPointerResult
                 {
                     Hit = true,
                     SceneEntityId = hitEntity.Id,
@@ -261,7 +347,7 @@ namespace DCL.McpServer.Systems
         }
 
         /// <summary>The pipeline hit nothing usable: a cold-path raycast tells whether the aim reaches any collider at all.</summary>
-        private McpPointerClickResult DiagnoseMiss(in McpPointerEventIntent intent, in Ray originRay)
+        private SyntheticPointerResult DiagnoseMiss(in SyntheticPointerEventIntent intent, in Ray originRay)
         {
             if (!Physics.Raycast(originRay, out RaycastHit hit, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK))
                 return Failure(in intent, "the ray from the camera hit nothing (target may lack a collider)");
@@ -272,9 +358,9 @@ namespace DCL.McpServer.Systems
         }
 
         /// <summary>The ray reached the expected entity, but the pipeline did not qualify it for cursor input.</summary>
-        private static McpPointerClickResult DiagnoseUnqualified(in McpPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo, Entity hitEntity, int hitCrdtId, float distance)
+        private static SyntheticPointerResult DiagnoseUnqualified(in SyntheticPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo, Entity hitEntity, int hitCrdtId, float distance)
         {
-            McpPointerClickResult result;
+            SyntheticPointerResult result;
 
             if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents) || pbPointerEvents == null)
                 result = Failure(in intent, $"entity {hitEntity.Id} has no PointerEvents component (not clickable)");
@@ -302,7 +388,7 @@ namespace DCL.McpServer.Systems
         ///     The release must land on the entity that received the press; a lone event with an explicit target
         ///     must land on that target. A pure aim-point event accepts whatever the pipeline hit.
         /// </summary>
-        private static bool IsExpectedTarget(in McpPointerEventIntent intent, Entity hitEntity)
+        private static bool IsExpectedTarget(in SyntheticPointerEventIntent intent, Entity hitEntity)
         {
             if (intent.Press is { } press)
                 return hitEntity == press.Entity;
@@ -310,7 +396,7 @@ namespace DCL.McpServer.Systems
             return intent.TargetEntityId < 0 || hitEntity.Id == intent.TargetEntityId;
         }
 
-        private void PostSyntheticInput(Vector3 aimPoint, InputAction? pressButton = null, InputAction? releaseButton = null)
+        private void PostSyntheticInput(Vector3? aimPoint, InputAction? pressButton = null, InputAction? releaseButton = null)
         {
             World.Set(pipelineEntity, new SyntheticPointerInput
             {
@@ -327,23 +413,31 @@ namespace DCL.McpServer.Systems
             return tooltips is { Count: > 0 } ? tooltips[0].Text : null;
         }
 
-        private static Vector3 ResolveAimPoint(in McpPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>
+        private static Vector3 ResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>
             intent.AimPoint ?? ResolveEntityAimPoint(sceneWorld, targetEntity);
 
         /// <summary>
         ///     Resolves the world point the synthetic ray must pass through. An explicit aim is taken as is and
-        ///     needs no entity — the pipeline raycast still validates whatever the ray lands on. Otherwise the aim
-        ///     is the target entity's collider center, and only this case scans the scene world: the target id is a
-        ///     raw Arch id, recovered the same way list_scene_entities/get_entity_details recover it.
+        ///     needs no entity — the pipeline raycast still validates whatever the ray lands on; a screen-space
+        ///     aim is projected to a far point along the camera ray through it. Otherwise the aim is the target
+        ///     entity's collider center, and only this case scans the scene world: the target id is a raw Arch id,
+        ///     recovered the same way list_scene_entities/get_entity_details recover it.
         /// </summary>
-        private static bool TryResolveAimPoint(in McpPointerEventIntent intent, World sceneWorld, out Vector3 aimPoint, out McpPointerClickResult failure)
+        private bool TryResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, out Vector3 aimPoint, out SyntheticPointerResult failure)
         {
-            failure = default(McpPointerClickResult);
+            failure = default(SyntheticPointerResult);
             aimPoint = default(Vector3);
 
             if (intent.AimPoint is { } explicitAim)
             {
                 aimPoint = explicitAim;
+                return true;
+            }
+
+            if (intent.ScreenPoint is { } screenPoint)
+            {
+                Camera camera = playerCamera.GetCameraComponent(World).Camera;
+                aimPoint = camera.ScreenPointToRay(screenPoint).GetPoint(PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE);
                 return true;
             }
 

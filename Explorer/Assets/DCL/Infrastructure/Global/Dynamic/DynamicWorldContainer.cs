@@ -46,6 +46,7 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SkyBox;
+using DCL.SyntheticInput.Systems;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
@@ -877,6 +878,9 @@ namespace Global.Dynamic
             }
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
+            {
+                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache));
+
                 globalPlugins.Add(new McpServerPlugin(
                     appArgs,
                     new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections)),
@@ -888,10 +892,10 @@ namespace Global.Dynamic
                     realmContainer.ReloadSceneController,
                     bootstrapContainer.DiagnosticsContainer,
                     exposedGlobalDataContainer.ExposedCameraData,
-                    staticContainer.EntityCollidersGlobalCache,
                     coroutineRunner,
                     globalWorld,
                     localSceneDevelopment));
+            }
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));

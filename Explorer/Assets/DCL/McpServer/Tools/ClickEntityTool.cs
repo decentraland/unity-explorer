@@ -1,9 +1,8 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
-using DCL.McpServer.Components;
-using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using DCL.SyntheticInput;
+using DCL.SyntheticInput.Components;
 using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
 using System;
@@ -13,10 +12,10 @@ using UnityEngine;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Presses a pointer button on a scene entity by composing single-event <see cref="McpPointerEventIntent" />s
-    ///     delivered by McpPointerEventSystem through the real reticle pipeline (a synthetic aim and button edge
-    ///     posted to it), so occlusion, distance gates and the scene write-back are the production ones. A full
-    ///     click is a press followed by a release ordered onto a later scene tick, merged into one result here.
+    ///     Presses a pointer button on a scene entity via <see cref="SyntheticInputAgent" />, which delivers the
+    ///     gesture through the real reticle pipeline (a synthetic aim and button edge posted to it), so occlusion,
+    ///     distance gates and the scene write-back are the production ones. A full click is a press followed by a
+    ///     release ordered onto a later scene tick, merged into one result.
     /// </summary>
     public class ClickEntityTool : McpTool
     {
@@ -44,8 +43,7 @@ namespace DCL.McpServer.Tools
         private const float MIN_TIMEOUT_SEC = 0.5f;
         private const float MAX_TIMEOUT_SEC = 15f;
 
-        private readonly World world;
-        private readonly Entity playerEntity;
+        private readonly SyntheticInputAgent syntheticInput;
 
         public override string Name => "click_entity";
 
@@ -67,10 +65,9 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
-        public ClickEntityTool(World world, Entity playerEntity)
+        public ClickEntityTool(SyntheticInputAgent syntheticInput)
         {
-            this.world = world;
-            this.playerEntity = playerEntity;
+            this.syntheticInput = syntheticInput;
         }
 
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
@@ -103,21 +100,15 @@ namespace DCL.McpServer.Tools
             string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
             Vector3? aimPoint = hasAimPoint ? new Vector3(x, y, z) : null;
 
-            McpPointerClickResult result;
+            SyntheticPointerResult result = kind switch
+                                            {
+                                                ClickKind.DOWN => await syntheticInput.PointerDownAsync(targetEntityId, sceneId, aimPoint, screenPoint: null, button, timeoutSec, ct),
+                                                ClickKind.UP => await syntheticInput.PointerUpAsync(targetEntityId, sceneId, aimPoint, screenPoint: null, button, timeoutSec, ct),
+                                                _ => await syntheticInput.ClickAsync(targetEntityId, sceneId, aimPoint, screenPoint: null, button, timeoutSec, ct),
+                                            };
 
-            try
-            {
-                // A single budget for the whole gesture: it covers both a paused simulation that never runs
-                // the system and a release stuck waiting for the scene tick to advance.
-                result = await RunGestureAsync(targetEntityId, sceneId, aimPoint, button, kind)
-                              .AttachExternalCancellation(ct)
-                              .Timeout(TimeSpan.FromSeconds(timeoutSec));
-            }
-            catch (TimeoutException)
-            {
-                await McpEcsRequest.AbandonAsync<McpPointerEventIntent>(world, playerEntity);
+            if (result.TimedOut)
                 return McpToolResult.Error($"click_entity did not complete within {timeoutSec}s (is the simulation paused?).");
-            }
 
             var json = new JObject
             {
@@ -150,45 +141,5 @@ namespace DCL.McpServer.Tools
 
             return McpToolResult.Json(json);
         }
-
-        /// <summary>
-        ///     Composes the requested gesture from single-event intents: a lone press or release is one delivery;
-        ///     a click is a press followed by a release that carries the press handoff so the system keeps it
-        ///     ordered onto a later scene tick.
-        /// </summary>
-        private async UniTask<McpPointerClickResult> RunGestureAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, InputAction button, ClickKind kind)
-        {
-            PointerEventType pressType = kind == ClickKind.UP ? PointerEventType.PetUp : PointerEventType.PetDown;
-
-            McpPointerEventOutcome down = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, pressType));
-
-            if (kind != ClickKind.CLICK || !down.Result.Hit)
-                return down.Result;
-
-            McpPointerEventOutcome up = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press));
-
-            if (up.Result.Hit)
-                return up.Result;
-
-            // The release did not reach the target (whether it missed, a guard rejected it or a newer call
-            // preempted it): report the delivered press, flag the divergence and keep the release diagnostics.
-            McpPointerClickResult merged = down.Result;
-            merged.UpRayMissed = true;
-            merged.FailureReason = $"the release did not reach the target ({up.Result.FailureReason}); the scene received only the press";
-            merged.BlockedByEntityId = up.Result.BlockedByEntityId;
-            merged.BlockedByCrdtId = up.Result.BlockedByCrdtId;
-            merged.BlockedByColliderName = up.Result.BlockedByColliderName;
-            return merged;
-        }
-
-        private UniTask<McpPointerEventOutcome> SendAsync(McpPointerEventIntent request) =>
-            McpEcsRequest.SendAsync(world, playerEntity, request, new McpPointerEventOutcome
-            {
-                Result = new McpPointerClickResult
-                {
-                    Hit = false,
-                    FailureReason = "preempted by a newer click_entity call",
-                },
-            });
     }
 }

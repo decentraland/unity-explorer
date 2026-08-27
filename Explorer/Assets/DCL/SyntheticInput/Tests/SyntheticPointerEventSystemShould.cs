@@ -6,8 +6,8 @@ using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
-using DCL.McpServer.Components;
-using DCL.McpServer.Systems;
+using DCL.SyntheticInput.Components;
+using DCL.SyntheticInput.Systems;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
@@ -20,9 +20,9 @@ using Utility.Multithreading;
 using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 using RaycastHit = UnityEngine.RaycastHit;
 
-namespace DCL.McpServer.Tests
+namespace DCL.SyntheticInput.Tests
 {
-    public class McpPointerEventSystemShould : UnitySystemTestBase<McpPointerEventSystem>
+    public class SyntheticPointerEventSystemShould : UnitySystemTestBase<SyntheticPointerEventSystem>
     {
         private const int TARGET_CRDT_ID = 512;
         private const int BLOCKER_CRDT_ID = 513;
@@ -135,7 +135,7 @@ namespace DCL.McpServer.Tests
                                return false;
                            });
 
-            system = new McpPointerEventSystem(world, scenesCache, collidersCache, playerEntity);
+            system = new SyntheticPointerEventSystem(world, scenesCache, collidersCache, playerEntity);
             system.Initialize();
         }
 
@@ -150,15 +150,15 @@ namespace DCL.McpServer.Tests
             sceneWorld.Dispose();
         }
 
-        private UniTaskCompletionSource<McpPointerEventOutcome> AddIntent(
+        private UniTaskCompletionSource<SyntheticPointerOutcome> AddIntent(
             PointerEventType eventType = PointerEventType.PetDown,
             int? targetId = null,
-            McpPressHandoff? press = null,
+            SyntheticPressHandoff? press = null,
             string? sceneId = null)
         {
-            var completion = new UniTaskCompletionSource<McpPointerEventOutcome>();
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
 
-            world.Add(playerEntity, new McpPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, InputAction.IaPointer, eventType, press)
+            world.Add(playerEntity, new SyntheticPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, InputAction.IaPointer, eventType, press)
             {
                 Completion = completion,
             });
@@ -234,25 +234,25 @@ namespace DCL.McpServer.Tests
         }
 
         /// <summary>Delivers a press and returns its outcome, asserting the handoff the release leg needs is filled.</summary>
-        private McpPointerEventOutcome DeliverPress()
+        private SyntheticPointerOutcome DeliverPress()
         {
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent();
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
             system!.Update(0); // inject
             RunPipelineFrame();
             system.Update(0); // observe
 
-            McpPointerEventOutcome outcome = OutcomeOf(completion);
+            SyntheticPointerOutcome outcome = OutcomeOf(completion);
             Assert.That(outcome.Result.Hit, Is.True);
             Assert.That(outcome.Press, Is.Not.Null);
 
             return outcome;
         }
 
-        private static McpPointerClickResult ResultOf(UniTaskCompletionSource<McpPointerEventOutcome> completion) =>
+        private static SyntheticPointerResult ResultOf(UniTaskCompletionSource<SyntheticPointerOutcome> completion) =>
             OutcomeOf(completion).Result;
 
-        private static McpPointerEventOutcome OutcomeOf(UniTaskCompletionSource<McpPointerEventOutcome> completion)
+        private static SyntheticPointerOutcome OutcomeOf(UniTaskCompletionSource<SyntheticPointerOutcome> completion)
         {
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             return completion.Task.GetAwaiter().GetResult();
@@ -261,7 +261,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void PostSyntheticAimAndPressOnInjectFrame()
         {
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent();
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
             system!.Update(0);
 
@@ -270,19 +270,19 @@ namespace DCL.McpServer.Tests
             Assert.That(synthetic.PressButton, Is.EqualTo((InputAction?)InputAction.IaPointer));
             Assert.That(synthetic.ReleaseButton, Is.Null);
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.True);
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.True);
         }
 
         [Test]
         public void StayPendingUntilPipelineConsumesTheInput()
         {
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent();
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
             system!.Update(0); // inject
             system.Update(0); // the pipeline has not run: keep waiting
 
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.True);
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.True);
         }
 
         [Test]
@@ -301,26 +301,26 @@ namespace DCL.McpServer.Tests
         [Test]
         public void DeliverPressThenOrderedReleaseOnNextTick()
         {
-            UniTaskCompletionSource<McpPointerEventOutcome> pressCompletion = AddIntent();
+            UniTaskCompletionSource<SyntheticPointerOutcome> pressCompletion = AddIntent();
 
             system!.Update(0); // inject
             RunPipelineFrame(hoverText: "Open");
             system.Update(0); // observe
 
-            McpPointerEventOutcome pressOutcome = OutcomeOf(pressCompletion);
+            SyntheticPointerOutcome pressOutcome = OutcomeOf(pressCompletion);
             Assert.That(pressOutcome.Result.Hit, Is.True);
             Assert.That(pressOutcome.Result.CrdtEntityId, Is.EqualTo(TARGET_CRDT_ID));
             Assert.That(pressOutcome.Result.HoverText, Is.EqualTo("Open"));
             Assert.That(pressOutcome.Press, Is.Not.Null);
             Assert.That(pressOutcome.Press!.Value.Entity, Is.EqualTo(targetEntity));
             Assert.That(pressOutcome.Press.Value.Tick, Is.EqualTo(tick));
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False);
 
             // The observe frame of a press re-posts the aim so the hover stays on the target between the legs.
             Assert.That(syntheticInput.AimPoint.HasValue, Is.True);
             Assert.That(syntheticInput.PressButton, Is.Null);
 
-            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
+            UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             system.Update(0); // same tick: keeps waiting so PetUp lands on a later tick than PetDown
             Assert.That(releaseCompletion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
@@ -334,16 +334,16 @@ namespace DCL.McpServer.Tests
             RunPipelineFrame();
             system.Update(0); // observe
 
-            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.True);
             Assert.That(releaseResult.UpRayMissed, Is.False);
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
         public void DeliverSingleReleaseWithoutPressContext()
         {
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(PointerEventType.PetUp);
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(PointerEventType.PetUp);
 
             system!.Update(0);
 
@@ -354,13 +354,13 @@ namespace DCL.McpServer.Tests
             system.Update(0);
 
             Assert.That(ResultOf(completion).Hit, Is.True);
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
         public void ReportReleaseMissWhenAnotherColliderBlocksIt()
         {
-            McpPointerEventOutcome pressOutcome = DeliverPress();
+            SyntheticPointerOutcome pressOutcome = DeliverPress();
 
             // A blocker slides between the camera and the target after the press.
             blockerGo = new GameObject("mcp-click-test-blocker") { transform = { position = new Vector3(0f, 0f, 2f) } };
@@ -368,14 +368,14 @@ namespace DCL.McpServer.Tests
             blockerGo.AddComponent<BoxCollider>();
             Physics.SyncTransforms();
 
-            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
+            UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             tick++;
             system!.Update(0); // inject
             RunPipelineFrame();
             system.Update(0); // observe
 
-            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.False);
             Assert.That(releaseResult.UpRayMissed, Is.True);
             Assert.That(releaseResult.BlockedByCrdtId, Is.EqualTo(BLOCKER_CRDT_ID));
@@ -384,16 +384,16 @@ namespace DCL.McpServer.Tests
         [Test]
         public void ReportPressOnlyWhenTargetDiesBeforeRelease()
         {
-            McpPointerEventOutcome pressOutcome = DeliverPress();
+            SyntheticPointerOutcome pressOutcome = DeliverPress();
 
             sceneWorld.Destroy(targetEntity);
 
-            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
+            UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             tick++;
             system!.Update(0);
 
-            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.False);
             Assert.That(releaseResult.UpRayMissed, Is.True);
             Assert.That(releaseResult.FailureReason, Does.Contain("destroyed"));
@@ -402,21 +402,21 @@ namespace DCL.McpServer.Tests
         [Test]
         public void FailReleaseWhenSceneWorldChangedMidClick()
         {
-            McpPointerEventOutcome pressOutcome = DeliverPress();
+            SyntheticPointerOutcome pressOutcome = DeliverPress();
 
             var reloadedWorld = World.Create();
 
             try
             {
-                McpPressHandoff stalePress = pressOutcome.Press!.Value;
+                SyntheticPressHandoff stalePress = pressOutcome.Press!.Value;
                 stalePress.World = reloadedWorld;
 
-                UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: stalePress);
+                UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: stalePress);
 
                 tick++;
                 system!.Update(0);
 
-                McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+                SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
                 Assert.That(releaseResult.Hit, Is.False);
                 Assert.That(releaseResult.UpRayMissed, Is.True);
                 Assert.That(releaseResult.FailureReason, Does.Contain("reloaded"));
@@ -430,17 +430,17 @@ namespace DCL.McpServer.Tests
         [Test]
         public void MarkReleaseAsPressOnlyWhenCurrentSceneGuardRejectsIt()
         {
-            McpPointerEventOutcome pressOutcome = DeliverPress();
+            SyntheticPointerOutcome pressOutcome = DeliverPress();
 
             // The scene stops being current between the legs (player crossed a parcel border).
             sceneStateProvider.IsCurrent.Returns(false);
 
-            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
+            UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             tick++;
             system!.Update(0);
 
-            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.False);
             Assert.That(releaseResult.UpRayMissed, Is.True);
             Assert.That(releaseResult.FailureReason, Does.Contain("no running current scene"));
@@ -450,16 +450,16 @@ namespace DCL.McpServer.Tests
         public void MarkReleaseAsPressOnlyWhenPinnedSceneChangedBetweenLegs()
         {
             SetCurrentSceneDefinitionId("scene-press");
-            McpPointerEventOutcome pressOutcome = DeliverPress();
+            SyntheticPointerOutcome pressOutcome = DeliverPress();
 
             SetCurrentSceneDefinitionId("scene-after-move");
 
-            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press, sceneId: "scene-press");
+            UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press, sceneId: "scene-press");
 
             tick++;
             system!.Update(0);
 
-            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.False);
             Assert.That(releaseResult.UpRayMissed, Is.True);
             Assert.That(releaseResult.FailureReason, Does.Contain("pinned"));
@@ -473,29 +473,29 @@ namespace DCL.McpServer.Tests
             blockerGo.AddComponent<BoxCollider>();
             Physics.SyncTransforms();
 
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent();
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
             system!.Update(0);
             RunPipelineFrame();
             system.Update(0);
 
-            McpPointerClickResult result = ResultOf(completion);
+            SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.UpRayMissed, Is.False);
             Assert.That(result.BlockedByCrdtId, Is.EqualTo(BLOCKER_CRDT_ID));
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
         public void FailWhenOutOfRange()
         {
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent();
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
             system!.Update(0);
             RunPipelineFrame(isAtDistance: false);
             system.Update(0);
 
-            McpPointerClickResult result = ResultOf(completion);
+            SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("out of range"));
         }
@@ -505,13 +505,13 @@ namespace DCL.McpServer.Tests
         {
             sceneWorld.Remove<PBPointerEvents>(targetEntity);
 
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent();
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
             system!.Update(0);
             RunPipelineFrame(assignHover: false);
             system.Update(0);
 
-            McpPointerClickResult result = ResultOf(completion);
+            SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("PointerEvents"));
         }
@@ -519,13 +519,13 @@ namespace DCL.McpServer.Tests
         [Test]
         public void FailWhenPipelineSkipsTheFrame()
         {
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent();
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
             system!.Update(0);
             RunPipelineSkippedFrame();
             system.Update(0);
 
-            McpPointerClickResult result = ResultOf(completion);
+            SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("did not process"));
         }
@@ -535,16 +535,16 @@ namespace DCL.McpServer.Tests
         {
             // The press frame left a raycast result whose ray passes through the very aim the release re-uses;
             // only the explicit synthetic-aim echo distinguishes a skipped release frame from a processed one.
-            McpPointerEventOutcome pressOutcome = DeliverPress();
+            SyntheticPointerOutcome pressOutcome = DeliverPress();
 
-            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
+            UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             tick++;
             system!.Update(0); // inject the release
             RunPipelineSkippedFrame();
             system.Update(0); // observe
 
-            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.False);
             Assert.That(releaseResult.UpRayMissed, Is.True);
             Assert.That(releaseResult.FailureReason, Does.Contain("did not process"));
@@ -556,11 +556,11 @@ namespace DCL.McpServer.Tests
             // The current scene's definition carries an empty id (the codebase's id-less definition), so no pin can match it.
             SetCurrentSceneDefinitionId(string.Empty);
 
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(sceneId: "scene-gone");
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(sceneId: "scene-gone");
 
             system!.Update(0);
 
-            McpPointerClickResult result = ResultOf(completion);
+            SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("pinned"));
             Assert.That(syntheticInput.AimPoint, Is.Null, "no synthetic input may be posted for a rejected request");
@@ -572,11 +572,11 @@ namespace DCL.McpServer.Tests
             // The pinned scene may still be loaded, but the player stands in a different one now.
             SetCurrentSceneDefinitionId("scene-current");
 
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(sceneId: "scene-elsewhere");
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(sceneId: "scene-elsewhere");
 
             system!.Update(0);
 
-            McpPointerClickResult result = ResultOf(completion);
+            SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("pinned"));
             Assert.That(syntheticInput.AimPoint, Is.Null, "no synthetic input may be posted for a rejected request");
@@ -587,7 +587,7 @@ namespace DCL.McpServer.Tests
         {
             SetCurrentSceneDefinitionId("scene-here");
 
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(sceneId: "scene-here");
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(sceneId: "scene-here");
 
             system!.Update(0);
             RunPipelineFrame();
@@ -599,13 +599,201 @@ namespace DCL.McpServer.Tests
         [Test]
         public void FailWhenEntityIdIsUnknown()
         {
-            UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(targetId: 987654);
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(targetId: 987654);
 
             system!.Update(0);
 
-            McpPointerClickResult result = ResultOf(completion);
+            SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("no entity"));
+        }
+
+        private UniTaskCompletionSource<SyntheticPointerOutcome> AddAimlessIntent(PointerEventType eventType, SyntheticPressHandoff? press = null)
+        {
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, null, InputAction.IaSecondary, eventType, press)
+            {
+                Completion = completion,
+            });
+
+            return completion;
+        }
+
+        private UniTaskCompletionSource<SyntheticPointerOutcome> AddHoverIntent(float holdSecondsFromNow)
+        {
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            SyntheticPointerEventIntent intent = SyntheticPointerEventIntent.Hover(targetEntity.Id, null, null, null, UnityEngine.Time.time + holdSecondsFromNow);
+            intent.Completion = completion;
+            world.Add(playerEntity, intent);
+
+            return completion;
+        }
+
+        /// <summary>
+        ///     Emulates the pipeline frame of an aimless post: the cursor ray stays in charge, so the raycast
+        ///     publishes no synthetic-aim echo and hits whatever sits along the camera's forward direction.
+        /// </summary>
+        private void RunPipelineAimlessFrame(bool cursorHoversTarget)
+        {
+            ref SyntheticPointerInput synthetic = ref syntheticInput;
+            Assert.That(synthetic.AimPoint, Is.Null, "an aimless post must keep the cursor ray");
+            Assert.That(synthetic.IsPostedThisFrame, Is.True);
+            synthetic = default(SyntheticPointerInput);
+
+            ref PlayerOriginRaycastResultForSceneEntities raycastResult = ref world.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity);
+            ref HoverStateComponent hoverState = ref world.Get<HoverStateComponent>(pipelineEntity);
+            hoverState.Clear();
+
+            var ray = new Ray(cameraGo.transform.position, cameraGo.transform.forward);
+            raycastResult.SetRay(ray, null);
+
+            if (cursorHoversTarget
+                && Physics.Raycast(ray, out RaycastHit hit, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE)
+                && collidersCache.TryGetSceneEntity(hit.collider, out GlobalColliderSceneEntityInfo info))
+            {
+                raycastResult.SetupHit(hit, info, hit.distance, hit.distance);
+                hoverState.AssignCollider(hit.collider!, true, true);
+            }
+            else
+                raycastResult.Reset();
+        }
+
+        [Test]
+        public void PostButtonOnlyEdgeWithoutAim()
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
+
+            system!.Update(0);
+
+            Assert.That(syntheticInput.AimPoint, Is.Null);
+            Assert.That(syntheticInput.PressButton, Is.EqualTo((InputAction?)InputAction.IaSecondary));
+
+            RunPipelineAimlessFrame(cursorHoversTarget: false);
+            system.Update(0);
+
+            SyntheticPointerOutcome outcome = OutcomeOf(completion);
+            Assert.That(outcome.Result.Hit, Is.False, "nothing was hovered: the edge went out as a global broadcast");
+            Assert.That(outcome.Result.FailureReason, Is.Null);
+            Assert.That(outcome.Result.UpRayMissed, Is.False);
+            Assert.That(outcome.Press, Is.Not.Null);
+            Assert.That(outcome.Press!.Value.Entity, Is.EqualTo(Entity.Null));
+            Assert.That(outcome.Press.Value.Tick, Is.EqualTo(tick));
+        }
+
+        [Test]
+        public void OrderAimlessReleaseOntoALaterTick()
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> pressCompletion = AddAimlessIntent(PointerEventType.PetDown);
+
+            system!.Update(0);
+            RunPipelineAimlessFrame(cursorHoversTarget: false);
+            system.Update(0);
+
+            SyntheticPointerOutcome pressOutcome = OutcomeOf(pressCompletion);
+
+            UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddAimlessIntent(PointerEventType.PetUp, pressOutcome.Press);
+
+            system.Update(0); // same tick: keeps waiting so PetUp lands on a later tick than PetDown
+            Assert.That(releaseCompletion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
+            Assert.That(syntheticInput.ReleaseButton, Is.Null, "no button may be posted while the release waits for the tick");
+
+            tick++;
+            system.Update(0);
+
+            Assert.That(syntheticInput.ReleaseButton, Is.EqualTo((InputAction?)InputAction.IaSecondary));
+            Assert.That(syntheticInput.AimPoint, Is.Null);
+
+            RunPipelineAimlessFrame(cursorHoversTarget: false);
+            system.Update(0);
+
+            SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
+            Assert.That(releaseResult.FailureReason, Is.Null);
+            Assert.That(releaseResult.UpRayMissed, Is.False, "an aimless release has no target to miss");
+        }
+
+        [Test]
+        public void ReportTheHoveredEntityWhenAnAimlessEdgeLandsEntityBound()
+        {
+            // The camera happens to point straight at the target: the edge goes entity-bound, like a real key.
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
+
+            system!.Update(0);
+            RunPipelineAimlessFrame(cursorHoversTarget: true);
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.CrdtEntityId, Is.EqualTo(TARGET_CRDT_ID));
+        }
+
+        [Test]
+        public void KeepRepostingTheHoverAimWithoutButtonsWhileTheHoldLasts()
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddHoverIntent(holdSecondsFromNow: 1000f);
+
+            system!.Update(0);
+
+            Assert.That(syntheticInput.AimPoint, Is.EqualTo((Vector3?)targetGo.transform.position));
+            Assert.That(syntheticInput.PressButton, Is.Null);
+            Assert.That(syntheticInput.ReleaseButton, Is.Null);
+
+            RunPipelineFrame();
+            system.Update(0); // still holding: the aim is re-posted, no observation happens
+
+            Assert.That(syntheticInput.AimPoint.HasValue, Is.True);
+            Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.True);
+        }
+
+        [Test]
+        public void CompleteTheHoverWithHoverDiagnosticsOnceTheHoldExpires()
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddHoverIntent(holdSecondsFromNow: -1f);
+
+            system!.Update(0); // the hold is already over: post once and observe next frame
+
+            Assert.That(syntheticInput.PressButton, Is.Null);
+            Assert.That(syntheticInput.ReleaseButton, Is.Null);
+
+            RunPipelineFrame(hoverText: "Open");
+            system.Update(0);
+
+            SyntheticPointerOutcome outcome = OutcomeOf(completion);
+            Assert.That(outcome.Result.Hit, Is.True);
+            Assert.That(outcome.Result.CrdtEntityId, Is.EqualTo(TARGET_CRDT_ID));
+            Assert.That(outcome.Result.HoverText, Is.EqualTo("Open"));
+            Assert.That(outcome.Press, Is.Null, "a hover delivers no press handoff");
+            Assert.That(syntheticInput.AimPoint, Is.Null, "the aim stops being posted, so the hover leaves naturally");
+        }
+
+        [Test]
+        public void AimThroughTheScreenPointWhenGiven()
+        {
+            Camera camera = cameraGo.GetComponent<Camera>();
+            var screenCenter = new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f);
+            Vector3 expectedAim = camera.ScreenPointToRay(screenCenter).GetPoint(PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE);
+
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, null, InputAction.IaPointer, PointerEventType.PetDown, screenPoint: screenCenter)
+            {
+                Completion = completion,
+            });
+
+            system!.Update(0);
+
+            Assert.That(syntheticInput.AimPoint.HasValue, Is.True);
+            Assert.That(Vector3.Distance(syntheticInput.AimPoint!.Value, expectedAim), Is.LessThan(0.001f));
+
+            // The centered camera looks straight at the target, so the screen-center ray must hit it.
+            RunPipelineFrame();
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.CrdtEntityId, Is.EqualTo(TARGET_CRDT_ID));
         }
     }
 }

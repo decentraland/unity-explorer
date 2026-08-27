@@ -1,10 +1,9 @@
-using Arch.Core;
-using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
-using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using DCL.SyntheticInput;
+using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 using UnityEngine;
@@ -13,9 +12,7 @@ namespace DCL.McpServer.Tools
 {
     public class LookAtTool : McpTool
     {
-        private readonly IGlobalWorldActions globalWorldActions;
-        private readonly World world;
-        private readonly Entity playerEntity;
+        private readonly SyntheticInputAgent syntheticInput;
         private readonly ExposedCameraData exposedCameraData;
 
         public override string Name => "look_at";
@@ -30,11 +27,9 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
-        public LookAtTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity, ExposedCameraData exposedCameraData)
+        public LookAtTool(SyntheticInputAgent syntheticInput, ExposedCameraData exposedCameraData)
         {
-            this.globalWorldActions = globalWorldActions;
-            this.world = world;
-            this.playerEntity = playerEntity;
+            this.syntheticInput = syntheticInput;
             this.exposedCameraData = exposedCameraData;
         }
 
@@ -43,11 +38,13 @@ namespace DCL.McpServer.Tools
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
                 return McpToolResult.Error("x, y and z world coordinates are required.");
 
-            Vector3 playerPosition = world.Get<CharacterTransform>(playerEntity).Position;
-            globalWorldActions.RotateCamera(new Vector3(x, y, z), playerPosition);
+            SyntheticInputDelivery delivery = await syntheticInput.LookAtAsync(new Vector3(x, y, z), ct);
 
-            // Let the Cinemachine systems apply the look-at intent before reading the camera back.
-            await UniTask.DelayFrame(3, cancellationToken: ct);
+            if (delivery == SyntheticInputDelivery.TimedOut)
+                return McpToolResult.Error("look_at was not applied by the camera (is the simulation paused?).");
+
+            // The exposed camera data is refreshed by its own system; give it one frame to observe the rotation.
+            await UniTask.DelayFrame(1, cancellationToken: ct);
 
             var result = new JObject
             {
