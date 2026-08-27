@@ -58,7 +58,7 @@ namespace DCL.McpServer.Tools
                 result = uiAutomation.Simulator.ScrollUgui(target!, delta, arguments.GetBool("force", false));
             }
 
-            return UniTask.FromResult(McpToolResult.Json(UiAddressArgs.ResultJson(in result, uiAutomation.CursorStateName())));
+            return UniTask.FromResult(McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName())));
         }
     }
 }

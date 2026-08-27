@@ -87,7 +87,7 @@ Repeat until **every requirement has proof**: a screenshot or state read demonst
 2. **Confirm the scene is healthy**: `get_scene_state` — a `state` of `JavaScriptError` or `EcsError` means your code crashed the scene runtime.
 3. **Read the runtime output**: `get_scene_logs` with `sinceSeq` set to the last sequence number you saw. Scene `console.log` output and exceptions land here.
 4. **Look and verify**: position the view (`teleport`, `move_to`, `walk`, `look_at` — for precise framing or free-camera sweeps read [`reference/camera-and-movement.md`](reference/camera-and-movement.md)), then `screenshot` and inspect the image against what the scene code should produce.
-5. **Exercise behavior**: `walk` into trigger areas, `click_entity` on interactables, `send_chat` for commands, `trigger_emote`, and re-screenshot to verify reactions. `list_scene_entities` + `get_entity_details` show the scene's ECS state when visuals aren't enough.
+5. **Exercise behavior**: `walk` into trigger areas, `click_entity` on interactables (`click_at` when you only have screenshot coordinates), `hover_entity` for hover-driven reactions, `press_input` for global input listeners (IA_PRIMARY etc.), `send_chat` for commands, `trigger_emote`, and re-screenshot to verify reactions. For the scene's own 2D UI use `ui_list` + `ui_click`/`ui_set_text`/`ui_scroll` (SDK UI is addressed by CRDT id). `list_scene_entities` + `get_entity_details` show the scene's ECS state when visuals aren't enough.
 
 **Cross-examine** every conclusion: confirm each visual claim with a state read (ECS values via `get_entity_details`, logs, `get_player_state` position), and each state claim with pixels. One channel lies routinely — colliders exist that pixels don't show, entities render invisible while their state looks healthy, animations silently don't play. The reference files call out where cross-examination is mandatory.
 
@@ -123,7 +123,10 @@ Paths are relative to this skill's directory; requires curl + python3; pass `-p 
 ## Interaction testing
 
 - `click_entity` presses a pointer button on a scene entity (get ids from `list_scene_entities`). The target needs a `PointerEvents` component and a collider; the aim is validated by a real camera-origin raycast, so occluders return `hit:false` + `blockedBy*` (reposition and retry) and the entity's `maxDistance` (default 10 m) applies — get close first. `upRayMissed: true` means the target moved between press and release (e.g. a door starting to swing) and the release was delivered with the press-frame hit. For GLTF entities whose collider sits away from the pivot, pass an explicit `x/y/z` aim point. The player must be standing on the scene's parcel — off-parcel clicks fail with "no running current scene".
-- `walk` moves relative to the camera and requires an explicit direction: pass `directionY: 1` for forward (`directionX` strafes); omitting both errors with "directionX and directionY must not both be zero".
+- `walk` moves relative to the camera and requires an explicit direction: pass `directionY: 1` for forward (`directionX` strafes); omitting both errors with "directionX and directionY must not both be zero". Scene `InputModifier` movement locks now apply to `walk` exactly as they do to WASD — a zero-distance result inside a freeze zone proves the lock works; pass `ignoreInputModifiers: true` to escape deliberately.
+- `hover_entity` holds the reticle on an entity without clicking (`PetHoverEnter`/`PetHoverLeave` fire like a real cursor) and reports the hover tooltip text — use it to verify hover feedback before committing to a click.
+- `press_input` sends any SDK input action (primary/secondary/action_3…) with the real-key fan-out: entity-bound if the reticle hovers a qualified entity (the result reports it), otherwise a global `PBPointerEventsResult` on the scene root. It does NOT move the player — combine with `walk` when a scene expects movement keys.
+- Scene UI (`ReactEcsRenderer` panels): `ui_list stack:sdk` lists the interactable elements with their CRDT ids and screen rects; `ui_click`/`ui_set_text` fire the same pointer/value/submit events a user produces. A covered element fails with `blockedBy` instead of clicking through — that's the occlusion check working, not a bug.
 - Collider checks beat pixels for physics (cross-examine): `look_at` straight at the target, `walk` forward, then compare `get_player_state` positions to prove passage or blockage.
 - Trigger areas fire `onTriggerEnter` immediately after `reload_scene` if the player is already standing inside one — reposition the player outside all triggers before testing enter/exit sequencing (and treat post-reload trigger logs as stale state, not gameplay).
 
@@ -140,7 +143,7 @@ Two rules:
 - expected output shape
 - the blocked use case, and why the existing tools can't cover it
 
-The user decides whether and when to implement it. **MANDATORY: implementing an approved tool must go through plan mode first** — whichever session does the implementation starts in plan mode, researches the unity-explorer codebase (the server lives under `Explorer/Assets/DCL/McpServer/` — see `docs/mcp-automation.md` → Implementation map), and presents the plan for user approval before writing any code. Also append the proposal to the "Wanted tools" list below so it isn't lost if the user defers.
+The user decides whether and when to implement it. **MANDATORY: implementing an approved tool must go through plan mode first** — whichever session does the implementation starts in plan mode, researches the unity-explorer codebase (the server lives under `Explorer/Assets/DCL/McpServer/`, the shared input layer under `Explorer/Assets/DCL/SyntheticInput/` — see `docs/mcp-automation.md` → Implementation map and `docs/synthetic-input-simulation.md`), and presents the plan for user approval before writing any code. Also append the proposal to the "Wanted tools" list below so it isn't lost if the user defers.
 
 ## Wanted tools
 

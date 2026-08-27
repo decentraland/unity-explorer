@@ -68,25 +68,5 @@ namespace DCL.McpServer.Tools
             error = "ugui addressing requires one of: path, id, altId.";
             return false;
         }
-
-        public static JObject ResultJson(in UiActionResult result, string cursorState)
-        {
-            var json = new JObject
-            {
-                ["ok"] = result.Ok,
-                ["cursorState"] = cursorState,
-            };
-
-            if (result.FailureReason != null)
-                json["reason"] = result.FailureReason;
-
-            if (result.BlockedBy != null)
-                json["blockedBy"] = result.BlockedBy;
-
-            if (result.ScreenRect != default(UnityEngine.Rect))
-                json["screenRect"] = UiDiscovery.RectJson(result.ScreenRect);
-
-            return json;
-        }
     }
 }

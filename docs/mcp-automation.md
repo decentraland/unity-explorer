@@ -76,14 +76,30 @@ The tables below are a human-readable overview. The authoritative argument contr
 |---|---|---|
 | `teleport` | `x`, `y`, `waitForReady?`, `timeoutSec?` | `/goto x,y` through the regular pipeline, waits for scene readiness |
 | `move_to` | `x`, `y`, `z`, `lookAt{X,Y,Z}?`, `durationSec?` | Instant or smooth move to a world position (16 m per parcel) |
-| `walk` | `directionX`, `directionY`, `seconds?`, `kind?`, `jump?` | Holds camera-relative movement through the real locomotion pipeline (collisions apply) |
+| `walk` | `directionX`, `directionY`, `seconds?`, `kind?`, `jump?`, `ignoreInputModifiers?` | Holds camera-relative movement through the real locomotion pipeline (collisions apply). Scene `InputModifier` locks apply exactly as they do to WASD unless `ignoreInputModifiers` |
 | `look_at` | `x`, `y`, `z` | Rotates the camera to a world point (aim before a screenshot) |
+| `camera_look` | `deltaX`, `deltaY`, `seconds?` | Holds a relative mouse-look input (Cinemachine axes) — human-like turns; use `look_at` for absolute aims |
 | `set_camera_mode` | `mode` | Switches the camera mode like the user hotkey; refuses (with the reason) while a scene locks the camera — `CameraModeArea`, scene virtual camera, or photo camera. `get_player_state` → `camera.modeChangeAllowed` reports the lock state in advance |
 | `set_camera_pose` | `x`,`y`,`z`, `lookAt{X,Y,Z}?`, `fov?`, `timeoutSec?` | Places the free camera at an absolute world position, optionally aiming it and setting FOV. Auto-enters free mode (same locks as `set_camera_mode`), waits for the blend to settle (`settled` in the result), and returns the actual pose. The camera stays put while the player moves; restore with `set_camera_mode` |
 | `send_chat` | `message` | Sends to Nearby chat; `/commands` run through the chat command pipeline |
 | `reload_scene` | `timeoutSec?` | Reloads the current scene (motion + skybox frozen during reload) |
 | `trigger_emote` | `urn` or `stop: true`, `loop?` | Plays or stops an avatar emote |
 | `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?`, `eventType?`, `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. Returns `hit`, hover text, hit point/distance, or the blocking entity |
+| `click_at` | `x`, `y` (normalized image coords, origin top-left), `button?`, `sceneId?`, `timeoutSec?` | Clicks whatever qualified scene entity the ray through that screen point lands on — the screenshot-coordinates counterpart of `click_entity` |
+| `hover_entity` | `entityId` and/or `x`,`y`,`z`, `sceneId?`, `seconds?` | Aims the reticle at the entity and holds the hover without clicking, so `PetHoverEnter`/`PetHoverLeave` fire like a real cursor; reports the hover tooltip text |
+| `press_input` | `action` (`primary`, `secondary`, `action_3`…), `holdSeconds?` | Presses + releases an SDK input action with no aim: entity-bound on the hovered entity when one qualifies, otherwise a global `PBPointerEventsResult` (`hit: null`) on the scene root — exactly the real-key fan-out |
+
+### UI
+
+All ui_* tools report `screenRect` in **image pixels (origin top-left)** — the same way coordinates read off a `screenshot`.
+
+| Tool | Arguments | Effect |
+|---|---|---|
+| `ui_list` | `stack?` (`all`/`ugui`/`sdk`), `checkOcclusion?` | Lists interactable UI: client interface elements (with their address `path`, `id`, `kind`, label) and the current scene's SDK UI (addressed by `crdtId`, with its declared pointer event types) |
+| `ui_click` | address (`stack` + `path`/`id`/`altId` or `crdtId`), `button?`, `force?`, `device?`, `timeoutSec?` | Clicks the element. Semantic by default (events synthesized after an occlusion pre-check — a covered element fails with `blockedBy` instead of clicking through); `device: true` replays it positionally through the virtual mouse for real hit-testing |
+| `ui_set_text` | address, `text`, `submit?`, `optionIndex?` | Types into an input field (value-changed + optional submit events); `optionIndex` selects an SDK dropdown option instead |
+| `ui_scroll` | address, `dx`, `dy`, `force?` | Scrolls a scroll container (uGUI scroll event / SDK scroll-offset) |
+| `ui_drag` | `fromX`,`fromY`,`toX`,`toY` (normalized image coords), `durationFrames?`, `rightButton?` | Presses, drags and releases the virtual mouse — the only path that exercises real drag thresholds and hit-testing |
 
 ### Interpreting the numbers
 
@@ -129,12 +145,13 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 
 ## Implementation map
 
-- `Explorer/Assets/DCL/McpServer/` — feature root, its own `DCL.McpServer` assembly. Two folders are folded into other assemblies via `.asmref` so they can reach code that assembly doesn't reference:
+All input-simulating tools (walk, clicks, hover, global actions, camera look, ui_*) are thin front-ends over the shared **synthetic input simulation layer** (`Explorer/Assets/DCL/SyntheticInput/`), which AltTester probes drive too — see [Synthetic Input Simulation](synthetic-input-simulation.md) for its architecture. What stays MCP-specific:
+
+- `Explorer/Assets/DCL/McpServer/` — feature root, its own `DCL.McpServer` assembly (references `DCL.SyntheticInput`). Two folders are folded into other assemblies via `.asmref` so they can reach code that assembly doesn't reference:
   - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `McpTool` (abstract tool base), `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpJsonSchema` (typed schema builder).
-  - `Tools/` — one class per tool (16).
-  - `Components/` — ECS components for the input-driving tools: `McpMovementOverride`, `McpPointerEventIntent`.
-  - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`), `McpInputOverrideSystem` (held movement), `McpPointerEventSystem` (synthetic pointer press/release delivery; `ClickEntityTool` composes a click from two intents).
+  - `Tools/` — one class per tool (28).
+  - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`).
   - `Utils/` — `SceneLogBuffer`, `JObjectExtensions`.
-  - `Tests/` — EditMode tests **folded into `DCL.EditMode.Tests`** via `.asmref`: dispatcher / registry / result routing and the pointer-click system.
-- Gating: `FeatureId.MCP_SERVER` in `FeaturesRegistry` (resolved as `appArgs.HasFlag(MCP) || appArgs.HasFlag(MCP_PORT)`); `DynamicWorldContainer.CreateAsync` reads `FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER)` and adds `McpServerPlugin`.
-- Flags: `AppArgsFlags.MCP` / `AppArgsFlags.MCP_PORT`; log category: `ReportCategory.MCP`.
+  - `Tests/` — EditMode tests **folded into `DCL.EditMode.Tests`** via `.asmref`: dispatcher / registry / result routing.
+- Gating: `FeatureId.MCP_SERVER` in `FeaturesRegistry` (resolved as `appArgs.HasFlag(MCP) || appArgs.HasFlag(MCP_PORT)`); `DynamicWorldContainer.CreateAsync` reads `FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER)` and adds `SyntheticInputPlugin` + `McpServerPlugin`.
+- Flags: `AppArgsFlags.MCP` / `AppArgsFlags.MCP_PORT`; log categories: `ReportCategory.MCP` (server), `ReportCategory.SYNTHETIC_INPUT` (input layer).

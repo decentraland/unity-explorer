@@ -66,7 +66,7 @@ namespace DCL.McpServer.Tools
                 result = uiAutomation.Simulator.SetTextUgui(target!, arguments["text"]!.Value<string>()!, submit);
             }
 
-            return UniTask.FromResult(McpToolResult.Json(UiAddressArgs.ResultJson(in result, uiAutomation.CursorStateName())));
+            return UniTask.FromResult(McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName())));
         }
     }
 }

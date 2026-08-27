@@ -52,6 +52,7 @@ namespace DCL.McpServer.Systems
         private readonly ECSReloadScene reloadSceneController;
         private readonly bool localSceneDevelopment;
 
+        private readonly SyntheticInputAgent syntheticInput;
         private readonly UiAutomationServices uiAutomation;
 
         private readonly SceneLogBuffer logBuffer;
@@ -73,6 +74,7 @@ namespace DCL.McpServer.Systems
             ECSReloadScene reloadSceneController,
             DiagnosticsContainer diagnosticsContainer,
             ExposedCameraData exposedCameraData,
+            SyntheticInputAgent syntheticInput,
             UiAutomationServices uiAutomation,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
@@ -92,6 +94,7 @@ namespace DCL.McpServer.Systems
             this.worldInfoHub = worldInfoHub;
             this.reloadSceneController = reloadSceneController;
             this.exposedCameraData = exposedCameraData;
+            this.syntheticInput = syntheticInput;
             this.uiAutomation = uiAutomation;
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
@@ -113,8 +116,6 @@ namespace DCL.McpServer.Systems
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            var syntheticInput = new SyntheticInputAgent(globalWorld, arguments.PlayerEntity);
-
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
 
             var toolsRegistry = new McpToolsRegistry()

@@ -18,11 +18,18 @@ namespace DCL.SyntheticInput.Systems
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly UiAutomationServices uiAutomation;
 
-        public SyntheticInputPlugin(IScenesCache scenesCache, IEntityCollidersGlobalCache entityCollidersGlobalCache, UiAutomationServices uiAutomation)
+        public SyntheticInputPlugin(SyntheticInputAgent syntheticInput, IScenesCache scenesCache, IEntityCollidersGlobalCache entityCollidersGlobalCache, UiAutomationServices uiAutomation)
         {
             this.scenesCache = scenesCache;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.uiAutomation = uiAutomation;
+
+#if ALTTESTER
+            // The static-latch probe pattern (AlttesterSceneReadinessProbe): AltTester tests reach the layer
+            // through CallStaticMethod, so the session's instances are handed to the static facades once.
+            DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInput);
+            DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
+#endif
         }
 
         public void Dispose() =>

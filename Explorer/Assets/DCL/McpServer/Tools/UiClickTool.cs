@@ -83,7 +83,7 @@ namespace DCL.McpServer.Tools
                     : uiAutomation.Simulator.ClickUgui(target!, ToInputButton(button), force);
             }
 
-            return McpToolResult.Json(UiAddressArgs.ResultJson(in result, uiAutomation.CursorStateName()));
+            return McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName()));
         }
 
         private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, ClickButton button, float timeoutSec, CancellationToken ct)

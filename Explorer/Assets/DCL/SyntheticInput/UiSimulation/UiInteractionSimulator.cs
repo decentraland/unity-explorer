@@ -273,5 +273,26 @@ namespace DCL.SyntheticInput.UiSimulation
 
         public static UiActionResult Failure(string reason, string? blockedBy = null, Rect screenRect = default) =>
             new () { Ok = false, FailureReason = reason, BlockedBy = blockedBy, ScreenRect = screenRect };
+
+        /// <summary>The wire shape both driver front-ends (MCP tools, AltTester probes) hand back for a UI action.</summary>
+        public Newtonsoft.Json.Linq.JObject ToJson(string cursorState)
+        {
+            var json = new Newtonsoft.Json.Linq.JObject
+            {
+                ["ok"] = Ok,
+                ["cursorState"] = cursorState,
+            };
+
+            if (FailureReason != null)
+                json["reason"] = FailureReason;
+
+            if (BlockedBy != null)
+                json["blockedBy"] = BlockedBy;
+
+            if (ScreenRect != default(Rect))
+                json["screenRect"] = UiDiscovery.RectJson(ScreenRect);
+
+            return json;
+        }
     }
 }
