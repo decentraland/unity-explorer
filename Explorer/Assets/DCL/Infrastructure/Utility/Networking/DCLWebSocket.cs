@@ -96,6 +96,9 @@ namespace Utility.Networking
                 bool marshalBackToIssuingContext = SynchronizationContext.Current != null;
                 using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, connectAbort.Token);
 
+                if (LocalCertificateValidation.ShouldBypass(uri))
+                    ws.Options.RemoteCertificateValidationCallback = (_, _, _, _) => true;
+
                 // Only AttachExternalCancellation can complete this await once the BCL task parks mid-upgrade (see connectAbort).
                 await ws.ConnectAsync(uri, linked.Token).AsUniTask(useCurrentSynchronizationContext: marshalBackToIssuingContext).AttachExternalCancellation(linked.Token);
 #endif

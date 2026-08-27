@@ -58,6 +58,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
+using Utility.Networking;
 using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
 
 // ReSharper disable once CheckNamespace
@@ -250,6 +251,7 @@ namespace Global.Dynamic
             // it has not supplied yet. (base-domain is denied by the allowlist, so a link carrying it still reaches
             // the consent dialog; WarnIfCommandLineOnlyArgCameFromTheDeepLink reports that accepting it changes nothing.)
             ApplyBaseDomainArg(applicationParametersParser);
+            LocalCertificateValidation.Configure(applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM));
 
             // Read while the deep link is still deferred for the same reason as the base domain: which chain the
             // client signs against is not something a link may pick, not even through the denied-params dialog.

@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
+using Utility.Networking;
 
 namespace DCL.WebRequests
 {
@@ -100,6 +101,10 @@ namespace DCL.WebRequests
         {
             TWebRequest request = initializeRequest(CommonArguments.URL, ref args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
+
+            CertificateHandler? certificateHandler = LocalCertificateValidation.CreateCertificateHandler(unityWebRequest.url);
+            if (certificateHandler != null)
+                unityWebRequest.certificateHandler = certificateHandler;
 
             AssignTimeout(unityWebRequest);
             AssignHeaders(unityWebRequest, web3IdentityCache);
