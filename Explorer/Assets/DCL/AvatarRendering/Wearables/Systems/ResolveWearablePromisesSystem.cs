@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -31,33 +32,29 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class ResolveWearablePromisesSystem : BaseUnityLoopSystem
     {
-        /// <summary>
-        ///     A resolution stuck in the asset phase for this long stops holding an in-flight slot, so a wearable
-        ///     whose assets never resolve cannot starve the avatars queued behind it.
-        /// </summary>
-        private const float IN_FLIGHT_STUCK_TIMEOUT_SECS = 30f;
-
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWearableStorage wearableStorage;
         private readonly IDecentralandUrlsSource urlsSource;
-        private readonly int maxAvatarsWithAssetsInFlight;
+        private readonly ConcurrentLoadingPerformanceBudget loadingBudget;
+        private readonly int estimatedAssetsPerAvatar;
 
         // Per-frame aggregation only
         private readonly List<(Entity entity, float sqrDistance)> assetPhaseCandidates = new ();
-        private int avatarsWithAssetsInFlight;
 
         public ResolveWearablePromisesSystem(
             World world,
             IWearableStorage wearableStorage,
             IDecentralandUrlsSource urlsSource,
             URLSubdirectory customStreamingSubdirectory,
-            int maxAvatarsWithAssetsInFlight
+            ConcurrentLoadingPerformanceBudget loadingBudget,
+            int estimatedAssetsPerAvatar
             ) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
-            this.maxAvatarsWithAssetsInFlight = Math.Max(1, maxAvatarsWithAssetsInFlight);
+            this.loadingBudget = loadingBudget;
+            this.estimatedAssetsPerAvatar = Math.Max(1, estimatedAssetsPerAvatar);
         }
 
         public override void Initialize()
@@ -68,34 +65,40 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             assetPhaseCandidates.Clear();
             ResolveWearablePromiseQuery(World);
-
-            avatarsWithAssetsInFlight = 0;
-            CountAvatarsWithAssetsInFlightQuery(World, t);
             AdmitNextAvatarsToAssetPhase();
         }
 
-        [Query]
-        [None(typeof(StreamableResult))]
-        private void CountAvatarsWithAssetsInFlight([Data] float dt, ref AvatarWearableAssetsInFlight inFlight)
-        {
-            inFlight.Age += dt;
-
-            if (inFlight.Age < IN_FLIGHT_STUCK_TIMEOUT_SECS)
-                avatarsWithAssetsInFlight++;
-        }
-
+        /// <summary>
+        ///     Admits DTO-ready avatars into the asset phase, nearest first, only while the shared download budget has
+        ///     free slots. Each admission is assumed to add <see cref="estimatedAssetsPerAvatar" /> downloads to the
+        ///     pipe, so we stop once we predict it is full instead of flooding it. This keeps the budget saturated (the
+        ///     admitted avatars' downloads fill it) while still serializing at the avatar granularity, so avatars
+        ///     complete and reveal one wave after another. As avatars finish they release budget and the next wave is
+        ///     admitted, so admission self-tunes to the completion rate and a stalled avatar (holding no budget) never
+        ///     blocks the queue.
+        /// </summary>
         private void AdmitNextAvatarsToAssetPhase()
         {
-            int freeSlots = maxAvatarsWithAssetsInFlight - avatarsWithAssetsInFlight;
+            if (assetPhaseCandidates.Count == 0)
+                return;
 
-            if (freeSlots <= 0 || assetPhaseCandidates.Count == 0)
+            // CurrentBudget is the whole app's free concurrent-download slots; admitted avatars compete for the same
+            // pool as scenes and everything else, which is exactly what we want to avoid oversubscribing.
+            int freeSlots = loadingBudget.CurrentBudget;
+
+            if (freeSlots <= 0)
                 return;
 
             // Nearest first, so the stagger reveals the most visible avatars earlier
             assetPhaseCandidates.Sort(static (c1, c2) => c1.sqrDistance.CompareTo(c2.sqrDistance));
 
-            for (var i = 0; i < assetPhaseCandidates.Count && i < freeSlots; i++)
+            // Admit at least the nearest candidate whenever there is any room (freeSlots checked before the decrement),
+            // so avatars keep progressing even when the pipe only has a sliver free.
+            for (var i = 0; i < assetPhaseCandidates.Count && freeSlots > 0; i++)
+            {
                 World.Add(assetPhaseCandidates[i].entity, new AvatarWearableAssetsInFlight());
+                freeSlots -= estimatedAssetsPerAvatar;
+            }
         }
 
         [Query]
@@ -157,8 +160,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            // Only a capped number of avatars may load wearable assets at once, so they complete one after another
-            // instead of interleaving downloads and all finishing together at the tail of one shared queue.
+            // Avatars enter the asset phase through a nearest-first gate (see AdmitNextAvatarsToAssetPhase) so their
+            // downloads keep the shared pipe busy without flooding it, and they complete one wave after another instead
+            // of interleaving and all finishing together at the tail of one queue. Until admitted, an avatar with all
+            // its DTOs resolved is only a candidate.
             // DTO resolution above is exempt: definitions are batched into a single request and shared via the storage.
             if (finishedDTOs == wearablesByPointersIntention.Pointers.Count && !World.Has<AvatarWearableAssetsInFlight>(entity))
             {

@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Systems;
 using DCL.AvatarRendering.Wearables.Systems.Load;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -38,9 +39,10 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWearableStorage wearableStorage;
         private readonly ITrimmedWearableStorage trimmedWearableStorage;
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly ConcurrentLoadingPerformanceBudget loadingBudget;
 
         private TimeSpan batchHeartbeat;
-        private int maxAvatarsWithAssetsInFlight;
+        private int estimatedAssetsPerAvatar;
 
         public WearablePlugin(IWebRequestController webRequestController,
             IRealmData realmData,
@@ -49,6 +51,7 @@ namespace DCL.AvatarRendering.Wearables
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
             EntitiesAnalytics entitiesAnalytics,
+            ConcurrentLoadingPerformanceBudget loadingBudget,
             string builderContentURL)
         {
             this.wearableStorage = wearableStorage;
@@ -59,6 +62,7 @@ namespace DCL.AvatarRendering.Wearables
             this.builderContentURL = builderContentURL;
             this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections);
             this.entitiesAnalytics = entitiesAnalytics;
+            this.loadingBudget = loadingBudget;
 
             cacheCleaner.Register(this.wearableStorage);
             cacheCleaner.Register(this.trimmedWearableStorage);
@@ -82,13 +86,13 @@ namespace DCL.AvatarRendering.Wearables
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
-            ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, urlsSource, WEARABLES_EMBEDDED_SUBDIRECTORY, maxAvatarsWithAssetsInFlight);
+            ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, urlsSource, WEARABLES_EMBEDDED_SUBDIRECTORY, loadingBudget, estimatedAssetsPerAvatar);
         }
 
         UniTask IDCLPlugin<Settings>.InitializeAsync(Settings settings, CancellationToken ct)
         {
             batchHeartbeat = TimeSpan.FromMilliseconds(settings.BatchHeartbeatMs);
-            maxAvatarsWithAssetsInFlight = settings.MaxAvatarsWithAssetsInFlight;
+            estimatedAssetsPerAvatar = settings.EstimatedAssetsPerAvatar;
             return UniTask.CompletedTask;
         }
 
@@ -98,10 +102,13 @@ namespace DCL.AvatarRendering.Wearables
             [field: SerializeField] public uint BatchHeartbeatMs { get; private set; } = 100;
 
             /// <summary>
-            ///     How many avatars may have their wearable assets downloading at once. The rest wait, nearest first,
-            ///     so avatars appear one after another instead of all together.
+            ///     Assumed number of concurrent downloads a freshly admitted avatar adds to the shared loading budget.
+            ///     Avatars are admitted to the asset phase nearest first only while that budget has free slots, so this
+            ///     estimate sets how many are let in per wave: near the real per-avatar cost the pipe stays full with the
+            ///     fewest avatars in flight (best stagger at full throughput); higher values stagger more but may
+            ///     under-fill the pipe, lower values approach loading everything at once.
             /// </summary>
-            [field: SerializeField] public int MaxAvatarsWithAssetsInFlight { get; private set; } = 3;
+            [field: SerializeField] public int EstimatedAssetsPerAvatar { get; private set; } = 6;
         }
     }
 }
