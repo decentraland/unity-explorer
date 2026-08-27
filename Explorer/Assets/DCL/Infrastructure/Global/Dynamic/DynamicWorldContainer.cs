@@ -46,6 +46,7 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SkyBox;
+using DCL.SyntheticInput;
 using DCL.SyntheticInput.Systems;
 using DCL.SyntheticInput.UiSimulation;
 using DCL.UI;

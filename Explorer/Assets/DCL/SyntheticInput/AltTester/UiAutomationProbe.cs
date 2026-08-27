@@ -216,7 +216,7 @@ namespace DCL.SyntheticInput.AltTester
                 case "altId":
                     address = UiElementAddress.UguiAltId(addressValue);
                     break;
-                case "id" when int.TryParse(addressValue, out int instanceId):
+                case "id" when ulong.TryParse(addressValue, out ulong instanceId):
                     address = UiElementAddress.UguiInstance(instanceId);
                     break;
                 default:

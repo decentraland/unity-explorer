@@ -49,7 +49,7 @@ namespace DCL.SyntheticInput
             {
                 Axes = axes,
                 Kind = kind,
-                EndTime = Time.time + seconds,
+                EndTime = UnityEngine.Time.time + seconds,
                 JumpRequested = jump,
                 IgnoreInputModifiers = ignoreInputModifiers,
             }, SyntheticInputDelivery.Preempted);
@@ -66,7 +66,7 @@ namespace DCL.SyntheticInput
             UniTask<SyntheticInputDelivery> hold = EcsRequest.SendAsync(world, playerEntity, new SyntheticCameraLookIntent
             {
                 AxisValue = axisValue,
-                EndTime = Time.time + seconds,
+                EndTime = UnityEngine.Time.time + seconds,
             }, SyntheticInputDelivery.Preempted);
 
             return await AwaitHoldAsync<SyntheticCameraLookIntent>(hold, seconds, ct);
@@ -112,7 +112,7 @@ namespace DCL.SyntheticInput
         {
             try
             {
-                SyntheticPointerOutcome outcome = await SendPointerAsync(SyntheticPointerEventIntent.Hover(targetEntityId, sceneId, aimPoint, screenPoint, Time.time + seconds))
+                SyntheticPointerOutcome outcome = await SendPointerAsync(SyntheticPointerEventIntent.Hover(targetEntityId, sceneId, aimPoint, screenPoint, UnityEngine.Time.time + seconds))
                                                        .AttachExternalCancellation(ct)
                                                        .Timeout(TimeSpan.FromSeconds(seconds + COMPLETION_GRACE_SEC));
 

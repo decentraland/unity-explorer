@@ -46,7 +46,7 @@ namespace DCL.SyntheticInput.Tests
             world.Add(playerEntity, new SyntheticCameraLookIntent
             {
                 AxisValue = axisValue,
-                EndTime = Time.time + secondsFromNow,
+                EndTime = UnityEngine.Time.time + secondsFromNow,
                 LookAtTarget = lookAtTarget,
                 Completion = completion,
             });
@@ -65,7 +65,7 @@ namespace DCL.SyntheticInput.Tests
             // The real camera input system zeroed the delta earlier this frame (cursor not locked).
             cameraInput.Delta = Vector2.zero;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(cameraInput.Delta, Is.EqualTo(axisValue));
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
@@ -79,7 +79,7 @@ namespace DCL.SyntheticInput.Tests
             world.Add(cameraEntity, new CameraBlockerComponent());
             cameraInput.Delta = Vector2.zero;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(cameraInput.Delta, Is.EqualTo(Vector2.zero));
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending), "the hold keeps running; only its effect is suppressed");
@@ -90,7 +90,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticInputDelivery> completion = AddIntent(new Vector2(5f, 0f), secondsFromNow: -1f);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False);
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded));
@@ -103,7 +103,7 @@ namespace DCL.SyntheticInput.Tests
             var target = new Vector3(10f, 2f, 30f);
             UniTaskCompletionSource<SyntheticInputDelivery> completion = AddIntent(Vector2.zero, secondsFromNow: 0f, lookAtTarget: target);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Has<CameraLookAtIntent>(cameraEntity), Is.True);
             Assert.That(world.Get<CameraLookAtIntent>(cameraEntity).LookAtTarget, Is.EqualTo(target));

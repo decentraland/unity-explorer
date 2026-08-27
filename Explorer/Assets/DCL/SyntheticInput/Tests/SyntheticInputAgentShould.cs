@@ -29,10 +29,10 @@ namespace DCL.SyntheticInput.Tests
             world.Dispose();
         }
 
-        private SyntheticPointerEventIntent CurrentPointerIntent => world.Get<SyntheticPointerEventIntent>(playerEntity);
+        private SyntheticPointerEventIntent currentPointerIntent => world.Get<SyntheticPointerEventIntent>(playerEntity);
 
         private void CompletePointerIntent(SyntheticPointerOutcome outcome) =>
-            EcsRequest.CompleteAndRemove(world, playerEntity, CurrentPointerIntent, outcome);
+            EcsRequest.CompleteAndRemove(world, playerEntity, currentPointerIntent, outcome);
 
         private static SyntheticPointerOutcome Delivered(int entityId, int crdtId = 0, SyntheticPressHandoff? press = null) =>
             new ()
@@ -46,7 +46,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTask<SyntheticPointerResult> click = agent.ClickAsync(7, "scene-a", null, null, InputAction.IaPointer, timeoutSec: 30f);
 
-            SyntheticPointerEventIntent press = CurrentPointerIntent;
+            SyntheticPointerEventIntent press = currentPointerIntent;
             Assert.That(press.EventType, Is.EqualTo(PointerEventType.PetDown));
             Assert.That(press.TargetEntityId, Is.EqualTo(7));
             Assert.That(press.SceneId, Is.EqualTo("scene-a"));
@@ -55,7 +55,7 @@ namespace DCL.SyntheticInput.Tests
             var handoff = new SyntheticPressHandoff { World = world, Entity = playerEntity, Tick = 3 };
             CompletePointerIntent(Delivered(7, press: handoff));
 
-            SyntheticPointerEventIntent release = CurrentPointerIntent;
+            SyntheticPointerEventIntent release = currentPointerIntent;
             Assert.That(release.EventType, Is.EqualTo(PointerEventType.PetUp));
             Assert.That(release.Press, Is.Not.Null);
             Assert.That(release.Press!.Value.Tick, Is.EqualTo(3u));
@@ -131,7 +131,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTask<SyntheticPointerResult> press = agent.GlobalInputAsync(InputAction.IaPrimary);
 
-            SyntheticPointerEventIntent down = CurrentPointerIntent;
+            SyntheticPointerEventIntent down = currentPointerIntent;
             Assert.That(down.HasAimTarget, Is.False);
             Assert.That(down.Button, Is.EqualTo(InputAction.IaPrimary));
             Assert.That(down.EventType, Is.EqualTo(PointerEventType.PetDown));
@@ -142,7 +142,7 @@ namespace DCL.SyntheticInput.Tests
                 Press = new SyntheticPressHandoff { World = world, Entity = Entity.Null, Tick = 12 },
             });
 
-            SyntheticPointerEventIntent up = CurrentPointerIntent;
+            SyntheticPointerEventIntent up = currentPointerIntent;
             Assert.That(up.EventType, Is.EqualTo(PointerEventType.PetUp));
             Assert.That(up.HasAimTarget, Is.False);
             Assert.That(up.Press!.Value.Tick, Is.EqualTo(12u));
@@ -166,7 +166,7 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(intent.Kind, Is.EqualTo(MovementKind.Run));
             Assert.That(intent.JumpRequested, Is.True);
             Assert.That(intent.IgnoreInputModifiers, Is.True);
-            Assert.That(intent.EndTime, Is.EqualTo(Time.time + 2f).Within(0.5f));
+            Assert.That(intent.EndTime, Is.EqualTo(UnityEngine.Time.time + 2f).Within(0.5f));
 
             EcsRequest.CompleteAndRemove(world, playerEntity, intent, SyntheticInputDelivery.Completed);
 

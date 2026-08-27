@@ -1,7 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
-using DCL.CharacterCamera.Components;
 using DCL.SyntheticInput.Core;
 using DCL.SyntheticInput.Systems;
 using DCL.SyntheticInput.UiSimulation;

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;

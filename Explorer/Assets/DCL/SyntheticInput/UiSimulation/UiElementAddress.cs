@@ -20,11 +20,13 @@ namespace DCL.SyntheticInput.UiSimulation
     {
         public readonly UiStack Stack;
         public readonly string? Path;
-        public readonly int? InstanceId;
+
+        /// <summary>The element's entity id (EntityId.ToULong) as reported by the last listing.</summary>
+        public readonly ulong? InstanceId;
         public readonly string? AltId;
         public readonly int CrdtId;
 
-        private UiElementAddress(UiStack stack, string? path, int? instanceId, string? altId, int crdtId)
+        private UiElementAddress(UiStack stack, string? path, ulong? instanceId, string? altId, int crdtId)
         {
             Stack = stack;
             Path = path;
@@ -36,7 +38,7 @@ namespace DCL.SyntheticInput.UiSimulation
         public static UiElementAddress UguiPath(string path) =>
             new (UiStack.UGUI, path, null, null, -1);
 
-        public static UiElementAddress UguiInstance(int instanceId) =>
+        public static UiElementAddress UguiInstance(ulong instanceId) =>
             new (UiStack.UGUI, null, instanceId, null, -1);
 
         public static UiElementAddress UguiAltId(string altId) =>

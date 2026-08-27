@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
+using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;

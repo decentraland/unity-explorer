@@ -20,7 +20,7 @@ namespace DCL.SyntheticInput.UiSimulation
 
         private readonly EventSystem eventSystem;
         private readonly PointerEventData pointerEventData;
-        private readonly Dictionary<int, GameObject> lastListing = new ();
+        private readonly Dictionary<ulong, GameObject> lastListing = new ();
         private readonly List<RaycastResult> raycastResults = new ();
         private readonly List<Transform> candidateRoots = new ();
         private readonly List<string> pathSegments = new ();
@@ -38,7 +38,7 @@ namespace DCL.SyntheticInput.UiSimulation
             lastListing.Clear();
             var entries = new JArray();
 
-            Selectable[] selectables = UnityEngine.Object.FindObjectsByType<Selectable>(FindObjectsSortMode.None);
+            Selectable[] selectables = UnityEngine.Object.FindObjectsByType<Selectable>();
 
             foreach (Selectable selectable in selectables)
             {
@@ -51,7 +51,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 Append(entries, selectable.gameObject, KindOf(selectable), checkOcclusion);
             }
 
-            ScrollRect[] scrolls = UnityEngine.Object.FindObjectsByType<ScrollRect>(FindObjectsSortMode.None);
+            ScrollRect[] scrolls = UnityEngine.Object.FindObjectsByType<ScrollRect>();
 
             foreach (ScrollRect scroll in scrolls)
             {
@@ -96,9 +96,9 @@ namespace DCL.SyntheticInput.UiSimulation
         {
             target = null;
 #if ALTTESTER
-            AltTester.AltTesterUnitySDK.AltId[] altIds = UnityEngine.Object.FindObjectsByType<AltTester.AltTesterUnitySDK.AltId>(FindObjectsSortMode.None);
+            global::AltTester.AltTesterUnitySDK.AltId[] altIds = UnityEngine.Object.FindObjectsByType<global::AltTester.AltTesterUnitySDK.AltId>();
 
-            foreach (AltTester.AltTesterUnitySDK.AltId candidate in altIds)
+            foreach (global::AltTester.AltTesterUnitySDK.AltId candidate in altIds)
             {
                 if (candidate.altID != altId)
                     continue;
@@ -204,7 +204,7 @@ namespace DCL.SyntheticInput.UiSimulation
             UiElementAddress.ParseSegment(segment, out ReadOnlySpan<char> name, out int siblingIndex);
 
             candidateRoots.Clear();
-            Canvas[] canvases = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+            Canvas[] canvases = UnityEngine.Object.FindObjectsByType<Canvas>();
 
             foreach (Canvas canvas in canvases)
             {
@@ -254,7 +254,8 @@ namespace DCL.SyntheticInput.UiSimulation
 
         private void Append(JArray entries, GameObject element, string kind, bool checkOcclusion)
         {
-            int instanceId = element.GetInstanceID();
+            // EntityId.ToULong is the future-proof numeric form; the listing/addressing wire id carries it.
+            ulong instanceId = EntityId.ToULong(element.GetEntityId());
             lastListing[instanceId] = element;
 
             Rect rect = UiScreenGeometry.ImageRectOf((RectTransform)element.transform);
@@ -274,7 +275,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 entry["label"] = label;
 
 #if ALTTESTER
-            var altId = element.GetComponent<AltTester.AltTesterUnitySDK.AltId>();
+            var altId = element.GetComponent<global::AltTester.AltTesterUnitySDK.AltId>();
 
             if (altId != null)
                 entry["altId"] = altId.altID;
@@ -300,7 +301,7 @@ namespace DCL.SyntheticInput.UiSimulation
             if (string.IsNullOrEmpty(text))
                 return null;
 
-            return text!.Length <= LABEL_MAX_LENGTH ? text : text[..LABEL_MAX_LENGTH];
+            return text.Length <= LABEL_MAX_LENGTH ? text : text[..LABEL_MAX_LENGTH];
         }
 
         private static string KindOf(Selectable selectable) =>

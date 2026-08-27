@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
@@ -9,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.McpServer.Tools
 {

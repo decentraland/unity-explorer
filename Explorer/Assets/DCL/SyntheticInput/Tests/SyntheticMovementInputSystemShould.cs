@@ -42,7 +42,7 @@ namespace DCL.SyntheticInput.Tests
             {
                 Axes = axes,
                 Kind = kind,
-                EndTime = Time.time + secondsFromNow,
+                EndTime = UnityEngine.Time.time + secondsFromNow,
                 JumpRequested = jump,
                 IgnoreInputModifiers = ignoreInputModifiers,
                 Completion = completion,
@@ -64,7 +64,7 @@ namespace DCL.SyntheticInput.Tests
             movement.Axes = new Vector2(0.3f, -0.7f);
             movement.Kind = MovementKind.Idle;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(movement.Axes, Is.EqualTo(Vector2.up));
             Assert.That(movement.Kind, Is.EqualTo(MovementKind.Jog));
@@ -79,7 +79,7 @@ namespace DCL.SyntheticInput.Tests
             movement.Axes = Vector2.up;
             movement.Kind = MovementKind.Run;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(movement.Axes, Is.EqualTo(Vector2.zero));
             Assert.That(movement.Kind, Is.EqualTo(MovementKind.Idle));
@@ -93,7 +93,7 @@ namespace DCL.SyntheticInput.Tests
         {
             AddIntent(Vector2.up, MovementKind.Jog, secondsFromNow: 100f, jump: true);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Get<JumpInputComponent>(playerEntity).Trigger.TickWhenJumpOccurred, Is.EqualTo(PHYSICS_TICK + 1));
 
@@ -108,11 +108,11 @@ namespace DCL.SyntheticInput.Tests
         public void CompletePreemptedHoldWhenNewerOneArrives()
         {
             UniTask<SyntheticInputDelivery> first = EcsRequest.SendAsync(world, playerEntity,
-                new SyntheticMovementIntent { Axes = Vector2.up, Kind = MovementKind.Jog, EndTime = Time.time + 100f },
+                new SyntheticMovementIntent { Axes = Vector2.up, Kind = MovementKind.Jog, EndTime = UnityEngine.Time.time + 100f },
                 SyntheticInputDelivery.Preempted);
 
             UniTask<SyntheticInputDelivery> second = EcsRequest.SendAsync(world, playerEntity,
-                new SyntheticMovementIntent { Axes = Vector2.down, Kind = MovementKind.Walk, EndTime = Time.time + 100f },
+                new SyntheticMovementIntent { Axes = Vector2.down, Kind = MovementKind.Walk, EndTime = UnityEngine.Time.time + 100f },
                 SyntheticInputDelivery.Preempted);
 
             Assert.That(first.Status, Is.EqualTo(UniTaskStatus.Succeeded));
@@ -130,7 +130,7 @@ namespace DCL.SyntheticInput.Tests
             movement.Axes = Vector2.zero;
             movement.Kind = MovementKind.Idle;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(movement.Axes, Is.EqualTo(Vector2.zero));
             Assert.That(movement.Kind, Is.EqualTo(MovementKind.Idle));
@@ -144,7 +144,7 @@ namespace DCL.SyntheticInput.Tests
 
             inputModifier.DisableRun = true;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(movement.Axes, Is.EqualTo(Vector2.up));
             Assert.That(movement.Kind, Is.EqualTo(MovementKind.Jog));
@@ -157,7 +157,7 @@ namespace DCL.SyntheticInput.Tests
 
             inputModifier.DisableAll = true;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(movement.Axes, Is.EqualTo(Vector2.up));
             Assert.That(movement.Kind, Is.EqualTo(MovementKind.Run));
@@ -170,7 +170,7 @@ namespace DCL.SyntheticInput.Tests
 
             inputModifier.DisableJump = true;
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(world.Get<JumpInputComponent>(playerEntity).Trigger.TickWhenJumpOccurred, Is.EqualTo(0));
             Assert.That(world.Get<SyntheticMovementIntent>(playerEntity).JumpRequested, Is.False, "the jump request is consumed even when the lock drops it");

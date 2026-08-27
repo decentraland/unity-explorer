@@ -1,7 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
-using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.SyntheticInput.Core;

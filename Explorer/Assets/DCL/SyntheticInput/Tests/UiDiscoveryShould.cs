@@ -1,4 +1,5 @@
 using DCL.SyntheticInput.UiSimulation;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -76,13 +77,13 @@ namespace DCL.SyntheticInput.Tests
             buttonGo.AddComponent<Image>();
             buttonGo.AddComponent<Button>();
 
-            Newtonsoft.Json.Linq.JArray listed = discovery.ListInteractable(checkOcclusion: false);
+            JArray listed = discovery.ListInteractable(checkOcclusion: false);
 
             Assert.That(listed.Count, Is.EqualTo(1));
             Assert.That(listed[0]!["kind"]!.Value<string>(), Is.EqualTo("button"));
             Assert.That(listed[0]!["path"]!.Value<string>(), Is.EqualTo("TestCanvasRoot/MyButton"));
 
-            int listedId = listed[0]!["id"]!.Value<int>();
+            ulong listedId = listed[0]!["id"]!.Value<ulong>();
             Assert.That(discovery.TryResolve(UiElementAddress.UguiInstance(listedId), out GameObject? resolved, out _), Is.True);
             Assert.That(resolved, Is.EqualTo(buttonGo));
         }

@@ -1,3 +1,4 @@
+using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
@@ -47,9 +48,9 @@ namespace DCL.McpServer.Tools
                 return true;
             }
 
-            if (arguments.TryGetInt("id", out int instanceId))
+            if (arguments["id"]?.Type == JTokenType.Integer)
             {
-                address = UiElementAddress.UguiInstance(instanceId);
+                address = UiElementAddress.UguiInstance(arguments["id"]!.Value<ulong>());
                 return true;
             }
 
