@@ -85,7 +85,7 @@ string, and each local session derives one from the preview entity id its dev se
 (`lsd:b64-…`). Two scenes running out of two different project folders — or the same folder on two
 machines — land in different realms and never see each other. Nothing is exchanged to arrange this:
 every party derives the same key from the same id. The full contract, including the hashed form used
-when the key would exceed 255 characters, is in [Pulse → Realm](pulse.md#realm--ipulserealm).
+when the key would exceed 255 characters, is in [Pulse → Realm](pulse.md#realm--pulserealm).
 
 Because the id is path-based, the realm survives content edits, `/reload`, and restarting the dev
 server. Editing your scene does not reshuffle who you can see.

@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.Movement
             IWeb3IdentityCache identityCache,
             ReconnectionSettings settings,
             ISelfProfile selfProfile,
-            IPulseRealm pulseRealm)
+            PulseRealm pulseRealm)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;

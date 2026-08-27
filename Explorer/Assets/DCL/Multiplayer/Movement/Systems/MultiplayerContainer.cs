@@ -192,7 +192,7 @@ namespace DCL.Multiplayer.Movement
         public readonly IEmotesMessageBus EmotesMessageBus;
         public readonly IRemoveIntentions RemoveIntentions;
         public readonly PulseActivation PulseActivation;
-        public readonly IPulseRealm PulseRealm;
+        public readonly PulseRealm PulseRealm;
 
         public IProfileBroadcast ProfileBroadcast => liveKitContainer.ProfileBroadcast;
         public IProfilePropagation ProfilePropagation => pulseContainer.pulseProfilePropagationBus!;
@@ -202,7 +202,7 @@ namespace DCL.Multiplayer.Movement
         public PulseMultiplayerBus PulseMultiplayerBus => pulseContainer.pulseMultiplayerBus!;
         public ITransport PulseTransport => pulseContainer.transport!;
 
-        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile, PulseActivation pulseActivation, IPulseRealm pulseRealm)
+        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile, PulseActivation pulseActivation, PulseRealm pulseRealm)
         {
             this.pulseContainer = pulseContainer;
             this.liveKitContainer = liveKitContainer;
@@ -221,7 +221,7 @@ namespace DCL.Multiplayer.Movement
 
         public static async UniTask<MultiplayerContainer> CreateAsync(
             IPluginSettingsContainer pluginSettingsContainer,
-            IPulseRealm pulseRealm,
+            PulseRealm pulseRealm,
             IWeb3IdentityCache identityCache,
             MovementInbox movementInbox,
             LandscapeData landscapeData,

@@ -250,9 +250,10 @@ namespace Global.Dynamic
 
             // Pulse partitions visibility by exact realm string. Local scene development has no realm of its own,
             // so each dev process derives one from the entity id its dev server serves, keeping concurrent previews apart.
-            IPulseRealm pulseRealm = localSceneDevelopment
-                ? new LocalSceneDevelopmentPulseRealm(new LocalSceneEntityIdSource(staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.LocalSceneDevelopmentRealm))
-                : new RealmDataPulseRealm(staticContainer.RealmData);
+            var pulseRealm = new PulseRealm(staticContainer.RealmData,
+                localSceneDevelopment
+                    ? new LocalSceneEntityIdSource(staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.LocalSceneDevelopmentRealm)
+                    : null);
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
 

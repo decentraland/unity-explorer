@@ -1,13 +1,17 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
+using DCL.Utility.Types;
+using ECS;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow.Tests
 {
@@ -15,12 +19,14 @@ namespace DCL.UserInAppInitializationFlow.Tests
     public class StartPulseMultiplayerStartupOperationShould
     {
         private const string REALM = "main";
+        private const string ENTITY_ID = "b64-L2hvbWUvZGV2L215LXNjZW5l";
 
         private World world = null!;
         private IPulseMultiplayerService service = null!;
         private IProfilePropagation profilePropagation = null!;
         private ISelfProfile selfProfile = null!;
-        private IPulseRealm pulseRealm = null!;
+        private IRealmData realmData = null!;
+        private ILocalSceneEntityIdSource entityIdSource = null!;
         private CancellationTokenSource cts = null!;
 
         [SetUp]
@@ -30,8 +36,9 @@ namespace DCL.UserInAppInitializationFlow.Tests
             service = Substitute.For<IPulseMultiplayerService>();
             profilePropagation = Substitute.For<IProfilePropagation>();
             selfProfile = Substitute.For<ISelfProfile>();
-            pulseRealm = Substitute.For<IPulseRealm>();
-            pulseRealm.Value.Returns(REALM);
+            realmData = Substitute.For<IRealmData>();
+            realmData.RealmName.Returns(REALM);
+            entityIdSource = Substitute.For<ILocalSceneEntityIdSource>();
             cts = new CancellationTokenSource();
         }
 
@@ -47,7 +54,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         {
             // Arrange
             var activation = new PulseActivation(false);
-            StartPulseMultiplayerStartupOperation operation = Operation(activation);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, new PulseRealm(realmData));
 
             // Act
             await operation.ExecuteAsync(MakeParams(), cts.Token);
@@ -63,7 +70,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             // Arrange
             var activation = new PulseActivation(true);
             service.ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>()).Returns(UniTask.FromResult(false));
-            StartPulseMultiplayerStartupOperation operation = Operation(activation);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, new PulseRealm(realmData));
 
             // Act
             await operation.ExecuteAsync(MakeParams(), cts.Token);
@@ -74,44 +81,49 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
-        public async Task ResolveRealmBeforeConnecting()
+        public async Task ResolveTheLocalSceneRealmBeforeConnecting()
         {
             // Arrange
             var activation = new PulseActivation(true);
             service.ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>()).Returns(UniTask.FromResult(true));
-            StartPulseMultiplayerStartupOperation operation = Operation(activation);
+            entityIdSource.EntityAsync(Arg.Any<CancellationToken>())
+                          .Returns(UniTask.FromResult(Result<LocalSceneEntity>.SuccessResult(new LocalSceneEntity(ENTITY_ID, Vector2Int.zero))));
+
+            var pulseRealm = new PulseRealm(realmData, entityIdSource);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, pulseRealm);
 
             // Act
             await operation.ExecuteAsync(MakeParams(), cts.Token);
 
-            // Assert
-            Received.InOrder(() =>
-            {
-                pulseRealm.EnsureResolvedAsync(Arg.Any<CancellationToken>());
-                service.ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
-            });
-
+            // Assert — the realm is only non-empty once resolved, and the connection is gated on that,
+            // so a connected session proves resolution ran first
+            Assert.That(pulseRealm.Value, Is.EqualTo("lsd:" + ENTITY_ID));
+            _ = service.Received(1).ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
             Assert.IsTrue(activation.IsActive);
         }
 
         [Test]
-        public async Task FallBackToLiveKitWhenRealmUnresolved()
+        public async Task FallBackToLiveKitWhenTheLocalSceneRealmIsUnresolved()
         {
-            // Arrange
+            // Arrange — the local dev server is unreachable
             var activation = new PulseActivation(true);
-            pulseRealm.Value.Returns(string.Empty);
-            StartPulseMultiplayerStartupOperation operation = Operation(activation);
+            entityIdSource.EntityAsync(Arg.Any<CancellationToken>())
+                          .Returns(UniTask.FromResult(Result<LocalSceneEntity>.ErrorResult("Local scene server unreachable")));
+
+            var pulseRealm = new PulseRealm(realmData, entityIdSource);
+            StartPulseMultiplayerStartupOperation operation = Operation(activation, pulseRealm);
 
             // Act
             await operation.ExecuteAsync(MakeParams(), cts.Token);
 
-            // Assert
+            // Assert — an empty realm is rejected server-side, so it must not connect at all
+            Assert.That(pulseRealm.Value, Is.Empty);
             Assert.IsFalse(activation.IsActive);
             _ = service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
             profilePropagation.DidNotReceive().Propagate(Arg.Any<Profile>());
         }
 
-        private StartPulseMultiplayerStartupOperation Operation(PulseActivation activation) =>
+        private StartPulseMultiplayerStartupOperation Operation(PulseActivation activation, PulseRealm pulseRealm) =>
             new (service, profilePropagation, selfProfile, activation, pulseRealm);
 
         private IStartupOperation.Params MakeParams()

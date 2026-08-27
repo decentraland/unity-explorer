@@ -44,7 +44,7 @@ From `DCL/FeatureFlags/FeaturesRegistry.cs`:
 
 Override semantics: when `--pulse` is **specified** its value wins over the remote flag (`--pulse true` force-enables, `--pulse false` force-disables — useful for local development, integration testing, and ops kill-switching); when it is **not specified**, Pulse is driven by the remote feature flag.
 
-**Local scene development is the exception**: it resolves no remote feature flags (the feature-flag host is the local dev server), so the flag can never be *on* there and Pulse defaults on instead. `--pulse false` is the way back to the LiveKit-only behaviour local scene development had before. See [Realm — `IPulseRealm`](#realm--ipulserealm) for how concurrent dev processes stay isolated from one another.
+**Local scene development is the exception**: it resolves no remote feature flags (the feature-flag host is the local dev server), so the flag can never be *on* there and Pulse defaults on instead. `--pulse false` is the way back to the LiveKit-only behaviour local scene development had before. See [Realm — `PulseRealm`](#realm--pulserealm) for how concurrent dev processes stay isolated from one another.
 
 ### Where the flag is consumed
 
@@ -73,7 +73,7 @@ The effective runtime cost of Pulse when disabled is a few dummy virtual calls p
 
 `StartPulseMultiplayerStartupOperation` connects to Pulse during login, passing a bounded attempt count (`5`) to `IPulseMultiplayerService.ConnectAsync(ct, maxAttempts)`:
 
-- Before connecting it awaits `IPulseRealm.EnsureResolvedAsync(ct)`. If the realm is still empty afterwards — in local scene development, that means the dev server is unreachable — it calls `PulseActivation.Deactivate()` and returns success without connecting. An empty realm violates the server contract, so connecting anyway would join a session nothing can be filtered into.
+- Before connecting it awaits `PulseRealm.EnsureResolvedAsync(ct)`. If the realm is still empty afterwards — in local scene development, that means the dev server is unreachable — it calls `PulseActivation.Deactivate()` and returns success without connecting. An empty realm violates the server contract, so connecting anyway would join a session nothing can be filtered into.
 - If the connection keeps failing transiently across all 5 attempts (timing out, or dropped mid-handshake for a retriable reason such as `GRACEFUL` or `SERVER_FULL`), or fails terminally on any attempt (rejected handshake, `BANNED`, or another non-retriable disconnect reason), the operation calls `PulseActivation.Deactivate()` and returns success — login continues and the client behaves as if Pulse were absent.
 - If Pulse is already inactive (disabled / `--pulse false`), the operation is a no-op.
 
@@ -81,35 +81,39 @@ Runtime reconnection failures (after a successful initial connect) do **not** fa
 
 ---
 
-## Realm — `IPulseRealm`
+## Realm — `PulseRealm`
 
 Pulse has no rooms. The server partitions visibility by **exact realm-string match**, so the realm a
 peer announces is the only thing separating two sessions that share a Pulse instance. Every realm read
 and write in `PulseMultiplayerBus` — peer lookup (`GetWalletInRealm`), the stale-peer purge
 (`CollectWalletsNotInRealm` / `RemoveWhereNotInRealm`), the `PlayerJoined` / `TeleportPerformed`
 filters, `BroadcastTeleport`, and the handshake's `PlayerInitialState.Realm` — goes through
-`Connections/Pulse/IPulseRealm.cs`:
+`Connections/Pulse/PulseRealm.cs`:
 
 ```csharp
-public interface IPulseRealm
+public class PulseRealm
 {
-    string Value { get; }
+    public string Value { get; }
 
-    UniTask EnsureResolvedAsync(CancellationToken ct);
+    public PulseRealm(IRealmData realmData, ILocalSceneEntityIdSource? localSceneEntityIdSource = null);
+
+    public UniTask EnsureResolvedAsync(CancellationToken ct);
 }
 ```
 
-| Implementation | `Value` | `EnsureResolvedAsync` |
+There is no interface and no second implementation — the optional constructor argument *is* the mode:
+
+| `localSceneEntityIdSource` | `Value` | `EnsureResolvedAsync` |
 |---|---|---|
-| `RealmDataPulseRealm` | `IRealmData.RealmName`, read **live** | no-op |
-| `LocalSceneDevelopmentPulseRealm` | the derived local-development key, resolved once | fetches the dev server's entity id |
+| `null` (the normal case) | `IRealmData.RealmName`, read **live** | no-op |
+| supplied (local scene development) | the derived local-development key, resolved once | fetches the dev server's entity id |
 
-`RealmDataPulseRealm` reads live rather than caching because a realm change — teleporting between
-Genesis and a world — has to be visible to the very next message the bus sends or filters. It is a
-pure passthrough: outside local scene development this abstraction changes nothing.
+The normal case reads live rather than caching because a realm change — teleporting between Genesis
+and a world — has to be visible to the very next message the bus sends or filters. It is a pure
+passthrough: outside local scene development this class changes nothing.
 
-`Value` is empty while the realm is unknown, and callers must not connect in that state: an empty
-realm violates the server contract and every incoming message would be filtered out.
+`Value` is empty while a local-development realm is unresolved, and callers must not connect in that
+state: an empty realm violates the server contract and every incoming message would be filtered out.
 
 ### The local-development realm key
 
@@ -145,7 +149,7 @@ the same served id, so they share it too.
 >
 > The contract is written down once in js-sdk-toolchain's
 > [`docs/lsd-identity-and-pulse-realm.md`](https://github.com/decentraland/js-sdk-toolchain/blob/main/docs/lsd-identity-and-pulse-realm.md);
-> `LocalSceneDevelopmentPulseRealmShould` pins the exact strings, including the worked examples
+> `PulseRealmShould` pins the exact strings, including the worked examples
 > published there. Keep both in sync.
 
 **Stability.** The key derives from the *entity id only*, never from a content hash. js-sdk-toolchain
@@ -170,7 +174,7 @@ and log-in continues on LiveKit alone.
 
 - **Genesis bounds.** Pulse's `FieldValidator` rejects parcel indices outside Genesis City and
   disconnects the peer, so a local scene outside those bounds would join a realm and then silently
-  fail to sync. `LocalSceneDevelopmentPulseRealm` logs a warning naming the parcel and the bounds when
+  fail to sync. `PulseRealm` logs a warning naming the parcel and the bounds when
   it sees one. (`sdk-commands` already refuses to *start* such a scene, so this only fires for dev
   servers it did not launch.)
 - **Endpoint.** Local scene development connects to the same org Pulse endpoint as any other session;

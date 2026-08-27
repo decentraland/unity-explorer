@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Utility.Types;
+using ECS;
 using System;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,16 +13,20 @@ using Utility;
 namespace DCL.Multiplayer.Connections.Pulse
 {
     /// <summary>
-    ///     Isolates each local development process inside the shared Pulse server by deriving the realm
-    ///     from the entity id the dev server serves for the previewed project.
-    ///     Nothing is exchanged: every party — this client, <c>sdk-commands</c>, other explorers — derives
-    ///     the identical string from the same entity id, which is what makes isolation work without any
-    ///     paired endpoint or handshake. Two implementations that derive even slightly different strings
-    ///     do not error; their peers simply never see each other.
-    ///     The contract is written down once in js-sdk-toolchain's
+    ///     The realm string Pulse announces peers under and filters incoming messages by. The server
+    ///     partitions visibility by exact string match, so this value is the only thing separating two
+    ///     sessions that share a Pulse instance.
+    ///     Normally it follows <see cref="IRealmData.RealmName" /> live, because a realm change — teleporting
+    ///     between Genesis and a world — has to be visible to the very next message the bus sends or filters.
+    ///     Local scene development has no realm of its own, so each dev process instead derives one from the
+    ///     entity id its dev server serves, which is what keeps concurrent previews from seeing each other.
+    ///     Nothing is exchanged: every party — this client, <c>sdk-commands</c>, other explorers — derives the
+    ///     identical string from the same entity id, so isolation needs no paired endpoint or handshake. Two
+    ///     implementations that derive even slightly different strings do not error; their peers simply never
+    ///     see each other. The contract is written down once in js-sdk-toolchain's
     ///     <c>docs/lsd-identity-and-pulse-realm.md</c>; keep this in sync with it.
     /// </summary>
-    public class LocalSceneDevelopmentPulseRealm : IPulseRealm
+    public class PulseRealm
     {
         /// <summary>
         ///     Pulse's <c>FieldValidatorOptions.MaxRealmLength</c>. A longer realm is rejected server-side.
@@ -32,29 +37,46 @@ namespace DCL.Multiplayer.Connections.Pulse
         private const string HASHED_PREFIX = "lsd:sha256:";
         private const string HEX_DIGITS = "0123456789abcdef";
 
-        private readonly ILocalSceneEntityIdSource entityIdSource;
+        private readonly IRealmData realmData;
 
-        private string resolved = string.Empty;
+        /// <summary>
+        ///     Null outside local scene development — its presence is what selects the derived realm over
+        ///     the one <see cref="realmData" /> reports.
+        /// </summary>
+        private readonly ILocalSceneEntityIdSource? localSceneEntityIdSource;
 
-        public string Value => resolved;
+        private string localSceneRealm = string.Empty;
 
-        public LocalSceneDevelopmentPulseRealm(ILocalSceneEntityIdSource entityIdSource)
+        /// <summary>
+        ///     Empty while a local scene development realm is unresolved — callers must not connect to Pulse
+        ///     in that state, since an empty realm violates the server contract.
+        /// </summary>
+        public string Value => localSceneEntityIdSource == null ? realmData.RealmName : localSceneRealm;
+
+        public PulseRealm(IRealmData realmData, ILocalSceneEntityIdSource? localSceneEntityIdSource = null)
         {
-            this.entityIdSource = entityIdSource;
+            this.realmData = realmData;
+            this.localSceneEntityIdSource = localSceneEntityIdSource;
         }
 
+        /// <summary>
+        ///     Resolves the local scene development realm if it is not known yet; a no-op everywhere else,
+        ///     and on every call after the first. Called once before connecting, because the realm ships in
+        ///     the very first message — the handshake's initial state.
+        ///     Never throws: an unresolvable realm leaves <see cref="Value" /> empty rather than failing the
+        ///     log-in flow this runs inside.
+        /// </summary>
         public async UniTask EnsureResolvedAsync(CancellationToken ct)
         {
-            if (resolved.Length > 0)
+            if (localSceneEntityIdSource == null || localSceneRealm.Length > 0)
                 return;
 
             Result<LocalSceneEntity> entity;
 
-            try { entity = await entityIdSource.EntityAsync(ct); }
+            try { entity = await localSceneEntityIdSource.EntityAsync(ct); }
             catch (OperationCanceledException) { return; }
             catch (Exception e)
             {
-                // Leave the realm unresolved rather than failing the log-in flow this runs inside.
                 ReportHub.LogException(e, ReportCategory.MULTIPLAYER);
                 return;
             }
@@ -67,8 +89,8 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             WarnIfOutsideGenesisBounds(entity.Value.BaseParcel);
 
-            resolved = RealmKeyFor(entity.Value.Id);
-            ReportHub.Log(ReportCategory.MULTIPLAYER, $"Local scene development Pulse realm resolved to '{resolved}'");
+            localSceneRealm = RealmKeyFor(entity.Value.Id);
+            ReportHub.Log(ReportCategory.MULTIPLAYER, $"Local scene development Pulse realm resolved to '{localSceneRealm}'");
         }
 
         /// <summary>

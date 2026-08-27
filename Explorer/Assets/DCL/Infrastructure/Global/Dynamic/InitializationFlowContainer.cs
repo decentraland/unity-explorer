@@ -44,7 +44,7 @@ namespace DCL.UserInAppInitializationFlow
             IPulseMultiplayerService pulseMultiplayerService,
             IProfilePropagation profilePropagation,
             PulseActivation pulseActivation,
-            IPulseRealm pulseRealm,
+            PulseRealm pulseRealm,
             IWorldPermissionsService worldPermissionsService,
             IChatHistory chatHistory)
         {

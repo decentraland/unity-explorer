@@ -29,7 +29,7 @@ Both transports send the same `NetworkMovementMessage` / emote / profile-announc
 
 Pulse is gated by the `FeatureId.Pulse` feature flag, resolved once into a shared `PulseActivation`. When inactive, Pulse is replaced with no-op dummies and only LiveKit carries traffic, with `LiveKitMessagesBroadcaster` broadcasting to all peers. When active, the broadcaster sends only to peers that announced over LiveKit (the rest receive over Pulse). If the Pulse server is unreachable at start-up, the client falls back fully to LiveKit. See [Transport Selection & Wiring](#transport-selection--wiring) below.
 
-This dual-transport split also applies to local scene development: Pulse carries player state while the local gatekeeper LiveKit room keeps carrying Scene Messages (SDK `MessageBus` and client↔client CRDT sync). Concurrent dev processes are kept apart by a per-process Pulse realm — see [Pulse → Realm](pulse.md#realm--ipulserealm).
+This dual-transport split also applies to local scene development: Pulse carries player state while the local gatekeeper LiveKit room keeps carrying Scene Messages (SDK `MessageBus` and client↔client CRDT sync). Concurrent dev processes are kept apart by a per-process Pulse realm — see [Pulse → Realm](pulse.md#realm--pulserealm).
 
 ---
 
