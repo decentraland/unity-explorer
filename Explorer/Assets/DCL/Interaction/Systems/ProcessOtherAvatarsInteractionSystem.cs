@@ -170,23 +170,11 @@ namespace DCL.Interaction.Systems
             if (ct.IsCancellationRequested)
                 return;
 
-            // Runs on every outcome: menu closed, never shown (unknown profile, another menu already open) or failed
-            ReleaseCursorHeldForMenu(cameraEntity);
-        }
-
-        /// <summary>
-        ///     Undoes the lock-with-UI requested for the menu: drops the intention if it was not applied yet,
-        ///     otherwise requests the cursor to be freed.
-        /// </summary>
-        private void ReleaseCursorHeldForMenu(Entity cameraEntity)
-        {
+            // Runs on every outcome: menu closed, never shown (unknown profile, another menu already open) or failed.
+            // Drops the lock-with-UI intention if it was not applied yet, otherwise requests the cursor to be freed
             if (World.TryGet(cameraEntity, out PointerLockIntention pendingIntention) && pendingIntention is { Locked: true, WithUI: true })
-            {
                 World.Remove<PointerLockIntention>(cameraEntity);
-                return;
-            }
-
-            if (World.Get<CursorComponent>(cameraEntity).CursorState == CursorState.LockedWithUi)
+            else if (World.Get<CursorComponent>(cameraEntity).CursorState == CursorState.LockedWithUi)
                 World.AddOrSet(cameraEntity, new PointerLockIntention(false));
         }
 
