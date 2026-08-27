@@ -17,8 +17,46 @@ namespace Preview
     public class PreviewUIPresenter : MonoBehaviour
     {
         private const string USS_SWITCHER_BUTTON_SELECTED = "switcher__button--selected";
+        private const string USS_CONTAINER_PANNING = "container--panning";
         private const float LOADER_SPEED = 360f;
         private const string DEBUG_PASSPHRASE = "debugmesilly";
+
+        // The mouse-controls hint's three frames, in the order they cycle.
+        private static readonly string[] USS_TUTORIAL_STEPS =
+        {
+            "tutorial-hint--rotate", "tutorial-hint--pan", "tutorial-hint--zoom"
+        };
+
+        // The drift each frame animates through, indexed alongside USS_TUTORIAL_STEPS. null = the icon
+        // stays put for that frame (zoom, for now). The offsets themselves live in the USS.
+        private static readonly string[] USS_TUTORIAL_DRIFTS =
+        {
+            "tutorial-hint--drift-rotate", "tutorial-hint--drift-pan", null
+        };
+
+        // The caption shown under each frame, indexed alongside USS_TUTORIAL_STEPS.
+        private static readonly string[] TUTORIAL_LABELS =
+        {
+            "Rotate", "Pan", "Zoom"
+        };
+
+        // Each frame is held for two of these: one drifting out, one easing back. So a 4s step.
+        private const long TUTORIAL_HALF_STEP_MS = 2000;
+
+        // How long the icon spends faded out while the image behind it is swapped. A single element
+        // cannot cross-fade its own background image, so frames dip through transparent instead -
+        // indistinguishable from a cross-fade this brief, and no second stacked element to keep in sync.
+        private const long TUTORIAL_FADE_MS = 150;
+
+        // The zoom frame does not drift; it flicks the wheel instead. Each half runs
+        // base -> arrow -> base -> arrow -> base (up in the first half, down in the second) and then
+        // rests for what is left of the half. Four ticks of 300ms = two blips over the first 1.2s.
+        // TUTORIAL_ZOOM_STEP must stay the index of the zoom entry in USS_TUTORIAL_STEPS.
+        private const int TUTORIAL_ZOOM_STEP = 2;
+        private const long TUTORIAL_ZOOM_PULSE_MS = 300;
+        private const int TUTORIAL_ZOOM_PULSE_TICKS = 4;
+        private const string USS_ZOOM_UP = "tutorial-hint--zoom-up";
+        private const string USS_ZOOM_DOWN = "tutorial-hint--zoom-down";
 
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private PreviewCameraController previewCameraController;
@@ -27,14 +65,11 @@ namespace Preview
         public event Action ShowWearableClicked;
         public event Action<bool> EmoteToggleClicked;
         public event Action<Vector2, float> ContainerDrag;
+        public event Action<Vector2, float> ContainerPan;
 
         private VisualElement _switcher;
         private VisualElement _wearableButton;
         private VisualElement _avatarButton;
-
-        private VisualElement _zoomControls;
-        private Button _zoomInButton;
-        private Button _zoomOutButton;
 
         private VisualElement _emoteControls;
         private Button _playEmoteButton;
@@ -45,9 +80,19 @@ namespace Preview
         private VisualElement _loader;
         private VisualElement _loaderIcon;
 
+        private VisualElement _tutorialHint;
+        private Label _tutorialLabel;
+        private IVisualElementScheduledItem _tutorialCycle;
+        private int _tutorialStep;
+        private bool _tutorialReturning;
+        private bool _tutorialDismissed;
+        private IVisualElementScheduledItem _tutorialZoomPulse;
+        private int _tutorialZoomTick;
+
         private string _currentDebugInput = "";
         private bool _debugLoaded;
         private bool _zoomEnabled;
+        private bool _panEnabled;
         private bool _animationPlaying = true;
         private SwitcherState _switcherState = SwitcherState.Wearable;
         private float _lastPlayPauseClickTime;
@@ -59,12 +104,6 @@ namespace Preview
             _wearableButton = _switcher.Q("WearableButton");
             _avatarButton = _switcher.Q("AvatarButton");
 
-            _zoomControls = root.Q("ZoomControls");
-            _zoomInButton = _zoomControls.Q<Button>("ZoomInButton");
-            _zoomOutButton = _zoomControls.Q<Button>("ZoomOutButton");
-            _zoomInButton.clicked += previewCameraController.ZoomIn;
-            _zoomOutButton.clicked += previewCameraController.ZoomOut;
-
             _emoteControls = root.Q("EmoteControls");
             _playEmoteButton = _emoteControls.Q<Button>("PlayStopButton");
             _playEmoteLabel = _playEmoteButton.Q<Label>("Title");
@@ -75,8 +114,21 @@ namespace Preview
             _controls = root.Q("Controls");
             _loader = root.Q("Loader");
             _loaderIcon = _loader.Q("Icon");
+            _tutorialHint = root.Q("TutorialHint");
+            _tutorialLabel = _tutorialHint.Q<Label>("TutorialLabel");
+
+            // Any pointer activity anywhere in the frame retires the hint for good. Registered on the
+            // ROOT in the trickle-down phase so #Controls' drag manipulators, which StopPropagation on
+            // pointer moves, cannot hide the event from us. PointerMove is listened to as well as
+            // PointerEnter because a pointer already sitting inside the frame when the preview finishes
+            // loading never fires an enter - it only moves.
+            root.RegisterCallback<PointerEnterEvent>(_ => DismissTutorial(), TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerMoveEvent>(_ => DismissTutorial(), TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerDownEvent>(_ => DismissTutorial(), TrickleDown.TrickleDown);
 
             _controls.AddManipulator(new DragManipulator((d, dt) => ContainerDrag!(d, dt)));
+            _controls.AddManipulator(new DragManipulator(OnPanDrag, MouseButton.RightMouse, accumulateDelta: true,
+                activeChanged: OnPanActiveChanged));
             _controls.RegisterCallback<WheelEvent>(OnWheel);
             _wearableButton.AddManipulator(new Clickable(OnWearableButtonClicked));
             _avatarButton.AddManipulator(new Clickable(OnAvatarButtonClicked));
@@ -105,7 +157,158 @@ namespace Preview
         public void EnableZoom(bool enable)
         {
             _zoomEnabled = enable;
-            _zoomControls.style.display = enable ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// Shows the cycling mouse-controls hint, or hides it. Only meaningful in Marketplace and
+        /// Builder - the two modes the Shop uses, and the only two where the pan and zoom it advertises
+        /// actually work. Call this once the loader has cleared: the hint is a sibling of
+        /// <c>#Controls</c>, so <see cref="ShowLoader"/> does not govern it.
+        ///
+        /// Once <see cref="DismissTutorial"/> has fired this is a no-op for the rest of the page's
+        /// life, reloads included - the point is to teach the controls once, not on every item.
+        /// </summary>
+        public void EnableTutorial(bool enable)
+        {
+            if (_tutorialDismissed) return;
+
+            _tutorialCycle?.Pause();
+            _tutorialCycle = null;
+            StopZoomPulse();
+
+            if (!enable)
+            {
+                _tutorialHint.style.display = DisplayStyle.None;
+                return;
+            }
+
+            _tutorialStep = 0;
+            _tutorialReturning = false;
+            ApplyTutorialStep();
+            ApplyTutorialDrift(false);
+            _tutorialHint.style.opacity = 0f;
+            _tutorialHint.style.display = DisplayStyle.Flex;
+
+            // One frame at rest before the first drift and fade-in. Applied in the same frame as the
+            // display:none -> flex flip there is no previous value to interpolate from, so the icon
+            // would snap to the offset and pop in at full opacity instead of easing.
+            _tutorialHint.schedule.Execute(() =>
+            {
+                ApplyTutorialDrift(true);
+                _tutorialHint.style.opacity = 1f;
+            }).ExecuteLater(0);
+
+            // Ticks twice per frame of the tutorial: out, then back. StartingIn is required:
+            // Every() on its own fires its first tick on the very next panel update, which would
+            // undo the outward drift scheduled above before it has rendered a single frame - the
+            // rotate frame would then hold still for its whole step and the cycle would only start
+            // animating once it reached pan.
+            _tutorialCycle = _tutorialHint.schedule.Execute(() =>
+            {
+                if (!_tutorialReturning)
+                {
+                    _tutorialReturning = true;
+                    ApplyTutorialDrift(false);
+
+                    // The zoom frame's second half flicks the wheel the other way instead of drifting.
+                    if (_tutorialStep == TUTORIAL_ZOOM_STEP) StartZoomPulse(up: false);
+                    return;
+                }
+
+                _tutorialReturning = false;
+                SwapTutorialFrame();
+            }).Every(TUTORIAL_HALF_STEP_MS).StartingIn(TUTORIAL_HALF_STEP_MS);
+        }
+
+        /// <summary>
+        /// Advances to the next frame behind a short fade. The image is swapped at the bottom of the
+        /// dip, so the cut is never seen; the new frame's outward drift starts from the same point.
+        /// </summary>
+        private void SwapTutorialFrame()
+        {
+            // Back to the plain wheel before fading out, so a half-finished pulse is never the image
+            // that lingers through the dip.
+            StopZoomPulse();
+            _tutorialHint.style.opacity = 0f;
+
+            _tutorialHint.schedule.Execute(() =>
+            {
+                _tutorialStep = (_tutorialStep + 1) % USS_TUTORIAL_STEPS.Length;
+                ApplyTutorialStep();
+                ApplyTutorialDrift(true);
+                _tutorialHint.style.opacity = 1f;
+
+                if (_tutorialStep == TUTORIAL_ZOOM_STEP) StartZoomPulse(up: true);
+            }).ExecuteLater(TUTORIAL_FADE_MS);
+        }
+
+        /// <summary>
+        /// Blips the wheel arrow on and off twice, then leaves the plain wheel showing for the rest of
+        /// the half. Unlike a frame change these swap instantly - background-image is not transitioned.
+        /// </summary>
+        private void StartZoomPulse(bool up)
+        {
+            StopZoomPulse();
+
+            var variant = up ? USS_ZOOM_UP : USS_ZOOM_DOWN;
+            _tutorialZoomTick = 0;
+
+            _tutorialZoomPulse = _tutorialHint.schedule.Execute(() =>
+            {
+                _tutorialZoomTick++;
+
+                // Odd ticks show the arrow, even ticks return to the plain wheel.
+                _tutorialHint.EnableInClassList(variant, _tutorialZoomTick % 2 == 1);
+
+                if (_tutorialZoomTick >= TUTORIAL_ZOOM_PULSE_TICKS) StopZoomPulse();
+            }).Every(TUTORIAL_ZOOM_PULSE_MS);
+        }
+
+        private void StopZoomPulse()
+        {
+            _tutorialZoomPulse?.Pause();
+            _tutorialZoomPulse = null;
+            _tutorialHint.RemoveFromClassList(USS_ZOOM_UP);
+            _tutorialHint.RemoveFromClassList(USS_ZOOM_DOWN);
+        }
+
+        private void ApplyTutorialStep()
+        {
+            for (var i = 0; i < USS_TUTORIAL_STEPS.Length; i++)
+                _tutorialHint.EnableInClassList(USS_TUTORIAL_STEPS[i], i == _tutorialStep);
+
+            _tutorialLabel.text = TUTORIAL_LABELS[_tutorialStep];
+        }
+
+        /// <summary>
+        /// Eases the icon out to its drifted position, or back to rest. Only flips the destination
+        /// class - the USS transition on <c>.tutorial-hint</c> does the interpolation and the easing.
+        /// A frame with no drift entry (zoom) simply never gets a class, so it sits still.
+        /// </summary>
+        private void ApplyTutorialDrift(bool drifted)
+        {
+            for (var i = 0; i < USS_TUTORIAL_DRIFTS.Length; i++)
+            {
+                var cls = USS_TUTORIAL_DRIFTS[i];
+                if (cls != null)
+                    _tutorialHint.EnableInClassList(cls, drifted && i == _tutorialStep);
+            }
+        }
+
+        private void DismissTutorial()
+        {
+            if (_tutorialDismissed) return;
+
+            _tutorialDismissed = true;
+            _tutorialCycle?.Pause();
+            _tutorialCycle = null;
+            StopZoomPulse();
+            _tutorialHint.style.display = DisplayStyle.None;
+        }
+
+        public void EnablePan(bool enable)
+        {
+            _panEnabled = enable;
         }
 
         public void EnableEmoteControls(bool enable)
@@ -193,6 +396,30 @@ namespace Preview
 
             previewCameraController.ZoomByWheelDelta(evt.delta.y);
             evt.StopPropagation();
+        }
+
+        private void OnPanDrag(Vector2 delta, float deltaTime)
+        {
+            if (!_panEnabled) return;
+
+            // UI Toolkit deltas are in panel points, and PreviewPanelSettings scales with screen size
+            // (m_ScaleMode: 2), so a point is not a screen pixel. Dividing by the panel's own height
+            // cancels that scaling - and since points are square, the same divisor is right for both
+            // axes. The camera controller then only has to scale by the world height it frames.
+            var panelHeight = _controls.panel.visualTree.layout.height;
+            if (panelHeight <= 0f) return;
+
+            ContainerPan!(delta / panelHeight, deltaTime);
+        }
+
+        /// <summary>
+        /// Swaps the frame cursor between the rotate icon it wears at rest and the pan icon, for as
+        /// long as the right button is held. Gated on <see cref="_panEnabled"/> so the modes without
+        /// pan keep the rotate cursor through a right-drag that does nothing.
+        /// </summary>
+        private void OnPanActiveChanged(bool panning)
+        {
+            _controls.EnableInClassList(USS_CONTAINER_PANNING, panning && _panEnabled);
         }
 
         private void OnTextInput(char c)

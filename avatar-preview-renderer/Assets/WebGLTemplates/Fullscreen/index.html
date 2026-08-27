@@ -61,6 +61,12 @@
       var dprParam = parseFloat(new URLSearchParams(window.location.search).get("dpr"));
       var dprCap = isNaN(dprParam) ? 1.5 : dprParam;
 
+      // Right-drag pans the preview camera, so the browser context menu has to stay out of the way.
+      // It also swallows the pointerup that ends the drag, which would leave the pan stuck on.
+      // Scoped to the canvas so a host page keeps its own context menu.
+      document.querySelector("#unity-canvas")
+        .addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
       createUnityInstance(document.querySelector("#unity-canvas"), {
         arguments: [],
         dataUrl: "Build/{{{ DATA_FILENAME }}}",

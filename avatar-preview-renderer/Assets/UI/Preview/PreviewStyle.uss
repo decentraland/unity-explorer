@@ -12,6 +12,14 @@
     -unity-font-definition: url("project://database/Assets/UI/Font/Inter-UI-Bold%20SDF.asset?fileID=11400000&guid=d16b4f6c5b0564f9aafdb059ebd77bff&type=2#Inter-UI-Bold SDF");
 }
 
+/* Swapped in for as long as a right-button pan drag is under way, so the cursor shows what the
+   drag is actually doing rather than the rotation the frame advertises at rest. Two classes so
+   it outranks .container by SPECIFICITY rather than by source order, matching the zoom pulse
+   rules below. */
+.container.container--panning {
+    cursor: var(--dcl-cursor-pan);
+}
+
 .switcher {
     position: absolute;
     right: 0;
@@ -43,52 +51,85 @@
     background-color: rgb(231, 63, 78);
 }
 
-.zoomer {
+/* Mouse-controls hint. One box whose background image cycles rotate -> pan -> zoom every 2s while
+   the preview is loaded and the pointer has never entered the frame. It is a sibling of #Controls,
+   not a child, so it is positioned against the whole frame rather than the 20px-inset container,
+   and so ShowLoader() does not govern it. */
+.tutorial-hint {
     position: absolute;
-    top: 0;
-    left: 0;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-    border-bottom-left-radius: 8px;
-    overflow: hidden;
+    top: 50%;
+    left: 75%;
+    width: 64px;
+    height: 64px;
+    /* Half the box, so the icon's CENTRE lands on (75%, 50%) instead of its top-left corner.
+       Negative margins rather than a translate: no dependency on USS transform support. */
+    margin-left: -32px;
+    margin-top: -32px;
+    -unity-background-scale-mode: scale-to-fit;
+    display: none;
+    /* Both animations are driven entirely by this transition - the presenter only flips the
+       destination class or value, it never interpolates anything itself. The lists are matched by
+       index: `translate` takes 2s (one half of a 4s step) and `opacity` 0.15s (the dip between
+       frames). `translate` is used rather than the margins above, which are doing the centring. */
+    transition-property: translate, opacity;
+    transition-duration: 2s, 0.15s;
+    transition-timing-function: ease-in-out, ease;
 }
 
-.zoomer__button {
-    border-top-width: 0;
-    border-right-width: 0;
-    border-bottom-width: 0;
-    border-left-width: 0;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
-    padding-top: 0;
-    padding-right: 0;
-    padding-bottom: 0;
-    padding-left: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    width: 32px;
-    height: 32px;
-    background-size: 85% 85%;
-    transition-duration: 0.15s;
-    cursor: var(--dcl-cursor-interactive);
+/* Caption under the icon, naming the control the frame is demonstrating. Absolutely positioned and
+   deliberately wider than the 64px icon box so it centres on the icon by text alignment - the drift
+   already owns `translate` on .tutorial-hint, so the label cannot borrow it to centre itself. It is
+   a CHILD of the hint, so the drift and the dip between frames both carry it along. */
+.tutorial-hint__label {
+    position: absolute;
+    top: 100%;
+    left: -50px;
+    right: -50px;
+    /* Eats about half of the transparent footer the 128px icons carry inside their box, so the
+       caption sits under the glyph rather than under the box the glyph is centred in. */
+    margin-top: -1px;
+    -unity-text-align: upper-center;
+    /* The hint is a sibling of #Controls rather than a child, so it inherits none of the container's
+       font and has to name it itself. */
+    -unity-font-definition: url("project://database/Assets/UI/Font/Inter-UI-Bold%20SDF.asset?fileID=11400000&guid=d16b4f6c5b0564f9aafdb059ebd77bff&type=2#Inter-UI-Bold SDF");
+    font-size: 12px;
+    color: rgb(255, 255, 255);
 }
 
-.zoomer__button:hover {
-    background-color: rgb(0, 0, 0);
+/* Per-frame drift, applied for the first half of a step and removed for the second. Kept well
+   under the 96px icon box so it reads as a nudge rather than the icon wandering off. */
+.tutorial-hint--drift-rotate {
+    /* Orbit: horizontal, matching the yaw-only drag it is describing. */
+    translate: 20px 0;
 }
 
-.zoomer__button:active {
-    background-size: 60% 60%;
+.tutorial-hint--drift-pan {
+    /* Pan: diagonally up-and-left, so it reads as two axes rather than one. */
+    translate: -16px -16px;
 }
 
-.zoomer__button--in {
-    background-image: url("project://database/Assets/UI/Sprites/ZoomIn.png?fileID=2800000&guid=951db5e9d7cdc4e64bc3f990fc130fa2&type=3#ZoomIn");
+.tutorial-hint--rotate {
+    background-image: url("project://database/Assets/UI/Sprites/Rotate.png?fileID=2800000&guid=33eeb487d74a7674e9dae1c72272545e&type=3#Rotate");
 }
 
-.zoomer__button--out {
-    background-image: url("project://database/Assets/UI/Sprites/ZoomOut.png?fileID=2800000&guid=02a7e65a07d244303a2618485f704d8b&type=3#ZoomOut");
+.tutorial-hint--pan {
+    background-image: url("project://database/Assets/UI/Sprites/Pan.png?fileID=2800000&guid=84997b5c784bc2949953c469b11dd101&type=3#Pan");
+}
+
+.tutorial-hint--zoom {
+    background-image: url("project://database/Assets/UI/Sprites/Zoom.png?fileID=2800000&guid=d3ed09262a8fb414e9e052cb8e0b1a86&type=3#Zoom");
+}
+
+/* Wheel pulses layered over the zoom frame. Deliberately two classes each, so they outrank the
+   plain .tutorial-hint--zoom rule by SPECIFICITY rather than by source order - reordering this
+   file can then never silently break them. background-image is not in the transition list, so
+   these swap instantly rather than fading. */
+.tutorial-hint--zoom.tutorial-hint--zoom-up {
+    background-image: url("project://database/Assets/UI/Sprites/Zoom_Up.png?fileID=2800000&guid=7393019078cbf76409df0b34a0906729&type=3#Zoom_Up");
+}
+
+.tutorial-hint--zoom.tutorial-hint--zoom-down {
+    background-image: url("project://database/Assets/UI/Sprites/Zoom_Down.png?fileID=2800000&guid=540a1561e9875a3408fa1ee159cf6217&type=3#Zoom_Down");
 }
 
 .emote-controls {

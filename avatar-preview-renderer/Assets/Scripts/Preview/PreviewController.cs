@@ -29,6 +29,8 @@ namespace Preview
 
         [SerializeField] private GameObject animationReference;
         [SerializeField] private GameObject platform;
+        [SerializeField] private GameObject shadowCatcher;
+        [SerializeField] private GameObject glowCatcher;
 
         [SerializeField] private float wearablePadding = 0.15f;
 
@@ -51,6 +53,7 @@ namespace Preview
             previewUIPresenter.EmoteToggleClicked += OnEmoteToggleClicked;
             previewUIPresenter.ContainerDrag += avatarRotator.OnDrag;
             previewUIPresenter.ContainerDrag += wearableRotator.OnDrag;
+            previewUIPresenter.ContainerPan += previewCameraController.Pan;
             emoteAnimationController.EmoteAnimationEnded += OnEmoteAnimationEnded;
 
             avatarRotator.AllowVertical = false;
@@ -154,6 +157,8 @@ namespace Preview
 
                 animationReference.SetActive(config.ShowAnimationReference);
                 platform.SetActive(config.Mode is PreviewMode.Authentication);
+                shadowCatcher.SetActive(config.Shadow);
+                glowCatcher.SetActive(config.Glow);
                 mainCamera.backgroundColor = config.Background;
                 mainCamera.orthographic = config.Projection == "orthographic";
                 previewUIPresenter.EnableLoader(!config.DisableLoader);
@@ -256,11 +261,19 @@ namespace Preview
 
                 previewUIPresenter.EnableEmoteControls(hasEmoteOverride);
                 previewUIPresenter.EnableZoom(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
+                previewUIPresenter.EnablePan(config.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
                 previewUIPresenter.EnableSwitcher(hasWearableOverride && !config.DisableSwitcher);
                 previewUIPresenter.EnableAudioControls(hasEmoteAudio);
             } while (_shouldReload);
 
             previewUIPresenter.ShowLoader(false);
+
+            // Only once the avatar is actually on screen - the hint points at something the user can
+            // reach. Marketplace and Builder are the two modes the Shop uses, and the only two where
+            // the pan and zoom it advertises are enabled at all.
+            previewUIPresenter.EnableTutorial(
+                PreviewConfiguration.Instance.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
+
             _loading = false;
             mainCamera.cullingMask = -1; // Render everything
             avatarLoader.enabled = true; // Enables Update for Outline

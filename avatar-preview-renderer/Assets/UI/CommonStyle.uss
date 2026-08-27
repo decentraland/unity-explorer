@@ -8,6 +8,7 @@
     
     --dcl-cursor-rotate: url("project://database/Assets/UI/Sprites/Configurator/cursor_rotate.png?fileID=2800000&guid=797e032bcecb14d79865077f5670d471&type=3#cursor_rotate");
     --dcl-cursor-interactive: url("project://database/Assets/UI/Sprites/Configurator/cursor_interactive.png?fileID=2800000&guid=e16855ab158be494b97fd679ca9c6968&type=3#cursor_interactive");
+    --dcl-cursor-pan: url("project://database/Assets/UI/Sprites/Configurator/cursor_pan.png?fileID=2800000&guid=4f3fce96a1051c840ba1fc2446c5a548&type=3#cursor_pan");
     
     -unity-font-definition: url("project://database/Assets/UI/Font/Inter_18pt-Regular%20SDF.asset?fileID=11400000&guid=ac33835a7d3724b99af9e75a108d285d&type=2#Inter_18pt-Regular SDF");
 }

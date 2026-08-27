@@ -7,17 +7,31 @@ namespace UI.Manipulators
     public class DragManipulator : PointerManipulator
     {
         private readonly Action<Vector2, float> _dragged;
+        private readonly bool _accumulateDelta;
+        private readonly Action<bool> _activeChanged;
 
         private bool active;
         private Vector2 _lastDelta;
 
-        public DragManipulator(Action<Vector2, float> dragged)
+        /// <param name="accumulateDelta">
+        /// Sum every pointer move between scheduler ticks instead of keeping only the newest. Needed by
+        /// anything that has to track the cursor 1:1; rotation is tuned around the lossy default.
+        /// </param>
+        /// <param name="activeChanged">
+        /// Raised with true when a drag starts and false when it ends, for callers that need to reflect
+        /// the drag somewhere else - a cursor, say. Fires off the same activation filter and pointer
+        /// capture the drag itself uses, so it cannot disagree with whether a drag is running.
+        /// </param>
+        public DragManipulator(Action<Vector2, float> dragged, MouseButton activatorButton = MouseButton.LeftMouse,
+            bool accumulateDelta = false, Action<bool> activeChanged = null)
         {
             _dragged = dragged;
+            _accumulateDelta = accumulateDelta;
+            _activeChanged = activeChanged;
 
             activators.Add(new ManipulatorActivationFilter
             {
-                button = MouseButton.LeftMouse
+                button = activatorButton
             });
         }
 
@@ -42,6 +56,7 @@ namespace UI.Manipulators
 
             active = true;
             target.CapturePointer(evt.pointerId);
+            _activeChanged?.Invoke(true);
 
             target.schedule.Execute(OnUpdate).Until(() => !active);
         }
@@ -51,7 +66,10 @@ namespace UI.Manipulators
             if (!active)
                 return;
 
-            _lastDelta = evt.deltaPosition;
+            // Pointer moves outpace the scheduler that drains this - a 1000Hz mouse fires ~16 per frame
+            // at 60fps - so overwriting throws most of the movement away.
+            var delta = (Vector2)evt.deltaPosition;
+            _lastDelta = _accumulateDelta ? _lastDelta + delta : delta;
             evt.StopPropagation();
         }
 
@@ -62,6 +80,7 @@ namespace UI.Manipulators
 
             active = false;
             target.ReleasePointer(evt.pointerId);
+            _activeChanged?.Invoke(false);
 
             evt.StopPropagation();
         }
