@@ -24,7 +24,7 @@ namespace DCL.Communities.EventInfo
     {
         private const int ITEMS_POOL_DEFAULT_CAPACITY = 8;
         private const int COLLECTION_ITEMS_LIMIT = 20;
-        private const int GRID_ITEMS_PER_ROW = 5;
+        private const int GRID_ITEMS_PER_ROW = 4;
         private const string URN_PREFIX = "urn:";
         private const string CONTRACT_ADDRESS_PREFIX = "0x";
         private const string EMOTE_CATEGORY = "emote";
