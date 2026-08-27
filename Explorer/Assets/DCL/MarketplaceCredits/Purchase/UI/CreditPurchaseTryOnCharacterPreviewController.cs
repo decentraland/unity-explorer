@@ -10,7 +10,6 @@ using Avatar = DCL.Profiles.Avatar;
 namespace DCL.MarketplaceCredits.Purchase.UI
 {
     public class CreditPurchaseTryOnCharacterPreviewController : CharacterPreviewControllerBase
-    public class CreditPurchaseTryOnCharacterPreviewController : CharacterPreviewControllerBase
     {
         private readonly List<URN> shortenedWearables = new ();
 

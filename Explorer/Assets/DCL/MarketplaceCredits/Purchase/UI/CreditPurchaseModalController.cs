@@ -73,6 +73,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private bool navigatedAway;
         private float purchaseStartedAt;
         private CreditsPurchaseState lastPurchaseState;
+        private URN shortenedItemUrn;
         private CreditPurchaseTryOnCharacterPreviewController? tryOnPreviewController;
         private CancellationTokenSource? characterPreviewCts;
         private bool characterPreviewShown;
@@ -159,6 +160,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             purchaseSucceeded = false;
             navigatedAway = false;
             lastPurchaseState = CreditsPurchaseState.ResolvingListing;
+            shortenedItemUrn = new URN(inputData.ItemUrn).Shorten();
 
             if (viewInstance != null)
             {
@@ -414,15 +416,13 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                     return;
                 }
 
-                URN itemUrn = new URN(inputData.ItemUrn).Shorten();
-
                 if (inputData.IsEmote)
                 {
-                    previewController.TryOnEmote(profile.Avatar, itemUrn);
+                    previewController.TryOnEmote(profile.Avatar, shortenedItemUrn);
                     viewInstance?.TryOnReplayEmoteButton.gameObject.SetActive(true);
                 }
                 else
-                    previewController.TryOnWearable(profile.Avatar, itemUrn, inputData.Listing.wearableCategory, wearableStorage);
+                    previewController.TryOnWearable(profile.Avatar, shortenedItemUrn, inputData.Listing.wearableCategory, wearableStorage);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -435,7 +435,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private void OnReplayEmoteClicked()
         {
             if (characterPreviewShown && inputData.IsEmote)
-                tryOnPreviewController?.ReplayEmote(new URN(inputData.ItemUrn).Shorten());
+                tryOnPreviewController?.ReplayEmote(shortenedItemUrn);
         }
 
         private void ResetCharacterPreview()
