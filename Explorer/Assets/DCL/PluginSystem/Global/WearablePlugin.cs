@@ -40,6 +40,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly EntitiesAnalytics entitiesAnalytics;
 
         private TimeSpan batchHeartbeat;
+        private int maxAvatarsWithAssetsInFlight;
 
         public WearablePlugin(IWebRequestController webRequestController,
             IRealmData realmData,
@@ -81,12 +82,13 @@ namespace DCL.AvatarRendering.Wearables
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
-            ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, urlsSource, WEARABLES_EMBEDDED_SUBDIRECTORY);
+            ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, urlsSource, WEARABLES_EMBEDDED_SUBDIRECTORY, maxAvatarsWithAssetsInFlight);
         }
 
         UniTask IDCLPlugin<Settings>.InitializeAsync(Settings settings, CancellationToken ct)
         {
             batchHeartbeat = TimeSpan.FromMilliseconds(settings.BatchHeartbeatMs);
+            maxAvatarsWithAssetsInFlight = settings.MaxAvatarsWithAssetsInFlight;
             return UniTask.CompletedTask;
         }
 
@@ -94,6 +96,12 @@ namespace DCL.AvatarRendering.Wearables
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public uint BatchHeartbeatMs { get; private set; } = 100;
+
+            /// <summary>
+            ///     How many avatars may have their wearable assets downloading at once. The rest wait, nearest first,
+            ///     so avatars appear one after another instead of all together.
+            /// </summary>
+            [field: SerializeField] public int MaxAvatarsWithAssetsInFlight { get; private set; } = 3;
         }
     }
 }

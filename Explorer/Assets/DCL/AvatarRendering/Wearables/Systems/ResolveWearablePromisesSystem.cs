@@ -31,20 +31,33 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class ResolveWearablePromisesSystem : BaseUnityLoopSystem
     {
+        /// <summary>
+        ///     A resolution stuck in the asset phase for this long stops holding an in-flight slot, so a wearable
+        ///     whose assets never resolve cannot starve the avatars queued behind it.
+        /// </summary>
+        private const float IN_FLIGHT_STUCK_TIMEOUT_SECS = 30f;
+
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWearableStorage wearableStorage;
         private readonly IDecentralandUrlsSource urlsSource;
+        private readonly int maxAvatarsWithAssetsInFlight;
+
+        // Per-frame aggregation only
+        private readonly List<(Entity entity, float sqrDistance)> assetPhaseCandidates = new ();
+        private int avatarsWithAssetsInFlight;
 
         public ResolveWearablePromisesSystem(
             World world,
             IWearableStorage wearableStorage,
             IDecentralandUrlsSource urlsSource,
-            URLSubdirectory customStreamingSubdirectory
+            URLSubdirectory customStreamingSubdirectory,
+            int maxAvatarsWithAssetsInFlight
             ) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
+            this.maxAvatarsWithAssetsInFlight = Math.Max(1, maxAvatarsWithAssetsInFlight);
         }
 
         public override void Initialize()
@@ -53,7 +66,36 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         protected override void Update(float t)
         {
+            assetPhaseCandidates.Clear();
             ResolveWearablePromiseQuery(World);
+
+            avatarsWithAssetsInFlight = 0;
+            CountAvatarsWithAssetsInFlightQuery(World, t);
+            AdmitNextAvatarsToAssetPhase();
+        }
+
+        [Query]
+        [None(typeof(StreamableResult))]
+        private void CountAvatarsWithAssetsInFlight([Data] float dt, ref AvatarWearableAssetsInFlight inFlight)
+        {
+            inFlight.Age += dt;
+
+            if (inFlight.Age < IN_FLIGHT_STUCK_TIMEOUT_SECS)
+                avatarsWithAssetsInFlight++;
+        }
+
+        private void AdmitNextAvatarsToAssetPhase()
+        {
+            int freeSlots = maxAvatarsWithAssetsInFlight - avatarsWithAssetsInFlight;
+
+            if (freeSlots <= 0 || assetPhaseCandidates.Count == 0)
+                return;
+
+            // Nearest first, so the stagger reveals the most visible avatars earlier
+            assetPhaseCandidates.Sort(static (c1, c2) => c1.sqrDistance.CompareTo(c2.sqrDistance));
+
+            for (var i = 0; i < assetPhaseCandidates.Count && i < freeSlots; i++)
+                World.Add(assetPhaseCandidates[i].entity, new AvatarWearableAssetsInFlight());
         }
 
         [Query]
@@ -112,6 +154,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (missingPointers.Count > 0)
             {
                 CreateMissingPointersPromise(missingPointers, ref wearablesByPointersIntention, partitionComponent);
+                return;
+            }
+
+            // Only a capped number of avatars may load wearable assets at once, so they complete one after another
+            // instead of interleaving downloads and all finishing together at the tail of one shared queue.
+            // DTO resolution above is exempt: definitions are batched into a single request and shared via the storage.
+            if (finishedDTOs == wearablesByPointersIntention.Pointers.Count && !World.Has<AvatarWearableAssetsInFlight>(entity))
+            {
+                assetPhaseCandidates.Add((entity, partitionComponent.RawSqrDistance));
+
+                WearableComponentsUtils.WEARABLES_POOL.Release(resolvedDTOs);
+                WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
                 return;
             }
 
