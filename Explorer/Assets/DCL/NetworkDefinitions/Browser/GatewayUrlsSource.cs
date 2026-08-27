@@ -27,8 +27,10 @@ namespace DCL.Browser
             DecentralandUrl.ApiPlaces,
             DecentralandUrl.ApiWorlds,
             DecentralandUrl.ApiDestinations,
+            DecentralandUrl.POI,
             DecentralandUrl.Map,
             DecentralandUrl.ContentModerationReport,
+            DecentralandUrl.ApiEvents,
 
             DecentralandUrl.ApiAuth,
             DecentralandUrl.ApiChunks,

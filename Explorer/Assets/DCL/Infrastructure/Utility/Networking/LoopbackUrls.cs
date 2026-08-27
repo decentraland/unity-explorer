@@ -17,6 +17,7 @@ namespace Utility.Networking
     {
         private const string HTTP_SCHEME = "http://";
         private const string HTTPS_SCHEME = "https://";
+        private const string WS_SCHEME = "ws://";
 
         /// <summary>
         ///     True when <paramref name="url" /> is an absolute <c>http://</c> url with a loopback host. For
@@ -24,6 +25,10 @@ namespace Utility.Networking
         /// </summary>
         public static bool IsLoopbackHttpUrl(ReadOnlySpan<char> url) =>
             IsLoopbackUrlOf(url, HTTP_SCHEME);
+
+        /// <summary>True when <paramref name="url" /> is an absolute <c>ws://</c> url with a loopback host.</summary>
+        public static bool IsLoopbackWsUrl(ReadOnlySpan<char> url) =>
+            IsLoopbackUrlOf(url, WS_SCHEME);
 
         /// <summary>True when <paramref name="url" /> is an absolute <c>http(s)://</c> url with a loopback host.</summary>
         public static bool IsLoopbackWebUrl(ReadOnlySpan<char> url) =>

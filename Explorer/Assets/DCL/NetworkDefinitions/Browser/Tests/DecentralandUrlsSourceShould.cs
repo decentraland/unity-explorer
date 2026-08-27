@@ -262,6 +262,17 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual(expected, urlsSource.Url(DecentralandUrl.ApiPlaces));
         }
 
+        [Test]
+        public void RoutePlacesPoisAndEventsThroughTheGateway()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://gateway.decentraland.org/places/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
+            Assert.AreEqual("https://gateway.decentraland.org/dcl-lists/pois", urlsSource.Url(DecentralandUrl.POI));
+            Assert.AreEqual("https://gateway.decentraland.org/events/api/events", urlsSource.Url(DecentralandUrl.ApiEvents));
+        }
+
         [TestCase("https://gateway.localhost", "https://gateway.localhost/")]
         [TestCase("https://gateway.localhost/", "https://gateway.localhost/")]
         [TestCase("  https://gateway.localhost  ", "https://gateway.localhost/")]

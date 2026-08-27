@@ -24,6 +24,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
             Assert.AreEqual(ForkGlobalRealmRoom.AdapterProtocol.Archipelago,
                 ProtocolFor("archipelago:archipelago:wss://archipelago-ea-stats.decentraland.org", NOT_ACCEPTED));
 
+        [TestCase("archipelago:archipelago:ws://127.0.0.1:8080/archipelago-ea-ws-connector/ws")]
+        [TestCase("archipelago:archipelago:ws://localhost:8080/archipelago-ea-ws-connector/ws")]
+        [TestCase("archipelago:archipelago:ws://[::1]:8080/archipelago-ea-ws-connector/ws")]
+        public void ServeAnOptedInLoopbackFixtureAsAnArchipelagoRoom(string commsAdapter) =>
+            Assert.AreEqual(ForkGlobalRealmRoom.AdapterProtocol.Archipelago, ProtocolFor(commsAdapter, ACCEPTED));
+
+        [Test]
+        public void RefuseALoopbackArchipelagoFixtureWithoutTheOptIn() =>
+            Assert.Throws<InvalidOperationException>(
+                () => ProtocolFor("archipelago:archipelago:ws://127.0.0.1:8080/archipelago/ws", NOT_ACCEPTED));
+
         [Test]
         public void ServeAnHttpsAdapterAsAFixedRoom() =>
             Assert.AreEqual(ForkGlobalRealmRoom.AdapterProtocol.Fixed,
@@ -51,6 +62,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         [TestCase("fixed-adapter:signed-login:http://127.0.0.1.attacker.example/comms")]
         [TestCase("fixed-adapter:signed-login:http://127.0.0.1@attacker.example/comms")]
         [TestCase("fixed-adapter:signed-login:http://attacker.example/?next=http://127.0.0.1")]
+        [TestCase("archipelago:archipelago:ws://127.0.0.1.attacker.example/archipelago/ws")]
+        [TestCase("archipelago:archipelago:ws://127.0.0.1@attacker.example/archipelago/ws")]
         [TestCase("nonsense")]
         public void RefuseEveryOtherAdapterEvenWithTheOptIn(string commsAdapter) =>
             Assert.Throws<InvalidOperationException>(() => ProtocolFor(commsAdapter, ACCEPTED));

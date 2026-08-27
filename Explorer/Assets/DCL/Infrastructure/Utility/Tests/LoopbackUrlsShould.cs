@@ -24,6 +24,14 @@ namespace Utility.Tests
         public void MatchCleartextLoopback(string url) =>
             Assert.IsTrue(LoopbackUrls.IsLoopbackHttpUrl(url), url);
 
+        [TestCase("ws://localhost")]
+        [TestCase("ws://localhost:8080/comms")]
+        [TestCase("WS://LOCALHOST:8080")]
+        [TestCase("ws://127.0.0.1:8080/comms?a=b")]
+        [TestCase("ws://[::1]:8080/comms")]
+        public void MatchCleartextLoopbackWebSocket(string url) =>
+            Assert.IsTrue(LoopbackUrls.IsLoopbackWsUrl(url), url);
+
         // A remote host wearing a loopback host's name.
         [TestCase("http://127.0.0.1.attacker.example/comms")]
         [TestCase("http://localhost.attacker.example")]
@@ -49,6 +57,20 @@ namespace Utility.Tests
         [TestCase("fixed-adapter:signed-login:http://127.0.0.1:8080/comms")]
         public void RejectEverythingElseAsCleartextLoopback(string url) =>
             Assert.IsFalse(LoopbackUrls.IsLoopbackHttpUrl(url), url);
+
+        [TestCase("wss://127.0.0.1:8080/comms")]
+        [TestCase("http://127.0.0.1:8080/comms")]
+        [TestCase("ws://127.0.0.1.attacker.example/comms")]
+        [TestCase("ws://127.0.0.1@attacker.example/comms")]
+        [TestCase("ws://attacker.example/?next=ws://127.0.0.1")]
+        [TestCase("ftp://127.0.0.1")]
+        [TestCase("")]
+        [TestCase("localhost:8080")]
+        [TestCase("ws://")]
+        [TestCase("ws:///comms")]
+        [TestCase("archipelago:archipelago:ws://127.0.0.1:8080/comms")]
+        public void RejectEverythingElseAsCleartextLoopbackWebSocket(string url) =>
+            Assert.IsFalse(LoopbackUrls.IsLoopbackWsUrl(url), url);
 
         [TestCase("https://localhost")]
         [TestCase("https://127.0.0.1:8080/comms")]

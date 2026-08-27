@@ -53,6 +53,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             if (adapterUrl.Contains("https://", StringComparison.OrdinalIgnoreCase))
                 return AdapterProtocol.Fixed;
 
+            // The local fixture exposes Archipelago through cleartext WebSockets. It is still the Archipelago
+            // protocol, so keep it on the island-room path while requiring the same explicit local opt-in used
+            // for the fixture's cleartext HTTP endpoints.
+            if (allowInsecureLocalHttp && LoopbackUrls.IsLoopbackWsUrl(adapterUrl))
+                return AdapterProtocol.Archipelago;
+
             // A cleartext adapter is only ever a local fixture, and only where the operator asked for one on
             // the command line: over http the handshake this room signs is readable and rewritable in transit.
             if (allowInsecureLocalHttp && LoopbackUrls.IsLoopbackHttpUrl(adapterUrl))
