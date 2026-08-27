@@ -292,8 +292,12 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void UpdateRemoteMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView) =>
             EmotePlayer.UpdateMaskedEmoteTag(ref masked, avatarView);
 
-        // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
+        // This query takes care of consuming the CharacterEmoteIntent to trigger an emote.
+        // AvatarCustomSkinningComponent gates avatars that are still loading: it appears with the first wearable
+        // instantiation, while the AvatarBase (animator + ghost renderer) is attached earlier — consuming before
+        // it exists would animate the loading ghost. The intent persists until the avatar is instantiated.
         [Query]
+        [All(typeof(AvatarCustomSkinningComponent))]
         [None(typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
         private void ConsumeEmoteIntent([Data] float dt, Entity entity,
             ref CharacterEmoteComponent emoteComponent,

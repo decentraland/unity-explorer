@@ -139,7 +139,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
                     Mask = AvatarEmoteMask.AemFullBody,
                 },
                 strandedAvatarView,
-                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE },
+                new AvatarCustomSkinningComponent()); // instantiated avatar: the intent is consumable
 
             for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
                 system.Update(1f);
@@ -167,7 +168,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
                     Mask = AvatarEmoteMask.AemFullBody,
                 },
                 movingAvatarView,
-                new AvatarShapeComponent { BodyShape = BodyShape.MALE });
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE },
+                new AvatarCustomSkinningComponent()); // instantiated avatar: the intent is consumable
 
             for (var second = 0; second < StreamableLoadingDefaults.TIMEOUT + 1; second++)
                 system.Update(1f);

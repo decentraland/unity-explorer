@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -34,17 +35,26 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWearableStorage wearableStorage;
         private readonly IDecentralandUrlsSource urlsSource;
+        private readonly ConcurrentLoadingPerformanceBudget loadingBudget;
+        private readonly int estimatedAssetsPerAvatar;
+
+        // Per-frame aggregation only
+        private readonly List<(Entity entity, float sqrDistance)> assetPhaseCandidates = new ();
 
         public ResolveWearablePromisesSystem(
             World world,
             IWearableStorage wearableStorage,
             IDecentralandUrlsSource urlsSource,
-            URLSubdirectory customStreamingSubdirectory
+            URLSubdirectory customStreamingSubdirectory,
+            ConcurrentLoadingPerformanceBudget loadingBudget,
+            int estimatedAssetsPerAvatar
             ) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
+            this.loadingBudget = loadingBudget;
+            this.estimatedAssetsPerAvatar = Math.Max(1, estimatedAssetsPerAvatar);
         }
 
         public override void Initialize()
@@ -53,7 +63,42 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         protected override void Update(float t)
         {
+            assetPhaseCandidates.Clear();
             ResolveWearablePromiseQuery(World);
+            AdmitNextAvatarsToAssetPhase();
+        }
+
+        /// <summary>
+        ///     Admits DTO-ready avatars into the asset phase, nearest first, only while the shared download budget has
+        ///     free slots. Each admission is assumed to add <see cref="estimatedAssetsPerAvatar" /> downloads to the
+        ///     pipe, so we stop once we predict it is full instead of flooding it. This keeps the budget saturated (the
+        ///     admitted avatars' downloads fill it) while still serializing at the avatar granularity, so avatars
+        ///     complete and reveal one wave after another. As avatars finish they release budget and the next wave is
+        ///     admitted, so admission self-tunes to the completion rate and a stalled avatar (holding no budget) never
+        ///     blocks the queue.
+        /// </summary>
+        private void AdmitNextAvatarsToAssetPhase()
+        {
+            if (assetPhaseCandidates.Count == 0)
+                return;
+
+            // CurrentBudget is the whole app's free concurrent-download slots; admitted avatars compete for the same
+            // pool as scenes and everything else, which is exactly what we want to avoid oversubscribing.
+            int freeSlots = loadingBudget.CurrentBudget;
+
+            if (freeSlots <= 0)
+                return;
+
+            // Nearest first, so the stagger reveals the most visible avatars earlier
+            assetPhaseCandidates.Sort(static (c1, c2) => c1.sqrDistance.CompareTo(c2.sqrDistance));
+
+            // Admit at least the nearest candidate whenever there is any room (freeSlots checked before the decrement),
+            // so avatars keep progressing even when the pipe only has a sliver free.
+            for (var i = 0; i < assetPhaseCandidates.Count && freeSlots > 0; i++)
+            {
+                World.Add(assetPhaseCandidates[i].entity, new AvatarWearableAssetsInFlight());
+                freeSlots -= estimatedAssetsPerAvatar;
+            }
         }
 
         [Query]
@@ -112,6 +157,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (missingPointers.Count > 0)
             {
                 CreateMissingPointersPromise(missingPointers, ref wearablesByPointersIntention, partitionComponent);
+                return;
+            }
+
+            // Avatars enter the asset phase through a nearest-first gate (see AdmitNextAvatarsToAssetPhase) so their
+            // downloads keep the shared pipe busy without flooding it, and they complete one wave after another instead
+            // of interleaving and all finishing together at the tail of one queue. Until admitted, an avatar with all
+            // its DTOs resolved is only a candidate.
+            // DTO resolution above is exempt: definitions are batched into a single request and shared via the storage.
+            if (finishedDTOs == wearablesByPointersIntention.Pointers.Count && !World.Has<AvatarWearableAssetsInFlight>(entity))
+            {
+                assetPhaseCandidates.Add((entity, partitionComponent.RawSqrDistance));
+
+                WearableComponentsUtils.WEARABLES_POOL.Release(resolvedDTOs);
+                WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
                 return;
             }
 

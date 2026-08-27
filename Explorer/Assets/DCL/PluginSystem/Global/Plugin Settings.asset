@@ -595,6 +595,7 @@ MonoBehaviour:
       type: {class: WearablePlugin/Settings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
       data:
         <BatchHeartbeatMs>k__BackingField: 100
+        <EstimatedAssetsPerAvatar>k__BackingField: 6
     - rid: 1709771761983946845
       type: {class: AnalyticsContainer/Settings, ns: DCL.PerformanceAndDiagnostics.Analytics, asm: DCL.Plugins}
       data:

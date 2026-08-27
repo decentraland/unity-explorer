@@ -105,6 +105,12 @@ namespace Global
         /// </summary>
         public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
+
+        /// <summary>
+        ///     The shared concurrent-download budget backing <see cref="ECSWorldSingletonSharedDependencies.LoadingBudget" />,
+        ///     exposed concretely so consumers can read its remaining slots (e.g. avatar asset-phase admission).
+        /// </summary>
+        public ConcurrentLoadingPerformanceBudget AssetsLoadingBudget { get; private set; }
         public Profiler Profiler { get; private set; }
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
         public IPartitionSettings PartitionSettings => StaticSettings.PartitionSettings;
@@ -196,12 +202,15 @@ namespace Global
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsContainer.Controller, web3IdentityProvider) : new LoadingStatus();
 
+            var assetsLoadingBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget);
+            container.AssetsLoadingBudget = assetsLoadingBudget;
+
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 reportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
+                assetsLoadingBudget,
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider, container.LoadingStatus.IsLoadingScreenOn),
                 new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
                 new SceneMapping()
