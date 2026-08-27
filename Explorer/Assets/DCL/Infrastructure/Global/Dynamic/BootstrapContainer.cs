@@ -114,7 +114,7 @@ namespace Global.Dynamic
             string? localAbBaseUrl,
             CancellationToken ct)
         {
-            var browser = new UnityAppWebBrowser(decentralandUrlsSource);
+            var browser = new UnityAppWebBrowser(decentralandUrlsSource, applicationParametersParser);
             var web3AccountFactory = new Web3AccountFactory();
             var bootstrapContainer = new BootstrapContainer
             {
