@@ -12,18 +12,18 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LoginSelectionWelcomeAuthState : AuthStateBase, IState
+    public class GuestOrSignUpAuthState : AuthStateBase, IState
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly SplashScreen splashScreen;
-        private readonly LoginSelectionWelcomeAuthView view;
+        private readonly GuestOrSignUpAuthView view;
 
         private Exception? loginException;
 
-        public LoginSelectionWelcomeAuthState(
+        public GuestOrSignUpAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -31,7 +31,7 @@ namespace DCL.AuthenticationScreenFlow
             ICompositeWeb3Provider compositeWeb3Provider,
             SplashScreen splashScreen) : base(viewInstance)
         {
-            view = viewInstance.LoginSelectionWelcomeAuthView;
+            view = viewInstance.GuestOrSignUpAuthView;
 
             this.machine = machine;
             this.controller = controller;
@@ -49,7 +49,7 @@ namespace DCL.AuthenticationScreenFlow
 
             loginException = null;
 
-            currentState.Value = AuthStatus.LoginSelectionScreen;
+            currentState.Value = AuthStatus.GuestOrSignUpScreen;
 
             view.Show();
             SetButtonsInteractable(true);

@@ -35,6 +35,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             switch (state)
             {
+                // Triggered WHEN the guest or sign up screen is shown
+                case AuthStatus.GuestOrSignUpScreen:
+                    analytics.Track(Authentication.GUEST_OR_SIGNUP_SCREEN);
+                    break;
+
                 // Triggered WHEN login screen is shown
                 case AuthStatus.LoginSelectionScreen:
                     analytics.Track(Authentication.LOGIN_SELECTION_SCREEN);

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LoginSelectionWelcomeAuthView : ViewBase
+    public class GuestOrSignUpAuthView : ViewBase
     {
         [field: SerializeField] public Button PlayAsGuestButton { get; private set; } = null!;
         [field: SerializeField] public Button LoginOrSignupButton { get; private set; } = null!;

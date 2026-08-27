@@ -96,6 +96,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string AUTOLOGIN_SUCCESS = "autologin_success";
             public const string AUTOLOGIN_FAILURE = "autologin_failure";
 
+            // 0. GUEST OR SIGN UP SCREEN
+            public const string GUEST_OR_SIGNUP_SCREEN = "guest_or_signup_screen";
+
             // 1. LOGIN SELECTION SCREEN
             public const string LOGIN_SELECTION_SCREEN = "login_selection_screen";
             public const string LOGIN_REQUESTED = "login_requested";

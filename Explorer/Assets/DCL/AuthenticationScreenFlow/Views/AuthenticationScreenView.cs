@@ -17,7 +17,7 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("SCREENS")]
         [field: SerializeField]
-        public LoginSelectionWelcomeAuthView LoginSelectionWelcomeAuthView { get; private set; } = null!;
+        public GuestOrSignUpAuthView GuestOrSignUpAuthView { get; private set; } = null!;
 
         [field: SerializeField]
         public LoginSelectionAuthView LoginSelectionAuthView { get; private set; } = null!;
