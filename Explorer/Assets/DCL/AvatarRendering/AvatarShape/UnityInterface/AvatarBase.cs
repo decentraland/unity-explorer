@@ -266,11 +266,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void ResetAnimatorTrigger(int hash) =>
             AvatarAnimator.ResetTrigger(hash);
 
-        public void ResetArmatureInclination()
+        public void ResetArmatureTransform()
         {
             Vector3 angles = Armature.eulerAngles;
             angles.x = 90;
             Armature.eulerAngles = angles;
+            Armature.localPosition = armatureStartLocalPosition;
+            Armature.localScale = armatureStartLocalScale;
         }
 
         // Called onRelease of the pool. Resets stuff to avoid:
@@ -278,9 +280,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
         public void ResetState()
         {
-            ResetArmatureInclination();
-            Armature.localPosition = armatureStartLocalPosition;
-            Armature.localScale = armatureStartLocalScale;
+            ResetArmatureTransform();
             transform.localPosition = Vector3.zero;
             LegacyAnimation?.Stop();
             maskedLegacyBlender?.Stop();
@@ -440,7 +440,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void ResetAnimatorTrigger(int hash);
 
-        void ResetArmatureInclination();
+        void ResetArmatureTransform();
 
         void SetLayerWeight(int layerIndex, float weight);
     }

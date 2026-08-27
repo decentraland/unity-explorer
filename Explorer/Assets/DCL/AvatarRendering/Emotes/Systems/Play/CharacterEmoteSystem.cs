@@ -269,7 +269,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // See https://github.com/decentraland/unity-explorer/issues/4198
             // Some emotes changes the armature rotation, we need to restore it
-            avatarView.ResetArmatureInclination();
+            avatarView.ResetArmatureTransform();
 
             // Propagate emote stop only for local player
             if (World.Has<PlayerComponent>(entity))
