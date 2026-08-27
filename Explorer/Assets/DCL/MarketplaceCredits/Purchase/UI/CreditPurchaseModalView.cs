@@ -18,6 +18,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         [field: Header("Item card")]
         [field: SerializeField] public GameObject Item { get; private set; } = null!;
+        [field: SerializeField] public Image RarityBackgroundFull { get; private set; } = null!;
         [field: SerializeField] public Image ItemThumbnail { get; private set; } = null!;
         [field: SerializeField] public Image ItemBackground { get; private set; } = null!;
         [field: SerializeField] public Image ItemCategory { get; private set; } = null!;

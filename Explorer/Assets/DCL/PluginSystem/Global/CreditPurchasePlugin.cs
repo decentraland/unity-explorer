@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
@@ -85,6 +86,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(CreditPurchaseSettings settings, CancellationToken ct)
         {
             CreditPurchaseModalView viewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CreditPurchasePopupPrefab, ct: ct)).GetComponent<CreditPurchaseModalView>();
+            NftTypeIconSO rarityInfoPanelBackgrounds = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityInfoPanelBackgroundsMapping, ct);
 
             creditPurchaseModalController = new CreditPurchaseModalController(
                 CreditPurchaseModalController.CreateLazily(viewAsset, null),
@@ -98,6 +100,7 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 world,
                 wearableStorage,
+                rarityInfoPanelBackgrounds,
                 OpenGetCreditsPanelAsync,
                 OpenBackpackPanelAsync);
 
@@ -131,6 +134,7 @@ namespace DCL.PluginSystem.Global
             [field: Header("Credit purchase")]
             [field: SerializeField] internal AssetReferenceGameObject CreditPurchasePopupPrefab { get; private set; } = null!;
             [field: SerializeField] internal AssetReferenceGameObject CreditsTopUpPopupPrefab { get; private set; } = null!;
+            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; } = null!;
         }
     }
 }

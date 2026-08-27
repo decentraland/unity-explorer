@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -59,6 +60,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly World world;
         private readonly IWearableStorage wearableStorage;
+        private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
         private readonly Func<CancellationToken, UniTask> openBackpackAsync;
         private readonly CancellationTokenSource disposalCts = new ();
@@ -98,6 +100,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
             IWearableStorage wearableStorage,
+            NftTypeIconSO rarityInfoPanelBackgrounds,
             Func<CancellationToken, UniTask> openGetCreditsPanelAsync,
             Func<CancellationToken, UniTask> openBackpackAsync)
             : base(viewFactory)
@@ -112,6 +115,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.world = world;
             this.wearableStorage = wearableStorage;
+            this.rarityInfoPanelBackgrounds = rarityInfoPanelBackgrounds;
             this.openGetCreditsPanelAsync = openGetCreditsPanelAsync;
             this.openBackpackAsync = openBackpackAsync;
             purchaseService.StateChanged += OnPurchaseStateChanged;
@@ -138,6 +142,15 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 characterPreviewEventBus);
         }
 
+        protected override void OnBeforeViewShow()
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.TryOnCharacterPreviewView.gameObject.SetActive(IsTryOnAvailable());
+            tryOnPreviewController?.OnBeforeShow();
+        }
+
         protected override void OnViewShow()
         {
             lifeCts = new CancellationTokenSource();
@@ -154,6 +167,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.RarityLabel.text = inputData.RarityName;
                 viewInstance.RarityLabel.color = inputData.RarityColor;
                 viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
+                viewInstance.RarityBackgroundFull.sprite = rarityInfoPanelBackgrounds.GetTypeImage(inputData.RarityName);
 
                 if (inputData.ItemThumbnail != null)
                 {
@@ -175,7 +189,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
                 viewInstance.ItemCategoryBackground.color = inputData.RarityColor;
                 viewInstance.ItemCategoryBackgroundCompleted.color = inputData.RarityColor;
-                viewInstance.TryOnCharacterPreviewView.gameObject.SetActive(IsTryOnAvailable());
 
                 viewInstance.ConfirmButton.onClick.AddListener(OnConfirmClicked);
                 viewInstance.RetryButton.onClick.AddListener(OnRetryClicked);
