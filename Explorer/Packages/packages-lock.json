@@ -22,7 +22,7 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.ugui": "1.0.0"
       },
-      "hash": "4cd550ae84c9188b468761508997e9bb29e937f7"
+      "hash": "3c644489030a026eaf49c02eade0127ee975dbd0"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -527,11 +527,11 @@
       "hash": "84a79b486b171068b1429cf61c9081b59a7cf276"
     },
     "io.sentry.unity": {
-      "version": "https://github.com/getsentry/unity.git#4.0.0",
+      "version": "https://github.com/getsentry/unity.git#4.9.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "ad36b581ab86a846c33a7d509acb9a0dd9016bde"
+      "hash": "ef9830bd5f9600f3d23bb13ba5858a7b29fc06ee"
     },
     "net.tnrd.nsubstitute": {
       "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",
