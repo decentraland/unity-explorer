@@ -459,14 +459,18 @@ namespace Global.Dynamic
                     throw new IOException($"abgen archive checksum mismatch: {actual}");
             }
 
+            // Resolved before the thread switch: persistentDataPath and Application.platform (behind
+            // IsWindows) are main-thread-only Unity APIs.
+            string finalDir = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin", version);
+            bool isWindows = IsWindows;
+
             await DCLTask.RunOnThreadPool(() =>
             {
-                string finalDir = Path.Combine(Application.persistentDataPath, AbgenBundleDiskCache.SIDECAR_DIR, "bin", version);
                 string tmpDir = finalDir + ".tmp";
                 if (Directory.Exists(tmpDir)) Directory.Delete(tmpDir, true);
                 ExtractTarGz(archive, tmpDir);
 
-                if (!IsWindows)
+                if (!isWindows)
                 {
                     // Straight through libc — a chmod subprocess needs System.Diagnostics.Process,
                     // which cannot spawn under IL2CPP.
