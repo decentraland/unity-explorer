@@ -7,7 +7,6 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
-using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.FeatureFlags;
 using DCL.Input;
@@ -21,7 +20,6 @@ using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
-using Global.AppArgs;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -48,13 +46,12 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteStorage emoteStorage;
         private readonly IRealmData realmData;
         private readonly IEmotesMessageBus messageBus;
-        private readonly IDebugContainerBuilder debugBuilder;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly SelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly AudioClipsCache audioClipsCache;
-        private readonly string builderContentURL;
+        private readonly string builderContentUrl;
         private readonly ICursor cursor;
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
@@ -80,7 +77,6 @@ namespace DCL.PluginSystem.Global
             IEmoteStorage emoteStorage,
             IRealmData realmData,
             IEmotesMessageBus messageBus,
-            IDebugContainerBuilder debugBuilder,
             IAssetsProvisioner assetsProvisioner,
             SelfProfile selfProfile,
             IMVCManager mvcManager,
@@ -90,7 +86,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
-            string builderContentURL,
+            string builderContentUrl,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -101,12 +97,11 @@ namespace DCL.PluginSystem.Global
         {
             this.emotePlayer = emotePlayer;
             this.messageBus = messageBus;
-            this.debugBuilder = debugBuilder;
             this.assetsProvisioner = assetsProvisioner;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
             this.entityParticipantTable = entityParticipantTable;
-            this.builderContentURL = builderContentURL;
+            this.builderContentUrl = builderContentUrl;
             this.webRequestController = webRequestController;
             this.emoteStorage = emoteStorage;
             this.realmData = realmData;
@@ -145,9 +140,9 @@ namespace DCL.PluginSystem.Global
             LoadTrimmedEmotesByParamSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
                 emoteStorage, trimmedEmoteStorage, EMOTES_COMPLEMENT_URL,
-                decentralandUrlsSource, builderContentURL);
+                decentralandUrlsSource, builderContentUrl);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, emotePlayer, debugBuilder, localSceneDevelopment, scenesCache);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, emotePlayer, localSceneDevelopment, scenesCache);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
@@ -218,7 +213,7 @@ namespace DCL.PluginSystem.Global
             /// Ordered list of base emote URNs.
             /// The order defines the default emote order for users with no equipped emotes.
             /// </summary>
-            [field: SerializeField] public string[] BaseEmotes { get; private set; }
+            [field: SerializeField] public string[] BaseEmotes { get; private set; } = null!;
 
             public IReadOnlyCollection<URN> BaseEmotesAsURN() => BaseEmotes.Select(s => new URN(s)).ToArray();
         }
