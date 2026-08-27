@@ -31,6 +31,7 @@ namespace Preview
         [SerializeField] private GameObject platform;
         [SerializeField] private GameObject shadowCatcher;
         [SerializeField] private GameObject glowCatcher;
+        [SerializeField] private GameObject wearableGlowCatcher;
 
         [SerializeField] private float wearablePadding = 0.15f;
 
@@ -79,11 +80,27 @@ namespace Preview
             }
         }
 
+        /// <summary>
+        /// Points the marketplace at one of its two views. The item-alone view floats the item with no
+        /// floor under it, so it carries its own glow at the wearable position rather than the one under
+        /// the avatar's feet - exactly one of the two is ever showing.
+        /// </summary>
+        private void ShowWearableView(bool showWearable)
+        {
+            previewCameraController.ShowMarketplaceWearable(showWearable);
+
+            // The catcher is one 20-unit plane spanning both subjects, which sit 5 apart, so the
+            // avatar's shadow drifts into the item view as soon as it is zoomed out. Nothing in that
+            // view casts a shadow at all, so the plane goes with the view.
+            shadowCatcher.SetActive(!showWearable && PreviewConfiguration.Instance.Shadow);
+            wearableGlowCatcher.SetActive(showWearable && PreviewConfiguration.Instance.Glow);
+        }
+
         private void OnShowWearableClicked()
         {
             PlayerPrefs.SetInt(PREF_AVATAR_SHOWN, 0);
 
-            previewCameraController.ShowMarketplaceWearable(true);
+            ShowWearableView(true);
             wearableRotator.ResetRotation();
         }
 
@@ -91,7 +108,7 @@ namespace Preview
         {
             PlayerPrefs.SetInt(PREF_AVATAR_SHOWN, 1);
 
-            previewCameraController.ShowMarketplaceWearable(false);
+            ShowWearableView(false);
             avatarRotator.ResetRotation();
         }
 
@@ -159,6 +176,7 @@ namespace Preview
                 platform.SetActive(config.Mode is PreviewMode.Authentication);
                 shadowCatcher.SetActive(config.Shadow);
                 glowCatcher.SetActive(config.Glow);
+                wearableGlowCatcher.SetActive(false);
                 mainCamera.backgroundColor = config.Background;
                 mainCamera.orthographic = config.Projection == "orthographic";
                 previewUIPresenter.EnableLoader(!config.DisableLoader);
@@ -248,7 +266,15 @@ namespace Preview
 
                 if (config.Mode is PreviewMode.Marketplace)
                 {
-                    previewCameraController.ShowMarketplaceWearable(!showingAvatar);
+                    // Frame each view on what it actually shows, before switching to one of them.
+                    // Here rather than earlier: the CenterAndFit above and the frame of animation
+                    // before it are what settle the bounds these are measured from.
+                    previewCameraController.FitAvatarView(avatarLoader.transform);
+
+                    if (hasWearableOverride)
+                        previewCameraController.FitWearableView(wearableLoader.transform);
+
+                    ShowWearableView(!showingAvatar);
                 }
                 else if (config.Mode is PreviewMode.Builder)
                 {

@@ -5,6 +5,7 @@ using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
 using Runtime.Wearables;
 using Services;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Utils;
 
 namespace Loading
@@ -83,6 +84,13 @@ namespace Loading
 
             _outlineRenderers.Clear();
             AvatarUtils.SetupWearable(_wearableGO, colors, _outlineRenderers);
+
+            // Nothing to cast onto: the item-alone view floats the item with no floor beneath it, so
+            // the only thing a cast shadow can land on is the catcher plane far below, where it reads
+            // as a smear rather than contact. The plane is shared with the avatar view, so the item
+            // opts out here rather than the catcher being switched off.
+            foreach (var wearableRenderer in _wearableGO.GetComponentsInChildren<Renderer>(true))
+                wearableRenderer.shadowCastingMode = ShadowCastingMode.Off;
         }
 
         private void Update()

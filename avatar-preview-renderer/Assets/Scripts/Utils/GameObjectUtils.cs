@@ -6,12 +6,7 @@ namespace Utils
     {
         public static void CenterAndFit(Transform root, Camera mainCamera, float wearablePadding = 0.15f)
         {
-            // Gather combined bounds of all Renderers under root
-            var renders = root.GetComponentsInChildren<Renderer>();
-            if (renders.Length == 0) return;
-            var combined = renders[0].bounds;
-            for (var i = 1; i < renders.Length; i++)
-                combined.Encapsulate(renders[i].bounds);
+            if (!TryGetCombinedBounds(root, out var combined)) return;
 
             // Make it a cube
             var maxSize = Mathf.Max(combined.size.x, Mathf.Max(combined.size.y, combined.size.z));
@@ -45,9 +40,56 @@ namespace Utils
                 scaleFactor = frustumMin * (1f - wearablePadding * 2f) / size.x;
             }
 
-            // Apply uniform scaling and adjust position on root
             root.localScale *= scaleFactor;
-            root.localPosition = Vector3.Scale(-localCenter, root.localScale);
+
+            // Centre by moving the CONTENT onto the root, never the root off its content. The root is
+            // what DragRotator spins, and Transform.Rotate pivots on the root's own origin, so any gap
+            // between the two becomes the radius of an orbit. Only the horizontal part of the gap
+            // matters for a yaw spin, which is why items modelled on the body's vertical axis were
+            // fine and one modelled out to the side - a watch at the wrist - swung out of frame, its
+            // offset multiplied by the large scale a small item gets fitted with.
+            root.localPosition = Vector3.zero;
+
+            foreach (Transform child in root)
+                child.localPosition -= localCenter;
+        }
+
+        /// <summary>
+        /// Measures a subject so the result does not change as it spins about Y. The radius is the
+        /// circumradius of the horizontal footprint, which is the widest half-width the bounds can
+        /// present at any yaw, so framing against it never clips part way through a rotation. Returns
+        /// false when the subject has nothing to measure.
+        /// </summary>
+        public static bool TryMeasureYawInvariant(Transform root, out Vector3 center, out float radius,
+            out float height)
+        {
+            center = default(Vector3);
+            radius = 0f;
+            height = 0f;
+
+            if (!TryGetCombinedBounds(root, out var bounds)) return false;
+
+            var size = bounds.size;
+
+            center = bounds.center;
+            radius = 0.5f * Mathf.Sqrt(size.x * size.x + size.z * size.z);
+            height = size.y;
+
+            return true;
+        }
+
+        private static bool TryGetCombinedBounds(Transform root, out Bounds bounds)
+        {
+            bounds = default(Bounds);
+
+            var renderers = root.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0) return false;
+
+            bounds = renderers[0].bounds;
+            for (var i = 1; i < renderers.Length; i++)
+                bounds.Encapsulate(renderers[i].bounds);
+
+            return true;
         }
     }
 }
