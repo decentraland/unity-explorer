@@ -356,7 +356,7 @@ namespace DCL.Interaction.Systems.Tests
         }
 
         [Test]
-        public void FreeCursorWhenContextMenuClosesWhileLockedWithUi()
+        public void RequestFreeCursorWhenContextMenuClosesWhileLockedWithUi()
         {
             // Arrange
             SetUpWithFeatureFlag(true);
@@ -371,7 +371,8 @@ namespace DCL.Interaction.Systems.Tests
             menuLifetime.TrySetResult();
 
             // Assert
-            Assert.That(world.Get<CursorComponent>(cameraEntity).CursorState, Is.EqualTo(CursorState.Free));
+            Assert.That(world.TryGet(cameraEntity, out PointerLockIntention intention), Is.True);
+            Assert.That(intention.Locked, Is.False);
         }
 
         [Test]
@@ -392,7 +393,7 @@ namespace DCL.Interaction.Systems.Tests
         }
 
         [Test]
-        public void FreeCursorWhenSecondRightClickHappensWhileMenuIsOpen()
+        public void RequestFreeCursorWhenSecondRightClickHappensWhileMenuIsOpen()
         {
             // Arrange - first menu is open with the cursor parked in LockedWithUi
             SetUpWithFeatureFlag(true);
@@ -409,7 +410,8 @@ namespace DCL.Interaction.Systems.Tests
             firstMenuLifetime.TrySetResult();
 
             // Assert
-            Assert.That(world.Get<CursorComponent>(cameraEntity).CursorState, Is.EqualTo(CursorState.Free));
+            Assert.That(world.TryGet(cameraEntity, out PointerLockIntention intention), Is.True);
+            Assert.That(intention.Locked, Is.False);
         }
 
         [Test]

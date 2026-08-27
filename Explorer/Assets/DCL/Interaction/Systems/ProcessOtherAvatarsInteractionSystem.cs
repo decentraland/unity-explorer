@@ -21,6 +21,7 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Utility.Arch;
 
 namespace DCL.Interaction.Systems
 {
@@ -180,17 +181,18 @@ namespace DCL.Interaction.Systems
 
         /// <summary>
         ///     Undoes the lock-with-UI requested for the menu: drops the intention if it was not applied yet,
-        ///     otherwise frees the cursor, since <see cref="CursorState.LockedWithUi" /> is never left by the cursor system on its own.
+        ///     otherwise requests the cursor to be freed.
         /// </summary>
         private void ReleaseCursorHeldForMenu(Entity cameraEntity)
         {
             if (World.TryGet(cameraEntity, out PointerLockIntention pendingIntention) && pendingIntention is { Locked: true, WithUI: true })
+            {
                 World.Remove<PointerLockIntention>(cameraEntity);
+                return;
+            }
 
-            ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntity);
-
-            if (cursor.CursorState == CursorState.LockedWithUi)
-                cursor.CursorState = CursorState.Free;
+            if (World.Get<CursorComponent>(cameraEntity).CursorState == CursorState.LockedWithUi)
+                World.AddOrSet(cameraEntity, new PointerLockIntention(false));
         }
 
         private void OnPlayerMoved(InputAction.CallbackContext obj)
