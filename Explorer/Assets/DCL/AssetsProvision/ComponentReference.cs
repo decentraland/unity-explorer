@@ -35,7 +35,7 @@ namespace DCL.AssetsProvision
             return Addressables.ResourceManager.CreateCompletedOperation(comp, string.Empty);
         }
 
-        public override bool ValidateAsset(Object obj)
+        public override bool ValidateAsset(UnityEngine.Object obj)
         {
             var go = obj as GameObject;
             return go != null && go.GetComponent<TComponent>() != null;
