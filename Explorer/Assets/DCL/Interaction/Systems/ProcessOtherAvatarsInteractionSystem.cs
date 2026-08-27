@@ -155,12 +155,7 @@ namespace DCL.Interaction.Systems
             Entity cameraEntity = cameraEntityProxy.Object;
 
             if (World.Get<CursorComponent>(cameraEntity).CursorState == CursorState.Locked)
-            {
-                if (World.Has<PointerLockIntention>(cameraEntity))
-                    World.Set(cameraEntity, new PointerLockIntention(true, true));
-                else
-                    World.Add(cameraEntity, new PointerLockIntention(true, true));
-            }
+                World.AddOrSet(cameraEntity, new PointerLockIntention(true, true));
 
             await menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(
                                         new Web3Address(userId),
