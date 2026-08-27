@@ -642,7 +642,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
             viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
 
-            bool previewVisible = newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits && IsTryOnAvailable();
+            bool previewVisible = (newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits) && IsTryOnAvailable();
 
             if (previewVisible)
                 ShowCharacterPreview();
