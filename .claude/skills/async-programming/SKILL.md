@@ -75,30 +75,41 @@ private async UniTask<PlacesData.PlaceInfo?> GetPlaceInfoAsync(
 }
 ```
 
-## Swallowing teardown / dispose-race exceptions
+## Dispose races: cancel, don't catch
 
-During scene teardown a pending async operation can race with `Dispose()`. Swallow the
-expected race **once, at the layer that owns the resource**, never defensively at every
-caller. Re-catching the same race up the stack is noise (see the "Defensive null-checks
-against non-null declarations" anti-pattern in CLAUDE.md §11): once the owning layer absorbs
-it, callers only handle their own concerns (typically `OperationCanceledException`).
+A pending async operation must never race with `Dispose()`. The owner cancels its
+`CancellationTokenSource` (`SafeCancelAndDispose()`, see Cancellation Token Management below)
+before tearing anything down, so in-flight work exits through `OperationCanceledException`,
+which the flow already handles. Catching `ObjectDisposedException` to hide a race is patching
+the symptom: if it shows up, the fix is the missing cancellation in the owner's `Dispose()`,
+not a new `catch`.
 
-### Mono gotcha: WebSocketException wrapping ObjectDisposedException
+### Last-resort compromise: a race the runtime owns
 
-On Mono, a `Dispose()` racing with an in-flight `WebSocket.CloseAsync` does **not** surface as
-a bare `ObjectDisposedException`; it comes back as a `WebSocketException` whose
-`InnerException` is that `ObjectDisposedException`. Catch that exact shape at the owning layer
-(`DCLWebSocket`), so the race is fully owned there:
+Only when cancellation cannot prevent the race, because it happens inside a platform or
+third-party layer the code does not control, may the exception be absorbed. Then:
+
+- Absorb it **once, at the layer that owns the resource**, with a comment naming why
+  cancellation is not enough. It is a documented exception, never a pattern to copy.
+- Never re-catch the same race up the stack: re-catching it at every caller is the same
+  defensive redundancy as the "Defensive null-checks against non-null declarations"
+  anti-pattern in CLAUDE.md §11. Callers handle only their own concerns (typically
+  `OperationCanceledException`).
+
+Known instance: on Mono, `Dispose()` racing with an in-flight `WebSocket.CloseAsync` does not
+surface as a bare `ObjectDisposedException`; it comes back as a `WebSocketException` whose
+`InnerException` is that `ObjectDisposedException`, from inside the runtime's socket close.
+`DCLWebSocket.CloseAsync` owns the socket, so it is the one place that absorbs that exact shape:
 
 ```csharp
-// DCLWebSocket.CloseAsync owns the socket, so it owns the race
 try
 {
     await ws.CloseAsync(statusType, description, cancellationToken);
 }
 catch (System.Net.WebSockets.WebSocketException e) when (e.InnerException is ObjectDisposedException)
 {
-    // Mono surfaces the Dispose() race as a WebSocketException wrapping the ObjectDisposedException.
+    // Mono surfaces the Dispose() race inside the runtime as a WebSocketException wrapping the
+    // ObjectDisposedException; cancellation cannot reach it, so the owning layer absorbs it here.
 }
 catch (System.Net.WebSockets.WebSocketException e)
 {
@@ -106,9 +117,9 @@ catch (System.Net.WebSockets.WebSocketException e)
 }
 ```
 
-With the race owned there, higher layers such as `ClientWebSocketApiImplementation.CloseAsync`
-must **not** re-catch `ObjectDisposedException` (nor `e.InnerException is ObjectDisposedException`);
-they only absorb `OperationCanceledException` for a close cancelled mid-flight.
+Higher layers such as `ClientWebSocketApiImplementation.CloseAsync` must **not** re-catch
+`ObjectDisposedException` (nor `e.InnerException is ObjectDisposedException`); they only absorb
+`OperationCanceledException` for a close cancelled mid-flight.
 
 ## SuppressToResultAsync Pattern
 
