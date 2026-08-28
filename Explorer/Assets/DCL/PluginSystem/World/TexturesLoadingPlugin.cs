@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
@@ -8,6 +9,7 @@ using DCL.ResourcesUnloading;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.LifeCycle;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Textures;
 using System;
@@ -23,6 +25,8 @@ namespace DCL.PluginSystem.World
         private readonly IProfileRepository profileRepository;
         private readonly TexturesCache<GetTextureIntention> texturesCache;
 
+        private NoCache<TextureData, GetTextureIntention>? pathOnlySceneCache;
+
         public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<TextureData> diskCache,
             IProfileRepository profileRepository)
         {
@@ -34,8 +38,19 @@ namespace DCL.PluginSystem.World
             cacheCleaner.Register(texturesCache);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
-            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, profileRepository);
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        {
+            // A path-only local-dev scene keeps its content hashes across edits, so its reload flow
+            // force-drains the registered caches (ECSReloadScene): a shared entry destroyed by the
+            // drain would still be handed to any texture load in flight across it. Keeping such
+            // scenes uncached makes every texture private to its request, out of the drain's reach.
+            IStreamableCache<TextureData, GetTextureIntention> cache =
+                LocalSceneDevHashes.IsPathOnly(sharedDependencies.SceneData.SceneEntityDefinition)
+                    ? pathOnlySceneCache ??= new NoCache<TextureData, GetTextureIntention>(true, true)
+                    : texturesCache;
+
+            LoadTextureSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, profileRepository);
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache, profileRepository);

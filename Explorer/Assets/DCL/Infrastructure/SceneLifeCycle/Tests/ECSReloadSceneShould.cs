@@ -16,29 +16,36 @@ namespace DCL.SceneLifeCycle.Tests
                 new ContentDefinition { file = "models/shark.glb", hash = VersionedHash("/project/models/shark.glb", 1_699_999_999_999, "machine-1") });
 
             //Act & Assert
-            Assert.That(ECSReloadScene.IsContentVersioned(definition), Is.True);
+            Assert.That(LocalSceneDevHashes.IsContentVersioned(definition), Is.True);
+            Assert.That(LocalSceneDevHashes.IsPathOnly(definition), Is.False);
         }
 
         [Test]
-        public void NotTreatPathOnlyHashAsContentVersioned()
+        public void TreatHashWithoutEmbeddedMtimeAsPathOnly()
         {
             //Arrange: older dev servers encode "{path}-{machineId}" with no NUL — an edit keeps the hash
             SceneEntityDefinition definition = CreateDefinition(
                 new ContentDefinition { file = "models/shark.glb", hash = PathOnlyHash("/project/models/shark.glb", "machine-1") });
 
             //Act & Assert
-            Assert.That(ECSReloadScene.IsContentVersioned(definition), Is.False);
+            Assert.That(LocalSceneDevHashes.IsContentVersioned(definition), Is.False);
+            Assert.That(LocalSceneDevHashes.IsPathOnly(definition), Is.True);
         }
 
         [Test]
-        public void NotTreatMissingOrNonB64ContentAsContentVersioned()
+        public void NotClassifyMissingOrNonB64ContentAsLocalDevHash()
         {
-            Assert.That(ECSReloadScene.IsContentVersioned(null), Is.False);
-            Assert.That(ECSReloadScene.IsContentVersioned(CreateDefinition()), Is.False);
+            Assert.That(LocalSceneDevHashes.IsContentVersioned(null), Is.False);
+            Assert.That(LocalSceneDevHashes.IsPathOnly(null), Is.False);
+            Assert.That(LocalSceneDevHashes.IsContentVersioned(CreateDefinition()), Is.False);
+            Assert.That(LocalSceneDevHashes.IsPathOnly(CreateDefinition()), Is.False);
 
             //production content-addressed hashes are not b64- prefixed
-            Assert.That(ECSReloadScene.IsContentVersioned(
-                CreateDefinition(new ContentDefinition { file = "models/shark.glb", hash = "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku" })), Is.False);
+            SceneEntityDefinition production = CreateDefinition(
+                new ContentDefinition { file = "models/shark.glb", hash = "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku" });
+
+            Assert.That(LocalSceneDevHashes.IsContentVersioned(production), Is.False);
+            Assert.That(LocalSceneDevHashes.IsPathOnly(production), Is.False);
         }
 
         private static string PathOnlyHash(string path, string machineId) =>
