@@ -126,6 +126,41 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(world.Get<SyntheticPointerEventIntent>(playerEntity).TargetEntityId, Is.EqualTo(8));
         }
 
+        /// <summary>
+        ///     The entity-bound half of the global fan-out is only reachable with an aim: a driver has no OS cursor
+        ///     resting on a target for the reticle to follow, so an aimless edge always lands on the scene root.
+        /// </summary>
+        [Test]
+        public void AimTheGlobalGestureAtAnEntityWhenOneIsRequested()
+        {
+            UniTask<SyntheticPointerResult> press = agent.GlobalInputAsync(InputAction.IaPrimary, holdSeconds: 0f, targetEntityId: 77);
+
+            SyntheticPointerEventIntent down = currentPointerIntent;
+            Assert.That(down.HasAimTarget, Is.True);
+            Assert.That(down.TargetEntityId, Is.EqualTo(77));
+            Assert.That(down.Button, Is.EqualTo(InputAction.IaPrimary));
+            Assert.That(down.EventType, Is.EqualTo(PointerEventType.PetDown));
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = true, SceneEntityId = 77 },
+                Press = new SyntheticPressHandoff { World = world, Entity = Entity.Null, Tick = 3 },
+            });
+
+            SyntheticPointerEventIntent up = currentPointerIntent;
+            Assert.That(up.EventType, Is.EqualTo(PointerEventType.PetUp));
+            Assert.That(up.TargetEntityId, Is.EqualTo(77));
+            Assert.That(up.Press!.Value.Tick, Is.EqualTo(3u));
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = true, SceneEntityId = 77 },
+            });
+
+            Assert.That(press.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(press.GetAwaiter().GetResult().Hit, Is.True);
+        }
+
         [Test]
         public void ComposeAGlobalPressAndReleaseFromAimlessIntents()
         {

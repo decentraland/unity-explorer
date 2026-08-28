@@ -16,13 +16,16 @@ namespace DCL.McpServer.Tools
         public override string Name => "ui_scroll";
 
         public override string Description =>
-            "Scroll a UI scroll container by a delta. " + UiAddressArgs.ADDRESS_SCHEMA_HINT + " For ugui the delta is in "
-            + "scroll-wheel units (positive dy scrolls up); for sdk it offsets the scroll view in panel pixels.";
+            "Scroll a UI scroll container by a delta. " + UiAddressArgs.ADDRESS_SCHEMA_HINT
+            + " The delta follows image coordinates like every other position in these tools: POSITIVE dy scrolls the "
+            + "content DOWN (toward later rows), negative dy scrolls up. Units are panel pixels for sdk and wheel "
+            + "notches for ugui. The result reports the offset actually achieved, so a delta that only hits the clamp "
+            + "is visible instead of looking like a no-op success.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             UiAddressArgs.DescribeAddress(schema)
                          .Number("dx", "Horizontal scroll delta. Default 0.")
-                         .Number("dy", "Vertical scroll delta. Default 0.")
+                         .Number("dy", "Vertical scroll delta: positive scrolls the content down. Default 0.")
                          .Boolean("force", "Skip the occlusion pre-check (ugui only). Default false.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);

@@ -125,22 +125,35 @@ namespace DCL.SyntheticInput
         }
 
         /// <summary>
-        ///     Presses and releases an SDK input action with no aim of its own: the cursor ray stays in charge and
-        ///     the edges fan out to the scene exactly like a real key press — entity-bound when a qualified entity
-        ///     is hovered, broadcast to the scene root otherwise. The release lands on a later scene tick; a
-        ///     positive <paramref name="holdSeconds" /> keeps the action held between the edges.
+        ///     <para>
+        ///         Presses and releases an SDK input action. Without an aim the cursor ray stays in charge and the
+        ///         edges fan out to the scene root — which is what a driver gets in practice, because a driver has
+        ///         no OS cursor resting on a target (the reticle ray follows the free cursor, and a free cursor
+        ///         hovers nothing the driver chose).
+        ///     </para>
+        ///     <para>
+        ///         Pass an aim (<paramref name="targetEntityId" />, or an explicit <paramref name="aimPoint" />) to
+        ///         steer the reticle at a target for the duration of the gesture: the edges then land entity-bound
+        ///         on it under the real qualification gates, exactly like a key pressed while looking at it, and
+        ///         the result carries the same hit/occlusion/range diagnostics a click does.
+        ///     </para>
+        ///     <para>
+        ///         The release lands on a later scene tick; a positive <paramref name="holdSeconds" /> keeps the
+        ///         action held between the edges.
+        ///     </para>
         /// </summary>
-        public async UniTask<SyntheticPointerResult> GlobalInputAsync(InputAction action, float holdSeconds = 0f, CancellationToken ct = default)
+        public async UniTask<SyntheticPointerResult> GlobalInputAsync(InputAction action, float holdSeconds = 0f,
+            int targetEntityId = -1, string? sceneId = null, Vector3? aimPoint = null, CancellationToken ct = default)
         {
             try
             {
-                return await RunGlobalGestureAsync(action, holdSeconds, ct)
+                return await RunGlobalGestureAsync(action, holdSeconds, targetEntityId, sceneId, aimPoint, ct)
                             .AttachExternalCancellation(ct)
                             .Timeout(TimeSpan.FromSeconds(holdSeconds + COMPLETION_GRACE_SEC));
             }
             catch (TimeoutException)
             {
-                return await AbandonPointerAsync(targetEntityId: -1, holdSeconds + COMPLETION_GRACE_SEC);
+                return await AbandonPointerAsync(targetEntityId, holdSeconds + COMPLETION_GRACE_SEC);
             }
         }
 
@@ -206,9 +219,14 @@ namespace DCL.SyntheticInput
             return merged;
         }
 
-        private async UniTask<SyntheticPointerResult> RunGlobalGestureAsync(InputAction action, float holdSeconds, CancellationToken ct)
+        /// <summary>
+        ///     An aimed gesture goes through the reticle (entity-bound delivery, full diagnostics); an aimless one
+        ///     keeps the cursor ray and reaches the scene root. Both order the release onto a later scene tick.
+        /// </summary>
+        private async UniTask<SyntheticPointerResult> RunGlobalGestureAsync(InputAction action, float holdSeconds,
+            int targetEntityId, string? sceneId, Vector3? aimPoint, CancellationToken ct)
         {
-            SyntheticPointerOutcome down = await SendPointerAsync(new SyntheticPointerEventIntent(-1, null, null, action, PointerEventType.PetDown));
+            SyntheticPointerOutcome down = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, action, PointerEventType.PetDown));
 
             if (down.Result.FailureReason != null)
                 return down.Result;
@@ -216,7 +234,7 @@ namespace DCL.SyntheticInput
             if (holdSeconds > 0f)
                 await UniTask.Delay(TimeSpan.FromSeconds(holdSeconds), cancellationToken: ct);
 
-            SyntheticPointerOutcome up = await SendPointerAsync(new SyntheticPointerEventIntent(-1, null, null, action, PointerEventType.PetUp, down.Press));
+            SyntheticPointerOutcome up = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, action, PointerEventType.PetUp, down.Press));
 
             if (up.Result.FailureReason == null)
                 return up.Result;

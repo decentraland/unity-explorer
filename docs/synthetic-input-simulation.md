@@ -19,10 +19,10 @@ For world/avatar input the layer does **not** synthesize operating-system-level 
 |---|---|
 | Walk / jog / run / jump | `SyntheticMovementInputSystem` re-asserts `MovementInputComponent` **after** the real input systems each frame (and triggers the jump tick), so the hold survives their per-frame overwrite. Scene `InputModifier` locks apply exactly as they do to WASD (movement locks idle the hold, disabled kinds degrade through the same fallback table, jump locks drop the jump) unless the intent sets `IgnoreInputModifiers`. |
 | Pointer aim + buttons on entities | `SyntheticPointerInput` (in `DCL.Interaction`, the pipeline's own contract surface): a single-frame post of an aim point and/or button edge. `PlayerOriginatedRaycastSystem` builds the reticle ray through the aim and echoes what it consumed; `ProcessPointerEventsSystem` applies the button edges under the same qualification gates as real input and clears the post. |
-| Hover-only | The same aim post, re-posted each frame without a button until the hold expires — producing the same `PetHoverEnter`/`PetHoverLeave` flow a real cursor does. |
+| Hover-only | The same aim post, re-posted each frame without a button until the hold expires — producing the same `PetHoverEnter`/`PetHoverLeave` flow a real cursor does. The leave is issued whenever the hover that is ending had been qualified, and is deliberately *not* re-qualified against the ray of the frame it ends on: that ray points elsewhere, and re-checking it against the target's `maxDistance` left tight-range targets hovered forever (fixed in `HoverFeedbackUtils`, matching the proximity-leave path). |
 | Global SDK input actions | `PrepareGlobalInputEventsSystem` appends the synthetic button edges to the per-frame global-events buffer (deduped against real same-frame presses). The downstream suppression rule is untouched: an edge that lands entity-bound on a hovered, qualified entity suppresses the scene-root broadcast for that frame — exactly the real-key fan-out. |
 | Camera look (relative) | `SyntheticCameraLookSystem` re-asserts `CameraInput.Delta` after `UpdateCameraInputSystem`, feeding the same Cinemachine axes as mouse-look. A `CameraBlockerComponent` suppresses it like real look input. |
-| Camera look-at (absolute) | Translated into the production `CameraLookAtIntent`; the request completes when the camera consumed it. |
+| Camera look-at (absolute) | Translated into the production `CameraLookAtIntent`, then **refined**: that intent drives the rig's orbit value from an angle measured at the player's feet, which leaves a third-person camera with the right yaw and an aim that misses vertically, so `SyntheticCameraLookSystem` closes the residual through the look channel until the point is under the reticle. The loop is bounded — on target, out of frames, or as soon as the error stops improving (a clamped rig), and `look_at` reports the remaining `aimErrorDegrees`. |
 
 UI interaction is **layered** (see below): a semantic path that synthesizes element events directly, and a virtual-device path for positional fidelity.
 
@@ -51,7 +51,7 @@ WalkAsync(axes, kind, seconds, jump, ignoreInputModifiers, ct)
 CameraLookAsync(axisValue, seconds, ct)          LookAtAsync(worldTarget, ct)
 ClickAsync / PointerDownAsync / PointerUpAsync(entityId, sceneId, aimPoint, screenPoint, button, timeoutSec, ct)
 HoverAsync(entityId, sceneId, aimPoint, screenPoint, seconds, ct)
-GlobalInputAsync(action, holdSeconds, ct)
+GlobalInputAsync(action, holdSeconds, entityId, sceneId, aimPoint, ct)
 ```
 
 A click is composed from two intents — a press, then a release carrying the press handoff so the scene observes `PetDown` on an earlier tick than `PetUp`; a release that no longer reaches the press target reports the delivered press with the divergence (`upRayMissed`). Rich failure diagnostics (occluder entity, out-of-range distance, missing `PointerEvents`, scene changed mid-gesture) come from observing the pipeline's own raycast and hover state.
@@ -105,9 +105,12 @@ The probes are reflection-only entry points, preserved against IL2CPP stripping 
 ## Documented divergences from human input
 
 - `WalkAsync` moves the avatar but does not also emit `IA_FORWARD`-style global input events the way a physical W key does; compose `GlobalInputAsync(IaForward, hold)` alongside it when a scene listens for those.
+- **An aimless `GlobalInputAsync` always reaches the scene root, never an entity.** The entity-bound half of the fan-out needs the reticle on a target, and the reticle follows the OS cursor — which no driver is holding over anything (`CursorState.Free` builds the ray from the cursor position, and a pointer over client UI is additionally excluded from hovering). Pass an aim (`entityId` / `aimPoint`) to produce the entity-bound edge; that is the driver's equivalent of pressing a key while looking at something.
+- Suppression is *per scene tick*: an entity-bound edge suppresses the scene-root broadcast in the tick that writes it. Note that a scene reading `inputSystem.isTriggered(action, type)` **without** an entity is not measuring the scene-root broadcast at all — the SDK answers that from every entity's `PointerEventsResult`, so an entity-bound event satisfies it too. A scene verifying suppression must read `engine.RootEntity` explicitly.
 - Hover tooltips pick their pressed/unpressed variant from the real Unity input actions, so a synthetically held button doesn't switch the tooltip glyph (cosmetic only).
 - Synthetic camera look needs no OS cursor lock — a driver has no cursor to lock.
-- Semantic UI clicks don't exercise hit-testing beyond their occlusion pre-check; use the device path (`ui_click device:true`, `ui_drag`) when the pipeline itself is under test.
+- Semantic UI clicks don't exercise hit-testing beyond their occlusion pre-check; use the device path (`ui_click device:true`, `ui_drag device:true`) when the pipeline itself is under test.
+- **The virtual-device path drives the client UI stack, not UI Toolkit scene panels.** SDK scene UI consumes events sent to its elements, so an injected device pointer does not reach it: `ui_click device:true` on an SDK element reports whether the element observed anything (it normally does not, and says so instead of returning a bare success), and `ui_drag` delivers a drag that starts inside the scene UI semantically — press on the start element, moves along the path, release on the end element — unless `device:true` forces the device path.
 
 ## Extending the layer
 

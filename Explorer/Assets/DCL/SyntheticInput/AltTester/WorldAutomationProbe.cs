@@ -124,11 +124,20 @@ namespace DCL.SyntheticInput.AltTester
         }
 
         /// <summary>
-        ///     Presses and releases an SDK input action with no aim, fanning out to the scene like the real key
-        ///     (entity-bound when hovering a qualified entity, scene-root broadcast otherwise);
+        ///     Presses and releases an SDK input action with no aim: it reaches the scene root, because a driver
+        ///     holds no cursor over a target for the reticle to follow. Use <see cref="StartGlobalInputOnEntity" />
+        ///     for the entity-bound half of the fan-out.
         ///     action ∈ pointer|primary|secondary|jump|forward|backward|right|left|action3..6|walk|modifier.
         /// </summary>
-        public static int StartGlobalInput(string action, float holdSeconds)
+        public static int StartGlobalInput(string action, float holdSeconds) =>
+            StartGlobalInputOnEntity(action, holdSeconds, entityId: -1);
+
+        /// <summary>
+        ///     Presses and releases an SDK input action while the reticle is aimed at <paramref name="entityId" />,
+        ///     so the scene observes it entity-bound on that target under the real qualification gates — the same
+        ///     event a key pressed while looking at the entity produces.
+        /// </summary>
+        public static int StartGlobalInputOnEntity(string action, float holdSeconds, int entityId)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
                 return failedId;
@@ -137,7 +146,7 @@ namespace DCL.SyntheticInput.AltTester
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{action}'")));
 
             return AltOperationRegistry.Start(
-                readyAgent.GlobalInputAsync(inputAction, Mathf.Clamp(holdSeconds, 0f, MAX_SECONDS))
+                readyAgent.GlobalInputAsync(inputAction, Mathf.Clamp(holdSeconds, 0f, MAX_SECONDS), entityId)
                           .ContinueWith(PointerResultPayload));
         }
 

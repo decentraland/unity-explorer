@@ -5,6 +5,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
+using UnityEngine.UIElements;
 
 namespace DCL.SyntheticInput.UiSimulation
 {
@@ -59,6 +60,35 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
+        /// <summary>
+        ///     The panel the current scene's UI is attached to — the space positional gestures against scene UI are
+        ///     expressed in. Any attached element identifies it: a scene renders its UI into one panel.
+        /// </summary>
+        public bool TryGetScenePanel(out IPanel? panel, out string? failure)
+        {
+            panel = null;
+
+            if (!TryGetRunningSceneWorld(out World? maybeWorld, out failure))
+                return false;
+
+            World world = maybeWorld!;
+            IPanel? found = null;
+
+            world.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity _) =>
+            {
+                found ??= uiTransform.Transform.panel;
+            });
+
+            if (found == null)
+            {
+                failure = "the current scene has no UI attached to a panel";
+                return false;
+            }
+
+            panel = found;
+            return true;
+        }
+
         /// <summary>Lists the interactable SDK-UI elements of the current scene (pointer targets, inputs, dropdowns, scrolls).</summary>
         public JArray ListInteractable()
         {
@@ -71,7 +101,7 @@ namespace DCL.SyntheticInput.UiSimulation
 
             world.Query(in UI_ELEMENTS, (Entity entity, ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
             {
-                if (uiTransform.IsHidden || uiTransform.Transform?.panel == null)
+                if (uiTransform.IsHidden || uiTransform.Transform.panel == null)
                     return;
 
                 bool hasInput = world.TryGet(entity, out UIInputComponent? _);

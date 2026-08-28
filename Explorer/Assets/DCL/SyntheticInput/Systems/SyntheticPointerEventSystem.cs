@@ -285,7 +285,7 @@ namespace DCL.SyntheticInput.Systems
                 result.Hit = true;
                 result.SceneEntityId = entityInfo.ColliderSceneEntityInfo.EntityReference.Id;
                 result.CrdtEntityId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id;
-                result.HoverText = FirstTooltipText();
+                result.HoverText = ResolveHoverText(in entityInfo);
                 result.HitPoint = raycastResult.RaycastHit.point;
                 result.Distance = raycastResult.GetDistance();
             }
@@ -337,13 +337,14 @@ namespace DCL.SyntheticInput.Systems
                     Hit = true,
                     SceneEntityId = hitEntity.Id,
                     CrdtEntityId = hitCrdtId,
-                    HoverText = FirstTooltipText(),
+                    HoverText = ResolveHoverText(in entityInfo),
                     HitPoint = raycastResult.RaycastHit.point,
                     Distance = raycastResult.GetDistance(),
                 };
             }
 
-            return DiagnoseUnqualified(in intent, in entityInfo, hitEntity, hitCrdtId, raycastResult.GetDistance());
+            return DiagnoseUnqualified(in intent, in entityInfo, hitEntity, hitCrdtId, raycastResult.GetDistance(),
+                StoppedShortOfAim(in raycastResult, intent.InjectedAimPoint), raycastResult.Collider.name);
         }
 
         /// <summary>The pipeline hit nothing usable: a cold-path raycast tells whether the aim reaches any collider at all.</summary>
@@ -357,13 +358,31 @@ namespace DCL.SyntheticInput.Systems
                 : Failure(in intent, $"the ray hit a non-scene collider '{hit.collider.name}'");
         }
 
-        /// <summary>The ray reached the expected entity, but the pipeline did not qualify it for cursor input.</summary>
-        private static SyntheticPointerResult DiagnoseUnqualified(in SyntheticPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo, Entity hitEntity, int hitCrdtId, float distance)
+        /// <summary>
+        ///     The ray reached an entity the gesture accepts as its target, but the pipeline did not qualify it for
+        ///     cursor input. An entity without PointerEvents that the ray reached <em>before</em> the requested aim
+        ///     point is an occluder, not the target — reported as a block so an aim-point gesture gets the same
+        ///     blocker diagnostics an entity-addressed one does.
+        /// </summary>
+        private static SyntheticPointerResult DiagnoseUnqualified(in SyntheticPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo,
+            Entity hitEntity, int hitCrdtId, float distance, bool stoppedShortOfAim, string colliderName)
         {
             SyntheticPointerResult result;
 
             if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents) || pbPointerEvents == null)
+            {
+                if (stoppedShortOfAim)
+                {
+                    result = Failure(in intent, "another collider blocks the line of sight to the aim point");
+                    result.BlockedByEntityId = hitEntity.Id;
+                    result.BlockedByCrdtId = hitCrdtId;
+                    result.BlockedByColliderName = colliderName;
+                    result.Distance = distance;
+                    return result;
+                }
+
                 result = Failure(in intent, $"entity {hitEntity.Id} has no PointerEvents component (not clickable)");
+            }
             else
                 result = Failure(in intent, HasCursorEntry(pbPointerEvents)
                     ? $"target is out of range for its pointer events (hit distance {distance:F2}m)"
@@ -373,6 +392,18 @@ namespace DCL.SyntheticInput.Systems
             result.CrdtEntityId = hitCrdtId;
             result.Distance = distance;
             return result;
+        }
+
+        /// <summary>
+        ///     True when the ray was stopped by geometry closer than the point it was aimed through: the camera-origin
+        ///     hit distance is the comparable one (the pipeline's own distance is measured from the player focus in
+        ///     third person).
+        /// </summary>
+        private static bool StoppedShortOfAim(in PlayerOriginRaycastResultForSceneEntities raycastResult, Vector3 aimPoint)
+        {
+            const float TOLERANCE = 0.05f;
+
+            return raycastResult.RaycastHit.distance < Vector3.Distance(raycastResult.OriginRay.origin, aimPoint) - TOLERANCE;
         }
 
         private static bool HasCursorEntry(PBPointerEvents pbPointerEvents)
@@ -407,10 +438,30 @@ namespace DCL.SyntheticInput.Systems
             });
         }
 
-        private string? FirstTooltipText()
+        /// <summary>
+        ///     The hover text a human would read on the target. The client's tooltip is preferred, but it only
+        ///     exists for press/release entries (a hover-only entity shows no key prompt), so the target's own
+        ///     PointerEvents text is the fallback — otherwise hover-only entities report no text at all.
+        /// </summary>
+        private string? ResolveHoverText(in GlobalColliderSceneEntityInfo entityInfo)
         {
             IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips = World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips;
-            return tooltips is { Count: > 0 } ? tooltips[0].Text : null;
+
+            if (tooltips is { Count: > 0 })
+                return tooltips[0].Text;
+
+            if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents) || pbPointerEvents == null)
+                return null;
+
+            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
+            {
+                PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[i]!;
+
+                if (entry.InteractionType == InteractionType.Cursor && entry.EventInfo is { HasHoverText: true } info && !string.IsNullOrEmpty(info.HoverText))
+                    return info.HoverText;
+            }
+
+            return null;
         }
 
         private static Vector3 ResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>

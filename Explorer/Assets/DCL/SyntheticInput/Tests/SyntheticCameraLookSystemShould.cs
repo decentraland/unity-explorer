@@ -98,9 +98,10 @@ namespace DCL.SyntheticInput.Tests
         }
 
         [Test]
-        public void IssueLookAtIntentAndCompleteOnceTheCameraConsumedIt()
+        public void IssueLookAtIntentAndCompleteOnceTheCameraIsOnTarget()
         {
-            var target = new Vector3(10f, 2f, 30f);
+            // Straight ahead of the test camera (identity rotation looks down +Z), so no refinement is needed.
+            var target = new Vector3(0f, 0f, 30f);
             UniTaskCompletionSource<SyntheticInputDelivery> completion = AddIntent(Vector2.zero, secondsFromNow: 0f, lookAtTarget: target);
 
             system.Update(0);
@@ -120,6 +121,47 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False);
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             Assert.That(completion.Task.GetAwaiter().GetResult(), Is.EqualTo(SyntheticInputDelivery.Completed));
+            Assert.That(cameraInput.Delta, Is.EqualTo(Vector2.zero));
+        }
+
+        /// <summary>
+        ///     The production look-at drives the rig's orbit value and leaves the aim off the point (right yaw,
+        ///     wrong pitch on a third-person rig); the request must keep steering the look input until the target
+        ///     is actually under the reticle.
+        /// </summary>
+        [Test]
+        public void RefineTheAimWhileTheCameraStillMissesTheTarget()
+        {
+            // 45 degrees to the right of, and above, the camera's forward.
+            var target = new Vector3(30f, 30f, 30f);
+            UniTaskCompletionSource<SyntheticInputDelivery> completion = AddIntent(Vector2.zero, secondsFromNow: 0f, lookAtTarget: target);
+
+            system.Update(0);
+            world.Remove<CameraLookAtIntent>(cameraEntity);
+
+            cameraInput.Delta = Vector2.zero;
+            system.Update(0);
+
+            Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending), "the request stays open while the aim is off");
+            Assert.That(cameraInput.Delta.x, Is.GreaterThan(0f), "the target is to the right, so the look input turns right");
+            Assert.That(cameraInput.Delta.y, Is.GreaterThan(0f), "the target is above, so the look input looks up");
+        }
+
+        [Test]
+        public void StopRefiningWhenTheRigCannotGetAnyCloser()
+        {
+            // Nothing in the test moves the camera, so every frame measures the same error — what a clamped rig
+            // (third-person pitch limits) looks like from here.
+            UniTaskCompletionSource<SyntheticInputDelivery> completion = AddIntent(Vector2.zero, secondsFromNow: 0f, lookAtTarget: new Vector3(0f, 100f, 1f));
+
+            system.Update(0);
+            world.Remove<CameraLookAtIntent>(cameraEntity);
+
+            for (var frame = 0; frame < 32 && completion.Task.Status == UniTaskStatus.Pending; frame++)
+                system.Update(0);
+
+            Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded), "the refinement gives up instead of holding the request open");
+            Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False);
         }
     }
 }

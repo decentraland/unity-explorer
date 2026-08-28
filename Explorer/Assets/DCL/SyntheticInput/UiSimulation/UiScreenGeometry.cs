@@ -47,6 +47,19 @@ namespace DCL.SyntheticInput.UiSimulation
                 Mathf.Approximately(perPixel.y, 0f) ? 0f : (panelPoint.y - origin.y) / perPixel.y);
         }
 
+        /// <summary>
+        ///     Maps an image-pixel point into panel space: the algebraic inverse of <see cref="PanelToImagePoint" />,
+        ///     built from the same two probe conversions so a point round-trips against the rects these tools report.
+        /// </summary>
+        public static Vector2 ImageToPanelPoint(IPanel panel, Vector2 imagePoint)
+        {
+            Vector2 origin = RuntimePanelUtils.ScreenToPanel(panel, Vector2.zero);
+            Vector2 unit = RuntimePanelUtils.ScreenToPanel(panel, Vector2.one);
+            Vector2 perPixel = unit - origin;
+
+            return new Vector2(origin.x + (imagePoint.x * perPixel.x), origin.y + (imagePoint.y * perPixel.y));
+        }
+
         /// <summary>The panel-space rect expressed in image pixels, for driver-facing output.</summary>
         public static Rect PanelRectToImageRect(IPanel panel, Rect panelRect)
         {

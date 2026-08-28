@@ -67,6 +67,10 @@ namespace DCL.Interaction.Systems
             // Process all PBPointerEvents components to see if any of them is qualified
             hoverFeedbackComponent.Clear();
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderSceneEntityInfo previousEntityInfo);
+
+            // The distance verdict of the hover being left behind: it decides whether an enter was ever issued,
+            // and therefore whether the leave completing it must be issued now.
+            bool previousHoverWasQualified = hoverStateComponent.IsAtDistance;
             hoverStateComponent.Clear();
 
             if (
@@ -99,7 +103,7 @@ namespace DCL.Interaction.Systems
             }
 
             if (candidateForHoverLeaveIsValid)
-                ResetPreviousEntity(in raycastResultForSceneEntities, in proximityResultForSceneEntities, in previousEntityInfo);
+                ResetPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo, previousHoverWasQualified);
         }
 
         private bool TryGetPreviousEntityInfo(in HoverStateComponent stateComponent, out GlobalColliderSceneEntityInfo globalColliderSceneEntityInfo)
@@ -219,13 +223,13 @@ namespace DCL.Interaction.Systems
         }
 
         private void ResetPreviousEntity(
-            in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
             in ProximityResultForSceneEntities proximityResultForSceneEntities,
-            in GlobalColliderSceneEntityInfo previousEntityInfo
+            in GlobalColliderSceneEntityInfo previousEntityInfo,
+            bool previousHoverWasQualified
         )
         {
             ResetHighlightComponentQuery(previousEntityInfo.EcsExecutor.World);
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousEntityInfo, previousHoverWasQualified);
             ProximityFeedbackUtils.TryIssueProximityLeaveEventForPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo);
         }
 

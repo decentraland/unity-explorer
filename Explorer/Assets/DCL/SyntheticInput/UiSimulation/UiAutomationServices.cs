@@ -5,7 +5,9 @@ using DCL.SyntheticInput.Core;
 using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UIElements;
 
 namespace DCL.SyntheticInput.UiSimulation
 {
@@ -62,6 +64,23 @@ namespace DCL.SyntheticInput.UiSimulation
                 await EcsRequest.AbandonAsync<UiDeviceGestureRequest>(world, playerEntity);
                 return new UiGestureResult { Ok = false, FailureReason = $"the gesture did not complete within {timeoutSec}s (is the simulation paused?)" };
             }
+        }
+
+        /// <summary>
+        ///     Drags inside the scene's own UI, if the scene UI is what sits under <paramref name="fromImagePoint" />:
+        ///     UI Toolkit panels consume events sent to their elements rather than virtual-device pointer state, so a
+        ///     positional gesture there has to be synthesized against the elements. Returns null when the scene UI
+        ///     does not own the point, leaving the gesture to the virtual devices.
+        /// </summary>
+        public async UniTask<UiActionResult?> TryDragSceneUiAsync(Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
+        {
+            if (!SdkResolver.TryGetScenePanel(out IPanel? panel, out _) || panel == null)
+                return null;
+
+            if (panel.Pick(UiScreenGeometry.ImageToPanelPoint(panel, fromImagePoint)) == null)
+                return null;
+
+            return await Simulator.DragSdkAsync(panel, fromImagePoint, toImagePoint, steps, ct);
         }
 
         /// <summary>The cursor state name, for driver-facing diagnostics (clicks on invisible-under-lock UI are allowed but flagged).</summary>

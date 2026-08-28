@@ -83,7 +83,8 @@ namespace DCL.SyntheticInput.UiSimulation
             if (!PrepareUguiPointer(target, UiScreenGeometry.ScreenCenterOf(rectTransform), force, out UiActionResult blockedResult))
                 return blockedResult;
 
-            pointerEventData.scrollDelta = delta;
+            // Wheel units run opposite to image coordinates: a wheel-up (positive y) scrolls the content up.
+            pointerEventData.scrollDelta = new Vector2(delta.x, -delta.y);
 
             GameObject scrollRoot = raycastResults.Count > 0 ? raycastResults[0].gameObject : target;
             ExecuteEvents.ExecuteHierarchy(scrollRoot, pointerEventData, ExecuteEvents.scrollHandler);
@@ -116,14 +117,14 @@ namespace DCL.SyntheticInput.UiSimulation
                         picked != null ? $"{picked.name} ({string.Join(' ', picked.GetClasses())})" : "nothing pickable at the point",
                         imageRect);
 
-                // A uGUI surface (e.g. a modal) raycast-hit at the same point sits on top of the scene UI panel.
+                // A uGUI surface (e.g. a modal) raycast-hit above the scene UI panel covers it.
                 pointerEventData.Reset();
                 pointerEventData.position = UiScreenGeometry.ImageToScreenPoint(UiScreenGeometry.PanelToImagePoint(target.panel, panelCenter));
                 raycastResults.Clear();
                 eventSystem.RaycastAll(pointerEventData, raycastResults);
 
-                if (raycastResults.Count > 0)
-                    return UiActionResult.Failure("a client UI element covers the scene UI at this point", PathOf(raycastResults[0].gameObject.transform), imageRect);
+                if (TryFindClientCover(target.panel, out GameObject? cover))
+                    return UiActionResult.Failure("a client UI element covers the scene UI at this point", PathOf(cover!.transform), imageRect);
             }
 
             SendPooled<PointerEnterEvent>(target);
@@ -145,6 +146,60 @@ namespace DCL.SyntheticInput.UiSimulation
 
             return UiActionResult.Success(imageRect);
         }
+
+        /// <summary>
+        ///     Drags between two points inside the SDK scene-UI panel by synthesizing the element events a real
+        ///     drag produces: press on the element under <paramref name="fromImagePoint" />, moves along the path,
+        ///     release on the element under <paramref name="toImagePoint" />. This is the semantic counterpart of
+        ///     the virtual-device drag — UI Toolkit panels consume events sent to their elements, and a scene
+        ///     that recognises a drag as "down here, up there" observes exactly what a user produces.
+        /// </summary>
+        public async UniTask<UiActionResult> DragSdkAsync(IPanel panel, Vector2 fromImagePoint, Vector2 toImagePoint, int steps, CancellationToken ct)
+        {
+            Vector2 fromPanelPoint = UiScreenGeometry.ImageToPanelPoint(panel, fromImagePoint);
+            Vector2 toPanelPoint = UiScreenGeometry.ImageToPanelPoint(panel, toImagePoint);
+
+            VisualElement? pressTarget = panel.Pick(fromPanelPoint);
+
+            if (pressTarget == null)
+                return UiActionResult.Failure("no scene UI element at the drag start point");
+
+            Rect imageRect = UiScreenGeometry.PanelRectToImageRect(panel, pressTarget.worldBound);
+
+            SendPooled<PointerEnterEvent>(pressTarget);
+            SendPooled<PointerDownEvent>(pressTarget);
+
+            // One move per frame along the path: a scene reading the drag as a gesture sees it progress, and the
+            // release cannot land on the same frame as the press (the pointer-event slot holds one event).
+            for (var step = 1; step <= steps; step++)
+            {
+                Vector2 pointOnPath = Vector2.Lerp(fromPanelPoint, toPanelPoint, step / (float)steps);
+                VisualElement moveTarget = panel.Pick(pointOnPath) ?? pressTarget;
+
+                SendPooled<PointerMoveEvent>(moveTarget);
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+            }
+
+            VisualElement? releaseTarget = panel.Pick(toPanelPoint);
+
+            if (releaseTarget == null)
+            {
+                SendPooled<PointerUpEvent>(pressTarget);
+                SendPooled<PointerLeaveEvent>(pressTarget);
+
+                return UiActionResult.Failure($"no scene UI element at the drag end point; the release was delivered back to '{pressTarget.name}'", null, imageRect);
+            }
+
+            SendPooled<PointerUpEvent>(releaseTarget);
+            SendPooled<PointerLeaveEvent>(releaseTarget);
+
+            UiActionResult result = UiActionResult.Success(imageRect);
+            result.Info = $"pressed '{DescribeElement(pressTarget)}', released '{DescribeElement(releaseTarget)}'";
+            return result;
+        }
+
+        private static string DescribeElement(VisualElement element) =>
+            string.IsNullOrEmpty(element.name) ? element.GetType().Name : element.name;
 
         public UiActionResult SetTextSdk(SdkUiElement element, string text, bool submit)
         {
@@ -190,6 +245,12 @@ namespace DCL.SyntheticInput.UiSimulation
                 : default(Rect));
         }
 
+        /// <summary>
+        ///     Scrolls an SDK scroll container. <paramref name="delta" /> follows the layer's image-coordinate
+        ///     convention (positive y scrolls the content down, toward later rows), which is also UI Toolkit's own
+        ///     scroll-offset direction. The achieved offset is reported: a delta that only hits the clamp moves
+        ///     nothing, and a silent success there is indistinguishable from a broken call.
+        /// </summary>
         public UiActionResult ScrollSdk(SdkUiElement element, Vector2 delta)
         {
             ScrollView? scrollView = element.Transform.InnerScrollView;
@@ -197,11 +258,46 @@ namespace DCL.SyntheticInput.UiSimulation
             if (scrollView == null)
                 return UiActionResult.Failure("the entity has no scroll overflow");
 
-            scrollView.scrollOffset += delta;
+            Vector2 before = scrollView.scrollOffset;
+            scrollView.scrollOffset = before + delta;
+            Vector2 after = scrollView.scrollOffset;
 
-            return UiActionResult.Success(scrollView.panel != null
+            UiActionResult result = UiActionResult.Success(scrollView.panel != null
                 ? UiScreenGeometry.PanelRectToImageRect(scrollView.panel, scrollView.worldBound)
                 : default(Rect));
+
+            result.Info = after == before
+                ? $"the scroll offset did not move ({FormatOffset(before)}); the container is already at that end, or its content does not overflow"
+                : $"scroll offset {FormatOffset(before)} -> {FormatOffset(after)}";
+
+            return result;
+        }
+
+        private static string FormatOffset(Vector2 offset) =>
+            $"({offset.x:F0}, {offset.y:F0})";
+
+        /// <summary>
+        ///     Finds the client uGUI surface covering the scene UI at the already-raycast point, if any. The scene
+        ///     UI panel is itself a uGUI raycast target — UI Toolkit registers a PanelRaycaster/PanelEventHandler
+        ///     GameObject per PanelSettings — so its own hit is not a cover, and neither is anything the raycast
+        ///     sorted <em>behind</em> it; only a surface above it can intercept the pointer.
+        /// </summary>
+        private bool TryFindClientCover(IPanel targetPanel, out GameObject? cover)
+        {
+            cover = null;
+
+            if (raycastResults.Count == 0)
+                return false;
+
+            // Results are sorted front-most first, so only the top hit can intercept the pointer: the scene UI
+            // panel's own hit means nothing is above it, and anything the raycast sorted behind it is irrelevant.
+            GameObject topHit = raycastResults[0].gameObject;
+
+            if (topHit.TryGetComponent(out PanelEventHandler handler) && ReferenceEquals(handler.panel, targetPanel))
+                return false;
+
+            cover = topHit;
+            return true;
         }
 
         /// <summary>Fills the reusable pointer data at the point and runs the occlusion pre-check.</summary>
@@ -262,6 +358,9 @@ namespace DCL.SyntheticInput.UiSimulation
         public bool Ok;
         public string? FailureReason;
 
+        /// <summary>What the action achieved, when a bare "ok" would hide it (e.g. a scroll that hit its clamp).</summary>
+        public string? Info;
+
         /// <summary>What covered the target, when the occlusion pre-check failed.</summary>
         public string? BlockedBy;
 
@@ -285,6 +384,9 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (FailureReason != null)
                 json["reason"] = FailureReason;
+
+            if (Info != null)
+                json["info"] = Info;
 
             if (BlockedBy != null)
                 json["blockedBy"] = BlockedBy;

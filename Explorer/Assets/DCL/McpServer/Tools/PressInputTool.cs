@@ -5,20 +5,29 @@ using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Presses and releases an SDK input action with no aim of its own via
-    ///     <see cref="SyntheticInputAgent.GlobalInputAsync" />: the edges fan out to the scene exactly like a real
-    ///     key press — entity-bound when the reticle hovers a qualified entity, broadcast to the scene root
-    ///     (a PBPointerEventsResult with no hit) otherwise.
+    ///     Presses and releases an SDK input action via <see cref="SyntheticInputAgent.GlobalInputAsync" />.
+    ///     Without an aim the edges reach the scene root (a PBPointerEventsResult with no hit); with an aim the
+    ///     reticle is steered at the target for the gesture, so they land entity-bound on it under the real
+    ///     qualification gates — the only way a driver can produce the entity-bound half of the fan-out, having
+    ///     no OS cursor of its own to rest on a target.
     /// </summary>
     public class PressInputTool : McpTool
     {
-        /// <summary>Wire-facing mirror of the SDK <see cref="InputAction" />s a scene can listen to globally.</summary>
+        /// <summary>
+        ///     Wire-facing mirror of the SDK <see cref="InputAction" />s a scene can listen to globally. The member
+        ///     names ARE the wire contract: McpWireEnum derives each tool argument value from them, so ACTION_3
+        ///     yields "action_3" while a PascalCase Action3 would yield "action3" and silently break every agent
+        ///     recipe and doc that spells the value out. Same reason McpWireEnumShould's fixture enum suppresses it.
+        /// </summary>
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum SdkAction : byte
         {
             POINTER,
@@ -45,13 +54,20 @@ namespace DCL.McpServer.Tools
 
         public override string Description =>
             "Press and release an SDK input action (IA_PRIMARY, IA_SECONDARY, IA_ACTION_3..6, movement actions, ...) so the "
-            + "scene observes it exactly like the real key: entity-bound on the entity under the reticle when one is hovered "
-            + "in range, otherwise as a global PBPointerEventsResult on the scene root. The release lands on a later scene "
-            + "tick; holdSeconds keeps the action held between press and release. This does NOT move the player — use walk for that.";
+            + "scene observes it exactly like the real key. Without an aim it arrives as a global PBPointerEventsResult on "
+            + "the scene root; pass entityId or an x/y/z world aim point to steer the reticle at a target so it arrives "
+            + "entity-bound on it instead (and suppresses the scene-root broadcast for that frame, like a key pressed while "
+            + "looking at the entity). The release lands on a later scene tick; holdSeconds keeps the action held between "
+            + "press and release. This does NOT move the player — use walk for that.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Enum<SdkAction>("action", "Which SDK input action to press.", isRequired: true)
-                  .Number("holdSeconds", "Seconds between the press and the release. Default 0 (release on the next scene tick), max 30.");
+                  .Number("holdSeconds", "Seconds between the press and the release. Default 0 (release on the next scene tick), max 30.")
+                  .Integer("entityId", "Aim the reticle at this entity for the gesture (from list_scene_entities) so the action lands entity-bound on it. Omit for a scene-root broadcast.")
+                  .Number("x", "World-space aim point; an alternative to entityId (and it overrides the aim at the entity's collider center).")
+                  .Number("y")
+                  .Number("z")
+                  .String("sceneId", "Pin the gesture to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -67,12 +83,23 @@ namespace DCL.McpServer.Tools
 
             float holdSeconds = Mathf.Clamp(arguments.GetFloat("holdSeconds", 0f), 0f, MAX_HOLD_SECONDS);
 
-            SyntheticPointerResult result = await syntheticInput.GlobalInputAsync(ToInputAction(action), holdSeconds, ct);
+            bool hasEntityId = arguments.TryGetInt("entityId", out int entityId);
+            bool hasAimPoint = arguments.TryGetFloat("x", out float x)
+                               & arguments.TryGetFloat("y", out float y)
+                               & arguments.TryGetFloat("z", out float z);
+            string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
+
+            SyntheticPointerResult result = await syntheticInput.GlobalInputAsync(ToInputAction(action), holdSeconds,
+                hasEntityId ? entityId : -1, sceneId, hasAimPoint ? new Vector3(x, y, z) : null, ct);
 
             if (result.TimedOut)
                 return McpToolResult.Error($"press_input did not complete within {holdSeconds + SyntheticInputAgent.COMPLETION_GRACE_SEC}s (is the simulation paused?).");
 
-            if (result.FailureReason != null && !result.Hit)
+            bool aimed = hasEntityId || hasAimPoint;
+
+            // An aimless gesture can only fail outright (no scene, preempted); an aimed one has the same
+            // legitimate negative outcomes a click has (occluded, out of range), reported the same way.
+            if (result.FailureReason != null && !result.Hit && !aimed)
                 return McpToolResult.Error($"press_input was not delivered: {result.FailureReason}");
 
             var json = new JObject
@@ -86,13 +113,28 @@ namespace DCL.McpServer.Tools
             {
                 json["entityId"] = result.SceneEntityId;
                 json["crdtEntityId"] = result.CrdtEntityId;
+                json["hitPoint"] = result.HitPoint.ToVector();
+                json["distance"] = Math.Round(result.Distance, 2);
 
                 if (result.HoverText != null)
                     json["hoverText"] = result.HoverText;
             }
 
+
+            // Nothing is hovered without an aim: the reticle ray follows the free OS cursor, which no driver is
+            // holding over a target. This is the expected outcome, not a failure.
+            else if (!aimed)
+                json["hint"] = "delivered to the scene root; pass entityId or x/y/z to aim the reticle and land it entity-bound";
+
             if (result.FailureReason != null)
-                json["warning"] = result.FailureReason;
+                json[aimed && !result.Hit ? "reason" : "warning"] = result.FailureReason;
+
+            if (result.BlockedByEntityId.HasValue)
+            {
+                json["blockedByEntityId"] = result.BlockedByEntityId.Value;
+                json["blockedByCrdtId"] = result.BlockedByCrdtId;
+                json["blockedByCollider"] = result.BlockedByColliderName;
+            }
 
             return McpToolResult.Json(json);
         }
@@ -113,7 +155,8 @@ namespace DCL.McpServer.Tools
                 SdkAction.ACTION_5 => InputAction.IaAction5,
                 SdkAction.ACTION_6 => InputAction.IaAction6,
                 SdkAction.WALK => InputAction.IaWalk,
-                _ => InputAction.IaModifier,
+                SdkAction.MODIFIER => InputAction.IaModifier,
+                _ => InputAction.IaPointer,
             };
     }
 }

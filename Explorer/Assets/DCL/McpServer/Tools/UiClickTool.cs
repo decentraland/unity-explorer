@@ -3,6 +3,7 @@ using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -17,6 +18,11 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class UiClickTool : McpTool
     {
+        /// <summary>
+        ///     The member names are the wire contract (McpWireEnum derives "left"/"right"/"middle" from them), so
+        ///     they follow the wire format rather than local enum-member casing.
+        /// </summary>
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum ClickButton : byte
         {
             LEFT,
@@ -27,6 +33,9 @@ namespace DCL.McpServer.Tools
         private const float DEFAULT_TIMEOUT_SEC = 3f;
         private const float MIN_TIMEOUT_SEC = 0.5f;
         private const float MAX_TIMEOUT_SEC = 15f;
+
+        /// <summary>Frames a device click at an SDK element is given to show up in the element's pointer-event slot.</summary>
+        private const int SDK_DEVICE_OBSERVE_FRAMES = 6;
 
         private readonly UiAutomationServices uiAutomation;
 
@@ -71,7 +80,7 @@ namespace DCL.McpServer.Tools
                     return McpToolResult.Error(failure!);
 
                 result = device
-                    ? await RunDeviceClickAsync(SdkScreenCenter(element), button, timeoutSec, ct)
+                    ? await RunDeviceClickOnSdkAsync(element, button, timeoutSec, ct)
                     : await uiAutomation.Simulator.ClickSdkAsync(element, force, ct);
             }
             else
@@ -85,6 +94,34 @@ namespace DCL.McpServer.Tools
             }
 
             return McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName()));
+        }
+
+        /// <summary>
+        ///     Replays a device click at an SDK element and then reports whether the element actually observed it.
+        ///     The gesture succeeding only means the device states were injected; UI Toolkit panels consume events
+        ///     sent to their elements, so a driver must be told when the injected pointer never arrived instead of
+        ///     reading a bare "ok" as a delivered click.
+        /// </summary>
+        private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, ClickButton button, float timeoutSec, CancellationToken ct)
+        {
+            UiActionResult result = await RunDeviceClickAsync(SdkScreenCenter(element), button, timeoutSec, ct);
+
+            if (!result.Ok)
+                return result;
+
+            bool observed = element.Transform.PointerEventTriggered != null;
+
+            for (var frame = 0; !observed && frame < SDK_DEVICE_OBSERVE_FRAMES; frame++)
+            {
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                observed = element.Transform.PointerEventTriggered != null;
+            }
+
+            result.Info = observed
+                ? "the element observed the device pointer event"
+                : $"the element observed no pointer event within {SDK_DEVICE_OBSERVE_FRAMES} frames: the virtual device drives the client UI stack, not UI Toolkit scene panels — use the semantic path (device:false) for scene UI";
+
+            return result;
         }
 
         private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, ClickButton button, float timeoutSec, CancellationToken ct)
