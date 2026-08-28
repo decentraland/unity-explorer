@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.PluginSystem.Global;
