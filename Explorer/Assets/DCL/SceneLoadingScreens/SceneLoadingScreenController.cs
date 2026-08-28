@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.BugReporting.UI;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Prefs;
@@ -24,6 +26,7 @@ namespace DCL.SceneLoadingScreens
         private readonly TimeSpan minimumDisplayDuration;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly IInputBlock inputBlock;
+        private readonly IMVCManager mvcManager;
         private readonly List<UniTask> fadingTasks = new ();
         private readonly PersistentSetting<int> currentTip =
             PersistentSetting.CreateInt(DCLPrefKeys.SCENE_LOADING_LAST_TIP_INDEX, 0);
@@ -31,6 +34,7 @@ namespace DCL.SceneLoadingScreens
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
         private CancellationTokenSource? tipsFadeCancellationToken;
+        private bool inputsBlocked;
 
         // IntVariable causes deadlock occasionally.
         // There is a similar issue reported on the forum:https://discussions.unity.com/t/deadlock-freezing-issue-with-localizationsettings-stringdatabase-getlocalizedstring-under-multiple-concurrent-calls-on-mobile/1566794
@@ -43,12 +47,14 @@ namespace DCL.SceneLoadingScreens
             ISceneTipsProvider sceneTipsProvider,
             TimeSpan minimumDisplayDuration,
             AudioMixerVolumesController audioMixerVolumesController,
-            IInputBlock inputBlock) : base(viewFactory)
+            IInputBlock inputBlock,
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.sceneTipsProvider = sceneTipsProvider;
             this.minimumDisplayDuration = minimumDisplayDuration;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.inputBlock = inputBlock;
+            this.mvcManager = mvcManager;
         }
 
         public override void Dispose()
@@ -79,7 +85,26 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.OnBreadcrumbClicked += ShowTipWithFade;
 
+            bool bugReportEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
+            viewInstance.BugReportButton?.gameObject.SetActive(bugReportEnabled);
+
+            if (bugReportEnabled)
+                viewInstance.BugReportButton?.onClick.AddListener(OpenBugReport);
+
             UpdateLocalizedTextAsync().Forget();
+        }
+
+        private void OpenBugReport() =>
+            OpenBugReportAsync().Forget();
+
+        private async UniTaskVoid OpenBugReportAsync()
+        {
+            try
+            {
+                await mvcManager.ShowAsync(BugReportController.IssueCommand(new BugReportParams(showAboveOverlays: true)));
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         private async UniTaskVoid UpdateLocalizedTextAsync()
@@ -103,6 +128,12 @@ namespace DCL.SceneLoadingScreens
             BlockUnwantedInputs();
             SetLoadProgress(0);
             viewInstance!.ClearTips();
+
+            // Fetched synchronously, so `tips` is populated before the view can show
+            tips = sceneTipsProvider.Get();
+
+            if (tips.Random)
+                tips.Tips.Shuffle();
         }
 
         protected override void OnViewShow()
@@ -122,6 +153,10 @@ namespace DCL.SceneLoadingScreens
         protected override void OnViewClose()
         {
             base.OnViewClose();
+
+            // Runs first, before any statement that can throw: input must be unblocked on every close path
+            UnblockUnwantedInputs();
+
             tipsRotationCancellationToken?.SafeCancelAndDispose();
             tipsFadeCancellationToken?.SafeCancelAndDispose();
 
@@ -135,7 +170,7 @@ namespace DCL.SceneLoadingScreens
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            await LoadTipsAsync(ct);
+            await LoadTipsAsync();
 
             ShowTip(currentTip.Value);
 
@@ -179,13 +214,8 @@ namespace DCL.SceneLoadingScreens
             }
         }
 
-        private async UniTask LoadTipsAsync(CancellationToken ct)
+        private async UniTask LoadTipsAsync()
         {
-            tips = await sceneTipsProvider.GetAsync(ct);
-
-            if (tips.Random)
-                tips.Tips.Shuffle();
-
             using var scope = ListPool<UniTask<SceneTips.LoadedTip>>.Get(out var tasks);
             foreach (SceneTips.Tip tip in tips.Tips) tasks.Add(tip.LoadAsync());
             var loaded = await UniTask.WhenAll(tasks!);
@@ -287,11 +317,17 @@ namespace DCL.SceneLoadingScreens
 
         private void BlockUnwantedInputs()
         {
+            if (inputsBlocked) return;
+
+            inputsBlocked = true;
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void UnblockUnwantedInputs()
         {
+            if (!inputsBlocked) return;
+
+            inputsBlocked = false;
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
     }

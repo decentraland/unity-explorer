@@ -31,6 +31,7 @@ namespace DCL.MarketplaceCredits
     {
         public int usdPriceCents;
         public string tradeId;
+        public string source;
     }
 
     [Serializable]
@@ -39,6 +40,7 @@ namespace DCL.MarketplaceCredits
         public int usdPriceCents;
         public string contractAddress;
         public string itemId;
+        public string source;
     }
 
     [Serializable]

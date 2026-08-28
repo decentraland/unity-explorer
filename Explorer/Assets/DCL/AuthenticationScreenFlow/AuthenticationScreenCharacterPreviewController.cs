@@ -39,7 +39,7 @@ namespace DCL.AuthenticationScreenFlow
             PlayEmote(settings.IntroEmoteURN);
         }
 
-        public new void OnHide(bool triggerOnHideBusEvent = true)
+        public override void OnHide(bool triggerOnHideBusEvent = true)
         {
             playEmotesCts.SafeCancelAndDispose();
             base.OnHide(triggerOnHideBusEvent);
@@ -47,7 +47,7 @@ namespace DCL.AuthenticationScreenFlow
             view.gameObject.SetActive(false);
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
             playEmotesCts.SafeCancelAndDispose();
             base.Dispose();
@@ -87,7 +87,7 @@ namespace DCL.AuthenticationScreenFlow
     [Serializable]
     public class AuthScreenEmotesSettings
     {
-        [field: SerializeField] public string IntroEmoteURN { get; private set; }
-        [field: SerializeField] public string JumpInEmoteURN { get; private set; }
+        [field: SerializeField] public string IntroEmoteURN { get; private set; } = null!;
+        [field: SerializeField] public string JumpInEmoteURN { get; private set; } = null!;
     }
 }

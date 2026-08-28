@@ -105,6 +105,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46abfd8d700191d43b8892c99421c5a7
+    m_Address: PerformanceIssuePrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4ae49825f39c564478515b4c2ae201af
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Toon.mat
     m_ReadOnly: 0
@@ -267,6 +272,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9c4c0e79124f01744a5f969e08ad0370
     m_Address: RemoteAvatarCollider
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab23199c8104ca44e837d8ac570fee44
+    m_Address: BugReportView
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

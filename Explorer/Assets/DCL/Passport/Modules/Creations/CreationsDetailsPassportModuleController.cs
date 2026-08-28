@@ -95,6 +95,7 @@ namespace DCL.Passport.Modules.Creations
                 {
                     itemView.gameObject.SetActive(true);
                     itemView.gameObject.transform.SetAsLastSibling();
+                    itemView.ItemPriceContainer.SetActive(false);
                     itemView.SetAsLoading(true);
                 },
                 actionOnRelease: itemView =>
@@ -216,7 +217,7 @@ namespace DCL.Passport.Modules.Creations
             CancellationToken ct)
         {
             string baseUrl = decentralandUrlsSource.Url(DecentralandUrl.MarketplaceServer);
-            var url = URLAddress.FromString($"{baseUrl}/v2/catalog?category={category}&creator={currentProfile?.UserId}&includeSocialEmotes=false&first=100");
+            var url = URLAddress.FromString($"{baseUrl}/v3/catalog/items?category={category}&creator={currentProfile?.UserId}&includeSocialEmotes=false&first=100");
 
             MarketplaceCatalogResponse response = await webRequestController.GetAsync(url, ct, ReportCategory.UI)
                                                                             .CreateFromJson<MarketplaceCatalogResponse>(WRJsonParser.Unity);
@@ -252,11 +253,17 @@ namespace DCL.Passport.Modules.Creations
             bool hasLink = marketplaceLink != string.Empty;
             bool isBaseWearable = itemView.ItemId.IsBaseWearable();
             bool showBuy = !isBaseWearable && item.isOnSale && hasLink;
-            bool showView = !isBaseWearable && !item.isOnSale && hasLink;
+            bool showView = !isBaseWearable && hasLink;
 
             itemView.BuyButton.gameObject.SetActive(showBuy);
             itemView.ViewButton.gameObject.SetActive(showView);
             itemView.OnSaleFlap.gameObject.SetActive(showBuy);
+
+            bool showPrice = showBuy && item.priceCredits > 0;
+            itemView.ItemPriceContainer.SetActive(showPrice);
+
+            if (showPrice)
+                itemView.ItemPrice.text = item.priceCredits.ToString();
 
             RemoveNavigationListener(itemView);
             string itemUrn = item.urn ?? string.Empty;

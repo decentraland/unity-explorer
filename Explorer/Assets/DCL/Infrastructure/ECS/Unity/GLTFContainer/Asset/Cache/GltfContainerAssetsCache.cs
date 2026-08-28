@@ -98,7 +98,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
             if (handleAssetLoad && assetLoadCache != null && assetLoadCache.ContainsGltf(key))
             {
-                assetLoadCache.ReleaseGltfInstance(key, asset);
+                // The template is still cached: destroy the released clone rather than pooling a duplicate
+                asset.Dispose();
                 return;
             }
 

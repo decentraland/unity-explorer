@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -13,27 +12,34 @@ using NUnit.Framework;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using SceneRunner.Scene;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
 {
     public class SignedFetchWrapShould
     {
-        private IWebRequestController webController;
-        private ISceneData sceneData;
-        private IRealmData realmData;
-        private IWeb3IdentityCache identityCache;
-        private CancellationTokenSource disposeCts;
-        private SignedFetchWrap signedFetchWrap;
+        /// <summary>
+        ///     Player loop ticks granted to a dispatched request to resume after the main thread is released.
+        /// </summary>
+        private const int MAX_CONTINUATION_TICKS = 10;
+
+        private IWebRequestController webController = null!;
+        private ISceneData sceneData = null!;
+        private IRealmData realmData = null!;
+        private IWeb3IdentityCache identityCache = null!;
+        private CancellationTokenSource disposeCts = null!;
+        private SignedFetchWrap signedFetchWrap = null!;
 
         private Vector2Int sceneBase;
-        private string sceneID;
+        private string sceneID = null!;
 
-        private string realmName;
-        private string realmHostname;
-        private string realmProtocol;
+        private string realmName = null!;
+        private string realmHostname = null!;
+        private string realmProtocol = null!;
 
 
         [SetUp]
@@ -71,7 +77,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             // Setup identity cache with a mock identity
             var mockIdentity = Substitute.For<IWeb3Identity>();
             // Return a new AuthChain with a signer link each time Sign is called
-            mockIdentity.Sign(Arg.Any<string>()).Returns(callInfo =>
+            mockIdentity.Sign(Arg.Any<string>()).Returns(_ =>
             {
                 var authChain = AuthChain.Create();
                 authChain.SetSigner("0x1234567890123456789012345678901234567890");
@@ -92,7 +98,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
         [TearDown]
         public void TearDown()
         {
-            disposeCts?.Dispose();
+            disposeCts.Dispose();
         }
 
         [Test]
@@ -105,17 +111,17 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             string method = "GET";
 
             // Act
-            string result = signedFetchWrap.GetSignedHeaders(url, body, headers, method) as string;
+            string? result = signedFetchWrap.GetSignedHeaders(url, body, headers, method) as string;
 
             // Assert
             Assert.IsNotNull(result, "GetSignedHeaders should return a non-null result");
 
             // Parse the returned headers JSON
-            Dictionary<string, string>? headersDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+            Dictionary<string, string>? headersDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(result!);
             Assert.IsNotNull(headersDict, "Headers should be deserializable");
 
             // Extract the signature metadata from headers
-            Assert.IsTrue(headersDict.ContainsKey("x-identity-metadata"), "Headers should contain x-identity-metadata");
+            Assert.IsTrue(headersDict!.ContainsKey("x-identity-metadata"), "Headers should contain x-identity-metadata");
             string signatureMetadataJson = headersDict["x-identity-metadata"];
 
             // Parse the signature metadata JSON
@@ -189,7 +195,60 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Tests
             DoAssertions(metadata);
         }
 
+        /// <summary>
+        ///     Regression: reading <c>disposeCts.Token</c> after the main-thread hop raced runtime disposal and dropped the request.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DispatchRequestWithTokenCapturedBeforeMainThreadHop()
+        {
+            string url = "https://example.com/api";
+            string body = "";
+            string headers = "{}";
+            string method = "get";
 
+            CancellationToken tokenBeforeDisposal = disposeCts.Token;
+            CancellationToken dispatchedToken = default;
+            var dispatched = false;
+
+            webController.RequestHub.Returns(Substitute.For<IRequestHub>());
+
+            webController.When(controller =>
+                            controller.SendAsync<GenericGetRequest, GenericGetArguments, FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                                Arg.Any<RequestEnvelope<GenericGetRequest, GenericGetArguments>>(),
+                                Arg.Any<FlatFetchResponse<GenericGetRequest>>(),
+                                Arg.Any<long>(),
+                                Arg.Any<IProgress<float>>()))
+                         .Do(callInfo =>
+                          {
+                              dispatchedToken = callInfo.Arg<RequestEnvelope<GenericGetRequest, GenericGetArguments>>().Ct;
+                              dispatched = true;
+                          });
+
+            Exception? dispatchFailure = null;
+
+            // Join() parks the main thread for the whole dispatch, so disposal always lands before the hop resumes
+            var sceneThread = new Thread(() =>
+            {
+                try { signedFetchWrap.SignedFetch(url, body, headers, method); }
+                catch (ArgumentNullException)
+                {
+                    // No script engine in EditMode to build the returned promise; the request is already dispatched by then
+                }
+                catch (Exception e) { dispatchFailure = e; }
+
+                disposeCts.Dispose();
+            });
+
+            sceneThread.Start();
+            sceneThread.Join();
+
+            for (var i = 0; i < MAX_CONTINUATION_TICKS && !dispatched; i++)
+                yield return null;
+
+            Assert.IsNull(dispatchFailure, $"Dispatching the request threw {dispatchFailure}");
+            Assert.IsTrue(dispatched, "The request never reached the web request controller.");
+            Assert.AreEqual(tokenBeforeDisposal, dispatchedToken, "The request must carry the token read before the source was disposed.");
+        }
     }
 }
 

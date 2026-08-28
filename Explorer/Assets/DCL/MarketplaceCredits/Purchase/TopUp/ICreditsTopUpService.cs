@@ -12,7 +12,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
 
         void StartTopUp(CreditPack pack);
 
-        void StopWaitingForBrowser();
+        void CancelTopUp();
 
         void AcknowledgeTerminalState();
     }

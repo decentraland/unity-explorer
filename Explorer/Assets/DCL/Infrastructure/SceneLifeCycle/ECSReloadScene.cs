@@ -117,7 +117,7 @@ namespace ECS.SceneLifeCycle
                     // from the file path, not content, so an updated model keeps the same hash and cache
                     // hits would return stale assets. Draining guarantees fresh loads.
                     cacheCleaner.UnloadCache(budgeted: false);
-                    Resources.UnloadUnusedAssets();
+                    _ = Resources.UnloadUnusedAssets();
                 }
 
                 await WaitUntilNewSceneIsFullyLoadedAsync();

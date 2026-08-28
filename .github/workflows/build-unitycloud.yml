@@ -13,6 +13,13 @@ on:
   push:
     branches:
       - dev
+    # avatar-preview-renderer merges are invisible to the Explorer project; only
+    # Explorer/ and the shared package can affect this build.
+    paths:
+      - 'Explorer/**'
+      - 'unity-shared-dependencies/**'
+      - 'scripts/cloudbuild/**'
+      - '.github/workflows/build-unitycloud.yml'
   workflow_dispatch:
     inputs:
       profile:
@@ -279,13 +286,14 @@ jobs:
           fetch-depth: 0
           filter: blob:none
 
-      - name: Detect changes under Explorer/**
+      - name: Detect changes under Explorer/** or unity-shared-dependencies/**
         if: github.event_name == 'pull_request'
         id: changed_explorer
         uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
         with:
           files: |
             Explorer/**
+            unity-shared-dependencies/**
 
       - name: Decide whether to build
         id: decide
@@ -357,7 +365,7 @@ jobs:
                 sha,
                 state: 'success',
                 context: check,
-                description: 'Skipped — no Explorer/ changes detected'
+                description: 'Skipped — no Explorer/ or unity-shared-dependencies/ changes detected'
               });
             }
             console.log(`Posted success statuses for: ${checks.join(', ')}`);
@@ -652,6 +660,23 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/cloudbuild/build.py --cancel || true
+
+      # the app-local Visual C++ runtime (deployed by VCRedistBuildPostprocessor)
+      # is what lets the player start without the VC++ Redistributable installed
+      - name: Verify app-local VC++ runtime
+        if: matrix.target == 'windows64'
+        run: |
+          set -euo pipefail
+          for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+            if [[ ! -f "build/$dll" ]]; then
+              echo "::error::$dll missing from build/ (VCRedistBuildPostprocessor regression?)"
+              exit 1
+            fi
+            if [[ "$(head -c2 "build/$dll")" != "MZ" ]]; then
+              echo "::error::$dll is not a PE image (Git LFS pointer?)"
+              exit 1
+            fi
+          done
 
       - name: Locate Windows main executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
@@ -1055,11 +1080,11 @@ jobs:
             exit 0
           fi
 
-          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ changes).
+          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ or shared-deps changes).
           # The Prebuild job's "Skip build and test checks" step already posts per-target success
           # statuses for this case, so the gate can safely pass.
           if [ "$prebuild_result" = "success" ] && [ "$should_build" != "true" ]; then
-            echo "Gate not applicable (prebuild ran, no Explorer/ changes). Passing."
+            echo "Gate not applicable (prebuild ran, no Explorer/ or shared-deps changes). Passing."
             exit 0
           fi
 

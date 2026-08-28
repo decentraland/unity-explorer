@@ -39,6 +39,7 @@ namespace DCL.Tests
         private static readonly string[] WEBGL_THREAD_SAFETY_EXCLUDED_PATHS = {
             "Assets/DCL/Input/UnityInputSystem/DCLInput.cs", // cause it's autogen
             "Assets/Plugins/UUAV/Packages/UUAV/Runtime/UUAVPlayer.cs", // desktop-only native plugin; Interlocked guards FFI callback state and the assembly never targets WebGL
+            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs", // desktop-only; SynchronizationContext.Current gates the connect continuation's thread affinity
         };
 
         private static readonly string[] WEB_SOCKETS_EXCLUDED_PATHS = {
@@ -200,6 +201,7 @@ namespace DCL.Tests
                 "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentDictionary.cs",
                 "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentBag.cs",
                 "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentQueue.cs",
+                "Assets/DCL/Infrastructure/Utility/Tests/DCLWebSocketCloseAsyncShould.cs", // test-only SynchronizationContext pump uses BlockingCollection
             };
             ValidateNoForbiddenApiUsed(PATTERN, "Use DCLConcurrent insteat version instead.", ignorePaths);
         }

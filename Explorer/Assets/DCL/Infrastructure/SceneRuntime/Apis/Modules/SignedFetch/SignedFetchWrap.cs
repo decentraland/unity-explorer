@@ -15,31 +15,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Security.Cryptography;
 using UnityEngine;
-using Utility;
 using Utility.Times;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch
 {
     public class SignedFetchWrap : JsApiWrapper
     {
-        private static readonly string[] AUTH_CHAIN_HEADER_NAMES =
-        {
-            // AuthLinkType.SIGNER
-            "x-identity-auth-chain-0",
-
-            // AuthLinkType.ECDSA_EPHEMERAL
-            "x-identity-auth-chain-1",
-
-            // AuthLinkType.ECDSA_SIGNED_ENTITY
-            "x-identity-auth-chain-2",
-
-            // AuthLinkType.ECDSA_EIP_1654_EPHEMERAL
-            "x-identity-auth-chain-3",
-
-            // AuthLinkType.ECDSA_EIP_1654_SIGNED_ENTITY
-            "x-identity-auth-chain-4",
-        };
-
         private readonly IWebRequestController webController;
         private readonly string decentralandEnvironment;
         private readonly ISceneData sceneData;
@@ -109,7 +90,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             foreach (AuthLink link in authChain)
             {
-                headers[AUTH_CHAIN_HEADER_NAMES[authChainIndex]] = link.ToJson();
+                headers[$"x-identity-auth-chain-{authChainIndex}"] = link.ToJson();
                 authChainIndex++;
             }
 
@@ -174,6 +155,9 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 method ?? string.Empty
             );
 
+            // Read before the main-thread hop: disposeCts can be disposed while the request is still hopping
+            CancellationToken token = disposeCts.Token;
+
             async UniTask<FlatFetchResponse> ExecuteRequestAsync()
             {
                 await UniTask.SwitchToMainThread();
@@ -190,7 +174,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 new FlatFetchResponse<GenericPostRequest>(),
                                 signatureMetadata,
                                 GetReportData(),
-                                disposeCts.Token);
+                                token);
 
                             break;
                         case "post":
@@ -198,7 +182,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericPostRequest>(),
                                 GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                                token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
@@ -208,7 +192,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             response = await webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                                 request.url,
                                 new FlatFetchResponse<GenericGetRequest>(),
-                                disposeCts.Token,
+                                token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportData: GetReportData());
@@ -219,7 +203,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericPutRequest>(),
                                 GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                                token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
@@ -230,7 +214,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericDeleteRequest>(),
                                 GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                                token,
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
@@ -305,6 +289,8 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             return JsonUtility.ToJson(metadata);
         }
 
+        // Wire format serialized with JsonUtility: field names must match the JSON keys.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         internal struct SignatureMetadata
         {
@@ -327,5 +313,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 public string serverName;
             }
         }
+
+        // ReSharper restore InconsistentNaming
     }
 }

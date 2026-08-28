@@ -354,7 +354,7 @@ namespace DCL.PluginSystem.Global
             placeDetailPanelController?.Dispose();
             creditsPanelController.Dispose();
 
-            dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.MainMenu.canceled -= OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
@@ -367,7 +367,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
-            dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformedAsync;
+            dclInput.Shortcuts.MainMenu.canceled += OnInputShortcutsMainMenuCanceledAsync;
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
@@ -705,7 +705,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
         }
 
-        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _)
+        private void OnInputShortcutsMainMenuCanceledAsync(InputAction.CallbackContext _)
         {
             if (explorePanelController is { State: not ControllerState.ViewHidden }) return;
 

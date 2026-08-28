@@ -136,6 +136,33 @@ To change the template defaults, run the template config (`@T_<TARGET_NAME>`) ma
 If a build fails, the auto-generated config build is not removed from the cloud, which allows any re-runs from GitHub to use the exact same cache and settings as before.
 If you need to run a clean build you can trigger the build with the `CLEAN_BUILD` param.
 
+## Avatar Preview Renderer
+
+The `avatar-preview-renderer/` sibling root has its own workflows, all path-scoped so Explorer changes never touch them:
+
+- **`avatar-preview-renderer-build.yml`** — PR and dev builds via Unity Cloud Build. PRs get a Vercel *preview* deployment (PR comment with the URL); merges to dev deploy to Vercel *production*, so `unity-explorer-aang-renderer.vercel.app` (the project's production domain — the pre-rename name, kept deliberately; changing it is a Vercel-dashboard action, not a repo change) always serves the latest dev build. A `vercel alias` step is not an option here: bare `.vercel.app` aliases are an account-level resource that the team-scoped CI token cannot manage. Triggers on `avatar-preview-renderer/**` and `unity-shared-dependencies/**` — so a shared-deps-only merge to dev **also updates the site, without cutting a release** (the site tracks dev; releases track renderer changes).
+- **`avatar-preview-renderer-release.yml`** — clean UCB build → tag `avatar-preview-renderer/vX.Y.Z` → GitHub release with a zip (`make_latest: false` — the repo's *Latest* belongs to Explorer). No Vercel deploy: the site tracks dev via the build workflow. Note the site's build and the release zip are **separate builds of the same commit** (incremental + `library` cache + `<tag>-<sha>` version vs clean + no cache + the tagged version) — the release zip is the artifact of record; the site is a QA surface. To put a specific release build on the site, pass its run ID to the deploy workflow below. Runs two ways:
+  - **Auto (the normal path):** every merge to dev that touches `avatar-preview-renderer/**` cuts a release. Changes only in `Explorer/` or `unity-shared-dependencies/**` deliberately do **not** release. Versioning: **major is pinned by `AUTO_RELEASE_MAJOR` in the workflow** (currently `3` — the monorepo era; the standalone repo left off at `v2.8.0`), **minor increments once per releasing merge**, patch stays `0`; the first auto release is `3.1.0`. The next minor is computed from the highest existing tag on that major, so it self-heals around skipped or failed runs.
+  - **Manual dispatch (escape hatch):** dev-only; pick a semver bump or pass an explicit `X.Y.Z` when a specific version is needed (e.g. a patch on the current minor). Auto-releases resume from whatever the highest tag on the pinned major is afterwards. **A manual major change must also raise `AUTO_RELEASE_MAJOR`** in `avatar-preview-renderer-release.yml` — the dispatch inputs say so and the run warns on the mismatch — or the next auto release keeps tagging the old major.
+- **`avatar-preview-renderer-deploy.yml`** — manual dispatch: redeploys any successful build **or release** run's artifact to Vercel production without cutting a release (rollbacks, re-promotes, putting a dispatched release's exact build on the site). Empty run ID takes the latest successful dev build.
+
+Renderer releases are consumed by the [wearable-preview](https://github.com/decentraland/wearable-preview) repo, which vendors the newest `avatar-preview-renderer/v*` release via its `npm run update-unity` script — the release assets (and their exact file names) are load-bearing for it.
+
+## App-local Visual C++ runtime (Windows)
+
+Five prebuilt package binaries — `ktx_unity.dll`, `dracodec_unity.dll`, `dracoenc_unity.dll`, `rust_audio.dll`, `rust_eth.dll` — import the MSVC CRT, so without it they throw `DllNotFoundException` on a clean Windows install. None can be rebuilt here. Instead of requiring the machine-wide redistributable (admin rights, UAC prompt), we ship the runtime with the player:
+
+- `Explorer/Assets/Plugins/.VCRedist/x64/` holds `msvcp140.dll`, `vcruntime140.dll`, `vcruntime140_1.dll`. Dot-prefixed so Unity's importer skips them — otherwise Unity treats them as native plugins and deploys them on its own schedule.
+- `Explorer/Assets/Editor/VCRedistBuildPostprocessor.cs` copies them next to the built `.exe`, where Windows looks before `System32`. It fails the build if one is missing.
+- The *Verify app-local VC++ runtime* step in `build-unitycloud.yml` re-checks the artifact on every Windows build.
+
+### Refreshing
+
+Copy a newer **release** `Microsoft.VC143.CRT` x64 set over the folder, note what you pulled in `.VCRedist/README.md`, and verify on a clean Windows 11 VM.
+
+- Never the debug variants (`*d.dll`) — not redistributable.
+- Never downgrade. An app-local copy older than the toolset a plugin was built against fails with "entry point not found".
+
 ---
 
 See also: [Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md) | [Unity Upgrades](unity-upgrades.md)

@@ -12,6 +12,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
+using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -37,6 +38,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly Web3Address? referrer;
 
         private readonly AvatarRandomizer avatarRandomizer = new ();
 
@@ -60,7 +62,8 @@ namespace DCL.AuthenticationScreenFlow
             UnityAppWebBrowser webBrowser,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus) : base(viewInstance)
+            ProfileChangesBus profileChangesBus,
+            string? referrer = null) : base(viewInstance)
         {
             view = viewInstance.LobbyForNewAccountAuthView;
 
@@ -74,6 +77,9 @@ namespace DCL.AuthenticationScreenFlow
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            // Normalized/validated once at construction so the field is always canonical;
+            // an invalid launch-argument value degrades to "no referral tracking".
+            this.referrer = Web3Address.FromUntrusted(referrer);
 
             characterPreviewView = viewInstance.CharacterPreviewView;
             characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
@@ -124,6 +130,9 @@ namespace DCL.AuthenticationScreenFlow
             view.TermsOfUseAndPrivacyLink.OnLinkClicked += OpenClickableURL;
 
             UpdateFinalizeButtonState();
+
+            view.JumpInIcon.SetActive(true);
+            view.FinalizeLoading.SetActive(false);
         }
 
         public override void Exit()
@@ -276,6 +285,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             view.FinalizeNewUserButton.interactable = false;
             view.BackButton.interactable = false;
+            view.JumpInIcon.SetActive(false);
+            view.FinalizeLoading.SetActive(true);
 
             if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
                 SubscribeToNewsletterAsync(userEmail).Forget();
@@ -289,12 +300,19 @@ namespace DCL.AuthenticationScreenFlow
                 try
                 {
                     newUserProfile.Name = view.ProfileNameInputField.Text;
+
                     Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                     newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
 
                     // Notify profile-bus subscribers (sidebar thumbnail, explore panel, chat) that the
                     // freshly created profile is live
                     profileChangesBus.PushUpdate(newUserProfile);
+
+                    // Register the referral here — awaited BEFORE the user proceeds to the world —
+                    // so the referral exists before the first LOGGED_IN event reaches the backend
+                    // (whose finalize step drops events for referrals that don't exist yet). Best
+                    // effort: a failed call must not fail onboarding.
+                    await RegisterReferralAsync(ct);
 
                     // Mark the analytics-visible end of the onboarding step. Anything between
                     // LOGGED_IN (avatar customization shown) and PROFILE_FINALIZED is the user
@@ -321,6 +339,49 @@ namespace DCL.AuthenticationScreenFlow
                     view.Hide(UIAnimationHashes.SLIDE);
                     fsm.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
                 }
+            }
+        }
+
+        /// <summary>
+        ///     Registers the referral: POST creates it, PATCH marks the invited user as signed up.
+        ///     Awaited by the caller so the create completes before the user enters the world, and
+        ///     best-effort so a failure never fails onboarding. Runs on the login-flow token, so
+        ///     abandoning the flow abandons the attribution too.
+        /// </summary>
+        private async UniTask RegisterReferralAsync(CancellationToken ct)
+        {
+            if (referrer == null)
+                return;
+
+            try
+            {
+                string url = decentralandUrlsSource.Url(DecentralandUrl.ReferralProgress);
+
+                // referrer is validated at construction (Web3Address.FromUntrusted), safe to interpolate
+                var jsonBody = $"{{\"referrer\":\"{referrer.Value}\"}}";
+
+                await webRequestController.SignedFetchPostAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.CreateJson(jsonBody),
+                                               string.Empty,
+                                               ct)
+                                          .WithNoOpAsync();
+
+                await webRequestController.SignedFetchPatchAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.Empty,
+                                               string.Empty,
+                                               ct)
+                                          .WithNoOpAsync();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                // Best-effort attribution: any failure (timeout, network) must not surface as a
+                // Sentry error nor block onboarding. The POST is idempotent server-side (a same-
+                // referrer duplicate returns 204, not an error), so a retry — here on re-entry, or
+                // from a future login-time retry using the launcher-persisted referrer — is safe.
+                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral registration failed: {e.Message}");
             }
         }
 

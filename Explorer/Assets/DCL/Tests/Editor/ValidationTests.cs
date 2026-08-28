@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Utilities.Extensions;
 using Global.Dynamic;
 using Microsoft.CodeAnalysis;
@@ -129,6 +130,47 @@ namespace DCL.Tests.Editor
 
                 Assert.Fail($"Missing references found in the following ScriptableObjects:\n{string.Join("\n", scriptableObject)}, {report}");
             }
+        }
+
+        [Test]
+        public void ContextualImagePrefabsMustNotBakeSprite()
+        {
+            var offenders = new List<string>();
+
+            foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/DCL" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+
+                if (prefab == null)
+                    continue;
+
+                foreach (ContextualImage contextualImage in prefab.GetComponentsInChildren<ContextualImage>(true))
+                {
+                    Component image = contextualImage.GetComponent("Image");
+
+                    if (image == null)
+                        continue;
+
+                    SerializedProperty sprite = new SerializedObject(image).FindProperty("m_Sprite");
+
+                    if (sprite != null && sprite.objectReferenceValue != null)
+                        offenders.Add($"{path} :: {contextualImage.name}");
+                }
+            }
+
+            Assert.That(offenders, Is.Empty,
+                "ContextualImage requires an Image with no baked sprite; a baked sprite hard-links it into memory and defeats contextual loading:\n"
+                + string.Join("\n", offenders));
+        }
+
+        [Test]
+        public void ProfileNameEditorWorldSizeLimitsLinkIsValid()
+        {
+            string prefab = File.ReadAllText(Path.Combine(Application.dataPath, "DCL/UI/Profiles/Names/Assets/ProfileNameEditor.prefab"));
+
+            Assert.That(prefab, Does.Not.Contain("worlds/about/#worlds-size-limit"));
+            Assert.That(prefab, Does.Contain("creator/scenes-sdk7/kinds-of-projects/kinds-of-project#size-limits"));
         }
 
         [UnityTest]

@@ -87,6 +87,23 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             remoteAvatars.Register(avatarBase, ref transformMatrixComponent);
         }
 
+        /// <summary>
+        ///     Pushes the avatar's authoritative bone count (AvatarCustomSkinningComponent.BoneCount — the
+        ///     exact number of matrices ComputeSkinning uploads) into the matching pipeline so the
+        ///     calculation job produces precisely that range. Must be called every frame before
+        ///     ScheduleBoneMatrixCalculation; unregistered avatars (invalid index) are ignored.
+        /// </summary>
+        public void SetBoneCount(ref AvatarTransformMatrixComponent transformMatrixComponent, int boneCount)
+        {
+            if (transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex) == false)
+                return;
+
+            if (transformMatrixComponent.IsMainPlayer)
+                mainPlayerAvatar.SetBoneCount(boneCount);
+            else
+                remoteAvatars.SetBoneCount(validIndex, boneCount);
+        }
+
         public void Dispose()
         {
             // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
