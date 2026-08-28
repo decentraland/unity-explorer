@@ -9,10 +9,9 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AvatarPresetProvider
     {
-        private static readonly Preset[] PRESETS =
+        private static readonly Preset[] FEMALE_PRESETS =
         {
             new (
-                BodyShape.FEMALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:standard_hair",
@@ -27,7 +26,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.596078f, 0.372549f, 0.219608f),
                 new (0.866667f, 0.694118f, 0.560784f)),
             new (
-                BodyShape.FEMALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:rasta",
@@ -42,7 +40,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.486275f, 0.286275f, 0.086275f),
                 new (0.239216f, 0.133333f, 0.086275f)),
             new (
-                BodyShape.FEMALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:tall_front_01",
@@ -57,7 +54,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (1.000000f, 0.000000f, 0.772549f),
                 new (0.674510f, 1.000000f, 0.988235f)),
             new (
-                BodyShape.FEMALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:curly_hair",
@@ -74,7 +70,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (1.000000f, 0.745098f, 0.149020f),
                 new (0.949020f, 0.760784f, 0.647059f)),
             new (
-                BodyShape.FEMALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:double_bun",
@@ -91,7 +86,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.674510f, 1.000000f, 0.737255f),
                 new (0.866667f, 0.694118f, 0.560784f)),
             new (
-                BodyShape.FEMALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:hair_anime_01",
@@ -106,8 +100,11 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.219608f, 0.486275f, 0.690196f),
                 new (0.109804f, 0.109804f, 0.109804f),
                 new (1.000000f, 0.894118f, 0.776471f)),
+        };
+
+        private static readonly Preset[] MALE_PRESETS =
+        {
             new (
-                BodyShape.MALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:green_hoodie",
@@ -120,7 +117,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.235294f, 0.129412f, 0.043137f),
                 new (0.490196f, 0.364706f, 0.278431f)),
             new (
-                BodyShape.MALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:yellow_tshirt",
@@ -133,7 +129,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.596078f, 0.372549f, 0.215686f),
                 new (0.490196f, 0.364706f, 0.278431f)),
             new (
-                BodyShape.MALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:turtle_neck_sweater",
@@ -146,7 +141,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.549020f, 0.125490f, 0.078431f),
                 new (0.490196f, 0.364706f, 0.278431f)),
             new (
-                BodyShape.MALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:sleeveless_punk_shirt",
@@ -160,7 +154,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.925490f, 0.909804f, 0.886275f),
                 new (0.490196f, 0.364706f, 0.278431f)),
             new (
-                BodyShape.MALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:striped_pijama",
@@ -173,7 +166,6 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.925490f, 0.909804f, 0.886275f),
                 new (0.490196f, 0.364706f, 0.278431f)),
             new (
-                BodyShape.MALE,
                 new URN[]
                 {
                     "urn:decentraland:off-chain:base-avatars:red_square_shirt",
@@ -188,65 +180,39 @@ namespace DCL.AuthenticationScreenFlow
                 new (0.490196f, 0.364706f, 0.278431f)),
         };
 
-        private static readonly Dictionary<BodyShape, List<int>> INDICES_BY_BODY_SHAPE = BuildIndices();
-
-        private readonly Dictionary<BodyShape, int> lastPickedByBodyShape = new ();
+        private int lastIndex = -1;
 
         public Avatar Next(BodyShape bodyShape)
         {
-            List<int> candidates = INDICES_BY_BODY_SHAPE[bodyShape];
-            int last = lastPickedByBodyShape.TryGetValue(bodyShape, out int previous) ? previous : -1;
+            Preset[] presets = bodyShape.Equals(BodyShape.FEMALE) ? FEMALE_PRESETS : MALE_PRESETS;
 
-            int picked = candidates[Random.Range(0, candidates.Count)];
+            int index = Random.Range(0, presets.Length);
 
-            while (candidates.Count > 1 && picked == last)
-                picked = candidates[Random.Range(0, candidates.Count)];
+            if (index == lastIndex)
+                index = (index + 1) % presets.Length;
 
-            lastPickedByBodyShape[bodyShape] = picked;
+            lastIndex = index;
 
-            return PRESETS[picked].ToAvatar();
-        }
-
-        private static Dictionary<BodyShape, List<int>> BuildIndices()
-        {
-            var indices = new Dictionary<BodyShape, List<int>>();
-
-            for (var i = 0; i < PRESETS.Length; i++)
-            {
-                BodyShape bodyShape = PRESETS[i].BodyShape;
-
-                if (!indices.TryGetValue(bodyShape, out List<int>? bucket))
-                {
-                    bucket = new List<int>();
-                    indices[bodyShape] = bucket;
-                }
-
-                bucket.Add(i);
-            }
-
-            return indices;
+            return presets[index].ToAvatar(bodyShape);
         }
 
         private readonly struct Preset
         {
-            public readonly BodyShape BodyShape;
-
             private readonly URN[] wearables;
             private readonly Color eyesColor;
             private readonly Color hairColor;
             private readonly Color skinColor;
 
-            public Preset(BodyShape bodyShape, URN[] wearables, Color eyesColor, Color hairColor, Color skinColor)
+            public Preset(URN[] wearables, Color eyesColor, Color hairColor, Color skinColor)
             {
-                BodyShape = bodyShape;
                 this.wearables = wearables;
                 this.eyesColor = eyesColor;
                 this.hairColor = hairColor;
                 this.skinColor = skinColor;
             }
 
-            public Avatar ToAvatar() =>
-                new (BodyShape, new HashSet<URN>(wearables), eyesColor, hairColor, skinColor);
+            public Avatar ToAvatar(BodyShape bodyShape) =>
+                new (bodyShape, new HashSet<URN>(wearables), eyesColor, hairColor, skinColor);
         }
     }
 }
