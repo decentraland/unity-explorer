@@ -253,7 +253,7 @@ namespace DCL.Passport.Modules.Creations
             bool hasLink = marketplaceLink != string.Empty;
             bool isBaseWearable = itemView.ItemId.IsBaseWearable();
             bool showBuy = !isBaseWearable && item.isOnSale && hasLink;
-            bool showView = !isBaseWearable && !item.isOnSale && hasLink;
+            bool showView = !isBaseWearable && hasLink;
 
             itemView.BuyButton.gameObject.SetActive(showBuy);
             itemView.ViewButton.gameObject.SetActive(showView);

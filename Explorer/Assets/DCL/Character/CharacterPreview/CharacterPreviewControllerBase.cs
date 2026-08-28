@@ -291,6 +291,7 @@ namespace DCL.CharacterPreview
 
         private GameObject EnableSpinner()
         {
+            view.RawImage.DOKill();
             profileColor = view.RawImage.color;
             profileColor.a = 0;
             view.RawImage.color = profileColor;

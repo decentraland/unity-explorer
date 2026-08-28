@@ -39,13 +39,13 @@ namespace Global.Dynamic
 {
     public class BootstrapContainer : DCLGlobalContainer<BootstrapSettings>
     {
-        private IReportsHandlingSettings reportHandlingSettings;
+        private IReportsHandlingSettings reportHandlingSettings = null!;
 
         public bool EnableAnalytics => Analytics.Enabled;
-        public DiagnosticsContainer DiagnosticsContainer { get; private set; }
-        public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
-        public UnityAppWebBrowser WebBrowser { get; private set; }
-        public IWeb3AccountFactory Web3AccountFactory { get; private set; }
+        public DiagnosticsContainer DiagnosticsContainer { get; private set; } = null!;
+        public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; } = null!;
+        public UnityAppWebBrowser WebBrowser { get; private set; } = null!;
+        public IWeb3AccountFactory Web3AccountFactory { get; private set; } = null!;
         public IAssetsProvisioner? AssetsProvisioner { get; private init; }
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
@@ -54,12 +54,12 @@ namespace Global.Dynamic
 
         // The auth request id this instance's login flow is waiting a signin deep link for (null when not logging in).
         public ReactiveProperty<string?> DeeplinkLoginAwaitingSigninRequestId { get; } = new (null);
-        public AnalyticsContainer Analytics { get; private set; }
-        public DebugSettings.DebugSettings DebugSettings { get; private set; }
-        public VolumeBus VolumeBus { get; private set; }
+        public AnalyticsContainer Analytics { get; private set; } = null!;
+        public DebugSettings.DebugSettings DebugSettings { get; private set; } = null!;
+        public VolumeBus VolumeBus { get; private set; } = null!;
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings;
-        public IAppArgs AppArgs { get; private set; }
-        public ILaunchMode LaunchMode { get; private set; }
+        public IAppArgs AppArgs { get; private set; } = null!;
+        public ILaunchMode LaunchMode { get; private set; } = null!;
         public bool UseRemoteAssetBundles { get; private set; }
         public bool UseLocalAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
@@ -79,7 +79,7 @@ namespace Global.Dynamic
         /// </summary>
         public string? LocalAbBaseUrl { get; private set; }
         public RealmClock RealmClock { get; } = new ();
-        public WebRequestsContainer WebRequestsContainer { get; private set; }
+        public WebRequestsContainer WebRequestsContainer { get; private set; } = null!;
 
         public override void Dispose()
         {
@@ -114,7 +114,7 @@ namespace Global.Dynamic
             string? localAbBaseUrl,
             CancellationToken ct)
         {
-            var browser = new UnityAppWebBrowser(decentralandUrlsSource);
+            var browser = new UnityAppWebBrowser(decentralandUrlsSource, applicationParametersParser);
             var web3AccountFactory = new Web3AccountFactory();
             var bootstrapContainer = new BootstrapContainer
             {
