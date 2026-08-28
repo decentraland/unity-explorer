@@ -1,10 +1,8 @@
-using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.UI;
 using DCL.UI.Buttons;
 using MVC;
-using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -49,6 +47,9 @@ namespace DCL.Minimap
 
         [field: SerializeField]
         internal RectTransform minimapContainer { get; private set; }
+
+        [field: SerializeField]
+        internal CanvasGroup minimapContainerCanvasGroup { get; private set; }
 
         [field: SerializeField]
         internal SideMenuView sideMenuView { get; private set; }

@@ -340,6 +340,7 @@ namespace DCL.Minimap
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
             viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.EXPAND);
+            viewInstance.minimapContainerCanvasGroup.blocksRaycasts = true;
         }
 
         private void CollapseMinimap()
@@ -348,6 +349,7 @@ namespace DCL.Minimap
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
             viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.COLLAPSE);
+            viewInstance.minimapContainerCanvasGroup.blocksRaycasts = false;
         }
 
         private void OpenSideMenu()
