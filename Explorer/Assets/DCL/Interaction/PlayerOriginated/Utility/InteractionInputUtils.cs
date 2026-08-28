@@ -2,12 +2,16 @@
 using DCL.Interaction.PlayerOriginated.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using InputAction = UnityEngine.InputSystem.InputAction;
 
 namespace DCL.Interaction.PlayerOriginated.Utility
 {
     public static class InteractionInputUtils
     {
+        /// <summary>Player-distance threshold when neither max_distance nor max_camera_distance is set</summary>
+        public const float DEFAULT_MAX_DISTANCE = 10f;
+
         public static AnyInputInfo GatherAnyInputInfo(this IEnumerable<InputAction> eligibleInputActions)
         {
             var anyButtonWasPressedThisFrame = false;
@@ -33,18 +37,25 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             PBPointerEvents.Types.Info info
         )
         {
-            if (info is { HasMaxDistance: true, HasMaxPlayerDistance: false })
-                return raycastResultForSceneEntities.GetDistance() <= info.MaxDistance;
+            // max_distance is the player-distance threshold; max_player_distance is its deprecated alias (larger wins)
+            float? maxPlayerDistance = (info.HasMaxDistance, info.HasMaxPlayerDistance) switch
+            {
+                (true, true) => Mathf.Max(info.MaxDistance, info.MaxPlayerDistance),
+                (true, false) => info.MaxDistance,
+                (false, true) => info.MaxPlayerDistance,
+                _ => null,
+            };
 
-            if (info is { HasMaxDistance: false, HasMaxPlayerDistance: true })
-                return raycastResultForSceneEntities.DistanceToPlayer <= info.MaxPlayerDistance;
+            float? maxCameraDistance = info.HasMaxCameraDistance ? info.MaxCameraDistance : null;
 
-            if (info is { HasMaxDistance: true, HasMaxPlayerDistance: true })
-                return raycastResultForSceneEntities.GetDistance() <= info.MaxDistance
-                       || raycastResultForSceneEntities.DistanceToPlayer <= info.MaxPlayerDistance;
-
-            // Uses the default behavior in case both values are missing
-            return raycastResultForSceneEntities.GetDistance() <= info.MaxDistance;
+            return (maxPlayerDistance, maxCameraDistance) switch
+            {
+                (null, null) => raycastResultForSceneEntities.DistanceToPlayer <= DEFAULT_MAX_DISTANCE,
+                ({ } player, null) => raycastResultForSceneEntities.DistanceToPlayer <= player,
+                (null, { } cam) => raycastResultForSceneEntities.GetDistance() <= cam,
+                ({ } player, { } cam) => raycastResultForSceneEntities.DistanceToPlayer <= player
+                                         || raycastResultForSceneEntities.GetDistance() <= cam,
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -128,17 +139,11 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             if (!info.HasButton)
                 info.Button = ECSComponents.InputAction.IaAny;
 
-            if (!info.HasMaxDistance)
-                info.MaxDistance = 10f;
-
             if (!info.HasShowFeedback)
                 info.ShowFeedback = true;
 
             if (!info.HasHoverText)
                 info.HoverText = "Interact";
-
-            if (!info.HasMaxPlayerDistance)
-                info.MaxPlayerDistance = 0f;
         }
 
         public readonly struct AnyInputInfo
