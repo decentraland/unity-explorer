@@ -54,8 +54,8 @@ namespace DCL.Backpack.Gifting.Notifications
 
         protected override void OnViewShow()
         {
-            viewInstance!.SubTitleText.text = GiftingTextIds.GiftOpenedTitle;
-            viewInstance.ItemNameText.text = GiftingTextIds.GiftLoading;
+            viewInstance!.SubTitleText.text = GiftingTextIds.GIFT_OPENED_TITLE;
+            viewInstance.ItemNameText.text = GiftingTextIds.GIFT_LOADING;
             viewInstance.GiftItemView.SetLoading();
 
             lifeCts = new CancellationTokenSource();
@@ -92,7 +92,7 @@ namespace DCL.Backpack.Gifting.Notifications
                 if (profile != null)
                 {
                     string hexColor = ColorUtility.ToHtmlStringRGB(profile.UserNameColor);
-                    viewInstance!.TitleText.text = string.Format(GiftingTextIds.GiftReceivedFromFormat, hexColor, profile.Name);
+                    viewInstance!.TitleText.text = string.Format(GiftingTextIds.GIFT_RECEIVED_FROM_FORMAT, hexColor, profile.Name);
                 }
 
                 if (itemData.HasValue)

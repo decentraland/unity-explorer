@@ -137,7 +137,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // If there's an ongoing request for the same intention, piggyback on it
                     if (cache.OngoingRequests.SyncTryGetValue(intentionId,
-                            out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
+                            out UniTaskCompletionSource<OngoingRequestResult<TAsset>> cachedSource))
                     {
                         ReportHub.Log(ReportCategory.STREAMABLE_LOADING,
                             $"[Cache] Hit (Ongoing Request) for: {intention.CommonArguments.URL}");
