@@ -19,6 +19,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
 
         public readonly string FallbackMarketplaceUrl;
         public readonly string Source;
+        public readonly string ItemUrn;
+
+        public bool IsEmote => Listing.category == "emote";
 
         public CreditPurchaseModalControllerParams(
             ShopListingDto listing,
@@ -29,7 +32,8 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             Color rarityColor,
             Sprite? categoryIcon,
             string fallbackMarketplaceUrl,
-            string source)
+            string source,
+            string itemUrn)
         {
             Listing = listing;
             ItemName = itemName;
@@ -40,6 +44,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             CategoryIcon = categoryIcon;
             FallbackMarketplaceUrl = fallbackMarketplaceUrl;
             Source = source;
+            ItemUrn = itemUrn;
         }
     }
 }

@@ -179,6 +179,42 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         /// <summary>
+        /// The AvatarBase is attached before the wearables are instantiated, so an already-loaded emote could
+        /// otherwise start on a half-built avatar: the intent must wait until the avatar shape is no longer dirty.
+        /// </summary>
+        [Test]
+        public void KeepCharacterEmoteIntentParkedWhileTheAvatarIsInstantiating()
+        {
+            IAvatarView instantiatingAvatarView = Substitute.For<IAvatarView>();
+            instantiatingAvatarView.GetAnimatorBool(AnimationHashes.GROUNDED).Returns(true);
+
+            Entity instantiatingEntity = world.Create(
+                new CharacterEmoteComponent(),
+                new CharacterEmoteIntent
+                {
+                    EmoteId = new URN("urn:decentraland:off-chain:base-emotes:dance"),
+                    Mask = AvatarEmoteMask.AemFullBody,
+                },
+                instantiatingAvatarView,
+                new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsDirty = true });
+
+            for (var i = 0; i < 3; i++)
+                system.Update(0.1f);
+
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(instantiatingEntity),
+                "The intent must stay parked while the avatar shape is still being instantiated.");
+
+            emoteStorage.DidNotReceive().TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>());
+
+            ref AvatarShapeComponent avatarShape = ref world.Get<AvatarShapeComponent>(instantiatingEntity);
+            avatarShape.IsDirty = false;
+
+            system.Update(0.1f);
+
+            emoteStorage.Received(1).TryGetElement(Arg.Any<URN>(), out Arg.Any<IEmote>());
+        }
+
+        /// <summary>
         /// Regression for https://github.com/decentraland/unity-explorer/issues/9485: an emote stuck in
         /// IsLoading must be released by the play timeout instead of parking the intent forever.
         /// </summary>
