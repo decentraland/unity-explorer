@@ -229,6 +229,7 @@ namespace DCL.Passport.Modules
 
                 if (hasMarketplaceActions)
                 {
+                    equippedWearableItem.ViewButton.gameObject.SetActive(true);
                     equippedWearableItem.ViewButton.onClick.AddListener(() => webBrowser.OpenUrlMainThreadOnly(marketPlaceLink));
                     primaryListingCandidates.Add((equippedWearableItem, wearableUrn));
                 }
@@ -268,6 +269,7 @@ namespace DCL.Passport.Modules
 
                 if (hasEmoteMarketplaceActions)
                 {
+                    equippedWearableItem.ViewButton.gameObject.SetActive(true);
                     equippedWearableItem.ViewButton.onClick.AddListener(() => webBrowser.OpenUrlMainThreadOnly(marketPlaceLink));
                     primaryListingCandidates.Add((equippedWearableItem, emoteUrn));
                 }
@@ -325,7 +327,6 @@ namespace DCL.Passport.Modules
                     bool isOnPrimarySale = onSalePrices.TryGetValue(urn, out int priceCredits);
                     itemView.BuyButton.gameObject.SetActive(isOnPrimarySale);
                     itemView.OnSaleFlap.gameObject.SetActive(isOnPrimarySale);
-                    itemView.ViewButton.gameObject.SetActive(!isOnPrimarySale);
 
                     bool showPrice = isOnPrimarySale && priceCredits > 0;
                     itemView.ItemPriceContainer.SetActive(showPrice);
@@ -338,12 +339,6 @@ namespace DCL.Passport.Modules
             catch (Exception e)
             {
                 ReportHub.LogError(ReportCategory.WEARABLE, $"There was an error while resolving primary listings for equipped items. ERROR: {e.Message}");
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                foreach ((EquippedItemPassportFieldView itemView, _) in primaryListingCandidates)
-                    itemView.ViewButton.gameObject.SetActive(true);
             }
         }
 
