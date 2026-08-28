@@ -64,6 +64,18 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         string BaseDomain { get; }
 
         /// <summary>
+        ///     The single origin every supported service is routed through when <c>--gateway</c> named one (or the
+        ///     <c>use-gateway</c> flag derived <c>gateway.{BaseDomain}</c>), including the trailing '/'; null when
+        ///     gateway routing is off. A host-trust check must accept it alongside <see cref="BaseDomain" />: a
+        ///     gateway origin is deliberately allowed to sit outside the base domain — an e2e fixture's is loopback —
+        ///     so comparing only against the domain would reject this session's own realms. Naming one is
+        ///     command-line only (<c>DeepLinkAllowlist</c> denies <c>--gateway</c>), so trusting it adds no
+        ///     link-reachable surface. Keep the trailing '/' when comparing: it is the boundary that stops
+        ///     "http://127.0.0.1:8080.attacker.com/" from matching the origin "http://127.0.0.1:8080/".
+        /// </summary>
+        string? GatewayOrigin { get; }
+
+        /// <summary>
         ///     Get a raw url without caching at any moment (without dependency on FF)
         /// </summary>
         public string Probe(DecentralandUrl decentralandUrl);

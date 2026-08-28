@@ -8,6 +8,7 @@ namespace DCL.Tests.Editor
     public class ChatEnvironmentValidatorShould
     {
         private const string CUSTOM_DOMAIN = "interconnected.online";
+        private const string LOOPBACK_GATEWAY = "http://127.0.0.1:8080/";
 
         // Org
         [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN, "https://peer.decentraland.org", true)]
@@ -38,6 +39,30 @@ namespace DCL.Tests.Editor
         }
 
         /// <summary>
+        ///     A --gateway session routes every supported service, realms included, through one origin that is
+        ///     allowed to sit outside the base domain: a local e2e fixture's gateway is loopback. Those realms are
+        ///     this session's own, so they must pass while everything off that origin is judged as before.
+        /// </summary>
+        // Local fixture: the gateway origin is nowhere near decentraland.org, and its realms are still ours
+        [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN, LOOPBACK_GATEWAY, LOOPBACK_GATEWAY + "worlds-content-server/world/x.dcl.eth", true)]
+        [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN, LOOPBACK_GATEWAY, LOOPBACK_GATEWAY + "realm-provider-ea/main", true)]
+        // The un-gatewayed domain keeps working in the same session
+        [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN, LOOPBACK_GATEWAY, "https://peer.decentraland.org", true)]
+        // A gateway does not make foreign realms reachable
+        [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN, LOOPBACK_GATEWAY, "https://evil.example/world/x.dcl.eth", false)]
+        // The origin's trailing '/' is the authority boundary: this host merely starts with the same characters
+        [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN, LOOPBACK_GATEWAY, "http://127.0.0.1:8080.attacker.com/world/x.dcl.eth", false)]
+        // Remote fixture (--base-domain plus a gateway on that same domain)
+        [TestCase(DecentralandEnvironment.Custom, CUSTOM_DOMAIN, "https://" + CUSTOM_DOMAIN + "/", "https://" + CUSTOM_DOMAIN + "/worlds-content-server/world/x.dcl.eth", true)]
+        // Derived gateway subdomain, as the use-gateway flag builds it
+        [TestCase(DecentralandEnvironment.Custom, CUSTOM_DOMAIN, "https://gateway." + CUSTOM_DOMAIN + "/", "https://gateway." + CUSTOM_DOMAIN + "/worlds-content-server/world/x.dcl.eth", true)]
+        public void AcceptRealmsServedByTheGatewayOrigin(DecentralandEnvironment environment, string baseDomain, string gatewayOrigin, string realm, bool expectSuccess)
+        {
+            var validator = new ChatEnvironmentValidator(environment, UrlsSourceWithBaseDomain(baseDomain, gatewayOrigin));
+            Assert.AreEqual(expectSuccess, validator.ValidateTeleport(realm).Success, realm);
+        }
+
+        /// <summary>
         ///     Today is the one environment that cannot follow a realm change at all, so even a host under its own
         ///     base domain is rejected.
         /// </summary>
@@ -49,10 +74,23 @@ namespace DCL.Tests.Editor
             Assert.IsFalse(validator.ValidateTeleport(realm).Success, realm);
         }
 
-        private static IDecentralandUrlsSource UrlsSourceWithBaseDomain(string baseDomain)
+        /// <summary>Today's blanket rejection outranks the gateway origin, so the order of the two checks matters.</summary>
+        [Test]
+        public void RejectGatewayRealmsInTheTodayEnvironment()
+        {
+            var validator = new ChatEnvironmentValidator(DecentralandEnvironment.Today, UrlsSourceWithBaseDomain(IDecentralandUrlsSource.TODAY_DOMAIN, LOOPBACK_GATEWAY));
+            Assert.IsFalse(validator.ValidateTeleport(LOOPBACK_GATEWAY + "worlds-content-server/world/x.dcl.eth").Success);
+        }
+
+        /// <summary>
+        ///     <paramref name="gatewayOrigin" /> defaults to null, which is what a session with no gateway routing
+        ///     reports — the cases above it therefore cover the un-gatewayed behaviour unchanged.
+        /// </summary>
+        private static IDecentralandUrlsSource UrlsSourceWithBaseDomain(string baseDomain, string? gatewayOrigin = null)
         {
             IDecentralandUrlsSource urlsSource = Substitute.For<IDecentralandUrlsSource>();
             urlsSource.BaseDomain.Returns(baseDomain);
+            urlsSource.GatewayOrigin.Returns(gatewayOrigin);
             return urlsSource;
         }
     }

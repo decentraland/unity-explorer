@@ -49,6 +49,7 @@ namespace DCL.Browser
             // Content Servers
             DecentralandUrl.AssetBundlesCDN,
             DecentralandUrl.LodAssetBundlesCDN,
+            DecentralandUrl.WorldServer,
             DecentralandUrl.WorldContentServer,
 
             DecentralandUrl.Genesis,
@@ -154,6 +155,12 @@ namespace DCL.Browser
             prefix = uri.ToString().TrimEnd('/') + "/";
             return true;
         }
+
+        /// <summary>
+        ///     The origin every supported service is routed through, or null while routing is off — a caller must not
+        ///     trust a prefix this source is not actually using.
+        /// </summary>
+        public override string? GatewayOrigin => enabled ? gatewayPrefix : null;
 
         /// <summary>
         ///     Transforms a 3rd party URL, DecentralandURLs are already transformed by <see cref="RawUrl" />

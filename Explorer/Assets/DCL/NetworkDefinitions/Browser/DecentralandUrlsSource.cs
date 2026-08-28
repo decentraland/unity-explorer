@@ -215,6 +215,9 @@ namespace DCL.Browser.DecentralandUrls
             return urlData.Url!;
         }
 
+        /// <summary>This source routes nothing through a gateway; <see cref="GatewayUrlsSource" /> overrides it.</summary>
+        public virtual string? GatewayOrigin => null;
+
         public virtual string TransformUrl(string originalUrl) =>
             originalUrl;
 
