@@ -112,24 +112,28 @@ namespace DCL.SocialService
 
         public virtual async UniTask SendMessageAsync(byte[] data, CancellationToken ct)
         {
-            if (isDisposed) return;
+            if (isDisposed || !isConnected) return;
 
             try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
             catch (WebSocketException e)
             {
                 OnErrorEvent?.Invoke(e);
             }
+            catch (ObjectDisposedException) { }
+            catch (InvalidOperationException) { }
         }
 
         public virtual async UniTask SendMessageAsync(string data, CancellationToken ct)
         {
-            if (isDisposed) return;
+            if (isDisposed || !isConnected) return;
 
             try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
             catch (WebSocketException e)
             {
                 OnErrorEvent?.Invoke(e);
             }
+            catch (ObjectDisposedException) { }
+            catch (InvalidOperationException) { }
         }
 
         public void Close() =>

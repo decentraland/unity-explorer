@@ -41,5 +41,13 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(StyleKeyword.Null, uiTransformComponent.Transform.style.overflow.keyword);
             Assert.AreEqual(StyleKeyword.Null, uiTransformComponent.Transform.style.backgroundColor.keyword);
         }
+
+        [Test]
+        public void NewlyInstantiatedUITransformIsHiddenUntilParented()
+        {
+            // Assert - the element sits on the shared canvas root until parented, so it must not be visible yet.
+            UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
+            Assert.AreEqual(Visibility.Hidden, uiTransformComponent.Transform.style.visibility.value);
+        }
     }
 }

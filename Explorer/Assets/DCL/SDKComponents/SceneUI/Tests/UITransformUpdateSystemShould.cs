@@ -46,12 +46,36 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
+        public void ApplyStylesOnceWhenDirtyFlagWasLost()
+        {
+            // Arrange - the model's only dirty tick was consumed by ResetDirtyFlagSystem before this system ran
+            PBUiTransform input = CreateUITransform();
+            sceneStateProvider.IsCurrent = true;
+            input.Display = YGDisplay.YgdNone;
+            input.IsDirty = false;
+
+            // Act
+            system.Update(0);
+
+            // Assert - the first application must not depend on the dirty flag
+            UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
+            Assert.AreEqual(UiElementUtils.GetDisplay(YGDisplay.YgdNone), uiTransformComponent.Transform.style.display);
+
+            // Act - subsequent non-dirty mutations keep the regular dirty semantics
+            input.Display = YGDisplay.YgdFlex;
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(UiElementUtils.GetDisplay(YGDisplay.YgdNone), uiTransformComponent.Transform.style.display);
+        }
+
+        [Test]
         [TestCase(true)]
         [TestCase(false)]
         public void CheckUITransformOutOfScene(bool isCurrentScene)
         {
             // Arrange
-            PBUiTransform input = CreateUITransform();
+            CreateUITransform();
             sceneStateProvider.IsCurrent = isCurrentScene;
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
             uiTransformComponent.IsHidden = isCurrentScene;
