@@ -362,16 +362,21 @@ namespace DCL.SyntheticInput.Systems
         ///     The ray reached an entity the gesture accepts as its target, but the pipeline did not qualify it for
         ///     cursor input. An entity without PointerEvents that the ray reached <em>before</em> the requested aim
         ///     point is an occluder, not the target — reported as a block so an aim-point gesture gets the same
-        ///     blocker diagnostics an entity-addressed one does.
+        ///     blocker diagnostics an entity-addressed one does. That reading only exists for a pure aim-point
+        ///     gesture: a gesture with an explicit target reached this method because the hit IS that target
+        ///     (anything else was reported as a block upstream), and an entity aim point is the collider's center,
+        ///     which the ray always stops short of at the collider's face — the target must not read as its own
+        ///     occluder.
         /// </summary>
         private static SyntheticPointerResult DiagnoseUnqualified(in SyntheticPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo,
             Entity hitEntity, int hitCrdtId, float distance, bool stoppedShortOfAim, string colliderName)
         {
             SyntheticPointerResult result;
+            bool aimPointOnly = intent.TargetEntityId < 0 && !intent.Press.HasValue;
 
             if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents) || pbPointerEvents == null)
             {
-                if (stoppedShortOfAim)
+                if (aimPointOnly && stoppedShortOfAim)
                 {
                     result = Failure(in intent, "another collider blocks the line of sight to the aim point");
                     result.BlockedByEntityId = hitEntity.Id;

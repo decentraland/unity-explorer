@@ -34,6 +34,14 @@ namespace DCL.Interaction.PlayerOriginated
             entries.Add(entry);
         }
 
+        /// <summary>Removes every buffered entry of this action edge.</summary>
+        public void Remove(InputAction inputAction, PointerEventType pointerEventType)
+        {
+            for (int i = entries.Count - 1; i >= 0; i--)
+                if (entries[i].InputAction == inputAction && entries[i].PointerEventType == pointerEventType)
+                    entries.RemoveAt(i);
+        }
+
         public void Clear()
         {
             entries.Clear();

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.SDKComponents.SceneUI.Components;
 using System.Collections.Generic;
 using System.Threading;
 using TMPro;
@@ -20,12 +21,14 @@ namespace DCL.SyntheticInput.UiSimulation
         private const int MAX_SDK_DRAIN_FRAMES = 60;
 
         private readonly EventSystem eventSystem;
+        private readonly SdkUiResolver sdkResolver;
         private readonly PointerEventData pointerEventData;
         private readonly List<RaycastResult> raycastResults = new ();
 
-        public UiInteractionSimulator(EventSystem eventSystem)
+        public UiInteractionSimulator(EventSystem eventSystem, SdkUiResolver sdkResolver)
         {
             this.eventSystem = eventSystem;
+            this.sdkResolver = sdkResolver;
             pointerEventData = new PointerEventData(eventSystem);
         }
 
@@ -93,9 +96,10 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     Clicks an SDK scene-UI element. Press and release are sent on separate frames — the scene's
-        ///     pointer-event slot holds a single event, so a same-frame pair would lose the press — and the
-        ///     release waits until the (throttled) scene system drained the press.
+        ///     Clicks an SDK scene-UI element. Every pointer event is sent on its own frame and only after the
+        ///     (throttled) scene system drained the previous one — the scene's pointer-event slot holds a single
+        ///     event, so two events in one drain window lose the earlier one (a same-frame leave would eat the
+        ///     release, a same-frame down would eat the hover enter).
         /// </summary>
         public async UniTask<UiActionResult> ClickSdkAsync(SdkUiElement element, bool force, CancellationToken ct)
         {
@@ -128,23 +132,43 @@ namespace DCL.SyntheticInput.UiSimulation
             }
 
             SendPooled<PointerEnterEvent>(target);
+
+            if (!await DrainSdkSlotAsync(element.Transform, ct))
+                return UiActionResult.Failure("the scene did not consume the hover enter (is the scene paused?); the click was not delivered", null, imageRect);
+
             SendPooled<PointerDownEvent>(target);
 
-            var frames = 0;
-
-            while (element.Transform.PointerEventTriggered != null && frames++ < MAX_SDK_DRAIN_FRAMES)
-                await UniTask.Yield(PlayerLoopTiming.Update, ct);
-
-            if (frames == 0)
-                await UniTask.Yield(PlayerLoopTiming.Update, ct); // still split the legs across frames
-
-            if (element.Transform.PointerEventTriggered != null)
+            if (!await DrainSdkSlotAsync(element.Transform, ct))
                 return UiActionResult.Failure("the scene did not consume the press (is the scene paused?); the release was not sent", null, imageRect);
 
             SendPooled<PointerUpEvent>(target);
+
+            if (!await DrainSdkSlotAsync(element.Transform, ct))
+                return UiActionResult.Failure("the scene did not consume the release (is the scene paused?)", null, imageRect);
+
             SendPooled<PointerLeaveEvent>(target);
 
             return UiActionResult.Success(imageRect);
+        }
+
+        /// <summary>
+        ///     Waits until the scene system drained the element's single pointer-event slot, always yielding at
+        ///     least one frame so consecutive events land on separate frames. A null owner has no slot to wait on.
+        ///     False when the slot still holds an event after the bounded wait.
+        /// </summary>
+        private static async UniTask<bool> DrainSdkSlotAsync(UITransformComponent? slotOwner, CancellationToken ct)
+        {
+            await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+            if (slotOwner == null)
+                return true;
+
+            var frames = 0;
+
+            while (slotOwner.PointerEventTriggered != null && frames++ < MAX_SDK_DRAIN_FRAMES)
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+            return slotOwner.PointerEventTriggered == null;
         }
 
         /// <summary>
@@ -165,12 +189,16 @@ namespace DCL.SyntheticInput.UiSimulation
                 return UiActionResult.Failure("no scene UI element at the drag start point");
 
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(panel, pressTarget.worldBound);
+            UITransformComponent? pressSlot = sdkResolver.ResolveComponent(pressTarget);
 
             SendPooled<PointerEnterEvent>(pressTarget);
+            await DrainSdkSlotAsync(pressSlot, ct);
             SendPooled<PointerDownEvent>(pressTarget);
 
-            // One move per frame along the path: a scene reading the drag as a gesture sees it progress, and the
-            // release cannot land on the same frame as the press (the pointer-event slot holds one event).
+            if (!await DrainSdkSlotAsync(pressSlot, ct))
+                return UiActionResult.Failure("the scene did not consume the press (is the scene paused?); the drag was abandoned", null, imageRect);
+
+            // One move per frame along the path: a scene reading the drag as a gesture sees it progress.
             for (var step = 1; step <= steps; step++)
             {
                 Vector2 pointOnPath = Vector2.Lerp(fromPanelPoint, toPanelPoint, step / (float)steps);
@@ -184,18 +212,35 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (releaseTarget == null)
             {
-                SendPooled<PointerUpEvent>(pressTarget);
-                SendPooled<PointerLeaveEvent>(pressTarget);
-
+                await ReleaseSdkAsync(pressTarget, pressSlot, ct);
                 return UiActionResult.Failure($"no scene UI element at the drag end point; the release was delivered back to '{pressTarget.name}'", null, imageRect);
             }
 
-            SendPooled<PointerUpEvent>(releaseTarget);
-            SendPooled<PointerLeaveEvent>(releaseTarget);
+            if (!await ReleaseSdkAsync(releaseTarget, sdkResolver.ResolveComponent(releaseTarget), ct))
+                return UiActionResult.Failure("the scene did not consume the release (is the scene paused?)", null, imageRect);
 
             UiActionResult result = UiActionResult.Success(imageRect);
             result.Info = $"pressed '{DescribeElement(pressTarget)}', released '{DescribeElement(releaseTarget)}'";
             return result;
+        }
+
+        /// <summary>
+        ///     Delivers the release leg: the slot must be free before the up (a same-element drag may still hold
+        ///     the press) and drained after it, so the leave sent last cannot overwrite the release the scene has
+        ///     not read yet. On an unconsumed release the leave is withheld — the release stays in the slot for a
+        ///     slow scene to pick up. True when the scene consumed the release.
+        /// </summary>
+        private async UniTask<bool> ReleaseSdkAsync(VisualElement target, UITransformComponent? slot, CancellationToken ct)
+        {
+            await DrainSdkSlotAsync(slot, ct);
+            SendPooled<PointerUpEvent>(target);
+
+            bool consumed = await DrainSdkSlotAsync(slot, ct);
+
+            if (consumed)
+                SendPooled<PointerLeaveEvent>(target);
+
+            return consumed;
         }
 
         private static string DescribeElement(VisualElement element) =>

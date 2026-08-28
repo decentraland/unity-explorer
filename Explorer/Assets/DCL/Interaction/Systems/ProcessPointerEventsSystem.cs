@@ -6,6 +6,7 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Input;
+using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Raycast.Components;
@@ -26,6 +27,7 @@ namespace DCL.Interaction.Systems
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly IEventSystem eventSystem;
         private readonly IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap;
+        private readonly GlobalInputEvents globalInputEvents;
         private readonly QueryDescription highlightQuery = new QueryDescription().WithAll<HighlightComponent>();
 
         private SingleInstanceEntity playerCamera;
@@ -33,12 +35,14 @@ namespace DCL.Interaction.Systems
         internal ProcessPointerEventsSystem(World world,
             IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
-            IEventSystem eventSystem) : base(world)
+            IEventSystem eventSystem,
+            GlobalInputEvents globalInputEvents) : base(world)
         {
             this.sdkInputActionsMap = sdkInputActionsMap;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
 
             this.eventSystem = eventSystem;
+            this.globalInputEvents = globalInputEvents;
         }
 
         public override void Initialize()
@@ -344,7 +348,24 @@ namespace DCL.Interaction.Systems
 
                 if (synthetic.ReleaseButton.HasValue)
                     pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.ReleaseButton.Value, PointerEventType.PetUp);
+
+                SuppressGlobalBroadcastOfEntityBoundActions(in pbPointerEvents.AppendPointerEventResultsIntent);
             }
+        }
+
+        /// <summary>
+        ///     Drops the entity-bound action edges from the buffer WritePointerEventResultsSystem broadcasts to the
+        ///     scene root: an edge delivered to a qualified hovered entity is consumed by it, and the same buffer —
+        ///     filled by PrepareGlobalInputEventsSystem earlier this frame — must not fan the edge out a second time.
+        ///     Removing at production time keeps the buffer correct for the whole frame, no matter when the scene
+        ///     world drains it.
+        /// </summary>
+        private void SuppressGlobalBroadcastOfEntityBoundActions(in AppendPointerEventResultsIntent intent)
+        {
+            IReadOnlyList<(InputAction inputAction, PointerEventType pointerEventType)> entityBoundActions = intent.ValidInputActions;
+
+            for (var i = 0; i < entityBoundActions.Count; i++)
+                globalInputEvents.Remove(entityBoundActions[i].inputAction, entityBoundActions[i].pointerEventType);
         }
 
         private Vector2 GetColliderCenterScreenPosition(Collider collider)

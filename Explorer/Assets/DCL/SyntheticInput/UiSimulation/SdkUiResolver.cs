@@ -61,6 +61,41 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
+        ///     The scene-UI component owning a picked visual element: the entity whose UITransform element is the
+        ///     element itself or its closest ancestor (a pick can land on an inner child, and UITransforms nest).
+        ///     Null when nothing in the current scene owns the element.
+        /// </summary>
+        public UITransformComponent? ResolveComponent(VisualElement element)
+        {
+            if (!TryGetRunningSceneWorld(out World? maybeWorld, out _))
+                return null;
+
+            UITransformComponent? closest = null;
+            var closestDistance = int.MaxValue;
+
+            maybeWorld!.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity _) =>
+            {
+                var distance = 0;
+
+                for (VisualElement? current = element; current != null; current = current.parent, distance++)
+                {
+                    if (!ReferenceEquals(uiTransform.Transform, current))
+                        continue;
+
+                    if (distance < closestDistance)
+                    {
+                        closest = uiTransform;
+                        closestDistance = distance;
+                    }
+
+                    return;
+                }
+            });
+
+            return closest;
+        }
+
+        /// <summary>
         ///     The panel the current scene's UI is attached to — the space positional gestures against scene UI are
         ///     expressed in. Any attached element identifies it: a scene renders its UI into one panel.
         /// </summary>

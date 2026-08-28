@@ -37,8 +37,8 @@ namespace DCL.SyntheticInput.UiSimulation
             this.playerEntity = playerEntity;
 
             Discovery = new UiDiscovery(eventSystem);
-            Simulator = new UiInteractionSimulator(eventSystem);
             SdkResolver = new SdkUiResolver(scenesCache);
+            Simulator = new UiInteractionSimulator(eventSystem, SdkResolver);
             Devices = new AutomationVirtualDevices();
         }
 
