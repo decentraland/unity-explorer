@@ -3637,7 +3637,7 @@ MonoBehaviour:
   <mapRendererTargetImage>k__BackingField: {fileID: 6221276209546346655}
   <minimapRendererButton>k__BackingField: {fileID: 7182984698585332529}
   <sideMenuButton>k__BackingField: {fileID: 4843367397424901149}
-  <SideMenuCanvasGroup>k__BackingField: {fileID: 3561821593630048208}
+  <sideMenuCanvasGroup>k__BackingField: {fileID: 3561821593630048208}
   <pixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 7898703652701543681}
   <mapRendererVisibleParcels>k__BackingField: 8
   <expandMinimapButton>k__BackingField: {fileID: 2913232251365639464}
