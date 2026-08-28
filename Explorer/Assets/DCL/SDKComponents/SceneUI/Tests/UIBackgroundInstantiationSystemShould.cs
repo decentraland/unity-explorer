@@ -19,12 +19,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UIBackgroundInstantiationSystemShould : UnitySystemTestBase<UIBackgroundInstantiationSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-        private ISceneData sceneData;
-        private IPerformanceBudget frameTimeBudgetProvider;
-        private IPerformanceBudget memoryBudgetProvider;
+        private IComponentPoolsRegistry poolsRegistry = null!;
+        private ISceneData sceneData = null!;
+        private IPerformanceBudget frameTimeBudgetProvider = null!;
+        private IPerformanceBudget memoryBudgetProvider = null!;
         private Entity entity;
-        private UITransformComponent uiTransformComponent;
+        private UITransformComponent uiTransformComponent = null!;
 
         [SetUp]
         public void SetUp()
@@ -58,6 +58,27 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Assert
             ref UIBackgroundComponent uiBackgroundComponent = ref world.Get<UIBackgroundComponent>(entity);
             Assert.IsNotNull(uiBackgroundComponent.Image);
+        }
+
+        [Test]
+        public void ApplyBackgroundOnceWhenDirtyFlagWasLost()
+        {
+            // Arrange - the model's only dirty tick was consumed by ResetDirtyFlagSystem before this system ran
+            var input = new PBUiBackground { Color = new Color4 { R = 1, G = 0, B = 0, A = 1 } };
+            world.Add(entity, input);
+
+            // Act
+            system.Update(0);
+
+            // Assert - the first application must not depend on the dirty flag
+            Assert.IsTrue(input.GetColor() == uiTransformComponent.Transform.style.backgroundColor);
+
+            // Act - subsequent non-dirty mutations keep the regular dirty semantics
+            input.Color = new Color4 { R = 0, G = 1, B = 0, A = 1 };
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(input.GetColor() == uiTransformComponent.Transform.style.backgroundColor);
         }
 
         [Test]

@@ -16,10 +16,10 @@ namespace DCL.RealmNavigation.Tests
 {
     public class TeleportControllerShould
     {
-        private World world;
+        private World world = null!;
         private Entity playerEntity;
-        private TeleportController controller;
-        private IRetrieveScene retrieveScene;
+        private TeleportController controller = null!;
+        private IRetrieveScene retrieveScene = null!;
 
         [SetUp]
         public void SetUp()

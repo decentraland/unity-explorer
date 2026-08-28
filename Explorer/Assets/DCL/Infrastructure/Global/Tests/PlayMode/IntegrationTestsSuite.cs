@@ -13,10 +13,8 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
-using DCL.Settings;
 using DCL.Time;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -34,7 +32,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.InputModifier.Components;
-using DCL.Utilities;
 using DCL.Utility;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
@@ -45,7 +42,6 @@ using Global.Versioning;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.UIElements;
 
 namespace Global.Tests.PlayMode
 {

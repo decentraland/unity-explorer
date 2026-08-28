@@ -22,18 +22,18 @@ namespace DCL.UI.DebugMenu
 
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
-        private ConsolePanelView consolePanelView;
-        private AbConversionPanelView abConversionPanelView;
-        private MetricsPanelView metricsPanelView;
+        private ConsolePanelView consolePanelView = null!;
+        private AbConversionPanelView abConversionPanelView = null!;
+        private MetricsPanelView metricsPanelView = null!;
 
         private DebugPanelView? visiblePanel;
 
         private IInputBlock? inputBlock;
 
-        private Button consoleButton;
-        private Button abConversionButton;
-        private Button metricsButton;
-        private Button debugPanelButton;
+        private Button consoleButton = null!;
+        private Button abConversionButton = null!;
+        private Button metricsButton = null!;
+        private Button debugPanelButton = null!;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -168,7 +168,7 @@ namespace DCL.UI.DebugMenu
             }
 
             // Cheap when nothing changed: a version check against the conversion metrics.
-            abConversionPanelView?.Refresh();
+            abConversionPanelView.Refresh();
 
             UpdateAbConversionAttention();
             UpdateMetricsPanel();
