@@ -243,7 +243,7 @@ namespace Global
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.LodAssetBundlesCDN)), container.GltfContainerAssetsCache, launchMode);
 
             var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
-            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, container.ProfilesContainer.Repository);
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
 
             container.ISSDescriptorDiskCache = new DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer());
 
