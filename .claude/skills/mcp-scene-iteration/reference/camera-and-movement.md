@@ -6,6 +6,8 @@ Read before framing screenshots, navigating precise lines, or inspecting a build
 
 - `move_to`'s `lookAt*` params orient the avatar but NOT the third-person camera; `screenshot` and `walk` follow the camera. Call the standalone `look_at` tool (it aligns camera yaw — confirm via `get_player_state` → `camera.rotationEuler.y`) before walking a precise line or framing a screenshot.
 - `look_at` lines the third-person camera up through the avatar, so the avatar occludes exactly the thing you framed. To photograph a subject, first `move_to` a spot offset sideways from the camera→subject line, then `look_at`.
+- **Looking up in third person stalls well before the pitch clamp.** The clamp is about -54° (a target directly overhead reports `aimErrorDegrees` ~33 with a rig-limit warning, which is correct). But aiming up at a shallower target can also stop short: measured `aimErrorDegrees: 18.0` with the camera parked at only **-22.5°** of pitch — the orbit boom swings toward the ground as it rises, collision shortens it, and that moves the ray origin under the refiner. "Back away so the angle is shallower" does not reliably fix it. For anything meaningfully above eye level, `set_camera_mode first_person` and `look_at` — it reaches -89° with `aimErrorDegrees` ~1.
+- **Reading small world-space text (readout boards, floating labels) needs first person.** At 1280×720 a board 10 m away is illegible even upscaled from the JPEG. Stand 2-4 m from it, `set_camera_mode first_person`, `look_at` the text, and capture `--png`; the third-person clamp is exactly what stops you getting close and looking up. Restore `third_person` afterwards.
 
 ## Free camera
 
