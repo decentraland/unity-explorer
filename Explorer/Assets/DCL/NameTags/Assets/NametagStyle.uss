@@ -313,15 +313,18 @@
     align-items: center;
     justify-content: center;
     max-width: 300px;
-    padding-top: 3px;
-    padding-bottom: 3px;
-    padding-right: 10px;
-    padding-left: 10px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 6px;
+    padding-left: 6px;
     background-color: var(--dcl-color-shadow);
-    border-top-left-radius: 13px;
-    border-top-right-radius: 13px;
-    border-bottom-right-radius: 13px;
-    border-bottom-left-radius: 13px;
+    border-width: 1.5px;
+    border-color: rgba(255, 255, 255, 0.2);
+    /* Larger than any possible half-height: the corners clamp into a capsule, per the design. */
+    border-top-left-radius: 100px;
+    border-top-right-radius: 100px;
+    border-bottom-right-radius: 100px;
+    border-bottom-left-radius: 100px;
 }
 
 .nametag--scene-tag > .nametag__scene-tag-container {
