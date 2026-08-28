@@ -57,8 +57,11 @@ namespace Preview
             previewUIPresenter.ContainerPan += previewCameraController.Pan;
             emoteAnimationController.EmoteAnimationEnded += OnEmoteAnimationEnded;
 
+            // The avatar stays on a turntable: it is read as a figure standing up, and tipping it just
+            // looks like it is falling over. An item shown on its own is an object being inspected, so it
+            // gets the second axis - the inside of a hood or the sole of a shoe is not reachable by yaw.
             avatarRotator.AllowVertical = false;
-            wearableRotator.AllowVertical = false;
+            wearableRotator.AllowVertical = true;
 
             StartCoroutine(Reload());
         }
@@ -346,6 +349,10 @@ namespace Preview
             var colors = new AvatarColors(eyeColor ?? Color.black, hairColor ?? Color.black,
                 skinColor ?? DEFAULT_SKIN_COLOR);
 
+            // "idle" resolves to no emote at all: the rig the scene is built on (Avatar_Model_Idle.glb)
+            // already carries an Idle clip, so leaving the slot empty plays it with nothing to download.
+            // NOTE the asymmetry — LoadForProfile does NOT short-circuit, so Profile and Authentication
+            // do fetch StreamingAssets/idle.glb for the same parameter value.
             var emoteEntity = base64Emote ?? (emoteName == "idle" ? null : EntityDefinition.FromEmbeddedEmote(emoteName, true));
 
             await avatarLoader.LoadAvatar(bodyShape,
@@ -428,6 +435,8 @@ namespace Preview
                 hasValidRepresentation = true;
             }
 
+            // Same "idle" short-circuit as LoadForBuilder: the empty slot falls through to the scene
+            // rig's own Idle clip rather than fetching one.
             var emoteDefinition = emoteOverride ??
                                   (defaultEmote == "idle"
                                       ? null
@@ -460,7 +469,10 @@ namespace Preview
 
             if (showsItemAlone)
             {
-                await wearableLoader.LoadWearable(wearableOverrides[0], avatarBodyShape, avatarColors);
+                // The pose comes from the avatar rig because that is where the Idle clip lives; the item
+                // view has no rig of its own to sample.
+                await wearableLoader.LoadWearable(wearableOverrides[0], avatarBodyShape, avatarColors,
+                    avatarLoader.GetIdlePose());
             }
             else
             {
@@ -484,6 +496,12 @@ namespace Preview
                 _ => PlayerPrefs.GetInt(PREF_AVATAR_SHOWN, 0) == 1
             };
 
+        /// <summary>
+        /// Unlike LoadForBuilder and LoadForMarketplace, this does NOT special-case "idle" — the default
+        /// emote value. So Profile and Authentication download StreamingAssets/idle.glb (132KB) to play
+        /// Idle_Male once, unlooped, and then EmoteAnimationController crossfades to the scene rig's own
+        /// Idle clip and stays there. The fetch buys the first 3s of the pose and nothing after it.
+        /// </summary>
         private async Awaitable LoadForProfile(string profileID, string defaultEmote, bool loop = false)
         {
             Assert.IsNotNull(profileID);
