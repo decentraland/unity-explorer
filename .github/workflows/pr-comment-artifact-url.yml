@@ -406,8 +406,9 @@ jobs:
           echo "PAT_EXPIRY_WARNING=$msg" >> "$GITHUB_ENV"
 
       # repository_dispatch is fire-and-forget (no run id comes back), so this
-      # links the target workflow's run list; the benchmark itself posts a
-      # separate perf-test-summary comment with its run link when it finishes.
+      # links the target workflow's run list; the benchmark itself rewrites
+      # this section with its report when it finishes (or falls back to a
+      # standalone perf-test-summary comment when the section write fails).
       - name: Mark performance section as dispatched
         if: steps.perf_dispatch.outcome == 'success'
         uses: ./.github/actions/ci-status-comment
@@ -418,7 +419,7 @@ jobs:
           body: |-
             [![Performance](https://img.shields.io/badge/Performance-Dispatched!-yellow?logo=speedtest&logoColor=white&style=for-the-badge)](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)
 
-            🏁 Bare-metal benchmark dispatched for this build ([run queue](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)) — results across the runner fleet will be posted as a separate `perf-test-summary` comment.
+            🏁 Bare-metal benchmark dispatched for this build ([run queue](https://github.com/decentraland/performance-testing/actions/workflows/unity-explorer.yaml)) — results across the runner fleet land in this section when it finishes.
 
             <sub>Latest build wins this section — it also replaces any earlier `perf_test`-suite verdict.</sub>
 

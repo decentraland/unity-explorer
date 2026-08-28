@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Create or update the single unified CI status comment on a PR, replacing only
-# one section (build | lint | tests | performance | automation). CI comment
-# workflows call this through the ci-status-comment composite action; build.py
-# (live build rows) and decentraland/performance-testing run it directly. Either
-# way the separate bot comments collapse into one.
+# one section (build | lint | tests | performance | automation | inworld). CI
+# comment workflows call this through the ci-status-comment composite action;
+# build.py (live build rows), decentraland/performance-testing (benchmark
+# report) and decentraland/explorer-automation (InWorld suite) run it directly.
+# Either way the separate bot comments collapse into one.
 #
 # The comment is keyed by the hidden <!-- ci-status --> marker and holds the
 # $HEADER heading plus one fenced block per section:
@@ -15,6 +16,7 @@
 #   <!-- ci:tests:start -->       …tests…       <!-- ci:tests:end -->
 #   <!-- ci:performance:start --> …performance… <!-- ci:performance:end -->
 #   <!-- ci:automation:start -->  …automation…  <!-- ci:automation:end -->
+#   <!-- ci:inworld:start -->     …inworld…     <!-- ci:inworld:end -->
 #
 # Build and Unity Test run as independent workflows whose comment writers can
 # fire at the same time, so a plain read-modify-write would drop a section or
@@ -83,7 +85,7 @@ fi
 # append a dead fence to the shared comment and then wedge the survive check
 # for 5 attempts, burning ~15 API calls per write from then on.
 case "${SECTION:-}" in
-  build|lint|tests|performance|automation) ;;
+  build|lint|tests|performance|automation|inworld) ;;
   *) echo "::error::Unknown section '${SECTION:-}'."; exit 2 ;;
 esac
 
@@ -106,14 +108,18 @@ section_default() {
     lint)  printf '![Lint](https://img.shields.io/badge/Lint-Waiting-lightgrey?logo=jetbrains&logoColor=white&style=for-the-badge)\n\n_Waiting for lint to start…_' ;;
     tests) printf '![Tests](https://img.shields.io/badge/Tests-Waiting-lightgrey?logo=codecov&logoColor=white&style=for-the-badge)\n\n_Waiting for tests to start…_' ;;
     automation) printf '![Automation](https://img.shields.io/badge/Automation-On%%20demand-lightgrey?logo=github&logoColor=white&style=for-the-badge)\n\n_On demand — comment `/visual-tests` on this PR to run the visual regression suite against its build._' ;;
-    performance) printf '![Performance](https://img.shields.io/badge/Performance-Waiting-lightgrey?logo=speedtest&logoColor=white&style=for-the-badge)\n\n_Bare-metal benchmarks run automatically after each successful build; results arrive as a separate comment. Add the `perf_test` label to run the in-repo Unity performance suite instead (skips normal CI and blocks merge while set)._' ;;
+    performance) printf '![Performance](https://img.shields.io/badge/Performance-Waiting-lightgrey?logo=speedtest&logoColor=white&style=for-the-badge)\n\n_Bare-metal benchmarks run automatically after each successful build; results land in this section. Add the `perf_test` label to run the in-repo Unity performance suite instead (skips normal CI and blocks merge while set)._' ;;
+    inworld) printf '![InWorld](https://img.shields.io/badge/InWorld-Waiting-lightgrey?logo=unity&logoColor=white&style=for-the-badge)\n\n_Waiting for the InWorld suite…_' ;;
   esac
 }
 
 # One section, fenced by its start/end markers.
 wrap_section() { printf '<!-- ci:%s:start -->\n%s\n<!-- ci:%s:end -->' "$1" "$2" "$1"; }
 
-# A fresh comment with every section defaulted to "waiting".
+# A fresh comment with every always-present section defaulted to "waiting".
+# inworld is deliberately absent: the suite only runs on release/hotfix PRs
+# into main, and a permanent "waiting" row on every other PR would be noise —
+# the append-missing-fence path below adds it the first time it reports.
 skeleton() {
   printf '%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n' \
     "$MARKER" "$HEADER" \
@@ -201,17 +207,22 @@ for attempt in 1 2 3 4 5; do
     CURRENT_BODY=""
   fi
 
-  # No unified comment yet: start from the full skeleton. A comment that exists
-  # but lacks our markers predates this section (e.g. it was written before the
-  # automation section existed) — append an empty fence for just our section
-  # instead of resetting the whole comment and wiping the other sections' state.
+  # No unified comment yet: start from the full skeleton. A comment that lacks
+  # our markers predates this section (e.g. it was written before the automation
+  # section existed) or the section is not part of the skeleton (inworld) —
+  # append an empty fence for just our section instead of resetting the whole
+  # comment and wiping the other sections' state. Two independent checks, not
+  # if/elif: a fresh skeleton needs the fence appended too when the section is
+  # a non-skeleton one, or replace_section would find no fence and the survive
+  # check would burn all 5 attempts.
   if [ -z "$CURRENT_BODY" ]; then
     CURRENT_BODY="$(skeleton)"
+  fi
   # -x: whole-line, matching replace_section/extract_section's $0==s exactly. A
   # substring hit on a marker embedded in a body line (which the strip filter
   # deliberately lets through) would skip fence creation here while the awk
   # matchers see nothing — leaving the section permanently unwritable.
-  elif ! grep -qxF "$START" <<< "$CURRENT_BODY"; then
+  if ! grep -qxF "$START" <<< "$CURRENT_BODY"; then
     CURRENT_BODY="$CURRENT_BODY"$'\n\n'"$(wrap_section "$SECTION" "$(section_default "$SECTION")")"
   fi
 

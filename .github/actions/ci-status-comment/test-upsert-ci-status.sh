@@ -107,9 +107,10 @@ run_upsert build "BUILD-CONTENT" >/dev/null
 BODY="$(body_of)"
 grep -q 'BUILD-CONTENT' <<< "$BODY" || fail "create: build content missing"
 grep -q '<!-- ci:performance:start -->' <<< "$BODY" || fail "create: performance fence missing"
+grep -q '<!-- ci:inworld:start -->' <<< "$BODY" && fail "create: on-demand inworld fence in skeleton"
 grep -q '🚦 CI Status' <<< "$BODY" || fail "create: emoji header missing"
 grep -q 'decentraland_256x256' <<< "$BODY" && fail "create: retired logo header present"
-pass "create seeds skeleton with all sections"
+pass "create seeds skeleton with all always-present sections"
 
 # --- 2. section update preserves the others ---------------------------------
 run_upsert tests "TESTS-CONTENT" >/dev/null
@@ -134,6 +135,26 @@ grep -q 'AUTO-CONTENT' <<< "$BODY" || fail "append: new section missing"
 grep -q '🚦 CI Status' <<< "$BODY" || fail "append: logo header not migrated"
 grep -q 'decentraland_256x256' <<< "$BODY" && fail "append: retired logo header still present"
 pass "missing fence appended + header migrated"
+
+# --- 3b. on-demand section: appended to an existing comment, and on create ----
+# inworld is not in the skeleton; a write must append its fence to a comment
+# seeded without it — and a write that has to create the comment must append
+# the fence to the fresh skeleton too, not wedge the survive check.
+reset_store
+run_upsert build "BUILD-FIRST" >/dev/null
+run_upsert inworld "INWORLD-CONTENT" >/dev/null
+[ "$(count)" = 1 ] || fail "inworld append: expected 1 comment"
+BODY="$(body_of)"
+grep -q 'BUILD-FIRST' <<< "$BODY" || fail "inworld append: build content lost"
+grep -q 'INWORLD-CONTENT' <<< "$BODY" || fail "inworld append: content missing"
+[ "$(grep -cF '<!-- ci:inworld:start -->' <<< "$BODY")" = 1 ] || fail "inworld append: fence count wrong"
+reset_store
+OUT="$(run_upsert inworld "INWORLD-SEEDS")"
+grep -q 'updated (attempt 1)' <<< "$OUT" || fail "inworld create: did not settle on attempt 1"
+BODY="$(body_of)"
+grep -q 'INWORLD-SEEDS' <<< "$BODY" || fail "inworld create: content missing"
+grep -q '<!-- ci:build:start -->' <<< "$BODY" || fail "inworld create: skeleton sections missing"
+pass "on-demand inworld section appended on update and on create"
 
 # --- 4. marker-shaped body lines are stripped --------------------------------
 reset_store
