@@ -43,17 +43,18 @@ namespace DCL.ECSComponents {
   }
   #region Messages
   /// <summary>
-  /// The AvatarNametag component adds a plate with scene-provided text above a player's nametag,
+  /// The AvatarNametag component adds a plate with scene-provided text above an avatar's nametag,
   /// for example to show a rank or a role that the scene assigns to that player.
   ///
-  /// It has to be attached to a player entity: `engine.PlayerEntity` for the local player, or the
-  /// entity of a player in the scene. On any other entity it is ignored. The client owns those
-  /// entities and reuses their ids after players disconnect, so resolve the entity from the user
-  /// id on every write, and remove the component when the player leaves the scene - a later write
-  /// to a stale entity lands on whoever holds that id next.
+  /// It has to be attached to an avatar-bearing entity: `engine.PlayerEntity` for the local player,
+  /// the entity of a player in the scene, or an entity with an AvatarShape. On any other entity it
+  /// is ignored. The client owns the player entities and reuses their ids after players disconnect,
+  /// so resolve the entity from the user id on every write, and remove the component when the
+  /// player leaves the scene - a later write to a stale entity lands on whoever holds that id next.
   ///
   /// The plate does not replace the avatar's name. It is drawn above the nametag as its own line,
-  /// and it stays visible while the name itself is hidden, including by AMT_HIDE_NAMETAGS.
+  /// and it stays visible while the name itself is hidden by AMT_HIDE_NAMETAGS. It does follow the
+  /// client's nametag visibility setting: a player who turns nametags off sees no plates either.
   /// Removing the component, or the entity, removes the plate.
   ///
   /// The plate is local to the client that renders it and is never relayed to other players. A
