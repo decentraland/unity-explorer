@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.BugReporting.UI;
 using DCL.CharacterPreview;
@@ -62,7 +61,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
         private readonly AudioClipConfig backgroundMusic;
-        private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
@@ -113,7 +111,6 @@ namespace DCL.AuthenticationScreenFlow
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
@@ -134,7 +131,6 @@ namespace DCL.AuthenticationScreenFlow
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
-            this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
@@ -187,7 +183,7 @@ namespace DCL.AuthenticationScreenFlow
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
-                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer)
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer)
             );
 
             if (enableEmailOTP)

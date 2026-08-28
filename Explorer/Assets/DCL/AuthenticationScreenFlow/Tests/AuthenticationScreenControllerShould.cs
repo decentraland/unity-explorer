@@ -28,7 +28,6 @@ namespace DCL.AuthenticationScreenFlow.Tests
                 null!,
                 null!,
                 null!,
-                null!,
                 null!);
 
             Assert.DoesNotThrow(controller.Dispose);
