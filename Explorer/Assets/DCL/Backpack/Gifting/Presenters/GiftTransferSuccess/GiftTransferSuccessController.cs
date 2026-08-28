@@ -27,7 +27,7 @@ namespace DCL.Backpack.Gifting.Presenters
             if (viewInstance != null)
             {
                 viewInstance.GiftSentText.text = string.Format(
-                    GiftingTextIds.GiftSentTextFormat,
+                    GiftingTextIds.GIFT_SENT_TEXT_FORMAT,
                     inputData.UserNameColorHex,
                     inputData.RecipientName
                 );

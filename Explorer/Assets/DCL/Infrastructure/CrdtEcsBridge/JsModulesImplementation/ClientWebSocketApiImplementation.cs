@@ -96,7 +96,14 @@ namespace CrdtEcsBridge.JsModulesImplementation
             if (!webSockets.TryGetValue(websocketId, out WebSocketRental webSocket))
                 throw new ArgumentException($"WebSocket with id {websocketId} does not exist.");
 
-            await webSocket.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, ct);
+            try
+            {
+                await webSocket.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected during scene teardown when the close is cancelled mid-flight.
+            }
         }
 
         public async UniTask<IWebSocketApi.ReceiveResponse> ReceiveAsync(int websocketId, CancellationToken ct)

@@ -1,12 +1,9 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
-using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
-using DCL.Web3;
 using DCL.WebRequests;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -14,9 +11,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using UnityEngine.Pool;
 
@@ -97,8 +92,11 @@ namespace DCL.Profiles
                     {
                         bool batched = result.Value.Count > 1;
 
-                        foreach (Profile dto in result.Value)
+                        foreach (Profile? dto in result.Value)
                         {
+                            // ProfileConverter deserializes malformed profile entries to null
+                            if (dto == null) continue;
+
                             intention.Ids.Remove(dto.UserId);
                             profileRepository.ResolveProfile(dto.UserId, dto, batched);
                         }
