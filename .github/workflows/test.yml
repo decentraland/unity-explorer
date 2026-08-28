@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'Explorer/**'
+      # Explorer consumes unity-shared-dependencies as a local package.
+      - 'unity-shared-dependencies/**'
       # The rsp-drift job must run when the generator changes, or drift merges unnoticed.
       - 'scripts/generate-ignore-warnings.sh'
     types:
@@ -14,7 +16,14 @@ on:
       - ready_for_review
       - labeled
   merge_group: {}
-  push: { branches: [dev] }
+  push:
+    branches: [dev]
+    # avatar-preview-renderer merges are invisible to the Explorer project; only
+    # Explorer/ and the shared package can affect this suite.
+    paths:
+      - 'Explorer/**'
+      - 'unity-shared-dependencies/**'
+      - 'scripts/generate-ignore-warnings.sh'
 
 permissions:
   contents: read
