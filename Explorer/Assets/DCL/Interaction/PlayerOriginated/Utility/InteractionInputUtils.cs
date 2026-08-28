@@ -37,15 +37,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             PBPointerEvents.Types.Info info
         )
         {
-            // max_distance is the player-distance threshold; max_player_distance is its deprecated alias (larger wins)
-            float? maxPlayerDistance = (info.HasMaxDistance, info.HasMaxPlayerDistance) switch
-            {
-                (true, true) => Mathf.Max(info.MaxDistance, info.MaxPlayerDistance),
-                (true, false) => info.MaxDistance,
-                (false, true) => info.MaxPlayerDistance,
-                _ => null,
-            };
-
+            float? maxPlayerDistance = ResolveMaxPlayerDistance(info);
             float? maxCameraDistance = info.HasMaxCameraDistance ? info.MaxCameraDistance : null;
 
             return (maxPlayerDistance, maxCameraDistance) switch
@@ -63,8 +55,21 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             in ProximityResultForSceneEntities proximityResultForSceneEntities,
             PBPointerEvents.Types.Info info
         ) =>
-            info is not { HasMaxPlayerDistance: true }
-            || proximityResultForSceneEntities.DistanceToPlayer <= info.MaxPlayerDistance;
+            proximityResultForSceneEntities.DistanceToPlayer <= (ResolveMaxPlayerDistance(info) ?? DEFAULT_MAX_DISTANCE);
+
+        /// <summary>
+        ///     The player-distance threshold of an entry, or null when it sets neither field.
+        ///     <c>max_distance</c> is the player-distance threshold; <c>max_player_distance</c> is its deprecated alias (larger wins).
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float? ResolveMaxPlayerDistance(PBPointerEvents.Types.Info info) =>
+            (info.HasMaxDistance, info.HasMaxPlayerDistance) switch
+            {
+                (true, true) => Mathf.Max(info.MaxDistance, info.MaxPlayerDistance),
+                (true, false) => info.MaxDistance,
+                (false, true) => info.MaxPlayerDistance,
+                _ => null,
+            };
 
         /// <summary>
         ///     Handler Pointer Up and Pointer Down, check the corresponding input action if it was upped or downed this frame
