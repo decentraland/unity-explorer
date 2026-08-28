@@ -33,7 +33,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public void SetUp()
         {
             creditsApiClient = Substitute.For<MarketplaceCreditsAPIClient>(null, null);
-            webBrowser = Substitute.For<UnityAppWebBrowser>((IDecentralandUrlsSource)null!);
+            webBrowser = Substitute.For<UnityAppWebBrowser>((IDecentralandUrlsSource)null!, null);
             identityCache = Substitute.For<IWeb3IdentityCache>();
 
             IWeb3Identity identity = Substitute.For<IWeb3Identity>();

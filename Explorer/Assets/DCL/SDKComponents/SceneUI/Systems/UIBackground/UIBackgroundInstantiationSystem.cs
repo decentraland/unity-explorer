@@ -72,7 +72,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [Query]
         private void UpdateUIBackground(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent, ref PartitionComponent partitionComponent)
         {
-            if (!sdkModel.IsDirty)
+            // The dirty flag is reset at the end of the frame even when this system didn't run for that tick, so it cannot gate the first application.
+            if (!sdkModel.IsDirty && uiBackgroundComponent.StylesApplied)
                 return;
 
             // Create texture promise if needed
@@ -89,6 +90,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             else if (uiBackgroundComponent is { TexturePromise: not null, Status: LifeCycle.LoadingFinished })
                 // Ensure texture has latest data from model
                 uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, uiBackgroundComponent.Image.Texture);
+
+            uiBackgroundComponent.StylesApplied = true;
         }
 
         [Query]
