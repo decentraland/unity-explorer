@@ -11,6 +11,19 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField] public Button PlayAsGuestButton { get; private set; } = null!;
         [field: SerializeField] public Button LoginOrSignupButton { get; private set; } = null!;
 
+        [field: Header("ERROR POPUP")]
+        [field: SerializeField]
+        public GameObject ErrorPopupRoot { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupRetryButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupExitButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupCloseButton { get; private set; } = null!;
+
         public void Show() =>
             ShowAsync(CancellationToken.None).Forget();
 

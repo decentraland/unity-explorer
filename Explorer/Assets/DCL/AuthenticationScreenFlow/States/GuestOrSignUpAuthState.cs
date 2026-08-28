@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
+using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
@@ -12,7 +13,7 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class GuestOrSignUpAuthState : AuthStateBase, IState
+    public class GuestOrSignUpAuthState : AuthStateBase, IState, IPayloadedState<ErrorType>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
@@ -40,6 +41,14 @@ namespace DCL.AuthenticationScreenFlow
             this.splashScreen = splashScreen;
         }
 
+        public void Enter(ErrorType errorType)
+        {
+            Enter();
+
+            if (errorType == ErrorType.ConnectionError)
+                view.ErrorPopupRoot.SetActive(true);
+        }
+
         public new void Enter()
         {
             base.Enter();
@@ -56,6 +65,10 @@ namespace DCL.AuthenticationScreenFlow
 
             view.LoginOrSignupButton.onClick.AddListener(OnLoginClicked);
             view.PlayAsGuestButton.onClick.AddListener(PlayAsGuestClicked);
+
+            view.ErrorPopupRetryButton.onClick.AddListener(OnRetryFromError);
+            view.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
+            view.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
         }
 
         public override void Exit()
@@ -75,6 +88,11 @@ namespace DCL.AuthenticationScreenFlow
             view.LoginOrSignupButton.onClick.RemoveAllListeners();
             view.PlayAsGuestButton.onClick.RemoveAllListeners();
 
+            view.ErrorPopupRetryButton.onClick.RemoveAllListeners();
+            view.ErrorPopupCloseButton.onClick.RemoveAllListeners();
+            view.ErrorPopupExitButton.onClick.RemoveAllListeners();
+
+            view.ErrorPopupRoot.SetActive(false);
             view.Hide();
             base.Exit();
         }
@@ -107,9 +125,19 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
+                SetButtonsInteractable(true);
+                view.ErrorPopupRoot.SetActive(true);
             }
         }
+
+        private void OnRetryFromError()
+        {
+            controller.CancelLoginProcess();
+            machine.Enter<GuestOrSignUpAuthState>(true);
+        }
+
+        private void CloseErrorPopup() =>
+            view.ErrorPopupRoot.SetActive(false);
 
         private void SetButtonsInteractable(bool interactable)
         {

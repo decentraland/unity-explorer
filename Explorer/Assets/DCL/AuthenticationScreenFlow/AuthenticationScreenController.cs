@@ -221,12 +221,28 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void EnterLoginEntryState(int animHash)
+        internal void EnterLoginEntryState(int animHash)
         {
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
                 fsm?.Enter<GuestOrSignUpAuthState>(true);
             else
                 fsm?.Enter<LoginSelectionAuthState, int>(animHash, true);
+        }
+
+        internal void ReturnToOrigin(int animHash)
+        {
+            if (CurrentLoginMethod == LoginMethod.GUEST)
+                EnterLoginEntryState(animHash);
+            else
+                fsm?.Enter<LoginSelectionAuthState, int>(animHash);
+        }
+
+        internal void ReturnToOrigin(ErrorType errorType)
+        {
+            if (CurrentLoginMethod == LoginMethod.GUEST && FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
+                fsm?.Enter<GuestOrSignUpAuthState, ErrorType>(errorType, true);
+            else
+                fsm?.Enter<LoginSelectionAuthState, ErrorType>(errorType);
         }
 
         private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)

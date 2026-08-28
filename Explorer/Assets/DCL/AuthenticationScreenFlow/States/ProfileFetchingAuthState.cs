@@ -120,10 +120,10 @@ namespace DCL.AuthenticationScreenFlow
                     }
                     else if (isCached)
                     {
-                        // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and return to login selection.
+                        // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and start over.
                         identityCache.Clear();
                         profileFetchException = new ProfileNotFoundException();
-                        machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                        controller.ReturnToOrigin(SLIDE);
                     }
                     else
                     {
@@ -134,22 +134,22 @@ namespace DCL.AuthenticationScreenFlow
                 catch (OperationCanceledException e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                    controller.ReturnToOrigin(SLIDE);
                 }
                 catch (ProfileNotFoundException e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                    controller.ReturnToOrigin(SLIDE);
                 }
                 catch (TimeoutException e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
+                    controller.ReturnToOrigin(ErrorType.ConnectionError);
                 }
                 catch (Exception e)
                 {
                     profileFetchException = e;
-                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.ConnectionError);
+                    controller.ReturnToOrigin(ErrorType.ConnectionError);
                 }
             }
         }
