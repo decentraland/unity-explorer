@@ -1551,6 +1551,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        UpgradeGuestAccountPopupPrefab:
+          m_AssetGUID: f5f9dfc19df574348991427c083d6e04
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 8121969354881106021
       type: {class: EnsureClockSyncPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data: 

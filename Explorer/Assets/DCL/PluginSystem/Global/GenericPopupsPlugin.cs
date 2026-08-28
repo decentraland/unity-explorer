@@ -3,12 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Clipboard;
 using DCL.UI;
+using DCL.UI.UpgradeGuestAccountPopup;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.Serialization;
 
 namespace DCL.PluginSystem.Global
 {
@@ -20,6 +19,7 @@ namespace DCL.PluginSystem.Global
 
         private PastePopupToastController? pasteToastButtonController;
         private ChatEntryMenuPopupController? chatEntryMenuPopupController;
+        private UpgradeGuestAccountPopupController? upgradeGuestAccountPopupController;
 
         public GenericPopupsPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -35,6 +35,7 @@ namespace DCL.PluginSystem.Global
         {
             pasteToastButtonController?.Dispose();
             chatEntryMenuPopupController?.Dispose();
+            upgradeGuestAccountPopupController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -59,6 +60,14 @@ namespace DCL.PluginSystem.Global
 
             chatEntryMenuPopupController = new ChatEntryMenuPopupController(viewFactoryMethod, clipboardManager);
             mvcManager.RegisterController(chatEntryMenuPopupController);
+
+            UpgradeGuestAccountPopupView upgradeGuestAccountPopupAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.UpgradeGuestAccountPopupPrefab, ct)).Value;
+
+            ControllerBase<UpgradeGuestAccountPopupView, ControllerNoData>.ViewFactoryMethod upgradeGuestAccountViewFactoryMethod =
+                UpgradeGuestAccountPopupController.Preallocate(upgradeGuestAccountPopupAsset, null, out _);
+
+            upgradeGuestAccountPopupController = new UpgradeGuestAccountPopupController(upgradeGuestAccountViewFactoryMethod);
+            mvcManager.RegisterController(upgradeGuestAccountPopupController);
         }
 
         [Serializable]
@@ -76,8 +85,15 @@ namespace DCL.PluginSystem.Global
                 public ChatEntryMenuPopupRef(string guid) : base(guid) { }
             }
 
+            [Serializable]
+            public class UpgradeGuestAccountPopupRef : ComponentReference<UpgradeGuestAccountPopupView>
+            {
+                public UpgradeGuestAccountPopupRef(string guid) : base(guid) { }
+            }
+
             [field: SerializeField] public PastePopupToastRef PastePopupToastPrefab;
             [field: SerializeField] public ChatEntryMenuPopupRef ChatEntryMenuPopupPrefab;
+            [field: SerializeField] public UpgradeGuestAccountPopupRef UpgradeGuestAccountPopupPrefab;
         }
     }
 }
