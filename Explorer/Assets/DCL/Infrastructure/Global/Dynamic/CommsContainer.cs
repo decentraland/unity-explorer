@@ -31,6 +31,7 @@ using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using LiveKit.Internal.FFIClients.Requests;
 using System;
 using System.Buffers;
 using UnityEngine;
@@ -116,6 +117,10 @@ namespace Global.Dynamic
             bool localSceneDevelopment,
             string? localSceneDevelopmentRealm = null)
         {
+            FFIBridgeExtensions.UseTransportAllForLoopbackUrls = LocalUntrustedRealmCommsPolicy.ShouldUseTransportAll(
+                appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM),
+                staticContainer.RealmData.Ipfs.CatalystBaseUrl.Value);
+
             var entityParticipantTable = new EntityParticipantTable();
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
