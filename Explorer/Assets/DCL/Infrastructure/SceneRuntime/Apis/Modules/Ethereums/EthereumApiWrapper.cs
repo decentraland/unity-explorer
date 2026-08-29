@@ -110,6 +110,27 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                         jsonAnyResponse = JsonConvert.SerializeObject(result),
                     };
                 }
+                catch (Web3MethodNotAllowedException e)
+                {
+                    // A deterministic, scene-input-driven rejection (non-whitelisted method or disabled Web3 API),
+                    // not an engine fault. Return a spec-compliant JSON-RPC error to the scene and do NOT route it
+                    // through OnEngineException, which would report it to Sentry and, on repeated calls, trip the
+                    // engine-exception tolerance and suspend the scene.
+                    return new SendEthereumMessageResponse
+                    {
+                        jsonAnyResponse = JsonConvert.SerializeObject(new EthApiResponse
+                        {
+                            id = (long)id,
+                            jsonrpc = "2.0",
+                            result = null,
+                            error = new EthApiError
+                            {
+                                code = -32601, // JSON-RPC 2.0 "Method not found"
+                                message = e.Message,
+                            },
+                        }),
+                    };
+                }
                 catch (Exception e)
                 {
                     sceneExceptionsHandler.OnEngineException(e);
