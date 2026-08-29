@@ -123,40 +123,61 @@ namespace Runtime.Wearables
             item = new CacheItem();
             cache.Add(id, item);
 
-            // Null DTO wearable, just consider it non-smart
-            if (wearable.DTO == null) return item;
-
-            item.IsSmart = IsSmart(wearable);
-            if (!item.IsSmart) return item;
-
-            string contentUrl = GetContentUrl(wearable);
-            item.SceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), wearable, BodyShape.MALE);
-
-            if (!item.SceneContent.TryGetContentUrl("scene.json", out URLAddress url))
+            try
             {
-                ReportHub.LogError(ReportCategory.WEARABLE, "Could not find 'scene.json'");
+                // Null DTO wearable, just consider it non-smart
+                if (wearable.DTO == null) return item;
+
+                item.IsSmart = IsSmart(wearable);
+                if (!item.IsSmart) return item;
+
+                string contentUrl = GetContentUrl(wearable);
+                item.SceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), wearable, BodyShape.MALE);
+
+                if (!item.SceneContent.TryGetContentUrl("scene.json", out URLAddress url))
+                {
+                    ReportHub.LogError(ReportCategory.WEARABLE, "Could not find 'scene.json'");
+
+                    // The DTO advertised a smart wearable but its content has no scene.json, so it cannot run:
+                    // downgrade to non-smart instead of caching a smart entry with no metadata, which would crash the scene load.
+                    item.IsSmart = false;
+                    return item;
+                }
+
+                var args = new CommonLoadingArguments(URLAddress.FromString(url));
+                item.SceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
+                                                               .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
+
+                if (ct.IsCancellationRequested)
+                {
+                    // Do not leave a partially-populated entry (SceneContent set, SceneMetadata still null) in the cache:
+                    // a later non-cancelled read would return it and crash the smart wearable scene load.
+                    cache.Remove(id);
+                    return null;
+                }
+
+                item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
+
+                if (item.IsSmart)
+                {
+                    List<string> permissions = item.SceneMetadata.requiredPermissions;
+
+                    item.RequiresWeb3API = permissions.Contains(ScenePermissionNames.USE_WEB3_API);
+                    item.RequiresAuthorization = item.RequiresWeb3API ||
+                                                 permissions.Contains(ScenePermissionNames.OPEN_EXTERNAL_LINK) ||
+                                                 permissions.Contains(ScenePermissionNames.USE_WEBSOCKET) ||
+                                                 permissions.Contains(ScenePermissionNames.USE_FETCH);
+                }
+
                 return item;
             }
-
-            var args = new CommonLoadingArguments(URLAddress.FromString(url));
-            item.SceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
-                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
-            if (ct.IsCancellationRequested) return null;
-
-            item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
-
-            if (item.IsSmart)
+            catch
             {
-                List<string> permissions = item.SceneMetadata.requiredPermissions;
-
-                item.RequiresWeb3API = permissions.Contains(ScenePermissionNames.USE_WEB3_API);
-                item.RequiresAuthorization = item.RequiresWeb3API ||
-                                             permissions.Contains(ScenePermissionNames.OPEN_EXTERNAL_LINK) ||
-                                             permissions.Contains(ScenePermissionNames.USE_WEBSOCKET) ||
-                                             permissions.Contains(ScenePermissionNames.USE_FETCH);
+                // The metadata fetch failed (network/JSON/cancellation): evict the half-built entry so the next
+                // request retries from scratch instead of permanently returning a poisoned, metadata-less item.
+                cache.Remove(id);
+                throw;
             }
-
-            return item;
         }
 
         private bool IsSmart(IWearable wearable)
