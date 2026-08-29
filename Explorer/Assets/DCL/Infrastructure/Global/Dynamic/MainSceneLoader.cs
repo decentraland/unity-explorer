@@ -45,6 +45,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Versioning;
+using LiveKit.Internal.FFIClients.Requests;
 using MVC;
 using Newtonsoft.Json.Linq;
 using Plugins.NativeWindowManager;
@@ -252,6 +253,11 @@ namespace Global.Dynamic
             // the consent dialog; WarnIfCommandLineOnlyArgCameFromTheDeepLink reports that accepting it changes nothing.)
             ApplyBaseDomainArg(applicationParametersParser);
             LocalCertificateValidation.Configure(applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM));
+
+            // Configure the local ICE policy before any dynamic container or room is created. The SDK still
+            // applies its own loopback URL check, so this opt-in cannot change transport behavior for a remote
+            // realm. RealmController recomputes the value after every realm bootstrap/change as a second guard.
+            FFIBridgeExtensions.UseTransportAllForLoopbackUrls = applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM);
 
             // Read while the deep link is still deferred for the same reason as the base domain: which chain the
             // client signs against is not something a link may pick, not even through the denied-params dialog.
