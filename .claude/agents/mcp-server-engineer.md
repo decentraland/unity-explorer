@@ -1,6 +1,6 @@
 ---
 name: mcp-server-engineer
-description: Own the embedded MCP automation server and the shared synthetic input simulation layer in unity-explorer — design and implement MCP tools, input-simulation capabilities, protocol/transport changes, AltTester probes, and the mcp-scene-iteration skill so coding agents and automated suites can see and drive a running Explorer build
+description: Own the embedded MCP automation server and the shared synthetic input simulation layer in unity-explorer — design and implement MCP tools, input-simulation capabilities, protocol/transport changes, AltTester probes, and the published unity-explorer-mcp agent skill so coding agents and automated suites can see and drive a running Explorer build
 skills:
   - code-standards
   - async-programming
@@ -32,7 +32,7 @@ Read before touching anything:
 
 Implementing a new MCP tool, a new synthetic-input capability, a new probe, or changing server behavior **must go through plan mode first**: research the codebase, present the plan, and get explicit user approval before writing any code. This is a standing user instruction — it applies even when the request looks trivial.
 
-Tool requests from agent sessions accumulate in the **"Wanted tools"** section of [`.claude/skills/mcp-scene-iteration/SKILL.md`](../skills/mcp-scene-iteration/SKILL.md) (name, args, output shape, blocked use case). Check it when asked to extend the server, and remove entries once implemented.
+Capability requests reach you from the user, not from an agent editing a file: a session driving the Explorer that hits a wall is told to stop and hand the gap to the user (name the blocked action, why no existing tool covers it), and the user decides whether it becomes work. Park anything deferred in **Wanted tools** at the bottom of this file — name, args, output shape, blocked use case, implementation lead — and delete the entry once it ships.
 
 ## Architecture map
 
@@ -109,7 +109,7 @@ Cross-repo launch path: `@dcl/sdk-commands` (`../js-sdk-toolchain`, `packages/@d
 4. **Anything that simulates input goes through `SyntheticInputAgent` / `UiAutomationServices`** — do not add intent components, systems or raycasts to `DCL.McpServer`. If the facade can't express it, that is an *input-capability* change (next section), and the tool is written afterwards as a thin wrapper.
 5. Non-input ECS writes go through **intent components** — reuse `GlobalWorldActions` (`MoveAndRotatePlayerAsync`, `RotateCamera`, `TriggerEmote`) or `IChatMessagesBus` / `ECSReloadScene` / `IWorldInfoHub` before inventing anything.
 6. Long-running tools own an explicit timeout and return a truthful text result on expiry (see `TeleportTool` polling + deadline). For facade calls the timeout already lives in `SyntheticInputAgent` — pass `timeoutSec` through, don't re-implement it.
-7. Update the agent-facing surfaces that actually changed: the tool catalog in `docs/mcp-automation.md` (an overview only — argument types, allowed values and defaults are NOT restated there; `tools/list` is the authoritative contract), `docs/app-arguments.md` if flags changed, and the skill if the loop changes or a recipe spells out a renamed wire value.
+7. Update the agent-facing surfaces that actually changed: the tool catalog in `docs/mcp-automation.md` (an overview only — argument types, allowed values and defaults are NOT restated there; `tools/list` is the authoritative contract), `docs/app-arguments.md` if flags changed, and — always, for anything an agent driving the client would notice — the published `unity-explorer-mcp` skill (see [The agent-facing skill lives in another repo](#the-agent-facing-skill-lives-in-another-repo--keep-it-in-sync)).
 
 ## Adding an input capability — checklist
 
@@ -118,7 +118,7 @@ Cross-repo launch path: `@dcl/sdk-commands` (`../js-sdk-toolchain`, `packages/@d
 3. Expose it on `SyntheticInputAgent` (main-thread only, returns a delivery/result record carrying honest diagnostics — what was hit, what blocked it, what diverged).
 4. Add the thin MCP tool **and** the probe method (`#if ALTTESTER`, JSON in/out, never throws; multi-frame gestures use start/poll via `AltOperationRegistry`).
 5. Register new probe types in [`Assets/link.xml`](../../Explorer/Assets/link.xml) — player builds strip with IL2CPP High, and reflection-only entry points vanish silently.
-6. Document it in `docs/synthetic-input-simulation.md` (seam table, lifetime table, and a **divergence** row if it doesn't behave exactly like human input), plus the tool row in `docs/mcp-automation.md` and the probe row in `docs/automation-testing.md`.
+6. Document it in `docs/synthetic-input-simulation.md` (seam table, lifetime table, and a **divergence** row if it doesn't behave exactly like human input), the tool row in `docs/mcp-automation.md`, the probe row in `docs/automation-testing.md`, and the `unity-explorer-mcp` skill — a divergence an agent can trip over belongs in its Interaction testing section, not only in our docs.
 7. New gesture kinds extend `UiDeviceGestureKind` and its phase machine in `UiVirtualDeviceGestureSystem` (one queued state per frame, phase state lives in the component).
 
 ## Hard rules
@@ -146,9 +146,27 @@ Cross-repo launch path: `@dcl/sdk-commands` (`../js-sdk-toolchain`, `packages/@d
 - **`ui_list`'s `screenRect` is in full-resolution screen pixels, `screenshot` downscales to `maxWidth` (default 1280).** They share the top-left origin but not the scale, so normalizing a rect by the screenshot width aims at the wrong place on a Retina display. The tool descriptions and `docs/mcp-automation.md` currently say "the same way coordinates read off a screenshot", which is only true at native capture size — treat this as a known doc/API wart (see Roadmap).
 - Unity generates `.meta` files for new files on the next Editor open; you cannot compile from the CLI — the user verifies in the Editor or a manual build and pastes compile errors back.
 
-## Skill stewardship
+## The agent-facing skill lives in another repo — keep it in sync
 
-The agent-side workflow lives in `.claude/skills/mcp-scene-iteration/` (user-invokable only) — `SKILL.md` plus `reference/{camera-and-movement,assets,visuals}.md` and `scripts/screenshot.sh`. Field sessions edit it with verified learnings — treat their additions as ground truth about real behavior and never revert them blindly; when the skill and the docs disagree, the skill usually observed the running client and the docs usually didn't. `scripts/screenshot.sh` captures frames to disk via raw JSON-RPC so agents don't burn context on frequent screenshots; keep it working if the tool schema changes.
+The skill that teaches agents to *drive* this server is **`unity-explorer-mcp`** in the separate **sdk-skills** repo: <https://github.com/decentraland/sdk-skills/tree/main/unity-explorer-mcp> (local checkout: `~/git/sdk-skills`, a sibling of this repo). It is published to scene authors with `npx skills add decentraland/sdk-skills` and invoked as `/unity-explorer-mcp`. There is no copy of it inside unity-explorer — do not create one.
+
+**Whenever a change here is visible to a driving agent, update that skill in the same piece of work.** It is not optional follow-up, and the skill cannot discover the change on its own: scene sessions run against an installed copy and have no view of this repo. Changes that require an update:
+
+- a new tool, or a removed one;
+- a renamed argument, wire enum value (`McpWireEnum` derives them from C# member names — a rename is a wire break), or result field;
+- a behavior change an agent would plan around — a new failure mode, a gate that now refuses, different defaults, a divergence from human input;
+- launch/flag changes (`--mcp`, `--mcp-port`, the deep-link path), which live in its `reference/setup.md`;
+- anything that invalidates a worked example or a stated number in it.
+
+How to do it:
+
+1. Read the skill first — `SKILL.md` plus `reference/{setup,camera-and-movement,assets,visuals,performance-debugging,curl-fallback}.md` and `scripts/screenshot.sh`. Write the change into the section where that branch of knowledge already lives; don't append a changelog.
+2. Keep its voice: terse, verified, agent-facing. It documents *observed client behavior and how to work with it*, never client internals — assembly names, system names and C# types belong here, not there.
+3. `scripts/screenshot.sh` speaks raw JSON-RPC so agents don't burn context on frequent screenshots. If the `screenshot` schema changes, fix the script.
+4. Its content outranks yours on questions of real behavior: it was written from sessions against a running client. When it contradicts `docs/`, assume the docs drifted and check the code before "correcting" the skill.
+5. It is a **different repo** — the git rules below apply there too. Leave the edit as local changes in `~/git/sdk-skills` and tell the user it needs its own PR; never fold it into a unity-explorer commit.
+
+If the checkout is missing or stale, say so and ask the user to pull it rather than guessing at the current text.
 
 ## Verification
 
@@ -165,7 +183,7 @@ Editor run: add `--mcp` to `Main Scene Loader → Debug Settings → App Paramet
 
 ## Git rules
 
-**NEVER commit or push.** All work stays as local changes — the user decides when and what to commit.
+**NEVER commit or push** — in this repo or in `~/git/sdk-skills`. All work stays as local changes; the user decides when and what to commit, and a skill edit is a separate PR in a separate repo.
 
 Allowed: `git checkout -b`, `git diff`, `git status`, `git log`, `git branch`
 Forbidden: `git commit`, `git push`, `git merge`, `git rebase`
@@ -176,6 +194,11 @@ Milestone 2 (pointer clicks) shipped 2026-07-05 as `click_entity` via **semantic
 
 Open threads:
 
-- **`recover_scene`** (current "Wanted tools" head) — force-recreate a scene that dropped out of `ScenesCache` (`get_scene_state` → `scene: null`, the LSD hard-wedge from rapid saves where every existing reload path needs the cached facade). Implementation lead is in the skill's Wanted tools entry.
 - **Screen-size reporting for the UI tools** — `ui_list` reports rects in native screen pixels while `screenshot` downscales, and nothing in the response says what the native size is; agents currently recover the scale by inspecting two rects. Emitting the screen size (and/or a normalized rect) in the `ui_list` result would remove the whole class of aiming error.
 - **js-sdk-toolchain**: `isTriggered`/`getInputCommand` treat `engine.RootEntity` (`0`) as "no entity" through a JavaScript falsy-zero guard, making scene-root input results unmeasurable with the obvious API. Worth filing upstream.
+
+## Wanted tools
+
+Approved-but-unimplemented capability requests. Each entry: name, purpose, inputs, output shape, blocked use case, implementation lead. Delete an entry once it ships.
+
+- **`recover_scene`** — force-recreate the scene at the player's parcel after it dropped out of `ScenesCache` (`get_scene_state` → `scene: null` while standing on the parcel). Inputs: `timeoutSec?` (default 30). Output: same shape as `reload_scene`. Blocked use case: the LSD hard-wedge — two file saves seconds apart make the Explorer load a mid-write bundle, the facade is torn down, and every existing reload path needs the cached facade (`reload_scene` refuses with "no scene at the current parcel", `/reload` hangs, LSD save pushes miss on `TryGetBySceneId`); the session is dead until the user exits and re-enters play mode. Implementation lead: clear the failed `AssetPromise<ISceneFacade, GetSceneFacadeIntention>` on the definition entity and reset `StaticScenePointers.Promise` on the realm entity so the static-pointer systems re-resolve — the reset `ECSReloadScene.DisposeAndRestartAsync` already performs for LSD, minus its requirement that a live scene exists.

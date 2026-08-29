@@ -132,7 +132,7 @@ Optional determinism flags for stable screenshots: `--disable-hud`, `--skybox-ti
 
 Once loading completes, the server announces its address in the scene debug console (available with local scene development or `--scene-console`): `MCP server listening on http://127.0.0.1:8123/unity-explorer-mcp`. A startup failure (port in use) is announced there as an error instead. The same line lands in the `get_scene_logs` buffer, so agents can confirm the server from inside the loop.
 
-A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/mcp-scene-iteration/` (invoke with `/mcp-scene-iteration`).
+A user-invokable Claude Code skill wrapping this loop is published in the **sdk-skills** repo as [`unity-explorer-mcp`](https://github.com/decentraland/sdk-skills/tree/main/unity-explorer-mcp) (installed with `npx skills add decentraland/sdk-skills`, invoked with `/unity-explorer-mcp`). It is the agent-facing counterpart of this document — when the tool surface changes here, update it there.
 
 ## Troubleshooting
 
