@@ -62,6 +62,18 @@ namespace UUAV
                 );
                 return;
             }
+#elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
+            // native captures Unity's device through IUnityGraphicsVulkan at
+            // plugin load (Vulkan) or drives the current GL context (OpenGL
+            // Core); no other API has an import path for the shared frames
+            if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Vulkan
+                && SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore)
+            {
+                Debug.LogError(
+                    $"[UUAV] init: unsupported graphics API {SystemInfo.graphicsDeviceType}; Linux requires Vulkan or OpenGL Core"
+                );
+                return;
+            }
 #endif
 
             Application.quitting += Deinit;

@@ -83,6 +83,9 @@ namespace DCL.SDKComponents.MediaStream
 
         private static FeatureId CurrentPlatformMediaPlayerFeature()
         {
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Linux))
+                return FeatureId.UseCustomMediaPlayerLinux;
+
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
                 return SystemInfo.processorType.Contains("apple", StringComparison.OrdinalIgnoreCase)
                     ? FeatureId.UseCustomMediaPlayerMacSilicon

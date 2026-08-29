@@ -17,6 +17,12 @@ typedef DWORD pid_t;
 #define EXPORT __attribute__((visibility("default")))
 #endif
 
+#ifdef __linux__
+#include <sys/types.h>
+
+#define EXPORT __attribute__((visibility("default")))
+#endif
+
 EXPORT char* get_process_name(pid_t pid);
 
 EXPORT void free_name(char* name);

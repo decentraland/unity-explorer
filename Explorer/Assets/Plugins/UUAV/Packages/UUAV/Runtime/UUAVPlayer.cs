@@ -395,10 +395,11 @@ namespace UUAV
 
             var uvTexture = yTexture;
 
-            // on Metal each plane is its own texture; both pointers change
-            // together on resolution change, so polling plane 0 covers both.
-            // on D3D11 native ignores the plane and returns the one resource
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            // on Metal (and on Linux, Vulkan or GL) each plane is its own
+            // texture; both pointers change together on resolution change, so
+            // polling plane 0 covers both. on D3D11 native ignores the plane
+            // and returns the one NV12 resource for both
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX || UNITY_EDITOR_LINUX || UNITY_STANDALONE_LINUX
             var uvResult = NativeMethods.uuav_player_get_video_texture(
                     playerId,
                     1,

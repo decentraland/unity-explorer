@@ -16,7 +16,6 @@ namespace DCL.SDKComponents.MediaStream
 {
     public class MediaPlayerPluginWrapper : IDisposable
     {
-        // ReSharper disable NotAccessedField.Local -- consumed by InjectToWorld, whose body is compiled out under the Linux defines InspectCode runs with.
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IExposedCameraData exposedCameraData;
         private readonly float audioFadeSpeed;
@@ -24,9 +23,9 @@ namespace DCL.SDKComponents.MediaStream
         private readonly MediaFactoryBuilder mediaFactory;
         private readonly Material flipMaterial;
         private readonly MediaPlayerDebugRegistry debugRegistry;
-        // ReSharper restore NotAccessedField.Local
 
-        // Null on platforms where the LiveKit media feature is compiled out (see InjectToWorld guard).
+        // Null on Linux, where the eager offscreen placeholder camera is not created (see MediaPlayerPlugin);
+        // LivekitPlayer null-checks it and falls back to black on camera-off.
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
 
         public MediaPlayerPluginWrapper(
@@ -52,7 +51,6 @@ namespace DCL.SDKComponents.MediaStream
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-#if !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             MediaFactory sceneMediaFactory = mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub, placeholderSource);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, sceneMediaFactory);
@@ -65,7 +63,6 @@ namespace DCL.SDKComponents.MediaStream
             GatherMediaStreamDebugSystem.InjectToWorld(ref builder, debugRegistry, sceneDeps.SceneStateProvider, sceneDeps.SceneData);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
-#endif
         }
 
         public void Dispose()
