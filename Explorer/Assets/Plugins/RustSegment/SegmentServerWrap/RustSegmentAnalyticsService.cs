@@ -266,8 +266,13 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
+                // A non-Success result here is a transient failure delivering an already-queued analytics
+                // operation to Segment's external ingestion API (the native library persists and retries it).
+                // Report it as a warning breadcrumb instead of an error-level Sentry issue so a normal external
+                // hiccup does not consume the Sentry error budget. Genuine client faults (invalid operationId,
+                // init/dispose failures) keep their LogError/throw handling on their own paths.
                 if (response is not NativeMethods.Response.Success)
-                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment operation {operationId} {type} failed with: {response}");
 
                 instanceGuard.Value.CleanMemory(operationId);
             }
