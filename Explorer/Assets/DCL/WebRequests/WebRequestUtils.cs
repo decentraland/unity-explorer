@@ -2,7 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System;
+using System.Collections.Concurrent;
 using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -16,6 +19,8 @@ namespace DCL.WebRequests
         public const int UNAUTHORIZED_ACCESS = 401;
         public const int FORBIDDEN_ACCESS = 403;
         public const int NOT_FOUND = 404;
+
+        private static readonly ConcurrentDictionary<string, bool> PRIVATE_HOST_CACHE = new ();
 
         public static SuppressExceptionWithFallback<TCoreOp, TWebRequest, TResult> SuppressExceptionsWithFallback<TCoreOp, TWebRequest, TResult>(this TCoreOp coreOp, TResult fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) where TWebRequest: struct, ITypedWebRequest where TCoreOp: IWebRequestOp<TWebRequest, TResult> =>
             new (coreOp, fallbackValue, behaviour, reportContext);
@@ -175,6 +180,47 @@ namespace DCL.WebRequests
             || url.StartsWith("https://127.0.0.1", StringComparison.OrdinalIgnoreCase)
             || url.StartsWith("http://[::1]", StringComparison.OrdinalIgnoreCase)
             || url.StartsWith("https://[::1]", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        ///     True when the URL's host resolves only to loopback, private (RFC 1918), link-local,
+        ///     carrier-grade-NAT (RFC 6598), or IPv6 ULA addresses. Content on such hosts cannot be
+        ///     reached by public server-side services (e.g. the media converter), so it must be
+        ///     fetched directly. The verdict is cached per host; the first call for a host performs
+        ///     a blocking DNS resolution.
+        /// </summary>
+        public static bool IsPrivateNetworkHost(string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            return PRIVATE_HOST_CACHE.GetOrAdd(uri.Host, static host =>
+            {
+                try
+                {
+                    IPAddress[] addresses = Dns.GetHostAddresses(host);
+                    return addresses.Length > 0 && Array.TrueForAll(addresses, IsPrivateAddress);
+                }
+                catch (Exception) { return false; }
+            });
+        }
+
+        private static bool IsPrivateAddress(IPAddress address)
+        {
+            if (IPAddress.IsLoopback(address)) return true;
+
+            if (address.AddressFamily == AddressFamily.InterNetwork)
+            {
+                byte[] b = address.GetAddressBytes();
+
+                return b[0] == 10
+                       || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+                       || (b[0] == 192 && b[1] == 168)
+                       || (b[0] == 100 && b[1] >= 64 && b[1] <= 127)
+                       || (b[0] == 169 && b[1] == 254);
+            }
+
+            return address.IsIPv6LinkLocal || address.IsIPv6SiteLocal || (address.GetAddressBytes()[0] & 0xFE) == 0xFC;
+        }
 
         /// <summary>
         ///     Does nothing with the web request
