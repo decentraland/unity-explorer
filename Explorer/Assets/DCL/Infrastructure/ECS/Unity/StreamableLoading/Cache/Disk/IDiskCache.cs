@@ -279,8 +279,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public void Dispose()
         {
-            disposeSource?.Invoke(source);
-            SerializeMemoryIterator.POOL.Release(buffer);
+            try { disposeSource?.Invoke(source); }
+            finally { SerializeMemoryIterator.POOL.Release(buffer); }
         }
     }
 
