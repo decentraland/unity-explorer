@@ -187,20 +187,32 @@ namespace Decentraland.Terrain
             GenerateScatteredFlowers(terrainGenerator);
             GenerateScatteredCatTails(terrainGenerator);
 
+            // A detail asset with a dangling mesh/material reference must degrade to "that detail
+            // does not render", never throw: an exception here aborts the whole
+            // PresentationSystemGroup for the frame, killing every system ordered after this one.
             LandscapeAsset grass = landscapeData.terrainData.detailAssets[0];
-            SetGrassMeshAndMaterial(grass.TerrainDetailSettings.Mesh, grass.TerrainDetailSettings.Material);
-            RenderGrass(renderToAllCameras ? null : camera);
+
+            if (HasMeshAndMaterial(grass))
+            {
+                SetGrassMeshAndMaterial(grass.TerrainDetailSettings.Mesh!, grass.TerrainDetailSettings.Material!);
+                RenderGrass(renderToAllCameras ? null : camera);
+            }
 
             LandscapeAsset flower0 = landscapeData.terrainData.detailAssets[1];
-            SetFlower0MeshAndMaterial(flower0.TerrainDetailSettings.Mesh, flower0.TerrainDetailSettings.Material);
-
             LandscapeAsset flower1 = landscapeData.terrainData.detailAssets[2];
-            SetFlower1MeshAndMaterial(flower1.TerrainDetailSettings.Mesh, flower1.TerrainDetailSettings.Material);
-
             LandscapeAsset flower2 = landscapeData.terrainData.detailAssets[3];
-            SetFlower2MeshAndMaterial(flower2.TerrainDetailSettings.Mesh, flower2.TerrainDetailSettings.Material);
-            RenderFlowers(renderToAllCameras ? null : camera);
+
+            if (HasMeshAndMaterial(flower0) && HasMeshAndMaterial(flower1) && HasMeshAndMaterial(flower2))
+            {
+                SetFlower0MeshAndMaterial(flower0.TerrainDetailSettings.Mesh!, flower0.TerrainDetailSettings.Material!);
+                SetFlower1MeshAndMaterial(flower1.TerrainDetailSettings.Mesh!, flower1.TerrainDetailSettings.Material!);
+                SetFlower2MeshAndMaterial(flower2.TerrainDetailSettings.Mesh!, flower2.TerrainDetailSettings.Material!);
+                RenderFlowers(renderToAllCameras ? null : camera);
+            }
         }
+
+        private static bool HasMeshAndMaterial(LandscapeAsset detailAsset) =>
+            detailAsset.TerrainDetailSettings.Mesh != null && detailAsset.TerrainDetailSettings.Material != null;
 
         public void SetGrassMeshAndMaterial(Mesh mesh, Material material)
         {
