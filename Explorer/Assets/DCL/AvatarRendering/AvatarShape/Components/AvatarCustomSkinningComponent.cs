@@ -75,6 +75,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public FixedComputeBufferHandler.Slice VertsOutRegion;
 
+        /// <summary>
+        ///     After defragmentation the new region holds another avatar's verts, so one re-skin must run regardless of visibility
+        /// </summary>
+        public bool ForceSkinNextFrame;
+
         public readonly int VertCount;
         public readonly int BoneCount;
 
@@ -98,6 +103,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.computeShaderInstance = computeShaderInstance;
             this.LocalBounds = localBounds;
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
+            ForceSkinNextFrame = false;
 
             disposed = false;
         }
@@ -135,6 +141,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void SetVertOutRegion(FixedComputeBufferHandler.Slice region)
         {
             VertsOutRegion = region;
+            ForceSkinNextFrame = true;
 
             computeShaderInstance.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
 
