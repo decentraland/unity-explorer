@@ -45,14 +45,16 @@ namespace DCL.Places
         {
             sortContentDeselectable.gameObject.SetActive(true);
 
+            // Keep the default sort toggle in sync with PlacesView.ResetCurrentFilters (Most Active) so the
+            // dropdown reflects the applied ordering and live-user scenes surface at the top by default.
             if (invokeEvents)
             {
-                sortByBestRated.isOn = true;
+                sortByMostActive.isOn = true;
                 sdk7Only.isOn = true;
             }
             else
             {
-                sortByBestRated.SetIsOnWithoutNotify(true);
+                sortByMostActive.SetIsOnWithoutNotify(true);
                 sdk7Only.SetIsOnWithoutNotify(true);
             }
 
