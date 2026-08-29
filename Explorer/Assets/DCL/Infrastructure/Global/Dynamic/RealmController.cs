@@ -27,6 +27,7 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
+using LiveKit.Internal.FFIClients.Requests;
 using Unity.Mathematics;
 using UnityEngine;
 using DCL.UserInAppInitializationFlow.StartupOperations;
@@ -180,6 +181,13 @@ namespace Global.Dynamic
                     skyboxFixedHour,
                     realm
                 );
+
+                // CommsContainer is created before the starting realm is loaded. Set the loopback ICE policy only
+                // after RealmData has been configured, and recompute it on every realm change so a remote world
+                // cannot inherit the local direct-ICE workaround.
+                FFIBridgeExtensions.UseTransportAllForLoopbackUrls = LocalUntrustedRealmCommsPolicy.ShouldUseTransportAll(
+                    appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM),
+                    realmData.Ipfs.CatalystBaseUrl.Value);
 
                 UnityDiagnosticsCenter.Instance.SetRealmInfo(
                     realmData.Ipfs.CatalystBaseUrl.Value,
