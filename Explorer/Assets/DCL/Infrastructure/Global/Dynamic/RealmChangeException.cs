@@ -4,6 +4,8 @@ namespace DCL.Global.Dynamic
 {
     public class RealmChangeException : Exception
     {
+        public RealmChangeException(string message) : base(message) { }
+
         public RealmChangeException(string message, Exception innerException) : base(message, innerException) { }
     }
 }

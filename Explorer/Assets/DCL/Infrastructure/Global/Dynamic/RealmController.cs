@@ -144,6 +144,21 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
+#if !UNITY_EDITOR
+            // In built players non-loopback cleartext (http) connections are blocked by the platform's transport
+            // security. On macOS the blocked request stalls without ever completing or faulting, so the awaited
+            // /about request below never returns, no RealmChangeException is thrown, and the loading screen hangs
+            // indefinitely with no user-facing error. Fail fast here with an actionable message routed through the
+            // normal RealmChangeException -> load-error popup path. Loopback dev realms (localhost/127.0.0.1/[::1])
+            // stay allowed, so local-scene development over http is unaffected.
+            if (realm.Value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !WebRequestUtils.IsLocalhost(realm.Value))
+            {
+                string insecureRealmMessage = $"Insecure http connection to non-loopback realm '{realm.Value}' is not allowed; use https or a loopback (localhost/127.0.0.1) address.";
+                ReportHub.LogError(ReportCategory.REALM, insecureRealmMessage);
+                throw new RealmChangeException(insecureRealmMessage);
+            }
+#endif
+
             try
             {
                 serverAbout.Clear();
