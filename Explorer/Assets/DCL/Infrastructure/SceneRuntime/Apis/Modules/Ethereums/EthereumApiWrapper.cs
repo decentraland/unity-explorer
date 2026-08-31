@@ -14,6 +14,9 @@ namespace SceneRuntime.Apis.Modules.Ethereums
 {
     public class EthereumApiWrapper : JsApiWrapper
     {
+        // JSON-RPC 2.0 "Method not found": https://www.jsonrpc.org/specification#error_object
+        private const long JSON_RPC_METHOD_NOT_FOUND = -32601;
+
         private readonly IEthereumApi ethereumApi;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -125,7 +128,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                             result = null,
                             error = new EthApiError
                             {
-                                code = -32601, // JSON-RPC 2.0 "Method not found"
+                                code = JSON_RPC_METHOD_NOT_FOUND,
                                 message = e.Message,
                             },
                         }),
