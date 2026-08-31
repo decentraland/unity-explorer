@@ -154,7 +154,7 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics.Controller, staticContainer.ProfilesContainer.Cache, profileContainer.SelfProfile)
                 : coreChatMessageBus;
 
-            ChatOpener.Initialize(new ChatOpener(chatEventBus, uiShellContainer.MvcManager));
+            ChatOpener.Initialize(new ChatOpener(chatEventBus, uiShellContainer.MvcManager, identityCache));
 
             return new ChatContainer(
                 chatHistory,
