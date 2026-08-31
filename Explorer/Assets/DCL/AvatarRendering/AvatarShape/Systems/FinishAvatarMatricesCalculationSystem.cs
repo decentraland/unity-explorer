@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -36,13 +37,31 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        [All(typeof(AvatarShapeComponent))]
         [None(typeof(DeleteEntityIntention))]
         private void Execute(
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            ref AvatarCustomSkinningComponent computeShaderSkinning
+            ref AvatarCustomSkinningComponent computeShaderSkinning,
+            in AvatarShapeComponent avatarShape,
+            in AvatarCachedVisibilityComponent cachedVisibility,
+            in AvatarBase avatarBase
         )
         {
+            bool culled = !avatarTransformMatrixComponent.IsMainPlayer
+                          && (!avatarShape.IsVisible || !cachedVisibility.IsInCameraFrustum);
+
+            // Unity's own animator culling only consults SkinnedMeshRenderers and the custom skinning
+            // pipeline deletes them all, so visibility must gate the Animator manually
+            if (avatarBase.AvatarAnimator.enabled == culled)
+                avatarBase.AvatarAnimator.enabled = !culled;
+
+            if (!computeShaderSkinning.ForceSkinNextFrame && culled)
+                return;
+
+            computeShaderSkinning.ForceSkinNextFrame = false;
+                return;
+
+            computeShaderSkinning.ForceSkinNextFrame = false;
+
             NativeArray<float4x4> bonesResult = avatarTransformMatrixComponent.IsMainPlayer
                 ? mainPlayerResult
                 : remoteResult;

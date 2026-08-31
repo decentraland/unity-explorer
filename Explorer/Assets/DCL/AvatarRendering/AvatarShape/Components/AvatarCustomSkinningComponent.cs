@@ -75,6 +75,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public FixedComputeBufferHandler.Slice VertsOutRegion;
 
+        /// <summary>
+        ///     One-shot flag: forces the next skin dispatch to run regardless of visibility or frustum state. Self-clears after consumption.
+        /// </summary>
+        public bool ForceSkinNextFrame;
+
         public readonly int VertCount;
         public readonly int BoneCount;
 
@@ -98,6 +103,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.computeShaderInstance = computeShaderInstance;
             this.LocalBounds = localBounds;
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
+            ForceSkinNextFrame = false;
 
             disposed = false;
         }
@@ -135,6 +141,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void SetVertOutRegion(FixedComputeBufferHandler.Slice region)
         {
             VertsOutRegion = region;
+            ForceSkinNextFrame = true;
 
             computeShaderInstance.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
 
