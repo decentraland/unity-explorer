@@ -172,7 +172,10 @@ namespace ECS.StreamableLoading.Tests
                 // Stopping the listener aborts a still-pending GetContextAsync with an exception; irrelevant to
                 // the assertions above, just drain it so it doesn't surface as an unobserved task exception.
                 try { await serverTask; }
-                catch (Exception) { }
+                catch (Exception)
+                {
+                    // Ignored: the test only asserts the system state that follows the failure.
+                }
             }
         }
 

@@ -269,7 +269,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // See https://github.com/decentraland/unity-explorer/issues/4198
             // Some emotes changes the armature rotation, we need to restore it
-            avatarView.ResetArmatureInclination();
+            avatarView.ResetArmatureTransform();
 
             // Propagate emote stop only for local player
             if (World.Has<PlayerComponent>(entity))
@@ -323,6 +323,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                     World.Remove<CharacterEmoteIntent>(entity);
                     return;
                 }
+
+                // The AvatarBase is attached before wearables and skinning are instantiated: the intent stays parked
+                // until then so the clip never drives (and the Animator never rebinds on) a half-built avatar.
+                if (avatarShapeComponent.IsDirty)
+                    return;
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {

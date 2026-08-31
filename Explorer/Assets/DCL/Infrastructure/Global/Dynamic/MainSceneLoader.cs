@@ -769,7 +769,7 @@ namespace Global.Dynamic
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs && !skipScreen)
-                SavedQualitySettingsApplier.EnforceLowPreset();
+                SavedQualitySettingsApplier.EnforceLowPresetOnce();
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 

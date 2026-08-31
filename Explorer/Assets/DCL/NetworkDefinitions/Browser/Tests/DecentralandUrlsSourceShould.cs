@@ -186,19 +186,6 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://abcdn.decentraland.org/entities/active", urlsSource.Url(DecentralandUrl.EntitiesActiveElements));
         }
 
-        [Test]
-        public void KeepTodayConstructionPinsWhenFlagsArriveLater()
-        {
-            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
-            DecentralandUrlsSource urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Today, ILaunchMode.PLAY);
-
-            InitializeFeatureFlags(optimizedAssets: true);
-
-            Assert.AreEqual("https://ab-cdn.decentraland.today", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
-            Assert.AreEqual("https://asset-bundle-registry.decentraland.today", urlsSource.Url(DecentralandUrl.AssetBundleRegistry));
-            Assert.AreEqual("https://asset-bundle-registry.decentraland.today/profiles", urlsSource.Url(DecentralandUrl.Profiles));
-        }
-
         [TestCase(DecentralandEnvironment.Org)]
         [TestCase(DecentralandEnvironment.Zone)]
         public void FlipCdnAndRegistryTogetherWhenAbgenPipelineEnabled(DecentralandEnvironment environment)
@@ -306,16 +293,6 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.GetOriginalUrl(urlsSource.Url(DecentralandUrl.ApiPlaces)));
         }
 
-        // The arg replaces the origin and outranks the flag, never the environment: today is not gateway-routed.
-        [Test]
-        public void KeepTodayOffTheGatewayEvenWithAGatewayOrigin()
-        {
-            InitializeFeatureFlags(optimizedAssets: false, useGateway: false);
-            var urlsSource = new GatewayUrlsSource(DecentralandEnvironment.Today, new IRealmData.Fake(), ILaunchMode.PLAY, cliGatewayPrefix: "https://gateway.localhost/");
-
-            Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.Url(DecentralandUrl.ApiPlaces));
-        }
-
         [Test]
         public void KeepGatewayRoutingWhenOptimizedAssetsDisabled()
         {
@@ -353,20 +330,13 @@ namespace DCL.Browser.DecentralandUrls.Tests
 
         [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN)]
         [TestCase(DecentralandEnvironment.Zone, IDecentralandUrlsSource.ZONE_DOMAIN)]
-        [TestCase(DecentralandEnvironment.Today, IDecentralandUrlsSource.TODAY_DOMAIN)]
         public void SelectTheEnvironmentsOwnDomain(DecentralandEnvironment environment, string expectedBaseDomain)
         {
             Assert.AreEqual(expectedBaseDomain, DecentralandUrlsSource.ResolveBaseDomain(environment, null));
         }
 
-        /// <summary>
-        ///     What a constructed source reports is the domain it resolves urls against, which is not always the
-        ///     domain the environment selects: today pins the handful of hosts it serves from .today while it is being
-        ///     built and serves everything afterwards from org, so org is what it settles on.
-        /// </summary>
         [TestCase(DecentralandEnvironment.Org, IDecentralandUrlsSource.ORG_DOMAIN)]
         [TestCase(DecentralandEnvironment.Zone, IDecentralandUrlsSource.ZONE_DOMAIN)]
-        [TestCase(DecentralandEnvironment.Today, IDecentralandUrlsSource.ORG_DOMAIN)]
         public void ReportTheDomainUrlsResolveAgainst(DecentralandEnvironment environment, string expectedBaseDomain)
         {
             InitializeFeatureFlags(optimizedAssets: false);

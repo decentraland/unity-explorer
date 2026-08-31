@@ -5,7 +5,6 @@ using DCL.Utility;
 using ECS;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Utility;
 
 // ReSharper disable once CheckNamespace
@@ -15,11 +14,6 @@ namespace DCL.Browser
     {
         private const string GATEWAY_SUBDOMAIN = "gateway";
         private const int HTTPS_PREFIX_LENGTH = 8; // "https://".Length
-
-        // Today is excluded on purpose: its org/today host mixture is pinned at construction and would not survive
-        // the rewrite. Custom is included, but a custom deployment only routes through a gateway when the
-        // "use-gateway" flag its own feature-flags backend serves says so, so opting in stays that deployment's call.
-        private static readonly DecentralandEnvironment[] SUPPORTED_ENVS = { DecentralandEnvironment.Org, DecentralandEnvironment.Zone, DecentralandEnvironment.Custom };
 
         private static readonly HashSet<DecentralandUrl> SUPPORTED_URLS = new (EnumUtils.GetEqualityComparer<DecentralandUrl>())
         {
@@ -90,16 +84,17 @@ namespace DCL.Browser
             "profile-images",
         };
 
-        private readonly bool envSupported;
-
         // The origin --gateway named, already normalized by TryNormalizeGatewayPrefix, or null to use
         // gateway.{BaseDomain}. Naming one is itself the opt-in, so it also stands in for the flag.
         private readonly string? cliGatewayPrefix;
-        private readonly List<string>? resolvedNonClientHosts;
-        private readonly string? gatewayPrefix;
-        private readonly string? domainSuffix;
+        private readonly List<string> resolvedNonClientHosts;
+        private readonly string gatewayPrefix;
+        private readonly string domainSuffix;
 
-        private bool enabled => envSupported && (cliGatewayPrefix != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY));
+        // Otherwise flag-gated for every environment alike: a custom deployment only routes through a gateway
+        // when the "use-gateway" flag its own feature-flags backend serves says so, so opting in stays that
+        // deployment's call.
+        private bool enabled => cliGatewayPrefix != null || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
         public GatewayUrlsSource(
             DecentralandEnvironment environment,
@@ -115,18 +110,14 @@ namespace DCL.Browser
             : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain, abgenPipelineForced)
         {
             this.cliGatewayPrefix = cliGatewayPrefix;
-            envSupported = SUPPORTED_ENVS.Contains(environment);
 
-            if (envSupported)
-            {
-                resolvedNonClientHosts = new List<string>(SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN.Length);
+            resolvedNonClientHosts = new List<string>(SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN.Length);
 
-                foreach (string subdomain in SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN)
-                    resolvedNonClientHosts.Add($"{subdomain}.{BaseDomain}");
+            foreach (string subdomain in SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN)
+                resolvedNonClientHosts.Add($"{subdomain}.{BaseDomain}");
 
-                gatewayPrefix = cliGatewayPrefix ?? $"https://{GATEWAY_SUBDOMAIN}.{BaseDomain}/";
-                domainSuffix = $".{BaseDomain}";
-            }
+            gatewayPrefix = cliGatewayPrefix ?? $"https://{GATEWAY_SUBDOMAIN}.{BaseDomain}/";
+            domainSuffix = $".{BaseDomain}";
         }
 
         public new static GatewayUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode) =>
@@ -167,7 +158,7 @@ namespace DCL.Browser
         /// </summary>
         public override string TransformUrl(string originalUrl)
         {
-            if (!enabled || resolvedNonClientHosts == null || originalUrl.Length <= HTTPS_PREFIX_LENGTH)
+            if (!enabled || originalUrl.Length <= HTTPS_PREFIX_LENGTH)
                 return originalUrl;
 
             ReadOnlySpan<char> urlAfterPrefix = originalUrl.AsSpan(HTTPS_PREFIX_LENGTH);
@@ -210,7 +201,7 @@ namespace DCL.Browser
         /// </summary>
         private bool IsGatewayTransformable(string url)
         {
-            if (domainSuffix == null || !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            if (!url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 return false;
 
             int hostEnd = url.IndexOf('/', HTTPS_PREFIX_LENGTH);
@@ -231,7 +222,7 @@ namespace DCL.Browser
 
         public override string GetOriginalUrl(string url)
         {
-            if (!enabled || gatewayPrefix == null || !url.StartsWith(gatewayPrefix, StringComparison.OrdinalIgnoreCase))
+            if (!enabled || !url.StartsWith(gatewayPrefix, StringComparison.OrdinalIgnoreCase))
                 return url;
 
             string original = ReverseGatewayTransform(url);
@@ -244,13 +235,13 @@ namespace DCL.Browser
         /// </summary>
         private string ReverseGatewayTransform(string url)
         {
-            int prefixLength = gatewayPrefix!.Length;
+            int prefixLength = gatewayPrefix.Length;
             ReadOnlySpan<char> afterPrefix = url.AsSpan(prefixLength);
             int slashIdx = afterPrefix.IndexOf('/');
 
             int subdomainLength = slashIdx >= 0 ? slashIdx : afterPrefix.Length;
             int pathLength = slashIdx >= 0 ? afterPrefix.Length - slashIdx : 0;
-            string suffix = domainSuffix!;
+            string suffix = domainSuffix;
             int resultLength = HTTPS_PREFIX_LENGTH + subdomainLength + suffix.Length + pathLength;
 
             return string.Create(resultLength, (url, prefixLength, subdomainLength, pathLength, suffix), static (span, state) =>
@@ -278,9 +269,6 @@ namespace DCL.Browser
         /// </summary>
         private string TransformToGateway(string url)
         {
-            if (gatewayPrefix == null)
-                return url;
-
             string prefix = gatewayPrefix;
 
             int firstDot = url.IndexOf('.', HTTPS_PREFIX_LENGTH);

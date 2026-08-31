@@ -6,23 +6,15 @@ namespace DCL.Chat.Commands
 {
     public class ChatEnvironmentValidator
     {
-        private readonly DecentralandEnvironment dclEnvironment;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        public ChatEnvironmentValidator(DecentralandEnvironment dclEnvironment, IDecentralandUrlsSource decentralandUrlsSource)
+        public ChatEnvironmentValidator(IDecentralandUrlsSource decentralandUrlsSource)
         {
-            this.dclEnvironment = dclEnvironment;
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public Result ValidateTeleport(string realmToTeleportTo)
         {
-            // Today serves part of its hosts from .today and the rest from .org, a split pinned when the url source
-            // is built, so no realm it could move to would be served consistently.
-            if (dclEnvironment == DecentralandEnvironment.Today)
-                return Result.ErrorResult(
-                    "🔴 Error. You cannot change realms in the Today environment. Please restart DCL with the desired environment");
-
             // A --gateway session serves every supported service from one origin, realms included, and that origin
             // is allowed to sit outside the base domain — a local e2e fixture's is loopback. It is this session's
             // own infrastructure, named on the command line (DeepLinkAllowlist denies --gateway), so accept it
@@ -30,7 +22,7 @@ namespace DCL.Chat.Commands
             if (IsOnGatewayOrigin(realmToTeleportTo))
                 return Result.SuccessResult();
 
-            // Every other environment — the decentraland ones and a --base-domain deployment alike — accepts exactly
+            // Every environment — the decentraland ones and a --base-domain deployment alike — accepts exactly
             // the realms under its own base domain, so one check covers them all.
             return HostHasSuffix(realmToTeleportTo, decentralandUrlsSource.BaseDomain)
                 ? Result.SuccessResult()

@@ -71,6 +71,9 @@ namespace ECS.StreamableLoading
         public RefAcquisition AcquireRef() =>
             new (this);
 
+        void IStreamableRefCountData.AddReference() =>
+            AddReference();
+
         internal void AddReference()
         {
             if (referenceCount == 0)
