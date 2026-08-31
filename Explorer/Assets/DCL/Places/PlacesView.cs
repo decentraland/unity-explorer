@@ -197,9 +197,7 @@ namespace DCL.Places
             currentFilters.Section = null;
             currentFilters.CategoryId = null;
 
-            // Default the Places tab to Most Active so scenes with live concurrent users surface at the top,
-            // matching the /api/destinations service default and decentraland.org/whats-on. The dropdown default
-            // in PlacesFilterSelectorView.ResetFilters is kept in sync with this value.
+            // Most Active surfaces live-user scenes and matches the places service default (mirrored in PlacesFilterSelectorView.ResetFilters)
             currentFilters.SortBy = IPlacesAPIService.SortBy.MOST_ACTIVE;
             currentFilters.SDKVersion = IPlacesAPIService.SDKVersion.SDK7_ONLY;
             currentFilters.SearchText = string.Empty;

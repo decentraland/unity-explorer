@@ -77,9 +77,7 @@ namespace DCL.Web3.Authenticators
 
                 if (!whitelistMethods.Contains(request.method))
                 {
-                    // A non-whitelisted method is a deterministic, scene-input-driven rejection, not an engine fault:
-                    // log at warning level (breadcrumb) so it does not spam Sentry as an error, and throw the typed
-                    // exception the scene runtime turns into a proper JSON-RPC error.
+                    // Warning, not error: a non-whitelisted method is a deterministic scene-input rejection, not a fault
                     ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Method not allowed : {request.method}");
                     throw new Web3MethodNotAllowedException($"The method is not allowed: {request.method}");
                 }

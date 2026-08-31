@@ -114,8 +114,7 @@ namespace DCL.Chat.ChatServices
             {
                 await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
 
-                // In local scene development the chat room is never connected (see CommsContainer),
-                // so waiting for it would only burn the timeout and log a spurious error.
+                // The chat room is never connected in local scene development (see CommsContainer); waiting would just burn the timeout.
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment))
                     return;
 

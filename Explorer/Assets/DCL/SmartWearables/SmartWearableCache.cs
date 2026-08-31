@@ -138,8 +138,7 @@ namespace Runtime.Wearables
                 {
                     ReportHub.LogError(ReportCategory.WEARABLE, $"Could not find 'scene.json' for smart wearable '{id}'");
 
-                    // The wearable stays smart (its DTO says so), but the entry is evicted so the metadata-less
-                    // item is never served from the cache on a later request.
+                    // The wearable stays smart per its DTO; evict so the metadata-less entry is never served from the cache
                     cache.Remove(id);
                     return item;
                 }
@@ -150,8 +149,7 @@ namespace Runtime.Wearables
 
                 if (ct.IsCancellationRequested)
                 {
-                    // Do not leave a partially-populated entry (SceneContent set, SceneMetadata still null) in the cache:
-                    // a later non-cancelled read would return it and crash the smart wearable scene load.
+                    // Evict the half-built entry (SceneMetadata still null): a later read would crash the scene load
                     cache.Remove(id);
                     return null;
                 }
@@ -173,8 +171,7 @@ namespace Runtime.Wearables
             }
             catch
             {
-                // The metadata fetch failed (network/JSON/cancellation): evict the half-built entry so the next
-                // request retries from scratch instead of permanently returning a poisoned, metadata-less item.
+                // Evict the half-built entry so the next request retries instead of reading a poisoned, metadata-less item
                 cache.Remove(id);
                 throw;
             }
