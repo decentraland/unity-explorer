@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -112,6 +113,11 @@ namespace DCL.Chat.ChatServices
             try
             {
                 await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
+
+                // In local scene development the chat room is never connected (see CommsContainer),
+                // so waiting for it would only burn the timeout and log a spurious error.
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment))
+                    return;
 
                 await UniTask.WaitUntil(() =>
                     chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected, cancellationToken: cts.Token)

@@ -165,7 +165,10 @@ namespace Global.Dynamic
                 roomHub = new RoomHub(
                         localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
                         gateKeeperSceneRoom,
-                        chatRoom,
+
+                        // In local scene development the Friends subsystem is disabled, so DMs delivered over the
+                        // chat room would be unanswerable: keep the room disconnected, like the island room above.
+                        localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : chatRoom,
                         voiceChatRoom
                         );
             }
