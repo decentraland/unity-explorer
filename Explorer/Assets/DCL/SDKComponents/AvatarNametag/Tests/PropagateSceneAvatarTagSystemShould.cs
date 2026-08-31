@@ -220,10 +220,16 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         }
 
         [Test]
-        public void FlagThePlateRemovingOnAnEmptyLabel()
+        public void KeepThePlateOnAnEmptyLabel()
         {
             // Arrange
-            var pbNametag = new PBAvatarNametag { Label = "Club Owner", IsDirty = true };
+            var pbNametag = new PBAvatarNametag
+            {
+                Label = "Club Owner",
+                BackgroundColor = new Decentraland.Common.Color3 { R = 1f, G = 0f, B = 0f },
+                IsDirty = true,
+            };
+
             CreateSceneEntity(SpecialEntitiesID.PLAYER_ENTITY, pbNametag);
             system.Update(0);
 
@@ -232,9 +238,11 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             pbNametag.IsDirty = true;
             system.Update(0);
 
-            // Assert — the plate is flagged, never removed: NametagPlacementSystem hides it first.
-            Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalPlayerEntity), Is.True);
-            Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity).IsRemoving, Is.True);
+            // Assert - a label-less plate is the color-coding case, so it stays and keeps its colors.
+            SceneAvatarTagComponent plate = globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity);
+            Assert.That(plate.IsRemoving, Is.False);
+            Assert.That(plate.Text, Is.Empty);
+            Assert.That(plate.BackgroundColor, Is.EqualTo(new Color(1f, 0f, 0f)));
         }
 
         [Test]

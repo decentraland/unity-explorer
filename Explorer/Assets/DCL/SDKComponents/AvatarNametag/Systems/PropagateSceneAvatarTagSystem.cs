@@ -98,20 +98,6 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             bool hasPlate = World.TryGet(entity, out SceneAvatarTagApplied applied);
 
-            // An empty label is the documented signal for "no plate", and needs no target of its own.
-            if (string.IsNullOrEmpty(pbNametag.Label))
-            {
-                pbNametag.IsDirty = false;
-
-                if (hasPlate)
-                {
-                    World.Remove<SceneAvatarTagApplied>(entity);
-                    MarkPlateRemoving(applied.GlobalEntity);
-                }
-
-                return;
-            }
-
             // Leave IsDirty set so the write is retried once the avatar behind this entity exists.
             if (!TryResolveTarget(entity, in crdtEntity, out Entity target))
                 return;
@@ -124,6 +110,8 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             Color backgroundColor = pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR);
 
             globalWorld.AddOrSet(target, new SceneAvatarTagComponent(
+                // An empty label draws the bare plate instead of hiding it, so a scene can color-code
+                // players without labelling them; the plate goes away with the component.
                 pbNametag.Label,
                 pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
                 backgroundColor,
