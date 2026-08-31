@@ -329,7 +329,8 @@ namespace Global.Dynamic
 
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles)
             {
-                // Mirrors RealmUrls' LSD resolution — RealmUrls itself needs the URL sources that don't exist yet.
+                // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
+                // RealmUrls itself can't be used here: it needs the URL sources that don't exist yet.
                 string realmRoot = launchSettings.initialRealm == InitialRealm.Localhost
                     ? IRealmNavigator.LOCALHOST
                     : launchSettings.customRealm;
