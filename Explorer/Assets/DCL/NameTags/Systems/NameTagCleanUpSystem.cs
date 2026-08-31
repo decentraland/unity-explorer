@@ -37,8 +37,8 @@ namespace DCL.Nametags
                 nametagHolderPool.Release(nametagHolder);
         }
 
-        // Holders backing an active scene avatar tag survive the global name tag toggle:
-        // NametagPlacementSystem keeps positioning them with the name part hidden.
+        // Scene-tagged holders are left to NametagPlacementSystem, which releases them
+        // together with the plate when the toggle goes off.
         [Query]
         [None(typeof(SceneAvatarTagComponent))]
         private void RemoveAllTags(Entity e, NametagHolder nametagHolder)

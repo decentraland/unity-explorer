@@ -14,7 +14,7 @@ namespace DCL.Nametags
     /// <summary>
     ///     Drives <see cref="SceneAvatarTagComponent" /> from the "Nametags" debug widget
     ///     alongside the PBAvatarNametag SDK path, to exercise the plate without a scene.
-    ///     Widget fields: tag text, text color (html string), background color (html string).
+    ///     Widget fields: tag text, text color, background color, border color (colors are html strings).
     /// </summary>
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [UpdateBefore(typeof(NametagPlacementSystem))]

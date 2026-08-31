@@ -72,8 +72,7 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
-            // The nametags toggle disables everything, name and scene plate alike, so while it is off
-            // no holder can be born and the avatar-wide queries are skipped entirely.
+            // The nametags toggle disables name and scene plate alike, so no holder is created while it is off.
             if (showNameTags)
             {
                 AddTagForPlayerAvatarsQuery(World, cameraComponent);
@@ -81,7 +80,7 @@ namespace DCL.Nametags
 
                 // Holders needed by a scene avatar tag while the name itself is hidden by a modifier area
                 // or missing. SceneAvatarTagComponent is part of the archetype, so these iterate nothing
-                // at all while no scene has tagged anyone.
+                // while no scene has tagged anyone.
                 AddSceneTagForPlayerAvatarsQuery(World, cameraComponent);
                 AddSceneTagForNonPlayerAvatarsQuery(World, cameraComponent);
             }

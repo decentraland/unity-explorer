@@ -25,7 +25,6 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         // An ordinary scene-owned entity id, past the reserved range player entities live in.
         private const int SCENE_LOCAL_ENTITY = 512;
 
-        // Assigned in SetUp before any test runs; null! keeps the fixture free of nullable-dereference noise.
         private World globalWorld = null!;
         private Entity globalPlayerEntity;
         private Entity globalRemoteEntity;
@@ -149,9 +148,9 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         [Test]
         public void ResolveARemotePlayerWhoseProfileLivesOnTheBridgeEntity()
         {
-            // Arrange — in a real scene world the CRDT bridge materializes the scene's write on its own
-            // entity, while the multiplayer bridge keeps SDKProfile on a separate entity that carries
-            // no CRDTEntity; the two representations of one player share nothing but the CRDT id.
+            // Arrange — the CRDT bridge materializes the scene's write on its own entity, while the
+            // multiplayer bridge keeps SDKProfile on a separate entity that carries no CRDTEntity;
+            // the two representations of one player share nothing but the CRDT id.
             CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
                 new PBAvatarNametag { Label = "Bronze", IsDirty = true });
 

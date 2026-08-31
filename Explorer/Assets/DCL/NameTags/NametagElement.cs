@@ -148,7 +148,7 @@ namespace DCL.Nametags
         {
             get => nameVisible;
 
-            // Written every frame by NametagPlacementSystem, so keep repeated assignments off the class list.
+            // Set every frame; keep unchanged values off the class list.
             set
             {
                 if (nameVisible == value)
@@ -380,7 +380,7 @@ namespace DCL.Nametags
 
             // The panel treats runtime-assigned colors as linear and lifts them on output, while USS
             // colors are pre-converted by the importer - so a scene-authored sRGB value must be pushed
-            // down to linear here or mid-tones render washed out (a #7890F5 plate came out #B5C4FA).
+            // down to linear here or mid-tones render washed out.
             sceneTagLabel.style.color = textColor.linear;
             sceneTagContainer.style.backgroundColor = backgroundColor.linear;
 

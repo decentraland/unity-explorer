@@ -11,14 +11,12 @@ namespace DCL.Nametags
     public struct SceneAvatarTagComponent
     {
         /// <summary>
-        ///     The plate label color the client uses natively: `--dcl-color-snow` (rgb(252, 252, 252)),
-        ///     inherited by `.nametag__scene-tag-label` from the `:root` block of CommonStyles.uss.
+        ///     Mirrors the plate label's native color, `--dcl-color-snow` (rgb(252, 252, 252)) in CommonStyles.uss.
         /// </summary>
         public static readonly Color NATIVE_TEXT_COLOR = new (252f / 255f, 252f / 255f, 252f / 255f);
 
         /// <summary>
-        ///     The plate background color the client uses natively: `--dcl-color-shadow` (#161518),
-        ///     set on `.nametag__scene-tag-container` by NametagStyle.uss and defined in CommonStyles.uss.
+        ///     Mirrors the plate's native background, `--dcl-color-shadow` (#161518) in CommonStyles.uss.
         /// </summary>
         public static readonly Color NATIVE_BACKGROUND_COLOR = new (22f / 255f, 21f / 255f, 24f / 255f);
 
@@ -27,8 +25,8 @@ namespace DCL.Nametags
         public readonly Color BackgroundColor;
 
         /// <summary>
-        ///     The 1.5px rim of the plate. It carries <see cref="BackgroundColor" /> unless a rim was asked
-        ///     for explicitly, which keeps the plate a flat capsule while holding its size either way.
+        ///     The rim of the plate. Holds <see cref="BackgroundColor" /> unless a border was explicitly
+        ///     requested; the rim always renders at its USS width, so a flat plate keeps the same size.
         /// </summary>
         public readonly Color BorderColor;
 
