@@ -46,11 +46,12 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             // Skinned verts persist between dispatches, so hidden and out-of-frustum avatars can skip theirs.
             // The main player is always re-skinned regardless of visibility or frustum state.
-            if (computeShaderSkinning.ForceSkinNextFrame)
-                computeShaderSkinning.ForceSkinNextFrame = false;
-            else if (!avatarTransformMatrixComponent.IsMainPlayer
-                     && (!avatarShape.IsVisible || !cachedVisibility.IsInCameraFrustum))
+            if (!computeShaderSkinning.ForceSkinNextFrame
+                && !avatarTransformMatrixComponent.IsMainPlayer
+                && (!avatarShape.IsVisible || !cachedVisibility.IsInCameraFrustum))
                 return;
+
+            computeShaderSkinning.ForceSkinNextFrame = false;
 
             NativeArray<float4x4> bonesResult = avatarTransformMatrixComponent.IsMainPlayer
                 ? mainPlayerResult
