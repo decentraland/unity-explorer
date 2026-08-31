@@ -14,10 +14,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public void BuildUrnQueryForItemUrn()
         {
             // Act
-            bool result = EventFeaturedItemsController.TryBuildCatalogUrl(MARKETPLACE_SERVER, ITEM_URN, out URLAddress url);
+            bool result = EventFeaturedItemsController.TryBuildCatalogUrl(MARKETPLACE_SERVER, ITEM_URN, out URLAddress url, out bool isCollection);
 
             // Assert
             Assert.IsTrue(result);
+            Assert.IsFalse(isCollection);
             Assert.AreEqual($"{MARKETPLACE_SERVER}/v3/catalog/items?first=1&urn={ITEM_URN}", url.Value);
         }
 
@@ -25,10 +26,11 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public void BuildContractAddressQueryForCollectionUrn()
         {
             // Act
-            bool result = EventFeaturedItemsController.TryBuildCatalogUrl(MARKETPLACE_SERVER, COLLECTION_URN, out URLAddress url);
+            bool result = EventFeaturedItemsController.TryBuildCatalogUrl(MARKETPLACE_SERVER, COLLECTION_URN, out URLAddress url, out bool isCollection);
 
             // Assert
             Assert.IsTrue(result);
+            Assert.IsTrue(isCollection);
             StringAssert.StartsWith($"{MARKETPLACE_SERVER}/v3/catalog/items?contractAddress=0x2222222222222222222222222222222222222222&first=", url.Value);
         }
 
@@ -41,7 +43,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public void RejectUrnsThatAreNeitherItemNorCollection(string urn)
         {
             // Act
-            bool result = EventFeaturedItemsController.TryBuildCatalogUrl(MARKETPLACE_SERVER, urn, out URLAddress url);
+            bool result = EventFeaturedItemsController.TryBuildCatalogUrl(MARKETPLACE_SERVER, urn, out URLAddress url, out bool _);
 
             // Assert
             Assert.IsFalse(result);

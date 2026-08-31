@@ -2499,7 +2499,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 16
   m_fontSizeMax: 16
-  m_fontStyle: 0
+  m_fontStyle: 16
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -4877,6 +4877,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Communities.EventInfo.EventFeaturedItemsView
   <Root>k__BackingField: {fileID: 8767532345514838046}
+  <Title>k__BackingField: {fileID: 6221690280861175268}
   <ItemsContainer>k__BackingField: {fileID: 6269458030333335193}
   <ItemPrefab>k__BackingField: {fileID: 8659181788028684893}
   <LoadingSpinner>k__BackingField: {fileID: 5444867100014383447}

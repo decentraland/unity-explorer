@@ -28,6 +28,8 @@ namespace DCL.Communities.EventInfo
         private const string URN_PREFIX = "urn:";
         private const string CONTRACT_ADDRESS_PREFIX = "0x";
         private const string EMOTE_CATEGORY = "emote";
+        private const string FEATURED_ITEM_TITLE = "Featured Item";
+        private const string FEATURED_COLLECTION_TITLE = "Featured Collection";
 
         private readonly EventFeaturedItemsView view;
         private readonly IWebRequestController webRequestController;
@@ -145,9 +147,10 @@ namespace DCL.Communities.EventInfo
             loadedThumbnails.Clear();
         }
 
-        public static bool TryBuildCatalogUrl(string marketplaceServerBaseUrl, string featuredItemUrn, out URLAddress url)
+        public static bool TryBuildCatalogUrl(string marketplaceServerBaseUrl, string featuredItemUrn, out URLAddress url, out bool isCollection)
         {
             url = URLAddress.EMPTY;
+            isCollection = false;
 
             if (!featuredItemUrn.StartsWith(URN_PREFIX, StringComparison.OrdinalIgnoreCase))
                 return false;
@@ -165,6 +168,7 @@ namespace DCL.Communities.EventInfo
                 return false;
 
             url = URLAddress.FromString($"{marketplaceServerBaseUrl}/v3/catalog/items?contractAddress={contractAddress}&first={COLLECTION_ITEMS_LIMIT}");
+            isCollection = true;
             return true;
         }
 
@@ -180,12 +184,14 @@ namespace DCL.Communities.EventInfo
         {
             try
             {
-                if (!TryBuildCatalogUrl(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceServer), featuredItemUrn, out URLAddress url))
+                if (!TryBuildCatalogUrl(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceServer), featuredItemUrn, out URLAddress url, out bool isCollection))
                 {
                     ReportHub.LogWarning(ReportCategory.EVENTS, $"Unrecognized event featured item urn: {featuredItemUrn}");
                     view.Root.SetActive(false);
                     return;
                 }
+
+                view.Title.text = isCollection ? FEATURED_COLLECTION_TITLE : FEATURED_ITEM_TITLE;
 
                 MarketplaceCatalogResponse response = await webRequestController.GetAsync(url, ct, ReportCategory.EVENTS)
                                                                                 .CreateFromJson<MarketplaceCatalogResponse>(WRJsonParser.Unity);
