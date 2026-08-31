@@ -69,6 +69,16 @@ namespace DCL.AvatarRendering.AvatarShape
                 CalculateFrustumPlanes(cameraComponent.Camera);
                 GetAvatarsVisibleWithOutlineQuery(World, cameraComponent);
             }
+            else
+                CalculateFrustumPlanes(camera.GetCameraComponent(World).Camera);
+
+            StampFrustumVisibilityQuery(World);
+        }
+
+        [Query]
+        private void StampFrustumVisibility(in AvatarBase avatarBase, ref AvatarCachedVisibilityComponent cached)
+        {
+            cached.IsInCameraFrustum = IsVisibleInCamera(avatarBase.AvatarSkinnedMeshRenderer.bounds);
         }
 
         internal void CalculateFrustumPlanes(Camera camera)
