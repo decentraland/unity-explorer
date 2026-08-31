@@ -1,6 +1,5 @@
 ﻿using DCL.Diagnostics;
 using DCL.Utility;
-using Sentry;
 using Sentry.Unity;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -51,8 +50,11 @@ namespace Utility
         /// </summary>
         public static void SafeDestroyGameObject<T>(T? component) where T: Component
         {
-            // If Application is quitting component may be already invalid
-            if (IsQuitting && (!component || !component.gameObject))
+            // Null reference check is fast in comparison to Unity's overloaded operator
+            if (ReferenceEquals(component, null)) return;
+
+            // Component or its game object may already be invalid (destroyed externally or during quit)
+            if (!component || !component.gameObject)
                 return;
 
             if (!Application.isPlaying)

@@ -318,7 +318,7 @@ namespace DCL.Passport
                                            && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits)
                                            && CreditsFeatureAccess.Instance.IsUserAllowed();
 
-            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopApiClient, webBrowser, isCreditPurchaseEnabled);
+            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopApiClient, webBrowser, characterPreviewController.StopEmotePreview, isCreditPurchaseEnabled);
             creditPurchaseBuyHandler.FellBackToWeb += OnCreditsBuyFellBackToWeb;
 
             overviewPassportModules.Add(new EquippedItemsPassportModuleController(
