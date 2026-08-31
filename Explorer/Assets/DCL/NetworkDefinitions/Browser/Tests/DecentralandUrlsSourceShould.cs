@@ -85,11 +85,11 @@ namespace DCL.Browser.DecentralandUrls.Tests
         }
 
         [Test]
-        public void ApplyCliOverrideForLocalPreviewSidecar()
+        public void ApplyLocalAbOverrideForLocalPreviewSidecar()
         {
-            // The flag variant is fleet-scoped, so a per-machine preview sidecar needs the CLI arg (forces on + overrides verbatim)
+            // The flag variant is fleet-scoped, so a per-machine preview sidecar needs the local-ab override (forces on + overrides verbatim)
             InitializeFeatureFlags(optimizedAssets: false);
-            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.LOCAL_SCENE_DEVELOPMENT, cliOptimizedAssetsUrl: "http://127.0.0.1:5147");
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, new IRealmData.Fake(), ILaunchMode.LOCAL_SCENE_DEVELOPMENT, localAbBaseUrl: "http://127.0.0.1:5147");
 
             Assert.AreEqual("http://127.0.0.1:5147", urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
             Assert.AreEqual("http://127.0.0.1:5147", urlsSource.Url(DecentralandUrl.LodGeneratorCDN));

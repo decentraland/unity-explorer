@@ -96,10 +96,10 @@ namespace DCL.Browser
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
             string? cliGatekeeperUrl = null,
-            string? cliOptimizedAssetsUrl = null,
+            string? localAbBaseUrl = null,
             string? customBaseDomain = null,
             bool abgenPipelineForced = false)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl, customBaseDomain, abgenPipelineForced)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, localAbBaseUrl, customBaseDomain, abgenPipelineForced)
         {
             resolvedNonClientHosts = new List<string>(SUPPORTED_SUBDOMAINS_OF_NON_CLIENT_ORIGIN.Length);
 

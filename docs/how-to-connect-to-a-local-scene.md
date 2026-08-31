@@ -92,10 +92,8 @@ Wearables/emotes keep working — the sidecar answers with the production regist
 streams their bundles from the production ab-cdn.
 
 In the Unity Editor, ticking "Use Local Asset Bundles" in the Main Scene Loader (shown when
-Initial Realm is Localhost) is all that's needed when the sidecar runs on its default port —
-`--optimized-assets-url` defaults to `http://127.0.0.1:5147` in that mode and only needs to be
-passed (via Debug Settings → App Parameters) when the sidecar reports a different port (it falls
-back to a random free one when 5147 is taken).
+Initial Realm is Localhost) is all that's needed — the client launches its embedded sidecar on a
+free loopback port (5147, or a random one when taken) and wires the URL override itself.
 
 For abgen development itself, `ABGEN_BIN=/path/to/abgen` makes the SDK spawn that binary instead
 of the pinned release, and any `ABGEN_*` variable exported in the shell overrides the SDK's wiring.
