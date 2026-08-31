@@ -1,13 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack;
 using DCL.Ipfs;
-using JetBrains.Annotations;
 using MVC;
 using System.Threading;
-using UnityEngine;
 
 namespace Runtime.Wearables
 {
@@ -19,7 +15,7 @@ namespace Runtime.Wearables
         private readonly NftTypeIconSO categoryIcons;
 
         public SmartWearableAuthorizationPopupController(
-            [NotNull] ViewFactoryMethod viewFactory,
+            ViewFactoryMethod viewFactory,
             SmartWearableCache smartWearableCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
@@ -59,11 +55,11 @@ namespace Runtime.Wearables
             base.OnViewShow();
 
             var wearable = inputData.Wearable;
-            var thumbnail = ((IAvatarAttachment)wearable).ThumbnailAssetResult?.Asset.Sprite;
+            var thumbnail = wearable.ThumbnailAssetResult?.Asset.Sprite;
             var rarityBackground = rarityBackgrounds.GetTypeImage(wearable.GetRarity());
             var rarityColor = rarityColors.GetColor(wearable.GetRarity());
             var categoryIcon = categoryIcons.GetTypeImage(wearable.GetCategory());
-            viewInstance.Setup(wearable.GetName(), thumbnail, rarityBackground, rarityColor, categoryIcon);
+            viewInstance!.Setup(wearable.GetName(), thumbnail, rarityBackground, rarityColor, categoryIcon);
 
             UpdatePermissionsAsync(wearable).Forget();
         }
@@ -72,7 +68,7 @@ namespace Runtime.Wearables
         {
             (_, SceneMetadata sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, CancellationToken.None);
             await UniTask.SwitchToMainThread();
-            viewInstance.SetPermissions(sceneMetadata.requiredPermissions);
+            viewInstance!.SetPermissions(sceneMetadata.requiredPermissions);
         }
 
         public static async UniTask<bool> RequestAuthorizationAsync(IMVCManager mvcManager, IWearable wearable, CancellationToken ct)

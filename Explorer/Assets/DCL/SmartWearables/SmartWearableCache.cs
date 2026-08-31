@@ -132,9 +132,10 @@ namespace Runtime.Wearables
                 if (!item.IsSmart) return item;
 
                 string contentUrl = GetContentUrl(wearable);
-                item.SceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), wearable, BodyShape.MALE);
+                SmartWearableSceneContent sceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), wearable, BodyShape.MALE);
+                item.SceneContent = sceneContent;
 
-                if (!item.SceneContent.TryGetContentUrl("scene.json", out URLAddress url))
+                if (!sceneContent.TryGetContentUrl("scene.json", out URLAddress url))
                 {
                     ReportHub.LogError(ReportCategory.WEARABLE, $"Could not find 'scene.json' for smart wearable '{id}'");
 
@@ -144,21 +145,23 @@ namespace Runtime.Wearables
                 }
 
                 var args = new CommonLoadingArguments(URLAddress.FromString(url));
-                item.SceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
-                                                               .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
+                SceneMetadata sceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
+                                                                        .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
+
+                item.SceneMetadata = sceneMetadata;
 
                 if (ct.IsCancellationRequested)
                 {
-                    // Evict the half-built entry (SceneMetadata still null): a later read would crash the scene load
+                    // Evict the half-built entry: a later read would serve it in an inconsistent state
                     cache.Remove(id);
-                    return null;
+                    return item;
                 }
 
-                item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
+                item.IsSmart &= int.TryParse(sceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
 
                 if (item.IsSmart)
                 {
-                    List<string> permissions = item.SceneMetadata.requiredPermissions;
+                    List<string> permissions = sceneMetadata.requiredPermissions;
 
                     item.RequiresWeb3API = permissions.Contains(ScenePermissionNames.USE_WEB3_API);
                     item.RequiresAuthorization = item.RequiresWeb3API ||
@@ -179,6 +182,8 @@ namespace Runtime.Wearables
 
         private bool IsSmart(IWearable wearable)
         {
+            if (wearable.DTO == null) return false;
+
             foreach (var content in wearable.DTO.content)
             {
                 if (content.file.EndsWith("scene.json", StringComparison.OrdinalIgnoreCase))
@@ -189,7 +194,7 @@ namespace Runtime.Wearables
 
         private string GetContentUrl(IWearable smartWearable)
         {
-            string? dtoContentUrl = smartWearable.DTO.ContentDownloadUrl;
+            string? dtoContentUrl = smartWearable.DTO?.ContentDownloadUrl;
             return string.IsNullOrEmpty(dtoContentUrl) ? $"{decentralandUrlsSource.Url(DecentralandUrl.PeerContent)}/" : dtoContentUrl;
         }
 
@@ -197,9 +202,9 @@ namespace Runtime.Wearables
         {
             public bool IsSmart;
 
-            public ISceneContent SceneContent;
+            public ISceneContent? SceneContent;
 
-            public SceneMetadata SceneMetadata;
+            public SceneMetadata? SceneMetadata;
 
             public bool RequiresAuthorization;
 

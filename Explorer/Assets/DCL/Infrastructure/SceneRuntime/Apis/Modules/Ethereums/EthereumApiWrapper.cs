@@ -79,7 +79,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                         },
                     }, Web3RequestSource.SdkScene, ct);
 
-                    return new SignMessageResponse(hex, message, (string)response.result);
+                    return new SignMessageResponse(hex, message, (string?)response.result ?? string.Empty);
                 }
                 catch (Exception e)
                 {
@@ -94,10 +94,10 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object SendAsync(double id, string method, string jsonParams)
         {
-            return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams) ?? Array.Empty<object>(), sendCancellationToken.Token)
+            return SendAndFormatAsync(JsonConvert.DeserializeObject<object[]>(jsonParams) ?? Array.Empty<object>(), sendCancellationToken.Token)
                .ToDisconnectedPromise(this);
 
-            async UniTask<SendEthereumMessageResponse> SendAndFormatAsync(double id, string method, object[] @params, CancellationToken ct)
+            async UniTask<SendEthereumMessageResponse> SendAndFormatAsync(object[] @params, CancellationToken ct)
             {
                 try
                 {
