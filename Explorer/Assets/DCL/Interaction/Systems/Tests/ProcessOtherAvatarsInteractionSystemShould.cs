@@ -30,17 +30,17 @@ namespace DCL.Interaction.Systems.Tests
     {
         private const string TEST_USER_ID = "0xtestuser1234";
 
-        private ProcessOtherAvatarsInteractionSystem system;
-        private World world;
-        private Mouse mouse;
-        private IEventSystem eventSystem;
-        private IMVCManagerMenusAccessFacade menusAccessFacade;
-        private IMVCManager mvcManager;
-        private ObjectProxy<Entity> cameraEntityProxy;
+        private ProcessOtherAvatarsInteractionSystem system = null!;
+        private World world = null!;
+        private Mouse mouse = null!;
+        private IEventSystem eventSystem = null!;
+        private IMVCManagerMenusAccessFacade menusAccessFacade = null!;
+        private IMVCManager mvcManager = null!;
+        private ObjectProxy<Entity> cameraEntityProxy = null!;
         private Entity cameraEntity;
         private Entity queryEntity;
         private Entity avatarEntity;
-        private Profile testProfile;
+        private Profile testProfile = null!;
 
         private void SetUpWithFeatureFlag(bool enableContextMenu)
         {
@@ -81,11 +81,9 @@ namespace DCL.Interaction.Systems.Tests
         [TearDown]
         public override void TearDown()
         {
-            system?.Dispose();
-            world?.Dispose();
-
-            if (mouse != null)
-                InputSystem.RemoveDevice(mouse);
+            system.Dispose();
+            world.Dispose();
+            InputSystem.RemoveDevice(mouse);
 
             EcsTestsUtils.TearDownFeaturesRegistry();
             base.TearDown();
@@ -180,7 +178,7 @@ namespace DCL.Interaction.Systems.Tests
 
         [TestCase(true)]
         [TestCase(false)]
-        public void ClearTooltipWhenPointerOverUI(bool contextMenuEnabled)
+        public void ClearTooltipWhenPointerOverUi(bool contextMenuEnabled)
         {
             // Arrange
             SetUpWithFeatureFlag(contextMenuEnabled);
@@ -335,7 +333,7 @@ namespace DCL.Interaction.Systems.Tests
         }
 
         [Test]
-        public void SetPointerLockIntentionWithUIWhenCursorLockedAndRightClick()
+        public void SetPointerLockIntentionWithUiWhenCursorLockedAndRightClick()
         {
             // Arrange
             SetUpWithFeatureFlag(true);
@@ -442,7 +440,6 @@ namespace DCL.Interaction.Systems.Tests
 
             // Act & Assert
             Assert.DoesNotThrow(() => system.Dispose());
-            system = null;
         }
 
         [Test]
@@ -453,7 +450,6 @@ namespace DCL.Interaction.Systems.Tests
 
             // Act & Assert
             Assert.DoesNotThrow(() => system.Dispose());
-            system = null;
         }
     }
 }
