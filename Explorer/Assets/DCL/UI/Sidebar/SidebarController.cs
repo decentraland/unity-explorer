@@ -462,6 +462,12 @@ namespace DCL.UI.Sidebar
                 return;
             }
 
+            if (identityCache.IsGuest())
+            {
+                OpenPanelAsync(null, UpgradeGuestAccountPopupController.IssueCommand()).Forget();
+                return;
+            }
+
             OpenPanelAsync(null, NearbyVoicePanelController.IssueCommand()).Forget();
         }
 

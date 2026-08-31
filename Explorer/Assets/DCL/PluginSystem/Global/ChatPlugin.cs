@@ -403,7 +403,8 @@ namespace DCL.PluginSystem.Global
                 messageReactionService,
                 web3IdentityCache,
                 profileCache,
-                inputBlock
+                inputBlock,
+                mvcManager
             );
 
             pluginScope.Add(chatPanelPresenter);

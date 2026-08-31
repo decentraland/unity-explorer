@@ -79,7 +79,8 @@ namespace DCL.Chat
             ChatMessageReactionService messageReactionService,
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IMVCManager mvcManager)
         {
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
@@ -100,7 +101,9 @@ namespace DCL.Chat
                 view.JoinCommunityLiveStreamSubTitleButton,
                 voiceChatOrchestrator,
                 currentChannelService.CurrentChannelProperty,
-                communityDataProvider);
+                communityDataProvider,
+                web3IdentityCache,
+                mvcManager);
 
 
             var titleBarPresenter = new ChatTitlebarPresenter(
@@ -118,7 +121,9 @@ namespace DCL.Chat
                 voiceChatOrchestrator,
                 chatEventBus,
                 chatCommandRegistry.GetUserCallStatusCommand,
-                chatCommandRegistry.ToggleAutoTranslateCommand);
+                chatCommandRegistry.ToggleAutoTranslateCommand,
+                web3IdentityCache,
+                mvcManager);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,

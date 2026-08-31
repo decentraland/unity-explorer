@@ -4,7 +4,10 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
+using DCL.Web3.Identities;
+using MVC;
 using System;
 using System.Threading;
 using Utility;
@@ -20,6 +23,8 @@ namespace DCL.VoiceChat
         private readonly JoinCommunityLiveStreamChatSubTitleButtonView view;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IMVCManager mvcManager;
         private readonly bool disabled;
 
         private CancellationTokenSource communityCts = new ();
@@ -31,12 +36,16 @@ namespace DCL.VoiceChat
             JoinCommunityLiveStreamChatSubTitleButtonView view,
             ICommunityCallOrchestrator communityCallOrchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,
-            CommunitiesDataProvider communityDataProvider)
+            CommunitiesDataProvider communityDataProvider,
+            IWeb3IdentityCache identityCache,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.currentChannel = currentChannel;
             this.communityDataProvider = communityDataProvider;
+            this.identityCache = identityCache;
+            this.mvcManager = mvcManager;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
             {
@@ -66,6 +75,12 @@ namespace DCL.VoiceChat
 
         private void OnJoinStreamButtonClicked()
         {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
             communityCallOrchestrator.JoinCommunityVoiceChat(communityId, true);
         }
