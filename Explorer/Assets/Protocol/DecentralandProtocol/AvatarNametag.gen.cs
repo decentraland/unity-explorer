@@ -26,16 +26,17 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX25hbWV0YWcu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxogZGVjZW50cmFs",
-            "YW5kL2NvbW1vbi9jb2xvcnMucHJvdG8iuAEKD1BCQXZhdGFyTmFtZXRhZxIN",
+            "YW5kL2NvbW1vbi9jb2xvcnMucHJvdG8igQIKD1BCQXZhdGFyTmFtZXRhZxIN",
             "CgVsYWJlbBgBIAEoCRI1CgtsYWJlbF9jb2xvchgCIAEoCzIbLmRlY2VudHJh",
             "bGFuZC5jb21tb24uQ29sb3IzSACIAQESOgoQYmFja2dyb3VuZF9jb2xvchgD",
-            "IAEoCzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3IzSAGIAQFCDgoMX2xh",
-            "YmVsX2NvbG9yQhMKEV9iYWNrZ3JvdW5kX2NvbG9yQhSqAhFEQ0wuRUNTQ29t",
-            "cG9uZW50c2IGcHJvdG8z"));
+            "IAEoCzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3IzSAGIAQESNgoMYm9y",
+            "ZGVyX2NvbG9yGAQgASgLMhsuZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjNI",
+            "AogBAUIOCgxfbGFiZWxfY29sb3JCEwoRX2JhY2tncm91bmRfY29sb3JCDwoN",
+            "X2JvcmRlcl9jb2xvckIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarNametag), global::DCL.ECSComponents.PBAvatarNametag.Parser, new[]{ "Label", "LabelColor", "BackgroundColor" }, new[]{ "LabelColor", "BackgroundColor" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarNametag), global::DCL.ECSComponents.PBAvatarNametag.Parser, new[]{ "Label", "LabelColor", "BackgroundColor", "BorderColor" }, new[]{ "LabelColor", "BackgroundColor", "BorderColor" }, null, null, null)
           }));
     }
     #endregion
@@ -100,6 +101,7 @@ namespace DCL.ECSComponents {
       label_ = other.label_;
       labelColor_ = other.labelColor_ != null ? other.labelColor_.Clone() : null;
       backgroundColor_ = other.backgroundColor_ != null ? other.backgroundColor_.Clone() : null;
+      borderColor_ = other.borderColor_ != null ? other.borderColor_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -156,6 +158,21 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "border_color" field.</summary>
+    public const int BorderColorFieldNumber = 4;
+    private global::Decentraland.Common.Color3 borderColor_;
+    /// <summary>
+    /// (default: the client's native plate border - a translucent lightening of the background color)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Color3 BorderColor {
+      get { return borderColor_; }
+      set {
+        borderColor_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -174,6 +191,7 @@ namespace DCL.ECSComponents {
       if (Label != other.Label) return false;
       if (!object.Equals(LabelColor, other.LabelColor)) return false;
       if (!object.Equals(BackgroundColor, other.BackgroundColor)) return false;
+      if (!object.Equals(BorderColor, other.BorderColor)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -184,6 +202,7 @@ namespace DCL.ECSComponents {
       if (Label.Length != 0) hash ^= Label.GetHashCode();
       if (labelColor_ != null) hash ^= LabelColor.GetHashCode();
       if (backgroundColor_ != null) hash ^= BackgroundColor.GetHashCode();
+      if (borderColor_ != null) hash ^= BorderColor.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -214,6 +233,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(26);
         output.WriteMessage(BackgroundColor);
       }
+      if (borderColor_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(BorderColor);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -236,6 +259,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(26);
         output.WriteMessage(BackgroundColor);
       }
+      if (borderColor_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(BorderColor);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -254,6 +281,9 @@ namespace DCL.ECSComponents {
       }
       if (backgroundColor_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(BackgroundColor);
+      }
+      if (borderColor_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(BorderColor);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -281,6 +311,12 @@ namespace DCL.ECSComponents {
           BackgroundColor = new global::Decentraland.Common.Color3();
         }
         BackgroundColor.MergeFrom(other.BackgroundColor);
+      }
+      if (other.borderColor_ != null) {
+        if (borderColor_ == null) {
+          BorderColor = new global::Decentraland.Common.Color3();
+        }
+        BorderColor.MergeFrom(other.BorderColor);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -319,6 +355,13 @@ namespace DCL.ECSComponents {
             input.ReadMessage(BackgroundColor);
             break;
           }
+          case 34: {
+            if (borderColor_ == null) {
+              BorderColor = new global::Decentraland.Common.Color3();
+            }
+            input.ReadMessage(BorderColor);
+            break;
+          }
         }
       }
     #endif
@@ -354,6 +397,13 @@ namespace DCL.ECSComponents {
               BackgroundColor = new global::Decentraland.Common.Color3();
             }
             input.ReadMessage(BackgroundColor);
+            break;
+          }
+          case 34: {
+            if (borderColor_ == null) {
+              BorderColor = new global::Decentraland.Common.Color3();
+            }
+            input.ReadMessage(BorderColor);
             break;
           }
         }

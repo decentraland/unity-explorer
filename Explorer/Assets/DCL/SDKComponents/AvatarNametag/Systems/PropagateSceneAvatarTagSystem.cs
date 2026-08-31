@@ -6,6 +6,7 @@ using CrdtEcsBridge.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Multiplayer.SDK.Components;
 using DCL.Nametags;
 using DCL.Profiles;
 using ECS.Abstract;
@@ -122,7 +123,8 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             globalWorld.AddOrSet(target, new SceneAvatarTagComponent(
                 pbNametag.Label,
                 pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
-                pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR)));
+                pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR),
+                pbNametag.BorderColor.ToUnityColor(fallback: NATIVE_BORDER_COLOR)));
 
             pbNametag.IsDirty = false;
 
@@ -153,12 +155,16 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             target = Entity.Null;
 
-            // A remote player's wallet sits on the very same scene entity, which keeps the lookup O(1)
-            // instead of scanning the global world for an avatar with a matching id.
-            if (!World.TryGet(sceneEntity, out SDKProfile? sdkProfile))
-                return false;
+            string userId = string.Empty;
 
-            string? userId = sdkProfile?.UserId;
+            // The scene's write materializes on the CRDT bridge's own entity, while the multiplayer
+            // bridge keeps the player's SDKProfile on a separate scene entity that carries no CRDTEntity
+            // at all - the two representations of one player share nothing but the CRDT id, so when the
+            // profile is not on the write's entity it is found through that id.
+            if (World.TryGet(sceneEntity, out SDKProfile? sdkProfile))
+                userId = sdkProfile?.UserId ?? string.Empty;
+            else
+                FindWalletByCrdtIdQuery(World, in crdtEntity, ref userId);
 
             if (string.IsNullOrEmpty(userId)
                 || !entityParticipantTable.TryGet(userId, out IReadOnlyEntityParticipantTable.Entry entry)
@@ -167,6 +173,13 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             target = entry.Entity;
             return true;
+        }
+
+        [Query]
+        private void FindWalletByCrdtId([Data] in CRDTEntity searchedId, [Data] ref string wallet, in PlayerSceneCRDTEntity playerCrdtEntity, in SDKProfile profile)
+        {
+            if (playerCrdtEntity.CRDTEntity.Id == searchedId.Id)
+                wallet = profile.UserId;
         }
 
         private void MarkPlateRemoving(Entity target)

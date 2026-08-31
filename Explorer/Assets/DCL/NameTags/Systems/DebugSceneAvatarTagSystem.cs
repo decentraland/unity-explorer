@@ -24,13 +24,14 @@ namespace DCL.Nametags
         private string pendingText = string.Empty;
         private Color pendingTextColor = SceneAvatarTagComponent.NATIVE_TEXT_COLOR;
         private Color pendingBackgroundColor = SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR;
+        private Color pendingBorderColor = SceneAvatarTagComponent.NATIVE_BORDER_COLOR;
         private bool applyRequested;
         private bool removeRequested;
 
         internal DebugSceneAvatarTagSystem(World world, IDebugContainerBuilder debugContainerBuilder) : base(world)
         {
             debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.NAMETAGS)
-                                ?.AddStringFieldsWithConfirmation(3, "Apply scene tag", OnApplyRequested)
+                                ?.AddStringFieldsWithConfirmation(4, "Apply scene tag", OnApplyRequested)
                                  .AddSingleButton("Remove scene tags", () => removeRequested = true);
         }
 
@@ -60,6 +61,9 @@ namespace DCL.Nametags
             if (string.IsNullOrEmpty(fields[2]) || !ColorUtility.TryParseHtmlString(fields[2], out pendingBackgroundColor))
                 pendingBackgroundColor = SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR;
 
+            if (string.IsNullOrEmpty(fields[3]) || !ColorUtility.TryParseHtmlString(fields[3], out pendingBorderColor))
+                pendingBorderColor = SceneAvatarTagComponent.NATIVE_BORDER_COLOR;
+
             applyRequested = true;
         }
 
@@ -67,13 +71,13 @@ namespace DCL.Nametags
         [None(typeof(SceneAvatarTagComponent), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
         private void AddSceneAvatarTag(Entity e) =>
-            World.Add(e, new SceneAvatarTagComponent(pendingText, pendingTextColor, pendingBackgroundColor));
+            World.Add(e, new SceneAvatarTagComponent(pendingText, pendingTextColor, pendingBackgroundColor, pendingBorderColor));
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
         private void UpdateSceneAvatarTag(ref SceneAvatarTagComponent sceneTag) =>
-            sceneTag = new SceneAvatarTagComponent(pendingText, pendingTextColor, pendingBackgroundColor);
+            sceneTag = new SceneAvatarTagComponent(pendingText, pendingTextColor, pendingBackgroundColor, pendingBorderColor);
 
         [Query]
         [None(typeof(DeleteEntityIntention))]

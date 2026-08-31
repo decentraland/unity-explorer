@@ -209,7 +209,7 @@ namespace DCL.Nametags
             if (!sceneTag.IsDirty)
                 return;
 
-            nametagHolder.Nametag.SetSceneAvatarTag(sceneTag.Text, sceneTag.TextColor, sceneTag.BackgroundColor);
+            nametagHolder.Nametag.SetSceneAvatarTag(sceneTag.Text, sceneTag.TextColor, sceneTag.BackgroundColor, sceneTag.BorderColor);
             sceneTag.IsDirty = false;
         }
 

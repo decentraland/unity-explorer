@@ -4,6 +4,7 @@ using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Multiplayer.SDK.Components;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.SDKComponents.AvatarNametag.Systems;
@@ -80,6 +81,7 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             SceneAvatarTagComponent plate = globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity);
             Assert.That(plate.TextColor, Is.EqualTo(SceneAvatarTagComponent.NATIVE_TEXT_COLOR));
             Assert.That(plate.BackgroundColor, Is.EqualTo(SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR));
+            Assert.That(plate.BorderColor, Is.EqualTo(SceneAvatarTagComponent.NATIVE_BORDER_COLOR));
         }
 
         [Test]
@@ -91,6 +93,7 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
                 Label = "Gold",
                 LabelColor = new Decentraland.Common.Color3 { R = 1f, G = 0.5f, B = 0f },
                 BackgroundColor = new Decentraland.Common.Color3 { R = 0f, G = 0f, B = 0.25f },
+                BorderColor = new Decentraland.Common.Color3 { R = 1f, G = 0.9f, B = 0.4f },
                 IsDirty = true,
             };
 
@@ -103,6 +106,7 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             SceneAvatarTagComponent plate = globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity);
             Assert.That(plate.TextColor, Is.EqualTo(new Color(1f, 0.5f, 0f)));
             Assert.That(plate.BackgroundColor, Is.EqualTo(new Color(0f, 0f, 0.25f)));
+            Assert.That(plate.BorderColor, Is.EqualTo(new Color(1f, 0.9f, 0.4f)));
         }
 
         [Test]
@@ -121,6 +125,27 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalRemoteEntity), Is.True);
             Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalRemoteEntity).Text, Is.EqualTo("Bronze"));
             Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalPlayerEntity), Is.False);
+        }
+
+        [Test]
+        public void ResolveARemotePlayerWhoseProfileLivesOnTheBridgeEntity()
+        {
+            // Arrange — in a real scene world the CRDT bridge materializes the scene's write on its own
+            // entity, while the multiplayer bridge keeps SDKProfile on a separate entity that carries
+            // no CRDTEntity; the two representations of one player share nothing but the CRDT id.
+            CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                new PBAvatarNametag { Label = "Bronze", IsDirty = true });
+
+            world.Create(
+                new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM)),
+                NewSdkProfile(REMOTE_WALLET));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalRemoteEntity), Is.True);
+            Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalRemoteEntity).Text, Is.EqualTo("Bronze"));
         }
 
         [Test]

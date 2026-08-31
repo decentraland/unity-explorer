@@ -22,18 +22,27 @@ namespace DCL.Nametags
         /// </summary>
         public static readonly Color NATIVE_BACKGROUND_COLOR = new (22f / 255f, 21f / 255f, 24f / 255f);
 
+        /// <summary>
+        ///     The plate border color the client uses natively: translucent white that UITK composites
+        ///     over the plate background, lightening whatever color the scene picked - the same
+        ///     derivation the design system uses on the nametag itself (NametagStyle.uss).
+        /// </summary>
+        public static readonly Color NATIVE_BORDER_COLOR = new (1f, 1f, 1f, 0.2f);
+
         public readonly string Text;
         public readonly Color TextColor;
         public readonly Color BackgroundColor;
+        public readonly Color BorderColor;
 
         public bool IsDirty;
         public bool IsRemoving;
 
-        public SceneAvatarTagComponent(string text, Color textColor, Color backgroundColor)
+        public SceneAvatarTagComponent(string text, Color textColor, Color backgroundColor, Color borderColor)
         {
             Text = text;
             TextColor = textColor;
             BackgroundColor = backgroundColor;
+            BorderColor = borderColor;
             IsDirty = true;
             IsRemoving = false;
         }

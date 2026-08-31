@@ -308,7 +308,8 @@
     position: absolute;
     bottom: 100%;
     align-self: center;
-    translate: 0 -6px;
+    /* The design parks the pill almost on the nametag - about a third of the pill's height away. */
+    translate: 0 -2px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
@@ -318,13 +319,17 @@
     padding-right: 6px;
     padding-left: 6px;
     background-color: var(--dcl-color-shadow);
+    /* Translucent white composites over the background box UITK draws underneath the border,
+       so the rim comes out slightly lighter than whatever background the scene picks - the same
+       derivation the design system uses on the nametag itself. */
     border-width: 1.5px;
     border-color: rgba(255, 255, 255, 0.2);
-    /* Larger than any possible half-height: the corners clamp into a capsule, per the design. */
-    border-top-left-radius: 100px;
-    border-top-right-radius: 100px;
-    border-bottom-right-radius: 100px;
-    border-bottom-left-radius: 100px;
+    /* Half the plate's rendered height: a stadium capsule per the design. UITK does not clamp
+       oversized radii the CSS way - anything larger deforms the plate into an ellipse. */
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    border-bottom-right-radius: 11px;
+    border-bottom-left-radius: 11px;
 }
 
 .nametag--scene-tag > .nametag__scene-tag-container {

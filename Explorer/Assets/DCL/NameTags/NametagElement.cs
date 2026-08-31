@@ -374,11 +374,24 @@ namespace DCL.Nametags
             hideMessage.ExecuteLater(NametagViewConstants.CHAT_BUBBLE_DELAY);
         }
 
-        public void SetSceneAvatarTag(string text, Color textColor, Color backgroundColor)
+        public void SetSceneAvatarTag(string text, Color textColor, Color backgroundColor, Color borderColor)
         {
             sceneTagLabel.text = text;
-            sceneTagLabel.style.color = textColor;
-            sceneTagContainer.style.backgroundColor = backgroundColor;
+
+            // The panel treats runtime-assigned colors as linear and lifts them on output, while USS
+            // colors are pre-converted by the importer - so a scene-authored sRGB value must be pushed
+            // down to linear here or mid-tones render washed out (a #7890F5 plate came out #B5C4FA).
+            // The native border (translucent white) survives the conversion intact: 1 and 0 are its
+            // fixed points and the alpha channel is not converted.
+            sceneTagLabel.style.color = textColor.linear;
+            sceneTagContainer.style.backgroundColor = backgroundColor.linear;
+
+            Color linearBorder = borderColor.linear;
+            sceneTagContainer.style.borderTopColor = linearBorder;
+            sceneTagContainer.style.borderBottomColor = linearBorder;
+            sceneTagContainer.style.borderLeftColor = linearBorder;
+            sceneTagContainer.style.borderRightColor = linearBorder;
+
             SceneAvatarTagVisible = true;
         }
 
