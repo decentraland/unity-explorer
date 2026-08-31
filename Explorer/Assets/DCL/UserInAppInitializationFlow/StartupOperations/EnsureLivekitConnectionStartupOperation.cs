@@ -29,7 +29,7 @@ namespace DCL.UserInAppInitializationFlow
             }
             catch (TimeoutException)
             {
-                ReportHub.Log(ReportCategory.LIVEKIT, $"Livekit handshake timed out");
+                ReportHub.Log(ReportCategory.LIVEKIT, $"Livekit handshake timed out after {LIVEKIT_TIMEOUT.TotalSeconds}s, rooms: {roomHub.RoomsStateInfo()}");
 
                 try
                 {
