@@ -44,7 +44,6 @@ namespace DCL.Chat.MessageBus
         private readonly bool isChatMessageRateLimiterEnabled;
         private readonly bool isNearbyChannelBufferEnabled;
         private readonly bool isPrivateChatRequiresTopicEnabled;
-        private readonly bool isFriendsEnabled;
 
         private bool isCommunitiesIncluded;
 
@@ -81,7 +80,6 @@ namespace DCL.Chat.MessageBus
             }
 
             isPrivateChatRequiresTopicEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PrivateChatRequiresTopic);
-            isFriendsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends);
 
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
@@ -181,12 +179,6 @@ namespace DCL.Chat.MessageBus
                 }
                 else if (!isPrivateChatRequiresTopicEnabled || string.Equals(receivedMessage.Topic, identityCache.Identity?.Address, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    // Direct messages belong to the Friends subsystem; when it is disabled (e.g. local-scene
-                    // development mode) there is no UI to reply and the user is not presented as online, so
-                    // inbound DMs must be dropped rather than delivered unanswerable. Mirrors the isCommunitiesIncluded gate above.
-                    if (!isFriendsEnabled)
-                        return;
-
                     parsedChannelId = new ChatChannel.ChannelId(receivedMessage.FromWalletId);
                     channelType = ChatChannel.ChatChannelType.USER;
                 }
