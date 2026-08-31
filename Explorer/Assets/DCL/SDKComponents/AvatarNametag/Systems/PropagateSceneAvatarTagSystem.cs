@@ -16,6 +16,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.ColorComponent;
 using SceneRunner.Scene;
+using UnityEngine;
 using Utility.Arch;
 using static DCL.Nametags.SceneAvatarTagComponent;
 
@@ -120,11 +121,15 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             if (hasPlate && applied.GlobalEntity != target)
                 MarkPlateRemoving(applied.GlobalEntity);
 
+            Color backgroundColor = pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR);
+
             globalWorld.AddOrSet(target, new SceneAvatarTagComponent(
                 pbNametag.Label,
                 pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
-                pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR),
-                pbNametag.BorderColor.ToUnityColor(fallback: NATIVE_BORDER_COLOR)));
+                backgroundColor,
+                // A border the scene did not ask for takes the background color, leaving the plate
+                // a flat capsule - the rim is opt-in rather than derived from the background.
+                pbNametag.BorderColor.ToUnityColor(fallback: backgroundColor)));
 
             pbNametag.IsDirty = false;
 

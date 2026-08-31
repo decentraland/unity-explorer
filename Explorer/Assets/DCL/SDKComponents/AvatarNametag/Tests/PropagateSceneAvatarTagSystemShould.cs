@@ -81,7 +81,26 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             SceneAvatarTagComponent plate = globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity);
             Assert.That(plate.TextColor, Is.EqualTo(SceneAvatarTagComponent.NATIVE_TEXT_COLOR));
             Assert.That(plate.BackgroundColor, Is.EqualTo(SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR));
-            Assert.That(plate.BorderColor, Is.EqualTo(SceneAvatarTagComponent.NATIVE_BORDER_COLOR));
+            Assert.That(plate.BorderColor, Is.EqualTo(SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR));
+        }
+
+        [Test]
+        public void FallBackToTheBackgroundColorWhenTheSceneSendsNoBorder()
+        {
+            // Arrange
+            CreateSceneEntity(SpecialEntitiesID.PLAYER_ENTITY, new PBAvatarNametag
+            {
+                Label = "Blue",
+                BackgroundColor = new Decentraland.Common.Color3 { R = 0.47f, G = 0.56f, B = 0.96f },
+                IsDirty = true,
+            });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            SceneAvatarTagComponent plate = globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity);
+            Assert.That(plate.BorderColor, Is.EqualTo(plate.BackgroundColor));
         }
 
         [Test]

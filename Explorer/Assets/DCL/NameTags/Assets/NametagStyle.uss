@@ -319,11 +319,11 @@
     padding-right: 6px;
     padding-left: 6px;
     background-color: var(--dcl-color-shadow);
-    /* Translucent white composites over the background box UITK draws underneath the border,
-       so the rim comes out slightly lighter than whatever background the scene picks - the same
-       derivation the design system uses on the nametag itself. */
+    /* The rim keeps its width whatever its color, so the plate does not change size when a scene
+       asks for one. This color only shows in the UI Builder preview - the plate is painted from
+       SceneAvatarTagComponent before it is ever displayed. */
     border-width: 1.5px;
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--dcl-color-shadow);
     /* Half the plate's rendered height: a stadium capsule per the design. UITK does not clamp
        oversized radii the CSS way - anything larger deforms the plate into an ellipse. */
     border-top-left-radius: 11px;

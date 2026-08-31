@@ -24,7 +24,7 @@ namespace DCL.Nametags
         private string pendingText = string.Empty;
         private Color pendingTextColor = SceneAvatarTagComponent.NATIVE_TEXT_COLOR;
         private Color pendingBackgroundColor = SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR;
-        private Color pendingBorderColor = SceneAvatarTagComponent.NATIVE_BORDER_COLOR;
+        private Color pendingBorderColor = SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR;
         private bool applyRequested;
         private bool removeRequested;
 
@@ -61,8 +61,9 @@ namespace DCL.Nametags
             if (string.IsNullOrEmpty(fields[2]) || !ColorUtility.TryParseHtmlString(fields[2], out pendingBackgroundColor))
                 pendingBackgroundColor = SceneAvatarTagComponent.NATIVE_BACKGROUND_COLOR;
 
+            // Matches the SDK path: an unspecified border takes the background color.
             if (string.IsNullOrEmpty(fields[3]) || !ColorUtility.TryParseHtmlString(fields[3], out pendingBorderColor))
-                pendingBorderColor = SceneAvatarTagComponent.NATIVE_BORDER_COLOR;
+                pendingBorderColor = pendingBackgroundColor;
 
             applyRequested = true;
         }

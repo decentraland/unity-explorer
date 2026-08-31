@@ -381,8 +381,6 @@ namespace DCL.Nametags
             // The panel treats runtime-assigned colors as linear and lifts them on output, while USS
             // colors are pre-converted by the importer - so a scene-authored sRGB value must be pushed
             // down to linear here or mid-tones render washed out (a #7890F5 plate came out #B5C4FA).
-            // The native border (translucent white) survives the conversion intact: 1 and 0 are its
-            // fixed points and the alpha channel is not converted.
             sceneTagLabel.style.color = textColor.linear;
             sceneTagContainer.style.backgroundColor = backgroundColor.linear;
 
