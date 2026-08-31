@@ -562,7 +562,8 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 loadingStatus,
                 webBrowser,
-                decentralandUrlsSource);
+                decentralandUrlsSource,
+                web3IdentityCache);
 
             var placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, decentralandUrlsSource, navmapBus, mapPathEventBus, homePlaceEventBus);
             var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));

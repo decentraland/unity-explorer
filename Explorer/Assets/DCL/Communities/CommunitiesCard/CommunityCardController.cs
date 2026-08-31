@@ -30,6 +30,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
@@ -607,6 +608,12 @@ namespace DCL.Communities.CommunitiesCard
 
         private void JoinCommunity()
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
             JoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
             return;
@@ -667,6 +674,12 @@ namespace DCL.Communities.CommunitiesCard
 
         private void RequestToJoinCommunity()
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
             RequestToJoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
             return;
