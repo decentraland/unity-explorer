@@ -10,6 +10,7 @@ using DCL.MarketplaceCredits.Purchase.TopUp;
 using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.MarketplaceCredits.Purchase.UI;
 using DCL.UI;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -89,10 +90,15 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(creditsTopUpModalController);
         }
 
-        private UniTask OpenGetCreditsPanelAsync(CancellationToken ct) =>
-            FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
+        private UniTask OpenGetCreditsPanelAsync(CancellationToken ct)
+        {
+            if (web3IdentityCache.IsGuest())
+                return mvcManager.ShowAsync(UpgradeGuestAccountPopupController.IssueCommand(), ct);
+
+            return FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup) && CreditsFeatureAccess.Instance.IsUserAllowed()
                 ? mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_PURCHASE_MODAL)), ct)
                 : mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)), ct);
+        }
 
         private UniTask OpenBackpackPanelAsync(CancellationToken ct) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar)), ct);

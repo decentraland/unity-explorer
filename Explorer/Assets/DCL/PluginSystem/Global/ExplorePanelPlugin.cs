@@ -77,6 +77,7 @@ using DCL.Settings.Settings;
 using DCL.SkyBox;
 using DCL.UI;
 using DCL.UI.Credits;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Utilities;
@@ -642,9 +643,22 @@ namespace DCL.PluginSystem.Global
 
             creditsPanelController = new CreditsPanelController(view, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
                 topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsTopup),
-                openTopUpPanel: () => mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD))).Forget());
+                openTopUpPanel: OpenTopUpPanel);
 
             view.gameObject.SetActive(true);
+
+            return;
+
+            void OpenTopUpPanel()
+            {
+                if (web3IdentityCache.IsGuest())
+                {
+                    mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(), ct: ct);
+                    return;
+                }
+
+                mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD)), ct).Forget();
+            }
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
