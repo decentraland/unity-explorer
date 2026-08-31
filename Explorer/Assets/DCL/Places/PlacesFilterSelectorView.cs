@@ -47,12 +47,12 @@ namespace DCL.Places
 
             if (invokeEvents)
             {
-                sortByBestRated.isOn = true;
+                sortByMostActive.isOn = true;
                 sdk7Only.isOn = true;
             }
             else
             {
-                sortByBestRated.SetIsOnWithoutNotify(true);
+                sortByMostActive.SetIsOnWithoutNotify(true);
                 sdk7Only.SetIsOnWithoutNotify(true);
             }
 
