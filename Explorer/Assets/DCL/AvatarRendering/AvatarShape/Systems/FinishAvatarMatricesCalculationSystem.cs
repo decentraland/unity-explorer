@@ -56,8 +56,8 @@ namespace DCL.AvatarRendering.AvatarShape
             in AvatarBase avatarBase
         )
         {
-            // Skinned verts persist between dispatches, so hidden and out-of-frustum avatars can skip theirs;
-            // the main player never skips (reflections and portraits sample it outside this frustum test)
+            // Skinned verts persist between dispatches, so hidden and out-of-frustum avatars can skip theirs.
+            // The main player is always re-skinned regardless of visibility or frustum state.
             if (computeShaderSkinning.ForceSkinNextFrame)
                 computeShaderSkinning.ForceSkinNextFrame = false;
             else if (!avatarTransformMatrixComponent.IsMainPlayer
