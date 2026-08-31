@@ -39,7 +39,7 @@ namespace Global.Dynamic
     /// </summary>
     public sealed class AbgenSidecar : IDisposable
     {
-        private const string PINNED_VERSION = "0.17.8";
+        private const string PINNED_VERSION = "0.17.11";
         private const int MAX_RESTARTS = 3;
         private const int HEALTH_TIMEOUT_MS = 15000;
         private const int HEALTH_POLL_MS = 250;
@@ -375,11 +375,11 @@ namespace Global.Dynamic
         private static (string target, string sha256)? Platform() =>
             Application.platform switch
             {
-                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "0533a87f3dc6a718a41c58cb163e8226df2f2f8733a769894114a16c113badd3"),
+                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => ("x86_64-pc-windows-gnu", "e9509e1041bdf22504123a86fff7a46966ef7bf34d53f7a0976f7d8849e64bf0"),
                 RuntimePlatform.OSXPlayer or RuntimePlatform.OSXEditor => RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-                    ? ("aarch64-apple-darwin", "07fff975084330072011a55498b823ca6cf6ffd1e4ba7d3e385c45c0ade3f890")
-                    : ("x86_64-apple-darwin", "ed28c0526b5b4d03b5e959182632ffc2f21d6c67f0f63ecf26ddef6ccc8462ca"),
-                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "7b64cbd0294d17e42462adcb776dbd1709897b58406129ea55f73ec28a8e6d67"),
+                    ? ("aarch64-apple-darwin", "8c27e97ab537a1a40683b10b421547a0c551299770ec067b00f38bb5ec8417c3")
+                    : ("x86_64-apple-darwin", "0e30ebe7e969811162b08536a99e78e6be68294c3b328d688e5cac3e2cb997af"),
+                RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => ("x86_64-unknown-linux-gnu", "284092fc30dc172336434c07d838e80ba45e58405cbbe84129eb4379092cf674"),
                 _ => null,
             };
 
