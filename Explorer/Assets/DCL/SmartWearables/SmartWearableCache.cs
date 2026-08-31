@@ -136,11 +136,11 @@ namespace Runtime.Wearables
 
                 if (!item.SceneContent.TryGetContentUrl("scene.json", out URLAddress url))
                 {
-                    ReportHub.LogError(ReportCategory.WEARABLE, "Could not find 'scene.json'");
+                    ReportHub.LogError(ReportCategory.WEARABLE, $"Could not find 'scene.json' for smart wearable '{id}'");
 
-                    // The DTO advertised a smart wearable but its content has no scene.json, so it cannot run:
-                    // downgrade to non-smart instead of caching a smart entry with no metadata, which would crash the scene load.
-                    item.IsSmart = false;
+                    // The wearable stays smart (its DTO says so), but the entry is evicted so the metadata-less
+                    // item is never served from the cache on a later request.
+                    cache.Remove(id);
                     return item;
                 }
 
