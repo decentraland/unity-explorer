@@ -328,6 +328,22 @@ UserId userId = UserId.New(KNOWN_CONSTANT).Unwrap();
 
 In production code, handle `None` explicitly (early return, propagation) or use a by-construction-valid factory. `Unwrap()` is a test-only affordance — and in tests, known-valid constants go through `Unwrap()`, never bare `.Value`.
 
+### 9. Committing one-shot development tooling
+
+Code written to help *build* a feature is not part of the feature. This covers editor `[MenuItem]` scaffolders that generate a greybox prefab, API probes and spike scripts (`Assets/DCL/Playgrounds/...`), throwaway editor assemblies (`*.Editor.asmdef` + `csc.rsp`) created only to host such a tool, temporary `DecentralandUrlsSource` localhost pointers, and hand-rolled test harnesses that are not NUnit tests. Once the generated asset or the answer exists, the tool has no consumer and it ships nothing.
+
+```csharp
+// WRONG: a one-shot generator committed next to the feature it bootstrapped
+[MenuItem("Decentraland/UI/Scaffold BugReportView Prefab")]
+private static void Scaffold() { /* builds a greybox and saves the prefab */ }
+```
+
+Rules:
+
+- Keep such tools **untracked** (never `git add` them) or delete them once they have done their job. If a tool must survive across sessions, leave it untracked and note its location in memory, not in the repo.
+- Before proposing a commit or PR, scan the staged diff for these files and drop them. `Assets/DCL/**/Editor/` folders and new `[MenuItem]` attributes in a feature PR are the usual tell.
+- The exceptions are tools with a lasting audience: runtime debug widgets registered through `IDebugContainerBuilder` (see the **debug-widget** skill), editor-only companion systems guarded by `#if UNITY_EDITOR`, and recurring editor utilities that other developers use (`Assets/DCL/Editor/`, `DiskCacheMenu`, `AssetBundleCacheClearMenu`). Those go through review as their own change, with the justification stated in the PR.
+
 ## PR Standards
 
 - **Branches:** Based on `dev` branch
@@ -340,3 +356,4 @@ In production code, handle `None` explicitly (early return, propagation) or use 
 - **PR approval:** QA review + developer review + passing builds/tests
 - **Merge method:** Squash and merge
 - **Commits:** Commit often as save points; PRs are squashed on merge
+- **PR contents:** Only the feature/fix. One-shot development tooling (prefab scaffolders, probes, spike scripts, throwaway editor assemblies) stays untracked or is deleted before the PR; see Anti-Pattern 9.
