@@ -18,9 +18,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
-        // Shared asset-bundle meshes are never mutated after load and destroyed instance ids never recur, so no invalidation is needed
-        private static readonly HashSet<int> tangentsComputed = new ();
-
         public override AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
             in FacialFeaturesTextures facialFeatureTexture, int boneCount)
@@ -57,7 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 MeshData meshData = meshesData[i];
                 int meshVertexCount = meshData.Mesh.sharedMesh.vertexCount;
                 ResetTransforms(meshData.Transform, meshData.RootTransform);
-                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount, meshData.SpringBoneOffset);
+                FillMeshArray(meshData, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount);
                 vertCounter += meshVertexCount;
                 skinnedMeshCounter++;
             }
@@ -85,13 +82,17 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return new AvatarCustomSkinningComponent.Buffers(mBones, kernel);
         }
 
-        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount, int springBoneOffset)
+        private void FillMeshArray(in MeshData meshData, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount)
         {
+            Mesh mesh = meshData.Mesh.sharedMesh;
+
             // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
-            if (tangentsComputed.Add(mesh.GetInstanceID()))
+            // The meshes are shared between every instance of the asset and nothing mutates their vertices or
+            // normals after load, so the recalculation only has to run on the first instance that uses each one.
+            if (meshData.OriginalAsset.TryMarkTangentsRecalculated(mesh))
                 mesh.RecalculateTangents();
 
-            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, springBoneOffset);
+            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, meshData.SpringBoneOffset);
         }
 
         private (int vertCount, int totalBoneBufferCount) SetupCounters(IReadOnlyList<MeshData> meshesData, int boneCount)
@@ -176,7 +177,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                             cachedWearable.Renderers.Add(tuple.Item1);
 
                             targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
-                                originalMaterial, springBoneOffset));
+                                originalMaterial, cachedWearable.OriginalAsset, springBoneOffset));
                         }
                         else
                         {
@@ -184,7 +185,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
                             // From Pooled Object
                             targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
-                                originalMaterial, springBoneOffset));
+                                originalMaterial, cachedWearable.OriginalAsset, springBoneOffset));
                         }
                     }
                 }
