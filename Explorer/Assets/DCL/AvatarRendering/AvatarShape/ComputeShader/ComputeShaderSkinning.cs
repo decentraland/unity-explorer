@@ -18,6 +18,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
+        // Shared asset-bundle meshes are never mutated after load and destroyed instance ids never recur, so no invalidation is needed
+        private static readonly HashSet<int> tangentsComputed = new ();
+
         public override AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
             in FacialFeaturesTextures facialFeatureTexture, int boneCount)
@@ -85,7 +88,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount, int springBoneOffset)
         {
             // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
-            mesh.RecalculateTangents();
+            if (tangentsComputed.Add(mesh.GetInstanceID()))
+                mesh.RecalculateTangents();
 
             computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, springBoneOffset);
         }
