@@ -6,7 +6,12 @@
 
         // Stamped by AvatarShapeVisibilitySystem's frustum pass so downstream systems
         // (skinning skip, animator gate) share one visibility source instead of re-testing
-        public bool IsInCameraFrustum;
+        public bool IsInCameraFrustum { get; private set; }
+
+        public void SetInCameraFrustum(bool isInFrustum)
+        {
+            IsInCameraFrustum = isInFrustum;
+        }
         private DITHER_STATE currentDitherState;
 
         public bool ShouldUpdateDitherState(float newDistance, float startFadeDithering, float endFadeDithering)

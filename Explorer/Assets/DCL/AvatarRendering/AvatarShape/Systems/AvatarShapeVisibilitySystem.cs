@@ -78,7 +78,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         private void StampFrustumVisibility(in AvatarBase avatarBase, ref AvatarCachedVisibilityComponent cached)
         {
-            cached.IsInCameraFrustum = IsVisibleInCamera(avatarBase.AvatarSkinnedMeshRenderer.bounds);
+            cached.SetInCameraFrustum(IsVisibleInCamera(avatarBase.AvatarSkinnedMeshRenderer.bounds));
         }
 
         internal void CalculateFrustumPlanes(Camera camera)
