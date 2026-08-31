@@ -167,7 +167,6 @@ namespace DCL.Chat.ChatReactions.Core
             string serverEnv = environment switch
             {
                 DecentralandEnvironment.Org => "prd",
-                DecentralandEnvironment.Today => "prd",
                 DecentralandEnvironment.Zone => "dev",
 
                 // A --base-domain deployment is treated as a non-production stack, like zone: its

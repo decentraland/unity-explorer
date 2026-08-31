@@ -253,9 +253,9 @@ namespace DCL.Passport.Modules.Creations
             bool hasLink = marketplaceLink != string.Empty;
             bool isBaseWearable = itemView.ItemId.IsBaseWearable();
             bool showBuy = !isBaseWearable && item.isOnSale && hasLink;
-            bool showView = !isBaseWearable && hasLink;
+            bool showView = !isBaseWearable && !item.isOnSale && hasLink;
 
-            itemView.BuyButton.gameObject.SetActive(showBuy);
+            itemView.BuyButtonSection.SetActive(showBuy);
             itemView.ViewButton.gameObject.SetActive(showView);
             itemView.OnSaleFlap.gameObject.SetActive(showBuy);
 
@@ -272,6 +272,7 @@ namespace DCL.Passport.Modules.Creations
             UnityAction viewListener = () => webBrowser.OpenUrlMainThreadOnly(marketplaceLink);
             itemView.BuyButton.onClick.AddListener(buyListener);
             itemView.ViewButton.onClick.AddListener(viewListener);
+            itemView.ViewButtonSmaller.onClick.AddListener(viewListener);
             navigationListeners[itemView] = (buyListener, viewListener);
 
             itemView.SetAsLoading(false);
@@ -285,6 +286,7 @@ namespace DCL.Passport.Modules.Creations
 
             itemView.BuyButton.onClick.RemoveListener(listeners.buy);
             itemView.ViewButton.onClick.RemoveListener(listeners.view);
+            itemView.ViewButtonSmaller.onClick.RemoveListener(listeners.view);
             navigationListeners.Remove(itemView);
         }
 
