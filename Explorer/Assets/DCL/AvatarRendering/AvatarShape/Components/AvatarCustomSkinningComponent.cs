@@ -78,6 +78,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// <summary>
         ///     One-shot flag: forces the next skin dispatch to run regardless of visibility or frustum state. Self-clears after consumption.
         /// </summary>
+        public bool ForceSkinNextFrame;
 
         public readonly int VertCount;
         public readonly int BoneCount;
