@@ -1,0 +1,38 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Preview/PreviewStyle.uss?fileID=7433441132597879392&amp;guid=f68a6a2e06d354fd9a80fadbd46871a5&amp;type=3#PreviewStyle" />
+    <engine:VisualElement name="Controls" class="container">
+        <engine:VisualElement name="Switcher" class="switcher">
+            <engine:VisualElement name="WearableButton" tooltip="Wearable" class="switcher__button switcher__button--selected" style="background-image: url(&quot;project://database/Assets/UI/Sprites/UpperBodyIcon.png?fileID=2800000&amp;guid=485539051aef5498a9871192a27ad7ca&amp;type=3#UpperBodyIcon&quot;);" />
+            <engine:VisualElement name="AvatarButton" tooltip="Try On" class="switcher__button" style="background-image: url(&quot;project://database/Assets/UI/Sprites/BodyIcon.png?fileID=2800000&amp;guid=c6339aa049f3a42c6b337d3822bf7118&amp;type=3#BodyIcon&quot;);" />
+        </engine:VisualElement>
+        <engine:VisualElement name="ZoomControls" class="zoomer">
+            <engine:Button name="ZoomInButton" class="zoomer__button zoomer__button--in" />
+            <engine:VisualElement name="Spacer" style="height: 1px;" />
+            <engine:Button name="ZoomOutButton" class="zoomer__button zoomer__button--out" />
+        </engine:VisualElement>
+        <engine:VisualElement name="EmoteControls" class="emote-controls">
+            <engine:Button name="PlayStopButton" class="emote-controls__button emote-controls__button-play dcl-clickable">
+                <engine:VisualElement picking-mode="Ignore" name="Icon" style="flex-grow: 1;" />
+                <engine:Label text="STOP EMOTE" name="Title" picking-mode="Ignore" />
+            </engine:Button>
+            <engine:Button name="MuteButton" class="emote-controls__button emote-controls__button-mute dcl-clickable" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+    <engine:VisualElement name="Loader" class="loader" style="display: flex;">
+        <engine:VisualElement name="Icon" class="loader__icon" />
+    </engine:VisualElement>
+    <engine:VisualElement name="DebugPanel" picking-mode="Ignore" style="flex-direction: column; font-size: 22px; justify-content: flex-end; align-items: stretch; position: absolute; top: 0; left: 0; bottom: 0; right: 0; display: none;">
+        <engine:Label text="v0.0.0" name="VersionLabel" style="align-self: flex-end;" />
+        <engine:Button text="Hide" name="HideButton" style="width: 93px; align-self: flex-end;" />
+        <engine:Button text="Print Config" name="PrintConfigButton" style="align-self: flex-end;" />
+        <engine:Button text="Random Profile" name="RandomProfileButton" style="align-self: flex-end;" />
+        <engine:VisualElement style="flex-direction: row; height: 50px;">
+            <engine:DropdownField name="MethodNameDropdown" choices="Method" index="0" style="flex-grow: 1; flex-basis: 1px; margin-left: 0;" />
+            <engine:TextField placeholder-text="MethodName" name="MethodName" style="flex-grow: 1; flex-basis: 1px; display: none;" />
+            <engine:TextField placeholder-text="Parameter" name="Parameter" style="flex-grow: 1; flex-basis: 1px;" />
+            <engine:Button text="Invoke" name="InvokeButton" />
+        </engine:VisualElement>
+        <engine:DropdownField name="URLDropdown" choices="From URL" index="0" style="margin-left: 0;" />
+    </engine:VisualElement>
+    <engine:Label name="Tooltip" picking-mode="Ignore" class="tooltip" />
+</engine:UXML>

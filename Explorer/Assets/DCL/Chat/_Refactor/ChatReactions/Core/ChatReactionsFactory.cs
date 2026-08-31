@@ -11,7 +11,6 @@ using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Settings.Settings;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using UnityEngine;
 using Utility;

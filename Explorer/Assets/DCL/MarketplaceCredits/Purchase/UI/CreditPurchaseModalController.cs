@@ -1,9 +1,18 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.Diagnostics;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using MVC;
 using Plugins.NativeWindowManager;
+using Runtime.Wearables;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -28,9 +37,9 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         public const string NAV_DESTINATION_MARKETPLACE = "marketplace";
 
         private const string CANNOT_AFFORD_TEXT = "Add <b>{0} Credits</b> to complete your purchase.";
-        private const float NORMAL_HEIGHT = 491;
+        private const float NORMAL_HEIGHT = 813;
         private const float PURCHASING_HEIGHT = 371;
-        private const float INSUFFICIENT_CREDITS_HEIGHT = 622;
+        private const float INSUFFICIENT_CREDITS_HEIGHT = 950;
         private const float COMPLETED_HEIGHT = 571;
 
         private const string ANALYTICS_STEP_QUOTE = "quote";
@@ -40,11 +49,20 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private const string ANALYTICS_DETAIL_BALANCE_LOAD_FAILED = "balance_load_failed";
         private const string ANALYTICS_DETAIL_UNHANDLED_EXCEPTION = "unhandled_exception";
         private const int UNKNOWN_MISSING_CREDITS = -1;
+        private const string EMOTE_PLAY_LABEL = "Play";
+        private const string EMOTE_STOP_LABEL = "Stop";
 
         private readonly ICreditsPurchaseService purchaseService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
         private readonly IWeb3IdentityCache identityCache;
         private readonly UnityAppWebBrowser webBrowser;
+        private readonly ICharacterPreviewFactory characterPreviewFactory;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly ISelfProfile selfProfile;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly World world;
+        private readonly IWearableStorage wearableStorage;
+        private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
         private readonly Func<CancellationToken, UniTask> openBackpackAsync;
         private readonly CancellationTokenSource disposalCts = new ();
@@ -57,6 +75,11 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private bool navigatedAway;
         private float purchaseStartedAt;
         private CreditsPurchaseState lastPurchaseState;
+        private URN shortenedItemUrn;
+        private CreditPurchaseTryOnCharacterPreviewController? tryOnPreviewController;
+        private CancellationTokenSource? characterPreviewCts;
+        private bool characterPreviewShown;
+        private bool emotePlayingShown;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -75,6 +98,13 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             MarketplaceCreditsAPIClient creditsApiClient,
             IWeb3IdentityCache identityCache,
             UnityAppWebBrowser webBrowser,
+            ICharacterPreviewFactory characterPreviewFactory,
+            CharacterPreviewEventBus characterPreviewEventBus,
+            ISelfProfile selfProfile,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            World world,
+            IWearableStorage wearableStorage,
+            NftTypeIconSO rarityInfoPanelBackgrounds,
             Func<CancellationToken, UniTask> openGetCreditsPanelAsync,
             Func<CancellationToken, UniTask> openBackpackAsync)
             : base(viewFactory)
@@ -83,6 +113,13 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             this.creditsApiClient = creditsApiClient;
             this.identityCache = identityCache;
             this.webBrowser = webBrowser;
+            this.characterPreviewFactory = characterPreviewFactory;
+            this.characterPreviewEventBus = characterPreviewEventBus;
+            this.selfProfile = selfProfile;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.world = world;
+            this.wearableStorage = wearableStorage;
+            this.rarityInfoPanelBackgrounds = rarityInfoPanelBackgrounds;
             this.openGetCreditsPanelAsync = openGetCreditsPanelAsync;
             this.openBackpackAsync = openBackpackAsync;
             purchaseService.StateChanged += OnPurchaseStateChanged;
@@ -92,11 +129,31 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         {
             purchaseService.StateChanged -= OnPurchaseStateChanged;
             lifeCts?.SafeCancelAndDispose();
+            characterPreviewCts?.SafeCancelAndDispose();
+            tryOnPreviewController?.Dispose();
             disposalCts.SafeCancelAndDispose();
         }
 
         private static bool CanAfford(in CreditsPurchaseQuote quote, in UserCreditsResponse credits) =>
             credits.usd.credits >= quote.Credits;
+
+        protected override void OnViewInstantiated()
+        {
+            tryOnPreviewController = new CreditPurchaseTryOnCharacterPreviewController(
+                viewInstance!.TryOnCharacterPreviewView,
+                characterPreviewFactory,
+                world,
+                characterPreviewEventBus);
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.TryOnCharacterPreviewView.gameObject.SetActive(IsTryOnAvailable());
+            tryOnPreviewController?.OnBeforeShow();
+        }
 
         protected override void OnViewShow()
         {
@@ -106,13 +163,16 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             purchaseSucceeded = false;
             navigatedAway = false;
             lastPurchaseState = CreditsPurchaseState.ResolvingListing;
+            shortenedItemUrn = new URN(inputData.ItemUrn).Shorten();
 
             if (viewInstance != null)
             {
                 viewInstance.ItemName.text = inputData.ItemName;
+                viewInstance.CreatorName.text = string.Empty;
                 viewInstance.RarityLabel.text = inputData.RarityName;
                 viewInstance.RarityLabel.color = inputData.RarityColor;
                 viewInstance.RarityBackground.color = new Color(inputData.RarityColor.r, inputData.RarityColor.g, inputData.RarityColor.b, viewInstance.RarityBackground.color.a);
+                viewInstance.RarityBackgroundFull.sprite = rarityInfoPanelBackgrounds.GetTypeImage(inputData.RarityName);
 
                 if (inputData.ItemThumbnail != null)
                 {
@@ -140,15 +200,19 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
                 viewInstance.OpenMarketplaceButton.onClick.AddListener(OnOpenMarketplaceClicked);
                 viewInstance.ToBackpackButton.onClick.AddListener(OnToBackpackClicked);
+                viewInstance.TryOnEmoteToggleButton.onClick.AddListener(OnEmoteToggleClicked);
             }
 
             LoadQuoteAndBalanceAsync(lifeCts.Token).Forget();
+            LoadCreatorNameAsync(lifeCts.Token).Forget();
 
             ModalOpened?.Invoke(inputData.Listing, inputData.Source);
         }
 
         protected override void OnViewClose()
         {
+            ResetCharacterPreview();
+
             if (viewInstance != null)
             {
                 viewInstance.ConfirmButton.onClick.RemoveListener(OnConfirmClicked);
@@ -156,6 +220,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.GetCreditsButton.onClick.RemoveListener(OnGetCreditsClicked);
                 viewInstance.OpenMarketplaceButton.onClick.RemoveListener(OnOpenMarketplaceClicked);
                 viewInstance.ToBackpackButton.onClick.RemoveListener(OnToBackpackClicked);
+                viewInstance.TryOnEmoteToggleButton.onClick.RemoveListener(OnEmoteToggleClicked);
             }
 
             if (!purchaseSucceeded && !navigatedAway)
@@ -247,6 +312,34 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             }
         }
 
+        private async UniTask LoadCreatorNameAsync(CancellationToken ct)
+        {
+            string creator = inputData.Listing.creator;
+
+            try
+            {
+                Profile.CompactInfo? profile = await profileRepositoryWrapper.GetProfileAsync(creator, ct);
+
+                if (ct.IsCancellationRequested || viewInstance == null)
+                    return;
+
+                viewInstance.CreatorName.text = profile is { ValidatedName: { Length: > 0 } } compact
+                    ? compact.ValidatedName
+                    : ShortenWallet(creator);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Creator profile lookup failed for {creator}: {e.Message}");
+
+                if (!ct.IsCancellationRequested && viewInstance != null)
+                    viewInstance.CreatorName.text = ShortenWallet(creator);
+            }
+        }
+
+        private static string ShortenWallet(string wallet) =>
+            wallet.Length > 10 ? string.Concat(wallet[..6], "...", wallet[^4..]) : wallet;
+
         private void OnConfirmClicked()
         {
             if (currentState != ModalState.ReadyToConfirm || quote == null || lifeCts == null || lifeCts.IsCancellationRequested)
@@ -291,6 +384,115 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 webBrowser.OpenUrlMainThreadOnly(inputData.FallbackMarketplaceUrl);
             }
         }
+
+        private void ShowCharacterPreview()
+        {
+            if (characterPreviewShown)
+                return;
+
+            characterPreviewShown = true;
+            viewInstance?.TryOnEmoteToggleButton.gameObject.SetActive(false);
+
+            characterPreviewCts = characterPreviewCts.SafeRestart();
+            LoadCharacterPreviewAsync(characterPreviewCts.Token).Forget();
+        }
+
+        private async UniTask LoadCharacterPreviewAsync(CancellationToken ct)
+        {
+            CreditPurchaseTryOnCharacterPreviewController? previewController = tryOnPreviewController;
+
+            if (previewController == null)
+                return;
+
+            try
+            {
+
+                Profile? profile = await selfProfile.ProfileAsync(ct);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (profile == null)
+                {
+                    ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, "Try-on preview aborted: own profile is unavailable.");
+                    ResetCharacterPreview();
+                    return;
+                }
+
+                if (inputData.IsEmote)
+                {
+                    previewController.TryOnEmote(profile.Avatar, shortenedItemUrn);
+                    SetEmoteToggleLabel(playing: true);
+                    viewInstance?.TryOnEmoteToggleButton.gameObject.SetActive(true);
+                    TrackEmotePlaybackAsync(previewController, ct).Forget();
+                }
+                else
+                    previewController.TryOnWearable(profile.Avatar, shortenedItemUrn, inputData.Listing.wearableCategory, wearableStorage);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
+                ResetCharacterPreview();
+            }
+        }
+
+        private void OnEmoteToggleClicked()
+        {
+            if (!characterPreviewShown || !inputData.IsEmote || tryOnPreviewController == null)
+                return;
+
+            if (tryOnPreviewController.IsPlayingEmote())
+            {
+                tryOnPreviewController.StopEmotes();
+                SetEmoteToggleLabel(playing: false);
+            }
+            else
+            {
+                tryOnPreviewController.PlayTryOnEmote(shortenedItemUrn);
+                SetEmoteToggleLabel(playing: true);
+            }
+        }
+
+        // Mirrors the preview emote state onto the toggle label so a non-looping emote that ends on its
+        // own flips back to "Play". Only transitions update the label, so the optimistic value set on click
+        // survives the frames between the play intent and the animator entering the emote state.
+        private async UniTask TrackEmotePlaybackAsync(CreditPurchaseTryOnCharacterPreviewController previewController, CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                bool playing = previewController.IsPlayingEmote();
+
+                if (playing != emotePlayingShown)
+                    SetEmoteToggleLabel(playing);
+
+                await UniTask.Yield(PlayerLoopTiming.PostLateUpdate, ct).SuppressCancellationThrow();
+            }
+        }
+
+        private void SetEmoteToggleLabel(bool playing)
+        {
+            emotePlayingShown = playing;
+
+            if (viewInstance != null)
+                viewInstance.TryOnEmoteToggleButtonText.text = playing ? EMOTE_STOP_LABEL : EMOTE_PLAY_LABEL;
+        }
+
+        private void ResetCharacterPreview()
+        {
+            if (!characterPreviewShown)
+                return;
+
+            characterPreviewCts?.SafeCancelAndDispose();
+            characterPreviewCts = null;
+            characterPreviewShown = false;
+            emotePlayingShown = false;
+            tryOnPreviewController?.OnHide();
+            viewInstance?.TryOnEmoteToggleButton.gameObject.SetActive(false);
+        }
+
+        private bool IsTryOnAvailable() =>
+            inputData.IsEmote || inputData.Listing.wearableCategory != WearableCategories.Categories.BODY_SHAPE;
 
         private async UniTask PurchaseAsync(CreditsPurchaseQuote confirmedQuote, CancellationToken ct)
         {
@@ -479,6 +681,13 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             viewInstance.Item.SetActive(newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits);
 
             viewInstance.ConfirmButton.interactable = newState == ModalState.ReadyToConfirm;
+
+            bool previewVisible = (newState is ModalState.LoadingBalance or ModalState.ReadyToConfirm or ModalState.InsufficientCredits) && IsTryOnAvailable();
+
+            if (previewVisible)
+                ShowCharacterPreview();
+            else
+                ResetCharacterPreview();
         }
 
         private void RequestClose() =>

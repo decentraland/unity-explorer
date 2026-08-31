@@ -118,11 +118,17 @@ namespace DCL.Quality.Runtime
         /// <summary>
         ///     Forces the Low preset by clearing any custom overrides and saving the Low preset level.
         ///     Called before QualitySettingsController is created (e.g. when minimum specs are not met).
+        ///     Applies only once per installation: after the first enforcement the saved preset is left untouched
+        ///     so quality settings the user changes afterwards survive restarts.
         /// </summary>
-        public static void EnforceLowPreset()
+        public static void EnforceLowPresetOnce()
         {
+            if (DCLPlayerPrefs.GetBool(DCLPrefKeys.MIN_SPECS_LOW_PRESET_ENFORCED))
+                return;
+
             DeleteCustomSettings();
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_QUALITY_PRESET, EnumUtils.ToInt(QualityPresetLevel.Low), save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_QUALITY_PRESET, EnumUtils.ToInt(QualityPresetLevel.Low));
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.MIN_SPECS_LOW_PRESET_ENFORCED, true, save: true);
         }
     }
 }
