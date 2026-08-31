@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -41,14 +42,22 @@ namespace DCL.AvatarRendering.AvatarShape
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             ref AvatarCustomSkinningComponent computeShaderSkinning,
             in AvatarShapeComponent avatarShape,
-            in AvatarCachedVisibilityComponent cachedVisibility
+            in AvatarCachedVisibilityComponent cachedVisibility,
+            in AvatarBase avatarBase
         )
         {
-            // Skinned verts persist between dispatches, so hidden and out-of-frustum avatars can skip theirs.
-            // The main player is always re-skinned regardless of visibility or frustum state.
-            if (!computeShaderSkinning.ForceSkinNextFrame
-                && !avatarTransformMatrixComponent.IsMainPlayer
-                && (!avatarShape.IsVisible || !cachedVisibility.IsInCameraFrustum))
+            bool culled = !avatarTransformMatrixComponent.IsMainPlayer
+                          && (!avatarShape.IsVisible || !cachedVisibility.IsInCameraFrustum);
+
+            // Unity's own animator culling only consults SkinnedMeshRenderers and the custom skinning
+            // pipeline deletes them all, so visibility must gate the Animator manually
+            if (avatarBase.AvatarAnimator.enabled == culled)
+                avatarBase.AvatarAnimator.enabled = !culled;
+
+            if (!computeShaderSkinning.ForceSkinNextFrame && culled)
+                return;
+
+            computeShaderSkinning.ForceSkinNextFrame = false;
                 return;
 
             computeShaderSkinning.ForceSkinNextFrame = false;
