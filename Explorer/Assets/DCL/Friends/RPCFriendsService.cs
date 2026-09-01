@@ -109,8 +109,15 @@ namespace DCL.Friends
                                 // This stream is ack-driven: the server sends the next update only after this one
                                 // is consumed, so a hung await here silently starves every subsequent update.
                                 // Prefer the cached profile and bound the fallback fetch
-                                Profile? myProfile = selfProfile.OwnProfile
-                                                     ?? await selfProfile.ProfileAsync(ct).Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+                                Profile? myProfile = selfProfile.OwnProfile;
+
+                                if (myProfile == null)
+                                {
+                                    myProfile = await selfProfile.ProfileAsync(ct).Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+                                    // The fetch may resume on a background thread; the broadcast below requires the main thread
+                                    await UniTask.SwitchToMainThread(ct);
+                                }
 
                                 if (myProfile == null)
                                 {
