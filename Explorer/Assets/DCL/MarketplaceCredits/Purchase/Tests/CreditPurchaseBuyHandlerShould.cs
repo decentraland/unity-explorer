@@ -182,6 +182,24 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             Assert.IsFalse(CreditPurchaseBuyHandler.TryParseCollectionItem("no-colons-here", out _, out _));
         }
 
+        [Test]
+        public void BuildShopItemLinkFromItemUrn()
+        {
+            // Arrange
+            var urlsSource = Substitute.For<IDecentralandUrlsSource>();
+            urlsSource.Url(DecentralandUrl.ShopLink).Returns("https://decentraland.org/shop");
+
+            // Act & Assert
+            Assert.AreEqual(
+                "https://decentraland.org/shop/item/0x2222222222222222222222222222222222222222/3?utm_source=client",
+                CreditPurchaseBuyHandler.GetShopItemLink(urlsSource, ITEM_URN));
+
+            Assert.AreEqual(string.Empty, CreditPurchaseBuyHandler.GetShopItemLink(urlsSource, "urn:decentraland:matic:collections-v2:0x2222222222222222222222222222222222222222"));
+            Assert.AreEqual(string.Empty, CreditPurchaseBuyHandler.GetShopItemLink(urlsSource, "urn:decentraland:off-chain:base-avatars:brown_pants"));
+            Assert.AreEqual(string.Empty, CreditPurchaseBuyHandler.GetShopItemLink(urlsSource, null));
+            Assert.AreEqual(string.Empty, CreditPurchaseBuyHandler.GetShopItemLink(urlsSource, string.Empty));
+        }
+
         private class MockWebBrowser : UnityAppWebBrowser
         {
             public string? UrlOpened { get; private set; }

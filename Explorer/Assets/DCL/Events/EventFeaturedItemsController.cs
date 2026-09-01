@@ -296,13 +296,8 @@ namespace DCL.Communities.EventInfo
                 webBrowser.OpenUrlMainThreadOnly(marketplaceLink);
         }
 
-        private string GetMarketplaceLink(MarketplaceCatalogItem item)
-        {
-            if (string.IsNullOrEmpty(item.url))
-                return string.Empty;
-
-            return $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}{item.url}";
-        }
+        private string GetMarketplaceLink(MarketplaceCatalogItem item) =>
+            CreditPurchaseBuyHandler.GetShopItemLink(decentralandUrlsSource, item.urn);
 
         private static int CalculateMissingEmptyItems(int totalItems)
         {

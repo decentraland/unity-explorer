@@ -311,13 +311,8 @@ namespace DCL.Passport.Modules.Creations
                                     .Forget();
         }
 
-        private string GetMarketplaceLink(MarketplaceCatalogItem item)
-        {
-            if (string.IsNullOrEmpty(item.url))
-                return string.Empty;
-
-            return $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}{item.url}";
-        }
+        private string GetMarketplaceLink(MarketplaceCatalogItem item) =>
+            CreditPurchaseBuyHandler.GetShopItemLink(decentralandUrlsSource, item.urn);
 
         private async UniTaskVoid WaitForThumbnailAsync(string? thumbnailUrl, EquippedItemPassportFieldView itemView, CancellationToken ct)
         {

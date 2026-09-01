@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.MarketplaceCredits.Purchase.UI;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -77,6 +78,14 @@ namespace DCL.Passport.Modules
             contractAddress = contract;
             itemId = item;
             return true;
+        }
+
+        public static string GetShopItemLink(IDecentralandUrlsSource decentralandUrlsSource, string? urn)
+        {
+            if (string.IsNullOrEmpty(urn) || !TryParseCollectionItem(urn, out string contractAddress, out string itemId))
+                return string.Empty;
+
+            return $"{decentralandUrlsSource.Url(DecentralandUrl.ShopLink)}/item/{contractAddress}/{itemId}?utm_source=client";
         }
 
         public void ClearCache() =>
