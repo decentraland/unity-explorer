@@ -125,6 +125,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
         [TestCase(9999f)]
         [TestCase(-5f)]
         [TestCase(float.NaN)]
+        [TestCase(float.PositiveInfinity)]
         public void ClampOutOfRangeSeekOnRetrigger(float currentTime)
         {
             // Arrange: resolve the clip promise and run one update to instantiate the Unity AudioSource.
