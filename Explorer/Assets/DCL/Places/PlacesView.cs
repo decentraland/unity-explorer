@@ -196,8 +196,6 @@ namespace DCL.Places
         {
             currentFilters.Section = null;
             currentFilters.CategoryId = null;
-
-            // Most Active surfaces live-user scenes and matches the places service default (mirrored in PlacesFilterSelectorView.ResetFilters)
             currentFilters.SortBy = IPlacesAPIService.SortBy.MOST_ACTIVE;
             currentFilters.SDKVersion = IPlacesAPIService.SDKVersion.SDK7_ONLY;
             currentFilters.SearchText = string.Empty;
