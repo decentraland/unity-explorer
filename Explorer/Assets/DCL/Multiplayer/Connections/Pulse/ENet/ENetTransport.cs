@@ -142,7 +142,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                                       .AttachExternalCancellation(ct)
                                       .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
             }
-            catch (SocketException e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 throw new PulseHostResolutionException(hostName, e);
             }
