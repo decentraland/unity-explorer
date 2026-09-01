@@ -33,10 +33,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
         private readonly List<PBUiCanvasInformation> publishedComponents = new ();
 
-        private IECSToCRDTWriter ecsToCRDTWriter;
-        private GameObject canvasGameObject;
-        private PanelSettings panelSettings;
-        private UIDocument canvas;
+        private IECSToCRDTWriter ecsToCRDTWriter = null!;
+        private GameObject canvasGameObject = null!;
+        private PanelSettings panelSettings = null!;
+        private UIDocument canvas = null!;
 
         [SetUp]
         public void SetUp()

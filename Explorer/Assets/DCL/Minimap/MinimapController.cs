@@ -208,8 +208,8 @@ namespace DCL.Minimap
             viewInstance.favoriteButton.OnButtonClicked += OnFavoriteButtonClicked;
             viewInstance.donateButton.onClick.AddListener(OpenDonateToCreatorPanel);
 
-            viewInstance.SideMenuCanvasGroup.alpha = 0;
-            viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
+            viewInstance.sideMenuCanvasGroup.alpha = 0;
+            viewInstance.sideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuPresenter = new SideMenuPresenter(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetGenesisMode(realmData.IsGenesis());
@@ -340,6 +340,7 @@ namespace DCL.Minimap
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
             viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.EXPAND);
+            viewInstance.minimapContainerCanvasGroup.blocksRaycasts = true;
         }
 
         private void CollapseMinimap()
@@ -348,15 +349,16 @@ namespace DCL.Minimap
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
             viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.COLLAPSE);
+            viewInstance.minimapContainerCanvasGroup.blocksRaycasts = false;
         }
 
         private void OpenSideMenu()
         {
-            if (viewInstance!.SideMenuCanvasGroup.gameObject.activeInHierarchy) { viewInstance.SideMenuCanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(false)); }
+            if (viewInstance!.sideMenuCanvasGroup.gameObject.activeInHierarchy) { viewInstance.sideMenuCanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => viewInstance.sideMenuCanvasGroup.gameObject.gameObject.SetActive(false)); }
             else
             {
-                viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(true);
-                viewInstance.SideMenuCanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
+                viewInstance.sideMenuCanvasGroup.gameObject.gameObject.SetActive(true);
+                viewInstance.sideMenuCanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
         }
 

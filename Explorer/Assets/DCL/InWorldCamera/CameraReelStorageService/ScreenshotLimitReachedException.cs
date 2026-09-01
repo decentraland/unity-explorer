@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCL.InWorldCamera.Systems
+namespace DCL.InWorldCamera.CameraReelStorageService
 {
     public sealed class ScreenshotLimitReachedException : Exception { }
 }
