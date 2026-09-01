@@ -182,8 +182,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         }
 
         /// <summary>
-        ///     Refreshes the avatar-space bounds for a live slot. Pushed every frame alongside the bone count so a
-        ///     wearable re-equip that changes the silhouette is picked up without a re-register.
+        ///     Refreshes the avatar-space bounds for a live slot. Pushed every frame alongside the bone count, so
+        ///     the value is current whether the avatar kept its slot or was re-registered into a recycled one.
         /// </summary>
         public void SetLocalBounds(int validIndex, float3x2 bounds)
         {

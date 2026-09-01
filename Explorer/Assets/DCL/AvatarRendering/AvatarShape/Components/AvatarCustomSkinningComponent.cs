@@ -109,12 +109,16 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             disposed = false;
         }
 
+#if UNITY_INCLUDE_TESTS
+        public static AvatarCustomSkinningComponent NewWithLocalBounds(Bounds localBounds) =>
+            new () { LocalBounds = localBounds };
+#endif
+
         /// <summary>
         ///     Places <see cref="LocalBounds" /> in the world through the avatar's transform, re-axis-aligning the
         ///     rotated box. The renderers cannot answer this: compute-shader skinning replaced their local bounds
         ///     with a fixed cube, and the skinned vertices only ever exist in the GPU buffer.
-        ///     The runtime culling path does not call this — BoneMatrixCalculationJob computes the same result off
-        ///     the main thread from the gathered root matrix. This is the readable reference for tooling and tests.
+        ///     This is the managed reference form of the transform; BoneMatrixCalculationJob carries the Burst one.
         /// </summary>
         public readonly Bounds ToWorldBounds(Transform avatarTransform)
         {

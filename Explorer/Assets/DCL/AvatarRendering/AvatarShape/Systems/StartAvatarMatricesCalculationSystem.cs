@@ -60,7 +60,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void RefreshPerAvatarJobInputs(ref AvatarTransformMatrixComponent transformMatrixComponent, ref AvatarCustomSkinningComponent skinningComponent)
+        private void RefreshPerAvatarJobInputs(ref AvatarTransformMatrixComponent transformMatrixComponent, in AvatarCustomSkinningComponent skinningComponent)
         {
             avatarTransformMatrixBatchJob.SetBoneCount(ref transformMatrixComponent, skinningComponent.BoneCount);
             avatarTransformMatrixBatchJob.SetLocalBounds(ref transformMatrixComponent, skinningComponent.LocalBounds);

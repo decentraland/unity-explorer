@@ -44,8 +44,7 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
         private static readonly List<Renderer> CHILD_RENDERERS = new ();
         private static readonly Dictionary<AvatarBase, CullingInputs> CULLING_INPUTS = new ();
 
-        private static readonly GUIStyle VERDICT_LABEL = new ();
-
+        private static GUIStyle verdictLabel;
         private static int cachedFrame = -1;
 
         private static bool Enabled
@@ -76,15 +75,17 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
 
             RefreshCullingInputs();
 
+            // The system reads the ECS camera singleton, which DCL.Editor cannot reference; in a scene with one
+            // tagged MainCamera these are the same camera.
             Camera mainCamera = Camera.main;
+
             bool hasInputs = CULLING_INPUTS.TryGetValue(avatarBase, out CullingInputs inputs);
+            bool hasVerdict = hasInputs && mainCamera != null;
 
-            // Consult the frustum in the same order the system does: only for avatars subject to culling at all
-            bool inFrustum = inputs.ExemptFromCulling
-                             || (mainCamera != null && IsInsideFrustum(mainCamera, inputs.Bounds));
-
-            bool culled = hasInputs
-                          && AvatarCullingRule.IsCulled(inputs.ExemptFromCulling, inputs.IsVisible, inFrustum);
+            // Hands the rule the same argument the system does, short-circuiting the frustum for exempt avatars
+            bool culled = hasVerdict
+                          && AvatarCullingRule.IsCulled(inputs.ExemptFromCulling, inputs.IsVisible,
+                              inputs.ExemptFromCulling || IsInsideFrustum(mainCamera, inputs.Bounds));
 
             if (hasInputs)
             {
@@ -118,7 +119,7 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
                 Gizmos.DrawWireCube(drawn.center, drawn.size);
             }
 
-            DrawVerdict(avatarBase, inputs, hasInputs, culled, mainCamera);
+            DrawVerdict(avatarBase, inputs, hasInputs, culled, mainCamera != null);
 
             if ((gizmoType & GizmoType.Selected) != 0)
                 DrawDetails(avatarBase, inputs, hasInputs, drawn, hasDrawnGeometry);
@@ -152,8 +153,6 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
 
                 foreach (int entityIndex in chunk)
                 {
-                    if (entityIndex < 0) continue;
-
                     AvatarBase avatar = avatars[entityIndex];
 
                     if (avatar == null) continue;
@@ -208,27 +207,29 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
         ///     selecting anything. Names the reason as well as the verdict, since an avatar can skip culling for
         ///     three different reasons.
         /// </summary>
-        private static void DrawVerdict(AvatarBase avatarBase, CullingInputs inputs, bool hasInputs, bool culled, Camera mainCamera)
+        private static void DrawVerdict(AvatarBase avatarBase, CullingInputs inputs, bool hasInputs, bool culled, bool hasCamera)
         {
             string verdict;
 
             if (!hasInputs)
                 verdict = "no skinning component, never culled";
+            else if (!hasCamera)
+                verdict = "no Camera.main, verdict unknown";
             else if (culled)
                 verdict = inputs.IsVisible ? "CULLED - out of frustum" : "CULLED - hidden";
             else if (inputs.IsMainPlayer)
                 verdict = "SKINNING - main player";
             else if (inputs.IsPreview)
                 verdict = "SKINNING - preview";
-            else if (mainCamera == null)
-                verdict = "SKINNING - no Camera.main";
             else
                 verdict = "SKINNING - in frustum";
 
-            VERDICT_LABEL.normal.textColor = culled ? CULLED_COLOR : SKINNING_COLOR;
+            // Built lazily: a GUIStyle constructed during static initialisation carries no font and draws nothing
+            verdictLabel ??= new GUIStyle(EditorStyles.label);
+            verdictLabel.normal.textColor = culled ? CULLED_COLOR : SKINNING_COLOR;
 
             Handles.Label(LabelAnchor(avatarBase, inputs, hasInputs, above: true),
-                $"{avatarBase.name}  {verdict}", VERDICT_LABEL);
+                $"{avatarBase.name}  {verdict}", verdictLabel);
         }
 
         private static void DrawDetails(AvatarBase avatarBase, CullingInputs inputs, bool hasInputs, Bounds drawn, bool hasDrawnGeometry)

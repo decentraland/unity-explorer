@@ -63,14 +63,11 @@ namespace DCL.AvatarRendering.AvatarShape
             UpdateAvatarsVisibilityStateQuery(World);
             UpdateMainPlayerAvatarVisibilityStateQuery(World, camera.GetCameraComponent(World));
 
-            if (outlineFeature != null && outlineFeature.isActive)
-            {
-                CameraComponent cameraComponent = camera.GetCameraComponent(World);
-                CalculateFrustumPlanes(cameraComponent.Camera);
-                GetAvatarsVisibleWithOutlineQuery(World, cameraComponent);
-            }
-            else
-                CalculateFrustumPlanes(camera.GetCameraComponent(World).Camera);
+            if (outlineFeature == null || !outlineFeature.isActive) return;
+
+            CameraComponent cameraComponent = camera.GetCameraComponent(World);
+            CalculateFrustumPlanes(cameraComponent.Camera);
+            GetAvatarsVisibleWithOutlineQuery(World, cameraComponent);
         }
 
         internal void CalculateFrustumPlanes(Camera camera)

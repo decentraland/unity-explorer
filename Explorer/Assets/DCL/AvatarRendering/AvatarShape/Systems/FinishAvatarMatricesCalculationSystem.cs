@@ -48,8 +48,8 @@ namespace DCL.AvatarRendering.AvatarShape
             mainPlayerResult = jobWrapper.MainPlayerBonesResult;
             worldBounds = jobWrapper.RemoteAvatarsWorldBounds;
 
-            // This group runs in PostLateUpdate, after every camera system, so the planes are final for the
-            // frame - and the bounds they are tested against were placed in the world by the calculation job.
+            // Extracted here rather than at schedule time so the planes and the completed job output are read
+            // in the same place, one tick of the player loop apart at most.
             GeometryUtility.CalculateFrustumPlanes(camera.GetCameraComponent(World).Camera, frustumPlanes);
 
             ExecuteQuery(World);
@@ -69,11 +69,12 @@ namespace DCL.AvatarRendering.AvatarShape
             // about them either.
             bool exempt = avatarTransformMatrixComponent.IsMainPlayer || avatarShape.IsPreview;
 
+            // The || short-circuits, so an exempt avatar never indexes the remote bounds array.
             bool culled = AvatarCullingRule.IsCulled(exempt, avatarShape.IsVisible,
-                !exempt && IsInFrustum(avatarTransformMatrixComponent.IndexInGlobalJobArray));
+                exempt || IsInFrustum(avatarTransformMatrixComponent.IndexInGlobalJobArray));
 
             // Unity's own animator culling only consults SkinnedMeshRenderers and the custom skinning
-            // pipeline deletes them all, so visibility must gate the Animator manually
+            // pipeline deletes them all, so visibility must gate the Animator manually.
             if (avatarBase.AvatarAnimator.enabled == culled)
                 avatarBase.AvatarAnimator.enabled = !culled;
 
@@ -95,7 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private bool IsInFrustum(GlobalJobArrayIndex indexInGlobalJobArray)
         {
             // An avatar that has not been registered into the job yet has no bounds to test, so it is kept
-            // alive rather than culled on missing data
+            // alive rather than culled on missing data.
             if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false || validIndex >= worldBounds.Length)
                 return true;
 

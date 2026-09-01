@@ -220,6 +220,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         /// <returns>A bounding box that contains all the meshes.</returns>
         private static Bounds CalculateLocalBoundsFromMeshes(List<MeshData> meshes)
         {
+            // Seeding the corners from an empty list would yield negative extents, which reads as an inverted
+            // box everywhere downstream, culling included.
+            if (meshes.Count == 0) return default(Bounds);
+
             Vector3 maxCorner = new Vector3(float.MinValue, float.MinValue, float.MinValue);
             Vector3 minCorner = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
 
