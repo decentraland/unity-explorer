@@ -11,7 +11,9 @@ using ECS.LifeCycle.Components;
 using Unity.Collections;
 using Unity.Mathematics;
 using System;
+using DCL.CharacterCamera;
 using RichTypes;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
@@ -19,12 +21,24 @@ namespace DCL.AvatarRendering.AvatarShape
     public partial class FinishAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {
         private readonly AvatarTransformMatrixJobWrapper jobWrapper;
+
+        // Reused frustum-plane scratch buffer, rewritten once per tick before the query reads it.
+        private readonly Plane[] frustumPlanes = new Plane[6];
+
         private NativeArray<float4x4> remoteResult;
         private NativeArray<float4x4> mainPlayerResult;
+        private NativeArray<float3x2> worldBounds;
+
+        private SingleInstanceEntity camera;
 
         internal FinishAvatarMatricesCalculationSystem(World world, AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
         {
             this.jobWrapper = jobWrapper;
+        }
+
+        public override void Initialize()
+        {
+            camera = World.CacheCamera();
         }
 
         protected override void Update(float t)
@@ -32,6 +46,11 @@ namespace DCL.AvatarRendering.AvatarShape
             jobWrapper.CompleteBoneMatrixCalculations();
             remoteResult = jobWrapper.RemoteAvatarsBonesResult;
             mainPlayerResult = jobWrapper.MainPlayerBonesResult;
+            worldBounds = jobWrapper.RemoteAvatarsWorldBounds;
+
+            // Extracted here rather than at schedule time so the planes and the completed job output are read
+            // in the same place, one tick of the player loop apart at most.
+            GeometryUtility.CalculateFrustumPlanes(camera.GetCameraComponent(World).Camera, frustumPlanes);
 
             ExecuteQuery(World);
         }
@@ -42,22 +61,24 @@ namespace DCL.AvatarRendering.AvatarShape
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             ref AvatarCustomSkinningComponent computeShaderSkinning,
             in AvatarShapeComponent avatarShape,
-            in AvatarCachedVisibilityComponent cachedVisibility,
             in AvatarBase avatarBase
         )
         {
-            bool culled = !avatarTransformMatrixComponent.IsMainPlayer
-                          && (!avatarShape.IsVisible || !cachedVisibility.IsInCameraFrustum);
+            // The main player never skips: reflections and portraits sample it outside this frustum. Preview
+            // avatars are drawn by their own camera into a render texture, so the player camera says nothing
+            // about them either.
+            bool exempt = avatarTransformMatrixComponent.IsMainPlayer || avatarShape.IsPreview;
+
+            // The || short-circuits, so an exempt avatar never indexes the remote bounds array.
+            bool culled = AvatarCullingRule.IsCulled(exempt, avatarShape.IsVisible,
+                exempt || IsInFrustum(avatarTransformMatrixComponent.IndexInGlobalJobArray));
 
             // Unity's own animator culling only consults SkinnedMeshRenderers and the custom skinning
-            // pipeline deletes them all, so visibility must gate the Animator manually
+            // pipeline deletes them all, so visibility must gate the Animator manually.
             if (avatarBase.AvatarAnimator.enabled == culled)
                 avatarBase.AvatarAnimator.enabled = !culled;
 
             if (!computeShaderSkinning.ForceSkinNextFrame && culled)
-                return;
-
-            computeShaderSkinning.ForceSkinNextFrame = false;
                 return;
 
             computeShaderSkinning.ForceSkinNextFrame = false;
@@ -70,6 +91,17 @@ namespace DCL.AvatarRendering.AvatarShape
 
             if (result.Success == false)
                 ReportHub.LogException(new Exception(result.ErrorMessage), ReportCategory.AVATAR);
+        }
+
+        private bool IsInFrustum(GlobalJobArrayIndex indexInGlobalJobArray)
+        {
+            // An avatar that has not been registered into the job yet has no bounds to test, so it is kept
+            // alive rather than culled on missing data.
+            if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false || validIndex >= worldBounds.Length)
+                return true;
+
+            float3x2 bounds = worldBounds[validIndex];
+            return GeometryUtility.TestPlanesAABB(frustumPlanes, new Bounds(bounds.c0, bounds.c1 * 2f));
         }
     }
 }
