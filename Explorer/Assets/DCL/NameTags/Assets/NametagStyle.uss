@@ -342,7 +342,10 @@
 
 .nametag__scene-tag-label {
     font-size: 14px;
-    white-space: nowrap;
+    /* pre, not nowrap: both stay on one line, but nowrap collapses whitespace runs and drops
+       trailing ones at measurement, which would fold a spaces-only label - a scene widening a
+       text-less plate - back into the min-width dot. */
+    white-space: pre;
     overflow: hidden;
     text-overflow: ellipsis;
 }

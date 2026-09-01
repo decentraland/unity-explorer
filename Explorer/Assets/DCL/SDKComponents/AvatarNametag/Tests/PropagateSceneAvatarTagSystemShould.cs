@@ -245,6 +245,21 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         }
 
         [Test]
+        public void PassASpacesOnlyLabelThroughVerbatim()
+        {
+            // Arrange - a spaces-only label is how a scene widens a text-less plate, so no
+            // trimming or normalization may happen on the way to the component.
+            CreateSceneEntity(SpecialEntitiesID.PLAYER_ENTITY, new PBAvatarNametag { Label = "    ", IsDirty = true });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalPlayerEntity).Text,
+                Is.EqualTo("    "));
+        }
+
+        [Test]
         public void FlagThePlateRemovingWhenTheComponentIsRemoved()
         {
             // Arrange
