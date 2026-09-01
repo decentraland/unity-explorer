@@ -308,28 +308,22 @@
     position: absolute;
     bottom: 100%;
     align-self: center;
-    /* The design parks the pill almost on the nametag - about a third of the pill's height away. */
     translate: 0 -2px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     max-width: 300px;
-    /* A plate with no label is only as wide as its padding, which the corner radius below
-       deforms into an ellipse. This floor is the plate's own height, so a label-less plate
-       comes out a dot. */
+    /* The plate's own height, so a label-less plate comes out a circle, not an ellipse. */
     min-width: 22px;
     padding-top: 1px;
     padding-bottom: 1px;
     padding-right: 6px;
     padding-left: 6px;
     background-color: var(--dcl-color-shadow);
-    /* The rim keeps its width whatever its color, so the plate does not change size when a scene
-       asks for one. This color only shows in the UI Builder preview - the plate is painted from
-       SceneAvatarTagComponent before it is ever displayed. */
     border-width: 1.5px;
     border-color: var(--dcl-color-shadow);
-    /* Half the plate's rendered height: a stadium capsule per the design. UITK does not clamp
-       oversized radii the CSS way - anything larger deforms the plate into an ellipse. */
+    /* Half the plate's height. UITK does not clamp oversized radii the CSS way - anything
+       larger deforms the plate into an ellipse. */
     border-top-left-radius: 11px;
     border-top-right-radius: 11px;
     border-bottom-right-radius: 11px;
@@ -342,9 +336,7 @@
 
 .nametag__scene-tag-label {
     font-size: 14px;
-    /* pre, not nowrap: both stay on one line, but nowrap collapses whitespace runs and drops
-       trailing ones at measurement, which would fold a spaces-only label - a scene widening a
-       text-less plate - back into the min-width dot. */
+    /* pre, not nowrap: nowrap would collapse a spaces-only label into the min-width circle. */
     white-space: pre;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -358,9 +350,8 @@
     display: none;
 }
 
-/* With every name element hidden, the plate drops onto the anchor line the name occupied instead of
-   staying stacked above a collapsed root. Anchoring by top keeps it there while the chat bubble
-   animates the root's padding, since insets resolve against the padding box, not the content box. */
+/* Top-anchored so the plate sits on the name's line and stays put while the chat bubble
+   animates the root's padding (insets resolve against the padding box). */
 .nametag--name-hidden > .nametag__scene-tag-container {
     top: 0;
     bottom: auto;

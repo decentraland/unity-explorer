@@ -110,20 +110,15 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             Color backgroundColor = pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR);
 
             globalWorld.AddOrSet(target, new SceneAvatarTagComponent(
-                // An empty label draws the bare plate instead of hiding it, so a scene can color-code
-                // players without labelling them. Spaces pass through verbatim - a label of spaces
-                // is the scene's way to widen a bare plate.
+                // Verbatim, no trimming: empty (bare plate) and spaces-only (widened plate) labels are meaningful.
                 pbNametag.Label,
                 pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
                 backgroundColor,
-                // A border the scene did not ask for takes the background color, leaving the plate
-                // a flat capsule - the rim is opt-in rather than derived from the background.
                 pbNametag.BorderColor.ToUnityColor(fallback: backgroundColor)));
 
             pbNametag.IsDirty = false;
 
-            // Structural change last: it moves the entity between archetypes and invalidates the
-            // component references this query is holding.
+            // Structural change last: it invalidates the component references this query holds.
             World.AddOrSet(entity, new SceneAvatarTagApplied(target));
         }
 
@@ -151,10 +146,8 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             string userId = string.Empty;
 
-            // The scene's write materializes on the CRDT bridge's own entity, while the multiplayer
-            // bridge keeps the player's SDKProfile on a separate scene entity that carries no CRDTEntity
-            // at all - the two representations of one player share nothing but the CRDT id, so when the
-            // profile is not on the write's entity it is found through that id.
+            // One player has two scene entities that share nothing but the CRDT id: the CRDT bridge's,
+            // which the scene writes to, and the multiplayer bridge's, which holds the SDKProfile.
             if (World.TryGet(sceneEntity, out SDKProfile? sdkProfile))
                 userId = sdkProfile?.UserId ?? string.Empty;
             else
@@ -182,8 +175,7 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             ref SceneAvatarTagComponent plate = ref globalWorld.TryGetRef<SceneAvatarTagComponent>(target, out bool exists);
 
-            // NametagPlacementSystem hides the plate first and removes the component afterwards,
-            // so flag it instead of removing it from here.
+            // Flagged, not removed: the plate must be hidden before the component goes away.
             if (exists)
                 plate.IsRemoving = true;
         }

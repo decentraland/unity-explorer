@@ -25,8 +25,7 @@ namespace DCL.Nametags
         public readonly Color BackgroundColor;
 
         /// <summary>
-        ///     The rim of the plate. Holds <see cref="BackgroundColor" /> unless a border was explicitly
-        ///     requested; the rim always renders at its USS width, so a flat plate keeps the same size.
+        ///     Equals <see cref="BackgroundColor" /> when the scene requested no border, leaving the plate flat.
         /// </summary>
         public readonly Color BorderColor;
 
@@ -39,6 +38,7 @@ namespace DCL.Nametags
             TextColor = textColor;
             BackgroundColor = backgroundColor;
             BorderColor = borderColor;
+
             IsDirty = true;
             IsRemoving = false;
         }

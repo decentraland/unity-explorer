@@ -78,9 +78,8 @@ namespace DCL.Nametags
                 AddTagForPlayerAvatarsQuery(World, cameraComponent);
                 AddTagForNonPlayerAvatarsQuery(World, cameraComponent);
 
-                // Holders needed by a scene avatar tag while the name itself is hidden by a modifier area
-                // or missing. SceneAvatarTagComponent is part of the archetype, so these iterate nothing
-                // while no scene has tagged anyone.
+                // Holders needed by a scene avatar tag while the name itself is hidden or missing.
+                // SceneAvatarTagComponent is in the archetype, so these iterate nothing until a scene tags someone.
                 AddSceneTagForPlayerAvatarsQuery(World, cameraComponent);
                 AddSceneTagForNonPlayerAvatarsQuery(World, cameraComponent);
             }
@@ -168,8 +167,7 @@ namespace DCL.Nametags
                 voiceChat.IsDirty = true;
         }
 
-        // Same rationale as MarkVoiceChatBadgeDirty: a re-acquired holder starts with the plate hidden,
-        // so ProcessSceneAvatarTags must re-apply the current tag to it.
+        // Same rationale as MarkVoiceChatBadgeDirty: a re-acquired holder starts with the plate hidden.
         private void MarkSceneAvatarTagDirty(Entity e)
         {
             ref SceneAvatarTagComponent sceneTag = ref World.TryGetRef<SceneAvatarTagComponent>(e, out bool exists);
@@ -212,8 +210,8 @@ namespace DCL.Nametags
             sceneTag.IsDirty = false;
         }
 
-        // A tag flagged for removal on an entity that currently has no holder (culled by distance, behind camera)
-        // would otherwise linger forever, as ProcessSceneAvatarTags only sees entities that do have one.
+        // ProcessSceneAvatarTags only sees entities that have a holder, so a tag flagged for removal on a
+        // culled avatar would linger forever.
         [Query]
         [None(typeof(NametagHolder), typeof(DeleteEntityIntention))]
         private void RemoveOrphanSceneAvatarTags(Entity e, in SceneAvatarTagComponent sceneTag)

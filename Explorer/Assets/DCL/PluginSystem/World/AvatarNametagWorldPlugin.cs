@@ -28,8 +28,7 @@ namespace DCL.SDKComponents.AvatarNametag
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            // Portable experiences follow the player across scenes, so they are refused the plate outright,
-            // in the same spirit as restricted actions.
+            // Portable experiences follow the player across scenes, so they are refused the plate outright.
             if (sharedDependencies.SceneData.IsPortableExperience())
                 return;
 

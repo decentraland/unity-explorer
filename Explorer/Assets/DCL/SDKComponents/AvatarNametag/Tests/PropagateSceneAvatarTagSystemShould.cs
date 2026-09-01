@@ -148,9 +148,8 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         [Test]
         public void ResolveARemotePlayerWhoseProfileLivesOnTheBridgeEntity()
         {
-            // Arrange — the CRDT bridge materializes the scene's write on its own entity, while the
-            // multiplayer bridge keeps SDKProfile on a separate entity that carries no CRDTEntity;
-            // the two representations of one player share nothing but the CRDT id.
+            // Arrange — the scene writes to the CRDT bridge's entity, while the SDKProfile lives on the
+            // multiplayer bridge's separate one; the two share nothing but the CRDT id.
             CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
                 new PBAvatarNametag { Label = "Bronze", IsDirty = true });
 
