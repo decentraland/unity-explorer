@@ -5,6 +5,8 @@ using ENet;
 using Google.Protobuf;
 using Pulse.Transport;
 using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Utility;
@@ -90,7 +92,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
-        public async UniTask ConnectAsync(string ip, int port, CancellationToken ct)
+        public async UniTask ConnectAsync(string hostName, int port, CancellationToken ct)
         {
             if (!isLibInitialized)
             {
@@ -100,10 +102,12 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 isLibInitialized = true;
             }
 
+            string resolvedIp = await ResolveIPv4Async(hostName, ct);
+
             host = new Host();
 
             var address = new Address();
-            address.SetHost(ip);
+            address.SetHost(resolvedIp);
             address.Port = (ushort)port;
 
             host.Create(peerLimit: 1, channelLimit: ENetChannel.COUNT);
@@ -124,6 +128,32 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
+        private async UniTask<string> ResolveIPv4Async(string hostName, CancellationToken ct)
+        {
+            if (IPAddress.TryParse(hostName, out IPAddress? literal))
+                return literal.ToString();
+
+            IPAddress[] candidates;
+
+            try
+            {
+                candidates = await Dns.GetHostAddressesAsync(hostName)
+                                      .AsUniTask()
+                                      .AttachExternalCancellation(ct)
+                                      .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
+            }
+            catch (SocketException e)
+            {
+                throw new PulseHostResolutionException(hostName, e);
+            }
+
+            foreach (IPAddress candidate in candidates)
+                if (candidate.AddressFamily == AddressFamily.InterNetwork)
+                    return candidate.ToString();
+
+            throw new PulseHostResolutionException(hostName);
+        }
+
         internal async UniTask ForceDisconnectAsync()
         {
             lifeCycleCts.SafeCancelAndDispose();
@@ -138,6 +168,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         public UniTask DisconnectAsync(DisconnectReason reason) =>
             DisconnectAsync(reason, false).AsUniTask();
 
+        /// <param name="reason">Reported to the peer as the disconnection cause</param>
         /// <param name="spinThread">If true: Wait on the same thread; if false - async Yield</param>
         private async Task DisconnectAsync(DisconnectReason reason, bool spinThread)
         {
@@ -192,6 +223,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         ///     The listener loop must be gracefully finalized before other ENet manipulations to prevent race conditions
         /// </summary>
         /// <param name="servingHost">The currently serving host, the class field might be changed on disconnection/reconnection</param>
+        /// <param name="ct">Cancelled to exit the loop and release the host</param>
         private async UniTask ListenForIncomingDataAsync(Host servingHost, CancellationToken ct)
         {
             Volatile.Write(ref listenLoopIsActive, true);
