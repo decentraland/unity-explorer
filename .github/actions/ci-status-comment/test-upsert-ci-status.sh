@@ -208,7 +208,7 @@ BODY="$(body_of)"
 grep -q 'truncated' <<< "$BODY" || fail "truncate: no truncation note"
 [ "$(( $(grep -c '^```' <<< "$BODY") % 2 ))" = 0 ] || fail "truncate: unbalanced code fence"
 SECTION_CONTENT="$(awk '/^<!-- ci:tests:start -->$/{grab=1;next} /^<!-- ci:tests:end -->$/{grab=0} grab' <<< "$BODY")"
-[ "${#SECTION_CONTENT}" -le 20000 ] || fail "truncate: section is ${#SECTION_CONTENT} chars, closers re-inflated past the cap"
+[ "${#SECTION_CONTENT}" -le 10000 ] || fail "truncate: section is ${#SECTION_CONTENT} chars, closers re-inflated past the cap"
 pass "oversized body truncated with constructs closed"
 
 # --- 9. embedded own-section markers must not scramble the comment ------------

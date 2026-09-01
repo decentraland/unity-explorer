@@ -48,7 +48,13 @@ SECTION_BODY="${SECTION_BODY//$'\r'/}"
 # writer — whichever path its body arrived by — from consuming the whole budget
 # and failing an unrelated section's PATCH with an opaque 422. Truncation is
 # fine for a status section that already links out to the full report.
-CAP=20000
+#
+# The cap is per-section and blind to the others, so it only bounds the total
+# if (section count × CAP) stays under 65536 with headroom for the header and
+# the fences. There are 6 allowlisted sections (see below): 6 × 10000 = 60000,
+# leaving ~5.5k. Re-derive this if a section is added, or the ${#NEW_BODY}
+# guard below is the only thing left standing between a big comment and a 422.
+CAP=10000
 if [ "${#SECTION_BODY}" -gt "$CAP" ]; then
   echo "::warning::Section body is ${#SECTION_BODY} chars; truncating to $CAP."
   NOTE=$'\n\n'"_…truncated; see the linked run for the full report._"
