@@ -4,7 +4,6 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.FeatureFlags;
 using DCL.UI;
-using DCL.WebRequests;
 using DG.Tweening;
 using MVC;
 using System;
