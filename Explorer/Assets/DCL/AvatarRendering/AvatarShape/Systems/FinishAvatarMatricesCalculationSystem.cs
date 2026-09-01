@@ -58,9 +58,6 @@ namespace DCL.AvatarRendering.AvatarShape
                 return;
 
             computeShaderSkinning.ForceSkinNextFrame = false;
-                return;
-
-            computeShaderSkinning.ForceSkinNextFrame = false;
 
             NativeArray<float4x4> bonesResult = avatarTransformMatrixComponent.IsMainPlayer
                 ? mainPlayerResult
