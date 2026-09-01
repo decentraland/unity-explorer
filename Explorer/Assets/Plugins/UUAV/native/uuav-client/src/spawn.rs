@@ -51,7 +51,7 @@ pub fn spawn_helper(
     }
     let child = command
         .spawn()
-        .with_context(|| format!("failed to spawn {}", path.display()))?;
+        .map_err(|e| anyhow::anyhow!("failed to spawn {}: {}", path.display(), e))?;
     drop(handoff);
     Ok(HelperChild(child))
 }
@@ -180,7 +180,7 @@ pub fn spawn_helper(handoff: ChildHandoff, token: &str) -> Result<HelperChild> {
                 &startup.StartupInfo,
                 &mut process_info,
             )
-            .with_context(|| format!("failed to spawn {}", path.display()))?;
+            .map_err(|e| anyhow::anyhow!("failed to spawn {}: {}", path.display(), e))?;
             Ok(process_info)
         })
     };
