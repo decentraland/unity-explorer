@@ -15,18 +15,20 @@ namespace DCL.Audio
     public class WorldAudioPlaybackController : MonoBehaviour, IDisposable
     {
         [SerializeField]
-        private WorldAudioSettings audioSettings;
+        private WorldAudioSettings audioSettings = null!;
         [SerializeField]
-        private AudioSource audioSourcePrefab;
+        private AudioSource audioSourcePrefab = null!;
 
         private readonly Dictionary<WorldAudioClipType, Dictionary<int, List<WorldPlaybackAudioData>>> audioDatasPerIndexDictionary = new ();
-        private GameObjectPool<AudioSource> audioSourcePool;
-        private CancellationTokenSource mainCancellationTokenSource;
+
+        // Dedicated to be initialized at the Initialize method
+        private GameObjectPool<AudioSource> audioSourcePool = null!;
+        private CancellationTokenSource mainCancellationTokenSource = null!;
 
         public void Dispose()
         {
             audioDatasPerIndexDictionary.Clear();
-            audioSourcePool?.Dispose();
+            audioSourcePool.Dispose();
             mainCancellationTokenSource.SafeCancelAndDispose();
         }
 
