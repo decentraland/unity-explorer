@@ -570,6 +570,10 @@ jobs:
     # actions: read — build.py resolves its own job URL via GET /actions/runs/{run_id}/jobs.
     # pull-requests: write — live CI status comment upsert (issue-comment POST/PATCH/DELETE
     #   on the PR via .github/actions/ci-status-comment/upsert-ci-status.sh).
+    #   Safe on this `pull_request` (not `pull_request_target`) trigger: a fork PR gets a
+    #   read-only GITHUB_TOKEN that `permissions:` cannot escalate, and cannot run this job
+    #   anyway (the build needs UNITY_CLOUD_API_KEY/ORG_ID/PROJECT_ID, unavailable to forks);
+    #   a same-repo branch is pushed by someone who already holds this capability with write access.
     permissions:
       contents: read
       actions: read
