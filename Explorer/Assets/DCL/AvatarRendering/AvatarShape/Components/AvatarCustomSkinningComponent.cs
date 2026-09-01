@@ -90,7 +90,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private bool disposed;
 
         /// <summary>
-        ///
+        ///     Union of the bind-pose bounds of every mesh the avatar was assembled from, wearables included,
+        ///     expressed in the space of the avatar's own transform. Recomputed on every re-instantiation.
         /// </summary>
         public Bounds LocalBounds { get; private set; }
 
@@ -106,6 +107,24 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             ForceSkinNextFrame = false;
 
             disposed = false;
+        }
+
+        /// <summary>
+        ///     Places <see cref="LocalBounds" /> in the world through the avatar's transform, re-axis-aligning the
+        ///     rotated box. The renderers cannot answer this: compute-shader skinning replaced their local bounds
+        ///     with a fixed cube, and the skinned vertices only ever exist in the GPU buffer.
+        /// </summary>
+        public readonly Bounds ToWorldBounds(Transform avatarTransform)
+        {
+            Matrix4x4 matrix = avatarTransform.localToWorldMatrix;
+            Vector3 extents = LocalBounds.extents;
+
+            var worldExtents = new Vector3(
+                (Mathf.Abs(matrix.m00) * extents.x) + (Mathf.Abs(matrix.m01) * extents.y) + (Mathf.Abs(matrix.m02) * extents.z),
+                (Mathf.Abs(matrix.m10) * extents.x) + (Mathf.Abs(matrix.m11) * extents.y) + (Mathf.Abs(matrix.m12) * extents.z),
+                (Mathf.Abs(matrix.m20) * extents.x) + (Mathf.Abs(matrix.m21) * extents.y) + (Mathf.Abs(matrix.m22) * extents.z));
+
+            return new Bounds(matrix.MultiplyPoint3x4(LocalBounds.center), worldExtents * 2f);
         }
 
         /// <summary>
