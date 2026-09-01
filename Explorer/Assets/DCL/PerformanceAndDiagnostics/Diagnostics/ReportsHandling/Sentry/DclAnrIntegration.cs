@@ -62,13 +62,12 @@ namespace DCL.Diagnostics.Sentry
 #if UNITY_STANDALONE_WIN
                 hub.CaptureEvent(se, scope =>
                 {
-                    foreach (Result<DumpEntry> entry in e.DumpFileEntries)
-                    {
-                        if (entry.Success)
-                        {
-                            scope.AddAttachment(filePath: entry.Value.path, AttachmentType.Default);
-                        }
-                    }
+                    Option<DumpEntry> deepest = DeepestDump(e.DumpFileEntries);
+
+                    if (deepest.Has)
+                        scope.AddAttachment(filePath: deepest.Value.path, AttachmentType.Minidump);
+
+                    DiscardDumpsExcept(e.DumpFileEntries, deepest);
                 });
 #else
                 hub.CaptureEvent(se);
@@ -77,6 +76,39 @@ namespace DCL.Diagnostics.Sentry
 
 
         }
+
+#if UNITY_STANDALONE_WIN
+        private static Option<DumpEntry> DeepestDump(IReadOnlyList<Result<DumpEntry>> entries)
+        {
+            var deepest = Option<DumpEntry>.None;
+
+            foreach (Result<DumpEntry> entry in entries)
+            {
+                if (!entry.Success)
+                    continue;
+
+                if (!deepest.Has || entry.Value.tresholdMs > deepest.Value.tresholdMs)
+                    deepest = Option<DumpEntry>.Some(entry.Value);
+            }
+
+            return deepest;
+        }
+
+        private static void DiscardDumpsExcept(IReadOnlyList<Result<DumpEntry>> entries, Option<DumpEntry> keep)
+        {
+            foreach (Result<DumpEntry> entry in entries)
+            {
+                if (!entry.Success)
+                    continue;
+
+                if (keep.Has && entry.Value.path == keep.Value.path)
+                    continue;
+
+                if (File.Exists(entry.Value.path))
+                    File.Delete(entry.Value.path);
+            }
+        }
+#endif
     }
 
     internal abstract class DclAnrWatchDog
@@ -88,7 +120,7 @@ namespace DCL.Diagnostics.Sentry
         protected readonly IDiagnosticLogger? Logger;
         protected readonly SentryMonoBehaviour MonoBehaviour;
         internal event EventHandler<DclApplicationNotRespondingException> OnApplicationNotResponding = delegate { };
-        protected bool Paused { get; private set; } = false;
+        protected bool Paused { get; private set; }
 
         internal DclAnrWatchDog(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour)
         {
@@ -402,22 +434,16 @@ namespace DCL.Diagnostics.Sentry
                 this,
                 onCollectNextDumpFileForTresholdMs: static (self, forMs) => {
 #if UNITY_STANDALONE_WIN
-                    Result<(string filePath, string zipPath)> dumpResult = ThreadsDumpUtility.CollectAndArchiveDumpInfoToAppDir();
+                    Result<string> dumpResult = ThreadsDumpUtility.CollectDumpInfoToAppDir();
 #else
                     // MacOS is always error
-                    Result<(string filePath, string zipPath)> dumpResult = Result<(string filePath, string zipPath)>.ErrorResult("MacOS doesn't support dumps");
+                    Result<string> dumpResult = Result<string>.ErrorResult("MacOS doesn't support dumps");
 #endif
 
-                    Result<DumpEntry> path = default;
+                    Result<DumpEntry> path;
                     if (dumpResult.Success)
                     {
-                        string rawDumpPath = dumpResult.Value.filePath;
-                        if (File.Exists(rawDumpPath))
-                        {
-                            File.Delete(rawDumpPath);
-                        }
-
-                        string filePath = dumpResult.Value.zipPath;
+                        string filePath = dumpResult.Value;
                         string fileName = Path.GetFileNameWithoutExtension(filePath);
                         DumpEntry e = new DumpEntry(path: filePath, name: fileName, forMs);
                         path = Result<DumpEntry>.SuccessResult(e);
@@ -640,6 +666,16 @@ namespace DCL.Diagnostics.Sentry
             Debug.Log($"Successfully dumped and archive at: {result.Value.filePath}, {result.Value.zipPath}");
         }
 #endif
+
+        public static Result<string> CollectDumpInfoToAppDir()
+        {
+            string filePath = NewDumpFilePath();
+            Result result = CollectDumpInfoFile(filePath);
+
+            return result.Success
+                ? Result<string>.SuccessResult(filePath)
+                : Result<string>.ErrorResult($"Error on dumping: {result.ErrorMessage}");
+        }
 
         public static Result<(string filePath, string zipPath)> CollectAndArchiveDumpInfoToAppDir()
         {
