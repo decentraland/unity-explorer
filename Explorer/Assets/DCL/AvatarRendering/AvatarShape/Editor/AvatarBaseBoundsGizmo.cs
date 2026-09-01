@@ -14,10 +14,11 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
     using Time = UnityEngine.Time;
 
     /// <summary>
-    ///     Draws the three boxes an avatar carries so their fit can be compared: the one
-    ///     FinishAvatarMatricesCalculationSystem frustum-tests, the ghost-renderer box that used to be tested, and
-    ///     the union of Renderer.bounds that Unity culls the drawn geometry with. Each is read from the same source
-    ///     its own consumer reads, so a box shown here is the box that decision was made on.
+    ///     Labels every avatar with the culling verdict FinishAvatarMatricesCalculationSystem acts on, and draws the
+    ///     three boxes an avatar carries so their fit can be compared: the one that system frustum-tests, the
+    ///     ghost-renderer box that used to be tested, and the union of Renderer.bounds that Unity culls the drawn
+    ///     geometry with. Every box is read from the source its own consumer reads, and the verdict comes from that
+    ///     system's own predicate, so what is shown here is what the runtime decided.
     /// </summary>
     public static class AvatarBaseBoundsGizmo
     {
@@ -25,10 +26,9 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
         private const string ENABLED_PREF_KEY = "DCL.AvatarBaseBoundsGizmo.Enabled";
         private const float ROOT_BONE_MARKER_RADIUS = 0.06f;
 
-        // Yellow / red: the box the frustum test reads, coloured by its verdict
-        private static readonly Color TESTED_IN_FRUSTUM_COLOR = new (1f, 0.85f, 0.1f, 1f);
-        private static readonly Color TESTED_CULLED_COLOR = new (1f, 0.25f, 0.2f, 1f);
-        private static readonly Color TESTED_NO_CAMERA_COLOR = new (0.8f, 0.8f, 0.8f, 1f);
+        // Yellow / red: the box the frustum test reads, coloured by the culling verdict
+        private static readonly Color SKINNING_COLOR = new (1f, 0.85f, 0.1f, 1f);
+        private static readonly Color CULLED_COLOR = new (1f, 0.25f, 0.2f, 1f);
 
         // Magenta: the ghost-renderer box this test read before, kept for comparison
         private static readonly Color GHOST_BOUNDS_COLOR = new (1f, 0.3f, 0.9f, 1f);
@@ -37,12 +37,14 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
         private static readonly Color DRAWN_GEOMETRY_COLOR = new (0.2f, 0.85f, 1f, 1f);
         private static readonly Color ROOT_BONE_COLOR = Color.white;
 
-        private static readonly QueryDescription AVATARS_WITH_SKINNING =
-            new QueryDescription().WithAll<AvatarBase, AvatarCustomSkinningComponent>();
+        private static readonly QueryDescription CULLABLE_AVATARS =
+            new QueryDescription().WithAll<AvatarBase, AvatarCustomSkinningComponent, AvatarShapeComponent, AvatarTransformMatrixComponent>();
 
         private static readonly Plane[] FRUSTUM_PLANES = new Plane[6];
         private static readonly List<Renderer> CHILD_RENDERERS = new ();
-        private static readonly Dictionary<AvatarBase, Bounds> TESTED_BOUNDS = new ();
+        private static readonly Dictionary<AvatarBase, CullingInputs> CULLING_INPUTS = new ();
+
+        private static readonly GUIStyle VERDICT_LABEL = new ();
 
         private static int cachedFrame = -1;
 
@@ -72,16 +74,22 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
         {
             if (!Enabled) return;
 
-            RefreshTestedBounds();
+            RefreshCullingInputs();
 
             Camera mainCamera = Camera.main;
-            bool hasTested = TESTED_BOUNDS.TryGetValue(avatarBase, out Bounds tested);
-            bool inFrustum = hasTested && mainCamera != null && IsInsideFrustum(mainCamera, tested);
+            bool hasInputs = CULLING_INPUTS.TryGetValue(avatarBase, out CullingInputs inputs);
 
-            if (hasTested)
+            // Consult the frustum in the same order the system does: only for avatars subject to culling at all
+            bool inFrustum = inputs.ExemptFromCulling
+                             || (mainCamera != null && IsInsideFrustum(mainCamera, inputs.Bounds));
+
+            bool culled = hasInputs
+                          && AvatarCullingRule.IsCulled(inputs.ExemptFromCulling, inputs.IsVisible, inFrustum);
+
+            if (hasInputs)
             {
-                Gizmos.color = mainCamera == null ? TESTED_NO_CAMERA_COLOR : inFrustum ? TESTED_IN_FRUSTUM_COLOR : TESTED_CULLED_COLOR;
-                Gizmos.DrawWireCube(tested.center, tested.size);
+                Gizmos.color = culled ? CULLED_COLOR : SKINNING_COLOR;
+                Gizmos.DrawWireCube(inputs.Bounds.center, inputs.Bounds.size);
             }
 
             SkinnedMeshRenderer ghostRenderer = avatarBase.AvatarSkinnedMeshRenderer;
@@ -110,35 +118,37 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
                 Gizmos.DrawWireCube(drawn.center, drawn.size);
             }
 
+            DrawVerdict(avatarBase, inputs, hasInputs, culled, mainCamera);
+
             if ((gizmoType & GizmoType.Selected) != 0)
-                DrawReadout(avatarBase, tested, hasTested, drawn, hasDrawnGeometry, mainCamera, inFrustum);
+                DrawDetails(avatarBase, inputs, hasInputs, drawn, hasDrawnGeometry);
         }
 
         /// <summary>
-        ///     Collects, once per frame, the box FinishAvatarMatricesCalculationSystem tests: the LocalBounds
-        ///     snapshot the entity's skinning component holds, placed in the world. It reads that component rather
-        ///     than rebuilding the union from the live hierarchy, because the snapshot is taken at instantiation and
-        ///     any drift between the two is precisely what needs to stay visible.
-        ///     The runtime gets the same value from BoneMatrixCalculationJob instead; that array is not reachable
-        ///     from editor code, so the identical formula is applied here through ToWorldBounds. The only way the
-        ///     two can differ is the avatar moving between the job gather and this draw.
+        ///     Collects, once per frame, everything FinishAvatarMatricesCalculationSystem feeds its culling rule:
+        ///     the LocalBounds snapshot the skinning component holds placed in the world, plus the exemption and
+        ///     visibility flags. The runtime gets its bounds from BoneMatrixCalculationJob instead; that array is
+        ///     not reachable from editor code, so the identical formula is applied here through ToWorldBounds. The
+        ///     only way the two can differ is the avatar moving between the job gather and this draw.
         /// </summary>
-        private static void RefreshTestedBounds()
+        private static void RefreshCullingInputs()
         {
             if (cachedFrame == Time.frameCount) return;
 
             cachedFrame = Time.frameCount;
-            TESTED_BOUNDS.Clear();
+            CULLING_INPUTS.Clear();
 
             World world = GlobalWorld.ECSWorldInstance;
 
             // Null until the global world is built, and in edit mode
             if (world == null) return;
 
-            foreach (ref Chunk chunk in world.Query(AVATARS_WITH_SKINNING))
+            foreach (ref Chunk chunk in world.Query(CULLABLE_AVATARS))
             {
                 AvatarBase[] avatars = chunk.GetArray<AvatarBase>();
                 AvatarCustomSkinningComponent[] skinnings = chunk.GetArray<AvatarCustomSkinningComponent>();
+                AvatarShapeComponent[] shapes = chunk.GetArray<AvatarShapeComponent>();
+                AvatarTransformMatrixComponent[] matrices = chunk.GetArray<AvatarTransformMatrixComponent>();
 
                 foreach (int entityIndex in chunk)
                 {
@@ -148,7 +158,11 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
 
                     if (avatar == null) continue;
 
-                    TESTED_BOUNDS[avatar] = skinnings[entityIndex].ToWorldBounds(avatar.transform);
+                    CULLING_INPUTS[avatar] = new CullingInputs(
+                        skinnings[entityIndex].ToWorldBounds(avatar.transform),
+                        matrices[entityIndex].IsMainPlayer,
+                        shapes[entityIndex].IsPreview,
+                        shapes[entityIndex].IsVisible);
                 }
             }
         }
@@ -189,31 +203,81 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
             return found;
         }
 
-        private static void DrawReadout(AvatarBase avatarBase, Bounds tested, bool hasTested, Bounds drawn,
-            bool hasDrawnGeometry, Camera mainCamera, bool inFrustum)
+        /// <summary>
+        ///     Always-on one-liner above the avatar, so the culling state is readable from the scene view without
+        ///     selecting anything. Names the reason as well as the verdict, since an avatar can skip culling for
+        ///     three different reasons.
+        /// </summary>
+        private static void DrawVerdict(AvatarBase avatarBase, CullingInputs inputs, bool hasInputs, bool culled, Camera mainCamera)
         {
-            string verdict = mainCamera == null ? "no Camera.main" : inFrustum ? "IN FRUSTUM" : "CULLED";
+            string verdict;
 
-            string testedLine = hasTested
-                ? $"yellow  tested bounds  size {Format(tested.size)}  center {Format(tested.center)}"
-                : "yellow  tested bounds  no skinning component, never stamped";
+            if (!hasInputs)
+                verdict = "no skinning component, never culled";
+            else if (culled)
+                verdict = inputs.IsVisible ? "CULLED - out of frustum" : "CULLED - hidden";
+            else if (inputs.IsMainPlayer)
+                verdict = "SKINNING - main player";
+            else if (inputs.IsPreview)
+                verdict = "SKINNING - preview";
+            else if (mainCamera == null)
+                verdict = "SKINNING - no Camera.main";
+            else
+                verdict = "SKINNING - in frustum";
+
+            VERDICT_LABEL.normal.textColor = culled ? CULLED_COLOR : SKINNING_COLOR;
+
+            Handles.Label(LabelAnchor(avatarBase, inputs, hasInputs, above: true),
+                $"{avatarBase.name}  {verdict}", VERDICT_LABEL);
+        }
+
+        private static void DrawDetails(AvatarBase avatarBase, CullingInputs inputs, bool hasInputs, Bounds drawn, bool hasDrawnGeometry)
+        {
+            string testedLine = hasInputs
+                ? $"tested bounds  size {Format(inputs.Bounds.size)}  center {Format(inputs.Bounds.center)}"
+                : "tested bounds  none";
 
             string drawnLine = hasDrawnGeometry
                 ? $"cyan    Renderer.bounds union  size {Format(drawn.size)}  center {Format(drawn.center)}"
                 : "cyan    Renderer.bounds union  none enabled";
 
-            Vector3 labelAnchor = hasTested
-                ? tested.center + (Vector3.up * tested.extents.y)
-                : avatarBase.transform.position;
-
-            Handles.Label(labelAnchor, $@"{avatarBase.name}
-{testedLine}
+            Handles.Label(LabelAnchor(avatarBase, inputs, hasInputs, above: false),
+                $@"{testedLine}
 {drawnLine}
-magenta ghost renderer bounds, tested before
-frustum: {verdict}");
+magenta ghost renderer bounds, tested before");
+        }
+
+        private static Vector3 LabelAnchor(AvatarBase avatarBase, CullingInputs inputs, bool hasInputs, bool above)
+        {
+            if (!hasInputs)
+                return avatarBase.transform.position;
+
+            float offset = above ? inputs.Bounds.extents.y : -inputs.Bounds.extents.y;
+            return inputs.Bounds.center + (Vector3.up * offset);
         }
 
         private static string Format(Vector3 value) =>
             $"({value.x:0.00}, {value.y:0.00}, {value.z:0.00})";
+
+        /// <summary>
+        ///     Everything the culling rule consumes for one avatar, snapshotted once per frame.
+        /// </summary>
+        private readonly struct CullingInputs
+        {
+            public readonly Bounds Bounds;
+            public readonly bool IsMainPlayer;
+            public readonly bool IsPreview;
+            public readonly bool IsVisible;
+
+            public bool ExemptFromCulling => IsMainPlayer || IsPreview;
+
+            public CullingInputs(Bounds bounds, bool isMainPlayer, bool isPreview, bool isVisible)
+            {
+                Bounds = bounds;
+                IsMainPlayer = isMainPlayer;
+                IsPreview = isPreview;
+                IsVisible = isVisible;
+            }
+        }
     }
 }

@@ -67,9 +67,10 @@ namespace DCL.AvatarRendering.AvatarShape
             // The main player never skips: reflections and portraits sample it outside this frustum. Preview
             // avatars are drawn by their own camera into a render texture, so the player camera says nothing
             // about them either.
-            bool culled = !avatarTransformMatrixComponent.IsMainPlayer
-                          && !avatarShape.IsPreview
-                          && (!avatarShape.IsVisible || !IsInFrustum(avatarTransformMatrixComponent.IndexInGlobalJobArray));
+            bool exempt = avatarTransformMatrixComponent.IsMainPlayer || avatarShape.IsPreview;
+
+            bool culled = AvatarCullingRule.IsCulled(exempt, avatarShape.IsVisible,
+                !exempt && IsInFrustum(avatarTransformMatrixComponent.IndexInGlobalJobArray));
 
             // Unity's own animator culling only consults SkinnedMeshRenderers and the custom skinning
             // pipeline deletes them all, so visibility must gate the Animator manually
