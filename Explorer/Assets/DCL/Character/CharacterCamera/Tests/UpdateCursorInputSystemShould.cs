@@ -5,6 +5,7 @@ using DCL.Input;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.SyntheticInput.UiSimulation;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -19,15 +20,15 @@ namespace DCL.Character.CharacterCamera.Tests
     [TestFixture]
     public class UpdateCursorInputSystemShould : InputTestFixture
     {
-        private UpdateCursorInputSystem system;
-        private World world;
+        private UpdateCursorInputSystem system = null!;
+        private World world = null!;
         private Entity entity;
-        private Keyboard keyboard;
-        private Mouse mouse;
-        private IEventSystem eventSystem;
-        private ICursor cursor;
-        private ICrosshairView crosshairView;
-        private InputControl<Vector2> positionControl;
+        private Keyboard keyboard = null!;
+        private Mouse mouse = null!;
+        private IEventSystem eventSystem = null!;
+        private ICursor cursor = null!;
+        private ICrosshairView crosshairView = null!;
+        private InputControl<Vector2> positionControl = null!;
         private Entity hoverEntity;
 
         [SetUp]
@@ -56,13 +57,44 @@ namespace DCL.Character.CharacterCamera.Tests
         [TearDown]
         public override void TearDown()
         {
+            // Editor tests share frames, so an asserted synthetic pointer would steer the next fixture's cursor.
+            SyntheticCursorState.Reset();
             InputSystem.RemoveDevice(keyboard);
             InputSystem.RemoveDevice(mouse);
             base.TearDown();
         }
 
         [Test]
-        public void DontLockCursorWhenOverUI()
+        public void FollowTheSyntheticPointerWhileAnAutomationGestureRuns()
+        {
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult>());
+
+            var gesturePoint = new Vector2(320f, 240f);
+            SyntheticCursorState.AssertPointerPositionThisFrame(gesturePoint);
+
+            system.Update(0);
+
+            // The automation mouse is a device of its own, so the hardware position (50, 50) must lose to it:
+            // everything downstream of this value — the UI raycast, the cursor style, and the world reticle ray
+            // PlayerOriginatedRaycastSystem builds from CursorComponent.Position — has to describe the same pointer.
+            Assert.AreEqual(gesturePoint, world.Get<CursorComponent>(entity).Position);
+            eventSystem.Received().RaycastAll(gesturePoint);
+        }
+
+        [Test]
+        public void FallBackToTheHardwareMouseWhenNoGestureIsRunning()
+        {
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult>());
+
+            system.Update(0);
+
+            Assert.AreEqual(new Vector2(50, 50), world.Get<CursorComponent>(entity).Position);
+        }
+
+        [Test]
+        public void DontLockCursorWhenOverUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
 
@@ -77,7 +109,7 @@ namespace DCL.Character.CharacterCamera.Tests
         }
 
         [Test]
-        public void LockCursorWhenNotClickingUI()
+        public void LockCursorWhenNotClickingUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(true);
@@ -90,7 +122,7 @@ namespace DCL.Character.CharacterCamera.Tests
         }
 
         [Test]
-        public void SetCursorToInteractableWhenHoveringOverClickableUI()
+        public void SetCursorToInteractableWhenHoveringOverClickableUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(false);
@@ -126,7 +158,7 @@ namespace DCL.Character.CharacterCamera.Tests
         }
 
         [Test]
-        public void SetCursorToNormalWhenHoveringOverNotClickableUI()
+        public void SetCursorToNormalWhenHoveringOverNotClickableUi()
         {
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(false);

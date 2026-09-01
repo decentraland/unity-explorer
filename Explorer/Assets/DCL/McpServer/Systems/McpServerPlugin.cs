@@ -142,6 +142,7 @@ namespace DCL.McpServer.Systems
                           .Add(new ClickAtTool(syntheticInput))
                           .Add(new HoverEntityTool(syntheticInput))
                           .Add(new PressInputTool(syntheticInput))
+                          .Add(new SweepPointerTool(syntheticInput, exposedCameraData))
                           .Add(new UiListTool(uiAutomation))
                           .Add(new UiClickTool(uiAutomation))
                           .Add(new UiSetTextTool(uiAutomation))

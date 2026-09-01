@@ -162,6 +162,22 @@ namespace DCL.SyntheticInput.Components
     }
 
     /// <summary>
+    ///     What a held-and-turn sweep achieved: the press that armed it, how the camera rotation ended, and the
+    ///     release that closed it. A sweep whose press never landed reports <see cref="FailureReason" /> and never
+    ///     ran the other two legs — the press outcome is the diagnostic that matters, because a scene watching for
+    ///     a pointer-down arms on it or not at all.
+    /// </summary>
+    public struct SyntheticSweepResult
+    {
+        public SyntheticPointerResult Press;
+        public SyntheticInputDelivery CameraSweep;
+        public SyntheticPointerResult Release;
+
+        /// <summary>Why the sweep was abandoned before the camera turned; null when the whole gesture ran.</summary>
+        public string? FailureReason;
+    }
+
+    /// <summary>
     ///     What the fulfilling system hands back for one intent: the wire-facing <see cref="Result" /> plus, on a
     ///     delivered press, the <see cref="Press" /> handoff the release leg of a click carries.
     /// </summary>

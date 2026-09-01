@@ -164,5 +164,60 @@ namespace DCL.SyntheticInput.Tests
 
             Assert.That(SyntheticCursorState.SuppressOsWarp, Is.True);
         }
+
+        [Test]
+        public void PublishEveryQueuedPointerPositionToTheCursorSystems()
+        {
+            var from = new Vector2(10f, 10f);
+            var to = new Vector2(50f, 10f);
+            Send(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.Drag, From = from, To = to, DurationFrames = 2, Button = MouseButton.Left });
+
+            // The cursor system reads this instead of the hardware mouse, so every phase that moves the pointer
+            // must publish it — otherwise the world reticle stays behind while the UI stack follows the gesture.
+            system.Update(0); // move to the start
+            Assert.That(SyntheticCursorState.TryGetPointerPosition(out Vector2 published), Is.True);
+            Assert.That(published, Is.EqualTo(from));
+
+            system.Update(0); // press at the start
+            SyntheticCursorState.TryGetPointerPosition(out published);
+            Assert.That(published, Is.EqualTo(from));
+
+            system.Update(0); // first drag step
+            SyntheticCursorState.TryGetPointerPosition(out published);
+            Assert.That(published, Is.EqualTo(Vector2.Lerp(from, to, 0.5f)));
+        }
+
+        [Test]
+        public void PublishNoPointerPositionForAKeyGesture()
+        {
+            Send(new UiDeviceGestureRequest { Kind = UiDeviceGestureKind.KeyPress, Key = Key.E, DurationFrames = 1 });
+
+            system.Update(0);
+
+            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False);
+        }
+
+        [Test]
+        public void FailADragThatTurnedIntoACameraPanMidGesture()
+        {
+            UniTask<UiGestureResult> gesture = Send(new UiDeviceGestureRequest
+            {
+                Kind = UiDeviceGestureKind.Drag, From = new Vector2(10f, 10f), To = new Vector2(90f, 10f), DurationFrames = 4, Button = MouseButton.Left,
+            });
+
+            system.Update(0); // move
+            system.Update(0); // press
+
+            // A held button dragged across the world is the camera-pan gesture (TemporalLock binds the left mouse
+            // button), so the cursor flips to panning and the drag the caller asked for never happens.
+            cursor.CursorState = CursorState.Panning;
+            system.Update(0);
+
+            Assert.That(gesture.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            UiGestureResult result = gesture.GetAwaiter().GetResult();
+            Assert.That(result.Ok, Is.False, "a gesture that panned the camera instead of dragging must not report a delivery");
+            Assert.That(result.FailureReason, Does.Contain("panned the camera"));
+            Assert.That(world.Has<UiDeviceGestureRequest>(playerEntity), Is.False);
+        }
     }
 }

@@ -115,6 +115,53 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False);
         }
 
+        /// <summary>
+        ///     The sweep is the held-and-turn gesture: the press arms whatever watches for a pointer-down, the
+        ///     camera hold is what moves the ray a scene samples, and the release closes it. The order is the
+        ///     contract — a camera turn with nothing held sweeps nothing.
+        /// </summary>
+        [Test]
+        public void ComposeASweepFromPressCameraLookAndRelease()
+        {
+            UniTask<SyntheticSweepResult> sweep = agent.SweepAsync(7, null, null, null, InputAction.IaPointer,
+                new Vector2(5f, 0f), seconds: 0.5f, timeoutSec: 30f);
+
+            Assert.That(currentPointerIntent.EventType, Is.EqualTo(PointerEventType.PetDown));
+            Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False, "the camera must not turn before the press landed");
+
+            CompletePointerIntent(Delivered(7, press: new SyntheticPressHandoff { World = world, Entity = playerEntity, Tick = 3 }));
+
+            Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.True, "the press landed, so the camera sweep runs while it is held");
+            Assert.That(world.Get<SyntheticCameraLookIntent>(playerEntity).AxisValue, Is.EqualTo(new Vector2(5f, 0f)));
+
+            EcsRequest.CompleteAndRemove(world, playerEntity, world.Get<SyntheticCameraLookIntent>(playerEntity), SyntheticInputDelivery.Completed);
+
+            Assert.That(currentPointerIntent.EventType, Is.EqualTo(PointerEventType.PetUp), "the button is released after the camera turned");
+            CompletePointerIntent(Delivered(7));
+
+            Assert.That(sweep.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            SyntheticSweepResult result = sweep.GetAwaiter().GetResult();
+            Assert.That(result.FailureReason, Is.Null);
+            Assert.That(result.Press.Hit, Is.True);
+            Assert.That(result.CameraSweep, Is.EqualTo(SyntheticInputDelivery.Completed));
+            Assert.That(result.Release.Hit, Is.True);
+        }
+
+        [Test]
+        public void AbandonASweepWhosePressWasNeverDelivered()
+        {
+            UniTask<SyntheticSweepResult> sweep = agent.SweepAsync(7, null, null, null, InputAction.IaPointer,
+                new Vector2(5f, 0f), seconds: 0.5f, timeoutSec: 30f);
+
+            CompletePointerIntent(new SyntheticPointerOutcome { Result = new SyntheticPointerResult { Hit = false, FailureReason = "out of range" } });
+
+            Assert.That(sweep.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            SyntheticSweepResult result = sweep.GetAwaiter().GetResult();
+            Assert.That(result.FailureReason, Does.Contain("out of range"));
+            Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False, "turning the camera with nothing held is not the gesture that was asked for");
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False, "no release may follow a press that never landed");
+        }
+
         [Test]
         public void PreemptThePendingGestureWhenANewerOneStarts()
         {

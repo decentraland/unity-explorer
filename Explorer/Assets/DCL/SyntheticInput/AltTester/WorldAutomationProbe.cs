@@ -116,6 +116,30 @@ namespace DCL.SyntheticInput.AltTester
                           .ContinueWith(PointerResultPayload));
         }
 
+        /// <summary>
+        ///     Presses a pointer button on an entity, turns the camera while it is held, then releases — the
+        ///     gesture that sweeps the pointer ray a scene samples from PrimaryPointerInfo. Dragging the virtual
+        ///     mouse across the world pans the camera instead, so this is the only way to drive a held sweep.
+        /// </summary>
+        public static int StartSweep(int entityId, string sceneId, string button, float deltaX, float deltaY, float seconds, float timeoutSec)
+        {
+            if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
+                return failedId;
+
+            if (!TryParseInputAction(button, out InputAction inputAction))
+                return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{button}'")));
+
+            if (deltaX == 0f && deltaY == 0f)
+                return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload("deltaX and deltaY must not both be zero: a sweep that does not turn the camera is a press/release pair")));
+
+            var axisValue = new Vector2(deltaX, deltaY);
+
+            return AltOperationRegistry.Start(
+                readyAgent.SweepAsync(entityId, EmptyToNull(sceneId), null, null, inputAction, axisValue,
+                               Mathf.Clamp(seconds, 0.1f, MAX_SECONDS), ClampTimeout(timeoutSec))
+                          .ContinueWith(SweepResultPayload));
+        }
+
         /// <summary>Aims at a scene entity and holds the hover (no button) for a duration.</summary>
         public static int StartHover(int entityId, float seconds)
         {
@@ -200,6 +224,23 @@ namespace DCL.SyntheticInput.AltTester
                 ["ok"] = delivery != SyntheticInputDelivery.TimedOut,
                 ["delivery"] = delivery.ToString(),
             }.ToString();
+
+        private static string SweepResultPayload(SyntheticSweepResult sweep)
+        {
+            var payload = new JObject
+            {
+                ["ok"] = sweep.FailureReason == null && sweep.CameraSweep == SyntheticInputDelivery.Completed,
+                ["pressed"] = JObject.Parse(PointerResultPayload(sweep.Press)),
+                ["sweep"] = sweep.CameraSweep.ToString(),
+            };
+
+            if (sweep.FailureReason != null)
+                payload["reason"] = sweep.FailureReason;
+            else
+                payload["released"] = JObject.Parse(PointerResultPayload(sweep.Release));
+
+            return payload.ToString();
+        }
 
         private static string PointerResultPayload(SyntheticPointerResult result)
         {

@@ -112,7 +112,13 @@ namespace DCL.Input.Systems
         [Query]
         private void UpdateCursor(ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
         {
-            Vector2 mousePos = mouseDevice.position.value;
+            // An automation gesture steers a virtual mouse of its own, which this system's single cached device
+            // never resolves; while one runs, its position is the pointer, so the UI raycast, the cursor style and
+            // the world reticle ray built from CursorComponent.Position all describe the same pointer.
+            Vector2 mousePos = SyntheticCursorState.TryGetPointerPosition(out Vector2 syntheticPointer)
+                ? syntheticPointer
+                : mouseDevice.position.value;
+
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
 
             cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();

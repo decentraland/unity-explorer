@@ -103,6 +103,45 @@ namespace DCL.SyntheticInput
             RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: false, PointerEventType.PetUp, timeoutSec, force, ct);
 
         /// <summary>
+        ///     <para>
+        ///         The gesture a human paints with: press a pointer button on a target, turn the camera while it is
+        ///         held, release. The press is what arms a scene (it lands entity-bound on the aimed target under
+        ///         the real qualification gates), and the camera rotation is what sweeps the pointer ray a scene
+        ///         samples — <c>PrimaryPointerInfo.WorldRayDirection</c> is built from the camera, so turning the
+        ///         camera moves it whether the cursor is free or locked.
+        ///     </para>
+        ///     <para>
+        ///         No aim is posted between the legs: for the duration of the sweep the reticle is the cursor's own,
+        ///         so the sampled ray follows the camera rather than staying pinned to the pressed target. A press
+        ///         that was never delivered aborts the gesture — turning the camera with nothing held is not the
+        ///         gesture that was asked for, and releasing a button that never went down would fake a delivery.
+        ///     </para>
+        /// </summary>
+        public async UniTask<SyntheticSweepResult> SweepAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
+            InputAction button, Vector2 axisValue, float seconds, float timeoutSec, CancellationToken ct = default, bool force = false)
+        {
+            SyntheticPointerResult press = await PointerDownAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, timeoutSec, ct, force);
+
+            if (press.TimedOut || press.FailureReason != null)
+                return new SyntheticSweepResult
+                {
+                    Press = press,
+                    FailureReason = press.TimedOut
+                        ? $"the press did not complete within {timeoutSec}s, so nothing was held to sweep with"
+                        : $"the press was not delivered ({press.FailureReason}), so nothing was held to sweep with",
+                };
+
+            SyntheticInputDelivery cameraSweep = await CameraLookAsync(axisValue, seconds, ct);
+
+            return new SyntheticSweepResult
+            {
+                Press = press,
+                CameraSweep = cameraSweep,
+                Release = await PointerUpAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, timeoutSec, ct, force),
+            };
+        }
+
+        /// <summary>
         ///     Aims the reticle at a scene entity (or an explicit world/screen point) and holds the hover for a
         ///     duration without pressing anything: the scene observes the same hover enter/leave flow a real
         ///     cursor produces, and the result reports what was hovered.
