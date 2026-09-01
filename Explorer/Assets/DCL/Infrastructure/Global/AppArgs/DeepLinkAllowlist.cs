@@ -90,7 +90,7 @@ namespace Global.AppArgs
             // publish a profile change.
             AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS,
 
-            // Target environment (org|zone|today). Not realm-gated: the login callbacks and jump-in links that carry
+            // Target environment (org|zone). Not realm-gated: the login callbacks and jump-in links that carry
             // it have no realm at all, so the loopback-realm condition below could never pass for them and the session
             // would silently fall back to the default environment. Safe on its own — a closed Decentraland-owned enum,
             // parsed with Enum.TryParse where it is consumed and ignored when it does not match, never a URL, so it
