@@ -86,7 +86,6 @@ namespace Global.Dynamic
             environment switch
             {
                 DecentralandEnvironment.Org => ORG_MANIFEST_URL,
-                DecentralandEnvironment.Today => ORG_MANIFEST_URL,
                 DecentralandEnvironment.Zone => ZONE_MANIFEST_URL,
                 DecentralandEnvironment.Custom => null,
                 _ => throw new ArgumentOutOfRangeException(nameof(environment), environment, null),

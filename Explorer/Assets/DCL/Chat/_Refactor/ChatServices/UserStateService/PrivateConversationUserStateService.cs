@@ -363,6 +363,8 @@ namespace DCL.Chat.ChatServices
         {
         }
 
+        // Wire format serialized with JsonUtility: field names must match the JSON keys.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         public struct ParticipantPrivacyMetadata
         {
