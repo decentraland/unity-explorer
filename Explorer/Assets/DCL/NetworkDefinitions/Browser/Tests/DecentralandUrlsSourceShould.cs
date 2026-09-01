@@ -293,6 +293,18 @@ namespace DCL.Browser.DecentralandUrls.Tests
             Assert.AreEqual("https://places.decentraland.org/api/places", urlsSource.GetOriginalUrl(urlsSource.Url(DecentralandUrl.ApiPlaces)));
         }
 
+        // A world's scene room is reached through the worlds content server, so it has to be gatewayed like the
+        // rest of that host. Left out, a gatewayed session opens its comms handshake against the public deployment.
+        [Test]
+        public void RouteTheWorldSceneCommsAdapterThroughTheGateway()
+        {
+            InitializeFeatureFlags(optimizedAssets: false, useGateway: true);
+            GatewayUrlsSource urlsSource = GatewayUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+
+            Assert.AreEqual("https://gateway.decentraland.org/worlds-content-server/worlds/{0}/scenes/{1}/comms",
+                urlsSource.Url(DecentralandUrl.WorldCommsAdapter));
+        }
+
         [Test]
         public void KeepGatewayRoutingWhenOptimizedAssetsDisabled()
         {

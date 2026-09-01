@@ -39,6 +39,7 @@ namespace DCL.Browser
             DecentralandUrl.RemotePeersWorld,
             DecentralandUrl.ArchipelagoStatus,
             DecentralandUrl.ArchipelagoHotScenes,
+            DecentralandUrl.WorldCommsAdapter,
 
             // Content Servers
             DecentralandUrl.AssetBundlesCDN,
