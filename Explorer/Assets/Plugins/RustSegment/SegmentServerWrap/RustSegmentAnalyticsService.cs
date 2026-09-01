@@ -12,6 +12,7 @@ using System.Threading;
 using UnityEngine.Device;
 using UnityEngine.Pool;
 using Cysharp.Threading.Tasks;
+using Utility;
 using Utility.Multithreading;
 
 namespace Plugins.RustSegment.SegmentServerWrap
@@ -52,8 +53,14 @@ namespace Plugins.RustSegment.SegmentServerWrap
         // temportal sentry budget fix. TODO remove once the core issue solved
         private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
 
-        public RustSegmentAnalyticsService(string writerKey, string? anonId)
+        // Popup is raised once per session: the queue keeps failing while the disk stays full
+        private static bool DISK_FULL_ALREADY_RAISED = false;
+
+        private readonly IEventBus? eventBus;
+
+        public RustSegmentAnalyticsService(string writerKey, string? anonId, IEventBus? eventBus = null)
         {
+            this.eventBus = eventBus;
             using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
             if (string.IsNullOrWhiteSpace(writerKey))
@@ -266,7 +273,18 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
-                if (response is not NativeMethods.Response.Success)
+                if (response is NativeMethods.Response.ErrorDiskFull)
+                {
+                    // Environment condition, not an app bug: warn instead of a Sentry exception
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment operation {operationId} {type} failed: disk is full");
+
+                    if (!DISK_FULL_ALREADY_RAISED)
+                    {
+                        DISK_FULL_ALREADY_RAISED = true;
+                        instanceGuard.Value.eventBus?.Publish(new AnalyticsDiskFullDetected());
+                    }
+                }
+                else if (response is not NativeMethods.Response.Success)
                     ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
 
                 instanceGuard.Value.CleanMemory(operationId);

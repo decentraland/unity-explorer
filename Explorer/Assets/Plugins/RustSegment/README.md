@@ -78,6 +78,16 @@ Notes:
 
 Operations are asynchronous. Completion and errors are reported via the provided callbacks.
 
+### Response codes
+
+Each operation completes through `FfiCallbackFn` with one of:
+
+| Code | Name | Meaning |
+|---|---|---|
+| 0 | `Success` | Operation completed. |
+| 1 | `Error` | Generic failure; details arrive via the error callback. |
+| 2 | `ErrorDiskFull` | The persistent queue cannot write because the disk is full (SQLITE_FULL). |
+
 ---
 
 ## Shutdown / Disposal Contract

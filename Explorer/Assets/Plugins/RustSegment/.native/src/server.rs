@@ -14,7 +14,7 @@ use tokio::sync::Mutex;
 use segment::{
     message::{BatchMessage, User},
     queue::{
-        event_queue::{CombinedAnalyticsEventQueue, CombinedAnalyticsEventQueueNewResult},
+        event_queue::{CombinedAnalyticsEventQueue, CombinedAnalyticsEventQueueNewResult, EnqueError},
         event_send_daemon::AnalyticsEventSendDaemon,
     },
     Client, HttpClient,
@@ -360,10 +360,15 @@ impl SegmentServer {
 
     pub async fn enqueue(&self, id: OperationHandleId, msg: impl Into<BatchMessage>) {
         if let Err(e) = self.enqueue_internal(msg).await {
+            // enqueue_internal wraps the queue's EnqueError in anyhow; recover
+            // it to distinguish a full disk from other failures
+            let code = e
+                .downcast_ref::<EnqueError>()
+                .map_or(Response::Error, response_code_for_enque_error);
             self.context
                 .lock()
                 .await
-                .report_error(Some(id), format!("Cannot enqueue: {e}"));
+                .report_error_with_code(Some(id), format!("Cannot enqueue: {e}"), code);
         } else {
             self.context.lock().await.report_success(id);
         }
@@ -391,7 +396,8 @@ impl SegmentServer {
         let mut context = instance.context.lock().await;
 
         if let Err(e) = context.batcher.flush().await {
-            context.report_error(Some(id), format!("Cannot flush: {e}"));
+            let code = response_code_for_enque_error(&e);
+            context.report_error_with_code(Some(id), format!("Cannot flush: {e}"), code);
         } else {
             context.report_success(id);
         }
@@ -418,12 +424,29 @@ impl SegmentServer {
     }
 }
 
+fn response_code_for_enque_error(error: &EnqueError) -> Response {
+    if error.is_disk_full() {
+        Response::ErrorDiskFull
+    } else {
+        Response::Error
+    }
+}
+
 impl AppContext {
     pub fn report_success(&self, id: OperationHandleId) {
         self.callback_fn.as_ref()(id, Response::Success);
     }
 
     pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
+        self.report_error_with_code(id, message, Response::Error);
+    }
+
+    pub fn report_error_with_code(
+        &self,
+        id: Option<OperationHandleId>,
+        message: String,
+        code: Response,
+    ) {
         let message = match id {
             Some(id) => {
                 format!("Operation {id} failed: {message}")
@@ -433,7 +456,7 @@ impl AppContext {
         self.error_fn.as_ref()(message.as_str());
 
         if let Some(id) = id {
-            self.callback_fn.as_ref()(id, Response::Error);
+            self.callback_fn.as_ref()(id, code);
         };
     }
 }

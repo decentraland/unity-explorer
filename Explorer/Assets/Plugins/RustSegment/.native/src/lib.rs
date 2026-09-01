@@ -10,11 +10,13 @@ pub type OperationHandleId = u64;
 pub const INVALID_OPERATION_HANDLE_ID: OperationHandleId = 0;
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Response {
     Success = 0,
     // Errors are propagated vie the error callback
     Error = 1,
+    // The persistent queue cannot write because the disk is full (SQLITE_FULL)
+    ErrorDiskFull = 2,
 }
 
 /// # SAFTEY: The "C" callback must be threadsafe and not block

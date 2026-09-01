@@ -836,6 +836,8 @@ namespace Global.Dynamic
                     uiShellContainer.MvcManager,
                     bootstrapContainer.DecentralandUrlsSource));
 
+            globalPlugins.Add(new AnalyticsDiskFullPopupPlugin(bootstrapContainer.Analytics.EventBus, uiShellContainer.MvcManager));
+
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
                 globalPlugins.Add(
