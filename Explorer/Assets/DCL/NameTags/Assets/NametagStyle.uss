@@ -314,9 +314,9 @@
     align-items: center;
     justify-content: center;
     max-width: 300px;
-    /* A plate with no label is only as wide as its padding, which the corner radius below then
-       deforms into an ellipse. This floor is the plate's own height, so a label-less plate - a
-       scene color-coding players without naming them - comes out a dot. */
+    /* A plate with no label is only as wide as its padding, which the corner radius below
+       deforms into an ellipse. This floor is the plate's own height, so a label-less plate
+       comes out a dot. */
     min-width: 22px;
     padding-top: 1px;
     padding-bottom: 1px;

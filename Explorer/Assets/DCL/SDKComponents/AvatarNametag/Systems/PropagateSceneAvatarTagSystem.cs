@@ -111,8 +111,8 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             globalWorld.AddOrSet(target, new SceneAvatarTagComponent(
                 // An empty label draws the bare plate instead of hiding it, so a scene can color-code
-                // players without labelling them; the plate goes away with the component. Spaces pass
-                // through verbatim - a label of spaces is the scene's way to widen a bare plate.
+                // players without labelling them. Spaces pass through verbatim - a label of spaces
+                // is the scene's way to widen a bare plate.
                 pbNametag.Label,
                 pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
                 backgroundColor,

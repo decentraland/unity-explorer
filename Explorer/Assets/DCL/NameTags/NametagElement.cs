@@ -140,15 +140,14 @@ namespace DCL.Nametags
         }
 
         /// <summary>
-        ///     When false, hides every name-related sub-element (background, header, chat bubble, pointer)
-        ///     while keeping the scene avatar tag plate visible.
+        ///     When false, hides every name-related sub-element while keeping the scene avatar tag plate visible.
         /// </summary>
         [UxmlAttribute]
         public bool NameVisible
         {
             get => nameVisible;
 
-            // Set every frame; keep unchanged values off the class list.
+            // Safe to write every frame: unchanged values never touch the class list.
             set
             {
                 if (nameVisible == value)

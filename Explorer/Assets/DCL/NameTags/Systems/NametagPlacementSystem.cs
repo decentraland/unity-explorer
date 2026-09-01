@@ -72,7 +72,7 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
-            // The nametags toggle disables name and scene plate alike, so no holder is created while it is off.
+            // The nametags toggle disables the name and the scene plate alike.
             if (showNameTags)
             {
                 AddTagForPlayerAvatarsQuery(World, cameraComponent);
