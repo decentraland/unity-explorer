@@ -6,7 +6,6 @@ using DCL.PluginSystem.World;
 using DCL.Tests.Editor;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -57,7 +56,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), poolsRegistry, budgetProvider, budgetProvider, null, sceneStateProvider, new AudioSourcesPlugin.AudioSourcesPluginSettings());
+            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), poolsRegistry, budgetProvider, budgetProvider, null!, sceneStateProvider, new AudioSourcesPlugin.AudioSourcesPluginSettings());
         }
 
         [Test]
@@ -85,7 +84,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
             Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
             Assert.That(afterUpdate.AudioSource, Is.Not.Null);
-            Assert.That(afterUpdate.AudioSource.clip, Is.EqualTo(TestAudioClip));
+            Assert.That(afterUpdate.AudioSource!.clip, Is.EqualTo(TestAudioClip));
         }
 
         [Test]
