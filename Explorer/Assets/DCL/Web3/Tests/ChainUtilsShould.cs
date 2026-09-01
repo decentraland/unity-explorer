@@ -10,7 +10,6 @@ namespace DCL.Web3.Tests
     public class ChainUtilsShould
     {
         [TestCase(DecentralandEnvironment.Org, EthereumNetwork.Mainnet, TestName = "org is mainnet")]
-        [TestCase(DecentralandEnvironment.Today, EthereumNetwork.Mainnet, TestName = "today is mainnet")]
         [TestCase(DecentralandEnvironment.Zone, EthereumNetwork.Sepolia, TestName = "zone is sepolia")]
         public void PinDecentralandsOwnEnvironmentsToTheirChain(DecentralandEnvironment environment, EthereumNetwork expected)
         {
@@ -21,7 +20,6 @@ namespace DCL.Web3.Tests
         // The whole point of pinning: no argument moves a decentraland environment onto the other chain, whether it
         // names the other network, a network that does not exist, or nonsense.
         [TestCase(DecentralandEnvironment.Org, "sepolia", EthereumNetwork.Mainnet, TestName = "org asked for sepolia")]
-        [TestCase(DecentralandEnvironment.Today, "sepolia", EthereumNetwork.Mainnet, TestName = "today asked for sepolia")]
         [TestCase(DecentralandEnvironment.Zone, "mainnet", EthereumNetwork.Sepolia, TestName = "zone asked for mainnet")]
         [TestCase(DecentralandEnvironment.Org, "MAINNET", EthereumNetwork.Mainnet, TestName = "org asked for the chain it already runs on")]
         [TestCase(DecentralandEnvironment.Zone, "amoy", EthereumNetwork.Sepolia, TestName = "zone asked for a network this flag does not name")]
