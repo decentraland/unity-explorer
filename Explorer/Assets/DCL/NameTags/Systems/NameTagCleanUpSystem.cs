@@ -37,7 +37,6 @@ namespace DCL.Nametags
                 nametagHolderPool.Release(nametagHolder);
         }
 
-        // Scene-tagged holders are left to NametagPlacementSystem, which releases them together with the plate.
         [Query]
         [None(typeof(SceneAvatarTagComponent))]
         private void RemoveAllTags(Entity e, NametagHolder nametagHolder)

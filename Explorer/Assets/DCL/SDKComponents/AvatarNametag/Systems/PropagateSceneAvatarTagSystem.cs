@@ -98,8 +98,17 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             bool hasPlate = World.TryGet(entity, out SceneAvatarTagApplied applied);
 
-            // Leave IsDirty set so the write is retried once the avatar behind this entity exists.
-            if (!TryResolveTarget(entity, in crdtEntity, out Entity target))
+            ResolveResult resolveResult = ResolveTarget(entity, in crdtEntity, out Entity target);
+
+            // Ends the retry: nothing about this entity can turn it into an avatar anymore.
+            if (resolveResult == ResolveResult.Unreachable)
+            {
+                pbNametag.IsDirty = false;
+                return;
+            }
+
+            // Pending leaves IsDirty set, so the write is retried once the avatar shows up.
+            if (resolveResult == ResolveResult.Pending)
                 return;
 
             // Remote-player entity ids are recycled, so a re-resolve can land on a different avatar
@@ -127,46 +136,65 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
         private void MarkNametagsDirty(ref PBAvatarNametag pbNametag) =>
             pbNametag.IsDirty = true;
 
-        private bool TryResolveTarget(Entity sceneEntity, in CRDTEntity crdtEntity, out Entity target)
+        private ResolveResult ResolveTarget(Entity sceneEntity, in CRDTEntity crdtEntity, out Entity target)
         {
+            target = Entity.Null;
+
             if (crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY)
             {
                 target = globalPlayerEntity;
-                return globalWorld.IsAlive(target);
+                return globalWorld.IsAlive(target) ? ResolveResult.Resolved : ResolveResult.Unreachable;
             }
 
             // A scene-spawned avatar keeps a handle to its global-world twin on the very same scene entity.
             if (World.TryGet(sceneEntity, out SDKAvatarShapeComponent sdkAvatarShape))
             {
                 target = sdkAvatarShape.GlobalWorldEntity;
-                return globalWorld.IsAlive(target);
+                return globalWorld.IsAlive(target) ? ResolveResult.Resolved : ResolveResult.Unreachable;
             }
 
-            target = Entity.Null;
+            // A shape without a twin is an avatar mid-creation, not an absent one.
+            if (World.Has<PBAvatarShape>(sceneEntity))
+                return ResolveResult.Pending;
 
-            string userId = string.Empty;
+            string userId;
 
             // One player has two scene entities that share nothing but the CRDT id: the CRDT bridge's,
             // which the scene writes to, and the multiplayer bridge's, which holds the SDKProfile.
-            if (World.TryGet(sceneEntity, out SDKProfile? sdkProfile))
-                userId = sdkProfile?.UserId ?? string.Empty;
+            if (World.TryGet(sceneEntity, out SDKProfile? ownProfile))
+                userId = ownProfile?.UserId ?? string.Empty;
             else
-                FindWalletByCrdtIdQuery(World, in crdtEntity, ref userId);
+            {
+                var playerEntity = Entity.Null;
+                FindPlayerByCrdtIdQuery(World, in crdtEntity, ref playerEntity);
 
-            if (string.IsNullOrEmpty(userId)
-                || !entityParticipantTable.TryGet(userId, out IReadOnlyEntityParticipantTable.Entry entry)
+                // No player entity carries this id: it is a plain scene entity, or a player who left and
+                // handed the reserved id back to the pool.
+                if (playerEntity == Entity.Null)
+                    return ResolveResult.Unreachable;
+
+                userId = World.TryGet(playerEntity, out SDKProfile? bridgeProfile)
+                    ? bridgeProfile?.UserId ?? string.Empty
+                    : string.Empty;
+            }
+
+            // A player entity without a profile is mid-setup, not gone.
+            if (string.IsNullOrEmpty(userId))
+                return ResolveResult.Pending;
+
+            if (!entityParticipantTable.TryGet(userId, out IReadOnlyEntityParticipantTable.Entry entry)
                 || !globalWorld.IsAlive(entry.Entity))
-                return false;
+                return ResolveResult.Unreachable;
 
             target = entry.Entity;
-            return true;
+            return ResolveResult.Resolved;
         }
 
         [Query]
-        private void FindWalletByCrdtId([Data] in CRDTEntity searchedId, [Data] ref string wallet, in PlayerSceneCRDTEntity playerCrdtEntity, in SDKProfile profile)
+        private void FindPlayerByCrdtId([Data] in CRDTEntity searchedId, [Data] ref Entity found, Entity e, in PlayerSceneCRDTEntity playerCrdtEntity)
         {
             if (playerCrdtEntity.CRDTEntity.Id == searchedId.Id)
-                wallet = profile.UserId;
+                found = e;
         }
 
         private void MarkPlateRemoving(Entity target)
@@ -175,9 +203,19 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             ref SceneAvatarTagComponent plate = ref globalWorld.TryGetRef<SceneAvatarTagComponent>(target, out bool exists);
 
-            // Flagged, not removed: the plate must be hidden before the component goes away.
             if (exists)
                 plate.IsRemoving = true;
+        }
+
+        private enum ResolveResult
+        {
+            Resolved,
+
+            /// <summary>The avatar behind the scene entity does not exist yet, but still can.</summary>
+            Pending,
+
+            /// <summary>No avatar backs the scene entity, and none ever will.</summary>
+            Unreachable,
         }
 
         /// <summary>

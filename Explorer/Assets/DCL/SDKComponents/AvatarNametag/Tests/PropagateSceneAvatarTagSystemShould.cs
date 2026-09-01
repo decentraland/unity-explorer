@@ -188,6 +188,7 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             // Arrange — the nametag arrives before AvatarShapeHandlerSystem has instantiated the avatar.
             var pbNametag = new PBAvatarNametag { Label = "Boss", IsDirty = true };
             Entity sceneEntity = CreateSceneEntity(SCENE_LOCAL_ENTITY, pbNametag);
+            world.Add(sceneEntity, new PBAvatarShape());
             system.Update(0);
 
             Assert.That(pbNametag.IsDirty, Is.True, "an unresolved write must stay dirty to be retried");
@@ -206,8 +207,8 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         public void IgnoreAnEntityThatResolvesToNoAvatar()
         {
             // Arrange
-            CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-                new PBAvatarNametag { Label = "Nobody", IsDirty = true });
+            var pbNametag = new PBAvatarNametag { Label = "Nobody", IsDirty = true };
+            CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, pbNametag);
 
             // Act
             system.Update(0);
@@ -215,6 +216,48 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             // Assert
             Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalPlayerEntity), Is.False);
             Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalRemoteEntity), Is.False);
+            Assert.That(pbNametag.IsDirty, Is.False, "no avatar can ever back this entity, so the retry must end");
+        }
+
+        [Test]
+        public void StopRetryingWhenTheRemotePlayerHasLeft()
+        {
+            // Arrange
+            var pbNametag = new PBAvatarNametag { Label = "Bronze", IsDirty = true };
+            Entity sceneEntity = CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, pbNametag);
+
+            world.Add(sceneEntity, NewSdkProfile(REMOTE_WALLET));
+            entityParticipantTable.Release(REMOTE_WALLET, RoomSource.Island);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalRemoteEntity), Is.False);
+            Assert.That(pbNametag.IsDirty, Is.False);
+        }
+
+        [Test]
+        public void RetryUntilTheRemotePlayerProfileArrives()
+        {
+            // Arrange — the multiplayer bridge creates the player entity before the profile reaches it.
+            var pbNametag = new PBAvatarNametag { Label = "Bronze", IsDirty = true };
+            CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, pbNametag);
+
+            Entity playerEntity = world.Create(
+                new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM)));
+
+            system.Update(0);
+
+            Assert.That(pbNametag.IsDirty, Is.True, "a profile-less player entity must keep the write pending");
+
+            // Act
+            world.Add(playerEntity, NewSdkProfile(REMOTE_WALLET));
+            system.Update(0);
+
+            // Assert
+            Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalRemoteEntity), Is.True);
+            Assert.That(pbNametag.IsDirty, Is.False);
         }
 
         [Test]

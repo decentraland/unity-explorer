@@ -218,11 +218,11 @@ namespace DCL.Nametags
         private readonly VisualElement sceneTagContainer;
         private readonly Label sceneTagLabel;
 
-        private bool nameVisible = true;
-
         private readonly IVisualElementScheduledItem hideMessage;
 
         private readonly Label debugLabel;
+
+        private bool nameVisible = true;
 
         public NametagElement()
         {
