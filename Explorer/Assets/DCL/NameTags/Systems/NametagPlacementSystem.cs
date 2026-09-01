@@ -257,7 +257,6 @@ namespace DCL.Nametags
                 return;
             }
 
-            nametagHolder.Nametag.NameVisible = true;
             UpdateTagTransform(nametagHolder, e, in avatarBase, in characterTransform, in camera, fovScaleFactor, cameraForward, cameraUp);
         }
 
