@@ -113,6 +113,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         ///     Places <see cref="LocalBounds" /> in the world through the avatar's transform, re-axis-aligning the
         ///     rotated box. The renderers cannot answer this: compute-shader skinning replaced their local bounds
         ///     with a fixed cube, and the skinned vertices only ever exist in the GPU buffer.
+        ///     The runtime culling path does not call this — BoneMatrixCalculationJob computes the same result off
+        ///     the main thread from the gathered root matrix. This is the readable reference for tooling and tests.
         /// </summary>
         public readonly Bounds ToWorldBounds(Transform avatarTransform)
         {

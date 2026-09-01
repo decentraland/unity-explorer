@@ -181,35 +181,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void StampPreviewAvatarsAsInFrustumWhereverThePlayerCameraLooks()
-        {
-            // Arrange - both avatars read the same transform, placed behind the camera, so IsPreview is
-            // the only difference between them
-            cameraGameObject.transform.rotation = Quaternion.identity;
-            avatarGameObject.transform.position = new Vector3(0, 0, -50);
-
-            AvatarShapeComponent previewShape = CreateAvatarShapeComponent("preview-id", "Preview");
-            previewShape.IsPreview = true;
-
-            // The stamp reads LocalBounds off the skinning component; a default one is a degenerate box at the
-            // avatar transform, which is all this test needs to separate the frustum result from the preview flag
-            var skinning = default(AvatarCustomSkinningComponent);
-
-            Entity previewEntity = world.Create(previewShape, avatarBase, skinning, new CharacterEmoteComponent());
-            Entity inWorldEntity = world.Create(CreateAvatarShapeComponent(), avatarBase, skinning, new CharacterEmoteComponent());
-
-            // Act
-            system!.Update(0);
-
-            // Assert
-            Assert.IsTrue(world.Get<AvatarCachedVisibilityComponent>(previewEntity).IsInCameraFrustum,
-                "a preview avatar is drawn by its own camera, so the player camera must never cull it");
-
-            Assert.IsFalse(world.Get<AvatarCachedVisibilityComponent>(inWorldEntity).IsInCameraFrustum,
-                "the in-world avatar shares the transform, so this confirms that position really is outside the frustum");
-        }
-
-        [Test]
         public void AddCachedVisibilityComponentToPlayerAvatar()
         {
             // Arrange

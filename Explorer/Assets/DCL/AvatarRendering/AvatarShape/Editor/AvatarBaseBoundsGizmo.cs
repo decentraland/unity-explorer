@@ -15,9 +15,9 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
 
     /// <summary>
     ///     Draws the three boxes an avatar carries so their fit can be compared: the one
-    ///     AvatarShapeVisibilitySystem frustum-tests, the ghost-renderer box it used to test, and the union of
-    ///     Renderer.bounds that Unity culls the drawn geometry with. Each is read from the same source its own
-    ///     consumer reads, so a box shown here is the box that decision was made on.
+    ///     FinishAvatarMatricesCalculationSystem frustum-tests, the ghost-renderer box that used to be tested, and
+    ///     the union of Renderer.bounds that Unity culls the drawn geometry with. Each is read from the same source
+    ///     its own consumer reads, so a box shown here is the box that decision was made on.
     /// </summary>
     public static class AvatarBaseBoundsGizmo
     {
@@ -115,10 +115,13 @@ namespace DCL.AvatarRendering.AvatarShape.Editor
         }
 
         /// <summary>
-        ///     Collects, once per frame, the exact box AvatarShapeVisibilitySystem tests: ToWorldBounds over the
-        ///     LocalBounds snapshot the entity's skinning component holds. Recomputing the union from the live
-        ///     hierarchy instead would let this gizmo disagree with the culling it exists to explain — the snapshot
-        ///     is taken at instantiation, so any drift between the two is precisely what needs to stay visible.
+        ///     Collects, once per frame, the box FinishAvatarMatricesCalculationSystem tests: the LocalBounds
+        ///     snapshot the entity's skinning component holds, placed in the world. It reads that component rather
+        ///     than rebuilding the union from the live hierarchy, because the snapshot is taken at instantiation and
+        ///     any drift between the two is precisely what needs to stay visible.
+        ///     The runtime gets the same value from BoneMatrixCalculationJob instead; that array is not reachable
+        ///     from editor code, so the identical formula is applied here through ToWorldBounds. The only way the
+        ///     two can differ is the avatar moving between the job gather and this draw.
         /// </summary>
         private static void RefreshTestedBounds()
         {

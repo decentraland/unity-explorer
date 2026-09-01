@@ -71,18 +71,6 @@ namespace DCL.AvatarRendering.AvatarShape
             }
             else
                 CalculateFrustumPlanes(camera.GetCameraComponent(World).Camera);
-
-            StampFrustumVisibilityQuery(World);
-        }
-
-        [Query]
-        private void StampFrustumVisibility(in AvatarBase avatarBase, in AvatarShapeComponent avatarShape,
-            in AvatarCustomSkinningComponent skinningComponent, ref AvatarCachedVisibilityComponent cached)
-        {
-            // Preview avatars (backpack, passport) are drawn by their own camera into a render texture, so the
-            // player camera's frustum says nothing about them: they are always in view of the camera that draws them
-            cached.SetInCameraFrustum(avatarShape.IsPreview
-                                      || IsVisibleInCamera(skinningComponent.ToWorldBounds(avatarBase.transform)));
         }
 
         internal void CalculateFrustumPlanes(Camera camera)
