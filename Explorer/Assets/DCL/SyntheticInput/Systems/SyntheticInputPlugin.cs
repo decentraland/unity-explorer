@@ -27,8 +27,8 @@ namespace DCL.SyntheticInput.Systems
 #if ALTTESTER
             // The static-latch probe pattern (AlttesterSceneReadinessProbe): AltTester tests reach the layer
             // through CallStaticMethod, so the session's instances are handed to the static facades once.
-            DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInput);
-            DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
+            AltTester.WorldAutomationProbe.Install(syntheticInput);
+            AltTester.UiAutomationProbe.Install(uiAutomation);
 #endif
         }
 
@@ -38,7 +38,7 @@ namespace DCL.SyntheticInput.Systems
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             SyntheticMovementInputSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
-            SyntheticPointerEventSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
+            SyntheticPointerEventSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity, uiAutomation.TryFindUiCoverAt);
             SyntheticCameraLookSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
             UiVirtualDeviceGestureSystem.InjectToWorld(ref builder, arguments.PlayerEntity, uiAutomation.Devices);
         }

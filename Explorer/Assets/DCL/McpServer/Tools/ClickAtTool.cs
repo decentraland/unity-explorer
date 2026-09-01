@@ -6,6 +6,7 @@ using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ namespace DCL.McpServer.Tools
     public class ClickAtTool : McpTool
     {
         /// <summary>Wire-facing subset of <see cref="InputAction" />: only the three pointer buttons make sense for a click.</summary>
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum PointerButton : byte
         {
             POINTER,
@@ -38,14 +40,17 @@ namespace DCL.McpServer.Tools
             "Press and release a pointer button at a screen position given as normalized image coordinates "
             + "(x right 0..1, y DOWN 0..1, origin at the top-left — the same way you read a screenshot). The ray through "
             + "that point decides the target: whatever qualified scene entity it lands on receives the click through the "
-            + "real reticle pipeline, and a miss reports what blocked it. Use click_entity when you know the entity id.";
+            + "real reticle pipeline, and a miss reports what blocked it. This clicks the 3D world, never UI — a point "
+            + "covered by client UI or the scene's own UI fails with the cover (click those with ui_click), unless force "
+            + "is set. Use click_entity when you know the entity id.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Number("x", "Normalized horizontal image coordinate, 0 (left) to 1 (right).", isRequired: true)
                   .Number("y", "Normalized vertical image coordinate, 0 (top) to 1 (bottom).", isRequired: true)
                   .String("sceneId", "Pin the click to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.")
                   .Enum<PointerButton>("button", "Which input action to press. Default pointer (left click / IA_POINTER).")
-                  .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.");
+                  .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.")
+                  .Boolean("force", "Aim through UI covering that point instead of failing. Default false.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -78,7 +83,9 @@ namespace DCL.McpServer.Tools
             // Image coordinates run top-down; Unity screen coordinates run bottom-up.
             var screenPoint = new Vector2(x * Screen.width, (1f - y) * Screen.height);
 
-            SyntheticPointerResult result = await syntheticInput.ClickAsync(targetEntityId: -1, sceneId, aimPoint: null, screenPoint, button, timeoutSec, ct);
+            bool force = arguments.GetBool("force", false);
+
+            SyntheticPointerResult result = await syntheticInput.ClickAsync(targetEntityId: -1, sceneId, aimPoint: null, screenPoint, button, timeoutSec, ct, force);
 
             if (result.TimedOut)
                 return McpToolResult.Error($"click_at did not complete within {timeoutSec}s (is the simulation paused?).");
@@ -92,6 +99,9 @@ namespace DCL.McpServer.Tools
 
             if (result.FailureReason != null)
                 json["reason"] = result.FailureReason;
+
+            if (result.BlockedByUi != null)
+                json["blockedByUi"] = result.BlockedByUi;
 
             if (result.Hit)
             {

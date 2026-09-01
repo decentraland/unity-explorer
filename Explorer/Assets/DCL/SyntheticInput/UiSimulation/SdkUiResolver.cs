@@ -65,15 +65,22 @@ namespace DCL.SyntheticInput.UiSimulation
         ///     element itself or its closest ancestor (a pick can land on an inner child, and UITransforms nest).
         ///     Null when nothing in the current scene owns the element.
         /// </summary>
-        public UITransformComponent? ResolveComponent(VisualElement element)
+        public UITransformComponent? ResolveComponent(VisualElement element) =>
+            ResolveComponent(element, out _);
+
+        /// <summary>As <see cref="ResolveComponent(VisualElement)" />, also reporting the owner's CRDT id (-1 if none).</summary>
+        public UITransformComponent? ResolveComponent(VisualElement element, out int crdtId)
         {
+            crdtId = -1;
             if (!TryGetRunningSceneWorld(out World? maybeWorld, out _))
                 return null;
 
             UITransformComponent? closest = null;
             var closestDistance = int.MaxValue;
 
-            maybeWorld!.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity _) =>
+            var closestId = -1;
+
+            maybeWorld!.Query(in UI_ELEMENTS, (ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
             {
                 var distance = 0;
 
@@ -85,6 +92,7 @@ namespace DCL.SyntheticInput.UiSimulation
                     if (distance < closestDistance)
                     {
                         closest = uiTransform;
+                        closestId = crdtEntity.Id;
                         closestDistance = distance;
                     }
 
@@ -92,8 +100,53 @@ namespace DCL.SyntheticInput.UiSimulation
                 }
             });
 
+            crdtId = closestId;
             return closest;
         }
+
+        /// <summary>
+        ///     Whether the current scene's UI covers a screen point (Unity screen coordinates), and which entity
+        ///     does. Uses the panel's own hit test, so it agrees with what a real click at that pixel would reach:
+        ///     only elements the scene declared as blocking (pointerFilter PFM_BLOCK) are pickable at all.
+        /// </summary>
+        public bool TryFindCoverAt(UnityEngine.Vector2 screenPoint, out string? cover)
+        {
+            cover = null;
+
+            if (!TryGetScenePanel(out IPanel? panel, out _) || panel == null)
+                return false;
+
+            return TryDescribeCoverIn(panel, screenPoint, out cover);
+        }
+
+        /// <summary>
+        ///     Describes the current scene's UI covering a screen point (Unity screen coordinates) inside a panel
+        ///     the caller already identified — a uGUI raycast reports the panel, not the element it picked, so the
+        ///     cover has to be re-derived here to name something a driver can act on. False when the point picks
+        ///     nothing or the picked element belongs to no entity of the current scene (another panel's element, or
+        ///     one the scene world does not own), leaving the caller's own description in place.
+        /// </summary>
+        public bool TryDescribeCoverIn(IPanel panel, UnityEngine.Vector2 screenPoint, out string? cover)
+        {
+            cover = null;
+
+            UnityEngine.Vector2 panelPoint = UiScreenGeometry.ImageToPanelPoint(panel, UiScreenGeometry.ScreenToImagePoint(screenPoint));
+            VisualElement? picked = panel.Pick(panelPoint);
+
+            if (picked == null || ResolveComponent(picked, out int crdtId) == null)
+                return false;
+
+            cover = CoverDescription(crdtId);
+            return true;
+        }
+
+        /// <summary>
+        ///     How a scene-UI cover is named to a driver. The CRDT id is the whole point: it is the one address
+        ///     ui_click takes for scene UI, so a cover that omits it (the panel host's GameObject path, which is
+        ///     what a raycast reports) tells an agent nothing it can act on.
+        /// </summary>
+        internal static string CoverDescription(int crdtId) =>
+            crdtId >= 0 ? $"the scene's UI (crdtId {crdtId})" : "the scene's UI";
 
         /// <summary>
         ///     The panel the current scene's UI is attached to — the space positional gestures against scene UI are
@@ -147,12 +200,15 @@ namespace DCL.SyntheticInput.UiSimulation
                 if (!hasInput && !hasDropdown && !hasScroll && !hasPointerEvents)
                     return;
 
+                UnityEngine.Rect rect = UiScreenGeometry.PanelRectToImageRect(uiTransform.Transform.panel, uiTransform.Transform.worldBound);
+
                 var entry = new JObject
                 {
                     ["stack"] = "sdk",
                     ["crdtId"] = crdtEntity.Id,
                     ["kind"] = hasInput ? "input" : hasDropdown ? "dropdown" : hasPointerEvents ? "pointerTarget" : "scroll",
-                    ["screenRect"] = UiDiscovery.RectJson(UiScreenGeometry.PanelRectToImageRect(uiTransform.Transform.panel, uiTransform.Transform.worldBound)),
+                    ["screenRect"] = UiDiscovery.RectJson(rect),
+                    ["center"] = UiDiscovery.CenterJson(rect),
                 };
 
                 if (hasPointerEvents)

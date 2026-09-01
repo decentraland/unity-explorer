@@ -13,11 +13,21 @@ namespace DCL.McpServer.Tools
     ///     Drags between two screen points. Inside the SDK scene UI the drag is synthesized semantically — the
     ///     element under the start point receives the press, the elements along the path the moves, the element
     ///     under the end point the release — because UI Toolkit panels consume events sent to their elements
-    ///     rather than virtual-device pointer state. Elsewhere (and whenever <c>device</c> is set) the virtual
-    ///     mouse is replayed instead, which is the path that exercises real drag thresholds and hit-testing.
+    ///     rather than virtual-device pointer state. Elsewhere the virtual mouse is replayed instead, which is the
+    ///     path that exercises real drag thresholds and hit-testing. Which path ran is reported, and an automatic
+    ///     fallback to the device path also reports why the semantic one did not apply: that fallback drags the 3D
+    ///     world, so a caller who meant to drag the scene's UI must be able to tell the two apart.
     /// </summary>
     public class UiDragTool : McpTool
     {
+        /// <summary>Which delivery path the caller allows. The default picks one and says which; the others pin it.</summary>
+        private enum DragPath : byte
+        {
+            Auto,
+            Sdk,
+            Device,
+        }
+
         private const int DEFAULT_DURATION_FRAMES = 15;
         private const int MIN_DURATION_FRAMES = 2;
         private const int MAX_DURATION_FRAMES = 300;
@@ -33,7 +43,9 @@ namespace DCL.McpServer.Tools
             + "y DOWN 0..1, origin top-left — the same way you read a screenshot). A drag whose start point lands on the "
             + "scene's own UI is delivered to those elements (press on the start element, release on the end element); "
             + "anywhere else it replays the virtual mouse through the real input pipeline (drag thresholds, hit-testing), "
-            + "e.g. to drag client list items, sliders or map panning. Set device:true to force the virtual mouse.";
+            + "e.g. to drag client list items, sliders or map panning. The result's path says which one ran, plus a "
+            + "pathReason when the scene UI was not usable and the virtual mouse took over — that fallback drags the 3D "
+            + "world, not the UI. Pass path:sdk to fail instead of falling back, or path:device to force the mouse.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Number("fromX", "Normalized start x, 0 (left) to 1 (right).", isRequired: true)
@@ -42,7 +54,9 @@ namespace DCL.McpServer.Tools
                   .Number("toY", "Normalized end y.", isRequired: true)
                   .Integer("durationFrames", "Frames spent moving between the points. Default 15, max 300.")
                   .Boolean("rightButton", "Drag with the right button instead of the left. Default false.")
-                  .Boolean("device", "Force the virtual-mouse path even when the drag starts on the scene's own UI. Default false.");
+                  .Enum<DragPath>("path", "Which delivery path to use. Default auto (the scene's UI when the start point "
+                                          + "lands on it, the virtual mouse otherwise). sdk fails if the scene's UI does not own "
+                                          + "the start point, instead of dragging the world behind it; device forces the mouse.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -60,23 +74,35 @@ namespace DCL.McpServer.Tools
             if (fromX is < 0f or > 1f || fromY is < 0f or > 1f || toX is < 0f or > 1f || toY is < 0f or > 1f)
                 return McpToolResult.Error("coordinates must be normalized image values in [0, 1].");
 
+            if (!arguments.TryGetEnum("path", DragPath.Auto, out DragPath path))
+                return McpToolResult.Error("path must be one of: auto, sdk, device.");
+
             int durationFrames = Mathf.Clamp(arguments.TryGetInt("durationFrames", out int frames) ? frames : DEFAULT_DURATION_FRAMES, MIN_DURATION_FRAMES, MAX_DURATION_FRAMES);
 
-            var fromImage = new Vector2(fromX * Screen.width, fromY * Screen.height);
-            var toImage = new Vector2(toX * Screen.width, toY * Screen.height);
+            string? skippedSceneUi = null;
 
-            if (!arguments.GetBool("device", false))
+            if (path != DragPath.Device)
             {
-                UiActionResult? sceneUiDrag = await uiAutomation.TryDragSceneUiAsync(fromImage, toImage, durationFrames, ct);
+                var fromImage = new Vector2(fromX * Screen.width, fromY * Screen.height);
+                var toImage = new Vector2(toX * Screen.width, toY * Screen.height);
 
-                if (sceneUiDrag.HasValue)
+                SceneUiDragAttempt attempt = await uiAutomation.DragSceneUiAsync(fromImage, toImage, durationFrames, ct);
+
+                if (attempt.Result.HasValue)
                 {
-                    JObject sdkJson = sceneUiDrag.Value.ToJson(uiAutomation.CursorStateName());
-                    sdkJson["path"] = "sdk";
+                    JObject sdkJson = attempt.Result.Value.ToJson(uiAutomation.CursorStateName());
+                    sdkJson["path"] = McpWireEnum<DragPath>.ToWire(DragPath.Sdk);
                     return McpToolResult.Json(sdkJson);
                 }
+
+                skippedSceneUi = attempt.SkipReason;
+
+                // The caller pinned the semantic path: falling back would drag the 3D world instead of the UI.
+                if (path == DragPath.Sdk)
+                    return McpToolResult.Error($"the drag was not delivered to the scene's UI: {skippedSceneUi}");
             }
 
+            // Image coordinates run top-down; Unity screen coordinates run bottom-up.
             var from = new Vector2(fromX * Screen.width, (1f - fromY) * Screen.height);
             var to = new Vector2(toX * Screen.width, (1f - toY) * Screen.height);
 
@@ -97,9 +123,14 @@ namespace DCL.McpServer.Tools
             var result = new JObject
             {
                 ["ok"] = true,
-                ["path"] = "device",
+                ["path"] = McpWireEnum<DragPath>.ToWire(DragPath.Device),
                 ["cursorState"] = uiAutomation.CursorStateName(),
             };
+
+            // The device drag really happened, so ok is true — but it dragged the 3D world, which is not what a
+            // caller aiming at scene UI asked for. Naming the reason is what separates this from a delivered UI drag.
+            if (skippedSceneUi != null)
+                result["pathReason"] = $"the scene-UI path did not apply ({skippedSceneUi}), so the virtual mouse dragged the 3D world";
 
             return McpToolResult.Json(result);
         }

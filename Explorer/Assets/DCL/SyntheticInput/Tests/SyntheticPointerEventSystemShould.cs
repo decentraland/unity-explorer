@@ -46,6 +46,10 @@ namespace DCL.SyntheticInput.Tests
         [SetUp]
         public void SetUp()
         {
+            // NUnit reuses one fixture instance for the whole class, so the stubbed cover must be cleared
+            // per test — otherwise an armed cover leaks into every test that runs after it.
+            uiCover = null;
+
             sceneWorld = World.Create();
 
             cameraGo = new GameObject("mcp-click-test-camera");
@@ -135,8 +139,17 @@ namespace DCL.SyntheticInput.Tests
                                return false;
                            });
 
-            system = new SyntheticPointerEventSystem(world, scenesCache, collidersCache, playerEntity);
+            system = new SyntheticPointerEventSystem(world, scenesCache, collidersCache, playerEntity, TryFindUiCover);
             system.Initialize();
+        }
+
+        /// <summary>Armed per test: what the stubbed UI probe reports as covering any screen point, if anything.</summary>
+        private string? uiCover;
+
+        private bool TryFindUiCover(Vector2 screenPoint, out string cover)
+        {
+            cover = uiCover ?? string.Empty;
+            return uiCover != null;
         }
 
         protected override void OnTearDown()
@@ -238,7 +251,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
-            system!.Update(0); // inject
+            system.Update(0); // inject
             RunPipelineFrame();
             system.Update(0); // observe
 
@@ -263,7 +276,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
-            system!.Update(0);
+            system.Update(0);
 
             ref SyntheticPointerInput synthetic = ref syntheticInput;
             Assert.That(synthetic.AimPoint, Is.EqualTo((Vector3?)targetGo.transform.position));
@@ -278,7 +291,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
-            system!.Update(0); // inject
+            system.Update(0); // inject
             system.Update(0); // the pipeline has not run: keep waiting
 
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
@@ -293,7 +306,7 @@ namespace DCL.SyntheticInput.Tests
             var foreignAim = new Vector3(1f, 2f, 3f);
             syntheticInput = new SyntheticPointerInput { AimPoint = foreignAim, PostedAtFrame = UnityEngine.Time.frameCount };
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(syntheticInput.AimPoint, Is.EqualTo((Vector3?)foreignAim));
         }
@@ -303,7 +316,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> pressCompletion = AddIntent();
 
-            system!.Update(0); // inject
+            system.Update(0); // inject
             RunPipelineFrame(hoverText: "Open");
             system.Update(0); // observe
 
@@ -345,7 +358,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(PointerEventType.PetUp);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(syntheticInput.ReleaseButton, Is.EqualTo((InputAction?)InputAction.IaPointer));
             Assert.That(syntheticInput.PressButton, Is.Null);
@@ -371,7 +384,7 @@ namespace DCL.SyntheticInput.Tests
             UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             tick++;
-            system!.Update(0); // inject
+            system.Update(0); // inject
             RunPipelineFrame();
             system.Update(0); // observe
 
@@ -391,7 +404,7 @@ namespace DCL.SyntheticInput.Tests
             UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             tick++;
-            system!.Update(0);
+            system.Update(0);
 
             SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.False);
@@ -414,7 +427,7 @@ namespace DCL.SyntheticInput.Tests
                 UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: stalePress);
 
                 tick++;
-                system!.Update(0);
+                system.Update(0);
 
                 SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
                 Assert.That(releaseResult.Hit, Is.False);
@@ -438,7 +451,7 @@ namespace DCL.SyntheticInput.Tests
             UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             tick++;
-            system!.Update(0);
+            system.Update(0);
 
             SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.False);
@@ -457,7 +470,7 @@ namespace DCL.SyntheticInput.Tests
             UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press, sceneId: "scene-press");
 
             tick++;
-            system!.Update(0);
+            system.Update(0);
 
             SyntheticPointerResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.False);
@@ -475,7 +488,7 @@ namespace DCL.SyntheticInput.Tests
 
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
-            system!.Update(0);
+            system.Update(0);
             RunPipelineFrame();
             system.Update(0);
 
@@ -491,7 +504,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
-            system!.Update(0);
+            system.Update(0);
             RunPipelineFrame(isAtDistance: false);
             system.Update(0);
 
@@ -507,7 +520,7 @@ namespace DCL.SyntheticInput.Tests
 
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
-            system!.Update(0);
+            system.Update(0);
             RunPipelineFrame(assignHover: false);
             system.Update(0);
 
@@ -521,7 +534,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
 
-            system!.Update(0);
+            system.Update(0);
             RunPipelineSkippedFrame();
             system.Update(0);
 
@@ -540,7 +553,7 @@ namespace DCL.SyntheticInput.Tests
             UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             tick++;
-            system!.Update(0); // inject the release
+            system.Update(0); // inject the release
             RunPipelineSkippedFrame();
             system.Update(0); // observe
 
@@ -558,7 +571,7 @@ namespace DCL.SyntheticInput.Tests
 
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(sceneId: "scene-gone");
 
-            system!.Update(0);
+            system.Update(0);
 
             SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
@@ -574,7 +587,7 @@ namespace DCL.SyntheticInput.Tests
 
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(sceneId: "scene-elsewhere");
 
-            system!.Update(0);
+            system.Update(0);
 
             SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
@@ -589,7 +602,7 @@ namespace DCL.SyntheticInput.Tests
 
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(sceneId: "scene-here");
 
-            system!.Update(0);
+            system.Update(0);
             RunPipelineFrame();
             system.Update(0);
 
@@ -601,7 +614,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent(targetId: 987654);
 
-            system!.Update(0);
+            system.Update(0);
 
             SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
@@ -647,7 +660,7 @@ namespace DCL.SyntheticInput.Tests
             hoverState.Clear();
 
             var ray = new Ray(cameraGo.transform.position, cameraGo.transform.forward);
-            raycastResult.SetRay(ray, null);
+            raycastResult.SetRay(ray);
 
             if (cursorHoversTarget
                 && Physics.Raycast(ray, out RaycastHit hit, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE)
@@ -665,7 +678,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(syntheticInput.AimPoint, Is.Null);
             Assert.That(syntheticInput.PressButton, Is.EqualTo((InputAction?)InputAction.IaSecondary));
@@ -687,7 +700,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> pressCompletion = AddAimlessIntent(PointerEventType.PetDown);
 
-            system!.Update(0);
+            system.Update(0);
             RunPipelineAimlessFrame(cursorHoversTarget: false);
             system.Update(0);
 
@@ -719,7 +732,7 @@ namespace DCL.SyntheticInput.Tests
             // The camera happens to point straight at the target: the edge goes entity-bound, like a real key.
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddAimlessIntent(PointerEventType.PetDown);
 
-            system!.Update(0);
+            system.Update(0);
             RunPipelineAimlessFrame(cursorHoversTarget: true);
             system.Update(0);
 
@@ -733,7 +746,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddHoverIntent(holdSecondsFromNow: 1000f);
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(syntheticInput.AimPoint, Is.EqualTo((Vector3?)targetGo.transform.position));
             Assert.That(syntheticInput.PressButton, Is.Null);
@@ -752,7 +765,7 @@ namespace DCL.SyntheticInput.Tests
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddHoverIntent(holdSecondsFromNow: -1f);
 
-            system!.Update(0); // the hold is already over: post once and observe next frame
+            system.Update(0); // the hold is already over: post once and observe next frame
 
             Assert.That(syntheticInput.PressButton, Is.Null);
             Assert.That(syntheticInput.ReleaseButton, Is.Null);
@@ -782,7 +795,7 @@ namespace DCL.SyntheticInput.Tests
                 Completion = completion,
             });
 
-            system!.Update(0);
+            system.Update(0);
 
             Assert.That(syntheticInput.AimPoint.HasValue, Is.True);
             Assert.That(Vector3.Distance(syntheticInput.AimPoint!.Value, expectedAim), Is.LessThan(0.001f));
@@ -794,6 +807,78 @@ namespace DCL.SyntheticInput.Tests
             SyntheticPointerResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.True);
             Assert.That(result.CrdtEntityId, Is.EqualTo(TARGET_CRDT_ID));
+        }
+
+        [Test]
+        public void RefuseAScreenPointCoveredByUi()
+        {
+            Camera camera = cameraGo.GetComponent<Camera>();
+            var screenCenter = new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f);
+            uiCover = "MainUI/Sidebar/ExploreButton";
+
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, null, InputAction.IaPointer, PointerEventType.PetDown, screenPoint: screenCenter)
+            {
+                Completion = completion,
+            });
+
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.False);
+            Assert.That(result.BlockedByUi, Is.EqualTo("MainUI/Sidebar/ExploreButton"));
+            Assert.That(result.FailureReason, Does.Contain("ui_click"), "the failure names the tool that can click it");
+            Assert.That(syntheticInput.AimPoint, Is.Null, "nothing was aimed: a real click at that pixel lands on the UI");
+        }
+
+        [Test]
+        public void AimThroughCoveringUiWhenForced()
+        {
+            Camera camera = cameraGo.GetComponent<Camera>();
+            var screenCenter = new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f);
+            uiCover = "MainUI/Sidebar/ExploreButton";
+
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, null, InputAction.IaPointer, PointerEventType.PetDown, screenPoint: screenCenter, force: true)
+            {
+                Completion = completion,
+            });
+
+            system.Update(0);
+
+            Assert.That(syntheticInput.AimPoint.HasValue, Is.True, "force aims past the cover");
+
+            // Complete the gesture: an aim left posted on the shared pipeline entity leaks into the next test.
+            RunPipelineFrame();
+            system.Update(0);
+
+            Assert.That(ResultOf(completion).Hit, Is.True);
+        }
+
+        [Test]
+        public void NeverGateAWorldAimOnUiCover()
+        {
+            // The pipeline's UI bypass is correct for a world aim: the driver named a world target, not a pixel,
+            // so a cover anywhere on screen is irrelevant. Gating it here would break click_entity.
+            uiCover = "MainUI/Sidebar/ExploreButton";
+
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(targetEntity.Id, null, null, InputAction.IaPointer, PointerEventType.PetDown)
+            {
+                Completion = completion,
+            });
+
+            system.Update(0);
+
+            Assert.That(syntheticInput.AimPoint.HasValue, Is.True, "a world aim is unaffected by UI cover");
+
+            RunPipelineFrame();
+            system.Update(0);
+
+            Assert.That(ResultOf(completion).Hit, Is.True);
         }
     }
 }

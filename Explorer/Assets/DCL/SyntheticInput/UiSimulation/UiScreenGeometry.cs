@@ -19,6 +19,15 @@ namespace DCL.SyntheticInput.UiSimulation
             return new Rect(min.x, Screen.height - max.y, max.x - min.x, max.y - min.y);
         }
 
+        /// <summary>
+        ///     The rect's center as a normalized image point (0..1, top-left origin) — the form ui_drag takes.
+        ///     The screen is the only correct divisor: a screenshot may be downscaled from it, so
+        ///     normalizing a reported rect against the captured image aims somewhere else entirely.
+        /// </summary>
+        public static Vector2 NormalizedCenterOf(Rect imageRect) =>
+            new (Mathf.Clamp01(imageRect.center.x / Mathf.Max(1, Screen.width)),
+                Mathf.Clamp01(imageRect.center.y / Mathf.Max(1, Screen.height)));
+
         /// <summary>The element's center in Unity screen coordinates (bottom-left origin), for raycasts and devices.</summary>
         public static Vector2 ScreenCenterOf(RectTransform rectTransform)
         {

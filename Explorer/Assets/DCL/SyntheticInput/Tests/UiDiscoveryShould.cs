@@ -80,12 +80,34 @@ namespace DCL.SyntheticInput.Tests
             JArray listed = discovery.ListInteractable(checkOcclusion: false);
 
             Assert.That(listed.Count, Is.EqualTo(1));
-            Assert.That(listed[0]!["kind"]!.Value<string>(), Is.EqualTo("button"));
-            Assert.That(listed[0]!["path"]!.Value<string>(), Is.EqualTo("TestCanvasRoot/MyButton"));
+            Assert.That(listed[0]["kind"]!.Value<string>(), Is.EqualTo("button"));
+            Assert.That(listed[0]["path"]!.Value<string>(), Is.EqualTo("TestCanvasRoot/MyButton"));
 
-            ulong listedId = listed[0]!["id"]!.Value<ulong>();
+            ulong listedId = listed[0]["id"]!.Value<ulong>();
             Assert.That(discovery.TryResolve(UiElementAddress.UguiInstance(listedId), out GameObject? resolved, out _), Is.True);
             Assert.That(resolved, Is.EqualTo(buttonGo));
+        }
+
+        [Test]
+        public void ReportACenterNormalizedAgainstTheScreenNotTheRect()
+        {
+            GameObject buttonGo = AddChild(canvasGo.transform, "MyButton");
+            buttonGo.AddComponent<Image>();
+            buttonGo.AddComponent<Button>();
+
+            JToken entry = discovery.ListInteractable(checkOcclusion: false)[0];
+            JToken rect = entry["screenRect"]!;
+            JToken center = entry["center"]!;
+
+            // Asserted as a relation, not as absolute pixels: the EditMode screen is whatever the game view is,
+            // and the point of the field is that a driver can reproduce it without knowing that size.
+            float expectedX = (rect["x"]!.Value<float>() + (rect["width"]!.Value<float>() / 2f)) / Screen.width;
+            float expectedY = (rect["y"]!.Value<float>() + (rect["height"]!.Value<float>() / 2f)) / Screen.height;
+
+            Assert.That(center["x"]!.Value<float>(), Is.EqualTo(Mathf.Clamp01(expectedX)).Within(0.001f));
+            Assert.That(center["y"]!.Value<float>(), Is.EqualTo(Mathf.Clamp01(expectedY)).Within(0.001f));
+            Assert.That(center["x"]!.Value<float>(), Is.InRange(0f, 1f), "the center is normalized, ready for ui_drag");
+            Assert.That(center["y"]!.Value<float>(), Is.InRange(0f, 1f));
         }
     }
 }

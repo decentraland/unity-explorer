@@ -437,7 +437,11 @@ namespace DCL.SyntheticInput.UiSimulation
                 json["blockedBy"] = BlockedBy;
 
             if (ScreenRect != default(Rect))
+            {
                 json["screenRect"] = UiDiscovery.RectJson(ScreenRect);
+                json["center"] = UiDiscovery.CenterJson(ScreenRect);
+                json["screen"] = UiDiscovery.ScreenJson();
+            }
 
             return json;
         }

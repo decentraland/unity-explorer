@@ -89,18 +89,18 @@ namespace DCL.SyntheticInput
         ///     a release that no longer reaches the press target reports the delivered press with the divergence.
         /// </summary>
         public UniTask<SyntheticPointerResult> ClickAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, float timeoutSec, CancellationToken ct = default) =>
-            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: true, PointerEventType.PetDown, timeoutSec, ct);
+            InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: true, PointerEventType.PetDown, timeoutSec, force, ct);
 
         /// <summary>Delivers a lone press leg: the scene observes only the PetDown.</summary>
         public UniTask<SyntheticPointerResult> PointerDownAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, float timeoutSec, CancellationToken ct = default) =>
-            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: false, PointerEventType.PetDown, timeoutSec, ct);
+            InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: false, PointerEventType.PetDown, timeoutSec, force, ct);
 
         /// <summary>Delivers a lone release leg: the scene observes only the PetUp.</summary>
         public UniTask<SyntheticPointerResult> PointerUpAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, float timeoutSec, CancellationToken ct = default) =>
-            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: false, PointerEventType.PetUp, timeoutSec, ct);
+            InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: false, PointerEventType.PetUp, timeoutSec, force, ct);
 
         /// <summary>
         ///     Aims the reticle at a scene entity (or an explicit world/screen point) and holds the hover for a
@@ -174,13 +174,13 @@ namespace DCL.SyntheticInput
         }
 
         private async UniTask<SyntheticPointerResult> RunPointerGestureAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, bool composeClick, PointerEventType firstLegType, float timeoutSec, CancellationToken ct)
+            InputAction button, bool composeClick, PointerEventType firstLegType, float timeoutSec, bool force, CancellationToken ct)
         {
             try
             {
                 // A single budget for the whole gesture: it covers both a paused simulation that never runs
                 // the delivering system and a release stuck waiting for the scene tick to advance.
-                return await ComposeGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick, firstLegType)
+                return await ComposeGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick, firstLegType, force)
                             .AttachExternalCancellation(ct)
                             .Timeout(TimeSpan.FromSeconds(timeoutSec));
             }
@@ -196,14 +196,14 @@ namespace DCL.SyntheticInput
         ///     keeps it ordered onto a later scene tick.
         /// </summary>
         private async UniTask<SyntheticPointerResult> ComposeGestureAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, bool composeClick, PointerEventType firstLegType)
+            InputAction button, bool composeClick, PointerEventType firstLegType, bool force)
         {
-            SyntheticPointerOutcome down = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, button, firstLegType, screenPoint: screenPoint));
+            SyntheticPointerOutcome down = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, button, firstLegType, screenPoint: screenPoint, force: force));
 
             if (!composeClick || !down.Result.Hit)
                 return down.Result;
 
-            SyntheticPointerOutcome up = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press, screenPoint));
+            SyntheticPointerOutcome up = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press, screenPoint, force));
 
             if (up.Result.Hit)
                 return up.Result;

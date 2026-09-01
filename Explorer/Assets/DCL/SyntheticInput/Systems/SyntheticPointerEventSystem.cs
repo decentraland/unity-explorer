@@ -9,6 +9,7 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.SyntheticInput.Components;
 using DCL.SyntheticInput.Core;
+using DCL.SyntheticInput.UiSimulation;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
@@ -55,6 +56,7 @@ namespace DCL.SyntheticInput.Systems
         private readonly IScenesCache scenesCache;
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly Entity playerEntity;
+        private readonly UiCoverProbe? uiCoverProbe;
 
         private SingleInstanceEntity playerCamera;
         private SingleInstanceEntity pipelineEntity;
@@ -62,11 +64,13 @@ namespace DCL.SyntheticInput.Systems
         internal SyntheticPointerEventSystem(World world,
             IScenesCache scenesCache,
             IEntityCollidersGlobalCache collidersGlobalCache,
-            Entity playerEntity) : base(world)
+            Entity playerEntity,
+            UiCoverProbe? uiCoverProbe = null) : base(world)
         {
             this.scenesCache = scenesCache;
             this.collidersGlobalCache = collidersGlobalCache;
             this.playerEntity = playerEntity;
+            this.uiCoverProbe = uiCoverProbe;
         }
 
         public override void Initialize()
@@ -492,6 +496,16 @@ namespace DCL.SyntheticInput.Systems
 
             if (intent.ScreenPoint is { } screenPoint)
             {
+                // A screen-addressed aim names a pixel, so whatever owns that pixel intercepts it. The world-aim
+                // path above deliberately keeps the pipeline's UI bypass: there the driver named a world target and
+                // the cursor's position is irrelevant, but here a real click would never reach past the UI.
+                if (!intent.Force && uiCoverProbe != null && uiCoverProbe(screenPoint, out string cover))
+                {
+                    failure = Failure(in intent, $"UI covers that point ({cover}); click the element with ui_click, or pass force to aim through it");
+                    failure.BlockedByUi = cover;
+                    return false;
+                }
+
                 Camera camera = playerCamera.GetCameraComponent(World).Camera;
                 aimPoint = camera.ScreenPointToRay(screenPoint).GetPoint(PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE);
                 return true;

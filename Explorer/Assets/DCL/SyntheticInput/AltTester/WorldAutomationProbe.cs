@@ -96,8 +96,12 @@ namespace DCL.SyntheticInput.AltTester
                           .ContinueWith(PointerResultPayload));
         }
 
-        /// <summary>Clicks at a screen position in normalized image coordinates (x right 0..1, y DOWN 0..1, origin top-left).</summary>
-        public static int StartClickAtScreen(float x, float y, string button, float timeoutSec)
+        /// <summary>
+        ///     Clicks at a screen position in normalized image coordinates (x right 0..1, y DOWN 0..1, origin
+        ///     top-left). Clicks the 3D world only: a point covered by client or scene UI fails with the cover
+        ///     (reported as "blockedByUi") unless <paramref name="force" /> is set.
+        /// </summary>
+        public static int StartClickAtScreen(float x, float y, string button, float timeoutSec, bool force)
         {
             if (!TryGetAgent(out SyntheticInputAgent readyAgent, out int failedId))
                 return failedId;
@@ -108,7 +112,7 @@ namespace DCL.SyntheticInput.AltTester
             var screenPoint = new Vector2(x * Screen.width, (1f - y) * Screen.height);
 
             return AltOperationRegistry.Start(
-                readyAgent.ClickAsync(-1, null, null, screenPoint, inputAction, ClampTimeout(timeoutSec))
+                readyAgent.ClickAsync(-1, null, null, screenPoint, inputAction, ClampTimeout(timeoutSec), force: force)
                           .ContinueWith(PointerResultPayload));
         }
 
@@ -209,6 +213,9 @@ namespace DCL.SyntheticInput.AltTester
 
             if (result.FailureReason != null)
                 payload["reason"] = result.FailureReason;
+
+            if (result.BlockedByUi != null)
+                payload["blockedByUi"] = result.BlockedByUi;
 
             if (result.TimedOut)
                 payload["timedOut"] = true;

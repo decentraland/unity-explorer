@@ -3,7 +3,9 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
+using Button = UnityEngine.UI.Button;
+using Image = UnityEngine.UI.Image;
 
 namespace DCL.SyntheticInput.Tests
 {
@@ -12,10 +14,18 @@ namespace DCL.SyntheticInput.Tests
         private readonly List<RaycastResult> raycastResults = new ();
         private readonly List<GameObject> createdObjects = new ();
 
+        private PanelSettings? panelSettings;
+
         [TearDown]
         public void TearDown()
         {
             raycastResults.Clear();
+
+            if (panelSettings != null)
+            {
+                Object.DestroyImmediate(panelSettings);
+                panelSettings = null;
+            }
 
             foreach (GameObject go in createdObjects)
                 Object.DestroyImmediate(go);
@@ -90,6 +100,39 @@ namespace DCL.SyntheticInput.Tests
 
             Assert.That(UiOcclusion.IsTopHitFor(target, raycastResults, out GameObject? blocker), Is.False);
             Assert.That(blocker, Is.EqualTo(cover));
+        }
+
+        [Test]
+        public void RecognizeAHitProducedByAUiToolkitPanel()
+        {
+            GameObject documentObject = Create("scene-ui-document");
+            var document = documentObject.AddComponent<UIDocument>();
+            panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+            panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
+            document.panelSettings = panelSettings;
+
+            IPanel? panel = document.rootVisualElement?.panel;
+            Assert.That(panel, Is.Not.Null, "the document must be attached to a live panel for the hit to stand for one");
+
+            // What PanelRaycaster.Raycast produces: the panel's host GameObject, plus itself as the module.
+            var raycaster = documentObject.AddComponent<PanelRaycaster>();
+            raycaster.panel = panel;
+
+            var hit = new RaycastResult { gameObject = documentObject, module = raycaster };
+
+            Assert.That(UiOcclusion.TryGetHostedPanel(hit, out IPanel? hosted), Is.True,
+                "a panel raycaster's hit stands for the panel, not for the host GameObject it names");
+
+            Assert.That(hosted, Is.SameAs(panel));
+        }
+
+        [Test]
+        public void NotTreatAGraphicHitAsAPanel()
+        {
+            GameObject graphic = Create("Button");
+
+            Assert.That(UiOcclusion.TryGetHostedPanel(new RaycastResult { gameObject = graphic }, out IPanel? hosted), Is.False);
+            Assert.That(hosted, Is.Null);
         }
     }
 }

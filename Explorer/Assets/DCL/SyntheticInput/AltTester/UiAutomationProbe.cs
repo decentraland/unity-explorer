@@ -39,23 +39,19 @@ namespace DCL.SyntheticInput.AltTester
         public static string PollJson(int operationId) =>
             AltOperationRegistry.PollJson(operationId);
 
-        /// <summary>Lists interactable UI; stack ∈ all|ugui|sdk. screenRect is in image pixels (origin top-left).</summary>
+        /// <summary>
+        ///     Lists interactable UI; stack ∈ all|ugui|sdk. screenRect is in image pixels (origin top-left) of the
+        ///     client screen, whose size comes back as "screen"; each element also carries its normalized "center".
+        /// </summary>
         public static string ListInteractableJson(string stack, bool checkOcclusion)
         {
             if (!TryGetServices(out UiAutomationServices ready, out string failedPayload))
                 return failedPayload;
 
-            var elements = new JArray();
+            var payload = new JObject { ["ok"] = true };
+            payload.Merge(ready.ListInteractableJson(stack != "sdk", stack != "ugui", checkOcclusion));
 
-            if (stack != "sdk")
-                foreach (JToken entry in ready.Discovery.ListInteractable(checkOcclusion))
-                    elements.Add(entry);
-
-            if (stack != "ugui")
-                foreach (JToken entry in ready.SdkResolver.ListInteractable())
-                    elements.Add(entry);
-
-            return new JObject { ["ok"] = true, ["count"] = elements.Count, ["elements"] = elements }.ToString();
+            return payload.ToString();
         }
 
         /// <summary>Semantic uGUI click; button ∈ left|right|middle.</summary>

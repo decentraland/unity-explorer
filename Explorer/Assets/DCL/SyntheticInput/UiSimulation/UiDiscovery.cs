@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using IPanel = UnityEngine.UIElements.IPanel;
 
 namespace DCL.SyntheticInput.UiSimulation
 {
@@ -60,6 +61,40 @@ namespace DCL.SyntheticInput.UiSimulation
             }
 
             return entries;
+        }
+
+        /// <summary>
+        ///     What client UI, if anything, covers a screen point (Unity screen coordinates). A screen-addressed
+        ///     world action must fail against the cover rather than aiming past it: a real click at that pixel
+        ///     lands on the UI, never on the world behind it.
+        ///     <para>
+        ///         The raycast also carries UI Toolkit panels — a panel that picks an element at the point adds a
+        ///         hit for its host GameObject — so <paramref name="hostedPanel" /> reports which panel a covering
+        ///         hit belongs to. A caller that can name the picked element should describe the cover through the
+        ///         panel instead of through <paramref name="path" />, which there names Unity plumbing.
+        ///     </para>
+        /// </summary>
+        public bool TryFindCoverAt(Vector2 screenPoint, out string? path, out IPanel? hostedPanel)
+        {
+            pointerEventData.Reset();
+            pointerEventData.position = screenPoint;
+            raycastResults.Clear();
+            eventSystem.RaycastAll(pointerEventData, raycastResults);
+
+            if (raycastResults.Count == 0)
+            {
+                path = null;
+                hostedPanel = null;
+                return false;
+            }
+
+            RaycastResult topHit = raycastResults[0];
+            UiOcclusion.TryGetHostedPanel(topHit, out hostedPanel);
+
+            // A panel host reports the panel's selectableGameObject, which a panel need not have.
+            GameObject? topObject = topHit.gameObject;
+            path = topObject != null ? PathOf(topObject.transform) : "an unnamed UI surface";
+            return true;
         }
 
         /// <summary>Resolves a uGUI address to a live GameObject, or explains why it cannot.</summary>
@@ -267,6 +302,7 @@ namespace DCL.SyntheticInput.UiSimulation
                 ["path"] = PathOf(element.transform),
                 ["kind"] = kind,
                 ["screenRect"] = RectJson(rect),
+                ["center"] = CenterJson(rect),
             };
 
             string? label = LabelOf(element);
@@ -315,6 +351,29 @@ namespace DCL.SyntheticInput.UiSimulation
                 Scrollbar => "scrollbar",
                 _ => "selectable",
             };
+
+        /// <summary>
+        ///     The screen size every reported rect is expressed in. Driver-facing output states it because a
+        ///     screenshot may be downscaled: without it a rect cannot be turned into a normalized coordinate.
+        /// </summary>
+        internal static JObject ScreenJson() =>
+            new ()
+            {
+                ["width"] = Screen.width,
+                ["height"] = Screen.height,
+            };
+
+        /// <summary>The rect's center in the normalized form ui_drag takes (ui_click addresses elements by id, not by position).</summary>
+        internal static JObject CenterJson(Rect rect)
+        {
+            Vector2 center = UiScreenGeometry.NormalizedCenterOf(rect);
+
+            return new JObject
+            {
+                ["x"] = Math.Round(center.x, 4),
+                ["y"] = Math.Round(center.y, 4),
+            };
+        }
 
         internal static JObject RectJson(Rect rect) =>
             new ()

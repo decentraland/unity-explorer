@@ -55,6 +55,12 @@ namespace DCL.SyntheticInput.Components
         /// <summary>Hover-only gestures keep re-posting the aim until this Time.time, then observe the outcome.</summary>
         public readonly float HoldEndTime;
 
+        /// <summary>
+        ///     Aim through UI that covers a <see cref="ScreenPoint" />. Off by default, because a real click at a
+        ///     covered pixel lands on the UI; set only to reach the world deliberately past an overlay.
+        /// </summary>
+        public readonly bool Force;
+
         public UniTaskCompletionSource<SyntheticPointerOutcome>? Completion { get; set; }
 
         /// <summary>Set once the synthetic input was posted to the pipeline; the outcome is observed one frame later.</summary>
@@ -73,7 +79,7 @@ namespace DCL.SyntheticInput.Components
         public bool HasAimTarget => TargetEntityId >= 0 || AimPoint.HasValue || ScreenPoint.HasValue;
 
         public SyntheticPointerEventIntent(int targetEntityId, string? sceneId, Vector3? aimPoint, InputAction button, PointerEventType eventType,
-            SyntheticPressHandoff? press = null, Vector2? screenPoint = null)
+            SyntheticPressHandoff? press = null, Vector2? screenPoint = null, bool force = false)
         {
             TargetEntityId = targetEntityId;
             SceneId = sceneId;
@@ -83,13 +89,14 @@ namespace DCL.SyntheticInput.Components
             EventType = eventType;
             Press = press;
             HoldEndTime = 0f;
+            Force = force;
             Completion = null;
             Injected = false;
             InjectedTick = 0;
             InjectedAimPoint = Vector3.zero;
         }
 
-        private SyntheticPointerEventIntent(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint, float holdEndTime)
+        private SyntheticPointerEventIntent(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint, float holdEndTime, bool force)
         {
             TargetEntityId = targetEntityId;
             SceneId = sceneId;
@@ -99,6 +106,7 @@ namespace DCL.SyntheticInput.Components
             EventType = PointerEventType.PetHoverEnter;
             Press = null;
             HoldEndTime = holdEndTime;
+            Force = force;
             Completion = null;
             Injected = false;
             InjectedTick = 0;
@@ -106,8 +114,8 @@ namespace DCL.SyntheticInput.Components
         }
 
         /// <summary>A hover-only aim hold: no button edge, the aim is re-posted every frame until <paramref name="holdEndTime" />.</summary>
-        public static SyntheticPointerEventIntent Hover(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint, float holdEndTime) =>
-            new (targetEntityId, sceneId, aimPoint, screenPoint, holdEndTime);
+        public static SyntheticPointerEventIntent Hover(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint, float holdEndTime, bool force = false) =>
+            new (targetEntityId, sceneId, aimPoint, screenPoint, holdEndTime, force);
     }
 
     /// <summary>
@@ -135,6 +143,9 @@ namespace DCL.SyntheticInput.Components
         public int? BlockedByEntityId;
         public int? BlockedByCrdtId;
         public string? BlockedByColliderName;
+
+        /// <summary>What UI covered a screen-addressed aim, when that is why nothing was clicked.</summary>
+        public string? BlockedByUi;
 
         /// <summary>
         ///     The release did not reach the press target (it moved, died or got occluded after the press, or a
