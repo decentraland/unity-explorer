@@ -150,58 +150,72 @@ namespace DCL.Notifications.NewNotification
             if (viewInstance == null)
                 return;
 
-            while (notificationQueue.Count > 0)
+            isDisplaying = true;
+
+            try
             {
-                isDisplaying = true;
-                INotification notification = notificationQueue.Dequeue();
-                displayingNotificationType = notification.Type;
-
-                switch (notification.Type)
+                while (notificationQueue.Count > 0)
                 {
-                    case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
-                    case NotificationType.INTERNAL_SERVER_ERROR:
-                    case NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE:
-                        await ProcessArrivedNotificationAsync(notification);
-                        break;
-                    case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
-                        if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
-                            await ProcessCommunityVoiceChatStartedNotificationAsync(notification);
+                    INotification notification = notificationQueue.Dequeue();
+                    displayingNotificationType = notification.Type;
 
-                        break;
-                    case NotificationType.BADGE_GRANTED:
-                        await ProcessBadgeNotificationAsync(notification);
-                        break;
-                    case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
-                    case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
-                        await ProcessFriendsNotificationAsync(notification);
-                        break;
-                    case NotificationType.CREDITS_GOAL_COMPLETED:
-                        await ProcessMarketplaceCreditsNotificationAsync(notification);
-                        break;
-                    case NotificationType.INTERNAL_DEFAULT_SUCCESS:
-                        await ProcessArrivedNotificationAsync(notification, false);
-                        break;
-                    case NotificationType.TRANSFER_RECEIVED:
-                        await ProcessGiftNotificationAsync(notification);
-                        break;
-                    case NotificationType.TIP_RECEIVED:
-                        await ProcessTipReceivedNotificationAsync(notification);
-                        break;
-                    case NotificationType.BAN_WARNING:
-                    case NotificationType.BANNED:
-                    case NotificationType.BAN_LIFTED:
-                        await ProcessPersistentNotificationAsync(notification);
-                        break;
-                    default:
-                        await ProcessDefaultNotificationAsync(notification);
-                        break;
+                    try
+                    {
+                        switch (notification.Type)
+                        {
+                            case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
+                            case NotificationType.INTERNAL_SERVER_ERROR:
+                            case NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE:
+                                await ProcessArrivedNotificationAsync(notification);
+                                break;
+                            case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
+                                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
+                                    await ProcessCommunityVoiceChatStartedNotificationAsync(notification);
+
+                                break;
+                            case NotificationType.BADGE_GRANTED:
+                                await ProcessBadgeNotificationAsync(notification);
+                                break;
+                            case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
+                            case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
+                                await ProcessFriendsNotificationAsync(notification);
+                                break;
+                            case NotificationType.CREDITS_GOAL_COMPLETED:
+                                await ProcessMarketplaceCreditsNotificationAsync(notification);
+                                break;
+                            case NotificationType.INTERNAL_DEFAULT_SUCCESS:
+                                await ProcessArrivedNotificationAsync(notification, false);
+                                break;
+                            case NotificationType.TRANSFER_RECEIVED:
+                                await ProcessGiftNotificationAsync(notification);
+                                break;
+                            case NotificationType.TIP_RECEIVED:
+                                await ProcessTipReceivedNotificationAsync(notification);
+                                break;
+                            case NotificationType.BAN_WARNING:
+                            case NotificationType.BANNED:
+                            case NotificationType.BAN_LIFTED:
+                                await ProcessPersistentNotificationAsync(notification);
+                                break;
+                            default:
+                                await ProcessDefaultNotificationAsync(notification);
+                                break;
+                        }
+                    }
+                    catch (OperationCanceledException) { }
+
+                    // A notification that fails to display must not kill the loop: the queue keeps
+                    // being consumed and later notifications still show
+                    catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+
+                    // The natural-expiry counterpart to the reset in StopAnimation, which covers early dismissal.
+                    displayingNotificationType = null;
                 }
-
-                // The natural-expiry counterpart to the reset in StopAnimation, which covers early dismissal.
-                displayingNotificationType = null;
             }
-
-            isDisplaying = false;
+            finally
+            {
+                isDisplaying = false;
+            }
         }
 
         private async UniTask ProcessGiftNotificationAsync(INotification notification)
