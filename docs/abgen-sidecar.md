@@ -1,6 +1,6 @@
 # Local asset bundles via the abgen sidecar (`--local-ab`)
 
-**Branch:** `feat/local-ab-inproc-build` · **Pinned:** abgen v0.17.8 · **Status:** editor E2E green
+**Branch:** `feat/local-ab-inproc-build` · **Pinned:** abgen v0.17.11 · **Status:** editor E2E green
 on Windows (v16, Unity 6000.4.0f1); macOS player verified end-to-end; Windows player pending re-test
 after the CPU-encoder pin.
 
