@@ -92,6 +92,7 @@ namespace DCL.Communities.EventInfo
                     }
 
                     itemView.SetAsLoading(false);
+                    itemView.BuyButton.interactable = true;
                     boundItems.Remove(itemView);
                     itemView.gameObject.SetActive(false);
                 });
@@ -177,6 +178,7 @@ namespace DCL.Communities.EventInfo
             EquippedItemPassportFieldView itemView = Object.Instantiate(view.ItemPrefab, view.ItemsContainer);
             itemView.BuyButton.onClick.AddListener(() => OnBuyClicked(itemView));
             itemView.ViewButton.onClick.AddListener(() => OnViewClicked(itemView));
+            itemView.ViewButtonSmaller.onClick.AddListener(() => OnViewClicked(itemView));
             return itemView;
         }
 
@@ -243,7 +245,7 @@ namespace DCL.Communities.EventInfo
             bool showBuy = item.isOnSale && hasLink;
             bool showView = !item.isOnSale && hasLink;
 
-            itemView.BuyButton.gameObject.SetActive(showBuy);
+            itemView.BuyButtonSection.SetActive(showBuy);
             itemView.ViewButton.gameObject.SetActive(showView);
             itemView.OnSaleFlap.gameObject.SetActive(showBuy);
 

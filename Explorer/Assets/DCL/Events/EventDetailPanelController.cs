@@ -88,7 +88,7 @@ namespace DCL.Communities.EventInfo
                                            && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits)
                                            && CreditsFeatureAccess.Instance.IsUserAllowed();
 
-            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopApiClient, webBrowser, isCreditPurchaseEnabled);
+            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopApiClient, webBrowser, stopEmotePreview: static () => { }, isCreditPurchaseEnabled);
 
             featuredItemsController = new EventFeaturedItemsController(
                 viewInstance!.FeaturedItemsSection,
