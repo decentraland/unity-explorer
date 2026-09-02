@@ -385,6 +385,28 @@
     background-image: var(--sprite-common__icon-debug);
 }
 
+.sidebar__buttons {
+    align-items: center;
+}
+
+/* Collapse handle: sits above the action buttons and folds them away when a scene's
+   top-right UI overlaps the strip. Arrow points up while expanded, down while collapsed. */
+.sidebar__collapse {
+    width: 30px;
+    height: 14px;
+    margin-bottom: 4px;
+    background-size: 12px 12px;
+    background-image: var(--sprite-common__icon-arrow-down);
+    background-color: rgba(0, 0, 0, 0);
+    rotate: 180deg;
+    transition-property: rotate, background-color;
+    transition-duration: 0.15s;
+}
+
+.sidebar__collapse--collapsed {
+    rotate: 0deg;
+}
+
 .metrics-panel {
     width: 440px;
     background-color: rgba(15, 15, 17, 0.9);

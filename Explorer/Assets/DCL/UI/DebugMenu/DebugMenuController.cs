@@ -17,6 +17,7 @@ namespace DCL.UI.DebugMenu
     {
         private const string USS_SIDEBAR_BUTTON_SELECTED = "sidebar__button--selected";
         private const string USS_SIDEBAR_BUTTON_ATTENTION = "sidebar__button--attention";
+        private const string USS_SIDEBAR_COLLAPSE_COLLAPSED = "sidebar__collapse--collapsed";
         private const int METRICS_REFRESH_COOLDOWN_FRAMES = 30;
         private const float AB_PANEL_AUTO_CLOSE_LINGER_SECONDS = 3f;
 
@@ -34,6 +35,9 @@ namespace DCL.UI.DebugMenu
         private Button abConversionButton = null!;
         private Button metricsButton = null!;
         private Button debugPanelButton = null!;
+        private Button collapseButton = null!;
+        private VisualElement sidebarButtons = null!;
+        private bool sidebarCollapsed;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -61,10 +65,16 @@ namespace DCL.UI.DebugMenu
             abConversionButton = root.Q<Button>("AbConversionButton");
             metricsButton = root.Q<Button>("MetricsButton");
             debugPanelButton = root.Q<Button>("DebugPanelButton");
+            collapseButton = root.Q<Button>("CollapseButton");
+            sidebarButtons = root.Q("SidebarButtons");
 
             consoleButton.clicked += OnConsoleButtonClicked;
             abConversionButton.clicked += OnAbConversionButtonClicked;
             metricsButton.clicked += OnMetricsButtonClicked;
+            collapseButton.clicked += OnCollapseButtonClicked;
+
+            // Re-apply the persisted collapsed state after a live reload rebuilds the tree.
+            ApplySidebarCollapsed();
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
@@ -131,6 +141,7 @@ namespace DCL.UI.DebugMenu
             logsHistory.LogsUpdated -= OnLogsUpdated;
             abConversionButton.clicked -= OnAbConversionButtonClicked;
             metricsButton.clicked -= OnMetricsButtonClicked;
+            collapseButton.clicked -= OnCollapseButtonClicked;
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
 
             if (metricsScene != null)
@@ -235,6 +246,9 @@ namespace DCL.UI.DebugMenu
 
             abConversionButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, attention);
 
+            // While collapsed the AB button is hidden, so surface the flash on the collapse handle instead.
+            collapseButton.EnableInClassList(USS_SIDEBAR_BUTTON_ATTENTION, sidebarCollapsed && attention);
+
             UpdateAbPanelAutoClose(warmUpStage, failedConversions);
         }
 
@@ -315,6 +329,18 @@ namespace DCL.UI.DebugMenu
 
         private void OnMetricsButtonClicked() =>
             TogglePanel(metricsPanelView);
+
+        private void OnCollapseButtonClicked()
+        {
+            sidebarCollapsed = !sidebarCollapsed;
+            ApplySidebarCollapsed();
+        }
+
+        private void ApplySidebarCollapsed()
+        {
+            sidebarButtons.style.display = sidebarCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
+            collapseButton.EnableInClassList(USS_SIDEBAR_COLLAPSE_COLLAPSED, sidebarCollapsed);
+        }
 
         private void OnDebugPanelButtonClicked()
         {

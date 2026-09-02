@@ -39,9 +39,12 @@
         <ui:VisualElement name="MetricsRows" class="metrics-panel__rows" />
     </ui:VisualElement>
     <ui:VisualElement name="Sidebar" class="sidebar">
-        <ui:Button name="ConsoleButton" class="sidebar__button sidebar__button--console dcl-clickable" />
-        <ui:Button name="MetricsButton" class="sidebar__button sidebar__button--metrics dcl-clickable" />
-        <ui:Button name="AbConversionButton" text="AB" class="sidebar__button dcl-clickable" />
-        <ui:Button name="DebugPanelButton" class="sidebar__button sidebar__button--debug dcl-clickable" style="display: none;" />
+        <ui:Button name="CollapseButton" class="sidebar__collapse dcl-clickable" />
+        <ui:VisualElement name="SidebarButtons" class="sidebar__buttons">
+            <ui:Button name="ConsoleButton" class="sidebar__button sidebar__button--console dcl-clickable" />
+            <ui:Button name="MetricsButton" class="sidebar__button sidebar__button--metrics dcl-clickable" />
+            <ui:Button name="AbConversionButton" text="AB" class="sidebar__button dcl-clickable" />
+            <ui:Button name="DebugPanelButton" class="sidebar__button sidebar__button--debug dcl-clickable" style="display: none;" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
