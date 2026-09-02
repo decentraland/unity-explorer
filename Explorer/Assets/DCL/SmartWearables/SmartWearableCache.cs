@@ -101,7 +101,7 @@ namespace Runtime.Wearables
         public bool IsCached(IWearable wearable) =>
             cache.ContainsKey(GetCacheId(wearable));
 
-        public async UniTask<(ISceneContent, SceneMetadata)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
+        public async UniTask<(ISceneContent?, SceneMetadata?)> GetCachedSceneInfoAsync(IWearable wearable, CancellationToken ct)
         {
             CacheItem item = await CacheWearableInternalAsync(wearable, ct);
             return ct.IsCancellationRequested ? (null, null) : (item.SceneContent, item.SceneMetadata);

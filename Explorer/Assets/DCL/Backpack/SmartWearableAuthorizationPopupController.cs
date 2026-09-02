@@ -66,7 +66,11 @@ namespace Runtime.Wearables
 
         private async UniTask UpdatePermissionsAsync(IWearable wearable)
         {
-            (_, SceneMetadata sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, CancellationToken.None);
+            (_, SceneMetadata? sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, CancellationToken.None);
+
+            if (sceneMetadata == null)
+                return;
+
             await UniTask.SwitchToMainThread();
             viewInstance!.SetPermissions(sceneMetadata.requiredPermissions);
         }
