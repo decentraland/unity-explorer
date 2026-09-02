@@ -22,6 +22,9 @@ namespace DCL.PluginSystem.Global
         private readonly CancellationTokenSource cts = new ();
         private IDisposable? subscription;
 
+        // The disk-full event repeats with every failing flush; show the popup once per session
+        private bool popupShown;
+
         public AnalyticsDiskFullPopupPlugin(IEventBus analyticsEventBus, IMVCManager mvcManager)
         {
             this.analyticsEventBus = analyticsEventBus;
@@ -38,6 +41,11 @@ namespace DCL.PluginSystem.Global
 
         private void OnDiskFull(AnalyticsDiskFullDetected evt)
         {
+            if (popupShown)
+                return;
+
+            popupShown = true;
+
             var data = new ErrorPopupData(
                 UIProperty<Sprite>.UseDefault,
                 UIProperty<string>.From("Storage Full"),
@@ -49,8 +57,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             subscription?.Dispose();
-            cts.Cancel();
-            cts.Dispose();
+            cts.SafeCancelAndDispose();
         }
     }
 }

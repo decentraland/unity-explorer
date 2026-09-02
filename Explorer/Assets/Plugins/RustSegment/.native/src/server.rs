@@ -453,7 +453,13 @@ impl AppContext {
             }
             None => message,
         };
-        self.error_fn.as_ref()(message.as_str());
+
+        // Disk-full is fully described by the typed response code and logged as a
+        // warning on the C# side; the error-string channel would raise it as an
+        // exception, which is wrong for an environment condition.
+        if !matches!(code, Response::ErrorDiskFull) {
+            self.error_fn.as_ref()(message.as_str());
+        }
 
         if let Some(id) = id {
             self.callback_fn.as_ref()(id, code);

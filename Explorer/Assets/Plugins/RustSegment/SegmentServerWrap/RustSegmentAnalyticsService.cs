@@ -53,9 +53,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
         // temportal sentry budget fix. TODO remove once the core issue solved
         private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
 
-        // Popup is raised once per session: the queue keeps failing while the disk stays full
-        private static bool DISK_FULL_ALREADY_RAISED = false;
-
         private readonly IEventBus? eventBus;
 
         public RustSegmentAnalyticsService(string writerKey, string? anonId, IEventBus? eventBus = null)
@@ -275,14 +272,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
                 if (response is NativeMethods.Response.ErrorDiskFull)
                 {
-                    // Environment condition, not an app bug: warn instead of a Sentry exception
+                    // Environment condition, not an app bug: warn instead of a Sentry exception.
+                    // Published on every occurrence: subscribers may not exist yet during boot,
+                    // and the failing flush repeats while the disk stays full. The popup plugin
+                    // deduplicates on its side.
                     ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment operation {operationId} {type} failed: disk is full");
-
-                    if (!DISK_FULL_ALREADY_RAISED)
-                    {
-                        DISK_FULL_ALREADY_RAISED = true;
-                        instanceGuard.Value.eventBus?.Publish(new AnalyticsDiskFullDetected());
-                    }
+                    instanceGuard.Value.eventBus?.Publish(new AnalyticsDiskFullDetected());
                 }
                 else if (response is not NativeMethods.Response.Success)
                     ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
