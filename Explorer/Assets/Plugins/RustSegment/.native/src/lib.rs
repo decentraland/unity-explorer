@@ -15,7 +15,7 @@ pub enum Response {
     Success = 0,
     // Errors are propagated vie the error callback
     Error = 1,
-    // The persistent queue cannot write because the disk is full (SQLITE_FULL)
+    // SQLITE_FULL from the persistent queue
     ErrorDiskFull = 2,
 }
 

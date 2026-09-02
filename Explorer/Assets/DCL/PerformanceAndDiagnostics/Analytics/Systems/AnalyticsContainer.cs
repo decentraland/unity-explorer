@@ -26,10 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public EntitiesAnalytics EntitiesAnalytics { get; private set; } = null!;
 
-        /// <summary>
-        ///     Carries analytics-originated events (e.g. <see cref="AnalyticsDiskFullDetected" />) to
-        ///     UI-layer subscribers that are created much later than this container.
-        /// </summary>
+        /// <summary>Decouples analytics-originated events from their UI subscribers, which are created long after this container.</summary>
         public IEventBus EventBus { get; } = new EventBus(invokeSubscribersOnMainThread: true);
 
         public static async UniTask<AnalyticsContainer> CreateAsync(

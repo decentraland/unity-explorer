@@ -360,8 +360,7 @@ impl SegmentServer {
 
     pub async fn enqueue(&self, id: OperationHandleId, msg: impl Into<BatchMessage>) {
         if let Err(e) = self.enqueue_internal(msg).await {
-            // enqueue_internal wraps the queue's EnqueError in anyhow; recover
-            // it to distinguish a full disk from other failures
+            // enqueue_internal wraps EnqueError in anyhow, downcast to tell a full disk from other failures
             let code = e
                 .downcast_ref::<EnqueError>()
                 .map_or(Response::Error, response_code_for_enque_error);
@@ -424,9 +423,6 @@ impl SegmentServer {
     }
 }
 
-// SQLITE_FULL ("database or disk is full") is the code the persistent queue
-// returns when the user's disk has no space left; Unity reacts to it with a
-// dedicated popup instead of a Sentry exception.
 fn response_code_for_enque_error(error: &EnqueError) -> Response {
     match error {
         EnqueError::Sqlite(e)
@@ -460,9 +456,7 @@ impl AppContext {
             None => message,
         };
 
-        // Disk-full is fully described by the typed response code and logged as a
-        // warning on the C# side; the error-string channel would raise it as an
-        // exception, which is wrong for an environment condition.
+        // The error-string channel is for genuine faults; a full disk is an environment condition already carried by the code
         if !matches!(code, Response::ErrorDiskFull) {
             self.error_fn.as_ref()(message.as_str());
         }

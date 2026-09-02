@@ -139,7 +139,7 @@ namespace Runtime.Wearables
                 {
                     ReportHub.LogError(ReportCategory.WEARABLE, $"Could not find 'scene.json' for smart wearable '{id}'");
 
-                    // The wearable stays smart per its DTO; evict so the metadata-less entry is never served from the cache
+                    // Still smart per its DTO but without metadata: evict so the cache never serves it
                     cache.Remove(id);
                     return item;
                 }
@@ -152,7 +152,7 @@ namespace Runtime.Wearables
 
                 if (ct.IsCancellationRequested)
                 {
-                    // Evict the half-built entry: a later read would serve it in an inconsistent state
+                    // Evict the half-built entry so the next request retries
                     cache.Remove(id);
                     return item;
                 }
@@ -174,7 +174,7 @@ namespace Runtime.Wearables
             }
             catch
             {
-                // Evict the half-built entry so the next request retries instead of reading a poisoned, metadata-less item
+                // Evict the half-built entry so the next request retries
                 cache.Remove(id);
                 throw;
             }

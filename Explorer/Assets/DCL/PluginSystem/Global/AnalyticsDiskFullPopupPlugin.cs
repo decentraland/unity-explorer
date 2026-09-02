@@ -10,11 +10,6 @@ using Utility;
 
 namespace DCL.PluginSystem.Global
 {
-    /// <summary>
-    ///     Shows a warning popup when the analytics persistent queue reports the disk is full
-    ///     (raised as <see cref="AnalyticsDiskFullDetected" /> by RustSegmentAnalyticsService),
-    ///     so the user learns their machine ran out of space instead of failing silently.
-    /// </summary>
     public class AnalyticsDiskFullPopupPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly IEventBus analyticsEventBus;
@@ -22,7 +17,7 @@ namespace DCL.PluginSystem.Global
         private readonly CancellationTokenSource cts = new ();
         private IDisposable? subscription;
 
-        // The disk-full event repeats with every failing flush; show the popup once per session
+        // The event repeats with every failing flush; the popup must show once per session
         private bool popupShown;
 
         public AnalyticsDiskFullPopupPlugin(IEventBus analyticsEventBus, IMVCManager mvcManager)

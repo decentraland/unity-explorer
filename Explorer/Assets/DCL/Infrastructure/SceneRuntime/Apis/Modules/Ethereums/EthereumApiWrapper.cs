@@ -115,7 +115,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                 }
                 catch (Web3MethodNotAllowedException e)
                 {
-                    // Deterministic allow-list rejection, not an engine fault: OnEngineException would report it to Sentry and can suspend the scene on repeated calls
+                    // Not an engine fault: OnEngineException would report it to Sentry and can suspend the scene on repeated calls
                     return new SendEthereumMessageResponse
                     {
                         jsonAnyResponse = JsonConvert.SerializeObject(new EthApiResponse

@@ -272,11 +272,10 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
                 if (response is NativeMethods.Response.ErrorDiskFull)
                 {
-                    // Environment condition, not an app bug: warn instead of a Sentry exception.
-                    // Published on every occurrence: subscribers may not exist yet during boot,
-                    // and the failing flush repeats while the disk stays full. The popup plugin
-                    // deduplicates on its side.
+                    // Environment condition, not an app bug: warn instead of a Sentry exception
                     ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment operation {operationId} {type} failed: disk is full");
+
+                    // Published on every occurrence since subscribers may not exist yet during boot
                     instanceGuard.Value.eventBus?.Publish(new AnalyticsDiskFullDetected());
                 }
                 else if (response is not NativeMethods.Response.Success)
