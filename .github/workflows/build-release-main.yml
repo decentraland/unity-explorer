@@ -38,6 +38,13 @@ jobs:
   build:
     name: Build Unity Cloud
     needs: get-info
+    # Union of the called workflow's job-level grants — a caller caps its
+    # callee, so this keeps the call working if the repo default tightens.
+    permissions:
+      contents: read
+      statuses: write
+      actions: read
+      pull-requests: write
     strategy:
       matrix:
         install_source: ['launcher', 'epic']

@@ -28,10 +28,15 @@ namespace DCL.Passport.Fields
         public RectTransform HoverBackgroundTransform { get; private set; } = null!;
 
         [field: SerializeField]
+        public GameObject BuyButtonSection { get; private set; } = null!;
+
+        [field: SerializeField]
         public Button BuyButton { get; private set; } = null!;
 
         [field: SerializeField]
         public Button ViewButton { get; private set; } = null!;
+        [field: SerializeField]
+        public Button ViewButtonSmaller { get; private set; } = null!;
 
         [field: SerializeField]
         public GameObject OnSaleFlap { get; private set; } = null!;
@@ -92,6 +97,7 @@ namespace DCL.Passport.Fields
         {
             BuyButton.onClick.AddListener(() => UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio));
             ViewButton.onClick.AddListener(() => UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio));
+            ViewButtonSmaller.onClick.AddListener(() => UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio));
         }
 
         private void OnDisable()

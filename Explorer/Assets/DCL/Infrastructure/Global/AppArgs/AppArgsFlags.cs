@@ -25,7 +25,7 @@ namespace Global.AppArgs
 
         /// <summary>
         ///     Points every backend host at a deployment served under this base domain instead of
-        ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
+        ///     decentraland.{org,zone}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
         ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
         ///     link is processed. It is denied by <c>DeepLinkAllowlist</c> like the other infrastructure-pointing
         ///     params, and accepting it in the denied-params dialog has no effect.
@@ -35,7 +35,7 @@ namespace Global.AppArgs
         /// <summary>
         ///     The chain a <c>--base-domain</c> deployment signs and transacts against: "mainnet" or "sepolia", each
         ///     carrying the polygon network that pairs with it. Defaults to mainnet. Every decentraland environment
-        ///     answers for one chain of its own - org and today mainnet, zone sepolia - and this cannot move them:
+        ///     answers for one chain of its own - org mainnet, zone sepolia - and this cannot move them:
         ///     paired with one of those it is reported and dropped (<c>ChainUtils.ResolveNetwork</c>). Where the value
         ///     is read, anything not naming a known network ends the launch instead of falling back to the default
         ///     (<c>MainSceneLoader.CaptureEthNetworkArg</c>). Command line only, like <see cref="BASE_DOMAIN" />.
