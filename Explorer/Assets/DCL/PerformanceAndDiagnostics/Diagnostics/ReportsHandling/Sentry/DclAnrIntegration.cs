@@ -53,7 +53,7 @@ namespace DCL.Diagnostics.Sentry
             Watchdog.OnApplicationNotResponding += (_, e) =>
             {
                 SentryEvent se = new SentryEvent(e);
-                se.Fingerprint = FINGER_PRINT;
+                // se.Fingerprint = FINGER_PRINT;
                 se.SetTag("loading_stage", e.LoadingStage);
                 se.SetTag("session_age", SessionAgeBucket(e.SessionAgeSeconds));
                 se.SetExtra("session_age_seconds", e.SessionAgeSeconds);
