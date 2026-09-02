@@ -60,8 +60,10 @@ namespace DCL.VoiceChat.UI
         [Serializable]
         private struct ConfigDto
         {
+#pragma warning disable UAC1001 // Newtonsoft-only feature-flag payload (TryGetJsonPayload -> JsonConvert); Unity serialization never reads this struct.
             public int? showEverySessions;
             public int? maxTimesShown;
+#pragma warning restore UAC1001
         }
         // ReSharper restore InconsistentNaming
     }
