@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Settings;
-using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
+using DCL.Rendering.ObjectHighlight;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -75,13 +75,13 @@ namespace DCL.Interaction.Systems
                     RemoveHighlight(highlightComponent.CurrentEntityOrNull());
 
                 highlightComponent.SwitchEntity();
-                AddOrUpdateHighlight(highlightComponent.CurrentEntityOrNull(), highlightComponent.IsAtDistance());
+                AddOrUpdateHighlight(highlightComponent.CurrentEntityOrNull());
             }
             else
                 ResetHighlight(ref highlightComponent);
         }
 
-        private void AddOrUpdateHighlight(in Entity entity, bool isAtDistance)
+        private void AddOrUpdateHighlight(in Entity entity)
         {
             using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers)!;
 
@@ -93,12 +93,33 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers!);
-                RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
+
+                ObjectHighlightSettings settings = BuildSettings();
+                ObjectHighlightRendererFeature.HighlightedObjects.Highlight(renderers!, in settings);
             }
         }
 
-        private Color GetColor(bool isAtDistance) =>
-            isAtDistance ? settingsData.ValidColor : settingsData.InvalidColor;
+        /// <summary>
+        ///     Snapshots the authored settings together with this frame's pulse value. The render pass reads
+        ///     these per renderer, so nothing needs to survive between frames.
+        /// </summary>
+        private ObjectHighlightSettings BuildSettings()
+        {
+            float phase = 0.5f + (0.5f * Mathf.Sin(UnityEngine.Time.time * settingsData.PulseSpeed * Mathf.PI * 2f));
+
+            return new ObjectHighlightSettings
+            {
+                Color = settingsData.HighlightColor,
+                Width = settingsData.Thickness,
+                Fill = settingsData.FresnelFill,
+                Rim = settingsData.FresnelRim,
+                FresnelPower = settingsData.FresnelPower,
+                MaxOpacity = settingsData.MaxSurfaceOpacity,
+                Pulse = Mathf.Lerp(settingsData.PulseMin, settingsData.PulseMax, phase),
+                SurfaceDepthBias = settingsData.SurfaceDepthBias,
+                OutlineDepthBias = settingsData.OutlineDepthBias,
+            };
+        }
 
         private void RemoveHighlight(in Entity entity)
         {
@@ -112,7 +133,7 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
-                RenderFeature_ObjectHighlight.HighlightedObjects.Disparage(renderers);
+                ObjectHighlightRendererFeature.HighlightedObjects.Disparage(renderers);
             }
         }
 
