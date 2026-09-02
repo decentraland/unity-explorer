@@ -460,9 +460,10 @@
 }
 
 .sidebar__header-arrow {
-    width: 12px;
-    height: 12px;
-    background-size: 12px 12px;
+    width: 14px;
+    height: 8px;
+    flex-shrink: 0;
+    background-size: contain;
     background-image: var(--sprite-common__icon-arrow-down);
     rotate: 180deg;
     transition-property: rotate;

@@ -46,6 +46,7 @@ namespace DCL.UI.DebugMenu
         private VisualElement abConversionPanelRoot = null!;
         private VisualElement metricsPanelRoot = null!;
         private bool sidebarCollapsed;
+        private float expandedSidebarWidth;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -360,9 +361,17 @@ namespace DCL.UI.DebugMenu
 
         private void OnSidebarGeometryChanged(GeometryChangedEvent evt)
         {
+            // Pin the strip to its expanded width so collapsing hides the rows without the box
+            // resizing under the header. Captured while expanded (the default state).
+            if (!sidebarCollapsed && evt.newRect.width > expandedSidebarWidth)
+            {
+                expandedSidebarWidth = evt.newRect.width;
+                sidebar.style.minWidth = expandedSidebarWidth;
+            }
+
             // The sidebar is drawn on top of the panels, so tuck each panel's right edge just left
-            // of the sidebar's current width — it grows with its labels and shrinks when collapsed,
-            // so a fixed offset would either overlap or leave a gap.
+            // of the sidebar's width — it varies with the labels, so a fixed offset would either
+            // overlap or leave a gap.
             float panelRight = SIDEBAR_RIGHT_MARGIN + evt.newRect.width + PANEL_SIDEBAR_GAP;
             consolePanelRoot.style.right = panelRight;
             abConversionPanelRoot.style.right = panelRight;
