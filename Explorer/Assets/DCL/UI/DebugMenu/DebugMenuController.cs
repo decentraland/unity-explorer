@@ -21,6 +21,10 @@ namespace DCL.UI.DebugMenu
         private const int METRICS_REFRESH_COOLDOWN_FRAMES = 30;
         private const float AB_PANEL_AUTO_CLOSE_LINGER_SECONDS = 3f;
 
+        // The sidebar is pinned at this distance from the screen's right edge (see .sidebar in DebugMenu.uss).
+        private const float SIDEBAR_RIGHT_MARGIN = 10f;
+        private const float PANEL_SIDEBAR_GAP = 8f;
+
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
         private ConsolePanelView consolePanelView = null!;
@@ -36,7 +40,11 @@ namespace DCL.UI.DebugMenu
         private Button metricsButton = null!;
         private Button debugPanelButton = null!;
         private Button collapseButton = null!;
+        private VisualElement sidebar = null!;
         private VisualElement sidebarButtons = null!;
+        private VisualElement consolePanelRoot = null!;
+        private VisualElement abConversionPanelRoot = null!;
+        private VisualElement metricsPanelRoot = null!;
         private bool sidebarCollapsed;
 
         private bool shouldRefreshConsole;
@@ -66,25 +74,32 @@ namespace DCL.UI.DebugMenu
             metricsButton = root.Q<Button>("MetricsButton");
             debugPanelButton = root.Q<Button>("DebugPanelButton");
             collapseButton = root.Q<Button>("CollapseButton");
+            sidebar = root.Q("Sidebar");
             sidebarButtons = root.Q("SidebarButtons");
+            consolePanelRoot = root.Q("ConsolePanel");
+            abConversionPanelRoot = root.Q("AbConversionPanel");
+            metricsPanelRoot = root.Q("MetricsPanel");
 
             consoleButton.clicked += OnConsoleButtonClicked;
             abConversionButton.clicked += OnAbConversionButtonClicked;
             metricsButton.clicked += OnMetricsButtonClicked;
             collapseButton.clicked += OnCollapseButtonClicked;
 
+            // Panels open to the left of the sidebar; keep them clear of its live width.
+            sidebar.RegisterCallback<GeometryChangedEvent>(OnSidebarGeometryChanged);
+
             // Re-apply the persisted collapsed state after a live reload rebuilds the tree.
             ApplySidebarCollapsed();
 
             // Views
-            consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
+            consolePanelView = new ConsolePanelView(consolePanelRoot, consoleButton, OnConsoleButtonClicked, logsHistory);
 
             // Null until Initialize runs; the view receives it in SetInputBlock then
             if (inputBlock != null)
                 consolePanelView.SetInputBlock(inputBlock);
 
-            abConversionPanelView = new AbConversionPanelView(root.Q("AbConversionPanel"), abConversionButton, OnAbConversionButtonClicked);
-            metricsPanelView = new MetricsPanelView(root.Q("MetricsPanel"), metricsButton, OnMetricsButtonClicked);
+            abConversionPanelView = new AbConversionPanelView(abConversionPanelRoot, abConversionButton, OnAbConversionButtonClicked);
+            metricsPanelView = new MetricsPanelView(metricsPanelRoot, metricsButton, OnMetricsButtonClicked);
 
             // Shortcuts
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
@@ -142,6 +157,7 @@ namespace DCL.UI.DebugMenu
             abConversionButton.clicked -= OnAbConversionButtonClicked;
             metricsButton.clicked -= OnMetricsButtonClicked;
             collapseButton.clicked -= OnCollapseButtonClicked;
+            sidebar.UnregisterCallback<GeometryChangedEvent>(OnSidebarGeometryChanged);
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
 
             if (metricsScene != null)
@@ -340,6 +356,17 @@ namespace DCL.UI.DebugMenu
         {
             sidebarButtons.style.display = sidebarCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
             collapseButton.EnableInClassList(USS_SIDEBAR_COLLAPSE_COLLAPSED, sidebarCollapsed);
+        }
+
+        private void OnSidebarGeometryChanged(GeometryChangedEvent evt)
+        {
+            // The sidebar is drawn on top of the panels, so tuck each panel's right edge just left
+            // of the sidebar's current width — it grows with its labels and shrinks when collapsed,
+            // so a fixed offset would either overlap or leave a gap.
+            float panelRight = SIDEBAR_RIGHT_MARGIN + evt.newRect.width + PANEL_SIDEBAR_GAP;
+            consolePanelRoot.style.right = panelRight;
+            abConversionPanelRoot.style.right = panelRight;
+            metricsPanelRoot.style.right = panelRight;
         }
 
         private void OnDebugPanelButtonClicked()
