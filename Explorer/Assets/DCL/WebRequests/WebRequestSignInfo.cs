@@ -23,19 +23,8 @@ namespace DCL.WebRequests
             NewFromRaw(string.Empty, url, unixTimestamp, method);
 
         /// <summary>
-        ///     Builds the ADR-44 payload the auth chain is signed over.
-        ///     <para>
-        ///         The method and path are lowercased; the timestamp and metadata are interpolated verbatim.
-        ///         That last part matters: folding the whole string, as this did before, left the metadata's
-        ///         casing outside the signature while the request still delivered `x-identity-metadata`
-        ///         unfolded. A key or value could therefore be re-cased between signing and delivery and still
-        ///         verify, and services read that header — so they were authorizing on bytes the signature
-        ///         never covered.
-        ///     </para>
-        ///     <para>
-        ///         Matches createPayload in @dcl/crypto-middleware 6.x, so what is signed here is exactly what
-        ///         every Decentraland verifier reconstructs.
-        ///     </para>
+        ///     Builds the ADR-44 payload the auth chain is signed over: method and path lowercased,
+        ///     timestamp and metadata verbatim.
         /// </summary>
         public static WebRequestSignInfo NewFromRaw(string rawToSign, string url, ulong unixTimestamp, string method)
         {
