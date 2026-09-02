@@ -8,6 +8,8 @@ import zipfile
 import requests
 import datetime
 import argparse
+import subprocess
+import tempfile
 import collections
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
@@ -60,6 +62,42 @@ ACTIVE_STATUSES = {'started', 'restarted'}
 TERMINAL_STATUSES = {'success', 'failure', 'canceled', 'unknown'}
 
 build_healthy = True
+
+# Deep link to this build in the Unity Cloud dashboard, captured from the first build
+# response that carries one. Persisted to BUILD_LINK_INFO_PATH so the workflow can
+# upload it and the PR status comment can link the build directly.
+BUILD_LINK_INFO_PATH = 'unity_cloud_build_info.env'
+# Mirror of URL_RE in .github/actions/ucb-build-links/action.yml (the consumer
+# silently drops links failing it, so only persist links that will survive).
+_DASHBOARD_LINK_RE = re.compile(
+    r'^https://(cloud\.unity\.com|developer\.cloud\.unity3d\.com|dashboard\.unity3d\.com)'
+    r'/[A-Za-z0-9./_%~?=&#-]*/builds/[0-9]+[A-Za-z0-9./_%~?=&#-]*$')
+dashboard_url = None
+_build_link_info_written = False
+_final_elapsed = None  # (queue_secs, build_secs), set once when the build reaches a terminal status
+
+# Live PR status-comment update: the artifact above only leaves the runner when
+# this job ends, so the comment's build section is also written directly the
+# moment the build id is known — the Unity Cloud link goes live while the build
+# runs instead of after it. Purely cosmetic: every failure is swallowed.
+CI_STATUS_SCRIPT = os.path.join('.github', 'actions', 'ci-status-comment', 'upsert-ci-status.sh')
+LIVE_MARKER_PREFIX = '<!-- ucb-live:'
+# Reconcile budget for maybe_update_live_comment: give up re-asserting a row
+# after this many successful writes.
+MAX_LIVE_ASSERTS = 3
+# Reconcile budget: also give up once the row has stayed put this many
+# consecutive confirmation checks.
+MAX_LIVE_CONFIRMS = 3
+# Minimum spacing between reconcile probes, so self-healing doesn't spend the
+# comments-API budget on every poll of the (much shorter) build poll interval.
+LIVE_RECONCILE_INTERVAL_SECS = 240
+# Bound on upsert_live_comment's own read-compose-write-verify retries, for the
+# race where the sibling platform's row lands between this function's read and
+# upsert-ci-status.sh's write.
+LIVE_COMMENT_WRITE_ATTEMPTS = 3
+_live_comment_asserts = 0
+_live_comment_last_attempt = 0.0
+_live_comment_confirms = 0
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
@@ -616,6 +654,247 @@ def try_resume_build():
     return None
 
 
+def record_build_link_info(id, response_json):
+    """Persist the Unity Cloud dashboard deep link for this build (best-effort).
+
+    Build API responses carry dashboard links; the workflow uploads the written file
+    as an artifact so the PR status comment can link the build id directly instead
+    of telling humans to search cloud.unity.com by hand.
+    """
+    global dashboard_url, _build_link_info_written
+
+    links = response_json.get('links') or {}
+    href = None
+    # dashboard_summary is the build's page and dashboard_log its log tab;
+    # dashboard_url can be just the dashboard root, so a candidate only
+    # qualifies when it deep-links this specific build on a Unity dashboard
+    # host — exactly what the comment workflow accepts.
+    for key in ('dashboard_summary', 'dashboard_log', 'dashboard_url'):
+        candidate = (links.get(key) or {}).get('href')
+        if candidate and _DASHBOARD_LINK_RE.match(candidate):
+            href = candidate
+            break
+
+    if _build_link_info_written and not href:
+        return
+
+    try:
+        with open(BUILD_LINK_INFO_PATH, 'w') as f:
+            f.write(f'BUILD_TARGET={os.getenv("TARGET")}\n')
+            f.write(f'BUILD_ID={id}\n')
+            link = href or dashboard_url or _dashboard_build_url(id)
+            if link:
+                f.write(f'DASHBOARD_URL={link}\n')
+            if _final_elapsed:
+                f.write(f'QUEUE_SECS={_final_elapsed[0]}\n')
+                f.write(f'BUILD_SECS={_final_elapsed[1]}\n')
+        # Only a successful write settles the no-news guard; after an OSError
+        # the next poll must retry even without fresh links.
+        _build_link_info_written = True
+    except OSError as e:
+        print(f'Warning: could not write {BUILD_LINK_INFO_PATH}: {e}')
+
+    if href:
+        dashboard_url = href
+        print(f'::notice::Unity Cloud build #{id} ({os.getenv("TARGET")}): {href}')
+    # force: a dashboard link that arrives on a later poll must replace the
+    # unlinked row the first write left behind.
+    maybe_update_live_comment(id, force=bool(href))
+
+
+def record_final_elapsed(id, queue_secs, build_secs):
+    """Rewrite the link-info file with the final queue/build split, so the
+    comment's build rows can show how long each platform took. Runs after the
+    last poll; the artifact uploads when the job ends."""
+    global _final_elapsed, _build_link_info_written
+    _final_elapsed = (max(0, int(queue_secs)), max(0, int(build_secs)))
+    _build_link_info_written = False  # bypass the no-news guard for this rewrite
+    record_build_link_info(id, {})
+
+
+def _github_api(path):
+    token = os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')
+    base = os.getenv('GITHUB_API_URL', 'https://api.github.com')
+    return requests.get(
+        f'{base}{path}',
+        headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json'},
+        timeout=30)
+
+
+def _build_section_of_status_comment():
+    """Current text between the build fences of the unified CI status comment.
+
+    Oldest marker-bearing bot comment wins, matching upsert-ci-status.sh's
+    duplicate-collapse rule, so both read the same comment. Returns '' when the
+    comment genuinely does not exist, and None when it could not be determined
+    (API failure, or the page bound ran out) — writing on None would compose a
+    section without the sibling platform's row and wipe it.
+    """
+    repo = os.getenv('GITHUB_REPOSITORY')
+    pr = os.getenv('PR_NUMBER')
+    for page in range(1, 31):
+        resp = _github_api(f'/repos/{repo}/issues/{pr}/comments?per_page=100&page={page}')
+        if resp.status_code != 200:
+            return None
+        comments = resp.json()
+        for comment in comments:
+            body = comment.get('body') or ''
+            if (comment.get('user') or {}).get('login') == 'github-actions[bot]' and '<!-- ci-status -->' in body:
+                start = body.find('<!-- ci:build:start -->')
+                end = body.find('<!-- ci:build:end -->')
+                return body[start:end] if 0 <= start < end else ''
+        if len(comments) < 100:
+            return ''
+    return None
+
+
+def _platform_key():
+    """windows64 | macos, surviving the per-branch TARGET rewrites this script does."""
+    target = os.getenv('TARGET') or ''
+    if target.startswith('t_'):
+        target = target[2:]
+    for key in ('windows64', 'macos'):
+        if target.startswith(key):
+            return key
+    return target or 'unknown'
+
+
+def _dashboard_build_url(build_id):
+    """Unity Cloud dashboard page for a build, constructible from the env
+    alone — the API's own dashboard_summary/dashboard_log deep links replace
+    it as soon as a poll response carries them."""
+    org = os.getenv('ORG_ID')
+    project = os.getenv('PROJECT_ID')
+    target = os.getenv('TARGET')
+    if not (org and project and target):
+        return None
+    return (f'https://cloud.unity.com/home/organizations/{org}/projects/{project}'
+            f'/cloud-build/buildtargets/{target}/builds/{build_id}')
+
+
+def _own_job_url():
+    repo = os.getenv('GITHUB_REPOSITORY')
+    run_id = os.getenv('GITHUB_RUN_ID')
+    try:
+        resp = _github_api(f'/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100')
+        if resp.status_code == 200:
+            for job in resp.json().get('jobs') or []:
+                if job.get('name') == f'Build ({_platform_key()})':
+                    return job.get('html_url')
+    except requests.RequestException:
+        pass
+    return None
+
+
+def upsert_live_comment(build_id, only_if_missing=False):
+    """Write this target's live links into the comment's build section.
+
+    upsert-ci-status.sh's own retry loop only confirms that *this* write's body
+    landed — it has no way to notice a sibling row that arrived between this
+    function's read and that write. So each attempt here re-reads the section,
+    recomposes the row union from that fresh read, and after writing re-reads
+    once more to confirm every row it composed (including any sibling row it
+    carried along) survived; a mismatch means a concurrent write raced in and
+    it retries against a new read rather than trusting the stale union.
+    Bounded by LIVE_COMMENT_WRITE_ATTEMPTS. Returns True when a write landed
+    and its union was confirmed, False when the row was already present, and
+    None when a read/write failed or the union never settled.
+    """
+    platform = _platform_key()
+    label = {'windows64': 'Windows', 'macos': 'Mac'}.get(platform, platform)
+    marker = f'{LIVE_MARKER_PREFIX}{platform} -->'
+
+    parts = []
+    job_url = _own_job_url()
+    if job_url:
+        parts.append(f'[GitHub job]({job_url})')
+    # Unlinked last-resort must not say "#N": GitHub autolinks bare #N in
+    # comments to issue N.
+    link = dashboard_url or _dashboard_build_url(build_id)
+    parts.append(f'[Unity Cloud #{build_id}]({link})' if link else f'Unity Cloud build {build_id}')
+    own_row = f'| {label} | {" · ".join(parts)} {marker} |'
+
+    for _ in range(LIVE_COMMENT_WRITE_ATTEMPTS):
+        section = _build_section_of_status_comment()
+        if section is None:
+            return None
+        if only_if_missing and marker in section:
+            return False
+
+        rows = [line for line in section.splitlines() if LIVE_MARKER_PREFIX in line and marker not in line]
+        rows.append(own_row)
+        rows.sort(key=lambda row: 0 if '| Windows |' in row else 1)
+
+        server = os.getenv('GITHUB_SERVER_URL', 'https://github.com')
+        run_url = f"{server}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
+        body = '\n'.join([
+            f'[![Build](https://img.shields.io/badge/Build-In%20progress-1f6feb?logo=unity&logoColor=white&style=for-the-badge)]({run_url})',
+            '',
+            '| Platform | Links & timing |',
+            '| -------- | ----------------------- |',
+            *rows,
+        ])
+
+        body_file = None
+        try:
+            with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+                f.write(body)
+                body_file = f.name
+            env = dict(os.environ,
+                       REPO=os.getenv('GITHUB_REPOSITORY') or '',
+                       SECTION='build',
+                       SECTION_BODY='',
+                       SECTION_BODY_FILE=body_file)
+            result = subprocess.run(['bash', CI_STATUS_SCRIPT], env=env, timeout=180, check=False)
+        finally:
+            if body_file:
+                os.unlink(body_file)
+        if result.returncode != 0:
+            return None
+
+        post_section = _build_section_of_status_comment()
+        if post_section is not None and all(row in post_section for row in rows):
+            return True
+
+    return None
+
+
+def maybe_update_live_comment(build_id, reconcile=False, force=False):
+    """Gate and rate-limit the live comment write; never let it fail the build."""
+    global _live_comment_asserts, _live_comment_last_attempt, _live_comment_confirms
+    if not os.getenv('PR_NUMBER') or not (os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')):
+        return
+    if not os.path.exists(CI_STATUS_SCRIPT):
+        return
+    if reconcile:
+        # Re-assert a few times only: the Pending reset (or the other target's
+        # first write racing ours) can land after us and drop this row. A zero
+        # count still falls through, so a failed first write gets retried.
+        if _live_comment_asserts >= MAX_LIVE_ASSERTS:
+            return
+        # Every probe is a comments-API read drawn from the repo-shared rate
+        # budget; once the row has stayed put this many consecutive checks,
+        # stop probing for the rest of the build.
+        if _live_comment_confirms >= MAX_LIVE_CONFIRMS:
+            return
+        if time.time() - _live_comment_last_attempt < LIVE_RECONCILE_INTERVAL_SECS:
+            return
+    elif _live_comment_asserts > 0 and not force:
+        return
+    try:
+        _live_comment_last_attempt = time.time()
+        outcome = upsert_live_comment(build_id, only_if_missing=reconcile)
+        if outcome is True:
+            _live_comment_asserts += 1
+            _live_comment_confirms = 0
+        elif outcome is False and reconcile:
+            # Only a confirmed present row spends the probe budget; a failed
+            # read or write (None) must leave both counters for the retry.
+            _live_comment_confirms += 1
+    except Exception as e:
+        print(f'note: live status-comment update failed: {e}')
+
+
 def write_step_summary(target, build_id, final_status, phase_durations, queue_reasons, queue_elapsed, build_elapsed):
     """Append a phase breakdown to $GITHUB_STEP_SUMMARY (best-effort)."""
     summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
@@ -635,6 +914,8 @@ def write_step_summary(target, build_id, final_status, phase_durations, queue_re
     lines.append('')
     lines.append(f'- Target: `{target}`')
     lines.append(f'- Build ID: `{build_id}`')
+    if dashboard_url:
+        lines.append(f'- Unity Cloud build page: {dashboard_url}')
     lines.append(f'- Final outcome: `{final_status}`')
     if queue_reasons:
         lines.append(f"- Queue reasons seen: {', '.join(f'`{r}`' for r in sorted(queue_reasons))}")
@@ -711,6 +992,13 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
 
         keep_polling, status, response_json = poll_build(id)
 
+        # Both run every poll: record keeps retrying until the info file lands
+        # AND a dashboard href arrives, and reconcile self-heals the live row
+        # whether or not an href ever qualifies (it rate-limits internally).
+        if dashboard_url is None or not _build_link_info_written:
+            record_build_link_info(id, response_json)
+        maybe_update_live_comment(id, reconcile=True)
+
         queued_reason = response_json.get('queuedReason')
         if queued_reason and status in QUEUE_STATUSES:
             queue_reasons.add(queued_reason)
@@ -782,150 +1070,160 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
         time.sleep(poll_interval)
 
 
-args = parser.parse_args()
 
-build_already_active = False
-resumed_build_elapsed = 0
+if __name__ == '__main__':
+    args = parser.parse_args()
 
-if args.delete:
-    delete_current_target()
-elif args.resume or args.cancel:
-    build_info = utils.read_build_info()
-    if build_info is None:
-        sys.exit(1)
+    build_already_active = False
+    resumed_build_elapsed = 0
 
-    os.environ['TARGET'] = build_info["target"]
-    id = build_info["id"]
+    if args.delete:
+        delete_current_target()
+    elif args.resume or args.cancel:
+        build_info = utils.read_build_info()
+        if build_info is None:
+            sys.exit(1)
 
-    if args.cancel:
-        if id is None:
-            # The runner died between the build POST and the id write; the queued build is
-            # findable only as the target's latest build. Cancel it only while it is still
-            # in a queue status: targets are shared (release pool; consecutive runs on one
-            # branch), so an already-started build may belong to a concurrent run — leaving
-            # it is at worst one wasted build, cancelling it would kill someone else's.
-            # A missing/unknown status is treated as not-cancellable for the same reason.
-            latest = get_latest_build(os.getenv('TARGET'))
-            if latest and latest.get('buildStatus') in QUEUE_STATUSES:
-                id = latest['build']
-                print(f'No build id persisted; cancelling latest queued build #{id} on {os.getenv("TARGET")}')
-            else:
-                print('No build id persisted and no queued build found; nothing to cancel.')
-                utils.delete_build_info()
-                sys.exit(0)
-        cancel_build(id)
-        utils.delete_build_info()
-        sys.exit(0)
+        os.environ['TARGET'] = build_info["target"]
+        id = build_info["id"]
 
-else:
-    branch_name = os.getenv('BRANCH_NAME')
-    validate_branch_name(branch_name)
+        if args.cancel:
+            if id is None:
+                # The runner died between the build POST and the id write; the queued build is
+                # findable only as the target's latest build. Cancel it only while it is still
+                # in a queue status: targets are shared (release pool; consecutive runs on one
+                # branch), so an already-started build may belong to a concurrent run — leaving
+                # it is at worst one wasted build, cancelling it would kill someone else's.
+                # A missing/unknown status is treated as not-cancellable for the same reason.
+                latest = get_latest_build(os.getenv('TARGET'))
+                if latest and latest.get('buildStatus') in QUEUE_STATUSES:
+                    id = latest['build']
+                    print(f'No build id persisted; cancelling latest queued build #{id} on {os.getenv("TARGET")}')
+                else:
+                    print('No build id persisted and no queued build found; nothing to cancel.')
+                    utils.delete_build_info()
+                    sys.exit(0)
+            cancel_build(id)
+            utils.delete_build_info()
+            sys.exit(0)
 
-    resumed = try_resume_build()
-    if resumed is not None:
-        target_name, id, resumed_status, resumed_elapsed = resumed
-        os.environ['TARGET'] = target_name
-        build_already_active = resumed_status in ACTIVE_STATUSES
-        if build_already_active:
-            resumed_build_elapsed = resumed_elapsed
     else:
-        try:
-            clone_current_target(True)
-        except Exception as e:
-            print(f"Operation failed: {e}")
+        branch_name = os.getenv('BRANCH_NAME')
+        validate_branch_name(branch_name)
 
-        # Set parameters immediately before run_build to avoid races with concurrent
-        # builds on shared targets.
-        set_parameters(get_param_env_variables())
+        resumed = try_resume_build()
+        if resumed is not None:
+            target_name, id, resumed_status, resumed_elapsed = resumed
+            os.environ['TARGET'] = target_name
+            build_already_active = resumed_status in ACTIVE_STATUSES
+            if build_already_active:
+                resumed_build_elapsed = resumed_elapsed
+        else:
+            try:
+                clone_current_target(True)
+            except Exception as e:
+                print(f"Operation failed: {e}")
 
-        def get_clean_build_bool():
-            value = os.getenv('CLEAN_BUILD', 'false').lower()
-            if value in ['true', '1']:
-                return True
-            elif value in ['false', '0']:
-                return False
-            else:
-                raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
+            # Set parameters immediately before run_build to avoid races with concurrent
+            # builds on shared targets.
+            set_parameters(get_param_env_variables())
 
-        # Persist the target before the POST: if the runner dies mid-request, --cancel can still
-        # find the queued build via the target's latest-build lookup.
-        utils.persist_build_info(os.getenv('TARGET'), None)
-        id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
-        utils.persist_build_info(os.getenv('TARGET'), id)
-        print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
+            def get_clean_build_bool():
+                value = os.getenv('CLEAN_BUILD', 'false').lower()
+                if value in ['true', '1']:
+                    return True
+                elif value in ['false', '0']:
+                    return False
+                else:
+                    raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
 
-final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(
-    id,
-    build_already_active=build_already_active,
-    resumed_build_elapsed=resumed_build_elapsed,
-)
-write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed)
+            # Persist the target before the POST: if the runner dies mid-request, --cancel can still
+            # find the queued build via the target's latest-build lookup.
+            utils.persist_build_info(os.getenv('TARGET'), None)
+            id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
+            utils.persist_build_info(os.getenv('TARGET'), id)
+            # Write the link info file (target + id, no URL yet) immediately so it exists
+            # even if the runner dies before the first poll; the poll loop upgrades it
+            # with the dashboard URL once a response carries one.
+            record_build_link_info(id, {})
+            print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
 
-if final_outcome in ('queue_timeout', 'build_timeout', 'log_stall'):
-    if final_outcome in ('build_timeout', 'log_stall'):
-        # Build was cancelled; the persisted info points to a dead build.
-        # Delete it so the next retry creates a fresh build on a different VM.
+    final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(
+        id,
+        build_already_active=build_already_active,
+        resumed_build_elapsed=resumed_build_elapsed,
+    )
+    write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed)
+
+    if final_outcome in ('queue_timeout', 'build_timeout', 'log_stall'):
+        if final_outcome in ('build_timeout', 'log_stall'):
+            # Build was cancelled; the persisted info points to a dead build.
+            # Delete it so the next retry creates a fresh build on a different VM.
+            utils.delete_build_info()
+            try:
+                download_log(id)
+            except Exception as e:
+                print(f'Warning: could not download log after {final_outcome}: {e}')
+        sys.exit(RETRYABLE_EXIT_CODE)
+
+    if final_outcome == 'canceled':
+        # This run's own cancellations exit through the watchdog/timeout branches above,
+        # so 'canceled' here came from outside.  Two different outsides, though:
+        #  - UBA giving up on builder provisioning (observed: 9 min in sentToBuilder, then a
+        #    platform-side cancel) — nothing else wants the target, so retry on a fresh build;
+        #  - a concurrent run superseding us via run_build's `already a build pending` cancel.
+        #    main/release/*/hotfix/* share one target but sit in different concurrency groups,
+        #    so re-POSTing here would cancel *their* build and hand them the same exit 99 —
+        #    both runs then burn a full queue+build cycle and one still ends red.
+        # Build numbers are monotonic per target: a newer build means we were superseded.
+        def probe_latest_build():
+            # Fail-open: a transient socket error here must not traceback past the
+            # cleanup below - it degrades to the retry path, same as a non-200 probe.
+            try:
+                return get_latest_build(os.getenv('TARGET'))
+            except requests.exceptions.RequestException as e:
+                print(f'Warning: latest-build probe failed ({e})')
+                return None
+
+        latest = probe_latest_build()
+        if latest and int(latest.get('build') or 0) <= int(id):
+            # run_build cancels the pending build and only re-POSTs ~30 s later, so a
+            # supersede can be invisible for that gap. Re-probe once past it before
+            # deciding to retry.
+            time.sleep(35)
+            latest = probe_latest_build() or latest
         utils.delete_build_info()
         try:
             download_log(id)
         except Exception as e:
-            print(f'Warning: could not download log after {final_outcome}: {e}')
-    sys.exit(RETRYABLE_EXIT_CODE)
+            print(f'Warning: could not download log after external cancel: {e}')
+        if latest and int(latest.get('build') or 0) > int(id):
+            print(
+                f'Build {id} was superseded by #{latest["build"]} on shared target '
+                f'{os.getenv("TARGET")} - not retrying (the successor owns the slot).'
+            )
+            sys.exit(1)
+        print('Build was canceled outside this run - retrying with a fresh build.')
+        sys.exit(RETRYABLE_EXIT_CODE)
 
-if final_outcome == 'canceled':
-    # This run's own cancellations exit through the watchdog/timeout branches above,
-    # so 'canceled' here came from outside.  Two different outsides, though:
-    #  - UBA giving up on builder provisioning (observed: 9 min in sentToBuilder, then a
-    #    platform-side cancel) — nothing else wants the target, so retry on a fresh build;
-    #  - a concurrent run superseding us via run_build's `already a build pending` cancel.
-    #    main/release/*/hotfix/* share one target but sit in different concurrency groups,
-    #    so re-POSTing here would cancel *their* build and hand them the same exit 99 —
-    #    both runs then burn a full queue+build cycle and one still ends red.
-    # Build numbers are monotonic per target: a newer build means we were superseded.
-    def probe_latest_build():
-        # Fail-open: a transient socket error here must not traceback past the
-        # cleanup below - it degrades to the retry path, same as a non-200 probe.
-        try:
-            return get_latest_build(os.getenv('TARGET'))
-        except requests.exceptions.RequestException as e:
-            print(f'Warning: latest-build probe failed ({e})')
-            return None
-
-    latest = probe_latest_build()
-    if latest and int(latest.get('build') or 0) <= int(id):
-        # run_build cancels the pending build and only re-POSTs ~30 s later, so a
-        # supersede can be invisible for that gap. Re-probe once past it before
-        # deciding to retry.
-        time.sleep(35)
-        latest = probe_latest_build() or latest
     utils.delete_build_info()
-    try:
-        download_log(id)
-    except Exception as e:
-        print(f'Warning: could not download log after external cancel: {e}')
-    if latest and int(latest.get('build') or 0) > int(id):
-        print(
-            f'Build {id} was superseded by #{latest["build"]} on shared target '
-            f'{os.getenv("TARGET")} - not retrying (the successor owns the slot).'
-        )
+
+    print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
+    record_final_elapsed(id, queue_elapsed, build_elapsed)
+
+    download_artifact(id)
+    download_log(id)
+
+    if not build_healthy:
+        # Dashboard URLs embed ORG_ID/PROJECT_ID, which are masked to *** in
+        # runner logs — the PR status comment carries the clickable link.
+        print(f'Build unhealthy - check the downloaded logs or the Unity Cloud build page '
+              f'linked from the PR status comment (target "{os.getenv("TARGET")}", build {id}).')
         sys.exit(1)
-    print('Build was canceled outside this run - retrying with a fresh build.')
-    sys.exit(RETRYABLE_EXIT_CODE)
 
-utils.delete_build_info()
+    # Cleanup (only if build is healthy and not release)
+    # We only delete all artifacts, not the build target
+    if not is_release_workflow:
+        delete_build(id)
 
-print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
-
-download_artifact(id)
-download_log(id)
-
-if not build_healthy:
-    print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
-    sys.exit(1)
-
-# Cleanup (only if build is healthy and not release)
-# We only delete all artifacts, not the build target
-if not is_release_workflow:
-    delete_build(id)
-
-utils.delete_build_info()
+    utils.delete_build_info()
