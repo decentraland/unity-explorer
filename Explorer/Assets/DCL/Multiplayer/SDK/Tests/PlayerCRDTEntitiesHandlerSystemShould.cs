@@ -1,4 +1,5 @@
 using Arch.Core;
+using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Character;
 using DCL.Character.Components;
@@ -266,7 +267,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system!.Update(0);
 
             Assert.IsTrue(world.TryGet(entity2, out playerCRDTEntity));
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 0), playerCRDTEntity.CRDTEntity);
 
             Entity entity3 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
@@ -274,20 +275,21 @@ namespace DCL.Multiplayer.SDK.Tests
             system!.Update(0);
 
             Assert.IsTrue(world.TryGet(entity3, out playerCRDTEntity));
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, playerCRDTEntity.CRDTEntity.Id);
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, 0), playerCRDTEntity.CRDTEntity);
 
             // "Disconnect" 2nd player
             world.Add(entity2, new DeleteEntityIntention());
             system!.Update(0);
 
-            // Add 4th different player and check it's assigned with the disconnected player CRDT id
+            // Add 4th different player and check it's assigned with the disconnected player CRDT number
+            // under the next version, so scenes tell it apart from the player that left
             Entity entity4 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
             system!.Update(0);
 
             Assert.IsTrue(world.TryGet(entity4, out playerCRDTEntity));
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 1), playerCRDTEntity.CRDTEntity);
         }
 
         [Test]
@@ -304,7 +306,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsFalse(playerCRDTEntity.AssignedToScene);
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 0), playerCRDTEntity.CRDTEntity);
 
             // "Disconnect" the player while it is still assigned to no scene
             world.Add(remotePlayer, new DeleteEntityIntention());
@@ -312,14 +314,14 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(remotePlayer));
 
-            // The id must have been given back to the pool, so the next player reuses it
+            // The number must have been given back to the pool, so the next player reuses it under a new version
             Entity nextRemotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
             system!.Update(0);
 
             Assert.IsTrue(world.TryGet(nextRemotePlayer, out playerCRDTEntity));
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 1), playerCRDTEntity.CRDTEntity);
         }
 
         [Test]
@@ -339,7 +341,7 @@ namespace DCL.Multiplayer.SDK.Tests
                 system!.Update(0);
 
                 Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity), $"No PlayerCRDTEntity assigned on cycle {i}");
-                Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id, $"Reserved id was not reused on cycle {i}");
+                Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, i), playerCRDTEntity.CRDTEntity, $"Reserved id was not reused on cycle {i}");
 
                 world.Add(remotePlayer, new DeleteEntityIntention());
                 system!.Update(0);
@@ -349,6 +351,112 @@ namespace DCL.Multiplayer.SDK.Tests
                 // Emulate DestroyEntitiesSystem, which destroys entities marked for deletion later in the frame
                 world.Destroy(remotePlayer);
             }
+        }
+
+        [Test]
+        public void PropagateRecycledEntityVersionToTheSceneEntity()
+        {
+            //Arrange
+            fakeCharacterUnityTransform.position = Vector3.one;
+
+            Entity remotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system!.Update(0);
+
+            Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity));
+            Entity firstSceneEntity = playerCRDTEntity.SceneWorldEntity;
+            Assert.IsTrue(scene1World.TryGet(firstSceneEntity, out PlayerSceneCRDTEntity firstSceneCRDTEntity));
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 0), firstSceneCRDTEntity.CRDTEntity);
+
+            //Act: the player disconnects and another one takes the freed number over
+            world.Add(remotePlayer, new DeleteEntityIntention());
+            system!.Update(0);
+            world.Destroy(remotePlayer);
+
+            Entity nextRemotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system!.Update(0);
+
+            //Assert: the scene gets the same number under a new version, which is what keeps its CRDT
+            //state from discarding every message addressed to the player that took the slot over
+            Assert.IsTrue(world.TryGet(nextRemotePlayer, out playerCRDTEntity));
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 1), playerCRDTEntity.CRDTEntity);
+
+            Assert.AreNotEqual(firstSceneEntity, playerCRDTEntity.SceneWorldEntity);
+            Assert.IsTrue(scene1World.TryGet(playerCRDTEntity.SceneWorldEntity, out PlayerSceneCRDTEntity nextSceneCRDTEntity));
+            Assert.AreEqual(playerCRDTEntity.CRDTEntity, nextSceneCRDTEntity.CRDTEntity);
+        }
+
+        [Test]
+        public void BumpEntityVersionsIndependentlyPerReservedNumber()
+        {
+            //Arrange
+            fakeCharacterUnityTransform.position = Vector3.one * 100;
+
+            Entity firstPlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system!.Update(0);
+
+            Entity secondPlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system!.Update(0);
+
+            Assert.IsTrue(world.TryGet(firstPlayer, out PlayerCRDTEntity firstCRDTEntity));
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 0), firstCRDTEntity.CRDTEntity);
+            Assert.IsTrue(world.TryGet(secondPlayer, out PlayerCRDTEntity secondCRDTEntity));
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, 0), secondCRDTEntity.CRDTEntity);
+
+            //Act: only the first number is released and handed out again
+            world.Add(firstPlayer, new DeleteEntityIntention());
+            system!.Update(0);
+            world.Destroy(firstPlayer);
+
+            Entity thirdPlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            system!.Update(0);
+
+            //Assert
+            Assert.IsTrue(world.TryGet(thirdPlayer, out PlayerCRDTEntity thirdCRDTEntity));
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, 1), thirdCRDTEntity.CRDTEntity);
+
+            // The number that was never released keeps the version it was handed out with
+            Assert.IsTrue(world.TryGet(secondPlayer, out secondCRDTEntity));
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, 0), secondCRDTEntity.CRDTEntity);
+        }
+
+        [Test]
+        public void RetireReservedNumberWhenItRunsOutOfVersions()
+        {
+            //Arrange: a single remote player that keeps reconnecting onto the same reserved number
+            fakeCharacterUnityTransform.position = Vector3.one * 100;
+
+            Entity remotePlayer = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform));
+
+            //Act: use up every version the 16 bits of the id can hold
+            for (var version = 0; version <= CRDTEntity.MAX_VERSION; version++)
+            {
+                system!.Update(0);
+
+                Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity playerCRDTEntity), $"No PlayerCRDTEntity assigned on version {version}");
+                Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, version), playerCRDTEntity.CRDTEntity, $"Wrong id handed out on version {version}");
+
+                world.Add(remotePlayer, new DeleteEntityIntention());
+                system!.Update(0);
+                world.Remove<DeleteEntityIntention>(remotePlayer);
+            }
+
+            system!.Update(0);
+
+            //Assert: reusing the number would repeat a version scenes may still hold as deleted,
+            //so it is retired and the player moves onto the next free number instead
+            Assert.IsTrue(world.TryGet(remotePlayer, out PlayerCRDTEntity retiredCRDTEntity));
+            Assert.AreEqual(CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, 0), retiredCRDTEntity.CRDTEntity);
         }
 
         [TestCase(true)]
