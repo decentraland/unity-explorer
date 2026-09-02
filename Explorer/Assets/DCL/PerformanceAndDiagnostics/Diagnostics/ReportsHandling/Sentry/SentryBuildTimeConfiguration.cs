@@ -29,7 +29,10 @@ namespace DCL.Diagnostics.Sentry
             DclAnrIntegration anrIntegration = new DclAnrIntegration(monoInstance);
             options.AddIntegration(anrIntegration);
 
-            // Sentry 4.9.0 deprecated DisableAnrIntegration() in favour of this property.
+            // DclAnrIntegration above is the only ANR reporter we want. This property gates the
+            // NATIVE app-hang detector only -- Sentry's managed C# watchdog is switched off via
+            // AnrDetectionEnabled in SentryOptions.asset, because ScriptableSentryUnityOptions adds
+            // that integration before this configuration runs.
             options.EnableAppHangTracking = false;
 
 #if UNITY_EDITOR
