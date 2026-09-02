@@ -398,7 +398,7 @@ fn start_session(
                 child.kill();
                 child.wait();
             }
-            return Err(format!("failed to start uuav helper: {e}"));
+            return Err(format!("failed to start uuav helper: {e:#}"));
         }
     };
     let Some(child) = child else {
@@ -788,7 +788,7 @@ pub unsafe extern "C" fn uuav_init(
 
     let unity = match unsafe { platform::capture_probe(texture) } {
         Ok(unity) => Arc::new(unity),
-        Err(e) => return ResultFFI::error(e.to_string()),
+        Err(e) => return ResultFFI::error(format!("{e:#}")),
     };
     #[cfg(target_os = "macos")]
     let adapter = unity.registry_id;
@@ -1498,7 +1498,7 @@ extern "C" fn uuav_render_event(event_id: i32) {
             Err(e) => {
                 client
                     .sinks
-                    .on_player_error(Some(player_id), &format!("present failed: {e}"));
+                    .on_player_error(Some(player_id), &format!("present failed: {e:#}"));
                 return;
             }
         }
