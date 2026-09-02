@@ -64,7 +64,9 @@ namespace DCL.SDKEntityTriggerArea.Components
         {
             bool useTransformScaleAsAreaSize = AreaSize == Vector3.zero;
 
-            if (monoBehaviour is not { } area)
+            SDKEntityTriggerArea? area = monoBehaviour;
+
+            if (area == null)
             {
                 area = pool.Get();
                 SetMonoBehaviour(area);
