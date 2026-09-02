@@ -58,17 +58,18 @@ namespace DCL.Diagnostics.Sentry
             {
                 SentryEvent se = new SentryEvent(e);
                 se.Fingerprint = FINGER_PRINT;
+                se.SetTag("loading_stage", e.LoadingStage);
 
 #if UNITY_STANDALONE_WIN
+                Option<DumpEntry> deepest = DeepestDump(e.DumpFileEntries);
+
                 hub.CaptureEvent(se, scope =>
                 {
-                    Option<DumpEntry> deepest = DeepestDump(e.DumpFileEntries);
-
                     if (deepest.Has)
                         scope.AddAttachment(filePath: deepest.Value.path, AttachmentType.Minidump);
-
-                    DiscardDumpsExcept(e.DumpFileEntries, deepest);
                 });
+
+                DiscardDumpsExcept(e.DumpFileEntries, deepest);
 #else
                 hub.CaptureEvent(se);
 #endif
@@ -145,8 +146,10 @@ namespace DCL.Diagnostics.Sentry
         // Is never supposed to be called during the pause
         protected void Report(IReadOnlyList<Result<DumpEntry>> collectedDumpEntries)
         {
+            string loadingStage = CurrentLoadingStage.Value;
+
             System.Text.StringBuilder sb = new ();
-            sb.Append("DclApplication not responding: ");
+            sb.Append("DclApplication not responding at ").Append(loadingStage).Append(": ");
 
             for (int i = 0; i < collectedDumpEntries.Count; i++)
             {
@@ -156,7 +159,7 @@ namespace DCL.Diagnostics.Sentry
                 if (result.Success)
                 {
                     DumpEntry e = result.Value;
-                    sb.Append(e.tresholdMs).Append("ms - ").Append(e.name);
+                    sb.Append(e.tresholdMs).Append("ms");
                 }
                 else
                 {
@@ -172,9 +175,9 @@ namespace DCL.Diagnostics.Sentry
             Logger?.LogInfo("Detected an DclAnr event: {0}", message);
 
 #if UNITY_STANDALONE_WIN
-            var exception = new DclApplicationNotRespondingException(message, collectedDumpEntries);
+            var exception = new DclApplicationNotRespondingException(message, loadingStage, collectedDumpEntries);
 #else
-            var exception = new DclApplicationNotRespondingException(message);
+            var exception = new DclApplicationNotRespondingException(message, loadingStage);
 #endif
 
             exception.SetSentryMechanism(Mechanism, "Main thread unresponsive.", false);
