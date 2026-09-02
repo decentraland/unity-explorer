@@ -159,10 +159,12 @@ namespace DCL.SkyBox
         [Serializable]
         private struct SkyboxSettings
         {
+#pragma warning disable UAC1001 // Newtonsoft-only feature-flag payload (TryGetJsonPayload -> JsonConvert); Unity serialization never reads this struct.
             [JsonProperty("fixedTimeInSeconds")]
             public uint? FixedTimeInSeconds;
             [JsonProperty("dayCycleDurationInSeconds")]
             public uint? DayCycleDurationInSeconds;
+#pragma warning restore UAC1001
         }
     }
 }

@@ -29,7 +29,8 @@ namespace DCL.Diagnostics.Sentry
             DclAnrIntegration anrIntegration = new DclAnrIntegration(monoInstance);
             options.AddIntegration(anrIntegration);
 
-            options.DisableAnrIntegration();
+            // Sentry 4.9.0 deprecated DisableAnrIntegration() in favour of this property.
+            options.EnableAppHangTracking = false;
 
 #if UNITY_EDITOR
             bool isDirty = false;
