@@ -62,7 +62,9 @@ namespace SceneRuntime.Apis.Modules.FetchApi
             public string url;
             public string data;
             public string type;
+#pragma warning disable UAC1001 // ClearScript host object marshalled straight to V8; Unity serialization never sees this field.
             public PropertyBag headers;
+#pragma warning restore UAC1001
         }
     }
 }
