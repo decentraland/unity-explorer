@@ -39,7 +39,10 @@
         <ui:VisualElement name="MetricsRows" class="metrics-panel__rows" />
     </ui:VisualElement>
     <ui:VisualElement name="Sidebar" class="sidebar">
-        <ui:Button name="CollapseButton" class="sidebar__collapse dcl-clickable" />
+        <ui:Button name="CollapseButton" class="sidebar__header dcl-clickable">
+            <ui:Label text="LOCALHOST TOOLS" class="sidebar__header-label" />
+            <ui:VisualElement name="CollapseArrow" class="sidebar__header-arrow" />
+        </ui:Button>
         <ui:VisualElement name="SidebarButtons" class="sidebar__buttons">
             <ui:Button name="ConsoleButton" class="sidebar__button sidebar__button--console dcl-clickable" />
             <ui:Button name="MetricsButton" class="sidebar__button sidebar__button--metrics dcl-clickable" />

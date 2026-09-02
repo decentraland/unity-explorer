@@ -17,7 +17,7 @@ namespace DCL.UI.DebugMenu
     {
         private const string USS_SIDEBAR_BUTTON_SELECTED = "sidebar__button--selected";
         private const string USS_SIDEBAR_BUTTON_ATTENTION = "sidebar__button--attention";
-        private const string USS_SIDEBAR_COLLAPSE_COLLAPSED = "sidebar__collapse--collapsed";
+        private const string USS_SIDEBAR_COLLAPSE_COLLAPSED = "sidebar__header--collapsed";
         private const int METRICS_REFRESH_COOLDOWN_FRAMES = 30;
         private const float AB_PANEL_AUTO_CLOSE_LINGER_SECONDS = 3f;
 

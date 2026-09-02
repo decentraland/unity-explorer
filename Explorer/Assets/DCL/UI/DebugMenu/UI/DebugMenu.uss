@@ -389,21 +389,40 @@
     align-items: center;
 }
 
-/* Collapse handle: sits above the action buttons and folds them away when a scene's
-   top-right UI overlaps the strip. Arrow points up while expanded, down while collapsed. */
-.sidebar__collapse {
-    width: 30px;
-    height: 14px;
-    margin-bottom: 4px;
-    background-size: 12px 12px;
-    background-image: var(--sprite-common__icon-arrow-down);
+/* Collapse header: labels the strip ("LOCALHOST TOOLS") and folds the action buttons away
+   when a scene's top-right UI overlaps them. Arrow points up while expanded, down while collapsed. */
+.sidebar__header {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 2px;
+    padding-right: 4px;
+    padding-bottom: 4px;
+    padding-left: 4px;
+    margin-bottom: 2px;
     background-color: rgba(0, 0, 0, 0);
-    rotate: 180deg;
-    transition-property: rotate, background-color;
+    transition-property: background-color;
     transition-duration: 0.15s;
 }
 
-.sidebar__collapse--collapsed {
+.sidebar__header-label {
+    font-size: 9px;
+    letter-spacing: 1px;
+    margin-right: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    -unity-font-definition: var(--dcl-font-inter-semibold);
+}
+
+.sidebar__header-arrow {
+    width: 12px;
+    height: 12px;
+    background-size: 12px 12px;
+    background-image: var(--sprite-common__icon-arrow-down);
+    rotate: 180deg;
+    transition-property: rotate;
+    transition-duration: 0.15s;
+}
+
+.sidebar__header--collapsed .sidebar__header-arrow {
     rotate: 0deg;
 }
 
