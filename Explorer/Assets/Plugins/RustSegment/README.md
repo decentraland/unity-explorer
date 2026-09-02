@@ -88,6 +88,8 @@ Each operation completes through `FfiCallbackFn` with one of:
 | 1 | `Error` | Generic failure; details arrive via the error callback. |
 | 2 | `ErrorDiskFull` | The persistent queue cannot write because the disk is full (SQLITE_FULL). |
 
+`Libraries/Linux/segment-server.so` predates `ErrorDiskFull` and has not been rebuilt (Linux is not a release target), so on Linux a full disk still completes with `Error`.
+
 ---
 
 ## Shutdown / Disposal Contract

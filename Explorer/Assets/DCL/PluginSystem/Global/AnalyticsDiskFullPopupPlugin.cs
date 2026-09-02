@@ -1,7 +1,10 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ErrorPopup;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Threading;
@@ -40,13 +43,22 @@ namespace DCL.PluginSystem.Global
                 return;
 
             popupShown = true;
+            ShowPopupAsync(cts.Token).Forget();
+        }
 
+        private async UniTaskVoid ShowPopupAsync(CancellationToken ct)
+        {
             var data = new ErrorPopupData(
                 UIProperty<Sprite>.UseDefault,
                 UIProperty<string>.From("Storage Full"),
                 UIProperty<string>.From("Your device is running out of disk space. Free up space to keep Decentraland working correctly."));
 
-            mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(data), cts.Token).Forget();
+            EnumResult<TaskError> result = await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(data), ct)
+                                                           .SuppressToResultAsync(ReportCategory.ANALYTICS);
+
+            // A show that failed never reached the user, so the next disk-full event may retry
+            if (result.Error is { State: not TaskError.Cancelled })
+                popupShown = false;
         }
 
         public void Dispose()
