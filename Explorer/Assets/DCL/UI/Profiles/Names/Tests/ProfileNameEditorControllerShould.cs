@@ -22,10 +22,10 @@ namespace DCL.UI.ProfileNames.Tests
         private const string PREFAB_PATH = "Assets/DCL/UI/Profiles/Names/Assets/ProfileNameEditor.prefab";
         private const string OWNED_NAME = "test2000";
 
-        private GameObject viewGameObject;
-        private ProfileNameEditorView view;
-        private ProfileNameEditorController controller;
-        private Profile profile;
+        private GameObject viewGameObject = null!;
+        private ProfileNameEditorView view = null!;
+        private ProfileNameEditorController controller = null!;
+        private Profile? profile;
 
         [SetUp]
         public void SetUp()
@@ -83,7 +83,7 @@ namespace DCL.UI.ProfileNames.Tests
                 "current (unclaimed) display name, or Save can never be enabled (#9550)");
         }
 
-        private void InvokeSetUpClaimed(ProfileNameEditorView.ClaimedNameConfig config, Profile profile, INftNamesProvider.PaginatedNamesResponse names)
+        private void InvokeSetUpClaimed(ProfileNameEditorView.ClaimedNameConfig config, Profile claimedProfile, INftNamesProvider.PaginatedNamesResponse names)
         {
             // SetUpClaimed is a local function nested in OnBeforeViewShow/SetUpAsync; the compiler
             // emits it as a private instance method on the controller (it closes over the
@@ -92,7 +92,7 @@ namespace DCL.UI.ProfileNames.Tests
                 .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
                 .Single(m => m.Name.Contains("SetUpClaimed"));
 
-            setUpClaimed.Invoke(controller, new object[] { config, profile, names });
+            setUpClaimed.Invoke(controller, new object[] { config, claimedProfile, names });
         }
     }
 }

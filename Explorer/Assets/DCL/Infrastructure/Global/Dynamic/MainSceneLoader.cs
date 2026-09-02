@@ -38,6 +38,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DG.Tweening;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -99,6 +100,7 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
+        private AbgenSidecarBootstrap? abgenSidecar;
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
@@ -167,6 +169,9 @@ namespace Global.Dynamic
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
                 stopwatch.LogStep("staticContainer.SafeDispose");
             }
+
+            abgenSidecar?.Dispose();
+            stopwatch.LogStep("abgenSidecar.Dispose");
 
             bootstrapContainer?.Dispose();
             stopwatch.LogStep("bootstrapContainer.Dispose");
@@ -301,6 +306,13 @@ namespace Global.Dynamic
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
                 GetResolutionFromAppArgs(applicationParametersParser));
 
+            // Shown before anything that can wait (the abgen sidecar launch below is serial).
+            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                InstantiateAltTester(applicationParametersParser);
+
             World world = World.Create();
 
             var realmData = new RealmData();
@@ -308,17 +320,24 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
-            // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
-            // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
-            // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
-            // stream through it from the production upstream (abgen's ab-cdn read-through and registry
-            // pass-through), so no lane loses content. Only the loopback endpoint is reserved here — the
-            // URL sources below need it at construction; AbgenSidecarPlugin (registered from this value,
-            // absent otherwise) owns everything else: creation, launch, warm-up and disposal.
-            string? localAbBaseUrl = null;
+            bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
 
+            // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
+            // local scene and read-throughs everything else from production). Brought up to health serially,
+            // before the URL sources are built, so the override is seeded only when the server is actually
+            // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
-                cliOptimizedAssetsUrl = localAbBaseUrl = AbgenSidecar.ReserveBaseUrl();
+            {
+                // Mirrors RealmUrls' LSD resolution — RealmUrls itself needs the URL sources that don't exist yet.
+                string realmRoot = launchSettings.initialRealm == InitialRealm.Localhost
+                    ? IRealmNavigator.LOCALHOST
+                    : launchSettings.customRealm;
+
+                abgenSidecar = new AbgenSidecarBootstrap(decentralandEnvironment);
+
+                if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
+                    cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
+            }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -328,14 +347,9 @@ namespace Global.Dynamic
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
                 cliOptimizedAssetsUrl,
-                customBaseDomain);
+                customBaseDomain,
+                cliAbgenPipeline);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
-
-            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
-
-            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
-            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
-                InstantiateAltTester(applicationParametersParser);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, ethereumNetwork);
@@ -362,7 +376,6 @@ namespace Global.Dynamic
                 decentralandEnvironment,
                 ethereumNetwork,
                 dclVersion,
-                localAbBaseUrl,
                 destroyCancellationToken
             );
 
@@ -466,11 +479,10 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
-                // Realm loading is what starts scene loading — and with it the scene's asset-bundle
-                // manifest request, whose bundles-vs-GLTFs verdict is final for the session. Hold it
-                // until the abgen sidecar is warm or has given up; completed immediately when the
-                // sidecar is not mounted.
-                await dynamicWorldContainer!.AbgenSidecarReadyAsync.AttachExternalCancellation(ct);
+                // The scene's first manifest request fixes the bundles-vs-GLTFs verdict for the session —
+                // hold realm loading until the whole-scene warm-up settles.
+                if (abgenSidecar != null)
+                    await abgenSidecar.WarmUpTask.AttachExternalCancellation(ct);
 
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);
@@ -720,7 +732,7 @@ namespace Global.Dynamic
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs && !skipScreen)
-                SavedQualitySettingsApplier.EnforceLowPreset();
+                SavedQualitySettingsApplier.EnforceLowPresetOnce();
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 

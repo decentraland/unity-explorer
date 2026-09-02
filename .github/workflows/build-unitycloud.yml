@@ -13,6 +13,13 @@ on:
   push:
     branches:
       - dev
+    # avatar-preview-renderer merges are invisible to the Explorer project; only
+    # Explorer/ and the shared package can affect this build.
+    paths:
+      - 'Explorer/**'
+      - 'unity-shared-dependencies/**'
+      - 'scripts/cloudbuild/**'
+      - '.github/workflows/build-unitycloud.yml'
   workflow_dispatch:
     inputs:
       profile:
@@ -209,6 +216,14 @@ jobs:
   prebuild:
     name: Prebuild
     runs-on: ubuntu-latest
+    # contents: read — checkout + the version composite's `git fetch origin main:main --tags`
+    #   over the checkout's persisted credentials.
+    # statuses: write — "Skip build and test checks" posts 4 commit statuses via github-script.
+    # pull-requests: read — step-security/changed-files' REST fallback (GET /pulls/{n}/files).
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: read
     timeout-minutes: 20
     # Skip when PR has 'perf_test' label (only performance tests should run)
     if: |
@@ -271,13 +286,14 @@ jobs:
           fetch-depth: 0
           filter: blob:none
 
-      - name: Detect changes under Explorer/**
+      - name: Detect changes under Explorer/** or unity-shared-dependencies/**
         if: github.event_name == 'pull_request'
         id: changed_explorer
         uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
         with:
           files: |
             Explorer/**
+            unity-shared-dependencies/**
 
       - name: Decide whether to build
         id: decide
@@ -349,7 +365,7 @@ jobs:
                 sha,
                 state: 'success',
                 context: check,
-                description: 'Skipped — no Explorer/ changes detected'
+                description: 'Skipped — no Explorer/ or unity-shared-dependencies/ changes detected'
               });
             }
             console.log(`Posted success statuses for: ${checks.join(', ')}`);
@@ -550,6 +566,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: prebuild
     if: needs.prebuild.outputs.should_build == 'true'
+    # contents: read — checkout + the size-budget step's GET /releases/latest.
+    # actions: read — build.py resolves its own job URL via GET /actions/runs/{run_id}/jobs.
+    # pull-requests: write — live CI status comment upsert (issue-comment POST/PATCH/DELETE
+    #   on the PR via .github/actions/ci-status-comment/upsert-ci-status.sh).
+    #   Safe on this `pull_request` (not `pull_request_target`) trigger: a fork PR gets a
+    #   read-only GITHUB_TOKEN that `permissions:` cannot escalate, and cannot run this job
+    #   anyway (the build needs UNITY_CLOUD_API_KEY/ORG_ID/PROJECT_ID, unavailable to forks);
+    #   a same-repo branch is pushed by someone who already holds this capability with write access.
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
     # Safety ceiling around the 450m retry budget + surrounding steps.
     timeout-minutes: 510
     strategy:
@@ -597,6 +625,10 @@ jobs:
           QUEUE_TIMEOUT: 14400
           BUILD_TIMEOUT: 10800
           TARGET: t_${{ matrix.target }}
+          # For the live PR status-comment update the moment the Unity-side
+          # build id is known; empty PR number (push/dispatch) disables it.
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
@@ -632,6 +664,23 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/cloudbuild/build.py --cancel || true
+
+      # the app-local Visual C++ runtime (deployed by VCRedistBuildPostprocessor)
+      # is what lets the player start without the VC++ Redistributable installed
+      - name: Verify app-local VC++ runtime
+        if: matrix.target == 'windows64'
+        run: |
+          set -euo pipefail
+          for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+            if [[ ! -f "build/$dll" ]]; then
+              echo "::error::$dll missing from build/ (VCRedistBuildPostprocessor regression?)"
+              exit 1
+            fi
+            if [[ "$(head -c2 "build/$dll")" != "MZ" ]]; then
+              echo "::error::$dll is not a PE image (Git LFS pointer?)"
+              exit 1
+            fi
+          done
 
       - name: Locate Windows main executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
@@ -976,6 +1025,19 @@ jobs:
           path: unity_cloud_log.log
           if-no-files-found: error
 
+      # Written by build.py as soon as the Unity-side build id is known, so it exists for
+      # failed builds too. The PR status comment uses it to deep-link the Unity Cloud
+      # build page instead of asking humans to search cloud.unity.com by hand.
+      - name: Upload Unity Cloud build info
+        if: ${{ always() && hashFiles('unity_cloud_build_info.env') != '' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: unity_build_info_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
+          path: unity_cloud_build_info.env
+          if-no-files-found: error
+          # Only consumed by the immediately-following PR status comment run.
+          retention-days: 7
+
       - name: Print cloud logs
         if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
         run: cat unity_cloud_log.log
@@ -1001,6 +1063,8 @@ jobs:
   build-gate:
     name: Build Gate (Windows + macOS)
     runs-on: ubuntu-latest
+    # Pure bash over needs.* context — no checkout, no token use.
+    permissions: {}
     needs: [prebuild, build]
     if: always() && github.event_name == 'pull_request'
     steps:
@@ -1020,11 +1084,11 @@ jobs:
             exit 0
           fi
 
-          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ changes).
+          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ or shared-deps changes).
           # The Prebuild job's "Skip build and test checks" step already posts per-target success
           # statuses for this case, so the gate can safely pass.
           if [ "$prebuild_result" = "success" ] && [ "$should_build" != "true" ]; then
-            echo "Gate not applicable (prebuild ran, no Explorer/ changes). Passing."
+            echo "Gate not applicable (prebuild ran, no Explorer/ or shared-deps changes). Passing."
             exit 0
           fi
 

@@ -83,8 +83,6 @@ namespace Global.Dynamic
         private readonly UIShellContainer uiShellContainer;
         private readonly ChatContainer chatContainer;
 
-        private AbgenSidecarPlugin? abgenSidecarPlugin;
-
         public IMVCManager MvcManager => uiShellContainer.MvcManager;
 
         public IGlobalRealmController RealmController { get; }
@@ -110,13 +108,6 @@ namespace Global.Dynamic
         public IRoomHub RoomHub => commsContainer.RoomHub;
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
-
-        /// <summary>
-        ///     Completed once the abgen sidecar reaches a terminal state — warm and serving, or given up
-        ///     (see <see cref="AbgenSidecarPlugin.ReadyAsync" />). Already completed when the sidecar is
-        ///     not mounted, so awaiting it costs nothing outside local scene development with local ABs.
-        /// </summary>
-        public UniTask AbgenSidecarReadyAsync => abgenSidecarPlugin?.ReadyAsync ?? UniTask.CompletedTask;
 
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
@@ -516,8 +507,6 @@ namespace Global.Dynamic
 
             var springBoneSimulationSettings = new SpringBoneSimulationSettings();
 
-            AbgenSidecarPlugin? abgenSidecarPlugin = null;
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -532,7 +521,7 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, uiShellContainer.EventSystem, staticContainer.ScenesCache, uiShellContainer.MvcManager, menusAccessFacade, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 wearableContainer.CreateWearablePlugin(staticContainer, bootstrapContainer),
-                wearableContainer.CreateEmotePlugin(staticContainer, bootstrapContainer, assetsProvisioner, debugBuilder, uiShellContainer, profileContainer, commsContainer,
+                wearableContainer.CreateEmotePlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, profileContainer, commsContainer,
                     multiplayerEmotesMessageBus, globalWorld, playerEntity),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
@@ -780,7 +769,13 @@ namespace Global.Dynamic
                     marketplaceCreditsApiClient,
                     identityCache,
                     webBrowser,
-                    staticContainer.ImageControllerProvider),
+                    staticContainer.ImageControllerProvider,
+                    characterPreviewFactory,
+                    characterPreviewEventBus,
+                    profileContainer.SelfProfile,
+                    profileContainer.ProfileRepositoryWrapper,
+                    globalWorld,
+                    wearableContainer.WearableCatalog),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
@@ -864,11 +859,6 @@ namespace Global.Dynamic
             if (localSceneDevelopment)
             {
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(realmContainer.ReloadSceneController, realmUrls));
-
-                // local-ab only (the endpoint is reserved exclusively under that flag); the plugin owns
-                // the abgen server's whole lifecycle: creation, launch, warm-up, dispose.
-                if (bootstrapContainer.LocalAbBaseUrl != null)
-                    globalPlugins.Add(abgenSidecarPlugin = new AbgenSidecarPlugin(bootstrapContainer.LocalAbBaseUrl, realmUrls, bootstrapContainer.Environment));
             }
             else
             {
@@ -894,7 +884,7 @@ namespace Global.Dynamic
                     localSceneDevelopment));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
-                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
+                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
@@ -1091,8 +1081,6 @@ namespace Global.Dynamic
                 communitiesContainer,
                 voiceChatContainer
             );
-
-            container.abgenSidecarPlugin = abgenSidecarPlugin;
 
             // Init itself
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();

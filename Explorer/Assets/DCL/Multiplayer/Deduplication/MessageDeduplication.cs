@@ -57,24 +57,24 @@ namespace DCL.Multiplayer.Deduplication
         [Serializable]
         internal struct RegisteredStamp : IEquatable<RegisteredStamp>
         {
-            public string walletId;
-            public T timestamp;
+            public string WalletId;
+            public T Timestamp;
 
             public RegisteredStamp(string walletId, T timestamp)
             {
-                this.walletId = walletId;
-                this.timestamp = timestamp;
+                WalletId = walletId;
+                Timestamp = timestamp;
             }
 
             public bool Equals(RegisteredStamp other) =>
-                walletId == other.walletId
-                && timestamp.Equals(other.timestamp);
+                WalletId == other.WalletId
+                && Timestamp.Equals(other.Timestamp);
 
             public override bool Equals(object? obj) =>
                 obj is RegisteredStamp other && Equals(other);
 
             public override int GetHashCode() =>
-                HashCode.Combine(walletId, timestamp);
+                HashCode.Combine(WalletId, Timestamp);
         }
     }
 }

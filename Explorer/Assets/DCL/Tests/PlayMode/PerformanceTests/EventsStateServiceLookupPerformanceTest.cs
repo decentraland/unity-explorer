@@ -137,8 +137,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             double small = PopulatePassMs(10);
             double large = PopulatePassMs(1000);
-            Measure.Custom(new SampleGroup("populate-friends-10", SampleUnit.Millisecond), small);
-            Measure.Custom(new SampleGroup("populate-friends-1000", SampleUnit.Millisecond), large);
+            Measure.Custom(new SampleGroup("populate-friends-10"), small);
+            Measure.Custom(new SampleGroup("populate-friends-1000"), large);
             Debug.Log($"[EventsStateService] populate pass: friends=10 -> {small:F3}ms, friends=1000 -> {large:F3}ms");
 
             Assert.LessOrEqual(large, (3 * small) + 5, "dictionary lookups must not scale with friend-list size");
