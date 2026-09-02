@@ -424,11 +424,17 @@ impl SegmentServer {
     }
 }
 
+// SQLITE_FULL ("database or disk is full") is the code the persistent queue
+// returns when the user's disk has no space left; Unity reacts to it with a
+// dedicated popup instead of a Sentry exception.
 fn response_code_for_enque_error(error: &EnqueError) -> Response {
-    if error.is_disk_full() {
-        Response::ErrorDiskFull
-    } else {
-        Response::Error
+    match error {
+        EnqueError::Sqlite(e)
+            if matches!(e.sqlite_error_code(), Some(rusqlite::ErrorCode::DiskFull)) =>
+        {
+            Response::ErrorDiskFull
+        }
+        _ => Response::Error,
     }
 }
 
@@ -464,5 +470,40 @@ impl AppContext {
         if let Some(id) = id {
             self.callback_fn.as_ref()(id, code);
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sqlite_enque_error(code: std::os::raw::c_int) -> EnqueError {
+        EnqueError::Sqlite(rusqlite::Error::SqliteFailure(
+            rusqlite::ffi::Error::new(code),
+            None,
+        ))
+    }
+
+    #[test]
+    fn sqlite_full_maps_to_disk_full_response() {
+        let error = sqlite_enque_error(rusqlite::ffi::SQLITE_FULL);
+        assert!(matches!(
+            response_code_for_enque_error(&error),
+            Response::ErrorDiskFull
+        ));
+    }
+
+    #[test]
+    fn other_errors_map_to_generic_response() {
+        let error = sqlite_enque_error(rusqlite::ffi::SQLITE_BUSY);
+        assert!(matches!(
+            response_code_for_enque_error(&error),
+            Response::Error
+        ));
+
+        assert!(matches!(
+            response_code_for_enque_error(&EnqueError::LimitReached),
+            Response::Error
+        ));
     }
 }
