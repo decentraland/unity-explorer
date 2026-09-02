@@ -53,6 +53,7 @@ namespace DCL.Diagnostics.Sentry
             Watchdog.OnApplicationNotResponding += (_, e) =>
             {
                 SentryEvent se = new SentryEvent(e);
+                // TODO: reassign fingerprint if needed
                 // se.Fingerprint = FINGER_PRINT;
                 se.SetTag("loading_stage", e.LoadingStage);
 
