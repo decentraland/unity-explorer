@@ -74,9 +74,13 @@ namespace DCL.AvatarRendering.AvatarShape
                 exempt || IsInFrustum(avatarTransformMatrixComponent.IndexInGlobalJobArray));
 
             // Unity's own animator culling only consults SkinnedMeshRenderers and the custom skinning
-            // pipeline deletes them all, so visibility must gate the Animator manually.
-            if (avatarBase.AvatarAnimator.enabled == culled)
-                avatarBase.AvatarAnimator.enabled = !culled;
+            // pipeline deletes them all, so visibility must gate the Animator manually. The legacy-emote
+            // path disables the Animator on purpose while the Animation component drives the rig, so the
+            // un-cull must not switch it back on mid-emote.
+            bool animatorShouldRun = !culled && !avatarBase.IsLegacyAnimationPlaying;
+
+            if (avatarBase.AvatarAnimator.enabled != animatorShouldRun)
+                avatarBase.AvatarAnimator.enabled = animatorShouldRun;
 
             if (!computeShaderSkinning.ForceSkinNextFrame && culled)
                 return;
