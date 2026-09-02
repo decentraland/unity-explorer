@@ -3,11 +3,14 @@ using UnityEngine;
 namespace DCL.SyntheticInput.UiSimulation
 {
     /// <summary>
-    ///     What the virtual-device gesture pipeline tells the cursor systems while it steers the pointer: skip the
+    ///     What the synthetic input layer tells the cursor systems while it steers the pointer: skip the
     ///     OS-cursor warps instead of fighting the injected positions, and take the pointer's position from the
     ///     gesture rather than from the hardware mouse — the automation mouse is a device of its own, which the
     ///     cursor system's single cached <c>Mouse</c> never resolves, so without this the injected pointer moved
     ///     the UI stack while the world reticle stayed wherever the OS cursor sat.
+    ///     Two writers state a position: a running virtual-device gesture, and a held synthetic press, which
+    ///     parks the pointer at its own pixel so the ray a scene samples follows the gesture rather than the
+    ///     hardware mouse the driver never touched.
     ///     Static by design (the same pattern as PhysicsTickProvider): retail builds never write it, and the frame
     ///     stamps make both signals expire on their own — an aborted gesture leaves no residue to sweep.
     /// </summary>

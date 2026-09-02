@@ -17,6 +17,7 @@ using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.Arch;
 using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 using RaycastHit = UnityEngine.RaycastHit;
 
@@ -44,6 +45,11 @@ namespace DCL.SyntheticInput.Systems
     ///         hover enter/leave flow as a real cursor. Aimless intents post only the button edge: the cursor ray
     ///         stays in charge and the edge fans out entity-bound or globally exactly like a real key press.
     ///     </para>
+    ///     <para>
+    ///         Between an aimed press and its release the pointer itself is parked at the pixel the press landed
+    ///         on (<see cref="SyntheticPointerHold" />), because the frames in between belong to no intent and a
+    ///         driver has no hardware pointer of its own to leave there.
+    ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PlayerOriginatedRaycastSystem))]
@@ -52,6 +58,13 @@ namespace DCL.SyntheticInput.Systems
     {
         private static readonly QueryDescription ALL_ENTITIES = new ();
         private static readonly QueryDescription PIPELINE_ENTITY = new QueryDescription().WithAll<SyntheticPointerInput>();
+
+        /// <summary>
+        ///     How long a delivered press may keep the pointer parked with no release in sight. Covers the
+        ///     longest hold a driver can ask for (press_input caps it at 30s) plus the driver-side completion
+        ///     grace; past it an abandoned gesture hands the pointer back to the hardware mouse.
+        /// </summary>
+        private const float POINTER_HOLD_TIMEOUT_SEC = 35f;
 
         private readonly IScenesCache scenesCache;
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
@@ -82,6 +95,8 @@ namespace DCL.SyntheticInput.Systems
 
         protected override void Update(float t)
         {
+            AssertHeldPointer();
+
             ref SyntheticPointerEventIntent intent = ref World.TryGetRef<SyntheticPointerEventIntent>(playerEntity, out bool exists);
 
             if (!exists)
@@ -137,7 +152,14 @@ namespace DCL.SyntheticInput.Systems
             if (intent.Press.HasValue && intent.HasAimTarget && !result.Hit)
                 result.UpRayMissed = true;
 
+            // Read before the removals below: every path that ends a release leg ends the hold with it, whether
+            // the release was delivered or rejected — the driver is not holding the button any more either way.
+            bool endsPointerHold = intent.EventType == PointerEventType.PetUp;
+
             EcsRequest.CompleteAndRemove(World, playerEntity, intent, new SyntheticPointerOutcome { Result = result, Press = press });
+
+            if (endsPointerHold)
+                World.TryRemove<SyntheticPointerHold>(playerEntity);
         }
 
         private static SyntheticPointerResult Failure(in SyntheticPointerEventIntent intent, string reason) =>
@@ -248,12 +270,21 @@ namespace DCL.SyntheticInput.Systems
                 in World.Get<HoverStateComponent>(pipelineEntity),
                 out SyntheticPressHandoff? press);
 
+            Vector3? deliveredPress = null;
+
             // A press is usually followed by a release intent installed later this frame: hold the aim so the
             // hover does not leave the target in the gap between the two legs.
             if (result.Hit && intent.EventType == PointerEventType.PetDown)
+            {
                 PostSyntheticInput(intent.InjectedAimPoint);
+                deliveredPress = intent.InjectedAimPoint;
+            }
 
+            // CompleteAndRemove invalidates the intent ref, so the pointer is parked from the copy above.
             CompleteAndRemove(in intent, result, press);
+
+            if (deliveredPress is { } pressAimPoint)
+                ParkPointerAtPress(pressAimPoint);
         }
 
         /// <summary>
@@ -357,9 +388,30 @@ namespace DCL.SyntheticInput.Systems
             if (!Physics.Raycast(originRay, out RaycastHit hit, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK))
                 return Failure(in intent, "the ray from the camera hit nothing (target may lack a collider)");
 
-            return collidersGlobalCache.TryGetSceneEntity(hit.collider, out _)
-                ? Failure(in intent, "the reticle found no scene entity under the aim (transient scene state; retry)")
-                : Failure(in intent, $"the ray hit a non-scene collider '{hit.collider.name}'");
+            if (collidersGlobalCache.TryGetSceneEntity(hit.collider, out _))
+                return Failure(in intent, "the reticle found no scene entity under the aim (transient scene state; retry)");
+
+            return Failure(in intent, DescribeNonSceneHit(in intent, in hit, originRay.origin));
+        }
+
+        /// <summary>
+        ///     Names a non-scene collider in terms of the aim, not on its own. Reporting only what the ray met
+        ///     ("the ray hit a non-scene collider 'SatelliteView 7,7'") reads as if that object were in the way,
+        ///     when the usual cause is an aim point with nothing at it: the ray passed straight through and met the
+        ///     skybox geometry far beyond. The distance to the aim separates the two.
+        /// </summary>
+        private static string DescribeNonSceneHit(in SyntheticPointerEventIntent intent, in RaycastHit hit, Vector3 origin)
+        {
+            // A screen-point aim is projected to a far point along the camera ray, so its "aim distance" is the
+            // raycast limit and comparing against it says nothing.
+            if (intent.ScreenPoint != null)
+                return $"nothing clickable at that point: the ray hit non-scene geometry ('{hit.collider.name}')";
+
+            float aimDistance = Vector3.Distance(origin, intent.InjectedAimPoint);
+
+            return hit.distance > aimDistance
+                ? $"nothing at the aim point: the ray passed it and hit non-scene geometry ('{hit.collider.name}') {hit.distance - aimDistance:F1} m further on (does the target have a collider?)"
+                : $"non-scene geometry ('{hit.collider.name}') blocks the aim {aimDistance - hit.distance:F1} m before it";
         }
 
         /// <summary>
@@ -434,6 +486,57 @@ namespace DCL.SyntheticInput.Systems
                 return hitEntity == press.Entity;
 
             return intent.TargetEntityId < 0 || hitEntity.Id == intent.TargetEntityId;
+        }
+
+        /// <summary>
+        ///     Re-states the parked pointer position every frame a press is held. The cursor systems take the
+        ///     pointer from <see cref="SyntheticCursorState" /> while it is asserted, which is what makes the
+        ///     reticle ray — and the PBPrimaryPointerInfo ray built from the same position — follow the gesture
+        ///     rather than the hardware mouse. A hold nobody released expires here.
+        /// </summary>
+        private void AssertHeldPointer()
+        {
+            if (!World.TryGet(playerEntity, out SyntheticPointerHold hold))
+                return;
+
+            if (UnityEngine.Time.time > hold.ExpiryTime)
+            {
+                World.Remove<SyntheticPointerHold>(playerEntity);
+                return;
+            }
+
+            SyntheticCursorState.AssertPointerPositionThisFrame(hold.ScreenPosition);
+        }
+
+        /// <summary>
+        ///     Parks the pointer at the pixel the delivered press occupies, for as long as the button stays down.
+        ///     An aim that is not on screen is left alone: a driver can aim at a world point no human could have
+        ///     clicked (behind the camera, out of the viewport), and a projection of it is a pixel the gesture
+        ///     never touched.
+        /// </summary>
+        private void ParkPointerAtPress(Vector3 aimPoint)
+        {
+            Camera camera = playerCamera.GetCameraComponent(World).Camera;
+            Vector3 projected = camera.WorldToScreenPoint(aimPoint);
+
+            bool onScreen = projected.z > 0f
+                            && projected.x >= 0f && projected.x <= camera.pixelWidth
+                            && projected.y >= 0f && projected.y <= camera.pixelHeight;
+
+            if (!onScreen)
+                return;
+
+            var hold = new SyntheticPointerHold
+            {
+                ScreenPosition = new Vector2(projected.x, projected.y),
+                ExpiryTime = UnityEngine.Time.time + POINTER_HOLD_TIMEOUT_SEC,
+            };
+
+            World.AddOrSet(playerEntity, hold);
+
+            // Stated for this frame too: the cursor systems run in an earlier group, so leaving it to the next
+            // Update would hand the frame right after the press back to the hardware mouse.
+            SyntheticCursorState.AssertPointerPositionThisFrame(hold.ScreenPosition);
         }
 
         private void PostSyntheticInput(Vector3? aimPoint, InputAction? pressButton = null, InputAction? releaseButton = null)

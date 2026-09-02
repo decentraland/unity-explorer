@@ -118,8 +118,10 @@ namespace DCL.SyntheticInput.AltTester
 
         /// <summary>
         ///     Presses a pointer button on an entity, turns the camera while it is held, then releases — the
-        ///     gesture that sweeps the pointer ray a scene samples from PrimaryPointerInfo. Dragging the virtual
-        ///     mouse across the world pans the camera instead, so this is the only way to drive a held sweep.
+        ///     gesture that sweeps the pointer ray a scene samples from PrimaryPointerInfo: the press parks the
+        ///     pointer on the target and the camera turns under it. Dragging the virtual mouse across the world
+        ///     pans the camera instead, so this is the only way to drive a held sweep. The target has to be on
+        ///     screen for the pointer to be parked at all, so aim the camera at it first.
         /// </summary>
         public static int StartSweep(int entityId, string sceneId, string button, float deltaX, float deltaY, float seconds, float timeoutSec)
         {

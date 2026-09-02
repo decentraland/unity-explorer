@@ -8,6 +8,7 @@ using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.SyntheticInput.Components;
 using DCL.SyntheticInput.Systems;
+using DCL.SyntheticInput.UiSimulation;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
@@ -49,6 +50,10 @@ namespace DCL.SyntheticInput.Tests
             // NUnit reuses one fixture instance for the whole class, so the stubbed cover must be cleared
             // per test — otherwise an armed cover leaks into every test that runs after it.
             uiCover = null;
+
+            // The parked pointer is static and lives a frame longer than the assertion; EditMode tests share
+            // frames, so a hold from the previous test would still read as asserted in this one.
+            SyntheticCursorState.Reset();
 
             sceneWorld = World.Create();
 
@@ -146,6 +151,9 @@ namespace DCL.SyntheticInput.Tests
         /// <summary>Armed per test: what the stubbed UI probe reports as covering any screen point, if anything.</summary>
         private string? uiCover;
 
+        /// <summary>Non-scene geometry (skybox-like) a test can place on the ray; never registered in the colliders cache.</summary>
+        private GameObject? nonSceneGo;
+
         private bool TryFindUiCover(Vector2 screenPoint, out string cover)
         {
             cover = uiCover ?? string.Empty;
@@ -154,11 +162,18 @@ namespace DCL.SyntheticInput.Tests
 
         protected override void OnTearDown()
         {
+            SyntheticCursorState.Reset();
             Object.DestroyImmediate(cameraGo);
             Object.DestroyImmediate(targetGo);
 
             if (blockerGo != null)
                 Object.DestroyImmediate(blockerGo);
+
+            if (nonSceneGo != null)
+            {
+                Object.DestroyImmediate(nonSceneGo);
+                nonSceneGo = null;
+            }
 
             sceneWorld.Dispose();
         }
@@ -879,6 +894,193 @@ namespace DCL.SyntheticInput.Tests
             system.Update(0);
 
             Assert.That(ResultOf(completion).Hit, Is.True);
+        }
+
+        /// <summary>
+        ///     Placing non-scene geometry (the skybox's collider, in the live client) on the ray and aiming at an
+        ///     empty point in front of it. Reporting only the collider the ray met reads as if that object were in
+        ///     the way; what actually happened is that the aim point held nothing.
+        /// </summary>
+        [Test]
+        public void ReportAnEmptyAimPointRatherThanTheGeometryBeyondIt()
+        {
+            PlaceNonSceneGeometryAt(new Vector3(20f, 0f, 20f));
+
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+            var aimPoint = new Vector3(10f, 0f, 10f);
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, aimPoint, InputAction.IaPointer, PointerEventType.PetDown)
+            {
+                Completion = completion,
+            });
+
+            system.Update(0);
+            RunPipelineFrame();
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("nothing at the aim point"));
+            Assert.That(result.FailureReason, Does.Contain("further on"));
+        }
+
+        [Test]
+        public void ReportNonSceneGeometryThatBlocksTheAimAsABlocker()
+        {
+            PlaceNonSceneGeometryAt(new Vector3(2.5f, 0f, 2.5f));
+
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+            var aimPoint = new Vector3(10f, 0f, 10f);
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, aimPoint, InputAction.IaPointer, PointerEventType.PetDown)
+            {
+                Completion = completion,
+            });
+
+            system.Update(0);
+            RunPipelineFrame();
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("blocks the aim"));
+            Assert.That(result.FailureReason, Does.Contain("before it"));
+        }
+
+        /// <summary>A screen-point aim is projected to the raycast limit, so no distance to it is worth reporting.</summary>
+        [Test]
+        public void ReportAScreenPointMissWithoutADistanceToTheAim()
+        {
+            Camera camera = cameraGo.GetComponent<Camera>();
+
+            // Aim at a corner so the ray misses the target box entirely and only meets the non-scene geometry.
+            PlaceNonSceneGeometryAt(new Vector3(-20f, 0f, 20f));
+            var screenCorner = new Vector2(0f, camera.pixelHeight / 2f);
+
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, null, InputAction.IaPointer, PointerEventType.PetDown, screenPoint: screenCorner)
+            {
+                Completion = completion,
+            });
+
+            system.Update(0);
+            RunPipelineFrame();
+            system.Update(0);
+
+            SyntheticPointerResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("nothing clickable at that point"));
+            Assert.That(result.FailureReason, Does.Not.Contain(" m "), "a screen-point aim has no meaningful distance to report");
+        }
+
+        /// <summary>
+        ///     The frames between a press and its release belong to no intent, and a driver has no hardware
+        ///     pointer sitting on the target — so the press pixel is parked for the pipeline (and for the
+        ///     PBPrimaryPointerInfo ray a scene samples) to keep building the reticle ray through it.
+        /// </summary>
+        [Test]
+        public void ParkThePointerAtThePressedPixelWhileTheButtonIsHeld()
+        {
+            DeliverPress();
+
+            Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.True);
+            Assert.That(SyntheticCursorState.TryGetPointerPosition(out Vector2 parked), Is.True);
+            Assert.That(parked, Is.EqualTo(ScreenPointOfTarget()));
+        }
+
+        [Test]
+        public void KeepAssertingTheParkedPointerOnFramesThatCarryNoIntent()
+        {
+            DeliverPress();
+
+            // The assertion is frame-scoped, so only re-stating it every frame keeps the pointer on the
+            // gesture for the whole camera sweep a held press is turned into.
+            SyntheticCursorState.Reset();
+            system.Update(0);
+
+            Assert.That(SyntheticCursorState.TryGetPointerPosition(out Vector2 parked), Is.True);
+            Assert.That(parked, Is.EqualTo(ScreenPointOfTarget()));
+        }
+
+        [Test]
+        public void HandThePointerBackWhenTheReleaseIsDelivered()
+        {
+            SyntheticPointerOutcome press = DeliverPress();
+
+            UniTaskCompletionSource<SyntheticPointerOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: press.Press);
+
+            tick++;
+            system.Update(0); // inject the release
+            RunPipelineFrame();
+            system.Update(0); // observe
+
+            Assert.That(ResultOf(releaseCompletion).Hit, Is.True);
+            Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.False);
+
+            SyntheticCursorState.Reset();
+            system.Update(0);
+
+            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False, "the hardware mouse owns the pointer again once the button is up");
+        }
+
+        [Test]
+        public void NotParkThePointerForAnAimlessPress()
+        {
+            // An aimless edge names no target, so there is no pixel of the driver's choosing to park at:
+            // the cursor ray stays in charge, exactly as it does for the delivery itself.
+            AddAimlessIntent(PointerEventType.PetDown);
+
+            system.Update(0);
+            RunPipelineAimlessFrame(cursorHoversTarget: true);
+            system.Update(0);
+
+            Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.False);
+            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False);
+        }
+
+        [Test]
+        public void NotParkThePointerWhenThePressIsAimedOffScreen()
+        {
+            // A world aim needs no line of sight, so a driver can press on something behind the camera —
+            // there is no pixel a human could have pressed, and projecting one would invent a position.
+            targetGo.transform.position = new Vector3(0f, 0f, -5f);
+            Physics.SyncTransforms();
+
+            DeliverPress();
+
+            Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.False);
+            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False);
+        }
+
+        [Test]
+        public void DropAParkedPointerWhoseReleaseNeverArrived()
+        {
+            DeliverPress();
+
+            // An abandoned gesture (a driver that died between the legs) must not keep the pointer away
+            // from the hardware mouse forever.
+            world.Set(playerEntity, new SyntheticPointerHold { ScreenPosition = Vector2.one, ExpiryTime = UnityEngine.Time.time - 1f });
+            SyntheticCursorState.Reset();
+
+            system.Update(0);
+
+            Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.False);
+            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False);
+        }
+
+        /// <summary>Where the target's aim point sits on screen, which is the pixel a press on it occupies.</summary>
+        private Vector2 ScreenPointOfTarget()
+        {
+            Vector3 projected = cameraGo.GetComponent<Camera>().WorldToScreenPoint(targetGo.transform.position);
+            return new Vector2(projected.x, projected.y);
+        }
+
+        private void PlaceNonSceneGeometryAt(Vector3 position)
+        {
+            nonSceneGo = new GameObject("non-scene-geometry") { transform = { position = position, localScale = new Vector3(4f, 4f, 4f) } };
+            nonSceneGo.AddComponent<BoxCollider>();
+            Physics.SyncTransforms();
         }
     }
 }

@@ -125,6 +125,9 @@ namespace DCL.McpServer.Tools
                 ["ok"] = true,
                 ["path"] = McpWireEnum<DragPath>.ToWire(DragPath.Device),
                 ["cursorState"] = uiAutomation.CursorStateName(),
+
+                // The space the from/to coordinates were normalized against, stated like every other UI result.
+                ["screen"] = new JObject { ["width"] = Screen.width, ["height"] = Screen.height },
             };
 
             // The device drag really happened, so ok is true — but it dragged the 3D world, which is not what a

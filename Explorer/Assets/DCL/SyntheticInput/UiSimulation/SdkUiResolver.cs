@@ -192,8 +192,8 @@ namespace DCL.SyntheticInput.UiSimulation
                 if (uiTransform.IsHidden || uiTransform.Transform.panel == null)
                     return;
 
-                bool hasInput = world.TryGet(entity, out UIInputComponent? _);
-                bool hasDropdown = world.TryGet(entity, out UIDropdownComponent? _);
+                bool hasInput = world.TryGet(entity, out UIInputComponent? input);
+                bool hasDropdown = world.TryGet(entity, out UIDropdownComponent? dropdown);
                 bool hasScroll = uiTransform.InnerScrollView != null;
                 bool hasPointerEvents = world.TryGet(entity, out PBPointerEvents? pointerEvents) && pointerEvents != null;
 
@@ -210,6 +210,12 @@ namespace DCL.SyntheticInput.UiSimulation
                     ["screenRect"] = UiDiscovery.RectJson(rect),
                     ["center"] = UiDiscovery.CenterJson(rect),
                 };
+
+                // The scene can declare an input or dropdown disabled, which makes it inert for a user and refused by
+                // ui_click/ui_set_text; listing it without saying so invites a call that can only fail.
+                if ((hasInput && input != null && !input.TextField.enabledInHierarchy)
+                    || (hasDropdown && dropdown != null && !dropdown.DropdownField.enabledInHierarchy))
+                    entry["disabled"] = true;
 
                 if (hasPointerEvents)
                 {

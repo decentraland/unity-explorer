@@ -5,6 +5,7 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 
 namespace DCL.SyntheticInput.UiSimulation
@@ -67,6 +68,13 @@ namespace DCL.SyntheticInput.UiSimulation
             if (field == null)
                 return UiActionResult.Failure("the element has no TMP_InputField");
 
+            // Assigning field.text goes past uGUI's own guard, so the guard has to be applied here: a user
+            // cannot type into a field the client disabled, and reporting a write it could not perform is the
+            // failure mode this layer exists to avoid.
+            if (!field.IsInteractable())
+                return UiActionResult.Failure("the input is not interactable (disabled by the client, or inside a CanvasGroup that is); a user could not type into it",
+                    null, UiScreenGeometry.ImageRectOf((RectTransform)field.transform));
+
             field.Select();
             field.ActivateInputField();
             field.text = text;
@@ -110,6 +118,12 @@ namespace DCL.SyntheticInput.UiSimulation
 
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(target.panel, target.worldBound);
 
+            // A disabled element is PickingMode.Ignore, so the pick below would miss it and blame a cover that is
+            // not there. Say what actually stops the click, and say it even under force: force skips the occlusion
+            // pre-check, not the element's own state.
+            if (!target.enabledInHierarchy)
+                return UiActionResult.Failure("the element is disabled; a user could not click it", null, imageRect);
+
             if (!force)
             {
                 Vector2 panelCenter = target.worldBound.center;
@@ -128,7 +142,9 @@ namespace DCL.SyntheticInput.UiSimulation
                 eventSystem.RaycastAll(pointerEventData, raycastResults);
 
                 if (TryFindClientCover(target.panel, out GameObject? cover))
-                    return UiActionResult.Failure("a client UI element covers the scene UI at this point", PathOf(cover!.transform), imageRect);
+                    return UiActionResult.Failure(
+                        "a client UI element covers the scene UI at this point (a client surface can be fully transparent and still take the click); pass force to click through it",
+                        PathOf(cover!.transform), imageRect);
             }
 
             SendPooled<PointerEnterEvent>(target);
@@ -258,6 +274,12 @@ namespace DCL.SyntheticInput.UiSimulation
 
             Rect imageRect = UiScreenGeometry.PanelRectToImageRect(textField.panel, textField.worldBound);
 
+            // PBUiInput.disabled disables the element and sets pickingMode to Ignore, so a real keystroke never
+            // reaches it. Writing .value would bypass UI Toolkit entirely and fire the scene's onChange for input
+            // the scene declared impossible.
+            if (!textField.enabledInHierarchy)
+                return UiActionResult.Failure("the input is disabled (PBUiInput.disabled); a user could not type into it", null, imageRect);
+
             textField.Focus();
             textField.value = text;
 
@@ -279,6 +301,10 @@ namespace DCL.SyntheticInput.UiSimulation
                 return UiActionResult.Failure("the entity has no UiDropdown component");
 
             DropdownField dropdownField = element.Dropdown.DropdownField;
+
+            if (!dropdownField.enabledInHierarchy)
+                return UiActionResult.Failure("the dropdown is disabled (PBUiDropdown.disabled); a user could not open it",
+                    null, dropdownField.panel != null ? UiScreenGeometry.PanelRectToImageRect(dropdownField.panel, dropdownField.worldBound) : default(Rect));
 
             if (index < 0 || index >= dropdownField.choices.Count)
                 return UiActionResult.Failure($"index {index} is out of range (the dropdown has {dropdownField.choices.Count} options)");
@@ -345,10 +371,24 @@ namespace DCL.SyntheticInput.UiSimulation
             return true;
         }
 
-        /// <summary>Fills the reusable pointer data at the point and runs the occlusion pre-check.</summary>
+        /// <summary>Fills the reusable pointer data at the point and runs the interactable and occlusion pre-checks.</summary>
         private bool PrepareUguiPointer(GameObject target, Vector2 screenPoint, bool force, out UiActionResult blockedResult)
         {
             blockedResult = default(UiActionResult);
+
+            // A disabled Selectable swallows the events its own handlers receive (Button.OnPointerClick starts with
+            // an IsInteractable guard), so synthesizing them would report a click that did nothing. IsInteractable
+            // also accounts for an ancestor CanvasGroup that disables the subtree. force does not apply: it bypasses
+            // the occlusion check, and there is nothing to bypass here — the element is inert for a user too.
+            var selectable = target.GetComponent<Selectable>();
+
+            if (selectable != null && !selectable.IsInteractable())
+            {
+                blockedResult = UiActionResult.Failure("the element is not interactable (disabled by the client, or inside a CanvasGroup that is)",
+                    null, UiScreenGeometry.ImageRectOf((RectTransform)target.transform));
+
+                return false;
+            }
 
             pointerEventData.Reset();
             pointerEventData.position = screenPoint;
@@ -362,8 +402,11 @@ namespace DCL.SyntheticInput.UiSimulation
 
             if (!topHit && !force)
             {
+                // A cover is often invisible: a fully transparent client surface with raycastTarget on takes the
+                // click exactly as an opaque one would, so an agent looking at a screenshot sees nothing there.
                 blockedResult = blocker != null
-                    ? UiActionResult.Failure("another element covers the target at its center", PathOf(blocker.transform), UiScreenGeometry.ImageRectOf((RectTransform)target.transform))
+                    ? UiActionResult.Failure("another element covers the target at its center (a cover can be fully transparent and still take the click); pass force to click through it",
+                        PathOf(blocker.transform), UiScreenGeometry.ImageRectOf((RectTransform)target.transform))
                     : UiActionResult.Failure("nothing interactable raycasts at the target's center (is its raycastTarget off, or the element off-screen?)");
 
                 return false;
@@ -436,11 +479,15 @@ namespace DCL.SyntheticInput.UiSimulation
             if (BlockedBy != null)
                 json["blockedBy"] = BlockedBy;
 
+            // The screen is stated unconditionally: it is the space every coordinate in this payload (and every
+            // coordinate a caller passes back) is expressed in, and it is knowable even when no element was
+            // resolved — a result that omits it forces the caller to guess the frame of reference.
+            json["screen"] = UiDiscovery.ScreenJson();
+
             if (ScreenRect != default(Rect))
             {
                 json["screenRect"] = UiDiscovery.RectJson(ScreenRect);
                 json["center"] = UiDiscovery.CenterJson(ScreenRect);
-                json["screen"] = UiDiscovery.ScreenJson();
             }
 
             return json;

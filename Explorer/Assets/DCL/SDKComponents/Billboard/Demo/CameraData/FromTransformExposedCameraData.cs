@@ -18,11 +18,12 @@ namespace DCL.Billboard.Demo.CameraData
         public CanBeDirty<CameraType> CameraType { get; }
         public CanBeDirty<bool> PointerIsLocked { get; }
         public CumulativePointerDelta AccumulatedPointerDelta => default;
+        public Vector2 PointerScreenPosition => default;
         public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
         public CinemachineBrain? CinemachineBrain { get; set; }
         public CameraMode CameraMode { get; set; }
 
-        public FromTransformExposedCameraData() : this((Camera.main ? Camera.main : throw new NullReferenceException("Camera not found"))!) { }
+        public FromTransformExposedCameraData() : this(Camera.main ? Camera.main : throw new NullReferenceException("Camera not found")) { }
 
         public FromTransformExposedCameraData(Camera camera) : this(camera.transform, ECSComponents.CameraType.CtCinematic, false) { }
 

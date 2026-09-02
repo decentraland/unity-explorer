@@ -107,14 +107,15 @@ namespace DCL.SyntheticInput
         ///         The gesture a human paints with: press a pointer button on a target, turn the camera while it is
         ///         held, release. The press is what arms a scene (it lands entity-bound on the aimed target under
         ///         the real qualification gates), and the camera rotation is what sweeps the pointer ray a scene
-        ///         samples — <c>PrimaryPointerInfo.WorldRayDirection</c> is built from the camera, so turning the
-        ///         camera moves it whether the cursor is free or locked.
+        ///         samples — <c>PrimaryPointerInfo.WorldRayDirection</c> is the ray through the pointer's pixel, so
+        ///         turning the camera under a parked pointer drags that ray across the world.
         ///     </para>
         ///     <para>
-        ///         No aim is posted between the legs: for the duration of the sweep the reticle is the cursor's own,
-        ///         so the sampled ray follows the camera rather than staying pinned to the pressed target. A press
-        ///         that was never delivered aborts the gesture — turning the camera with nothing held is not the
-        ///         gesture that was asked for, and releasing a button that never went down would fake a delivery.
+        ///         No aim is posted between the legs, so the ray is free to follow the camera instead of staying
+        ///         pinned to the pressed target; what holds it steady is the pointer itself, parked at the pressed
+        ///         pixel by <c>SyntheticPointerHold</c> until the release. A press that was never delivered aborts
+        ///         the gesture — turning the camera with nothing held is not the gesture that was asked for, and
+        ///         releasing a button that never went down would fake a delivery.
         ///     </para>
         /// </summary>
         public async UniTask<SyntheticSweepResult> SweepAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,

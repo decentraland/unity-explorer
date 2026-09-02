@@ -16,8 +16,9 @@ namespace DCL.McpServer.Tools
     /// <summary>
     ///     The held-and-turn gesture, composed by <see cref="SyntheticInputAgent.SweepAsync" /> from a press, a
     ///     camera-look hold and a release. This is the only way a driver can sweep the pointer ray a scene samples
-    ///     (<c>PrimaryPointerInfo.WorldRayDirection</c>, built from the camera): dragging the virtual mouse across
-    ///     the world pans the camera instead, exactly as a human's held-button drag does.
+    ///     (<c>PrimaryPointerInfo.WorldRayDirection</c>, the ray through the pointer's pixel, which the press
+    ///     parks on the target while the camera turns under it): dragging the virtual mouse across the world pans
+    ///     the camera instead, exactly as a human's held-button drag does.
     /// </summary>
     public class SweepPointerTool : McpTool
     {
@@ -46,10 +47,12 @@ namespace DCL.McpServer.Tools
         public override string Description =>
             "Press a pointer button on a scene entity, turn the camera while it is held, then release — the gesture a "
             + "human makes to drag a pointer across the world (painting, dragging a held target, sweeping a ray). The "
-            + "press arms scenes that watch for a pointer-down, and the camera turn is what moves the ray a scene reads "
-            + "from PrimaryPointerInfo; deltaX/deltaY/seconds behave exactly as in camera_look. Check pressed.hit: a "
-            + "press that landed on nothing armed nothing, and the sweep then turned the camera with nothing held. "
-            + "Use click_entity for a click in place, and ui_drag for dragging inside UI.";
+            + "press arms scenes that watch for a pointer-down and parks the pointer on the target, and the camera turn "
+            + "is what then drags the ray a scene reads from PrimaryPointerInfo across the world; deltaX/deltaY/seconds "
+            + "behave exactly as in camera_look. Check pressed.hit: a press that landed on nothing armed nothing, and "
+            + "the sweep then turned the camera with nothing held. Point the camera at the target first (look_at): only "
+            + "a press that lands on screen parks the pointer, and a sweep with no parked pointer turns the camera "
+            + "without dragging anything. Use click_entity for a click in place, and ui_drag for dragging inside UI.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Number("deltaX", "Horizontal look speed while the button is held, in mouse-delta units per frame: positive turns right.", isRequired: true)

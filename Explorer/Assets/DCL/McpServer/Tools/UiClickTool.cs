@@ -88,9 +88,11 @@ namespace DCL.McpServer.Tools
                 if (!uiAutomation.Discovery.TryResolve(in address, out GameObject? target, out string? failure))
                     return McpToolResult.Error(failure!);
 
+                var rectTransform = (RectTransform)target!.transform;
+
                 result = device
-                    ? await RunDeviceClickAsync(UiScreenGeometry.ScreenCenterOf((RectTransform)target!.transform), button, timeoutSec, ct)
-                    : uiAutomation.Simulator.ClickUgui(target!, ToInputButton(button), force);
+                    ? await RunDeviceClickAsync(UiScreenGeometry.ScreenCenterOf(rectTransform), UiScreenGeometry.ImageRectOf(rectTransform), button, timeoutSec, ct)
+                    : uiAutomation.Simulator.ClickUgui(target, ToInputButton(button), force);
             }
 
             return McpToolResult.Json(result.ToJson(uiAutomation.CursorStateName()));
@@ -104,7 +106,8 @@ namespace DCL.McpServer.Tools
         /// </summary>
         private async UniTask<UiActionResult> RunDeviceClickOnSdkAsync(SdkUiElement element, ClickButton button, float timeoutSec, CancellationToken ct)
         {
-            UiActionResult result = await RunDeviceClickAsync(SdkScreenCenter(element), button, timeoutSec, ct);
+            Rect imageRect = SdkImageRect(element);
+            UiActionResult result = await RunDeviceClickAsync(UiScreenGeometry.ImageToScreenPoint(imageRect.center), imageRect, button, timeoutSec, ct);
 
             if (!result.Ok)
                 return result;
@@ -124,7 +127,12 @@ namespace DCL.McpServer.Tools
             return result;
         }
 
-        private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, ClickButton button, float timeoutSec, CancellationToken ct)
+        /// <summary>
+        ///     Replays the click through the virtual mouse. The element's rect travels with the result: the device
+        ///     path resolved the very same element the semantic path does, so hiding its coordinates would make the
+        ///     two paths answer differently about where the click landed.
+        /// </summary>
+        private async UniTask<UiActionResult> RunDeviceClickAsync(Vector2 screenCenter, Rect imageRect, ClickButton button, float timeoutSec, CancellationToken ct)
         {
             UiGestureResult gesture = await uiAutomation.RunGestureAsync(new UiDeviceGestureRequest
             {
@@ -134,15 +142,12 @@ namespace DCL.McpServer.Tools
             }, timeoutSec, ct);
 
             return gesture.Ok
-                ? UiActionResult.Success(default(Rect))
-                : UiActionResult.Failure(gesture.FailureReason ?? "the device click failed");
+                ? UiActionResult.Success(imageRect)
+                : UiActionResult.Failure(gesture.FailureReason ?? "the device click failed", null, imageRect);
         }
 
-        private static Vector2 SdkScreenCenter(in SdkUiElement element)
-        {
-            Rect imageRect = UiScreenGeometry.PanelRectToImageRect(element.Transform.Transform.panel, element.Transform.Transform.worldBound);
-            return UiScreenGeometry.ImageToScreenPoint(imageRect.center);
-        }
+        private static Rect SdkImageRect(in SdkUiElement element) =>
+            UiScreenGeometry.PanelRectToImageRect(element.Transform.Transform.panel, element.Transform.Transform.worldBound);
 
         private static PointerEventData.InputButton ToInputButton(ClickButton button) =>
             button switch
