@@ -55,8 +55,6 @@ namespace DCL.Diagnostics.Sentry
                 SentryEvent se = new SentryEvent(e);
                 // se.Fingerprint = FINGER_PRINT;
                 se.SetTag("loading_stage", e.LoadingStage);
-                se.SetTag("session_age", SessionAgeBucket(e.SessionAgeSeconds));
-                se.SetExtra("session_age_seconds", e.SessionAgeSeconds);
 
 #if UNITY_STANDALONE_WIN
                 Option<DumpEntry> deepest = DeepestDump(e.DumpFileEntries);
@@ -75,18 +73,6 @@ namespace DCL.Diagnostics.Sentry
 #endif
             };
         }
-
-        private static string SessionAgeBucket(int seconds) =>
-            seconds switch
-            {
-                < 0 => "unknown",
-                < 60 => "under_1min",
-                < 180 => "1_3min",
-                < 300 => "3_5min",
-                < 1800 => "5_30min",
-                < 7200 => "30min_2h",
-                _ => "over_2h",
-            };
 
 #if UNITY_STANDALONE_WIN
         private static Option<DumpEntry> DeepestDump(IReadOnlyList<Result<DumpEntry>> entries)
@@ -162,7 +148,6 @@ namespace DCL.Diagnostics.Sentry
         protected void Report(IReadOnlyList<Result<DumpEntry>> collectedDumpEntries)
         {
             string loadingStage = CurrentLoadingStage.Value;
-            int sessionAgeSeconds = SessionAgeSeconds();
 
             System.Text.StringBuilder sb = new ();
             sb.Append("DclApplication not responding at ").Append(loadingStage).Append(": ");
@@ -192,29 +177,15 @@ namespace DCL.Diagnostics.Sentry
             logger?.LogInfo("Detected an DclAnr event: {0}", message);
 
 #if UNITY_STANDALONE_WIN
-            var exception = new DclApplicationNotRespondingException(message, loadingStage, sessionAgeSeconds, collectedDumpEntries);
+            var exception = new DclApplicationNotRespondingException(message, loadingStage, collectedDumpEntries);
 #else
-            var exception = new DclApplicationNotRespondingException(message, loadingStage, sessionAgeSeconds);
+            var exception = new DclApplicationNotRespondingException(message, loadingStage);
 #endif
 
             exception.SetSentryMechanism(MECHANISM, "Main thread unresponsive.", false);
             OnApplicationNotResponding.Invoke(this, exception);
         }
 
-        /// <summary>
-        ///     Read through Process rather than Time.realtimeSinceStartup
-        ///     because it could run on the thread-pool, where Unity APIs are
-        ///     unavailable. Returns -1 when the OS refuses the query.
-        /// </summary>
-        private static int SessionAgeSeconds()
-        {
-            try
-            {
-                using Process process = Process.GetCurrentProcess();
-                return (int)(DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalSeconds;
-            }
-            catch (Exception) { return -1; }
-        }
     }
 
     public readonly struct DumpEntry
