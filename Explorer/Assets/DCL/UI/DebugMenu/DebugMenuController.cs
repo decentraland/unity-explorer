@@ -363,6 +363,11 @@ namespace DCL.UI.DebugMenu
         {
             sidebarCollapsed = !sidebarCollapsed;
             ApplySidebarCollapsed();
+
+            // Collapsing hides the rows that open these panels, so close whichever one is open
+            // (Console / Scene Stats / AB Conversion). The Debug Panel is separate and left as-is.
+            if (sidebarCollapsed && visiblePanel != null)
+                TogglePanel(visiblePanel);
         }
 
         private void ApplySidebarCollapsed()
