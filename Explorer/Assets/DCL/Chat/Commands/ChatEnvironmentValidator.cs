@@ -6,33 +6,21 @@ namespace DCL.Chat.Commands
 {
     public class ChatEnvironmentValidator
     {
-        private readonly DecentralandEnvironment dclEnvironment;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        public ChatEnvironmentValidator(DecentralandEnvironment dclEnvironment)
+        public ChatEnvironmentValidator(IDecentralandUrlsSource decentralandUrlsSource)
         {
-            this.dclEnvironment = dclEnvironment;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public Result ValidateTeleport(string realmToTeleportTo)
         {
-            switch (dclEnvironment)
-            {
-                case DecentralandEnvironment.Today:
-                    return Result.ErrorResult(
-                        "🔴 Error. You cannot change realms in the Today environment. Please restart DCL with the desired environment");
-                case DecentralandEnvironment.Zone:
-                    return HostHasSuffix(realmToTeleportTo, IDecentralandUrlsSource.ZONE_DOMAIN)
-                        ? Result.SuccessResult()
-                        : Result.ErrorResult(
-                            "🔴 Error. You cannot teleport to other realms that are not Zone in Zone environment. Please restart DCL with the desired environment");
-                case DecentralandEnvironment.Org:
-                    return HostHasSuffix(realmToTeleportTo, IDecentralandUrlsSource.ORG_DOMAIN)
-                        ? Result.SuccessResult()
-                        : Result.ErrorResult(
-                            "🔴 Error. You cannot teleport to other realms that are not Org or World in Org environment. Please restart DCL with the desired environment");
-            }
-
-            return Result.SuccessResult();
+            // Every environment — the decentraland ones and a --base-domain deployment alike — accepts exactly
+            // the realms under its own base domain, so one check covers them all.
+            return HostHasSuffix(realmToTeleportTo, decentralandUrlsSource.BaseDomain)
+                ? Result.SuccessResult()
+                : Result.ErrorResult(
+                    $"🔴 Error. You cannot teleport to realms outside {decentralandUrlsSource.BaseDomain}. Please restart DCL with the desired environment");
         }
 
         /// <summary>

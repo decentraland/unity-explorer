@@ -9,6 +9,7 @@ namespace DCL.MarketplaceCredits
         public const string STATUS_PROCESSING = "processing";
         public const string STATUS_CREDITED = "credited";
         public const string STATUS_FAILED = "failed";
+        public const string STATUS_ABANDONED = "abandoned";
 
         public string status;
 

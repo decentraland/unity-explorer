@@ -334,6 +334,7 @@ namespace Global.Dynamic
             bool includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends);
             bool includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MarketplaceCredits);
             bool includeBannedUsersFromScene = FeaturesRegistry.Instance.IsEnabled(FeatureId.BannedUsersFromScene);
+            bool includeBugReport = FeaturesRegistry.Instance.IsEnabled(FeatureId.BugReport);
 
             var moderationDataProvider = new ModerationDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
@@ -397,7 +398,7 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData,
                 placesAndEventsContainer.PlacesAPIService,
-                bootstrapContainer.Environment,
+                bootstrapContainer.EthereumNetwork,
                 bootstrapContainer.Analytics.Controller,
                 localSceneDevelopment,
                 dynamicWorldParams.EnableAnalytics);
@@ -439,7 +440,7 @@ namespace Global.Dynamic
             MarketplaceCreditsAPIClient marketplaceCreditsApiClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var marketplaceShopApiClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.Environment);
+            var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.EthereumNetwork);
 
             CreditsFeatureAccess.Initialize(new CreditsFeatureAccess(identityCache, ct));
 
@@ -531,7 +532,7 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, uiShellContainer.EventSystem, staticContainer.ScenesCache, uiShellContainer.MvcManager, menusAccessFacade, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 wearableContainer.CreateWearablePlugin(staticContainer, bootstrapContainer),
-                wearableContainer.CreateEmotePlugin(staticContainer, bootstrapContainer, assetsProvisioner, debugBuilder, uiShellContainer, profileContainer, commsContainer,
+                wearableContainer.CreateEmotePlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, profileContainer, commsContainer,
                     multiplayerEmotesMessageBus, globalWorld, playerEntity),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
@@ -779,7 +780,13 @@ namespace Global.Dynamic
                     marketplaceCreditsApiClient,
                     identityCache,
                     webBrowser,
-                    staticContainer.ImageControllerProvider),
+                    staticContainer.ImageControllerProvider,
+                    characterPreviewFactory,
+                    characterPreviewEventBus,
+                    profileContainer.SelfProfile,
+                    profileContainer.ProfileRepositoryWrapper,
+                    globalWorld,
+                    wearableContainer.WearableCatalog),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
@@ -893,7 +900,7 @@ namespace Global.Dynamic
                     localSceneDevelopment));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
-                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
+                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
@@ -952,6 +959,20 @@ namespace Global.Dynamic
                     wearableContainer.ThumbnailProvider,
                     cameraReelContainer.GalleryEventBus
                 ));
+
+            if (includeBugReport)
+                globalPlugins.Add(new BugReportPlugin(
+                    assetsProvisioner,
+                    uiShellContainer.MvcManager,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    profileContainer.SelfProfile,
+                    staticContainer.InputBlock,
+                    globalWorld,
+                    playerEntity,
+                    new BugReportSessionContext(staticContainer.ScenesCache, appArgs),
+                    debugBuilder,
+                    staticContainer.LoadingStatus));
 
             if (includeMarketplaceCredits)
             {

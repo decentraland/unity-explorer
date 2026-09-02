@@ -106,7 +106,7 @@ namespace DCL.Profiling.ECS
                          .AddCustomMarker("Min FPS (last 256 ticks):", stringBindings.MinFps)
                          .AddCustomMarker("Max FPS (last 256 ticks):", stringBindings.MaxFps)
                          .AddCustomMarker("Hiccups (last 256 ticks):", stringBindings.Hiccups)
-                         .AddControl(new DebugLineChartDef(fpsChart, "Tick FPS", new Color(0.18f, 0.80f, 0.44f), DebugLongMarkerDef.Unit.NoFormat), null)
+                         .AddControl(new DebugLineChartDef(fpsChart, "Tick FPS", new Color(0.18f, 0.80f, 0.44f)), null)
                          .AddCustomMarker("Bytes from scene:", stringBindings.BytesFromTotal)
                          .AddCustomMarker("Bytes/s from scene:", stringBindings.BytesFromPerSec)
                          .AddControl(new DebugLineChartDef(bytesFromChart, "Bytes/tick from scene", new Color(0.20f, 0.60f, 0.86f), DebugLongMarkerDef.Unit.Bytes), null)
@@ -114,7 +114,7 @@ namespace DCL.Profiling.ECS
                          .AddCustomMarker("Msgs/s from scene:", stringBindings.MessagesFromPerSec)
                          .AddCustomMarker("Msgs/call min/max from scene:", stringBindings.MessagesFromMinMax)
                          .AddCustomMarker("Msg hiccups from scene:", stringBindings.MessagesFromHiccups)
-                         .AddControl(new DebugLineChartDef(messagesFromChart, "Msgs/tick from scene", new Color(0.40f, 0.80f, 0.95f), DebugLongMarkerDef.Unit.NoFormat), null)
+                         .AddControl(new DebugLineChartDef(messagesFromChart, "Msgs/tick from scene", new Color(0.40f, 0.80f, 0.95f)), null)
                          .AddCustomMarker("Bytes to scene:", stringBindings.BytesToTotal)
                          .AddCustomMarker("Bytes/s to scene:", stringBindings.BytesToPerSec)
                          .AddControl(new DebugLineChartDef(bytesToChart, "Bytes/tick to scene", new Color(0.91f, 0.30f, 0.55f), DebugLongMarkerDef.Unit.Bytes), null)
@@ -122,7 +122,7 @@ namespace DCL.Profiling.ECS
                          .AddCustomMarker("Msgs/s to scene:", stringBindings.MessagesToPerSec)
                          .AddCustomMarker("Msgs/call min/max to scene:", stringBindings.MessagesToMinMax)
                          .AddCustomMarker("Msg hiccups to scene:", stringBindings.MessagesToHiccups)
-                         .AddControl(new DebugLineChartDef(messagesToChart, "Msgs/tick to scene", new Color(0.98f, 0.55f, 0.75f), DebugLongMarkerDef.Unit.NoFormat), null);
+                         .AddControl(new DebugLineChartDef(messagesToChart, "Msgs/tick to scene", new Color(0.98f, 0.55f, 0.75f)), null);
         }
 
         protected override void Update(float t)

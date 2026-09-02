@@ -8,6 +8,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
         PendingTimeout,
         Credited,
         Failed,
+        Abandoned,
     }
 
     public readonly struct CreditsTopUpStatus
@@ -52,5 +53,8 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
 
         public static CreditsTopUpStatus GrantFailed(CreditPack pack, string orderId, string? errorMessage) =>
             new (CreditsTopUpStage.Failed, pack, orderId, errorMessage: errorMessage);
+
+        public static CreditsTopUpStatus Abandoned(CreditPack pack, string orderId) =>
+            new (CreditsTopUpStage.Abandoned, pack, orderId);
     }
 }

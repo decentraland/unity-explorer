@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.DecentralandUrls
@@ -12,11 +13,28 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         /// </summary>
         const string ORG_DOMAIN = "decentraland.org";
         const string ZONE_DOMAIN = "decentraland.zone";
-        const string TODAY_DOMAIN = "decentraland.today";
 
         // IReadOnlyList, not string[]: the array contents would otherwise be writable by any caller, and these gate
         // host-trust checks (SEC-019/020).
-        static readonly IReadOnlyList<string> ALL_DOMAINS = new[] { ORG_DOMAIN, ZONE_DOMAIN, TODAY_DOMAIN };
+        static readonly IReadOnlyList<string> ALL_DOMAINS = new[] { ORG_DOMAIN, ZONE_DOMAIN };
+
+        /// <summary>
+        ///     Whether <paramref name="host" /> sits strictly below <paramref name="domain" />
+        ///     ("worlds-content-server.decentraland.org" under "decentraland.org"). The '.' boundary check is what
+        ///     rejects lookalikes such as "decentraland.org.attacker.com" and "evil-decentraland.org". Pass a parsed
+        ///     host — this does no url parsing, so a caller handing it an authority could be spoofed through userinfo.
+        /// </summary>
+        static bool IsSubdomainOf(string host, string domain) =>
+            host.Length > domain.Length
+            && host[host.Length - domain.Length - 1] == '.'
+            && host.EndsWith(domain, StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        ///     <see cref="IsSubdomainOf" />, plus the domain itself. Use this where the registrable domain is a host in
+        ///     its own right; prefer <see cref="IsSubdomainOf" /> where only subdomains should carry trust.
+        /// </summary>
+        static bool IsHostWithinDomain(string host, string domain) =>
+            string.Equals(host, domain, StringComparison.OrdinalIgnoreCase) || IsSubdomainOf(host, domain);
 
         const string EXPLORER_LATEST_RELEASE_URL = "https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/releases/latest.json";
         const string LAUNCHER_DOWNLOAD_URL = "https://explorer-artifacts.decentraland.org/launcher-rust";
@@ -28,6 +46,16 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ///     .claude/skills/mcp-scene-iteration/ — keep in sync.
         /// </summary>
         const string LOCAL_MCP_ENDPOINT_URL = "http://127.0.0.1:{0}/unity-explorer-mcp";
+
+        /// <summary>
+        ///     The base domain every backend host of this client sits under: one of <see cref="ORG_DOMAIN" />,
+        ///     <see cref="ZONE_DOMAIN" /> or, for
+        ///     <see cref="DecentralandEnvironment.Custom" />, the domain supplied via <c>--base-domain</c>.
+        ///     Anything that needs the domain as a value - a host-trust suffix check, a comms hostname - must read
+        ///     it here rather than restate a literal, so a custom deployment is not silently compared against
+        ///     <c>decentraland.*</c>.
+        /// </summary>
+        string BaseDomain { get; }
 
         /// <summary>
         ///     Get a raw url without caching at any moment (without dependency on FF)

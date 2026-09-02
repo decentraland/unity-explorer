@@ -26,8 +26,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string ANALYTICS_STEP_CHECKOUT = "checkout";
         private const string ANALYTICS_STEP_GRANT = "grant";
         private const string ANALYTICS_ERROR_GRANT_FAILED = "grant_failed";
+        private const string ANALYTICS_ABANDONED = "abandoned";
         private const string PACKS_LOAD_FAILED_REQUEST = "request_failed";
         private const string PACKS_LOAD_FAILED_EMPTY = "empty_response";
+        private const string PURCHASE_CANCELLED_TEXT = "Purchase cancelled — you were not charged.";
 
         private readonly ICreditsTopUpService topUpService;
         private readonly MarketplaceCreditsAPIClient creditsApiClient;
@@ -71,6 +73,16 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         {
             topUpService.StatusChanged -= OnServiceStatusChanged;
             lifeCts?.SafeCancelAndDispose();
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.PacksLoadingSpinner.SetActive(true);
+            viewInstance.PacksErrorContainer.SetActive(false);
+            HideAllPackItems();
         }
 
         protected override void OnViewShow()
@@ -192,13 +204,13 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
 
                 packItem.ConfigureImageController(imageControllerProvider);
                 packItem.SetupImage(pack.ImageUrl);
-
-                packItem.gameObject.SetActive(true);
             }
 
             if (packsData.Length > slots.Length)
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE,
                     $"Server returned {packsData.Length} credit packs but only {slots.Length} UI slots exist; extra packs are not shown.");
+
+            viewInstance.AnimatePackItemsPopIn(count);
         }
 
         private void HideAllPackItems()
@@ -262,7 +274,12 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                             status.CheckoutError != null ? ANALYTICS_STEP_CHECKOUT : ANALYTICS_STEP_GRANT,
                             MapAnalyticsErrorCode(status),
                             status.Pack);
-
+                        break;
+                    case CreditsTopUpStage.Abandoned:
+                        BuyCreditsFailed?.Invoke(
+                            ANALYTICS_STEP_GRANT,
+                            ANALYTICS_ABANDONED,
+                            status.Pack);
                         break;
                 }
 
@@ -298,6 +315,10 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                     (string reason, bool allowRetry) = MapFailureCopy(status);
                     viewInstance.FailedReasonText.text = reason;
                     viewInstance.RetryButton.gameObject.SetActive(allowRetry);
+                    break;
+                case CreditsTopUpStage.Abandoned:
+                    viewInstance.FailedReasonText.text = PURCHASE_CANCELLED_TEXT;
+                    viewInstance.RetryButton.gameObject.SetActive(true);
                     break;
             }
         }
@@ -357,6 +378,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 CreditsTopUpStage.PendingTimeout => ModalState.Pending,
                 CreditsTopUpStage.Credited => ModalState.Success,
                 CreditsTopUpStage.Failed => ModalState.Failed,
+                CreditsTopUpStage.Abandoned => ModalState.Failed,
                 _ => ModalState.PackSelection,
             };
 

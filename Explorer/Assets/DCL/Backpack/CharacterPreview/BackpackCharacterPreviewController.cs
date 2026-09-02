@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
@@ -15,7 +14,6 @@ using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using Utility;
-using Random = UnityEngine.Random;
 
 namespace DCL.Backpack.CharacterPreview
 {
@@ -77,7 +75,7 @@ namespace DCL.Backpack.CharacterPreview
             }
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
             base.Dispose();
 
@@ -122,7 +120,7 @@ namespace DCL.Backpack.CharacterPreview
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            if (categoryEnum is AvatarWearableCategoryEnum c)
+            if (categoryEnum is { } c)
                 inputEventBus.OnChangePreviewFocus(c);
         }
 

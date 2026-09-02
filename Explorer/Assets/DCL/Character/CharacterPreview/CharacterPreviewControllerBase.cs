@@ -119,7 +119,7 @@ namespace DCL.CharacterPreview
             OnModelUpdated();
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             initialized = false;
             previewController?.Dispose();
@@ -223,7 +223,7 @@ namespace DCL.CharacterPreview
         /// Hides the character preview.
         /// </summary>
         /// <param name="triggerOnHideBusEvent">True for keeping the rest of preview controllers informed about this hiding.</param>
-        public void OnHide(bool triggerOnHideBusEvent = true)
+        public virtual void OnHide(bool triggerOnHideBusEvent = true)
         {
             if (initialized)
             {
@@ -291,6 +291,7 @@ namespace DCL.CharacterPreview
 
         private GameObject EnableSpinner()
         {
+            view.RawImage.DOKill();
             profileColor = view.RawImage.color;
             profileColor.a = 0;
             view.RawImage.color = profileColor;
