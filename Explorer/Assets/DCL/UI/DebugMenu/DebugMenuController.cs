@@ -21,8 +21,6 @@ namespace DCL.UI.DebugMenu
         private const int METRICS_REFRESH_COOLDOWN_FRAMES = 30;
         private const float AB_PANEL_AUTO_CLOSE_LINGER_SECONDS = 3f;
 
-        // The sidebar is pinned at this distance from the screen's right edge (see .sidebar in DebugMenu.uss).
-        private const float SIDEBAR_RIGHT_MARGIN = 10f;
         private const float PANEL_SIDEBAR_GAP = 8f;
 
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
