@@ -69,18 +69,18 @@
       "hash": "2e993ff18f28c931602a07292df0b0804eebef99"
     },
     "com.dcl.gpui-assets": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets#chore/unity-6-5",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "4426b066d2c5e44c5938d395739384be58c5e81b"
+      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "com.decentraland.filebrowserpro": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro#chore/unity-6-5",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "4426b066d2c5e44c5938d395739384be58c5e81b"
+      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git#222d67ccc289337dadb5e8d96ee5b633dfb905b6",
@@ -135,7 +135,7 @@
       "dependencies": {}
     },
     "com.gurbu.gpui-pro": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#chore/unity-6-5",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -143,16 +143,16 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "4426b066d2c5e44c5938d395739384be58c5e81b"
+      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "com.gurbu.gpui-pro.terrain": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#chore/unity-6-5",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.gurbu.gpui-pro": "0.12.18"
       },
-      "hash": "4426b066d2c5e44c5938d395739384be58c5e81b"
+      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.7.0",
@@ -179,11 +179,11 @@
       "hash": "00cbf100acd16a024c6fb1acd2ba9a439dfa358b"
     },
     "com.renderheads.avpro.video-ultra": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo#chore/unity-6-5",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "4426b066d2c5e44c5938d395739384be58c5e81b"
+      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -511,11 +511,11 @@
       "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "decentraland.renderfeatures": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures#chore/unity-6-5",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "958192e5038b07ccb52d93823d2780ceecf7f403"
+      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
