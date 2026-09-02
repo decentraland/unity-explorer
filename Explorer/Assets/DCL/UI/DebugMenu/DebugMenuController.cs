@@ -201,6 +201,7 @@ namespace DCL.UI.DebugMenu
 
             UpdateAbConversionAttention();
             UpdateMetricsPanel();
+            UpdateDebugPanelButtonState();
         }
 
         /// <summary>
@@ -314,6 +315,16 @@ namespace DCL.UI.DebugMenu
             metricsPanelView.UpdateValues(in text);
         }
 
+        private void UpdateDebugPanelButtonState()
+        {
+            // Mirror the debug panel's actual visibility so the row stays in sync when the panel is
+            // closed from its own header, not just from this button. Gated until the container is
+            // built (shouldHideDebugPanelOwnToggle only clears once Container is available).
+            if (debugContainerBuilder == null || shouldHideDebugPanelOwnToggle) return;
+
+            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
+        }
+
         private void HideDebugPanelOwnToggle()
         {
             try
@@ -383,9 +394,9 @@ namespace DCL.UI.DebugMenu
         {
             if (debugContainerBuilder == null) return;
 
+            // The row's selected state is mirrored from the panel's visibility every frame in
+            // UpdateDebugPanelButtonState, so it only needs to flip the panel here.
             debugContainerBuilder.Container.TogglePanelVisibility();
-
-            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
         }
 
         private void TogglePanel(DebugPanelView panelView)
