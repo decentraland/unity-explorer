@@ -389,7 +389,7 @@ namespace DCL.UI.DebugMenu
             // The sidebar is drawn on top of the panels, so tuck each panel's right edge just left
             // of the sidebar's width — it varies with the labels, so a fixed offset would either
             // overlap or leave a gap.
-            float panelRight = SIDEBAR_RIGHT_MARGIN + evt.newRect.width + PANEL_SIDEBAR_GAP;
+            float panelRight = sidebar.resolvedStyle.right + evt.newRect.width + PANEL_SIDEBAR_GAP;
             consolePanelRoot.style.right = panelRight;
             abConversionPanelRoot.style.right = panelRight;
             metricsPanelRoot.style.right = panelRight;
