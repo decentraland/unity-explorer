@@ -17,7 +17,7 @@ inputs:
   body:
     description: >-
       Markdown for this section (inline badge + message). Rendered between the
-      section markers after dropping marker-shaped lines; bodies over 20000
+      section markers after dropping marker-shaped lines; bodies over 10000
       chars are truncated with fences/<details> re-closed and a truncation note.
       Callers must keep it under ~120KB: it travels as one env string, and
       Linux rejects any single env entry over 128KiB (E2BIG) before the
