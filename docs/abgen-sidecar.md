@@ -1,6 +1,6 @@
 # Local asset bundles via the abgen sidecar (`--local-ab`)
 
-**Branch:** `feat/local-ab-inproc-build` · **Pinned:** abgen v0.16.0 · **Status:** editor E2E green
+**Branch:** `feat/local-ab-inproc-build` · **Pinned:** abgen v0.17.11 · **Status:** editor E2E green
 on Windows (v16, Unity 6000.4.0f1); macOS player verified end-to-end; Windows player pending re-test
 after the CPU-encoder pin.
 
@@ -15,17 +15,19 @@ to raw GLTFs. Everything else is env-configured (preview content server as `ABGE
 preview server's path-derived hashes, persistent disk cache under `persistentDataPath/abgen-lsd`,
 and `ABGEN_GPU_BACKEND=off` — see below), health-checked, restarted up to 3× on unexpected exit.
 
-The lifecycle is split in two. `MainSceneLoader` only *reserves the loopback endpoint*
-(`AbgenSidecar.ReserveBaseUrl` — a URL, nothing else) — it must exist before the URL sources are
-built — and only in local scene development with `--local-ab` when no explicit
-`--optimized-assets-url` is given. Everything else lives in **`AbgenSidecarPlugin`**
-(PluginSystem/Global), registered by `DynamicWorldContainer` exclusively from that reserved URL:
-it resolves the realm through the canonical `RealmUrls.LocalSceneDevelopmentRealmAsync`, downloads
-the pinned binary when absent (`EnsurePinnedBinaryAsync`, awaited — the AB panel is auto-opened so
-the wait is visible), creates the sidecar (`TryCreate`), launches it
-(`StartAsync`), runs the whole-scene warm-up once healthy, and kills the child on dispose
-(global-plugin teardown in `MainSceneLoader.Shutdown()`). In every other mode the plugin is never
-constructed.
+The lifecycle is owned end to end by `MainSceneLoader` and is deliberately **serial where it
+matters**: in local scene development with `--local-ab` (and no explicit `--optimized-assets-url`),
+**`AbgenSidecarBootstrap`** is constructed and its `StartAsync` *awaited under the splash screen,
+before the URL sources are built*. It resolves the realm directly from the launch settings (LSD is
+only entered with a web-scheme realm param or the editor's Localhost preset), downloads the pinned
+binary when absent (`EnsurePinnedBinaryAsync` — the AB panel is auto-opened so the wait is
+visible), creates the sidecar (`TryCreate`), launches it and polls it to health (`StartAsync`).
+Only when it returns `true` — the server is provably serving — is its base URL passed into the URL
+sources as the optimized-assets override; on `false` the override is simply never set and the
+session is byte-for-byte production, with no correction step anywhere. The whole-scene warm-up
+then runs in the background (`WarmUpTask`), overlapping the rest of boot. The child is killed on
+dispose (`MainSceneLoader.Shutdown()`, registered as a quit-cleanup candidate). In every other
+mode no sidecar object is ever constructed.
 
 The sidecar's base URL becomes the optimized-assets source
 (`AssetBundlesCDN` / `LodGeneratorCDN` / `AssetBundleRegistry`): the server JIT-converts the local
@@ -40,8 +42,8 @@ manifest download removes ~3 s of scene-entry latency against a JIT-revalidating
 
 At boot the warm-up (`WarmUpLocalSceneAsync`) resolves the scene entity from the realm (`/about`
 `scenesUrn`, falling back to `localSceneParcels` + `POST /entities/active`) and requests its
-manifest, which makes abgen convert the whole scene in one pass — parallelized across files as of
-the pinned v0.16.0 (bounded file-level workers overlap one file's single-threaded fetch/parse/BC5/IO
+manifest, which makes abgen convert the whole scene in one pass — parallelized across files since
+v0.16.0 (bounded file-level workers overlap one file's single-threaded fetch/parse/BC5/IO
 phases with another file's core-parallel BC7 encode; `ABGEN_JIT_FILE_CONCURRENCY` caps the workers);
 `/progress/{entity}` is polled into `AbgenConversionMetrics` for the AB Conversion debug panel.
 
@@ -66,7 +68,7 @@ scene (the single-threaded valleys between BC7 bursts now overlap); peak RSS run
 
 ## Binary acquisition
 
-The binary is never embedded in the build. On first run `AbgenSidecarPlugin` downloads the
+The binary is never embedded in the build. On first run `AbgenSidecarBootstrap` downloads the
 **pinned release** into `persistentDataPath/abgen/bin/{version}/`, verified against its
 compile-time sha256, then starts the sidecar in the same session; download progress lands in the
 AB panel as milestone rows (25% steps). Only the pinned version is ever executed — upgrading
@@ -74,14 +76,15 @@ abgen requires a deliberate pin+checksum bump in `AbgenSidecar`, so a compromise
 cannot propagate to users on its own. `StreamingAssets/abgen(.exe)` acts as an explicit developer
 override when no pinned install exists.
 
-**Boot holds on readiness**: the scene's bundles-vs-GLTFs verdict is made once, at the scene's
+**Boot holds on the warm-up**: the scene's bundles-vs-GLTFs verdict is made once, at the scene's
 first manifest request, and a failure is cached for the session (`IrrecoverableFailures`). So
-`MainSceneLoader` awaits `DynamicWorldContainer.AbgenSidecarReadyAsync` before loading the
-starting realm (which is what starts scene loading): the plugin completes it when the sidecar is
-warm — whole-scene warm-up done — or has given up (no binary and the download failed, launch
-failure). First run therefore enters the world with bundles already served; outside
-LSD + `--local-ab` the task is pre-completed and boot is unaffected. The wait is absorbed under
-the splash screen, before the authentication screen.
+`MainSceneLoader` awaits `AbgenSidecarBootstrap.WarmUpTask` before loading the starting realm
+(which is what starts scene loading), so the first manifest request lands on converted bundles
+rather than a server mid-conversion; the warm-up's outcome carries no signal (a healthy server
+JIT-converts per request regardless), and the task is pre-completed when the server never came
+up. First run therefore enters the world with bundles already served; outside LSD + `--local-ab`
+no sidecar exists and boot is unaffected. Both waits — the serial health launch and this hold —
+are absorbed under the splash screen, before the authentication screen.
 
 ## Visibility
 

@@ -105,6 +105,7 @@ namespace DCL.PluginSystem.World
             PrepareGltfAssetLoadingSystem.InjectToWorld(
                 ref builder,
                 assetsCache,
+                gltfLoadCache,
                 sharedDependencies.SceneData,
                 new PrepareGltfAssetLoadingSystem.Options
                 {
