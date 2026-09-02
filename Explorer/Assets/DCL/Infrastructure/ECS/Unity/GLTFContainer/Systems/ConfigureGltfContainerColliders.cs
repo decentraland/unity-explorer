@@ -93,7 +93,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     MeshCollider newCollider = go.AddComponent<MeshCollider>();
 
                     // TODO Jobify: can be invoked from a worker thread
-                    Physics.BakeMesh(mesh.GetInstanceID(), false);
+                    Physics.BakeMesh(mesh.GetEntityId(), false);
 
                     newCollider.sharedMesh = mesh;
 

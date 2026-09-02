@@ -41,7 +41,7 @@ namespace ECS.Unity.GLTFContainer
 
         private static MeshCollider AddMeshCollider(MeshFilter meshFilter, GameObject go)
         {
-            Physics.BakeMesh(meshFilter.sharedMesh.GetInstanceID(), false);
+            Physics.BakeMesh(meshFilter.sharedMesh.GetEntityId(), false);
             MeshCollider newCollider = go.AddComponent<MeshCollider>();
             var renderer = go.GetComponent<MeshRenderer>();
 
