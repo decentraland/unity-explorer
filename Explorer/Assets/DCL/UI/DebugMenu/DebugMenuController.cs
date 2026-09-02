@@ -155,6 +155,7 @@ namespace DCL.UI.DebugMenu
         private void OnDisable()
         {
             logsHistory.LogsUpdated -= OnLogsUpdated;
+            consoleButton.clicked -= OnConsoleButtonClicked;
             abConversionButton.clicked -= OnAbConversionButtonClicked;
             metricsButton.clicked -= OnMetricsButtonClicked;
             collapseButton.clicked -= OnCollapseButtonClicked;
