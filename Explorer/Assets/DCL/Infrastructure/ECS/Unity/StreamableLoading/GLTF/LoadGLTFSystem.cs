@@ -118,7 +118,7 @@ namespace ECS.StreamableLoading.GLTF
                 // Ownership of gltfImport and rootContainer transfers to GLTFData — null out locals so the catch
                 // block does not double-dispose. Per-consumer ref counting: LoadSystemBase.ApplyLoadedResult
                 // calls cache.AddReference, and each consumer's GltfContainerAsset.Dispose dereferences.
-                var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
+                var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths, gltFastDownloadProvider.ExternalDependencies);
                 gltfImport = null;
                 rootContainer = null;
                 return new StreamableLoadingResult<GLTFData>(gltfData);

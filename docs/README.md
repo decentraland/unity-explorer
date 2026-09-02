@@ -85,7 +85,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Performance Benchmark](performance-benchmark.md)** — Generating PDF benchmark reports
 
 ## Build & CI
-- **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, and Unity Cloud
+- **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, Unity Cloud, and the app-local Visual C++ runtime
 - **[Unity Upgrades](unity-upgrades.md)** — Handling Unity version upgrades and CI images
 - **[Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md)** — Fixing missing UnityCI Docker images
 
