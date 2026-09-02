@@ -173,6 +173,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
 
             public event Action<Profile>? ProfilePropagated;
 
+            public Profile? OwnProfile => null;
+
             public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
             {
                 CapturedTokens.Add(ct);
@@ -198,6 +200,8 @@ namespace DCL.AuthenticationScreenFlow.Tests
             public int Calls { get; private set; }
 
             public event Action<Profile>? ProfilePropagated;
+
+            public Profile? OwnProfile => null;
 
             public UniTask<Profile?> ProfileAsync(CancellationToken ct)
             {
