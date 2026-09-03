@@ -193,20 +193,21 @@ jobs:
           # Query the run-scoped endpoint: the repo-wide /actions/artifacts list is
           # newest-first and page-limited, so a zip uploaded by a fast platform long
           # before the slow one finishes can fall off the first page and lose its
-          # "Download .zip" link in the comment.
-          WINDOWS_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/runs/${PREVIOUS_JOB_ID}/artifacts?per_page=100" \
-            --jq ".artifacts.[] |
-            select(.expired==false) |
-            select(.name==\"Decentraland_windows64\") |
-            .id")
+          # "Download .zip" link in the comment. The run list spans all re-run
+          # attempts, so a same-name artifact can appear once per attempt —
+          # max_by keeps only the newest and guarantees a single-line id.
+          RUN_ARTIFACTS=$(gh api "/repos/$OWNER/$REPO/actions/runs/${PREVIOUS_JOB_ID}/artifacts?per_page=100")
+          newest_artifact_id() {
+            jq -r --arg name "$1" \
+              '[.artifacts[] | select(.expired==false and .name==$name)] | max_by(.created_at) | .id // empty' \
+              <<< "$RUN_ARTIFACTS"
+          }
+
+          WINDOWS_ARTIFACT_ID=$(newest_artifact_id "Decentraland_windows64")
           echo "Windows Artifact ID: $WINDOWS_ARTIFACT_ID"
           echo "WINDOWS_ARTIFACT_ID=$WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
 
-          MAC_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/runs/${PREVIOUS_JOB_ID}/artifacts?per_page=100" \
-            --jq ".artifacts.[] |
-            select(.expired==false) |
-            select(.name==\"Decentraland_macos\") |
-            .id")
+          MAC_ARTIFACT_ID=$(newest_artifact_id "Decentraland_macos")
           echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
           echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"
 
