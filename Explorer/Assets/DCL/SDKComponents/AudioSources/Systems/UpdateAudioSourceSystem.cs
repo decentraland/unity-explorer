@@ -23,6 +23,11 @@ namespace DCL.SDKComponents.AudioSources
     [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem
     {
+        /// <summary>
+        ///     Seeking to the very end of a clip is an invalid FMOD position; keep the cursor this far before it.
+        /// </summary>
+        private const float CLIP_END_SEEK_MARGIN = 0.01f;
+
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IComponentPool<AudioSource> audioSourcesPool;
@@ -148,8 +153,16 @@ namespace DCL.SDKComponents.AudioSources
                     if (sdkComponent is {HasPlaying: true, Playing: true })
                     {
                         // LWW PUT with playing:true is an explicit retrigger — seek first so the cursor is correct.
+                        // CurrentTime arrives from the scene unvalidated: clamp it into the clip's seekable
+                        // range, otherwise FMOD rejects the seek ("An invalid seek position was passed").
                         if (sdkComponent.HasCurrentTime)
-                            audioSource.time = sdkComponent.CurrentTime;
+                        {
+                            float currentTime = sdkComponent.CurrentTime;
+
+                            audioSource.time = float.IsNaN(currentTime)
+                                ? 0f
+                                : Mathf.Clamp(currentTime, 0f, Mathf.Max(0f, audioSource.clip.length - CLIP_END_SEEK_MARGIN));
+                        }
 
                         audioSource.Play();
                     }
