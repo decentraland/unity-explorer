@@ -297,12 +297,6 @@ namespace Preview
 
             previewUIPresenter.ShowLoader(false);
 
-            // Only once the avatar is actually on screen - the hint points at something the user can
-            // reach. Marketplace and Builder are the two modes the Shop uses, and the only two where
-            // the pan and zoom it advertises are enabled at all.
-            previewUIPresenter.EnableTutorial(
-                PreviewConfiguration.Instance.Mode is PreviewMode.Marketplace or PreviewMode.Builder);
-
             _loading = false;
             mainCamera.cullingMask = -1; // Render everything
             avatarLoader.enabled = true; // Enables Update for Outline
