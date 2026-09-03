@@ -5,6 +5,9 @@
 }
 
 .nametag {
+    /* The default Advanced (HarfBuzz) generator has no sprite-asset emoji support, so emoji
+       render as tofu; only the Standard one resolves them through the PanelTextSettings fallback. */
+    -unity-text-generator: standard;
     position: absolute;
     flex-direction: column;
     border-top-left-radius: 15px;
