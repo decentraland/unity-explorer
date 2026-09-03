@@ -54,8 +54,7 @@ namespace DCL.Diagnostics.Sentry
             {
                 SentryEvent se = new SentryEvent(e);
 
-                // TODO: reassign fingerprint if needed
-                // se.Fingerprint = FINGER_PRINT;
+                se.Fingerprint = FINGER_PRINT;
                 se.SetTag("loading_stage", e.LoadingStage);
 
 #if UNITY_STANDALONE_WIN
