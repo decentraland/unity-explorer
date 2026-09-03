@@ -1,5 +1,8 @@
+using CommunicationData.URLHelpers;
 using DCL.FeatureFlags;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utilities;
 using DCL.Utility;
 using ECS;
 using NSubstitute;
@@ -474,6 +477,39 @@ namespace DCL.Browser.DecentralandUrls.Tests
 
             Assert.AreEqual("https://gk.example.com/get-scene-adapter", urlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter));
             Assert.AreEqual("https://gk.example.com/get-scene-adapter", urlsSource.Url(DecentralandUrl.LocalGateKeeperSceneAdapter));
+        }
+
+        [Test]
+        public void ResolveIdentityUrlsFromTheEnvironmentWhenTheRealmIsALocalScene()
+        {
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, RealmOfKind(RealmKind.LocalScene), ILaunchMode.LOCAL_SCENE_DEVELOPMENT);
+
+            Assert.AreEqual("https://peer.decentraland.zone/content/entities/", urlsSource.Url(DecentralandUrl.EntitiesDeployment));
+            Assert.AreEqual("https://peer.decentraland.zone/lambdas", urlsSource.Url(DecentralandUrl.Lambdas));
+        }
+
+        [TestCase(RealmKind.GenesisCity)]
+        [TestCase(RealmKind.World)]
+        public void ResolveIdentityUrlsFromTheRealmWhenItServesThem(RealmKind kind)
+        {
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, RealmOfKind(kind), ILaunchMode.PLAY);
+
+            Assert.AreEqual("http://127.0.0.1:8000/content/entities/", urlsSource.Url(DecentralandUrl.EntitiesDeployment));
+            Assert.AreEqual("http://127.0.0.1:8000/lambdas", urlsSource.Url(DecentralandUrl.Lambdas));
+        }
+
+        private static IRealmData RealmOfKind(RealmKind kind)
+        {
+            var ipfs = Substitute.For<IIpfsRealm>();
+            ipfs.EntitiesBaseUrl.Returns(URLDomain.FromString("http://127.0.0.1:8000/content/entities/"));
+            ipfs.LambdasBaseUrl.Returns(URLDomain.FromString("http://127.0.0.1:8000/lambdas"));
+
+            var realmData = Substitute.For<IRealmData>();
+            realmData.Configured.Returns(true);
+            realmData.Ipfs.Returns(ipfs);
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(kind));
+
+            return realmData;
         }
     }
 }
