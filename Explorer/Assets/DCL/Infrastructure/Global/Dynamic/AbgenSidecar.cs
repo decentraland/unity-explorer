@@ -35,7 +35,6 @@ namespace Global.Dynamic
     ///     (<see cref="EnsurePinnedBinaryAsync" />) and verified against its compile-time sha256. Only the
     ///     pinned version is ever executed — a compromised GitHub release cannot propagate here without a
     ///     deliberate pin+checksum bump in this file. StreamingAssets acts as an explicit developer override.
-    ///     An explicit --optimized-assets-url always takes precedence.
     /// </summary>
     public sealed class AbgenSidecar : IDisposable
     {

@@ -170,8 +170,6 @@ namespace Global.AppArgs
         /// </summary>
         public const string LOCAL_AB = "local-ab";
 
-        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
-
         /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
         public const string ABGEN_PIPELINE = "abgen-pipeline";
 

@@ -16,7 +16,7 @@ preview server's path-derived hashes, persistent disk cache under `persistentDat
 and `ABGEN_GPU_BACKEND=off` — see below), health-checked, restarted up to 3× on unexpected exit.
 
 The lifecycle is owned end to end by `MainSceneLoader` and is deliberately **serial where it
-matters**: in local scene development with `--local-ab` (and no explicit `--optimized-assets-url`),
+matters**: in local scene development with `--local-ab`,
 **`AbgenSidecarBootstrap`** is constructed and its `StartAsync` *awaited under the splash screen,
 before the URL sources are built*. It resolves the realm directly from the launch settings (LSD is
 only entered with a web-scheme realm param or the editor's Localhost preset), downloads the pinned
