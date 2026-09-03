@@ -16,6 +16,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.ColorComponent;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility.Arch;
 using static DCL.Nametags.SceneAvatarTagComponent;
@@ -23,11 +24,16 @@ using static DCL.Nametags.SceneAvatarTagComponent;
 namespace DCL.SDKComponents.AvatarNametag.Systems
 {
     /// <summary>
-    ///     Turns the scene-authored <see cref="PBAvatarNametag" /> into the global-world
-    ///     <see cref="SceneAvatarTagComponent" /> that draws the plate above an avatar's nametag.
-    ///     A target resolves for the local player (by CRDT id), a remote player (by <see cref="SDKProfile" />
-    ///     wallet) or a scene-spawned avatar (by its <see cref="SDKAvatarShapeComponent" /> global-world twin);
-    ///     on any other entity the component is a no-op.
+    ///     Turns the scene-authored <see cref="PBAvatarNametag" /> into
+    ///     the global-world  <see cref="SceneAvatarTagComponent" />
+    ///     that draws the plate above an avatar's nametag.
+    ///     A target resolves for:
+    ///     <list type="bullet">
+    ///         <item>the local player — by CRDT id;</item>
+    ///         <item>a remote player — by <see cref="SDKProfile" /> wallet;</item>
+    ///         <item>a scene-spawned avatar — by its <see cref="SDKAvatarShapeComponent" /> global-world twin.</item>
+    ///     </list>
+    ///     On any other entity the component is a no-op.
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]
@@ -37,6 +43,7 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World globalWorld;
         private readonly Entity globalPlayerEntity;
+        private readonly List<PendingScan> pendingScans = new ();
 
         internal PropagateSceneAvatarTagSystem(World world, ISceneStateProvider sceneStateProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld, Entity globalPlayerEntity) : base(world)
@@ -50,17 +57,13 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
         public void OnSceneIsCurrentChanged(bool isCurrent)
         {
             if (isCurrent)
-            {
-                // The plates were dropped on exit, so every write has to be replayed on re-entry.
                 MarkNametagsDirtyQuery(World);
-                return;
-            }
-
-            DropNametagQuery(World);
+            else
+                DropAllNametagsQuery(World);
         }
 
         public void FinalizeComponents(in Query query) =>
-            DropNametagQuery(World);
+            DropAllNametagsQuery(World);
 
         protected override void Update(float t)
         {
@@ -68,7 +71,14 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             HandleComponentRemovedQuery(World);
             HandleEntityDestructionQuery(World);
+
+            pendingScans.Clear();
             PropagateNametagQuery(World);
+
+            if (pendingScans.Count == 0) return;
+
+            MatchPendingPlayersQuery(World);
+            ResolvePendingScans();
         }
 
         [Query]
@@ -82,6 +92,9 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             DropNametag(entity, in applied);
 
         [Query]
+        private void DropAllNametags(Entity entity, in SceneAvatarTagApplied applied) =>
+            DropNametag(entity, in applied);
+
         private void DropNametag(Entity entity, in SceneAvatarTagApplied applied)
         {
             Entity target = applied.GlobalEntity;
@@ -96,8 +109,6 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
         {
             if (!pbNametag.IsDirty) return;
 
-            bool hasPlate = World.TryGet(entity, out SceneAvatarTagApplied applied);
-
             ResolveResult resolveResult = ResolveTarget(entity, in crdtEntity, out Entity target);
 
             // Ends the retry: nothing about this entity can turn it into an avatar anymore.
@@ -111,24 +122,64 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             if (resolveResult == ResolveResult.Pending)
                 return;
 
-            // Remote-player entity ids are recycled, so a re-resolve can land on a different avatar
-            // than the one currently wearing this scene entity's plate.
-            if (hasPlate && applied.GlobalEntity != target)
-                MarkPlateRemoving(applied.GlobalEntity);
+            if (resolveResult == ResolveResult.NeedsPlayerScan)
+            {
+                pendingScans.Add(new PendingScan(entity, crdtEntity));
+                return;
+            }
 
-            Color backgroundColor = pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR);
+            ApplyPlate(entity, pbNametag, target);
+        }
 
-            globalWorld.AddOrSet(target, new SceneAvatarTagComponent(
-                // Verbatim, no trimming: empty (bare plate) and spaces-only (widened plate) labels are meaningful.
-                pbNametag.Label,
-                pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
-                backgroundColor,
-                pbNametag.BorderColor.ToUnityColor(fallback: backgroundColor)));
+        [Query]
+        private void MatchPendingPlayers(Entity entity, in PlayerSceneCRDTEntity playerCrdtEntity)
+        {
+            for (var i = 0; i < pendingScans.Count; i++)
+            {
+                if (pendingScans[i].CrdtEntity.Id != playerCrdtEntity.CRDTEntity.Id) continue;
 
-            pbNametag.IsDirty = false;
+                PendingScan scan = pendingScans[i];
+                scan.PlayerEntity = entity;
+                pendingScans[i] = scan;
+            }
+        }
 
-            // Structural change last: it invalidates the component references this query holds.
-            World.AddOrSet(entity, new SceneAvatarTagApplied(target));
+        internal void ResolvePendingScans()
+        {
+            for (var i = 0; i < pendingScans.Count; i++)
+            {
+                PendingScan scan = pendingScans[i];
+
+                // ApplyPlate's structural changes relocate entities between entries, so the component
+                // is re-fetched instead of carried over from the collecting query.
+                if (!World.IsAlive(scan.SceneEntity) || !World.TryGet(scan.SceneEntity, out PBAvatarNametag? pbNametag) || pbNametag == null)
+                    continue;
+
+                // No player entity carries this id: it is a plain scene entity, or a player who left and
+                // handed the reserved id back to the pool.
+                if (scan.PlayerEntity == Entity.Null)
+                {
+                    pbNametag.IsDirty = false;
+                    continue;
+                }
+
+                string userId = World.TryGet(scan.PlayerEntity, out SDKProfile? bridgeProfile)
+                    ? bridgeProfile?.UserId ?? string.Empty
+                    : string.Empty;
+
+                ResolveResult resolveResult = ResolveByUserId(userId, out Entity target);
+
+                if (resolveResult == ResolveResult.Unreachable)
+                {
+                    pbNametag.IsDirty = false;
+                    continue;
+                }
+
+                if (resolveResult == ResolveResult.Pending)
+                    continue;
+
+                ApplyPlate(scan.SceneEntity, pbNametag, target);
+            }
         }
 
         [Query]
@@ -157,26 +208,17 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             if (World.Has<PBAvatarShape>(sceneEntity))
                 return ResolveResult.Pending;
 
-            string userId;
-
             // One player has two scene entities that share nothing but the CRDT id: the CRDT bridge's,
             // which the scene writes to, and the multiplayer bridge's, which holds the SDKProfile.
             if (World.TryGet(sceneEntity, out SDKProfile? ownProfile))
-                userId = ownProfile?.UserId ?? string.Empty;
-            else
-            {
-                var playerEntity = Entity.Null;
-                FindPlayerByCrdtIdQuery(World, in crdtEntity, ref playerEntity);
+                return ResolveByUserId(ownProfile?.UserId ?? string.Empty, out target);
 
-                // No player entity carries this id: it is a plain scene entity, or a player who left and
-                // handed the reserved id back to the pool.
-                if (playerEntity == Entity.Null)
-                    return ResolveResult.Unreachable;
+            return ResolveResult.NeedsPlayerScan;
+        }
 
-                userId = World.TryGet(playerEntity, out SDKProfile? bridgeProfile)
-                    ? bridgeProfile?.UserId ?? string.Empty
-                    : string.Empty;
-            }
+        private ResolveResult ResolveByUserId(string userId, out Entity target)
+        {
+            target = Entity.Null;
 
             // A player entity without a profile is mid-setup, not gone.
             if (string.IsNullOrEmpty(userId))
@@ -190,11 +232,25 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
             return ResolveResult.Resolved;
         }
 
-        [Query]
-        private void FindPlayerByCrdtId([Data] in CRDTEntity searchedId, [Data] ref Entity found, Entity e, in PlayerSceneCRDTEntity playerCrdtEntity)
+        private void ApplyPlate(Entity entity, PBAvatarNametag pbNametag, Entity target)
         {
-            if (playerCrdtEntity.CRDTEntity.Id == searchedId.Id)
-                found = e;
+            // Remote-player entity ids are recycled, so a re-resolve can land on a different avatar
+            // than the one currently wearing this scene entity's plate.
+            if (World.TryGet(entity, out SceneAvatarTagApplied applied) && applied.GlobalEntity != target)
+                MarkPlateRemoving(applied.GlobalEntity);
+
+            Color backgroundColor = pbNametag.BackgroundColor.ToUnityColor(fallback: NATIVE_BACKGROUND_COLOR);
+
+            globalWorld.AddOrSet(target, new SceneAvatarTagComponent(
+                pbNametag.Label,
+                pbNametag.LabelColor.ToUnityColor(fallback: NATIVE_TEXT_COLOR),
+                backgroundColor,
+                pbNametag.BorderColor.ToUnityColor(fallback: backgroundColor)));
+
+            pbNametag.IsDirty = false;
+
+            // Structural change last: it invalidates the component references this query holds.
+            World.AddOrSet(entity, new SceneAvatarTagApplied(target));
         }
 
         private void MarkPlateRemoving(Entity target)
@@ -216,6 +272,23 @@ namespace DCL.SDKComponents.AvatarNametag.Systems
 
             /// <summary>No avatar backs the scene entity, and none ever will.</summary>
             Unreachable,
+
+            /// <summary>Only a scan over the player entities can tell which of the other outcomes applies.</summary>
+            NeedsPlayerScan,
+        }
+
+        private struct PendingScan
+        {
+            public readonly Entity SceneEntity;
+            public readonly CRDTEntity CrdtEntity;
+            public Entity PlayerEntity;
+
+            public PendingScan(Entity sceneEntity, CRDTEntity crdtEntity)
+            {
+                SceneEntity = sceneEntity;
+                CrdtEntity = crdtEntity;
+                PlayerEntity = Entity.Null;
+            }
         }
 
         /// <summary>

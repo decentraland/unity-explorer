@@ -150,8 +150,8 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
         {
             // Arrange — the scene writes to the CRDT bridge's entity, while the SDKProfile lives on the
             // multiplayer bridge's separate one; the two share nothing but the CRDT id.
-            CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-                new PBAvatarNametag { Label = "Bronze", IsDirty = true });
+            var pbNametag = new PBAvatarNametag { Label = "Bronze", IsDirty = true };
+            CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, pbNametag);
 
             world.Create(
                 new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM)),
@@ -160,9 +160,62 @@ namespace DCL.SDKComponents.AvatarNametag.Tests
             // Act
             system.Update(0);
 
-            // Assert
+            // Assert — the write completes within the update that collected it, not a frame later.
             Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalRemoteEntity), Is.True);
             Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalRemoteEntity).Text, Is.EqualTo("Bronze"));
+            Assert.That(pbNametag.IsDirty, Is.False);
+        }
+
+        [Test]
+        public void ResolveEveryCollectedEntryInOneUpdate()
+        {
+            // Arrange
+            const string SECOND_WALLET = "0xcafebabe";
+            Entity secondGlobalEntity = globalWorld.Create();
+            entityParticipantTable.Register(SECOND_WALLET, secondGlobalEntity, RoomSource.Island);
+
+            CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                new PBAvatarNametag { Label = "Bronze", IsDirty = true });
+
+            CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1,
+                new PBAvatarNametag { Label = "Silver", IsDirty = true });
+
+            world.Create(
+                new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM)),
+                NewSdkProfile(REMOTE_WALLET));
+
+            world.Create(
+                new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1)),
+                NewSdkProfile(SECOND_WALLET));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(globalWorld.Get<SceneAvatarTagComponent>(globalRemoteEntity).Text, Is.EqualTo("Bronze"));
+            Assert.That(globalWorld.Get<SceneAvatarTagComponent>(secondGlobalEntity).Text, Is.EqualTo("Silver"));
+        }
+
+        [Test]
+        public void SurviveASceneEntityDeletedBetweenCollectionAndResolution()
+        {
+            // Arrange
+            Entity sceneEntity = CreateSceneEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                new PBAvatarNametag { Label = "Bronze", IsDirty = true });
+
+            world.Create(
+                new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM)),
+                NewSdkProfile(REMOTE_WALLET));
+
+            // Act — drive the phases by hand: the entity dies after the collecting query ran.
+            system.PropagateNametagQuery(world);
+            world.Destroy(sceneEntity);
+            system.MatchPendingPlayersQuery(world);
+            system.ResolvePendingScans();
+            system.Update(0);
+
+            // Assert — the dead entry is skipped and the next update runs clean.
+            Assert.That(globalWorld.Has<SceneAvatarTagComponent>(globalRemoteEntity), Is.False);
         }
 
         [Test]
