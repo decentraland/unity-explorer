@@ -145,7 +145,8 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController,
-                staticContainer.RealmData
+                staticContainer.RealmData,
+                allowInsecureLocalHttp: appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM)
             );
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), hardwareFingerprintProvider);

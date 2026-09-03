@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Networking;
+using Utility.Networking;
 
 namespace DCL.FeatureFlags
 {
@@ -34,6 +35,10 @@ namespace DCL.FeatureFlags
             {
                 // At this moment IWebRequestController can't be injected so perform a "raw" unity request
                 using UnityWebRequest request = UnityWebRequest.Get(fetchUrl);
+                CertificateHandler? certificateHandler = LocalCertificateValidation.CreateCertificateHandler(request.url);
+                if (certificateHandler != null)
+                    request.certificateHandler = certificateHandler;
+
                 request.SetRequestHeader("X-Debug", "false");
 
                 request.timeout = FETCH_TIMEOUT_SECONDS;

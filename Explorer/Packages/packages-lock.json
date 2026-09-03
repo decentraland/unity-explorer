@@ -83,7 +83,7 @@
       "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git#222d67ccc289337dadb5e8d96ee5b633dfb905b6",
+      "version": "https://github.com/decentraland/client-sdk-unity.git#a4bd750e2262b9eeeee75dc83858017bbd3679ef",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -91,7 +91,7 @@
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
       },
-      "hash": "222d67ccc289337dadb5e8d96ee5b633dfb905b6"
+      "hash": "a4bd750e2262b9eeeee75dc83858017bbd3679ef"
     },
     "com.decentraland.pulse.transport": {
       "version": "https://github.com/decentraland/Pulse.git?path=src/DCLPulse.Transport/Package",
