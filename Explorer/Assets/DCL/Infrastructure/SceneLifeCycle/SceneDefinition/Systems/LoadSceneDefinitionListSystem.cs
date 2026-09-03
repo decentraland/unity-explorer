@@ -150,7 +150,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             // SDK7 scenes only: everything else (SDK6 scenes, roads) never instantiates as a scene — it is
             // permanently represented by LODs from the LOD pipeline (see VisualSceneStateResolver) — so it
             // never requests its own bundles and its digest map would go unread.
-            if (sceneEntityDefinition.metadata?.runtimeVersion == "7")
+            if (sceneEntityDefinition.metadata.runtimeVersion == "7")
                 await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct, isLocalSceneDevelopment);
         }
 
