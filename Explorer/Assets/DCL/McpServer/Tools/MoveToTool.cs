@@ -48,7 +48,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
-                return McpToolResult.Error("x, y and z world coordinates are required.");
+                return McpToolResult.Error("x, y and z world coordinates are required." + arguments.NonNumericHint("x", "y", "z"));
 
             Vector3? lookAtTarget = null;
 

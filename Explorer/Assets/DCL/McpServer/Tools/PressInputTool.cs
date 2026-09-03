@@ -87,6 +87,13 @@ namespace DCL.McpServer.Tools
             bool hasAimPoint = arguments.TryGetFloat("x", out float x)
                                & arguments.TryGetFloat("y", out float y)
                                & arguments.TryGetFloat("z", out float z);
+
+            // An aim that is only half readable must not quietly degrade into an aimless press: the edge would
+            // reach the scene root while the caller reads the result as entity-bound, which is this tool's
+            // hardest failure to spot from the outside.
+            if (!hasAimPoint && (arguments["x"] != null || arguments["y"] != null || arguments["z"] != null))
+                return McpToolResult.Error("x, y and z must all be numbers to aim the press; omit all three for a scene-root broadcast." + arguments.NonNumericHint("x", "y", "z"));
+
             string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
 
             SyntheticPointerResult result = await syntheticInput.GlobalInputAsync(ToInputAction(action), holdSeconds,

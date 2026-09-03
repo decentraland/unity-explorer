@@ -55,7 +55,7 @@ namespace DCL.McpServer.Tools
                                & arguments.TryGetFloat("z", out float z);
 
             if (!hasEntityId && !hasAimPoint)
-                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both.");
+                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both." + arguments.NonNumericHint("entityId", "x", "y", "z"));
 
             float seconds = Mathf.Clamp(arguments.GetFloat("seconds", DEFAULT_SECONDS), MIN_SECONDS, MAX_SECONDS);
 

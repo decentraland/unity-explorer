@@ -70,6 +70,38 @@ namespace DCL.McpServer.Tests
             Assert.That(result.Payload["content"]![0]!["text"]!.Value<string>(), Does.Contain("pointer, primary, secondary"));
         }
 
+        /// <summary>
+        ///     A coordinate that arrives as anything but a number reads as an absent one, and the bare "provide a
+        ///     full x/y/z" error then names a cause that is not true — a live run spent several calls attributing
+        ///     exactly that. The error has to name the argument and what it actually was.
+        /// </summary>
+        [Test]
+        public void NameTheArgumentWhenACoordinateIsNotANumber()
+        {
+            McpToolResult result = Execute(new JObject
+            {
+                ["deltaX"] = 5f,
+                ["deltaY"] = 0f,
+                ["x"] = 2393f,
+                ["y"] = "3.0",
+                ["z"] = 2393f,
+            });
+
+            string message = result.Payload["content"]![0]!["text"]!.Value<string>()!;
+
+            Assert.That(result.Payload["isError"]!.Value<bool>(), Is.True);
+            Assert.That(message, Does.Contain("y arrived as string \"3.0\""));
+            Assert.That(message, Does.Not.Contain("x arrived"), "the usable coordinates must not be named");
+        }
+
+        [Test]
+        public void NameNoArgumentWhenTheAimIsSimplyAbsent()
+        {
+            McpToolResult result = Execute(new JObject { ["deltaX"] = 5f, ["deltaY"] = 0f });
+
+            Assert.That(result.Payload["content"]![0]!["text"]!.Value<string>(), Does.Not.Contain("arrived as"));
+        }
+
         private McpToolResult Execute(JObject arguments) =>
             tool.ExecuteAsync(arguments, CancellationToken.None).GetAwaiter().GetResult();
     }

@@ -49,7 +49,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("deltaX", out float deltaX) || !arguments.TryGetFloat("deltaY", out float deltaY))
-                return McpToolResult.Error("deltaX and deltaY are required.");
+                return McpToolResult.Error("deltaX and deltaY are required." + arguments.NonNumericHint("deltaX", "deltaY"));
 
             if (deltaX == 0f && deltaY == 0f)
                 return McpToolResult.Error("deltaX and deltaY must not both be zero.");

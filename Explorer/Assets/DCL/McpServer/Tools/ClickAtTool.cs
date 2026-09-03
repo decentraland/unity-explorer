@@ -62,7 +62,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y))
-                return McpToolResult.Error("x and y normalized image coordinates are required.");
+                return McpToolResult.Error("x and y normalized image coordinates are required." + arguments.NonNumericHint("x", "y"));
 
             if (x is < 0f or > 1f || y is < 0f or > 1f)
                 return McpToolResult.Error("x and y must be normalized image coordinates in [0, 1].");

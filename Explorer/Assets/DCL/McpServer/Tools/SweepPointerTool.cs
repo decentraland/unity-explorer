@@ -77,7 +77,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("deltaX", out float deltaX) || !arguments.TryGetFloat("deltaY", out float deltaY))
-                return McpToolResult.Error("deltaX and deltaY are required.");
+                return McpToolResult.Error("deltaX and deltaY are required." + arguments.NonNumericHint("deltaX", "deltaY"));
 
             if (deltaX == 0f && deltaY == 0f)
                 return McpToolResult.Error("deltaX and deltaY must not both be zero: a sweep that does not turn the camera is a click_entity down/up pair.");
@@ -89,7 +89,7 @@ namespace DCL.McpServer.Tools
                                & arguments.TryGetFloat("z", out float z);
 
             if (!hasEntityId && !hasAimPoint)
-                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both: the press needs a target to arm on.");
+                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both: the press needs a target to arm on." + arguments.NonNumericHint("entityId", "x", "y", "z"));
 
             if (!arguments.TryGetEnum("button", PointerButton.POINTER, out PointerButton pointerButton))
                 return McpToolResult.Error("button must be one of: pointer, primary, secondary.");

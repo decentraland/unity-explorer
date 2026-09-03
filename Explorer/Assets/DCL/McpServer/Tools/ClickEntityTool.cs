@@ -7,6 +7,7 @@ using DCL.SyntheticInput.Components;
 using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ namespace DCL.McpServer.Tools
     public class ClickEntityTool : McpTool
     {
         /// <summary>Wire-facing subset of <see cref="InputAction" />: only the three pointer buttons make sense for a click.</summary>
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum PointerButton : byte
         {
             POINTER,
@@ -28,7 +30,12 @@ namespace DCL.McpServer.Tools
             SECONDARY,
         }
 
-        /// <summary>Wire-facing gesture kinds: a full click, or a single press/release leg.</summary>
+        /// <summary>
+        ///     Wire-facing gesture kinds: a full click, or a single press/release leg. The member names ARE the
+        ///     wire contract — McpWireEnum derives each argument value from them — so they stay SCREAMING_CASE,
+        ///     as in every other tool's wire enum.
+        /// </summary>
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum ClickKind : byte
         {
             /// <summary>Pointer down, then pointer up on the next scene tick.</summary>
@@ -80,7 +87,7 @@ namespace DCL.McpServer.Tools
                                & arguments.TryGetFloat("z", out float z);
 
             if (!hasEntityId && !hasAimPoint)
-                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both.");
+                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both." + arguments.NonNumericHint("entityId", "x", "y", "z"));
 
             if (!arguments.TryGetEnum("button", PointerButton.POINTER, out PointerButton pointerButton))
                 return McpToolResult.Error("button must be one of: pointer, primary, secondary.");

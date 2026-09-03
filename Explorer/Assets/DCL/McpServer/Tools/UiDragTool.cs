@@ -69,7 +69,7 @@ namespace DCL.McpServer.Tools
         {
             if (!arguments.TryGetFloat("fromX", out float fromX) || !arguments.TryGetFloat("fromY", out float fromY)
                 || !arguments.TryGetFloat("toX", out float toX) || !arguments.TryGetFloat("toY", out float toY))
-                return McpToolResult.Error("fromX, fromY, toX and toY normalized image coordinates are required.");
+                return McpToolResult.Error("fromX, fromY, toX and toY normalized image coordinates are required." + arguments.NonNumericHint("fromX", "fromY", "toX", "toY"));
 
             if (fromX is < 0f or > 1f || fromY is < 0f or > 1f || toX is < 0f or > 1f || toY is < 0f or > 1f)
                 return McpToolResult.Error("coordinates must be normalized image values in [0, 1].");
