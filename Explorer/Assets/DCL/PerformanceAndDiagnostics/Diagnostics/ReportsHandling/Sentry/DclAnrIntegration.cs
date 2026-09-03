@@ -71,28 +71,28 @@ namespace DCL.Diagnostics.Sentry
         }
 
 #if UNITY_STANDALONE_WIN
-        private static Option<DumpEntry> DeepestDump(IReadOnlyList<Result<DumpEntry>> entries)
+        private static Option<DumpEntry> EarliestDump(IReadOnlyList<Result<DumpEntry>> entries)
         {
-            var deepest = Option<DumpEntry>.None;
+            var earliest = Option<DumpEntry>.None;
 
             foreach (Result<DumpEntry> entry in entries)
             {
                 if (!entry.Success)
                     continue;
 
-                if (!deepest.Has || entry.Value.ThresholdMs > deepest.Value.ThresholdMs)
-                    deepest = Option<DumpEntry>.Some(entry.Value);
+                if (!earliest.Has || entry.Value.ThresholdMs < earliest.Value.ThresholdMs)
+                    earliest = Option<DumpEntry>.Some(entry.Value);
             }
 
-            return deepest;
+            return earliest;
         }
 
         private static void AttachDumps(Scope scope, IReadOnlyList<Result<DumpEntry>> entries)
         {
-            Option<DumpEntry> deepest = DeepestDump(entries);
+            Option<DumpEntry> earliest = EarliestDump(entries);
 
-            if (deepest.Has)
-                scope.AddAttachment(filePath: deepest.Value.Path, AttachmentType.Minidump);
+            if (earliest.Has)
+                scope.AddAttachment(filePath: earliest.Value.Path, AttachmentType.Minidump);
 
             foreach (Result<DumpEntry> entry in entries)
             {
@@ -101,7 +101,7 @@ namespace DCL.Diagnostics.Sentry
 
                 DumpEntry dump = entry.Value;
 
-                if (deepest.Has && dump.Path == deepest.Value.Path)
+                if (earliest.Has && dump.Path == earliest.Value.Path)
                     continue;
 
                 if (dump.ZipPath == null)
