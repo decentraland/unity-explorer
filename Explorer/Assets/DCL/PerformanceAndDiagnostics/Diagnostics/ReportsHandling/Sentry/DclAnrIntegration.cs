@@ -53,22 +53,17 @@ namespace DCL.Diagnostics.Sentry
             Watchdog.OnApplicationNotResponding += (_, e) =>
             {
                 SentryEvent se = new SentryEvent(e);
+
                 // TODO: reassign fingerprint if needed
                 // se.Fingerprint = FINGER_PRINT;
                 se.SetTag("loading_stage", e.LoadingStage);
 
 #if UNITY_STANDALONE_WIN
-                Option<DumpEntry> deepest = DeepestDump(e.DumpFileEntries);
-
                 hub.CaptureEvent(se, scope =>
                 {
                     SentryReportHandler.ApplyGlobalScope(scope);
-
-                    if (deepest.Has)
-                        scope.AddAttachment(filePath: deepest.Value.Path, AttachmentType.Minidump);
+                    AttachDumps(scope, e.DumpFileEntries);
                 });
-
-                DiscardDumpsExcept(e.DumpFileEntries, deepest);
 #else
                 hub.CaptureEvent(se, SentryReportHandler.ApplyGlobalScope);
 #endif
@@ -92,24 +87,30 @@ namespace DCL.Diagnostics.Sentry
             return deepest;
         }
 
-        private static void DiscardDumpsExcept(IReadOnlyList<Result<DumpEntry>> entries, Option<DumpEntry> keep)
+        private static void AttachDumps(Scope scope, IReadOnlyList<Result<DumpEntry>> entries)
         {
+            Option<DumpEntry> deepest = DeepestDump(entries);
+
+            if (deepest.Has)
+                scope.AddAttachment(filePath: deepest.Value.Path, AttachmentType.Minidump);
+
             foreach (Result<DumpEntry> entry in entries)
             {
                 if (!entry.Success)
                     continue;
 
-                if (keep.Has && entry.Value.Path == keep.Value.Path)
+                DumpEntry dump = entry.Value;
+
+                if (deepest.Has && dump.Path == deepest.Value.Path)
                     continue;
 
-                try
-                {
-                    if (File.Exists(entry.Value.Path))
-                        File.Delete(entry.Value.Path);
-                }
-                catch (Exception) { /* ignored */ }
+                if (dump.ZipPath == null)
+                    continue;
+
+                scope.AddAttachment(filePath: dump.ZipPath, AttachmentType.Default);
             }
         }
+
 #endif
     }
 
@@ -186,22 +187,25 @@ namespace DCL.Diagnostics.Sentry
             exception.SetSentryMechanism(MECHANISM, "Main thread unresponsive.", false);
             OnApplicationNotResponding.Invoke(this, exception);
         }
-
     }
 
     public readonly struct DumpEntry
     {
         public readonly string Path;
+        public readonly string? ZipPath;
+
         public readonly string Name;
         public readonly int ThresholdMs;
 
         public DumpEntry(
             string path,
+            string? zipPath,
             string name,
             int thresholdMs
         )
         {
             this.Path = path;
+            this.ZipPath = zipPath;
             this.Name = name;
             this.ThresholdMs = thresholdMs;
         }
@@ -465,6 +469,14 @@ namespace DCL.Diagnostics.Sentry
             );
         }
 
+#if UNITY_STANDALONE_WIN
+        private static Result<string> TryArchiveToZip(string path)
+        {
+            try { return ThreadsDumpUtility.ArchiveIntoZip(path); }
+            catch (Exception e) { return Result<string>.ErrorResult(e.Message); }
+        }
+#endif
+
         // With side effects
         private void ProcessCommand(WatchDogCommand command)
         {
@@ -486,7 +498,16 @@ namespace DCL.Diagnostics.Sentry
                     {
                         string filePath = dumpResult.Value;
                         string fileName = Path.GetFileNameWithoutExtension(filePath);
-                        DumpEntry e = new DumpEntry(path: filePath, name: fileName, forMs);
+                        string? zipPath = null;
+
+#if UNITY_STANDALONE_WIN
+                        Result<string> zipResult = TryArchiveToZip(filePath);
+
+                        if (zipResult.Success)
+                            zipPath = zipResult.Value;
+#endif
+
+                        DumpEntry e = new DumpEntry(path: filePath, zipPath: zipPath, name: fileName, forMs);
                         path = Result<DumpEntry>.SuccessResult(e);
                     }
                     else
@@ -498,7 +519,8 @@ namespace DCL.Diagnostics.Sentry
                 onSendTotalReport: static (self, totalReport) => self.Report(totalReport.CollectedDumpEntries),
                 onRemoveDumpFileByPath: static (self, removePath) =>
                 {
-                    if (File.Exists(removePath)) { File.Delete(removePath); }
+                    if (File.Exists(removePath))
+                        File.Delete(removePath);
                 }
             );
         }
