@@ -190,18 +190,20 @@ jobs:
           echo "Previous Suite ID: $SUITE_ID"
           echo "SUITE_ID=$SUITE_ID" >> "$GITHUB_ENV"
 
-          WINDOWS_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
+          # Query the run-scoped endpoint: the repo-wide /actions/artifacts list is
+          # newest-first and page-limited, so a zip uploaded by a fast platform long
+          # before the slow one finishes can fall off the first page and lose its
+          # "Download .zip" link in the comment.
+          WINDOWS_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/runs/${PREVIOUS_JOB_ID}/artifacts?per_page=100" \
             --jq ".artifacts.[] |
-            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
             select(.name==\"Decentraland_windows64\") |
             .id")
           echo "Windows Artifact ID: $WINDOWS_ARTIFACT_ID"
           echo "WINDOWS_ARTIFACT_ID=$WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
 
-          MAC_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
+          MAC_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/runs/${PREVIOUS_JOB_ID}/artifacts?per_page=100" \
             --jq ".artifacts.[] |
-            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
             select(.name==\"Decentraland_macos\") |
             .id")
