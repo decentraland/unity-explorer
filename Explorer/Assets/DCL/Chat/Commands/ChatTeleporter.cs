@@ -39,7 +39,6 @@ namespace DCL.Chat.Commands
                 { "goerli-old", IRealmNavigator.GOERLI_OLD_URL },
                 { "stream", IRealmNavigator.STREAM_WORLD_URL },
                 { "sdk", IRealmNavigator.SDK_TEST_SCENES_URL },
-                { "test", IRealmNavigator.TEST_SCENES_URL },
             };
         }
 

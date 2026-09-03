@@ -999,7 +999,6 @@ namespace Global.Dynamic
                 && IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, dclUrls.BaseDomain))
                 return true;
             if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
             if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
             if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
             if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
