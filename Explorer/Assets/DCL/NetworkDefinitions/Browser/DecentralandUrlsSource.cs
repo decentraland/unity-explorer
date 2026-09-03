@@ -48,15 +48,11 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string? gatekeeperBaseOverride;
         private readonly string? optimizedAssetsBaseOverride;
         private readonly bool abgenPipelineForced;
-        private readonly bool isTodayEnvironment;
 
         /// <summary>
-        ///     The domain <see cref="RawUrl" /> composes every host from. Written only by the constructor — the today
-        ///     environment resolves the handful of hosts it serves from <c>.today</c> and then moves to org for
-        ///     everything resolved afterwards, which is why urls must stay lazily resolved — so it is settled by the
-        ///     time the instance is handed out.
+        ///     The domain <see cref="RawUrl" /> composes every host from.
         /// </summary>
-        public string BaseDomain { get; private set; }
+        public string BaseDomain { get; }
 
         public DecentralandUrlsSource(
             DecentralandEnvironment environment,
@@ -71,44 +67,12 @@ namespace DCL.Browser.DecentralandUrls
         {
             this.environment = environment;
             BaseDomain = ResolveBaseDomain(environment, customBaseDomain);
-            isTodayEnvironment = environment == DecentralandEnvironment.Today;
             this.realmData = realmData;
             this.launchMode = launchMode;
             gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
             optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
             this.abgenPipelineForced = abgenPipelineForced;
-
-            if (isTodayEnvironment)
-            {
-                // The today environment is a mixture of the org and today environments.
-                // Asset delivery (registry and S3) are used with the `.today` extension
-                // Adapter info (both scene and room) also have to responde to the `.today` environment
-                // Archipelago status as well, to have a clear minimap
-                // All the remaining urls should use the `Org` domain, that's why we change the domain to forcefully `.org`
-                // It's a catalyst that replicates the org environment and eth network, but doesn't propagate back to the production catalysts
-                Url(DecentralandUrl.AssetBundleRegistry);
-                Url(DecentralandUrl.AssetBundleRegistryVersion);
-                Url(DecentralandUrl.AssetBundlesCDN);
-                Url(DecentralandUrl.LodAssetBundlesCDN);
-                Url(DecentralandUrl.Profiles);
-                Url(DecentralandUrl.ProfilesMetadata);
-                Url(DecentralandUrl.EntitiesActive);
-                Url(DecentralandUrl.EntitiesActiveElements);
-                Url(DecentralandUrl.WorldEntitiesActive);
-                Url(DecentralandUrl.ArchipelagoStatus);
-                Url(DecentralandUrl.ArchipelagoHotScenes);
-                Url(DecentralandUrl.Genesis);
-                Url(DecentralandUrl.Gatekeeper);
-                Url(DecentralandUrl.GateKeeperSceneAdapter);
-                Url(DecentralandUrl.LocalGateKeeperSceneAdapter);
-                Url(DecentralandUrl.ChatAdapter);
-                Url(DecentralandUrl.GatekeeperStatus);
-                Url(DecentralandUrl.BannedUsers);
-                Url(DecentralandUrl.SceneAdmins);
-                Url(DecentralandUrl.RemotePeers);
-                BaseDomain = IDecentralandUrlsSource.ORG_DOMAIN;
-            }
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
@@ -161,7 +125,6 @@ namespace DCL.Browser.DecentralandUrls
                    {
                        GatekeeperMode.Org => null,
                        GatekeeperMode.Zone => "https://comms-gatekeeper." + IDecentralandUrlsSource.ZONE_DOMAIN,
-                       GatekeeperMode.Today => "https://comms-gatekeeper." + IDecentralandUrlsSource.TODAY_DOMAIN,
                        GatekeeperMode.Localhost => "http://localhost:3000",
                        GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
                        _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
@@ -215,6 +178,9 @@ namespace DCL.Browser.DecentralandUrls
             return urlData.Url!;
         }
 
+        /// <summary>This source routes nothing through a gateway; <see cref="GatewayUrlsSource" /> overrides it.</summary>
+        public virtual string? GatewayOrigin => null;
+
         public virtual string TransformUrl(string originalUrl) =>
             originalUrl;
 
@@ -254,9 +220,7 @@ namespace DCL.Browser.DecentralandUrls
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
-                return isTodayEnvironment
-                    ? dedicatedHost // Static — pinned on construction, before the host domain switches to org
-                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHost.Url!);
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, dedicatedHost.Url!);
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
                 return dedicatedHost;
@@ -285,9 +249,7 @@ namespace DCL.Browser.DecentralandUrls
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             if (featureFlags.IsEmpty)
-                return isTodayEnvironment
-                    ? regularHost // Static — pinned on construction, before the host domain switches to org
-                    : new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost);
+                return new UrlData(CacheBehaviour.FeatureFlagsDependent, regularHost);
 
             return featureFlags.IsEnabled(FeatureFlagsStrings.ABGEN_PIPELINE)
                 ? new UrlData(CacheBehaviour.FeatureFlagsDependent, abgenHost)

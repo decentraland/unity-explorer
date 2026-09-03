@@ -62,12 +62,13 @@ namespace Global.AppArgs.Tests
         public void DeepLinkDropsInternalFlags()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?creator-hub-bin-path=%5C%5Cattacker%5Cshare%5Cp.exe&launch-cdp-monitor-on-start&local-scene=true&comms-adapter=x&skip-auth-screen=true");
+                "decentraland://?creator-hub-bin-path=%5C%5Cattacker%5Cshare%5Cp.exe&launch-cdp-monitor-on-start&local-scene=true&comms-adapter=x&accept-untrusted-realm=true&skip-auth-screen=true");
 
             Assert.IsFalse(output.ContainsKey("creator-hub-bin-path"), "creator-hub-bin-path must be dropped from deep links (not an app-arg; the Creator Hub path is resolved at runtime)");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), "launch-cdp-monitor-on-start must be dropped");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.COMMS_ADAPTER), "comms-adapter must be dropped");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.ACCEPT_UNTRUSTED_REALM), "accept-untrusted-realm must be dropped — it lowers a transport guarantee");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen must be dropped");
         }
 
@@ -162,12 +163,13 @@ namespace Global.AppArgs.Tests
         public void DeepLinkDropsExecAndInfraParamsEvenForLoopbackRealm()
         {
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
-                "decentraland://?realm=http://127.0.0.1:8000&creator-hub-bin-path=x&launch-cdp-monitor-on-start=true&comms-adapter=y&optimized-assets-url=https://evil.example");
+                "decentraland://?realm=http://127.0.0.1:8000&creator-hub-bin-path=x&launch-cdp-monitor-on-start=true&comms-adapter=y&optimized-assets-url=https://evil.example&gateway=https://evil.example");
 
             Assert.IsFalse(output.ContainsKey("creator-hub-bin-path"), "creator-hub-bin-path must never be permitted (SEC-005), even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), "launch-cdp-monitor-on-start must never be permitted, even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.COMMS_ADAPTER), "comms-adapter must never be permitted, even for a loopback realm");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.OPTIMIZED_ASSETS_URL), "optimized-assets-url must never be permitted, even for a loopback realm — it points the AB/LOD/registry endpoints at arbitrary infrastructure for the whole session; local-ab derives the base from the realm instead");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.GATEWAY), "gateway must never be permitted, even for a loopback realm — it aims every supported backend url at a host of the link's choosing for the whole session");
         }
 
         [Test]

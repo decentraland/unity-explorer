@@ -24,8 +24,23 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
 
         /// <summary>
+        ///     Lets a realm's comms adapter be served over cleartext http, as an e2e fixture's is, provided it
+        ///     resolves to loopback. Command line only, and deliberately absent from the deep-link allowlist:
+        ///     it lowers a transport guarantee, which is never a link's call to make.
+        /// </summary>
+        public const string ACCEPT_UNTRUSTED_REALM = "accept-untrusted-realm";
+
+        /// <summary>
+        ///     Routes every supported service through this gateway origin instead of <c>gateway.{base-domain}</c>,
+        ///     and forces routing on: naming a gateway is the opt-in the <c>use-gateway</c> feature flag would
+        ///     otherwise carry, so the flag is ignored. Command line only — it aims the session's whole
+        ///     supported-service traffic at the named host, so a deep link must never set it.
+        /// </summary>
+        public const string GATEWAY = "gateway";
+
+        /// <summary>
         ///     Points every backend host at a deployment served under this base domain instead of
-        ///     decentraland.{org,zone,today}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
+        ///     decentraland.{org,zone}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
         ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
         ///     link is processed. It is denied by <c>DeepLinkAllowlist</c> like the other infrastructure-pointing
         ///     params, and accepting it in the denied-params dialog has no effect.
@@ -35,7 +50,7 @@ namespace Global.AppArgs
         /// <summary>
         ///     The chain a <c>--base-domain</c> deployment signs and transacts against: "mainnet" or "sepolia", each
         ///     carrying the polygon network that pairs with it. Defaults to mainnet. Every decentraland environment
-        ///     answers for one chain of its own - org and today mainnet, zone sepolia - and this cannot move them:
+        ///     answers for one chain of its own - org mainnet, zone sepolia - and this cannot move them:
         ///     paired with one of those it is reported and dropped (<c>ChainUtils.ResolveNetwork</c>). Where the value
         ///     is read, anything not naming a known network ends the launch instead of falling back to the default
         ///     (<c>MainSceneLoader.CaptureEthNetworkArg</c>). Command line only, like <see cref="BASE_DOMAIN" />.

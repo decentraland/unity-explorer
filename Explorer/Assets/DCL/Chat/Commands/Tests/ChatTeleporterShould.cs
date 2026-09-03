@@ -41,7 +41,7 @@ namespace DCL.Chat.Commands.Tests
             IScenesCache scenesCache = Substitute.For<IScenesCache>();
             scenesCache.CurrentParcel.Returns(currentParcel);
 
-            chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(DecentralandEnvironment.Org, urlsSource), urlsSource, scenesCache);
+            chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(urlsSource), urlsSource, scenesCache);
         }
 
         [Test]
