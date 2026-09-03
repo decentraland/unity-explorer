@@ -726,5 +726,48 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
         }
+
+        [Test]
+        public void ApplyModifiersToProfilelessAvatar()
+        {
+            // No Profile is added to fakeAvatarEntity: this is the scene avatar (NPC) case.
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideAvatars,
+                    AvatarModifierType.AmtHideNametags,
+                },
+            };
+
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0);
+
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
+            world.Set(triggerAreaEntity, component);
+
+            system.Update(0f);
+
+            AvatarShapeComponent avatarShape = globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity);
+            Assert.IsTrue(avatarShape.HiddenByModifierArea);
+            Assert.IsTrue(avatarShape.NameTagHiddenByModifierArea);
+
+            sdkEntityTriggerArea.OnTriggerExit(fakeAvatarShapeCollider);
+
+            system.Update(0f);
+
+            avatarShape = globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity);
+            Assert.IsFalse(avatarShape.HiddenByModifierArea);
+            Assert.IsFalse(avatarShape.NameTagHiddenByModifierArea);
+        }
     }
 }

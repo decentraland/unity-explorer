@@ -17,6 +17,7 @@ using ECS.StreamableLoading.Common.Components;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Profiles.Entities;
 using ECS.StreamableLoading.Common;
 using UnityEngine.TestTools;
 
@@ -33,7 +34,7 @@ namespace ECS.Unity.AvatarShape.Tests
             pool.Get().Returns(new GameObject().transform);
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
-            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, false);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, CreateAvatarColliderPool(), sceneData, false);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
@@ -41,6 +42,13 @@ namespace ECS.Unity.AvatarShape.Tests
 
         private Entity entity;
         private World globalWorld;
+
+        private static IComponentPool<RemoteAvatarCollider> CreateAvatarColliderPool()
+        {
+            IComponentPool<RemoteAvatarCollider> pool = Substitute.For<IComponentPool<RemoteAvatarCollider>>();
+            pool.Get().Returns(_ => new GameObject("avatar collider").AddComponent<RemoteAvatarCollider>());
+            return pool;
+        }
 
         [Test]
         public void ForwardSDKAvatarShapeInstantiationToGlobalWorldSystems()
@@ -57,6 +65,24 @@ namespace ECS.Unity.AvatarShape.Tests
             Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, SDKAvatarShapeComponent>()));
             Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
             globalWorld.Query(new QueryDescription().WithAll<PBAvatarShape, CharacterTransform>(), (ref PBAvatarShape comp) => Assert.AreEqual(pbAvatarShapeComponent.Name, comp.Name));
+        }
+
+        [Test]
+        public void AttachAvatarColliderToGlobalWorldEntity()
+        {
+            world.Add(entity, new PBAvatarShape { Name = "Cthulhu" });
+
+            system.Update(0);
+
+            // Without a collider the avatar is invisible to every avatar trigger area
+            // (AvatarModifierArea, PBTriggerArea): only physics events feed them.
+            Entity globalEntity = world.Get<SDKAvatarShapeComponent>(entity).GlobalWorldEntity;
+            Assert.IsTrue(globalWorld.Has<RemoteAvatarCollider>(globalEntity));
+
+            // FindAvatarUtils.AvatarWithTransform matches avatars by hierarchy: the collider and the
+            // AvatarBase must be siblings under the avatar's global transform.
+            RemoteAvatarCollider avatarCollider = globalWorld.Get<RemoteAvatarCollider>(globalEntity);
+            Assert.AreEqual(globalWorld.Get<CharacterTransform>(globalEntity).Transform, avatarCollider.transform.parent);
         }
 
         [Test]
@@ -154,7 +180,7 @@ namespace ECS.Unity.AvatarShape.Tests
                          });
 
             sceneData.SceneContent.Returns(sceneContent);
-            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, true);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, CreateAvatarColliderPool(), sceneData, true);
 
             // Avatar Shape
             var pbAvatarShapeComponent = new PBAvatarShape { Name = "Cthulhu", BodyShape = BodyShape.MALE.ToString() };
@@ -246,7 +272,7 @@ namespace ECS.Unity.AvatarShape.Tests
             sceneData.SceneContent.Returns(sceneContent);
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "sceneId" });
 
-            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, false);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, CreateAvatarColliderPool(), sceneData, false);
 
             // Avatar Shape
             var pbAvatarShapeComponent = new PBAvatarShape { Name = "Cthulhu", BodyShape = BodyShape.MALE.ToString() };
@@ -330,7 +356,7 @@ namespace ECS.Unity.AvatarShape.Tests
                         .Returns(false);
 
             sceneData.SceneContent.Returns(sceneContent);
-            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, true);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, CreateAvatarColliderPool(), sceneData, true);
 
             // Avatar Shape
             var pbAvatarShapeComponent = new PBAvatarShape { Name = "Cthulhu", BodyShape = BodyShape.MALE.ToString() };
@@ -372,7 +398,7 @@ namespace ECS.Unity.AvatarShape.Tests
                          });
 
             sceneData.SceneContent.Returns(sceneContent);
-            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, true);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, CreateAvatarColliderPool(), sceneData, true);
 
             // Avatar Shape
             var pbAvatarShapeComponent = new PBAvatarShape { Name = "Cthulhu", BodyShape = BodyShape.MALE.ToString(), ExpressionTriggerId = emoteId };
@@ -421,7 +447,7 @@ namespace ECS.Unity.AvatarShape.Tests
                          });
 
             sceneData.SceneContent.Returns(sceneContent);
-            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, true);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, CreateAvatarColliderPool(), sceneData, true);
 
             // Avatar Shape
             var pbAvatarShapeComponent = new PBAvatarShape { Name = "Cthulhu", BodyShape = BodyShape.MALE.ToString() };
@@ -480,7 +506,7 @@ namespace ECS.Unity.AvatarShape.Tests
                          });
 
             sceneData.SceneContent.Returns(sceneContent);
-            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, true);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, CreateAvatarColliderPool(), sceneData, true);
 
             // Avatar Shape
             var pbAvatarShapeComponent = new PBAvatarShape { Name = "Cthulhu", BodyShape = BodyShape.MALE.ToString() };

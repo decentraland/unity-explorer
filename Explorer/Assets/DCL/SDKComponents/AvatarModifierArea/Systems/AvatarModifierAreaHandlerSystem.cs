@@ -203,15 +203,15 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         private void HideAvatar(Entity entity, Transform avatarTransform, HashSet<string> excludedIds)
         {
-            if (!globalWorld.TryGet(entity, out Profile? profile)) return;
+            globalWorld.TryGet(entity, out Profile? profile);
 
             ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
             if (!hasAvatarShape) return;
 
-            bool shouldHide = !excludedIds.Contains(profile!.UserId);
+            bool shouldHide = !IsExcluded(profile, excludedIds);
             avatarShape.HiddenByModifierArea = shouldHide;
 
-            if (shouldHide && profile.UserId == web3IdentityCache.Identity?.Address)
+            if (shouldHide && profile != null && profile.UserId == web3IdentityCache.Identity?.Address)
             {
                 localAvatarTransform = avatarTransform;
                 sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.Applied));
@@ -220,12 +220,12 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         private void HideNameTag(Entity entity, HashSet<string> excludedIds)
         {
-            if (!globalWorld.TryGet(entity, out Profile? profile)) return;
+            globalWorld.TryGet(entity, out Profile? profile);
 
             ref AvatarShapeComponent avatarShape = ref globalWorld.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatarShape);
             if (!hasAvatarShape) return;
 
-            avatarShape.NameTagHiddenByModifierArea = !excludedIds.Contains(profile!.UserId);
+            avatarShape.NameTagHiddenByModifierArea = !IsExcluded(profile, excludedIds);
         }
 
         private void ShowNameTag(Entity entity)
@@ -238,16 +238,16 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         private void DisableAvatarInteraction(Entity entity, HashSet<string> excludedIds)
         {
-            if (!globalWorld.TryGet(entity, out Profile? profile)) return;
+            globalWorld.TryGet(entity, out Profile? profile);
 
-            bool shouldDisable = !excludedIds.Contains(profile!.UserId);
+            bool shouldDisable = !IsExcluded(profile, excludedIds);
 
             if (shouldDisable)
             {
                 // Something like TryAdd
                 globalWorld.AddOrGet<IgnoreInteractionComponent>(entity);
 
-                if (profile.UserId == web3IdentityCache.Identity?.Address)
+                if (profile != null && profile.UserId == web3IdentityCache.Identity?.Address)
                 {
                     ownAvatarEntity = entity;
                     sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreatePassportCannotBeOpened(SceneRestrictionsAction.Applied));
@@ -263,6 +263,14 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
             if (ownAvatarEntity == entity)
                 sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreatePassportCannotBeOpened(SceneRestrictionsAction.Removed));
+        }
+
+        // AlwaScene avatars (NPCs) have no Profile hence no UserId to match against excludeIds, so the
+        // area modifiers always apply to them.
+        private static bool IsExcluded(Profile? profile, HashSet<string> excludedIds)
+        {
+            string? userId = profile?.UserId;
+            return userId != null && excludedIds.Contains(userId);
         }
 
         private bool TryGetAvatarEntity(Transform transform, out Entity entity)

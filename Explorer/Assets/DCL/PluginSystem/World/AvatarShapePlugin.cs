@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AvatarShape.Systems;
@@ -15,13 +16,19 @@ namespace DCL.PluginSystem.World
     public class AvatarShapePlugin : IDCLWorldPlugin
     {
         private readonly Arch.Core.World globalWorld;
+        private readonly IComponentPoolsRegistry poolRegistry;
         private readonly IComponentPool<Transform> globalTransformPool;
         private readonly ILaunchMode launchMode;
         private readonly bool useAssetBundles;
 
+        // The RemoteAvatarCollider pool is registered by MultiplayerPlugin.InitializeAsync, which runs
+        // after this plugin's construction, so it can only be resolved once scene worlds are being built.
+        private IComponentPool<RemoteAvatarCollider>? avatarColliderPool;
+
         public AvatarShapePlugin(Arch.Core.World globalWorld, IComponentPoolsRegistry poolRegistry, ILaunchMode launchMode, bool useAssetBundles)
         {
             this.globalWorld = globalWorld;
+            this.poolRegistry = poolRegistry;
             this.launchMode = launchMode;
             this.useAssetBundles = useAssetBundles;
             this.globalTransformPool = poolRegistry.GetReferenceTypePool<Transform>();
@@ -35,7 +42,8 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
-            finalizeWorldSystems.Add(AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld, globalTransformPool, sharedDependencies.SceneData, launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment && !useAssetBundles));
+            avatarColliderPool ??= poolRegistry.GetReferenceTypePool<RemoteAvatarCollider>();
+            finalizeWorldSystems.Add(AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld, globalTransformPool, avatarColliderPool, sharedDependencies.SceneData, launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment && !useAssetBundles));
             UpdateAvatarShapeInterpolateMovementSystem.InjectToWorld(ref builder, globalWorld);
         }
     }

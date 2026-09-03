@@ -10,6 +10,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Profiles.Entities;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -37,14 +38,16 @@ namespace ECS.Unity.AvatarShape.Systems
 
         private readonly World globalWorld;
         private readonly IComponentPool<Transform> globalTransformPool;
+        private readonly IComponentPool<RemoteAvatarCollider> avatarColliderPool;
         private readonly ISceneData sceneData;
         private readonly bool loadAssetsFromLocalScene;
 
         public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool,
-            ISceneData sceneData, bool loadAssetsFromLocalScene) : base(world)
+            IComponentPool<RemoteAvatarCollider> avatarColliderPool, ISceneData sceneData, bool loadAssetsFromLocalScene) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalTransformPool = globalTransformPool;
+            this.avatarColliderPool = avatarColliderPool;
             this.sceneData = sceneData;
             this.loadAssetsFromLocalScene = loadAssetsFromLocalScene;
         }
@@ -76,8 +79,19 @@ namespace ECS.Unity.AvatarShape.Systems
             globalTransform.localRotation = Quaternion.identity;
             globalTransform.localScale = Vector3.one;
 
+            // Avatar trigger areas (AvatarModifierArea, PBTriggerArea) are fed by physics events only,
+            // so without an own collider the SDK avatar would be invisible to all of them. It sits as a
+            // sibling of the AvatarBase to satisfy the FindAvatarUtils.AvatarWithTransform hierarchy match.
+            RemoteAvatarCollider avatarCollider = avatarColliderPool.Get();
+            avatarCollider.name = $"Collider {pbAvatarShape.Id}";
+            avatarCollider.transform.SetParent(globalTransform, false);
+            avatarCollider.transform.localPosition = Vector3.zero;
+            avatarCollider.transform.localRotation = Quaternion.identity;
+            avatarCollider.transform.localScale = Vector3.one;
+
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
+                avatarCollider,
                 new CharacterTransform(globalTransform),
                 new CharacterInterpolationMovementComponent(
                     transformComponent.Transform.position,
@@ -259,6 +273,14 @@ namespace ECS.Unity.AvatarShape.Systems
         private void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
         {
             if (globalEntity == Entity.Null) return;
+
+            // The collider must leave the avatar's transform before that transform returns to its own
+            // pool, otherwise the pooled transform keeps a stale collider child.
+            if (globalWorld.TryGet(globalEntity, out RemoteAvatarCollider? avatarCollider))
+            {
+                avatarColliderPool.Release(avatarCollider!);
+                globalWorld.Remove<RemoteAvatarCollider>(globalEntity);
+            }
 
             Transform transform = globalWorld.Get<CharacterTransform>(globalEntity).Transform;
 
