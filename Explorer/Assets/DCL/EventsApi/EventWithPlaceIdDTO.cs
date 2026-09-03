@@ -1,35 +1,38 @@
 using System;
 
+// ReSharper disable InconsistentNaming
+
 namespace DCL.EventsApi
 {
     [Serializable]
     public class EventWithPlaceIdDTO : IEventDTO
     {
-        public string place_id;
-        public string id;
-        public string name;
-        public string image;
-        public string description;
-        public string next_start_at;
-        public string next_finish_at;
-        public string finish_at;
-        public string scene_name;
-        public int[] coordinates;
-        public string server;
+        public string place_id = null!;
+        public string id = null!;
+        public string name = null!;
+        public string image = null!;
+        public string description = null!;
+        public string next_start_at = null!;
+        public string next_finish_at = null!;
+        public string finish_at = null!;
+        public string scene_name = null!;
+        public int[] coordinates = null!;
+        public string server = null!;
         public int total_attendees;
         public bool live;
-        public string user_name;
+        public string user_name = null!;
         public bool highlighted;
         public bool trending;
         public bool attending;
-        public string[] categories;
+        public string[] categories = null!;
         public bool recurrent;
         public double duration;
-        public string start_at;
-        public string[] recurrent_dates;
+        public string start_at = null!;
+        public string[] recurrent_dates = null!;
         public bool world;
         public int x;
         public int y;
+        public string featured_item = string.Empty;
 
         public string Id
         {
@@ -171,7 +174,7 @@ namespace DCL.EventsApi
             set => recurrent_dates = value;
         }
 
-        private DateTime[] recurrentDatesProcessed;
+        private DateTime[] recurrentDatesProcessed = null!;
         public DateTime[] RecurrentDatesProcessed{
             get => recurrentDatesProcessed;
             set => recurrentDatesProcessed = value;
@@ -193,6 +196,12 @@ namespace DCL.EventsApi
         {
             get => y;
             set => y = value;
+        }
+
+        public string Featured_item
+        {
+            get => featured_item;
+            set => featured_item = value;
         }
 
         //No need to serialize anything more than the already present fields

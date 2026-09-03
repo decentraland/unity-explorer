@@ -1,4 +1,5 @@
 using DCL.Communities.EventInfo;
+using DCL.FeatureFlags;
 using DCL.UI;
 using System;
 using System.Threading;
@@ -24,6 +25,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         [SerializeField] private GameObject liveBadgeContainer = null!;
         [SerializeField] private GameObject liveBadgePlayerIcon = null!;
         [SerializeField] private GameObject interestedContainer = null!;
+        [SerializeField] private GameObject? featuredItemsBadge;
 
         [Header("Event info")]
         [SerializeField] private ImageView eventThumbnailImage = null!;
@@ -76,6 +78,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             UpdateInterestedButtonState();
             liveBadgeContainer.SetActive(data.Event.live);
+            featuredItemsBadge?.SetActive(FeaturesRegistry.Instance.IsEnabled(FeatureId.EventFeaturedItems) && !string.IsNullOrEmpty(data.Event.featured_item));
 
             bool showLiveOnlineUsers = data.Event.live && data.Place.user_count > 0;
             liveBadgePlayerIcon.SetActive(showLiveOnlineUsers);

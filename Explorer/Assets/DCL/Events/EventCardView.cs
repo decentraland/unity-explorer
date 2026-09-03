@@ -2,6 +2,7 @@
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.EventInfo;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI;
@@ -48,6 +49,7 @@ namespace DCL.Events
         [SerializeField] protected TMP_Text hostName = null!;
         [SerializeField] private TMP_Text eventDate = null!;
         [SerializeField] private List<GameObject> liveMarks = null!;
+        [SerializeField] private GameObject featuredItemMark = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private GameObject onlineMembersContainer = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
@@ -166,6 +168,10 @@ namespace DCL.Events
 
             foreach (GameObject liveMark in liveMarks)
                 liveMark.SetActive(eventInfo.live);
+
+            bool showFeaturedItemsMark = FeaturesRegistry.Instance.IsEnabled(FeatureId.EventFeaturedItems) && !string.IsNullOrEmpty(eventInfo.Featured_item);
+
+            featuredItemMark.SetActive(showFeaturedItemsMark);
 
             int onlineMembers = eventInfo.connected_addresses?.Length ?? 0;
             if (onlineMembersText != null) onlineMembersText.text = $"{onlineMembers}";

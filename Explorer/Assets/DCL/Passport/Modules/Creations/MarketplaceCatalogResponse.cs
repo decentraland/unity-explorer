@@ -18,6 +18,7 @@ namespace DCL.Passport.Modules.Creations
         public string? thumbnail;
         public string? url;
         public string? urn;
+        public string? category;
         public string? rarity;
         public bool isOnSale;
         public int priceCredits;
