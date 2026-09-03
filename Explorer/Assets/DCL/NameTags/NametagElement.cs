@@ -54,7 +54,7 @@ namespace DCL.Nametags
         /// we use this to avoid recalculating transparency and scale when distance hasn't changed.
         /// </summary>
         public float LastSqrDistance { get; set; }
-        public string ProfileID { get; set; }
+        public string? ProfileID { get; set; }
         public int ProfileVersion { get; set; }
 
         [UxmlAttribute]
@@ -210,7 +210,6 @@ namespace DCL.Nametags
         private readonly VisualElement dmBadge;
         private readonly Label dmRecipientLabel;
         private readonly VisualElement voiceChatBadge;
-        private readonly VisualElement hushedBadge;
 
         private readonly VisualElement messageContainer;
         private readonly Label messageLabel;
@@ -308,7 +307,8 @@ namespace DCL.Nametags
                     }, this);
                 }
 
-                header.Add(hushedBadge = new VisualElement { name = "hushed-badge" });
+                var hushedBadge = new VisualElement { name = "hushed-badge" };
+                header.Add(hushedBadge);
                 hushedBadge.AddToClassList(USS_BADGE_HUSHED);
 
                 header.Add(dmBadge = new VisualElement { name = "dm-badge" });

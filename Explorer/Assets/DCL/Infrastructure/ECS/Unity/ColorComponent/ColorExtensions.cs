@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using Decentraland.Common;
 using UnityEngine;
 

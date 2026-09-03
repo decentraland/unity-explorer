@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace DCL.ECSComponents
 {
     public interface IDirtyMarker

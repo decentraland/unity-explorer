@@ -18,7 +18,6 @@ using DCL.FeatureFlags;
 using DCL.Utilities;
 using DCL.VoiceChat;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Unity.Mathematics;
@@ -356,7 +355,8 @@ namespace DCL.Nametags
                 ? avatarShape.ID.AsSpan(avatarShape.ID.Length - 4).ToString()
                 : NAMETAG_DEFAULT_WALLET_ID);
 
-            bool isOfficial = !string.IsNullOrEmpty(profile?.UserId) && OfficialWalletsHelper.Instance.IsOfficialWallet(profile.UserId);
+            string? userId = profile?.UserId;
+            bool isOfficial = !string.IsNullOrEmpty(userId) && OfficialWalletsHelper.Instance.IsOfficialWallet(userId);
 
             nametagHolder.Nametag.SetData(avatarShape.Name, usernameColor, walletId, profile?.HasClaimedName ?? false, isOfficial);
         }
