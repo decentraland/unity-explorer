@@ -340,9 +340,7 @@ namespace DCL.Minimap
             if (ViewDependencies.CurrentIdentity is not { } identity)
                 return string.Empty;
 
-            string address = identity.Address.ToString();
-
-            return Web3Address.IsValidWalletAddress(address) ? $"&referrer={address}" : string.Empty;
+            return $"&referrer={identity.Address.ToString()}";
         }
 
         private void ExpandMinimap()
