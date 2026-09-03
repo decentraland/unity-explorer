@@ -23,6 +23,12 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         UniTask StopLocalRoomsAsync();
 
         IReadOnlyCollection<string> AllLocalRoomsRemoteParticipantIdentities();
+
+        /// <summary>
+        ///     State of every room <see cref="StartAsync" /> brings up, as <c>Name[state, connect attempt, connection loop]</c>,
+        ///     so a failed or timed out start tells which room did not come up. Voice Chat is left out as it is not started there.
+        /// </summary>
+        string RoomsStateInfo();
     }
 
     public static class RoomHubExtensions
