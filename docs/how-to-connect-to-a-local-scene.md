@@ -105,9 +105,11 @@ server. Editing your scene does not reshuffle who you can see.
 Decentraland.exe --realm http://127.0.0.1:8000 --position 0,0 --local-scene true --debug --pulse false
 ```
 
-- **Authoritative-server previews are not on Pulse yet.** A bevy-headless server has no Pulse
-  transport in server mode (decentraland/sdk-multiplayer-server#132); that scenario still runs over
-  LiveKit.
+- **Authoritative-server previews are on Pulse too.** bevy-headless gained a Pulse transport in
+  server mode ([bevy-explorer #1137](https://github.com/decentraland/bevy-explorer/pull/1137) — the
+  `@next` engine; `@latest` predates it), so an authoritative-server scene joins the same derived
+  realm as its clients. Older engines have no Pulse in server mode
+  (decentraland/sdk-multiplayer-server#132) and stay on LiveKit.
 
 ## Local asset bundles
 

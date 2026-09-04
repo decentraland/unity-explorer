@@ -70,7 +70,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                     await webRequestController.GetAsync(
                                                    new CommonArguments(sceneDefinitionEndpoint),
                                                    ct,
-                                                   ReportCategory.LIVEKIT,
+                                                   ReportCategory.MULTIPLAYER,
                                                    suppressErrors: true
                                                )
                                               .CreateFromJson<SceneDefinition>(WRJsonParser.Unity);
@@ -92,7 +92,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                                                new CommonArguments(idEndpoint),
                                                GenericPostArguments.CreateJson($"{{\"pointers\": [\"{coordinate.x},{coordinate.y}\" ]}}"),
                                                ct,
-                                               ReportCategory.LIVEKIT
+                                               ReportCategory.MULTIPLAYER
                                            )
                                           .CreateFromJson<EndpointResponse[]>(WRJsonParser.Newtonsoft);
 
@@ -104,7 +104,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
             string? id = result[0].id;
 
-            if (string.IsNullOrWhiteSpace(id!))
+            if (string.IsNullOrWhiteSpace(id))
                 return Result<LocalSceneEntity>.ErrorResult("Id is empty or null");
 
             return Result<LocalSceneEntity>.SuccessResult(new LocalSceneEntity(id, coordinate));
