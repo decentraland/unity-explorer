@@ -14,6 +14,9 @@ namespace SceneRuntime.Apis.Modules.Ethereums
 {
     public class EthereumApiWrapper : JsApiWrapper
     {
+        // JSON-RPC 2.0 "Method not found": https://www.jsonrpc.org/specification#error_object
+        private const long JSON_RPC_METHOD_NOT_FOUND = -32601;
+
         private readonly IEthereumApi ethereumApi;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -76,7 +79,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                         },
                     }, Web3RequestSource.SdkScene, ct);
 
-                    return new SignMessageResponse(hex, message, (string)response.result);
+                    return new SignMessageResponse(hex, message, (string?)response.result ?? string.Empty);
                 }
                 catch (Exception e)
                 {
@@ -91,10 +94,10 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object SendAsync(double id, string method, string jsonParams)
         {
-            return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams) ?? Array.Empty<object>(), sendCancellationToken.Token)
+            return SendAndFormatAsync(JsonConvert.DeserializeObject<object[]>(jsonParams) ?? Array.Empty<object>(), sendCancellationToken.Token)
                .ToDisconnectedPromise(this);
 
-            async UniTask<SendEthereumMessageResponse> SendAndFormatAsync(double id, string method, object[] @params, CancellationToken ct)
+            async UniTask<SendEthereumMessageResponse> SendAndFormatAsync(object[] @params, CancellationToken ct)
             {
                 try
                 {
@@ -108,6 +111,24 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                     return new SendEthereumMessageResponse
                     {
                         jsonAnyResponse = JsonConvert.SerializeObject(result),
+                    };
+                }
+                catch (Web3MethodNotAllowedException e)
+                {
+                    // Not an engine fault: OnEngineException would report it to Sentry and can suspend the scene on repeated calls
+                    return new SendEthereumMessageResponse
+                    {
+                        jsonAnyResponse = JsonConvert.SerializeObject(new EthApiResponse
+                        {
+                            id = (long)id,
+                            jsonrpc = "2.0",
+                            result = null,
+                            error = new EthApiError
+                            {
+                                code = JSON_RPC_METHOD_NOT_FOUND,
+                                message = e.Message,
+                            },
+                        }),
                     };
                 }
                 catch (Exception e)
