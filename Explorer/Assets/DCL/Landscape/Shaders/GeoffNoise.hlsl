@@ -1,7 +1,10 @@
 ﻿#if !GEOFFNOISE_INCLUDED
 #define GEOFFNOISE_INCLUDED
 
-#if SHADER_TARGET
+// SHADER_TARGET is only defined while a shader is being compiled, so it cannot
+// distinguish HLSL from C# when Unity syntax-checks this .hlsl at asset import.
+// CSHARP_7_3_OR_NEWER is defined for every C# compilation and never in HLSL.
+#if !CSHARP_7_3_OR_NEWER
 #define internal
 #define private
 #define static
@@ -620,7 +623,7 @@ namespace Decentraland.Terrain
             float value = 0.0f;
             float3 derivative = float3(0.0f, 0.0f, 0.0f);
 
-            #if SHADER_TARGET
+            #if !CSHARP_7_3_OR_NEWER
                 // Pre-computed rotation matrices to avoid accumulation
                 static const float3x3 rotations[8] = {
                     float3x3(1.00f, 0.00f, 0.00f,  0.00f, 1.00f, 0.00f,  0.00f, 0.00f, 1.00f),
@@ -690,7 +693,7 @@ namespace Decentraland.Terrain
                 clamp(PositionIn.z, TerrainBounds.y, TerrainBounds.w));
         }
 
-        #if !SHADER_TARGET
+        #if CSHARP_7_3_OR_NEWER
         private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
         {
             uv = uv * textureSize - 0.5f;
@@ -707,7 +710,7 @@ namespace Decentraland.Terrain
         }
         #endif
 
-        #if !SHADER_TARGET
+        #if CSHARP_7_3_OR_NEWER
         private static float GetOccupancy(NativeArray<byte> occupancyMap, int2 occupancyMapSize, float3 PositionIn, RectInt bounds, int parcelSize)
         {
             float2 scale = 1f / ((float2(bounds.width, bounds.height) + 2f) * parcelSize);
@@ -785,7 +788,7 @@ namespace Decentraland.Terrain
             return terrain( float3(x, 0.0f, z), frequencyCS, octaves).yzw;
         }
 
-#if !SHADER_TARGET
+#if CSHARP_7_3_OR_NEWER
     }
 }
 #endif
