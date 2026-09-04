@@ -12,6 +12,10 @@ public class DragRotator : MonoBehaviour
 
     [SerializeField] private float inertiaDamp = 0.95f;
 
+    // Well short of a right angle: the fit measures a YAW-invariant radius, so a spin presents the
+    // silhouette it zoomed for but a steep tilt overflows the view.
+    [SerializeField] private float maxPitch = 30f;
+
     [Header("Auto-Rotate Settings")] [SerializeField]
     private float autoRotateSpeed = 20f;
 
@@ -22,6 +26,11 @@ public class DragRotator : MonoBehaviour
     private float _verticalVel;
     private float _lastDragTime;
     private Quaternion _initialRotation;
+
+    // Rebuilt from angles each frame rather than accumulated: composing world Y and X turns works roll
+    // in, and a tilt held only as a quaternion cannot be clamped.
+    private float _yaw;
+    private float _pitch;
 
     public bool AllowVertical { get; set; } = true;
     public bool EnableAutoRotate { get; set; } = true;
@@ -62,20 +71,38 @@ public class DragRotator : MonoBehaviour
         _verticalVel *= Mathf.Pow(inertiaDamp, dt);
 
         // Velocity rotation
-        transform.Rotate(Vector3.up, _horizontalVel, Space.World);
-        if (AllowVertical) transform.Rotate(Vector3.right, _verticalVel, Space.World);
+        _yaw += _horizontalVel;
+
+        if (AllowVertical)
+        {
+            var tilted = _pitch + _verticalVel;
+            _pitch = Mathf.Clamp(tilted, -maxPitch, maxPitch);
+
+            // Drop inertia at the stop, or a flick keeps "arriving" after the subject has visibly stopped.
+            if (!Mathf.Approximately(_pitch, tilted)) _verticalVel = 0f;
+        }
 
         // Auto rotation
-        if (Time.time - _lastDragTime > autoRotateDelay)
+        if (Time.time - _lastDragTime > autoRotateDelay && EnableAutoRotate)
         {
-            var euler = transform.eulerAngles;
-            euler.x = Mathf.LerpAngle(euler.x, 0f, returnSpeed * dt);
-            euler.z = Mathf.LerpAngle(euler.z, 0f, returnSpeed * dt);
-            transform.eulerAngles = euler;
-
-            if (EnableAutoRotate) transform.Rotate(Vector3.up, autoRotateSpeed * dt, Space.World);
+            // Levelling rides with auto-rotate only: a self-spinning view is presenting a canonical
+            // framing, while one tilted by hand is being inspected and should not spring back.
+            _pitch = Mathf.Lerp(_pitch, 0f, returnSpeed * dt);
+            _yaw += autoRotateSpeed * dt;
         }
+
+        // An idle page auto-rotates indefinitely; past a few million degrees the float step exceeds the
+        // per-frame increment and the spin jitters, then stalls. A full turn is a no-op for AngleAxis.
+        _yaw %= 360f;
+
+        ApplyRotation();
     }
+
+    // Pitch OUTSIDE yaw, or the tilt goes about the subject's own axis and reads as roll once side-on.
+    private void ApplyRotation() =>
+        transform.rotation = Quaternion.AngleAxis(_pitch, Vector3.right)
+                             * Quaternion.AngleAxis(_yaw, Vector3.up)
+                             * _initialRotation;
 
     public void LookAtCamera(bool smooth)
     {
@@ -86,6 +113,11 @@ public class DragRotator : MonoBehaviour
         _horizontalVel = 0;
         _verticalVel = 0;
         _lastDragTime = 0;
+
+        // Carry the angles across, or the frame after the smooth lerp finishes snaps back to the yaw
+        // they still held. `direction` is flattened, so the target is a pure yaw turn.
+        _yaw = (targetRotation * Quaternion.Inverse(_initialRotation)).eulerAngles.y;
+        _pitch = 0f;
 
         if (smooth)
         {
@@ -99,9 +131,15 @@ public class DragRotator : MonoBehaviour
 
     public void ResetRotation()
     {
-        transform.rotation = _initialRotation;
+        _yaw = 0f;
+        _pitch = 0f;
         _horizontalVel = 0;
         _verticalVel = 0;
         _lastDragTime = 0;
+
+        // An in-flight LookAtCamera would otherwise keep lerping straight over the reset.
+        _targetRotation = null;
+
+        transform.rotation = _initialRotation;
     }
 }

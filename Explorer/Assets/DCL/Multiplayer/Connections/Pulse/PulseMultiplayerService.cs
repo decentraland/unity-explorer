@@ -129,7 +129,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection failed terminally, no retry: {e.Message}");
                     return false;
                 }
-                catch (Exception e) when (e is TimeoutException or PulseHandshakeDisconnectedException)
+                catch (Exception e) when (e is TimeoutException or PulseHostResolutionException or PulseHandshakeDisconnectedException)
                 {
                     if (attempt >= maxAttempts)
                     {

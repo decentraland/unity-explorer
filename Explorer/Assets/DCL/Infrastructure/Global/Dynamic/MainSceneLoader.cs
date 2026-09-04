@@ -38,6 +38,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DG.Tweening;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -45,6 +46,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Versioning;
+using LiveKit.Internal.FFIClients.Requests;
 using MVC;
 using Newtonsoft.Json.Linq;
 using Plugins.NativeWindowManager;
@@ -58,6 +60,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
+using Utility.Networking;
 using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
 
 // ReSharper disable once CheckNamespace
@@ -73,6 +76,8 @@ namespace Global.Dynamic
 
         // Non-null only for DecentralandEnvironment.Custom; set from the command line by ApplyBaseDomainArg.
         private string? customBaseDomain;
+        private string? cliGatewayArg;
+        private string? cliGatewayPrefix;
 
         // The validated --eth-network value, or null when it was not passed on the command line. Captured by
         // CaptureEthNetworkArg and turned into a network by ResolveEthereumNetwork once the environment is settled.
@@ -99,6 +104,7 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
+        private AbgenSidecarBootstrap? abgenSidecar;
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
@@ -167,6 +173,9 @@ namespace Global.Dynamic
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
                 stopwatch.LogStep("staticContainer.SafeDispose");
             }
+
+            abgenSidecar?.Dispose();
+            stopwatch.LogStep("abgenSidecar.Dispose");
 
             bootstrapContainer?.Dispose();
             stopwatch.LogStep("bootstrapContainer.Dispose");
@@ -248,10 +257,25 @@ namespace Global.Dynamic
             // it has not supplied yet. (base-domain is denied by the allowlist, so a link carrying it still reaches
             // the consent dialog; WarnIfCommandLineOnlyArgCameFromTheDeepLink reports that accepting it changes nothing.)
             ApplyBaseDomainArg(applicationParametersParser);
+            LocalCertificateValidation.Configure(applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM));
+
+            // Configure the local ICE policy before any dynamic container or room is created. The SDK still
+            // applies its own loopback URL check, so this opt-in cannot change transport behavior for a remote
+            // realm. RealmController recomputes the value after every realm bootstrap/change as a second guard.
+            FFIBridgeExtensions.UseTransportAllForLoopbackUrls = applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM);
 
             // Read while the deep link is still deferred for the same reason as the base domain: which chain the
             // client signs against is not something a link may pick, not even through the denied-params dialog.
             if (!CaptureEthNetworkArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            // Read while the deep link is still deferred, for the same reason as the two above: where a session's
+            // supported-service traffic goes is not something a link may pick, not even through the denied-params
+            // dialog.
+            if (!CaptureGatewayArg(applicationParametersParser))
             {
                 ExitUtils.Exit();
                 return;
@@ -276,6 +300,7 @@ namespace Global.Dynamic
 
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -301,6 +326,13 @@ namespace Global.Dynamic
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
                 GetResolutionFromAppArgs(applicationParametersParser));
 
+            // Shown before anything that can wait (the abgen sidecar launch below is serial).
+            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                InstantiateAltTester(applicationParametersParser);
+
             World world = World.Create();
 
             var realmData = new RealmData();
@@ -310,17 +342,22 @@ namespace Global.Dynamic
 
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
 
-            // local-ab only: the embedded abgen JIT server reads the scene through the preview server's own
-            // content endpoints — no SDK-side sidecar or proxy involved. Its base URL becomes the
-            // optimized-assets source; requests it doesn't build (wearables, emotes, LODs, registry)
-            // stream through it from the production upstream (abgen's ab-cdn read-through and registry
-            // pass-through), so no lane loses content. Only the loopback endpoint is reserved here — the
-            // URL sources below need it at construction; AbgenSidecarPlugin (registered from this value,
-            // absent otherwise) owns everything else: creation, launch, warm-up and disposal.
-            string? localAbBaseUrl = null;
-
+            // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
+            // local scene and read-throughs everything else from production). Brought up to health serially,
+            // before the URL sources are built, so the override is seeded only when the server is actually
+            // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
             if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
-                cliOptimizedAssetsUrl = localAbBaseUrl = AbgenSidecar.ReserveBaseUrl();
+            {
+                // Mirrors RealmUrls' LSD resolution — RealmUrls itself needs the URL sources that don't exist yet.
+                string realmRoot = launchSettings.initialRealm == InitialRealm.Localhost
+                    ? IRealmNavigator.LOCALHOST
+                    : launchSettings.customRealm;
+
+                abgenSidecar = new AbgenSidecarBootstrap(decentralandEnvironment);
+
+                if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
+                    cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
+            }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -331,14 +368,9 @@ namespace Global.Dynamic
                 cliGatekeeperUrl,
                 cliOptimizedAssetsUrl,
                 customBaseDomain,
-                cliAbgenPipeline);
+                cliAbgenPipeline,
+                cliGatewayPrefix);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
-
-            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
-
-            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
-            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
-                InstantiateAltTester(applicationParametersParser);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, ethereumNetwork);
@@ -365,7 +397,6 @@ namespace Global.Dynamic
                 decentralandEnvironment,
                 ethereumNetwork,
                 dclVersion,
-                localAbBaseUrl,
                 destroyCancellationToken
             );
 
@@ -469,11 +500,10 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
-                // Realm loading is what starts scene loading — and with it the scene's asset-bundle
-                // manifest request, whose bundles-vs-GLTFs verdict is final for the session. Hold it
-                // until the abgen sidecar is warm or has given up; completed immediately when the
-                // sidecar is not mounted.
-                await dynamicWorldContainer!.AbgenSidecarReadyAsync.AttachExternalCancellation(ct);
+                // The scene's first manifest request fixes the bundles-vs-GLTFs verdict for the session —
+                // hold realm loading until the whole-scene warm-up settles.
+                if (abgenSidecar != null)
+                    await abgenSidecar.WarmUpTask.AttachExternalCancellation(ct);
 
                 await LoadStartingRealmAsync(ct);
                 await LoadUserFlowAsync(playerEntity, ct);
@@ -650,6 +680,31 @@ namespace Global.Dynamic
         }
 
         /// <summary>
+        ///     Captures <see cref="AppArgsFlags.GATEWAY" /> into <see cref="cliGatewayArg" /> and its normalized form
+        ///     into <see cref="cliGatewayPrefix" />. Returns false when the launch must be abandoned; the reason is
+        ///     already reported.
+        ///     <para>
+        ///         Rejecting rather than ignoring: naming a gateway forces routing on, so a value that cannot be read
+        ///         as an origin would otherwise send every supported service to a host nobody named.
+        ///     </para>
+        /// </summary>
+        private bool CaptureGatewayArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.GATEWAY, out string? value) || string.IsNullOrWhiteSpace(value))
+                return true;
+
+            if (!GatewayUrlsSource.TryNormalizeGatewayPrefix(value, out string prefix))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.GATEWAY} '{value}' is not a gateway origin. Expected an absolute http or https url with a host and no query or fragment");
+                return false;
+            }
+
+            cliGatewayArg = value.Trim();
+            cliGatewayPrefix = prefix;
+            return true;
+        }
+
+        /// <summary>
         ///     Turns the captured <see cref="ethNetworkArg" /> into the chain this run uses. Only a
         ///     <c>--base-domain</c> deployment can answer for its own chain, so an override paired with a
         ///     decentraland environment is reported and dropped rather than silently having no effect. The rule
@@ -723,7 +778,7 @@ namespace Global.Dynamic
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs && !skipScreen)
-                SavedQualitySettingsApplier.EnforceLowPreset();
+                SavedQualitySettingsApplier.EnforceLowPresetOnce();
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
@@ -978,23 +1033,18 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realm)) return true;
 
             var uri = new Uri(realm);
-            if (uri.Host == "127.0.0.1") return true;
-            if (uri.Host == "localhost") return true;
+            // A controlled host skips the consent prompt and the contracts/servers lookup below.
+            if (TrustedRealms.IsTrusted(uri)) return true;
 
             // A --base-domain deployment owns everything under its domain, so its realms and worlds carry the same
-            // trust the hardcoded decentraland hosts below do. Its worlds server in particular cannot be reached any
-            // other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers, which
-            // is exactly why decentraland's is hardcoded. Widening trust this way is safe because --base-domain is
-            // command-line only (never accepted from a deep link), so the operator already chose this deployment.
+            // trust TrustedRealms grants decentraland's own hosts. Its worlds server in particular cannot be reached
+            // any other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers,
+            // which is exactly why decentraland's is named outright. Widening trust this way is safe because
+            // --base-domain is command-line only (never accepted from a deep link), so the operator already chose
+            // this deployment.
             if (decentralandEnvironment == DecentralandEnvironment.Custom
                 && IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, dclUrls.BaseDomain))
                 return true;
-            if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 

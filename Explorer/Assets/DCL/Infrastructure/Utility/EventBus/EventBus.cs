@@ -66,7 +66,7 @@ namespace Utility
 
             public static void Schedule(Action<T> typedDelegate, T evt)
             {
-                if (!POOL.TryDequeue(out PooledContinuation<T>? continuation))
+                if (!POOL.TryDequeue(out PooledContinuation<T> continuation))
                     continuation = new PooledContinuation<T>();
 
                 continuation.typedDelegate = typedDelegate;

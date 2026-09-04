@@ -47,7 +47,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                               .Invoke(avatarBase, null);
 
             // The test prefab leaves several serialized IK references unassigned (fileID: 0). ResetState() touches
-            // Armature (via ResetArmatureInclination), HipsConstraint and FeetIKRig, so each would throw
+            // Armature (via ResetArmatureTransform), HipsConstraint and FeetIKRig, so each would throw
             // UnassignedReferenceException. Wire throwaway objects into the private serialized backing fields via
             // reflection (the same technique sibling AvatarBase tests use). The rigging component types are resolved
             // from the property types, so the test needs no Animation-Rigging asmref.

@@ -17,6 +17,7 @@ namespace Utility.Networking
 
         // Once TCP connects, neither Abort() nor a CancellationToken unparks mono's ConnectAsync, so failing a pending connection means abandoning its await via this token.
         private readonly CancellationTokenSource connectAbort = new ();
+        private volatile bool disposed;
 #endif
 
         public WebSocketState State
@@ -36,6 +37,7 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             ws.Dispose();
 #else
+            disposed = true;
             connectAbort.SafeCancelAndDispose();
             ws.Dispose();
 #endif
@@ -96,6 +98,9 @@ namespace Utility.Networking
                 bool marshalBackToIssuingContext = SynchronizationContext.Current != null;
                 using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, connectAbort.Token);
 
+                if (LocalCertificateValidation.ShouldBypass(uri))
+                    ws.Options.RemoteCertificateValidationCallback = (_, _, _, _) => true;
+
                 // Only AttachExternalCancellation can complete this await once the BCL task parks mid-upgrade (see connectAbort).
                 await ws.ConnectAsync(uri, linked.Token).AsUniTask(useCurrentSynchronizationContext: marshalBackToIssuingContext).AttachExternalCancellation(linked.Token);
 #endif
@@ -114,6 +119,10 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.CloseAsync(status, description, cancellationToken);
 #else
+                // A racing Dispose() nulls Mono's inner socket; bail before touching ws.
+                if (disposed)
+                    return;
+
                 // Mono's close path derefs an inner socket that only exists after a successful upgrade; per WHATWG, close() outside an established connection aborts instead.
                 if (State is not (WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent))
                 {
@@ -125,9 +134,17 @@ namespace Utility.Networking
                 await ws.CloseAsync(statusType, description, cancellationToken);
 #endif
             }
+            catch (System.Net.WebSockets.WebSocketException e) when (e.InnerException is ObjectDisposedException)
+            {
+                // Mono surfaces the Dispose() race as a WebSocketException wrapping the ObjectDisposedException.
+            }
             catch (System.Net.WebSockets.WebSocketException e)
             {
                 throw new WebSocketException(e);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Dispose() ran between the disposed-flag check and the actual ws call.
             }
         }
 

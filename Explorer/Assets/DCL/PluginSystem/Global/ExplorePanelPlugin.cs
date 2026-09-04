@@ -27,6 +27,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Quality;
 using DCL.Settings;
+using DCL.Shop;
 using DCL.SpringBones;
 using DCL.Settings.Configuration;
 using DCL.UserInAppInitializationFlow;
@@ -584,6 +585,9 @@ namespace DCL.PluginSystem.Global
             eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
                 eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendsService, communitiesDataProvider);
 
+            ShopView shopView = explorePanelView.GetComponentInChildren<ShopView>();
+            var shopController = new ShopController(shopView);
+
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
             eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
@@ -619,6 +623,7 @@ namespace DCL.PluginSystem.Global
                     communitiesBrowserController,
                     placesController,
                     eventsController,
+                    shopController,
                     inputBlock,
                     eventsApiService,
                     mvcManager,

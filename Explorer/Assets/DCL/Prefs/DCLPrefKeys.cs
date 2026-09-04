@@ -18,6 +18,7 @@ namespace DCL.Prefs
         public const string GUEST_SESSION_ACTIVE = "Web3Authentication.GuestSessionActive";
 
         public const string DONT_SHOW_MIN_SPECS_SCREEN = "dontShowMinSpecsScreen";
+        public const string MIN_SPECS_LOW_PRESET_ENFORCED = "minSpecsLowPresetEnforced";
 
         public const string GPUI_ENABLED = "alfa-gpui";
 

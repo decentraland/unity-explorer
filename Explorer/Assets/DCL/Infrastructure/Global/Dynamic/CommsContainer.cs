@@ -114,13 +114,13 @@ namespace Global.Dynamic
             bool isolateScenesCommunication,
             bool enableAnalytics,
             bool localSceneDevelopment,
-            string? localSceneDevelopmentRealm = null)
+            ILocalSceneEntityIdSource localSceneEntityIdSource)
         {
             var entityParticipantTable = new EntityParticipantTable();
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
-            SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource, identityCache).WithLog();
-            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController, identityCache, localSceneDevelopmentRealm).WithLog();
+            SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
+            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(localSceneEntityIdSource, identityCache).WithLog();
 
             Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HardwareFingerprint)
                 ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())
@@ -145,7 +145,8 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController,
-                staticContainer.RealmData
+                staticContainer.RealmData,
+                allowInsecureLocalHttp: appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM)
             );
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), hardwareFingerprintProvider);
@@ -165,7 +166,9 @@ namespace Global.Dynamic
                 roomHub = new RoomHub(
                         localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
                         gateKeeperSceneRoom,
-                        chatRoom,
+
+                        // Friends is disabled in local scene development, so DMs delivered over the chat room would be unanswerable
+                        localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : chatRoom,
                         voiceChatRoom
                         );
             }

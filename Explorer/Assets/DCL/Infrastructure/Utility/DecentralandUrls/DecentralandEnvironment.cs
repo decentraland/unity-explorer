@@ -4,7 +4,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
     {
         Org,
         Zone,
-        Today,
 
         /// <summary>
         ///     A deployment reachable under a base domain other than <c>decentraland.*</c>, selected with the

@@ -62,7 +62,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnContinuousAudioStarted(AudioClipConfig audioClipConfig)
         {
-            if (audioClipConfig.GetInstanceID() != backgroundMusic.GetInstanceID())
+            if (audioClipConfig != backgroundMusic)
                 return;
 
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;

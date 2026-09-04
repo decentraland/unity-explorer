@@ -1,32 +1,20 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Utility.Types;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
-using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 
-// ReSharper disable InconsistentNaming
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
     public class LocalSceneDevelopmentSceneRoomMetaDataSource : ISceneRoomMetaDataSource
     {
-        private readonly IWebRequestController webRequestController;
+        private readonly ILocalSceneEntityIdSource entityIdSource;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly string realm;
 
-        // realm is the local scene development realm the client was launched with (the `realm` deep link
-        // parameter). The scene server only listens on the port it was started with, so falling back to the
-        // default would make this source unreachable for any `sdk-commands start --port` but the default one.
-        public LocalSceneDevelopmentSceneRoomMetaDataSource(IWebRequestController webRequestController, IWeb3IdentityCache identityCache, string? realm = null)
+        public LocalSceneDevelopmentSceneRoomMetaDataSource(ILocalSceneEntityIdSource entityIdSource,
+            IWeb3IdentityCache identityCache)
         {
-            this.webRequestController = webRequestController;
+            this.entityIdSource = entityIdSource;
             this.identityCache = identityCache;
-            this.realm = string.IsNullOrWhiteSpace(realm) ? IRealmNavigator.LOCALHOST : realm;
         }
 
         public bool ScenesCommunicationIsIsolated => false;
@@ -36,100 +24,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
-            URLDomain baseUrl = URLDomain.FromString(realm);
-            URLAddress sceneDefinitionEndpoint = baseUrl.Append(URLSubdirectory.FromString("scene.json"));
-            URLAddress idEndpoint = baseUrl.Append(URLSubdirectory.FromString("content/entities/active"));
+            Result<LocalSceneEntity> entity = await entityIdSource.EntityAsync(token);
 
-            SceneDefinition sceneDefinition;
+            if (!entity.Success)
+                return Result<MetaData>.ErrorResult(entity.ErrorMessage!);
 
-            try
-            {
-                sceneDefinition =
-                    await webRequestController.GetAsync(
-                                                   new CommonArguments(sceneDefinitionEndpoint),
-                                                   token,
-                                                   ReportCategory.LIVEKIT,
-                                                   suppressErrors: true
-                                               )
-                                              .CreateFromJson<SceneDefinition>(WRJsonParser.Unity);
-            }
-            catch (UnityWebRequestException e) when (e.Result == UnityWebRequest.Result.ConnectionError)
-            {
-                return Result<MetaData>.ErrorResult($"Local scene server unreachable at {baseUrl}: {e.Message}");
-            }
-
-            var baseResult = sceneDefinition.scene.BaseParcel();
-
-            if (baseResult.Has == false)
-                return Result<MetaData>.ErrorResult("Cannot get base parcel from scene definition");
-
-            Vector2Int coordinate = baseResult.Value;
-
-            EndpointResponse[]? result =
-                await webRequestController.PostAsync(
-                                               new CommonArguments(idEndpoint),
-                                               GenericPostArguments.CreateJson($"{{\"pointers\": [\"{coordinate.x},{coordinate.y}\" ]}}"),
-                                               token,
-                                               ReportCategory.LIVEKIT
-                                           )
-                                          .CreateFromJson<EndpointResponse[]>(WRJsonParser.Newtonsoft);
-
-            if (result == null)
-                return Result<MetaData>.ErrorResult($"Error result from: {idEndpoint}");
-
-            if (result.Length == 0)
-                return Result<MetaData>.ErrorResult($"Empty array from endpoint: {idEndpoint}");
-
-            string? id = result[0].id;
-
-            if (string.IsNullOrWhiteSpace(id!))
-                return Result<MetaData>.ErrorResult("Id is empty or null");
-
-            return Result<MetaData>.SuccessResult(new MetaData(id, Vector2Int.zero, new MetaData.Input("LocalPreview", Vector2Int.zero), identityCache.IsGuest()));
-        }
-
-        [Serializable]
-        private struct EndpointResponse
-        {
-            public string? id;
-        }
-
-        [Serializable]
-        private struct SceneDefinition
-        {
-            public Scene scene;
-        }
-
-        [Serializable]
-        private struct Scene
-        {
-            public string @base;
-
-            public Option<Vector2Int> BaseParcel()
-            {
-                if (string.IsNullOrWhiteSpace(@base))
-                    return Option<Vector2Int>.None;
-
-                string[]? parts = @base.Split(',');
-
-                if (parts == null)
-                    return Option<Vector2Int>.None;
-
-                if (parts.Length < 2)
-                    return Option<Vector2Int>.None;
-
-                string rawX = parts[0];
-                string rawY = parts[1];
-
-                if (int.TryParse(rawX, out int x) == false)
-                    return Option<Vector2Int>.None;
-
-                if (int.TryParse(rawY, out int y) == false)
-                    return Option<Vector2Int>.None;
-
-                Vector2Int result = new Vector2Int(x, y);
-                return Option<Vector2Int>.Some(result);
-            }
+            return Result<MetaData>.SuccessResult(new MetaData(entity.Value.Id, Vector2Int.zero, new MetaData.Input("LocalPreview", Vector2Int.zero), identityCache.IsGuest()));
         }
     }
 }
