@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using System.Threading;
 using UnityEngine;
 
