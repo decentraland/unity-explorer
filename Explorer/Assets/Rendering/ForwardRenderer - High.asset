@@ -223,7 +223,7 @@ MonoBehaviour:
   - {fileID: 8054367766033506950}
   - {fileID: -7900794056938074830}
   - {fileID: -4898321790264357683}
-  m_RendererFeatureMap: 41ef42dbdb93651851016c145f871f4499542062310ed9bacbf142f293e0b8ba86a2c830cfdcc66f324db058aabd5a92cdccbcbf48aa05bc
+  m_RendererFeatureMap: 41ef42dbdb93651851016c145f871f4499542062310ed9ba4b6fec4d7d18d447cbf142f293e0b8ba86a2c830cfdcc66f324db058aabd5a92
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
@@ -344,6 +344,22 @@ MonoBehaviour:
   m_Active: 0
   m_Settings:
     settings: {fileID: 11400000, guid: fb981fee23899ef4eacd98e0c788b4e0, type: 2}
+--- !u!114 &5175788798212861771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bd5c64af15e426a932a23d627f2d07f, type: 3}
+  m_Name: RenderFeature_ObjectHighlight
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  highlightInputMaterial: {fileID: 2100000, guid: 55a3f55bb348e95418783121e0b8ce1e, type: 2}
+  highlightInputBlurMaterial: {fileID: 2100000, guid: c7d4b82b1c0428c4d815890b615064eb, type: 2}
+  highlightOutputMaterial: {fileID: 2100000, guid: 1015f0654e3a1524aa9c0f38ed24692b, type: 2}
 --- !u!114 &5202977093706822531
 MonoBehaviour:
   m_ObjectHideFlags: 0
