@@ -77,6 +77,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.UseCustomMediaPlayerMacSilicon] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON), requireDebug: false),
                 [FeatureId.UseCustomMediaPlayerMacIntel] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.USE_CUSTOM_MEDIA_PLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL), requireDebug: false),
                 [FeatureId.BugReport] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BUG_REPORT, featureFlags.IsEnabled(FeatureFlagsStrings.BUG_REPORT) || isEditor),
+                [FeatureId.InGameShop] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.IN_GAME_SHOP, featureFlags.IsEnabled(FeatureFlagsStrings.IN_GAME_SHOP) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -224,5 +225,6 @@ namespace DCL.FeatureFlags
         UseCustomMediaPlayerMacIntel = 73,
         NearbyVoiceChatTip = 74,
         BugReport = 75,
+        InGameShop = 76,
     }
 }
