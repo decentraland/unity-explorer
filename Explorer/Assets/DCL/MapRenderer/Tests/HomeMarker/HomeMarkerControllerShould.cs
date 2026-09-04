@@ -70,7 +70,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 				placesAPIService,
 				eventBus
 			);
-			homePlaceEventBus.Controller = controller;
+			homePlaceEventBus.SetController(controller);
 
 			// Clear prefs keys (safe because player prefs are replaced for test duration)
 			if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
@@ -313,6 +313,51 @@ namespace DCL.MapRenderer.Tests.HomeMarker
             homePlaceEventBus.SetAsHome("testworld.dcl.eth");
 
             var placeInfo = new PlacesData.PlaceInfo(Vector2Int.zero) { world_name = "otherworld.dcl.eth" };
+            Assert.IsFalse(homePlaceEventBus.IsHome(placeInfo));
+        }
+
+        [Test]
+        public void IdentifyPlaceAsHomeWhenHomeIsOnNonBaseParcel()
+        {
+            // Arrange
+            controller.Initialize();
+            homePlaceEventBus.SetAsHome(new Vector2Int(2, 3));
+
+            var placeInfo = new PlacesData.PlaceInfo(Vector2Int.zero)
+            {
+                Positions = new[] { Vector2Int.zero, new Vector2Int(1, 0), new Vector2Int(2, 3) },
+            };
+
+            // Act & Assert
+            Assert.IsTrue(homePlaceEventBus.IsHome(placeInfo));
+        }
+
+        [Test]
+        public void NotIdentifyPlaceAsHomeWhenHomeIsOutsideItsParcels()
+        {
+            // Arrange
+            controller.Initialize();
+            homePlaceEventBus.SetAsHome(new Vector2Int(5, 5));
+
+            var placeInfo = new PlacesData.PlaceInfo(Vector2Int.zero)
+            {
+                Positions = new[] { Vector2Int.zero, new Vector2Int(1, 0) },
+            };
+
+            // Act & Assert
+            Assert.IsFalse(homePlaceEventBus.IsHome(placeInfo));
+        }
+
+        [Test]
+        public void NotIdentifyParcelPlaceAsHomeWhenHomeIsWorld()
+        {
+            // Arrange
+            controller.Initialize();
+            homePlaceEventBus.SetAsHome("testworld.dcl.eth");
+
+            var placeInfo = new PlacesData.PlaceInfo(Vector2Int.zero);
+
+            // Act & Assert
             Assert.IsFalse(homePlaceEventBus.IsHome(placeInfo));
         }
 	}
