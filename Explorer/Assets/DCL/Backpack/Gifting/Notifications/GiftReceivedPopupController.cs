@@ -2,6 +2,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Services.GiftItemLoader;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Diagnostics;
@@ -27,8 +28,9 @@ namespace DCL.Backpack.Gifting.Notifications
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        private ImageController imageController;
+        private ImageController? imageController;
         private CancellationTokenSource? lifeCts;
+        private GiftableType giftedItemType;
 
         public GiftReceivedPopupController(
             ViewFactoryMethod viewFactory,
@@ -46,21 +48,25 @@ namespace DCL.Backpack.Gifting.Notifications
             this.imageControllerProvider = imageControllerProvider;
         }
 
-        protected override void OnViewInstantiated()
+        public override void Dispose()
         {
-            base.OnViewInstantiated();
-            imageController = imageControllerProvider.Create(viewInstance!.GiftItemView.ThumbnailImageView);
+            imageController?.Dispose();
+            lifeCts?.SafeCancelAndDispose();
         }
+
+        protected override void OnViewInstantiated() =>
+            imageController = imageControllerProvider.Create(viewInstance!.GiftItemView.ThumbnailImageView);
 
         protected override void OnViewShow()
         {
             viewInstance!.SubTitleText.text = GiftingTextIds.GIFT_OPENED_TITLE;
             viewInstance.ItemNameText.text = GiftingTextIds.GIFT_LOADING;
             viewInstance.GiftItemView.SetLoading();
+            giftedItemType = GiftableType.Wearable;
 
             lifeCts = new CancellationTokenSource();
 
-            imageController.SpriteLoaded += OnImageLoaded;
+            imageController!.SpriteLoaded += OnImageLoaded;
 
             LoadFullDataAsync(inputData, lifeCts.Token)
                 .Forget();
@@ -72,7 +78,7 @@ namespace DCL.Backpack.Gifting.Notifications
         protected override void OnViewClose()
         {
             lifeCts.SafeCancelAndDispose();
-            imageController.SpriteLoaded -= OnImageLoaded;
+            imageController!.SpriteLoaded -= OnImageLoaded;
             imageController.StopLoading();
         }
 
@@ -81,7 +87,7 @@ namespace DCL.Backpack.Gifting.Notifications
         {
             try
             {
-                var (profile, itemData) = await UniTask.WhenAll(
+                (Profile? profile, GiftItemModel? itemData) = await UniTask.WhenAll(
                     profileRepository.GetAsync(notification.Metadata.SenderAddress, ct),
                     giftItemLoaderService.LoadItemMetadataAsync(notification.Metadata.TokenUri, ct)
                 );
@@ -98,25 +104,20 @@ namespace DCL.Backpack.Gifting.Notifications
                 if (itemData.HasValue)
                 {
                     var data = itemData.Value;
+                    giftedItemType = data.Type;
                     viewInstance!.ItemNameText.text = data.Name;
 
                     if (wearableCatalog != null)
-                    {
                         viewInstance.GiftItemView.ConfigureAttributes(
                             rarityBg: wearableCatalog.GetRarityBackground(data.Rarity),
                             flapColor: wearableCatalog.GetRarityFlapColor(data.Rarity),
                             categoryIcon: wearableCatalog.GetCategoryIcon(data.Category)
                         );
-                    }
 
                     if (!string.IsNullOrEmpty(data.ImageUrl))
-                    {
                         imageController.RequestImage(data.ImageUrl, fitAndCenterImage: true);
-                    }
                     else
-                    {
                         viewInstance.GiftItemView.SetLoadedState();
-                    }
                 }
                 else
                 {
@@ -139,10 +140,8 @@ namespace DCL.Backpack.Gifting.Notifications
 
         }
 
-        private void OnImageLoaded(Sprite sprite)
-        {
+        private void OnImageLoaded(Sprite sprite) =>
             viewInstance?.GiftItemView.SetLoadedState();
-        }
 
         private async UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
@@ -175,7 +174,10 @@ namespace DCL.Backpack.Gifting.Notifications
                 UniTask.WhenAny(closeBtn, backpackBtn, bgBtn);
 
             if (result == 1)
-                mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)), ct);
+            {
+                BackpackSections backpackSection = giftedItemType == GiftableType.Emote ? BackpackSections.Emotes : BackpackSections.Avatar;
+                mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, backpackSection)), ct);
+            }
 
             await PlayHideAnimationAsync(CancellationToken.None);
             lifeCts.SafeCancelAndDispose();
