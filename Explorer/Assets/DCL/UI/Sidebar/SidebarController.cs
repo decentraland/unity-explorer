@@ -31,9 +31,11 @@ using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
 using DCL.UI.Sidebar.HelpMenu;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.Web3.Identities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.UI;
 using ECS.Abstract;
@@ -47,6 +49,7 @@ namespace DCL.UI.Sidebar
         private const string SOURCE_BUTTON = "Button";
 
         private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly UnityAppWebBrowser webBrowser;
@@ -97,10 +100,12 @@ namespace DCL.UI.Sidebar
             World globalWorld,
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
-            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
+            IWeb3IdentityCache identityCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
+            this.identityCache = identityCache;
             this.profileButtonPresenter = profileButtonPresenter;
             this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
@@ -419,12 +424,28 @@ namespace DCL.UI.Sidebar
         }
         private void OnUnreadMessagesButtonClicked() => chatEventBus.RaiseToggleChatEvent();
         private void OnEmotesWheelButtonClicked() => OpenPanelAsync(viewInstance!.emotesWheelButton, EmotesWheelController.IssueCommand()).Forget();
-        private void OnFriendsButtonClicked() =>
-            OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
+        private void OnFriendsButtonClicked()
+        {
+            if (identityCache.IsGuest())
+            {
+                OpenPanelAsync(viewInstance!.friendsButton, UpgradeGuestAccountPopupController.IssueCommand()).Forget();
+                return;
+            }
 
-        private void OnMarketplaceCreditsButtonClicked() =>
+            OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
+        }
+
+        private void OnMarketplaceCreditsButtonClicked()
+        {
+            if (identityCache.IsGuest())
+            {
+                OpenPanelAsync(viewInstance!.MarketplaceCreditsButton, UpgradeGuestAccountPopupController.IssueCommand()).Forget();
+                return;
+            }
+
             OpenPanelAsync(viewInstance!.MarketplaceCreditsButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
+        }
 
         private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();
 
@@ -446,6 +467,12 @@ namespace DCL.UI.Sidebar
             if (viewInstance!.NearbyVoiceChatButton.IsSuppressed)
             {
                 viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();
+                return;
+            }
+
+            if (identityCache.IsGuest())
+            {
+                OpenPanelAsync(null, UpgradeGuestAccountPopupController.IssueCommand()).Forget();
                 return;
             }
 

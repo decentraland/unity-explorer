@@ -2,9 +2,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.FeatureFlags;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DG.Tweening;
+using MVC;
 using System;
 using System.Threading;
 using Utility;
@@ -40,6 +43,8 @@ namespace DCL.VoiceChat
         private readonly CallButtonView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
         private readonly ChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IMVCManager mvcManager;
 
         private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
@@ -52,11 +57,15 @@ namespace DCL.VoiceChat
             CallButtonView view,
             IPrivateCallOrchestrator privateCallOrchestrator,
             ChatEventBus chatEventBus,
-            IReadonlyReactiveProperty<ChatChannel> currentChannel)
+            IReadonlyReactiveProperty<ChatChannel> currentChannel,
+            IWeb3IdentityCache identityCache,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.privateCallOrchestrator = privateCallOrchestrator;
             this.chatEventBus = chatEventBus;
+            this.identityCache = identityCache;
+            this.mvcManager = mvcManager;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
 
@@ -113,6 +122,12 @@ namespace DCL.VoiceChat
 
         private void OnCallButtonClicked()
         {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             cts = cts.SafeRestart();
             HandleCallButtonClickAsync(cts.Token).Forget();
         }

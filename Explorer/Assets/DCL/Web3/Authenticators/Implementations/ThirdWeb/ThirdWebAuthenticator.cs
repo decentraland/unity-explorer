@@ -37,7 +37,8 @@ namespace DCL.Web3.Authenticators
             HashSet<string> readOnlyMethods,
             IWeb3AccountFactory web3AccountFactory,
             IWebRequestController webRequestController,
-            int? identityExpirationDuration = null)
+            int? identityExpirationDuration = null,
+            string? guestSessionIdOverride = null)
         {
             Dictionary<BigInteger, string> rpcOverrides = ChainRpcOverrides(decentralandUrlsSource);
 
@@ -52,7 +53,7 @@ namespace DCL.Web3.Authenticators
                 rpcOverrides: rpcOverrides
             );
 
-            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration);
+            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration, guestSessionIdOverride);
             ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, ethereumNetwork, rpcOverrides);
         }
 

@@ -1,4 +1,6 @@
 using CodeLess.Attributes;
+using DCL.UI.UpgradeGuestAccountPopup;
+using DCL.Web3.Identities;
 using MVC;
 
 namespace DCL.Chat
@@ -8,11 +10,13 @@ namespace DCL.Chat
     {
         private readonly ChatEventBus chatEventBus;
         private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache identityCache;
 
-        public ChatOpener(ChatEventBus chatEventBus, IMVCManager mvcManager)
+        public ChatOpener(ChatEventBus chatEventBus, IMVCManager mvcManager, IWeb3IdentityCache identityCache)
         {
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
+            this.identityCache = identityCache;
         }
 
         /// <summary>
@@ -21,6 +25,12 @@ namespace DCL.Chat
         /// <param name="id"> The id or walletId of the user to open a conversation with</param>
         public void OpenPrivateConversationWithUserId(string id)
         {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             CloseAllViewsAndFocusChat();
             chatEventBus.RaiseOpenPrivateConversationRequestedEvent(id);
         }

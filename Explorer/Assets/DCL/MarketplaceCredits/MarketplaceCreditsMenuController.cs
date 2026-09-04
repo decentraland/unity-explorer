@@ -11,6 +11,7 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -302,6 +303,12 @@ namespace DCL.MarketplaceCredits
 
         private void OnMarketplaceCreditsNotificationClicked(object[] parameters)
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             if (!isFeatureActivated)
                 return;
 
@@ -320,6 +327,10 @@ namespace DCL.MarketplaceCredits
             {
                 await UniTask.WaitUntil(() => sidebarButton.gameObject.activeInHierarchy, cancellationToken: ct);
                 await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+
+                if (web3IdentityCache.IsGuest())
+                    return;
+
                 var ownProfile = await selfProfile.ProfileAsync(ct);
                 if (ownProfile == null)
                     return;

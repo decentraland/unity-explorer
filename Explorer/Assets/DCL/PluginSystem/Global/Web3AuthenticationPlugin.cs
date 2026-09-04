@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
-using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
@@ -44,7 +43,6 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IAppArgs appArgs;
-        private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
@@ -71,7 +69,6 @@ namespace DCL.PluginSystem.Global
             AudioClipConfig backgroundMusic,
             Arch.Core.World world,
             IAppArgs appArgs,
-            IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
@@ -95,7 +92,6 @@ namespace DCL.PluginSystem.Global
             this.backgroundMusic = backgroundMusic;
             this.world = world;
             this.appArgs = appArgs;
-            this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
@@ -126,7 +122,6 @@ namespace DCL.PluginSystem.Global
                 settings.EmotesSettings,
                 inputBlock,
                 backgroundMusic,
-                wearablesProvider,
                 webRequestController,
                 decentralandUrlsSource,
                 profileChangesBus,

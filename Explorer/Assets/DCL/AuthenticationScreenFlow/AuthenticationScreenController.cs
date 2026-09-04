@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.BugReporting.UI;
 using DCL.CharacterPreview;
@@ -35,6 +34,8 @@ namespace DCL.AuthenticationScreenFlow
             LoginSelectionScreen = 1,
             LoginRequested = 2,
 
+            GuestOrSignUpScreen = 8,
+
             VerificationRequested = 3,
 
             ProfileFetching = 4,
@@ -60,7 +61,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
         private readonly AudioClipConfig backgroundMusic;
-        private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
@@ -111,7 +111,6 @@ namespace DCL.AuthenticationScreenFlow
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus,
@@ -132,7 +131,6 @@ namespace DCL.AuthenticationScreenFlow
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
-            this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
@@ -181,10 +179,11 @@ namespace DCL.AuthenticationScreenFlow
                 new InitAuthState(viewInstance, installSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser,
                     enableEmailOTP, otherLoginMethodsEnabled, isEpicBuild),
+                new GuestOrSignUpAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, splashScreen),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
-                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer)
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer)
             );
 
             if (enableEmailOTP)
@@ -218,8 +217,32 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                EnterLoginEntryState(UIAnimationHashes.IN);
             }
+        }
+
+        internal void EnterLoginEntryState(int animHash)
+        {
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
+                fsm?.Enter<GuestOrSignUpAuthState>(true);
+            else
+                fsm?.Enter<LoginSelectionAuthState, int>(animHash, true);
+        }
+
+        internal void ReturnToOrigin(int animHash)
+        {
+            if (CurrentLoginMethod == LoginMethod.GUEST)
+                EnterLoginEntryState(animHash);
+            else
+                fsm?.Enter<LoginSelectionAuthState, int>(animHash);
+        }
+
+        internal void ReturnToOrigin(ErrorType errorType)
+        {
+            if (CurrentLoginMethod == LoginMethod.GUEST && FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
+                fsm?.Enter<GuestOrSignUpAuthState, ErrorType>(errorType, true);
+            else
+                fsm?.Enter<LoginSelectionAuthState, ErrorType>(errorType);
         }
 
         private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)
@@ -232,7 +255,7 @@ namespace DCL.AuthenticationScreenFlow
                     fsm?.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
                 else
                 {
-                    fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                    EnterLoginEntryState(UIAnimationHashes.IN);
                 }
             }
             catch (OperationCanceledException)
@@ -241,7 +264,7 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                EnterLoginEntryState(UIAnimationHashes.IN);
             }
         }
 
@@ -300,7 +323,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm?.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
+                EnterLoginEntryState(UIAnimationHashes.SLIDE);
             }
         }
 
