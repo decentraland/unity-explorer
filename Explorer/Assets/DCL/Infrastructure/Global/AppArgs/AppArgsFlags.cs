@@ -24,6 +24,12 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
 
         /// <summary>
+        ///     Explicit command-line opt-in for local fixture realms whose signed comms adapter uses HTTP.
+        ///     This flag is intentionally not included in the deep-link allowlist.
+        /// </summary>
+        public const string ACCEPT_UNTRUSTED_REALM = "accept-untrusted-realm";
+
+        /// <summary>
         ///     Points every backend host at a deployment served under this base domain instead of
         ///     decentraland.{org,zone}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
         ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep

@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using Global.AppArgs;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 
@@ -19,7 +20,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             ICharacterObject characterObject,
             ICurrentAdapterAddress currentAdapterAddress,
             IWebRequestController webRequestController,
-            IRealmData realmData
+            IRealmData realmData,
+            IAppArgs? appArgs = null
         ) =>
             new ForkGlobalRealmRoom(
                 currentAdapterAddress,
@@ -35,6 +37,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                     currentAdapterAddress,
                     identityCache,
                     realmData
-                )).AsActivatable();
+                ),
+                allowInsecureLocalHttp: appArgs?.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM) == true
+            ).AsActivatable();
     }
 }

@@ -146,6 +146,16 @@ On a `base-domain` deployment, where the value *is* read, anything that does not
 
 ---
 
+### `accept-untrusted-realm`
+**Description:** Explicitly enables the local fixture comms fallback for a signed adapter served over HTTP. The adapter must still resolve to a loopback address (`localhost`, `127.0.0.1`, or `::1`); remote HTTP adapters are rejected. This flag is intended for direct command-line launches only and is not accepted from `decentraland://` deep links. It does not disable TLS validation or bypass the untrusted-realm confirmation for other URLs.
+
+**Usage:**
+```bash
+--accept-untrusted-realm
+```
+
+---
+
 ### `local-scene`
 **Type:** Bool
 **Description:** Enables local scene development mode.
