@@ -20,6 +20,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
+using DCL.Web3;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -331,7 +332,15 @@ namespace DCL.Minimap
                 ? $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?realm={realmData.RealmName}&position={previousParcelPosition.x},{previousParcelPosition.y}"
                 : $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?position={previousParcelPosition.x},{previousParcelPosition.y}";
 
-            systemClipboard.Set(link);
+            systemClipboard.Set(link + ReferrerQuery());
+        }
+
+        private static string ReferrerQuery()
+        {
+            if (ViewDependencies.CurrentIdentity is not { } identity)
+                return string.Empty;
+
+            return $"&referrer={identity.Address.ToString()}";
         }
 
         private void ExpandMinimap()
