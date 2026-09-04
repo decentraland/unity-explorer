@@ -80,6 +80,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[MCP Automation](mcp-automation.md)** — Embedded MCP server for coding agents: screenshots, player/scene state, scene logs, and player control via `--mcp`
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
+- **[QA: Archipelago Island Room](qa-archipelago-island-room.md)** — Verifying island assignment and LiveKit room membership from the client, and reading the debug room indicator
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides
 - **[Performance Benchmark](performance-benchmark.md)** — Generating PDF benchmark reports
 
