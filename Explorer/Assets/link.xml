@@ -12,4 +12,18 @@
         <type fullname="Google.Protobuf.CodedOutputStream" preserve="all" />
         <type fullname="Google.Protobuf.CodedInputStream" preserve="all" />
     </assembly>
+
+    <!--  AltTester static probes are reflection-only entry points (AltDriver.CallStaticMethod); High stripping
+          would remove their uncalled methods. The linker ignores entries whose types don't exist, so these are
+          no-ops in release builds where ALTTESTER is stripped.  -->
+    <assembly fullname="DCL.SyntheticInput">
+        <type fullname="DCL.SyntheticInput.AltTester.WorldAutomationProbe" preserve="all" />
+        <type fullname="DCL.SyntheticInput.AltTester.UiAutomationProbe" preserve="all" />
+    </assembly>
+    <assembly fullname="DCL.Network">
+        <type fullname="DCL.FeatureFlags.AltTesterFeatureFlagsProbe" preserve="all" />
+    </assembly>
+    <assembly fullname="SceneRunner.Scene">
+        <type fullname="SceneRunner.Scene.AlttesterSceneReadinessProbe" preserve="all" />
+    </assembly>
 </linker>

@@ -109,9 +109,18 @@ namespace DCL.Input.Systems
         }
 
         [Query]
-        private void UpdateCursor(ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
+        private void UpdateCursor(in Entity entity, ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
         {
-            Vector2 mousePos = mouseDevice.position.value;
+            // Present only while an automation driver is installed. A gesture steers a virtual mouse of its own,
+            // which this system's single cached device never resolves; while one asserts a position, that is the
+            // pointer, so the UI raycast, the cursor style and the world reticle ray built from
+            // CursorComponent.Position all describe the same pointer.
+            SyntheticCursorOverride syntheticCursor = World.TryGet(entity, out SyntheticCursorOverride installed) ? installed : SyntheticCursorOverride.Inactive;
+
+            Vector2 mousePos = syntheticCursor.TryGetPointerPosition(out Vector2 syntheticPointer)
+                ? syntheticPointer
+                : mouseDevice.position.value;
+
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
 
             cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
@@ -139,7 +148,7 @@ namespace DCL.Input.Systems
 
             UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults, exposedCameraData);
             UpdateCursorVisualState(ref cursorComponent, raycastResults, exposedCameraData);
-            UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos);
+            UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos, syntheticCursor.SuppressOsWarp);
         }
 
         [Query]
@@ -332,7 +341,7 @@ namespace DCL.Input.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateCursorPosition(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos)
+        private void UpdateCursorPosition(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos, bool suppressOsWarp)
         {
             bool isPanning = cursorComponent.CursorState == CursorState.Panning;
 
@@ -342,7 +351,9 @@ namespace DCL.Input.Systems
                 pos.x = pos.x / Screen.width * 100f;
                 pos.y = pos.y / Screen.height * 100f;
                 crosshairCanvas.SetPosition(pos);
-                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+
+                if (!suppressOsWarp)
+                    Mouse.current.WarpCursorPosition(cursorComponent.Position);
             }
             else
                 crosshairCanvas.ResetPosition();
@@ -360,7 +371,9 @@ namespace DCL.Input.Systems
                 // Todo: extract the +1 to sensitivity settings for controllers
                 float fastCursor = uiActions.ControllerFastCursor.ReadValue<float>() + 1;
                 cursorComponent.Position += controllerDelta * fastCursor;
-                Mouse.current.WarpCursorPosition(cursorComponent.Position);
+
+                if (!suppressOsWarp)
+                    Mouse.current.WarpCursorPosition(cursorComponent.Position);
             }
             else
                 cursorComponent.Position = mousePos;

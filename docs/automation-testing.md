@@ -52,14 +52,23 @@ AltDriver.CallStaticMethod<bool>(
 |---|---|---|
 | `SceneRunner.Scene.AlttesterSceneReadinessProbe` | `SceneRunner.Scene` | whether the current scene finished loading, plus its name and base parcel |
 | `DCL.FeatureFlags.AltTesterFeatureFlagsProbe` | `DCL.Network` | remote flag state, resolved `FeatureId` state, variant payloads |
-| `DCL.PerformanceAndDiagnostics.AutoPilot.PerfSampler` | `DCL.Diagnostics.AutoPilot` | `Begin`/`End` around a test to write a perf CSV |
+| `DCL.PerformanceAndDiagnostics.AutoPilot.PerfSampler` | `DCL.Plugins` | `Begin`/`End` around a test to write a perf CSV |
+| `DCL.SyntheticInput.AltTester.WorldAutomationProbe` | `DCL.SyntheticInput` | synthetic world/avatar input: walk, entity/screen clicks, hover, global SDK input actions, camera look, and `StartSweep` (press, turn the camera while held, release) — start/poll API, see [Synthetic Input Simulation](synthetic-input-simulation.md) |
+| `DCL.SyntheticInput.AltTester.UiAutomationProbe` | `DCL.SyntheticInput` | UI simulation: list interactable UI, semantic clicks/text/scroll on uGUI and SDK scene UI, virtual-mouse drags (whose payload names the UI cover at each end — `pointerOverStart`/`pointerOverEnd`, `"world"` when none, plus an `info` line for a drag no UI received) |
 
-Both probe types are gated by the `ALTTESTER` define and are therefore absent from release builds;
-`PerfSampler` is not gated. Note the inconsistent casing — `AltTesterFeatureFlagsProbe` against
-`AlttesterSceneReadinessProbe`. The driver resolves the type with `Assembly.GetType`, which is
-case-sensitive, so a probe renamed on this side silently becomes `componentNotFound` on the test
-side. That error means the assembly loaded but the type was not in it; a wrong *assembly* name
-reports `Assembly not found` instead.
+The probe types are gated by the `ALTTESTER` define and are therefore absent from release builds;
+`PerfSampler` is not gated. The synthetic-input probes additionally need the layer installed at
+launch (`--alttester` or `--mcp`) — `IsReady()` reports it. Note the inconsistent casing —
+`AltTesterFeatureFlagsProbe` against `AlttesterSceneReadinessProbe`. The driver resolves the type
+with `Assembly.GetType`, which is case-sensitive, so a probe renamed on this side silently becomes
+`componentNotFound` on the test side. That error means the assembly loaded but the type was not in
+it; a wrong *assembly* name reports `Assembly not found` instead. **Assembly names here are the
+real compiled assemblies** — a probe placed in a folder whose `.asmref` folds into another assembly
+must be documented under the folded-into name (`PerfSampler`'s folder folds into `DCL.Plugins`).
+
+Reflection-only probes are also a stripping hazard: player builds use IL2CPP with High managed
+stripping, so probe types are preserved explicitly in [`Assets/link.xml`](../Explorer/Assets/link.xml)
+— add new probes there.
 
 **Prefer a probe over re-deriving client state test-side.** Feature flags are the cautionary case:
 the remote document evaluates differently depending on request headers, and the client folds app

@@ -2,9 +2,10 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.McpServer.Components;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using DCL.SyntheticInput;
+using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
@@ -14,17 +15,17 @@ using Utility;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Holds a movement input on the player for a duration via <see cref="McpMovementOverride" />,
+    ///     Holds a movement input on the player for a duration via <see cref="SyntheticInputAgent.WalkAsync" />,
     ///     exercising the regular locomotion pipeline (velocity, collisions, jumps) instead of teleporting.
     /// </summary>
     public class WalkTool : McpTool
     {
         private const float MIN_SECONDS = 0.1f;
         private const float MAX_SECONDS = 30f;
-        private const float COMPLETION_GRACE_SEC = 5f;
 
         private static readonly MovementKind[] ALLOWED_KINDS = { MovementKind.Walk, MovementKind.Jog, MovementKind.Run };
 
+        private readonly SyntheticInputAgent syntheticInput;
         private readonly World world;
         private readonly Entity playerEntity;
 
@@ -39,12 +40,14 @@ namespace DCL.McpServer.Tools
                   .Number("directionY", "Forward axis: 1 forward, -1 backward.", isRequired: true)
                   .Number("seconds", "How long to hold the movement. Default 1, max 30.")
                   .Enum("kind", "Movement speed. Default jog.", ALLOWED_KINDS)
-                  .Boolean("jump", "Jump once at the start of the movement. Default false.");
+                  .Boolean("jump", "Jump once at the start of the movement. Default false.")
+                  .Boolean("ignoreInputModifiers", "Bypass the scene's InputModifier movement locks (which apply exactly as they do to WASD). Default false.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
-        public WalkTool(World world, Entity playerEntity)
+        public WalkTool(SyntheticInputAgent syntheticInput, World world, Entity playerEntity)
         {
+            this.syntheticInput = syntheticInput;
             this.world = world;
             this.playerEntity = playerEntity;
         }
@@ -60,31 +63,17 @@ namespace DCL.McpServer.Tools
 
             float seconds = Mathf.Clamp(arguments.GetFloat("seconds", 1f), MIN_SECONDS, MAX_SECONDS);
             bool jump = arguments.GetBool("jump", false);
+            bool ignoreInputModifiers = arguments.GetBool("ignoreInputModifiers", false);
 
             if (!arguments.TryGetEnum("kind", MovementKind.Jog, out MovementKind kind, ALLOWED_KINDS))
                 return McpToolResult.Error("kind must be one of: walk, jog, run.");
 
             Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
 
-            // A newer walk preempts a pending one; the preempted awaiter completes as a finished (shortened) hold.
-            UniTask<AsyncUnit> hold = McpEcsRequest.SendAsync(world, playerEntity, new McpMovementOverride
-            {
-                Axes = direction,
-                Kind = kind,
-                EndTime = UnityEngine.Time.time + seconds,
-                JumpRequested = jump,
-            }, AsyncUnit.Default);
+            SyntheticInputDelivery delivery = await syntheticInput.WalkAsync(direction, kind, seconds, jump, ignoreInputModifiers, ct);
 
-            try
-            {
-                await hold.AttachExternalCancellation(ct)
-                          .Timeout(TimeSpan.FromSeconds(seconds + COMPLETION_GRACE_SEC));
-            }
-            catch (TimeoutException)
-            {
-                await McpEcsRequest.AbandonAsync<McpMovementOverride>(world, playerEntity);
-                return McpToolResult.Error($"walk did not complete within {seconds + COMPLETION_GRACE_SEC}s (is the simulation paused?).");
-            }
+            if (delivery == SyntheticInputDelivery.TimedOut)
+                return McpToolResult.Error($"walk did not complete within {seconds + SyntheticInputAgent.COMPLETION_GRACE_SEC}s (is the simulation paused?).");
 
             await UniTask.SwitchToMainThread(ct);
 
