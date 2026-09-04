@@ -115,7 +115,7 @@ namespace DCL.Backpack.Gifting.Notifications
                         );
 
                     if (!string.IsNullOrEmpty(data.ImageUrl))
-                        imageController.RequestImage(data.ImageUrl, fitAndCenterImage: true);
+                        imageController!.RequestImage(data.ImageUrl, fitAndCenterImage: true);
                     else
                         viewInstance.GiftItemView.SetLoadedState();
                 }
