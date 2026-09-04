@@ -102,7 +102,7 @@ The tag above a remote avatar names every room that accounts for it, each prefix
 
 So `🟢Gatekeeper 🔗Island ⚡Pulse` reads: *in the Scene room and announcing over it; in the Island room but silent on it; and carried by Pulse.*
 
-**Which glyph is normal depends on the transport, and both are healthy.** With Pulse active — the default whenever the `pulse` feature flag is on — no client announces its profile over LiveKit at all, so LiveKit rooms read `🔗` and every avatar carries `⚡`. Launch with `--pulse false` and the LiveKit announcements come back, so the rooms read `🟢` and no avatar carries `⚡`. Only `👻` is worth reporting on sight.
+**What normal looks like.** These steps assume Pulse is on, which is the default whenever the `pulse` feature flag is enabled. With Pulse carrying profiles no client announces over LiveKit, so the expected reading is `🔗` on each LiveKit room plus `⚡Pulse`. A `🟢` is not a failure — it means that one peer is announcing over LiveKit, which is what a peer whose Pulse connection fell back at start-up looks like. Only `👻` is worth reporting on sight.
 
 > The glyph is what makes this test possible under Pulse. Before it, a Pulse-carried avatar reported `Pulse` and nothing else, so the tag could not tell you whether the avatar was on LiveKit at all.
 
@@ -142,7 +142,7 @@ The last two are **not failures on their own**: the Island room covers a wider a
 1. Go where other players are (Genesis Plaza).
 2. Read the nametag tags and both widgets.
 
-- ✅ Players **in your scene** carry both a `Gatekeeper` and an `Island` entry; players **outside your scene** carry `Island` only. Both LiveKit rooms show the same glyph as each other — `🔗` with Pulse on, `🟢` with `--pulse false` — and with Pulse on every avatar also carries `⚡Pulse`. `Remote Participants` is non-zero and `Avatars on LiveKit` is non-zero.
+- ✅ Players **in your scene** carry both a `Gatekeeper` and an `Island` entry; players **outside your scene** carry `Island` only. Every avatar also carries `⚡Pulse`, and the LiveKit entries normally read `🔗`. `Remote Participants` is non-zero and `Avatars on LiveKit` is non-zero.
 - ❌ Two avatars for one player; an on-screen avatar tagged `None`; **`Avatars on LiveKit` is 0** while `Remote Participants` is not; nobody carries an `Island` entry while players are clearly outside your scene; or an avatar carries `Island` with no Pulse entry and no `Gatekeeper` entry while Pulse is on.
 
 ### Test 3 — Scene-border handoff
@@ -157,18 +157,18 @@ The last two are **not failures on their own**: the Island room covers a wider a
 
 Do this while a player **in your scene** is visible and carries both a `Gatekeeper` and an `Island` entry.
 
-**Read the expected outcome off the transport first.** Deactivating a LiveKit room removes its entry from the tag either way; whether the *avatar* survives depends on who created it. With **Pulse on**, Pulse owns every avatar, so no LiveKit room can remove one — the tag is the whole result. With **`--pulse false`**, LiveKit owns them and step 4 clears the screen. Run this test whichever way you are already testing, and use the matching column.
+**Pulse owns the avatars, so this test reads the tag, not the screen.** Deactivating a LiveKit room removes that room's entry from every tag, but the avatars stay — Pulse created them and Pulse keeps them alive. An avatar vanishing here is a failure, not a pass.
 
 1. In **Room: Scene**, press **Deactivate**. Confirm `Room State: Stopped`, `Connection Loop: Stopped`, `Attempt to Connect: None`.
    - ✅ Their `Gatekeeper` entry disappears and **the avatar stays**.
-   - ❌ The `Gatekeeper` entry survives a stopped room; or (with `--pulse false`) the avatar disappears.
+   - ❌ The `Gatekeeper` entry survives a stopped room, or the avatar disappears.
 2. Press **Activate** on Room: Scene and wait for the `Gatekeeper` entry to come back.
 3. Press **Deactivate** on **Room: Island**.
-   - ✅ Their `Island` entry disappears and **the avatar stays**. With `--pulse false`, players *outside* your scene disappear; with Pulse on they stay, now with no `Island` entry.
-   - ❌ The `Island` entry survives a stopped room; or, with `--pulse false`, a player outside your scene is still visible.
+   - ✅ Their `Island` entry disappears and **the avatar stays**. Players *outside* your scene stay too, now with no `Island` entry.
+   - ❌ The `Island` entry survives a stopped room, or the avatar disappears.
 4. Deactivate **both**.
-   - ✅ Every tag drops to `⚡Pulse` alone, and `Avatars on LiveKit` drops to `0`. With `--pulse false`, all remote avatars disappear instead.
-   - ❌ Any LiveKit entry remains on any tag; `Avatars on LiveKit` stays above 0; or, with `--pulse false`, a remote avatar remains.
+   - ✅ Every tag reads `⚡Pulse` alone, `Avatars on LiveKit` drops to `0`, and every avatar is still on screen.
+   - ❌ Any LiveKit entry remains on any tag; `Avatars on LiveKit` stays above 0; or an avatar disappears.
 5. Re-activate both before continuing.
 
 > While a room is deactivated, do not file bugs about what it carries — with Room: Scene off, in-scene voice and scene streams are expected to be dead.
@@ -178,7 +178,7 @@ Do this while a player **in your scene** is visible and carries both a `Gatekeep
 1. Deactivate **Room: Scene** and leave it off, so avatar churn is Archipelago's alone. Deactivation is sticky: it survives scene changes, teleports and realm changes.
 2. Walk a long distance in a straight line, watching `Room Sid`.
 
-- ✅ `Room Sid` changes at least once. After each change `Connecting State` returns to `ConnConnected` and the set of avatars carrying an `Island` entry turns over — old ones lose it, new ones gain it. A brief flicker during the switch is normal. With Pulse on, avatars from the old island may remain on screen without an `Island` entry; that is Pulse's own area of interest, not a stale island.
+- ✅ `Room Sid` changes at least once. After each change `Connecting State` returns to `ConnConnected` and the set of avatars carrying an `Island` entry turns over — old ones lose it, new ones gain it. A brief flicker during the switch is normal. Avatars from the old island may remain on screen without an `Island` entry; that is Pulse's own area of interest, not a stale island.
 - ❌ `Room Sid` never changes over a long traverse; `Connecting State` does not return to `ConnConnected` after a change; or avatars keep an `Island` entry long after the sid changed.
 
 ### Test 6 — Realm change and teleport
@@ -232,5 +232,5 @@ Read `healthy`, `acceptingUsers` and the `comms` block.
 - All rows from **Room: Island** (Part 2), plus the same from **Room: Scene** if the test involved both.
 - The realm name and `comms` block from Step 1.
 - Whether the room indicator was on, and the exact tag text on the affected avatar, glyphs included.
-- The four `Room: Info` counters, and whether the session ran with Pulse on or `--pulse false`.
+- The four `Room: Info` counters.
 - Build number, and whether `--debug` or a Debug build was used.
