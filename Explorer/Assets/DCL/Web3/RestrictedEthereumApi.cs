@@ -21,7 +21,7 @@ namespace DCL.Web3
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
             if (!jsApiPermissionsProvider.CanInvokeWeb3API())
-                throw new Web3Exception("The Web3 API is not allowed");
+                throw new Web3MethodNotAllowedException("The Web3 API is not allowed");
 
             return impl.SendAsync(request, source, ct);
         }

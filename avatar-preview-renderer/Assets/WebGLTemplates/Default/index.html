@@ -33,6 +33,11 @@
     <script>
       var canvas = document.querySelector("#unity-canvas");
 
+      // Right-drag pans the preview camera, so the browser context menu has to stay out of the way.
+      // It also swallows the pointerup that ends the drag, which would leave the pan stuck on.
+      // Scoped to the canvas so a host page keeps its own context menu.
+      canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
       // Shows a temporary message banner/ribbon for a few seconds, or
       // a permanent error message on top of the canvas if type=='error'.
       // If type=='warning', a yellow highlight color is used.
