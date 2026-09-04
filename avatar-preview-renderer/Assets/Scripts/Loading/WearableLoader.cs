@@ -14,13 +14,10 @@ namespace Loading
     {
         [SerializeField] private Quaternion facialFeatureRotation = Quaternion.Euler(-15, 0, 0);
 
-        // How far an upper-body item shown on its own leans from its bind pose towards Idle. Not all the
-        // way: Idle drops the arms against the ribs, which folds a sleeve into the torso and hides the
-        // very thing being sold, while the bind pose splays them straight out. Keeping a fifth of the
-        // bind pose holds the arms clear of the body without reading as a mannequin.
-        //
-        // Upper body ONLY. Every other category either has no arm-clearance problem to solve (a hat, a
-        // mask) or is read against the leg pose instead (lower body, feet), so they stay as they load.
+        // How far a solo upper-body item leans from its bind pose towards Idle. Not all the way: Idle
+        // drops the arms against the ribs and folds a sleeve into the torso, hiding what is being sold,
+        // while the bind pose splays them straight out. Upper body only - other categories have no
+        // arm-clearance problem, or are read against the leg pose.
         [SerializeField, Range(0f, 1f)] private float upperBodyIdleBlend = 0.8f;
 
         private readonly List<Renderer> _outlineRenderers = new();
@@ -94,32 +91,20 @@ namespace Loading
             _outlineRenderers.Clear();
             AvatarUtils.SetupWearable(_wearableGO, colors, _outlineRenderers);
 
-            // Nothing animates this view, so posing the skeleton once is the whole job - the skinning
-            // picks it up from here on and there is no per-frame cost. It has to happen before the frame
-            // PreviewController waits on, which is what CenterAndFit measures the bounds from: framing
-            // the bind pose and then posing the item would leave it off-centre.
+            // Nothing animates this view, so posing the skeleton once is the whole job. It has to happen
+            // before the frame CenterAndFit measures bounds from, or the item ends up off-centre.
             if (entityDefinition.Type == EntityType.Wearable
                 && entityDefinition.Category == WearableCategories.Categories.UPPER_BODY)
                 BlendTowardsPose(_wearableGO, idlePose, upperBodyIdleBlend);
 
-            // Nothing to cast onto: the item-alone view floats the item with no floor beneath it, so
-            // the only thing a cast shadow can land on is the catcher plane far below, where it reads
-            // as a smear rather than contact. The plane is shared with the avatar view, so the item
-            // opts out here rather than the catcher being switched off.
+            // Nothing to cast onto - the item floats with no floor, so a shadow only reaches the catcher
+            // plane far below and reads as a smear. The plane is shared, so the item opts out instead.
             foreach (var wearableRenderer in _wearableGO.GetComponentsInChildren<Renderer>(true))
                 wearableRenderer.shadowCastingMode = ShadowCastingMode.Off;
         }
 
-        /// <summary>
-        /// Leans every bone of a freshly loaded item a fraction of the way towards <paramref name="pose" />.
-        /// The bones are still where the GLB put them, so "where they currently sit" IS the bind pose and
-        /// the blend needs no separate copy of it.
-        /// </summary>
-        /// <remarks>
-        /// Matched by name, and a bone the pose does not mention is simply left alone. Creator-authored
-        /// wearables do not all ship the canonical skeleton - some carry extra bones for spring chains,
-        /// some fewer - which is the same reason AvatarUtils remaps by name rather than by index.
-        /// </remarks>
+        // The bones are still where the GLB put them, so the bind pose needs no separate copy. Matched
+        // by name, and a bone the pose omits is left alone: not all wearables ship the canonical skeleton.
         private static void BlendTowardsPose(GameObject root, IReadOnlyDictionary<string, BonePose> pose,
             float weight)
         {

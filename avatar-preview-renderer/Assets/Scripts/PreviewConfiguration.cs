@@ -131,30 +131,7 @@ public class PreviewConfiguration
     /// </summary>
     public bool Shadow { get; private set; } = true;
 
-    /// <summary>
-    /// Sets shadow visibility. Accepts <c>off</c>/<c>false</c>/<c>0</c>/<c>no</c> to disable and
-    /// <c>on</c>/<c>true</c>/<c>1</c>/<c>yes</c> (or a bare <c>shadow=</c>) to enable, so both the
-    /// documented off spelling and the bool spelling the other flags use work.
-    ///
-    /// Unlike those flags this never throws on an unrecognised value: the others go through
-    /// <see cref="bool.Parse"/>, which aborts <see cref="RecreateFrom"/> mid-loop on a typo and drops
-    /// every parameter after it. A misspelt shadow value just leaves the default instead.
-    /// </summary>
-    public void SetShadow(string value)
-    {
-        switch (value.ToLowerInvariant())
-        {
-            case "off" or "false" or "0" or "no":
-                Shadow = false;
-                break;
-            case "on" or "true" or "1" or "yes" or "":
-                Shadow = true;
-                break;
-            default:
-                Debug.LogWarning($"Unknown shadow value [{value}], keeping shadow {(Shadow ? "on" : "off")}");
-                break;
-        }
-    }
+    public void SetShadow(string value) => Shadow = ParseToggle(value, "shadow", Shadow);
 
     /// <summary>
     /// Whether a soft pool of light is drawn on the floor under the avatar, so it reads as standing
@@ -163,23 +140,20 @@ public class PreviewConfiguration
     /// </summary>
     public bool Glow { get; private set; } = true;
 
-    /// <summary>
-    /// Sets glow visibility. Same spellings and the same never-throw behaviour as
-    /// <see cref="SetShadow"/>.
-    /// </summary>
-    public void SetGlow(string value)
+    public void SetGlow(string value) => Glow = ParseToggle(value, "glow", Glow);
+
+    // Accepts both the documented `off` spelling and the bool spelling the other parameters use. An
+    // unrecognised value keeps `current` rather than throwing: bool.Parse would abort RecreateFrom
+    // mid-loop on a typo and drop every parameter after it.
+    private static bool ParseToggle(string value, string name, bool current)
     {
         switch (value.ToLowerInvariant())
         {
-            case "off" or "false" or "0" or "no":
-                Glow = false;
-                break;
-            case "on" or "true" or "1" or "yes" or "":
-                Glow = true;
-                break;
+            case "off" or "false" or "0" or "no": return false;
+            case "on" or "true" or "1" or "yes" or "": return true;
             default:
-                Debug.LogWarning($"Unknown glow value [{value}], keeping glow {(Glow ? "on" : "off")}");
-                break;
+                Debug.LogWarning($"Unknown {name} value [{value}], keeping {name} {(current ? "on" : "off")}");
+                return current;
         }
     }
 

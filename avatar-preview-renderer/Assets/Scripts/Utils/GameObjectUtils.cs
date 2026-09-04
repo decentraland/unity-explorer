@@ -42,12 +42,9 @@ namespace Utils
 
             root.localScale *= scaleFactor;
 
-            // Centre by moving the CONTENT onto the root, never the root off its content. The root is
-            // what DragRotator spins, and Transform.Rotate pivots on the root's own origin, so any gap
-            // between the two becomes the radius of an orbit. Only the horizontal part of the gap
-            // matters for a yaw spin, which is why items modelled on the body's vertical axis were
-            // fine and one modelled out to the side - a watch at the wrist - swung out of frame, its
-            // offset multiplied by the large scale a small item gets fitted with.
+            // Move the CONTENT onto the root, never the root off its content: the root is what
+            // DragRotator spins about its own origin, so any gap between the two becomes an orbit
+            // radius. A side-modelled item - a watch at the wrist - swung out of frame that way.
             root.localPosition = Vector3.zero;
 
             foreach (Transform child in root)
@@ -56,9 +53,8 @@ namespace Utils
 
         /// <summary>
         /// Measures a subject so the result does not change as it spins about Y. The radius is the
-        /// circumradius of the horizontal footprint, which is the widest half-width the bounds can
-        /// present at any yaw, so framing against it never clips part way through a rotation. Returns
-        /// false when the subject has nothing to measure.
+        /// circumradius of the horizontal footprint - the widest half-width any yaw can present - so
+        /// framing against it never clips mid-rotation. False when there is nothing to measure.
         /// </summary>
         public static bool TryMeasureYawInvariant(Transform root, out Vector3 center, out float radius,
             out float height)

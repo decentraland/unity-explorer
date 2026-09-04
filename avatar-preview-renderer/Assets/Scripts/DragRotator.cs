@@ -12,10 +12,8 @@ public class DragRotator : MonoBehaviour
 
     [SerializeField] private float inertiaDamp = 0.95f;
 
-    // How far the subject can be tipped towards or away from the camera. Well short of a right angle,
-    // because the framing is fitted once at load and never refitted: PreviewCameraController measures a
-    // YAW-invariant radius, so a spin presents the same silhouette it zoomed for but a steep tilt does
-    // not, and the subject starts to overflow the view.
+    // Well short of a right angle: the fit measures a YAW-invariant radius, so a spin presents the
+    // silhouette it zoomed for but a steep tilt overflows the view.
     [SerializeField] private float maxPitch = 30f;
 
     [Header("Auto-Rotate Settings")] [SerializeField]
@@ -29,10 +27,8 @@ public class DragRotator : MonoBehaviour
     private float _lastDragTime;
     private Quaternion _initialRotation;
 
-    // The rotation is rebuilt from these two every frame rather than accumulated onto the transform.
-    // Turning about world Y and world X in sequence quietly works ROLL into the result - which is what
-    // the old code was flattening Z for - and there is no way to clamp a tilt you are only holding as a
-    // quaternion. Carrying the angles means roll cannot arise and the clamp is a Mathf.Clamp.
+    // Rebuilt from angles each frame rather than accumulated: composing world Y and X turns works roll
+    // in, and a tilt held only as a quaternion cannot be clamped.
     private float _yaw;
     private float _pitch;
 
@@ -82,27 +78,27 @@ public class DragRotator : MonoBehaviour
             var tilted = _pitch + _verticalVel;
             _pitch = Mathf.Clamp(tilted, -maxPitch, maxPitch);
 
-            // Drop the inertia at the stop rather than letting it keep pushing into it, which would
-            // leave a flick still "arriving" for a second after the subject has visibly stopped.
+            // Drop inertia at the stop, or a flick keeps "arriving" after the subject has visibly stopped.
             if (!Mathf.Approximately(_pitch, tilted)) _verticalVel = 0f;
         }
 
         // Auto rotation
         if (Time.time - _lastDragTime > autoRotateDelay && EnableAutoRotate)
         {
-            // Levelling rides with auto-rotate on purpose. A view that spins by itself is presenting a
-            // canonical framing, so it should ease back to level; one tilted by hand is being inspected,
-            // and springing back would fight that. The tilt there is cleared by ResetRotation instead,
-            // which both the view switch and a reload already call.
+            // Levelling rides with auto-rotate only: a self-spinning view is presenting a canonical
+            // framing, while one tilted by hand is being inspected and should not spring back.
             _pitch = Mathf.Lerp(_pitch, 0f, returnSpeed * dt);
             _yaw += autoRotateSpeed * dt;
         }
 
+        // An idle page auto-rotates indefinitely; past a few million degrees the float step exceeds the
+        // per-frame increment and the spin jitters, then stalls. A full turn is a no-op for AngleAxis.
+        _yaw %= 360f;
+
         ApplyRotation();
     }
 
-    // Pitch OUTSIDE yaw, so the tilt stays about the camera's horizontal axis however far the subject has
-    // been spun. The other order would tip it about its own axis and read as a roll once it is side-on.
+    // Pitch OUTSIDE yaw, or the tilt goes about the subject's own axis and reads as roll once side-on.
     private void ApplyRotation() =>
         transform.rotation = Quaternion.AngleAxis(_pitch, Vector3.right)
                              * Quaternion.AngleAxis(_yaw, Vector3.up)
@@ -118,9 +114,8 @@ public class DragRotator : MonoBehaviour
         _verticalVel = 0;
         _lastDragTime = 0;
 
-        // Carry the angles across as well, or the first frame after the smooth lerp finishes would snap
-        // back to whatever yaw they still held. `direction` is flattened, so the target is a pure yaw
-        // turn away from the initial rotation and the pitch goes to zero with it.
+        // Carry the angles across, or the frame after the smooth lerp finishes snaps back to the yaw
+        // they still held. `direction` is flattened, so the target is a pure yaw turn.
         _yaw = (targetRotation * Quaternion.Inverse(_initialRotation)).eulerAngles.y;
         _pitch = 0f;
 
@@ -142,8 +137,7 @@ public class DragRotator : MonoBehaviour
         _verticalVel = 0;
         _lastDragTime = 0;
 
-        // An in-flight LookAtCamera would otherwise keep lerping straight over the reset on the next
-        // frame, leaving the subject somewhere neither call asked for.
+        // An in-flight LookAtCamera would otherwise keep lerping straight over the reset.
         _targetRotation = null;
 
         transform.rotation = _initialRotation;

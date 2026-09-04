@@ -198,21 +198,16 @@ namespace Preview
         {
             if (!_panEnabled) return;
 
-            // UI Toolkit deltas are in panel points, and PreviewPanelSettings scales with screen size
-            // (m_ScaleMode: 2), so a point is not a screen pixel. Dividing by the panel's own height
-            // cancels that scaling - and since points are square, the same divisor is right for both
-            // axes. The camera controller then only has to scale by the world height it frames.
+            // UI Toolkit deltas are in panel points and PreviewPanelSettings scales with screen size, so
+            // a point is not a pixel. Dividing by the panel height cancels that; points are square, so
+            // the same divisor suits both axes.
             var panelHeight = _controls.panel.visualTree.layout.height;
             if (panelHeight <= 0f) return;
 
             ContainerPan!(delta / panelHeight, deltaTime);
         }
 
-        /// <summary>
-        /// Swaps the frame cursor between the rotate icon it wears at rest and the pan icon, for as
-        /// long as the right button is held. Gated on <see cref="_panEnabled"/> so the modes without
-        /// pan keep the rotate cursor through a right-drag that does nothing.
-        /// </summary>
+        // Gated on _panEnabled, so the modes without pan keep the rotate cursor through a right-drag.
         private void OnPanActiveChanged(bool panning)
         {
             _controls.EnableInClassList(USS_CONTAINER_PANNING, panning && _panEnabled);

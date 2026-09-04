@@ -14,13 +14,12 @@ namespace UI.Manipulators
         private Vector2 _lastDelta;
 
         /// <param name="accumulateDelta">
-        /// Sum every pointer move between scheduler ticks instead of keeping only the newest. Needed by
-        /// anything that has to track the cursor 1:1; rotation is tuned around the lossy default.
+        /// Sum every pointer move between scheduler ticks instead of keeping only the newest. Needed to
+        /// track the cursor 1:1; rotation is tuned around the lossy default.
         /// </param>
         /// <param name="activeChanged">
-        /// Raised with true when a drag starts and false when it ends, for callers that need to reflect
-        /// the drag somewhere else - a cursor, say. Fires off the same activation filter and pointer
-        /// capture the drag itself uses, so it cannot disagree with whether a drag is running.
+        /// Raised true when a drag starts and false when it ends, for callers reflecting the drag
+        /// elsewhere - a cursor, say. Fires off the same activation filter the drag itself uses.
         /// </param>
         public DragManipulator(Action<Vector2, float> dragged, MouseButton activatorButton = MouseButton.LeftMouse,
             bool accumulateDelta = false, Action<bool> activeChanged = null)
@@ -66,8 +65,8 @@ namespace UI.Manipulators
             if (!active)
                 return;
 
-            // Pointer moves outpace the scheduler that drains this - a 1000Hz mouse fires ~16 per frame
-            // at 60fps - so overwriting throws most of the movement away.
+            // Pointer moves outpace the scheduler draining this - a 1000Hz mouse fires ~16 per frame at
+            // 60fps - so overwriting would throw most of the movement away.
             var delta = (Vector2)evt.deltaPosition;
             _lastDelta = _accumulateDelta ? _lastDelta + delta : delta;
             evt.StopPropagation();

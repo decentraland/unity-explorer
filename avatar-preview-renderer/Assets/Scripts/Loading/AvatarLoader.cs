@@ -233,19 +233,14 @@ namespace Loading
         }
 
         /// <summary>
-        /// The scene rig's Idle clip evaluated at a fixed time, as bone-local TRS keyed by bone name.
-        /// The item view blends towards this so an upper-body wearable shown on its own is not stuck in
-        /// the bind pose - see WearableLoader.
+        /// The rig's Idle clip at a fixed time, as bone-local TRS keyed by bone name. The item view
+        /// blends towards this so a solo upper-body wearable is not stuck in the bind pose.
         /// </summary>
         /// <remarks>
-        /// Keyed by NAME rather than sampled onto the item directly: a clip binds its curves by transform
-        /// PATH, and the item's hierarchy carries wrapper nodes the rig does not (GLTFLoader parents the
-        /// glTF scene under a GameObject named after the category), so the paths would not line up. Names
-        /// do - every wearable ships a copy of this same 62-bone armature, which is the assumption
-        /// AvatarUtils.BuildBoneMap already runs on for the avatar view.
-        ///
-        /// Captured once. Both the clip and the rig are fixed for the lifetime of the scene, so the
-        /// result cannot change, and sampling has to briefly overwrite the live rig to read it.
+        /// Keyed by NAME, not sampled onto the item directly: a clip binds curves by transform PATH and
+        /// the item's hierarchy carries wrapper nodes the rig does not, so paths would not line up.
+        /// Captured once - clip and rig are fixed for the scene's lifetime, and sampling has to briefly
+        /// overwrite the live rig to read it.
         /// </remarks>
         public IReadOnlyDictionary<string, BonePose> GetIdlePose()
         {
@@ -263,15 +258,14 @@ namespace Loading
                 return _idlePose;
             }
 
-            // SampleAnimation writes straight into the live rig, which may be mid-emote, so put every
-            // bone back afterwards rather than trusting the Animation component to re-assert itself.
-            // Null entries are tolerated for the same reason the spring-bone pass tolerates them.
+            // SampleAnimation writes into the live rig, which may be mid-emote, so restore every bone
+            // afterwards rather than trusting the Animation component to re-assert itself.
             var restore = new BonePose[avatarBones.Length];
             for (var i = 0; i < avatarBones.Length; i++)
                 if (avatarBones[i] != null)
                     restore[i] = BonePose.From(avatarBones[i]);
 
-            // Time 0 rather than any other frame so a reloaded preview poses the item identically twice.
+            // Time 0 so a reloaded preview poses the item identically twice.
             clip.SampleAnimation(avatarAnimation.gameObject, 0f);
 
             foreach (var bone in avatarBones)
@@ -422,8 +416,8 @@ namespace Loading
     }
 
     /// <summary>
-    /// One bone's local transform, as a value. Local rather than world so it can be lifted off the avatar
-    /// rig and dropped onto a wearable's own skeleton copy, which sits somewhere else entirely.
+    /// One bone's local transform, as a value. Local rather than world so it can be lifted off the rig
+    /// and dropped onto a wearable's own skeleton copy, which sits elsewhere.
     /// </summary>
     public readonly struct BonePose
     {
@@ -449,8 +443,7 @@ namespace Loading
         }
 
         /// <summary>
-        /// Moves <paramref name="bone" /> a fraction of the way from where it currently sits to this pose.
-        /// Weight 0 leaves it alone, 1 lands on the pose exactly.
+        /// Moves <paramref name="bone" /> a fraction of the way to this pose. 0 leaves it, 1 lands on it.
         /// </summary>
         public void BlendOnto(Transform bone, float weight)
         {
