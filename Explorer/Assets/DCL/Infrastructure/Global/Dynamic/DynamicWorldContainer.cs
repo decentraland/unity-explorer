@@ -25,6 +25,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
+using DCL.MarketplaceCredits.Purchase.Cart;
 using DCL.McpServer.Systems;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -435,16 +436,36 @@ namespace Global.Dynamic
 
             CreditsFeatureAccess.Initialize(new CreditsFeatureAccess(identityCache, ct));
 
+            var creditsMetaTxRelayer = new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig);
+            var creditsSettlementPoller = new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
+            var manaUsdRateReader = new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig);
+            bool isCreditsPurchaseEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits);
+
             ICreditsPurchaseService creditsPurchaseService = new CreditsPurchaseService(
                 marketplaceShopApiClient,
                 marketplaceCreditsApiClient,
-                new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig),
-                new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
-                new ManaUsdRateReader(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
+                creditsMetaTxRelayer,
+                creditsSettlementPoller,
+                manaUsdRateReader,
                 creditsChainConfig,
                 identityCache,
                 CreditsFeatureAccess.Instance,
-                FeaturesRegistry.Instance.IsEnabled(FeatureId.CreditsWearablePurchase) && FeaturesRegistry.Instance.IsEnabled(FeatureId.UserCredits));
+                isCreditsPurchaseEnabled);
+
+            var shopCart = new ShopCart(identityCache);
+
+            ICreditsCartCheckoutService cartCheckoutService = new CreditsCartCheckoutService(
+                shopCart,
+                creditsPurchaseService,
+                marketplaceShopApiClient,
+                marketplaceCreditsApiClient,
+                creditsMetaTxRelayer,
+                creditsSettlementPoller,
+                manaUsdRateReader,
+                creditsChainConfig,
+                identityCache,
+                CreditsFeatureAccess.Instance,
+                isCreditsPurchaseEnabled);
             var cameraReelContainer = CameraReelContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache.Identity?.Address);
 
             var userCalendar = new GoogleUserCalendar(webBrowser);
@@ -680,7 +701,11 @@ namespace Global.Dynamic
                     springBoneSimulationSettings,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
                     profileContainer.PendingTransferService,
-                    marketplaceCreditsApiClient
+                    marketplaceCreditsApiClient,
+                    marketplaceShopApiClient,
+                    shopCart,
+                    creditsPurchaseService,
+                    cartCheckoutService
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -775,7 +800,10 @@ namespace Global.Dynamic
                     profileContainer.SelfProfile,
                     profileContainer.ProfileRepositoryWrapper,
                     globalWorld,
-                    wearableContainer.WearableCatalog),
+                    wearableContainer.WearableCatalog,
+                    shopCart,
+                    cartCheckoutService,
+                    staticContainer.WebRequestsContainer.WebRequestController),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),

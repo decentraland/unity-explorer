@@ -4,6 +4,8 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
     {
         public const string SOURCE_HUD = "hud";
         public const string SOURCE_PURCHASE_MODAL = "purchase_modal";
+        public const string SOURCE_SHOP = "shop";
+        public const string SOURCE_CART_MODAL = "cart_modal";
         public readonly string Source;
 
         public CreditsTopUpModalControllerParams(string source)

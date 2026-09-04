@@ -3,7 +3,9 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility.Types;
 using DCL.WebRequests;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using UnityEngine;
@@ -17,6 +19,8 @@ namespace DCL.MarketplaceCredits
         private const string NO_DATA_STATE = "NO_DATA";
         private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
         private const string PURCHASE_SOURCE = "client";
+
+        private static readonly JsonSerializerSettings OMIT_NULLS = new () { NullValueHandling = NullValueHandling.Ignore };
 
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
         public event Action<UserCreditsResponse> OnUserCreditsFetched;
@@ -129,6 +133,84 @@ namespace DCL.MarketplaceCredits
             await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
                                       .WithNoOpAsync();
         }
+
+        /// <summary>
+        ///     Authorizes ONE transaction group against a SINGLE ephemeral credit sized to the group's total. Every
+        ///     line shares the returned credit's salt, so a group is reserved, spent and released as a whole. One
+        ///     credit per line would leave a tail of never-consumed credits behind a cart (see the credits-server
+        ///     authorize-usd-credit-batch handler for the reasoning); never call this once per item.
+        /// </summary>
+        public virtual async UniTask<EnumResult<AuthorizeGroupResponse, CreditsAuthorizeError>> AuthorizeUsdCreditGroupAsync(IReadOnlyList<CheckoutLine> lines, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize/batch";
+            string jsonBody = BuildAuthorizeGroupBody(lines);
+
+            try
+            {
+                AuthorizeGroupResponse response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                                            .CreateFromJson<AuthorizeGroupResponse>(WRJsonParser.Newtonsoft);
+
+                return EnumResult<AuthorizeGroupResponse, CreditsAuthorizeError>.SuccessResult(response);
+            }
+            catch (OperationCanceledException)
+            {
+                return EnumResult<AuthorizeGroupResponse, CreditsAuthorizeError>.ErrorResult(CreditsAuthorizeError.Cancelled, "Operation was cancelled");
+            }
+            catch (UnityWebRequestException webRequestException)
+            {
+                return EnumResult<AuthorizeGroupResponse, CreditsAuthorizeError>.ErrorResult(
+                    MapAuthorizeStatusCode(webRequestException.ResponseCode),
+                    webRequestException.Text ?? string.Empty);
+            }
+            catch (Exception e)
+            {
+                return EnumResult<AuthorizeGroupResponse, CreditsAuthorizeError>.ErrorResult(CreditsAuthorizeError.NetworkError, e.Message);
+            }
+        }
+
+        /// <summary>
+        ///     Records which transaction carried a set of reserved credits: a fact about the broadcast, never an
+        ///     outcome. All salts of one group share the hash because they settle in one useCredits call.
+        /// </summary>
+        public virtual async UniTask ReportIntentSubmissionAsync(string[] salts, string txHash, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize/submitted";
+            string jsonBody = JsonUtility.ToJson(new ReportIntentSubmissionBody { salts = salts, txHash = txHash });
+
+            await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                      .WithNoOpAsync();
+        }
+
+        // Optional keys are OMITTED rather than sent as null: the server rejects `"contractAddress": null` with a 400.
+        internal static string BuildAuthorizeGroupBody(IReadOnlyList<CheckoutLine> lines)
+        {
+            var items = new AuthorizeUsdCreditGroupLineBody[lines.Count];
+
+            for (var i = 0; i < lines.Count; i++)
+            {
+                CheckoutLine line = lines[i];
+
+                items[i] = new AuthorizeUsdCreditGroupLineBody
+                {
+                    usdPriceCents = line.UsdPriceCents,
+                    tradeId = string.IsNullOrEmpty(line.TradeId) ? null : line.TradeId,
+                    contractAddress = string.IsNullOrEmpty(line.ContractAddress) ? null : line.ContractAddress,
+                    itemId = string.IsNullOrEmpty(line.ItemId) ? null : line.ItemId,
+                };
+            }
+
+            return JsonConvert.SerializeObject(new AuthorizeUsdCreditGroupBody { items = items, source = PURCHASE_SOURCE }, OMIT_NULLS);
+        }
+
+        internal static CreditsAuthorizeError MapAuthorizeStatusCode(long responseCode) =>
+            responseCode switch
+            {
+                (long)HttpStatusCode.PaymentRequired => CreditsAuthorizeError.InsufficientCredits,
+                (long)HttpStatusCode.Conflict => CreditsAuthorizeError.TooManyLiveIntents,
+                (long)HttpStatusCode.NotFound => CreditsAuthorizeError.FeatureDisabled,
+                (long)HttpStatusCode.BadRequest => CreditsAuthorizeError.BadRequest,
+                _ => CreditsAuthorizeError.NetworkError,
+            };
 
         private async UniTask<SeasonsData> UpdateProgramSeasonsAsync(CancellationToken ct)
         {

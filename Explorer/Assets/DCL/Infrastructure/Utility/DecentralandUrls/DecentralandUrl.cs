@@ -176,5 +176,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ChainRpc = 106,
 
         LodAssetBundlesCDN = 107,
+        ShopServer = 108,
     }
 }
