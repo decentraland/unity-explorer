@@ -21,8 +21,8 @@ namespace DCL.PluginSystem.World
         private readonly ILaunchMode launchMode;
         private readonly bool useAssetBundles;
 
-        // The RemoteAvatarCollider pool is registered by MultiplayerPlugin.InitializeAsync, which runs
-        // after this plugin's construction, so it can only be resolved once scene worlds are being built.
+        // MultiplayerPlugin.InitializeAsync registers this pool after this plugin is constructed,
+        // so unlike the transform pool it cannot be resolved in the constructor.
         private IComponentPool<RemoteAvatarCollider>? avatarColliderPool;
 
         public AvatarShapePlugin(Arch.Core.World globalWorld, IComponentPoolsRegistry poolRegistry, ILaunchMode launchMode, bool useAssetBundles)

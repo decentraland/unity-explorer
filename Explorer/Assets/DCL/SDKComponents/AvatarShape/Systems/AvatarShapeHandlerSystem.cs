@@ -79,9 +79,9 @@ namespace ECS.Unity.AvatarShape.Systems
             globalTransform.localRotation = Quaternion.identity;
             globalTransform.localScale = Vector3.one;
 
-            // Avatar trigger areas (AvatarModifierArea, PBTriggerArea) are fed by physics events only,
-            // so without an own collider the SDK avatar would be invisible to all of them. It sits as a
-            // sibling of the AvatarBase to satisfy the FindAvatarUtils.AvatarWithTransform hierarchy match.
+            // Without its own collider the avatar is invisible to avatar trigger areas (only physics
+            // events feed them). It must stay a sibling of the AvatarBase:
+            // FindAvatarUtils.AvatarWithTransform matches avatars by that hierarchy.
             RemoteAvatarCollider avatarCollider = avatarColliderPool.Get();
             avatarCollider.name = $"Collider {pbAvatarShape.Id}";
             avatarCollider.transform.SetParent(globalTransform, false);
@@ -274,8 +274,8 @@ namespace ECS.Unity.AvatarShape.Systems
         {
             if (globalEntity == Entity.Null) return;
 
-            // The collider must leave the avatar's transform before that transform returns to its own
-            // pool, otherwise the pooled transform keeps a stale collider child.
+            // Released before the avatar's transform returns to its own pool, otherwise the pooled
+            // transform keeps a stale collider child.
             if (globalWorld.TryGet(globalEntity, out RemoteAvatarCollider? avatarCollider))
             {
                 avatarColliderPool.Release(avatarCollider!);

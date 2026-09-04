@@ -730,7 +730,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         [Test]
         public void ApplyModifiersToProfilelessAvatar()
         {
-            // No Profile is added to fakeAvatarEntity: this is the scene avatar (NPC) case.
+            // No Profile on fakeAvatarEntity — the scene avatar (NPC) case.
             var pbComponent = new PBAvatarModifierArea
             {
                 Area = new Vector3

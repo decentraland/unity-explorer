@@ -74,13 +74,9 @@ namespace ECS.Unity.AvatarShape.Tests
 
             system.Update(0);
 
-            // Without a collider the avatar is invisible to every avatar trigger area
-            // (AvatarModifierArea, PBTriggerArea): only physics events feed them.
             Entity globalEntity = world.Get<SDKAvatarShapeComponent>(entity).GlobalWorldEntity;
             Assert.IsTrue(globalWorld.Has<RemoteAvatarCollider>(globalEntity));
 
-            // FindAvatarUtils.AvatarWithTransform matches avatars by hierarchy: the collider and the
-            // AvatarBase must be siblings under the avatar's global transform.
             RemoteAvatarCollider avatarCollider = globalWorld.Get<RemoteAvatarCollider>(globalEntity);
             Assert.AreEqual(globalWorld.Get<CharacterTransform>(globalEntity).Transform, avatarCollider.transform.parent);
         }

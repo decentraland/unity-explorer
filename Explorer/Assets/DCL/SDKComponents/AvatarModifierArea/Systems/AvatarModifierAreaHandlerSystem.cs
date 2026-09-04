@@ -265,8 +265,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreatePassportCannotBeOpened(SceneRestrictionsAction.Removed));
         }
 
-        // AlwaScene avatars (NPCs) have no Profile hence no UserId to match against excludeIds, so the
-        // area modifiers always apply to them.
+        // Scene avatars (NPCs) have no Profile hence no UserId to match against excludeIds, so the
+        // modifiers always apply to them.
         private static bool IsExcluded(Profile? profile, HashSet<string> excludedIds)
         {
             string? userId = profile?.UserId;
