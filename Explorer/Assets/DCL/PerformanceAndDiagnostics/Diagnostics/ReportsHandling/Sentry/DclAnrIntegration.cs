@@ -100,9 +100,6 @@ namespace DCL.Diagnostics.Sentry
 
                 DumpEntry dump = entry.Value;
 
-                if (earliest.Has && dump.Path == earliest.Value.Path)
-                    continue;
-
                 if (dump.ZipPath == null)
                     continue;
 
