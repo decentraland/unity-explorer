@@ -15,8 +15,10 @@ namespace DCL.McpServer.Tools
     ///     under the end point the release — because UI Toolkit panels consume events sent to their elements
     ///     rather than virtual-device pointer state. Elsewhere the virtual mouse is replayed instead, which is the
     ///     path that exercises real drag thresholds and hit-testing. Which path ran is reported, and an automatic
-    ///     fallback to the device path also reports why the semantic one did not apply: that fallback drags the 3D
-    ///     world, so a caller who meant to drag the scene's UI must be able to tell the two apart.
+    ///     fallback to the device path also reports why the semantic one did not apply, so a caller who meant to
+    ///     drag the scene's UI can tell the two apart. The device path additionally reports what its pointer was
+    ///     over at each end: the gesture verifies no target, so a bare success would read as a delivered drag even
+    ///     when the pointer was over the world and no UI could have received it.
     /// </summary>
     public class UiDragTool : McpTool
     {
@@ -28,11 +30,12 @@ namespace DCL.McpServer.Tools
             Device,
         }
 
+        /// <summary>What `pointerOver` reads when no UI covered that pixel — the drag ran over the 3D world there.</summary>
+        private const string WORLD = "world";
+
         private const int DEFAULT_DURATION_FRAMES = 15;
         private const int MIN_DURATION_FRAMES = 2;
         private const int MAX_DURATION_FRAMES = 300;
-        private const float TIMEOUT_GRACE_SEC = 5f;
-        private const float ASSUMED_MIN_FPS = 15f;
 
         private readonly UiAutomationServices uiAutomation;
 
@@ -44,8 +47,11 @@ namespace DCL.McpServer.Tools
             + "scene's own UI is delivered to those elements (press on the start element, release on the end element); "
             + "anywhere else it replays the virtual mouse through the real input pipeline (drag thresholds, hit-testing), "
             + "e.g. to drag client list items, sliders or map panning. The result's path says which one ran, plus a "
-            + "pathReason when the scene UI was not usable and the virtual mouse took over — that fallback drags the 3D "
-            + "world, not the UI. Pass path:sdk to fail instead of falling back, or path:device to force the mouse.";
+            + "pathReason when the scene UI was not usable and the virtual mouse took over. On the mouse path read "
+            + "pointerOver: it names what covered each end of the drag, or 'world' when nothing did — a drag over the "
+            + "world reaches no UI at all (sweep a held pointer across the world with sweep_pointer instead), and ok "
+            + "there means only that the mouse states were replayed. Pass path:sdk to fail instead of falling back, "
+            + "or path:device to force the mouse.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Number("fromX", "Normalized start x, 0 (left) to 1 (right).", isRequired: true)
@@ -56,7 +62,8 @@ namespace DCL.McpServer.Tools
                   .Boolean("rightButton", "Drag with the right button instead of the left. Default false.")
                   .Enum<DragPath>("path", "Which delivery path to use. Default auto (the scene's UI when the start point "
                                           + "lands on it, the virtual mouse otherwise). sdk fails if the scene's UI does not own "
-                                          + "the start point, instead of dragging the world behind it; device forces the mouse.");
+                                          + "the start point, instead of replaying the mouse over the world behind it; device "
+                                          + "forces the mouse.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -97,7 +104,7 @@ namespace DCL.McpServer.Tools
 
                 skippedSceneUi = attempt.SkipReason;
 
-                // The caller pinned the semantic path: falling back would drag the 3D world instead of the UI.
+                // The caller pinned the semantic path: falling back would replay the mouse over the world instead.
                 if (path == DragPath.Sdk)
                     return McpToolResult.Error($"the drag was not delivered to the scene's UI: {skippedSceneUi}");
             }
@@ -106,19 +113,12 @@ namespace DCL.McpServer.Tools
             var from = new Vector2(fromX * Screen.width, (1f - fromY) * Screen.height);
             var to = new Vector2(toX * Screen.width, (1f - toY) * Screen.height);
 
-            float timeoutSec = (durationFrames / ASSUMED_MIN_FPS) + TIMEOUT_GRACE_SEC;
+            MouseButton button = arguments.GetBool("rightButton", false) ? MouseButton.Right : MouseButton.Left;
 
-            UiGestureResult gesture = await uiAutomation.RunGestureAsync(new UiDeviceGestureRequest
-            {
-                Kind = UiDeviceGestureKind.Drag,
-                From = from,
-                To = to,
-                DurationFrames = durationFrames,
-                Button = arguments.GetBool("rightButton", false) ? MouseButton.Right : MouseButton.Left,
-            }, timeoutSec, ct);
+            UiDeviceDragOutcome outcome = await uiAutomation.DragWithDevicesAsync(from, to, durationFrames, button, ct);
 
-            if (!gesture.Ok)
-                return McpToolResult.Error(gesture.FailureReason ?? "the drag failed");
+            if (!outcome.Ok)
+                return McpToolResult.Error(outcome.FailureReason ?? "the drag failed");
 
             var result = new JObject
             {
@@ -126,14 +126,25 @@ namespace DCL.McpServer.Tools
                 ["path"] = McpWireEnum<DragPath>.ToWire(DragPath.Device),
                 ["cursorState"] = uiAutomation.CursorStateName(),
 
+                // What the pointer was over at each end. A device gesture verifies no target, so this is the only
+                // thing that separates a drag some UI could have received from one replayed over the world.
+                ["pointerOver"] = new JObject
+                {
+                    ["start"] = outcome.CoverAtStart ?? WORLD,
+                    ["end"] = outcome.CoverAtEnd ?? WORLD,
+                },
+
                 // The space the from/to coordinates were normalized against, stated like every other UI result.
                 ["screen"] = new JObject { ["width"] = Screen.width, ["height"] = Screen.height },
             };
 
-            // The device drag really happened, so ok is true — but it dragged the 3D world, which is not what a
-            // caller aiming at scene UI asked for. Naming the reason is what separates this from a delivered UI drag.
+            if (outcome.DeliveryNote != null)
+                result["info"] = outcome.DeliveryNote;
+
+            // The states were replayed, so ok is true — but the semantic path was what a caller aiming at scene UI
+            // asked for. Naming the reason is what separates this from a delivered UI drag.
             if (skippedSceneUi != null)
-                result["pathReason"] = $"the scene-UI path did not apply ({skippedSceneUi}), so the virtual mouse dragged the 3D world";
+                result["pathReason"] = $"the scene-UI path did not apply ({skippedSceneUi}), so the virtual mouse was replayed instead";
 
             return McpToolResult.Json(result);
         }

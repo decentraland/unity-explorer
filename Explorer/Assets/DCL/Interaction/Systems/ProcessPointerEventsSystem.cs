@@ -343,11 +343,19 @@ namespace DCL.Interaction.Systems
                 // Add all inputs that were pressed/unpressed this frame
                 InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
 
-                if (synthetic.PressButton.HasValue)
-                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.PressButton.Value, PointerEventType.PetDown);
+                // A synthetic edge that named a target entity may be consumed by that entity alone. The ray decides
+                // what is under the reticle, so without this the edge lands on whatever it found — a nearer
+                // interactable collider, or even a proximity entity the aim never pointed at — and fires that
+                // entity's handler, while the driver is told a frame later that its aim was blocked. Hover, feedback
+                // and highlight above are deliberately left ungated: those follow the ray for real input too.
+                if (synthetic.MayConsume(entityInfo.EcsExecutor.World, entityInfo.ColliderSceneEntityInfo.EntityReference))
+                {
+                    if (synthetic.PressButton.HasValue)
+                        pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.PressButton.Value, PointerEventType.PetDown);
 
-                if (synthetic.ReleaseButton.HasValue)
-                    pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.ReleaseButton.Value, PointerEventType.PetUp);
+                    if (synthetic.ReleaseButton.HasValue)
+                        pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.ReleaseButton.Value, PointerEventType.PetUp);
+                }
 
                 SuppressGlobalBroadcastOfEntityBoundActions(in pbPointerEvents.AppendPointerEventResultsIntent);
             }

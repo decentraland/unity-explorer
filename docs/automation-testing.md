@@ -54,7 +54,7 @@ AltDriver.CallStaticMethod<bool>(
 | `DCL.FeatureFlags.AltTesterFeatureFlagsProbe` | `DCL.Network` | remote flag state, resolved `FeatureId` state, variant payloads |
 | `DCL.PerformanceAndDiagnostics.AutoPilot.PerfSampler` | `DCL.Plugins` | `Begin`/`End` around a test to write a perf CSV |
 | `DCL.SyntheticInput.AltTester.WorldAutomationProbe` | `DCL.SyntheticInput` | synthetic world/avatar input: walk, entity/screen clicks, hover, global SDK input actions, camera look, and `StartSweep` (press, turn the camera while held, release) — start/poll API, see [Synthetic Input Simulation](synthetic-input-simulation.md) |
-| `DCL.SyntheticInput.AltTester.UiAutomationProbe` | `DCL.SyntheticInput` | UI simulation: list interactable UI, semantic clicks/text/scroll on uGUI and SDK scene UI, virtual-mouse drags |
+| `DCL.SyntheticInput.AltTester.UiAutomationProbe` | `DCL.SyntheticInput` | UI simulation: list interactable UI, semantic clicks/text/scroll on uGUI and SDK scene UI, virtual-mouse drags (whose payload names the UI cover at each end — `pointerOverStart`/`pointerOverEnd`, `"world"` when none, plus an `info` line for a drag no UI received) |
 
 The probe types are gated by the `ALTTESTER` define and are therefore absent from release builds;
 `PerfSampler` is not gated. The synthetic-input probes additionally need the layer installed at

@@ -58,7 +58,12 @@ namespace DCL.McpServer.Tools
         public override string Description =>
             "Press and release a pointer button on a scene entity so its PointerEvents fire exactly like a real click. "
             + "The click runs through the real reticle pipeline: occluders and the entity's maxDistance apply, and a miss "
-            + "returns hit:false with the blocking entity. Ids come from list_scene_entities. For entities whose collider "
+            + "returns hit:false with the blocking entity. When you passed an entityId the button is delivered to that "
+            + "entity or to nobody: not to the blocker, and not to the scene root either (the blocker still sees hover "
+            + "enter/leave, as a real cursor passing over it would). An aim given only as x/y/z names no entity, so a "
+            + "refusal there still broadcasts the press to the scene root, like any unqualified edge. Ids "
+            + "come from list_scene_entities and are engine entity ids, NOT the CRDT ids a scene logs; the result's "
+            + "crdtEntityId is the CRDT one, so compare it against the entity you meant. For entities whose collider "
             + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>

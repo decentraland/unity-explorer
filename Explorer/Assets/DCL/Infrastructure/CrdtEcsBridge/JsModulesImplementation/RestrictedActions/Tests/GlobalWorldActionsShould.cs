@@ -84,6 +84,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.AreEqual(expectedLookAt.x, intent.LookAtTarget.x, 0.01f);
             Assert.AreEqual(expectedLookAt.y, intent.LookAtTarget.y, 0.01f);
             Assert.AreEqual(expectedLookAt.z, intent.LookAtTarget.z, 0.01f);
+            Assert.AreEqual(playerPos, intent.From);
         }
 
         [Test]
@@ -97,6 +98,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.IsTrue(world.Has<PlayerLookAtIntent>(playerEntity));
             var intent = world.Get<PlayerLookAtIntent>(playerEntity);
             Assert.AreEqual(cameraTarget, intent.LookAtTarget);
+            Assert.AreEqual(playerPos, intent.From);
         }
 
         [Test]

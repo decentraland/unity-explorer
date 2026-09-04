@@ -77,6 +77,25 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         }
 
         [Test]
+        public void SkipTheGlobalAppendOfAnEdgeThatNamedATargetEntity()
+        {
+            // A targeted edge is not a broadcast. ProcessPointerEventsSystem delivers it to that entity or to
+            // nobody, so appending it here would leave the scene root observing a press the driver was told
+            // missed — the same "reported miss mutated the scene" the entity filter exists to end.
+            playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput
+            {
+                PressButton = InputAction.IaPrimary,
+                TargetWorld = world,
+                TargetEntity = world.Create(),
+                PostedAtFrame = UnityEngine.Time.frameCount,
+            };
+
+            system.Update(0);
+
+            Assert.That(globalInputEvents.Entries, Is.Empty);
+        }
+
+        [Test]
         public void IgnoreStaleSyntheticPost()
         {
             PostSynthetic(InputAction.IaSecondary, null, frameOffset: -1);

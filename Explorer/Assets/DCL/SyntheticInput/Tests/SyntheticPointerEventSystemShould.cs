@@ -302,6 +302,39 @@ namespace DCL.SyntheticInput.Tests
         }
 
         [Test]
+        public void PostTheTargetEntityAlongsideAnAimedEdge()
+        {
+            AddIntent();
+
+            system.Update(0);
+
+            // The pipeline delivers a posted edge to whatever its ray selected, so an edge that named an entity
+            // travels with it: anything else the ray finds is an occluder the driver is about to be told about,
+            // and it must not receive the button in the meantime.
+            ref SyntheticPointerInput synthetic = ref syntheticInput;
+            Assert.That(synthetic.TargetEntity, Is.EqualTo((Entity?)targetEntity));
+            Assert.That(ReferenceEquals(synthetic.TargetWorld, sceneWorld), Is.True);
+            Assert.That(synthetic.MayConsume(sceneWorld, targetEntity), Is.True);
+        }
+
+        [Test]
+        public void PostNoTargetEntityForAnAimlessEdge()
+        {
+            AddAimlessIntent(PointerEventType.PetDown);
+
+            system.Update(0);
+
+            // An aimless edge is the scene-root broadcast case: restricting it to an entity would suppress the
+            // fan-out that is the whole point of posting it without an aim. Entity.Null is not default(Entity),
+            // so a post built from a defaulted target once carried a restriction to an entity that cannot exist —
+            // which withheld the edge from every entity AND dropped the broadcast, making an unaimed press_input
+            // reach nothing at all. Any entity must be free to consume an untargeted edge.
+            Assert.That(syntheticInput.HasTargetEntity, Is.False);
+            Assert.That(syntheticInput.TargetEntity, Is.Null);
+            Assert.That(syntheticInput.MayConsume(sceneWorld, targetEntity), Is.True);
+        }
+
+        [Test]
         public void StayPendingUntilPipelineConsumesTheInput()
         {
             UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
@@ -814,6 +847,10 @@ namespace DCL.SyntheticInput.Tests
 
             Assert.That(syntheticInput.AimPoint.HasValue, Is.True);
             Assert.That(Vector3.Distance(syntheticInput.AimPoint!.Value, expectedAim), Is.LessThan(0.001f));
+
+            // A screen point names a pixel, not an entity: whatever the ray reaches there is the target by
+            // contract, so the edge carries no entity restriction.
+            Assert.That(syntheticInput.HasTargetEntity, Is.False);
 
             // The centered camera looks straight at the target, so the screen-center ray must hit it.
             RunPipelineFrame();

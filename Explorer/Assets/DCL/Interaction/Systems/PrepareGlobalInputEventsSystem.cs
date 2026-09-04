@@ -57,12 +57,16 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         /// <summary>
         ///     A synthetic edge of an action the player really pressed or released this same frame is skipped:
         ///     the real loop above already added it, and the scene must not observe the event twice.
+        ///     An edge that named a target entity is skipped too: it is not a broadcast. The driver asked for one
+        ///     entity, so an edge ProcessPointerEventsSystem cannot deliver there (blocked line of sight, out of
+        ///     range, no PointerEvents) must reach nobody — otherwise a call the driver is told missed still leaves
+        ///     the scene root observing the press.
         /// </summary>
         private void AppendSyntheticEntries()
         {
             SyntheticPointerInput synthetic = playerInteractionEntity.SyntheticPointerInput;
 
-            if (!synthetic.IsPostedThisFrame)
+            if (!synthetic.IsPostedThisFrame || synthetic.HasTargetEntity)
                 return;
 
             if (synthetic.PressButton is { } pressed && !WasReallyPressedThisFrame(pressed))

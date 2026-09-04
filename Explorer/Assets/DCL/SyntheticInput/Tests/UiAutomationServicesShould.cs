@@ -61,5 +61,49 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(services.TryFindUiCoverAt(new Vector2(5f, 5f), out string cover), Is.False);
             Assert.That(cover, Is.Empty);
         }
+
+        [Test]
+        public void ReportBothDragEndsOverTheWorldWhenNoUiIsOnScreen()
+        {
+            services.DescribeDragCover(new Vector2(5f, 5f), new Vector2(50f, 50f), out string? coverAtStart, out string? coverAtEnd);
+
+            // Null is the world: the empty cover string TryFindUiCoverAt leaves behind would read as a named cover.
+            Assert.That(coverAtStart, Is.Null);
+            Assert.That(coverAtEnd, Is.Null);
+        }
+
+        [Test]
+        public void NoteThatNoUiReceivedADragOverTheWorld()
+        {
+            UiDeviceDragOutcome outcome = UiDeviceDragOutcome.From(new UiGestureResult { Ok = true }, null, null);
+
+            // The gesture verifies no target, so a bare success here would read as a delivered drag.
+            Assert.That(outcome.Ok, Is.True);
+            Assert.That(outcome.DeliveryNote, Does.Contain("no UI element received this drag"));
+            Assert.That(outcome.DeliveryNote, Does.Contain("sweep_pointer"));
+        }
+
+        [Test]
+        public void AddNoNoteWhenTheDragStartedOnUi()
+        {
+            UiDeviceDragOutcome outcome = UiDeviceDragOutcome.From(new UiGestureResult { Ok = true }, "MainUI/Sidebar/ExploreButton", null);
+
+            // A drag that began on an element is a plain uGUI drag: the element keeps the pointer to the release.
+            Assert.That(outcome.CoverAtStart, Is.EqualTo("MainUI/Sidebar/ExploreButton"));
+            Assert.That(outcome.CoverAtEnd, Is.Null);
+            Assert.That(outcome.DeliveryNote, Is.Null);
+        }
+
+        [Test]
+        public void AddNoNoteToAFailedDrag()
+        {
+            UiDeviceDragOutcome outcome = UiDeviceDragOutcome.From(
+                new UiGestureResult { Ok = false, FailureReason = "the drag panned the camera instead of dragging" }, null, null);
+
+            // A failure carries its own reason; a note beside it would compete with it.
+            Assert.That(outcome.Ok, Is.False);
+            Assert.That(outcome.FailureReason, Does.Contain("panned the camera"));
+            Assert.That(outcome.DeliveryNote, Is.Null);
+        }
     }
 }

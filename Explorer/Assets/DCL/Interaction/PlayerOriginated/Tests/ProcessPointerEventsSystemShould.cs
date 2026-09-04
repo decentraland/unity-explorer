@@ -136,6 +136,19 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             };
         }
 
+        /// <summary>A press restricted to one entity, the way a driver that named an entity posts it.</summary>
+        private void PostSyntheticPressTargeting(InputAction button, World targetWorld, Entity target)
+        {
+            world.Get<SyntheticPointerInput>(pipelineEntity) = new SyntheticPointerInput
+            {
+                AimPoint = targetGo.transform.position,
+                PressButton = button,
+                TargetWorld = targetWorld,
+                TargetEntity = target,
+                PostedAtFrame = UnityEngine.Time.frameCount,
+            };
+        }
+
         private static IGlobalInputEvents.Entry Entry(InputAction action, PointerEventType type) =>
             new (action, type);
 
@@ -175,6 +188,75 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             Assert.That(globalInputEvents.Entries, Is.Empty,
                 "a real key press bound to the hovered entity must not also broadcast to the scene root");
+        }
+
+        [Test]
+        public void MergeASyntheticEdgeIntoTheEntityItNamed()
+        {
+            HoverTarget();
+            PostSyntheticPressTargeting(InputAction.IaPrimary, sceneWorld, targetEntity);
+
+            system.Update(0);
+
+            Assert.That(sceneWorld.Get<PBPointerEvents>(targetEntity).AppendPointerEventResultsIntent.ValidInputActions,
+                Is.EqualTo(new[] { (InputAction.IaPrimary, PointerEventType.PetDown) }),
+                "the ray reached the entity the edge was promised to, so it must be delivered");
+        }
+
+        [Test]
+        public void NotMergeASyntheticEdgeIntoAnEntityItDidNotName()
+        {
+            // The ray reached the target, but the edge was promised to another entity: whatever the ray found is
+            // an occluder from the driver's point of view, and firing its handler is the delivery that used to
+            // happen a frame before the driver was told its aim was blocked.
+            Entity otherEntity = sceneWorld.Create(new CRDTEntity(TARGET_CRDT_ID + 1));
+
+            HoverTarget();
+            PostSyntheticPressTargeting(InputAction.IaPrimary, sceneWorld, otherEntity);
+
+            system.Update(0);
+
+            Assert.That(sceneWorld.Get<PBPointerEvents>(targetEntity).AppendPointerEventResultsIntent.ValidInputActions, Is.Empty,
+                "no button edge may reach an entity the post did not name");
+        }
+
+        [Test]
+        public void StillIssueHoverEnterToTheEntityTheRayReached()
+        {
+            Entity otherEntity = sceneWorld.Create(new CRDTEntity(TARGET_CRDT_ID + 1));
+
+            HoverTarget();
+            PostSyntheticPressTargeting(InputAction.IaPrimary, sceneWorld, otherEntity);
+
+            system.Update(0);
+
+            // Only the button edge is withheld. Hover follows the ray for real input too, and a human's cursor
+            // passing over an occluder produces exactly this enter.
+            Assert.That(sceneWorld.Get<PBPointerEvents>(targetEntity).AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(1),
+                "the hover entry of the entity under the ray must still be appended");
+        }
+
+        [Test]
+        public void NotMergeASyntheticEdgeWhoseTargetBelongsToAnotherWorld()
+        {
+            // Arch entity ids are unique per world, and every loaded scene shares one physics scene, so the
+            // filter is keyed on (world, entity) — matching the id alone would deliver across scenes.
+            World otherWorld = World.Create();
+
+            try
+            {
+                HoverTarget();
+                PostSyntheticPressTargeting(InputAction.IaPrimary, otherWorld, targetEntity);
+
+                system.Update(0);
+
+                Assert.That(sceneWorld.Get<PBPointerEvents>(targetEntity).AppendPointerEventResultsIntent.ValidInputActions, Is.Empty,
+                    "an entity of the same id in another world is not the named target");
+            }
+            finally
+            {
+                World.Destroy(otherWorld);
+            }
         }
 
         [Test]

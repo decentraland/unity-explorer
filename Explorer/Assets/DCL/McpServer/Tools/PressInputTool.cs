@@ -57,7 +57,9 @@ namespace DCL.McpServer.Tools
             + "scene observes it exactly like the real key. Without an aim it arrives as a global PBPointerEventsResult on "
             + "the scene root; pass entityId or an x/y/z world aim point to steer the reticle at a target so it arrives "
             + "entity-bound on it instead (and suppresses the scene-root broadcast for that frame, like a key pressed while "
-            + "looking at the entity). The release lands on a later scene tick; holdSeconds keeps the action held between "
+            + "looking at the entity). A press that names an entityId reaches that entity or nobody: if something blocks the "
+            + "line of sight or the target does not qualify, the result says so and the scene sees no press at all, "
+            + "root included. The release lands on a later scene tick; holdSeconds keeps the action held between "
             + "press and release. This does NOT move the player — use walk for that.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>

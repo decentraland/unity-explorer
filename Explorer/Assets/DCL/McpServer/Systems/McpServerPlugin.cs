@@ -127,7 +127,7 @@ namespace DCL.McpServer.Systems
                           .Add(new GetPerformanceStatsTool(scenesCache))
                           .Add(new GetSceneLogsTool(logBuffer))
                           .Add(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
-                          .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity))
+                          .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData))
                           .Add(new LookAtTool(syntheticInput, exposedCameraData))
                           .Add(new CameraLookTool(syntheticInput, exposedCameraData))
                           .Add(new SetCameraModeTool(globalWorld, exposedCameraData))

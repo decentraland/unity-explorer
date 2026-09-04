@@ -200,7 +200,13 @@ namespace DCL.SyntheticInput.Systems
                 return;
             }
 
-            if (!TryResolveAimPoint(in intent, sceneWorld, out Vector3 aimPoint, out SyntheticPointerResult resolveFailure))
+            if (!TryResolveTargetEntity(in intent, sceneWorld, out Entity? targetEntity, out SyntheticPointerResult targetFailure))
+            {
+                CompleteAndRemove(in intent, targetFailure);
+                return;
+            }
+
+            if (!TryResolveAimPoint(in intent, sceneWorld, targetEntity, out Vector3 aimPoint, out SyntheticPointerResult resolveFailure))
             {
                 CompleteAndRemove(in intent, resolveFailure);
                 return;
@@ -221,9 +227,12 @@ namespace DCL.SyntheticInput.Systems
                 return;
             }
 
+            // The edge carries the entity it was promised to: the pipeline withholds it from anything else its ray
+            // selected, so a blocked or unqualified aim reports a miss having delivered no button anywhere.
             PostSyntheticInput(aimPoint,
                 intent.EventType == PointerEventType.PetDown ? intent.Button : null,
-                intent.EventType == PointerEventType.PetUp ? intent.Button : null);
+                intent.EventType == PointerEventType.PetUp ? intent.Button : null,
+                targetEntity, sceneWorld);
 
             intent.Injected = true;
             intent.InjectedTick = scene.SceneStateProvider.TickNumber;
@@ -539,13 +548,25 @@ namespace DCL.SyntheticInput.Systems
             SyntheticCursorState.AssertPointerPositionThisFrame(hold.ScreenPosition);
         }
 
-        private void PostSyntheticInput(Vector3? aimPoint, InputAction? pressButton = null, InputAction? releaseButton = null)
+        /// <summary>
+        ///     Posts the synthetic aim and/or button edge the pipeline consumes later this frame. A gesture that
+        ///     named an entity passes it as <paramref name="targetEntity" />: only that entity may consume the
+        ///     edge, and an edge no entity may consume is not broadcast to the scene root either.
+        /// </summary>
+        private void PostSyntheticInput(Vector3? aimPoint, InputAction? pressButton = null, InputAction? releaseButton = null,
+            Entity? targetEntity = null, World? targetWorld = null)
         {
+            // The target is nullable rather than an Entity.Null sentinel on purpose: Entity.Null is not
+            // default(Entity), so a defaulted parameter once produced a post restricted to a target that does not
+            // exist — which withheld the edge from every entity and, because a restricted edge is not a
+            // broadcast, silently stopped aimless presses from reaching the scene root at all.
             World.Set(pipelineEntity, new SyntheticPointerInput
             {
                 AimPoint = aimPoint,
                 PressButton = pressButton,
                 ReleaseButton = releaseButton,
+                TargetEntity = targetEntity,
+                TargetWorld = targetEntity.HasValue ? targetWorld : null,
                 PostedAtFrame = UnityEngine.Time.frameCount,
             });
         }
@@ -582,11 +603,56 @@ namespace DCL.SyntheticInput.Systems
         /// <summary>
         ///     Resolves the world point the synthetic ray must pass through. An explicit aim is taken as is and
         ///     needs no entity — the pipeline raycast still validates whatever the ray lands on; a screen-space
-        ///     aim is projected to a far point along the camera ray through it. Otherwise the aim is the target
-        ///     entity's collider center, and only this case scans the scene world: the target id is a raw Arch id,
-        ///     recovered the same way list_scene_entities/get_entity_details recover it.
+        ///     aim is projected to a far point along the camera ray through it. Otherwise the aim is the collider
+        ///     center of <paramref name="targetEntity" />, already resolved by TryResolveTargetEntity.
         /// </summary>
-        private bool TryResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, out Vector3 aimPoint, out SyntheticPointerResult failure)
+        /// <summary>
+        ///     The entity the gesture was promised, or Entity.Null when it named none. Resolved before the aim,
+        ///     because it is needed even when an explicit aim point makes the entity's own position irrelevant: it
+        ///     is the entity the posted edge is restricted to, and a target id that resolves to nothing is a
+        ///     failure in its own right rather than an aim that lands somewhere and reports a phantom blocker.
+        /// </summary>
+        private static bool TryResolveTargetEntity(in SyntheticPointerEventIntent intent, World sceneWorld, out Entity? targetEntity, out SyntheticPointerResult failure)
+        {
+            failure = default(SyntheticPointerResult);
+            targetEntity = null;
+
+            if (intent.Press is { } press)
+            {
+                // Liveness was checked before the release was ordered. An aimless press hands off Entity.Null:
+                // its release names no entity either.
+                if (press.Entity != Entity.Null)
+                    targetEntity = press.Entity;
+
+                return true;
+            }
+
+            if (intent.TargetEntityId < 0)
+                return true;
+
+            int targetId = intent.TargetEntityId;
+            Entity found = Entity.Null;
+
+            // TODO (Vit): drop this scan in a follow-up by switching MCP entity addressing from raw Arch ids to
+            // CRDT ids and resolving through CrdtEcsSynchronizer.EntitiesMap (O(1)); done together with
+            // list_scene_entities/get_entity_details/WorldInfo, which scan for the same reason.
+            sceneWorld.Query(in ALL_ENTITIES, entity =>
+            {
+                if (entity.Id == targetId)
+                    found = entity;
+            });
+
+            if (found == Entity.Null)
+            {
+                failure = Failure(in intent, $"no entity with id {targetId} in the current scene world");
+                return false;
+            }
+
+            targetEntity = found;
+            return true;
+        }
+
+        private bool TryResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity? targetEntity, out Vector3 aimPoint, out SyntheticPointerResult failure)
         {
             failure = default(SyntheticPointerResult);
             aimPoint = default(Vector3);
@@ -614,33 +680,15 @@ namespace DCL.SyntheticInput.Systems
                 return true;
             }
 
-            // The press already resolved its target (liveness checked before the release is ordered); the release
-            // aims at wherever that entity sits now, so the hover follows a target that moved between the legs.
-            if (intent.Press is { } press)
+            if (targetEntity is not { } target)
             {
-                aimPoint = ResolveEntityAimPoint(sceneWorld, press.Entity);
-                return true;
-            }
-
-            Entity found = Entity.Null;
-            int targetId = intent.TargetEntityId;
-
-            // TODO (Vit): drop this scan in a follow-up by switching MCP entity addressing from raw Arch ids to
-            // CRDT ids and resolving through CrdtEcsSynchronizer.EntitiesMap (O(1)); done together with
-            // list_scene_entities/get_entity_details/WorldInfo, which scan for the same reason.
-            sceneWorld.Query(in ALL_ENTITIES, entity =>
-            {
-                if (entity.Id == targetId)
-                    found = entity;
-            });
-
-            if (found == Entity.Null)
-            {
-                failure = Failure(in intent, $"no entity with id {targetId} in the current scene world");
+                failure = Failure(in intent, "the gesture names neither an aim point nor a target entity");
                 return false;
             }
 
-            aimPoint = ResolveEntityAimPoint(sceneWorld, found);
+            // A release aims at wherever its press target sits now, so the hover follows a target that moved
+            // between the legs; a press aims at its own target's collider volume.
+            aimPoint = ResolveEntityAimPoint(sceneWorld, target);
             return true;
         }
 

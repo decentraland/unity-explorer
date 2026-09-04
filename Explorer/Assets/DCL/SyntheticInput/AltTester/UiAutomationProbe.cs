@@ -25,7 +25,9 @@ namespace DCL.SyntheticInput.AltTester
     {
         private const float SDK_CLICK_TIMEOUT_SEC = 5f;
         private const float GESTURE_TIMEOUT_GRACE_SEC = 5f;
-        private const float ASSUMED_MIN_FPS = 15f;
+
+        /// <summary>What the drag payload reads when no UI covered that pixel — the pointer was over the 3D world.</summary>
+        private const string WORLD = "world";
 
         private static UiAutomationServices? services;
 
@@ -139,7 +141,10 @@ namespace DCL.SyntheticInput.AltTester
                      .ContinueWith(result => result.ToJson(ready.CursorStateName()).ToString()));
         }
 
-        /// <summary>Virtual-mouse drag between two normalized image points (x right 0..1, y DOWN 0..1, origin top-left).</summary>
+        /// <summary>
+        ///     Virtual-mouse drag between two normalized image points (x right 0..1, y DOWN 0..1, origin top-left).
+        ///     The payload names what the pointer was over at each end, because the gesture verifies no target.
+        /// </summary>
         public static int StartDrag(float fromX, float fromY, float toX, float toY, int durationFrames, bool rightButton)
         {
             if (services == null)
@@ -148,18 +153,12 @@ namespace DCL.SyntheticInput.AltTester
             UiAutomationServices ready = services;
             int frames = Mathf.Clamp(durationFrames, 2, 300);
 
-            var request = new UiDeviceGestureRequest
-            {
-                Kind = UiDeviceGestureKind.Drag,
-                From = new Vector2(fromX * Screen.width, (1f - fromY) * Screen.height),
-                To = new Vector2(toX * Screen.width, (1f - toY) * Screen.height),
-                DurationFrames = frames,
-                Button = rightButton ? MouseButton.Right : MouseButton.Left,
-            };
+            var from = new Vector2(fromX * Screen.width, (1f - fromY) * Screen.height);
+            var to = new Vector2(toX * Screen.width, (1f - toY) * Screen.height);
 
             return AltOperationRegistry.Start(
-                ready.RunGestureAsync(request, (frames / ASSUMED_MIN_FPS) + GESTURE_TIMEOUT_GRACE_SEC, CancellationToken.None)
-                     .ContinueWith(GesturePayload));
+                ready.DragWithDevicesAsync(from, to, frames, rightButton ? MouseButton.Right : MouseButton.Left, CancellationToken.None)
+                     .ContinueWith(DragPayload));
         }
 
         /// <summary>Virtual-mouse positional click at a normalized image point (full input-pipeline fidelity).</summary>
@@ -237,6 +236,25 @@ namespace DCL.SyntheticInput.AltTester
                 "middle" => PointerEventData.InputButton.Middle,
                 _ => PointerEventData.InputButton.Left,
             };
+
+        /// <summary>A device drag reports the cover at both ends: "world" is a drag no UI element received.</summary>
+        private static string DragPayload(UiDeviceDragOutcome outcome)
+        {
+            var payload = new JObject
+            {
+                ["ok"] = outcome.Ok,
+                ["pointerOverStart"] = outcome.CoverAtStart ?? WORLD,
+                ["pointerOverEnd"] = outcome.CoverAtEnd ?? WORLD,
+            };
+
+            if (outcome.FailureReason != null)
+                payload["error"] = outcome.FailureReason;
+
+            if (outcome.DeliveryNote != null)
+                payload["info"] = outcome.DeliveryNote;
+
+            return payload.ToString();
+        }
 
         private static string GesturePayload(UiGestureResult result)
         {

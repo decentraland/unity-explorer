@@ -1,3 +1,4 @@
+using Arch.Core;
 using DCL.ECSComponents;
 using UnityEngine;
 
@@ -40,10 +41,34 @@ namespace DCL.Interaction.PlayerOriginated.Components
         /// <summary>Button reported as released this frame.</summary>
         public InputAction? ReleaseButton;
 
+        /// <summary>
+        ///     The scene world the target entity belongs to; paired with <see cref="TargetEntity" />, since an Arch
+        ///     entity id is only unique within its own world and every loaded scene shares one physics scene.
+        /// </summary>
+        public World? TargetWorld;
+
+        /// <summary>
+        ///     The only entity allowed to consume this post's button edge. Null accepts whatever the pipeline's own
+        ///     ray selected, which is the contract of an aim that names no entity (a world or screen point). A
+        ///     driver that named an entity, though, has been promised that entity: the edge must not fall through to
+        ///     a nearer collider the driver was told blocked its aim, nor to a proximity entity it never aimed at.
+        /// </summary>
+        public Entity? TargetEntity;
+
+        /// <summary>True when the post names one entity as the only permitted receiver of its button edge.</summary>
+        public readonly bool HasTargetEntity => TargetEntity.HasValue;
+
         /// <summary><see cref="UnityEngine.Time.frameCount" /> at the moment of posting; every poster must stamp it.</summary>
         public int PostedAtFrame;
 
         /// <summary>The instructions are valid only while this holds; readers treat a stale post as absent.</summary>
         public bool IsPostedThisFrame => PostedAtFrame == UnityEngine.Time.frameCount;
+
+        /// <summary>
+        ///     Whether the given scene entity may consume this post's button edge. An untargeted post permits
+        ///     every entity; a targeted one permits exactly its own, matched by world reference and entity.
+        /// </summary>
+        public readonly bool MayConsume(World entityWorld, Entity entity) =>
+            TargetEntity is not { } target || (ReferenceEquals(entityWorld, TargetWorld) && entity == target);
     }
 }
