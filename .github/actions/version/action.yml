@@ -7,6 +7,10 @@ inputs:
   commit_sha:
     description: 'The commit SHA to use for versioning'
     required: true
+  bump_type:
+    description: 'Version bump type: "minor" bumps MINOR and resets BUILD to 0 (default); "patch" bumps BUILD only (for hotfixes)'
+    required: false
+    default: minor
 outputs:
   latest_version:
     description: 'Latest available version tag in repo'
@@ -21,13 +25,13 @@ outputs:
     description: 'v1.2.3-name'
     value: ${{ steps.parser.outputs.tag_version }}
   next_full_version:
-    description: 'v1.3.0-name-branch-shortsha'
+    description: 'v1.3.0-name-branch-shortsha (minor bump) or v1.2.4-name-branch-shortsha (patch bump)'
     value: ${{ steps.parser.outputs.next_full_version }}
   next_short_version:
-    description: 'v1.3.0-name-branch'
+    description: 'v1.3.0-name-branch (minor bump) or v1.2.4-name-branch (patch bump)'
     value: ${{ steps.parser.outputs.next_short_version }}
   next_tag_version:
-    description: 'v1.3.0-name'
+    description: 'v1.3.0-name (minor bump) or v1.2.4-name (patch bump)'
     value: ${{ steps.parser.outputs.next_tag_version }}
 runs:
   using: "composite"
@@ -95,18 +99,34 @@ runs:
         echo "Tag version: $TAGVER"
         echo "tag_version=$TAGVER" >> "$GITHUB_OUTPUT"
 
+        # Determine next version components based on bump_type
+        BUMP_TYPE="${{ inputs.bump_type || 'minor' }}"
+        if [ "$BUMP_TYPE" = "patch" ]; then
+          NEXT_MAJOR="$MAJOR"
+          NEXT_MINOR="$MINOR"
+          NEXT_BUILD="$((BUILD + 1))"
+        else
+          NEXT_MAJOR="$MAJOR"
+          NEXT_MINOR="$((MINOR + 1))"
+          NEXT_BUILD="0"
+        fi
+        echo "Bump type: $BUMP_TYPE"
+        echo "[Next Major]: $NEXT_MAJOR"
+        echo "[Next Minor]: $NEXT_MINOR"
+        echo "[Next Build]: $NEXT_BUILD"
+
         # Next full version with commit hash
-        NEXT_FULLVER="v${MAJOR}.$((MINOR + 1)).0-${NAME}-${BRANCH_NAME}-${SHORT_COMMIT_HASH}"
+        NEXT_FULLVER="v${NEXT_MAJOR}.${NEXT_MINOR}.${NEXT_BUILD}-${NAME}-${BRANCH_NAME}-${SHORT_COMMIT_HASH}"
         echo "Next full version: $NEXT_FULLVER"
         echo "next_full_version=$NEXT_FULLVER" >> "$GITHUB_OUTPUT"
 
         # Next short version without commit hash
-        NEXT_SHORTVER="v${MAJOR}.$((MINOR + 1)).0-${NAME}-${BRANCH_NAME}"
+        NEXT_SHORTVER="v${NEXT_MAJOR}.${NEXT_MINOR}.${NEXT_BUILD}-${NAME}-${BRANCH_NAME}"
         echo "Next short version: $NEXT_SHORTVER"
         echo "next_short_version=$NEXT_SHORTVER" >> "$GITHUB_OUTPUT"
-        
+
         # Next tag version without branch or commit hash
-        NEXT_TAGVER="v${MAJOR}.$((MINOR + 1)).0-${NAME}"
+        NEXT_TAGVER="v${NEXT_MAJOR}.${NEXT_MINOR}.${NEXT_BUILD}-${NAME}"
         echo "Next tag version: $NEXT_TAGVER"
         echo "next_tag_version=$NEXT_TAGVER" >> "$GITHUB_OUTPUT"
       shell: bash
