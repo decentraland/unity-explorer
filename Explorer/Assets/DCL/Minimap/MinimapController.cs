@@ -87,6 +87,7 @@ namespace DCL.Minimap
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings? homeToggleSettings;
+        private PlacesData.PlaceInfo? currentPlaceInfo;
         private string previousRealmName = string.Empty;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
@@ -257,10 +258,20 @@ namespace DCL.Minimap
                 isHome = string.Equals(homeWorldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
             }
             else
-                isHome = !homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
+            {
+                PlacesData.PlaceInfo? place = GetPlaceCoveringHome();
+
+                isHome = place != null
+                    ? homePlaceEventBus.IsHome(place)
+                    : !homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
+            }
 
             homeToggleSettings?.SetInitialValue(isHome);
         }
+
+        // Roads are a single place spanning the whole map, so they keep the per-parcel behaviour.
+        private PlacesData.PlaceInfo? GetPlaceCoveringHome() =>
+            currentPlaceInfo != null && !TeleportUtils.IsRoad(currentPlaceInfo.title) ? currentPlaceInfo : null;
 
         private void ShowContextMenu()
         {
@@ -277,16 +288,23 @@ namespace DCL.Minimap
                 if (realmData.ScenesAreFixed)
                     homePlaceEventBus.SetAsHome(realmData.RealmName);
                 else
-                    homePlaceEventBus.SetAsHome(previousParcelPosition);
+                    homePlaceEventBus.SetAsHome(ResolveHomeParcel());
             }
             else
-            {
                 homePlaceEventBus.UnsetHome();
-            }
 
             // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate
             // gaining focus again.
             OnFocus();
+        }
+
+        private Vector2Int ResolveHomeParcel()
+        {
+            PlacesData.PlaceInfo? place = GetPlaceCoveringHome();
+
+            return place != null && VectorUtilities.TryParseVector2Int(place.base_position, out Vector2Int basePosition)
+                ? basePosition
+                : previousParcelPosition;
         }
 
         private void OnFavoriteButtonClicked(bool value)
@@ -440,6 +458,7 @@ namespace DCL.Minimap
                 return;
 
             previousParcelPosition = playerParcelPosition;
+            currentPlaceInfo = null;
 
             if (realmData.Configured)
                 previousRealmName = realmData.RealmName;
@@ -476,6 +495,7 @@ namespace DCL.Minimap
             else
             {
                 PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
+                currentPlaceInfo = placeInfo;
 
                 if (placeInfo != null)
                 {
