@@ -11,7 +11,8 @@ namespace Global.Dynamic
     /// <summary>
     ///     Owns the embedded abgen JIT server for local scene development with local asset bundles:
     ///     <see cref="StartAsync" /> brings it up to health, then the whole-scene warm-up runs in the
-    ///     background as <see cref="WarmUpTask" />. The child process is killed on dispose.
+    ///     background as <see cref="WarmUpTask" />. Only a server this instance launched is killed on
+    ///     dispose — one adopted from another client outlives it.
     /// </summary>
     public sealed class AbgenSidecarBootstrap : IDisposable
     {
