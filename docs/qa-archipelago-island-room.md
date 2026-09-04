@@ -63,7 +63,7 @@ Expand **Room: Island**.
 
 Expand **Room: Info** and enable **Show Room Indicator**.
 
-- ✅ Each remote avatar's nametag gains a debug line naming the rooms that account for it, each prefixed by a state glyph — `🟢Gatekeeper 🔗Island ⚡Pulse` and combinations of it. Part 3 is the legend. Your own avatar is not tagged.
+- ✅ Each remote avatar's nametag gains a debug line naming the rooms that account for it, each prefixed by a state glyph — normally `🔗Gatekeeper 🔗Island ⚡Pulse`. Part 3 is the legend. Your own avatar is not tagged.
 - ❌ No debug line appears while other avatars are visible, or a tag reads `None` for an avatar that is on screen.
 
 > Leave this toggle on for the whole session. Every test below is read from it.
@@ -97,12 +97,14 @@ The tag above a remote avatar names every room that accounts for it, each prefix
 | --- | --- |
 | `🟢` | LiveKit's participant roster lists the wallet in that room **and** that room's data channel delivered its profile announcement |
 | `🔗` | LiveKit lists the wallet in that room, but it never announced over it |
-| `👻` | an announcement arrived from a wallet the roster no longer lists — stale, or a room hand-off in flight |
+| `👻` | an announcement arrived from a wallet the roster no longer lists. Only reachable for a peer that is not on Pulse, and only for the instant between it leaving the room and the client dropping it |
 | `⚡` | the profile arrived over Pulse. Pulse publishes no roster, so it has this one state only |
 
-So `🟢Gatekeeper 🔗Island ⚡Pulse` reads: *in the Scene room and announcing over it; in the Island room but silent on it; and carried by Pulse.*
+So `🔗Gatekeeper 🔗Island ⚡Pulse` reads: *in both LiveKit rooms, announcing over neither, and carried by Pulse.* That is what almost every avatar reads in these steps. A peer outside your scene reads `🔗Island ⚡Pulse`.
 
-**What normal looks like.** These steps assume Pulse is on, which is the default whenever the `pulse` feature flag is enabled. With Pulse carrying profiles no client announces over LiveKit, so the expected reading is `🔗` on each LiveKit room plus `⚡Pulse`. A `🟢` is not a failure — it means that one peer is announcing over LiveKit, which is what a peer whose Pulse connection fell back at start-up looks like. Only `👻` is worth reporting on sight.
+**`⚡` never shares a tag with `🟢` or `👻`.** Announcing over LiveKit and being carried by Pulse are mutually exclusive per peer: a peer on Pulse addresses its LiveKit announcement only to peers that announced to it first, and your client, being on Pulse itself, never does. So an avatar either reads `🔗` on its rooms **with** `⚡Pulse`, or reads `🟢` on its rooms **without** `⚡Pulse` because that peer is not on Pulse. A tag carrying both is a bug — report it.
+
+**What normal looks like.** These steps assume Pulse is on, which is the default whenever the `pulse` feature flag is enabled. With Pulse carrying profiles no client announces over LiveKit, so the expected reading is `🔗` on each LiveKit room plus `⚡Pulse`. An avatar reading `🟢` **and no** `⚡Pulse` is not a failure either — that peer is not on Pulse, which is what a client whose Pulse connection fell back at start-up looks like. Report a `👻` that sticks, and any tag mixing `⚡` with `🟢` or `👻`.
 
 > The glyph is what makes this test possible under Pulse. Before it, a Pulse-carried avatar reported `Pulse` and nothing else, so the tag could not tell you whether the avatar was on LiveKit at all.
 
@@ -142,22 +144,22 @@ The last two are **not failures on their own**: the Island room covers a wider a
 1. Go where other players are (Genesis Plaza).
 2. Read the nametag tags and both widgets.
 
-- ✅ Players **in your scene** carry both a `Gatekeeper` and an `Island` entry; players **outside your scene** carry `Island` only. Every avatar also carries `⚡Pulse`, and the LiveKit entries normally read `🔗`. `Remote Participants` is non-zero and `Avatars on LiveKit` is non-zero.
-- ❌ Two avatars for one player; an on-screen avatar tagged `None`; **`Avatars on LiveKit` is 0** while `Remote Participants` is not; nobody carries an `Island` entry while players are clearly outside your scene; or an avatar carries `Island` with no Pulse entry and no `Gatekeeper` entry while Pulse is on.
+- ✅ Players **in your scene** carry both a `Gatekeeper` and an `Island` entry; players **outside your scene** carry `Island` only. Nearly all read `🔗` on those entries plus `⚡Pulse`; a peer that is not on Pulse reads `🟢` with no `⚡Pulse` instead. `Remote Participants` is non-zero and `Avatars on LiveKit` is non-zero.
+- ❌ Two avatars for one player; an on-screen avatar tagged `None`; **`Avatars on LiveKit` is 0** while `Remote Participants` is not; nobody carries an `Island` entry while players are clearly outside your scene; or any tag mixes `⚡` with `🟢` or `👻`.
 
 ### Test 3 — Scene-border handoff
 
 1. With another player, walk together across a scene border.
 2. Watch their nametag tag and their avatar continuously.
 
-- ✅ The `Gatekeeper` entry appears and disappears as the Scene room picks them up or drops them, while the `Island` entry stays, and **the avatar never disappears, reloads or flickers**. A `👻` on the dropped room for a second or two during the hand-off is expected.
-- ❌ The avatar vanishes and respawns at the border; the nametag blanks; wearables reload; the tag drops to `None` while the player is still visible; or a `👻Gatekeeper` sticks for more than a few seconds after they left your scene.
+- ✅ The `Gatekeeper` entry appears and disappears as the Scene room picks them up or drops them, while the `Island` entry stays, and **the avatar never disappears, reloads or flickers**.
+- ❌ The avatar vanishes and respawns at the border; the nametag blanks; wearables reload; the tag drops to `None` while the player is still visible; or a `👻Gatekeeper` appears at all — a peer on Pulse announces over no LiveKit room, so a hand-off cannot produce one.
 
 ### Test 4 — Prove each room's contribution with Deactivate
 
 Do this while a player **in your scene** is visible and carries both a `Gatekeeper` and an `Island` entry.
 
-**Pulse owns the avatars, so this test reads the tag, not the screen.** Deactivating a LiveKit room removes that room's entry from every tag, but the avatars stay — Pulse created them and Pulse keeps them alive. An avatar vanishing here is a failure, not a pass.
+**Pulse owns the avatars, so this test reads the tag, not the screen.** Deactivating a LiveKit room removes that room's entry from every tag, but the avatars stay — Pulse created them and Pulse keeps them alive. An avatar vanishing here is a failure. The one exception is an avatar reading `🟢` with no `⚡Pulse`: that peer is not on Pulse, so LiveKit is the only thing holding it and it is *expected* to go when its rooms do.
 
 1. In **Room: Scene**, press **Deactivate**. Confirm `Room State: Stopped`, `Connection Loop: Stopped`, `Attempt to Connect: None`.
    - ✅ Their `Gatekeeper` entry disappears and **the avatar stays**.
@@ -167,8 +169,8 @@ Do this while a player **in your scene** is visible and carries both a `Gatekeep
    - ✅ Their `Island` entry disappears and **the avatar stays**. Players *outside* your scene stay too, now with no `Island` entry.
    - ❌ The `Island` entry survives a stopped room, or the avatar disappears.
 4. Deactivate **both**.
-   - ✅ Every tag reads `⚡Pulse` alone, `Avatars on LiveKit` drops to `0`, and every avatar is still on screen.
-   - ❌ Any LiveKit entry remains on any tag; `Avatars on LiveKit` stays above 0; or an avatar disappears.
+   - ✅ Every tag reads `⚡Pulse` alone, `Avatars on LiveKit` drops to `0`, and every Pulse-carried avatar is still on screen.
+   - ❌ Any LiveKit entry remains on any tag; `Avatars on LiveKit` stays above 0; or an avatar that was carrying `⚡Pulse` disappears.
 5. Re-activate both before continuing.
 
 > While a room is deactivated, do not file bugs about what it carries — with Room: Scene off, in-scene voice and scene streams are expected to be dead.
