@@ -47,21 +47,17 @@ namespace DCL.ECSComponents {
   /// The AvatarNametag component adds a plate with scene-provided text above an avatar's nametag,
   /// for example to show a rank or a role that the scene assigns to that player.
   ///
-  /// It has to be attached to an avatar-bearing entity: `engine.PlayerEntity` for the local player,
-  /// the entity of a player in the scene, or an entity with an AvatarShape. On any other entity it
-  /// is ignored. The client owns the player entities and reuses their ids after players disconnect,
-  /// so resolve the entity from the user id on every write, and remove the component when the
-  /// player leaves the scene - a later write to a stale entity lands on whoever holds that id next.
+  /// Valid only on an avatar-bearing entity:
+  /// - the local player: `engine.PlayerEntity`
+  /// - another player in the scene: that player's entity
+  /// - an NPC: any entity with an AvatarShape
+  /// Writes to any other entity are ignored.
   ///
-  /// The plate does not replace the avatar's name. It is drawn above the nametag as its own line,
-  /// and it stays visible while the name itself is hidden by AMT_HIDE_NAMETAGS. It does follow the
-  /// client's nametag visibility setting: a player who turns nametags off sees no plates either.
-  /// Removing the component, or the entity, removes the plate.
+  /// Player entity ids are not stable across disconnects: a write to a stale entity lands on
+  /// whoever holds that id next. Resolve the entity from the user id on every write, and remove
+  /// the component when the player leaves the scene.
   ///
-  /// The plate is local to the client that renders it and is never relayed to other players. A
-  /// scene that wants everyone to see the same plate has to distribute it through its own state.
-  /// Only the scene the local player is currently standing in shows plates; writes from other
-  /// loaded scenes and from portable experiences are ignored.
+  /// The plate is local to the client that renders it; it is never relayed to other players.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PBAvatarNametag : pb::IMessage<PBAvatarNametag>
@@ -115,9 +111,9 @@ namespace DCL.ECSComponents {
     public const int LabelFieldNumber = 1;
     private string label_ = "";
     /// <summary>
-    /// The plate content: one short line, for example "Club Owner". The client renders it on a
-    /// single line and truncates it with an ellipsis to fit the plate; multi-line text is not
-    /// supported. An empty string hides the plate.
+    /// The plate text: a single line, for example "Club Owner". Empty draws the plate without text,
+    /// and spaces are preserved: a label of spaces widens a text-less plate. For a plate sized
+    /// exactly to a word without showing it, set label_color equal to background_color instead.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -162,7 +158,7 @@ namespace DCL.ECSComponents {
     public const int BorderColorFieldNumber = 4;
     private global::Decentraland.Common.Color3 borderColor_;
     /// <summary>
-    /// (default: the client's native plate border - a translucent lightening of the background color)
+    /// (default: background_color, so the plate carries no visible border)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
