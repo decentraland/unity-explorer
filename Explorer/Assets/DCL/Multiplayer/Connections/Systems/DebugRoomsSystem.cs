@@ -6,6 +6,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Debug;
@@ -26,6 +27,7 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly IRoomDisplay roomDisplay;
         private readonly RoomsStatus roomsStatus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IRoomHub roomHub;
         private readonly ElementBinding<bool> debugAvatarsRooms;
         private bool enabled;
 
@@ -36,12 +38,14 @@ namespace DCL.Multiplayer.Connections.Systems
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IActivatableConnectiveRoom chatRoom,
             IActivatableConnectiveRoom voiceChatRoom,
+            IRoomHub roomHub,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IRemoteMetadata remoteMetadata,
             IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.roomsStatus = roomsStatus;
             this.entityParticipantTable = entityParticipantTable;
+            this.roomHub = roomHub;
 
             DebugWidgetBuilder? infoWidget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ROOM_INFO);
             enabled = infoWidget != null;
@@ -82,6 +86,7 @@ namespace DCL.Multiplayer.Connections.Systems
 
             var avatarsRoomDisplay = new AvatarsRoomDisplay(
                 entityParticipantTable,
+                roomHub,
                 infoWidget
             );
 
