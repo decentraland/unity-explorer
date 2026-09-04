@@ -9,7 +9,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
     {
         public Vector2Int? CurrentHomeCoordinates => controller?.CurrentCoordinates;
         public string? CurrentHomeWorldName => controller?.CurrentWorldName;
-        public bool IsWorldHome => controller != null && controller!.IsWorldHome;
+        public bool IsWorldHome => controller is { IsWorldHome: true };
 
         private HomeMarkerController? controller;
 
@@ -57,6 +57,6 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
         }
 
         public void DisplayPlacesInfoPanel(Vector2Int coords) =>
-            controller!.DisplayPlacesInfoPanelAsync(coords).Forget();
+            controller?.DisplayPlacesInfoPanelAsync(coords).Forget();
     }
 }
