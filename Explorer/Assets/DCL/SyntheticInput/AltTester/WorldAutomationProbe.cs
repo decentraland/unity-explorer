@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.ECSComponents;
 using DCL.SyntheticInput.Components;
+using DCL.SyntheticInput.UiSimulation;
 using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
@@ -92,7 +93,7 @@ namespace DCL.SyntheticInput.AltTester
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{button}'")));
 
             return AltOperationRegistry.Start(
-                readyAgent.ClickAsync(entityId, EmptyToNull(sceneId), null, null, inputAction, ClampTimeout(timeoutSec))
+                readyAgent.ClickAsync(PointerAim.AtEntity(entityId, EmptyToNull(sceneId)), inputAction, ClampTimeout(timeoutSec))
                           .ContinueWith(PointerResultPayload));
         }
 
@@ -109,10 +110,10 @@ namespace DCL.SyntheticInput.AltTester
             if (!TryParseInputAction(button, out InputAction inputAction))
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{button}'")));
 
-            var screenPoint = new Vector2(x * Screen.width, (1f - y) * Screen.height);
+            var aim = PointerAim.AtScreenPoint(UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(x, y)));
 
             return AltOperationRegistry.Start(
-                readyAgent.ClickAsync(-1, null, null, screenPoint, inputAction, ClampTimeout(timeoutSec), force: force)
+                readyAgent.ClickAsync(aim, inputAction, ClampTimeout(timeoutSec), force: force)
                           .ContinueWith(PointerResultPayload));
         }
 
@@ -137,7 +138,7 @@ namespace DCL.SyntheticInput.AltTester
             var axisValue = new Vector2(deltaX, deltaY);
 
             return AltOperationRegistry.Start(
-                readyAgent.SweepAsync(entityId, EmptyToNull(sceneId), null, null, inputAction, axisValue,
+                readyAgent.SweepAsync(PointerAim.AtEntity(entityId, EmptyToNull(sceneId)), inputAction, axisValue,
                                Mathf.Clamp(seconds, 0.1f, MAX_SECONDS), ClampTimeout(timeoutSec))
                           .ContinueWith(SweepResultPayload));
         }
@@ -149,7 +150,7 @@ namespace DCL.SyntheticInput.AltTester
                 return failedId;
 
             return AltOperationRegistry.Start(
-                readyAgent.HoverAsync(entityId, null, null, null, Mathf.Clamp(seconds, 0.1f, MAX_SECONDS))
+                readyAgent.HoverAsync(PointerAim.AtEntity(entityId), Mathf.Clamp(seconds, 0.1f, MAX_SECONDS))
                           .ContinueWith(PointerResultPayload));
         }
 
@@ -175,8 +176,10 @@ namespace DCL.SyntheticInput.AltTester
             if (!TryParseInputAction(action, out InputAction inputAction))
                 return AltOperationRegistry.Start(UniTask.FromResult(AltOperationRegistry.ErrorPayload($"unknown input action '{action}'")));
 
+            PointerAim aim = entityId >= 0 ? PointerAim.AtEntity(entityId) : PointerAim.None;
+
             return AltOperationRegistry.Start(
-                readyAgent.GlobalInputAsync(inputAction, Mathf.Clamp(holdSeconds, 0f, MAX_SECONDS), entityId)
+                readyAgent.GlobalInputAsync(inputAction, Mathf.Clamp(holdSeconds, 0f, MAX_SECONDS), aim)
                           .ContinueWith(PointerResultPayload));
         }
 
@@ -232,57 +235,27 @@ namespace DCL.SyntheticInput.AltTester
             var payload = new JObject
             {
                 ["ok"] = sweep.FailureReason == null && sweep.CameraSweep == SyntheticInputDelivery.Completed,
-                ["pressed"] = JObject.Parse(PointerResultPayload(sweep.Press)),
+                ["pressed"] = PointerResultJson(in sweep.Press),
                 ["sweep"] = sweep.CameraSweep.ToString(),
             };
 
             if (sweep.FailureReason != null)
                 payload["reason"] = sweep.FailureReason;
             else
-                payload["released"] = JObject.Parse(PointerResultPayload(sweep.Release));
+                payload["released"] = PointerResultJson(in sweep.Release);
 
             return payload.ToString();
         }
 
-        private static string PointerResultPayload(SyntheticPointerResult result)
+        private static string PointerResultPayload(SyntheticPointerResult result) =>
+            PointerResultJson(in result).ToString();
+
+        /// <summary>The pointer-result shape shared with the MCP tools, plus the probe's ok flag.</summary>
+        private static JObject PointerResultJson(in SyntheticPointerResult result)
         {
-            var payload = new JObject
-            {
-                ["ok"] = !result.TimedOut && result.FailureReason == null,
-                ["hit"] = result.Hit,
-                ["entityId"] = result.SceneEntityId,
-                ["crdtEntityId"] = result.CrdtEntityId,
-            };
-
-            if (result.FailureReason != null)
-                payload["reason"] = result.FailureReason;
-
-            if (result.BlockedByUi != null)
-                payload["blockedByUi"] = result.BlockedByUi;
-
-            if (result.TimedOut)
-                payload["timedOut"] = true;
-
-            if (result.Hit)
-            {
-                payload["hitPoint"] = new JObject { ["x"] = result.HitPoint.x, ["y"] = result.HitPoint.y, ["z"] = result.HitPoint.z };
-                payload["distance"] = Math.Round(result.Distance, 2);
-            }
-
-            if (result.HoverText != null)
-                payload["hoverText"] = result.HoverText;
-
-            if (result.BlockedByEntityId != null)
-            {
-                payload["blockedByEntityId"] = result.BlockedByEntityId;
-                payload["blockedByCrdtId"] = result.BlockedByCrdtId;
-                payload["blockedByCollider"] = result.BlockedByColliderName;
-            }
-
-            if (result.UpRayMissed)
-                payload["upRayMissed"] = true;
-
-            return payload.ToString();
+            JObject payload = result.ToJson();
+            payload["ok"] = !result.TimedOut && result.FailureReason == null;
+            return payload;
         }
     }
 }

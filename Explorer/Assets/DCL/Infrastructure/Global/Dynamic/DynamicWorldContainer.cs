@@ -883,7 +883,14 @@ namespace Global.Dynamic
                 var uiAutomation = new UiAutomationServices(globalWorld, playerEntity,
                     UnityEngine.EventSystems.EventSystem.current.EnsureNotNull(), staticContainer.ScenesCache);
 
-                globalPlugins.Add(new SyntheticInputPlugin(syntheticInputAgent, staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, uiAutomation));
+#if ALTTESTER
+                // AltTester tests reach the layer through CallStaticMethod, so the session's instances are handed
+                // to the static probes once (the static-latch pattern of AlttesterSceneReadinessProbe).
+                DCL.SyntheticInput.AltTester.WorldAutomationProbe.Install(syntheticInputAgent);
+                DCL.SyntheticInput.AltTester.UiAutomationProbe.Install(uiAutomation);
+#endif
+
+                globalPlugins.Add(new SyntheticInputPlugin(staticContainer.ScenesCache, staticContainer.EntityCollidersGlobalCache, uiAutomation));
 
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.McpServer))
                     globalPlugins.Add(new McpServerPlugin(

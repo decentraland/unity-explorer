@@ -5,7 +5,6 @@ using DCL.Input;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
 using DCL.Interaction.PlayerOriginated.Components;
-using DCL.SyntheticInput.UiSimulation;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -57,8 +56,6 @@ namespace DCL.Character.CharacterCamera.Tests
         [TearDown]
         public override void TearDown()
         {
-            // Editor tests share frames, so an asserted synthetic pointer would steer the next fixture's cursor.
-            SyntheticCursorState.Reset();
             InputSystem.RemoveDevice(keyboard);
             InputSystem.RemoveDevice(mouse);
             base.TearDown();
@@ -71,7 +68,9 @@ namespace DCL.Character.CharacterCamera.Tests
             eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult>());
 
             var gesturePoint = new Vector2(320f, 240f);
-            SyntheticCursorState.AssertPointerPositionThisFrame(gesturePoint);
+            SyntheticCursorOverride syntheticCursor = SyntheticCursorOverride.Inactive;
+            syntheticCursor.AssertPointerPositionThisFrame(gesturePoint);
+            world.Add(entity, syntheticCursor);
 
             system.Update(0);
 

@@ -44,7 +44,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void ComposeAClickFromOrderedPressAndReleaseLegs()
         {
-            UniTask<SyntheticPointerResult> click = agent.ClickAsync(7, "scene-a", null, null, InputAction.IaPointer, timeoutSec: 30f);
+            UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtEntity(7, "scene-a"), InputAction.IaPointer, timeoutSec: 30f);
 
             SyntheticPointerEventIntent press = currentPointerIntent;
             Assert.That(press.EventType, Is.EqualTo(PointerEventType.PetDown));
@@ -71,7 +71,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void MergePressDiagnosticsWhenTheReleaseMisses()
         {
-            UniTask<SyntheticPointerResult> click = agent.ClickAsync(7, null, null, null, InputAction.IaPointer, timeoutSec: 30f);
+            UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtEntity(7), InputAction.IaPointer, timeoutSec: 30f);
 
             CompletePointerIntent(Delivered(7, crdtId: 40, press: new SyntheticPressHandoff { World = world, Entity = playerEntity, Tick = 3 }));
 
@@ -91,7 +91,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void SkipTheReleaseLegWhenThePressMisses()
         {
-            UniTask<SyntheticPointerResult> click = agent.ClickAsync(7, null, null, null, InputAction.IaPointer, timeoutSec: 30f);
+            UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtEntity(7), InputAction.IaPointer, timeoutSec: 30f);
 
             CompletePointerIntent(new SyntheticPointerOutcome
             {
@@ -106,7 +106,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void DeliverALonePressWithoutAReleaseLeg()
         {
-            UniTask<SyntheticPointerResult> down = agent.PointerDownAsync(7, null, null, null, InputAction.IaPrimary, timeoutSec: 30f);
+            UniTask<SyntheticPointerResult> down = agent.PointerDownAsync(PointerAim.AtEntity(7), InputAction.IaPrimary, timeoutSec: 30f);
 
             CompletePointerIntent(Delivered(7, press: new SyntheticPressHandoff { World = world, Entity = playerEntity, Tick = 3 }));
 
@@ -123,8 +123,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void ComposeASweepFromPressCameraLookAndRelease()
         {
-            UniTask<SyntheticSweepResult> sweep = agent.SweepAsync(7, null, null, null, InputAction.IaPointer,
-                new Vector2(5f, 0f), seconds: 0.5f, timeoutSec: 30f);
+            UniTask<SyntheticSweepResult> sweep = agent.SweepAsync(PointerAim.AtEntity(7), InputAction.IaPointer, new Vector2(5f, 0f), seconds: 0.5f, timeoutSec: 30f);
 
             Assert.That(currentPointerIntent.EventType, Is.EqualTo(PointerEventType.PetDown));
             Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False, "the camera must not turn before the press landed");
@@ -150,8 +149,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void AbandonASweepWhosePressWasNeverDelivered()
         {
-            UniTask<SyntheticSweepResult> sweep = agent.SweepAsync(7, null, null, null, InputAction.IaPointer,
-                new Vector2(5f, 0f), seconds: 0.5f, timeoutSec: 30f);
+            UniTask<SyntheticSweepResult> sweep = agent.SweepAsync(PointerAim.AtEntity(7), InputAction.IaPointer, new Vector2(5f, 0f), seconds: 0.5f, timeoutSec: 30f);
 
             CompletePointerIntent(new SyntheticPointerOutcome { Result = new SyntheticPointerResult { Hit = false, FailureReason = "out of range" } });
 
@@ -165,8 +163,8 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void PreemptThePendingGestureWhenANewerOneStarts()
         {
-            UniTask<SyntheticPointerResult> first = agent.ClickAsync(7, null, null, null, InputAction.IaPointer, timeoutSec: 30f);
-            agent.ClickAsync(8, null, null, null, InputAction.IaPointer, timeoutSec: 30f).Forget();
+            UniTask<SyntheticPointerResult> first = agent.ClickAsync(PointerAim.AtEntity(7), InputAction.IaPointer, timeoutSec: 30f);
+            agent.ClickAsync(PointerAim.AtEntity(8), InputAction.IaPointer, timeoutSec: 30f).Forget();
 
             Assert.That(first.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             Assert.That(first.GetAwaiter().GetResult().FailureReason, Does.Contain("preempted"));
@@ -180,7 +178,7 @@ namespace DCL.SyntheticInput.Tests
         [Test]
         public void AimTheGlobalGestureAtAnEntityWhenOneIsRequested()
         {
-            UniTask<SyntheticPointerResult> press = agent.GlobalInputAsync(InputAction.IaPrimary, holdSeconds: 0f, targetEntityId: 77);
+            UniTask<SyntheticPointerResult> press = agent.GlobalInputAsync(InputAction.IaPrimary, holdSeconds: 0f, PointerAim.AtEntity(77));
 
             SyntheticPointerEventIntent down = currentPointerIntent;
             Assert.That(down.HasAimTarget, Is.True);

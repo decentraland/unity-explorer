@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.SyntheticInput.Core;
+using Newtonsoft.Json.Linq;
+using System;
 using UnityEngine;
 
 namespace DCL.SyntheticInput.Components
@@ -159,6 +161,56 @@ namespace DCL.SyntheticInput.Components
         ///     abandoned and the scene may have observed a partial gesture.
         /// </summary>
         public bool TimedOut;
+
+        /// <summary>
+        ///     The wire shape both driver front-ends (MCP tools, AltTester probes) hand back for a pointer gesture:
+        ///     the same field means the same thing whichever tool or probe reports it.
+        /// </summary>
+        public readonly JObject ToJson()
+        {
+            var json = new JObject
+            {
+                ["hit"] = Hit,
+                ["entityId"] = SceneEntityId,
+                ["crdtEntityId"] = CrdtEntityId,
+            };
+
+            if (FailureReason != null)
+                json["reason"] = FailureReason;
+
+            if (BlockedByUi != null)
+                json["blockedByUi"] = BlockedByUi;
+
+            if (Hit)
+            {
+                json["hitPoint"] = new JObject
+                {
+                    ["x"] = Math.Round(HitPoint.x, 2),
+                    ["y"] = Math.Round(HitPoint.y, 2),
+                    ["z"] = Math.Round(HitPoint.z, 2),
+                };
+
+                json["distance"] = Math.Round(Distance, 2);
+            }
+
+            if (HoverText != null)
+                json["hoverText"] = HoverText;
+
+            if (BlockedByEntityId != null)
+            {
+                json["blockedByEntityId"] = BlockedByEntityId;
+                json["blockedByCrdtId"] = BlockedByCrdtId;
+                json["blockedByCollider"] = BlockedByColliderName;
+            }
+
+            if (UpRayMissed)
+                json["upRayMissed"] = true;
+
+            if (TimedOut)
+                json["timedOut"] = true;
+
+            return json;
+        }
     }
 
     /// <summary>

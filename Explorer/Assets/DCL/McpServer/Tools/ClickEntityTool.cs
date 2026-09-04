@@ -6,7 +6,6 @@ using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
 using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
@@ -21,15 +20,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class ClickEntityTool : McpTool
     {
-        /// <summary>Wire-facing subset of <see cref="InputAction" />: only the three pointer buttons make sense for a click.</summary>
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        private enum PointerButton : byte
-        {
-            POINTER,
-            PRIMARY,
-            SECONDARY,
-        }
-
         /// <summary>
         ///     Wire-facing gesture kinds: a full click, or a single press/release leg. The member names ARE the
         ///     wire contract — McpWireEnum derives each argument value from them — so they stay SCREAMING_CASE,
@@ -72,7 +62,7 @@ namespace DCL.McpServer.Tools
                   .Number("y")
                   .Number("z")
                   .String("sceneId", "Pin the click to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.")
-                  .Enum<PointerButton>("button", "Which input action to press. Default pointer (left click / IA_POINTER).")
+                  .Enum<PointerButton>("button", PointerArgs.BUTTON_DESCRIPTION)
                   .Enum<ClickKind>("eventType", "click = down, then up on the next scene tick. Default click.")
                   .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.");
 
@@ -85,74 +75,28 @@ namespace DCL.McpServer.Tools
 
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
-            bool hasEntityId = arguments.TryGetInt("entityId", out int entityId);
+            if (!PointerArgs.TryParseAim(arguments, requireTarget: true, out PointerAim aim, out string? aimError))
+                return McpToolResult.Error(aimError!);
 
-            bool hasAimPoint = arguments.TryGetFloat("x", out float x)
-                               & arguments.TryGetFloat("y", out float y)
-                               & arguments.TryGetFloat("z", out float z);
-
-            if (!hasEntityId && !hasAimPoint)
-                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both." + arguments.NonNumericHint("entityId", "x", "y", "z"));
-
-            if (!arguments.TryGetEnum("button", PointerButton.POINTER, out PointerButton pointerButton))
-                return McpToolResult.Error("button must be one of: pointer, primary, secondary.");
-
-            InputAction button = pointerButton switch
-                                 {
-                                     PointerButton.PRIMARY => InputAction.IaPrimary,
-                                     PointerButton.SECONDARY => InputAction.IaSecondary,
-                                     _ => InputAction.IaPointer,
-                                 };
+            if (!PointerArgs.TryGetButton(arguments, out InputAction button, out string? buttonError))
+                return McpToolResult.Error(buttonError!);
 
             if (!arguments.TryGetEnum("eventType", ClickKind.CLICK, out ClickKind kind))
                 return McpToolResult.Error("eventType must be one of: click, down, up.");
 
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-            int targetEntityId = hasEntityId ? entityId : -1;
-            string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
-            Vector3? aimPoint = hasAimPoint ? new Vector3(x, y, z) : null;
-
             SyntheticPointerResult result = kind switch
                                             {
-                                                ClickKind.DOWN => await syntheticInput.PointerDownAsync(targetEntityId, sceneId, aimPoint, screenPoint: null, button, timeoutSec, ct),
-                                                ClickKind.UP => await syntheticInput.PointerUpAsync(targetEntityId, sceneId, aimPoint, screenPoint: null, button, timeoutSec, ct),
-                                                _ => await syntheticInput.ClickAsync(targetEntityId, sceneId, aimPoint, screenPoint: null, button, timeoutSec, ct),
+                                                ClickKind.DOWN => await syntheticInput.PointerDownAsync(aim, button, timeoutSec, ct),
+                                                ClickKind.UP => await syntheticInput.PointerUpAsync(aim, button, timeoutSec, ct),
+                                                _ => await syntheticInput.ClickAsync(aim, button, timeoutSec, ct),
                                             };
 
             if (result.TimedOut)
                 return McpToolResult.Error($"click_entity did not complete within {timeoutSec}s (is the simulation paused?).");
 
-            var json = new JObject
-            {
-                ["hit"] = result.Hit,
-                ["entityId"] = result.SceneEntityId,
-                ["crdtEntityId"] = result.CrdtEntityId,
-            };
-
-            if (result.FailureReason != null)
-                json["reason"] = result.FailureReason;
-
-            if (result.Hit)
-            {
-                json["hitPoint"] = result.HitPoint.ToVector();
-                json["distance"] = Math.Round(result.Distance, 2);
-            }
-
-            if (result.HoverText != null)
-                json["hoverText"] = result.HoverText;
-
-            if (result.BlockedByEntityId != null)
-            {
-                json["blockedByEntityId"] = result.BlockedByEntityId;
-                json["blockedByCrdtId"] = result.BlockedByCrdtId;
-                json["blockedByCollider"] = result.BlockedByColliderName;
-            }
-
-            if (result.UpRayMissed)
-                json["upRayMissed"] = true;
-
-            return McpToolResult.Json(json);
+            return McpToolResult.Json(result.ToJson());
         }
     }
 }

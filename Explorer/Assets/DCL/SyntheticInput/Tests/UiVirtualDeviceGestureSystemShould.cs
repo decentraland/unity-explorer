@@ -40,7 +40,6 @@ namespace DCL.SyntheticInput.Tests
         [TearDown]
         public void DisposeWorld()
         {
-            SyntheticCursorState.Reset();
             devices.Dispose();
             Object.DestroyImmediate(cameraGo);
             world.Dispose();
@@ -50,6 +49,9 @@ namespace DCL.SyntheticInput.Tests
             EcsRequest.SendAsync(world, playerEntity, request, new UiGestureResult { Ok = false, FailureReason = "preempted by a newer gesture" });
 
         private ref CursorComponent cursor => ref world.Get<CursorComponent>(cameraEntity);
+
+        /// <summary>What the cursor system will read next frame: installed on the camera entity by the system's Initialize.</summary>
+        private SyntheticCursorOverride cursorOverride => world.Get<SyntheticCursorOverride>(cameraEntity);
 
         [Test]
         public void DriveAClickThroughMovePressReleaseFrames()
@@ -162,7 +164,7 @@ namespace DCL.SyntheticInput.Tests
 
             system.Update(0);
 
-            Assert.That(SyntheticCursorState.SuppressOsWarp, Is.True);
+            Assert.That(cursorOverride.SuppressOsWarp, Is.True);
         }
 
         [Test]
@@ -175,15 +177,15 @@ namespace DCL.SyntheticInput.Tests
             // The cursor system reads this instead of the hardware mouse, so every phase that moves the pointer
             // must publish it — otherwise the world reticle stays behind while the UI stack follows the gesture.
             system.Update(0); // move to the start
-            Assert.That(SyntheticCursorState.TryGetPointerPosition(out Vector2 published), Is.True);
+            Assert.That(cursorOverride.TryGetPointerPosition(out Vector2 published), Is.True);
             Assert.That(published, Is.EqualTo(from));
 
             system.Update(0); // press at the start
-            SyntheticCursorState.TryGetPointerPosition(out published);
+            cursorOverride.TryGetPointerPosition(out published);
             Assert.That(published, Is.EqualTo(from));
 
             system.Update(0); // first drag step
-            SyntheticCursorState.TryGetPointerPosition(out published);
+            cursorOverride.TryGetPointerPosition(out published);
             Assert.That(published, Is.EqualTo(Vector2.Lerp(from, to, 0.5f)));
         }
 
@@ -194,7 +196,7 @@ namespace DCL.SyntheticInput.Tests
 
             system.Update(0);
 
-            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False);
+            Assert.That(cursorOverride.TryGetPointerPosition(out _), Is.False);
         }
 
         [Test]

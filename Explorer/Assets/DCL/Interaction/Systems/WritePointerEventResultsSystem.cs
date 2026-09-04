@@ -57,11 +57,11 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            WriteResultsQuery(World!, sceneData.Geometry.BaseParcelPosition);
+            var messageSent = false;
+            WriteResultsQuery(World!, sceneData.Geometry.BaseParcelPosition, ref messageSent);
 
-            // The buffer holds only the edges that did not land entity-bound this frame:
-            // ProcessPointerEventsSystem already removed the consumed ones at production time.
-            WriteGlobalEvents();
+            if (!messageSent)
+                WriteGlobalEvents();
         }
 
         private void WriteGlobalEvents()
@@ -76,7 +76,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void WriteResults([Data] in Vector3 scenePosition, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
+        private void WriteResults([Data] in Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
             int validIndicesCount = intent.ValidIndicesCount();
@@ -98,21 +98,28 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 for (var i = 0; i < intent.ValidInputActions.Count; i++)
                 {
                     (InputAction inputAction, PointerEventType pointerEventType) entry = intent.ValidInputActions[i];
-                    AppendSingleResult(sdkEntity, scenePosition, intent, entry.inputAction, entry.pointerEventType);
+                    messageSent |= AppendSingleResult(sdkEntity, scenePosition, intent, entry.inputAction, entry.pointerEventType);
                 }
             }
 
             intent.Clear();
         }
 
-        private void AppendSingleResult(CRDTEntity sdkEntity, in Vector3 scenePosition, in AppendPointerEventResultsIntent intent, InputAction button, PointerEventType eventType)
+        /// <summary>
+        /// Appends one pointer event result. Returns true if the event should suppress global input (non-hover).
+        /// </summary>
+        private bool AppendSingleResult(CRDTEntity sdkEntity, in Vector3 scenePosition, in AppendPointerEventResultsIntent intent, InputAction button, PointerEventType eventType)
         {
             RaycastHit raycastHit = raycastHitPool.Get();
             raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
             AppendMessage(sdkEntity, raycastHit, button, eventType);
 
-            if (eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave))
+            bool isNonHover = eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
+
+            if (isNonHover)
                 sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
+
+            return isNonHover;
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)

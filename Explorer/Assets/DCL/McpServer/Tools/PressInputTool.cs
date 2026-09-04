@@ -85,26 +85,17 @@ namespace DCL.McpServer.Tools
 
             float holdSeconds = Mathf.Clamp(arguments.GetFloat("holdSeconds", 0f), 0f, MAX_HOLD_SECONDS);
 
-            bool hasEntityId = arguments.TryGetInt("entityId", out int entityId);
-            bool hasAimPoint = arguments.TryGetFloat("x", out float x)
-                               & arguments.TryGetFloat("y", out float y)
-                               & arguments.TryGetFloat("z", out float z);
+            // A half-readable aim is refused rather than degraded into an aimless press: the edge would reach the
+            // scene root while the caller reads the result as entity-bound, this tool's hardest failure to spot.
+            if (!PointerArgs.TryParseAim(arguments, requireTarget: false, out PointerAim aim, out string? aimError))
+                return McpToolResult.Error(aimError!);
 
-            // An aim that is only half readable must not quietly degrade into an aimless press: the edge would
-            // reach the scene root while the caller reads the result as entity-bound, which is this tool's
-            // hardest failure to spot from the outside.
-            if (!hasAimPoint && (arguments["x"] != null || arguments["y"] != null || arguments["z"] != null))
-                return McpToolResult.Error("x, y and z must all be numbers to aim the press; omit all three for a scene-root broadcast." + arguments.NonNumericHint("x", "y", "z"));
-
-            string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
-
-            SyntheticPointerResult result = await syntheticInput.GlobalInputAsync(ToInputAction(action), holdSeconds,
-                hasEntityId ? entityId : -1, sceneId, hasAimPoint ? new Vector3(x, y, z) : null, ct);
+            SyntheticPointerResult result = await syntheticInput.GlobalInputAsync(ToInputAction(action), holdSeconds, aim, ct);
 
             if (result.TimedOut)
                 return McpToolResult.Error($"press_input did not complete within {holdSeconds + SyntheticInputAgent.COMPLETION_GRACE_SEC}s (is the simulation paused?).");
 
-            bool aimed = hasEntityId || hasAimPoint;
+            bool aimed = aim.HasTarget;
 
             // An aimless gesture can only fail outright (no scene, preempted); an aimed one has the same
             // legitimate negative outcomes a click has (occluded, out of range), reported the same way.

@@ -42,6 +42,17 @@ namespace DCL.SyntheticInput.UiSimulation
             new (screenPoint.x, Screen.height - screenPoint.y);
 
         /// <summary>
+        ///     A driver's normalized image point (x right 0..1, y down 0..1, origin top-left — the way a screenshot is
+        ///     read) as Unity screen coordinates (bottom-left origin), the space raycasts and devices take.
+        /// </summary>
+        public static Vector2 NormalizedImageToScreenPoint(Vector2 normalized) =>
+            new (normalized.x * Screen.width, (1f - normalized.y) * Screen.height);
+
+        /// <summary>A driver's normalized image point as image pixels (top-left origin).</summary>
+        public static Vector2 NormalizedToImagePoint(Vector2 normalized) =>
+            new (normalized.x * Screen.width, normalized.y * Screen.height);
+
+        /// <summary>
         ///     Maps a panel-space point back to image pixels. RuntimePanelUtils only offers screen→panel, so the
         ///     inverse affine is recovered from two probe conversions.
         /// </summary>

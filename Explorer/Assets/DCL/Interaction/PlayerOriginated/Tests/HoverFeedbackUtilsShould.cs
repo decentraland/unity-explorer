@@ -56,7 +56,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverWasQualified: true);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverEnterIssued: true);
 
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(1));
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndexAt(0), Is.EqualTo(0));
@@ -85,7 +85,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverWasQualified: true);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverEnterIssued: true);
 
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(1));
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndexAt(0), Is.EqualTo(0));
@@ -108,7 +108,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverWasQualified: false);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverEnterIssued: false);
 
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(0));
         }
@@ -120,7 +120,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             // Don't add PBPointerEvents component
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverWasQualified: true);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverEnterIssued: true);
 
             // Nothing to assert, just checking that no exception is thrown
         }
@@ -145,7 +145,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             world.Destroy(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference);
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverWasQualified: true);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousColliderSceneInfo, previousHoverEnterIssued: true);
 
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(0));
         }

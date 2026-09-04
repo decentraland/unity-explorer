@@ -10,15 +10,16 @@ using DCL.SyntheticInput.UiSimulation;
 using ECS.Abstract;
 using UnityEngine;
 using UnityEngine.InputSystem.LowLevel;
+using Utility.Arch;
 
 namespace DCL.SyntheticInput.Systems
 {
     /// <summary>
     ///     Drives a <see cref="UiDeviceGestureRequest" /> one input state per frame through the automation
     ///     virtual devices, so uGUI, UI Toolkit and gameplay all observe the gesture exactly as they would a real
-    ///     mouse or keyboard. Every queued pointer position is also published through
-    ///     <see cref="SyntheticCursorState" />, which is what makes the cursor systems follow the gesture instead
-    ///     of the hardware mouse (and skip their OS-cursor warps) — hence the ordering against
+    ///     mouse or keyboard. Every queued pointer position is also written into the camera entity's
+    ///     <see cref="SyntheticCursorOverride" />, which is what makes the cursor system follow the gesture instead
+    ///     of the hardware mouse (and skip its OS-cursor warps) — hence the ordering against
     ///     <see cref="UpdateCursorInputSystem" />, which reads that position the same frame.
     ///     Pointer gestures require a free cursor: with the cursor locked or panning the on-screen UI is not in a
     ///     clickable state, so the gesture fails instead of silently mutating the lock. That is re-checked every
@@ -45,6 +46,10 @@ namespace DCL.SyntheticInput.Systems
         {
             base.Initialize();
             camera = World.CacheCamera();
+
+            // Installed once per session beside CursorComponent; the gesture steps only write into it afterwards,
+            // so no structural change happens while a gesture ref is held.
+            World.AddOrSet(camera, SyntheticCursorOverride.Inactive);
         }
 
         protected override void Update(float t)
@@ -64,7 +69,7 @@ namespace DCL.SyntheticInput.Systems
             }
 
             if (gesture.Kind != UiDeviceGestureKind.KeyPress)
-                SyntheticCursorState.AssertSuppressionThisFrame();
+                World.Get<SyntheticCursorOverride>(camera).AssertSuppressionThisFrame();
 
             bool done = gesture.Kind switch
                         {
@@ -193,14 +198,14 @@ namespace DCL.SyntheticInput.Systems
                 rightPressed: button == MouseButton.Right && pressed);
 
         /// <summary>
-        ///     The single door every pointer state goes through: the device gets the state, and the cursor systems
-        ///     get the position. Routing both here is what stops a phase from moving the pointer without telling
+        ///     The single door every pointer state goes through: the device gets the state, and the cursor system
+        ///     gets the position. Routing both here is what stops a phase from moving the pointer without telling
         ///     the cursor — the failure that left the world reticle behind while the UI stack followed the gesture.
         /// </summary>
         private void QueueMouse(Vector2 position, bool leftPressed = false, bool rightPressed = false)
         {
             devices.QueueMouseState(position, leftPressed, rightPressed);
-            SyntheticCursorState.AssertPointerPositionThisFrame(position);
+            World.Get<SyntheticCursorOverride>(camera).AssertPointerPositionThisFrame(position);
         }
     }
 }

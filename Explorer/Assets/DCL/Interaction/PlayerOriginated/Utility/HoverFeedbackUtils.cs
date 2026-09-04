@@ -9,15 +9,15 @@ namespace DCL.Interaction.PlayerOriginated.Utility
     public static class HoverFeedbackUtils
     {
         /// <summary>
-        ///     Issues the hover leave for the entity hovered until now. <paramref name="previousHoverWasQualified" />
-        ///     is the distance verdict recorded while that entity was hovered: the leave completes an enter that
-        ///     was actually issued, so it must never be re-qualified against the ray of the frame the hover ended
-        ///     on — that ray points somewhere else, and a target with a tight maxDistance would keep a hover the
-        ///     scene can never see end (the proximity leave path is unconditional for the same reason).
+        ///     Issues the hover leave for the entity hovered until now. <paramref name="previousHoverEnterIssued" />
+        ///     is whether that hover produced an enter: the leave completes an enter that was actually issued, so it
+        ///     must never be re-qualified against the ray of the frame the hover ended on — that ray points somewhere
+        ///     else, and a target with a tight maxDistance would keep a hover the scene can never see end (the
+        ///     proximity leave path is unconditional for the same reason).
         /// </summary>
-        public static void TryIssueLeaveHoverEventForPreviousEntity(in GlobalColliderSceneEntityInfo previousSceneEntityInfo, bool previousHoverWasQualified)
+        public static void TryIssueLeaveHoverEventForPreviousEntity(in GlobalColliderSceneEntityInfo previousSceneEntityInfo, bool previousHoverEnterIssued)
         {
-            if (!previousHoverWasQualified)
+            if (!previousHoverEnterIssued)
                 return;
 
             World world = previousSceneEntityInfo.EcsExecutor.World;

@@ -6,8 +6,6 @@ using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 
@@ -22,15 +20,6 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class SweepPointerTool : McpTool
     {
-        /// <summary>Wire-facing subset of <see cref="InputAction" />: only the three pointer buttons make sense to hold.</summary>
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
-        private enum PointerButton : byte
-        {
-            POINTER,
-            PRIMARY,
-            SECONDARY,
-        }
-
         private const float DEFAULT_SECONDS = 1f;
         private const float MIN_SECONDS = 0.05f;
         private const float MAX_SECONDS = 10f;
@@ -82,39 +71,23 @@ namespace DCL.McpServer.Tools
             if (deltaX == 0f && deltaY == 0f)
                 return McpToolResult.Error("deltaX and deltaY must not both be zero: a sweep that does not turn the camera is a click_entity down/up pair.");
 
-            bool hasEntityId = arguments.TryGetInt("entityId", out int entityId);
+            // The press needs a target to arm on, so the aim is mandatory here.
+            if (!PointerArgs.TryParseAim(arguments, requireTarget: true, out PointerAim aim, out string? aimError))
+                return McpToolResult.Error(aimError!);
 
-            bool hasAimPoint = arguments.TryGetFloat("x", out float x)
-                               & arguments.TryGetFloat("y", out float y)
-                               & arguments.TryGetFloat("z", out float z);
-
-            if (!hasEntityId && !hasAimPoint)
-                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both: the press needs a target to arm on." + arguments.NonNumericHint("entityId", "x", "y", "z"));
-
-            if (!arguments.TryGetEnum("button", PointerButton.POINTER, out PointerButton pointerButton))
-                return McpToolResult.Error("button must be one of: pointer, primary, secondary.");
-
-            InputAction button = pointerButton switch
-                                 {
-                                     PointerButton.PRIMARY => InputAction.IaPrimary,
-                                     PointerButton.SECONDARY => InputAction.IaSecondary,
-                                     _ => InputAction.IaPointer,
-                                 };
+            if (!PointerArgs.TryGetButton(arguments, out InputAction button, out string? buttonError))
+                return McpToolResult.Error(buttonError!);
 
             var axisValue = new Vector2(Mathf.Clamp(deltaX, -MAX_AXIS, MAX_AXIS), Mathf.Clamp(deltaY, -MAX_AXIS, MAX_AXIS));
             float seconds = Mathf.Clamp(arguments.GetFloat("seconds", DEFAULT_SECONDS), MIN_SECONDS, MAX_SECONDS);
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-            int targetEntityId = hasEntityId ? entityId : -1;
-            string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
-            Vector3? aimPoint = hasAimPoint ? new Vector3(x, y, z) : null;
-
-            SyntheticSweepResult sweep = await syntheticInput.SweepAsync(targetEntityId, sceneId, aimPoint, screenPoint: null,
-                button, axisValue, seconds, timeoutSec, ct);
+            SyntheticSweepResult sweep = await syntheticInput.SweepAsync(aim, button, axisValue, seconds, timeoutSec, ct);
 
             var json = new JObject
             {
-                ["pressed"] = LegJson(sweep.Press),
+                // Each leg is shaped like click_entity's result, so the same fields mean the same things.
+                ["pressed"] = sweep.Press.ToJson(),
             };
 
             if (sweep.FailureReason != null)
@@ -135,44 +108,9 @@ namespace DCL.McpServer.Tools
             await UniTask.DelayFrame(1, cancellationToken: ct);
 
             json["cameraRotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector();
-            json["released"] = LegJson(sweep.Release);
+            json["released"] = sweep.Release.ToJson();
 
             return McpToolResult.Json(json);
-        }
-
-        /// <summary>One leg's outcome, shaped like click_entity's result so the same fields mean the same things.</summary>
-        private static JObject LegJson(in SyntheticPointerResult result)
-        {
-            var json = new JObject
-            {
-                ["hit"] = result.Hit,
-                ["entityId"] = result.SceneEntityId,
-                ["crdtEntityId"] = result.CrdtEntityId,
-            };
-
-            if (result.FailureReason != null)
-                json["reason"] = result.FailureReason;
-
-            if (result.Hit)
-            {
-                json["hitPoint"] = result.HitPoint.ToVector();
-                json["distance"] = Math.Round(result.Distance, 2);
-            }
-
-            if (result.BlockedByEntityId != null)
-            {
-                json["blockedByEntityId"] = result.BlockedByEntityId;
-                json["blockedByCrdtId"] = result.BlockedByCrdtId;
-                json["blockedByCollider"] = result.BlockedByColliderName;
-            }
-
-            if (result.BlockedByUi != null)
-                json["blockedByUi"] = result.BlockedByUi;
-
-            if (result.TimedOut)
-                json["timedOut"] = true;
-
-            return json;
         }
     }
 }

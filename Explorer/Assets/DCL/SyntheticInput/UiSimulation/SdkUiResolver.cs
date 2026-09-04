@@ -36,7 +36,7 @@ namespace DCL.SyntheticInput.UiSimulation
             Entity found = Entity.Null;
             UITransformComponent? transform = null;
 
-            // TODO (Vit): drop this scan by resolving through CrdtEcsSynchronizer.EntitiesMap (O(1)); done together
+            // TODO: resolve through CrdtEcsSynchronizer.EntitiesMap (O(1)) instead of scanning; done together
             // with the same scan in SyntheticPointerEventSystem/WorldInfo.
             world.Query(in UI_ELEMENTS, (Entity entity, ref UITransformComponent uiTransform, ref CRDTEntity crdtEntity) =>
             {

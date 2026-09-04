@@ -1,7 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CrdtEcsBridge.Physics;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -15,11 +15,10 @@ using ECS.SceneLifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility.Arch;
+using static DCL.SyntheticInput.Systems.SyntheticPointerDiagnostics;
 using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
-using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.SyntheticInput.Systems
 {
@@ -32,7 +31,8 @@ namespace DCL.SyntheticInput.Systems
     ///         <see cref="DCL.Interaction.Systems.ProcessPointerEventsSystem" /> consume the same frame, so
     ///         occlusion, distance gates, hover enter/leave and the scene write-back are all executed by the
     ///         production code. The outcome is read back one frame later from the pipeline's own raycast and
-    ///         hover state, before the next raycast overwrites them.
+    ///         hover state, before the next raycast overwrites them (<see cref="SyntheticPointerDiagnostics" />
+    ///         turns that state into the verdict).
     ///     </para>
     ///     <para>
     ///         A release that follows a press (<see cref="SyntheticPointerEventIntent.Press" />) is posted only once
@@ -91,6 +91,10 @@ namespace DCL.SyntheticInput.Systems
             base.Initialize();
             playerCamera = World.CacheCamera();
             pipelineEntity = new SingleInstanceEntity(in PIPELINE_ENTITY, World);
+
+            // Installed once per session beside CursorComponent; the parked pointer only writes into it afterwards,
+            // so no structural change happens while an intent ref is held.
+            World.AddOrSet(playerCamera, SyntheticCursorOverride.Inactive);
         }
 
         protected override void Update(float t)
@@ -161,14 +165,6 @@ namespace DCL.SyntheticInput.Systems
             if (endsPointerHold)
                 World.TryRemove<SyntheticPointerHold>(playerEntity);
         }
-
-        private static SyntheticPointerResult Failure(in SyntheticPointerEventIntent intent, string reason) =>
-            new ()
-            {
-                Hit = false,
-                FailureReason = reason,
-                SceneEntityId = intent.TargetEntityId,
-            };
 
         /// <summary>Posts the synthetic aim and/or button edge the pipeline will consume later this frame.</summary>
         private void Inject(ref SyntheticPointerEventIntent intent, ISceneFacade scene, World sceneWorld)
@@ -329,7 +325,7 @@ namespace DCL.SyntheticInput.Systems
                 result.Hit = true;
                 result.SceneEntityId = entityInfo.ColliderSceneEntityInfo.EntityReference.Id;
                 result.CrdtEntityId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id;
-                result.HoverText = ResolveHoverText(in entityInfo);
+                result.HoverText = ResolveHoverText(in entityInfo, World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips);
                 result.HitPoint = raycastResult.RaycastHit.point;
                 result.Distance = raycastResult.GetDistance();
             }
@@ -348,7 +344,7 @@ namespace DCL.SyntheticInput.Systems
                 return Failure(in intent, "the reticle pipeline did not process the synthetic aim (is the cursor panning or the in-world camera active?)");
 
             if (!raycastResult.IsValidHit)
-                return DiagnoseMiss(in intent, raycastResult.OriginRay);
+                return DiagnoseMiss(in intent, raycastResult.OriginRay, collidersGlobalCache);
 
             GlobalColliderSceneEntityInfo entityInfo = raycastResult.EntityInfo!.Value;
             Entity hitEntity = entityInfo.ColliderSceneEntityInfo.EntityReference;
@@ -381,7 +377,7 @@ namespace DCL.SyntheticInput.Systems
                     Hit = true,
                     SceneEntityId = hitEntity.Id,
                     CrdtEntityId = hitCrdtId,
-                    HoverText = ResolveHoverText(in entityInfo),
+                    HoverText = ResolveHoverText(in entityInfo, World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips),
                     HitPoint = raycastResult.RaycastHit.point,
                     Distance = raycastResult.GetDistance(),
                 };
@@ -391,115 +387,9 @@ namespace DCL.SyntheticInput.Systems
                 StoppedShortOfAim(in raycastResult, intent.InjectedAimPoint), raycastResult.Collider.name);
         }
 
-        /// <summary>The pipeline hit nothing usable: a cold-path raycast tells whether the aim reaches any collider at all.</summary>
-        private SyntheticPointerResult DiagnoseMiss(in SyntheticPointerEventIntent intent, in Ray originRay)
-        {
-            if (!Physics.Raycast(originRay, out RaycastHit hit, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK))
-                return Failure(in intent, "the ray from the camera hit nothing (target may lack a collider)");
-
-            if (collidersGlobalCache.TryGetSceneEntity(hit.collider, out _))
-                return Failure(in intent, "the reticle found no scene entity under the aim (transient scene state; retry)");
-
-            return Failure(in intent, DescribeNonSceneHit(in intent, in hit, originRay.origin));
-        }
-
         /// <summary>
-        ///     Names a non-scene collider in terms of the aim, not on its own. Reporting only what the ray met
-        ///     ("the ray hit a non-scene collider 'SatelliteView 7,7'") reads as if that object were in the way,
-        ///     when the usual cause is an aim point with nothing at it: the ray passed straight through and met the
-        ///     skybox geometry far beyond. The distance to the aim separates the two.
-        /// </summary>
-        private static string DescribeNonSceneHit(in SyntheticPointerEventIntent intent, in RaycastHit hit, Vector3 origin)
-        {
-            // A screen-point aim is projected to a far point along the camera ray, so its "aim distance" is the
-            // raycast limit and comparing against it says nothing.
-            if (intent.ScreenPoint != null)
-                return $"nothing clickable at that point: the ray hit non-scene geometry ('{hit.collider.name}')";
-
-            float aimDistance = Vector3.Distance(origin, intent.InjectedAimPoint);
-
-            return hit.distance > aimDistance
-                ? $"nothing at the aim point: the ray passed it and hit non-scene geometry ('{hit.collider.name}') {hit.distance - aimDistance:F1} m further on (does the target have a collider?)"
-                : $"non-scene geometry ('{hit.collider.name}') blocks the aim {aimDistance - hit.distance:F1} m before it";
-        }
-
-        /// <summary>
-        ///     The ray reached an entity the gesture accepts as its target, but the pipeline did not qualify it for
-        ///     cursor input. An entity without PointerEvents that the ray reached <em>before</em> the requested aim
-        ///     point is an occluder, not the target — reported as a block so an aim-point gesture gets the same
-        ///     blocker diagnostics an entity-addressed one does. That reading only exists for a pure aim-point
-        ///     gesture: a gesture with an explicit target reached this method because the hit IS that target
-        ///     (anything else was reported as a block upstream), and an entity aim point is the collider's center,
-        ///     which the ray always stops short of at the collider's face — the target must not read as its own
-        ///     occluder.
-        /// </summary>
-        private static SyntheticPointerResult DiagnoseUnqualified(in SyntheticPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo,
-            Entity hitEntity, int hitCrdtId, float distance, bool stoppedShortOfAim, string colliderName)
-        {
-            SyntheticPointerResult result;
-            bool aimPointOnly = intent.TargetEntityId < 0 && !intent.Press.HasValue;
-
-            if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents) || pbPointerEvents == null)
-            {
-                if (aimPointOnly && stoppedShortOfAim)
-                {
-                    result = Failure(in intent, "another collider blocks the line of sight to the aim point");
-                    result.BlockedByEntityId = hitEntity.Id;
-                    result.BlockedByCrdtId = hitCrdtId;
-                    result.BlockedByColliderName = colliderName;
-                    result.Distance = distance;
-                    return result;
-                }
-
-                result = Failure(in intent, $"entity {hitEntity.Id} has no PointerEvents component (not clickable)");
-            }
-            else
-                result = Failure(in intent, HasCursorEntry(pbPointerEvents)
-                    ? $"target is out of range for its pointer events (hit distance {distance:F2}m)"
-                    : "the target's pointer events are proximity-type only and the player is out of proximity range");
-
-            result.SceneEntityId = hitEntity.Id;
-            result.CrdtEntityId = hitCrdtId;
-            result.Distance = distance;
-            return result;
-        }
-
-        /// <summary>
-        ///     True when the ray was stopped by geometry closer than the point it was aimed through: the camera-origin
-        ///     hit distance is the comparable one (the pipeline's own distance is measured from the player focus in
-        ///     third person).
-        /// </summary>
-        private static bool StoppedShortOfAim(in PlayerOriginRaycastResultForSceneEntities raycastResult, Vector3 aimPoint)
-        {
-            const float TOLERANCE = 0.05f;
-
-            return raycastResult.RaycastHit.distance < Vector3.Distance(raycastResult.OriginRay.origin, aimPoint) - TOLERANCE;
-        }
-
-        private static bool HasCursorEntry(PBPointerEvents pbPointerEvents)
-        {
-            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
-                if (pbPointerEvents.PointerEvents[i]!.InteractionType == InteractionType.Cursor)
-                    return true;
-
-            return false;
-        }
-
-        /// <summary>
-        ///     The release must land on the entity that received the press; a lone event with an explicit target
-        ///     must land on that target. A pure aim-point event accepts whatever the pipeline hit.
-        /// </summary>
-        private static bool IsExpectedTarget(in SyntheticPointerEventIntent intent, Entity hitEntity)
-        {
-            if (intent.Press is { } press)
-                return hitEntity == press.Entity;
-
-            return intent.TargetEntityId < 0 || hitEntity.Id == intent.TargetEntityId;
-        }
-
-        /// <summary>
-        ///     Re-states the parked pointer position every frame a press is held. The cursor systems take the
-        ///     pointer from <see cref="SyntheticCursorState" /> while it is asserted, which is what makes the
+        ///     Re-states the parked pointer position every frame a press is held. The cursor system takes the
+        ///     pointer from <see cref="SyntheticCursorOverride" /> while it is asserted, which is what makes the
         ///     reticle ray — and the PBPrimaryPointerInfo ray built from the same position — follow the gesture
         ///     rather than the hardware mouse. A hold nobody released expires here.
         /// </summary>
@@ -514,7 +404,7 @@ namespace DCL.SyntheticInput.Systems
                 return;
             }
 
-            SyntheticCursorState.AssertPointerPositionThisFrame(hold.ScreenPosition);
+            World.Get<SyntheticCursorOverride>(playerCamera).AssertPointerPositionThisFrame(hold.ScreenPosition);
         }
 
         /// <summary>
@@ -545,21 +435,19 @@ namespace DCL.SyntheticInput.Systems
 
             // Stated for this frame too: the cursor systems run in an earlier group, so leaving it to the next
             // Update would hand the frame right after the press back to the hardware mouse.
-            SyntheticCursorState.AssertPointerPositionThisFrame(hold.ScreenPosition);
+            World.Get<SyntheticCursorOverride>(playerCamera).AssertPointerPositionThisFrame(hold.ScreenPosition);
         }
 
         /// <summary>
         ///     Posts the synthetic aim and/or button edge the pipeline consumes later this frame. A gesture that
         ///     named an entity passes it as <paramref name="targetEntity" />: only that entity may consume the
-        ///     edge, and an edge no entity may consume is not broadcast to the scene root either.
+        ///     edge, and an edge no entity may consume is not broadcast to the scene root either. Null names no
+        ///     entity, so an untargeted post stays a broadcast (Entity.Null is not default(Entity), which is why no
+        ///     sentinel stands in for absence here).
         /// </summary>
         private void PostSyntheticInput(Vector3? aimPoint, InputAction? pressButton = null, InputAction? releaseButton = null,
             Entity? targetEntity = null, World? targetWorld = null)
         {
-            // The target is nullable rather than an Entity.Null sentinel on purpose: Entity.Null is not
-            // default(Entity), so a defaulted parameter once produced a post restricted to a target that does not
-            // exist — which withheld the edge from every entity and, because a restricted edge is not a
-            // broadcast, silently stopped aimless presses from reaching the scene root at all.
             World.Set(pipelineEntity, new SyntheticPointerInput
             {
                 AimPoint = aimPoint,
@@ -571,46 +459,14 @@ namespace DCL.SyntheticInput.Systems
             });
         }
 
-        /// <summary>
-        ///     The hover text a human would read on the target. The client's tooltip is preferred, but it only
-        ///     exists for press/release entries (a hover-only entity shows no key prompt), so the target's own
-        ///     PointerEvents text is the fallback — otherwise hover-only entities report no text at all.
-        /// </summary>
-        private string? ResolveHoverText(in GlobalColliderSceneEntityInfo entityInfo)
-        {
-            IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips = World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips;
-
-            if (tooltips is { Count: > 0 })
-                return tooltips[0].Text;
-
-            if (!entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents) || pbPointerEvents == null)
-                return null;
-
-            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
-            {
-                PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[i]!;
-
-                if (entry.InteractionType == InteractionType.Cursor && entry.EventInfo is { HasHoverText: true } info && !string.IsNullOrEmpty(info.HoverText))
-                    return info.HoverText;
-            }
-
-            return null;
-        }
-
         private static Vector3 ResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>
             intent.AimPoint ?? ResolveEntityAimPoint(sceneWorld, targetEntity);
 
         /// <summary>
-        ///     Resolves the world point the synthetic ray must pass through. An explicit aim is taken as is and
-        ///     needs no entity — the pipeline raycast still validates whatever the ray lands on; a screen-space
-        ///     aim is projected to a far point along the camera ray through it. Otherwise the aim is the collider
-        ///     center of <paramref name="targetEntity" />, already resolved by TryResolveTargetEntity.
-        /// </summary>
-        /// <summary>
-        ///     The entity the gesture was promised, or Entity.Null when it named none. Resolved before the aim,
-        ///     because it is needed even when an explicit aim point makes the entity's own position irrelevant: it
-        ///     is the entity the posted edge is restricted to, and a target id that resolves to nothing is a
-        ///     failure in its own right rather than an aim that lands somewhere and reports a phantom blocker.
+        ///     The entity the gesture was promised, or null when it named none. Resolved before the aim, because it
+        ///     is needed even when an explicit aim point makes the entity's own position irrelevant: it is the
+        ///     entity the posted edge is restricted to, and a target id that resolves to nothing is a failure in
+        ///     its own right rather than an aim that lands somewhere and reports a phantom blocker.
         /// </summary>
         private static bool TryResolveTargetEntity(in SyntheticPointerEventIntent intent, World sceneWorld, out Entity? targetEntity, out SyntheticPointerResult failure)
         {
@@ -633,9 +489,9 @@ namespace DCL.SyntheticInput.Systems
             int targetId = intent.TargetEntityId;
             Entity found = Entity.Null;
 
-            // TODO (Vit): drop this scan in a follow-up by switching MCP entity addressing from raw Arch ids to
-            // CRDT ids and resolving through CrdtEcsSynchronizer.EntitiesMap (O(1)); done together with
-            // list_scene_entities/get_entity_details/WorldInfo, which scan for the same reason.
+            // TODO: resolve through CrdtEcsSynchronizer.EntitiesMap (O(1)) once MCP entity addressing moves from
+            // raw Arch ids to CRDT ids, together with list_scene_entities/get_entity_details/WorldInfo, which scan
+            // for the same reason.
             sceneWorld.Query(in ALL_ENTITIES, entity =>
             {
                 if (entity.Id == targetId)
@@ -652,6 +508,12 @@ namespace DCL.SyntheticInput.Systems
             return true;
         }
 
+        /// <summary>
+        ///     Resolves the world point the synthetic ray must pass through. An explicit aim is taken as is and
+        ///     needs no entity — the pipeline raycast still validates whatever the ray lands on; a screen-space
+        ///     aim is projected to a far point along the camera ray through it. Otherwise the aim is the collider
+        ///     center of <paramref name="targetEntity" />, already resolved by TryResolveTargetEntity.
+        /// </summary>
         private bool TryResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity? targetEntity, out Vector3 aimPoint, out SyntheticPointerResult failure)
         {
             failure = default(SyntheticPointerResult);

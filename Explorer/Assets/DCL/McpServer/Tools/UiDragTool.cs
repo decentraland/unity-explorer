@@ -90,8 +90,8 @@ namespace DCL.McpServer.Tools
 
             if (path != DragPath.Device)
             {
-                var fromImage = new Vector2(fromX * Screen.width, fromY * Screen.height);
-                var toImage = new Vector2(toX * Screen.width, toY * Screen.height);
+                Vector2 fromImage = UiScreenGeometry.NormalizedToImagePoint(new Vector2(fromX, fromY));
+                Vector2 toImage = UiScreenGeometry.NormalizedToImagePoint(new Vector2(toX, toY));
 
                 SceneUiDragAttempt attempt = await uiAutomation.DragSceneUiAsync(fromImage, toImage, durationFrames, ct);
 
@@ -109,9 +109,8 @@ namespace DCL.McpServer.Tools
                     return McpToolResult.Error($"the drag was not delivered to the scene's UI: {skippedSceneUi}");
             }
 
-            // Image coordinates run top-down; Unity screen coordinates run bottom-up.
-            var from = new Vector2(fromX * Screen.width, (1f - fromY) * Screen.height);
-            var to = new Vector2(toX * Screen.width, (1f - toY) * Screen.height);
+            Vector2 from = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(fromX, fromY));
+            Vector2 to = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(toX, toY));
 
             MouseButton button = arguments.GetBool("rightButton", false) ? MouseButton.Right : MouseButton.Left;
 

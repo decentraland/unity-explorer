@@ -1,6 +1,7 @@
 using Arch.Core;
 using CRDT;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
@@ -8,7 +9,6 @@ using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.SyntheticInput.Components;
 using DCL.SyntheticInput.Systems;
-using DCL.SyntheticInput.UiSimulation;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
@@ -30,6 +30,7 @@ namespace DCL.SyntheticInput.Tests
 
         private World sceneWorld = null!;
         private Entity playerEntity;
+        private Entity cameraEntity;
         private Entity targetEntity;
         private Entity pipelineEntity;
 
@@ -51,15 +52,11 @@ namespace DCL.SyntheticInput.Tests
             // per test — otherwise an armed cover leaks into every test that runs after it.
             uiCover = null;
 
-            // The parked pointer is static and lives a frame longer than the assertion; EditMode tests share
-            // frames, so a hold from the previous test would still read as asserted in this one.
-            SyntheticCursorState.Reset();
-
             sceneWorld = World.Create();
 
             cameraGo = new GameObject("mcp-click-test-camera");
             Camera camera = cameraGo.AddComponent<Camera>();
-            world.Create(new CameraComponent(camera)); // Mode defaults to FirstPerson
+            cameraEntity = world.Create(new CameraComponent(camera)); // Mode defaults to FirstPerson
 
             playerEntity = world.Create();
 
@@ -162,7 +159,6 @@ namespace DCL.SyntheticInput.Tests
 
         protected override void OnTearDown()
         {
-            SyntheticCursorState.Reset();
             Object.DestroyImmediate(cameraGo);
             Object.DestroyImmediate(targetGo);
 
@@ -198,6 +194,14 @@ namespace DCL.SyntheticInput.Tests
             sceneFacade.SceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition(id, new SceneMetadata()));
 
         private ref SyntheticPointerInput syntheticInput => ref world.Get<SyntheticPointerInput>(pipelineEntity);
+
+        /// <summary>The pointer the cursor system will read next frame, if the layer asserted one on the camera entity.</summary>
+        private bool TryGetAssertedPointer(out Vector2 position) =>
+            world.Get<SyntheticCursorOverride>(cameraEntity).TryGetPointerPosition(out position);
+
+        /// <summary>Clears the frame-scoped assertion, so a test can observe whether the next update re-states it.</summary>
+        private void ClearAssertedPointer() =>
+            world.Set(cameraEntity, SyntheticCursorOverride.Inactive);
 
         /// <summary>
         ///     Emulates the frame of the reticle pipeline at its contract boundary: consumes the posted synthetic
@@ -1022,7 +1026,7 @@ namespace DCL.SyntheticInput.Tests
             DeliverPress();
 
             Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.True);
-            Assert.That(SyntheticCursorState.TryGetPointerPosition(out Vector2 parked), Is.True);
+            Assert.That(TryGetAssertedPointer(out Vector2 parked), Is.True);
             Assert.That(parked, Is.EqualTo(ScreenPointOfTarget()));
         }
 
@@ -1033,10 +1037,10 @@ namespace DCL.SyntheticInput.Tests
 
             // The assertion is frame-scoped, so only re-stating it every frame keeps the pointer on the
             // gesture for the whole camera sweep a held press is turned into.
-            SyntheticCursorState.Reset();
+            ClearAssertedPointer();
             system.Update(0);
 
-            Assert.That(SyntheticCursorState.TryGetPointerPosition(out Vector2 parked), Is.True);
+            Assert.That(TryGetAssertedPointer(out Vector2 parked), Is.True);
             Assert.That(parked, Is.EqualTo(ScreenPointOfTarget()));
         }
 
@@ -1055,10 +1059,10 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(ResultOf(releaseCompletion).Hit, Is.True);
             Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.False);
 
-            SyntheticCursorState.Reset();
+            ClearAssertedPointer();
             system.Update(0);
 
-            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False, "the hardware mouse owns the pointer again once the button is up");
+            Assert.That(TryGetAssertedPointer(out _), Is.False, "the hardware mouse owns the pointer again once the button is up");
         }
 
         [Test]
@@ -1073,7 +1077,7 @@ namespace DCL.SyntheticInput.Tests
             system.Update(0);
 
             Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.False);
-            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False);
+            Assert.That(TryGetAssertedPointer(out _), Is.False);
         }
 
         [Test]
@@ -1087,7 +1091,7 @@ namespace DCL.SyntheticInput.Tests
             DeliverPress();
 
             Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.False);
-            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False);
+            Assert.That(TryGetAssertedPointer(out _), Is.False);
         }
 
         [Test]
@@ -1098,12 +1102,12 @@ namespace DCL.SyntheticInput.Tests
             // An abandoned gesture (a driver that died between the legs) must not keep the pointer away
             // from the hardware mouse forever.
             world.Set(playerEntity, new SyntheticPointerHold { ScreenPosition = Vector2.one, ExpiryTime = UnityEngine.Time.time - 1f });
-            SyntheticCursorState.Reset();
+            ClearAssertedPointer();
 
             system.Update(0);
 
             Assert.That(world.Has<SyntheticPointerHold>(playerEntity), Is.False);
-            Assert.That(SyntheticCursorState.TryGetPointerPosition(out _), Is.False);
+            Assert.That(TryGetAssertedPointer(out _), Is.False);
         }
 
         /// <summary>Where the target's aim point sits on screen, which is the pixel a press on it occupies.</summary>

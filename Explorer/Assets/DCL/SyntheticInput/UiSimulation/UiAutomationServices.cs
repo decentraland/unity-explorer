@@ -142,17 +142,6 @@ namespace DCL.SyntheticInput.UiSimulation
         }
 
         /// <summary>
-        ///     What covers each end of a drag, as <see cref="TryFindUiCoverAt" /> describes it, with null meaning
-        ///     the world. Read before the gesture is installed, because the drag moves the pointer itself. Split
-        ///     out of <see cref="DragWithDevicesAsync" /> so the cover reading is testable without running frames.
-        /// </summary>
-        public void DescribeDragCover(Vector2 fromScreenPoint, Vector2 toScreenPoint, out string? coverAtStart, out string? coverAtEnd)
-        {
-            coverAtStart = TryFindUiCoverAt(fromScreenPoint, out string startCover) ? startCover : null;
-            coverAtEnd = TryFindUiCoverAt(toScreenPoint, out string endCover) ? endCover : null;
-        }
-
-        /// <summary>
         ///     Replays a drag through the virtual devices and reports what its pointer was over. A device gesture
         ///     verifies no target — completing only means the states were replayed — so the covers at both ends are
         ///     what tells a caller whether any UI could have received it: over the world at both ends, nothing did.
@@ -161,7 +150,9 @@ namespace DCL.SyntheticInput.UiSimulation
         public async UniTask<UiDeviceDragOutcome> DragWithDevicesAsync(Vector2 fromScreenPoint, Vector2 toScreenPoint,
             int durationFrames, MouseButton button, CancellationToken ct)
         {
-            DescribeDragCover(fromScreenPoint, toScreenPoint, out string? coverAtStart, out string? coverAtEnd);
+            // Read before the gesture is installed, because the drag moves the pointer itself; null is the world.
+            string? coverAtStart = TryFindUiCoverAt(fromScreenPoint, out string startCover) ? startCover : null;
+            string? coverAtEnd = TryFindUiCoverAt(toScreenPoint, out string endCover) ? endCover : null;
 
             UiGestureResult gesture = await RunGestureAsync(new UiDeviceGestureRequest
             {
@@ -213,25 +204,19 @@ namespace DCL.SyntheticInput.UiSimulation
     ///     devices owes its caller that reason — a fallback drag lands in the 3D world, and without the reason it is
     ///     indistinguishable from a UI drag that was really delivered.
     /// </summary>
-    public readonly struct SceneUiDragAttempt
+    public struct SceneUiDragAttempt
     {
         /// <summary>What the semantic drag achieved, or null when that path did not apply.</summary>
-        public readonly UiActionResult? Result;
+        public UiActionResult? Result;
 
         /// <summary>Why the semantic path did not apply, or null when it ran.</summary>
-        public readonly string? SkipReason;
-
-        private SceneUiDragAttempt(UiActionResult? result, string? skipReason)
-        {
-            Result = result;
-            SkipReason = skipReason;
-        }
+        public string? SkipReason;
 
         public static SceneUiDragAttempt Delivered(UiActionResult result) =>
-            new (result, null);
+            new () { Result = result };
 
         public static SceneUiDragAttempt NotApplicable(string reason) =>
-            new (null, reason);
+            new () { SkipReason = reason };
     }
 
     /// <summary>
@@ -240,41 +225,36 @@ namespace DCL.SyntheticInput.UiSimulation
     ///     have received it, and a drag whose pointer was over the world at both ends reached no UI at all. Saying
     ///     so is the point: an unqualified "ok" there reads as a delivered drag, which is the one thing it is not.
     /// </summary>
-    public readonly struct UiDeviceDragOutcome
+    public struct UiDeviceDragOutcome
     {
-        public readonly bool Ok;
+        public bool Ok;
 
-        public readonly string? FailureReason;
+        public string? FailureReason;
 
         /// <summary>What covered the drag's start pixel, or null when the world did.</summary>
-        public readonly string? CoverAtStart;
+        public string? CoverAtStart;
 
         /// <summary>What covered the drag's end pixel, or null when the world did.</summary>
-        public readonly string? CoverAtEnd;
+        public string? CoverAtEnd;
 
         /// <summary>Set only for a delivered drag no UI could have received; null whenever there is nothing to add.</summary>
-        public readonly string? DeliveryNote;
+        public string? DeliveryNote;
 
-        private UiDeviceDragOutcome(bool ok, string? failureReason, string? coverAtStart, string? coverAtEnd, string? deliveryNote)
-        {
-            Ok = ok;
-            FailureReason = failureReason;
-            CoverAtStart = coverAtStart;
-            CoverAtEnd = coverAtEnd;
-            DeliveryNote = deliveryNote;
-        }
+        public static UiDeviceDragOutcome From(in UiGestureResult gesture, string? coverAtStart, string? coverAtEnd) =>
+            new ()
+            {
+                Ok = gesture.Ok,
+                FailureReason = gesture.FailureReason,
+                CoverAtStart = coverAtStart,
+                CoverAtEnd = coverAtEnd,
 
-        public static UiDeviceDragOutcome From(in UiGestureResult gesture, string? coverAtStart, string? coverAtEnd)
-        {
-            // A failure already carries its own reason (a captured cursor, a timeout, a preemption); the note is
-            // only for the case a bare success would misreport.
-            string? note = gesture.Ok && coverAtStart == null && coverAtEnd == null
-                ? "no UI element received this drag: the pointer was over the world at both ends (nothing in the "
-                + "client interface or the scene's UI covers either pixel). A held pointer swept across the world is "
-                + "a press, a camera turn and a release — sweep_pointer."
-                : null;
-
-            return new UiDeviceDragOutcome(gesture.Ok, gesture.FailureReason, coverAtStart, coverAtEnd, note);
-        }
+                // A failure already carries its own reason (a captured cursor, a timeout, a preemption); the note
+                // is only for the case a bare success would misreport.
+                DeliveryNote = gesture.Ok && coverAtStart == null && coverAtEnd == null
+                    ? "no UI element received this drag: the pointer was over the world at both ends (nothing in the "
+                      + "client interface or the scene's UI covers either pixel). A held pointer swept across the world is "
+                      + "a press, a camera turn and a release — sweep_pointer."
+                    : null,
+            };
     }
 }

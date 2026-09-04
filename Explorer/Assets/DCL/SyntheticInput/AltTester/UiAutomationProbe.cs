@@ -153,8 +153,8 @@ namespace DCL.SyntheticInput.AltTester
             UiAutomationServices ready = services;
             int frames = Mathf.Clamp(durationFrames, 2, 300);
 
-            var from = new Vector2(fromX * Screen.width, (1f - fromY) * Screen.height);
-            var to = new Vector2(toX * Screen.width, (1f - toY) * Screen.height);
+            Vector2 from = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(fromX, fromY));
+            Vector2 to = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(toX, toY));
 
             return AltOperationRegistry.Start(
                 ready.DragWithDevicesAsync(from, to, frames, rightButton ? MouseButton.Right : MouseButton.Left, CancellationToken.None)
@@ -172,7 +172,7 @@ namespace DCL.SyntheticInput.AltTester
             var request = new UiDeviceGestureRequest
             {
                 Kind = UiDeviceGestureKind.Click,
-                To = new Vector2(x * Screen.width, (1f - y) * Screen.height),
+                To = UiScreenGeometry.NormalizedImageToScreenPoint(new Vector2(x, y)),
                 Button = rightButton ? MouseButton.Right : MouseButton.Left,
             };
 

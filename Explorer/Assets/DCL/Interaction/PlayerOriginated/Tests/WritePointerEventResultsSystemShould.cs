@@ -193,55 +193,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Assert.That(results.Count, Is.EqualTo(2));
         }
 
-        /// <summary>
-        ///     The global buffer arrives pre-suppressed (ProcessPointerEventsSystem removed the entity-bound edges
-        ///     at production time), so an entity-bound write must not swallow the unrelated global edges that
-        ///     legitimately remained in it.
-        /// </summary>
-        [Test]
-        public void WriteEntityResultsAndRemainingGlobalEventsTogether()
-        {
-            var sdkEvents = new PBPointerEvents
-            {
-                PointerEvents = { CreateEntry(PointerEventType.PetDown, InputAction.IaPrimary) },
-            };
-
-            sdkEvents.AppendPointerEventResultsIntent.InitializeWithAlloc();
-            sdkEvents.AppendPointerEventResultsIntent.AddInputAction(InputAction.IaPrimary, PointerEventType.PetDown);
-
-            writer.AppendMessage(
-                       Arg.Any<Action<PBPointerEventsResult, (RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>>(),
-                       Arg.Any<CRDTEntity>(),
-                       Arg.Any<int>(),
-                       Arg.Any<(RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>())
-                  .Returns(info =>
-                   {
-                       var res = new PBPointerEventsResult();
-
-                       info.ArgAt<Action<PBPointerEventsResult, (RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>>(0)
-                           .Invoke(res, info.ArgAt<(RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>(3));
-
-                       results.Add(res);
-
-                       return res;
-                   });
-
-            globalInputEvents.Entries.Returns(new List<IGlobalInputEvents.Entry>
-            {
-                new (InputAction.IaSecondary, PointerEventType.PetDown),
-            });
-
-            world.Create(new CRDTEntity(100), sdkEvents);
-
-            system.Update(0);
-
-            Assert.That(results.Count, Is.EqualTo(2));
-            Assert.That(results[0].Button, Is.EqualTo(InputAction.IaPrimary));
-            Assert.That(results[0].Hit, Is.Not.Null);
-            Assert.That(results[1].Button, Is.EqualTo(InputAction.IaSecondary));
-            Assert.That(results[1].Hit, Is.Null);
-        }
-
         private static PBPointerEvents.Types.Entry CreateEntry(PointerEventType eventType, InputAction button) =>
             new ()
             {

@@ -4,7 +4,6 @@ using DCL.McpServer.Utils;
 using DCL.SyntheticInput;
 using DCL.SyntheticInput.Components;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Threading;
 using UnityEngine;
 
@@ -48,53 +47,17 @@ namespace DCL.McpServer.Tools
 
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
-            bool hasEntityId = arguments.TryGetInt("entityId", out int entityId);
-
-            bool hasAimPoint = arguments.TryGetFloat("x", out float x)
-                               & arguments.TryGetFloat("y", out float y)
-                               & arguments.TryGetFloat("z", out float z);
-
-            if (!hasEntityId && !hasAimPoint)
-                return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both." + arguments.NonNumericHint("entityId", "x", "y", "z"));
+            if (!PointerArgs.TryParseAim(arguments, requireTarget: true, out PointerAim aim, out string? aimError))
+                return McpToolResult.Error(aimError!);
 
             float seconds = Mathf.Clamp(arguments.GetFloat("seconds", DEFAULT_SECONDS), MIN_SECONDS, MAX_SECONDS);
 
-            int targetEntityId = hasEntityId ? entityId : -1;
-            string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
-            Vector3? aimPoint = hasAimPoint ? new Vector3(x, y, z) : null;
-
-            SyntheticPointerResult result = await syntheticInput.HoverAsync(targetEntityId, sceneId, aimPoint, screenPoint: null, seconds, ct);
+            SyntheticPointerResult result = await syntheticInput.HoverAsync(aim, seconds, ct);
 
             if (result.TimedOut)
                 return McpToolResult.Error($"hover_entity did not complete within {seconds + SyntheticInputAgent.COMPLETION_GRACE_SEC}s (is the simulation paused?).");
 
-            var json = new JObject
-            {
-                ["hit"] = result.Hit,
-                ["entityId"] = result.SceneEntityId,
-                ["crdtEntityId"] = result.CrdtEntityId,
-            };
-
-            if (result.FailureReason != null)
-                json["reason"] = result.FailureReason;
-
-            if (result.Hit)
-            {
-                json["hitPoint"] = result.HitPoint.ToVector();
-                json["distance"] = Math.Round(result.Distance, 2);
-            }
-
-            if (result.HoverText != null)
-                json["hoverText"] = result.HoverText;
-
-            if (result.BlockedByEntityId != null)
-            {
-                json["blockedByEntityId"] = result.BlockedByEntityId;
-                json["blockedByCrdtId"] = result.BlockedByCrdtId;
-                json["blockedByCollider"] = result.BlockedByColliderName;
-            }
-
-            return McpToolResult.Json(json);
+            return McpToolResult.Json(result.ToJson());
         }
     }
 }

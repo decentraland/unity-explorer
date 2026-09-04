@@ -63,16 +63,6 @@ namespace DCL.SyntheticInput.Tests
         }
 
         [Test]
-        public void ReportBothDragEndsOverTheWorldWhenNoUiIsOnScreen()
-        {
-            services.DescribeDragCover(new Vector2(5f, 5f), new Vector2(50f, 50f), out string? coverAtStart, out string? coverAtEnd);
-
-            // Null is the world: the empty cover string TryFindUiCoverAt leaves behind would read as a named cover.
-            Assert.That(coverAtStart, Is.Null);
-            Assert.That(coverAtEnd, Is.Null);
-        }
-
-        [Test]
         public void NoteThatNoUiReceivedADragOverTheWorld()
         {
             UiDeviceDragOutcome outcome = UiDeviceDragOutcome.From(new UiGestureResult { Ok = true }, null, null);

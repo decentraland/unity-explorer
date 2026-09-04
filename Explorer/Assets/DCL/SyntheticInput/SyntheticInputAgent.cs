@@ -28,6 +28,9 @@ namespace DCL.SyntheticInput
         /// <summary>Extra wait beyond a hold's own duration before a request is considered stuck.</summary>
         public const float COMPLETION_GRACE_SEC = 5f;
 
+        /// <summary>The intent's convention for an aim that names no entity.</summary>
+        private const int NO_ENTITY = -1;
+
         private readonly World world;
         private readonly Entity playerEntity;
 
@@ -84,23 +87,21 @@ namespace DCL.SyntheticInput
         }
 
         /// <summary>
-        ///     Presses and releases a pointer button on a scene entity (or at an explicit world/screen aim point)
-        ///     through the real reticle pipeline. The release is ordered onto a later scene tick than the press, and
-        ///     a release that no longer reaches the press target reports the delivered press with the divergence.
+        ///     Presses and releases a pointer button on what <paramref name="aim" /> names (a scene entity, a world
+        ///     point or a screen point) through the real reticle pipeline. The release is ordered onto a later scene
+        ///     tick than the press, and a release that no longer reaches the press target reports the delivered
+        ///     press with the divergence.
         /// </summary>
-        public UniTask<SyntheticPointerResult> ClickAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
-            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: true, PointerEventType.PetDown, timeoutSec, force, ct);
+        public UniTask<SyntheticPointerResult> ClickAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+            RunPointerGestureAsync(aim, button, composeClick: true, PointerEventType.PetDown, timeoutSec, force, ct);
 
         /// <summary>Delivers a lone press leg: the scene observes only the PetDown.</summary>
-        public UniTask<SyntheticPointerResult> PointerDownAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
-            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: false, PointerEventType.PetDown, timeoutSec, force, ct);
+        public UniTask<SyntheticPointerResult> PointerDownAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+            RunPointerGestureAsync(aim, button, composeClick: false, PointerEventType.PetDown, timeoutSec, force, ct);
 
         /// <summary>Delivers a lone release leg: the scene observes only the PetUp.</summary>
-        public UniTask<SyntheticPointerResult> PointerUpAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
-            RunPointerGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick: false, PointerEventType.PetUp, timeoutSec, force, ct);
+        public UniTask<SyntheticPointerResult> PointerUpAsync(PointerAim aim, InputAction button, float timeoutSec, CancellationToken ct = default, bool force = false) =>
+            RunPointerGestureAsync(aim, button, composeClick: false, PointerEventType.PetUp, timeoutSec, force, ct);
 
         /// <summary>
         ///     <para>
@@ -118,10 +119,10 @@ namespace DCL.SyntheticInput
         ///         releasing a button that never went down would fake a delivery.
         ///     </para>
         /// </summary>
-        public async UniTask<SyntheticSweepResult> SweepAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, Vector2 axisValue, float seconds, float timeoutSec, CancellationToken ct = default, bool force = false)
+        public async UniTask<SyntheticSweepResult> SweepAsync(PointerAim aim, InputAction button, Vector2 axisValue, float seconds, float timeoutSec,
+            CancellationToken ct = default, bool force = false)
         {
-            SyntheticPointerResult press = await PointerDownAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, timeoutSec, ct, force);
+            SyntheticPointerResult press = await PointerDownAsync(aim, button, timeoutSec, ct, force);
 
             if (press.TimedOut || press.FailureReason != null)
                 return new SyntheticSweepResult
@@ -138,21 +139,20 @@ namespace DCL.SyntheticInput
             {
                 Press = press,
                 CameraSweep = cameraSweep,
-                Release = await PointerUpAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, timeoutSec, ct, force),
+                Release = await PointerUpAsync(aim, button, timeoutSec, ct, force),
             };
         }
 
         /// <summary>
-        ///     Aims the reticle at a scene entity (or an explicit world/screen point) and holds the hover for a
-        ///     duration without pressing anything: the scene observes the same hover enter/leave flow a real
-        ///     cursor produces, and the result reports what was hovered.
+        ///     Aims the reticle at what <paramref name="aim" /> names and holds the hover for a duration without
+        ///     pressing anything: the scene observes the same hover enter/leave flow a real cursor produces, and the
+        ///     result reports what was hovered.
         /// </summary>
-        public async UniTask<SyntheticPointerResult> HoverAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            float seconds, CancellationToken ct = default)
+        public async UniTask<SyntheticPointerResult> HoverAsync(PointerAim aim, float seconds, CancellationToken ct = default)
         {
             try
             {
-                SyntheticPointerOutcome outcome = await SendPointerAsync(SyntheticPointerEventIntent.Hover(targetEntityId, sceneId, aimPoint, screenPoint, UnityEngine.Time.time + seconds))
+                SyntheticPointerOutcome outcome = await SendPointerAsync(SyntheticPointerEventIntent.Hover(aim.EntityId ?? NO_ENTITY, aim.SceneId, aim.AimPoint, aim.ScreenPoint, UnityEngine.Time.time + seconds))
                                                        .AttachExternalCancellation(ct)
                                                        .Timeout(TimeSpan.FromSeconds(seconds + COMPLETION_GRACE_SEC));
 
@@ -160,40 +160,39 @@ namespace DCL.SyntheticInput
             }
             catch (TimeoutException)
             {
-                return await AbandonPointerAsync(targetEntityId, seconds + COMPLETION_GRACE_SEC);
+                return await AbandonPointerAsync(aim, seconds + COMPLETION_GRACE_SEC);
             }
         }
 
         /// <summary>
         ///     <para>
-        ///         Presses and releases an SDK input action. Without an aim the cursor ray stays in charge and the
-        ///         edges fan out to the scene root — which is what a driver gets in practice, because a driver has
-        ///         no OS cursor resting on a target (the reticle ray follows the free cursor, and a free cursor
-        ///         hovers nothing the driver chose).
+        ///         Presses and releases an SDK input action. With the aimless <paramref name="aim" /> the cursor ray
+        ///         stays in charge and the edges fan out to the scene root — which is what a driver gets in
+        ///         practice, because a driver has no OS cursor resting on a target (the reticle ray follows the
+        ///         free cursor, and a free cursor hovers nothing the driver chose).
         ///     </para>
         ///     <para>
-        ///         Pass an aim (<paramref name="targetEntityId" />, or an explicit <paramref name="aimPoint" />) to
-        ///         steer the reticle at a target for the duration of the gesture: the edges then land entity-bound
-        ///         on it under the real qualification gates, exactly like a key pressed while looking at it, and
-        ///         the result carries the same hit/occlusion/range diagnostics a click does.
+        ///         An aim at an entity or a world point steers the reticle at it for the duration of the gesture:
+        ///         the edges then land entity-bound on it under the real qualification gates, exactly like a key
+        ///         pressed while looking at it, and the result carries the same hit/occlusion/range diagnostics a
+        ///         click does.
         ///     </para>
         ///     <para>
         ///         The release lands on a later scene tick; a positive <paramref name="holdSeconds" /> keeps the
         ///         action held between the edges.
         ///     </para>
         /// </summary>
-        public async UniTask<SyntheticPointerResult> GlobalInputAsync(InputAction action, float holdSeconds = 0f,
-            int targetEntityId = -1, string? sceneId = null, Vector3? aimPoint = null, CancellationToken ct = default)
+        public async UniTask<SyntheticPointerResult> GlobalInputAsync(InputAction action, float holdSeconds = 0f, PointerAim aim = default, CancellationToken ct = default)
         {
             try
             {
-                return await RunGlobalGestureAsync(action, holdSeconds, targetEntityId, sceneId, aimPoint, ct)
+                return await RunGlobalGestureAsync(action, holdSeconds, aim, ct)
                             .AttachExternalCancellation(ct)
                             .Timeout(TimeSpan.FromSeconds(holdSeconds + COMPLETION_GRACE_SEC));
             }
             catch (TimeoutException)
             {
-                return await AbandonPointerAsync(targetEntityId, holdSeconds + COMPLETION_GRACE_SEC);
+                return await AbandonPointerAsync(aim, holdSeconds + COMPLETION_GRACE_SEC);
             }
         }
 
@@ -213,20 +212,20 @@ namespace DCL.SyntheticInput
             }
         }
 
-        private async UniTask<SyntheticPointerResult> RunPointerGestureAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, bool composeClick, PointerEventType firstLegType, float timeoutSec, bool force, CancellationToken ct)
+        private async UniTask<SyntheticPointerResult> RunPointerGestureAsync(PointerAim aim, InputAction button, bool composeClick, PointerEventType firstLegType,
+            float timeoutSec, bool force, CancellationToken ct)
         {
             try
             {
                 // A single budget for the whole gesture: it covers both a paused simulation that never runs
                 // the delivering system and a release stuck waiting for the scene tick to advance.
-                return await ComposeGestureAsync(targetEntityId, sceneId, aimPoint, screenPoint, button, composeClick, firstLegType, force)
+                return await ComposeGestureAsync(aim, button, composeClick, firstLegType, force)
                             .AttachExternalCancellation(ct)
                             .Timeout(TimeSpan.FromSeconds(timeoutSec));
             }
             catch (TimeoutException)
             {
-                return await AbandonPointerAsync(targetEntityId, timeoutSec);
+                return await AbandonPointerAsync(aim, timeoutSec);
             }
         }
 
@@ -235,15 +234,14 @@ namespace DCL.SyntheticInput
         ///     a click is a press followed by a release that carries the press handoff so the delivering system
         ///     keeps it ordered onto a later scene tick.
         /// </summary>
-        private async UniTask<SyntheticPointerResult> ComposeGestureAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, Vector2? screenPoint,
-            InputAction button, bool composeClick, PointerEventType firstLegType, bool force)
+        private async UniTask<SyntheticPointerResult> ComposeGestureAsync(PointerAim aim, InputAction button, bool composeClick, PointerEventType firstLegType, bool force)
         {
-            SyntheticPointerOutcome down = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, button, firstLegType, screenPoint: screenPoint, force: force));
+            SyntheticPointerOutcome down = await SendPointerAsync(Intent(in aim, button, firstLegType, force: force));
 
             if (!composeClick || !down.Result.Hit)
                 return down.Result;
 
-            SyntheticPointerOutcome up = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press, screenPoint, force));
+            SyntheticPointerOutcome up = await SendPointerAsync(Intent(in aim, button, PointerEventType.PetUp, down.Press, force));
 
             if (up.Result.Hit)
                 return up.Result;
@@ -263,10 +261,9 @@ namespace DCL.SyntheticInput
         ///     An aimed gesture goes through the reticle (entity-bound delivery, full diagnostics); an aimless one
         ///     keeps the cursor ray and reaches the scene root. Both order the release onto a later scene tick.
         /// </summary>
-        private async UniTask<SyntheticPointerResult> RunGlobalGestureAsync(InputAction action, float holdSeconds,
-            int targetEntityId, string? sceneId, Vector3? aimPoint, CancellationToken ct)
+        private async UniTask<SyntheticPointerResult> RunGlobalGestureAsync(InputAction action, float holdSeconds, PointerAim aim, CancellationToken ct)
         {
-            SyntheticPointerOutcome down = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, action, PointerEventType.PetDown));
+            SyntheticPointerOutcome down = await SendPointerAsync(Intent(in aim, action, PointerEventType.PetDown));
 
             if (down.Result.FailureReason != null)
                 return down.Result;
@@ -274,7 +271,7 @@ namespace DCL.SyntheticInput
             if (holdSeconds > 0f)
                 await UniTask.Delay(TimeSpan.FromSeconds(holdSeconds), cancellationToken: ct);
 
-            SyntheticPointerOutcome up = await SendPointerAsync(new SyntheticPointerEventIntent(targetEntityId, sceneId, aimPoint, action, PointerEventType.PetUp, down.Press));
+            SyntheticPointerOutcome up = await SendPointerAsync(Intent(in aim, action, PointerEventType.PetUp, down.Press));
 
             if (up.Result.FailureReason == null)
                 return up.Result;
@@ -284,7 +281,7 @@ namespace DCL.SyntheticInput
             return merged;
         }
 
-        private async UniTask<SyntheticPointerResult> AbandonPointerAsync(int targetEntityId, float budgetSec)
+        private async UniTask<SyntheticPointerResult> AbandonPointerAsync(PointerAim aim, float budgetSec)
         {
             await EcsRequest.AbandonAsync<SyntheticPointerEventIntent>(world, playerEntity);
 
@@ -293,9 +290,13 @@ namespace DCL.SyntheticInput
                 Hit = false,
                 TimedOut = true,
                 FailureReason = $"the pointer gesture did not complete within {budgetSec}s (is the simulation paused?)",
-                SceneEntityId = targetEntityId,
+                SceneEntityId = aim.EntityId ?? NO_ENTITY,
             };
         }
+
+        private static SyntheticPointerEventIntent Intent(in PointerAim aim, InputAction button, PointerEventType eventType,
+            SyntheticPressHandoff? press = null, bool force = false) =>
+            new (aim.EntityId ?? NO_ENTITY, aim.SceneId, aim.AimPoint, button, eventType, press, aim.ScreenPoint, force);
 
         private UniTask<SyntheticPointerOutcome> SendPointerAsync(SyntheticPointerEventIntent request) =>
             EcsRequest.SendAsync(world, playerEntity, request, new SyntheticPointerOutcome

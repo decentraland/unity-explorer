@@ -76,15 +76,14 @@ namespace CrdtEcsBridge.RestrictedActions
             // We need to add a delay before we can start transitioning in the animator, or we might encounter artifacts
             world.AddOrSet(playerEntity, new DisableAnimationTransitionOnTeleport(UnityEngine.Time.frameCount + 20));
 
-            // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery). The direction is anchored
-            // at the destination so it does not depend on the teleport having been applied when the intent is consumed.
+            // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newAvatarTarget != null)
             {
                 Vector3 lookAtDirection = newAvatarTarget.Value - newPlayerPosition;
                 lookAtDirection.y = 0;
-                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newPlayerPosition + lookAtDirection.normalized, newPlayerPosition));
+                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newPlayerPosition + lookAtDirection.normalized));
             }
-            else if (newCameraTarget != null) { world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value, newPlayerPosition)); }
+            else if (newCameraTarget != null) { world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value)); }
 
             // Instant teleport is always successful
             return true;

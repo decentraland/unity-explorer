@@ -6,7 +6,6 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Input;
-using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Raycast.Components;
@@ -27,7 +26,6 @@ namespace DCL.Interaction.Systems
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly IEventSystem eventSystem;
         private readonly IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap;
-        private readonly GlobalInputEvents globalInputEvents;
         private readonly QueryDescription highlightQuery = new QueryDescription().WithAll<HighlightComponent>();
 
         private SingleInstanceEntity playerCamera;
@@ -35,14 +33,12 @@ namespace DCL.Interaction.Systems
         internal ProcessPointerEventsSystem(World world,
             IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
-            IEventSystem eventSystem,
-            GlobalInputEvents globalInputEvents) : base(world)
+            IEventSystem eventSystem) : base(world)
         {
             this.sdkInputActionsMap = sdkInputActionsMap;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
 
             this.eventSystem = eventSystem;
-            this.globalInputEvents = globalInputEvents;
         }
 
         public override void Initialize()
@@ -72,9 +68,9 @@ namespace DCL.Interaction.Systems
             hoverFeedbackComponent.Clear();
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderSceneEntityInfo previousEntityInfo);
 
-            // The distance verdict of the hover being left behind: it decides whether an enter was ever issued,
-            // and therefore whether the leave completing it must be issued now.
-            bool previousHoverWasQualified = hoverStateComponent.IsAtDistance;
+            // Whether the hover being left behind ever produced an enter: that is what decides whether the leave
+            // completing it must be issued now.
+            bool previousHoverEnterIssued = hoverStateComponent.HoverEnterIssued;
             hoverStateComponent.Clear();
 
             if (
@@ -101,13 +97,18 @@ namespace DCL.Interaction.Systems
                     pbPointerEvents!,
                     newEntityIsSelected,
                     in synthetic,
-                    out bool isAtDistance);
+                    out bool isAtDistance,
+                    out bool anyEntryAtDistance);
 
-                    hoverStateComponent.AssignCollider(collider!, isAtDistance, hoverFeedbackComponent.ScreenPositionOverride == null);
+                hoverStateComponent.AssignCollider(collider!, isAtDistance, hoverFeedbackComponent.ScreenPositionOverride == null);
+
+                // An enter is appended only on the frame an entity becomes hovered, for the entries qualified on
+                // that frame; a continuing hover keeps that verdict even if it drifts out of range later.
+                hoverStateComponent.HoverEnterIssued = newEntityIsSelected ? anyEntryAtDistance : previousHoverEnterIssued;
             }
 
             if (candidateForHoverLeaveIsValid)
-                ResetPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo, previousHoverWasQualified);
+                ResetPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo, previousHoverEnterIssued);
         }
 
         private bool TryGetPreviousEntityInfo(in HoverStateComponent stateComponent, out GlobalColliderSceneEntityInfo globalColliderSceneEntityInfo)
@@ -229,11 +230,11 @@ namespace DCL.Interaction.Systems
         private void ResetPreviousEntity(
             in ProximityResultForSceneEntities proximityResultForSceneEntities,
             in GlobalColliderSceneEntityInfo previousEntityInfo,
-            bool previousHoverWasQualified
+            bool previousHoverEnterIssued
         )
         {
             ResetHighlightComponentQuery(previousEntityInfo.EcsExecutor.World);
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousEntityInfo, previousHoverWasQualified);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in previousEntityInfo, previousHoverEnterIssued);
             ProximityFeedbackUtils.TryIssueProximityLeaveEventForPreviousEntity(in proximityResultForSceneEntities, in previousEntityInfo);
         }
 
@@ -283,10 +284,12 @@ namespace DCL.Interaction.Systems
             PBPointerEvents pbPointerEvents,
             bool newEntityIsSelected,
             in SyntheticPointerInput synthetic,
-            out bool isAtDistance
+            out bool isAtDistance,
+            out bool anyEntryAtDistance
         )
         {
             isAtDistance = false;
+            anyEntryAtDistance = false;
             bool highlightEnabled = true;
             var anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
@@ -318,6 +321,8 @@ namespace DCL.Interaction.Systems
                     : InteractionInputUtils.IsQualifiedByDistance(proximityResultForSceneEntities, info);
 
                 if (!isAtDistance) continue;
+
+                anyEntryAtDistance = true;
 
                 if (newEntityIsSelected)
                     pbPointerEvents.AppendPointerEventResultsIntent.AppendPointerInputIfQualified(GetEnterEventType(interactionType), pointerEvent, i);
@@ -356,24 +361,7 @@ namespace DCL.Interaction.Systems
                     if (synthetic.ReleaseButton.HasValue)
                         pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(synthetic.ReleaseButton.Value, PointerEventType.PetUp);
                 }
-
-                SuppressGlobalBroadcastOfEntityBoundActions(in pbPointerEvents.AppendPointerEventResultsIntent);
             }
-        }
-
-        /// <summary>
-        ///     Drops the entity-bound action edges from the buffer WritePointerEventResultsSystem broadcasts to the
-        ///     scene root: an edge delivered to a qualified hovered entity is consumed by it, and the same buffer —
-        ///     filled by PrepareGlobalInputEventsSystem earlier this frame — must not fan the edge out a second time.
-        ///     Removing at production time keeps the buffer correct for the whole frame, no matter when the scene
-        ///     world drains it.
-        /// </summary>
-        private void SuppressGlobalBroadcastOfEntityBoundActions(in AppendPointerEventResultsIntent intent)
-        {
-            IReadOnlyList<(InputAction inputAction, PointerEventType pointerEventType)> entityBoundActions = intent.ValidInputActions;
-
-            for (var i = 0; i < entityBoundActions.Count; i++)
-                globalInputEvents.Remove(entityBoundActions[i].inputAction, entityBoundActions[i].pointerEventType);
         }
 
         private Vector2 GetColliderCenterScreenPosition(Collider collider)

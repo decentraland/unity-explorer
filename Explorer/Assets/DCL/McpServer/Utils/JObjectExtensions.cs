@@ -58,6 +58,10 @@ namespace DCL.McpServer.Utils
         public static string GetString(this JObject arguments, string name, string defaultValue) =>
             arguments[name]?.Type == JTokenType.String ? arguments[name]!.Value<string>()! : defaultValue;
 
+        /// <summary>The string argument, or null when it is absent or not a string.</summary>
+        public static string? GetStringOrNull(this JObject arguments, string name) =>
+            arguments[name]?.Type == JTokenType.String ? arguments[name]!.Value<string>() : null;
+
         /// <summary>
         ///     Reads an enum argument sent as its wire name (see <see cref="McpWireEnum{T}" />). False when the
         ///     argument is missing, not a string, not a member, or outside <paramref name="allowed" />.
