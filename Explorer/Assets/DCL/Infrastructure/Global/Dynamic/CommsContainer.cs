@@ -114,13 +114,13 @@ namespace Global.Dynamic
             bool isolateScenesCommunication,
             bool enableAnalytics,
             bool localSceneDevelopment,
-            string? localSceneDevelopmentRealm = null)
+            ILocalSceneEntityIdSource localSceneEntityIdSource)
         {
             var entityParticipantTable = new EntityParticipantTable();
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
-            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController, localSceneDevelopmentRealm).WithLog();
+            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(localSceneEntityIdSource).WithLog();
 
             Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HardwareFingerprint)
                 ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())

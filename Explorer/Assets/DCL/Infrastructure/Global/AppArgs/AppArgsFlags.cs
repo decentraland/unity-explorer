@@ -127,6 +127,8 @@ namespace Global.AppArgs
 
         public const string DISCOVER = "discover";
 
+        public const string IN_GAME_SHOP = "in-game-shop";
+
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
         public const string NAME_COLOR_CHANGE = "name-color-change";

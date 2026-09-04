@@ -50,9 +50,9 @@ namespace DCL.Multiplayer.Movement
             PlayerJoined playerJoined = message.Message.PlayerJoined;
 
             // An empty realm violates the server contract, so it is dropped too
-            if (playerJoined.Realm.Length == 0 || playerJoined.Realm != realmData.RealmName)
+            if (playerJoined.Realm.Length == 0 || playerJoined.Realm != pulseRealm.Value)
             {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Dropping PlayerJoined for {playerJoined.State.SubjectId}: realm '{playerJoined.Realm}' differs from current '{realmData.RealmName}'");
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Dropping PlayerJoined for {playerJoined.State.SubjectId}: realm '{playerJoined.Realm}' differs from current '{pulseRealm.Value}'");
                 return;
             }
 

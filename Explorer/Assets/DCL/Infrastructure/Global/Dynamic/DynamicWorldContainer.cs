@@ -26,7 +26,9 @@ using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCredits.Purchase;
 using DCL.McpServer.Systems;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
@@ -226,6 +228,10 @@ namespace Global.Dynamic
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
+            // One fetch of the dev server’s entity id, shared by both transports: the gatekeeper scene room
+            // keys its room on it and Pulse derives its realm from it, so two instances would double the start-up requests.
+            var localSceneEntityIdSource = new LocalSceneEntityIdSource(staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.LocalSceneDevelopmentRealm);
+
             var commsContainer = CommsContainer.Create(
                 staticContainer,
                 bootstrapContainer,
@@ -235,7 +241,12 @@ namespace Global.Dynamic
                 dynamicWorldParams.IsolateScenesCommunication,
                 dynamicWorldParams.EnableAnalytics,
                 localSceneDevelopment,
-                dynamicWorldParams.LocalSceneDevelopmentRealm);
+                localSceneEntityIdSource);
+
+            // Pulse partitions visibility by exact realm string. Local scene development has no realm of its own,
+            // so each dev process derives one from the entity id its dev server serves, keeping concurrent previews apart.
+            var pulseRealm = new PulseRealm(staticContainer.RealmData,
+                localSceneDevelopment ? localSceneEntityIdSource : null);
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
 
@@ -273,7 +284,7 @@ namespace Global.Dynamic
 
                 multiplayerContainer = await MultiplayerContainer.CreateAsync(
                     settingsContainer,
-                    staticContainer.RealmData,
+                    pulseRealm,
                     identityCache,
                     commsContainer.MovementInbox,
                     staticContainer.QualityContainer.LandscapeData,
@@ -356,6 +367,7 @@ namespace Global.Dynamic
                 multiplayerContainer.PulseMultiplayerService,
                 multiplayerContainer.ProfilePropagation,
                 multiplayerContainer.PulseActivation,
+                multiplayerContainer.PulseRealm,
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
