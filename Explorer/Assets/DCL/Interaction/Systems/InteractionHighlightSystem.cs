@@ -83,7 +83,7 @@ namespace DCL.Interaction.Systems
 
         private void AddOrUpdateHighlight(in Entity entity)
         {
-            using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers)!;
+            using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers);
 
             AddRenderersFromEntity(entity, renderers!);
 
@@ -95,7 +95,7 @@ namespace DCL.Interaction.Systems
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers!);
 
                 ObjectHighlightSettings settings = BuildSettings();
-                ObjectHighlightRendererFeature.HighlightedObjects.Highlight(renderers!, in settings);
+                ObjectHighlightRendererFeature.HIGHLIGHTED_OBJECTS.Highlight(renderers!, in settings);
             }
         }
 
@@ -123,7 +123,7 @@ namespace DCL.Interaction.Systems
 
         private void RemoveHighlight(in Entity entity)
         {
-            using var scope = ListPool<Renderer>.Get(out var renderers)!;
+            using var scope = ListPool<Renderer>.Get(out var renderers);
 
             AddRenderersFromEntity(entity, renderers!);
 
@@ -133,7 +133,7 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
-                ObjectHighlightRendererFeature.HighlightedObjects.Disparage(renderers);
+                ObjectHighlightRendererFeature.HIGHLIGHTED_OBJECTS.Disparage(renderers);
             }
         }
 

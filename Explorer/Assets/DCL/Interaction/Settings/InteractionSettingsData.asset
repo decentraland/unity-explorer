@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cc9f7ae930048b5956ebc9ad72940b2, type: 3}
   m_Name: InteractionSettingsData
   m_EditorClassIdentifier: 
-  <HighlightColor>k__BackingField: {r: 0.19215687, g: 0.85882354, b: 0.9411765, a: 1}
-  <Thickness>k__BackingField: 4
-  <FresnelFill>k__BackingField: 0.2
-  <FresnelRim>k__BackingField: 0.7
-  <FresnelPower>k__BackingField: 3.5
-  <MaxSurfaceOpacity>k__BackingField: 0.45
-  <SurfaceDepthBias>k__BackingField: 0.02
-  <OutlineDepthBias>k__BackingField: 0.25
-  <PulseSpeed>k__BackingField: 0.45
-  <PulseMin>k__BackingField: 0.05
-  <PulseMax>k__BackingField: 1
+  highlightColor: {r: 0.19215687, g: 0.85882354, b: 0.9411765, a: 1}
+  thickness: 4
+  fresnelFill: 0.2
+  fresnelRim: 0.7
+  fresnelPower: 3.5
+  maxSurfaceOpacity: 0.45
+  surfaceDepthBias: 0.02
+  outlineDepthBias: 0.25
+  pulseSpeed: 0.45
+  pulseMin: 0.05
+  pulseMax: 1

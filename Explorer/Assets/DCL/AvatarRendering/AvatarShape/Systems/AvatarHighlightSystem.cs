@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 highlight.Opacity = newValue;
             }
             ObjectHighlightSettings highlightSettings = BuildSettings(highlight.Opacity);
-            ObjectHighlightRendererFeature.HighlightedObjects_Avatar.Highlight(avatarShape.OutlineCompatibleRenderers, in highlightSettings);
+            ObjectHighlightRendererFeature.HIGHLIGHTED_OBJECTS_AVATAR.Highlight(avatarShape.OutlineCompatibleRenderers, in highlightSettings);
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace DCL.AvatarRendering.AvatarShape
             var step = settings.OutlineVfxOpacity / settings.FadeOutTimeSeconds;
             highlight.Opacity = Mathf.MoveTowards(highlight.Opacity, 0, step * t);
             ObjectHighlightSettings highlightSettings = BuildSettings(highlight.Opacity);
-            ObjectHighlightRendererFeature.HighlightedObjects_Avatar.Highlight(avatarShape.OutlineCompatibleRenderers, in highlightSettings);
+            ObjectHighlightRendererFeature.HIGHLIGHTED_OBJECTS_AVATAR.Highlight(avatarShape.OutlineCompatibleRenderers, in highlightSettings);
         }
 
         /// <summary>

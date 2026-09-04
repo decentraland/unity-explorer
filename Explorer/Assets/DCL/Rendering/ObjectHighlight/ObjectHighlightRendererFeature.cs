@@ -54,7 +54,7 @@ namespace DCL.Rendering.ObjectHighlight
 
     /// <summary>
     ///     Draws an outline and a surface treatment over renderers registered in
-    ///     <see cref="HighlightedObjects" />. Registrations are cleared every frame, so callers re-register
+    ///     <see cref="HIGHLIGHTED_OBJECTS" />. Registrations are cleared every frame, so callers re-register
     ///     for as long as they want an object highlighted.
     /// </summary>
     public partial class ObjectHighlightRendererFeature : ScriptableRendererFeature
@@ -62,14 +62,14 @@ namespace DCL.Rendering.ObjectHighlight
         private static readonly Dictionary<Renderer, ObjectHighlightSettings> HIGHLIGHT_RENDERERS = new ();
         private static readonly Dictionary<Renderer, ObjectHighlightSettings> HIGHLIGHT_RENDERERS_AVATAR = new ();
 
-        public static readonly IHighlightedObjects HighlightedObjects = new HighlightedObjects(HIGHLIGHT_RENDERERS);
-        public static readonly IHighlightedObjects HighlightedObjects_Avatar = new HighlightedObjects(HIGHLIGHT_RENDERERS_AVATAR);
+        public static readonly IHighlightedObjects HIGHLIGHTED_OBJECTS = new HighlightedObjects(HIGHLIGHT_RENDERERS);
+        public static readonly IHighlightedObjects HIGHLIGHTED_OBJECTS_AVATAR = new HighlightedObjects(HIGHLIGHT_RENDERERS_AVATAR);
 
         [SerializeField] private Material? inputMaterial;
         [SerializeField] private Material? blurMaterial;
         [SerializeField] private Material? outputMaterial;
 
-        private RenderPass_DrawObjects? renderPass;
+        private DrawObjectsPass? renderPass;
 
         public override void Create()
         {
@@ -78,7 +78,7 @@ namespace DCL.Rendering.ObjectHighlight
             if (inputMaterial == null || blurMaterial == null || outputMaterial == null)
                 return;
 
-            renderPass = new RenderPass_DrawObjects(HIGHLIGHT_RENDERERS, HIGHLIGHT_RENDERERS_AVATAR, inputMaterial, blurMaterial, outputMaterial)
+            renderPass = new DrawObjectsPass(HIGHLIGHT_RENDERERS, HIGHLIGHT_RENDERERS_AVATAR, inputMaterial, blurMaterial, outputMaterial)
             {
                 renderPassEvent = RenderPassEvent.AfterRenderingTransparents,
             };

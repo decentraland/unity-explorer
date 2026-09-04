@@ -9,7 +9,7 @@ namespace DCL.Rendering.ObjectHighlight
 {
     public partial class ObjectHighlightRendererFeature
     {
-        private class RenderPass_DrawObjects : ScriptableRenderPass
+        private class DrawObjectsPass : ScriptableRenderPass
         {
             private const int BLUR_ITERATIONS = 4;
             private const string AVATAR_SHADER_NAME = "DCL/DCL_Toon";
@@ -42,20 +42,20 @@ namespace DCL.Rendering.ObjectHighlight
             private static readonly int PULSE = Shader.PropertyToID("_Highlight_Pulse");
             private static readonly int HIGHLIGHT_TEXTURE = Shader.PropertyToID("_HighlightTexture");
 
-            private enum ShaderPasses_Input
+            private enum InputPass
             {
                 Outline = 0,
                 Surface = 1,
             }
 
-            private enum ShaderPasses_Blur
+            private enum BlurPass
             {
                 Horizontal = 0,
                 Vertical = 1,
             }
 
             private readonly Dictionary<Renderer, ObjectHighlightSettings> highlightRenderers;
-            private readonly Dictionary<Renderer, ObjectHighlightSettings> highlightRenderers_Avatars;
+            private readonly Dictionary<Renderer, ObjectHighlightSettings> avatarHighlightRenderers;
             private readonly Material inputMaterial;
             private readonly Material blurMaterial;
             private readonly Material outputMaterial;
@@ -69,15 +69,15 @@ namespace DCL.Rendering.ObjectHighlight
 
             private RenderTextureDescriptor colourDescriptor;
 
-            public RenderPass_DrawObjects(
+            public DrawObjectsPass(
                 Dictionary<Renderer, ObjectHighlightSettings> highlightRenderers,
-                Dictionary<Renderer, ObjectHighlightSettings> highlightRenderers_Avatars,
+                Dictionary<Renderer, ObjectHighlightSettings> avatarHighlightRenderers,
                 Material inputMaterial,
                 Material blurMaterial,
                 Material outputMaterial)
             {
                 this.highlightRenderers = highlightRenderers;
-                this.highlightRenderers_Avatars = highlightRenderers_Avatars;
+                this.avatarHighlightRenderers = avatarHighlightRenderers;
                 this.inputMaterial = inputMaterial;
                 this.blurMaterial = blurMaterial;
                 this.outputMaterial = outputMaterial;
@@ -119,7 +119,7 @@ namespace DCL.Rendering.ObjectHighlight
                 return gameObject.activeSelf && (cullingMask & (1 << gameObject.layer)) != 0;
             }
 
-            private static void DrawObjects(CommandBuffer cmd, PassData data, ShaderPasses_Input shaderPass)
+            private static void DrawObjects(CommandBuffer cmd, PassData data, InputPass shaderPass)
             {
                 foreach ((Renderer renderer, ObjectHighlightSettings settings) in data.highlightRenderers)
                 {
@@ -140,14 +140,14 @@ namespace DCL.Rendering.ObjectHighlight
                 }
             }
 
-            private static void DrawObjects_Avatar(CommandBuffer cmd, PassData data, bool clear)
+            private static void DrawAvatarObjects(CommandBuffer cmd, PassData data, bool clear)
             {
                 if (data.avatarPassID < 0)
                     return;
 
                 AVATAR_HIGHLIGHT_MARKER.Begin();
 
-                foreach ((Renderer renderer, ObjectHighlightSettings settings) in data.highlightRenderers_Avatars)
+                foreach ((Renderer renderer, ObjectHighlightSettings settings) in data.avatarHighlightRenderers)
                 {
                     if (!IsDrawable(renderer, data.cullingMask))
                         continue;
@@ -164,9 +164,14 @@ namespace DCL.Rendering.ObjectHighlight
                 AVATAR_HIGHLIGHT_MARKER.End();
             }
 
+            private static void DrawBlur(CommandBuffer cmd, Material material, BlurPass blurPass)
+            {
+                CoreUtils.DrawFullScreen(cmd, material, properties: null, (int)blurPass);
+            }
+
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
             {
-                if (highlightRenderers.Count <= 0 && highlightRenderers_Avatars.Count <= 0)
+                if (highlightRenderers.Count <= 0 && avatarHighlightRenderers.Count <= 0)
                     return;
 
                 using IUnsafeRenderGraphBuilder builder = renderGraph.AddUnsafePass("FullHighlight", out PassData passData);
@@ -187,7 +192,7 @@ namespace DCL.Rendering.ObjectHighlight
                 colourDescriptor.msaaSamples = 1;
 
                 passData.highlightRenderers = highlightRenderers;
-                passData.highlightRenderers_Avatars = highlightRenderers_Avatars;
+                passData.avatarHighlightRenderers = avatarHighlightRenderers;
                 passData.inputMaterial = inputMaterial;
                 passData.blurMaterial = blurMaterial;
                 passData.outputMaterial = outputMaterial;
@@ -211,40 +216,40 @@ namespace DCL.Rendering.ObjectHighlight
 
                     // Silhouette, fattened outwards
                     context.cmd.SetRenderTarget(data.ping);
-                    DrawObjects(cmd, data, ShaderPasses_Input.Outline);
-                    DrawObjects_Avatar(cmd, data, clear: false);
+                    DrawObjects(cmd, data, InputPass.Outline);
+                    DrawAvatarObjects(cmd, data, clear: false);
 
                     for (var blurPass = 0; blurPass < BLUR_ITERATIONS; ++blurPass)
                     {
                         cmd.SetGlobalTexture(HIGHLIGHT_TEXTURE, blurPass % 2 < 1 ? data.ping : data.pong);
                         context.cmd.SetRenderTarget(blurPass % 2 > 0 ? data.ping : data.pong);
-                        CoreUtils.DrawFullScreen(cmd, data.blurMaterial, properties: null, (int)ShaderPasses_Blur.Horizontal);
-                        CoreUtils.DrawFullScreen(cmd, data.blurMaterial, properties: null, (int)ShaderPasses_Blur.Vertical);
+                        DrawBlur(cmd, data.blurMaterial, BlurPass.Horizontal);
+                        DrawBlur(cmd, data.blurMaterial, BlurPass.Vertical);
                     }
 
                     // Replace the silhouette's interior. This both erases the blur's inward bleed and shades
                     // the surface. Avatars only get the erase: they carry their own highlight pass in
                     // DCL_Toon, which has no surface treatment.
                     context.cmd.SetRenderTarget(data.ping);
-                    DrawObjects(cmd, data, ShaderPasses_Input.Surface);
-                    DrawObjects_Avatar(cmd, data, clear: true);
+                    DrawObjects(cmd, data, InputPass.Surface);
+                    DrawAvatarObjects(cmd, data, clear: true);
 
                     cmd.SetGlobalTexture(HIGHLIGHT_TEXTURE, data.ping);
                     context.cmd.SetRenderTarget(data.backBufferColour, data.backBufferDepth);
-                    CoreUtils.DrawFullScreen(cmd, data.outputMaterial, properties: null, shaderPassId: 0);
+                    CoreUtils.DrawFullScreen(cmd, data.outputMaterial);
                 });
             }
 
             public override void OnCameraCleanup(CommandBuffer cmd)
             {
                 highlightRenderers.Clear();
-                highlightRenderers_Avatars.Clear();
+                avatarHighlightRenderers.Clear();
             }
 
             private class PassData
             {
                 internal IReadOnlyDictionary<Renderer, ObjectHighlightSettings> highlightRenderers = null!;
-                internal IReadOnlyDictionary<Renderer, ObjectHighlightSettings> highlightRenderers_Avatars = null!;
+                internal IReadOnlyDictionary<Renderer, ObjectHighlightSettings> avatarHighlightRenderers = null!;
                 internal Material inputMaterial = null!;
                 internal Material blurMaterial = null!;
                 internal Material outputMaterial = null!;
