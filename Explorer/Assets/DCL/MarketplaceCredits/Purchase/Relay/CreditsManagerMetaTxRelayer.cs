@@ -27,11 +27,15 @@ namespace DCL.MarketplaceCredits.Purchase
         public readonly string? TxHash;
         public readonly string? Message;
 
-        public RelayResult(RelayOutcome outcome, string? txHash = null, string? message = null)
+        /// <summary>The meta-transaction nonce that was signed; negative when signing never happened.</summary>
+        public readonly BigInteger Nonce;
+
+        public RelayResult(RelayOutcome outcome, string? txHash = null, string? message = null, BigInteger? nonce = null)
         {
             Outcome = outcome;
             TxHash = txHash;
             Message = message;
+            Nonce = nonce ?? BigInteger.MinusOne;
         }
     }
 
@@ -58,7 +62,15 @@ namespace DCL.MarketplaceCredits.Purchase
             this.chainConfig = chainConfig;
         }
 
-        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken ct)
+        public virtual UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken ct) =>
+            RelayUseCreditsAsync(buyer, useCreditsCalldata, BigInteger.MinusOne, ct);
+
+        /// <summary>
+        ///     Signs and relays one useCredits call. minNonce floors the nonce read from the contract: a group signed
+        ///     right after another group's receipt may still read the previous nonce from a lagging RPC node, and
+        ///     reusing it would make the relayer reject the second transaction.
+        /// </summary>
+        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, BigInteger minNonce, CancellationToken ct)
         {
             BigInteger nonce;
 
@@ -69,6 +81,9 @@ namespace DCL.MarketplaceCredits.Purchase
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
                 return new RelayResult(RelayOutcome.SigningFailed, message: $"Nonce read failed: {e.Message}");
             }
+
+            if (minNonce > nonce)
+                nonce = minNonce;
 
             string typedDataJson = CreditsTradeEncoder.BuildMetaTxTypedDataJson(chainConfig, nonce, buyer, useCreditsCalldata);
             string signature;
@@ -124,23 +139,23 @@ namespace DCL.MarketplaceCredits.Purchase
                 if (string.IsNullOrEmpty(txHash))
                     return new RelayResult(RelayOutcome.RelayerRejected, message: response["message"]?.ToString() ?? "Relayer returned no txHash");
 
-                return new RelayResult(RelayOutcome.Broadcast, txHash);
+                return new RelayResult(RelayOutcome.Broadcast, txHash, nonce: nonce);
             }
             catch (OperationCanceledException)
             {
-                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "Cancelled while awaiting relayer response");
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: "Cancelled while awaiting relayer response", nonce: nonce);
             }
             catch (UnityWebRequestException e)
             {
                 if (e.ResponseCode > 0)
                     return new RelayResult(RelayOutcome.RelayerRejected, message: $"Relayer {e.ResponseCode}: {e.Text}");
 
-                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message);
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message, nonce: nonce);
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CREDITS_PURCHASE));
-                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message);
+                return new RelayResult(RelayOutcome.AmbiguousBroadcast, message: e.Message, nonce: nonce);
             }
         }
 
