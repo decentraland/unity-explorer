@@ -21,6 +21,8 @@ namespace DCL.Diagnostics.Sentry
         private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
 #endif
 
+        private static IReadOnlyList<ConfigureScope>? globalScopeConfigurators;
+
         private readonly List<ConfigureScope> scopeConfigurators = new (10);
 
         private readonly PerReportScope.Pool scopesPool;
@@ -29,6 +31,7 @@ namespace DCL.Diagnostics.Sentry
             : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
+            globalScopeConfigurators = scopeConfigurators;
 
             // To prevent unwanted logs, manual initialization is required.
             // We need to delay the replacement of Debug.unityLogger.logHandler instance
@@ -113,6 +116,20 @@ namespace DCL.Diagnostics.Sentry
         public void AddScopeConfigurator(ConfigureScope configureScope)
         {
             scopeConfigurators.Add(configureScope);
+        }
+
+        public static void ApplyGlobalScope(Scope scope)
+        {
+            IReadOnlyList<ConfigureScope>? configurators = globalScopeConfigurators;
+
+            if (configurators == null)
+                return;
+
+            for (var i = 0; i < configurators.Count; i++)
+            {
+                try { configurators[i](scope); }
+                catch (Exception) { /* ignored */ }
+            }
         }
 
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
