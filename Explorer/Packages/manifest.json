@@ -37,6 +37,7 @@
     "com.unity.memoryprofiler": "1.1.12",
     "com.unity.multiplayer.playmode": "2.0.2",
     "com.unity.performance.profile-analyzer": "1.4.0",
+    "com.unity.pipeline": "0.6.0-exp.1",
     "com.unity.render-pipelines.universal": "17.5.0",
     "com.unity.services.cloud-diagnostics": "1.0.12",
     "com.unity.test-framework": "1.7.0",
