@@ -11,6 +11,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     /// </summary>
     public interface IAnalyticsService
     {
+        /// <summary>
+        ///     Accepts every call and sends nothing, for sessions whose activity must not reach the analytics backend.
+        /// </summary>
+        public static IAnalyticsService Null => NullAnalyticsService.INSTANCE;
+
         void Identify(string? userId, JObject? traits = null);
 
         /// <summary>
@@ -23,6 +28,23 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         void AddPlugin(IAnalyticsPlugin plugin);
 
         void Flush();
+
+        private sealed class NullAnalyticsService : IAnalyticsService
+        {
+            internal static readonly NullAnalyticsService INSTANCE = new ();
+
+            private NullAnalyticsService() { }
+
+            public void Identify(string? _, JObject? __ = null) { }
+
+            public void Track(string _, JObject? __ = null) { }
+
+            public void InstantTrackAndFlush(string _, JObject? __ = null) { }
+
+            public void AddPlugin(IAnalyticsPlugin _) { }
+
+            public void Flush() { }
+        }
     }
 
     public interface IAnalyticsPlugin

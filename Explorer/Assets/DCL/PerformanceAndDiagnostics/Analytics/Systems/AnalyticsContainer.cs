@@ -66,8 +66,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return container;
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, bool isLocalSceneDevelopment, CancellationToken token)
+        internal static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, bool isLocalSceneDevelopment, CancellationToken token)
         {
+            // A UI automation run drives the client the way a person would, so every panel it opens, message it sends
+            // and account it logs in with reaches Segment as ordinary user activity. Nothing below would stop it: the
+            // instrumented builds the suites run against are not debug builds and carry the production write key.
+            // --alttester is the one argument every automated launch passes and no human launch does.
+            if (args.HasFlag(AppArgsFlags.ALTTESTER))
+            {
+                ReportHub.Log(ReportCategory.ANALYTICS, "Automation session (--alttester): analytics events are discarded.");
+                return IAnalyticsService.Null;
+            }
+
             // Avoid Segment analytics for: Unity Editor or Debug Mode (except when in Local Scene Development mode)
 
             if (!Application.isEditor && (!args.HasDebugFlag() || isLocalSceneDevelopment))
