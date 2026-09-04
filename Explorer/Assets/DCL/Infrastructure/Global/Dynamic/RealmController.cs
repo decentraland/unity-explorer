@@ -27,6 +27,7 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
+using LiveKit.Internal.FFIClients.Requests;
 using Unity.Mathematics;
 using UnityEngine;
 using DCL.UserInAppInitializationFlow.StartupOperations;
@@ -153,6 +154,15 @@ namespace Global.Dynamic
                 localSceneParcels = ParseLocalSceneParcels(result.configurations.localSceneParcels);
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 
+                // Custom Catalyst realms are Genesis realms, but they do not have the static Genesis City
+                // manifest hosted by the production environment. Use the local scene pointers advertised by
+                // /about to generate the minimal terrain manifest needed by the Genesis landscape pipeline.
+                if (worldManifest.IsEmpty && result.configurations.scenesUrn.Count == 0 && localSceneParcels.Count > 0)
+                {
+                    worldManifest = WorldManifest.Create(new List<int2>(localSceneParcels).ToArray(), persist: true);
+                    ReportHub.Log(ReportCategory.REALM, $"Using {localSceneParcels.Count} local scene parcel(s) as the Genesis terrain manifest.");
+                }
+
                 string hostname = ResolveHostname(realm, result);
 
                 float? skyboxFixedHour = result.configurations.skybox is { fixedHour: >= 0 }
@@ -171,6 +181,13 @@ namespace Global.Dynamic
                     skyboxFixedHour,
                     realm
                 );
+
+                // CommsContainer is created before the starting realm is loaded. Set the loopback ICE policy only
+                // after RealmData has been configured, and recompute it on every realm change so a remote world
+                // cannot inherit the local direct-ICE workaround.
+                FFIBridgeExtensions.UseTransportAllForLoopbackUrls = LocalUntrustedRealmCommsPolicy.ShouldUseTransportAll(
+                    appArgs.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM),
+                    realmData.Ipfs.CatalystBaseUrl.Value);
 
                 UnityDiagnosticsCenter.Instance.SetRealmInfo(
                     realmData.Ipfs.CatalystBaseUrl.Value,
