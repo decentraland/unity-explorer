@@ -4,27 +4,136 @@
   "authReview": null,
   "requester": "U0ADNDHL1T7",
   "originChannel": "C0BB9H2CS5D",
-  "groups": [[9893, 9877], [9858, 9860]],
+  "groups": [
+    [
+      9893,
+      9877
+    ],
+    [
+      9858,
+      9860
+    ]
+  ],
   "issues": [
-    {"number": 9906, "status": "pending", "commit": null, "note": null},
-    {"number": 9905, "status": "pending", "commit": null, "note": null},
-    {"number": 9903, "status": "pending", "commit": null, "note": null},
-    {"number": 9893, "status": "pending", "commit": null, "note": null},
-    {"number": 9883, "status": "pending", "commit": null, "note": null},
-    {"number": 9878, "status": "pending", "commit": null, "note": null},
-    {"number": 9873, "status": "pending", "commit": null, "note": null},
-    {"number": 9877, "status": "pending", "commit": null, "note": null},
-    {"number": 9858, "status": "pending", "commit": null, "note": null},
-    {"number": 9860, "status": "pending", "commit": null, "note": null},
-    {"number": 9843, "status": "pending", "commit": null, "note": null},
-    {"number": 9886, "status": "skipped", "commit": null, "note": "scene JS error (FiberNode circular JSON in React reconciler), not explorer C# code"},
-    {"number": 9880, "status": "skipped", "commit": null, "note": "native PhysX engine error, no C# source to fix"},
-    {"number": 9870, "status": "skipped", "commit": null, "note": "scene JS error (utf8_length on undefined), not explorer C# code"},
-    {"number": 9866, "status": "skipped", "commit": null, "note": "native Unity UIElements DrawText NullRef in IL2CPP, no C# source to fix"},
-    {"number": 9864, "status": "skipped", "commit": null, "note": "network connectivity failure (SocketException 61 connection refused), not a code bug"},
-    {"number": 9863, "status": "skipped", "commit": null, "note": "NullRef with only generic IL2CPP frames (Generics__16.cpp/Generics__2.cpp), no source location or repro"},
-    {"number": 9859, "status": "skipped", "commit": null, "note": "Unity engine warning 'screen position out of frustum', no C# source"},
-    {"number": 9853, "status": "skipped", "commit": null, "note": "insufficient reproduction steps; description only says 'inconsistency' with no measurable criteria"},
-    {"number": 9850, "status": "skipped", "commit": null, "note": "scene-specific bug in Fastlane Bowling (scoring text desync), not explorer code"}
+    {
+      "number": 9906,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9905,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9903,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9893,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9883,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9878,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9873,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9877,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9858,
+      "status": "fixed",
+      "commit": "d69f3496843f9b98e8a4326b14c77723871687f5",
+      "note": null
+    },
+    {
+      "number": 9860,
+      "status": "fixed",
+      "commit": "d69f3496843f9b98e8a4326b14c77723871687f5",
+      "note": null
+    },
+    {
+      "number": 9843,
+      "status": "pending",
+      "commit": null,
+      "note": null
+    },
+    {
+      "number": 9886,
+      "status": "skipped",
+      "commit": null,
+      "note": "scene JS error (FiberNode circular JSON in React reconciler), not explorer C# code"
+    },
+    {
+      "number": 9880,
+      "status": "skipped",
+      "commit": null,
+      "note": "native PhysX engine error, no C# source to fix"
+    },
+    {
+      "number": 9870,
+      "status": "skipped",
+      "commit": null,
+      "note": "scene JS error (utf8_length on undefined), not explorer C# code"
+    },
+    {
+      "number": 9866,
+      "status": "skipped",
+      "commit": null,
+      "note": "native Unity UIElements DrawText NullRef in IL2CPP, no C# source to fix"
+    },
+    {
+      "number": 9864,
+      "status": "skipped",
+      "commit": null,
+      "note": "network connectivity failure (SocketException 61 connection refused), not a code bug"
+    },
+    {
+      "number": 9863,
+      "status": "skipped",
+      "commit": null,
+      "note": "NullRef with only generic IL2CPP frames (Generics__16.cpp/Generics__2.cpp), no source location or repro"
+    },
+    {
+      "number": 9859,
+      "status": "skipped",
+      "commit": null,
+      "note": "Unity engine warning 'screen position out of frustum', no C# source"
+    },
+    {
+      "number": 9853,
+      "status": "skipped",
+      "commit": null,
+      "note": "insufficient reproduction steps; description only says 'inconsistency' with no measurable criteria"
+    },
+    {
+      "number": 9850,
+      "status": "skipped",
+      "commit": null,
+      "note": "scene-specific bug in Fastlane Bowling (scoring text desync), not explorer code"
+    }
   ]
 }
