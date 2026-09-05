@@ -60,7 +60,7 @@ namespace DCL.AvatarRendering.Wearables
                 promiseCts.Cancel();
                 avatarAttachment.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.Failed();
 
-                throw new ThumbnailLoadFailedException($"Thumbnail load timed out after {timeoutMs}ms");
+                return LoadThumbnailsUtils.DEFAULT_THUMBNAIL;
             }
         }
     }

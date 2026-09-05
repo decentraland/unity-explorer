@@ -26,35 +26,37 @@ namespace DCL.Multiplayer.Connectivity
 
             existingValue ??= new List<OnlineUserData>();
 
-            var rootObject = JObject.Load(reader).ToObject<RootObject>();
-            foreach (DataObject rootObjectPeer in rootObject.peers)
+            var root = JObject.Load(reader);
+            var peers = root["peers"] as JArray;
+
+            if (peers == null)
+                return existingValue;
+
+            foreach (JToken peer in peers)
             {
-                existingValue.Add(new OnlineUserData()
+                string? address = peer["address"]?.Value<string>();
+                var posArray = peer["position"] as JArray;
+
+                if (address == null || posArray == null || posArray.Count < 3)
+                    continue;
+
+                JToken xToken = posArray[0];
+                JToken zToken = posArray[2];
+
+                if (xToken.Type == JTokenType.Null || zToken.Type == JTokenType.Null)
+                    continue;
+
+                existingValue.Add(new OnlineUserData
                 {
-                    position = ToVector3(rootObjectPeer.position[0], rootObjectPeer.position[2]),
-                    avatarId = rootObjectPeer.address
+                    position = ToVector3(xToken.Value<float>(), zToken.Value<float>()),
+                    avatarId = address
                 });
             }
+
             return existingValue;
         }
 
         private static Vector3 ToVector3(float x, float z) =>
             new (Convert.ToInt32(x), 0, Convert.ToInt32(z));
-
-        [Serializable, Preserve]
-        private class RootObject
-        {
-            [Preserve]
-            public List<DataObject> peers { get; set; }
-        }
-
-        [Serializable, Preserve]
-        private class DataObject
-        {
-            [Preserve]
-            public string address { get; set; }
-            [Preserve]
-            public float[] position { get; set; }
-        }
     }
 }

@@ -83,7 +83,11 @@ namespace DCL.Friends.UI.Requests
             viewInstance.cancel.CloseButton.onClick.AddListener(Close);
 
             viewInstance.received.BackButton.onClick.AddListener(Close);
-            viewInstance.received.AcceptButton.onClick.AddListener(() => Accept(inputData.Request!.From));
+            viewInstance.received.AcceptButton.onClick.AddListener(() =>
+            {
+                if (inputData.Request is { } request)
+                    Accept(request.From);
+            });
             viewInstance.received.RejectButton.onClick.AddListener(Reject);
             viewInstance.received.CloseButton.onClick.AddListener(Close);
         }
@@ -301,7 +305,10 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid RejectThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.RejectFriendshipAsync(inputData.Request!.From.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                if (inputData.Request is not { } request)
+                    return;
+
+                await friendsService.RejectFriendshipAsync(request.From.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
                 // Dont show confirmation on negative actions
                 // await ShowOperationConfirmationAsync(
@@ -345,7 +352,10 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid CancelThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.CancelFriendshipAsync(inputData.Request!.To.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                if (inputData.Request is not { } request)
+                    return;
+
+                await friendsService.CancelFriendshipAsync(request.To.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
                 // Dont show confirmation on negative actions
                 // await ShowOperationConfirmationAsync(

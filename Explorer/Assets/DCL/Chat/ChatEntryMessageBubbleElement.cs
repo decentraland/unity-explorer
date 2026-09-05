@@ -145,7 +145,7 @@ namespace DCL.Chat
             int nameLength = 0;
 
             if (string.IsNullOrEmpty(username))
-                ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"SenderValidatedName is null or empty for message: {originalMessage.MessageId} sent by wallet: {originalMessage.SenderWalletAddress}");
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"SenderValidatedName is null or empty for message: {originalMessage.MessageId} sent by wallet: {originalMessage.SenderWalletAddress}");
             else
                 nameLength = username.Length;
 
