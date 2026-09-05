@@ -251,7 +251,13 @@ inline void InitializeSimpleLitSurfaceData(float2 uv, out SurfaceData outSurface
     outSurfaceData.specular = specularSmoothness.rgb;
     outSurfaceData.smoothness = specularSmoothness.a;
     //outSurfaceData.normalTS = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
-    outSurfaceData.normalTS = NormalMapMix(uv, splatControl);
+    // normalTS is only consumed under _NORMALMAP (InitializeInputData); keep the _NORMALMAP-off
+    // variants from paying the splat normal-map samples for a value that is never read.
+    #ifdef _NORMALMAP
+        outSurfaceData.normalTS = NormalMapMix(uv, splatControl);
+    #else
+        outSurfaceData.normalTS = half3(0.0h, 0.0h, 1.0h);
+    #endif
     outSurfaceData.occlusion = 1.0;
     outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
 }
