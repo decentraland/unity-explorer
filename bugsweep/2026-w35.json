@@ -17,14 +17,14 @@
   "issues": [
     {
       "number": 9906,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "5b30f0618209929fd367b71c4a3316ea1ac78435",
       "note": null
     },
     {
       "number": 9905,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "d689c2fafaba653cf201fb2928d565ff8d63de44",
       "note": null
     },
     {
@@ -35,32 +35,32 @@
     },
     {
       "number": 9893,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "d689c2fafaba653cf201fb2928d565ff8d63de44",
       "note": null
     },
     {
       "number": 9883,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "df933eecf67bef936c4558a6e678803f42d1ed40",
       "note": null
     },
     {
       "number": 9878,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "profile fetch timeout is handled correctly (TimeoutException caught, ConnectionError shown); Sentry issue is catalyst performance telemetry, not a code bug"
     },
     {
       "number": 9873,
-      "status": "pending",
+      "status": "skipped",
       "commit": null,
-      "note": null
+      "note": "PR #9862 already deleted the committed empty file; remaining hardening requires either CI changes (forbidden) or modifying third-party GPUInstancerPro load order (too risky)"
     },
     {
       "number": 9877,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "d689c2fafaba653cf201fb2928d565ff8d63de44",
       "note": null
     },
     {
@@ -77,8 +77,8 @@
     },
     {
       "number": 9843,
-      "status": "pending",
-      "commit": null,
+      "status": "fixed",
+      "commit": "15f6afbc887c407e789971540a44c0d2950f28a4",
       "note": null
     },
     {
