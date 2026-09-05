@@ -50,11 +50,17 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.SendAsync(buffer, messageType, endOfMessage, cancellationToken);
 #else
+                if (disposed)
+                    return;
 
                 System.Net.WebSockets.WebSocketMessageType msgType = (System.Net.WebSockets.WebSocketMessageType) messageType;
 
                 await ws.SendAsync(buffer, msgType, endOfMessage, cancellationToken);
 #endif
+            }
+            catch (System.Net.WebSockets.WebSocketException e) when (e.InnerException is ObjectDisposedException)
+            {
+                // Dispose() ran between the flag check and the actual send.
             }
             catch (System.Net.WebSockets.WebSocketException e)
             {
@@ -69,6 +75,9 @@ namespace Utility.Networking
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 return await ws.ReceiveAsync(buffer, cancellationToken);
 #else
+                if (disposed)
+                    return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true, WebSocketCloseStatus.NormalClosure, null);
+
                 System.Net.WebSockets.ValueWebSocketReceiveResult result = await ws.ReceiveAsync(buffer, cancellationToken);
                 WebSocketMessageType msgType = (WebSocketMessageType) result.MessageType;
                 WebSocketCloseStatus? closeStatus = ws.CloseStatus == null ? null : (WebSocketCloseStatus) ws.CloseStatus;
@@ -80,6 +89,10 @@ namespace Utility.Networking
                         ws.CloseStatusDescription
                         );
 #endif
+            }
+            catch (System.Net.WebSockets.WebSocketException e) when (e.InnerException is ObjectDisposedException)
+            {
+                return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true, WebSocketCloseStatus.NormalClosure, null);
             }
             catch (System.Net.WebSockets.WebSocketException e)
             {
