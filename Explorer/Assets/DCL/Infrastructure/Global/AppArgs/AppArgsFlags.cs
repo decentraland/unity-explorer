@@ -1,0 +1,228 @@
+// ReSharper disable once CheckNamespace
+namespace Global.AppArgs
+{
+    public static class AppArgsFlags
+    {
+        public const string DEBUG = "debug";
+        public const string DCL_EDITOR = "hub";
+
+        public const string SKIP_VERSION_CHECK = "skip-version-check";
+        public const string SIMULATE_VERSION = "simulateVersion";
+        public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";
+        public const string SKIP_MINIMUM_SPECS_SCREEN = "skip-minimum-specs-screen";
+
+        public const string SCENE_CONSOLE = "scene-console";
+
+        public const string AUTOPILOT = "autopilot";
+        public const string MEASURE_LOADING_TIME = "measure-loading-time";
+        public const string AUTOPILOT_CSV = "csv";
+        public const string AUTOPILOT_SUMMARY = "summary";
+        public const string PROFILER_LOG_FILE = "raw";
+        public const string ENVIRONMENT = "dclenv";
+        public const string REALM = "realm";
+        public const string COMMS_ADAPTER = "comms-adapter";
+        public const string GATEKEEPER_URL = "gatekeeper-url";
+
+        /// <summary>
+        ///     Lets a realm's comms adapter be served over cleartext http, as an e2e fixture's is, provided it
+        ///     resolves to loopback. Command line only, and deliberately absent from the deep-link allowlist:
+        ///     it lowers a transport guarantee, which is never a link's call to make.
+        /// </summary>
+        public const string ACCEPT_UNTRUSTED_REALM = "accept-untrusted-realm";
+
+        /// <summary>
+        ///     Routes every supported service through this gateway origin instead of <c>gateway.{base-domain}</c>,
+        ///     and forces routing on: naming a gateway is the opt-in the <c>use-gateway</c> feature flag would
+        ///     otherwise carry, so the flag is ignored. Command line only — it aims the session's whole
+        ///     supported-service traffic at the named host, so a deep link must never set it.
+        /// </summary>
+        public const string GATEWAY = "gateway";
+
+        /// <summary>
+        ///     Points every backend host at a deployment served under this base domain instead of
+        ///     decentraland.{org,zone}, selecting <c>DecentralandEnvironment.Custom</c>. Applied from the
+        ///     command line only: it gates which realm hosts are trusted, so it has to be read before a pending deep
+        ///     link is processed. It is denied by <c>DeepLinkAllowlist</c> like the other infrastructure-pointing
+        ///     params, and accepting it in the denied-params dialog has no effect.
+        /// </summary>
+        public const string BASE_DOMAIN = "base-domain";
+
+        /// <summary>
+        ///     The chain a <c>--base-domain</c> deployment signs and transacts against: "mainnet" or "sepolia", each
+        ///     carrying the polygon network that pairs with it. Defaults to mainnet. Every decentraland environment
+        ///     answers for one chain of its own - org mainnet, zone sepolia - and this cannot move them:
+        ///     paired with one of those it is reported and dropped (<c>ChainUtils.ResolveNetwork</c>). Where the value
+        ///     is read, anything not naming a known network ends the launch instead of falling back to the default
+        ///     (<c>MainSceneLoader.CaptureEthNetworkArg</c>). Command line only, like <see cref="BASE_DOMAIN" />.
+        /// </summary>
+        public const string ETH_NETWORK = "eth-network";
+
+        public const string LOCAL_SCENE = "local-scene";
+        public const string POSITION = "position";
+        public const string SPAWN_POINT = "spawnpoint";
+        public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
+        public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
+        public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
+
+        /// <summary>
+        /// The community received here (by its ID) will be shown through a notification inviting the user to click on it and open that community card.
+        /// </summary>
+        public const string COMMUNITY = "community";
+
+        public const string FORCE_OPEN_BACKPACK = "force-open-backpack";
+
+        // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
+        public const string SIGNIN = "signin";
+
+        /// <summary>
+        ///     Referral attribution address (0x…) forwarded by the launcher.
+        ///     Untrusted input: consumers must validate it before use.
+        /// </summary>
+        public const string REFERRER = "referrer";
+
+        // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
+        public const string AUTH_REQUEST_ID = "authRequestId";
+        // See: https://github.com/decentraland/unity-explorer/issues/9524
+        // ReSharper disable once UnusedMember.Global (used on non-editor build only)
+        public const string AUTH_BRIDGE_ONLY = "login-bridge-only";
+
+        public const string FORCED_EMOTES = "self-force-emotes";
+        public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
+        public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
+        public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";
+
+        public const string PROFILE_NAME_EDITOR = "profile-name-editor";
+
+        public const string CAMERA_REEL = "camera-reel";
+        public const string FRIENDS = "friends";
+        public const string FRIENDS_API_URL = "friends-api-url";
+        public const string FRIENDS_ONLINE_STATUS = "friends-online-status";
+        public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
+        public const string VOICE_CHAT = "voice-chat";
+        public const string NEARBY_VOICE_CHAT = "nearby-voice-chat";
+        public const string DONATIONS_UI = "donations-ui";
+        public const string BUG_REPORT = "bug-report";
+
+        public const string DISABLE_DISK_CACHE = "disable-disk-cache";
+        public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
+
+        public const string IDENTITY_EXPIRATION_DURATION = "identity-expiration-duration";
+
+        public const string SIMULATE_MEMORY = "simulateMemory";
+
+        public const string LAUNCH_CDP_MONITOR_ON_START = "launch-cdp-monitor-on-start";
+
+        public const string USE_LOG_MATRIX = "use-log-matrix";
+        public const string GRAPHICS = "graphics";
+        public const string WINDOWED_MODE = "windowed-mode";
+        public const string RESOLUTION = "resolution";
+        public const string DISABLE_WINDOW_RESTRICTIONS = "disable-window-restrictions";
+        public const string DISABLE_HUD = "disable-hud";
+
+        public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
+
+        public const string COMMUNITIES_ANNOUNCEMENTS = "include-communities-announcements";
+
+        public const string HEAD_SYNC = "head-sync";
+
+        public const string DISCOVER = "discover";
+
+        public const string IN_GAME_SHOP = "in-game-shop";
+
+        public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
+
+        public const string NAME_COLOR_CHANGE = "name-color-change";
+
+        public const string EMAIL_OTP_AUTH = "email-otp-auth";
+
+        public const string AVATAR_HIGHLIGHT = "avatar-highlight";
+
+        public const string CHAT_MESSAGE_RATE_LIMIT = "chat-message-rate-limit";
+        public const string CHAT_MESSAGE_BUFFER = "chat-message-buffer";
+        public const string STOP_ON_DUPLICATE_IDENTITY = "stop-on-duplicate-identity";
+        public const string PRIVATE_CHAT_REQUIRES_TOPIC = "private-chat-requires-topic";
+        public const string CHECK_DISK_SPACE = "check-disk-space";
+        public const string FORCE_CHECK_DISK_SPACE = "force-check-disk-space";
+
+        public const string DOUBLE_JUMP = "double-jump";
+
+        public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
+
+        public const string GLIDING = "gliding";
+        public const string POINT_AT = "point-at";
+
+        public const string AVATAR_GHOSTS = "avatar-ghosts";
+
+        public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
+        public const string ALTTESTER = "alttester";
+
+        /// <summary>
+        ///     Starts the embedded MCP (Model Context Protocol) server on 127.0.0.1 so coding agents can drive the client.
+        /// </summary>
+        public const string MCP = "mcp";
+
+        /// <summary>
+        ///     Overrides the port the embedded MCP server listens on (implies <see cref="MCP" />).
+        /// </summary>
+        public const string MCP_PORT = "mcp-port";
+
+        public const string REPORT_USER = "report-user";
+
+        public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
+        public const string DOUBLE_CLICK_WALK = "double-click-walk";
+
+        public const string PULSE_MULTIPLAYER = "pulse";
+
+        public const string BYTE_WEIGHTED_LOADING_PROGRESS = "byte-weighted-loading-progress";
+
+        public const string HARDWARE_FINGERPRINT = "hardware-fingerprint";
+
+        public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
+        public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
+        public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+        /// <summary>
+        ///     Local scene development only: serve the scene as asset bundles JIT-converted by the explorer's
+        ///     embedded abgen sidecar, reading the preview server's content. Carries no URL or port — the
+        ///     content base is derived from the realm the client already has.
+        /// </summary>
+        public const string LOCAL_AB = "local-ab";
+
+        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
+
+        /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
+        public const string ABGEN_PIPELINE = "abgen-pipeline";
+
+        public const string NO_LIVEKIT_MODE = "no-livekit-mode";
+
+        public const string NATIVE_SHUTDOWN_STOPWATCH = "native-shutdown-stopwatch";
+
+        /// <summary>
+        /// Use Unity's Application.Quit() (full native teardown) on exit instead of the default hard process termination. For native debugging only.
+        /// </summary>
+        public const string SOFT_SHUTDOWN = "soft-shutdown";
+
+        public static class Multiplayer
+        {
+            public const string COMPRESSION = "compression";
+        }
+
+        public static class FeatureFlags
+        {
+            public const string URL = "feature-flags-url";
+            public const string HOSTNAME = "feature-flags-hostname";
+        }
+
+        public static class Analytics
+        {
+            public const string SESSION_ID = "session_id";
+            public const string LAUNCHER_ID = "launcher_anonymous_id";
+            public const string CAMPAIGN_ANON_USER_ID = "campaign_anon_user_id";
+        }
+
+        public static class Launcher
+        {
+            /// <summary>Version of the launcher that started the client; launchers older than the flag do not send it.</summary>
+            public const string VERSION = "launcher_version";
+        }
+    }
+}

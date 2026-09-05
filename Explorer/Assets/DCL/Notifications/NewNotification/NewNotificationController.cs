@@ -1,0 +1,511 @@
+using Cysharp.Threading.Tasks;
+using DCL.Backpack;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.FeatureFlags;
+using DCL.UI;
+using DG.Tweening;
+using MVC;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using DCL.Diagnostics;
+using DCL.Notifications.NotificationEntry;
+using DCL.Profiles;
+using UnityEngine;
+using UnityEngine.UI;
+using Utility;
+
+namespace DCL.Notifications.NewNotification
+{
+    public class NewNotificationController : ControllerBase<NewNotificationView>
+    {
+        private const float ANIMATION_DURATION = 0.5f;
+        private static readonly int SHOW_TRIGGER = Animator.StringToHash("Show");
+        private static readonly int HIDE_TRIGGER = Animator.StringToHash("Hide");
+        private static readonly TimeSpan TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN = TimeSpan.FromSeconds(5f);
+
+        /// <summary>
+        ///     Types that carry a standing condition rather than a one-off event, so a second one while the first is
+        ///     still on screen would say nothing new. Only one instance of these is ever queued or displayed at a
+        ///     time; further ones are dropped instead of piling up behind it.
+        /// </summary>
+        private static readonly List<NotificationType> COLLAPSIBLE_NOTIFICATION_TYPES = new ()
+        {
+            NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE,
+        };
+
+        private readonly NotificationIconTypes notificationIconTypes;
+        private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
+        private readonly NftTypeIconSO rarityBackgroundMapping;
+        private readonly IProfileRepository profileRepository;
+        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly Queue<INotification> notificationQueue = new ();
+        private bool isDisplaying;
+        private NotificationType? displayingNotificationType;
+        private ImageController? thumbnailImageController;
+        private ImageController badgeThumbnailImageController;
+        private ImageController friendsThumbnailImageController;
+        private ImageController marketplaceCreditsThumbnailImageController;
+        private ImageController communityThumbnailImageController;
+        private ImageController giftToastImageController;
+        private CancellationTokenSource cts;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+
+        public NewNotificationController(
+            ViewFactoryMethod viewFactory,
+            NotificationIconTypes notificationIconTypes,
+            NotificationDefaultThumbnails notificationDefaultThumbnails,
+            NftTypeIconSO rarityBackgroundMapping,
+            IProfileRepository profileRepository,
+            ImageControllerProvider imageControllerProvider) : base(viewFactory)
+        {
+            this.notificationIconTypes = notificationIconTypes;
+            this.notificationDefaultThumbnails = notificationDefaultThumbnails;
+            this.rarityBackgroundMapping = rarityBackgroundMapping;
+            this.profileRepository = profileRepository;
+            this.imageControllerProvider  = imageControllerProvider;
+            NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
+            cts = new CancellationTokenSource();
+            cts.Token.ThrowIfCancellationRequested();
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            thumbnailImageController = imageControllerProvider.Create(viewInstance!.NotificationView.NotificationImage);
+            viewInstance.NotificationView.NotificationClicked += ClickedNotification;
+            viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
+            viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
+            badgeThumbnailImageController = imageControllerProvider.Create(viewInstance.BadgeNotificationView.NotificationImage);
+            viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
+            friendsThumbnailImageController = imageControllerProvider.Create(viewInstance.FriendsNotificationView.NotificationImage);
+            viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
+            marketplaceCreditsThumbnailImageController = imageControllerProvider.Create(viewInstance.MarketplaceCreditsNotificationView.NotificationImage);
+            viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
+            giftToastImageController = imageControllerProvider.Create(viewInstance.GiftToastView.NotificationImage);
+            viewInstance.GiftToastView.NotificationClicked += ClickedNotification;
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
+            {
+                communityThumbnailImageController = imageControllerProvider.Create(viewInstance.CommunityVoiceChatNotificationView.NotificationImage);
+                viewInstance.CommunityVoiceChatNotificationView.NotificationClicked += ClickedNotification;
+            }
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            thumbnailImageController?.Dispose();
+        }
+
+        private void StopAnimation()
+        {
+            cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            cts.Token.ThrowIfCancellationRequested();
+
+            // Dismissing hands the screen slot back immediately — the fade-out that follows is cosmetic, so a
+            // collapsible type must not stay suppressed for its duration.
+            displayingNotificationType = null;
+        }
+
+        private void ClickedNotification(NotificationType notificationType, INotification notification)
+        {
+            StopAnimation();
+            NotificationsBusController.Instance.ClickNotification(notificationType, notification);
+        }
+
+        private void QueueNewNotification(INotification newNotification)
+        {
+            ReportHub.Log(ReportCategory.GIFTING, $"{newNotification.Type}");
+
+            if (COLLAPSIBLE_NOTIFICATION_TYPES.Contains(newNotification.Type) && IsPending(newNotification.Type))
+                return;
+
+            notificationQueue.Enqueue(newNotification);
+
+            if (!isDisplaying) { DisplayNewNotificationAsync().Forget(); }
+        }
+
+        /// <summary>
+        ///     Whether a notification of this type is on screen right now or waiting behind the one that is.
+        /// </summary>
+        private bool IsPending(NotificationType type)
+        {
+            if (displayingNotificationType == type)
+                return true;
+
+            foreach (INotification queued in notificationQueue)
+            {
+                if (queued.Type == type)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private async UniTaskVoid DisplayNewNotificationAsync()
+        {
+            if (viewInstance == null)
+                return;
+
+            isDisplaying = true;
+
+            try
+            {
+                while (notificationQueue.Count > 0)
+                {
+                    INotification notification = notificationQueue.Dequeue();
+                    displayingNotificationType = notification.Type;
+
+                    try
+                    {
+                        switch (notification.Type)
+                        {
+                            case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
+                            case NotificationType.INTERNAL_SERVER_ERROR:
+                            case NotificationType.INTERNAL_SCENE_CLIPBOARD_WRITE:
+                                await ProcessArrivedNotificationAsync(notification);
+                                break;
+                            case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
+                                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CommunityVoiceChat))
+                                    await ProcessCommunityVoiceChatStartedNotificationAsync(notification);
+
+                                break;
+                            case NotificationType.BADGE_GRANTED:
+                                await ProcessBadgeNotificationAsync(notification);
+                                break;
+                            case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
+                            case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
+                                await ProcessFriendsNotificationAsync(notification);
+                                break;
+                            case NotificationType.CREDITS_GOAL_COMPLETED:
+                                await ProcessMarketplaceCreditsNotificationAsync(notification);
+                                break;
+                            case NotificationType.INTERNAL_DEFAULT_SUCCESS:
+                                await ProcessArrivedNotificationAsync(notification, false);
+                                break;
+                            case NotificationType.TRANSFER_RECEIVED:
+                                await ProcessGiftNotificationAsync(notification);
+                                break;
+                            case NotificationType.TIP_RECEIVED:
+                                await ProcessTipReceivedNotificationAsync(notification);
+                                break;
+                            case NotificationType.BAN_WARNING:
+                            case NotificationType.BANNED:
+                            case NotificationType.BAN_LIFTED:
+                                await ProcessPersistentNotificationAsync(notification);
+                                break;
+                            default:
+                                await ProcessDefaultNotificationAsync(notification);
+                                break;
+                        }
+                    }
+                    catch (OperationCanceledException) { }
+
+                    // A notification that fails to display must not kill the loop: the queue keeps
+                    // being consumed and later notifications still show
+                    catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+
+                    // The natural-expiry counterpart to the reset in StopAnimation, which covers early dismissal.
+                    displayingNotificationType = null;
+                }
+            }
+            finally
+            {
+                isDisplaying = false;
+            }
+        }
+
+        private async UniTask ProcessGiftNotificationAsync(INotification notification)
+        {
+            var giftNotification = (GiftReceivedNotification)notification;
+            var giftView = viewInstance.GiftToastView;
+
+            giftView.Configure(giftNotification);
+
+            var defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+            if (defaultThumbnail.Thumbnail != null)
+            {
+                giftToastImageController.SetImage(defaultThumbnail.Thumbnail);
+            }
+
+            UpdateGiftSenderNameAsync(giftView, giftNotification.Metadata.SenderAddress, cts.Token)
+                .Forget();
+
+            await AnimateGiftNotificationAsync();
+        }
+
+        private async UniTaskVoid UpdateGiftSenderNameAsync(GiftToastView view, string address, CancellationToken ct)
+        {
+            try
+            {
+                var profile = await profileRepository.GetAsync(address, ct);
+                if (profile != null && !ct.IsCancellationRequested)
+                {
+                    view.UpdateSenderName(profile.Name, profile.UserNameColor);
+                }
+            }
+            catch (Exception) { /* ignore failures, keep address */ }
+        }
+
+
+        private async UniTask AnimateGiftNotificationAsync()
+        {
+            if (viewInstance == null) return;
+
+            try
+            {
+                viewInstance.GiftToastView.PlayNotificationAudio();
+
+                viewInstance.GiftToastAnimator.SetTrigger(SHOW_TRIGGER);
+
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                viewInstance.GiftToastAnimator.SetTrigger(HIDE_TRIGGER);
+
+                await UniTask.Delay(TimeSpan.FromSeconds(ANIMATION_DURATION));
+            }
+        }
+
+        private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
+        {
+            viewInstance!.CommunityVoiceChatNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.CommunityVoiceChatNotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.CommunityVoiceChatNotificationView.NotificationType = notification.Type;
+            viewInstance.CommunityVoiceChatNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+            viewInstance.CommunityVoiceChatNotificationView.Notification = notification;
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                communityThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.CommunityNotificationCanvasGroup);
+        }
+
+        private async UniTask ProcessArrivedNotificationAsync(INotification notification, bool enableCloseButton = true)
+        {
+            viewInstance!.SystemNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.SystemNotificationView.NotificationType = notification.Type;
+            viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+            viewInstance!.SystemNotificationView.CloseButtonContainer.SetActive(enableCloseButton);
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)viewInstance.transform);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessTipReceivedNotificationAsync(INotification notification)
+        {
+            TipReceivedNotification tipReceivedNotification = (TipReceivedNotification)notification;
+
+            if (!tipReceivedNotification.SenderProfile.HasValue)
+            {
+                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.EnforceSingleGet);
+                tipReceivedNotification.SenderProfile = profile;
+            }
+
+            viewInstance!.FriendsNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.FriendsNotificationView.NotificationType = notification.Type;
+            viewInstance.FriendsNotificationView.Notification = notification;
+
+            viewInstance!.FriendsNotificationView.ConfigureFromTipReceivedNotificationData(tipReceivedNotification);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(tipReceivedNotification.GetThumbnail()))
+                friendsThumbnailImageController.RequestImage(tipReceivedNotification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                friendsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessPersistentNotificationAsync(INotification notification)
+        {
+            viewInstance!.NotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.NotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.NotificationView.NotificationType = notification.Type;
+            viewInstance.NotificationView.Notification = notification;
+            viewInstance.NotificationView.CloseButton.gameObject.SetActive(true);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                thumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimatePersistentNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessDefaultNotificationAsync(INotification notification)
+        {
+            viewInstance!.NotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.NotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.NotificationView.NotificationType = notification.Type;
+            viewInstance.NotificationView.Notification = notification;
+            ProcessCustomMetadata(notification);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                thumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessFriendsNotificationAsync(INotification notification)
+        {
+            viewInstance!.FriendsNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.FriendsNotificationView.NotificationType = notification.Type;
+            viewInstance.FriendsNotificationView.Notification = notification;
+            ProcessCustomMetadata(notification);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                friendsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            if (notification.Type == NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED)
+                viewInstance.FriendsNotificationView.PlayAcceptedNotificationAudio();
+            else
+                viewInstance.FriendsNotificationView.PlayRequestNotificationAudio();
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessBadgeNotificationAsync(INotification notification)
+        {
+            viewInstance!.BadgeNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.BadgeNotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.BadgeNotificationView.NotificationType = notification.Type;
+            viewInstance.BadgeNotificationView.Notification = notification;
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                badgeThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            await AnimateBadgeNotificationAsync();
+        }
+
+        private async UniTask ProcessMarketplaceCreditsNotificationAsync(INotification notification)
+        {
+            viewInstance!.MarketplaceCreditsNotificationView.SetHeaderText(notification.GetHeader());
+            viewInstance.MarketplaceCreditsNotificationView.SetTitleText(notification.GetTitle());
+            viewInstance.MarketplaceCreditsNotificationView.SetNotification(notification.Type, notification);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                marketplaceCreditsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            await AnimateMarketplaceCreditsNotificationAsync();
+        }
+
+        private void ProcessCustomMetadata(INotification notification)
+        {
+            switch (notification)
+            {
+                case RewardAssignedNotification rewardAssignedNotification:
+                    viewInstance!.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    break;
+                case FriendRequestAcceptedNotification friendRequestAcceptedNotification:
+                    viewInstance!.FriendsNotificationView.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
+                    break;
+                case FriendRequestReceivedNotification friendRequestReceivedNotification:
+                    viewInstance!.FriendsNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
+                    break;
+            }
+        }
+
+        private async UniTask AnimateNotificationCanvasGroupAsync(CanvasGroup notificationCanvasGroup)
+        {
+            try
+            {
+                notificationCanvasGroup.interactable = true;
+                notificationCanvasGroup.blocksRaycasts = true;
+                await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                notificationCanvasGroup.interactable = false;
+                notificationCanvasGroup.blocksRaycasts = false;
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token)
+                                             .SuppressCancellationThrow();
+            }
+        }
+
+        private async UniTask AnimatePersistentNotificationCanvasGroupAsync(CanvasGroup notificationCanvasGroup)
+        {
+            try
+            {
+                notificationCanvasGroup.interactable = true;
+                notificationCanvasGroup.blocksRaycasts = true;
+                await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
+                await UniTask.WaitUntilCanceled(cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                notificationCanvasGroup.interactable = false;
+                notificationCanvasGroup.blocksRaycasts = false;
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token)
+                                             .SuppressCancellationThrow();
+            }
+        }
+
+        private async UniTask AnimateBadgeNotificationAsync()
+        {
+            if (viewInstance == null)
+                return;
+
+            try
+            {
+                viewInstance.BadgeNotificationView.PlayNotificationAudio();
+                viewInstance.BadgeNotificationAnimator.SetTrigger(SHOW_TRIGGER);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally { viewInstance.BadgeNotificationAnimator.SetTrigger(HIDE_TRIGGER); }
+        }
+
+        private async UniTask AnimateMarketplaceCreditsNotificationAsync()
+        {
+            if (viewInstance == null)
+                return;
+
+            try
+            {
+                viewInstance.MarketplaceCreditsNotificationView.PlayNotificationAudio();
+                viewInstance.MarketplaceCreditsNotificationAnimator.SetTrigger(SHOW_TRIGGER);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally { viewInstance.MarketplaceCreditsNotificationAnimator.SetTrigger(HIDE_TRIGGER); }
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
+    }
+}

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4648edfba40f493bb8942c8dba9d656d, type: 3}
+  m_Name: NoiseData
+  m_EditorClassIdentifier: 
+  settings:
+    invert: 0
+    normalize: 1
+    scale: 54.5
+    octaves: 4
+    persistance: 0.684
+    lacunarity: 3.74
+    seed: 14
+    offset: {x: 10.62, y: 118.85}
+    cutoff: 0
+    noiseType: 2
+    baseValue: 0
+    multiplyValue: 1
+    divideValue: 1

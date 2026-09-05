@@ -1,0 +1,84 @@
+﻿using DCL.Diagnostics;
+using DG.Tweening;
+using DG.Tweening.Plugins.Options;
+using System;
+
+namespace DCL.SDKComponents.Tween.Components
+{
+    public abstract class CustomTweener<T, TU> : ITweener
+        where T: struct
+        where TU: struct, IPlugOptions
+    {
+        private readonly TweenCallback onCompleteCallback;
+
+        private bool finished;
+        private DG.Tweening.Tween? core;
+        private ITweener customTweenerImplementation;
+
+        public T CurrentValue { get; set; }
+
+        protected CustomTweener()
+        {
+            onCompleteCallback = OnTweenComplete;
+        }
+
+        public void Initialize(T startValue, T endValue, float durationInSeconds)
+        {
+            core?.Kill();
+            finished = false;
+            core = CreateTweener(startValue, endValue, durationInSeconds);
+        }
+
+        protected abstract DG.Tweening.Tween CreateTweener(T start, T end, float duration);
+
+        public void InitializeContinuous(T startValue, T directionOrEnd, float speed)
+        {
+            core?.Kill();
+            finished = false;
+            core = CreateContinuousTweener(startValue, directionOrEnd, speed);
+        }
+
+        protected virtual DG.Tweening.Tween CreateContinuousTweener(T start, T directionOrEnd, float speed)
+        {
+            ReportHub.LogError(ReportCategory.TWEEN, $"Continuous tweener is not supported for type {typeof(T).Name}");
+            throw new NotSupportedException($"Continuous tweener is not supported for type {typeof(T).Name}");
+        }
+
+        public void Play() =>
+            core?.Play();
+
+        public void Pause() =>
+            core?.Pause();
+
+        public void Rewind() =>
+            core?.Rewind();
+
+        public void Kill(bool complete)
+        {
+            core?.Kill(complete);
+            finished = complete;
+        }
+
+        public bool IsPaused() =>
+            !core?.IsPlaying() ?? false;
+
+        public bool IsFinished() =>
+            finished;
+
+        public bool IsActive() =>
+            !IsFinished() && (!core?.IsPlaying() ?? false);
+
+        public float GetElapsedTime() =>
+            core?.Elapsed() ?? 0f;
+
+        public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
+        {
+            core?.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);
+        }
+
+        private void OnTweenComplete()
+        {
+            finished = true;
+        }
+    }
+}

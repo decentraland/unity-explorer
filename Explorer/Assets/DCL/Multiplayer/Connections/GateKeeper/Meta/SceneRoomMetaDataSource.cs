@@ -1,0 +1,87 @@
+using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility.Types;
+using ECS;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
+using System.Threading;
+using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.Pool;
+using Utility;
+
+namespace DCL.Multiplayer.Connections.GateKeeper.Meta
+{
+    public class SceneRoomMetaDataSource : ISceneRoomMetaDataSource
+    {
+        private readonly IRealmData realmData;
+        private readonly IExposedTransform characterTransform;
+        private readonly World world;
+        private readonly IDecentralandUrlsSource urlsSource;
+
+        private readonly bool forceSceneIsolation;
+
+        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.SingleScene;
+
+        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation, IDecentralandUrlsSource urlsSource)
+        {
+            this.realmData = realmData;
+            this.characterTransform = characterTransform;
+            this.world = world;
+            this.forceSceneIsolation = forceSceneIsolation;
+            this.urlsSource = urlsSource;
+        }
+
+        public MetaData.Input GetMetadataInput() =>
+            new (
+                realmData.RealmName,
+                realmData.SingleScene
+                    ? Vector2Int.zero
+                    : characterTransform.Position.ToParcel()
+            );
+
+        public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
+        {
+            // Places API is relevant for Genesis City only
+            if (realmData.SingleScene)
+                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input));
+
+            using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
+            using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);
+
+            pointersList.Add(input.Parcel.ToInt2());
+
+            string entitiesActiveEndpoint = realmData.IsGenesis() ? urlsSource.Url(DecentralandUrl.EntitiesActive) : string.Format(urlsSource.Url(DecentralandUrl.WorldEntitiesActive), realmData.RealmName);
+
+            // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
+            // currently these processes are completely separated
+            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(entitiesActiveEndpoint)),
+                PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: token);
+
+            StreamableLoadingResult<SceneDefinitions> result = promise.Result!.Value;
+
+            // Don't collapse a network failure into "no scene at this position":
+            // that path parks the room until the player changes parcel.
+            if (!result.Succeeded)
+                return Result<MetaData>.ErrorResult(result.Exception?.Message ?? "Failed to fetch scene definition");
+
+            if (entityDefinitionList.Count > 0)
+            {
+                SceneEntityDefinition? sceneDefinition = entityDefinitionList[0];
+                string? id = sceneDefinition.id;
+                Vector2Int baseParcel = sceneDefinition.metadata.scene.DecodedBase;
+                return Result<MetaData>.SuccessResult(new MetaData(id, baseParcel, input));
+            }
+
+            return Result<MetaData>.SuccessResult(new MetaData(null, Vector2Int.zero, input));
+        }
+    }
+}

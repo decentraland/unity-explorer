@@ -1,0 +1,181 @@
+using Arch.SystemGroups;
+using CrdtEcsBridge.Components.Transform;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Character;
+using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Connections.FfiClients;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Multiplayer.Connections.Rooms.Status;
+using DCL.Multiplayer.Connections.Systems;
+using DCL.Multiplayer.Connections.Systems.Throughput;
+using DCL.Multiplayer.Profiles.Announcements;
+using DCL.Multiplayer.Profiles.BroadcastProfiles;
+using DCL.Multiplayer.Profiles.Entities;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.Multiplayer.Profiles.RemoteProfiles;
+using DCL.Multiplayer.Profiles.RemoveIntentions;
+using DCL.Multiplayer.Profiles.Systems;
+using DCL.Multiplayer.Profiles.Tables;
+using DCL.Multiplayer.SDK.Components;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
+using DCL.Optimization.Pools;
+using DCL.Profiles;
+using DCL.RealmNavigation;
+using DCL.UserInAppInitializationFlow;
+using DCL.Utility;
+using ECS;
+using ECS.LifeCycle.Systems;
+using ECS.SceneLifeCycle;
+using LiveKit.Internal.FFIClients;
+using System;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.Pool;
+using Object = UnityEngine.Object;
+
+namespace DCL.PluginSystem.Global
+{
+    public class MultiplayerPlugin : IDCLGlobalPlugin<MultiplayerPlugin.Settings>
+    {
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
+        private readonly ICharacterObject characterObject;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IProfileBroadcast profileBroadcast;
+        private readonly IProfileRepository profileRepository;
+        private readonly ILoadingStatus realFlowLoadingStatus;
+        private readonly IRealmData realmData;
+        private readonly IRemoteEntities remoteEntities;
+        private readonly IRemoteMetadata remoteMetadata;
+        private readonly IRoomHub roomHub;
+        private readonly RoomsStatus roomsStatus;
+        private readonly IScenesCache scenesCache;
+        private readonly CharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly ThroughputBufferBunch islandThroughputBufferBunch;
+        private readonly ThroughputBufferBunch sceneThroughputBufferBunch;
+        private readonly IActivatableConnectiveRoom chatRoom;
+        private readonly IActivatableConnectiveRoom voiceChatRoom;
+        private readonly IRemoteAnnouncements remoteAnnouncements;
+        private readonly IRemoveIntentions removeIntentions;
+        private readonly MovementInbox movementInbox;
+
+        public MultiplayerPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            IArchipelagoIslandRoom archipelagoIslandRoom,
+            IGateKeeperSceneRoom gateKeeperSceneRoom,
+            IActivatableConnectiveRoom chatRoom,
+            IRoomHub roomHub,
+            RoomsStatus roomsStatus,
+            IProfileRepository profileRepository,
+            IProfileBroadcast profileBroadcast,
+            IDebugContainerBuilder debugContainerBuilder,
+            ILoadingStatus realFlowLoadingStatus,
+            IEntityParticipantTable entityParticipantTable,
+            IRemoteMetadata remoteMetadata,
+            ICharacterObject characterObject,
+            IRealmData realmData,
+            IRemoteEntities remoteEntities,
+            IScenesCache scenesCache,
+            CharacterDataPropagationUtility characterDataPropagationUtility,
+            IComponentPoolsRegistry poolsRegistry,
+            ThroughputBufferBunch islandThroughputBufferBunch,
+            ThroughputBufferBunch sceneThroughputBufferBunch,
+            IActivatableConnectiveRoom voiceChatRoom,
+            IRemoteAnnouncements remoteAnnouncements,
+            IRemoveIntentions removeIntentions,
+            MovementInbox movementInbox)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            this.archipelagoIslandRoom = archipelagoIslandRoom;
+            this.gateKeeperSceneRoom = gateKeeperSceneRoom;
+            this.chatRoom = chatRoom;
+            this.roomHub = roomHub;
+            this.roomsStatus = roomsStatus;
+            this.profileRepository = profileRepository;
+            this.profileBroadcast = profileBroadcast;
+            this.debugContainerBuilder = debugContainerBuilder;
+            this.realFlowLoadingStatus = realFlowLoadingStatus;
+            this.entityParticipantTable = entityParticipantTable;
+            this.remoteMetadata = remoteMetadata;
+            this.characterObject = characterObject;
+            this.remoteEntities = remoteEntities;
+            this.realmData = realmData;
+            this.scenesCache = scenesCache;
+            this.characterDataPropagationUtility = characterDataPropagationUtility;
+            this.poolsRegistry = poolsRegistry;
+            this.islandThroughputBufferBunch = islandThroughputBufferBunch;
+            this.sceneThroughputBufferBunch = sceneThroughputBufferBunch;
+            this.voiceChatRoom = voiceChatRoom;
+            this.remoteAnnouncements = remoteAnnouncements;
+            this.removeIntentions = removeIntentions;
+            this.movementInbox = movementInbox;
+        }
+
+        public void Dispose()
+        {
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(MultiplayerPlugin));
+
+            archipelagoIslandRoom.Dispose();
+            stopwatch.LogStep("archipelagoIslandRoom.Dispose");
+
+            gateKeeperSceneRoom.Dispose();
+            stopwatch.LogStep("gateKeeperSceneRoom.Dispose");
+
+#if !NO_LIVEKIT_MODE
+            IFFIClient.Default.Dispose();
+            stopwatch.LogStep("IFFIClient.Default.Dispose");
+#endif
+        }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        {
+            RemoteAvatarCollider remoteAvatarCollider = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarColliderPrefab, ct)).Value.GetComponent<RemoteAvatarCollider>();
+            remoteEntities.Initialize(remoteAvatarCollider);
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments globalPluginArguments)
+        {
+#if !NO_LIVEKIT_MODE
+            IFFIClient.Default.EnsureInitialize();
+
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
+            DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
+
+            MultiplayerProfilesSystem.InjectToWorld(ref builder,
+                remoteAnnouncements,
+                removeIntentions,
+                new RemoteProfiles(profileRepository, remoteMetadata),
+                profileBroadcast,
+                remoteEntities,
+                remoteMetadata,
+                characterObject,
+                realFlowLoadingStatus,
+                realmData,
+                movementInbox
+            );
+
+            ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
+            PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);
+            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility);
+            ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
+            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder);
+            PlayerTransformPropagationSystem.InjectToWorld(ref builder, poolsRegistry.GetReferenceTypePool<SDKTransform>());
+#endif
+        }
+
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [SerializeField] public AssetReferenceGameObject RemoteAvatarColliderPrefab;
+        }
+    }
+}

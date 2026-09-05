@@ -1,0 +1,1120 @@
+name: Unity Cloud Build
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - labeled
+      - unlabeled
+  merge_group: {}
+  push:
+    branches:
+      - dev
+    # avatar-preview-renderer merges are invisible to the Explorer project; only
+    # Explorer/ and the shared package can affect this build.
+    paths:
+      - 'Explorer/**'
+      - 'unity-shared-dependencies/**'
+      - 'scripts/cloudbuild/**'
+      - '.github/workflows/build-unitycloud.yml'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Select level of profiling'
+        required: true
+        default: 'none'
+        type: choice
+        options:
+          - none
+          - profile
+          - deep
+      compression:
+        description: 'Level of compression'
+        required: true
+        default: 'LZ4HC'
+        type: choice
+        options:
+          - None
+          - LZ4
+          - LZ4HC
+      clean_build:
+        description: 'Clean Build'
+        required: false
+        default: false
+        type: boolean
+      cache_strategy:
+        description: 'Select cache strategy'
+        required: true
+        default: 'library'
+        type: choice
+        options:
+          - none
+          - library
+          - workspace
+          - inherit
+      sentry_enabled:
+        description: 'Enable Sentry'
+        required: false
+        type: boolean
+        default: false
+      script_debugging:
+        description: 'Enable Script Debugging (forces Development build)'
+        required: false
+        type: boolean
+        default: false
+      delta_threshold_macos_mb:
+        description: 'Warn if macOS growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      delta_threshold_windows_mb:
+        description: 'Warn if Windows growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      enforce_delta:
+        description: 'Build fails when Δ MB exceeds threshold'
+        required: false
+        default: false
+        type: boolean
+      enforce_cap:
+        description: 'Build fails when size MB exceeds cap'
+        required: false
+        default: false
+        type: boolean
+      force_sign:
+        description: 'Run Windows code-signing steps for testing (non-blocking)'
+        required: false
+        default: false
+        type: boolean
+      platforms:
+        description: 'Which platforms to build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - windows-only
+          - macos-only
+      install_source:
+        description: 'Install source baked into the build'
+        required: true
+        default: 'launcher'
+        type: choice
+        options:
+          - launcher
+          - epic
+  workflow_call:
+    inputs:
+      profile:
+        required: true
+        type: string
+        default: 'none'
+      compression:
+        required: false
+        type: string
+        default: 'LZ4HC'
+      clean_build:
+        required: true
+        default: true
+        type: boolean
+      cache_strategy:
+        required: true
+        default: 'library'
+        type: string
+      version:
+        required: true
+        type: string
+      sentry_enabled:
+        required: false
+        type: boolean
+        default: false
+      script_debugging:
+        required: false
+        type: boolean
+        default: false
+      is_release_build:
+        type: boolean
+        required: false
+        default: false
+      install_source:
+        required: false
+        default: 'launcher'
+        type: string
+      tag_version:
+        type: string
+        required: false
+      delta_threshold_macos_mb:
+        description: 'Warn if macOS growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      delta_threshold_windows_mb:
+        description: 'Warn if Windows growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      enforce_delta:
+        description: 'Build fails when Δ MB exceeds threshold'
+        required: false
+        default: false
+        type: boolean
+      enforce_cap:
+        description: 'Build fails when size MB exceeds cap'
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      ES_USERNAME:
+        description: 'SSL.com username for Windows code signing'
+        required: false
+      ES_PASSWORD:
+        description: 'SSL.com password for Windows code signing'
+        required: false
+      WINDOWS_CREDENTIAL_ID_SIGNER:
+        description: 'SSL.com credential ID for Windows code signing'
+        required: false
+      ES_TOTP_SECRET:
+        description: 'SSL.com TOTP secret for Windows code signing'
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.install_source }}
+  # Only cancel an in-flight build when the new event will actually produce a new useful build.
+  # Otherwise an incidental pull_request event (e.g. converted_to_draft race, non-override label change)
+  # would cancel a real in-progress build and let the new run skip prebuild/build, leaving the
+  # Build Gate falsely green.
+  cancel-in-progress: >-
+    ${{
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'merge_group' ||
+      (
+        github.event_name == 'pull_request' &&
+        (
+          github.event.action == 'opened' ||
+          github.event.action == 'reopened' ||
+          github.event.action == 'synchronize' ||
+          github.event.action == 'ready_for_review' ||
+          (
+            (github.event.action == 'labeled' || github.event.action == 'unlabeled') &&
+            (
+              github.event.label.name == 'force-build' ||
+              github.event.label.name == 'clean-build' ||
+              github.event.label.name == 'windows-only' ||
+              github.event.label.name == 'macos-only'
+            )
+          )
+        )
+      )
+    }}
+
+jobs:
+  prebuild:
+    name: Prebuild
+    runs-on: ubuntu-latest
+    # contents: read — checkout + the version composite's `git fetch origin main:main --tags`
+    #   over the checkout's persisted credentials.
+    # statuses: write — "Skip build and test checks" posts 4 commit statuses via github-script.
+    # pull-requests: read — step-security/changed-files' REST fallback (GET /pulls/{n}/files).
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: read
+    timeout-minutes: 20
+    # Skip when PR has 'perf_test' label (only performance tests should run)
+    if: |
+      !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
+        (github.ref == 'refs/heads/dev') ||
+        (github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch') ||
+        (
+          github.event_name == 'pull_request' &&
+          (
+            (
+              (github.event.action == 'opened' ||
+               github.event.action == 'reopened' ||
+               github.event.action == 'synchronize') &&
+              (
+                !github.event.pull_request.draft ||
+                contains(github.event.pull_request.labels.*.name, 'force-build') ||
+                contains(github.event.pull_request.labels.*.name, 'clean-build')
+              )
+            ) ||
+            github.event.action == 'ready_for_review' ||
+            (
+              (github.event.action == 'labeled' || github.event.action == 'unlabeled') &&
+              (
+                github.event.label.name == 'force-build' ||
+                github.event.label.name == 'clean-build' ||
+                github.event.label.name == 'windows-only' ||
+                github.event.label.name == 'macos-only'
+              )
+            )
+          )
+        )
+      )
+    outputs:
+      should_build: ${{ steps.decide.outputs.should_build }}
+      commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
+      options: ${{ steps.get_options.outputs.options }}
+      version: ${{ github.event.inputs.version || inputs.version || steps.get_version.outputs.full_version }}
+      sentry_environment: ${{ steps.get_sentry.outputs.environment }}
+      sentry_upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
+      sentry_enabled: ${{ steps.get_sentry.outputs.sentry_enabled }}
+      clean_build: ${{ steps.set_defaults.outputs.clean_build }}
+      cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
+      install_source: ${{ steps.set_defaults.outputs.install_source }}
+      targets: ${{ steps.get_targets.outputs.targets }}
+    steps:
+      - name: Plan checkout
+        id: plan
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]] || { [[ -z "${{ github.event.inputs.version }}" ]] && [[ -z "${{ inputs.version }}" ]]; }; then
+            echo "checkout=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkout=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout code
+        if: steps.plan.outputs.checkout == 'true'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Detect changes under Explorer/** or unity-shared-dependencies/**
+        if: github.event_name == 'pull_request'
+        id: changed_explorer
+        uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
+        with:
+          files: |
+            Explorer/**
+            unity-shared-dependencies/**
+
+      - name: Decide whether to build
+        id: decide
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          should_build=false
+
+          # Non-PR triggers that reached prebuild => build
+          echo "[check non-PR] event_name='${{ github.event_name }}' != 'pull_request'"
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "[non-PR] TRUE -> should_build=true"
+            should_build=true
+          fi
+
+          if [ "$should_build" = "false" ]; then
+            labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+            echo "labels='$labels'"
+
+            has_override=false
+            echo "[check override] searching for 'force-build|clean-build' in labels"
+            echo "$labels" | grep -qwE 'force-build|clean-build' && has_override=true
+
+            echo "has_override='$has_override'"
+            if [ "$has_override" = "true" ]; then
+              echo "[override] TRUE -> should_build=true"
+              should_build=true
+            fi
+          fi
+
+          if [ "$should_build" = "false" ]; then
+            # If still draft and no override => do not build
+            is_draft="${{ github.event.pull_request.draft }}"
+            echo "[check draft] is_draft='$is_draft'"
+            if [ "$is_draft" = "true" ]; then
+              echo "[draft] TRUE -> should_build=false"
+            else
+              explorer_changed="${{ steps.changed_explorer.outputs.any_changed }}"
+              echo "[check explorer_changed] explorer_changed='$explorer_changed'"
+              if [ "$explorer_changed" = "true" ]; then
+                echo "[explorer_changed] TRUE -> should_build=true"
+                should_build=true
+              else
+                echo "[explorer_changed] FALSE -> should_build=false"
+              fi
+            fi
+          fi
+
+          echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
+          echo "Final decision: should_build=$should_build"
+
+      - name: Skip build and test checks
+        if: steps.decide.outputs.should_build == 'false' && github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const sha = context.payload.pull_request.head.sha;
+            const checks = [
+              'Build (macos)',
+              'Build (windows64)',
+              'Test (editmode)',
+              'Test (playmode)'
+            ];
+            for (const check of checks) {
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha,
+                state: 'success',
+                context: check,
+                description: 'Skipped — no Explorer/ or unity-shared-dependencies/ changes detected'
+              });
+            }
+            console.log(`Posted success statuses for: ${checks.join(', ')}`);
+
+      - name: Get commit SHA
+        if: steps.decide.outputs.should_build == 'true'
+        id: get_commit_sha
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "commit_sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "commit_sha=$GITHUB_SHA" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Debug Commit SHA
+        if: steps.decide.outputs.should_build == 'true' && steps.plan.outputs.checkout == 'true'
+        run: |
+          echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
+          echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"
+          echo "HEAD Commit: $(git rev-parse HEAD)"
+
+      - name: Get version
+        id: get_version
+        if: steps.decide.outputs.should_build == 'true' && steps.plan.outputs.checkout == 'true'
+        uses: ./.github/actions/version
+        with:
+          commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
+
+      - name: Get Sentry parameters
+        if: steps.decide.outputs.should_build == 'true'
+        id: get_sentry
+        run: |
+          #!/bin/bash
+
+          sentry_enabled="${{ github.event.inputs.sentry_enabled || inputs.sentry_enabled }}"
+
+          if [[ "$sentry_enabled" != "true" && "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "Checking PR labels: ${{ join(github.event.pull_request.labels.*.name, ', ') }}"
+            sentry_enabled=$(echo "${{ join(github.event.pull_request.labels.*.name, ' ') }}" | grep -qw 'enable-sentry' && echo true || echo false)
+          fi
+
+          if [[ "$sentry_enabled" == "true" ]]; then
+            if [[ "${{ inputs.is_release_build }}" == "true" ]]; then
+              echo "environment=production" >> "$GITHUB_OUTPUT"
+            else
+              echo "environment=development" >> "$GITHUB_OUTPUT"
+            fi
+
+            echo "upload_symbols=true" >> "$GITHUB_OUTPUT"
+            echo "sentry_enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=" >> "$GITHUB_OUTPUT"
+            echo "upload_symbols=false" >> "$GITHUB_OUTPUT"
+            echo "sentry_enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set default values
+        if: steps.decide.outputs.should_build == 'true'
+        id: set_defaults
+        run: |
+          # Clean build logic
+          if [ "${{ github.event.inputs.clean_build }}" ]; then
+            clean_build=${{ github.event.inputs.clean_build }}
+          elif [ "${{ inputs.clean_build }}" ]; then
+            clean_build=${{ inputs.clean_build }}
+          else
+            clean_build=false
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              echo "Checking PR labels: ${{ join(github.event.pull_request.labels.*.name, ', ') }}"
+              # Proper label check with spaces
+              clean_build=$(echo "${{ join(github.event.pull_request.labels.*.name, ' ') }}" | grep -qw 'clean-build' && echo true || echo false)
+            fi
+          fi
+          echo "Set clean_build to: $clean_build"
+          echo "clean_build=${clean_build}" >> $GITHUB_OUTPUT
+
+          if [ "${{ github.event.inputs.cache_strategy }}" ]; then
+            cache_strategy=${{ github.event.inputs.cache_strategy }}
+          elif [ "${{ inputs.cache_strategy }}" ]; then
+            cache_strategy=${{ inputs.cache_strategy }}
+          else
+            cache_strategy='library'
+          fi
+          echo "Set cache_strategy to: $cache_strategy"
+          echo "cache_strategy=${cache_strategy}" >> $GITHUB_OUTPUT
+
+          if [ "${{ github.event.inputs.install_source }}" ]; then
+            install_source=${{ github.event.inputs.install_source }}
+          elif [ "${{ inputs.install_source }}" ]; then
+            install_source=${{ inputs.install_source }}
+          else
+            install_source='launcher'
+          fi
+          echo "Set install_source to: $install_source"
+          echo "install_source=${install_source}" >> $GITHUB_OUTPUT
+
+      - name: Get BuildOptions
+        if: steps.decide.outputs.should_build == 'true'
+        id: get_options
+        run: |
+          #!/bin/bash
+
+          #options=("DetailedBuildReport")
+          options=()
+
+          # compression - default is LZ4HC
+          compression="${{ github.event.inputs.compression || inputs.compression || 'LZ4HC' }}"
+          if [[ "$compression" == "LZ4" ]]; then
+            options+=("CompressWithLz4")
+          elif [[ "$compression" == "LZ4HC" ]]; then
+            options+=("CompressWithLz4HC")
+          fi
+
+          # input.profile
+          profile="${{ github.event.inputs.profile || inputs.profile }}"
+
+          if [[ "$profile" == "profile" || "$profile" == "deep" ]]; then
+            options+=("Development")
+            options+=("ConnectWithProfiler")
+          fi
+
+          if [[ "$profile" == "deep" ]]; then
+            options+=("EnableDeepProfilingSupport")
+          fi
+
+          # Script Debugging: input toggle (workflow_dispatch / workflow_call) or 'script-debugging' PR label.
+          # AllowDebugging requires a Development build to be honored by Unity.
+          script_debugging="${{ github.event.inputs.script_debugging || inputs.script_debugging }}"
+
+          if [[ "$script_debugging" != "true" && "${{ github.event_name }}" == "pull_request" ]]; then
+            script_debugging=$(echo "${{ join(github.event.pull_request.labels.*.name, ' ') }}" | grep -qw 'script-debugging' && echo true || echo false)
+          fi
+
+          if [[ "$script_debugging" == "true" ]]; then
+            # Add Development only if not already added by profile mode
+            if [[ ! " ${options[*]} " =~ " Development " ]]; then
+              options+=("Development")
+            fi
+            options+=("AllowDebugging")
+          fi
+
+          # Write the array as a comma-separated string
+          # Set the Internal Field Separator to comma
+          IFS=,
+          echo "options=${options[*]}" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Determine build targets
+        if: steps.decide.outputs.should_build == 'true'
+        id: get_targets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # platform_build_mode: windows | macos | both
+          platform_build_mode=both
+
+          dispatch_platforms="${{ github.event.inputs.platforms }}"
+          echo "Dispatch platforms: '$dispatch_platforms'"
+
+          if [ "$dispatch_platforms" = "windows-only" ]; then
+            platform_build_mode=windows
+          elif [ "$dispatch_platforms" = "macos-only" ]; then
+            platform_build_mode=macos
+          else
+            labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+            echo "Labels: '$labels'"
+
+            label_match_count=0
+            if echo "$labels" | grep -qw 'windows-only'; then
+              platform_build_mode=windows
+              label_match_count=$((label_match_count + 1))
+            fi
+            if echo "$labels" | grep -qw 'macos-only'; then
+              platform_build_mode=macos
+              label_match_count=$((label_match_count + 1))
+            fi
+
+            if [ "$label_match_count" -gt 1 ]; then
+              echo "::error::Both 'windows-only' and 'macos-only' labels are applied. Remove one — they are mutually exclusive."
+              exit 1
+            fi
+          fi
+
+          echo "Platform build mode: $platform_build_mode"
+
+          case "$platform_build_mode" in
+            windows) targets='["windows64"]' ;;
+            macos)   targets='["macos"]' ;;
+            both)    targets='["windows64","macos"]' ;;
+            *) echo "::error::Unknown platform_build_mode '$platform_build_mode'"; exit 1 ;;
+          esac
+
+          echo "Targets: $targets"
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: prebuild
+    if: needs.prebuild.outputs.should_build == 'true'
+    # contents: read — checkout + the size-budget step's GET /releases/latest.
+    # actions: read — build.py resolves its own job URL via GET /actions/runs/{run_id}/jobs.
+    # pull-requests: write — live CI status comment upsert (issue-comment POST/PATCH/DELETE
+    #   on the PR via .github/actions/ci-status-comment/upsert-ci-status.sh).
+    #   Safe on this `pull_request` (not `pull_request_target`) trigger: a fork PR gets a
+    #   read-only GITHUB_TOKEN that `permissions:` cannot escalate, and cannot run this job
+    #   anyway (the build needs UNITY_CLOUD_API_KEY/ORG_ID/PROJECT_ID, unavailable to forks);
+    #   a same-repo branch is pushed by someone who already holds this capability with write access.
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    # Safety ceiling around the 450m retry budget + surrounding steps.
+    timeout-minutes: 510
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.prebuild.outputs.targets) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12.3
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/cloudbuild/requirements.txt
+
+      - name: Execute Unity Cloud build
+        uses: nick-fields/retry@v3
+        with:
+          # Wraps QUEUE_TIMEOUT (240m) + BUILD_TIMEOUT (180m) + buffer.
+          timeout_minutes: 450
+          max_attempts: 2
+          retry_on_exit_code: 99
+          retry_wait_seconds: 30
+          on_retry_command: |
+            echo "::warning::🔁 Unity Cloud Build retry triggered at $(date '+%Y-%m-%d %H:%M:%S'). The next attempt will reattach to the persisted build if it is still in flight."
+          command: |
+            echo "🔧 Starting Unity Cloud Build attempt at $(date '+%Y-%m-%d %H:%M:%S')"
+            python -u scripts/cloudbuild/build.py
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+          POLL_TIME: 60
+          QUEUE_POLL_TIME: 120
+          STALE_POLL_THRESHOLD: 600
+          LOG_STALL_THRESHOLD: 900
+          QUEUE_TIMEOUT: 14400
+          BUILD_TIMEOUT: 10800
+          TARGET: t_${{ matrix.target }}
+          # For the live PR status-comment update the moment the Unity-side
+          # build id is known; empty PR number (push/dispatch) disables it.
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
+          BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
+          CLEAN_BUILD: ${{ needs.prebuild.outputs.clean_build }}
+          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }}
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          TAG_VERSION: ${{ inputs.tag_version }}
+          #Possible values: { none, library, workspace, inherit }
+          # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
+          # (The "PARAM_" prefix exists to allow any future values config-free)
+          # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
+          # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
+          PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
+          # solves https://github.com/decentraland/unity-explorer/issues/6789
+          # use pre-defined sentry dsn, but in case it is not defined, use the development sentry project
+          PARAM_SENTRY_DSN: ${{ inputs.is_release_build && secrets.SENTRY_DSN || secrets.SENTRY_DSN_DEV }}
+          PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
+          PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
+          PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
+          PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
+
+      # Must run before any always() log/report steps: on cancellation GitHub grants a 5-minute
+      # grace window, and the DELETE that frees the Unity-side queue slot has to win that race
+      # (a large-log upload ahead of it can eat the whole window). Also runs on failure() so an
+      # outer-step timeout doesn't leave a Unity-side build holding a slot.
+      - name: Cancel Unity Cloud build
+        if: ${{ cancelled() || failure() }}
+        timeout-minutes: 2
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+        run: python -u scripts/cloudbuild/build.py --cancel || true
+
+      # the app-local Visual C++ runtime (deployed by VCRedistBuildPostprocessor)
+      # is what lets the player start without the VC++ Redistributable installed
+      - name: Verify app-local VC++ runtime
+        if: matrix.target == 'windows64'
+        run: |
+          set -euo pipefail
+          for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+            if [[ ! -f "build/$dll" ]]; then
+              echo "::error::$dll missing from build/ (VCRedistBuildPostprocessor regression?)"
+              exit 1
+            fi
+            if [[ "$(head -c2 "build/$dll")" != "MZ" ]]; then
+              echo "::error::$dll is not a PE image (Git LFS pointer?)"
+              exit 1
+            fi
+          done
+
+      - name: Locate Windows main executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        run: |
+          set -euo pipefail
+          MAIN_EXE=$(find build -maxdepth 1 -name '*.exe' ! -name 'UnityCrashHandler64.exe' | head -n1)
+          if [[ -z "$MAIN_EXE" ]]; then
+            echo "::error::No main .exe found in build/"
+            exit 1
+          fi
+          MAIN_EXE_ABS=$(readlink -f "$MAIN_EXE")
+          echo "MAIN_EXE=$MAIN_EXE_ABS" >> "$GITHUB_ENV"
+          echo "Located: $MAIN_EXE_ABS"
+
+          # the UUAV media helper (deployed by HelperBuildPostprocessor)
+          # is a user-facing executable and must be signed like the game exe
+          HELPER_EXE=$(find build -path '*/Plugins/x86_64/uuav-helper.exe' | head -n1)
+          if [[ -z "$HELPER_EXE" ]]; then
+            echo "::error::uuav-helper.exe not found in build/ (HelperBuildPostprocessor regression?)"
+            exit 1
+          fi
+          HELPER_EXE_ABS=$(readlink -f "$HELPER_EXE")
+          echo "HELPER_EXE=$HELPER_EXE_ABS" >> "$GITHUB_ENV"
+          echo "Located: $HELPER_EXE_ABS"
+
+      - name: Sign Windows executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        uses: sslcom/esigner-codesign@b7f8ff36fc0de8690fbbab8e5b4421d29802f747 # develop @ 2025-06-23, pinned for supply-chain safety
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ env.MAIN_EXE }}
+          override: 'true'
+          malware_block: 'false'
+          environment_name: PROD
+
+      - name: Sign UUAV helper executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        uses: sslcom/esigner-codesign@b7f8ff36fc0de8690fbbab8e5b4421d29802f747 # develop @ 2025-06-23, pinned for supply-chain safety
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ env.HELPER_EXE }}
+          override: 'true'
+          malware_block: 'false'
+          environment_name: PROD
+
+      - name: Verify Windows signature
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq osslsigncode > /dev/null 2>&1
+
+          for exe in "$MAIN_EXE" "$HELPER_EXE"; do
+            echo "Verifying signature on $exe ..."
+            osslsigncode verify -in "$exe"
+            echo "::notice::Signature verified for $exe"
+          done
+
+      - name: 'Tar artifact to maintain original permissions'
+        if: matrix.target == 'macos'
+        run: tar --exclude='build/Decentraland_BackUpThisFolder_ButDontShipItWithYourGame' -cvf build.tar build
+          
+      - name: Set artifact name
+        id: set_artifact_name
+        run: |
+          if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
+            echo "artifact_name=Decentraland_${{ matrix.target }}" >> $GITHUB_ENV
+          else
+            echo "artifact_name=Decentraland_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}" >> $GITHUB_ENV
+          fi
+
+      - name: Upload artifact for macOS
+        id: upload-macos-artifact
+        if: matrix.target == 'macos'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.artifact_name }}
+          path: build.tar
+          if-no-files-found: error
+
+      - name: Upload artifact for Windows
+        id: upload-windows-artifact
+        if: matrix.target == 'windows64'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.artifact_name }}
+          path: |
+            build
+            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            !build/**/*_BurstDebugInformation_DoNotShip
+            !build/**/*.pdb
+          if-no-files-found: error
+
+      - name: Compress the build folder to upload it to S3
+        run: |
+          mkdir upload_to_s3/ && \
+          if [ "${{ matrix.target }}" == "macos" ]; then
+            zip -r upload_to_s3/${{ env.artifact_name }}.zip build.tar
+          elif [ "${{ matrix.target }}" == "windows64" ]; then
+            cd build
+            zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**" -x "*.pdb"
+          fi
+
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Enforce artifact size budget
+        id: size_check
+        env:
+          # Per-target absolute caps (MB)
+          MAX_MACOS_MB: 450
+          MAX_WINDOWS64_MB: 360
+
+          # Per-platform delta thresholds (MB); 0 = disabled
+          DELTA_MACOS_MB:   ${{ github.event.inputs.delta_threshold_macos_mb   || inputs.delta_threshold_macos_mb   || '0' }}
+          DELTA_WINDOWS_MB: ${{ github.event.inputs.delta_threshold_windows_mb || inputs.delta_threshold_windows_mb || '0' }}
+
+          # Enforcement toggles (when true => FAIL build)
+          ENFORCE_DELTA: ${{ github.event.inputs.enforce_delta || inputs.enforce_delta || false }}
+          ENFORCE_CAP:   ${{ github.event.inputs.enforce_cap   || inputs.enforce_cap   || false }}
+
+          REPO_FULL: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          FILE="upload_to_s3/${{ env.artifact_name }}.zip"
+          if [ ! -f "$FILE" ]; then
+            echo "::error::Artifact zip not found: $FILE"
+            exit 1
+          fi
+
+          # Current size in bytes
+          BYTES=$(stat -c%s "$FILE" 2>/dev/null || stat -f%z "$FILE")
+
+          # Convert to MB (decimal, 1 MB = 1,000,000) and MiB (binary, 1 MiB = 1,048,576)
+          MB_DEC=$(awk -v b="$BYTES" 'BEGIN { printf("%.1f", b/1000000) }')
+          MIB_BIN=$(awk -v b="$BYTES" 'BEGIN { printf("%.1f", b/1048576) }')
+
+          # Per-platform caps and delta thresholds
+          case "${{ matrix.target }}" in
+            macos)     MAX=$MAX_MACOS_MB    ; MAX_DELTA_MB=$DELTA_MACOS_MB   ;;
+            windows64) MAX=$MAX_WINDOWS64_MB; MAX_DELTA_MB=$DELTA_WINDOWS_MB ;;
+            *)         MAX=0; MAX_DELTA_MB=0 ;;
+          esac
+
+          echo "Checking ${{ matrix.target }} → ${MB_DEC} MB / ${MIB_BIN} MiB (cap ${MAX} MB, delta threshold ${MAX_DELTA_MB} MB)"
+
+          # Lookup latest release tag from GitHub API
+          API_LATEST="https://api.github.com/repos/${REPO_FULL}/releases/latest"
+          RELEASE_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" "$API_LATEST")
+          RELEASE_TAG=$(echo "$RELEASE_JSON" | jq -r '.tag_name // empty')
+
+          LATEST_FOUND=false
+          if [ -n "$RELEASE_TAG" ]; then
+            REPO_NAME="${REPO_FULL#*/}"
+            LATEST_NAME="${{ env.artifact_name }}.zip"
+            S3_URL="https://explorer-artifacts.decentraland.org/@dcl/${REPO_NAME}/releases/${RELEASE_TAG}/${LATEST_NAME}"
+
+            CL=$(curl -sI "$S3_URL" | awk '/[Cc]ontent-[Ll]ength:/ {print $2}' | tr -d '\r')
+            if [ -n "$CL" ]; then
+              MB_LATEST=$(( (CL + 999999) / 1000000 ))
+              MIB_LATEST=$(awk -v b="$CL" 'BEGIN { printf("%.1f", b/1048576) }')
+              LATEST_FOUND=true
+              echo "Latest release: ${RELEASE_TAG} → ${MB_LATEST} MB / ${MIB_LATEST} MiB"
+            fi
+          fi
+
+          # Delta
+          DELTA_MB="N/A"; DELTA_PCT="N/A"
+          if $LATEST_FOUND; then
+            DELTA_MB=$(awk -v cur="$MB_DEC" -v base="$MB_LATEST" 'BEGIN { printf("%d", cur - base) }')
+            DELTA_PCT=$(awk -v cur="$MB_DEC" -v base="$MB_LATEST" 'BEGIN { if (base==0){print "N/A"} else {printf("%.2f%%",(cur-base)*100.0/base)} }')
+          fi
+
+          # Flags
+          CAP_EXCEEDED=false
+          DELTA_EXCEEDED=false
+
+          if [ "${MAX:-0}" -gt 0 ] && (( $(echo "$MB_DEC > $MAX" | bc -l) )); then
+            CAP_EXCEEDED=true
+            [ "${ENFORCE_CAP}" = "true" ] && echo "::error::Artifact exceeds cap" || echo "::warning::Artifact exceeds cap"
+          fi
+
+          if $LATEST_FOUND && [ "${MAX_DELTA_MB:-0}" -gt 0 ]; then
+            ABS_DELTA_MB=${DELTA_MB#-}
+            if [ "$ABS_DELTA_MB" -gt "$MAX_DELTA_MB" ]; then
+              DELTA_EXCEEDED=true
+              [ "${ENFORCE_DELTA}" = "true" ] && echo "::error::Δ ${DELTA_MB} MB vs latest release exceeds threshold" || echo "::warning::Δ ${DELTA_MB} MB vs latest release exceeds threshold"
+            fi
+          fi
+
+          # Summary
+          {
+            echo "### Artifact size check (vs latest release)"
+            echo "_All sizes shown in both decimal MB (1 MB = 1,000,000 bytes) and binary MiB (1 MiB = 1,048,576 bytes)._"
+            echo
+            echo "| Target | File | Size (MB / MiB) | Cap (MB) | Δ MB vs latest release | Δ % vs latest release | Δ threshold (MB) | Result |"
+            echo "|---|---|---:|---:|---:|---:|---:|---|"
+
+            RESULT="✅ OK"
+            if [ "$CAP_EXCEEDED" = true ] || [ "$DELTA_EXCEEDED" = true ]; then
+              if [ "$CAP_EXCEEDED" = true ] && [ "$DELTA_EXCEEDED" = true ]; then
+                RESULT="❌ CAP & DELTA EXCEEDED"
+              elif [ "$CAP_EXCEEDED" = true ]; then
+                RESULT="❌ CAP EXCEEDED"
+              else
+                RESULT="❌ DELTA EXCEEDED"
+              fi
+            fi
+
+            if $LATEST_FOUND; then
+              echo "| ${{ matrix.target }} | \`$FILE\` | ${MB_DEC} / ${MIB_BIN} | ${MAX:-0} | $DELTA_MB | $DELTA_PCT | ${MAX_DELTA_MB:-0} | ${RESULT} |"
+              echo
+              echo "- Latest release: **${RELEASE_TAG}** (${MB_LATEST} MB / ${MIB_LATEST} MiB)"
+            else
+              echo "| ${{ matrix.target }} | \`$FILE\` | ${MB_DEC} / ${MIB_BIN} | ${MAX:-0} | N/A | N/A | ${MAX_DELTA_MB:-0} | ${RESULT} |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Export key values so the PR comment workflow can include them
+          echo "size_mb=$MB_DEC" >> "$GITHUB_OUTPUT"
+          echo "size_mib=$MIB_BIN" >> "$GITHUB_OUTPUT"
+          echo "cap_mb=${MAX:-0}" >> "$GITHUB_OUTPUT"
+          echo "delta_mb=$DELTA_MB" >> "$GITHUB_OUTPUT"
+          echo "delta_pct=$DELTA_PCT" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG:-}" >> "$GITHUB_OUTPUT"
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+
+          # Enforce (fail the job) only if toggles are true
+          if [ "$CAP_EXCEEDED" = true ] && [ "${ENFORCE_CAP}" = "true" ]; then exit 1; fi
+          if [ "$DELTA_EXCEEDED" = true ] && [ "${ENFORCE_DELTA}" = "true" ]; then exit 1; fi
+
+      - name: Save size report
+        if: always() && steps.size_check.outputs.result != ''
+        run: |
+          mkdir -p size_report
+          {
+            echo "release_tag=${{ steps.size_check.outputs.release_tag }}"
+            echo "| ${{ matrix.target }} | ${{ steps.size_check.outputs.size_mb }} / ${{ steps.size_check.outputs.size_mib }} | ${{ steps.size_check.outputs.cap_mb }} | ${{ steps.size_check.outputs.delta_mb }} | ${{ steps.size_check.outputs.delta_pct }} | ${{ steps.size_check.outputs.result }} |"
+          } > size_report/size_report_${{ matrix.target }}.md
+
+      - name: Upload size report
+        if: always() && steps.size_check.outputs.result != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: size_report_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
+          path: size_report/
+          if-no-files-found: warn
+
+      - name: Set SHA, branch, and build prefix
+        run: |
+          echo "SHA_SHORT=$(echo ${{ needs.prebuild.outputs.commit_sha }} | cut -c1-7)" >> $GITHUB_ENV
+          echo "SAFE_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> $GITHUB_ENV
+
+          EVENT_NAME="${{ github.event_name }}"
+          echo "Detected event: $EVENT_NAME"
+          case "$EVENT_NAME" in
+            pull_request) echo "BUILD_PREFIX=pr" >> $GITHUB_ENV ;;
+            push) echo "BUILD_PREFIX=pu" >> $GITHUB_ENV ;;
+            merge_group) echo "BUILD_PREFIX=mg" >> $GITHUB_ENV ;;
+            workflow_dispatch) echo "BUILD_PREFIX=wd" >> $GITHUB_ENV ;;
+            workflow_call) echo "BUILD_PREFIX=wc" >> $GITHUB_ENV ;;
+            schedule) echo "BUILD_PREFIX=sc" >> $GITHUB_ENV ;;
+            *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
+          esac
+
+      - name: Compute S3 destination path
+        env:
+          RESOLVED_DESTINATION_PATH: "${{
+            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
+            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
+          }}"
+        run: |
+          echo "DESTINATION_PATH=${RESOLVED_DESTINATION_PATH}" >> $GITHUB_ENV
+
+      - name: Upload artifact to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+        run: |
+          npx @dcl/cdn-uploader@next \
+            --bucket $EXPLORER_TEAM_S3_BUCKET \
+            --local-folder upload_to_s3 \
+            --bucket-folder $DESTINATION_PATH
+
+      - name: Print S3 upload URL
+        run: |
+          ARTIFACT_URL="https://explorer-artifacts.decentraland.org/${DESTINATION_PATH}/${{ env.artifact_name }}.zip"
+          echo "::notice::Artifact uploaded to: ${ARTIFACT_URL}"
+          {
+            echo "### Artifact upload URL (${{ matrix.target }})"
+            echo
+            echo "[${ARTIFACT_URL}](${ARTIFACT_URL})"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Symbol artifacts have no downstream consumer (Sentry uploads from the on-disk build/
+      # folder below; release drafting attaches only the player zips) — keep them only where a
+      # human might need post-hoc symbolication, and never at default retention.
+      - name: Upload debug symbols
+        if: ${{ inputs.is_release_build == true }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.artifact_name }}_debug_symbols
+          path: |
+            build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
+          retention-days: 7
+          
+      - name: Upload debug symbols to Sentry
+        if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' }}
+        shell: bash
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ inputs.is_release_build && vars.SENTRY_PROJECT || vars.SENTRY_PROJECT_DEV }}
+        run: |
+          npx --yes @sentry/cli debug-files upload \
+            --org "$SENTRY_ORG" \
+            --project "$SENTRY_PROJECT" \
+            "build"
+
+      # Runs even on failure, but only once a log actually exists (a run cancelled in-queue
+      # never writes one, and a guaranteed-failing upload would burn the cancellation grace window).
+      - name: Upload cloud logs
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
+          path: unity_cloud_log.log
+          if-no-files-found: error
+
+      # Written by build.py as soon as the Unity-side build id is known, so it exists for
+      # failed builds too. The PR status comment uses it to deep-link the Unity Cloud
+      # build page instead of asking humans to search cloud.unity.com by hand.
+      - name: Upload Unity Cloud build info
+        if: ${{ always() && hashFiles('unity_cloud_build_info.env') != '' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: unity_build_info_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
+          path: unity_cloud_build_info.env
+          if-no-files-found: error
+          # Only consumed by the immediately-following PR status comment run.
+          retention-days: 7
+
+      - name: Print cloud logs
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
+        run: cat unity_cloud_log.log
+
+      - name: Extract and display errors
+        if: ${{ always() && hashFiles('unity_cloud_log.log') != '' }}
+        run: |
+          echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
+          grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
+
+      - name: Generate Shader Compilation Report
+        shell: pwsh
+        run: |
+          ./scripts/Generate-ShaderReport.ps1 -InputLog "unity_cloud_log.log" -OutputReport "shader_compilation_report.log"
+
+      - name: Upload Shader Compilation Report
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
+          path: shader_compilation_report.log
+          if-no-files-found: warn
+
+  build-gate:
+    name: Build Gate (Windows + macOS)
+    runs-on: ubuntu-latest
+    # Pure bash over needs.* context — no checkout, no token use.
+    permissions: {}
+    needs: [prebuild, build]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Verify both targets built and passed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          should_build='${{ needs.prebuild.outputs.should_build }}'
+          prebuild_result='${{ needs.prebuild.result }}'
+
+          # Legit no-op: prebuild was skipped entirely (its 'if' was false — e.g. a labeled/unlabeled
+          # event, a draft without 'force-build', or the 'perf_test' label). That's a deliberate
+          # "don't build this event" decision, not a failure, so there is nothing to gate.
+          if [ "$prebuild_result" = "skipped" ]; then
+            echo "Gate not applicable (prebuild skipped — no build for this event). Passing."
+            exit 0
+          fi
+
+          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ or shared-deps changes).
+          # The Prebuild job's "Skip build and test checks" step already posts per-target success
+          # statuses for this case, so the gate can safely pass.
+          if [ "$prebuild_result" = "success" ] && [ "$should_build" != "true" ]; then
+            echo "Gate not applicable (prebuild ran, no Explorer/ or shared-deps changes). Passing."
+            exit 0
+          fi
+
+          # cancelled/failure => a build was expected but never completed. Fail closed so a real
+          # problem can't silently produce a green Build Gate.
+          if [ "$prebuild_result" != "success" ]; then
+            echo "::error::Prebuild did not succeed (result: $prebuild_result). No build produced for this commit; re-trigger the workflow (e.g. push a new commit or add the 'force-build' label)."
+            exit 1
+          fi
+
+          targets='${{ needs.prebuild.outputs.targets }}'
+          echo "Targets that ran: $targets"
+
+          has_windows=$(echo "$targets" | jq 'any(. == "windows64")')
+          has_macos=$(echo "$targets" | jq 'any(. == "macos")')
+          if [ "$has_windows" != "true" ] || [ "$has_macos" != "true" ]; then
+            echo "::error::Build Gate requires both Windows and macOS builds. This run was filtered to: $targets"
+            echo "::error::Remove the 'windows-only' or 'macos-only' label so both targets build, then push or re-trigger."
+            exit 1
+          fi
+
+          build_result='${{ needs.build.result }}'
+          if [ "$build_result" != "success" ]; then
+            echo "::error::Build matrix did not succeed (result: $build_result)"
+            exit 1
+          fi
+
+          echo "Both Windows and macOS builds passed."
+# Test change

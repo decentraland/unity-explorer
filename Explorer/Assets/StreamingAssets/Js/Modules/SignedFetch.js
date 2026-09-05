@@ -1,0 +1,41 @@
+// Responses should always correspond to the protocol definitions at
+// https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/signed_fetch.proto
+
+const fetchApi = require('~system/FetchApi');
+
+module.exports.signedFetch = async function(message) {
+    let body = ''
+    let headers = ''
+    let method = ''
+    
+    if (message.init != undefined) {
+        body = message.init.body ?? ''
+        headers = JSON.stringify(message.init.headers)
+        method = message.init.method ?? ''
+    }
+    
+    let response = await UnitySignedFetch.SignedFetch(message.url, body, headers, method);
+    
+    response = { ...response };
+    response.headers = new fetchApi.RequestHeaders(response.headers);
+    
+    return response;
+}
+
+module.exports.getHeaders = async function(message) {
+    let body = ''
+    let headers = ''
+    let method = ''
+    
+    if (message.init != undefined) {
+        body = message.init.body ?? ''
+        headers = JSON.stringify(message.init.headers)
+        method = message.init.method ?? ''
+    }
+    
+    const json = UnitySignedFetch.GetSignedHeaders(message.url, body, headers, method);
+    
+    return {
+        headers: JSON.parse(json)
+    }
+}

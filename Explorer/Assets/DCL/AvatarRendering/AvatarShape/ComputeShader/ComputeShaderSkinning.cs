@@ -1,0 +1,248 @@
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Unity.Collections;
+using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.Pool;
+using UnityEngine.Profiling;
+using Object = UnityEngine.Object;
+
+namespace DCL.AvatarRendering.AvatarShape.ComputeShader
+{
+    public class ComputeShaderSkinning : CustomSkinning
+    {
+        public override AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
+            UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
+            in FacialFeaturesTextures facialFeatureTexture, int boneCount)
+        {
+            List<MeshData> meshesData = ListPool<MeshData>.Get();
+
+            CreateMeshData(meshesData, gameObjects);
+
+            (int vertCount, int totalBoneBufferCount) = SetupCounters(meshesData, boneCount);
+
+            AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, totalBoneBufferCount, boneCount);
+            List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
+
+            Bounds totalBounds =  CalculateLocalBoundsFromMeshes(meshesData);
+
+            ListPool<MeshData>.Release(meshesData);
+
+            return new AvatarCustomSkinningComponent(vertCount, boneCount, buffers, materialSetups, skinningShader, totalBounds);
+        }
+
+        private AvatarCustomSkinningComponent.Buffers SetupComputeShader(IReadOnlyList<MeshData> meshesData, UnityEngine.ComputeShader skinningShader, int vertCount, int skinnedMeshRendererBoneCount, int boneCount)
+        {
+            Profiler.BeginSample(nameof(SetupComputeShader));
+
+            ComputeSkinningBufferContainer computeSkinningBufferContainer = ComputeSkinningBufferContainer.New(vertCount, skinnedMeshRendererBoneCount);
+
+            computeSkinningBufferContainer.StartWriting();
+
+            var vertCounter = 0;
+            var skinnedMeshCounter = 0;
+
+            for (var i = 0; i < meshesData.Count; i++)
+            {
+                MeshData meshData = meshesData[i];
+                int meshVertexCount = meshData.Mesh.sharedMesh.vertexCount;
+                ResetTransforms(meshData.Transform, meshData.RootTransform);
+                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount, meshData.SpringBoneOffset);
+                vertCounter += meshVertexCount;
+                skinnedMeshCounter++;
+            }
+
+            AvatarCustomSkinningComponent.Buffers buffers = SetupBuffers(computeSkinningBufferContainer, skinningShader, vertCount, boneCount);
+            buffers.AssignBuffer(computeSkinningBufferContainer);
+
+            Profiler.EndSample();
+
+            return buffers;
+        }
+
+        private AvatarCustomSkinningComponent.Buffers SetupBuffers(
+            ComputeSkinningBufferContainer computeSkinningBufferContainer,
+            UnityEngine.ComputeShader cs, int vertCount, int boneCount)
+        {
+            computeSkinningBufferContainer.EndWriting();
+            var mBones = new ComputeBuffer(boneCount, Unsafe.SizeOf<float4x4>(), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
+
+            int kernel = cs.FindKernel(ComputeShaderConstants.SKINNING_KERNEL_NAME);
+            computeSkinningBufferContainer.SetBuffers(cs, kernel);
+            cs.SetInt(ComputeShaderConstants.VERT_COUNT_ID, vertCount);
+            cs.SetBuffer(kernel, ComputeShaderConstants.BONES_ID, mBones);
+
+            return new AvatarCustomSkinningComponent.Buffers(mBones, kernel);
+        }
+
+        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount, int springBoneOffset)
+        {
+            // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
+            mesh.RecalculateTangents();
+
+            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, springBoneOffset);
+        }
+
+        private (int vertCount, int totalBoneBufferCount) SetupCounters(IReadOnlyList<MeshData> meshesData, int boneCount)
+        {
+            Profiler.BeginSample(nameof(SetupCounters));
+
+            var skinnedMeshRendererCount = 0;
+            var vertCount = 0;
+
+            for (var i = 0; i < meshesData.Count; i++)
+            {
+                vertCount += meshesData[i].Mesh.sharedMesh.vertexCount;
+                skinnedMeshRendererCount++;
+            }
+
+            Profiler.EndSample();
+
+            return (vertCount, skinnedMeshRendererCount * boneCount);
+        }
+
+        private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects,
+            IAvatarMaterialPoolHandler avatarMaterial, AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facilFeatureTexture)
+        {
+            var auxVertCounter = 0;
+
+            List<AvatarCustomSkinningComponent.MaterialSetup> list = AvatarCustomSkinningComponent.USED_SLOTS_POOL.Get();
+
+            for (var i = 0; i < gameObjects.Count; i++)
+            {
+                MeshData meshData = gameObjects[i];
+                int currentVertexCount = meshData.Mesh.sharedMesh.vertexCount;
+                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture));
+                auxVertCounter += currentVertexCount;
+
+                if (avatarShapeComponent.ShowOnlyWearables)
+                {
+                    string name = meshData.OriginalMaterial.name;
+
+                    if (name.Contains(ComputeShaderConstants.SKIN_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase)
+                        || name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase))
+                        meshData.Renderer.enabled = false;
+                }
+                else
+                    meshData.Renderer.enabled = true;
+            }
+
+            return list;
+        }
+
+
+        private void CreateMeshData(List<MeshData> targetList, IList<CachedAttachment> wearables)
+        {
+            // Track cumulative spring bone count so each wearable's BoneWeight indices
+            // can be offset to the correct slot in the global bone matrix buffer.
+            var springBoneOffset = 0;
+
+            for (var i = 0; i < wearables.Count; i++)
+            {
+                CachedAttachment cachedWearable = wearables[i];
+                GameObject instance = cachedWearable.Instance;
+
+                using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))
+                {
+                    for (var j = 0; j < pooledList.Value.Count; j++)
+                    {
+                        Renderer meshRenderer = pooledList.Value[j];
+                        if (!meshRenderer.gameObject.activeSelf) continue;
+
+                        if (j < 0 || j >= cachedWearable.OriginalAsset.RendererInfos.Count)
+                        {
+                            ReportHub.LogError(ReportCategory.AVATAR, $"RendererInfos.Count ({pooledList.Value.Count}) is different than pooledList.Value.Count ({pooledList.Value.Count})");
+                            continue;
+                        }
+
+                        Material originalMaterial = cachedWearable.OriginalAsset.RendererInfos[j].Material;
+
+                        if (meshRenderer is SkinnedMeshRenderer renderer)
+                        {
+                            // From Asset Bundle
+                            (MeshRenderer, MeshFilter) tuple = SetupMesh(renderer);
+
+                            cachedWearable.Renderers.Add(tuple.Item1);
+
+                            targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
+                                originalMaterial, springBoneOffset));
+                        }
+                        else
+                        {
+                            cachedWearable.Renderers.Add(meshRenderer);
+
+                            // From Pooled Object
+                            targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
+                                originalMaterial, springBoneOffset));
+                        }
+                    }
+                }
+
+                springBoneOffset += cachedWearable.SpringBones.Length;
+                wearables[i] = cachedWearable;
+            }
+        }
+
+        private (MeshRenderer, MeshFilter) SetupMesh(SkinnedMeshRenderer skin)
+        {
+            GameObject go = skin.gameObject;
+            MeshFilter filter = go.AddComponent<MeshFilter>();
+            filter.mesh = skin.sharedMesh;
+
+            MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
+            meshRenderer.renderingLayerMask = 2;
+
+            meshRenderer.localBounds = new Bounds(Vector3.zero, Vector3.one * 5);
+            Object.Destroy(skin);
+            return (meshRenderer, filter);
+        }
+
+        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
+            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeaturesTextures) =>
+            AvatarMaterialConfiguration.SetupMaterial(meshRenderer, originalMaterial, lastWearableVertCount, poolHandler, avatarShapeComponent, facialFeaturesTextures);
+
+        /// <summary>
+        /// Checks the bounds of a list of meshes and computes the bounding box that contains them all.
+        /// </summary>
+        /// <param name="meshes">A list of meshes.</param>
+        /// <returns>A bounding box that contains all the meshes.</returns>
+        private static Bounds CalculateLocalBoundsFromMeshes(List<MeshData> meshes)
+        {
+            Vector3 maxCorner = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+            Vector3 minCorner = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+
+            for (int i = 0; i < meshes.Count; ++i)
+            {
+                Bounds meshBounds = meshes[i].Mesh.sharedMesh.bounds;
+
+                if (maxCorner.x < meshBounds.max.x)
+                    maxCorner.x = meshBounds.max.x;
+
+                if (maxCorner.y < meshBounds.max.y)
+                    maxCorner.y = meshBounds.max.y;
+
+                if (maxCorner.z < meshBounds.max.z)
+                    maxCorner.z = meshBounds.max.z;
+
+                if (minCorner.x > meshBounds.min.x)
+                    minCorner.x = meshBounds.min.x;
+
+                if (minCorner.y > meshBounds.min.y)
+                    minCorner.y = meshBounds.min.y;
+
+                if (minCorner.z > meshBounds.min.z)
+                    minCorner.z = meshBounds.min.z;
+            }
+
+            Vector3 size = maxCorner - minCorner;
+            return new Bounds(minCorner + size * 0.5f, size);
+        }
+    }
+}

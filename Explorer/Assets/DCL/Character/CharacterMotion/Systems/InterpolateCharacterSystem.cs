@@ -1,0 +1,116 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using DCL.Character.CharacterMotion.Components;
+using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Platforms;
+using DCL.CharacterMotion.Settings;
+using ECS.Abstract;
+using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle;
+using UnityEngine;
+using Utility;
+
+namespace DCL.CharacterMotion.Systems
+{
+    /// <summary>
+    ///     Handles interpolating the character during variable update.
+    ///     <para>
+    ///         Modifies Transform (by calling `CharacterController` so the value is exposed to other systems ignoring Physics behind
+    ///     </para>
+    /// </summary>
+    [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
+    [UpdateAfter(typeof(TeleportCharacterSystem))]
+    public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
+    {
+        private const float IS_STUCK_THRESHOLD = 0.00001f;
+
+        private readonly IScenesCache scenesCache;
+
+        private int playerJustTeleportedCountDown;
+
+        private InterpolateCharacterSystem(World world, IScenesCache scenesCache) : base(world)
+        {
+            this.scenesCache = scenesCache;
+        }
+
+        protected override void Update(float t)
+        {
+            InterpolateQuery(World, t);
+        }
+
+        [Query]
+        [None(typeof(StopCharacterMotion), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported), typeof(PlayerMoveToWithDurationIntent))]
+        private void Interpolate(
+            [Data] float dt,
+            in ICharacterControllerSettings settings,
+            ref CharacterRigidTransform rigidTransform,
+            ref CharacterController characterController,
+            ref CharacterPlatformComponent platformComponent,
+            ref StunComponent stunComponent,
+            in JumpInputComponent jump,
+            in MovementInputComponent movementInput)
+        {
+            ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
+
+            Transform characterTransform = characterController.transform;
+            Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
+            Vector3 gravityDelta = CalculateGravityDelta(dt, rigidTransform, platformComponent);
+            Vector3 externalDelta = rigidTransform.ExternalVelocity * dt;
+            Vector3 prevPos = characterTransform.position;
+
+            // Force the platform collider to update its position, so slope modifier raycast can work properly
+            if (platformComponent.PositionChanged && platformComponent.PlatformCollider != null)
+            {
+                platformComponent.PlatformCollider.enabled = false;
+                platformComponent.PlatformCollider.enabled = true;
+            }
+
+            Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
+
+            // Fixes https://github.com/decentraland/unity-explorer/issues/6580
+            // We used to check for platform changes, but that might get out of sync on low-framerate devices
+            if (platformComponent.CurrentPlatform)
+            {
+                characterController.transform.position = platformComponent.CurrentPlatform.TransformPoint(platformComponent.LastAvatarRelativePosition);
+                Physics.SyncTransforms();
+            }
+
+            CollisionFlags collisionFlags = CollisionFlags.None;
+            if (characterController.enabled)
+                collisionFlags = characterController.Move(
+                    movementDelta
+                    + gravityDelta
+                    + externalDelta
+                    + slopeModifier);
+
+            Vector3 deltaMovement = characterTransform.position - prevPos;
+            bool hasGroundedFlag = deltaMovement.y <= 0 &&
+                EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+
+            if (!Mathf.Approximately(gravityDelta.y, 0f))
+                rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
+
+            rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Sides);
+
+            // If we are on a platform we save our local position
+            PlatformSaveLocalPosition.Execute(ref platformComponent, characterTransform.position, scenesCache.CurrentScene.Value);
+
+            // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
+            rigidTransform.IsStuck = rigidTransform.IsOnASteepSlope && Mathf.Abs(deltaMovement.sqrMagnitude) <= IS_STUCK_THRESHOLD;
+        }
+
+        private static Vector3 CalculateGravityDelta(float dt, CharacterRigidTransform rigidTransform, CharacterPlatformComponent platformComponent)
+        {
+            if (rigidTransform is { IsOnASteepSlope: true, IsStuck: false })
+                return rigidTransform.SlopeGravity * dt;
+
+            Vector3 finalGravity = rigidTransform.GravityVelocity * dt;
+
+            if (platformComponent.PositionChanged && rigidTransform.IsGrounded)
+                finalGravity.y = 0f;
+
+            return finalGravity;
+        }
+    }
+}

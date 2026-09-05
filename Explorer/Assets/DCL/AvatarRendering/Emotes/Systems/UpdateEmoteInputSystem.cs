@@ -1,0 +1,136 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using DCL.Diagnostics;
+using DCL.ECSComponents;
+using DCL.Input;
+using DCL.Profiles;
+using DCL.SDKComponents.InputModifier.Components;
+using ECS.Abstract;
+using MVC;
+using System;
+using System.Collections.Generic;
+using UnityEngine.InputSystem;
+using InputAction = UnityEngine.InputSystem.InputAction;
+
+namespace DCL.AvatarRendering.Emotes
+{
+    [LogCategory(ReportCategory.EMOTE)]
+    [UpdateInGroup(typeof(InputGroup))]
+    public partial class UpdateEmoteInputSystem : BaseUnityLoopSystem
+    {
+        private readonly EmoteWheelShortcutHandler emoteWheelShortcutHandler;
+        private readonly Dictionary<string, int> actionNameById = new ();
+        private readonly IMVCManager mvcManager;
+        private readonly DCLInput.EmotesActions emotesActions;
+
+        private int triggeredEmote = -1;
+        private EmoteTriggerSource? triggeredEmoteSource;
+        private int framesAfterWheelWasClosed;
+
+        private UpdateEmoteInputSystem(World world, EmoteWheelShortcutHandler emoteWheelShortcutHandler)
+            : base(world)
+        {
+            emotesActions = DCLInput.Instance.Emotes;
+            this.emoteWheelShortcutHandler = emoteWheelShortcutHandler;
+
+            GetReportData();
+
+            ListenToSlotsInput(emotesActions.Get());
+        }
+
+        protected override void OnDispose()
+        {
+            UnregisterSlotsInput(emotesActions.Get());
+        }
+
+        private void OnSlotPerformed(InputAction.CallbackContext obj)
+        {
+            int emoteIndex = actionNameById[obj.action.name];
+            triggeredEmote = emoteIndex;
+            triggeredEmoteSource = EmoteTriggerSource.Shortcut;
+        }
+
+        protected override void Update(float t)
+        {
+            TriggerEmoteBySlotIntentQuery(World);
+
+            if (triggeredEmote >= 0)
+            {
+                TriggerEmoteQuery(World, triggeredEmote);
+                if (triggeredEmoteSource.HasValue)
+                {
+                    emoteWheelShortcutHandler.NotifyEmotePlayed(triggeredEmoteSource.Value);
+                    triggeredEmoteSource = null;
+                }
+                triggeredEmote = -1;
+            }
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        private void TriggerEmoteBySlotIntent(in Entity entity, ref TriggerEmoteBySlotIntent intent)
+        {
+            triggeredEmote = intent.Slot;
+            triggeredEmoteSource = EmoteTriggerSource.WheelSlot;
+            World.Remove<TriggerEmoteBySlotIntent>(entity);
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(CharacterEmoteIntent))]
+        private void TriggerEmote([Data] int emoteIndex,
+            in Entity entity,
+            in Profile profile,
+            in InputModifierComponent inputModifier,
+            in AvatarShapeComponent avatarShapeComponent,
+            in GlideState glideState)
+        {
+            if (inputModifier.DisableEmote || glideState.Value != GlideStateValue.PropClosed) return;
+
+            IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
+            if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
+
+            URN emoteId = emotes[emoteIndex];
+
+            if (emoteId.IsNullOrEmpty()) return;
+
+            var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId, Spatial = true, TriggerSource = TriggerSource.Self};
+            ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
+            emoteIntent = newEmoteIntent;
+        }
+
+        private void ListenToSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
+            {
+                string actionName = GetActionName(i);
+
+                try
+                {
+                    InputAction inputAction = inputActionMap.FindAction(actionName);
+                    inputAction.started += OnSlotPerformed;
+                    actionNameById[actionName] = i;
+                }
+                catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+            }
+        }
+
+        private void UnregisterSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
+            {
+                string actionName = GetActionName(i);
+                InputAction inputAction = inputActionMap.FindAction(actionName);
+                inputAction.started -= OnSlotPerformed;
+            }
+        }
+
+        private static string GetActionName(int i) =>
+            $"Slot {i}";
+    }
+}

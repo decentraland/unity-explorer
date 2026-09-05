@@ -1,0 +1,275 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
+using Newtonsoft.Json;
+using rpc_csharp;
+using Sentry;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using RpcClient = rpc_csharp.RpcClient;
+using Utility.Multithreading;
+using Utility.Networking;
+
+namespace DCL.SocialService
+{
+    public interface IRPCSocialServices : IDisposable
+    {
+        public const int FOREGROUND_CONNECTION_RETRIES = 3;
+
+        public RpcClient? Client { get; }
+
+        bool IsDisconnecting { get; }
+
+        RpcClientModule Module();
+
+        /// <summary>
+        ///     Try to establish connection to the RPC server until the cancellation token is triggered or the retries count is exhausted.
+        /// </summary>
+        UniTask EnsureRpcConnectionAsync(CancellationToken ct) =>
+            EnsureRpcConnectionAsync(FOREGROUND_CONNECTION_RETRIES, ct);
+
+        UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct);
+    }
+
+    public class RPCSocialServices : IRPCSocialServices
+    {
+        private const string RPC_PORT_NAME = "social_service";
+        private const string RPC_SERVICE_NAME = "SocialService";
+        private const string BREADCRUMB_CATEGORY = "RPC Service";
+
+        private const int CONNECTION_TIMEOUT_SECS = 10;
+
+        private const double RETRY_BACKOFF_DELAY_MIN = 1.0;
+        private const double RETRY_BACKOFF_DELAY_MAX = 45.0;
+
+        private const double RETRY_BACKOFF_MULTIPLIER = 2.0;
+
+        /// <summary>
+        ///     Used to ensure that only one connection establishment process is running at a time.
+        /// </summary>
+        private readonly DCLSemaphoreSlim connectionEstablishingMutex = new ();
+
+        /// <summary>
+        ///     Used to ensure that handshake and disconnection processes do not overlap.
+        /// </summary>
+        private readonly DCLSemaphoreSlim handshakeMutex = new ();
+
+        private readonly Uri apiUrl;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly Dictionary<string, string> authChainBuffer = new ();
+        private readonly ISocialServiceEventBus socialServiceEventBus;
+
+        private double retryCurrentDelay = RETRY_BACKOFF_DELAY_MIN;
+
+        private RpcClientModule? module;
+        private RpcClientPort? port;
+        private WebSocketRpcTransport? transport;
+        private bool isDisconnecting;
+
+        private bool isConnectionReady => transport != null
+                                          && transport.State == WebSocketState.Open
+                                          && module != null
+                                          && Client != null
+                                          && port != null;
+
+        public RPCSocialServices(
+            URLAddress apiUrl,
+            IWeb3IdentityCache identityCache,
+            ISocialServiceEventBus socialServiceEventBus)
+        {
+            this.apiUrl = new Uri(apiUrl);
+            this.identityCache = identityCache;
+            this.socialServiceEventBus = socialServiceEventBus;
+        }
+
+        public RpcClient? Client { get; private set; }
+
+        public bool IsDisconnecting => isDisconnecting;
+
+        public void Dispose()
+        {
+            transport?.Dispose();
+            Client?.Dispose();
+            connectionEstablishingMutex.Dispose();
+            authChainBuffer.Clear();
+        }
+
+        public RpcClientModule Module() =>
+            module;
+
+        public async UniTask DisconnectAsync(CancellationToken ct)
+        {
+            try
+            {
+                isDisconnecting = true;
+                await handshakeMutex.WaitAsync(ct);
+
+                port?.Close();
+                port = null;
+                module = null;
+
+                if (transport != null)
+                {
+                    await transport.CloseAsync(ct);
+                    transport.OnCloseEvent -= OnTransportClosed;
+                    transport.OnErrorEvent -= OnTransportError;
+                    transport.Dispose();
+                    transport = null;
+                }
+
+                Client?.Dispose();
+                Client = null;
+            }
+            finally {
+                handshakeMutex.Release();
+                isDisconnecting = false;
+            }
+        }
+
+        public async UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct)
+        {
+            // Ensuring runs in the infinite loop,
+            // but it's bound to the cancellation token originated from the source of the procedure invocation.
+            // if the source of invocation goes out of scope the next request will take over the ensuring/reconnection process
+
+            var mutexAcquired = false;
+
+            try
+            {
+                // by acquiring the mutex while the whole loop is running
+                // prevent ping-ponging between different methods in competition for waiting for the mutex availability
+                await connectionEstablishingMutex.WaitAsync(ct);
+                mutexAcquired = true;
+
+                while (!ct.IsCancellationRequested)
+                {
+                    try
+                    {
+                        connectionRetries--;
+                        await StartHandshakeAsync(ct);
+
+                        // Reset the retry delay after a successful connection
+                        retryCurrentDelay = RETRY_BACKOFF_DELAY_MIN;
+
+                        // Return on success
+                        return;
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        if (connectionRetries > 0)
+                        {
+                            // Add a breadcrumb to better investigate the issue
+                            Sentry.Unity.SentrySdk.AddBreadcrumb(ex.Message, category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Error);
+
+                            double appliedDelay = retryCurrentDelay;
+
+                            // Preserved the delay in case this process is cancelled
+                            retryCurrentDelay = Math.Min(retryCurrentDelay * RETRY_BACKOFF_MULTIPLIER, RETRY_BACKOFF_DELAY_MAX);
+
+                            await UniTask.Delay(TimeSpan.FromSeconds(appliedDelay), DelayType.UnscaledDeltaTime, cancellationToken: ct);
+                        }
+                        else
+                        {
+                            // If we reach here, it means we exhausted the retries and failed to connect
+                            throw new WebSocketException($"Failed to connect after {connectionRetries} attempts", ex);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if (mutexAcquired)
+                    connectionEstablishingMutex.Release();
+            }
+        }
+
+        private async UniTask StartHandshakeAsync(CancellationToken ct)
+        {
+            var acquired = false;
+
+            try
+            {
+                await handshakeMutex.WaitAsync(ct);
+                acquired = true;
+
+                if (!isConnectionReady)
+                {
+                    await InitializeConnectionAsync(ct);
+                    Sentry.Unity.SentrySdk.AddBreadcrumb("Connection established successfully", category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Info);
+                }
+            }
+            catch (Exception)
+            {
+                // If we get here, the connection isn't ready and we should clean up
+
+                port?.Close();
+                port = null;
+                module = null;
+                transport?.Dispose();
+                transport = null;
+                Client?.Dispose();
+                Client = null;
+
+                throw;
+            }
+            finally
+            {
+                if (acquired)
+                    handshakeMutex.Release();
+            }
+        }
+
+        private async UniTask InitializeConnectionAsync(CancellationToken ct)
+        {
+            Client?.Dispose();
+            transport?.Dispose();
+
+            transport = new WebSocketRpcTransport(apiUrl);
+            transport.OnCloseEvent += OnTransportClosed;
+            transport.OnErrorEvent += OnTransportError;
+            Client = new RpcClient(transport);
+
+            await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
+
+            string authChain = BuildAuthChain();
+
+            // The service expects the auth-chain in json format within a 30 seconds threshold after connection
+            await transport.SendMessageAsync(authChain, ct);
+
+            transport.ListenForIncomingData();
+
+            port = await Client.CreatePort(RPC_PORT_NAME);
+            module = await port!.LoadModule(RPC_SERVICE_NAME);
+
+            socialServiceEventBus.SendWebSocketConnectionEstablishedNotification();
+        }
+
+        private string BuildAuthChain()
+        {
+            authChainBuffer.Clear();
+
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            using AuthChain authChain = identityCache.EnsuredIdentity().Sign($"get:/:{timestamp}:{{}}");
+            var authChainIndex = 0;
+
+            foreach (AuthLink link in authChain)
+            {
+                authChainBuffer[$"x-identity-auth-chain-{authChainIndex}"] = link.ToJson();
+                authChainIndex++;
+            }
+
+            authChainBuffer["x-identity-timestamp"] = timestamp.ToString();
+            authChainBuffer["x-identity-metadata"] = "{}";
+
+            return JsonConvert.SerializeObject(authChainBuffer);
+        }
+
+        private void OnTransportClosed() =>
+            socialServiceEventBus.SendTransportClosedNotification();
+
+        private void OnTransportError(Exception _) =>
+            socialServiceEventBus.SendTransportClosedNotification();
+    }
+}

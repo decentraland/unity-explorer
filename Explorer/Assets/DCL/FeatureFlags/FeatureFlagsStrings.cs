@@ -1,0 +1,202 @@
+using System;
+
+// ReSharper disable once CheckNamespace
+namespace DCL.FeatureFlags
+{
+    [Serializable]
+    public static class FeatureFlagsStrings
+    {
+        public const string MULTIPLAYER_COMPRESSION_WIN = "multiplayer_use_compression_win";
+        public const string MULTIPLAYER_COMPRESSION_MAC = "multiplayer_use_compression_mac";
+        public const string PORTABLE_EXPERIENCE = "alfa-portable-experiences";
+        public const string GLOBAL_PORTABLE_EXPERIENCE = "alfa-global-portable-experiences";
+        public const string PORTABLE_EXPERIENCE_CHAT_COMMANDS = "alfa-portable-experiences-chat-commands";
+        public const string MAP_PINS = "alfa-map-pins";
+        public const string CUSTOM_MAP_PINS_ICONS = "alfa-map-pins-custom-icons";
+        public const string USER_ALLOW_LIST = "user-allow-list";
+        public const string DEEPLINK_WHITELISTED_WORLDS = "deeplink-whitelisted-worlds";
+        public const string CSV_VARIANT = "csv-variant";
+        public const string STRING_VARIANT = "string-variant";
+        public const string WALLET_VARIANT = "wallet";
+        public const string WALLETS_VARIANT = "wallets";
+        public const string ONBOARDING = "onboarding";
+        public const string GREETING_ONBOARDING = "greeting-onboarding";
+        public const string ONBOARDING_ENABLED_VARIANT = "enabled";
+        public const string ONBOARDING_GREETINGS_VARIANT = "greetings";
+        public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";
+        public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
+        public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
+        public const string USE_GATEWAY = "use-gateway";
+        public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
+        public const string VOICE_CHAT = "alfa-voice-chat";
+        public const string COMMUNITY_VOICE_CHAT = "alfa-community-voice-chat";
+        public const string OFFICIAL_WALLETS = "alfa-official-wallets";
+        public const string CAMERA_REEL = "alfa-camera-reel";
+        public const string FRIENDS = "alfa-friends";
+        public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
+        public const string FRIENDS_ONLINE_STATUS = "alfa-friends-online-status";
+        public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
+        public const string SCENE_MEMORY_LIMIT = "alfa-use-scene-memory-limit";
+        public const string KTX2_CONVERSION = "ktx2-conversion";
+        public const string PULSE = "pulse";
+        public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
+        public const string USER_CREDITS = "alfa-user-credits";
+        public const string CREDITS_WEARABLE_PURCHASE = "alfa-credits-wearable-purchase";
+        public const string CREDITS_TOPUP = "alfa-credits-topup";
+        public const string CREDITS_WALLETS = "alfa-credits-wallets";
+        public const string COMMUNITIES = "alfa-communities";
+        public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
+        public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
+        public const string AUTH_CODE_VALIDATION = "number-validation";
+        public const string EMAIL_OTP_AUTH = "alfa-email-otp-auth";
+        [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
+        public const string GPUI_ENABLED = "alfa-gpui";
+        public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
+        public const string TEMPORAL_LOADING_SCREEN_TIPS = "alfa-temporal-loading-screen-tip";
+        public const string AUDIENCE_LOADING_SCREEN_TIPS = "alfa-audience-loading-screen-tips";
+        public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
+        public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
+        public const string OUTFITS_ENABLED = "alfa-outfits";
+        public const string OUTFITS_DEPLOY_WINDOW = "alfa-outfits-deploy-window";
+        public const string GIFTING_ENABLED = "alfa-gifting";
+        public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
+        public const string CHAT_MESSAGE_BUFFER_CONFIG = "alfa-chat-message-buffer-config";
+        public const string CHAT_MESSAGE_RATE_LIMIT = "alfa-chat-message-rate-limit";
+        public const string CHAT_REACTIONS_ENABLED = "alfa-chat-reactions";
+        public const string CONFIG_VARIANT = "config";
+        public const string HEAD_SYNC = "alfa-head-sync";
+        public const string PRIVATE_CHAT_REQUIRES_TOPIC = "alfa-private-chat-requires-topic";
+        public const string DISCOVER = "alfa-discover";
+        public const string STOP_ON_DUPLICATE_IDENTITY = "alfa-stop-on-duplicate-identity";
+        public const string DONATIONS = "alfa-donations";
+        public const string RECOMMENDED_DONATION_AMOUNT = "alfa-recommended-donation-amount";
+        public const string FORCE_BACKFACE_CULLING = "alfa-force-backface-culling";
+        public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
+        public const string SKYBOX_SETTINGS_VARIANT = "settings";
+        public const string NAME_COLOR_CHANGE = "alfa-name-color-change";
+        public const string CHECK_DISK_SPACE = "alfa-check-disk-space";
+        public const string AVATAR_HIGHLIGHT = "alfa-avatar-highlight";
+        public const string DOUBLE_JUMP = "alfa-double-jump";
+        public const string GLIDING = "alfa-gliding";
+        public const string AVATAR_GHOSTS = "alfa-avatar-ghosts";
+        public const string REPORT_USER = "alfa-report-user";
+        public const string POINT_AT = "alfa-point-at";
+        public const string NEARBY_VOICE_CHAT = "alfa-nearby-voice-chat";
+        public const string NEARBY_VOICE_CHAT_TIP = "alfa-nearby-voice-chat-tip";
+        public const string NEARBY_VOICE_CHAT_TIP_CONFIG_VARIANT = "config";
+        public const string AVATAR_CONTEXT_MENU = "alfa-avatar-context-menu";
+        public const string DOUBLE_CLICK_WALK = "alfa-double-click-walk";
+        public const string BYTE_WEIGHTED_LOADING_PROGRESS = "alfa-byte-weighted-loading-progress";
+        public const string NEW_LODS = "new-lods";
+        public const string FOUNDATION_COMMUNITY_ID = "alfa-foundation-community-id";
+        public const string HARDWARE_FINGERPRINT = "alfa-hardware-fingerprint";
+        public const string OPTIMIZED_ASSETS = "optimized-assets";
+        public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
+        public const string ABGEN_PIPELINE = "alfa-abgen-pipeline";
+        public const string USE_CUSTOM_MEDIA_PLAYER_WINDOWS = "use-custom-media-player-windows";
+        public const string USE_CUSTOM_MEDIA_PLAYER_MAC_SILICON = "use-custom-media-player-mac-silicon";
+        public const string USE_CUSTOM_MEDIA_PLAYER_MAC_INTEL = "use-custom-media-player-mac-intel";
+        public const string BUG_REPORT = "alfa-bug-report";
+        public const string IN_GAME_SHOP = "alfa-in-game-shop";
+
+        public static class Endpoints
+        {
+            public const string USE_CENTRALIZED_PROFILES = "use-centralized-profiles";
+        }
+    }
+
+    public enum FeatureFlag
+    {
+    
+        None = 0,
+        MultiplayerCompressionWin,
+        MultiplayerCompressionMac,
+        PortableExperience,
+        GlobalPortableExperience,
+        PortableExperienceChatCommands,
+        MapPins,
+        CustomMapPinsIcons,
+        UserAllowList,
+        CsvVariant,
+        StringVariant,
+        WalletsVariant,
+        Onboarding,
+        GreetingOnboarding,
+        OnboardingEnabledVariant,
+        OnboardingGreetingsVariant,
+        GenesisStartingParcel,
+        VideoPrioritization,
+        AssetBundleFallback,
+        ChatHistoryLocalStorage,
+        VoiceChat,
+        CommunityVoiceChat,
+        CameraReel,
+        Friends,
+        FriendsUserBlocking,
+        FriendsOnlineStatus,
+        ProfileNameEditor,
+        SceneMemoryLimit,
+        Ktx2Conversion,
+        MarketplaceCredits,
+        MarketplaceCreditsWalletsVariant,
+        AuthCodeValidation,
+        GpuiEnabled,
+        ChatTranslation,
+        OutfitsEnabled,
+        GiftingEnabled,
+        SkyboxSettings,
+        SkyboxSettingsVariant,
+        ReportUser,
+    }
+
+    public static class FeatureFlagExtensions
+    {
+        public static string GetStringValue(this FeatureFlag flag)
+        {
+            return flag switch
+            {
+                FeatureFlag.MultiplayerCompressionWin => FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN,
+                FeatureFlag.MultiplayerCompressionMac => FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC,
+                FeatureFlag.PortableExperience => FeatureFlagsStrings.PORTABLE_EXPERIENCE,
+                FeatureFlag.GlobalPortableExperience => FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE,
+                FeatureFlag.PortableExperienceChatCommands => FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS,
+                FeatureFlag.MapPins => FeatureFlagsStrings.MAP_PINS,
+                FeatureFlag.CustomMapPinsIcons => FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS,
+                FeatureFlag.UserAllowList => FeatureFlagsStrings.USER_ALLOW_LIST,
+                FeatureFlag.CsvVariant => FeatureFlagsStrings.CSV_VARIANT,
+                FeatureFlag.StringVariant => FeatureFlagsStrings.STRING_VARIANT,
+                FeatureFlag.WalletsVariant => FeatureFlagsStrings.WALLET_VARIANT,
+                FeatureFlag.Onboarding => FeatureFlagsStrings.ONBOARDING,
+                FeatureFlag.GreetingOnboarding => FeatureFlagsStrings.GREETING_ONBOARDING,
+                FeatureFlag.OnboardingEnabledVariant => FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT,
+                FeatureFlag.OnboardingGreetingsVariant => FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT,
+                FeatureFlag.GenesisStartingParcel => FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
+                FeatureFlag.VideoPrioritization => FeatureFlagsStrings.VIDEO_PRIORITIZATION,
+                FeatureFlag.AssetBundleFallback => FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK,
+                FeatureFlag.ChatHistoryLocalStorage => FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE,
+                FeatureFlag.VoiceChat => FeatureFlagsStrings.VOICE_CHAT,
+                FeatureFlag.CommunityVoiceChat => FeatureFlagsStrings.COMMUNITY_VOICE_CHAT,
+                FeatureFlag.CameraReel => FeatureFlagsStrings.CAMERA_REEL,
+                FeatureFlag.Friends => FeatureFlagsStrings.FRIENDS,
+                FeatureFlag.FriendsUserBlocking => FeatureFlagsStrings.FRIENDS_USER_BLOCKING,
+                FeatureFlag.FriendsOnlineStatus => FeatureFlagsStrings.FRIENDS_ONLINE_STATUS,
+                FeatureFlag.ProfileNameEditor => FeatureFlagsStrings.PROFILE_NAME_EDITOR,
+                FeatureFlag.SceneMemoryLimit => FeatureFlagsStrings.SCENE_MEMORY_LIMIT,
+                FeatureFlag.Ktx2Conversion => FeatureFlagsStrings.KTX2_CONVERSION,
+                FeatureFlag.MarketplaceCredits => FeatureFlagsStrings.MARKETPLACE_CREDITS,
+                FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
+                FeatureFlag.AuthCodeValidation => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
+#pragma warning disable CS0618 // the mapping must stay complete while the obsolete flag is still declared
+                FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
+#pragma warning restore CS0618
+                FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
+                FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
+                FeatureFlag.GiftingEnabled => FeatureFlagsStrings.GIFTING_ENABLED,
+                FeatureFlag.SkyboxSettings => FeatureFlagsStrings.SKYBOX_SETTINGS,
+                FeatureFlag.SkyboxSettingsVariant  => FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT,
+                FeatureFlag.ReportUser => FeatureFlagsStrings.REPORT_USER,
+                _ => string.Empty
+            };
+        }
+    }
+}

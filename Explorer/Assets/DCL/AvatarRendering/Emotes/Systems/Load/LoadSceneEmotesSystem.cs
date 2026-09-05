@@ -1,0 +1,168 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
+using DCL.Diagnostics;
+using DCL.Ipfs;
+using ECS.Abstract;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
+using System;
+using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
+
+namespace DCL.AvatarRendering.Emotes.Load
+{
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [LogCategory(ReportCategory.EMOTE)]
+    public partial class LoadSceneEmotesSystem : BaseUnityLoopSystem
+    {
+        // Logical file name of the synthesized DTO's single content entry; scene emotes have no real file list.
+        private const string SCENE_EMOTE_MAIN_FILE = "scene-emote.glb";
+
+        private readonly URLSubdirectory customStreamingSubdirectory;
+        private readonly IEmoteStorage emoteStorage;
+
+        public LoadSceneEmotesSystem(
+            World world,
+            IEmoteStorage emoteStorage,
+            URLSubdirectory customStreamingSubdirectory
+        )
+            : base(world)
+        {
+            this.emoteStorage = emoteStorage;
+            this.customStreamingSubdirectory = customStreamingSubdirectory;
+        }
+
+        protected override void Update(float t)
+        {
+            GetEmotesFromRealmQuery(World, t);
+            GetEmotesFromLocalSceneQuery(World, t);
+        }
+
+        [Query]
+        [None(typeof(StreamableResult))]
+        private void GetEmotesFromRealm([Data] float dt, Entity entity,
+            ref GetSceneEmoteFromRealmIntention intention,
+            ref IPartitionComponent partitionComponent)
+        {
+            if (intention.TryCancelByRequest<GetSceneEmoteFromRealmIntention, EmotesResolution>(
+                    World!,
+                    GetReportCategory(),
+                    entity,
+                    static i => $"Scene emote request cancelled {i.EmoteHash}"))
+                return;
+
+            ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent, intention.SceneAssetBundleManifestVersion);
+        }
+
+        [Query]
+        [None(typeof(StreamableResult))]
+        private void GetEmotesFromLocalScene([Data] float dt, Entity entity,
+            ref GetSceneEmoteFromLocalSceneIntention intention,
+            ref IPartitionComponent partitionComponent)
+        {
+            ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent, AssetBundleManifestVersion.CreateLSDAsset());
+        }
+
+        private void ProcessSceneEmoteIntention<TIntention>(
+            float dt,
+            Entity entity,
+            ref TIntention intention,
+            ref IPartitionComponent partitionComponent,
+            AssetBundleManifestVersion sceneAssetBundleManifest
+        ) where TIntention : struct, IEmoteAssetIntention
+        {
+            URN urn = intention.NewSceneEmoteURN();
+
+            if (intention.IsTimeout(dt))
+            {
+                if (!World.Has<StreamableResult>(entity))
+                {
+                    ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Scene emote timeout {urn}")));
+                }
+                return;
+            }
+
+            if (!emoteStorage.TryGetElement(urn, out IEmote emote))
+            {
+                var dto = new EmoteDTO
+                {
+                    id = urn,
+                    assetBundleManifestVersion = sceneAssetBundleManifest,
+
+                    // Scene emotes are a single clip shared by both genders; map the main file to the
+                    // emote's hash so content lookups (e.g. HasSameClipForAllGenders) resolve instead
+                    // of erroring on a null content list.
+                    content = new[]
+                    {
+                        new ContentDefinition { file = SCENE_EMOTE_MAIN_FILE, hash = intention.EmoteHash },
+                    },
+                    metadata = new EmoteDTO.EmoteMetadataDto
+                    {
+                        id = urn,
+                        emoteDataADR74 = new EmoteDTO.EmoteMetadataDto.Data
+                        {
+                            loop = intention.Loop,
+                            category = "emote",
+                            hides = Array.Empty<string>(),
+                            replaces = Array.Empty<string>(),
+                            tags = Array.Empty<string>(),
+                            removesDefaultHiding = Array.Empty<string>(),
+                            representations = new AvatarAttachmentDTO.Representation[]
+                            {
+                                new ()
+                                {
+                                    contents = Array.Empty<string>(),
+                                    bodyShapes = new[]
+                                    {
+                                        BodyShape.MALE.Value,
+                                        BodyShape.FEMALE.Value,
+                                    },
+                                    overrideHides = Array.Empty<string>(),
+                                    overrideReplaces = Array.Empty<string>(),
+                                    mainFile = SCENE_EMOTE_MAIN_FILE,
+                                },
+                            },
+                        },
+                    },
+                };
+
+                emote = emoteStorage.GetOrAddByDTO(dto);
+            }
+
+            if (emote.IsLoading) return;
+
+            if (CreatePromiseIfRequired(ref emote, ref intention, partitionComponent)) return;
+
+            if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
+            {
+                emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
+            }
+            else if (intention is GetSceneEmoteFromLocalSceneIntention)
+            {
+                World.Add(entity, new StreamableResult(GetReportCategory(), new Exception($"Scene emote failed to load {urn}")));
+                return;
+            }
+
+            World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
+        }
+
+        private bool CreatePromiseIfRequired<TIntention>(
+            ref IEmote emote,
+            ref TIntention intention,
+            IPartitionComponent partitionComponent)
+            where TIntention : struct, IEmoteAssetIntention
+        {
+            if (emote.AssetResults[intention.BodyShape] != null) return false;
+
+            intention.CreateAndAddPromiseToWorld(World, partitionComponent, customStreamingSubdirectory, emote);
+
+            emote.UpdateLoadingStatus(true);
+            return true;
+        }
+    }
+}

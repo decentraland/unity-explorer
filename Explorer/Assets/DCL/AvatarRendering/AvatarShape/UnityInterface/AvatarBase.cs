@@ -1,0 +1,447 @@
+using CommunicationData.URLHelpers;
+using DCL.Audio.Avatar;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.Diagnostics;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.Animations.Rigging;
+using Utility.Animations;
+using AvatarEmoteMask = DCL.ECSComponents.AvatarEmoteMask;
+using Random = UnityEngine.Random;
+
+namespace DCL.AvatarRendering.AvatarShape.UnityInterface
+{
+    public class AvatarBase : MonoBehaviour, IAvatarView
+    {
+        private const float GHOST_NAMETAG_HEIGHT = 2f;
+
+        private int rightPointAtLayerIndex;
+        private int rotationLayerIndex;
+        private int upperBodyLayerIndex;
+
+        private float lastPointAtLayerWeight = float.NaN;
+        private float lastRotationLayerWeight = float.NaN;
+
+        public int RandomID;
+
+        private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides = null!;
+        private AnimationClip lastEmote = null!;
+        private AnimationClip? lastMaskedEmote;
+        private AnimatorOverrideController overrideController = null!;
+
+        [field: SerializeField] public Animator AvatarAnimator { get; private set; } = null!;
+        [field: SerializeField] public AvatarAudioPlaybackController AudioPlaybackController { get; private set; } = null!;
+
+        public Animation? LegacyAnimation { get; private set; }
+
+        private MaskedLegacyEmoteBlender? maskedLegacyBlender;
+
+        [field: SerializeField] public RigBuilder RigBuilder { get; private set; } = null!;
+
+        [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; } = null!;
+
+        [field: Header("FEET IK")]
+
+        // This Rig controls the weight of ALL the feet IK constraints
+        [field: SerializeField] public Rig FeetIKRig { get; private set; } = null!;
+
+        //This Transform position has the current position of the right leg feet, after the animation kicks in, before the IK. We raycast from this position
+        [field: SerializeField] public Transform RightLegConstraint { get; private set; } = null!;
+
+        // This transform position decides where we want to put the right leg
+        [field: SerializeField] public Transform RightLegIKTarget { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftLegConstraint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftLegIKTarget { get; private set; } = null!;
+
+        // Constraint that controls the weight of the leg IK
+        [field: SerializeField] public TwoBoneIKConstraint RightLegIK { get; private set; } = null!;
+        [field: SerializeField] public TwoBoneIKConstraint LeftLegIK { get; private set; } = null!;
+
+        //This constraint Applies an offset to the hips, lowering the avatar position based on the desired feet position
+        [field: SerializeField] public MultiPositionConstraint HipsConstraint { get; private set; } = null!;
+
+        [field: Header("HANDS IK")]
+        [field: SerializeField] public Rig HandsIKRig { get; private set; } = null!;
+        [field: SerializeField] public TwoBoneIKConstraint LeftHandIK { get; private set; } = null!;
+
+        // IK target position and rotation, its called subTarget because the real target has a parent constraint based on this transform to fix some offsets
+        [field: SerializeField] public Transform LeftHandSubTarget { get; private set; } = null!;
+
+        // Position where we raycast from
+        [field: SerializeField] public Transform LeftHandRaycast { get; private set; } = null!;
+        [field: SerializeField] public TwoBoneIKConstraint RightHandIK { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandSubTarget { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandTarget { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandRaycast { get; private set; } = null!;
+
+        [field: Header("LOOK-AT IK")]
+        [field: SerializeField] public Rig HeadIKRig { get; private set; } = null!;
+
+        // The LookAt IK is based on 2 constraints, one for horizontal rotation and other for vertical rotation in order to control different bone chains for both of them, Horizontal is applied first
+        [field: SerializeField] public TwistChainConstraint HeadLookAtTargetVerticalConstraint { get; private set; } = null!;
+        [field: SerializeField] public Transform HeadLookAtTargetHorizontal { get; private set; } = null!;
+        [field: SerializeField] public Transform HeadLookAtTargetVertical { get; private set; } = null!;
+
+        // Position of the head after the animations
+        [field: SerializeField] public Transform HeadPositionConstraint { get; private set; } = null!;
+
+        [field: Header("TORSO IK")]
+        [field: SerializeField] public Rig TorsoIKRig { get; private set; } = null!;
+        [field: SerializeField] public Transform TorsoTarget { get; private set; } = null!;
+
+        [field: Header("ADDITIVE BREATH")]
+        [field: SerializeField] public Rig CachePoseRig { get; private set; } = null!;
+        [field: SerializeField] public Rig AdditiveBreathRig { get; private set; } = null!;
+        [field: SerializeField] public AdditiveBreathDataBridge AdditiveBreathBridge { get; private set; } = null!;
+
+        [field: Header("OTHER")]
+
+        // Anchor points to attach entities to, through the SDK
+        [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform HeadAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform NeckAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform SpineAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform Spine1AnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform Spine2AnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform HipAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftShoulderAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftArmAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftForearmAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftHandIndexAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightShoulderAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightArmAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightForearmAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightHandIndexAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftUpLegAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftLegAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftFootAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform LeftToeBaseAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightUpLegAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightLegAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; } = null!;
+        [field: SerializeField] public Transform Armature { get; private set; } = null!;
+
+        [field: SerializeField] public GameObject GhostGameObject { get; private set; } = null!;
+
+        public Renderer GhostRenderer { get; private set; } = null!;
+
+        [Header("NAMETAG RELATED")]
+        [SerializeField] [Tooltip("How high could nametag be, [m]")]
+        private float nametagMaxOffset = 2f;
+        [SerializeField] [Tooltip("Offset when nametag is higher than allowed max (means wearable is broken), [m]")]
+        private float nametagBoundedOffset = 1f;
+        [SerializeField] [Tooltip("Small buffer to have some air/space between nametag and head, [m]")]
+        private float nametagBuffer = 0.025f;
+        [SerializeField] [Tooltip("Extra height added to the nametag while the glider is deployed, to avoid clipping the glider model, [m]")]
+        private float nametagGlideOffset = 0.8f;
+
+        [SerializeField] private Transform headAramatureBone = null!;
+        [SerializeField] private Transform[] potentialHighestBones = null!;
+        private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
+        private Vector3 headArmatureBoneStartPosition;
+        private Vector3 armatureStartLocalPosition;
+        private Vector3 armatureStartLocalScale;
+
+        public float NametagGlideOffset => nametagGlideOffset;
+
+        public bool IsLegacyAnimationPlaying => LegacyAnimation != null && LegacyAnimation.isPlaying;
+        public bool IsMaskedLegacyEmotePlaying => maskedLegacyBlender != null && maskedLegacyBlender.IsPlaying;
+        public bool HasMaskedLegacyEmoteFinished => maskedLegacyBlender != null && maskedLegacyBlender.HasFinished;
+
+        public int UpperBodyLayerIndex => upperBodyLayerIndex;
+
+        private void Awake()
+        {
+            if (!AvatarAnimator)
+                return;
+
+            RandomID = Random.Range(0, 1000);
+
+            rightPointAtLayerIndex = AvatarAnimator.GetLayerIndex("RightPointAtHand");
+            rotationLayerIndex = AvatarAnimator.GetLayerIndex("Rotation");
+            upperBodyLayerIndex = AvatarAnimator.GetLayerIndex(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
+            animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+            overrideController.GetOverrides(animationOverrides);
+
+            // to avoid setting all animations to 'null' after replacing an emote, we set all overrides to their original clips
+            animationOverrides = animationOverrides.Select(a => new KeyValuePair<AnimationClip, AnimationClip>(a.Key, a.Key)).ToList();
+            overrideController.ApplyOverrides(animationOverrides);
+
+            headArmatureBoneStartPosition = headAramatureBone.position - transform.position;
+            armatureStartLocalPosition = Armature.localPosition;
+            armatureStartLocalScale = Armature.localScale;
+
+            GhostRenderer = GhostGameObject.GetComponentInChildren<Renderer>();
+        }
+
+        public Transform GetTransform() =>
+            transform;
+
+        public Animation AddOrGetLegacyAnimation()
+        {
+            if (LegacyAnimation != null) return LegacyAnimation;
+            LegacyAnimation = AvatarAnimator.gameObject.AddComponent<Animation>();
+            return LegacyAnimation;
+        }
+
+        public void StopLegacyAnimation()
+        {
+            if (LegacyAnimation != null) LegacyAnimation.Stop();
+        }
+
+        private MaskedLegacyEmoteBlender AddOrGetMaskedLegacyBlender()
+        {
+            if (maskedLegacyBlender != null) return maskedLegacyBlender;
+
+            GameObject animatorGo = AvatarAnimator.gameObject;
+            maskedLegacyBlender = animatorGo.AddComponent<MaskedLegacyEmoteBlender>();
+            maskedLegacyBlender.Initialize(animatorGo);
+            return maskedLegacyBlender;
+        }
+
+        public void StartMaskedLegacyEmote(AnimationClip clip, AvatarMask avatarMask, bool loop)
+        {
+            // Keep the Animator enabled so locomotion stays driving the bones we restore each frame.
+            AvatarAnimator.enabled = true;
+            AddOrGetMaskedLegacyBlender().Play(clip, avatarMask, loop);
+        }
+
+        public void StopMaskedLegacyEmote() =>
+            maskedLegacyBlender?.Stop();
+
+        public void SetPointAtLayerWeight(float weight)
+        {
+            if (weight == lastPointAtLayerWeight) return;
+            lastPointAtLayerWeight = weight;
+            AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
+        }
+
+        public void SetRotationLayerWeight(float weight)
+        {
+            if (weight == lastRotationLayerWeight) return;
+            lastRotationLayerWeight = weight;
+            AvatarAnimator.SetLayerWeight(rotationLayerIndex, weight);
+        }
+
+        public void SetAnimatorFloat(int hash, float value)
+        {
+            if (IsLegacyAnimationPlaying) return;
+            if (AvatarAnimator.GetFloat(hash).Equals(value)) return;
+
+            AvatarAnimator.enabled = true;
+            AvatarAnimator.SetFloat(hash, value);
+        }
+
+        public void SetAnimatorInt(int hash, int value)
+        {
+            if (IsLegacyAnimationPlaying) return;
+            if (AvatarAnimator.GetInteger(hash).Equals(value)) return;
+
+            AvatarAnimator.enabled = true;
+            AvatarAnimator.SetInteger(hash, value);
+        }
+
+        public void SetAnimatorTrigger(int hash)
+        {
+            if (IsLegacyAnimationPlaying) return;
+
+            AvatarAnimator.enabled = true;
+            AvatarAnimator.SetTrigger(hash);
+        }
+
+        public bool IsAnimatorInTag(int hashTag) =>
+            AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
+
+        public int GetAnimatorCurrentStateTag(int layerIndex) =>
+            AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
+
+        public int GetEmoteLayerIndex(AvatarEmoteMask mask) =>
+            mask == AvatarEmoteMask.AemUpperBody ? upperBodyLayerIndex : AnimatorEmoteLayers.BASE_LAYER_INDEX;
+
+        public void ResetAnimatorTrigger(int hash) =>
+            AvatarAnimator.ResetTrigger(hash);
+
+        public void ResetArmatureTransform()
+        {
+            Vector3 angles = Armature.eulerAngles;
+            angles.x = 90;
+            Armature.eulerAngles = angles;
+            Armature.localPosition = armatureStartLocalPosition;
+            Armature.localScale = armatureStartLocalScale;
+        }
+
+        // Called onRelease of the pool. Resets stuff to avoid:
+        //   - Armature inclination, offset and scale that could be caused by emote clips animating the Armature node
+        //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
+        public void ResetState()
+        {
+            ResetArmatureTransform();
+            transform.localPosition = Vector3.zero;
+            LegacyAnimation?.Stop();
+            maskedLegacyBlender?.Stop();
+            AvatarAnimator.Rebind();
+
+            lastPointAtLayerWeight = float.NaN;
+            lastRotationLayerWeight = float.NaN;
+
+            HipsConstraint.data.offset = Vector3.zero;
+            HipsConstraint.weight = 0;
+            FeetIKRig.enabled = false;
+        }
+
+        public void SetLayerWeight(int layerIndex, float weight) =>
+            AvatarAnimator.SetLayerWeight(layerIndex, weight);
+
+        public bool GetAnimatorBool(int hash) =>
+            AvatarAnimator.GetBool(hash);
+
+        public void SetAnimatorBool(int hash, bool value)
+        {
+            if (IsLegacyAnimationPlaying) return;
+            if (AvatarAnimator.GetBool(hash) == value) return;
+
+            AvatarAnimator.enabled = true;
+            AvatarAnimator.SetBool(hash, value);
+        }
+
+        public float GetAnimatorFloat(int hash) =>
+            AvatarAnimator.GetFloat(hash);
+
+        public void ReplaceEmoteAnimation(AnimationClip animationClip)
+        {
+            if (lastEmote == animationClip) return;
+
+            overrideController["Emote"] = animationClip;
+            AvatarAnimator.runtimeAnimatorController = overrideController;
+
+            lastEmote = animationClip;
+
+            if (IsLegacyAnimationPlaying) return;
+            AvatarAnimator.enabled = true;
+        }
+
+        public void ReplaceMaskedEmoteAnimation(AnimationClip animationClip)
+        {
+            if (lastMaskedEmote == animationClip) return;
+
+            overrideController["MaskedEmote"] = animationClip;
+            AvatarAnimator.runtimeAnimatorController = overrideController;
+
+            lastMaskedEmote = animationClip;
+
+            if (IsLegacyAnimationPlaying) return;
+            AvatarAnimator.enabled = true;
+        }
+
+        public void ClearMaskedEmoteAnimationCache() =>
+            lastMaskedEmote = null;
+
+        public Vector3 GetAdaptiveNametagPosition()
+        {
+            if (GhostGameObject.activeSelf)
+            {
+                Vector3 basePos = transform.position;
+                return new Vector3(basePos.x, basePos.y + GHOST_NAMETAG_HEIGHT, basePos.z);
+            }
+
+            Vector3 headPos = headAramatureBone.position;
+
+            float maxY = headPos.y;
+            var isHeadHighest = true;
+
+            // NOTE (Vit) : If performance critical - then iterate only if avatar is emoting (or jobify)
+            foreach (Transform bone in potentialHighestBones)
+                if (bone.position.y > maxY)
+                {
+                    maxY = bone.position.y;
+                    isHeadHighest = false;
+                }
+
+            // apply scaling for head animation
+            float offset = isHeadHighest ? cachedHeadWearableOffset * headAramatureBone.localScale.y : cachedHeadWearableOffset;
+
+            return new Vector3(headPos.x, maxY + offset, headPos.z);
+        }
+
+        /// <summary>
+        /// Updates the cached head wearable offset based on current skinning bounds. Should be called whenever wearables change.
+        /// </summary>
+        public void UpdateHeadWearableOffset(in Bounds skinningBounds, in GetWearablesByPointersIntention wearable)
+        {
+            float maxWearableY = skinningBounds.max.y;
+
+            // Calculate offset from head bone Y position to the highest point of wearables
+            cachedHeadWearableOffset = maxWearableY - headArmatureBoneStartPosition.y + nametagBuffer;
+
+            // if offset is too high, it means something wrong with the wearable, so we bound it by smaller value than MAX_OFFSET (by BOUNDED_OFFSET)
+            if (cachedHeadWearableOffset > nametagMaxOffset)
+            {
+                ReportHub.LogWarning(ReportCategory.WEARABLE, $"Wearable for {wearable.BodyShape.Value} produces very high nametag offset = {cachedHeadWearableOffset} [m]. Bouncing it by {nameof(nametagBoundedOffset)} = {nametagBoundedOffset}");
+                ReportHub.LogWarning(ReportCategory.WEARABLE, $"transform.position.y = {transform.position.y} | skinningBounds.max = {skinningBounds.max.ToString()} | skinningBounds.center = {skinningBounds.center.ToString()}");
+
+                foreach (URN pointer in wearable.Pointers)
+                    ReportHub.LogWarning(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
+
+                cachedHeadWearableOffset = nametagBoundedOffset;
+            }
+        }
+    }
+
+    public interface IAvatarView
+    {
+        Transform GetTransform();
+
+        Animator AvatarAnimator { get; }
+
+        void SetAnimatorFloat(int hash, float value);
+
+        void SetAnimatorInt(int hash, int value);
+
+        void SetAnimatorTrigger(int hash);
+
+        void SetAnimatorBool(int hash, bool value);
+
+        bool GetAnimatorBool(int hash);
+
+        void ReplaceEmoteAnimation(AnimationClip animationClip);
+
+        void ReplaceMaskedEmoteAnimation(AnimationClip animationClip);
+
+        void ClearMaskedEmoteAnimationCache();
+
+        Animation AddOrGetLegacyAnimation();
+
+        bool IsLegacyAnimationPlaying { get; }
+
+        void StopLegacyAnimation();
+
+        void StartMaskedLegacyEmote(AnimationClip clip, AvatarMask avatarMask, bool loop);
+
+        void StopMaskedLegacyEmote();
+
+        bool IsMaskedLegacyEmotePlaying { get; }
+
+        bool HasMaskedLegacyEmoteFinished { get; }
+
+        float GetAnimatorFloat(int hash);
+
+        bool IsAnimatorInTag(int hashTag);
+
+        int GetAnimatorCurrentStateTag(int layerIndex);
+
+        int UpperBodyLayerIndex { get; }
+
+        int GetEmoteLayerIndex(AvatarEmoteMask mask);
+
+        void ResetAnimatorTrigger(int hash);
+
+        void ResetArmatureTransform();
+
+        void SetLayerWeight(int layerIndex, float weight);
+    }
+}

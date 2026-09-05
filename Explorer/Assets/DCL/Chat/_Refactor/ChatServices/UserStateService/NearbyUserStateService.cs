@@ -1,0 +1,210 @@
+﻿using DCL.Chat.History;
+using DCL.Friends.UserBlocking;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Optimization.Pools;
+using DCL.LiveKit.Public;
+using LiveKit.Proto;
+using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
+using System.Collections.Generic;
+
+namespace DCL.Chat.ChatServices
+{
+    /// <summary>
+    ///     Handles updates from the members of the nearby channel only.
+    ///     Activated only when the Nearby Channel is selected.
+    /// </summary>
+    public class NearbyUserStateService : ICurrentChannelUserStateService
+    {
+        private readonly IRoomHub roomHub;
+        private readonly ChatEventBus eventBus;
+        private readonly IUserBlockingCache userBlockingCache;
+
+        private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<string> blockedOnlineParticipants = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<string> snapshotBuffer = new (PoolConstants.AVATARS_COUNT);
+
+        public IReadOnlyCollection<string> OnlineParticipants
+        {
+            get
+            {
+                lock (onlineParticipants) { return onlineParticipants; }
+            }
+        }
+
+        public NearbyUserStateService(IRoomHub roomHub, ChatEventBus eventBus,
+            IUserBlockingCache userBlockingCache)
+        {
+            this.roomHub = roomHub;
+            this.eventBus = eventBus;
+            this.userBlockingCache = userBlockingCache;
+        }
+
+        public void Activate()
+        {
+            // Retrieve all connected users from both rooms
+            IReadOnlyCollection<string> participantIdentities = roomHub.AllLocalRoomsRemoteParticipantIdentities();
+
+            RefreshAllOnlineParticipants(participantIdentities);
+
+            roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnIslandUpdatesFromParticipant;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += OnSceneRoomUpdatesFromParticipants;
+
+            roomHub.IslandRoom().ConnectionStateChanged += OnRoomConnectionStateChange;
+            roomHub.SceneRoom().Room().ConnectionStateChanged += OnRoomConnectionStateChange;
+
+            userBlockingCache.UserBlocked += BlockedSetOffline;
+            userBlockingCache.UserBlocksYou += BlockedSetOffline;
+            userBlockingCache.UserUnblocked += UnblockedSetOnline;
+            userBlockingCache.UserUnblocksYou += UnblockedSetOnline;
+        }
+
+        public void CopyOnlineParticipantsTo(HashSet<string> destination)
+        {
+            destination.Clear();
+
+            lock (onlineParticipants)
+            {
+                foreach (string participant in onlineParticipants)
+                    destination.Add(participant);
+            }
+        }
+
+        private void CopyToSnapshotBuffer()
+        {
+            snapshotBuffer.Clear();
+
+            foreach (string participant in onlineParticipants)
+                snapshotBuffer.Add(participant);
+        }
+
+        public void Deactivate()
+        {
+            roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnIslandUpdatesFromParticipant;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnSceneRoomUpdatesFromParticipants;
+
+            roomHub.IslandRoom().ConnectionStateChanged -= OnRoomConnectionStateChange;
+            roomHub.SceneRoom().Room().ConnectionStateChanged -= OnRoomConnectionStateChange;
+
+            lock (onlineParticipants) { onlineParticipants.Clear(); }
+
+            userBlockingCache.UserBlocked -= BlockedSetOffline;
+            userBlockingCache.UserBlocksYou -= BlockedSetOffline;
+            userBlockingCache.UserUnblocked -= UnblockedSetOnline;
+            userBlockingCache.UserUnblocksYou -= UnblockedSetOnline;
+        }
+
+        private void RefreshAllOnlineParticipants(IReadOnlyCollection<string> participantIdentities)
+        {
+            lock (onlineParticipants)
+            {
+                onlineParticipants.Clear();
+                blockedOnlineParticipants.Clear();
+
+                foreach (string participantIdentity in participantIdentities)
+                    if (userBlockingCache.UserIsBlocked(participantIdentity))
+                        blockedOnlineParticipants.Add(participantIdentity);
+                    else
+                        onlineParticipants.Add(participantIdentity);
+            }
+        }
+
+        private void OnSceneRoomUpdatesFromParticipants(LKParticipant participant, UpdateFromParticipant update)
+        {
+            OnRoomUpdatesFromParticipant(participant, update, roomHub.IslandRoom());
+        }
+
+        private void OnIslandUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
+        {
+            OnRoomUpdatesFromParticipant(participant, update, roomHub.SceneRoom().Room());
+        }
+
+        private void OnRoomUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update, IRoom otherRoom)
+        {
+            lock (onlineParticipants)
+            {
+                bool participantIsBlocked = userBlockingCache.UserIsBlocked(participant.Identity);
+
+                if (update == UpdateFromParticipant.Connected)
+                {
+                    if (participantIsBlocked)
+                        blockedOnlineParticipants.Add(participant.Identity);
+                    else
+                        SetOnline(participant.Identity);
+                }
+                else if (update == UpdateFromParticipant.Disconnected)
+                {
+                    // User is not disconnected if they are still in another room
+                    if (otherRoom.Participants.RemoteParticipant(participant.Identity) != null)
+                        return;
+
+                    if (participantIsBlocked)
+                        blockedOnlineParticipants.Remove(participant.Identity);
+                    else
+                        SetOffline(participant.Identity);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     This will be called:
+        ///     <list type="bullet">
+        ///         <item> If the connection state has changed from the SDK perspective </item>
+        ///         <item> If the new room is assigned to the proxy </item>
+        ///     </list>
+        /// </summary>
+        /// <param name="connectionState"></param>
+        private void OnRoomConnectionStateChange(LKConnectionState connectionState)
+        {
+            lock (onlineParticipants)
+            {
+                switch (connectionState)
+                {
+                    case LKConnectionState.ConnDisconnected:
+                    case LKConnectionState.ConnConnected:
+                        RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
+                        eventBus.RaiseChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants);
+                        CopyToSnapshotBuffer();
+                        eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, snapshotBuffer));
+                        break;
+                }
+            }
+        }
+
+        private void SetOnline(string userId)
+        {
+            if (onlineParticipants.Add(userId))
+                eventBus.RaiseUserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, true);
+        }
+
+        private void SetOffline(string userId)
+        {
+            if (onlineParticipants.Remove(userId))
+                eventBus.RaiseUserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false);
+        }
+
+        private void UnblockedSetOnline(string userId)
+        {
+            lock (onlineParticipants)
+            {
+                if (blockedOnlineParticipants.Contains(userId) && onlineParticipants.Add(userId))
+                {
+                    blockedOnlineParticipants.Remove(userId);
+                    eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, true));
+                }
+            }
+        }
+
+        private void BlockedSetOffline(string userId)
+        {
+            lock (onlineParticipants)
+            {
+                if (onlineParticipants.Remove(userId))
+                {
+                    blockedOnlineParticipants.Add(userId);
+                    eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false));
+                }
+            }
+        }
+    }
+}

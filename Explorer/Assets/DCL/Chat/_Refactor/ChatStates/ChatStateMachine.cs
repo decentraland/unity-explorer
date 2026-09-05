@@ -1,0 +1,163 @@
+﻿using DCL.Chat.ChatServices;
+using MVC;
+using System;
+using Utility;
+
+namespace DCL.Chat.ChatStates
+{
+    public class ChatStateMachine : IDisposable
+    {
+        private readonly ChatInputBlockingService inputBlocker;
+        private readonly ChatClickDetectionHandler chatClickDetectionHandler;
+        private readonly ChatEventBus eventBus;
+        private readonly MVCStateMachine<ChatState> fsm;
+        private readonly EventSubscriptionScope scope = new ();
+        private readonly ChatPanelPresenter chatPanelPresenter;
+
+        public bool IsFocused => fsm.CurrentState is FocusedChatState;
+        public bool IsMinimized => fsm.CurrentState is MinimizedChatState;
+        public bool IsHidden => fsm.CurrentState is HiddenChatState;
+
+        public ChatStateMachine(
+            ChatEventBus eventBus,
+            ChatUIMediator mediator,
+            ChatInputBlockingService inputBlocker,
+            ChatClickDetectionHandler chatClickDetectionHandler,
+            ChatPanelPresenter chatPanelPresenter)
+        {
+            this.inputBlocker = inputBlocker;
+            this.chatClickDetectionHandler = chatClickDetectionHandler;
+            this.eventBus = eventBus;
+
+            this.chatPanelPresenter = chatPanelPresenter;
+
+            fsm = new MVCStateMachine<ChatState>();
+            fsm.AddStates(
+                new InitChatState(),
+                new DefaultChatState(fsm, mediator),
+                new FocusedChatState(fsm, mediator, inputBlocker),
+                new MembersChatState(fsm, mediator),
+                new MinimizedChatState(fsm, mediator),
+                new HiddenChatState(mediator)
+            );
+            fsm.Enter<InitChatState>();
+            fsm.OnStateChanged += PropagateStateChange;
+
+            scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
+            scope.Add(eventBus.Subscribe<ChatEvents.BlurRequestedEvent>(HandleBlurRequestedEvent));
+            scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
+            scope.Add(eventBus.Subscribe<ChatEvents.ToggleMembersEvent>(HandleToggleMembersEvent));
+
+            chatClickDetectionHandler.OnClickInside += HandleClickInside;
+            chatClickDetectionHandler.OnClickOutside += HandleClickOutside;
+
+            this.chatPanelPresenter.PointerEntered += HandlePointerEntered;
+            this.chatPanelPresenter.PointerExited += HandlePointerExited;
+        }
+
+        public void Dispose()
+        {
+            chatClickDetectionHandler.OnClickInside -= HandleClickInside;
+            chatClickDetectionHandler.OnClickOutside -= HandleClickOutside;
+
+            chatPanelPresenter.PointerEntered -= HandlePointerEntered;
+            chatPanelPresenter.PointerExited -= HandlePointerExited;
+
+            fsm.OnStateChanged -= PropagateStateChange;
+
+            scope.Dispose();
+        }
+        private void PropagateStateChange(ChatState currentState) =>
+            eventBus.RaiseChatStateChangedEvent(currentState);
+
+        public void OnViewShow()
+        {
+            inputBlocker.Initialize();
+
+            fsm.Enter<DefaultChatState>();
+        }
+
+        private void HandleFocusRequestedEvent(ChatEvents.FocusRequestedEvent evt)
+        {
+            fsm.CurrentState!.OnFocusRequested();
+        }
+
+        private void HandleBlurRequestedEvent(ChatEvents.BlurRequestedEvent evt)
+        {
+            fsm.CurrentState!.OnBlurRequested();
+        }
+
+        private void HandleCloseChatEvent(ChatEvents.CloseChatEvent evt)
+        {
+            fsm.CurrentState!.OnCloseRequested();
+        }
+
+        private void HandleToggleMembersEvent(ChatEvents.ToggleMembersEvent evt)
+        {
+            fsm.CurrentState!.OnToggleMembers();
+        }
+
+        private void HandleClickInside()
+        {
+            fsm.CurrentState!.OnClickInside();
+        }
+
+        private void HandleClickOutside()
+        {
+            fsm.CurrentState!.OnClickOutside();
+        }
+
+        private void HandlePointerExited()
+        {
+            fsm.CurrentState!.OnPointerExit();
+        }
+
+        private void HandlePointerEntered()
+        {
+            fsm.CurrentState!.OnPointerEnter();
+        }
+
+        public void Minimize()
+        {
+            fsm.CurrentState!.OnMinimizeRequested();
+        }
+
+        public void SetInitialState(bool focus)
+        {
+            if (focus)
+                fsm.Enter<FocusedChatState>();
+            else
+                fsm.TryPopState();
+        }
+
+        public void SetToggleState()
+        {
+            if (IsHidden)
+                return;
+
+            // Branch on focus: some transitions land in states that are neither focused nor minimized.
+            if (IsFocused)
+                fsm.Enter<MinimizedChatState>();
+            else
+                fsm.Enter<FocusedChatState>();
+        }
+
+        public void PopState()
+        {
+            fsm.TryPopState();
+        }
+
+        public void SetVisibility(bool isVisible)
+        {
+            if (isVisible)
+                fsm.Enter<DefaultChatState>();
+            else
+                fsm.Enter<HiddenChatState>();
+        }
+
+        public void SetFocusState()
+        {
+            fsm.Enter<FocusedChatState>();
+        }
+    }
+}

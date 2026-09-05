@@ -1,0 +1,65 @@
+using Arch.Core;
+using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
+using DCL.Character.Components;
+using DCL.DebugUtilities.UIBindings;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.FfiClients;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
+using DCL.Time;
+using DCL.Utility;
+using DCL.Utility.Types;
+using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
+using DCL.WebRequests.RequestsHub;
+using ECS;
+using LiveKit.Internal.FFIClients;
+using UnityEngine;
+using Utility;
+
+namespace DCL.Multiplayer.Connections.Demo
+{
+    public class GateKeeperRoomPlayground : MonoBehaviour
+    {
+        private void Start()
+        {
+            LaunchAsync().Forget();
+        }
+
+        private async UniTaskVoid LaunchAsync()
+        {
+#if UNITY_EDITOR
+            IFFIClient.Default.EnsureInitialize();
+
+            var world = World.Create();
+            world.Create(new CharacterTransform(new GameObject("Player").transform));
+
+            var launchMode = ILaunchMode.PLAY;
+            var urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, launchMode);
+
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), EthereumNetwork.Sepolia);
+            var character = new ExposedTransform();
+            var totalBudget = 15;
+
+            var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)), new RealmClock());
+            var realmData = new IRealmData.Fake();
+
+            var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false, urlsSource));
+            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new RealmData(), Option<HardwareFingerprintProvider>.None);
+
+            new GateKeeperSceneRoom(
+                    webRequests,
+                    options
+                ).StartAsync()
+                 .Forget();
+#endif
+        }
+    }
+}

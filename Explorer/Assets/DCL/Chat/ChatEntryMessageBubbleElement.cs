@@ -1,0 +1,212 @@
+using DCL.Chat.History;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Translation;
+using System;
+using System.Globalization;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace DCL.Chat
+{
+    /// <summary>
+    ///     This class represents the part of the chat entry that contains the chat bubble, so it's where we display the text of the message
+    ///     and also now we display a button that when clicked opens an option panel
+    /// </summary>
+    public class ChatEntryMessageBubbleElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    {
+        [field: SerializeField] internal Color backgroundDefaultColor { get; private set; }
+        [field: SerializeField] internal Color backgroundMentionedColor { get; private set; }
+        [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; } = null!;
+        [field: SerializeField] internal RectTransform backgroundRectTransform { get; private set; } = null!;
+        [field: SerializeField] internal Image backgroundImage { get; private set; } = null!;
+        [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; } = null!;
+        [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; } = null!;
+        [field: SerializeField] internal RectTransform popupPosition { get; private set; } = null!;
+        [field: SerializeField] internal GameObject mentionedOutline { get; private set; } = null!;
+        [field: SerializeField] internal TMP_Text timestamp { get; private set; } = null!;
+        [field: SerializeField] internal ChatEntryTranslationView translationView { get; private set; } = null!;
+        [field: SerializeField] internal Button messageOptionsButton { get; private set; } = null!;
+        [field: SerializeField] internal Button? reactionButton { get; private set; }
+        [field: SerializeField] internal ChatEntryReactionButtonHoverView? reactionButtonHoverView { get; private set; }
+
+        public event Action? OnTranslateRequest;
+        public event Action? OnRevertRequest;
+        public event Action? OnPointerEnterEvent;
+        public event Action? OnPointerExitEvent;
+
+        private Vector2 backgroundSize;
+        private bool popupOpen;
+
+        private void Awake()
+        {
+            translationView.OnTranslateClicked += () => OnTranslateRequest?.Invoke();
+            translationView.OnSeeOriginalClicked += () => OnRevertRequest?.Invoke();
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            messageOptionsButton.gameObject.SetActive(true);
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+                reactionButton?.gameObject.SetActive(true);
+
+            OnPointerEnterEvent?.Invoke();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (!popupOpen)
+            {
+                messageOptionsButton.gameObject.SetActive(false);
+                reactionButton?.gameObject.SetActive(false);
+                reactionButtonHoverView?.ResetState();
+            }
+
+            OnPointerExitEvent?.Invoke();
+        }
+
+        public Vector3 PopupPosition => popupPosition.position;
+
+        public void SetPopupOpen(bool open)
+        {
+            popupOpen = open;
+        }
+
+        /// <summary>
+        /// Sets the visual state for when a reaction selector popup targets this message.
+        /// Keeps the hover buttons visible and marks the reaction button as active.
+        /// </summary>
+        public void SetReactionPopupActive(bool active)
+        {
+            popupOpen = active;
+            reactionButtonHoverView?.SetClicked(active);
+        }
+
+        public void Reset()
+        {
+            popupOpen = false;
+            messageOptionsButton.gameObject.SetActive(false);
+            reactionButton?.gameObject.SetActive(false);
+            reactionButtonHoverView?.ResetState();
+        }
+
+        public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
+        {
+            bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(originalData.SenderWalletAddress);
+            usernameElement.SetUsername(originalData.SenderValidatedName, originalData.SenderWalletId, isOfficial);
+            messageContentElement.SetMessageContent(displayText);
+
+            if (originalData.SentTimestamp.HasValue)
+            {
+                timestamp.gameObject.SetActive(true);
+                timestamp.text = originalData.SentTimestamp.Value.ToLocalTime().ToString("hh:mm tt", CultureInfo.InvariantCulture);
+            }
+            else
+                timestamp.gameObject.SetActive(false);
+
+            translationView.SetState(translationState);
+
+            backgroundSize = backgroundRectTransform.sizeDelta;
+            backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
+            backgroundSize.y += timestamp.gameObject.activeSelf ? timestamp.rectTransform.sizeDelta.y : 0.0f;
+            backgroundSize.x = CalculatePreferredWidth(displayText, originalData);
+            backgroundRectTransform.sizeDelta = backgroundSize;
+            mentionedOutline.SetActive(originalData.IsMention);
+
+            backgroundImage.color = originalData.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
+        }
+
+        /// <summary>
+        ///  Sets the chat message data into the chat bubble, adapting the background size accordingly and changing the color & outline if it's a mention
+        /// </summary>
+        /// <param name="data"> a ChatMessage </param>
+        public void SetMessageData(ChatMessage data)
+        {
+            SetMessageData(data.Message, data, TranslationState.Original);
+        }
+
+        public void SetTranslationViewVisibility(bool isVisible)
+        {
+            translationView.gameObject.SetActive(isVisible);
+        }
+
+        public void UpdateName(string displayText, ChatMessage originalMessage, string usernameOverride, string walletIdOverride)
+        {
+            backgroundSize.x = CalculatePreferredWidth(displayText, originalMessage, usernameOverride, walletIdOverride);
+            backgroundRectTransform.sizeDelta = backgroundSize;
+        }
+
+        private float CalculatePreferredWidth(string displayText, ChatMessage originalMessage, string usernameOverride = null, string walletIdOverride = null)
+        {
+            string username = string.IsNullOrEmpty(usernameOverride) ? originalMessage.SenderValidatedName : usernameOverride;
+            int nameLength = 0;
+
+            if (string.IsNullOrEmpty(username))
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"SenderValidatedName is null or empty for message: {originalMessage.MessageId} sent by wallet: {originalMessage.SenderWalletAddress}");
+            else
+                nameLength = username.Length;
+
+            string walletId = string.IsNullOrEmpty(walletIdOverride) ? originalMessage.SenderWalletId : walletIdOverride;
+            int walletIdLength = string.IsNullOrEmpty(walletId) ? 0 : walletId.Length;
+            int nameTotalLength = nameLength + walletIdLength;
+            TMP_Text messageContentText = messageContentElement.messageContentText;
+
+            // We use the displayText to get the textInfo, but the original message for emoji counting.
+            messageContentText.SetText(displayText); // Important: Set text first to get accurate textInfo
+            int parsedTextLength = messageContentText.textInfo.characterCount;
+
+            var emojisCount = 0;
+            var needsEmojiCount = false;
+
+            if (nameTotalLength > parsedTextLength)
+            {
+                needsEmojiCount = true;
+                emojisCount = GetEmojisCount(originalMessage.Message); // Count emojis from original message
+            }
+
+            float userNamePreferredWidth = usernameElement.GetUserNamePreferredWidth(configurationSo.BackgroundWidthOffset, configurationSo.VerifiedBadgeWidth);
+
+            if (nameTotalLength > (needsEmojiCount && emojisCount > 0 ? parsedTextLength + emojisCount : parsedTextLength))
+                return userNamePreferredWidth;
+
+            // Use the displayText for preferred size calculation
+            var preferredValues = messageContentText.GetPreferredValues(displayText, configurationSo.MaxEntryWidth, 0);
+
+            if (preferredValues.x < configurationSo.MaxEntryWidth - configurationSo.BackgroundWidthOffset)
+                return Mathf.Max(preferredValues.x + configurationSo.BackgroundWidthOffset, userNamePreferredWidth);
+
+            return configurationSo.MaxEntryWidth;
+        }
+
+        private int GetEmojisCount(string message)
+        {
+            if (string.IsNullOrEmpty(message))
+                return 0;
+
+            ReadOnlySpan<char> messageSpan = message.AsSpan();
+            var count = 0;
+
+            // Find all occurrences of "\U0"
+            for (var i = 0; i < messageSpan.Length - 2; i++)
+            {
+                if (messageSpan[i] == '\\' &&
+                    i + 2 < messageSpan.Length &&
+                    messageSpan[i + 1] == 'U' &&
+                    messageSpan[i + 2] == '0')
+                {
+                    count++;
+                    i += 2;
+                }
+            }
+            return count;
+        }
+
+        public void GreyOut(float opacity)
+        {
+            messageContentElement.GreyOut(opacity);
+        }
+    }
+}

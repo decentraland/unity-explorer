@@ -1,0 +1,160 @@
+﻿using DCL.Diagnostics;
+using DCL.Rendering.GPUInstancing.Utils;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+namespace DCL.Rendering.GPUInstancing.InstancingData
+{
+    [Serializable]
+    public class CombinedLODGroupData : MonoBehaviour, IEquatable<CombinedLODGroupData>
+    {
+        [SerializeField] private GPUInstancingSettings GPUInstancingSettings;
+
+        [Header("REFERENCES")]
+        [SerializeField] private LODGroup Reference;
+        [SerializeField] private List<Renderer> RefRenderers;
+
+        [field: Header("DATA")]
+        [field: SerializeField]
+        public LODGroupData LODGroupData { get; private set; }
+
+        [field: SerializeField]
+        public List<CombinedLodsRenderer> CombinedLodsRenderers { get; private set; }
+
+        public string Name => Reference != null ? Reference.name : transform.name;
+
+        [ContextMenu(nameof(HideAll))]
+        public void HideAll()
+        {
+            foreach (Renderer refRenderer in RefRenderers)
+                refRenderer.enabled = false;
+
+            if (Reference == null) return;
+
+            bool isAllRenderersDisabled = Reference.GetLODs().All(lod => lod.renderers.All(lodRenderer => lodRenderer.enabled));
+
+            if (isAllRenderersDisabled)
+                Reference.enabled = false;
+        }
+
+        [ContextMenu(nameof(ShowAll))]
+        public void ShowAll()
+        {
+            if (Reference != null) Reference.enabled = true;
+            foreach (Renderer refRenderer in RefRenderers) refRenderer.enabled = true;
+        }
+
+        [ContextMenu(nameof(CollectStandaloneRenderers))]
+        private void CollectStandaloneRenderers()
+        {
+            MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+            var meshFilter = GetComponent<MeshFilter>();
+
+            RefRenderers = new List<Renderer> { meshRenderer };
+
+            // Position at origin (but not scale!)
+            transform.position = Vector3.zero;
+            transform.rotation = Quaternion.identity;
+
+            // LOD Group
+            Reference = null;
+            LODGroupData = new LODGroupData(meshFilter.sharedMesh.bounds);
+
+            CombinedLodsRenderers = new List<CombinedLodsRenderer>
+            {
+                new (meshRenderer.sharedMaterial, meshRenderer, meshFilter),
+            };
+        }
+
+        [ContextMenu(nameof(CollectSelfData))]
+        private void CollectSelfData()
+        {
+            if (GetComponentsInChildren<CombinedLODGroupData>().Length > 1)
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"{name} has nested GPU instancing candidates, that could lead to duplication of meshes!");
+
+            LODGroup lodGroup = GetComponent<LODGroup>();
+            if (lodGroup == null)
+            {
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "Selected GameObject does not have a LODGroup component.");
+                return;
+            }
+
+            LOD[] lods = lodGroup.GetLODs();
+            if (lods.Length == 0)
+            {
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "LODGroup has no LOD levels.");
+                return;
+            }
+
+            CombinedLodsRenderers = new List<CombinedLodsRenderer>();
+
+            // Position at origin (but not scale!)
+            transform.position = Vector3.zero;
+            transform.rotation = Quaternion.identity;
+
+            var meshCombiner = new LodsMeshCombiner(GPUInstancingSettings.WhitelistedShaders, transform, lods);
+            meshCombiner.CollectCombineInstances();
+            if (meshCombiner.IsEmpty())
+            {
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "No valid meshes found to combine.");
+                return;
+            }
+
+            RefRenderers = meshCombiner.RefRenderers;
+            CombinedLodsRenderers.AddRange(meshCombiner.BuildCombinedLodsRenderers());
+
+            // LOD Group
+            Reference = lodGroup;
+            lodGroup.RecalculateBounds();
+            LODGroupData = new LODGroupData(lodGroup, lods, CombinedLodsRenderers);
+
+            HideAll();
+        }
+
+        public bool Equals(CombinedLODGroupData other)
+        {
+            if (other == null) return false;
+            if (ReferenceEquals(this, other)) return true;
+            if (!LODGroupData.Equals(other.LODGroupData)) return false;
+
+            // Check CombinedLods
+            if (CombinedLodsRenderers == null || other.CombinedLodsRenderers == null || CombinedLodsRenderers.Count != other.CombinedLodsRenderers.Count)
+                return false;
+
+            for (var i = 0; i < CombinedLodsRenderers.Count; i++)
+            {
+                var thisRenderer = CombinedLodsRenderers[i];
+                var otherRenderer = other.CombinedLodsRenderers[i];
+
+                if (thisRenderer.CombinedMesh.vertexCount != otherRenderer.CombinedMesh.vertexCount ||
+                    thisRenderer.CombinedMesh.subMeshCount != otherRenderer.CombinedMesh.subMeshCount ||
+                    thisRenderer.SharedMaterial != otherRenderer.SharedMaterial)
+                    return false;
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = new HashCode();
+            hashCode.Add(LODGroupData.GetHashCode());
+            // hashCode.Add(CombinedLodsRenderers.GetHashCode());
+            return hashCode.ToHashCode();
+        }
+
+        public override bool Equals(object obj) =>
+            Equals(obj as CombinedLODGroupData);
+
+        public static bool operator ==(CombinedLODGroupData left, CombinedLODGroupData right)
+        {
+            if (ReferenceEquals(left, right)) return true;
+            return left is not null && left.Equals(right);
+        }
+
+        public static bool operator !=(CombinedLODGroupData left, CombinedLODGroupData right) =>
+            !(left == right);
+    }
+}

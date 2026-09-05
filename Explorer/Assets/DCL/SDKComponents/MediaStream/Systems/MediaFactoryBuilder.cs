@@ -1,0 +1,49 @@
+using Arch.Core;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem.World.Dependencies;
+using DCL.WebRequests;
+using ECS.Unity.AssetLoad.Cache;
+using DCL.AvProSwitch;
+using UnityEngine;
+using UnityEngine.Pool;
+
+namespace DCL.SDKComponents.MediaStream
+{
+    /// <summary>
+    ///     Exists to overcome dependency management issues
+    /// </summary>
+    public class MediaFactoryBuilder
+    {
+        private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
+        private readonly MediaVolume volumeBus;
+        private readonly IWebRequestController webRequestController;
+        private readonly IPerformanceBudget performanceBudget;
+        private readonly IObjectPool<RenderTexture> videoTexturesPool;
+        private readonly AssetPreLoadCache assetPreLoadCache;
+        private readonly IAnalyticsController analyticsController;
+
+        public MediaFactoryBuilder(IWebRequestController webRequestController, MediaVolume volumeBus,
+            IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+        {
+            this.webRequestController = webRequestController;
+            this.performanceBudget = performanceBudget;
+            this.videoTexturesPool = videoTexturesPool;
+            this.volumeBus = volumeBus;
+            this.assetPreLoadCache = assetPreLoadCache;
+            this.analyticsController = analyticsController;
+
+            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
+        }
+
+        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, AvatarPlaceHolderTextureSource? placeholderSource) =>
+            new (sceneDeps.SceneData, roomHub.StreamingRoom(),
+                () => roomHub.SceneRoom().CurrentState() == IConnectiveRoom.State.Running,
+                mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
+                volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
+                analyticsController, placeholderSource);
+    }
+}

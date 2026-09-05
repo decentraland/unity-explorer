@@ -1,0 +1,30 @@
+name: Performance Test Merge Block
+
+# This workflow creates a failing status check when 'perf_test' label is present,
+# preventing the PR from being merged. Remove the label to allow merging.
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+
+jobs:
+  check-perf-test-label:
+    name: Merge Eligibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for perf_test label
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'perf_test') }}" == "true" ]]; then
+            echo "::error::PR has 'perf_test' label - merging is blocked while running performance tests."
+            echo ""
+            echo "The 'perf_test' label is used to run only performance tests and skip regular CI."
+            echo "Remove the 'perf_test' label to restore normal CI and allow merging."
+            exit 1
+          else
+            echo "No 'perf_test' label found - PR is eligible for merge."
+          fi

@@ -1,0 +1,107 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
+using CrdtEcsBridge.Components.Special;
+using DCL.Diagnostics;
+using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Utils;
+using ECS.Abstract;
+using ECS.Groups;
+using ECS.LifeCycle;
+using SceneRunner.Scene;
+using UnityEngine.UIElements;
+
+namespace DCL.SDKComponents.SceneUI.Systems.UITransform
+{
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(UITransformSortingSystem))]
+    [ThrottlingEnabled]
+    [LogCategory(ReportCategory.SCENE_UI)]
+    public partial class UITransformUpdateSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
+    {
+        private readonly UIDocument canvas;
+        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly Entity sceneRoot;
+
+        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot) : base(world)
+        {
+            this.canvas = canvas;
+            this.sceneStateProvider = sceneStateProvider;
+            this.sceneRoot = sceneRoot;
+        }
+
+        protected override void Update(float _)
+        {
+            UpdateUITransformQuery(World);
+
+            // For newly created and modified entities
+            CheckUITransformOutOfSceneQuery(World, sceneStateProvider.IsCurrent);
+        }
+
+        [Query]
+        private void UpdateUITransform(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        {
+            // The dirty flag is reset at the end of the frame even when this system didn't run for that tick, so it cannot gate the first application.
+            if (!sdkModel.IsDirty && uiTransformComponent.StylesApplied)
+                return;
+
+            bool zIndexChanged = false;
+
+            // Treat zIndex=0 as "not set" — the SDK always sends zIndex:0 in its defaults
+            // even when the user didn't specify one, making it indistinguishable from "absent".
+            // In CSS semantics, z-index:0 is the default stacking order (same as not setting it).
+            int? newZIndex = sdkModel.HasZIndex && sdkModel.ZIndex != 0 ? sdkModel.ZIndex : null;
+
+            if (uiTransformComponent.ZIndex != newZIndex)
+            {
+                zIndexChanged = true;
+                uiTransformComponent.ZIndex = newZIndex;
+            }
+
+            UiElementUtils.SetupTransformVisualElement(uiTransformComponent.Transform, ref sdkModel);
+            UiElementUtils.EnsureScrollMode(uiTransformComponent, in sdkModel);
+            uiTransformComponent.StylesApplied = true;
+
+            // If zIndex changed, mark the parent layout as dirty.
+            // This is needed to trigger UITransformSortingSystem.ApplySorting
+            // Note: UITransformUpdateSystem executes after UITransformSortingSystem so there will be always one frame delay.
+            if (zIndexChanged && uiTransformComponent.RelationData.parent != Entity.Null && World.IsAlive(uiTransformComponent.RelationData.parent))
+            {
+                ref var parentComponent = ref World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent);
+                parentComponent.RelationData.layoutIsDirty = true;
+            }
+        }
+
+        [Query]
+        [All(typeof(PBUiTransform), typeof(UITransformComponent))]
+        [None(typeof(SceneRootComponent))]
+        private void CheckUITransformOutOfScene([Data] bool isCurrent, ref UITransformComponent uiTransformComponent)
+        {
+            // Ignore all the child transforms
+            if (uiTransformComponent.RelationData.parent != sceneRoot)
+                return;
+
+            // Depending on the scene state, we add or remove the root transform from the canvas
+            switch (isCurrent)
+            {
+                case false when !uiTransformComponent.IsHidden:
+                    canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
+                    uiTransformComponent.IsHidden = true;
+                    break;
+                case true when uiTransformComponent.IsHidden:
+                    canvas.rootVisualElement.Add(uiTransformComponent.Transform);
+                    uiTransformComponent.IsHidden = false;
+                    break;
+            }
+        }
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            if(sceneStateProvider.State.Value() == SceneState.Disposed) return;
+
+            CheckUITransformOutOfSceneQuery(World, value);
+        }
+    }
+}

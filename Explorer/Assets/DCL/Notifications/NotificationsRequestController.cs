@@ -1,0 +1,198 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Notifications.Serialization;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Optimization.ThreadSafePool;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using Utility.Times;
+
+namespace DCL.Notifications
+{
+    public class NotificationsRequestController
+    {
+        private static readonly TimeSpan NOTIFICATIONS_DELAY = TimeSpan.FromSeconds(5);
+
+        private readonly JsonSerializerSettings serializerSettings;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urlsSource;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly CommonArguments commonArgumentsForSetRead;
+        private readonly StringBuilder bodyBuilder = new ();
+        private readonly URLParameter onlyUnreadParameter = new ("onlyUnread", "true");
+        private readonly URLParameter limitParameter = new ("limit", "50");
+        private readonly URLBuilder urlBuilder = new ();
+        private readonly URLDomain notificationsUrl;
+        private CommonArguments commonArguments;
+        private ulong unixTimestamp;
+        private ulong lastPolledTimestamp;
+
+        public NotificationsRequestController(
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource,
+            IWeb3IdentityCache web3IdentityCache
+        )
+        {
+            this.webRequestController = webRequestController;
+            this.urlsSource = urlsSource;
+            this.web3IdentityCache = web3IdentityCache;
+
+            serializerSettings = new () { Converters = new JsonConverter[]
+            {
+                new NotificationJsonDtoConverter(FeaturesRegistry.Instance.IsEnabled(FeatureId.Friends))
+            } };
+
+            lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            notificationsUrl = URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications");
+
+            commonArgumentsForSetRead = new CommonArguments(
+                new URLBuilder()
+                   .AppendDomain(
+                        URLDomain.FromString(
+                            $"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications/read"
+                        )
+                    )
+                   .Build()
+            );
+        }
+
+        public async UniTask<List<INotification>> GetMostRecentNotificationsAsync(CancellationToken ct)
+        {
+            do await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
+            while (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired);
+
+            urlBuilder.Clear();
+
+            urlBuilder.AppendDomain(notificationsUrl)
+                      .AppendParameter(limitParameter);
+
+            commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
+            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            // Null when the identity disappears before the signed request runs
+            List<INotification>? notifications =
+                await webRequestController.GetAsync(
+                                               commonArguments,
+                                               ct,
+                                               ReportCategory.UI,
+                                               signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
+                                               headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
+                                          .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
+
+            return notifications ?? new List<INotification>();
+        }
+
+        public async UniTask StartGettingNewNotificationsOverTimeAsync(CancellationToken ct)
+        {
+            // Loop-local so a cancelled run can't race the next one's Clear()
+            var pollNotificationsBuffer = new List<INotification>();
+
+            do
+            {
+                try
+                {
+                    await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
+
+                    if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
+                        continue;
+
+                    urlBuilder.Clear();
+
+                    urlBuilder.AppendDomain(notificationsUrl)
+                              .AppendParameter(onlyUnreadParameter)
+                              .AppendParameter(new URLParameter("from", lastPolledTimestamp.ToString()));
+
+                    commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
+
+                    unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+                    pollNotificationsBuffer.Clear();
+
+                    // Null when the identity disappears before the signed request runs
+                    List<INotification>? notifications =
+                        await webRequestController.GetAsync(
+                                                       commonArguments,
+                                                       ct,
+                                                       ReportCategory.UI,
+                                                       signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
+                                                       headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
+                                                  .OverwriteFromNewtonsoftJsonAsync(pollNotificationsBuffer, serializerSettings: serializerSettings);
+
+                    if (notifications == null || notifications.Count == 0)
+                        continue;
+
+                    lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+                    using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
+                    foreach (INotification notification in notifications)
+                        try
+                        {
+                            NotificationsBusController.Instance.AddNotification(notification);
+                            list.Add(notification.Id);
+                        }
+                        catch (Exception e)
+                        {
+                            ReportHub.LogException(e, ReportCategory.UI);
+                        }
+
+                    await SetNotificationAsReadAsync(list, ct);
+                }
+                catch (OperationCanceledException) { return; }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.UI);
+                }
+            }
+            while (ct.IsCancellationRequested == false);
+        }
+
+        public async UniTask SetNotificationAsReadAsync(string notificationId, CancellationToken ct)
+        {
+            using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
+            list.Add(notificationId);
+            await SetNotificationAsReadAsync(list, ct);
+        }
+
+        private async UniTask SetNotificationAsReadAsync(IReadOnlyList<string> notificationIds, CancellationToken ct)
+        {
+            if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired) return;
+
+            if (notificationIds.Count == 0) return;
+
+            bodyBuilder.Clear();
+            bodyBuilder.Append("{\"notificationIds\":[");
+
+            var first = true;
+            foreach (string id in notificationIds)
+            {
+                if (!first)
+                    bodyBuilder.Append(',');
+                bodyBuilder.Append('\"').Append(id).Append('\"');
+                first = false;
+            }
+
+            bodyBuilder.Append("]}");
+
+            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            await webRequestController.PutAsync(
+                                           commonArgumentsForSetRead,
+                                           GenericPostArguments.CreateJson(bodyBuilder.ToString()),
+                                           ct,
+                                           ReportCategory.UI,
+                                           signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArgumentsForSetRead.URL), unixTimestamp, "put"),
+                                           headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
+                                      .WithNoOpAsync();
+        }
+    }
+}

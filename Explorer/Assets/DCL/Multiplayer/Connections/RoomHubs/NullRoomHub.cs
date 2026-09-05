@@ -1,0 +1,52 @@
+using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
+using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
+using System;
+using System.Collections.Generic;
+
+namespace DCL.Multiplayer.Connections.RoomHubs
+{
+    public class NullRoomHub : IRoomHub
+    {
+        public static readonly NullRoomHub INSTANCE = new ();
+
+        public IRoom IslandRoom() => NullRoom.INSTANCE;
+
+        public IGateKeeperSceneRoom SceneRoom() =>
+            new IGateKeeperSceneRoom.Fake();
+
+        public IRoom ChatRoom() =>
+            NullRoom.INSTANCE;
+
+        public VoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
+            VoiceChatActivatableConnectiveRoom.Null.INSTANCE;
+
+        public bool TryGetUser(string wallet, out LKParticipant? participant, out IRoom? room)
+        {
+            participant = null;
+            room = null;
+            return false;
+        }
+
+        public UniTask StopLocalRoomsAsync() =>
+            UniTask.CompletedTask;
+
+        public IReadOnlyCollection<string> AllLocalRoomsRemoteParticipantIdentities() =>
+            new List<string>();
+
+        public string RoomsStateInfo() =>
+            "No rooms, livekit is disabled";
+
+        public UniTask<bool> StartAsync() => UniTask.FromResult(true);
+
+        public UniTask StopAsync() =>
+            UniTask.CompletedTask;
+
+        public int ParticipantsCount => 0;
+        public bool HasAnyRoomConnected => true;
+    }
+}

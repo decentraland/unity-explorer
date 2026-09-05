@@ -1,0 +1,201 @@
+using Cysharp.Threading.Tasks;
+using DCL.Audio;
+using DCL.Chat;
+using DCL.Diagnostics;
+using DCL.Emoji;
+using DCL.Input.Utils;
+using DCL.UI.CustomInputField;
+using DCL.UI.SuggestionPanel;
+using MVC;
+using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using Utility;
+
+namespace DCL.Communities.CommunitiesCard.Announcements
+{
+    public class AnnouncementEmojiController
+    {
+        private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,10})", RegexOptions.Compiled);
+        private static readonly Regex PRE_MATCH_PATTERN_REGEX = new (@"(?<=^|\s)([@:]\S+)$", RegexOptions.Compiled);
+
+        private readonly CustomInputField announcementInput;
+        private readonly EmojiButtonView emojiButton;
+        private readonly EmojiPanelView emojiPanel;
+        private readonly AudioClipConfig addEmojiAudio;
+        private readonly AudioClipConfig openEmojiPanelAudio;
+        private readonly InputSuggestionPanelView suggestionPanel;
+        private readonly EmojiPanelPresenter emojiPanelPresenter;
+        private readonly InputSuggestionPanelController suggestionPanelController;
+        private readonly Dictionary<string, EmojiInputSuggestionData> emojiSuggestionsDictionary;
+        private readonly EventSubscriptionScope eventsScope = new ();
+
+        private int wordMatchIndex;
+        private Match lastMatch = Match.Empty;
+        private CancellationTokenSource? searchSuggestionsCts;
+
+        public AnnouncementEmojiController(
+            CustomInputField announcementInput,
+            EmojiButtonView emojiButton,
+            EmojiPanelView emojiPanel,
+            EmojiPanelConfigurationSO emojiPanelConfiguration,
+            AudioClipConfig addEmojiAudio,
+            AudioClipConfig openEmojiPanelAudio,
+            InputSuggestionPanelView suggestionPanel,
+            Transform suggestionPanelParent,
+            ViewEventBus inputEventBus)
+        {
+            this.announcementInput = announcementInput;
+            this.emojiButton = emojiButton;
+            this.emojiPanel = emojiPanel;
+            this.addEmojiAudio = addEmojiAudio;
+            this.openEmojiPanelAudio = openEmojiPanelAudio;
+            this.suggestionPanel = suggestionPanel;
+
+            if (suggestionPanelParent != null)
+                this.suggestionPanel.transform.SetParent(suggestionPanelParent);
+
+            EmojiMapping emojiMapping = new EmojiMapping(emojiPanelConfiguration);
+
+            emojiPanelPresenter = new EmojiPanelPresenter(
+                emojiPanel,
+                emojiPanelConfiguration,
+                emojiMapping
+            );
+
+            suggestionPanelController = new InputSuggestionPanelController(suggestionPanel);
+
+            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(emojiMapping.NameMapping.Count);
+
+            foreach (KeyValuePair<string, EmojiData> pair in emojiMapping.NameMapping)
+                emojiSuggestionsDictionary.Add(pair.Key, new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName));
+
+            eventsScope.Add(inputEventBus.Subscribe<InputSuggestionsEvents.SuggestionSelectedEvent>(ReplaceSuggestionInText));
+
+            announcementInput.onValueChanged.AddListener(OnAnnouncementInputValueChanged);
+            announcementInput.onValidateInput += OnAnnouncementInputValidateInput;
+            emojiButton.Button.onClick.AddListener(OnToggleEmojisPanel);
+            emojiPanelPresenter.EmojiSelected += OnEmojiSelected;
+            DCLInput.Instance.UI.Click.performed += OnUIClicked;
+        }
+
+        public void Dispose()
+        {
+            announcementInput.onValueChanged.RemoveListener(OnAnnouncementInputValueChanged);
+            announcementInput.onValidateInput -= OnAnnouncementInputValidateInput;
+            emojiButton.Button.onClick.RemoveListener(OnToggleEmojisPanel);
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelected;
+            DCLInput.Instance.UI.Click.performed -= OnUIClicked;
+
+            emojiPanelPresenter.Dispose();
+            suggestionPanelController.Dispose();
+            eventsScope.Dispose();
+        }
+
+        private void OnAnnouncementInputValueChanged(string text)
+        {
+            searchSuggestionsCts = searchSuggestionsCts.SafeRestart();
+            SearchSuggestionsAndShowPanelAsync(searchSuggestionsCts.Token).Forget();
+            return;
+
+            async UniTaskVoid SearchSuggestionsAndShowPanelAsync(CancellationToken ct)
+            {
+                try
+                {
+                    Match wordMatch = PRE_MATCH_PATTERN_REGEX.Match(text, 0, announcementInput.stringPosition);
+
+                    lastMatch = Match.Empty;
+
+                    if (wordMatch.Success)
+                    {
+                        wordMatchIndex = wordMatch.Index;
+
+                        // Fixes https://github.com/decentraland/unity-explorer/issues/6965
+                        // This operation needs to be awaited otherwise a race condition occurs
+                        // between the suggested elements generated and the submitted element processed once the panel is activated
+                        lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.Emojis, emojiSuggestionsDictionary, ct);
+                    }
+
+                    suggestionPanelController.SetPanelVisibility(lastMatch.Success);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
+            }
+        }
+
+        private char OnAnnouncementInputValidateInput(string text, int charIndex, char addedChar)
+        {
+            if (addedChar is '\n' or '\r' && suggestionPanel.gameObject.activeSelf)
+            {
+                suggestionPanelController.SetPanelVisibility(false);
+                return '\0';
+            }
+
+            return addedChar;
+        }
+
+        private void OnToggleEmojisPanel() =>
+            SetEmojiPanelVisibility(!emojiPanel.IsVisible);
+
+        private void OnEmojiSelected(string emoji)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
+
+            if (!announcementInput.IsWithinCharacterLimit(emoji.Length))
+                return;
+
+            announcementInput.InsertTextAtCaretPosition(emoji);
+        }
+
+        private void OnUIClicked(InputAction.CallbackContext context)
+        {
+            if (!context.control.IsPressed())
+                return;
+
+            var clickPosition = DCLInputUtilities.GetPointerPosition(context);
+            bool isClickedInsideEmojiPanel = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiPanel.transform, clickPosition, null);
+
+            // Excluded so its own toggle handler isn't undone by closing here on the same click.
+            bool isClickedOnEmojiButton = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiButton.transform, clickPosition, null);
+
+            if (!isClickedInsideEmojiPanel && !isClickedOnEmojiButton)
+                SetEmojiPanelVisibility(false);
+        }
+
+        private void ReplaceSuggestionInText(InputSuggestionsEvents.SuggestionSelectedEvent suggestion)
+        {
+            if (!lastMatch.Success)
+                return;
+
+            if (!announcementInput.IsWithinCharacterLimit(suggestion.Id.Length - lastMatch.Groups[1].Length))
+                return;
+
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
+            int replaceAmount = lastMatch.Groups[1].Length;
+            int replaceAt = wordMatchIndex + lastMatch.Groups[1].Index;
+
+            announcementInput.ReplaceTextAtPosition(replaceAt, replaceAmount, suggestion.Id);
+
+            DeactivateSuggestionsNextFrameAsync().Forget();
+            return;
+
+            async UniTaskVoid DeactivateSuggestionsNextFrameAsync(CancellationToken ct = default)
+            {
+                await UniTask.NextFrame(ct);
+                suggestionPanelController.SetPanelVisibility(false);
+            }
+        }
+
+        private void SetEmojiPanelVisibility(bool isVisible)
+        {
+            emojiPanelPresenter.SetPanelVisibility(isVisible);
+            emojiButton.SetState(isVisible);
+
+            if (isVisible)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(openEmojiPanelAudio);
+        }
+    }
+}

@@ -1,0 +1,126 @@
+using System;
+using System.Diagnostics.CodeAnalysis;
+using DCL.PrivateWorlds;
+using UnityEngine;
+
+namespace DCL.Multiplayer.Connections.GateKeeper.Meta
+{
+    [Serializable]
+    [SuppressMessage("ReSharper", "NotAccessedField.Local")]
+    public struct MetaData : IEquatable<MetaData>
+    {
+        public readonly struct Input : IEquatable<Input>
+        {
+            public readonly string RealmName;
+            public readonly Vector2Int Parcel;
+
+            public Input(string realmName, Vector2Int parcel)
+            {
+                RealmName = realmName;
+                Parcel = parcel;
+            }
+
+            public bool Equals(Input other) =>
+                RealmName == other.RealmName && Parcel.Equals(other.Parcel);
+
+            public bool Equals(MetaData other) =>
+                RealmName == other.realmName && Parcel.Equals(other.parcel);
+
+            public override bool Equals(object? obj) =>
+                obj is Input other && Equals(other);
+
+            public override int GetHashCode() =>
+                HashCode.Combine(RealmName, Parcel);
+
+            public override string ToString() =>
+                $"Realm: {RealmName}, Parcel: {Parcel}";
+        }
+
+        [Serializable]
+        public struct Realm
+        {
+            public string serverName;
+        }
+
+        // Just keep both realmName and realm for backward compatibility until it's migrated on the prod version
+        public string realmName;
+        public Realm realm;
+
+        public string? sceneId;
+
+        /// <summary>
+        ///     Parcel metadata was requested for, not necessarily the base parcel of the scene
+        /// </summary>
+        public string parcel;
+
+        /// <summary>
+        ///     Base Parcel of the scene
+        ///     Not required from BE
+        /// </summary>
+        [NonSerialized]
+        public readonly Vector2Int BaseParcel;
+
+        private readonly string intent;
+        private readonly string signer;
+        private readonly bool isGuest;
+
+        public MetaData(string? sceneId, Vector2Int baseParcel, Input input)
+        {
+            realmName = input.RealmName;
+            realm = new Realm { serverName = input.RealmName };
+            parcel = $"{input.Parcel.x},{input.Parcel.y}";
+            this.sceneId = sceneId;
+            BaseParcel = baseParcel;
+            intent = "dcl:explorer:comms-handshake";
+            signer = "dcl:explorer";
+            isGuest = false;
+        }
+
+        public string ToJson() =>
+            JsonUtility.ToJson(this)!;
+
+        public string BuildWithSecret(string secret, string deviceIdentifier)
+        {
+            var metadata = new SceneCommsHandshakeMetadata
+            {
+                realmName = realmName,
+                realm = realm,
+                sceneId = sceneId,
+                parcel = parcel,
+                intent = CommsHandshakeMetadata.INTENT,
+                signer = CommsHandshakeMetadata.SIGNER,
+                isGuest = false,
+                secret = secret,
+                deviceIdentifier = deviceIdentifier,
+            };
+
+            return JsonUtility.ToJson(metadata);
+        }
+
+        public override string ToString() =>
+            $"Realm: {realmName}, Scene: {sceneId}, Parcel: {parcel}";
+
+        public bool Equals(MetaData other) =>
+            realmName == other.realmName && sceneId == other.sceneId;
+
+        public override bool Equals(object? obj) =>
+            obj is MetaData other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(realmName, sceneId);
+
+        [Serializable]
+        private struct SceneCommsHandshakeMetadata
+        {
+            public string realmName;
+            public Realm realm;
+            public string? sceneId;
+            public string parcel;
+            public string intent;
+            public string signer;
+            public bool isGuest;
+            public string secret;
+            public string deviceIdentifier;
+        }
+    }
+}

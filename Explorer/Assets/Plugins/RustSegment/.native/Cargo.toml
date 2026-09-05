@@ -1,0 +1,41 @@
+[package]
+name = "rust-segment"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lazy_static = "1.5.0"
+segment = { git = "https://github.com/decentraland/segment", rev = "51d89ce2556a36c57122b35cc9391e9727080435", default-features = false, features = ["rustls-tls"] }
+serde = "1.0.210"
+serde_json = "1.0.128"
+tokio = { version = "1.40.0", features = ["full", "parking_lot"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink"] }
+parking_lot = { version = "0.12", features = ["deadlock_detection"] }
+time = "0.3.36"
+anyhow = "1.0.100"
+futures = "0.3.32"
+crossbeam-queue = "0.3.12"
+
+# rusqlite is declared here (mirroring segment's per-target declarations, so cargo
+# unifies both onto one crate instance) to let the bridge inspect the sqlite error
+# code inside segment's EnqueError and classify disk-full.
+[target.'cfg(target_os = "macos")'.dependencies]
+rusqlite = { version = "0.37" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+rusqlite = { version = "0.37", features = ["bundled"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+rusqlite = { version = "0.37", features = ["bundled"] }
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[profile.release]
+# traceable build
+debug = 2 # goes to dSYM
+split-debuginfo = "packed" # pack dSYM
+strip = "symbols" # symbols are striped from dylib but persist in dSYM
+lto = true
+panic = "abort"
+

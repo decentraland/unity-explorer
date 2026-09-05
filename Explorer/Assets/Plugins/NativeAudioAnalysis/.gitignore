@@ -1,0 +1,3 @@
+# avoid pollusion the code by example audio trackes
+*.mp3
+*.mp3.meta

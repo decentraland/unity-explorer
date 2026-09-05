@@ -1,0 +1,68 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using JetBrains.Annotations;
+using Newtonsoft.Json;
+using PortableExperiences.Controller;
+using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
+using System.Threading;
+
+namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
+{
+    public class PortableExperiencesApiWrapper : JsApiWrapper
+    {
+        private readonly IJavaScriptApiExceptionsHandler exceptionsHandler;
+        private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly ISceneData sceneData;
+
+        public PortableExperiencesApiWrapper(IPortableExperiencesController portableExperiencesController, IJavaScriptApiExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
+            : base(disposeCts)
+        {
+            this.portableExperiencesController = portableExperiencesController;
+            this.exceptionsHandler = exceptionsHandler;
+        }
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
+        public object Spawn(string pid, string ens) =>
+            SpawnAsync(new URN(pid), new ENS(ens), disposeCts.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this);
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
+        public object Kill(string ens) =>
+            KillAsync(new ENS(ens), disposeCts.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this);
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
+        public object Exit() =>
+            ExitAsync().ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this);
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
+        public object GetLoadedPortableExperiences() => GetLoadedPortableExperiences(disposeCts.Token);
+
+        private async UniTask<IPortableExperiencesController.SpawnResponse> SpawnAsync(URN pid, ENS ens, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+            //We should check if pid is valid, if not, check if ens is valid, else, return error, for now we only support loading by ens.
+            return await portableExperiencesController.CreatePortableExperienceByEnsAsync(ens, ct);
+        }
+
+        private async UniTask<IPortableExperiencesController.ExitResponse> KillAsync(ENS ens, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            var portableExperienceId = ens.ToString();
+
+            if (!portableExperiencesController.CanKillPortableExperience(portableExperienceId))
+                return new IPortableExperiencesController.ExitResponse { status = false };
+
+            return portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
+        }
+
+        private async UniTask<IPortableExperiencesController.ExitResponse> ExitAsync()
+        {
+            await UniTask.SwitchToMainThread();
+            return portableExperiencesController.UnloadPortableExperienceById(sceneData.SceneEntityDefinition.id);
+        }
+
+        private string GetLoadedPortableExperiences(CancellationToken ct) =>
+            JsonConvert.SerializeObject(portableExperiencesController.GetAllPortableExperiences());
+    }
+}

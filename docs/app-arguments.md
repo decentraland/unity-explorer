@@ -1,0 +1,584 @@
+# App Arguments
+
+This document describes all available application argument flags (AppArgsFlags) that can be passed to the Decentraland Unity Explorer. These flags control various features, behaviors, and configurations during application startup.
+
+## Usage
+
+Flags can be passed via command line arguments using the format:
+```bash
+--flag-name
+--flag-name value
+```
+
+Or embedded in deep links:
+```
+decentraland://?flag-name=value&other-flag=true
+```
+For embedded links you will need to place value after `=` sign, instead of space.
+
+---
+
+## Flags
+
+### `debug`
+**Description:** Enables debug mode. When set, the application runs in debug mode. This flag is automatically added when running in Unity Editor. When enabled, many debug features and development tools become available.
+
+**Usage:**
+```bash
+--debug
+```
+
+---
+
+### `hub`
+**Description:** Indicates that the application is running from the DCL Editor (Creator Hub). Used for analytics tracking to distinguish between Unity Editor, DCL Editor, debug builds, and release builds.
+
+**Usage:**
+```bash
+--hub
+```
+
+---
+
+## Version & System Checks
+
+### `skip-version-check`
+**Description:** Skips the version check that normally runs on startup. Useful for development and testing scenarios where version validation should be bypassed.
+
+**Usage:**
+```bash
+--skip-version-check
+```
+
+---
+
+### `simulateVersion`
+**Type:** String
+**Description:** Simulates a specific version number for testing purposes. Overrides the actual version detection.
+
+**Usage:**
+```bash
+--simulateVersion 1.0.0
+```
+
+---
+
+### `forceMinimumSpecsScreen`
+**Description:** Forces the minimum system specifications screen to be displayed, regardless of the actual system capabilities. Useful for testing the minimum specs screen UI.
+
+**Usage:**
+```bash
+--forceMinimumSpecsScreen
+```
+
+---
+
+### `skip-minimum-specs-screen`
+**Description:** Skips the minimum system specifications screen on startup, even when the host hardware does not meet the minimum requirements. Also bypasses the automatic low-quality preset that is normally enforced on sub-spec hardware, so the user-selected preset (or `--graphics`) controls quality. Intended for visual tests and CI machines that may register as low-spec but should still render at the configured quality. The hardware check still runs and is recorded in analytics/Sentry. Ignored when `--forceMinimumSpecsScreen` is also passed.
+
+**Usage:**
+```bash
+--skip-minimum-specs-screen
+```
+
+---
+
+## Scene & Environment Flags
+
+### `scene-console`
+**Description:** Enables the scene console (the debug menu's log view of the scene's own output) for debugging and development. Works for any realm — local scene development enables it implicitly, and the flag itself is accepted from deep links against production realms and worlds too, so creators and QA can inspect a deployed scene.
+
+**Usage:**
+```bash
+--scene-console
+```
+
+---
+
+### `dclenv`
+**Type:** String
+**Description:** Sets the Decentraland environment (`org` or `zone`). Determines which API endpoints and services the application connects to. `custom` is not accepted here — it is selected by [`base-domain`](#base-domain), which also supplies the domain it needs.
+
+**Usage:**
+```bash
+--dclenv org
+```
+
+---
+
+### `gateway`
+**Type:** String (URL)
+**Description:** Routes every supported service through this gateway origin — `https://{subdomain}.{base-domain}/{path}` becomes `<gateway>/{subdomain}/{path}` — instead of the default `gateway.{base-domain}`. Specifying it also **forces routing on**: naming a gateway is the opt-in the `use-gateway` remote feature flag would otherwise carry, so the flag is ignored. Without it, the flag decides and the default host is used. The value must be an absolute `http`/`https` url with a host and no query or fragment; anything else ends the launch rather than being coerced. `today` has no gateway and is never routed, with or without this arg. Command line only: never accepted from a deep link, since it aims the session's whole supported-service traffic at the named host.
+
+**Usage:**
+```bash
+--gateway https://gateway.localhost
+```
+
+---
+
+### `base-domain`
+**Type:** String (bare domain)
+**Description:** Targets a deployment served under a base domain other than `decentraland.{org,zone}` — every backend host resolves under it (`peer.<domain>`, `comms-gatekeeper.<domain>`, `feature-flags.<domain>`, …). It selects the `Custom` environment, whose chain is mainnet unless [`eth-network`](#eth-network) says otherwise, and whose community-message router identity is `message-router-dev-0`. See [Custom base domain](custom-base-domain.md).
+
+The value must be a bare domain — no scheme, port or path — and it takes precedence over `dclenv`. Hosts under it are trusted for deep-link realm switching, so it is **command-line only**: it is never accepted from a `decentraland://` link.
+
+**Usage:**
+```bash
+--base-domain interconnected.online
+```
+
+---
+
+### `eth-network`
+**Type:** String (`mainnet` | `sepolia`)
+**Description:** The chain a [`base-domain`](#base-domain) deployment signs and transacts against. Each value carries the polygon network that pairs with it — `mainnet` with Polygon, `sepolia` with Amoy — because the identity, the credits contracts and the donation contract all have to sit on one chain. It also picks which stored-identity slot the session uses. Defaults to `mainnet`.
+
+Decentraland's own environments each answer for one chain — org mainnet, zone sepolia — and this flag **cannot move them**: paired with `--dclenv`, it is reported in the log and dropped.
+
+On a `base-domain` deployment, where the value *is* read, anything that does not name a known network makes the client report the problem and exit rather than fall back to the default. Command-line only: denied from `decentraland://` links, and accepting it in the denied-params dialog does not apply it.
+
+**Usage:**
+```bash
+--base-domain interconnected.online --eth-network sepolia
+```
+
+---
+
+### `realm`
+**Type:** String (URL)
+**Description:** Specifies a custom realm server URL to connect to. Used for connecting to local or custom Decentraland servers. The URL should include the protocol (http:// or https://).
+
+**Usage:**
+```bash
+--realm=http://127.0.0.1:8000
+--realm=https://peer-ap1.decentraland.zone/
+```
+
+---
+
+### `accept-untrusted-realm`
+**Type:** Bool (presence flag)
+**Description:** Lets the realm's global comms adapter be served over cleartext `http://`, which an e2e fixture's is (`fixed-adapter:signed-login:http://127.0.0.1:8080/...`). The adapter must still resolve to loopback — `localhost`, `127.0.0.1` or `[::1]` — so a remote `http://` adapter stays rejected, and a host that merely reads as loopback (`127.0.0.1.example.com`, `127.0.0.1@example.com`) does not qualify. It changes nothing else: TLS validation, the untrusted-realm consent prompt and the `https`/`wss` paths are all untouched.
+
+**Command-line only.** It lowers a transport guarantee, which is never a link's call to make, so it is absent from the deep-link allowlist and dropped from `decentraland://` links.
+
+**Usage:**
+```bash
+--accept-untrusted-realm
+```
+
+---
+
+### `local-scene`
+**Type:** Bool
+**Description:** Enables local scene development mode.
+
+**Usage:**
+```bash
+--local-scene true
+```
+
+---
+
+### `lsd-use-remote-ab`
+**Type:** Bool (presence flag)
+**Description:** Enables the use of remote asset bundles during local scene development (LSD). By default, local scene development relies on locally converted assets; with this flag the explorer can instead fetch already-deployed asset bundles from a remote content server. Only takes effect when local scene development is active (`--local-scene true` together with a valid `--realm` URL). Pair it with either `--lsd-remote-ab-world` or `--lsd-remote-ab-server` to choose where the remote asset bundles are sourced from.
+
+**Usage:**
+```bash
+--lsd-use-remote-ab
+```
+
+---
+
+### `lsd-remote-ab-world`
+**Type:** String (world name)
+**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), sources them from a specific deployed **world**. The value is the world name to pull the asset bundles from. Setting this flag implicitly selects the `World` content server, so it takes precedence over `--lsd-remote-ab-server`. Only effective during local scene development.
+
+**Usage:**
+```bash
+--lsd-remote-ab-world my-world.dcl.eth
+```
+
+---
+
+### `lsd-remote-ab-server`
+**Type:** String (`Genesis`, `Goerli`, case-insensitive)
+**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), selects which deployed environment the asset bundles are sourced from — `Genesis` (Genesis City) or `Goerli` (Goerli Plaza). `World` is also accepted, but to target a world you should use `--lsd-remote-ab-world` instead, since it sets the world name as well. Invalid values are ignored. Only effective during local scene development.
+
+**Usage:**
+```bash
+--lsd-remote-ab-server Genesis
+--lsd-remote-ab-server Goerli
+```
+
+---
+
+### `position`
+**Type:** String (coordinates)
+**Description:** Sets the initial spawn position in the world. Format is typically `x,y` coordinates.
+
+**Usage:**
+```bash
+--position 100,100
+```
+
+---
+
+## Authentication Flags
+
+### `skip-auth-screen`
+**Description:** Skips the authentication screen on startup. When set, the user bypasses the login/auth flow.
+
+**Usage:**
+```bash
+--skip-auth-screen
+```
+
+---
+
+### `login-bridge-only`
+**Description:** Forces the dapp deep-link login to complete through the deep-link bridge only, by appending `&bridgeOnly` to the auth website URL. Without it, confirming the login on the website can make the launcher spawn a second Explorer instance. See [issue #9524](https://github.com/decentraland/unity-explorer/issues/9524).
+
+Only affects player builds — the Editor always behaves as if the flag were set.
+
+**Usage:**
+```bash
+--login-bridge-only
+```
+
+---
+
+## Avatar & Profile Flags
+
+### `self-force-emotes`
+**Type:** String
+**Description:** Forces specific emotes to be available for preview. Accepts a comma-separated list of emote URNs (i.e. `urn:decentraland:matic:collections-v2:0xa80aea22d0fe9d34ca72ce304ef427bbefee1f11:2` ).
+
+The elements previewed are not visible for others, only for the tester.
+
+Only works for PUBLISHED elements (thus having a URN that identifies them).
+
+**Usage:**
+```bash
+--self-force-emotes emote1,emote2,emote3
+```
+
+---
+
+### `self-preview-emotes`
+**Type:** String
+**Description:** Enables preview mode for specific emotes. Accepts a comma-separated list of emote URNs (i.e. `urn:decentraland:matic:collections-v2:0xa80aea22d0fe9d34ca72ce304ef427bbefee1f11:2` ) that will be available for preview.
+
+The elements previewed are not visible for others, only for the tester.
+
+Only works for PUBLISHED elements (thus having a URN that identifies them).
+
+**Usage:**
+```bash
+--self-preview-emotes emote1,emote2
+```
+
+---
+
+### `self-preview-wearables`
+**Type:** String
+**Description:** Enables preview mode for specific wearables. Accepts a comma-separated list of wearable URNs (i.e. `urn:decentraland:matic:collections-v2:0xc11b9d892e12cfaca551551345266d60e9abff6e:3` )
+
+The elements previewed are not visible for others, only for the tester.
+
+Only works for PUBLISHED elements (thus having a URN that identifies them).
+
+**Usage:**
+```bash
+--self-preview-wearables wearable1,wearable2
+```
+
+---
+
+### `self-preview-builder-collections`
+**Type:** String
+**Description:** Enables preview mode for builder collections. Accepts a comma-separated list of collection IDs (e.g. `3062136a-065d-4d94-b28c-f57d6ef04860`).
+
+The elements previewed are not visible for others, only for the tester.
+
+Only works for UNRELEASED elements, the tester has to either be the owner of the collection or be whitelisted to test it (e.g. Curators).
+
+Make sure to use the COLLECTION ID (from the collection URL) and not the ITEM ID (from each item URL).
+
+More detailed instructions on how to test can be found in the description of relevant PRs that have worked on the usage of this flag, for example https://github.com/decentraland/unity-explorer/pull/5309
+
+**Usage:**
+```bash
+--self-preview-builder-collections collection1,collection2
+```
+
+---
+
+## UI Flags
+
+### `force-open-backpack`
+**Description:** Automatically opens the Backpack panel once the user lands in the world (after authentication and the loading screen). Presence-only: any value triggers it. Also works when a deep link reaches an already-running client — the Backpack opens immediately (or once loading completes).
+
+**Usage:**
+```bash
+--force-open-backpack
+```
+```
+decentraland://?force-open-backpack=true
+```
+
+---
+
+## Performance & Caching Flags
+
+### `disable-disk-cache`
+**Description:** Disables the disk cache system. All cached assets will be loaded from network or memory instead. Useful for testing cache-related issues or ensuring fresh data loads.
+
+**Usage:**
+```bash
+--disable-disk-cache
+```
+
+---
+
+### `disable-disk-cache-cleanup`
+**Description:** Disables automatic cleanup of the disk cache. Prevents the cache from being automatically cleared or managed.
+
+**Usage:**
+```bash
+--disable-disk-cache-cleanup
+```
+
+---
+
+### `simulateMemory`
+**Type:** String (integer)
+**Description:** Simulates a specific amount of system memory (in MB). Overrides the actual system memory detection. Useful for testing memory-related features and constraints.
+
+**Usage:**
+```bash
+--simulateMemory 4096
+```
+
+---
+
+### `graphics`
+**Type:** String (`Low`, `Medium`, or `High`, case-insensitive)
+**Description:** Forces a graphics quality preset on startup, overriding whatever preset is saved in PlayerPrefs. The override is ephemeral — PlayerPrefs are not modified, so launching again without the flag restores the user's saved preset (including any `Custom` overrides). `Custom` is not accepted as a value.
+
+**Usage:**
+```bash
+--graphics high
+--graphics medium
+--graphics low
+```
+
+---
+
+## Development Tools Flags
+
+### `identity-expiration-duration`
+**Type:** String (integer, seconds)
+**Description:** Sets the duration (in seconds) before user identity expires. Overrides the default identity expiration time.
+
+**Usage:**
+```bash
+--identity-expiration-duration 3600
+```
+
+---
+
+### `mcp`
+**Description:** Starts the embedded MCP (Model Context Protocol) server on `http://127.0.0.1:8123/unity-explorer-mcp` so coding agents can observe and drive the client (screenshots, player/scene state, scene logs, teleport/movement, chat commands). The listener binds to localhost only and rejects non-localhost browser Origins. See [MCP Automation](mcp-automation.md).
+
+**Usage:**
+```bash
+--mcp
+```
+
+---
+
+### `mcp-port`
+**Type:** String (integer port, 1024–65535)
+**Description:** Starts the embedded MCP server on a specific port (implies `mcp`). Use distinct ports when running multiple instances via `--multi-instance`.
+
+**Usage:**
+```bash
+--mcp-port 8124
+```
+
+---
+
+### `launch-cdp-monitor-on-start`
+**Type:** Boolean
+**Description:** Launches the Chrome DevTools Protocol (CDP) monitor on application start. Enables remote debugging capabilities.
+
+**Usage:**
+```bash
+--launch-cdp-monitor-on-start
+```
+
+---
+
+### `use-log-matrix`
+**Type:** String (file path)
+**Description:** Enables logging to a matrix file. The value should be the path to the log matrix file.
+
+**Usage:**
+```bash
+--use-log-matrix /path/to/log-matrix.txt
+```
+
+---
+
+## Display & Window Flags
+
+### `windowed-mode`
+**Type:** Boolean
+**Description:** Forces the application to run in windowed mode instead of fullscreen.
+
+**Usage:**
+```bash
+--windowed-mode
+```
+
+---
+
+### `resolution`
+**Type:** String (`WxH`)
+**Description:** Overrides the resolution on startup, taking precedence over both PlayerPrefs and the default resolution. Applies in both fullscreen and windowed modes. Format is width × height separated by `x`.
+
+**Usage:**
+```bash
+--resolution 1920x1080
+--resolution 2560x1440
+```
+
+---
+
+## Multiplayer Flags
+
+### `pulse`
+**Type:** Bool (`true` / `false`)
+**Description:** Toggles the Pulse transport (an ENet-based UDP channel that runs alongside LiveKit), overriding the `pulse` remote feature flag. When **specified**, the value wins over the remote flag: `--pulse true` force-enables Pulse, `--pulse false` force-disables it (LiveKit-only, as if Pulse were never present). When **not specified**, Pulse is driven by the remote feature flag. Always ignored during local scene development.
+
+**Usage:**
+```bash
+--pulse true
+--pulse false
+```
+
+---
+
+## Feature Flags Configuration
+
+### `feature-flags-url`
+**Type:** String (URL)
+**Description:** Overrides the default feature flags service URL. Used to connect to a custom feature flags server.
+
+**Usage:**
+```bash
+--feature-flags-url https://custom-feature-flags.example.com
+```
+
+---
+
+### `feature-flags-hostname`
+**Type:** String
+**Description:** Overrides the hostname used for feature flags requests. Used for custom feature flag configurations.
+
+**Usage:**
+```bash
+--feature-flags-hostname my-custom-hostname
+```
+
+---
+
+## Analytics Flags
+
+### `session_id`
+**Type:** String
+**Description:** Sets a custom session ID for analytics tracking. Overrides the automatically generated session ID.
+
+**Usage:**
+```bash
+--session_id=abc123xyz
+```
+
+---
+
+### `launcher_anonymous_id`
+**Type:** String
+**Description:** Sets the launcher anonymous ID for analytics tracking. Used to link analytics data between the launcher and the explorer.
+
+**Usage:**
+```bash
+--launcher_anonymous_id user123
+```
+
+---
+
+### `referrer`
+**Type:** String (Ethereum address, `0x` + 40 hex chars)
+**Description:** Referral attribution address forwarded by the launcher (originally captured by the installer from the download URL). For new accounts it is registered against the referral backend during onboarding, and it is appended to the deep link sign-in URL so the auth website can track the referral for wallet sign-ups. Invalid values are ignored.
+
+**Usage:**
+```bash
+--referrer 0x24e5f44999c151f08609f8e27b2238c773c4d020
+```
+
+---
+
+## Visual Test Determinism
+
+Visual regression tests need a deterministic scene: a fixed window, no time-of-day drift, no procedural terrain, and no overlapping HUD UI on top of the rendered output. The flags below are the canonical set passed to the Explorer when capturing or comparing reference frames.
+
+| Flag                                | Effect in visual tests |
+|-------------------------------------| --- |
+| `--landscape-terrain-enabled false` | Disables the procedural landscape terrain so the empty/grid background is identical across runs. Requires `--debug` (the flag is gated to debug builds). |
+| `--skybox-time-enabled false`       | Freezes the skybox time-of-day cycle so lighting, sun position, and shadows stay constant frame-to-frame. |
+| `--resolution 1024x768`             | Forces a fixed render resolution. Capturing at the same resolution that the reference frames were taken at avoids upscaler/MSAA differences. Only honored in fullscreen mode. |
+| `--disable-hud`                     | Hides the HUD (chat, minimap, notifications, etc.) so transient UI doesn't pollute the captured frame. SDK UI from scenes remains visible. |
+| `--skip-minimum-specs-screen`       | Skips the "performance adjusted to your device" screen on sub-spec hardware and prevents the automatic low-quality preset from overriding `--graphics`. |
+
+**Example launch:**
+```bash
+--landscape-terrain-enabled false --skybox-time-enabled false --resolution 1024x768 --disable-hud --skip-minimum-specs-screen
+```
+
+---
+
+## Notes
+
+- Most boolean flags are presence flags (they don't require a value). Simply including `--flag-name` enables the feature.
+- Some flags accept string values that can be boolean-like (`"true"` or `"false"`).
+- Flags can be combined in a single command line invocation.
+- Deep links can embed multiple flags: `decentraland://?realm=http://127.0.0.1:8000&local-scene=true&skip-auth-screen=true`
+- The `debug` flag is automatically added when running in Unity Editor.
+- Some flags are only effective when combined with the `debug` flag or when running in Unity Editor.
+
+---
+
+## Example Usage
+
+### Local Scene Development
+```bash
+--local-scene --skip-auth-screen true --position 100,100 --debug
+```
+
+### Custom Realm with Debug Features
+```bash
+--realm=http://127.0.0.1:8000 --debug --scene-console --windowed-mode
+```
+
+### Testing with Simulated Memory
+```bash
+--simulateMemory 2048 --disable-disk-cache --debug
+```
+
+### Preview Mode for Wearables
+```bash
+--self-preview-wearables wearable1,wearable2,wearable3 --debug
+```

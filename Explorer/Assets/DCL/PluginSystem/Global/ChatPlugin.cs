@@ -1,0 +1,510 @@
+using System;
+using Arch.Core;
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Chat;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
+using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Friends;
+using DCL.Friends.UserBlocking;
+using DCL.FeatureFlags;
+using DCL.Input;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Tables;
+using DCL.Nametags;
+using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
+using DCL.RealmNavigation;
+using DCL.Settings.Settings;
+using DCL.SocialService;
+using DCL.UI;
+using DCL.UI.InputFieldFormatting;
+using DCL.UI.MainUI;
+using DCL.Web3.Identities;
+using DCL.Utilities;
+using DCL.VoiceChat;
+using MVC;
+using System.Threading;
+using DCL.Audio;
+using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatConfig;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Debug;
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.ChatServices;
+using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.Commands;
+using DCL.ChatArea;
+using DCL.Diagnostics;
+using DCL.ExplorePanel;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.Settings;
+using DCL.Translation;
+using DCL.Translation.Processors;
+using DCL.Translation.Service;
+using DCL.WebRequests;
+using System.Collections.Generic;
+using DCL.Character.Components;
+using DCL.Chat.ChatReactions.Configs;
+using TMPro;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using Utility;
+
+namespace DCL.PluginSystem.Global
+{
+    public class ChatPlugin : IDCLGlobalPlugin<ChatPluginSettings>
+    {
+        private readonly IMVCManager mvcManager;
+        private readonly IChatHistory chatHistory;
+        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly NametagsData nametagsData;
+        private readonly IInputBlock inputBlock;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
+        private readonly MainUIView mainUIView;
+        private readonly IRoomHub roomHub;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly ITextFormatter hyperlinkTextFormatter;
+        private readonly IProfileCache profileCache;
+        private readonly ChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly ChatMessageFactory chatMessageFactory;
+        private readonly IUserBlockingCache userBlockingCache;
+        private readonly IRPCSocialServices socialServiceProxy;
+        private readonly IFriendsEventBus friendsEventBus;
+        private readonly IFriendsService? friendsService;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly CommunityDataService communityDataService;
+        private readonly ISpriteCache thumbnailCache;
+        private readonly CommunitiesEventBus communitiesEventBus;
+        private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
+        private readonly Transform chatViewRectTransform;
+        private readonly EventSubscriptionScope pluginScope = new ();
+        private readonly CancellationTokenSource pluginCts;
+        private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
+        private readonly ITranslationSettings translationSettings;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IMessagePipesHub messagePipesHub;
+        private readonly DecentralandEnvironment decentralandEnvironment;
+        private readonly IAnalyticsController analytics;
+        private readonly StreamReactionsChatCommand streamReactionsChatCommand;
+        private readonly CurrentChannelService? externalCurrentChannelService;
+        private readonly DCLInput dclInput;
+
+        private ChatMainSharedAreaController? chatSharedAreaController;
+        private ChatCommandRegistry? commandRegistry;
+        private ChatHistoryStorage? chatStorage;
+        private FallbackFontsProvider? fallbackFontsProvider;
+        private ChatMessageReactionService? messageReactionService;
+
+        public ChatPlugin(
+            IMVCManager mvcManager,
+            IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade,
+            IChatMessagesBus chatMessagesBus,
+            ChatEventBus eventBus,
+            IChatHistory chatHistory,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            NametagsData nametagsData,
+            MainUIView mainUIView,
+            IInputBlock inputBlock,
+            Arch.Core.World world,
+            Entity playerEntity,
+            IRoomHub roomHub,
+            IAssetsProvisioner assetsProvisioner,
+            ITextFormatter hyperlinkTextFormatter,
+            IProfileCache profileCache,
+            ChatEventBus chatEventBus,
+            IWeb3IdentityCache web3IdentityCache,
+            ILoadingStatus loadingStatus,
+            IUserBlockingCache userBlockingCache,
+            IRPCSocialServices socialServiceProxy,
+            IFriendsEventBus friendsEventBus,
+            ChatMessageFactory chatMessageFactory,
+            ProfileRepositoryWrapper profileDataProvider,
+            IFriendsService? friendsService,
+            CommunitiesDataProvider communitiesDataProvider,
+            CommunityDataService communityDataService,
+            ISpriteCache thumbnailCache,
+            CommunitiesEventBus communitiesEventBus,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            Transform chatViewRectTransform,
+            ITranslationSettings translationSettings,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ChatSharedAreaEventBus chatSharedAreaEventBus,
+            IMessagePipesHub messagePipesHub,
+            DecentralandEnvironment decentralandEnvironment,
+            IAnalyticsController analytics,
+            StreamReactionsChatCommand streamReactionsChatCommand,
+            CurrentChannelService? externalCurrentChannelService = null)
+        {
+            this.mvcManager = mvcManager;
+            this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
+            this.chatMessagesBus = chatMessagesBus;
+            this.chatHistory = chatHistory;
+            this.entityParticipantTable = entityParticipantTable;
+            this.nametagsData = nametagsData;
+            this.mainUIView = mainUIView;
+            this.inputBlock = inputBlock;
+            this.world = world;
+            this.playerEntity = playerEntity;
+            this.roomHub = roomHub;
+            this.assetsProvisioner = assetsProvisioner;
+            this.hyperlinkTextFormatter = hyperlinkTextFormatter;
+            this.profileCache = profileCache;
+            this.chatEventBus = chatEventBus;
+            this.web3IdentityCache = web3IdentityCache;
+            this.loadingStatus = loadingStatus;
+            this.userBlockingCache = userBlockingCache;
+            this.socialServiceProxy = socialServiceProxy;
+            this.friendsEventBus = friendsEventBus;
+            this.chatMessageFactory = chatMessageFactory;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.friendsService = friendsService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communityDataProvider = communitiesDataProvider;
+            this.thumbnailCache = thumbnailCache;
+            this.communitiesEventBus = communitiesEventBus;
+            this.communityDataService = communityDataService;
+            this.chatViewRectTransform = chatViewRectTransform;
+            this.chatSharedAreaEventBus = chatSharedAreaEventBus;
+            this.translationSettings = translationSettings;
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.messagePipesHub = messagePipesHub;
+            this.decentralandEnvironment = decentralandEnvironment;
+            this.analytics = analytics;
+            this.streamReactionsChatCommand = streamReactionsChatCommand;
+            this.externalCurrentChannelService = externalCurrentChannelService;
+            this.dclInput = DCLInput.Instance;
+
+            pluginCts = new CancellationTokenSource();
+            eventBus.Subscribe<ChatEvents.ClickableBlockedInputClickedEvent>(OnChatClickableBlockedInputClickedEventAsync);
+        }
+
+        public void Dispose()
+        {
+            streamReactionsChatCommand.Detach();
+
+            if (messageReactionService != null && chatStorage != null)
+                messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
+
+            chatStorage?.Dispose();
+
+            pluginScope.Dispose();
+            fallbackFontsProvider?.Dispose();
+            pluginCts.SafeCancelAndDispose();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
+        {
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, pluginCts.Token);
+            fallbackFontsProvider = new FallbackFontsProvider(assetsProvisioner, settings.FallbackFonts, linkedCts.Token);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, settings.ChatSettingsAsset);
+
+            var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
+            var chatConfig = chatConfigAsset.Value;
+
+            var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable, settings.ReactionsConfig.WorldLane);
+
+            ChatReactionsFactory.Result reactions = ChatReactionsFactory.Create(
+                settings.ReactionsConfig,
+                mainUIView.ChatMainView.SituationalReactionView.LaneRect,
+                mainUIView.ChatMainView.SituationalReactionView.LaneCanvas,
+                avatarReactionPosition,
+                messagePipesHub,
+                userBlockingCache,
+                web3IdentityCache,
+                chatHistory,
+                decentralandEnvironment,
+                settings.ChatSettingsAsset,
+                pluginScope);
+
+            messageReactionService = reactions.MessageReactionService;
+
+            // Hand the debug /streamreactions command a live control now that the reactions feature exists.
+            streamReactionsChatCommand.Attach(reactions.StreamControl);
+
+            var chatReactionsAnalytics = new ChatReactionsAnalytics(analytics,
+                messageReactionService,
+                reactions.Facade,
+                settings.ChatSettingsAsset);
+            
+            pluginScope.Add(chatReactionsAnalytics);
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+            {
+                string walletAddress = web3IdentityCache.Identity?.Address ?? string.Empty;
+                chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
+
+                messageReactionService.ReactionPersistenceRequested += chatStorage.OnReactionPersistenceRequested;
+            }
+
+            var translationPolicy = new ConversationTranslationPolicy(translationSettings);
+
+            var translationProvider = new DclTranslationProvider(webRequestController, decentralandUrlsSource, translationSettings);
+
+            var translationCache = new InMemoryTranslationCache(chatConfig.TranslationCacheCapacity, onEvicted: (key, _) =>
+            {
+                ReportHub.Log(ReportCategory.TRANSLATE, $"Cache evicted {key.MessageId}:{key.Lang}");
+            });
+
+            pluginScope.Add(translationCache);
+
+            var translationMemory = new InMemoryTranslationMemory(chatConfig.TranslationMemoryCapacity, onEvicted: (messageId, _) =>
+            {
+                ReportHub.Log(ReportCategory.TRANSLATE, $"Memory evicted {messageId}");
+            });
+
+            pluginScope.Add(translationMemory);
+
+            var messageProcessor = new ChatMessageProcessor(translationProvider);
+
+            var translationService = new TranslationService(translationProvider,
+                messageProcessor,
+                translationCache,
+                translationPolicy,
+                translationSettings,
+                chatEventBus,
+                translationMemory);
+
+            var chatWorldBubbleService = new ChatWorldBubbleService(world,
+                playerEntity,
+                entityParticipantTable,
+                profileCache,
+                nametagsData,
+                settings.ChatSettingsAsset,
+                chatHistory,
+                communityDataService);
+
+            var currentChannelService = externalCurrentChannelService ?? new CurrentChannelService();
+
+            var chatUserStateService = new PrivateConversationUserStateService(
+                currentChannelService,
+                chatEventBus,
+                userBlockingCache,
+                friendsService,
+                settings.ChatSettingsAsset,
+                privacySettings,
+                friendsEventBus,
+                roomHub);
+
+            pluginScope.Add(chatUserStateService);
+
+            var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
+
+            var chatPanelView = mainUIView.ChatMainView.ChatPanelView;
+
+            var chatClickDetectionHandler = new ChatClickDetectionHandler((RectTransform)chatPanelView.transform,
+                    chatPanelView.TitlebarView.CloseChatButton.transform,
+                    chatPanelView.TitlebarView.CloseMemberListButton.transform,
+                    chatPanelView.TitlebarView.OpenMemberListButton.transform,
+                    chatPanelView.TitlebarView.BackFromMemberList.transform,
+                    chatPanelView.InputView.inputField.transform,
+                    chatViewRectTransform,
+                    mainUIView.SidebarView.UnreadMessagesButton.transform,
+                    chatPanelView.ChatReactionButton.transform,
+                    chatPanelView.EmojiPanelView.transform);
+
+            pluginScope.Add(chatClickDetectionHandler);
+
+            var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionHandler);
+
+            var nearbyUserStateService = new NearbyUserStateService(roomHub, chatEventBus, userBlockingCache);
+
+
+            var communityUserStateService = new CommunityUserStateService(
+                communityDataProvider,
+                communitiesEventBus,
+                chatEventBus,
+                chatHistory,
+                web3IdentityCache,
+                userBlockingCache);
+
+            pluginScope.Add(communityUserStateService);
+
+            var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
+                friendsService,
+                currentChannelService,
+                chatEventBus);
+
+            var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache, currentChannelService);
+
+            commandRegistry = new ChatCommandRegistry(
+                chatConfig,
+                settings.ChatSettingsAsset,
+                chatEventBus,
+                web3IdentityCache,
+                chatEventBus,
+                chatMessagesBus,
+                chatHistory,
+                chatStorage,
+                chatMemberService,
+                nearbyUserStateService,
+                communityUserStateService,
+                chatUserStateService,
+                currentChannelService,
+                communityDataProvider,
+                communityDataService,
+                profileRepositoryWrapper,
+                thumbnailCache,
+                friendsService,
+                settings.ChatSendMessageAudio,
+                getParticipantProfilesCommand,
+                voiceChatOrchestrator,
+                translationService,
+                translationMemory,
+                translationCache,
+                translationSettings);
+
+            pluginScope.Add(commandRegistry);
+
+            var chatPanelPresenter = new ChatPanelPresenter(
+                mainUIView.ChatMainView.ChatPanelView,
+                hyperlinkTextFormatter,
+                voiceChatOrchestrator,
+                currentChannelService,
+                communityDataProvider,
+                chatConfig,
+                chatEventBus,
+                chatHistory,
+                communityDataService,
+                chatMemberService,
+                profileRepositoryWrapper,
+                commandRegistry,
+                chatInputBlockingService,
+                chatContextMenuService,
+                chatClickDetectionHandler,
+                chatSharedAreaEventBus,
+                translationSettings,
+                translationMemory,
+                translationCache,
+                reactions.Facade,
+                reactions.Simulation,
+                settings.ReactionsConfig,
+                reactions.DebugState,
+                reactions.DebugController,
+                settings.ChatSettingsAsset,
+                messageReactionService,
+                web3IdentityCache,
+                profileCache,
+                inputBlock
+            );
+
+            pluginScope.Add(chatPanelPresenter);
+
+            chatSharedAreaController = new ChatMainSharedAreaController(
+                () =>
+                {
+                    ChatMainSharedAreaView? view = mainUIView.ChatMainView;
+                    view.gameObject.SetActive(false);
+                    return view;
+                },
+                mvcManager,
+                chatSharedAreaEventBus,
+                commandRegistry,
+                chatEventBus,
+                dclInput
+            );
+
+            var chatBusListenerService = new ChatHistoryService(chatMessagesBus,
+                chatHistory,
+                hyperlinkTextFormatter,
+                chatConfig,
+                translationService,
+                currentChannelService);
+
+            pluginScope.Add(chatSharedAreaController);
+            pluginScope.Add(chatWorldBubbleService);
+            pluginScope.Add(chatBusListenerService);
+
+            mvcManager.RegisterController(chatSharedAreaController);
+
+            // Log out / log in
+            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
+            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+
+            loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
+        }
+
+        private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings, settingsSection: SettingsController.SettingsSection.Chat)));
+
+        private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
+        {
+            if (status == LoadingStatus.LoadingStage.Completed)
+                mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand());
+        }
+
+        private void OnIdentityCleared()
+        {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, "ChatPlugin.OnIdentityCleared");
+            commandRegistry?.ResetChat.Execute();
+
+            if (chatSharedAreaController is { IsVisible: true })
+                chatSharedAreaController.HideViewAsync(CancellationToken.None).Forget();
+        }
+
+        private void OnIdentityChanged()
+        {
+            if (web3IdentityCache.Identity == null) return;
+
+            ReportHub.Log(ReportData.UNSPECIFIED, "ChatPlugin.OnIdentityChanged: Re-initializing chat system for new user.");
+
+            ReinitializeChatAsync(pluginCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ReinitializeChatAsync(CancellationToken ct)
+        {
+            try
+            {
+                // STEP 1: RE-CONFIGURE SESSION-SPECIFIC SERVICES
+                chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.EnsuredIdentity().Address);
+
+                // STEP 2: RESTART BACKGROUND SERVICES
+                if (commandRegistry == null) return;
+
+                await commandRegistry.RestartChatServices.ExecuteAsync(ct);
+                ct.ThrowIfCancellationRequested();
+
+                // STEP 3: RE-POPULATE DATA
+                // Run the original initialization command. This command is now critical.
+                // It will call chatStorage.LoadAllChannelsWithoutMessages(), which will now
+                // read from the correct user directory because we re-configured it in Step 1.
+                // It will also fetch friends and communities for the new user.
+                await commandRegistry.InitializeChat.ExecuteAsync(ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
+        }
+    }
+
+    [Serializable]
+    public class ChatPluginSettings : IDCLPluginSettings
+    {
+        [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; } = null!;
+        [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; } = null!;
+        [field: SerializeField] public List<AssetReferenceT<TMP_FontAsset>> FallbackFonts { get; private set; } = null!;
+
+        [Header("Audio")]
+        [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
+
+        [field: Header("Reactions")]
+        [field: SerializeField] public ChatReactionsConfig ReactionsConfig { get; private set; }
+    }
+}

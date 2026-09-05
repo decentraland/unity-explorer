@@ -1,0 +1,322 @@
+﻿using DCL.DebugUtilities.Views;
+using DCL.Diagnostics;
+using DCL.WebRequests.Analytics.Metrics;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace DCL.WebRequests.Dumper.Editor
+{
+    public class WebRequestDumpRecorderWindow : EditorWindow
+    {
+        private const string FILTER_PREFS_KEY = "WebRequestDumper.Filter";
+        private const string IS_REGEX_PREFS_KEY = "WebRequestDumper.IsRegex";
+        private const string DISABLE_DISK_CACHE_PREFS_KEY = "WebRequestDumper.DisableCache";
+
+        private RequestMetricRecorder[] activeMetrics => WebRequestsDumper.Instance.activeMetrics;
+
+        private TextField filterField;
+        private Toggle isRegexToggle;
+        private ListView metricsView;
+        private Button restartButton;
+        private Button saveButton;
+        private Button stopResumeButton;
+
+        private void OnEnable()
+        {
+            EditorApplication.update += UpdateUI;
+            EditorApplication.playModeStateChanged += OnPlayModeChanged;
+        }
+
+        private void OnDisable()
+        {
+            EditorApplication.update -= UpdateUI;
+            EditorApplication.playModeStateChanged -= OnPlayModeChanged;
+        }
+
+        public void CreateGUI()
+        {
+            VisualElement root = rootVisualElement;
+            root.style.paddingTop = 10;
+            root.style.paddingBottom = 10;
+            root.style.paddingLeft = 10;
+            root.style.paddingRight = 10;
+
+            // Title
+            var title = new Label("Web Request Dump Recorder");
+            title.style.fontSize = 16;
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            title.style.marginBottom = 15;
+            root.Add(title);
+
+            // Filter field
+            filterField = new TextField("URL Filter (Regex)");
+
+            // Load filter from EditorPrefs
+            string savedFilter = EditorPrefs.GetString(FILTER_PREFS_KEY, string.Empty);
+            filterField.value = savedFilter;
+            WebRequestsDumper.Instance.Filter = savedFilter;
+
+            filterField.RegisterValueChangedCallback(evt =>
+            {
+                string value = evt.newValue.Trim();
+                WebRequestsDumper.Instance.Filter = value;
+                EditorPrefs.SetString(FILTER_PREFS_KEY, value);
+            });
+
+            root.Add(filterField);
+
+            // Is Regex field
+            isRegexToggle = new Toggle("Is Regex");
+            isRegexToggle.style.marginBottom = 10;
+
+            // Load the value from EditorPrefs
+            bool isRegex = EditorPrefs.GetBool(IS_REGEX_PREFS_KEY, false);
+            isRegexToggle.value = isRegex;
+            WebRequestsDumper.Instance.IsRegEx = isRegex;
+
+            isRegexToggle.RegisterValueChangedCallback(evt =>
+            {
+                WebRequestsDumper.Instance.IsRegEx = evt.newValue;
+                EditorPrefs.SetBool(IS_REGEX_PREFS_KEY, evt.newValue);
+            });
+
+            root.Add(isRegexToggle);
+
+            // Disable Disk Cache
+            var disableCacheToggle = new Toggle("Disable Cache");
+            disableCacheToggle.value = EditorPrefs.GetBool(DISABLE_DISK_CACHE_PREFS_KEY, false);
+
+            disableCacheToggle.RegisterValueChangedCallback(evt =>
+            {
+                WebRequestsDebugControl.DisableCache = evt.newValue;
+                EditorPrefs.SetBool(DISABLE_DISK_CACHE_PREFS_KEY, evt.newValue);
+            });
+
+            disableCacheToggle.style.marginBottom = 10;
+
+            root.Add(disableCacheToggle);
+
+            // Metrics List view
+            const int METRIC_ELEMENT_HEIGHT = 20;
+
+            metricsView = new ListView();
+            metricsView.style.paddingLeft = 20;
+            metricsView.virtualizationMethod = CollectionVirtualizationMethod.FixedHeight;
+            metricsView.fixedItemHeight = METRIC_ELEMENT_HEIGHT;
+            metricsView.itemsSource = activeMetrics;
+            metricsView.style.flexGrow = 0;
+            metricsView.style.flexShrink = 0;
+            metricsView.style.height = activeMetrics.Length * METRIC_ELEMENT_HEIGHT;
+
+            metricsView.makeItem = () =>
+            {
+                var container = new VisualElement();
+                container.style.flexDirection = FlexDirection.Row;
+
+                var metricName = new Label("Metric Name");
+                metricName.name = "MetricName";
+                container.Add(metricName);
+
+                var metricValue = new Label("Value");
+                metricValue.name = "Value";
+                container.Add(metricValue);
+
+                return container;
+            };
+
+            metricsView.bindItem = (element, i) =>
+            {
+                Label metricName = element.Q<Label>("MetricName");
+                Label metricValue = element.Q<Label>("Value");
+
+                // Do aggregation
+                metricName.text = MetricsRegistry.TYPES[i].Name;
+
+                RequestMetricRecorder metric = activeMetrics[i];
+
+                if (metric == null)
+                {
+                    metricValue.text = "N/A";
+                    return;
+                }
+
+                metricValue.text = DebugLongMarkerElement.FormatValue(metric.GetMetric(), metric.GetUnit());
+            };
+
+            root.Add(metricsView);
+
+            // Buttons container
+            var buttonsContainer = new VisualElement();
+            buttonsContainer.style.flexDirection = FlexDirection.Row;
+            buttonsContainer.style.marginBottom = 10;
+            root.Add(buttonsContainer);
+
+            // Restart button
+            restartButton = new Button(OnRestart);
+            restartButton.tooltip = "Restart recording";
+            GUIContent restartIcon = EditorGUIUtility.IconContent("Refresh");
+
+            if (restartIcon?.image != null)
+                restartButton.style.backgroundImage = new StyleBackground((Texture2D)restartIcon.image);
+
+            restartButton.style.width = 30;
+            restartButton.style.height = 30;
+            restartButton.style.marginRight = 5;
+            buttonsContainer.Add(restartButton);
+
+            // Stop/Resume button
+            stopResumeButton = new Button(OnStopResume);
+            stopResumeButton.tooltip = "Stop recording";
+            stopResumeButton.style.width = 30;
+            stopResumeButton.style.height = 30;
+            stopResumeButton.style.marginRight = 5;
+            buttonsContainer.Add(stopResumeButton);
+
+            // Save button
+            saveButton = new Button(OnSave);
+            saveButton.tooltip = "Save dump to file";
+            GUIContent saveIcon = EditorGUIUtility.IconContent("SaveAs");
+
+            if (saveIcon?.image != null)
+                saveButton.style.backgroundImage = new StyleBackground((Texture2D)saveIcon.image);
+
+            saveButton.style.width = 30;
+            saveButton.style.height = 30;
+            root.Add(saveButton);
+
+            // Initial UI update
+            UpdateUI();
+        }
+
+        [MenuItem("Decentraland/Web Requests Dumper")]
+        public static void ShowWindow()
+        {
+            WebRequestDumpRecorderWindow window = GetWindow<WebRequestDumpRecorderWindow>("Web Requests Dumper");
+            window.minSize = new Vector2(400, 250);
+            window.Show();
+        }
+
+        private static Func<IReadOnlyList<RequestMetricBase>, ulong> AggregateMetrics(Type metricType)
+        {
+            if (metricType == typeof(ServeTimePerMBAverage) ||
+                metricType == typeof(ServeTimeSmallFileAverage) ||
+                metricType == typeof(TimeToFirstByteAverage))
+                return metrics =>
+
+                    // average
+                    (ulong)metrics.Average(static m => (double)m.GetMetric());
+
+            // Sum
+            return metrics => (ulong)metrics.Sum(static m => (double)m.GetMetric());
+        }
+
+        private void OnPlayModeChanged(PlayModeStateChange change) =>
+            ResetMetrics();
+
+        private void UpdateUI()
+        {
+            if (metricsView == null || stopResumeButton == null) return;
+
+            WebRequestsDumper dumper = WebRequestsDumper.Instance;
+
+            // Update Metrics
+            metricsView.RefreshItems();
+
+            // Update stop/resume button icon and tooltip
+            if (dumper.Enabled)
+            {
+                GUIContent stopIcon = EditorGUIUtility.IconContent("PreMatQuad");
+
+                if (stopIcon?.image != null)
+                    stopResumeButton.style.backgroundImage = new StyleBackground((Texture2D)stopIcon.image);
+
+                stopResumeButton.tooltip = "Stop recording";
+            }
+            else
+            {
+                GUIContent resumeIcon = EditorGUIUtility.IconContent("Animation.Play");
+
+                if (resumeIcon?.image != null)
+                    stopResumeButton.style.backgroundImage = new StyleBackground((Texture2D)resumeIcon.image);
+
+                stopResumeButton.tooltip = "Resume recording";
+            }
+        }
+
+        private void OnRestart()
+        {
+            WebRequestsDumper dumper = WebRequestsDumper.Instance;
+            dumper.Filter = filterField.value;
+            dumper.Restart();
+
+            if (dumper.AnalyticsHandler != null)
+            {
+                // Remove tracked metrics
+                foreach (RequestMetricRecorder requestMetric in activeMetrics)
+                {
+                    if (requestMetric == null) continue;
+                    dumper.AnalyticsHandler.RemoveFlatMetric(requestMetric);
+                }
+            }
+
+            ResetMetrics();
+
+            // Metrics will be re-created in WebRequestDumpRecorder
+
+            ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, "Web Request Dumper: Recording restarted");
+        }
+
+        private void ResetMetrics() =>
+            Array.Clear(activeMetrics, 0, activeMetrics.Length);
+
+        private void OnStopResume()
+        {
+            WebRequestsDumper dumper = WebRequestsDumper.Instance;
+
+            if (dumper.Enabled)
+            {
+                dumper.Stop();
+
+                ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, "Web Request Dumper: Recording stopped");
+            }
+            else
+            {
+                dumper.Resume();
+
+                ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, "Web Request Dumper: Recording resumed");
+            }
+        }
+
+        private void OnSave()
+        {
+            WebRequestsDumper dumper = WebRequestsDumper.Instance;
+
+            string path = EditorUtility.SaveFilePanel(
+                "Save Web Requests Dump",
+                Application.dataPath,
+                "web_requests_dump.json",
+                "json"
+            );
+
+            if (string.IsNullOrEmpty(path)) return;
+
+            try
+            {
+                string serialized = dumper.Serialize();
+                File.WriteAllText(path, serialized);
+                ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, $"Web Request Dumper: Dump saved to {path}");
+                EditorUtility.DisplayDialog("Success", $"Dump saved successfully to:\n{path}", "OK");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.GENERIC_WEB_REQUEST, $"Web Request Dumper: Failed to save dump - {ex}");
+                EditorUtility.DisplayDialog("Error", $"Failed to save dump:\n{ex.Message}", "OK");
+            }
+        }
+    }
+}

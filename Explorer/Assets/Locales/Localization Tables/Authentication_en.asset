@@ -1,0 +1,136 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Authentication_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 48b7b423583d84e3d9f2dbeaa25c3aa1, type: 2}
+  m_Metadata:
+    m_Items:
+    - rid: 1095376860581462025
+  m_TableData:
+  - m_Id: 679572660224
+    m_Localized: SIGN IN
+    m_Metadata:
+      m_Items: []
+  - m_Id: 91353005416448
+    m_Localized: Explore, create, and make new friends in a world shaped by its community.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 92320304193536
+    m_Localized: Discover a virtual social world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 97841321074688
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 98660338622464
+    m_Localized: Pending authentication
+    m_Metadata:
+      m_Items: []
+  - m_Id: 99422326218752
+    m_Localized: We opened a new tab in your browser so you can select how to Sign
+      In into Decentraland.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 113318898425856
+    m_Localized: Decentraland
+    m_Metadata:
+      m_Items: []
+  - m_Id: 147993717104640
+    m_Localized: Loading {progressValue}%
+    m_Metadata:
+      m_Items:
+      - rid: 1095376860581462025
+  - m_Id: 155925695422464
+    m_Localized: jump into decentraland
+    m_Metadata:
+      m_Items: []
+  - m_Id: 156421285994496
+    m_Localized: use a different account
+    m_Metadata:
+      m_Items: []
+  - m_Id: 385401318531072
+    m_Localized: Welcome {back_profileName}
+    m_Metadata:
+      m_Items:
+      - rid: 1095376860581462025
+  - m_Id: 385917570244608
+    m_Localized: Ready to explore?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2611617878499328
+    m_Localized: Secure Sign-in
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2611913090392064
+    m_Localized: A browser window should open for you to sign into Decentraland.
+      Check this number when prompted.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2612271623692288
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2615618359517184
+    m_Localized: Keep this number private. It ensures that your sign-in is secure
+      and unique to you.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2972650811940864
+    m_Localized: Verification number will expire in {time}
+    m_Metadata:
+      m_Items:
+      - rid: 1095376860581462025
+  - m_Id: 65641274080747520
+    m_Localized: Apply for alpha access
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65641370348412928
+    m_Localized: Use a different account
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65641847559544832
+    m_Localized: Please log in with a wallet address that has been granted access
+      to the private alpha of Desktop Client 2.0 or apply to join the alpha group
+      below.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65642051994116096
+    m_Localized: You Do Not Have Alpha Access
+    m_Metadata:
+      m_Items: []
+  - m_Id: 264221019454320640
+    m_Localized: NEXT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 443316891551806206
+    m_Localized: BODY TYPE A
+    m_Metadata:
+      m_Items: []
+  - m_Id: 674482998896883396
+    m_Localized: BODY TYPE B
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 1095376860581462025
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 147993717104640
+        - id: 385401318531072
+        - id: 2972650811940864

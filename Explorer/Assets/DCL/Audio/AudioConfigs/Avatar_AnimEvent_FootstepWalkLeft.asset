@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea799a483c3f4db8afbf38b0e6c08665, type: 3}
+  m_Name: Avatar_AnimEvent_FootstepWalkLeft
+  m_EditorClassIdentifier: 
+  audioClips:
+  - {fileID: 8300000, guid: 4e79865ade0ec934190f30284560f324, type: 3}
+  - {fileID: 8300000, guid: 9f442e219acbbb745a2617e69098ff2d, type: 3}
+  - {fileID: 8300000, guid: 3c2c67c63ee77654b817191eb455d43c, type: 3}
+  - {fileID: 8300000, guid: d2be54783e3149944b583370382302e9, type: 3}
+  - {fileID: 8300000, guid: 536b88694a5cf1f4391fe3cce60ae612, type: 3}
+  - {fileID: 8300000, guid: 39a2911fdb5b0844c8d56a9e2fd04e14, type: 3}
+  - {fileID: 8300000, guid: f081b3833f379c0498135600354fe6f4, type: 3}
+  - {fileID: 8300000, guid: 7c21d76337931eb49a2c9f77a6ca1c25, type: 3}
+  relativeVolume: 1
+  audioCategory: 3
+  pitchVariation: 0.05
+  clipSelectionMode: 0

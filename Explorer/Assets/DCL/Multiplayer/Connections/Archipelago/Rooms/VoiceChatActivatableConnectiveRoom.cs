@@ -1,0 +1,223 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Audio;
+using DCL.Multiplayer.Connections.Credentials;
+using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
+using LiveKit.Internal;
+using LiveKit.Internal.FFIClients.Pools.Memory;
+using LiveKit.Rooms;
+using LiveKit.Rooms.ActiveSpeakers;
+using LiveKit.Rooms.DataPipes;
+using LiveKit.Rooms.Info;
+using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Participants.Factory;
+using LiveKit.Rooms.Streaming.Audio;
+using LiveKit.Rooms.TrackPublications;
+using LiveKit.Rooms.Tracks.Factory;
+using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
+using System;
+using System.ComponentModel;
+using System.Threading;
+using Utility;
+using Utility.Multithreading;
+
+namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
+{
+    // TODO: This Room will be refactored following the comments left and tracked on this ticket: 4693
+    public class VoiceChatActivatableConnectiveRoom : IActivatableConnectiveRoom
+    {
+        private const string LOG_PREFIX = "VoiceChatRoom";
+        private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
+        private readonly InteriorRoom room = new ();
+        private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
+        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
+        private CancellationTokenSource? cts;
+        private string connectionString = string.Empty;
+        public bool Activated { get; private set; }
+        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
+        public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
+
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+            cts = null;
+        }
+
+        public IConnectiveRoom.State CurrentState() =>
+            roomState.Value();
+
+        public IRoom Room() =>
+            room;
+
+        public async UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString)
+        {
+            connectionString = newConnectionString;
+            await DeactivateAsync();
+            await ActivateAsync();
+            return CurrentState() is IConnectiveRoom.State.Running;
+        }
+
+        public async UniTask ActivateAsync()
+        {
+            if (Activated) { return; }
+
+            Activated = true;
+
+            await this.StartIfNotAsync();
+        }
+
+        public async UniTask DeactivateAsync()
+        {
+            if (!Activated) { return; }
+
+            Activated = false;
+            await this.StopIfNotAsync();
+        }
+
+        public async UniTask<bool> StartAsync()
+        {
+            if (CurrentState() is not IConnectiveRoom.State.Stopped)
+                throw new WarningException("Room is already running");
+
+            cts = cts.SafeRestart();
+            attemptToConnectState.Set(AttemptToConnectState.None);
+
+            if (connectionString == string.Empty)
+            {
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - No connection string specified");
+                return false;
+            }
+#if UNITY_EDITOR
+            var credentials = new ConnectionStringCredentials(connectionString);
+            ReportHub.Log(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - Connect with credentials\nUrl - {credentials.Url}\nToken - {credentials.AuthToken}");
+#endif
+
+            roomState.Set(IConnectiveRoom.State.Starting);
+            RunAsync(cts.Token).Forget();
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
+
+            if (attemptToConnectState.Value() is AttemptToConnectState.Error)
+            {
+                // A failed attempt (e.g. revoked token → 401) is terminal; cancel the loop so it stops re-attempting the same credentials forever.
+                cts.SafeCancelAndDispose();
+                cts = null;
+                roomState.Set(IConnectiveRoom.State.Stopped);
+                attemptToConnectState.Set(AttemptToConnectState.None);
+                return false;
+            }
+
+            return true;
+        }
+
+        public async UniTask StopAsync()
+        {
+            if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
+                throw new InvalidOperationException("Room is already stopped");
+
+            roomState.Set(IConnectiveRoom.State.Stopping);
+
+            cts = cts.SafeRestart();
+
+            if (connectionLoopHealth != IConnectiveRoom.ConnectionLoopHealth.Stopped)
+                await room.ResetRoomAsync(cts.Token);
+
+            roomState.Set(IConnectiveRoom.State.Stopped);
+            connectionString = string.Empty;
+        }
+
+        private async UniTaskVoid RunAsync(CancellationToken ct)
+        {
+            roomState.Set(IConnectiveRoom.State.Starting);
+
+            while (ct.IsCancellationRequested == false)
+            {
+                await ExecuteWithRecoveryAsync(ct);
+                await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: ct);
+            }
+
+            connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
+            roomState.Set(IConnectiveRoom.State.Stopped);
+        }
+
+        private async UniTask ExecuteWithRecoveryAsync(CancellationToken ct)
+        {
+            do
+            {
+                try
+                {
+                    connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Running);
+                    await CycleStepAsync(ct);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - CycleStepAsync failed: {e}");
+                    connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.CycleFailed);
+                    await RecoveryDelayAsync(ct);
+                }
+            }
+            while (!ct.IsCancellationRequested && connectionLoopHealth.Value() == IConnectiveRoom.ConnectionLoopHealth.CycleFailed);
+        }
+
+        private async UniTask CycleStepAsync(CancellationToken ct)
+        {
+            if (CurrentState() is not IConnectiveRoom.State.Running)
+                await TryConnectToRoomAsync(ct);
+        }
+
+        private UniTask RecoveryDelayAsync(CancellationToken ct) =>
+            UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
+
+        private async UniTask<bool> TryConnectToRoomAsync(CancellationToken ct)
+        {
+            var credentials = new ConnectionStringCredentials(connectionString);
+
+            // Create a fresh room instance each time to ensure clean state
+            var freshRoom = CreateFreshRoom();
+
+            Result connectResult = await freshRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
+
+            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.Success : AttemptToConnectState.Error;
+            attemptToConnectState.Set(connectionState);
+
+            if (connectResult.Success)
+            {
+                room.Assign(freshRoom, out IRoom _);
+                roomState.Set(IConnectiveRoom.State.Running);
+                room.SimulateConnectionStateChanged();
+            }
+
+            return connectResult.Success;
+        }
+
+        private static IRoom CreateFreshRoom()
+        {
+            var hub = new ParticipantsHub();
+
+            var newRoom = new Room(
+                new ArrayMemoryPool(),
+                new DefaultActiveSpeakers(),
+                hub,
+                new TracksFactory(),
+                new FfiHandleFactory(),
+                new ParticipantFactory(),
+                new TrackPublicationFactory(),
+                new DataPipe(),
+                new MemoryRoomInfo(),
+                new VideoStreams(hub),
+                new AudioStreams(hub),
+                null!
+            );
+
+            return new LogRoom(newRoom, "VoiceChat");
+        }
+
+        public static class Null
+        {
+            public static readonly VoiceChatActivatableConnectiveRoom INSTANCE = new ();
+        }
+    }
+}

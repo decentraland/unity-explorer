@@ -1,0 +1,388 @@
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.DemoScripts.Systems;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.DebugUtilities;
+using DCL.FeatureFlags;
+using DCL.Nametags;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using DCL.ResourcesUnloading;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.Utility;
+using ECS;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using DCL.AvatarRendering;
+using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Loading.Assets;
+using DCL.ECSComponents;
+using DCL.Friends.UserBlocking;
+using DCL.Quality;
+using ECS.LifeCycle.Systems;
+using Runtime.Wearables;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.Pool;
+using Utility;
+using Utility.UIToolkit;
+using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
+using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
+using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
+using AvatarShapeVisibilitySystem = DCL.AvatarRendering.AvatarShape.AvatarShapeVisibilitySystem;
+using FinishAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.FinishAvatarMatricesCalculationSystem;
+using MakeVertsOutBufferDefragmentationSystem = DCL.AvatarRendering.AvatarShape.MakeVertsOutBufferDefragmentationSystem;
+using Object = UnityEngine.Object;
+using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.StartAvatarMatricesCalculationSystem;
+#if UNITY_EDITOR
+using DCL.AvatarAnimation;
+#endif
+
+namespace DCL.PluginSystem.Global
+{
+    public class AvatarPlugin : IDCLGlobalPlugin<AvatarPlugin.AvatarShapeSettings>
+    {
+        private static readonly int GLOBAL_AVATAR_BUFFER = Shader.PropertyToID("_GlobalAvatarBuffer");
+
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly CacheCleaner cacheCleaner;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly IPerformanceBudget frameTimeCapBudget;
+        private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
+        private readonly IPerformanceBudget memoryBudget;
+        private readonly IRendererFeaturesCache rendererFeaturesCache;
+        private readonly IRealmData realmData;
+        private readonly IUserBlockingCache userBlockingCache;
+        private readonly bool includeBannedUsersFromScene;
+
+        private readonly AttachmentsAssetsCache attachmentsAssetsCache;
+
+        // late init
+        private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
+        private IAvatarMaterialPoolHandler avatarMaterialPoolHandler = null!;
+        private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
+
+        private readonly NametagsData nametagsData;
+
+        private IComponentPool<Transform> transformPoolRegistry = null!;
+        private Transform? poolParent = null;
+
+        private IObjectPool<NametagHolder> nametagHolderPool = null!;
+        private TextureArrayContainer textureArrayContainer;
+
+        private AvatarRandomizerAsset avatarRandomizerAsset;
+
+        private readonly TextureArrayContainerFactory textureArrayContainerFactory;
+        private readonly IWearableStorage wearableStorage;
+        private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
+
+        private float startFadeDistanceDithering;
+        private float endFadeDistanceDithering;
+        private ReadOnlyAvatarHighlightData highlightData;
+        private Material ghostMaterial = null!;
+
+        private FacialFeaturesTextures[] facialFeaturesTextures;
+
+        public AvatarPlugin(
+            IComponentPoolsRegistry poolsRegistry,
+            IAssetsProvisioner assetsProvisioner,
+            IPerformanceBudget frameTimeCapBudget,
+            IPerformanceBudget memoryBudget,
+            IRendererFeaturesCache rendererFeaturesCache,
+            IRealmData realmData,
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
+            IDebugContainerBuilder debugContainerBuilder,
+            CacheCleaner cacheCleaner,
+            NametagsData nametagsData,
+            TextureArrayContainerFactory textureArrayContainerFactory,
+            IWearableStorage wearableStorage,
+            IUserBlockingCache userBlockingCache,
+            bool includeBannedUsersFromScene)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            this.frameTimeCapBudget = frameTimeCapBudget;
+            this.realmData = realmData;
+            this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.debugContainerBuilder = debugContainerBuilder;
+            this.cacheCleaner = cacheCleaner;
+            this.memoryBudget = memoryBudget;
+            this.rendererFeaturesCache = rendererFeaturesCache;
+            this.nametagsData = nametagsData;
+            this.textureArrayContainerFactory = textureArrayContainerFactory;
+            this.wearableStorage = wearableStorage;
+            this.userBlockingCache = userBlockingCache;
+            this.includeBannedUsersFromScene = includeBannedUsersFromScene;
+            componentPoolsRegistry = poolsRegistry;
+            avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
+            attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
+
+            cacheCleaner.Register(attachmentsAssetsCache);
+        }
+
+        public void Dispose()
+        {
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(AvatarPlugin));
+
+            attachmentsAssetsCache.Dispose();
+            stopwatch.LogStep("attachmentsAssetsCache.Dispose");
+
+            avatarTransformMatrixJobWrapper.Dispose();
+            stopwatch.LogStep("avatarTransformMatrixJobWrapper.Dispose");
+
+            UnityObjectUtils.SafeDestroyGameObject(poolParent);
+            stopwatch.LogStep("SafeDestroyGameObject(poolParent)");
+        }
+
+        public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            startFadeDistanceDithering = settings.startFadeDistanceDithering;
+            endFadeDistanceDithering = settings.endFadeDistanceDithering;
+            highlightData = new ReadOnlyAvatarHighlightData(await settings.OutlineSettingsRef.LoadAssetAsync());
+
+            await CreateAvatarBasePoolAsync(settings, ct);
+            await CreateNametagPoolAsync(settings, ct);
+            await CreateMaterialPoolPrewarmedAsync(settings, ct);
+            ghostMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.GhostMaterial, ct)).Value;
+            await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
+            facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
+
+            transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
+            avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
+
+            debugContainerBuilder.TryAddWidget("Nametags")
+                                ?.AddToggleField("ShowNametags", _ => nametagsData.showNameTags = !nametagsData.showNameTags, nametagsData.showNameTags);
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
+            Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
+
+            var skinningStrategy = new ComputeShaderSkinning();
+
+            AvatarLoaderSystem.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarHighlight))
+                AvatarHighlightSystem.InjectToWorld(ref builder, highlightData);
+
+            cacheCleaner.Register(avatarPoolRegistry);
+            cacheCleaner.Register(computeShaderPool);
+
+            foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
+                cacheCleaner.Register(extendedObjectPool.Pool);
+
+            bool includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AvatarGhosts);
+
+            if (includeGhosts)
+                AvatarGhostSystem.InjectToWorld(ref builder, ghostMaterial);
+
+            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler, computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, wearableStorage, avatarTransformMatrixJobWrapper, facialFeaturesTextures);
+            MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
+            StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
+            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCache, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
+
+            if (includeGhosts)
+                AvatarGhostCleanupSystem.InjectToWorld(ref builder);
+            AvatarCleanUpSystem.InjectToWorld(ref builder, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
+
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
+            NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
+
+            //Debug scripts
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
+#if UNITY_EDITOR
+            PlayableDirectorUpdatingSystem.InjectToWorld(ref builder);
+#endif
+        }
+
+        private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
+
+            componentPoolsRegistry.AddGameObjectPool(
+                () =>
+                {
+                    AvatarBase instance = Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity);
+
+                    // FeetIKRig must be disabled before the pool reactivates the object.
+                    // HandleGet calls SetActive(true) which triggers RigBuilder.Build() —
+                    // if FeetIK is active during that build, it evaluates with uninitialized
+                    // targets, causing intermittent wrong leg angles.
+                    instance.FeetIKRig.enabled = false;
+                    return instance;
+                },
+                onRelease: avatarBase => avatarBase.ResetState());
+            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
+        }
+
+        private async UniTask CreateNametagPoolAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            NametagHolder nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagHolder, ct: ct)).Value;
+
+            var poolRoot = componentPoolsRegistry.RootContainerTransform();
+            poolParent = new GameObject("POOL_CONTAINER_NameTags").transform;
+            poolParent.parent = poolRoot;
+
+            nametagHolderPool = new ObjectPool<NametagHolder>(
+                () =>
+                {
+                    var nametagHolder = Object.Instantiate(nametagPrefab, Vector3.zero, Quaternion.identity, poolParent);
+                    return nametagHolder;
+                },
+                actionOnRelease: nh =>
+                {
+                    nh.ResetTransientVisualState();
+                    nh.gameObject.SetActive(false);
+                },
+                actionOnDestroy: UnityObjectUtils.SafeDestroy,
+                actionOnGet: nh => nh.gameObject.SetActive(true));
+        }
+
+        private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            Material toonMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct)).Value;
+            Material faceFeatureMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct)).Value;
+
+#if UNITY_EDITOR
+
+            //Avoid generating noise in editor git by creating a copy of the material
+            toonMaterial = new Material(toonMaterial);
+            faceFeatureMaterial = new Material(faceFeatureMaterial);
+#endif
+
+            //Set initial dither properties obtained through settings
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_START_PARAM_ID, startFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_START_PARAM_ID, startFadeDistanceDithering);
+
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_END_PARAM_ID, endFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
+
+            //Default should be visible
+            toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
+            faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
+
+            avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
+            {
+                toonMaterial, faceFeatureMaterial,
+            }, settings.defaultMaterialCapacity, textureArrayContainerFactory);
+        }
+
+        private async UniTask CreateComputeShaderPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.ComputeShader, ct: ct);
+            computeShaderPool = new ExtendedObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
+
+            for (var i = 0; i < PoolConstants.COMPUTE_SHADER_COUNT; i++)
+            {
+                ComputeShader prewarmedShader = computeShaderPool.Get()!;
+                computeShaderPool.Release(prewarmedShader);
+            }
+        }
+
+        private async UniTask<FacialFeaturesTextures[]> CreateDefaultFaceTexturesByBodyShapeAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            var maleMouthTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMaleMouthTexture, ct: ct)).Value;
+            var maleEyebrowsTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMaleEyebrowsTexture, ct: ct)).Value;
+            var maleEyesTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMaleEyesTexture, ct: ct)).Value;
+            var femaleMouthTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultFemaleMouthTexture, ct: ct)).Value;
+            var femaleEyebrowsTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultFemaleEyebrowsTexture, ct: ct)).Value;
+            var femaleEyesTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultFemaleEyesTexture, ct: ct)).Value;
+
+            return new FacialFeaturesTextures[]
+            {
+                new (new Dictionary<string, Dictionary<int, Texture>>
+                {
+                    [WearableCategories.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyesTexture },
+                    [WearableCategories.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleMouthTexture },
+                    [WearableCategories.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyebrowsTexture },
+                }),
+                new (new Dictionary<string, Dictionary<int, Texture>>
+                {
+                    [WearableCategories.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyesTexture },
+                    [WearableCategories.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleMouthTexture },
+                    [WearableCategories.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyebrowsTexture },
+                }),
+            };
+        }
+
+        [Serializable]
+        public class AvatarShapeSettings : IDCLPluginSettings
+        {
+            [field: Header(nameof(AvatarPlugin) + "." + nameof(AvatarShapeSettings))]
+            [field: Space]
+            [field: SerializeField]
+            private AssetReferenceGameObject? avatarBase;
+
+            [field: SerializeField]
+            private AssetReferenceMaterial? celShadingMaterial;
+
+            [field: SerializeField]
+            private AssetReferenceMaterial? faceFeatureMaterial;
+
+            [field: SerializeField]
+            private AssetReferenceMaterial? ghostMaterial;
+
+            [field: SerializeField]
+            public float startFadeDistanceDithering = 2;
+
+            [field: SerializeField]
+            public float endFadeDistanceDithering = 0.8f;
+
+            [field: SerializeField]
+            public int defaultMaterialCapacity = 100;
+
+            [field: SerializeField]
+            public AssetReferenceComputeShader computeShader;
+
+            [field: SerializeField]
+            public StaticSettings.AvatarRandomizerSettingsRef AvatarRandomizerSettingsRef { get; set; }
+
+            [field: SerializeField]
+            public NametagHolderRef NametagHolder { get; set; }
+
+            [field: SerializeField]
+            public StaticSettings.AvatarOutlineSettingsRef OutlineSettingsRef;
+
+            public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
+
+            public AssetReferenceComputeShader ComputeShader => computeShader.EnsureNotNull();
+
+            public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
+
+            public AssetReferenceMaterial FaceFeatureMaterial => faceFeatureMaterial.EnsureNotNull();
+
+            public AssetReferenceMaterial GhostMaterial => ghostMaterial.EnsureNotNull();
+
+            public AssetReferenceT<Texture> DefaultMaleMouthTexture;
+            public AssetReferenceT<Texture> DefaultMaleEyesTexture;
+            public AssetReferenceT<Texture> DefaultMaleEyebrowsTexture;
+            public AssetReferenceT<Texture> DefaultFemaleMouthTexture;
+            public AssetReferenceT<Texture> DefaultFemaleEyesTexture;
+            public AssetReferenceT<Texture> DefaultFemaleEyebrowsTexture;
+
+            [Serializable]
+            public class NametagsDataRef : AssetReferenceT<NametagsData>
+            {
+                public NametagsDataRef(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class NametagHolderRef : ComponentReference<NametagHolder>
+            {
+                public NametagHolderRef(string guid) : base(guid) { }
+            }
+        }
+    }
+}

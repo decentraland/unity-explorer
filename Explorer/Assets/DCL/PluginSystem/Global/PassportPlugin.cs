@@ -1,0 +1,235 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables;
+using DCL.Backpack;
+using DCL.BadgesAPIService;
+using DCL.Browser;
+using DCL.CharacterPreview;
+using DCL.Clipboard;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Friends;
+using DCL.Input;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.MarketplaceCredits.Purchase;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
+using DCL.Multiplayer.Profiles.Poses;
+using DCL.Passport;
+using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Self;
+using DCL.UI.ProfileNames;
+using DCL.VoiceChat;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
+using MVC;
+using System.Threading;
+using DCL.InWorldCamera;
+using DCL.InWorldCamera.CameraReelGallery.Components;
+using DCL.UI;
+using System;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+
+namespace DCL.PluginSystem.Global
+{
+    public class PassportPlugin : IDCLGlobalPlugin<PassportPlugin.PassportSettings>
+    {
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
+        private readonly IProfileRepository profileRepository;
+        private readonly ICharacterPreviewFactory characterPreviewFactory;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly ISelfProfile selfProfile;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly BadgesAPIClient badgesAPIClient;
+        private readonly IInputBlock inputBlock;
+        private readonly IRemoteMetadata remoteMetadata;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
+        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly INftNamesProvider nftNamesProvider;
+        private readonly ProfileChangesBus profileChangesBus;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly GalleryEventBus galleryEventBus;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly bool isCommunitiesFeatureEnabled;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IWebRequestController webRequestController;
+        private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
+        private PassportController? passportController;
+
+        public PassportPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            IMVCManager mvcManager,
+            ICursor cursor,
+            IProfileRepository profileRepository,
+            ICharacterPreviewFactory characterPreviewFactory,
+            CharacterPreviewEventBus characterPreviewEventBus,
+            ISelfProfile selfProfile,
+            UnityAppWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            BadgesAPIClient badgesAPIClient,
+            IInputBlock inputBlock,
+            IRemoteMetadata remoteMetadata,
+            ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            Arch.Core.World world,
+            Entity playerEntity,
+            IFriendsService? friendsService,
+            FriendsConnectivityStatusTracker? friendOnlineStatusCache,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
+            IWeb3IdentityCache web3IdentityCache,
+            INftNamesProvider nftNamesProvider,
+            ProfileChangesBus profileChangesBus,
+            bool isCommunitiesFeatureEnabled,
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            GalleryEventBus galleryEventBus,
+            ISystemClipboard systemClipboard,
+            CommunitiesDataProvider communitiesDataProvider,
+            IThumbnailProvider thumbnailProvider,
+            ImageControllerProvider imageControllerProvider,
+            IWebRequestController webRequestController,
+            MarketplaceShopAPIClient marketplaceShopAPIClient)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            this.mvcManager = mvcManager;
+            this.cursor = cursor;
+            this.profileRepository = profileRepository;
+            this.characterPreviewFactory = characterPreviewFactory;
+            this.characterPreviewEventBus = characterPreviewEventBus;
+            this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.badgesAPIClient = badgesAPIClient;
+            this.inputBlock = inputBlock;
+            this.remoteMetadata = remoteMetadata;
+            this.world = world;
+            this.playerEntity = playerEntity;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.friendsService = friendsService;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.web3IdentityCache = web3IdentityCache;
+            this.nftNamesProvider = nftNamesProvider;
+            this.profileChangesBus = profileChangesBus;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.thumbnailProvider = thumbnailProvider;
+            this.galleryEventBus = galleryEventBus;
+            this.systemClipboard = systemClipboard;
+            this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
+            this.communitiesDataProvider = communitiesDataProvider;
+            this.imageControllerProvider = imageControllerProvider;
+            this.webRequestController = webRequestController;
+            this.marketplaceShopAPIClient = marketplaceShopAPIClient;
+        }
+
+        public void Dispose()
+        {
+            passportController?.Dispose();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(PassportSettings passportSettings, CancellationToken ct)
+        {
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityColorMappings, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.CategoryIconsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct));
+
+            PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
+            BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
+            ColorPresetsSO nameColors = await assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.NameColors, ct);
+
+            passportController = new PassportController(
+                PassportController.CreateLazily(chatView, null),
+                cursor,
+                profileRepository,
+                characterPreviewFactory,
+                rarityBackgroundsMapping,
+                rarityColorMappings,
+                categoryIconsMapping,
+                characterPreviewEventBus,
+                profileChangesBus,
+                mvcManager,
+                selfProfile,
+                world,
+                playerEntity,
+                this.thumbnailProvider,
+                webBrowser,
+                decentralandUrlsSource,
+                badgesAPIClient,
+                inputBlock,
+                remoteMetadata,
+                cameraReelStorageService,
+                cameraReelScreenshotsStorage,
+                friendsService,
+                friendOnlineStatusCache,
+                onlineUsersProvider,
+                realmNavigator,
+                web3IdentityCache,
+                nftNamesProvider,
+                passportSettings.GridLayoutFixedColumnCount,
+                passportSettings.ThumbnailHeight,
+                passportSettings.ThumbnailWidth,
+                isCommunitiesFeatureEnabled,
+                profileRepositoryWrapper,
+                voiceChatOrchestrator,
+                passport3DPreviewCamera,
+                galleryEventBus,
+                systemClipboard,
+                passportSettings.CameraReelGalleryMessages,
+                communitiesDataProvider,
+                imageControllerProvider,
+                nameColors,
+                webRequestController,
+                marketplaceShopAPIClient
+            );
+
+            mvcManager.RegisterController(passportController);
+
+            ProfileNameEditorView profileNameEditorView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.NameEditorPrefab, ct)).Value.GetComponent<ProfileNameEditorView>();
+
+            mvcManager.RegisterController(new ProfileNameEditorController(
+                ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
+                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
+        }
+
+        [Serializable]
+        public class PassportSettings : IDCLPluginSettings
+        {
+            [field: Space]
+            [field: SerializeField] public AssetReferenceGameObject PassportPrefab = null!;
+            [field: SerializeField] public AssetReferenceGameObject Badges3DCamera = null!;
+            [field: SerializeField] public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; } = null!;
+            [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
+            [field: SerializeField] public int ThumbnailHeight { get; private set; }
+            [field: SerializeField] public int ThumbnailWidth { get; private set; }
+            [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab = null!;
+            [field: SerializeField] public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; } = null!;
+            [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
+        }
+    }
+}

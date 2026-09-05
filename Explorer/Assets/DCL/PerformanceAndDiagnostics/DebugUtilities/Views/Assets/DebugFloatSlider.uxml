@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/DebugUtilitiesStyle.uss?fileID=7433441132597879392&amp;guid=70ae98e6ae8672b459c006796556f879&amp;type=3#DebugUtilitiesStyle" />
+    <DCL.DebugUtilities.Views.DebugFloatSliderElement style="flex-direction: column; justify-content: flex-start; align-items: stretch; flex-shrink: 0; align-self: stretch;">
+        <ui:Slider label="text name" high-value="100" show-input-field="true" style="flex-basis: auto; flex-shrink: 0; flex-wrap: nowrap; justify-content: center;" />
+    </DCL.DebugUtilities.Views.DebugFloatSliderElement>
+</ui:UXML>

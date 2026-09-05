@@ -1,0 +1,16 @@
+# Test video URLs for the UUAV stress scene (EntryPoint picks one at random per player).
+# media.w3.org hosts 12 distinct video files; lines beyond the first 12 repeat them with
+# a cache-busting query (?cb=N) so every line is a unique URL. Lines starting with # are skipped.
+https://media.w3.org/2010/05/sintel/trailer.mp4
+https://media.w3.org/2010/05/sintel/trailer.webm
+https://media.w3.org/2010/05/sintel/trailer.ogv
+https://media.w3.org/2010/05/bunny/trailer.mp4
+https://media.w3.org/2010/05/bunny/trailer.ogv
+https://media.w3.org/2010/05/bunny/movie.mp4
+https://media.w3.org/2010/05/bunny/movie.ogv
+https://media.w3.org/2010/05/video/movie_300.mp4
+https://media.w3.org/2010/05/video/movie_300.webm
+https://media.w3.org/2010/05/video/movie_300.ogv
+https://media.w3.org/2010/05/video/movie_5.mp4
+https://media.w3.org/2010/05/video/movie_5.ogv
+https://player.vimeo.com/progressive_redirect/playback/1125205710/rendition/720p/file.mp4%20%28720p%29.mp4?loc=external&signature=3a5a268970a4d35e2705d222e07daffa54ba4c336832ca041f84835b0129c49

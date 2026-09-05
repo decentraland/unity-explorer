@@ -1,0 +1,3 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <!-- Stylesheet now loaded at DCLSceneDefaultTheme -->
+</ui:UXML>

@@ -1,0 +1,30 @@
+using Arch.SystemGroups;
+using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.Animator.Systems;
+using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
+using System.Collections.Generic;
+
+namespace DCL.PluginSystem.World
+{
+    public class AnimatorPlugin : IDCLWorldPluginWithoutSettings
+    {
+        private readonly IPerformanceBudget frameTimeBudget;
+
+        public AnimatorPlugin(IPerformanceBudget frameTimeBudget)
+        {
+            this.frameTimeBudget = frameTimeBudget;
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        {
+            ResetDirtyFlagSystem<PBAnimator>.InjectToWorld(ref builder);
+            SDKAnimatorUpdaterSystem.InjectToWorld(ref builder);
+            AnimationPlayerSystem.InjectToWorld(ref builder);
+            LegacyAnimationPlayerSystem.InjectToWorld(ref builder);
+            AnimatorFinishWritebackSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, frameTimeBudget);
+        }
+    }
+}

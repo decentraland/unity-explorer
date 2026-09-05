@@ -1,0 +1,37 @@
+using Cysharp.Threading.Tasks;
+
+namespace Utility.Multithreading
+{
+    public readonly struct ExecuteOnMainThreadScope
+    {
+        private readonly bool returnOnThreadPoolOnDispose;
+
+        private ExecuteOnMainThreadScope(bool returnOnThreadPoolOnDispose)
+        {
+            this.returnOnThreadPoolOnDispose = returnOnThreadPoolOnDispose;
+        }
+
+        public static async UniTask<ExecuteOnMainThreadScope> NewScopeAsync()
+        {
+            await UniTask.SwitchToMainThread();
+            return new ExecuteOnMainThreadScope(false);
+        }
+
+        public static async UniTask<ExecuteOnMainThreadScope> NewScopeWithReturnOnThreadPoolAsync()
+        {
+            await UniTask.SwitchToMainThread();
+            return new ExecuteOnMainThreadScope(true);
+        }
+
+        public static async UniTask<ExecuteOnMainThreadScope> NewScopeWithReturnOnOriginalThreadAsync() =>
+            PlayerLoopHelper.IsMainThread
+                ? new ExecuteOnMainThreadScope(false)
+                : await NewScopeWithReturnOnThreadPoolAsync();
+
+        public async UniTask DisposeAsync()
+        {
+            if (returnOnThreadPoolOnDispose)
+                await DCLTask.SwitchToThreadPool();
+        }
+    }
+}

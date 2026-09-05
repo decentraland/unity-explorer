@@ -1,0 +1,504 @@
+using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Friends;
+using DCL.Friends.UI;
+using DCL.Friends.UI.BlockUserPrompt;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
+using DCL.Friends.UI.Requests;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
+using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Profiles;
+using DCL.UI.Controls.Configs;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using DCL.VoiceChat;
+using DCL.VoiceChat.Nearby;
+using DCL.Web3;
+using ECS.SceneLifeCycle.Realm;
+using MVC;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Threading;
+using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Views;
+using DCL.Browser;
+using DCL.Chat;
+using DCL.Profiles.Self;
+using DCL.UI.ConfirmationDialog;
+using Newtonsoft.Json;
+using UnityEngine;
+using Utility;
+using FriendshipStatus = DCL.Friends.FriendshipStatus;
+using JsonUtility = UnityEngine.JsonUtility;
+
+namespace DCL.UI
+{
+    [Serializable]
+    public struct GiftData
+    {
+        [JsonProperty("userId")] public string UserId;
+        [JsonProperty("userName")] public string UserName;
+
+        public GiftData(string userId, string userName)
+        {
+            this.UserId = userId;
+            this.UserName = userName;
+        }
+    }
+    public class GenericUserProfileContextMenuController
+    {
+        private delegate void StringDelegate(string id);
+
+        private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
+        private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
+        private const int CONTEXT_MENU_WIDTH = 250;
+        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
+        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
+        private static readonly Vector2 SUBMENU_CONTEXT_MENU_OFFSET = new (0, -30);
+
+        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
+        private readonly IMVCManager mvcManager;
+        private readonly ChatEventBus chatEventBus;
+        private readonly IAnalyticsController analytics;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly bool isVoiceChatFeatureEnabled;
+        private readonly bool isNearbyVoiceChatFeatureEnabled;
+        private readonly bool isCommunitiesFeatureEnabled;
+        private readonly bool isUserBlockingFeatureEnabled;
+        private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
+        private readonly ISelfProfile selfProfile;
+
+        private readonly string[] getUserPositionBuffer = new string[1];
+
+        private readonly GenericContextMenu contextMenu;
+        private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> giftButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> reportButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string>? muteNearbyButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string>? unmuteNearbyButtonControlSettings;
+        private readonly GenericContextMenuElement contextMenuJumpInButton;
+        private readonly GenericContextMenuElement contextMenuBlockUserButton;
+        private readonly GenericContextMenuElement contextMenuCallButton;
+        private readonly GenericContextMenuElement contextGiftButton;
+        private readonly GenericContextMenuElement contextMenuMentionButton;
+        private readonly GenericContextMenuElement? contextMenuMuteNearbyButton;
+        private readonly GenericContextMenuElement? contextMenuUnmuteNearbyButton;
+        private readonly GenericContextMenuElement invitationButton;
+        private readonly CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
+
+        private readonly NearbyMuteService? nearbyMuteService;
+
+        private CancellationTokenSource cancellationTokenSource = new();
+        private CancellationTokenSource muteCancellationTokenSource = new();
+        private UniTaskCompletionSource closeContextMenuTask = new ();
+        private Profile.CompactInfo targetProfile;
+
+        public GenericUserProfileContextMenuController(
+            IFriendsService? friendsService,
+            ChatEventBus chatEventBus,
+            IMVCManager mvcManager,
+            GenericUserProfileContextMenuSettings contextMenuSettings,
+            IAnalyticsController analytics,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
+            FriendsConnectivityStatusTracker? friendOnlineStatusCache,
+            bool isCommunitiesFeatureEnabled,
+            CommunitiesDataProvider communitiesDataProvider,
+            IVoiceChatOrchestratorActions voiceChatOrchestrator,
+            UnityAppWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile,
+            NearbyMuteService? nearbyMuteService = null)
+        {
+            this.nearbyMuteService = nearbyMuteService;
+            this.friendsService = friendsService;
+            this.chatEventBus = chatEventBus;
+            this.mvcManager = mvcManager;
+            this.analytics = analytics;
+            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FriendsUserBlocking);
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
+            this.isVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat);
+            this.isNearbyVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NearbyVoiceChat);
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.selfProfile = selfProfile;
+            this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.contextMenuSettings = contextMenuSettings;
+
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
+
+            userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
+            openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
+            mentionUserButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.MentionButtonConfig.Text, contextMenuSettings.MentionButtonConfig.Sprite, new StringDelegate(OnMentionUserClicked));
+            jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
+            giftButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.GiftInButtonConfig.Text, contextMenuSettings.GiftInButtonConfig.Sprite, new StringDelegate(OnGiftUserClicked));
+            blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked), textColor: redColor, iconColor: redColor);
+            reportButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.ReportButtonConfig.Text, contextMenuSettings.ReportButtonConfig.Sprite, new StringDelegate(OnReportUserClicked), textColor: redColor, iconColor: redColor);
+            openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
+            startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
+
+            contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
+            contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
+            contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
+            var contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
+
+            contextMenuMentionButton = new GenericContextMenuElement(mentionUserButtonControlSettings, false);
+
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BottomRight)
+                         .AddControl(userProfileControlSettings)
+                         .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
+                         .AddControl(contextMenuMentionButton)
+                         .AddControl(openUserProfileButtonControlSettings)
+                         .AddControl(openConversationControlSettings)
+                         .AddControl(contextMenuCallButton);
+
+            if (isNearbyVoiceChatFeatureEnabled)
+            {
+                muteNearbyButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HushNearbyButtonConfig.Text, contextMenuSettings.HushNearbyButtonConfig.Sprite, new StringDelegate(OnMuteNearbyClicked));
+                unmuteNearbyButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HearNearbyButtonConfig.Text, contextMenuSettings.HearNearbyButtonConfig.Sprite, new StringDelegate(OnUnmuteNearbyClicked));
+                contextMenuMuteNearbyButton = new GenericContextMenuElement(muteNearbyButtonControlSettings, false);
+                contextMenuUnmuteNearbyButton = new GenericContextMenuElement(unmuteNearbyButtonControlSettings, false);
+
+                contextMenu.AddControl(contextMenuMuteNearbyButton);
+                contextMenu.AddControl(contextMenuUnmuteNearbyButton);
+            }
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+                contextMenu.AddControl(contextGiftButton);
+
+            contextMenu.AddControl(contextMenuJumpInButton);
+
+            if (isCommunitiesFeatureEnabled)
+            {
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButton = invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
+            }
+
+            contextMenu.AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.ReportUser))
+                contextMenu.AddControl(reportButtonControlSettings);
+
+            contextMenu.AddControl(contextMenuBlockUserButton);
+        }
+
+        public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
+            CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BottomRight, Action? onContextMenuShow = null,
+            bool isOpenedOnWorldAvatar = false)
+        {
+            closeContextMenuTask.TrySetResult();
+            closeContextMenuTask = new UniTaskCompletionSource();
+            UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
+            UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.Disabled;
+            targetProfile = profile;
+
+            if (friendsService != null)
+            {
+                Result<FriendshipStatus> friendshipStatusAsyncResult = await friendsService.GetFriendshipStatusAsync(profile.UserId, ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.FRIENDS);
+
+                if (!friendshipStatusAsyncResult.Success)
+                {
+                    contextMenuBlockUserButton.Enabled = false;
+                    contextMenuJumpInButton.Enabled = false;
+                }
+                else
+                {
+                    FriendshipStatus friendshipStatus = friendshipStatusAsyncResult.Value;
+
+                    contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
+
+                    blockButtonControlSettings.SetData(profile.UserId);
+                    jumpInButtonControlSettings.SetData(profile.UserId);
+                    string? json = JsonUtility.ToJson(new GiftData(profile.UserId, profile.DisplayName));
+                    giftButtonControlSettings.SetData(json);
+
+                    contextMenuBlockUserButton.Enabled = isUserBlockingFeatureEnabled && friendshipStatus != FriendshipStatus.Blocked;
+                    contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.Friend &&
+                                                      friendOnlineStatusCache != null &&
+                                                      friendOnlineStatusCache.GetFriendStatus(profile.UserId) != OnlineStatus.Offline;
+                }
+            }
+
+            userProfileControlSettings.SetInitialData(profile, contextMenuFriendshipStatus);
+
+            mentionUserButtonControlSettings.SetData(profile.MentionName);
+            openUserProfileButtonControlSettings.SetData(profile.UserId);
+            openConversationControlSettings.SetData(profile.UserId);
+            reportButtonControlSettings.SetData(profile.UserId);
+
+            if (isVoiceChatFeatureEnabled)
+            {
+                contextMenuCallButton.Enabled = isVoiceChatFeatureEnabled;
+                startCallButtonControlSettings.SetData(profile.UserId);
+            }
+
+            if (isNearbyVoiceChatFeatureEnabled)
+            {
+                bool isMuted = nearbyMuteService!.IsMuted(profile.UserId);
+                contextMenuMuteNearbyButton!.Enabled = !isMuted;
+                contextMenuUnmuteNearbyButton!.Enabled = isMuted;
+                muteNearbyButtonControlSettings!.SetData(profile.UserId);
+                unmuteNearbyButtonControlSettings!.SetData(profile.UserId);
+            }
+
+            if (isOpenedOnWorldAvatar)
+            {
+                contextMenuMentionButton.Enabled = false;
+                contextMenuJumpInButton.Enabled = false;
+
+                if (invitationButton != null)
+                    invitationButton.Enabled = false;
+            }
+            else
+            {
+                contextMenuMentionButton.Enabled = true;
+
+                // contextMenuJumpInButton.Enabled is already set above based on friendship status
+                if (invitationButton != null)
+                    invitationButton.Enabled = true;
+            }
+
+            contextMenu.ChangeAnchorPoint(anchorPoint);
+
+            if (offset == default(Vector2))
+                offset = CONTEXT_MENU_OFFSET;
+
+            contextMenu.ChangeOffsetFromTarget(offset);
+
+            if (isCommunitiesFeatureEnabled)
+                invitationButtonHandler!.SetUserToInvite(profile.UserId);
+
+            if (ct.IsCancellationRequested) return;
+
+            await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, actionOnShow: onContextMenuShow, closeTask: closeTask)), ct);
+        }
+
+        private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
+        {
+            return friendshipStatus switch
+                   {
+                       FriendshipStatus.None => UserProfileContextMenuControlSettings.FriendshipStatus.None,
+                       FriendshipStatus.Friend => UserProfileContextMenuControlSettings.FriendshipStatus.Friend,
+                       FriendshipStatus.RequestSent => UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent,
+                       FriendshipStatus.RequestReceived => UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived,
+                       FriendshipStatus.Blocked => UserProfileContextMenuControlSettings.FriendshipStatus.Blocked,
+                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.None,
+                   };
+        }
+
+        private void OnFriendsButtonClicked(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        {
+            switch (friendshipStatus)
+            {
+                case UserProfileContextMenuControlSettings.FriendshipStatus.None:
+                    SendFriendRequest(userData.UserId);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.Friend:
+                    RemoveFriend(userData.UserId);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.RequestSent:
+                    CancelFriendRequest(userData.UserId);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.RequestReceived:
+                    AcceptFriendship(userData.UserId);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.Blocked: break;
+                default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
+            }
+        }
+
+        private void RemoveFriend(string userAddress)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            RemoveFriendAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid RemoveFriendAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
+                {
+                    UserId = new Web3Address(userAddress),
+                }), ct);
+            }
+        }
+
+        private void CancelFriendRequest(string userAddress)
+        {
+            if (friendsService == null) return;
+
+            IFriendsService friendService = friendsService;
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            CancelFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
+            {
+                await friendService.CancelFriendshipAsync(userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+            }
+        }
+
+        private void SendFriendRequest(string userAddress)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            ShowFriendRequestUIAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowFriendRequestUIAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                {
+                    DestinationUser = new Web3Address(userAddress),
+                }), ct);
+            }
+        }
+
+        private void AcceptFriendship(string userAddress)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            IFriendsService friendService = friendsService!;
+
+            AcceptFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid AcceptFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
+            {
+                await friendService.AcceptFriendshipAsync(userAddress, ct);
+            }
+        }
+
+        private void OnShowUserPassportClicked(string userId)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            closeContextMenuTask.TrySetResult();
+            ShowPassport(userId, cancellationTokenSource.Token).Forget();
+        }
+
+        private void OnMentionUserClicked(string userName)
+        {
+            closeContextMenuTask.TrySetResult();
+            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+            chatEventBus.RaiseInsertTextInChatRequestedEvent(userName + " ");
+        }
+
+        private void OnOpenConversationButtonClicked(string userId)
+        {
+            closeContextMenuTask.TrySetResult();
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(userId);
+        }
+
+        private void OnStartCallButtonClicked(string userId)
+        {
+            closeContextMenuTask.TrySetResult();
+            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+            voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
+        }
+
+        private void OnMuteNearbyClicked(string userId)
+        {
+            muteCancellationTokenSource = muteCancellationTokenSource.SafeRestart();
+            MuteNearbyAsync(userId, true, muteCancellationTokenSource.Token).Forget();
+        }
+
+        private void OnUnmuteNearbyClicked(string userId)
+        {
+            muteCancellationTokenSource = muteCancellationTokenSource.SafeRestart();
+            MuteNearbyAsync(userId, false, muteCancellationTokenSource.Token).Forget();
+        }
+
+        private async UniTaskVoid MuteNearbyAsync(string userId, bool muted, CancellationToken ct)
+        {
+            try
+            {
+                await nearbyMuteService!.SetMutedAsync(userId, muted, ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.VOICE_CHAT); }
+            finally { closeContextMenuTask.TrySetResult(); }
+        }
+
+        private void OnBlockUserClicked(string userId)
+        {
+            ShowBlockUserPromptAsync(targetProfile).Forget();
+        }
+
+        private void OnReportUserClicked(string userId)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                contextMenuSettings.ReportModalSprite,
+                ReportCategory.PROFILE,
+                userId,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                cancellationTokenSource.Token).Forget();
+        }
+
+        private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)
+        {
+            await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.Block)));
+        }
+
+        private void OnJumpInClicked(string userId)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource, parcel => JumpToFriendClicked(userId, parcel));
+        }
+
+        private UniTask ShowPassport(string userId, CancellationToken ct) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct);
+
+        private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JObject
+            {
+                { "receiver_id", targetAddress },
+                { "friend_position", parcel.ToString() },
+            });
+
+        private void OnGiftUserClicked(string payload)
+        {
+            closeContextMenuTask.TrySetResult();
+            if (!string.IsNullOrEmpty(payload) && payload[0] == '{')
+            {
+                try
+                {
+                    var data = JsonUtility.FromJson<GiftData>(payload);
+                    ShowGiftingPopupAsync(data.UserId, data.UserName).Forget();
+                }
+                catch
+                {
+                    /* fallthrough */
+                }
+            }
+        }
+
+        private async UniTaskVoid ShowGiftingPopupAsync(string userId, string userName)
+        {
+            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(userId, userName)));
+        }
+    }
+}

@@ -1,0 +1,103 @@
+﻿using DCL.DebugUtilities.Views;
+using DCL.Utility.Types;
+using System;
+using System.Collections.Generic;
+using UnityEngine.UIElements;
+
+namespace DCL.DebugUtilities
+{
+    /// <summary>
+    ///     Builder used by Plugins to schedule the creation of individual debug widgets
+    /// </summary>
+    public interface IDebugContainerBuilder
+    {
+        bool IsVisible { get; set; }
+
+        DebugContainer Container { get; }
+
+        public Result<DebugWidgetBuilder> GetOrAddWidget(WidgetName name);
+
+        IReadOnlyDictionary<string, DebugWidget> Widgets { get; }
+
+        void BuildWithFlex(UIDocument debugRootCanvas);
+
+        public static class Categories
+        {
+            public static readonly WidgetName ROOM_INFO = "Room: Info".AsWidgetName();
+            public static readonly WidgetName ROOM_CHAT = "Room: Chat".AsWidgetName();
+            public static readonly WidgetName ROOM_VOICE_CHAT = "Room: VoiceChat".AsWidgetName();
+            public static readonly WidgetName ROOM_ISLAND = "Room: Island".AsWidgetName();
+            public static readonly WidgetName ROOM_SCENE = "Room: Scene".AsWidgetName();
+            public static readonly WidgetName ROOM_THROUGHPUT = "Room: Throughput".AsWidgetName();
+            public static readonly WidgetName PULSE = "Pulse".AsWidgetName();
+            public static readonly WidgetName PERFORMANCE = "Performance".AsWidgetName();
+            public static readonly WidgetName CRASH = "Crash".AsWidgetName();
+            public static readonly WidgetName MEMORY = "Memory".AsWidgetName();
+            public static readonly WidgetName CURRENT_SCENE = "Current scene".AsWidgetName();
+            public static readonly WidgetName SCENE_CONTENT = "Scene content".AsWidgetName();
+            public static readonly WidgetName REALM = "Realm".AsWidgetName();
+            public static readonly WidgetName ENTITY_REQUESTS = "Entity Requests".AsWidgetName();
+            public static readonly WidgetName ANALYTICS = "Analytics".AsWidgetName();
+            public static readonly WidgetName GPU_INSTANCING = "GPU Instancing".AsWidgetName();
+            public static readonly WidgetName MEMORY_LIMITS = "Memory Limits".AsWidgetName();
+            public static readonly WidgetName WEB_REQUESTS = "Web Requests".AsWidgetName();
+            public static readonly WidgetName WEB_REQUESTS_DEBUG_METRICS = "Web Requests Debug Metrics".AsWidgetName();
+            public static readonly WidgetName VOICE_CHAT = "Voice Chat".AsWidgetName();
+            public static readonly WidgetName NEARBY_VOICE_CHAT = "Voice Chat - Nearby".AsWidgetName();
+            public static readonly WidgetName WEB_REQUESTS_DELAY = "Web Requests Delay".AsWidgetName();
+            public static readonly WidgetName WEB_REQUESTS_STRESS_TEST = "Web Requests Stress Test".AsWidgetName();
+            public static readonly WidgetName LANDSCAPE_GPUI = "Landscape - GPUI".AsWidgetName();
+            public static readonly WidgetName NAMETAGS = "Nametags".AsWidgetName();
+            public static readonly WidgetName CHAT = "Chat".AsWidgetName();
+            public static readonly WidgetName WEB3_AUTHENTICATION = "Web3 Authentication".AsWidgetName();
+            public static readonly WidgetName WORLD_INFO = "World Info".AsWidgetName();
+            public static readonly WidgetName LOCOMOTION_HANDS_IK = "locomotion: hands ik".AsWidgetName();
+            public static readonly WidgetName QUALITY = "Quality".AsWidgetName();
+            public static readonly WidgetName RENDERING = "Rendering".AsWidgetName();
+            public static readonly WidgetName PARTICLES = "Particles".AsWidgetName();
+            public static readonly WidgetName MEDIA_PLAYER = "Media Player".AsWidgetName();
+            public static readonly WidgetName BUG_REPORT = "Bug Report".AsWidgetName();
+        }
+    }
+
+    public static class DebugContainerBuilderExtensions
+    {
+        public static DebugWidgetBuilder? TryAddWidget(this IDebugContainerBuilder debugContainerBuilder, string name) =>
+            debugContainerBuilder.TryAddWidget(name.AsWidgetName());
+
+        public static DebugWidgetBuilder? TryAddWidget(this IDebugContainerBuilder debugContainerBuilder, WidgetName name)
+        {
+            Result<DebugWidgetBuilder> widget = debugContainerBuilder.GetOrAddWidget(name);
+            return widget.Success ? widget.Value : null;
+        }
+    }
+
+    // Enforces to keep widget naming organized
+    public readonly struct WidgetName : IEquatable<WidgetName>
+    {
+        public readonly string Name;
+
+        internal WidgetName(string name)
+        {
+            this.Name = name;
+        }
+
+        public static implicit operator string(WidgetName widgetName) =>
+            widgetName.Name;
+
+        public bool Equals(WidgetName other) =>
+            Name == other.Name;
+
+        public override bool Equals(object? obj) =>
+            obj is WidgetName other && Equals(other);
+
+        public override int GetHashCode() =>
+            Name.GetHashCode();
+    }
+
+    internal static class WidgetNameExtensions
+    {
+        internal static WidgetName AsWidgetName(this string name) =>
+            new (name);
+    }
+}

@@ -1,0 +1,179 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
+using DCL.Browser;
+using DCL.CommunicationData.URLHelpers;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.ReelActions;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Passport;
+using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
+using DCL.UI.Utilities;
+using ECS.SceneLifeCycle.Realm;
+using MVC;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Threading;
+using DCL.Web3.Identities;
+using UnityEngine;
+using Utility;
+
+namespace DCL.InWorldCamera.PhotoDetail
+{
+    /// <summary>
+    ///     Handles the logic for the metadata representation of the photo.
+    /// </summary>
+    public class PhotoDetailInfoController : IDisposable
+    {
+        public event Action WearableMarketClicked;
+
+        private const int VISIBLE_PERSON_DEFAULT_POOL_SIZE = 20;
+        private const int EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE = 20;
+        private const int VISIBLE_PERSON_MAX_POOL_CAPACITY = 10000;
+        private const int EQUIPPED_WEARABLE_MAX_POOL_CAPACITY = 10000;
+
+        private readonly PhotoDetailInfoView view;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly PhotoDetailPoolManager photoDetailPoolManager;
+        private readonly List<VisiblePersonController> visiblePersonControllers = new ();
+
+        public bool IsReelUserOwned => reelOwnerAddress == web3IdentityCache.Identity?.Address;
+
+        private Vector2Int screenshotParcel = Vector2Int.zero;
+        private string screenshotRealm;
+        private string reelOwnerAddress;
+        private CancellationTokenSource teleportCts = new ();
+
+        internal event Action JumpIn;
+
+        public PhotoDetailInfoController(PhotoDetailInfoView view,
+            ICameraReelStorageService cameraReelStorageService,
+            IProfileRepository profileRepository,
+            IMVCManager mvcManager,
+            UnityAppWebBrowser webBrowser,
+            IRealmNavigator realmNavigator,
+            IWearableStorage wearableStorage,
+            IWearablesProvider wearablesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IThumbnailProvider thumbnailProvider,
+            IWeb3IdentityCache web3IdentityCache,
+            NftTypeIconSO rarityBackgrounds,
+            NFTColorsSO rarityColors,
+            NftTypeIconSO categoryIcons,
+            ProfileRepositoryWrapper profileDataProvider)
+        {
+            this.view = view;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.mvcManager = mvcManager;
+            this.web3IdentityCache = web3IdentityCache;
+
+            this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
+                view.equippedWearablePrefab,
+                view.visiblePersonContainer,
+                view.unusedEquippedWearableViewContainer,
+                profileRepository,
+                mvcManager,
+                webBrowser,
+                wearableStorage,
+                wearablesProvider,
+                decentralandUrlsSource,
+                thumbnailProvider,
+                rarityBackgrounds,
+                rarityColors,
+                categoryIcons,
+                VISIBLE_PERSON_DEFAULT_POOL_SIZE,
+                VISIBLE_PERSON_MAX_POOL_CAPACITY,
+                EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,
+                EQUIPPED_WEARABLE_MAX_POOL_CAPACITY,
+                () => WearableMarketClicked?.Invoke(),
+                profileDataProvider);
+
+            this.view.jumpInButton.onClick.AddListener(JumpInClicked);
+            this.view.ownerProfileButton.onClick.AddListener(ShowOwnerPassportClicked);
+            this.view.visiblePersonScrollRect.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void Dispose()
+        {
+            view.jumpInButton.onClick.RemoveListener(JumpInClicked);
+            view.ownerProfileButton.onClick.RemoveListener(ShowOwnerPassportClicked);
+            JumpIn = null;
+            WearableMarketClicked = null;
+            teleportCts.SafeCancelAndDispose();
+        }
+
+        private void ShowOwnerPassportClicked()
+        {
+            if (string.IsNullOrEmpty(reelOwnerAddress)) return;
+
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(reelOwnerAddress))).Forget();
+        }
+
+        public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)
+        {
+            Release();
+            view.loadingState.Show();
+            CameraReelResponse reelData = await cameraReelStorageService.GetScreenshotsMetadataAsync(reelId, ct);
+
+            screenshotParcel.x = Convert.ToInt32(reelData.metadata.scene.location.x);
+            screenshotParcel.y = Convert.ToInt32(reelData.metadata.scene.location.y);
+            screenshotRealm = reelData.metadata.realm;
+
+            reelOwnerAddress = reelData.metadata.userAddress;
+
+            view.dateText.SetText(ReelUtility.GetDateTimeFromString(reelData.metadata.dateTime).ToString("MMMM dd, yyyy", CultureInfo.InvariantCulture));
+            view.ownerName.SetText(reelData.metadata.userName);
+            view.sceneInfo.SetText($"{reelData.metadata.scene.name}, {screenshotParcel.x}, {screenshotParcel.y}");
+
+            await PopulateVisiblePersonsAsync(reelData.metadata.visiblePeople, ct);
+            view.loadingState.Hide();
+        }
+
+        private async UniTask PopulateVisiblePersonsAsync(VisiblePerson[] visiblePeople, CancellationToken ct)
+        {
+            if (visiblePeople == null || visiblePeople.Length == 0)
+                return;
+
+            UniTask[] tasks = new UniTask[visiblePeople.Length];
+            for (int i = 0; i < visiblePeople.Length; i++)
+            {
+                VisiblePersonController visiblePersonController = photoDetailPoolManager.GetVisiblePerson();
+                visiblePersonControllers.Add(visiblePersonController);
+                tasks[i] = visiblePersonController.SetupAsync(visiblePeople[i], ct);
+            }
+
+            await UniTask.WhenAll(tasks);
+        }
+
+        private void JumpInClicked()
+        {
+            JumpIn?.Invoke();
+
+            if (!string.IsNullOrEmpty(screenshotRealm) && screenshotRealm.IsEns())
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(screenshotRealm).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), teleportCts.Token).Forget();
+            else
+                realmNavigator.TeleportToParcelAsync(screenshotParcel, teleportCts.Token, false).Forget();
+        }
+
+        public void Release()
+        {
+            for(int i = 0; i < visiblePersonControllers.Count; i++)
+            {
+                visiblePersonControllers[i].Release();
+                photoDetailPoolManager.ReleaseVisiblePerson(visiblePersonControllers[i]);
+            }
+            visiblePersonControllers.Clear();
+        }
+    }
+}

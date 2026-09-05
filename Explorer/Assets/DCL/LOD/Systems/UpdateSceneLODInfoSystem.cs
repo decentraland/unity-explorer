@@ -1,0 +1,125 @@
+using Arch.Core;
+using DCL.SceneRunner.Scene;
+using Arch.System;
+using Arch.SystemGroups;
+using AssetManagement;
+using DCL.Diagnostics;
+using DCL.Ipfs;
+using DCL.LOD.Components;
+using DCL.Utility;
+using ECS.Abstract;
+using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
+using ECS.StreamableLoading.Common;
+using SceneRunner.Scene;
+using System.Collections.Generic;
+using UnityEngine;
+using Utility;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
+    ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+
+namespace DCL.LOD.Systems
+{
+    [UpdateInGroup(typeof(RealmGroup))]
+    [UpdateBefore(typeof(ResolveISSLODSystem))]
+    [UpdateBefore(typeof(InstantiateSceneLODInfoSystem))]
+    [LogCategory(ReportCategory.LOD)]
+    public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
+    {
+        private readonly ILODSettingsAsset lodSettingsAsset;
+        private IReadOnlyList<SceneAssetBundleManifest>? manifestCache;
+
+        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset) : base(world)
+        {
+            this.lodSettingsAsset = lodSettingsAsset;
+        }
+
+        protected override void Update(float t)
+        {
+            UpdateLODLevelQuery(World);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(ISceneFacade))]
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor issDescriptor, ref SceneLoadingState sceneState)
+        {
+            if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
+            {
+                byte lodForAcquisition;
+
+                //If we are quality reducted, always load the greated value LOD
+                if (!sceneState.FullQuality)
+                    lodForAcquisition = (byte)lodSettingsAsset.LodPartitionBucketThresholds.Length;
+                else
+                {
+                    // LOD distances are currently using the old system so will only load in the LOD when the gameobject
+                    // is in the correct bucket. Once the lods are in it will change LODs based on screenspace size in relation
+                    // to height and dither the transition.
+                    lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
+                }
+                if (!sceneLODInfo.HasLOD(lodForAcquisition))
+                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, issDescriptor, lodForAcquisition);
+            }
+        }
+
+        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor issDescriptor, byte level)
+        {
+            sceneLODInfo.ForgetAllLoadings(World);
+
+            if (level == 0 && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.Failed)
+            {
+                // ResolveSceneStateByIncreasingRadiusSystem gates SHOWING_LOD/SHOWING_SCENE transitions on
+                // descriptor resolution, so by the time we reach this point the descriptor is guaranteed to
+                // be either None (no ISS for this scene) or a resolved Bundle/Descriptor.
+                if (issDescriptor.SupportsDescriptor())
+                {
+                    sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.Processing;
+                    sceneLODInfo.CurrentLODLevelPromise = level;
+                    return;
+                }
+                // descriptor in None state — no ISS for this scene; fall through to legacy LOD.
+            }
+
+            AssetBundleManifestVersion lodManifest = AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate");
+
+            var assetBundleIntention = GetAssetBundleIntention.FromHash(
+                lodManifest.GetCdnRequestHash($"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}"),
+                lodManifest,
+                typeof(GameObject),
+                permittedSources: AssetSource.All,
+                customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
+                lookForDependencies: true
+                );
+
+            sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
+            sceneLODInfo.CurrentLODLevelPromise = level;
+        }
+
+        private byte GetLODLevelForPartition(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo)
+        {
+            //If we are in an SDK6 scene, this value will be kept.
+            //Therefore, lod0 will be shown
+            byte sceneLODCandidate = 0;
+
+            for (byte i = 0; i < lodSettingsAsset.LodPartitionBucketThresholds.Length; i++)
+            {
+                if (partitionComponent.Bucket >= lodSettingsAsset.LodPartitionBucketThresholds[i])
+                    sceneLODCandidate = (byte)(i + 1);
+            }
+
+            //LOD0 load distance may be very far away from its show distance depending on the object size.
+            //So, we force it if it has not been loaded and we passed the show distance threshold
+            if (sceneLODInfo.metadata.LODChangeRelativeDistance >= partitionComponent.Bucket * ParcelMathHelper.PARCEL_SIZE
+                && sceneLODCandidate == 1 && !sceneLODInfo.HasLOD(0))
+                sceneLODCandidate = 0;
+
+            return sceneLODCandidate;
+        }
+    }
+}

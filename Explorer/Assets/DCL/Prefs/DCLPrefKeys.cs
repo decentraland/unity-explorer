@@ -1,0 +1,122 @@
+namespace DCL.Prefs
+{
+    public static class DCLPrefKeys
+    {
+        public const string NEW_BADGES = "NewBadges";
+
+        public const string LAUNCH_COUNT = "LaunchCount";
+
+        // Developer-selected path to the Creator Hub executable, remembered across launches so the Chrome
+        // DevTools bridge can relaunch it without re-prompting. Not an app-arg / deep-link input (SEC-005).
+        public const string CREATOR_HUB_BIN_PATH = "CreatorHub.BinPath";
+
+        public const string PREVIOUS_SEARCHES = "previous_searches";
+
+        public const string WEB3_IDENTITY = "Web3Authentication.Identity";
+        public const string WEB3_IDENTITY_ZONE = "Web3Authentication.Identity.zone";
+        public const string LOGGEDIN_EMAIL = "LoggedInEmail";
+
+        public const string DONT_SHOW_MIN_SPECS_SCREEN = "dontShowMinSpecsScreen";
+        public const string MIN_SPECS_LOW_PRESET_ENFORCED = "minSpecsLowPresetEnforced";
+
+        public const string GPUI_ENABLED = "alfa-gpui";
+
+        public const string CAMERA_SENSITIVITY = "CameraSensitivity";
+
+        public const string CLOSED_COMMUNITY_CHATS = "ClosedCommunityChats_{0}";
+
+        public const string PS_RENDERER_FEATURE_ACTIVE = "RendererFeature_{0}";
+        public const string PS_FOG_ACTIVE = "FogActive";
+        public const string PS_LENS_FLARE_ENABLED = "LensFlare_Enabled";
+        public const string PS_SCENE_LOAD_RADIUS = "SceneLoadRadius";
+        public const string PS_LOD1_THRESHOLD = "LOD1Threshold";
+        public const string PS_TERRAIN_LOD_BIAS = "TerrainLODBias";
+        public const string PS_DETAIL_DENSITY = "DetailDensity";
+        public const string PS_GRASS_DISTANCE = "GrassDistance";
+        public const string PS_CHUNK_CULL_DISTANCE = "ChunkCullDistance";
+        public const string PS_MAX_SIMULTANEOUS_VIDEOS = "MaxSimultaneousVideos";
+
+        // New quality settings controller
+        public const string PS_QUALITY_PRESET = "QualityPreset";
+        public const string PS_CUSTOM_BASE_PRESET = "QS_CustomBasePreset";
+        public const string PS_FPS_LIMIT = "QS_FpsLimit";
+        public const string PS_VSYNC = "QS_VSync";
+        public const string PS_RESOLUTION_SCALE = "QS_ResolutionScale";
+        public const string PS_MSAA = "QS_MSAA";
+        public const string PS_HDR_NEW = "QS_HDR";
+        public const string PS_BLOOM = "QS_Bloom";
+        public const string PS_AVATAR_OUTLINE = "QS_AvatarOutline";
+        public const string PS_SCENE_DISTANCE = "QS_SceneDistance";
+        public const string PS_LANDSCAPE_DISTANCE = "QS_LandscapeDistance";
+        public const string PS_GRASS_PRESET = "QS_GrassPreset";
+        public const string PS_SUN_SHADOWS = "QS_SunShadows";
+        public const string PS_SUN_LENS_FLARE = "QS_SunLensFlare";
+        public const string PS_SCENE_LIGHTS = "QS_SceneLights";
+        public const string PS_SCENE_LIGHT_SHADOWS = "QS_SceneLightShadows";
+        public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
+        public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
+        public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
+        public const string PS_PLAY_CURRENT_SCENE_STREAMS_ONLY = "QS_PlayCurrentSceneStreamsOnly";
+        public const string PS_SPRING_BONE_SIMULATION = "QS_SpringBoneSimulation";
+        public const string PS_RESOLUTION = "QS_Resolution";
+        public const string PS_WINDOWED_RESOLUTION = "QS_WindowedResolution";
+
+        public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
+        public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";
+        public const string SETTINGS_CHAT_BUBBLES_VISIBILITY = "Settings_ChatBubblesVisibility";
+        public const string SETTINGS_CHAT_SOUNDS = "Settings_ChatSounds";
+        public const string SETTINGS_MASTER_VOLUME = "Settings_MasterVolume";
+        public const string SETTINGS_MEMORY_CAP = "Settings_MemoryCap";
+        public const string SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY = "Settings_HorizontalMouseSensitivity";
+        public const string SETTINGS_VERTICAL_MOUSE_SENSITIVITY = "Settings_VerticalMouseSensitivity";
+
+        public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
+        public const string SETTINGS_FULLSCREEN = "Settings_Fullscreen";
+        public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
+        public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
+
+        public const string SETTINGS_POINT_AT_MARKER_VISIBILITY = "Settings_PointAtMarkerVisibility";
+
+        public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
+        public const string SETTINGS_VOICE_CHAT_VOLUME = "Settings_VoiceChatVolume";
+        public const string SETTINGS_MICROPHONE_DEVICE_NAME = "Settings_MicrophoneName";
+
+        public const string WEB_REQUEST_ARTIFICIAL_DELAY_ENABLED = "webRequestsArtificialDelayEnable";
+        public const string WEB_REQUEST_ARTIFICIAL_DELAY_SECONDS = "webRequestsArtificialDelaySeconds";
+
+        public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
+        public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
+        public const string DEBUG_PANEL_MAXIMIZED = "DebugPanel_Maximized";
+        public const string DEBUG_PANEL_MAXIMIZED_WIDTH = "DebugPanel_MaximizedWidth";
+        public const string SETTINGS_TRANSLATION_PREFERRED_LANGUAGE = "Settings_Translation.PreferredLanguage";
+
+        public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";
+
+        public const string MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START = "MarketPlaceCredits_LastSeasonShownWeekStart";
+
+        public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
+        public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName";
+
+        public const string GIFTING_PENDING_GIFTS = "PendingGifts_{0}";
+
+        public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
+
+        public const string SETTINGS_DOUBLE_TAP_TO_MOVE = "Settings_DoubleTapToMove";
+
+        public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
+
+        public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
+
+        public const string NEARBY_VOICE_TIP_DISMISSED = "NearbyVoice_TipDismissed";
+        public const string NEARBY_VOICE_TIP_SHOWN_COUNT = "NearbyVoice_TipShownCount";
+        public const string NEARBY_VOICE_TIP_LAST_SHOWN_LAUNCH = "NearbyVoice_TipLastShownLaunch";
+        public const string NEARBY_VOICE_USED = "NearbyVoice_Used";
+        public const string NEARBY_VOICE_CHAT_DISABLED = "NearbyVoice_Disabled";
+        public const string SETTINGS_MUTE_MIC_IN_BACKGROUND = "Settings_MuteMicInBackground";
+
+        public const string SETTINGS_CHAT_REACTIONS_ENABLED = "Settings_ChatReactionsEnabled";
+        public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
+
+        public const string BUG_REPORT_PERFORMANCE_PROMPT_DISMISSED = "BugReport_PerformancePromptDismissed";
+    }
+}

@@ -1,0 +1,364 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using CrdtEcsBridge.Components;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Audio;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
+using DCL.Character.Plugin;
+using DCL.DebugUtilities;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Gizmos.Plugin;
+using DCL.Input;
+using DCL.Interaction.Utility;
+using DCL.Ipfs;
+using DCL.MapPins.Bus;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
+using DCL.PluginSystem.World.Dependencies;
+using DCL.Profiling;
+using DCL.Quality;
+using DCL.ResourcesUnloading;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using DCL.Utilities;
+using DCL.Web3;
+using DCL.Web3.Identities;
+using DCL.WebRequests.Analytics;
+using ECS;
+using ECS.Prioritization;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Reporting;
+using SceneRunner.Mapping;
+using System.Collections.Generic;
+using System.Threading;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Profiles;
+using DCL.RealmNavigation;
+using DCL.Rendering.GPUInstancing;
+using DCL.SDKComponents.MediaStream;
+using DCL.SDKComponents.AvatarLocomotion;
+using DCL.SDKComponents.ParticleSystem.Systems;
+using DCL.SDKComponents.PhysicsImpulse.Systems;
+using DCL.SDKComponents.SkyboxTime;
+using DCL.Utility;
+using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
+using Global.AppArgs;
+using ECS.Unity.GLTFContainer.Asset.Cache;
+using PortableExperiences.Controller;
+using Runtime.Wearables;
+using System.Buffers;
+using DCL.UI;
+using ECS.Unity.AssetLoad.Cache;
+using Global.Dynamic;
+using Utility;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
+using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
+
+#pragma warning disable CS8618 // two-phase init: all members are assigned in CreateAsync before the container is returned
+
+namespace Global
+{
+    /// <summary>
+    ///     Produces dependencies that never change during the lifetime of the application
+    ///     and are not connected to the global world or scenes but are used by them.
+    ///     This is the first container to instantiate, should not depend on any other container
+    /// </summary>
+    public class StaticContainer : IDCLPlugin<StaticSettings>
+    {
+        public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
+        public readonly PartitionDataContainer PartitionDataContainer = new ();
+        public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
+
+        private IAssetsProvisioner assetsProvisioner = null!;
+        public Entity PlayerEntity { get; set; }
+        public RealmData RealmData { get; private set; } = null!;
+        public PublishIpfsEntityCommand PublishIpfsEntityCommand { get; private set; } = null!;
+
+        public ComponentsContainer ComponentsContainer { get; private set; }
+        public CharacterContainer CharacterContainer { get; private set; } = null!;
+        public MediaPlayerContainer MediaContainer { get; private set; } = null!;
+        public EmotesContainer EmotesContainer { get; private set; } = null!;
+        public ProfilesContainer ProfilesContainer { get; private set; } = null!;
+        public QualityContainer QualityContainer { get; private set; } = null!;
+        public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; } = null!;
+        public WebRequestsContainer WebRequestsContainer { get; private set; } = null!;
+        public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; } = null!;
+        public IEmoteStorage EmoteStorage { get; private set; } = null!;
+
+        public ISystemMemoryCap MemoryCap { get; private set; } = null!;
+
+        public SceneLoadingLimit SceneLoadingLimit { get; private set; } = null!;
+
+        /// <summary>
+        ///     Some plugins may implement both interfaces
+        /// </summary>
+        public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; } = null!;
+        public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
+        public Profiler Profiler { get; private set; } = null!;
+        public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; } = null!;
+        public IPartitionSettings PartitionSettings => StaticSettings.PartitionSettings;
+        public IRealmPartitionSettings RealmPartitionSettings => StaticSettings.RealmPartitionSettings;
+        public StaticSettings StaticSettings { get; private set; } = null!;
+        public CacheCleaner CacheCleaner { get; private set; } = null!;
+        public IEthereumApi EthereumApi { get; private set; } = null!;
+        public IInputBlock InputBlock { get; private set; } = null!;
+        public IScenesCache ScenesCache { get; private set; } = null!;
+        public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; } = null!;
+        public HttpFeatureFlagsProvider FeatureFlagsProvider { get; private set; } = null!;
+        public IPortableExperiencesController PortableExperiencesController { get; private set; } = null!;
+        public SmartWearableCache SmartWearableCache { get; private set; } = null!;
+        public ImageControllerProvider ImageControllerProvider { get; private set; } = null!;
+        public IDebugContainerBuilder DebugContainerBuilder { get; private set; } = null!;
+        public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; } = null!;
+        public GPUInstancingService GPUInstancingService { get; private set; }
+        public ILoadingStatus LoadingStatus { get; private set; } = null!;
+        public ILaunchMode LaunchMode { get; private set; } = null!;
+        public WorldManifestProvider WorldManifestProvider { get; private set; } = null!;
+
+        public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; } = null!;
+        public AssetPreLoadCache AssetPreLoadCache { get; private set; } = null!;
+        public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
+        public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; } = null!;
+
+        public void Dispose()
+        {
+            QualityContainer.Dispose();
+            Profiler.Dispose();
+            SceneRestrictionBusController.Dispose();
+        }
+
+        public UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
+        {
+            StaticSettings = settings;
+            return UniTask.CompletedTask;
+        }
+
+        public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            AnalyticsContainer analyticsContainer,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            RealmData realmData,
+            IAssetsProvisioner assetsProvisioner,
+            IReportsHandlingSettings reportHandlingSettings,
+            IDebugContainerBuilder debugContainerBuilder,
+            WebRequestsContainer webRequestsContainer,
+            IPluginSettingsContainer settingsContainer,
+            DiagnosticsContainer diagnosticsContainer,
+            IWeb3IdentityCache web3IdentityProvider,
+            IEthereumApi ethereumApi,
+            ILaunchMode launchMode,
+            bool useRemoteAssetBundles,
+            bool useLocalAssetBundles,
+            World globalWorld,
+            Entity playerEntity,
+            ISystemMemoryCap memoryCap,
+            VolumeBus volumeBus,
+            bool enableAnalytics,
+            IDiskCache diskCache,
+            IDiskCache<PartialLoadingState> partialsDiskCache,
+            CancellationToken ct,
+            IAppArgs appArgs,
+            bool enableGPUInstancing = true)
+        {
+            ProfilingCounters.CleanAllCounters();
+
+            var componentsContainer = ComponentsContainer.Create();
+            var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
+            var profilingProvider = new Profiler();
+            var container = new StaticContainer();
+
+            container.RealmData = realmData;
+            container.PublishIpfsEntityCommand = new PublishIpfsEntityCommand(web3IdentityProvider, webRequestsContainer.WebRequestController, decentralandUrlsSource, realmData);
+            container.PlayerEntity = playerEntity;
+            container.DebugContainerBuilder = debugContainerBuilder;
+            container.EthereumApi = ethereumApi;
+            container.ScenesCache = new ScenesCache();
+            container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
+            container.InputBlock = new ECSInputBlock(globalWorld);
+            container.assetsProvisioner = assetsProvisioner;
+            container.MemoryCap = memoryCap;
+            container.SceneRestrictionBusController = new SceneRestrictionBusController();
+            container.LaunchMode = launchMode;
+
+            var exposedPlayerTransform = new ExposedTransform();
+
+            StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
+
+            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsContainer.Controller, web3IdentityProvider) : new LoadingStatus();
+
+            var sharedDependencies = new ECSWorldSingletonSharedDependencies(
+                componentsContainer.ComponentPoolsRegistry,
+                reportHandlingSettings,
+                new SceneEntityFactory(),
+                new PartitionedWorldsAggregate.Factory(),
+                new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
+                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider, container.LoadingStatus.IsLoadingScreenOn),
+                new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
+                new SceneMapping()
+            );
+
+            DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
+            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
+            container.EmoteStorage = new MemoryEmotesStorage();
+            container.CacheCleaner.Register(container.EmoteStorage);
+
+            container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
+            container.AssetPreLoadCache = new AssetPreLoadCache(container.GltfContainerAssetsCache);
+            container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
+            container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
+            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller);
+            container.EmotesContainer = new EmotesContainer(assetsProvisioner);
+            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
+
+            bool result = await InitializeContainersAsync(container, settingsContainer, ct);
+
+            if (!result)
+                return (null, false);
+
+            container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
+            container.ComponentsContainer = componentsContainer;
+            container.SingletonSharedDependencies = sharedDependencies;
+            container.Profiler = profilingProvider;
+            container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
+            container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
+            container.WebRequestsContainer = webRequestsContainer;
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
+            container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController, decentralandUrlsSource);
+            container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
+
+            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
+
+            ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
+
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.LodAssetBundlesCDN)), container.GltfContainerAssetsCache, launchMode);
+
+            var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
+
+            container.ISSDescriptorDiskCache = new DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer());
+
+            diagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                if (container.ScenesCache.CurrentScene.Value != null)
+                    diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Value.Info);
+            });
+
+            container.ScenesCache.CurrentScene.OnUpdate += scene =>
+            {
+                if (scene != null)
+                    UnityDiagnosticsCenter.Instance.SetCurrentScene(scene.Info);
+            };
+
+            diagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                diagnosticsContainer.Sentry?.AddRealmInfoToScope(scope,
+                    container.RealmData.Ipfs.CatalystBaseUrl.Value,
+                    container.RealmData.Ipfs.ContentBaseUrl.Value,
+                    container.RealmData.Ipfs.LambdasBaseUrl.Value);
+            });
+
+            var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
+            if (!UnityEngine.SystemInfo.supportsComputeShaders)
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "Compute shaders not supported on this platform; GPU instancing disabled.");
+            else if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
+            {
+                container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
+                renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
+            }
+            else
+                ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
+
+            var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
+
+            container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(
+                componentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
+
+            container.ECSWorldPlugins = new IDCLWorldPlugin[]
+            {
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, useLocalAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache, appArgs, componentsContainer.ComponentPoolsRegistry.RootContainerTransform()),
+                new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
+                new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.MediaContainer.mediaFactoryBuilder),
+                new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry, assetsProvisioner),
+                new MaterialsPlugin(sharedDependencies, container.MediaContainer.mediaFactoryBuilder),
+                textureResolvePlugin,
+                new AssetsCollidersPlugin(sharedDependencies),
+                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles),
+                new PrimitivesRenderingPlugin(sharedDependencies),
+                new SceneContentStatsPlugin(),
+                new VisibilityPlugin(),
+                new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
+                new AudioAnalysisPlugin(sharedDependencies),
+                assetBundlePlugin,
+                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
+                container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
+                new AnimatorPlugin(sharedDependencies.FrameTimeBudget),
+                new TweenPlugin(),
+                container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData, container.DebugContainerBuilder),
+                new SDKEntityTriggerAreaPlugin(
+                    globalWorld,
+                    container.MainPlayerAvatarBaseProxy,
+                    exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                    container.CharacterContainer.CharacterObject,
+                    componentsContainer.ComponentPoolsRegistry,
+                    container.assetsProvisioner,
+                    container.CacheCleaner,
+                    exposedGlobalDataContainer.ExposedCameraData,
+                    container.SceneRestrictionBusController, web3IdentityProvider),
+                new PointerInputAudioPlugin(container.assetsProvisioner),
+                new MapPinPlugin(globalWorld, container.MapPinsEventBus),
+                new MultiplayerPlugin(globalWorld, playerEntity, container.CharacterDataPropagationUtility),
+                new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
+                new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
+                new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, appArgs.HasDebugFlag()),
+                new ParticleSystemPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.DebugContainerBuilder),
+                new PrimaryPointerInfoPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
+                promisesAnalyticsPlugin,
+                new SkyboxTimePlugin(),
+                new AvatarLocomotionOverridesWorldPlugin(globalWorld, playerEntity),
+#if UNITY_EDITOR
+                new GizmosWorldPlugin(),
+#endif
+                new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
+                new AssetPreLoadPlugin(sharedDependencies, container.AssetPreLoadCache),
+                new SDKExternalPhysicsPlugin(globalWorld, playerEntity),
+            };
+
+            container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
+
+            container.SharedPlugins = new IDCLGlobalPlugin[]
+            {
+                assetBundlePlugin,
+                textureResolvePlugin,
+                promisesAnalyticsPlugin
+            };
+
+            container.WorldManifestProvider = new WorldManifestProvider(container.WebRequestsContainer.WebRequestController);
+
+            return (container, true);
+        }
+
+        private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
+        {
+            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success), (MediaPlayerContainer plugin, bool success), (EmotesContainer plugin, bool success)) results = await UniTask.WhenAll(
+                settings.InitializePluginAsync(target, ct),
+                settings.InitializePluginAsync(target.CharacterContainer, ct),
+                settings.InitializePluginAsync(target.MediaContainer, ct),
+                settings.InitializePluginAsync(target.EmotesContainer, ct)
+            );
+
+            return results.Item1.success && results.Item2.success && results.Item3.success && results.Item4.success;
+        }
+    }
+}

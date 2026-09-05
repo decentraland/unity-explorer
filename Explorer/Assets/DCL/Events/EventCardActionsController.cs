@@ -1,0 +1,118 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Clipboard;
+using DCL.CommunicationData.URLHelpers;
+using DCL.Communities.EventInfo;
+using DCL.Diagnostics;
+using DCL.EventsApi;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utilities.Extensions;
+using ECS.SceneLifeCycle.Realm;
+using System;
+using System.Threading;
+using UnityEngine;
+
+namespace DCL.Events
+{
+    public class EventCardActionsController
+    {
+        public event Action<IEventDTO>? EventSetAsInterested;
+        public event Action<IEventDTO>? AddEventToCalendarClicked;
+        public event Action<IEventDTO>? JumpedInEventPlace;
+        public event Action<IEventDTO>? EventShared;
+        public event Action<IEventDTO>? EventLinkCopied;
+
+        private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
+        private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
+
+        private readonly HttpEventsApiService eventsApiService;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly ISystemClipboard clipboard;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
+        public EventCardActionsController(
+            HttpEventsApiService eventsApiService,
+            UnityAppWebBrowser webBrowser,
+            IRealmNavigator realmNavigator,
+            ISystemClipboard clipboard,
+            IDecentralandUrlsSource decentralandUrlsSource)
+        {
+            this.eventsApiService = eventsApiService;
+            this.webBrowser = webBrowser;
+            this.realmNavigator = realmNavigator;
+            this.clipboard = clipboard;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+        }
+
+        public async UniTaskVoid SetEventAsInterestedAsync(IEventDTO eventData, EventCardView? eventCardView, EventDetailPanelView? eventDetailPanelView, CancellationToken ct)
+        {
+            var result = eventData.Attending
+                ? await eventsApiService.MarkAsNotInterestedAsync(eventData.Id, ct)
+                                        .SuppressToResultAsync(ReportCategory.EVENTS)
+                : await eventsApiService.MarkAsInterestedAsync(eventData.Id, ct)
+                                        .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (!result.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
+                return;
+            }
+
+            eventData.Attending = !eventData.Attending;
+            eventData.Total_attendees += eventData.Attending ? 1 : -1;
+
+            eventCardView?.UpdateInterestedButtonState(eventData.Attending);
+            eventCardView?.UpdateVisuals();
+            eventDetailPanelView?.UpdateInterestedButtonState(eventData.Attending);
+
+            EventSetAsInterested?.Invoke(eventData);
+        }
+
+        public void AddEventToCalendar(IEventDTO eventData)
+        {
+            webBrowser.OpenUrlMainThreadOnly($"{EventUtilities.GetEventAddToCalendarLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
+            AddEventToCalendarClicked?.Invoke(eventData);
+        }
+
+        public void AddEventToCalendar(IEventDTO eventData, DateTime utcStart)
+        {
+            webBrowser.OpenUrlMainThreadOnly($"{EventUtilities.GetEventAddToCalendarLink(eventData, utcStart, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
+            AddEventToCalendarClicked?.Invoke(eventData);
+        }
+
+        public void JumpInEvent(IEventDTO eventData, CancellationToken ct)
+        {
+            if (eventData.World)
+                realmNavigator.TryChangeRealmAsync(
+                    URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
+                    ct,
+                    default,
+                    isWorld: true,
+                    allowsSpawnPointerOverride: true).Forget();
+            else
+                // Land at the event's exact parcel instead of the scene's spawn point — e.g. an event at the
+                // Theatre (0,5) inside the Genesis Plaza scene should drop the player at the Theatre, not at
+                // Genesis Plaza's spawn point.
+                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false, landOnParcel: true).Forget();
+
+            JumpedInEventPlace?.Invoke(eventData);
+        }
+
+        public void ShareEvent(IEventDTO eventData)
+        {
+            webBrowser.OpenUrlMainThreadOnly($"{EventUtilities.GetEventShareLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
+            EventShared?.Invoke(eventData);
+        }
+
+        public void CopyEventLink(IEventDTO eventData)
+        {
+            clipboard.Set(EventUtilities.GetEventCopyLink(eventData, decentralandUrlsSource));
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
+            EventLinkCopied?.Invoke(eventData);
+        }
+    }
+}

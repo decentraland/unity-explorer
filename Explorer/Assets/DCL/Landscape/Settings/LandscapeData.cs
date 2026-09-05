@@ -1,0 +1,72 @@
+﻿using DCL.Landscape.Utils;
+using Decentraland.Terrain;
+using GPUInstancerPro;
+using System;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+
+namespace DCL.Landscape.Settings
+{
+    public class LandscapeData : ScriptableObject
+    {
+        public Action<float>? OnDetailDistanceChanged;
+
+        public Transform mapChunk;
+        public TerrainGenerationData terrainData;
+        public TerrainGenerationData worldsTerrainData;
+
+        [field: SerializeField] public GPUIProfile TreesProfile { get; private set; } = null!;
+
+        [SerializeField] private float detailDistanceValue = 200;
+        public float DetailDistance
+        {
+            get => detailDistanceValue;
+
+            set
+            {
+                if (Mathf.Approximately(detailDistanceValue, value))
+                    return;
+
+                detailDistanceValue = value;
+                ApplyDetailDistanceToTrees(value);
+                OnDetailDistanceChanged?.Invoke(value);
+            }
+        }
+
+        private void ApplyDetailDistanceToTrees(float distance)
+        {
+            TreesProfile.minMaxDistance = new Vector2(0, distance);
+            TreesProfile.SetParameterBufferData();
+        }
+
+        private void OnEnable()
+        {
+            if (Application.isPlaying)
+                ApplyDetailDistanceToTrees(detailDistanceValue);
+        }
+
+        public bool RenderGround { get; set; } = true;
+        public bool RenderTrees { get; set; } = true;
+        public bool RenderGrass { get; set; } = true;
+        public bool ShowSatelliteFloor { get; set; } = true;
+        [field: SerializeField] public Material? GroundMaterial { get; private set; }
+        [field: SerializeField] public int GroundInstanceCapacity { get; set; }
+        [field: SerializeField] public GrassIndirectRenderer? GrassIndirectRenderer { get; private set; }
+
+        [field: SerializeField] [field: EnumIndexedArray(typeof(GroundMeshPiece))]
+        public Mesh?[] GroundMeshes { get; private set; } = null!;
+
+        private enum GroundMeshPiece
+        {
+            Middle,
+            Edge,
+            Corner,
+        }
+    }
+
+    [Serializable]
+    public class LandscapeDataRef : AssetReferenceT<LandscapeData>
+    {
+        public LandscapeDataRef(string guid) : base(guid) { }
+    }
+}

@@ -1,0 +1,207 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.SocialService;
+using DCL.Web3.Identities;
+using System;
+using System.Threading;
+using Decentraland.SocialService.V2;
+using Google.Protobuf.WellKnownTypes;
+using Utility;
+
+namespace DCL.VoiceChat.Services
+{
+    public class RPCPrivateVoiceChatService : RPCSocialServiceBase, IVoiceService
+    {
+        private const string TAG = nameof(RPCPrivateVoiceChatService);
+
+        public event Action<PrivateVoiceChatUpdate>? PrivateVoiceChatUpdateReceived;
+        public event Action? Reconnected;
+        public event Action? Disconnected;
+
+        /// <summary>
+        ///     Timeout used for foreground operations
+        /// </summary>
+        private const int FOREGROUND_TIMEOUT_SECONDS = 10;
+        private const string START_PRIVATE_VOICE_CHAT = "StartPrivateVoiceChat";
+        private const string ACCEPT_PRIVATE_VOICE_CHAT = "AcceptPrivateVoiceChat";
+        private const string REJECT_PRIVATE_VOICE_CHAT = "RejectPrivateVoiceChat";
+        private const string END_PRIVATE_VOICE_CHAT = "EndPrivateVoiceChat";
+        private const string SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES = "SubscribeToPrivateVoiceChatUpdates";
+        private const string GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST = "GetIncomingPrivateVoiceChatRequest";
+
+        private readonly ISocialServiceEventBus socialServiceEventBus;
+        private readonly IWeb3IdentityCache identityCache;
+        private CancellationTokenSource subscriptionCts = new ();
+        private readonly bool isServiceDisabled;
+
+        public RPCPrivateVoiceChatService(
+            IRPCSocialServices socialServiceRPC,
+            ISocialServiceEventBus socialServiceEventBus,
+            IWeb3IdentityCache identityCache) : base(socialServiceRPC, ReportCategory.COMMUNITY_VOICE_CHAT)
+        {
+            this.socialServiceEventBus = socialServiceEventBus;
+            this.identityCache = identityCache;
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat))
+            {
+                socialServiceEventBus.TransportClosed += OnTransportClosed;
+                socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
+                socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
+            }
+            else { isServiceDisabled = true; }
+        }
+
+        public override void Dispose()
+        {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VoiceChat)) return;
+
+            socialServiceEventBus.TransportClosed -= OnTransportClosed;
+            socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
+            socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
+            subscriptionCts.SafeCancelAndDispose();
+
+            base.Dispose();
+        }
+
+        private void ThrowIfServiceDisabled()
+        {
+            if (isServiceDisabled)
+                throw new InvalidOperationException("Voice chat service is disabled.");
+        }
+
+        private void OnTransportConnected()
+        {
+            if (isServiceDisabled || identityCache.Identity == null) return;
+
+            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+        }
+
+        private void OnTransportClosed()
+        {
+            subscriptionCts = subscriptionCts.SafeRestart();
+            Disconnected?.Invoke();
+        }
+
+        private void OnTransportReconnected()
+        {
+            if (isServiceDisabled || identityCache.Identity == null) return;
+
+            Reconnected?.Invoke();
+            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+        }
+
+        public async UniTask<StartPrivateVoiceChatResponse> StartPrivateVoiceChatAsync(string userId, CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+
+            var payload = new StartPrivateVoiceChatPayload
+            {
+                Callee = new User
+                {
+                    Address = userId,
+                },
+            };
+
+            StartPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
+                                                                            .CallUnaryProcedure<StartPrivateVoiceChatResponse>(START_PRIVATE_VOICE_CHAT, payload)
+                                                                            .AttachExternalCancellation(ct)
+                                                                            .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<AcceptPrivateVoiceChatResponse> AcceptPrivateVoiceChatAsync(string callId, CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+
+            var payload = new AcceptPrivateVoiceChatPayload
+            {
+                CallId = callId,
+            };
+
+            AcceptPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
+                                                                             .CallUnaryProcedure<AcceptPrivateVoiceChatResponse>(ACCEPT_PRIVATE_VOICE_CHAT, payload)
+                                                                             .AttachExternalCancellation(ct)
+                                                                             .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<RejectPrivateVoiceChatResponse> RejectPrivateVoiceChatAsync(string callId, CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+
+            var payload = new RejectPrivateVoiceChatPayload
+            {
+                CallId = callId,
+            };
+
+            RejectPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
+                                                                             .CallUnaryProcedure<RejectPrivateVoiceChatResponse>(REJECT_PRIVATE_VOICE_CHAT, payload)
+                                                                             .AttachExternalCancellation(ct)
+                                                                             .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<EndPrivateVoiceChatResponse> EndPrivateVoiceChatAsync(string callId, CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+
+            var payload = new EndPrivateVoiceChatPayload
+            {
+                CallId = callId,
+            };
+
+            EndPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
+                                                                          .CallUnaryProcedure<EndPrivateVoiceChatResponse>(END_PRIVATE_VOICE_CHAT, payload)
+                                                                          .AttachExternalCancellation(ct)
+                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<GetIncomingPrivateVoiceChatRequestResponse> GetIncomingPrivateVoiceChatRequestAsync(CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+
+            GetIncomingPrivateVoiceChatRequestResponse? response = await socialServiceRPC.Module()
+                                                                                         .CallUnaryProcedure<GetIncomingPrivateVoiceChatRequestResponse>(GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST, new Empty())
+                                                                                         .AttachExternalCancellation(ct)
+                                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        private async UniTaskVoid TrySubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct)
+        {
+            await KeepServerStreamOpenAsync<PrivateVoiceChatUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, ct);
+
+            return;
+
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Successfully opened private voice chat updates stream");
+
+                await foreach (PrivateVoiceChatUpdate? response in EnumerateWithCancellationAsync(stream, ct))
+                {
+                    try { PrivateVoiceChatUpdateReceived?.Invoke(response); }
+
+                    catch (OperationCanceledException) { }
+                    catch (Exception e) { ReportHub.LogException(e, ReportCategory.VOICE_CHAT); }
+                }
+            }
+        }
+    }
+}

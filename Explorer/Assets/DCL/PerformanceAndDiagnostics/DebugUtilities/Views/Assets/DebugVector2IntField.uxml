@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <DCL.DebugUtilities.Views.DebugVector2IntFieldElement style="align-self: stretch;">
+        <ui:Vector2IntField x="3333333" y="55" />
+    </DCL.DebugUtilities.Views.DebugVector2IntFieldElement>
+</ui:UXML>

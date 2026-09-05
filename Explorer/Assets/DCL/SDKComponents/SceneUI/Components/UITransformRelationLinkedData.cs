@@ -1,0 +1,270 @@
+﻿using Arch.Core;
+using CRDT;
+using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using System.Collections.Generic;
+using UnityEngine.Assertions;
+using UnityEngine.Pool;
+
+namespace DCL.SDKComponents.SceneUI.Components
+{
+    public struct UITransformRelationLinkedData
+    {
+        public class Node
+        {
+            internal static readonly ObjectPool<Node> POOL = new (() => new Node(), actionOnRelease: x => x.Reset(),
+                defaultCapacity: PoolConstants.SCENES_COUNT * 100, maxSize: PoolConstants.SCENES_MAX_CAPACITY * 100);
+
+            public CRDTEntity EntityId { get; private set; }
+            public CRDTEntity RightOf { get; set; }
+            public Node? Next { get; set; }
+            public Node? Previous { get; set; }
+
+            private Node()
+            {
+            }
+
+            private void Reset()
+            {
+                EntityId = 0;
+                RightOf = 0;
+                Next = null;
+                Previous = null;
+            }
+
+            public void Setup(CRDTEntity entityId)
+            {
+                EntityId = entityId;
+            }
+
+            public override string ToString() =>
+                $"{EntityId.ToString()}, Next: {Next?.EntityId.ToString()}, Previous: {Previous?.EntityId.ToString()}";
+        }
+
+        private const int CHILDREN_DEFAULT_CAPACITY = 10;
+
+        internal Node? head;
+        private Dictionary<CRDTEntity, Node>? nodes;
+        private Dictionary<CRDTEntity, Node>? pendingRightOf; // key is the left entity
+        private Dictionary<CRDTEntity, Node>? reverseRightOf; // key is the rightOf target, used for O(n) rebuild
+
+        internal Entity parent;
+
+        internal CRDTEntity rightOf;
+
+        /// <summary>
+        /// Indicates that resorting is required
+        /// </summary>
+        internal bool layoutIsDirty;
+
+        internal bool ContainsNode(CRDTEntity entity) =>
+            nodes != null && nodes.ContainsKey(entity);
+
+        public void AddChild(Entity thisEntity, CRDTEntity childEntity, ref UITransformRelationLinkedData childComponent)
+        {
+            Node newNode = Node.POOL.Get();
+            newNode.Setup(childEntity);
+            newNode.RightOf = childComponent.rightOf;
+
+            nodes ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
+            pendingRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
+
+            // If the element is first (or for some reason unspecified)
+            if (childComponent.rightOf.Id > 0)
+            {
+                if (nodes.TryGetValue(childComponent.rightOf, out Node leftNode))
+                {
+                    newNode.Next = leftNode.Next;
+
+                    if (leftNode.Next != null)
+                        leftNode.Next.Previous = newNode;
+
+                    leftNode.Next = newNode;
+                    Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
+
+                    newNode.Previous = leftNode;
+                }
+                else
+                {
+                    // If rightOfEntityId is not yet in the list, add to pending
+                    pendingRightOf[childComponent.rightOf] = newNode;
+                }
+            }
+            else if (head != null)
+            {
+                // if the element is unsorted pull it to the head - make it a new head
+                newNode.Next = head;
+                head.Previous = newNode;
+                head = newNode;
+            }
+
+            nodes[childEntity] = newNode;
+
+            head ??= newNode;
+
+            ResolvePending(childEntity, newNode);
+
+            childComponent.parent = thisEntity;
+
+            layoutIsDirty = true;
+        }
+
+        private void ResolvePending(CRDTEntity newlyAddedEntityId, Node leftNode)
+        {
+            if (pendingRightOf == null || !pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
+                return;
+
+            if (leftNode.Next != null)
+                leftNode.Next.Previous = rightNode;
+
+            leftNode.Next = rightNode;
+            rightNode.Previous = leftNode;
+
+            Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
+
+            if (rightNode == head)
+            {
+                // if the current head is the right node then the left-most becomes the new head
+                for (head = rightNode; head.Previous != null; head = head.Previous)
+                {
+                }
+            }
+
+            pendingRightOf?.Remove(newlyAddedEntityId);
+        }
+
+        public void RemoveChild(CRDTEntity child, ref UITransformRelationLinkedData childData)
+        {
+            // Child could be already removed from the nodes list if its entity was deleted
+            if (nodes == null || !nodes.TryGetValue(child, out Node? nodeToRemove))
+                return;
+
+            if (nodeToRemove == head)
+            {
+                head = head.Next;
+
+                if (head != null)
+                    head.Previous = null;
+            }
+            else
+            {
+                if (nodeToRemove.Previous != null)
+                    nodeToRemove.Previous.Next = nodeToRemove.Next;
+                if (nodeToRemove.Next != null)
+                    nodeToRemove.Next.Previous = nodeToRemove.Previous;
+            }
+            nodes.Remove(child);
+
+            // Update pendingRightOf if necessary
+            pendingRightOf?.Remove(child);
+            pendingRightOf?.Remove(childData.rightOf);
+
+            childData.parent = Entity.Null;
+
+            Node.POOL.Release(nodeToRemove);
+        }
+
+        internal void UpdateNodeRightOf(CRDTEntity childEntity, CRDTEntity newRightOf)
+        {
+            if (nodes != null && nodes.TryGetValue(childEntity, out var node))
+                node.RightOf = newRightOf;
+
+            layoutIsDirty = true;
+        }
+
+        internal void RebuildLinkedList()
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                head = null;
+                return;
+            }
+
+            reverseRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
+            reverseRightOf.Clear();
+
+            // Single pass: reset pointers, find head, build reverse map (rightOf target → node)
+            head = null;
+            Node? orphanTail = null;
+
+            foreach (var kvp in nodes)
+            {
+                kvp.Value.Next = null;
+                kvp.Value.Previous = null;
+
+                if (kvp.Value.RightOf.Id == 0)
+                {
+                    head = kvp.Value;
+                }
+                else if (reverseRightOf.ContainsKey(kvp.Value.RightOf))
+                {
+                    // Duplicate rightOf target: two nodes claim to be after the same sibling.
+                    // This happens when a new node is inserted between existing siblings and the
+                    // existing sibling's rightOf hasn't been updated yet (e.g., CRDT update for
+                    // the existing sibling was not processed by ResolveSiblingsOrder).
+                    // Keep the first entry and chain the duplicate at the end to avoid data loss.
+                    ReportHub.LogWarning(
+                        new ReportData(ReportCategory.SCENE_UI),
+                        $"[UISort] Duplicate rightOf target {kvp.Value.RightOf}: "
+                        + $"existing={reverseRightOf[kvp.Value.RightOf].EntityId}, new={kvp.Value.EntityId}. "
+                        + "Appending duplicate to end of chain.");
+
+                    // Track orphan to append at end
+                    if (orphanTail == null)
+                        orphanTail = kvp.Value;
+                    else
+                    {
+                        orphanTail.Next = kvp.Value;
+                        kvp.Value.Previous = orphanTail;
+                        orphanTail = kvp.Value;
+                    }
+                }
+                else
+                {
+                    reverseRightOf[kvp.Value.RightOf] = kvp.Value;
+                }
+            }
+
+            if (head == null)
+                return;
+
+            // Follow the chain using O(1) lookups
+            var current = head;
+
+            while (reverseRightOf.TryGetValue(current.EntityId, out var next))
+            {
+                current.Next = next;
+                next.Previous = current;
+                current = next;
+            }
+
+            // Append any orphaned nodes (from duplicate rightOf) at the end of the chain
+            if (orphanTail != null)
+            {
+                // Find the first orphan (walk back from tail)
+                Node firstOrphan = orphanTail;
+
+                while (firstOrphan.Previous != null)
+                    firstOrphan = firstOrphan.Previous;
+
+                current.Next = firstOrphan;
+                firstOrphan.Previous = current;
+            }
+        }
+
+        public void Dispose()
+        {
+            if (nodes != null)
+            {
+                foreach (var kvp in nodes)
+                    Node.POOL.Release(kvp.Value);
+
+                nodes.Clear();
+            }
+
+            pendingRightOf?.Clear();
+            reverseRightOf?.Clear();
+            head = null;
+        }
+    }
+}

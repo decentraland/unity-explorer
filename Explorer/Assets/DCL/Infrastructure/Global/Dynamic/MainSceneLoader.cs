@@ -1,0 +1,1225 @@
+using AltTester.AltTesterUnitySDK.Commands;
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using CRDT;
+using CrdtEcsBridge.Components;
+using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
+using DCL.AssetsProvision;
+using DCL.Audio;
+using DCL.Browser;
+using DCL.Browser.DecentralandUrls;
+using DCL.DebugUtilities;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
+using DCL.Global.Dynamic;
+using DCL.Infrastructure.Global;
+using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.HealthChecks;
+using DCL.Multiplayer.HealthChecks.Struct;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
+using DCL.Prefs;
+using DCL.Quality.Runtime;
+using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI.ErrorPopup;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.Utility;
+using DCL.Utility.Types;
+using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using DG.Tweening;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using Global.AppArgs;
+using Global.Versioning;
+using LiveKit.Internal.FFIClients.Requests;
+using MVC;
+using Newtonsoft.Json.Linq;
+using Plugins.NativeWindowManager;
+using SceneRunner.Debugging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.UI;
+using Utility;
+using Utility.Networking;
+using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
+
+// ReSharper disable once CheckNamespace
+namespace Global.Dynamic
+{
+    public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
+    {
+        [Header("STARTUP CONFIG")] [SerializeField]
+        private RealmLaunchSettings launchSettings = null!;
+
+        [Space]
+        [SerializeField] private DecentralandEnvironment decentralandEnvironment;
+
+        // Non-null only for DecentralandEnvironment.Custom; set from the command line by ApplyBaseDomainArg.
+        private string? customBaseDomain;
+        private string? cliGatewayArg;
+        private string? cliGatewayPrefix;
+
+        // The validated --eth-network value, or null when it was not passed on the command line. Captured by
+        // CaptureEthNetworkArg and turned into a network by ResolveEthereumNetwork once the environment is settled.
+        private string? ethNetworkArg;
+
+        [Space]
+        [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
+
+        [Header("REFERENCES")]
+        [SerializeField] private PluginSettingsContainer pluginSettingsContainer = null!;
+        [SerializeField] private DynamicSceneLoaderSettings settings = null!;
+        [SerializeField] private SplashScreenRef splashScreenRef = null!;
+        [SerializeField] private DynamicSettings dynamicSettings = null!;
+        [SerializeField] private AudioClipConfig backgroundMusic = null!;
+        [SerializeField] private WorldInfoTool worldInfoTool = null!;
+        [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
+        [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private AssetReferenceGameObject deepLinkParamsWarningPopupPrefab = null!;
+        [SerializeField] private ErrorPopupWithRetryRef clockDesyncPopupRef = null!;
+        [SerializeField] private GameObject altTesterPrefab = null!;
+
+        private BootstrapContainer? bootstrapContainer;
+        private StaticContainer? staticContainer;
+        private DynamicWorldContainer? dynamicWorldContainer;
+        private GlobalWorld? globalWorld;
+        private ProvidedInstance<SplashScreen> splashScreen;
+        private AbgenSidecarBootstrap? abgenSidecar;
+        private FileStream? singleInstanceLock;
+        private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
+
+        private bool canShutdown;
+
+        // ReSharper disable once UnusedMember.Local
+        private void Awake()
+        {
+            InitializeFlowAsync(destroyCancellationToken).Forget();
+        }
+
+        // ReSharper disable once UnusedMember.Local
+        private void OnDestroy()
+        {
+            Shutdown();
+        }
+
+        private void Shutdown()
+        {
+            if (PlayerLoopHelper.IsMainThread == false)
+                return;
+
+            if (canShutdown == false)
+                return;
+
+            canShutdown = false;
+
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(MainSceneLoader));
+
+            DisableAllSelectableTransitions();
+            stopwatch.LogStep(nameof(DisableAllSelectableTransitions));
+
+            if (dynamicWorldContainer != null)
+            {
+                foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
+                {
+                    plugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"GlobalPlugin {plugin.GetType().Name}");
+                }
+
+                foreach (IDCLWorldPlugin worldPlugin in dynamicWorldContainer.WorldPlugins)
+                {
+                    worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"WorldPlugin {worldPlugin.GetType().Name}");
+                }
+
+                if (globalWorld != null)
+                {
+                    dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                    stopwatch.LogStep("DisposeGlobalWorld");
+                }
+
+                dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("dynamicWorldContainer.SafeDispose");
+            }
+
+            if (staticContainer != null)
+            {
+                // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
+                foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer.SharedPlugins))
+                {
+                    worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"ECSWorldPlugin {worldPlugin.GetType().Name}");
+                }
+
+                staticContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("staticContainer.SafeDispose");
+            }
+
+            abgenSidecar?.Dispose();
+            stopwatch.LogStep("abgenSidecar.Dispose");
+
+            bootstrapContainer?.Dispose();
+            stopwatch.LogStep("bootstrapContainer.Dispose");
+
+            splashScreen.Dispose();
+            stopwatch.LogStep("splashScreen.Dispose");
+
+            ReportHub.LogProductionInfo($"[MainSceneLoader] OnDestroy successfully finished in {stopwatch.ElapsedMilliseconds}ms");
+        }
+
+        // ReSharper disable once UnusedMember.Local
+        private void OnApplicationQuit()
+        {
+            // Dispose just in case, but if the process ends normally or by a crash, the lock should also be released due to how native OS works
+            // ReSharper disable once EmptyGeneralCatchClause
+            try { singleInstanceLock?.Dispose(); }
+            catch { }
+
+            DisableAllSelectableTransitions();
+        }
+
+        public void ApplyConfig(IAppArgs applicationParametersParser)
+        {
+            if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
+                ParseEnvironment(environment!);
+
+            ExitUtils.Configure(
+                    softShutdown: applicationParametersParser.HasFlag(AppArgsFlags.SOFT_SHUTDOWN),
+                    nativeShutdownStopwatch: applicationParametersParser.HasFlag(AppArgsFlags.NATIVE_SHUTDOWN_STOPWATCH)
+                    );
+        }
+
+        private void ParseEnvironment(string environment)
+        {
+            // --base-domain already selected Custom, and it is command-line only while --dclenv can arrive from a
+            // deep link. Letting the link win would move the client back onto a decentraland domain behind the
+            // operator's back, so the base domain is authoritative and the mismatch is reported.
+            if (customBaseDomain != null)
+            {
+                ReportHub.Log(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: --{AppArgsFlags.BASE_DOMAIN}={customBaseDomain} pins the environment to {nameof(DecentralandEnvironment.Custom)}");
+                return;
+            }
+
+            if (!Enum.TryParse(environment, true, out DecentralandEnvironment env))
+                return;
+
+            // Custom has no domain of its own to derive; only --base-domain can select it.
+            if (env == DecentralandEnvironment.Custom)
+            {
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ENVIRONMENT}={environment}: {nameof(DecentralandEnvironment.Custom)} is selected by --{AppArgsFlags.BASE_DOMAIN} instead");
+                return;
+            }
+
+            decentralandEnvironment = env;
+        }
+
+        private async UniTask InitializeFlowAsync(CancellationToken ct)
+        {
+            canShutdown = true;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
+
+            string[] rawApplicationParameters =
+#if UNITY_EDITOR
+                debugSettings.AppParameters;
+#else
+                Environment.GetCommandLineArgs();
+#endif
+
+            // Phase 1: parse CLI flags (incl. --feature-flags-url) but DEFER the deep link — its whitelisted-realm
+            // params must be gated against the world whitelist, which comes from feature flags. Feature flags aren't
+            // initialized until later in bootstrap, so for a deep-link launch we preemptively fetch just the whitelist
+            // now (best-effort, fails safe to loopback-only), then process the deep link with it applied.
+            IAppArgs applicationParametersParser = ApplicationParametersParser.CreateDeferringDeepLinks(rawApplicationParameters);
+
+            // Read while the deep link is still deferred, so only the command line can supply it. The ordering is the
+            // reason, not the allowlist: the base domain gates which realms DeepLinkAllowlist trusts, so it has to be
+            // registered before InitializeDeepLinks() evaluates the pending link's whitelisted-realm params against
+            // it. A domain arriving in that same link could not be — its own params would need gating against a domain
+            // it has not supplied yet. (base-domain is denied by the allowlist, so a link carrying it still reaches
+            // the consent dialog; WarnIfCommandLineOnlyArgCameFromTheDeepLink reports that accepting it changes nothing.)
+            ApplyBaseDomainArg(applicationParametersParser);
+            LocalCertificateValidation.Configure(applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM));
+
+            // Configure the local ICE policy before any dynamic container or room is created. The SDK still
+            // applies its own loopback URL check, so this opt-in cannot change transport behavior for a remote
+            // realm. RealmController recomputes the value after every realm bootstrap/change as a second guard.
+            FFIBridgeExtensions.UseTransportAllForLoopbackUrls = applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM);
+
+            // Read while the deep link is still deferred for the same reason as the base domain: which chain the
+            // client signs against is not something a link may pick, not even through the denied-params dialog.
+            if (!CaptureEthNetworkArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            // Read while the deep link is still deferred, for the same reason as the two above: where a session's
+            // supported-service traffic goes is not something a link may pick, not even through the denied-params
+            // dialog.
+            if (!CaptureGatewayArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            if (applicationParametersParser.HasPendingDeepLink)
+                await InitializeDeepLinkWorldWhitelistAsync(applicationParametersParser, ct);
+
+            applicationParametersParser.InitializeDeepLinks();
+
+            var assetsProvisioner = new AddressablesProvisioner();
+
+            // The deep link carried params that failed the allowlist: surface them before anything consumes the
+            // app-args, so the user can either exit or explicitly accept the risk and continue with them applied
+            // (they are merged into the args only on consent).
+            if (applicationParametersParser.DeniedDeepLinkParams.Count > 0
+                && !await ShowDeniedDeepLinkParamsConfirmationAsync(assetsProvisioner, applicationParametersParser, ct))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
+
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+
+            DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
+            DiagnosticInfoUtils.LogSystem(dclVersion.Version);
+
+            // Memory limit
+            applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string? simulatedMemory);
+
+            ISystemMemoryCap memoryCap = simulatedMemory != null
+                ? new SystemMemoryCap(int.Parse(simulatedMemory))
+                : new SystemMemoryCap();
+
+            ApplyConfig(applicationParametersParser);
+            launchSettings.ApplyConfig(applicationParametersParser);
+
+            // Resolved after ApplyConfig, not where the arg was captured: --dclenv is able to move the environment up
+            // to this point, and the environment is what decides whether the override is read at all.
+            EthereumNetwork ethereumNetwork = ResolveEthereumNetwork();
+
+            NativeWindowManager.Initialize(
+                applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
+                GetResolutionFromAppArgs(applicationParametersParser));
+
+            // Shown before anything that can wait (the abgen sidecar launch below is serial).
+            splashScreen = await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct);
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                InstantiateAltTester(applicationParametersParser);
+
+            World world = World.Create();
+
+            var realmData = new RealmData();
+
+            applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
+            applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
+
+            bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
+
+            // local-ab only: the embedded abgen JIT server becomes the optimized-assets source (it serves the
+            // local scene and read-throughs everything else from production). Brought up to health serially,
+            // before the URL sources are built, so the override is seeded only when the server is actually
+            // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
+            {
+                // Mirrors RealmUrls' LSD resolution — RealmUrls itself needs the URL sources that don't exist yet.
+                string realmRoot = launchSettings.initialRealm == InitialRealm.Localhost
+                    ? IRealmNavigator.LOCALHOST
+                    : launchSettings.customRealm;
+
+                abgenSidecar = new AbgenSidecarBootstrap(decentralandEnvironment);
+
+                if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
+                    cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
+            }
+
+            var decentralandUrlsSource = new GatewayUrlsSource(
+                decentralandEnvironment,
+                realmData,
+                launchSettings,
+                debugSettings.GatekeeperMode,
+                debugSettings.CustomGatekeeperUrl,
+                cliGatekeeperUrl,
+                cliOptimizedAssetsUrl,
+                customBaseDomain,
+                cliAbgenPipeline,
+                cliGatewayPrefix);
+            DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
+
+            var web3AccountFactory = new Web3AccountFactory();
+            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, ethereumNetwork);
+            var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
+            var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
+
+            var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
+            var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(
+                assetsProvisioner,
+                debugSettings,
+                sceneLoaderSettings: settings,
+                decentralandUrlsSource,
+                debugContainer,
+                identityCache,
+                pluginSettingsContainer,
+                launchSettings,
+                applicationParametersParser,
+                splashScreen.Value,
+                diskCache,
+                partialsDiskCache,
+                world,
+                decentralandEnvironment,
+                ethereumNetwork,
+                dclVersion,
+                destroyCancellationToken
+            );
+
+            IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
+
+            try
+            {
+                await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
+
+                if (ShouldForceSingleRunningInstance(applicationParametersParser))
+                {
+                    await ShowSingleRunningInstancePopupAsync(assetsProvisioner, ct);
+                    return;
+                }
+
+                Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, ct);
+
+                bootstrap.InitializeFeaturesRegistry();
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+
+                // Refresh the deep-link world whitelist from the now-fully-loaded feature flags — covers runtime
+                // (post-launch) deep links and the case where the preemptive cold-start fetch was unavailable.
+                DeepLinkAllowlist.SetWhitelistedWorlds(DeepLinkWorldWhitelistProvider.ReadWorlds(FeatureFlagsConfiguration.Instance));
+
+                DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
+
+                // Need to ensure clock sync ASAP due to some requests may fail due this problem.
+                // Checking for clock desync after feature flags (or any other process that performs an http request)
+                // potentially saves one extra HEAD request
+                var ensureClockSyncAction = new EnsureClockSync(bootstrapContainer.RealmClock, bootstrapContainer.WebRequestsContainer.WebRequestController,
+                    ShowClockDesyncPopupAsync, bootstrapContainer.DecentralandUrlsSource);
+
+                await ensureClockSyncAction.ExecuteAsync(ct);
+
+                bool isLoaded;
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, pluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
+
+                if (!isLoaded)
+                {
+                    GameReports.PrintIsDead();
+                    return;
+                }
+
+                bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
+
+                staticContainer!.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+
+                OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
+
+                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
+                    bootstrapContainer,
+                    staticContainer!,
+                    pluginSettingsContainer,
+                    settings,
+                    dynamicSettings,
+                    backgroundMusic,
+                    worldInfoTool.EnsureNotNull(),
+                    playerEntity,
+                    applicationParametersParser,
+                    coroutineRunner: this,
+                    dclVersion,
+                    destroyCancellationToken);
+
+                if (!isLoaded)
+                {
+                    GameReports.PrintIsDead();
+                    return;
+                }
+
+                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
+                    return;
+
+                var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
+
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CheckDiskSpace))
+                    await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
+
+                if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
+                {
+                    splashScreen.Value.Hide();
+
+                    if (!await ShowUntrustedRealmConfirmationAsync(ct))
+                    {
+                        ExitUtils.Exit();
+                        return;
+                    }
+
+                    splashScreen.Value.Show();
+                }
+
+                DisableInputs();
+
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, pluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
+                {
+                    GameReports.PrintIsDead();
+                    return;
+                }
+
+                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
+
+                // The scene's first manifest request fixes the bundles-vs-GLTFs verdict for the session —
+                // hold realm loading until the whole-scene warm-up settles.
+                if (abgenSidecar != null)
+                    await abgenSidecar.WarmUpTask.AttachExternalCancellation(ct);
+
+                await LoadStartingRealmAsync(ct);
+                await LoadUserFlowAsync(playerEntity, ct);
+
+                //This is done to release the memory usage of the splash screen logo animation sprites
+                //The logo is used only at first launch, so we can safely release it after the game is loaded
+                splashScreen.Dispose();
+
+                RestoreInputs();
+            }
+            catch (OperationCanceledException)
+            {
+                // ignore
+            }
+            catch (Exception)
+            {
+                // unhandled exception
+                GameReports.PrintIsDead();
+                throw;
+            }
+
+            return;
+
+            async UniTask LoadStartingRealmAsync(CancellationToken cancellationToken)
+            {
+                try { await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, cancellationToken); }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadStartingRealmAsync(cancellationToken);
+                    else
+                        ExitUtils.Exit();
+                }
+            }
+
+            async UniTask LoadUserFlowAsync(Entity playerEntity, CancellationToken cancellationToken)
+            {
+                try { await bootstrap.UserInitializationAsync(dynamicWorldContainer!, bootstrapContainer, globalWorld, playerEntity, cancellationToken); }
+                catch (TimeoutException)
+                {
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadUserFlowAsync(playerEntity, cancellationToken);
+                    else
+                        throw;
+                }
+                catch (RealmChangeException)
+                {
+                    if (await ShowLoadErrorPopupAsync(cancellationToken) == ErrorPopupWithRetryController.Result.Restart)
+                        await LoadUserFlowAsync(playerEntity, cancellationToken);
+                    else
+                        ExitUtils.Exit();
+                }
+            }
+        }
+
+        private async UniTask ShowSingleRunningInstancePopupAsync(AddressablesProvisioner assetsProvisioner, CancellationToken ct)
+        {
+            ErrorPopupView prefab = (await assetsProvisioner.ProvideMainAssetAsync(singleInstanceRunningPopupPrefab, ct)).Value.GetComponent<ErrorPopupView>();
+            ErrorPopupView popup = Instantiate(prefab);
+            popup.OkButton.onClick.AddListener(ExitUtils.Exit);
+        }
+
+        /// <summary>
+        ///     Shown before anything consumes the app-args (so the MVC manager is not available yet). On consent the
+        ///     denied params are merged into the args; returns false only when the user chose to exit.
+        /// </summary>
+        private async UniTask<bool> ShowDeniedDeepLinkParamsConfirmationAsync(AddressablesProvisioner assetsProvisioner, IAppArgs appArgs, CancellationToken ct)
+        {
+            DeepLinkParamsWarningView popup;
+
+            try
+            {
+                DeepLinkParamsWarningView prefab = (await assetsProvisioner.ProvideMainAssetAsync(deepLinkParamsWarningPopupPrefab, ct)).Value.GetComponent<DeepLinkParamsWarningView>();
+                popup = Instantiate(prefab);
+            }
+            catch (OperationCanceledException)
+            {
+                // The launch is being torn down: InitializeFlowAsync already ignores it.
+                throw;
+            }
+            catch (Exception e)
+            {
+                // This runs before the splash screen exists, so a failure here would otherwise leave the launch on a
+                // black screen. Without the dialog there is no way to ask for consent: keep the params dropped (the
+                // behaviour before this dialog existed) and let the app start.
+                ReportHub.LogException(e, ReportCategory.STARTUP);
+                return true;
+            }
+
+            popup.SetDeniedParams(appArgs.DeniedDeepLinkParams);
+
+            var decision = new UniTaskCompletionSource<bool>();
+
+            // Continuing is two-step on purpose: Advanced only reveals the confirmation, it does not consent.
+            popup.AdvancedButton.onClick.AddListener(popup.RevealContinueOption);
+            popup.ContinueButton.onClick.AddListener(() => decision.TrySetResult(true));
+            popup.ExitButton.onClick.AddListener(() => decision.TrySetResult(false));
+
+            bool continueWithParams = await decision.Task.AttachExternalCancellation(ct);
+
+            if (continueWithParams)
+            {
+                appArgs.ApplyDeniedDeepLinkParams();
+                Destroy(popup.gameObject);
+            }
+
+            return continueWithParams;
+        }
+
+        private bool ShouldForceSingleRunningInstance(IAppArgs appArgs)
+        {
+            if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return false;
+
+#if UNITY_EDITOR
+            return false;
+#else
+            try
+            {
+                string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
+
+                // Note that FileShare.None should lock the file to other processes, and it does,
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                singleInstanceLock.Lock(0, 0); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            }
+            catch (IOException) { return true; }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
+
+            return false;
+#endif
+        }
+
+        /// <summary>
+        ///     Reports a value the deep link carried for an arg that was already read from the command line, where
+        ///     the link's own value is therefore not applied - not even after the user accepts it in the
+        ///     denied-params dialog, since nothing reads the arg again. Without this it would sit in the logged args
+        ///     looking applied.
+        /// </summary>
+        private static void WarnIfCommandLineOnlyArgCameFromTheDeepLink(IAppArgs appArgs, string flag, string? commandLineValue)
+        {
+            if (appArgs.TryGetValue(flag, out string? linkValue)
+                && !string.IsNullOrWhiteSpace(linkValue)
+                && !string.Equals(linkValue.Trim(), commandLineValue, StringComparison.OrdinalIgnoreCase))
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{flag}={linkValue} from the deep link: it is only applied from the command line");
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.ETH_NETWORK" /> into <see cref="ethNetworkArg" />, rejecting a value
+        ///     that would otherwise leave the run on the default chain with nothing said. Returns false when the
+        ///     launch must be abandoned; the reason is already reported.
+        ///     <para>
+        ///         Rejecting rather than defaulting is the whole point on a <c>--base-domain</c> deployment: mainnet
+        ///         is the default, so every way of mistyping this flag ends with real contracts and the production
+        ///         identity slot behind an operator who asked for a test chain.
+        ///     </para>
+        /// </summary>
+        private bool CaptureEthNetworkArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.ETH_NETWORK, out string? value))
+                return true;
+
+            // Only a Custom environment reads the value, and only --base-domain selects Custom, so this is already
+            // final here even though --dclenv has not been applied yet.
+            bool valueIsRead = decentralandEnvironment == DecentralandEnvironment.Custom;
+
+            if (valueIsRead && !ChainUtils.TryParseNetwork(value, out _))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.ETH_NETWORK} '{value}' names no known network. Expected {ChainUtils.GetNetworkId(EthereumNetwork.Mainnet)} or {ChainUtils.GetNetworkId(EthereumNetwork.Sepolia)}");
+                return false;
+            }
+
+            ethNetworkArg = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            return true;
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.GATEWAY" /> into <see cref="cliGatewayArg" /> and its normalized form
+        ///     into <see cref="cliGatewayPrefix" />. Returns false when the launch must be abandoned; the reason is
+        ///     already reported.
+        ///     <para>
+        ///         Rejecting rather than ignoring: naming a gateway forces routing on, so a value that cannot be read
+        ///         as an origin would otherwise send every supported service to a host nobody named.
+        ///     </para>
+        /// </summary>
+        private bool CaptureGatewayArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.GATEWAY, out string? value) || string.IsNullOrWhiteSpace(value))
+                return true;
+
+            if (!GatewayUrlsSource.TryNormalizeGatewayPrefix(value, out string prefix))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.GATEWAY} '{value}' is not a gateway origin. Expected an absolute http or https url with a host and no query or fragment");
+                return false;
+            }
+
+            cliGatewayArg = value.Trim();
+            cliGatewayPrefix = prefix;
+            return true;
+        }
+
+        /// <summary>
+        ///     Turns the captured <see cref="ethNetworkArg" /> into the chain this run uses. Only a
+        ///     <c>--base-domain</c> deployment can answer for its own chain, so an override paired with a
+        ///     decentraland environment is reported and dropped rather than silently having no effect. The rule
+        ///     itself lives in <see cref="ChainUtils.ResolveNetwork" />; this reports what it discarded.
+        /// </summary>
+        private EthereumNetwork ResolveEthereumNetwork()
+        {
+            EthereumNetwork ethereumNetwork = ChainUtils.ResolveNetwork(decentralandEnvironment, ethNetworkArg);
+
+            if (ethNetworkArg != null && ChainUtils.PinnedNetworkOf(decentralandEnvironment) is { } pinned)
+            {
+                if (!ChainUtils.TryParseNetwork(ethNetworkArg, out EthereumNetwork requested))
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ETH_NETWORK}={ethNetworkArg}: it names no known network, and the {decentralandEnvironment} environment runs on {ChainUtils.GetNetworkId(pinned)} regardless");
+                else if (requested != pinned)
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Ignoring --{AppArgsFlags.ETH_NETWORK}={ethNetworkArg}: the {decentralandEnvironment} environment always runs on {ChainUtils.GetNetworkId(pinned)}");
+            }
+
+            // Logged unconditionally: a custom deployment defaults to mainnet, which puts the production contracts
+            // and identity slot behind it, and that has to be answerable from a log after the fact.
+            ReportHub.Log(ReportCategory.STARTUP, $"Chain: {ChainUtils.GetNetworkId(ethereumNetwork)} (environment {decentralandEnvironment})");
+
+            return ethereumNetwork;
+        }
+
+        /// <summary>
+        ///     Applies <see cref="AppArgsFlags.BASE_DOMAIN" />: it selects <see cref="DecentralandEnvironment.Custom" />
+        ///     and, through <see cref="DecentralandUrlsSource.ResolveBaseDomain" />, the domain every backend host and
+        ///     every realm-trust check resolves against.
+        /// </summary>
+        private void ApplyBaseDomainArg(IAppArgs appArgs)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.BASE_DOMAIN, out string? baseDomainArg) && !string.IsNullOrWhiteSpace(baseDomainArg))
+            {
+                customBaseDomain = baseDomainArg.Trim();
+                decentralandEnvironment = DecentralandEnvironment.Custom;
+            }
+
+            DeepLinkAllowlist.SetTrustedBaseDomain(DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain));
+        }
+
+        private async UniTask InitializeDeepLinkWorldWhitelistAsync(IAppArgs appArgs, CancellationToken ct)
+        {
+            appArgs.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string? featureFlagsOverride);
+
+            string featureFlagsBase = string.IsNullOrEmpty(featureFlagsOverride)
+                ? DecentralandUrlsSource.GetFeatureFlagsUrl(decentralandEnvironment, customBaseDomain)
+                : featureFlagsOverride.TrimEnd('/');
+
+            IReadOnlyList<string> whitelistedWorlds = await DeepLinkWorldWhitelistProvider.FetchAsync($"{featureFlagsBase}/{FeatureFlagOptions.APP_NAME}.json", ct);
+            DeepLinkAllowlist.SetWhitelistedWorlds(whitelistedWorlds);
+        }
+
+        private async UniTask RegisterBlockedPopupAsync(UnityAppWebBrowser webBrowser, CancellationToken ct)
+        {
+            var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
+
+            ControllerBase<BlockedScreenView, BlockedScreenParameters>.ViewFactoryMethod viewFactory =
+                BlockedScreenController.CreateLazily(blockedPopupPrefab.Value.GetComponent<BlockedScreenView>(), null);
+
+            var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
+            dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+        }
+
+        private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, UnityAppWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
+        {
+            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
+                new UnitySystemInfoProvider());
+
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+            bool skipScreen = applicationParametersParser.HasFlag(AppArgsFlags.SKIP_MINIMUM_SPECS_SCREEN) && !forceShow;
+            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
+
+            if (!hasMinimumSpecs && !skipScreen)
+                SavedQualitySettingsApplier.EnforceLowPresetOnce();
+
+            bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
+
+            bootstrapContainer!.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer!.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
+            UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
+
+            var specsProperties = new JObject
+            {
+                ["meets_requirements"] = hasMinimumSpecs,
+            };
+
+            foreach (SpecResult result in minimumSpecsGuard.Results)
+            {
+                string categoryKey = result.Category.ToString().ToLowerInvariant();
+                specsProperties[$"{categoryKey}_met"] = result.IsMet;
+
+                if (!result.IsMet)
+                {
+                    specsProperties[$"{categoryKey}_required"] = result.Required;
+                    specsProperties[$"{categoryKey}_actual"] = result.Actual;
+                }
+            }
+
+            analytics.Track(AnalyticsEvents.General.MEETS_MINIMUM_REQUIREMENTS, specsProperties);
+
+            bool shouldShowScreen = forceShow || (!skipScreen && !userWantsToSkip && !hasMinimumSpecs);
+
+            if (!shouldShowScreen)
+                return minimumSpecsGuard.Results;
+
+            var minimumRequirementsPrefab = await bootstrapContainer!
+                                                 .AssetsProvisioner!
+                                                 .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+
+            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
+               .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+
+            var minimumSpecsResults = minimumSpecsGuard.Results;
+            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, analytics, minimumSpecsResults);
+            dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
+            dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
+            await minimumSpecsScreenController.HoldingTask.Task;
+
+            return minimumSpecsGuard.Results;
+        }
+
+        private async UniTask BlockOnInsufficientDiskSpaceAsync(IReadOnlyList<SpecResult> specResults, IAppArgs applicationParametersParser, CancellationToken ct)
+        {
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_CHECK_DISK_SPACE);
+            bool storageMet = true;
+
+            foreach (SpecResult result in specResults)
+            {
+                if (result.Category == SpecCategory.Storage)
+                {
+                    storageMet = result.IsMet;
+                    break;
+                }
+            }
+
+            if (storageMet && !forceShow)
+                return;
+
+            var insufficientDiskSpacePrefab = await bootstrapContainer!
+                                                   .AssetsProvisioner!
+                                                   .ProvideMainAssetAsync(dynamicSettings.InsufficientDiskSpaceScreenPrefab, ct);
+
+            ControllerBase<InsufficientDiskSpaceScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                InsufficientDiskSpaceScreenController.CreateLazily(insufficientDiskSpacePrefab.Value.GetComponent<InsufficientDiskSpaceScreenView>(), null);
+
+            var controller = new InsufficientDiskSpaceScreenController(viewFactory);
+            dynamicWorldContainer!.MvcManager.RegisterController(controller);
+            await dynamicWorldContainer!.MvcManager.ShowAsync(InsufficientDiskSpaceScreenController.IssueCommand(), ct);
+        }
+
+        private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
+            CancellationToken ct)
+        {
+            //If Livekit is down, stop bootstrapping
+            if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
+                return false;
+
+            //If application requires version update, stop bootstrapping
+            if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen.Value, ct))
+                return false;
+
+            //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
+            await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
+
+            return true;
+        }
+
+        private async UniTask<bool> IsLIvekitDeadAsync(IWebRequestController webRequestController, DecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        {
+            SequentialHealthCheck healthCheck = new SequentialHealthCheck(
+                new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
+                    DecentralandUrl.ArchipelagoStatus,
+                    DecentralandUrl.GatekeeperStatus
+                ).WithRetries(3));
+
+            Result result = await healthCheck.IsRemoteAvailableAsync(ct);
+
+            if (result.Success) return false;
+
+            var livekitDownPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.LivekitDownPrefab, ct);
+
+            ControllerBase<LivekitHealthGuardView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                LivekitHealthGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
+
+            dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealthGuardController(viewFactory));
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealthGuardController.IssueCommand(), ct).Forget();
+            return true;
+        }
+
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splash, CancellationToken ct)
+        {
+            DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
+            bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
+
+            if (!Application.isEditor)
+                runVersionControl = !applicationParametersParser.HasDebugFlag() &&
+                                    !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK) &&
+                                    !applicationParametersParser.HasFlag(AppArgsFlags.AUTOPILOT);
+
+            if (!runVersionControl)
+                return false;
+
+            var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
+            string? latestVersion = await appVersionGuard.GetLatestVersionAsync(ct);
+
+            if (!currentVersion.Version.IsOlderThan(latestVersion))
+                return false;
+
+            splash.Hide();
+
+            var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
+
+            ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
+                LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
+
+            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion.Version, latestVersion);
+            dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+
+            await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
+            return true;
+        }
+
+        private void DisableInputs()
+        {
+            // We disable Inputs directly because otherwise before login (so before the Input component was created and the system that handles it is working)
+            // all inputs will be valid, and it allows for weird behaviour, including opening menus that are not ready to be open yet.
+            DCLInput dclInput = DCLInput.Instance;
+
+            dclInput.Shortcuts.Disable();
+            dclInput.Player.Disable();
+            dclInput.Emotes.Disable();
+            dclInput.EmoteWheel.Disable();
+            dclInput.FreeCamera.Disable();
+            dclInput.Camera.Disable();
+            dclInput.UI.Disable();
+        }
+
+        private void RestoreInputs()
+        {
+            // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
+            // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
+            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FreeCamera,
+                InputMapComponent.Kind.EmoteWheel);
+
+            DCLInput.Instance.UI.Enable();
+        }
+
+        private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
+        {
+            if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
+                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+            }
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+            }
+
+            var cacheDirectory = CacheDirectory.NewDefaultSubdirectory("partials");
+            var filesLock = new FilesLock();
+
+            IDiskCleanUp diskCleanUp;
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache cleanup, flag --{AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP} is passed");
+                diskCleanUp = IDiskCleanUp.None.INSTANCE;
+            }
+            else
+                diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
+
+            var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
+            return partialCache;
+        }
+
+        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
+        {
+            if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
+                return new IDiskCache.Fake();
+            }
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+                return new IDiskCache.Fake();
+            }
+
+            var cacheDirectory = CacheDirectory.NewDefault();
+            var filesLock = new FilesLock();
+
+            IDiskCleanUp diskCleanUp;
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache cleanup, flag --{AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP} is passed");
+                diskCleanUp = IDiskCleanUp.None.INSTANCE;
+            }
+            else
+                diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
+
+            var diskCache = new DiskCache(cacheDirectory, filesLock, diskCleanUp);
+            return diskCache;
+        }
+
+        [ContextMenu(nameof(ValidateSettingsAsync))]
+        public async UniTask ValidateSettingsAsync()
+        {
+            using var scope = new CheckingScope(ReportData.UNSPECIFIED);
+
+            await pluginSettingsContainer.EnsureValidAsync();
+
+            ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
+        }
+
+        private async UniTask<bool> IsTrustedRealmAsync(DecentralandUrlsSource dclUrls, CancellationToken ct)
+        {
+            if (launchSettings.initialRealm != InitialRealm.Custom) return true;
+            if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment) return true;
+
+            string realm = launchSettings.customRealm;
+
+            if (string.IsNullOrEmpty(realm)) return true;
+
+            var uri = new Uri(realm);
+            // A controlled host skips the consent prompt and the contracts/servers lookup below.
+            if (TrustedRealms.IsTrusted(uri)) return true;
+
+            // A --base-domain deployment owns everything under its domain, so its realms and worlds carry the same
+            // trust TrustedRealms grants decentraland's own hosts. Its worlds server in particular cannot be reached
+            // any other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers,
+            // which is exactly why decentraland's is named outright. Widening trust this way is safe because
+            // --base-domain is command-line only (never accepted from a deep link), so the operator already chose
+            // this deployment.
+            if (decentralandEnvironment == DecentralandEnvironment.Custom
+                && IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, dclUrls.BaseDomain))
+                return true;
+
+            IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
+
+            // If we want to save one http request, we could have a hardcoded list of trusted realms instead
+            var url = URLAddress.FromString(dclUrls.Url(DecentralandUrl.Servers));
+            var adapter = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            TrustedRealmApiResponse[] realms = await adapter.CreateFromJson<TrustedRealmApiResponse[]>(WRJsonParser.Newtonsoft);
+
+            foreach (TrustedRealmApiResponse trustedRealm in realms)
+                if (string.Equals(trustedRealm.baseUrl, realm, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+            return false;
+        }
+
+        private async UniTask<bool> ShowUntrustedRealmConfirmationAsync(CancellationToken ct)
+        {
+            var prefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(untrustedRealmConfirmationPrefab, ct);
+
+            UntrustedRealmConfirmationController controller = new UntrustedRealmConfirmationController(
+                UntrustedRealmConfirmationController.CreateLazily(prefab.Value.GetComponent<UntrustedRealmConfirmationView>(), null));
+
+            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+            mvcManager.RegisterController(controller);
+
+            var args = new UntrustedRealmConfirmationController.Args { realm = launchSettings.customRealm };
+            await mvcManager.ShowAsync(UntrustedRealmConfirmationController.IssueCommand(args), ct);
+
+            return controller.SelectedOption;
+        }
+
+        private async UniTask<ErrorPopupWithRetryController.Result> ShowLoadErrorPopupAsync(CancellationToken ct)
+        {
+            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+
+            var input = new ErrorPopupWithRetryController.Input(
+                title: "Load Error",
+                description: "A loading error was encountered. Please reload to try again.",
+                iconType: ErrorPopupWithRetryController.IconType.Error);
+
+            await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
+
+            return input.SelectedOption;
+        }
+
+        private void InstantiateAltTester(IAppArgs appArgs)
+        {
+#if ALTTESTER
+
+            // Temporary parent needed because AltTester's Awake method relies on the name being
+            // AltTesterPrefab (and not AltTesterPrefab(Clone))
+            var tempParent = new GameObject("AltTesterParent");
+            tempParent.SetActive(false);
+            var instance = Instantiate(altTesterPrefab, tempParent.transform);
+            instance.name = "AltTesterPrefab";
+            instance.transform.SetParent(null);
+            Destroy(tempParent);
+
+            if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
+            {
+                var runner = instance.GetComponent<AltRunner>();
+
+                var split = endpoint.Split(':');
+
+                if (split.Length != 2 || !int.TryParse(split[1], out var port))
+                {
+                    ReportHub.LogError(ReportData.UNSPECIFIED, $"Invalid Alttester endpoint (needs to be host:port): {endpoint}");
+                    return;
+                }
+
+                runner.InstrumentationSettings.AltServerHost = split[0];
+                runner.InstrumentationSettings.AltServerPort = port;
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Required to fix crash on exit, ticket - https://github.com/decentraland/unity-explorer/issues/6180
+        /// </summary>
+        private static void DisableAllSelectableTransitions()
+        {
+            DOTween.KillAll();
+            Selectable[] all = FindObjectsByType<Selectable>(FindObjectsInactive.Include) ?? Array.Empty<Selectable>();
+
+            foreach (var s in all)
+            {
+                // Prevent Unity from executing DestroyTween / StartTween during shutdown
+                s.transition = Selectable.Transition.None;
+
+                // Disable any graphic tween still in progress
+                Graphic? g = s.targetGraphic;
+
+                if (g != null)
+                    g.CrossFadeColor(g.color, 0f, false, false); // instantly settle
+            }
+        }
+
+        [Serializable]
+        public struct TrustedRealmApiResponse
+        {
+            // Deserialized DTO field: keeps the JSON key casing of the /servers endpoint.
+            // ReSharper disable once InconsistentNaming
+            public string baseUrl;
+        }
+
+        private readonly struct CheckingScope : IDisposable
+        {
+            private readonly ReportData data;
+
+            public CheckingScope(ReportData data)
+            {
+                this.data = data;
+                ReportHub.Log(data, "Start checking");
+            }
+
+            public void Dispose()
+            {
+                ReportHub.Log(data, "Finish checking");
+            }
+        }
+
+        private async UniTask<EnsureClockSync.Result> ShowClockDesyncPopupAsync(CancellationToken ct)
+        {
+            if (clockDesyncPopupPrefab == null)
+                clockDesyncPopupPrefab = (await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(clockDesyncPopupRef, ct)).Value;
+
+            ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.ViewFactoryMethod viewFactory =
+                ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.Preallocate(clockDesyncPopupPrefab, null, out ErrorPopupWithRetryView viewInstance);
+
+            using var controller = new ErrorPopupWithRetryController(viewFactory);
+
+            var input = new ErrorPopupWithRetryController.Input(
+                title: "Time sync needed",
+                description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
+                iconType: ErrorPopupWithRetryController.IconType.Clock);
+
+            var ordering = new CanvasOrdering(controller.Layer, splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1);
+
+            // Cant use the MVC here, it doesn't exist at this point
+            await controller.LaunchViewLifeCycleAsync(ordering, input, ct);
+            await controller.HideViewAsync(ct);
+
+            Destroy(viewInstance.gameObject);
+
+            // On Exit the error popup will automatically request application exit, so Continue is returned for it too.
+            return input.SelectedOption == ErrorPopupWithRetryController.Result.Restart
+                ? EnsureClockSync.Result.Restart
+                : EnsureClockSync.Result.Continue;
+        }
+
+        private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string? resolutionArg) || string.IsNullOrEmpty(resolutionArg))
+                return null;
+
+            string[] parts = resolutionArg.Split('x');
+
+            if (parts.Length == 2 && int.TryParse(parts[0], out int w) && int.TryParse(parts[1], out int h))
+                return new Vector2Int(w, h);
+
+            ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
+            return null;
+        }
+
+
+        [Serializable]
+        public class SplashScreenRef : ComponentReference<SplashScreen>
+        {
+            public SplashScreenRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class ErrorPopupWithRetryRef : ComponentReference<ErrorPopupWithRetryView>
+        {
+            public ErrorPopupWithRetryRef(string guid) : base(guid) { }
+        }
+    }
+}

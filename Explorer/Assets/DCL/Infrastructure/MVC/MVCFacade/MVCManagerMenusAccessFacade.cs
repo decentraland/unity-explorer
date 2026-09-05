@@ -1,0 +1,203 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.ChangeRealmPrompt;
+using DCL.Chat;
+using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Diagnostics;
+using DCL.ExternalUrlPrompt;
+using DCL.Friends;
+using DCL.Multiplayer.Connectivity;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
+using DCL.TeleportPrompt;
+using DCL.UI;
+using DCL.Utilities;
+using DCL.VoiceChat;
+using DCL.VoiceChat.Nearby;
+using DCL.Web3;
+using ECS.SceneLifeCycle.Realm;
+using System;
+using System.Threading;
+using UnityEngine;
+using DCL.Passport;
+using DCL.Profiles.Self;
+
+namespace MVC
+{
+    /// <summary>
+    ///     Provides access to a limited set of views previously registered in the MVC Manager. This allows views without controllers to a restricted MVC
+    /// </summary>
+    public class MVCManagerMenusAccessFacade : IMVCManagerMenusAccessFacade
+    {
+        private readonly IMVCManager mvcManager;
+        private readonly IProfileCache profileCache;
+        private readonly IFriendsService? friendsService;
+        private readonly ChatEventBus chatEventBus;
+        private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
+        private readonly IAnalyticsController analytics;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
+        private readonly IProfileRepository profileRepository;
+        private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly bool includeCommunities;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly UnityAppWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ISelfProfile selfProfile;
+        private readonly NearbyMuteService? nearbyMuteService;
+
+        private CancellationTokenSource? cancellationTokenSource;
+        private GenericUserProfileContextMenuController? genericUserProfileContextMenuController;
+        private CommunityPlayerEntryContextMenu? communityPlayerEntryContextMenu;
+        private ChatOptionsContextMenuController? chatOptionsContextMenuController;
+        private CommunityContextMenuController? communityContextMenuController;
+
+        public MVCManagerMenusAccessFacade(
+            IMVCManager mvcManager,
+            IProfileCache profileCache,
+            IFriendsService? friendsService,
+            ChatEventBus chatEventBus,
+            GenericUserProfileContextMenuSettings contextMenuSettings,
+            IAnalyticsController analytics,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator, FriendsConnectivityStatusTracker? friendOnlineStatusCache,
+            IProfileRepository profileRepository,
+            CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            bool includeCommunities,
+            CommunitiesDataProvider communitiesDataProvider,
+            UnityAppWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile,
+            NearbyMuteService? nearbyMuteService = null)
+        {
+            this.nearbyMuteService = nearbyMuteService;
+            this.mvcManager = mvcManager;
+            this.profileCache = profileCache;
+            this.friendsService = friendsService;
+            this.chatEventBus = chatEventBus;
+            this.contextMenuSettings = contextMenuSettings;
+            this.analytics = analytics;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
+            this.profileRepository = profileRepository;
+            this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communitiesDataProvider = communitiesDataProvider;
+            this.includeCommunities = includeCommunities;
+            this.communitiesDataProvider = communitiesDataProvider;
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.selfProfile = selfProfile;
+        }
+
+        public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
+            await mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)), ct);
+
+        public async UniTask ShowTeleporterPromptAsync(Vector2Int coords, CancellationToken ct) =>
+            await mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)), ct);
+
+        public async UniTask ShowChangeRealmPromptAsync(string message, string realm, CancellationToken ct) =>
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)), ct);
+
+        public async UniTask ShowPastePopupToastAsync(PastePopupToastData data, CancellationToken ct) =>
+            await mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data), ct);
+
+        public async UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data, CancellationToken ct) =>
+            await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
+
+        public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
+            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, Action? onShow = null, bool isOpenedOnWorldAvatar = false)
+        {
+            Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(walletId, ct);
+
+            if (profile == null)
+                return;
+
+            await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint, isOpenedOnWorldAvatar);
+        }
+
+        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default)
+        {
+            if (string.IsNullOrEmpty(participantWalletId)) return;
+
+            Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(participantWalletId, ct);
+
+            if (profile == null) return;
+
+            await ShowCommunityPlayerEntryContextMenuAsync(profile.Value, position, offset, ct, onHide, closeMenuTask, anchorPoint, isSpeaker);
+        }
+
+        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
+            Action? onHide = null, Action? onShow = null)
+        {
+            ProfileTier? profile = profileCache.GetByUserName(userName);
+            if (profile == null) return;
+            await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask);
+        }
+
+        public async UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask)
+        {
+            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.DeleteChatHistoryIcon, data.DeleteChatHistoryText, onDeleteChatHistoryClicked);
+            await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
+        }
+
+        private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide, Action? onContextMenuShow,
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, bool isOpenedOnWorldAvatar = false)
+        {
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendsService, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCache, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, nearbyMuteService);
+            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
+        }
+
+        private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide,
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.Default, bool isSpeaker = false)
+        {
+            communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
+                friendsService, mvcManager,
+                contextMenuSettings, analytics, onlineUsersProvider,
+                realmNavigator, friendOnlineStatusCache,
+                voiceChatContextMenuSettings, voiceChatOrchestrator, communitiesDataProvider, decentralandUrlsSource);
+
+            await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker);
+        }
+
+
+        public async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
+        {
+            try { await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct); }
+            catch (Exception ex) { ReportHub.LogError(ReportCategory.UI, $"Failed to open passport for user {userId}: {ex.Message}"); }
+        }
+        public async UniTask ShowGenericContextMenuAsync(GenericContextMenuParameter parameter)
+        {
+            await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(parameter));
+        }
+
+        private ContextMenuOpenDirection ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)
+        {
+            switch (anchorPoint)
+            {
+                case MenuAnchorPoint.TopLeft:
+                    return ContextMenuOpenDirection.TopLeft;
+                case MenuAnchorPoint.TopRight:
+                    return ContextMenuOpenDirection.TopRight;
+                case MenuAnchorPoint.BottomLeft:
+                    return ContextMenuOpenDirection.BottomLeft;
+                case MenuAnchorPoint.BottomRight:
+                    return ContextMenuOpenDirection.BottomRight;
+                case MenuAnchorPoint.CenterLeft:
+                    return ContextMenuOpenDirection.CenterLeft;
+                case MenuAnchorPoint.CenterRight:
+                    return ContextMenuOpenDirection.CenterRight;
+                default:
+                case MenuAnchorPoint.Default:
+                    return ContextMenuOpenDirection.BottomRight;
+            }
+        }
+    }
+}

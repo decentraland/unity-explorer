@@ -1,0 +1,513 @@
+using Cysharp.Threading.Tasks;
+using DCL.Backpack;
+using DCL.Communities;
+using DCL.Communities.CommunitiesBrowser;
+using DCL.Credits;
+using DCL.FeatureFlags;
+using DCL.Diagnostics;
+using DCL.Events;
+using DCL.EventsApi;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.InWorldCamera.CameraReelGallery;
+using DCL.Navmap;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Places;
+using DCL.Settings;
+using DCL.Shop;
+using DCL.UI;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using DCL.VoiceChat;
+using MVC;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using Utility;
+
+namespace DCL.ExplorePanel
+{
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IReshowController<ExplorePanelParameter>
+    {
+        private readonly BackpackController backpackController;
+        private readonly ShopController shopController;
+        private readonly SidebarProfileButtonPresenter profileButtonPresenter;
+        private readonly ProfileMenuController profileMenuController;
+        private readonly DCLInput dclInput;
+        private readonly IInputBlock inputBlock;
+        private readonly bool includeCameraReel;
+        private readonly IMVCManager mvcManager;
+        private readonly bool includeDiscover;
+        private readonly bool includeInGameShop;
+        private readonly HttpEventsApiService eventsApiService;
+        private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
+        private bool includeCommunities;
+
+        private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
+
+        private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
+        private Dictionary<ExploreSections, ISection> exploreSections;
+        private SectionSelectorController<ExploreSections> sectionSelectorController;
+        private CancellationTokenSource? animationCts;
+        private CancellationTokenSource? profileMenuCts;
+        private CancellationTokenSource setupExploreSectionsCts;
+        private CancellationTokenSource checkForLiveEventsCts;
+        private TabSelectorView? previousSelector;
+        private ExploreSections lastShownSection;
+        private bool isControlClosing;
+
+        public NavmapController NavmapController { get; }
+        public CameraReelController CameraReelController { get; }
+        public SettingsController SettingsController { get; }
+        public CommunitiesBrowserController CommunitiesBrowserController { get; }
+        public PlacesController PlacesController { get; }
+        public EventsController EventsController { get; }
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+
+        public event Action? PlacesOpenedFromStartMenu;
+        public event Action? EventsOpenedFromStartMenu;
+
+        public ExplorePanelController(ViewFactoryMethod viewFactory,
+            NavmapController navmapController,
+            SettingsController settingsController,
+            BackpackController backpackController,
+            CameraReelController cameraReelController,
+            SidebarProfileButtonPresenter profileButtonPresenter,
+            ProfileMenuController profileMenuController,
+            CommunitiesBrowserController communitiesBrowserController,
+            PlacesController placesController,
+            EventsController eventsController,
+            ShopController shopController,
+            IInputBlock inputBlock,
+            HttpEventsApiService eventsApiService,
+            IMVCManager mvcManager,
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
+            ICreditsPanelController creditsPanelController)
+            : base(viewFactory)
+        {
+            NavmapController = navmapController;
+            SettingsController = settingsController;
+            this.backpackController = backpackController;
+            CameraReelController = cameraReelController;
+            this.profileButtonPresenter = profileButtonPresenter;
+            dclInput = DCLInput.Instance;
+            this.profileMenuController = profileMenuController;
+            this.inputBlock = inputBlock;
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CameraReel);
+            this.mvcManager = mvcManager;
+            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.Discover);
+            includeInGameShop = FeaturesRegistry.Instance.IsEnabled(FeatureId.InGameShop);
+            this.eventsApiService = eventsApiService;
+            this.communitiesLiveTracker = communitiesLiveTracker;
+            CommunitiesBrowserController = communitiesBrowserController;
+            PlacesController = placesController;
+
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
+
+            EventsController = eventsController;
+            this.shopController = shopController;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            profileMenuCts.SafeCancelAndDispose();
+            setupExploreSectionsCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
+
+            communitiesLiveBadgeSubscription?.Dispose();
+        }
+
+        public void OnReshowWhileVisible(ExplorePanelParameter parameter)
+        {
+            ExploreSections sectionToShow = parameter.IsSectionProvided ? parameter.Section : lastShownSection;
+
+            if (sectionToShow != lastShownSection)
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+
+            ShowSection(sectionToShow);
+
+            if (parameter.BackpackSection != null)
+                backpackController.Toggle(parameter.BackpackSection.Value);
+
+            if (parameter.SettingsSection != null)
+                SettingsController.Toggle(parameter.SettingsSection.Value);
+
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
+        }
+
+        private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow) =>
+            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(sectionToShow)));
+
+        protected override void OnViewInstantiated()
+        {
+            setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
+            SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
+            viewInstance!.SetLiveEventsCounter(0);
+
+            viewInstance.CommunitiesLiveBadge.SetActive(communitiesLiveTracker.HasAnyJoinedCommunityLive.Value);
+            communitiesLiveBadgeSubscription = communitiesLiveTracker.HasAnyJoinedCommunityLive.Subscribe(OnCommunitiesLiveStateChanged);
+        }
+
+        private void OnCommunitiesLiveStateChanged(bool hasAnyLive)
+        {
+            if (viewInstance != null)
+                viewInstance.CommunitiesLiveBadge.SetActive(hasAnyLive);
+        }
+
+        private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
+        {
+            exploreSections = new Dictionary<ExploreSections, ISection>
+            {
+                { ExploreSections.Navmap, NavmapController },
+                { ExploreSections.Settings, SettingsController },
+                { ExploreSections.Backpack, backpackController },
+                { ExploreSections.CameraReel, CameraReelController },
+                { ExploreSections.Communities, CommunitiesBrowserController },
+                { ExploreSections.Places, PlacesController },
+                { ExploreSections.Events, EventsController },
+                { ExploreSections.Shop, shopController },
+            };
+
+            includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+
+            lastShownSection = includeDiscover ? ExploreSections.Events : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
+
+            sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, lastShownSection);
+
+            foreach (KeyValuePair<ExploreSections, ISection> keyValuePair in exploreSections)
+                keyValuePair.Value.Deactivate();
+
+            tabsBySections = viewInstance!.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
+
+            foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
+            {
+                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+
+                if ((section == ExploreSections.CameraReel && !includeCameraReel) ||
+                    (section == ExploreSections.Communities && !includeCommunities) ||
+                    (section == ExploreSections.Places && !includeDiscover) ||
+                    (section == ExploreSections.Events && !includeDiscover) ||
+                    (section == ExploreSections.Shop && !includeInGameShop))
+                {
+                    tabSelector.gameObject.SetActive(false);
+                    continue;
+                }
+
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(isOn =>
+                    {
+                        ToggleSection(isOn, tabSelector, section, true);
+
+                        if (!isOn) return;
+
+                        switch (section)
+                        {
+                            case ExploreSections.Places:
+                                PlacesOpenedFromStartMenu?.Invoke();
+                                break;
+                            case ExploreSections.Events:
+                                EventsOpenedFromStartMenu?.Invoke();
+                                break;
+                        }
+
+                    }
+                );
+            }
+
+            viewInstance?.ProfileWidget?.OpenProfileButton?.Button?.onClick.AddListener(ShowProfileMenuAsync);
+        }
+
+        protected override void OnViewShow()
+        {
+            isControlClosing = false;
+            sectionSelectorController.ResetAnimators();
+
+            ExploreSections sectionToShow = inputData.IsSectionProvided ? inputData.Section : lastShownSection;
+
+            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
+            {
+                ToggleSection(section == sectionToShow, tab, section, true);
+                sectionSelectorController.SetAnimationState(section == sectionToShow, tabsBySections[section]);
+            }
+
+            if (inputData.BackpackSection != null)
+                backpackController.Toggle(inputData.BackpackSection.Value);
+
+            if (inputData.SettingsSection != null)
+                SettingsController.Toggle(inputData.SettingsSection.Value);
+
+            profileButtonPresenter.LoadProfile();
+
+            profileMenuCts = profileMenuCts.SafeRestart();
+
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
+
+            BlockUnwantedInputs();
+            RegisterHotkeys();
+
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
+
+            if (inputData.IsSectionProvided)
+                return;
+
+            // Only triggers OpenedFromStartMenu events if IsSectionProvided is false.
+            // This means that the section has not opened by shortcut nor sidebar.
+            switch (sectionToShow)
+            {
+                case ExploreSections.Places:
+                    PlacesOpenedFromStartMenu?.Invoke();
+                    break;
+                case ExploreSections.Events:
+                    EventsOpenedFromStartMenu?.Invoke();
+                    break;
+            }
+        }
+
+        private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
+        {
+            if (isOn && animate && shownSection != lastShownSection)
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+
+            animationCts.SafeCancelAndDispose();
+            animationCts = new CancellationTokenSource();
+            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+
+            if (!isOn) return;
+
+            if (shownSection == lastShownSection)
+                exploreSections[lastShownSection].Activate();
+
+            lastShownSection = shownSection;
+        }
+
+        private void RegisterHotkeys()
+        {
+            dclInput.Shortcuts.MainMenu.canceled += OnCloseMainMenu;
+            dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
+            dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
+            dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
+            dclInput.Shortcuts.Communities.performed += OnCommunitiesHotkeyPressed;
+            dclInput.Shortcuts.Places.performed += OnPlacesHotkeyPressed;
+            dclInput.Shortcuts.Events.performed += OnEventsHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed += OnCameraReelHotkeyPressed;
+        }
+
+        private void OnCameraReelHotkeyPressed(InputAction.CallbackContext ctx)
+        {
+            if (!includeCameraReel) return;
+
+            if (lastShownSection != ExploreSections.CameraReel)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                ShowSection(ExploreSections.CameraReel);
+            }
+            else
+                isControlClosing = true;
+        }
+
+        private void OnCloseMainMenu(InputAction.CallbackContext obj)
+        {
+            // Search bar could be focused when closing the menu, so we need to remove the focus,
+            // which will also re-enable shortcuts
+            EventSystem.current.SetSelectedGameObject(null);
+
+            profileMenuController.HideViewAsync(CancellationToken.None).Forget();
+            isControlClosing = true;
+        }
+
+        private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (lastShownSection != ExploreSections.Navmap)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                ShowSection(ExploreSections.Navmap);
+            }
+            else
+                isControlClosing = true;
+        }
+
+        private void OnSettingsHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (lastShownSection != ExploreSections.Settings)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                ShowSection(ExploreSections.Settings);
+            }
+            else
+                isControlClosing = true;
+        }
+
+        private void OnCommunitiesHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (!includeCommunities) return;
+
+            if (lastShownSection != ExploreSections.Communities)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                ShowSection(ExploreSections.Communities);
+            }
+            else
+                isControlClosing = true;
+        }
+
+        private void OnPlacesHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (!includeDiscover) return;
+
+            if (lastShownSection != ExploreSections.Places)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                ShowSection(ExploreSections.Places);
+            }
+            else
+                isControlClosing = true;
+        }
+
+        private void OnEventsHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (!includeDiscover) return;
+
+            if (lastShownSection != ExploreSections.Events)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                ShowSection(ExploreSections.Events);
+            }
+            else
+                isControlClosing = true;
+        }
+
+        private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (lastShownSection != ExploreSections.Backpack)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                ShowSection(ExploreSections.Backpack);
+            }
+            else
+                isControlClosing = true;
+        }
+
+        private void ShowSection(ExploreSections section)
+        {
+            ToggleSection(true, tabsBySections[section], section, true);
+        }
+
+        protected override void OnViewClose()
+        {
+            foreach (ISection exploreSectionsValue in exploreSections.Values)
+                exploreSectionsValue.Deactivate();
+
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
+
+            profileMenuCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
+
+            UnblockUnwantedInputs();
+            UnRegisterHotkeys();
+        }
+
+        private void UnRegisterHotkeys()
+        {
+            dclInput.Shortcuts.MainMenu.canceled -= OnCloseMainMenu;
+            dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
+            dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
+            dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
+            dclInput.Shortcuts.Communities.performed -= OnCommunitiesHotkeyPressed;
+            dclInput.Shortcuts.Places.performed -= OnPlacesHotkeyPressed;
+            dclInput.Shortcuts.Events.performed -= OnEventsHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
+        }
+
+        private void BlockUnwantedInputs()
+        {
+            inputBlock.Disable(InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+        }
+
+        private void UnblockUnwantedInputs()
+        {
+            inputBlock.Enable(InputMapComponent.Kind.Camera, InputMapComponent.Kind.Player);
+        }
+
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct),
+                                  UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
+                                  viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
+        }
+
+        private async void ShowProfileMenuAsync()
+        {
+            profileMenuCts = profileMenuCts.SafeRestart();
+
+            if (profileMenuController.State != ControllerState.ViewHidden)
+                return;
+
+            try
+            {
+                viewInstance!.ProfileMenuCloserButton.gameObject.SetActive(true);
+                viewInstance.ProfileMenuCloserButton.onClick.AddListener(OnProfileMenuCloserClicked);
+
+                await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0), new ControllerNoData(), profileMenuCts.Token);
+                await profileMenuController.HideViewAsync(CancellationToken.None);
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancellations ignored
+            }
+            finally
+            {
+                if (viewInstance != null)
+                {
+                    viewInstance.ProfileMenuCloserButton.onClick.RemoveListener(OnProfileMenuCloserClicked);
+                    viewInstance.ProfileMenuCloserButton.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private void OnProfileMenuCloserClicked() =>
+            profileMenuCts?.Cancel();
+
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
+        {
+            Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true).SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
+        }
+    }
+
+    public readonly struct ExplorePanelParameter
+    {
+        public readonly ExploreSections Section;
+        public readonly BackpackSections? BackpackSection;
+        public readonly SettingsController.SettingsSection? SettingsSection;
+
+        /// <summary>
+        /// Whether a specific section has to be opened when the explore panel is shown or not (using the default one).
+        /// </summary>
+        public readonly bool IsSectionProvided;
+
+        public ExplorePanelParameter(ExploreSections section, BackpackSections? backpackSection = null, SettingsController.SettingsSection? settingsSection = null)
+        {
+            Section = section;
+            BackpackSection = backpackSection;
+            SettingsSection = settingsSection;
+            IsSectionProvided = true;
+        }
+    }
+}

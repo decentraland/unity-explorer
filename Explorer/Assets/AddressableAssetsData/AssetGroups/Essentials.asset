@@ -1,0 +1,413 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Essentials
+  m_EditorClassIdentifier: 
+  m_GroupName: Essentials
+  m_GUID: 47f803e1e9c5079449bd106df98a0b7d
+  m_SerializeEntries:
+  - m_GUID: 00657accebbe6c348b5208e385e5ec73
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 05befaedcb2db4303a48d552554db836
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/Inter_24pt-SemiBold.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0703f7736b8c9b244953ae7c6ff9a037
+    m_Address: LODSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0eecf14978c1aa74381023946dde5c78
+    m_Address: Character Object
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 123e00daa809b4e31934bfaddb9db160
+    m_Address: NoDiskSpaceScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 13e534245f7a87d498ae850d58b9115f
+    m_Address: Assets/DCL/VoiceChat/VoiceChatPlaybackAudioSource.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 17775668c745d4edfae3bff500f95f32
+    m_Address: F_Eyes_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b6579d7e91068e41872ba3a3eb66fdf
+    m_Address: Avatar_Male_Mesh
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d6ca002a7e7b4f9c881a203eb97996f
+    m_Address: M_Mouth_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1dbd1decb60282248bd089c32bec5d02
+    m_Address: SkyboxRenderController
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 23318cb20f4dbe9429dd8be585ef75d6
+    m_Address: CharacterPreviewContainer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2a58c49334237a24781cae8b1e3fa351
+    m_Address: EmbeddedEmotes
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bd30078b12df4679bed329bf3c002ad
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Ghosts/HologramShader.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2df144b808932744487656f89a42fb11
+    m_Address: FlatNormal_256_BC5.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b17a8a5ab9ee104899eb22c70935c38
+    m_Address: Assets/DCL/StylizedSkybox/Animations/DirectionalLightCycle.anim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c7d798e18864314497aa15d59d3ee1b
+    m_Address: Assets/DCL/Character/CharacterMotion/Assets/GliderProp.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 41b6cad6750bc4b35ba63ebbeb956830
+    m_Address: M_EyeBrows_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4428c33e669492748afd75828965504b
+    m_Address: FlatNormal_512_BC5.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46abfd8d700191d43b8892c99421c5a7
+    m_Address: PerformanceIssuePrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4ae49825f39c564478515b4c2ae201af
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Toon.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f24a591312ba473ab5ac65d6658cb94
+    m_Address: SDKVirtualCamera
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 502bd975d08eca847807411acf6a73d2
+    m_Address: Assets/DCL/UI/ColorPicker/NameColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 508289f0a6feab048964059d0534fdd7
+    m_Address: PlaceCategories
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52c856180dc5d6447b902f06d38f4161
+    m_Address: LightSourceDefaults
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 55469a28bf0d2b14db8e6452e462bd4c
+    m_Address: LavaFlow.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 56a9743f8d94f684190dc11bb521fb78
+    m_Address: Scene.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 594ae6e7cd408424cb8433ddba60315d
+    m_Address: Assets/DCL/Notifications/Assets/NotificationDefaultThumbnails.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5de5609d1e6c441b5a7c56a77903cab7
+    m_Address: F_Mouth_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 62f68ba25f6c905428b36a081b072566
+    m_Address: EmoteAudioSource
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 63cc526b36c1242aab3ba3e09fb89896
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/Inter_24pt-Regular.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 654e496ed12f12e4f80243ab9f1d97c7
+    m_Address: Character Camera
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6578400f95c457644a7e77726c1305a2
+    m_Address: AvatarAudioSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6a252383173104e17acac54eb364afc4
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/PointAtMarker.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
+    m_Address: DefaultBlack_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73ed2f04eda7b4677b5c6e9d73681b0e
+    m_Address: Assets/DCL/SDKComponents/Fonts/AtkinsonHyperlegibleMono.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 762878a7bf3715b44ac918395f691db6
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker.glb
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 77042a6626e1a064f90b622d0381d7df
+    m_Address: JumpIndicator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a0ca548bf4cd42fa9f1c58db4332466
+    m_Address: Assets/DCL/SDKComponents/Fonts/NotoSerif.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c27dfc00496c5442a73aeede131877d
+    m_Address: Assets/Plugins/UUAV/Packages/UUAV/Runtime/Shaders/NV12ToRGB.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f09a2d0d9adc4e43b67879ab9cdf360
+    m_Address: LightSourcePrefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f53a7b2e8dca514c9c8f3114f3da727
+    m_Address: InWorldCamera_TakeScreenshot
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81289e85b8c13dc4b8ea68b7940e76a5
+    m_Address: LandscapeAudioSystemSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82655edf5bc71448d9d43617764bb7d8
+    m_Address: CreditsTopUpPopup
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8a91951d2f71f174d998356f01a3603c
+    m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b74e4206cd344b4c80b50f32f6c403a
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker/DestinationMarker.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c2fa120406894778bdb7d4e45135d3b
+    m_Address: SDKEntityTriggerArea
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ce65114d99514edba1ead5ffdfb595a
+    m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/AuthScreenImg.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
+    m_Address: AvatarBase
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 925419b3e8ba740ef9f36530d3e3a0bc
+    m_Address: Assets/DCL/Donations/UI/Prefabs/DonationsPanel.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 933532a4fcc9baf4fa0491de14d08ed7
+    m_Address: Lit.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9372c7ef01a5a4a52a0e9b3467605717
+    m_Address: M_Eyes_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c4c0e79124f01744a5f969e08ad0370
+    m_Address: RemoteAvatarCollider
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab23199c8104ca44e837d8ac570fee44
+    m_Address: BugReportView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ace53bd2bc5e2b8439785bb3122b12e3
+    m_Address: Assets/DCL/InWorldCamera/InWorldCamera/Prefabs/InWorldCamera.FollowTarget.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0989591ebd3293419eece13d705a1e3
+    m_Address: DefaultWhite_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7201c2efeb480b4293d5baae77973d6
+    m_Address: DefaultWhite_512_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7e9188aeab694320bb4c30078851643
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/LiberationSans-Regular.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bda7566751d4243fb842e1a272cb9f83
+    m_Address: MapCategoryIconMapping
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c16a7c2b7d6b642a4822df00f8bd5f71
+    m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopupWithRetry.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7939fa59480e654a8537b6fc2f007e3
+    m_Address: MediaPlayer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c9870b17ce36346458f07a63c096a16a
+    m_Address: FaillingLODCubePivot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb23ae366d31146bf85b403f6149419b
+    m_Address: SDKParticleSystem
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d08e60223593f4abe8863c64316f3476
+    m_Address: FlipLinearToGammaMaterial.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2b42532e2af88d479961e27dd400651
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown_Unselectable.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9a7adc162dc338449107a4654a26d50
+    m_Address: WorldAudioContainer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df3decac75a242f4689cb445dc93eb06
+    m_Address: UIAudioContainer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e18034962a56eac40ab5df62e159c314
+    m_Address: Avatar Randomizer.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e38b0fb061d7ffa47b54d89ecd483bd2
+    m_Address: GeneralAudioMixer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e6e9a19c3678ded42a3bc431ebef7dbd
+    m_Address: FallbackError.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e8cf73ccd47a385498b71ec58534d03c
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/ComputeShaderSkinning.compute
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e8f593404f0a19749bc68df2b5064215
+    m_Address: StylizedSkyboxAnimation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eae766b15f997414794bfd4f17de5949
+    m_Address: F_Eyebrows_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3a58c428a71b443e883f8fac00cfbbd
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/EmoteMaskCatalog.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3fd7329d073f964aaec82eb9acc9ed3
+    m_Address: DefaultBlack_512_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f87c3e77ea2e0ec45b0ddef98bfeb066
+    m_Address: Assets/DCL/Backpack/Gifting/Notifications/Prefab/GiftReceivedPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa8bec03ac49f9d44abac12af9e4aa39
+    m_Address: AvatarHighlight.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa9a67059d8a204408ce435cc8827612
+    m_Address: Assets/DCL/VoiceChat/VoiceChatMicrophoneAudioSource.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe492edbd0cef4457951fba2129d4c0a
+    m_Address: CreditsPurchaseModal
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: f1becbbb6af19b14bafe1985627ea5ea, type: 2}
+    - {fileID: 11400000, guid: 9457e5517ec7d134d8c10bdce90c02c6, type: 2}

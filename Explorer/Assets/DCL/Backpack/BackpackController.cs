@@ -1,0 +1,349 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.AvatarSection.Outfits;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.AvatarSection.Outfits.Logger;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
+using DCL.Backpack.AvatarSection.Outfits.Services;
+using DCL.Backpack.AvatarSection.Outfits.Slots;
+using DCL.Backpack.BackpackBus;
+using DCL.Backpack.CharacterPreview;
+using DCL.Backpack.EmotesSection;
+using DCL.Browser;
+using DCL.CharacterPreview;
+using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.UI;
+using DCL.WebRequests;
+using ECS;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using UnityEngine;
+using Utility;
+using Avatar = DCL.Profiles.Avatar;
+
+namespace DCL.Backpack
+{
+    public class BackpackController : ISection, IDisposable
+    {
+        private readonly BackpackView view;
+        private readonly BackpackCommandBus backpackCommandBus;
+        private readonly BackpackInfoPanelController emoteInfoPanelController;
+        private readonly RectTransform rectTransform;
+        private readonly AvatarController avatarController;
+        private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
+        private readonly ICursor cursor;
+        private readonly World world;
+        private readonly Entity playerEntity;
+        private readonly BackpackEmoteGridController backpackEmoteGridController;
+        private readonly EmotesController emotesController;
+        private readonly Dictionary<BackpackSections, ISection> backpackSections;
+        private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
+        private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
+        private readonly IBackpackEventBus backpackEventBus;
+        private readonly BackpackSections currentSection = BackpackSections.Avatar;
+        private readonly IRealmData realmData;
+
+        private BackpackSections lastShownSection;
+        private CancellationTokenSource? animationCts;
+        private CancellationTokenSource? profileLoadingCts;
+        private bool isAvatarLoaded;
+        private bool instantSectionToggle;
+
+        public BackpackController(
+            BackpackView view,
+            ISelfProfile selfProfile,
+            UnityAppWebBrowser webBrowser,
+            AvatarView avatarView,
+            NftTypeIconSO rarityInfoPanelBackgrounds,
+            BackpackCommandBus backpackCommandBus,
+            IBackpackEventBus backpackEventBus,
+            BackpackGridController backpackGridController,
+            BackpackInfoPanelController wearableInfoPanelController,
+            BackpackInfoPanelController emoteInfoPanelController,
+            World world, Entity playerEntity,
+            BackpackEmoteGridController backpackEmoteGridController,
+            AvatarSlotView[] avatarSlotViews,
+            EmotesController emotesController,
+            BackpackCharacterPreviewController backpackCharacterPreviewController,
+            IThumbnailProvider thumbnailProvider,
+            IInputBlock inputBlock,
+            ICursor cursor,
+            OutfitsRepository outfitsRepository,
+            IRealmData realmData,
+            IWebRequestController webController,
+            IEquippedWearables equippedWearables,
+            IWearableStorage wearableStorage,
+            INftNamesProvider nftNamesProvider,
+            IEventBus eventBus,
+            Sprite deleteIcon,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IOwnedNftFilter ownedNftFilter)
+        {
+            this.view = view;
+            this.backpackCommandBus = backpackCommandBus;
+            this.emoteInfoPanelController = emoteInfoPanelController;
+            this.world = world;
+            this.playerEntity = playerEntity;
+            this.backpackEmoteGridController = backpackEmoteGridController;
+            this.emotesController = emotesController;
+            this.backpackEventBus = backpackEventBus;
+            this.backpackCharacterPreviewController = backpackCharacterPreviewController;
+            rectTransform = view.transform.parent.GetComponent<RectTransform>();
+
+            var categoriesPresenter = new CategoriesPresenter(avatarView.CategoriesView,
+                backpackGridController,
+                backpackCommandBus,
+                backpackEventBus,
+                inputBlock);
+
+            var screenshotService = new AvatarScreenshotService(selfProfile);
+            var outfitsLogger = new OutfitsLogger(wearableStorage, realmData);
+            var outfitSlotFactory = new OutfitSlotPresenterFactory(screenshotService);
+            var outfitsCollection = new OutfitsCollection();
+            var outfitApplier = new OutfitApplier(backpackCommandBus);
+            var loadOutfitsCommand = new LoadOutfitsCommand(webController,
+                selfProfile,
+                decentralandUrlsSource,
+                outfitsLogger,
+                outfitsRepository);
+            var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
+                outfitsRepository,
+                wearableStorage,
+                eventBus,
+                outfitsLogger,
+                ownedNftFilter);
+            var deleteOutfitCommand = new DeleteOutfitCommand(outfitsRepository, screenshotService, deleteIcon);
+            var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
+            var previewOutfitCommand = new PreviewOutfitCommand(outfitApplier,
+                equippedWearables,
+                selfProfile,
+                wearableStorage,
+                outfitsLogger,
+                ownedNftFilter);
+
+            var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
+                eventBus,
+                backpackEventBus,
+                outfitApplier,
+                outfitsCollection,
+                webBrowser,
+                equippedWearables,
+                loadOutfitsCommand,
+                saveOutfitCommand,
+                deleteOutfitCommand,
+                checkOutfitsBannerCommand,
+                previewOutfitCommand,
+                screenshotService,
+                backpackCharacterPreviewController,
+                outfitSlotFactory,
+                ownedNftFilter);
+
+            avatarController = new AvatarController(
+                avatarView,
+                webBrowser,
+                avatarSlotViews,
+                rarityInfoPanelBackgrounds,
+                backpackCommandBus,
+                backpackEventBus,
+                wearableInfoPanelController,
+                backpackGridController,
+                categoriesPresenter,
+                outfitsPresenter,
+                thumbnailProvider,
+                decentralandUrlsSource);
+
+            backpackSections = new Dictionary<BackpackSections, ISection>
+            {
+                { BackpackSections.Avatar, avatarController },
+                { BackpackSections.Emotes, emotesController },
+            };
+
+            foreach (KeyValuePair<BackpackSections, ISection> keyValuePair in backpackSections)
+                keyValuePair.Value.Deactivate();
+
+            sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
+            tabsBySections = view.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
+
+            foreach ((BackpackSections section, TabSelectorView? tabSelector) in tabsBySections)
+            {
+                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
+                    isOn =>
+                    {
+                        ToggleSection(isOn, tabSelector, section, true);
+
+                        if (isOn)
+                        {
+                            backpackEventBus.SendChangedBackpackSectionEvent(section);
+                        }
+                    }
+                );
+            }
+
+
+            this.cursor = cursor;
+            view.TipsButton.onClick.AddListener(ToggleTipsContent);
+            view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
+        }
+
+        private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, BackpackSections shownSection, bool animate)
+        {
+            if(isOn && animate && shownSection != lastShownSection)
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+
+            animationCts.SafeCancelAndDispose();
+            animationCts = new CancellationTokenSource();
+            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+
+            if (isOn)
+            {
+                lastShownSection = shownSection;
+                backpackEventBus.SendChangedBackpackSectionEvent(shownSection);
+            }
+        }
+
+        public void Dispose()
+        {
+            view.TipsPanelDeselectable.OnDeselectEvent -= ToggleTipsContent;
+            avatarController.Dispose();
+            emotesController.Dispose();
+            backpackEmoteGridController.Dispose();
+            animationCts.SafeCancelAndDispose();
+            profileLoadingCts.SafeCancelAndDispose();
+            backpackCharacterPreviewController.Dispose();
+            emoteInfoPanelController.Dispose();
+        }
+
+        private void ToggleTipsContent()
+        {
+            if (!view.TipsPanelDeselectable.gameObject.activeInHierarchy)
+                view.TipsPanelDeselectable.SelectElement();
+
+            view.TipsPanelDeselectable.gameObject.SetActive(!view.TipsPanelDeselectable.gameObject.activeInHierarchy);
+        }
+
+        private async UniTaskVoid AwaitForProfileAsync(CancellationToken ct)
+        {
+            if (ct.IsCancellationRequested) return;
+
+            isAvatarLoaded = false;
+
+            var avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
+
+            Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
+            backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.BACKPACK_PREVIEW_POSITION);
+
+            while (!avatarShapeComponent.WearablePromise.IsConsumed)
+            {
+                avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
+                await UniTask.Yield();
+            }
+
+            if (ct.IsCancellationRequested) return;
+
+            var wearables = new List<string>(avatar.Wearables.Count);
+            foreach (var w in avatar.Wearables) wearables.Add(w.Shorten());
+
+            var command = new BackpackEquipOutfitCommand(
+                avatar.BodyShape.Value,
+                wearables,
+                avatar.EyesColor,
+                avatar.HairColor,
+                avatar.SkinColor,
+                avatar.ForceRender,
+                useFullUrns: true
+            );
+            backpackCommandBus.SendCommand(command);
+
+            for (var i = 0; i < avatar.Emotes.Count; i++)
+            {
+                URN avatarEmote = avatar.Emotes[i];
+                if (avatarEmote.IsNullOrEmpty()) continue;
+                backpackCommandBus.SendCommand(new BackpackEquipEmoteCommand(avatarEmote.Shorten(), i, false));
+            }
+
+            isAvatarLoaded = true;
+        }
+
+        public void Activate()
+        {
+            profileLoadingCts = profileLoadingCts.SafeRestart();
+            AwaitForProfileAsync(profileLoadingCts.Token).Forget();
+
+            backpackSections[currentSection].Activate();
+
+            view.gameObject.SetActive(true);
+            backpackCharacterPreviewController.OnBeforeShow();
+            backpackCharacterPreviewController.OnShow();
+
+            foreach ((BackpackSections section, TabSelectorView? tab) in tabsBySections)
+                ToggleSection(section == BackpackSections.Avatar, tab, section, true);
+
+            sectionSelectorController.SetAnimationState(true, tabsBySections[BackpackSections.Avatar]);
+
+            cursor.Unlock();
+        }
+
+        public void Deactivate()
+        {
+            foreach (ISection backpackSectionsValue in backpackSections.Values)
+                backpackSectionsValue.Deactivate();
+
+            //Resets the tab selector to the default state (Avatar selected and open)
+            foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
+                tabSelector.TabSelectorViews.TabSelectorToggle.isOn = tabSelector.Section == BackpackSections.Avatar;
+
+            profileLoadingCts.SafeCancelAndDispose();
+
+            if (isAvatarLoaded)
+                backpackCommandBus.SendCommand(new BackpackPublishProfileCommand());
+
+            view.gameObject.SetActive(false);
+            backpackCharacterPreviewController.OnHide();
+
+            backpackEventBus.SendBackpackDeactivateEvent();
+        }
+
+        public void Animate(int triggerId)
+        {
+            view.PanelAnimator.SetTrigger(triggerId);
+            view.HeaderAnimator.SetTrigger(triggerId);
+        }
+
+        public void ResetAnimator()
+        {
+            view.PanelAnimator.Rebind();
+            view.HeaderAnimator.Rebind();
+            view.PanelAnimator.Update(0);
+            view.HeaderAnimator.Update(0);
+        }
+
+        public RectTransform GetRectTransform() =>
+            rectTransform;
+
+        public void Toggle(BackpackSections section)
+        {
+            bool tmp = instantSectionToggle;
+            instantSectionToggle = true;
+
+            foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
+            {
+                if (tabSelector.Section != section) continue;
+                tabSelector.TabSelectorViews.TabSelectorToggle.isOn = true;
+            }
+
+            instantSectionToggle = tmp;
+        }
+    }
+}

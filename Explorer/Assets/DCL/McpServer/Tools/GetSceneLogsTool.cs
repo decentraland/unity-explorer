@@ -1,0 +1,84 @@
+using Cysharp.Threading.Tasks;
+using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
+using DCL.Optimization.ThreadSafePool;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using UnityEngine;
+
+namespace DCL.McpServer.Tools
+{
+    public class GetSceneLogsTool : McpTool
+    {
+        private enum Severity : byte
+        {
+            ALL,
+            ERROR,
+        }
+
+        private const int DEFAULT_LIMIT = 100;
+        private const int MAX_LIMIT = 500;
+
+        // Thread-safe because the tool runs on the transport's thread-pool thread and requests can overlap.
+        private static readonly ThreadSafeListPool<SceneLogBuffer.Entry> ENTRIES_POOL = new (MAX_LIMIT, 2);
+
+        private readonly SceneLogBuffer logBuffer;
+
+        public override string Name => "get_scene_logs";
+
+        public override string Description =>
+            "Read the scene's JavaScript console output (logs, warnings, errors and exceptions). Entries carry monotonic sequence numbers; "
+            + "pass the last seen sequence as sinceSeq to poll incrementally.";
+
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Integer("limit", "Maximum entries to return (newest win). Default 100.")
+                  .Enum<Severity>("severity", "Filter by severity. Default all.")
+                  .Integer("sinceSeq", "Only return entries with a sequence number greater than this.");
+
+        public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+
+        // SceneLogBuffer is thread-safe and nothing else here touches ECS/Unity state, so the tool runs on the
+        // transport's thread-pool thread and answers even while the main thread is busy loading or paused.
+        public override bool RequiresMainThread => false;
+
+        public GetSceneLogsTool(SceneLogBuffer logBuffer)
+        {
+            this.logBuffer = logBuffer;
+        }
+
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        {
+            int limit = Mathf.Clamp(arguments.GetInt("limit", DEFAULT_LIMIT), 1, MAX_LIMIT);
+
+            if (!arguments.TryGetEnum("severity", Severity.ALL, out Severity severity))
+                return UniTask.FromResult(McpToolResult.Error("severity must be one of: all, error."));
+
+            bool errorsOnly = severity == Severity.ERROR;
+            long sinceSeq = arguments.GetLong("sinceSeq", -1);
+
+            using var scope = ENTRIES_POOL.Get(out List<SceneLogBuffer.Entry> entries);
+            logBuffer.CopyTo(entries, sinceSeq, errorsOnly, limit);
+
+            var output = new StringBuilder();
+
+            output.Append("latestSeq=")
+                  .Append(logBuffer.LatestSeq)
+                  .Append(" returned=")
+                  .Append(entries.Count)
+                  .AppendLine();
+
+            foreach (SceneLogBuffer.Entry entry in entries)
+            {
+                output.Append('#')
+                      .Append(entry.Seq)
+                      .Append(' ')
+                      .Append(entry.Message)
+                      .AppendLine();
+            }
+
+            return UniTask.FromResult(McpToolResult.Text(output.ToString()));
+        }
+    }
+}
