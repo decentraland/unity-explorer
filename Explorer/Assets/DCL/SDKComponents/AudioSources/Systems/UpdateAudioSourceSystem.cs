@@ -152,9 +152,6 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     if (sdkComponent is {HasPlaying: true, Playing: true })
                     {
-                        // LWW PUT with playing:true is an explicit retrigger — seek first so the cursor is correct.
-                        // CurrentTime arrives from the scene unvalidated: clamp it into the clip's seekable
-                        // range, otherwise FMOD rejects the seek ("An invalid seek position was passed").
                         if (sdkComponent.HasCurrentTime)
                         {
                             float currentTime = sdkComponent.CurrentTime;
@@ -162,9 +159,13 @@ namespace DCL.SDKComponents.AudioSources
                             audioSource.time = float.IsNaN(currentTime)
                                 ? 0f
                                 : Mathf.Clamp(currentTime, 0f, Mathf.Max(0f, audioSource.clip.length - CLIP_END_SEEK_MARGIN));
-                        }
 
-                        audioSource.Play();
+                            audioSource.Play();
+                        }
+                        else if (!audioSource.isPlaying)
+                        {
+                            audioSource.Play();
+                        }
                     }
                     else
                         audioSource.Stop();
