@@ -163,6 +163,13 @@ namespace DCL.SyntheticInput.Components
         public bool TimedOut;
 
         /// <summary>
+        ///     No entity consumed the edge, so the pipeline fanned it out to the scene root — an untargeted edge is
+        ///     a broadcast, exactly as a human's click on nothing is. A miss that says this did reach the scene;
+        ///     one that does not was withheld from everyone (it named an entity) or never entered the pipeline.
+        /// </summary>
+        public bool RootBroadcast;
+
+        /// <summary>
         ///     The wire shape both driver front-ends (MCP tools, AltTester probes) hand back for a pointer gesture:
         ///     the same field means the same thing whichever tool or probe reports it.
         /// </summary>
@@ -208,6 +215,9 @@ namespace DCL.SyntheticInput.Components
 
             if (TimedOut)
                 json["timedOut"] = true;
+
+            if (RootBroadcast)
+                json["rootBroadcast"] = true;
 
             return json;
         }

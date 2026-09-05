@@ -66,7 +66,7 @@ namespace DCL.McpServer.Tools
                 return McpToolResult.Error(addressError!);
 
             if (!arguments.TryGetEnum("button", ClickButton.LEFT, out ClickButton button))
-                return McpToolResult.Error("button must be one of: left, right, middle.");
+                return McpToolResult.Error(arguments.EnumArgumentError<ClickButton>("button"));
 
             bool force = arguments.GetBool("force", false);
             bool device = arguments.GetBool("device", false);

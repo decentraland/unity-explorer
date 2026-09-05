@@ -81,7 +81,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetEnum("action", out SdkAction action))
-                return McpToolResult.Error("action is required (e.g. primary, secondary, action_3).");
+                return McpToolResult.Error(arguments.EnumArgumentError<SdkAction>("action"));
 
             float holdSeconds = Mathf.Clamp(arguments.GetFloat("holdSeconds", 0f), 0f, MAX_HOLD_SECONDS);
 

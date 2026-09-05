@@ -85,7 +85,7 @@ namespace DCL.McpServer.Tools
             int maxWidth = Mathf.Clamp(arguments.GetInt("maxWidth", DEFAULT_MAX_WIDTH), MIN_WIDTH, MAX_WIDTH);
 
             if (!arguments.TryGetEnum("quality", OutputFormat.JPG, out OutputFormat format))
-                return McpToolResult.Error("quality must be one of: jpg, png.");
+                return McpToolResult.Error(arguments.EnumArgumentError<OutputFormat>("quality"));
 
             bool asPng = format == OutputFormat.PNG;
             bool worldOnly = arguments.GetBool("worldOnly", false);

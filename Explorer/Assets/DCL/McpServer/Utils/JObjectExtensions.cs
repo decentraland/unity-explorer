@@ -142,6 +142,23 @@ namespace DCL.McpServer.Utils
             return hint == null ? string.Empty : hint.Append(')').ToString();
         }
 
+        /// <summary>
+        ///     The error for an enum argument <see cref="TryGetEnum{T}(JObject,string,out T,T[])" /> refused: what
+        ///     arrived, and the values that are accepted. Wire values are lowercase and matched exactly, so
+        ///     "PRIMARY" misses — and a caller told only "must be one of: primary, …" cannot see that its value
+        ///     was the right word in the wrong case, while one told "is required" for a value it did send re-sends
+        ///     the same thing. The accepted values come from the enum, the same source the schema is built from:
+        ///     a literal list here drifts silently the moment a member is added or renamed.
+        /// </summary>
+        public static string EnumArgumentError<T>(this JObject arguments, string name, T[]? allowed = null) where T : struct, Enum
+        {
+            string values = string.Join(", ", allowed == null ? McpWireEnum<T>.WIRE_NAMES : McpWireEnum<T>.WireNamesOf(allowed));
+
+            return arguments[name] == null
+                ? $"{name} is required, one of: {values}."
+                : $"{name} does not accept {Describe(arguments[name]!)}; the values are lowercase, one of: {values}.";
+        }
+
         /// <summary>What a token is, plus what it held — truncated, because a caller can pass anything.</summary>
         private static string Describe(JToken token)
         {

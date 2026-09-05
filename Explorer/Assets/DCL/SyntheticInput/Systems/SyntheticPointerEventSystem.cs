@@ -270,10 +270,26 @@ namespace DCL.SyntheticInput.Systems
                 return;
             }
 
+            // The pipeline echoes the aim it consumed; a frame it guarded away (cursor panning, in-world camera)
+            // echoes nothing, and an edge it never processed reached nobody — root included.
+            bool pipelineProcessed = World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity).SyntheticAimPoint == intent.InjectedAimPoint;
+
             SyntheticPointerResult result = BuildResult(in intent, sceneWorld,
                 in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
                 in World.Get<HoverStateComponent>(pipelineEntity),
                 out SyntheticPressHandoff? press);
+
+            // An untargeted edge no entity consumed is a broadcast: the scene root received it, exactly as it
+            // receives a human's click on nothing. A press the root received hands off its release like the
+            // aimless path does (Entity.Null: tick ordering only), so the driver can let go of what it pressed —
+            // a root left holding a button follows the camera into every gesture made in the meantime.
+            if (!result.Hit && pipelineProcessed && IsUntargeted(in intent))
+            {
+                result.RootBroadcast = true;
+
+                if (intent.EventType == PointerEventType.PetDown)
+                    press = new SyntheticPressHandoff { World = sceneWorld, Entity = Entity.Null, Tick = intent.InjectedTick };
+            }
 
             Vector3? deliveredPress = null;
 
@@ -312,6 +328,7 @@ namespace DCL.SyntheticInput.Systems
             {
                 Hit = false,
                 SceneEntityId = -1,
+                RootBroadcast = true,
             };
 
             ref readonly PlayerOriginRaycastResultForSceneEntities raycastResult = ref World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity);
@@ -323,6 +340,7 @@ namespace DCL.SyntheticInput.Systems
                 // The edge also landed entity-bound on the hovered target (which suppresses the global broadcast
                 // for that scene, exactly as a real key press would).
                 result.Hit = true;
+                result.RootBroadcast = false;
                 result.SceneEntityId = entityInfo.ColliderSceneEntityInfo.EntityReference.Id;
                 result.CrdtEntityId = entityInfo.ColliderSceneEntityInfo.SDKEntity.Id;
                 result.HoverText = ResolveHoverText(in entityInfo, World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips);
@@ -461,6 +479,14 @@ namespace DCL.SyntheticInput.Systems
 
         private static Vector3 ResolveAimPoint(in SyntheticPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>
             intent.AimPoint ?? ResolveEntityAimPoint(sceneWorld, targetEntity);
+
+        /// <summary>
+        ///     Whether the edge was posted without a target entity — the mirror of what TryResolveTargetEntity
+        ///     hands PostSyntheticInput: a first leg that named no entity, or a release whose press handed off
+        ///     Entity.Null. Only such an edge can have been broadcast to the scene root.
+        /// </summary>
+        private static bool IsUntargeted(in SyntheticPointerEventIntent intent) =>
+            intent.Press is { } press ? press.Entity == Entity.Null : intent.TargetEntityId < 0;
 
         /// <summary>
         ///     The entity the gesture was promised, or null when it named none. Resolved before the aim, because it

@@ -82,7 +82,7 @@ namespace DCL.McpServer.Tools
                 return McpToolResult.Error(buttonError!);
 
             if (!arguments.TryGetEnum("eventType", ClickKind.CLICK, out ClickKind kind))
-                return McpToolResult.Error("eventType must be one of: click, down, up.");
+                return McpToolResult.Error(arguments.EnumArgumentError<ClickKind>("eventType"));
 
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 

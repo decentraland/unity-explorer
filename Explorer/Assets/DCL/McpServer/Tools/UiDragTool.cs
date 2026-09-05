@@ -82,7 +82,7 @@ namespace DCL.McpServer.Tools
                 return McpToolResult.Error("coordinates must be normalized image values in [0, 1].");
 
             if (!arguments.TryGetEnum("path", DragPath.Auto, out DragPath path))
-                return McpToolResult.Error("path must be one of: auto, sdk, device.");
+                return McpToolResult.Error(arguments.EnumArgumentError<DragPath>("path"));
 
             int durationFrames = Mathf.Clamp(arguments.TryGetInt("durationFrames", out int frames) ? frames : DEFAULT_DURATION_FRAMES, MIN_DURATION_FRAMES, MAX_DURATION_FRAMES);
 

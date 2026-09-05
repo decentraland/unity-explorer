@@ -132,6 +132,18 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void ListTheArgumentNamesAToolDeclares()
+        {
+            var registry = new McpToolsRegistry()
+                          .Add(FakeMcpTool.Returning("with_argument"))
+                          .Add(new FakeTool("argumentless", McpToolAnnotations.ReadOnly()));
+
+            // Captured at registration, in declaration order: the set the dispatcher checks a tools/call against.
+            Assert.That(registry.ArgumentNames("with_argument"), Is.EqualTo(new[] { "value" }));
+            Assert.That(registry.ArgumentNames("argumentless"), Is.Empty);
+        }
+
+        [Test]
         public void NotFindAnUnknownTool()
         {
             var registry = new McpToolsRegistry().Add(new FakeTool("known", McpToolAnnotations.ReadOnly()));

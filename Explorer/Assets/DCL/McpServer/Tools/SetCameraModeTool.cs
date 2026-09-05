@@ -43,7 +43,7 @@ namespace DCL.McpServer.Tools
         public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetEnum("mode", out CameraMode targetMode, ALLOWED_MODES))
-                return McpToolResult.Error("mode must be one of: first_person, third_person, drone_view, free.");
+                return McpToolResult.Error(arguments.EnumArgumentError("mode", ALLOWED_MODES));
 
             string? blockReason = TrySwitchMode(world, targetMode, out CameraMode previousMode);
 

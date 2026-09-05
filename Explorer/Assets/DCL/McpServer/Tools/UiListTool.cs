@@ -46,7 +46,7 @@ namespace DCL.McpServer.Tools
         public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetEnum("stack", ListStack.ALL, out ListStack stack))
-                return UniTask.FromResult(McpToolResult.Error("stack must be one of: all, ugui, sdk."));
+                return UniTask.FromResult(McpToolResult.Error(arguments.EnumArgumentError<ListStack>("stack")));
 
             bool checkOcclusion = arguments.GetBool("checkOcclusion", false);
 

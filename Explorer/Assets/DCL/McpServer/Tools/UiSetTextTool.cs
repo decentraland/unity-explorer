@@ -22,7 +22,7 @@ namespace DCL.McpServer.Tools
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             UiAddressArgs.DescribeAddress(schema)
                          .String("text", "The text to set.")
-                         .Boolean("submit", "Also fire the submit event (Enter). Default false.")
+                         .Boolean("submit", "Also fire the submit event (Enter). Default false. An SDK scene input is blanked on submit by the client, exactly as a real Enter blanks it — the scene still receives the value, so read the empty box as the submit landing, not as a lost write.")
                          .Integer("optionIndex", "sdk dropdowns: select this option index instead of setting text.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);

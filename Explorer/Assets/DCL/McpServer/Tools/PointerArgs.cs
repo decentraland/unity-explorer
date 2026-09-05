@@ -32,7 +32,7 @@ namespace DCL.McpServer.Tools
 
             if (!arguments.TryGetEnum("button", PointerButton.POINTER, out PointerButton wireButton))
             {
-                error = "button must be one of: pointer, primary, secondary.";
+                error = arguments.EnumArgumentError<PointerButton>("button");
                 return false;
             }
 

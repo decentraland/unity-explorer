@@ -66,7 +66,7 @@ namespace DCL.McpServer.Tools
             bool ignoreInputModifiers = arguments.GetBool("ignoreInputModifiers", false);
 
             if (!arguments.TryGetEnum("kind", MovementKind.Jog, out MovementKind kind, ALLOWED_KINDS))
-                return McpToolResult.Error("kind must be one of: walk, jog, run.");
+                return McpToolResult.Error(arguments.EnumArgumentError("kind", ALLOWED_KINDS));
 
             Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
 

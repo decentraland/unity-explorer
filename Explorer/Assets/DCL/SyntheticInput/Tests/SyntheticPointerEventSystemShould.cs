@@ -565,6 +565,73 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.FailureReason, Does.Contain("out of range"));
         }
 
+        /// <summary>
+        ///     A miss that named an entity was withheld from everyone, so nothing was broadcast and nothing needs
+        ///     releasing: no handoff, no RootBroadcast. The facade reads exactly these two to decide whether a release
+        ///     follows.
+        /// </summary>
+        [Test]
+        public void HandOffNoReleaseForATargetedMiss()
+        {
+            UniTaskCompletionSource<SyntheticPointerOutcome> completion = AddIntent();
+
+            system.Update(0);
+            RunPipelineFrame(isAtDistance: false);
+            system.Update(0);
+
+            SyntheticPointerOutcome outcome = OutcomeOf(completion);
+            Assert.That(outcome.Result.Hit, Is.False);
+            Assert.That(outcome.Result.RootBroadcast, Is.False);
+            Assert.That(outcome.Press, Is.Null);
+        }
+
+        /// <summary>
+        ///     The same miss without a target is a broadcast: the pipeline fanned the edge out to the scene root,
+        ///     so the result says so and hands off the release the aimless path hands off (Entity.Null, tick only).
+        /// </summary>
+        [Test]
+        public void HandOffTheReleaseForAnUntargetedMissTheRootReceived()
+        {
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, targetGo.transform.position, InputAction.IaPointer, PointerEventType.PetDown)
+            {
+                Completion = completion,
+            });
+
+            system.Update(0);
+            RunPipelineFrame(isAtDistance: false);
+            system.Update(0);
+
+            SyntheticPointerOutcome outcome = OutcomeOf(completion);
+            Assert.That(outcome.Result.Hit, Is.False);
+            Assert.That(outcome.Result.FailureReason, Does.Contain("out of range"));
+            Assert.That(outcome.Result.RootBroadcast, Is.True);
+            Assert.That(outcome.Press, Is.Not.Null);
+            Assert.That(outcome.Press!.Value.Entity, Is.EqualTo(Entity.Null));
+            Assert.That(outcome.Press!.Value.Tick, Is.EqualTo(tick));
+        }
+
+        [Test]
+        public void HandOffNoReleaseWhenThePipelineSkippedAnUntargetedPress()
+        {
+            var completion = new UniTaskCompletionSource<SyntheticPointerOutcome>();
+
+            world.Add(playerEntity, new SyntheticPointerEventIntent(-1, null, targetGo.transform.position, InputAction.IaPointer, PointerEventType.PetDown)
+            {
+                Completion = completion,
+            });
+
+            system.Update(0);
+            RunPipelineSkippedFrame();
+            system.Update(0);
+
+            // A frame the pipeline guarded away processed no edge, so the root received nothing to release.
+            SyntheticPointerOutcome outcome = OutcomeOf(completion);
+            Assert.That(outcome.Result.RootBroadcast, Is.False);
+            Assert.That(outcome.Press, Is.Null);
+        }
+
         [Test]
         public void FailWhenEntityHasNoPointerEvents()
         {

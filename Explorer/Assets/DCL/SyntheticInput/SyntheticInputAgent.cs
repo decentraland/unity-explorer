@@ -238,6 +238,9 @@ namespace DCL.SyntheticInput
         {
             SyntheticPointerOutcome down = await SendPointerAsync(Intent(in aim, button, firstLegType, force: force));
 
+            if (firstLegType == PointerEventType.PetDown && !down.Result.Hit)
+                return await ReleaseBroadcastPressAsync(aim, button, down, force);
+
             if (!composeClick || !down.Result.Hit)
                 return down.Result;
 
@@ -261,6 +264,33 @@ namespace DCL.SyntheticInput
         ///     An aimed gesture goes through the reticle (entity-bound delivery, full diagnostics); an aimless one
         ///     keeps the cursor ray and reaches the scene root. Both order the release onto a later scene tick.
         /// </summary>
+        /// <summary>
+        ///     A press that missed its target may still have reached the scene: an untargeted edge is a broadcast,
+        ///     so the root received the PetDown exactly as it receives a human's click on nothing — and a human
+        ///     then lets go. The release follows here whenever the system handed the press off (it does so only
+        ///     when the root received it); otherwise the root would hold a button nobody will release, with the
+        ///     ray it samples following the camera into every gesture the driver makes in the meantime. The miss
+        ///     is still the result: the caller learns where the press went, not that it succeeded.
+        /// </summary>
+        private async UniTask<SyntheticPointerResult> ReleaseBroadcastPressAsync(PointerAim aim, InputAction button, SyntheticPointerOutcome down, bool force)
+        {
+            SyntheticPointerResult result = down.Result;
+
+            if (!down.Press.HasValue)
+                return result;
+
+            SyntheticPointerOutcome up = await SendPointerAsync(Intent(in aim, button, PointerEventType.PetUp, down.Press, force));
+
+            if (up.Result.RootBroadcast)
+                return result;
+
+            result.FailureReason += up.Result.Hit
+                ? $"; the scene root received the press, and its release landed on entity {up.Result.SceneEntityId} instead"
+                : $"; the scene root received the press but not its release ({up.Result.FailureReason}), so it is left holding the button";
+
+            return result;
+        }
+
         private async UniTask<SyntheticPointerResult> RunGlobalGestureAsync(InputAction action, float holdSeconds, PointerAim aim, CancellationToken ct)
         {
             SyntheticPointerOutcome down = await SendPointerAsync(Intent(in aim, action, PointerEventType.PetDown));

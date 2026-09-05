@@ -88,8 +88,12 @@ namespace DCL.SyntheticInput.Tests
             Assert.That(result.BlockedByCrdtId, Is.EqualTo(5));
         }
 
+        /// <summary>
+        ///     A missed press that named an entity was withheld from everyone (no handoff comes back), so there is
+        ///     nothing to release: a release would be a PetUp on a root that never saw the PetDown.
+        /// </summary>
         [Test]
-        public void SkipTheReleaseLegWhenThePressMisses()
+        public void SkipTheReleaseWhenAMissedPressReachedNobody()
         {
             UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtEntity(7), InputAction.IaPointer, timeoutSec: 30f);
 
@@ -100,7 +104,59 @@ namespace DCL.SyntheticInput.Tests
 
             Assert.That(click.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             Assert.That(click.GetAwaiter().GetResult().FailureReason, Is.EqualTo("out of range"));
-            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False, "no release leg may follow a missed press");
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False, "no release leg may follow a press nobody received");
+        }
+
+        /// <summary>
+        ///     A missed press without a target is a broadcast the scene root received, so the system hands off its
+        ///     release; a human's click on nothing releases too. Left held, the root keeps a button down whose ray
+        ///     follows the camera into every gesture the driver makes until the scene's own timeout.
+        /// </summary>
+        [Test]
+        public void ReleaseToTheRootAMissedPressTheRootReceived()
+        {
+            UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtWorldPoint(new Vector3(1f, 2f, 3f)), InputAction.IaPointer, timeoutSec: 30f);
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = false, FailureReason = "out of range", RootBroadcast = true },
+                Press = new SyntheticPressHandoff { World = world, Entity = Entity.Null, Tick = 3 },
+            });
+
+            SyntheticPointerEventIntent release = currentPointerIntent;
+            Assert.That(release.EventType, Is.EqualTo(PointerEventType.PetUp), "the root received the press, so it receives the release");
+            Assert.That(release.Press!.Value.Tick, Is.EqualTo(3u), "ordered onto a later scene tick like any release");
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = false, FailureReason = "nothing at the aim point", RootBroadcast = true },
+            });
+
+            SyntheticPointerResult result = click.GetAwaiter().GetResult();
+            Assert.That(result.Hit, Is.False, "releasing what missed does not make it a hit");
+            Assert.That(result.RootBroadcast, Is.True);
+            Assert.That(result.FailureReason, Is.EqualTo("out of range"), "a release the root received adds nothing to the miss");
+        }
+
+        [Test]
+        public void SayWhenTheRootWasLeftHoldingTheMissedPress()
+        {
+            UniTask<SyntheticPointerResult> click = agent.ClickAsync(PointerAim.AtWorldPoint(new Vector3(1f, 2f, 3f)), InputAction.IaPointer, timeoutSec: 30f);
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = false, FailureReason = "out of range", RootBroadcast = true },
+                Press = new SyntheticPressHandoff { World = world, Entity = Entity.Null, Tick = 3 },
+            });
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = false, FailureReason = "the scene reloaded mid-click" },
+            });
+
+            SyntheticPointerResult result = click.GetAwaiter().GetResult();
+            Assert.That(result.FailureReason, Does.StartWith("out of range"));
+            Assert.That(result.FailureReason, Does.Contain("left holding the button"));
         }
 
         [Test]
@@ -157,7 +213,28 @@ namespace DCL.SyntheticInput.Tests
             SyntheticSweepResult result = sweep.GetAwaiter().GetResult();
             Assert.That(result.FailureReason, Does.Contain("out of range"));
             Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False, "turning the camera with nothing held is not the gesture that was asked for");
-            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False, "no release may follow a press that never landed");
+            Assert.That(world.Has<SyntheticPointerEventIntent>(playerEntity), Is.False, "no release may follow a press nobody received");
+        }
+
+        [Test]
+        public void ReleaseTheRootBeforeAbandoningASweepWhosePressItReceived()
+        {
+            UniTask<SyntheticSweepResult> sweep = agent.SweepAsync(PointerAim.AtWorldPoint(new Vector3(1f, 2f, 3f)), InputAction.IaPointer, new Vector2(5f, 0f), seconds: 0.5f, timeoutSec: 30f);
+
+            CompletePointerIntent(new SyntheticPointerOutcome
+            {
+                Result = new SyntheticPointerResult { Hit = false, FailureReason = "out of range", RootBroadcast = true },
+                Press = new SyntheticPressHandoff { World = world, Entity = Entity.Null, Tick = 3 },
+            });
+
+            Assert.That(world.Has<SyntheticCameraLookIntent>(playerEntity), Is.False, "nothing was held on a target, so the camera must not sweep");
+            Assert.That(currentPointerIntent.EventType, Is.EqualTo(PointerEventType.PetUp), "the root received the press, so it is released before the sweep is abandoned");
+
+            CompletePointerIntent(new SyntheticPointerOutcome { Result = new SyntheticPointerResult { Hit = false, RootBroadcast = true } });
+
+            SyntheticSweepResult result = sweep.GetAwaiter().GetResult();
+            Assert.That(result.FailureReason, Does.Contain("out of range"));
+            Assert.That(result.Press.RootBroadcast, Is.True);
         }
 
         [Test]
