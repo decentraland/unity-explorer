@@ -54,7 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 MeshData meshData = meshesData[i];
                 int meshVertexCount = meshData.Mesh.sharedMesh.vertexCount;
                 ResetTransforms(meshData.Transform, meshData.RootTransform);
-                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount, meshData.SpringBoneOffset);
+                FillMeshArray(meshData, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount);
                 vertCounter += meshVertexCount;
                 skinnedMeshCounter++;
             }
@@ -82,12 +82,17 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return new AvatarCustomSkinningComponent.Buffers(mBones, kernel);
         }
 
-        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount, int springBoneOffset)
+        private void FillMeshArray(in MeshData meshData, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount)
         {
-            // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
-            mesh.RecalculateTangents();
+            Mesh mesh = meshData.Mesh.sharedMesh;
 
-            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, springBoneOffset);
+            // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
+            // The meshes are shared between every instance of the asset and nothing mutates their vertices or
+            // normals after load, so the recalculation only has to run on the first instance that uses each one.
+            if (meshData.OriginalAsset.TryMarkTangentsRecalculated(mesh))
+                mesh.RecalculateTangents();
+
+            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, meshData.SpringBoneOffset);
         }
 
         private (int vertCount, int totalBoneBufferCount) SetupCounters(IReadOnlyList<MeshData> meshesData, int boneCount)
@@ -172,7 +177,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                             cachedWearable.Renderers.Add(tuple.Item1);
 
                             targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
-                                originalMaterial, springBoneOffset));
+                                originalMaterial, cachedWearable.OriginalAsset, springBoneOffset));
                         }
                         else
                         {
@@ -180,7 +185,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
                             // From Pooled Object
                             targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
-                                originalMaterial, springBoneOffset));
+                                originalMaterial, cachedWearable.OriginalAsset, springBoneOffset));
                         }
                     }
                 }
@@ -215,6 +220,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         /// <returns>A bounding box that contains all the meshes.</returns>
         private static Bounds CalculateLocalBoundsFromMeshes(List<MeshData> meshes)
         {
+            // Seeding the corners from an empty list would yield negative extents, which reads as an inverted
+            // box everywhere downstream, culling included.
+            if (meshes.Count == 0) return default(Bounds);
+
             Vector3 maxCorner = new Vector3(float.MinValue, float.MinValue, float.MinValue);
             Vector3 minCorner = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
 

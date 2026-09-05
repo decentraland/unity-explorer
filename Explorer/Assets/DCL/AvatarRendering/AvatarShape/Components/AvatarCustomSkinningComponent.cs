@@ -75,6 +75,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public FixedComputeBufferHandler.Slice VertsOutRegion;
 
+        /// <summary>
+        ///     One-shot flag: forces the next skin dispatch to run regardless of visibility or frustum state. Self-clears after consumption.
+        /// </summary>
+        public bool ForceSkinNextFrame;
+
         public readonly int VertCount;
         public readonly int BoneCount;
 
@@ -85,7 +90,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private bool disposed;
 
         /// <summary>
-        ///
+        ///     Union of the bind-pose bounds of every mesh the avatar was assembled from, wearables included,
+        ///     expressed in the space of the avatar's own transform. Recomputed on every re-instantiation.
         /// </summary>
         public Bounds LocalBounds { get; private set; }
 
@@ -98,8 +104,33 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.computeShaderInstance = computeShaderInstance;
             this.LocalBounds = localBounds;
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
+            ForceSkinNextFrame = false;
 
             disposed = false;
+        }
+
+#if UNITY_INCLUDE_TESTS
+        public static AvatarCustomSkinningComponent NewWithLocalBounds(Bounds localBounds) =>
+            new () { LocalBounds = localBounds };
+#endif
+
+        /// <summary>
+        ///     Places <see cref="LocalBounds" /> in the world through the avatar's transform, re-axis-aligning the
+        ///     rotated box. The renderers cannot answer this: compute-shader skinning replaced their local bounds
+        ///     with a fixed cube, and the skinned vertices only ever exist in the GPU buffer.
+        ///     This is the managed reference form of the transform; BoneMatrixCalculationJob carries the Burst one.
+        /// </summary>
+        public readonly Bounds ToWorldBounds(Transform avatarTransform)
+        {
+            Matrix4x4 matrix = avatarTransform.localToWorldMatrix;
+            Vector3 extents = LocalBounds.extents;
+
+            var worldExtents = new Vector3(
+                (Mathf.Abs(matrix.m00) * extents.x) + (Mathf.Abs(matrix.m01) * extents.y) + (Mathf.Abs(matrix.m02) * extents.z),
+                (Mathf.Abs(matrix.m10) * extents.x) + (Mathf.Abs(matrix.m11) * extents.y) + (Mathf.Abs(matrix.m12) * extents.z),
+                (Mathf.Abs(matrix.m20) * extents.x) + (Mathf.Abs(matrix.m21) * extents.y) + (Mathf.Abs(matrix.m22) * extents.z));
+
+            return new Bounds(matrix.MultiplyPoint3x4(LocalBounds.center), worldExtents * 2f);
         }
 
         /// <summary>
@@ -135,6 +166,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void SetVertOutRegion(FixedComputeBufferHandler.Slice region)
         {
             VertsOutRegion = region;
+            ForceSkinNextFrame = true;
 
             computeShaderInstance.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
 

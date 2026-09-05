@@ -3,6 +3,7 @@
     public struct AvatarCachedVisibilityComponent
     {
         public bool IsVisible;
+
         private DITHER_STATE currentDitherState;
 
         public bool ShouldUpdateDitherState(float newDistance, float startFadeDithering, float endFadeDithering)
