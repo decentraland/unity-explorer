@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Threading;
@@ -15,7 +14,7 @@ namespace Global.Dynamic
     /// </summary>
     public sealed class AbgenSidecarBootstrap : IDisposable
     {
-        private readonly DecentralandEnvironment environment;
+        private readonly string baseDomain;
         private readonly CancellationTokenSource lifeCycleCancellationTokenSource = new ();
 
         private AbgenSidecar? sidecar;
@@ -29,9 +28,9 @@ namespace Global.Dynamic
         /// </summary>
         public UniTask WarmUpTask { get; private set; } = UniTask.CompletedTask;
 
-        public AbgenSidecarBootstrap(DecentralandEnvironment environment)
+        public AbgenSidecarBootstrap(string baseDomain)
         {
-            this.environment = environment;
+            this.baseDomain = baseDomain;
         }
 
         public void Dispose()
@@ -51,9 +50,7 @@ namespace Global.Dynamic
 
             try
             {
-                string environmentDomain = environment.ToString().ToLower();
-
-                AbgenSidecar? created = AbgenSidecar.TryCreate(BaseUrl, environmentDomain,
+                AbgenSidecar? created = AbgenSidecar.TryCreate(BaseUrl, baseDomain,
                     realmRootOverride: realmRoot, jitContentDigest: true);
 
                 if (created == null)
@@ -64,7 +61,7 @@ namespace Global.Dynamic
                     if (!await AbgenSidecar.EnsurePinnedBinaryAsync(ct))
                         return false;
 
-                    created = AbgenSidecar.TryCreate(BaseUrl, environmentDomain,
+                    created = AbgenSidecar.TryCreate(BaseUrl, baseDomain,
                         realmRootOverride: realmRoot, jitContentDigest: true);
 
                     if (created == null) return false;

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Global.Dynamic;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
 using System.Collections;
@@ -33,7 +34,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             string cacheRoot = Path.Combine(Path.GetTempPath(), "abgen-sidecar-test-" + Guid.NewGuid().ToString("N")[..8]);
 
-            AbgenSidecar? created = AbgenSidecar.TryCreate(AbgenSidecar.ReserveBaseUrl(), "org", cacheRoot);
+            AbgenSidecar? created = AbgenSidecar.TryCreate(AbgenSidecar.ReserveBaseUrl(), "decentraland.org", cacheRoot);
             Assert.IsNotNull(created, "no abgen binary was resolved");
             AbgenSidecar sidecar = created!;
             Assert.IsTrue(await sidecar.StartAsync(CancellationToken.None), "sidecar did not become healthy");
@@ -46,13 +47,13 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 await manifestReq.SendWebRequest();
                 Assert.AreEqual(UnityWebRequest.Result.Success, manifestReq.result, $"manifest JIT failed: {manifestReq.error}");
 
-                var manifest = JsonUtility.FromJson<ManifestDto>(manifestReq.downloadHandler.text);
-                Assert.Greater(manifest.files.Length, 0, "manifest lists no bundles");
-                ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"[abgen-sidecar] JIT manifest: [{string.Join(", ", manifest.files)}]");
+                var manifest = JsonConvert.DeserializeObject<ManifestDto>(manifestReq.downloadHandler.text)!;
+                Assert.Greater(manifest.Files.Length, 0, "manifest lists no bundles");
+                ReportHub.Log(ReportCategory.ASSET_BUNDLES, $"[abgen-sidecar] JIT manifest: [{string.Join(", ", manifest.Files)}]");
 
                 string? bundleName = null;
 
-                foreach (string file in manifest.files)
+                foreach (string file in manifest.Files)
                     if (file.EndsWith("_windows", StringComparison.Ordinal) && file.Length > 20)
                     {
                         bundleName = file;
@@ -90,10 +91,10 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         // Server schema: abgen /manifest/{entity}_{platform}.json response.
-        [Serializable]
         private class ManifestDto
         {
-            public string[] files = null!;
+            [JsonProperty("files")]
+            public string[] Files = Array.Empty<string>();
         }
     }
 }

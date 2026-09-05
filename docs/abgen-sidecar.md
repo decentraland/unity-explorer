@@ -31,8 +31,9 @@ mode no sidecar object is ever constructed.
 
 The sidecar's base URL becomes the optimized-assets source
 (`AssetBundlesCDN` / `LodGeneratorCDN` / `AssetBundleRegistry`): the server JIT-converts the local
-scene and answers everything else — wearables, emotes, LODs, registry records — from the
-production upstream via its built-in ab-cdn read-through and registry pass-through, so no lane
+scene and answers everything else — wearables, emotes, LODs, registry records — from the base
+domain's upstream (`ab-cdn.<base domain>`, with the registry abgen derives beside it) via its
+built-in ab-cdn read-through and registry pass-through, so no lane
 loses content. The loading flow is untouched: bundles stream over loopback via
 `DownloadHandlerAssetBundle` directly into native memory (no managed copies), requested on the
 standard v25+ hash-in-path lane (`{version}/{sceneID}/{hash}`). Deps digests are skipped in LSD
