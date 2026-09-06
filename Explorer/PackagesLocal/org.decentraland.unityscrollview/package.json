@@ -1,0 +1,7 @@
+{
+  "name": "org.decentraland.unityscrollview",
+  "version": "0.0.0-shim",
+  "displayName": "Decentraland Scroll View",
+  "description": "Functional shim over uGUI ScrollRect preserving the SuperScrollView API surface used by unity-explorer.",
+  "unity": "2022.3"
+}
