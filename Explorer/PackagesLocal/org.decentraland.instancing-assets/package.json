@@ -1,0 +1,13 @@
+{
+  "name": "org.decentraland.instancing-assets",
+  "version": "1.0.0",
+  "displayName": "Decentraland Instancing Assets",
+  "description": "DCL prototype bindings for the Unity Universal Instancer: the tree/detail prototype prefabs, profiles, and shaders authored against org.decentraland.unityuniversalinstancer. It ships assets rather than DCL C# imports, so a single internal placeholder type gives its assembly a compilation unit. Its presence, together with org.decentraland.unityuniversalinstancer, raises GPUI_PRO_PRESENT through DCL.Plugins.asmdef's versionDefines mapping, which gates the tree-instancing call sites.",
+  "unity": "2022.3",
+  "dependencies": {
+    "org.decentraland.unityuniversalinstancer": "1.0.0"
+  },
+  "author": {
+    "name": "Decentraland"
+  }
+}
