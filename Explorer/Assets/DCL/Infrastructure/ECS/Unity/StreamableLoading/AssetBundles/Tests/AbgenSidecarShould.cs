@@ -90,7 +90,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.AreEqual(0, dead.responseCode, "sidecar still listening after Dispose");
         }
 
-        // Server schema: decentraland/abgen crate/src/manifest.rs#/write_corpus_manifest — the /manifest/{entity}_{platform}.json body; "files" is always written.
         [Serializable]
         private class ManifestDto
         {
