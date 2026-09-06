@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.TestTools;
 
+// ReSharper disable InconsistentNaming
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     /// <summary>
@@ -33,7 +34,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             string cacheRoot = Path.Combine(Path.GetTempPath(), "abgen-sidecar-test-" + Guid.NewGuid().ToString("N")[..8]);
 
-            AbgenSidecar? created = AbgenSidecar.TryCreate(AbgenSidecar.ReserveBaseUrl(), "org", cacheRoot);
+            AbgenSidecar? created = AbgenSidecar.TryCreate(AbgenSidecar.ReserveBaseUrl(), "decentraland.org", cacheRoot);
             Assert.IsNotNull(created, "no abgen binary was resolved");
             AbgenSidecar sidecar = created!;
             Assert.IsTrue(await sidecar.StartAsync(CancellationToken.None), "sidecar did not become healthy");
@@ -89,7 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.AreEqual(0, dead.responseCode, "sidecar still listening after Dispose");
         }
 
-        // Server schema: abgen /manifest/{entity}_{platform}.json response.
+        // Server schema: decentraland/abgen crate/src/manifest.rs#/write_corpus_manifest — the /manifest/{entity}_{platform}.json body; "files" is always written.
         [Serializable]
         private class ManifestDto
         {
