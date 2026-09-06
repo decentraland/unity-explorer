@@ -14,10 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _version: 0.12.18
   _buildNo: 57
-  _subModuleVersions:
-  - packageName: com.gurbu.gpui-pro.terrain
-    version: 0.12.18
-    processedVersion: 0.12.18
+  _subModuleVersions: []
   isGenerateShaderVariantCollection: 0
   isAutoShaderConversion: 0
   _requirePackageReload: 0

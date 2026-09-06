@@ -1,0 +1,183 @@
+// Hi-Z occlusion culling for GPU-instanced prototypes.
+//
+// Kernels:
+//   CopyDepth      camera depth -> pyramid mip 0, normalised so larger = farther
+//   ReduceDepth    mip n -> mip n+1, max over the 2x2 footprint
+//   CullInstances  tests one input bucket against the pyramid and compacts the
+//                  survivors (and, optionally, demotes occluded casters to a
+//                  shadow-only bucket)
+//   WriteArgs      copies each bucket's survivor count into its indirect args
+//
+// Depth convention: every stored value is 0 at the near plane and 1 at the
+// far plane whatever the platform's buffer convention. An instance is
+// occluded when its nearest depth, minus the bias, is farther than the
+// farthest pyramid texel its screen rect covers.
+
+#pragma kernel CopyDepth
+#pragma kernel ReduceDepth
+#pragma kernel CullInstances
+#pragma kernel WriteArgs
+
+Texture2D<float> _SourceDepth;
+RWTexture2D<float> _HiZDst;
+RWTexture2D<float> _HiZSrc;
+Texture2D<float> _HiZ;
+
+int4 _Size;               // xy = source size, zw = destination size
+float _ReversedZ;         // 1 when the depth buffer stores 1 at the near plane
+
+StructuredBuffer<float4x4> _InTransforms;
+StructuredBuffer<float4x4> _InInverses;
+StructuredBuffer<float> _InFades;
+RWStructuredBuffer<float4x4> _OutTransforms;
+RWStructuredBuffer<float4x4> _OutInverses;
+RWStructuredBuffer<float> _OutFades;
+RWStructuredBuffer<uint> _Counts;
+StructuredBuffer<uint> _ArgBucket;
+RWStructuredBuffer<uint> _Args;   // 5 uints per entry: index count, instance count, start index, base vertex, start instance
+
+float4x4 _ViewProj;       // previous frame's world -> clip
+float4 _CameraPosition;
+float4 _PyramidParams;    // xy = mip 0 size, z = max mip, w = footprint texels
+float4 _DepthParams;      // xy = ndc z -> buffer depth scale/offset, z = bias, w = size multiplier
+float4 _BoundsCenter;     // prototype-local bounds centre
+float4 _BoundsExtents;    // prototype-local bounds extents
+int4 _BucketParams;       // x = input offset, y = input count, z = output bucket, w = output offset
+int4 _DemoteParams;       // x = demotion bucket (-1 drops), y = demotion offset, z = apply the occlusion test
+int _ArgCount;
+
+[numthreads(8, 8, 1)]
+void CopyDepth(uint3 id : SV_DispatchThreadID)
+{
+    uint2 dstSize = uint2(_Size.zw);
+    uint2 srcSize = uint2(_Size.xy);
+    if (id.x >= dstSize.x || id.y >= dstSize.y) return;
+
+    // Source texel range (inclusive) this pyramid texel covers; the shared
+    // boundary texel is visited by both neighbours, which keeps the max
+    // conservative.
+    uint2 t0 = (id.xy * srcSize) / dstSize;
+    uint2 t1 = min(srcSize - 1, ((id.xy + 1) * srcSize) / dstSize);
+
+    float farthest = 0.0;
+    for (uint y = t0.y; y <= t1.y; y++)
+    {
+        for (uint x = t0.x; x <= t1.x; x++)
+        {
+            float d = _SourceDepth.Load(int3(x, y, 0));
+            d = _ReversedZ > 0.5 ? 1.0 - d : d;
+            farthest = max(farthest, d);
+        }
+    }
+    _HiZDst[id.xy] = farthest;
+}
+
+[numthreads(8, 8, 1)]
+void ReduceDepth(uint3 id : SV_DispatchThreadID)
+{
+    uint2 dstSize = uint2(_Size.zw);
+    uint2 srcSize = uint2(_Size.xy);
+    if (id.x >= dstSize.x || id.y >= dstSize.y) return;
+
+    uint2 s0 = id.xy * 2;
+    uint2 s1 = min(s0 + 1, srcSize - 1);
+    float d = max(max(_HiZSrc[s0], _HiZSrc[uint2(s1.x, s0.y)]),
+                  max(_HiZSrc[uint2(s0.x, s1.y)], _HiZSrc[s1]));
+    _HiZDst[id.xy] = d;
+}
+
+int SelectMip(float extentTexels, float footprint, int maxMip)
+{
+    int mip = 0;
+    if (extentTexels > footprint)
+        mip = clamp((int)ceil(log2(extentTexels / footprint)), 0, maxMip);
+    return mip;
+}
+
+bool Occluded(float4x4 m)
+{
+    float3 c = _BoundsCenter.xyz;
+    float3 e = _BoundsExtents.xyz;
+
+    float3 worldCenter = mul(m, float4(c, 1.0)).xyz;
+    float3 scale = float3(length(m._m00_m10_m20), length(m._m01_m11_m21), length(m._m02_m12_m22));
+    float radius = length(scale * e);
+
+    // Nearest point of the bounding sphere along the view ray, pushed
+    // further toward the camera by the size multiplier.
+    float3 toCenter = worldCenter - _CameraPosition.xyz;
+    float dist = length(toCenter);
+    float3 dir = toCenter / max(dist, 1e-5);
+    float3 nearest = worldCenter - dir * (radius * (1.0 + _DepthParams.w));
+    float4 nearClip = mul(_ViewProj, float4(nearest, 1.0));
+    bool projectable = nearClip.w > 1e-4;
+    float nearDepth = (nearClip.z / max(nearClip.w, 1e-4)) * _DepthParams.x + _DepthParams.y;
+
+    // Screen rect of the eight box corners. A corner behind the near plane
+    // has no usable projection, so the instance stays visible.
+    float2 rectMin = 1e9;
+    float2 rectMax = -1e9;
+    [unroll]
+    for (int k = 0; k < 8; k++)
+    {
+        float3 corner = c + e * float3((k & 1) ? 1.0 : -1.0, (k & 2) ? 1.0 : -1.0, (k & 4) ? 1.0 : -1.0);
+        float4 clip = mul(_ViewProj, mul(m, float4(corner, 1.0)));
+        projectable = projectable && clip.w > 1e-4;
+        float2 ndc = clip.xy / max(clip.w, 1e-4);
+        rectMin = min(rectMin, ndc);
+        rectMax = max(rectMax, ndc);
+    }
+    bool onScreen = rectMax.x >= -1.0 && rectMin.x <= 1.0 && rectMax.y >= -1.0 && rectMin.y <= 1.0;
+    rectMin = clamp(rectMin, -1.0, 1.0);
+    rectMax = clamp(rectMax, -1.0, 1.0);
+
+    float2 size0 = _PyramidParams.xy;
+    float2 tmin = (rectMin * 0.5 + 0.5) * size0;
+    float2 tmax = (rectMax * 0.5 + 0.5) * size0;
+    float extent = max(tmax.x - tmin.x, tmax.y - tmin.y);
+    int maxMip = (int)_PyramidParams.z;
+    int footprint = (int)_PyramidParams.w;
+    int mip = SelectMip(extent, _PyramidParams.w, maxMip);
+
+    int2 mipSize = max(int2(size0) >> mip, int2(1, 1));
+    int2 t0 = clamp(int2(floor(tmin)) >> mip, int2(0, 0), mipSize - 1);
+    int2 t1 = clamp(int2(ceil(tmax) - 1.0) >> mip, int2(0, 0), mipSize - 1);
+    t1 = min(t1, t0 + footprint);
+
+    float farthest = 0.0;
+    for (int y = t0.y; y <= t1.y; y++)
+    {
+        for (int x = t0.x; x <= t1.x; x++)
+            farthest = max(farthest, _HiZ.Load(int3(x, y, mip)));
+    }
+
+    return projectable && onScreen && nearDepth - _DepthParams.z > farthest;
+}
+
+[numthreads(64, 1, 1)]
+void CullInstances(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)_BucketParams.y) return;
+    uint src = (uint)_BucketParams.x + id.x;
+    float4x4 m = _InTransforms[src];
+
+    bool visible = _DemoteParams.z == 0 || !Occluded(m);
+    int bucket = visible ? _BucketParams.z : _DemoteParams.x;
+    if (bucket < 0) return;
+    uint base = visible ? (uint)_BucketParams.w : (uint)_DemoteParams.y;
+
+    uint slot;
+    InterlockedAdd(_Counts[bucket], 1u, slot);
+    uint dst = base + slot;
+    _OutTransforms[dst] = m;
+    _OutInverses[dst] = _InInverses[src];
+    _OutFades[dst] = _InFades[src];
+}
+
+[numthreads(64, 1, 1)]
+void WriteArgs(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)_ArgCount) return;
+    uint bucket = _ArgBucket[id.x];
+    _Args[id.x * 5 + 1] = _Counts[bucket];
+}

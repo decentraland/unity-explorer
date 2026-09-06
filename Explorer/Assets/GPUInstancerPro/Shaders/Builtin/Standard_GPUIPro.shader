@@ -92,8 +92,8 @@ Shader "GPUInstancerPro/Standard"
             #pragma fragment fragBaseGPUI
             #include "UnityStandardCoreForward.cginc"
 
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUIStandardInclude.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUIStandardInclude.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             ENDCG
@@ -133,7 +133,7 @@ Shader "GPUInstancerPro/Standard"
             #pragma fragment fragAdd
             #include "UnityStandardCoreForward.cginc"
             
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             ENDCG
@@ -166,7 +166,7 @@ Shader "GPUInstancerPro/Standard"
 
             #include "UnityStandardShadow.cginc"
             
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             ENDCG
@@ -204,8 +204,8 @@ Shader "GPUInstancerPro/Standard"
 
             #include "UnityStandardCore.cginc"
 
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUIStandardInclude.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUIStandardInclude.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             ENDCG
@@ -223,7 +223,7 @@ Shader "GPUInstancerPro/Standard"
 
             CGPROGRAM
             #include "UnityCG.cginc"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerInput.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerInput.hlsl"
             #pragma vertex vert_meta
             #pragma fragment frag_meta
 
@@ -236,7 +236,7 @@ Shader "GPUInstancerPro/Standard"
             #include "UnityStandardMeta.cginc"
             
 
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             ENDCG

@@ -1,0 +1,10 @@
+{
+  "name": "org.decentraland.unityuniversalinstancer",
+  "version": "1.0.0",
+  "displayName": "Unity Universal Instancer",
+  "description": "Clean-room GPU-driven indirect instancing runtime providing the GPUInstancerPro C# surface DCL consumes (GPUICoreAPI / GPUIProfile / GPUIRuntimeSettings / GPUIShaderBindings / GPUIDebuggerCanvas / GPUIPrefabManager / GPUIDetailManager / GPUITreeManager). Registers prototypes with their mesh/material LODs, uploads per-instance transforms into GraphicsBuffers, runs a Burst cull + LOD-selection pass each frame, and submits per-LOD procedural-instanced draws with shadow casting via Graphics.RenderMeshPrimitives. Paired with org.decentraland.instancing-assets, both versionDefines together raise GPUI_PRO_PRESENT.",
+  "unity": "2022.3",
+  "author": {
+    "name": "Decentraland"
+  }
+}

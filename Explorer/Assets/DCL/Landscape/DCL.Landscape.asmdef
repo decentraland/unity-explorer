@@ -29,7 +29,7 @@
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.gurbu.gpui-pro",
+            "name": "org.decentraland.unityuniversalinstancer",
             "expression": "",
             "define": "GPUI_PRO_PRESENT"
         }
