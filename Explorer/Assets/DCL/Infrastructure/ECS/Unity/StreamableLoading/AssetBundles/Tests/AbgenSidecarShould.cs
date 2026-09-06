@@ -90,6 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.AreEqual(0, dead.responseCode, "sidecar still listening after Dispose");
         }
 
+        // Server schema: abgen /manifest/{entity}_{platform}.json response.
         [Serializable]
         private class ManifestDto
         {
