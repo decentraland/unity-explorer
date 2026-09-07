@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
@@ -37,6 +38,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
         public async UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
         {
+            // Flag off: no Heartbeat packet is ever produced, and the call succeeds without touching the
+            // connection. Read here and not in the constructor, so building a flow needs no feature registry.
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.ArchipelagoHeartbeats))
+                return Result.SuccessResult();
+
             try
             {
                 using SmartWrap<Position> position = multiPool.TempResource<Position>();

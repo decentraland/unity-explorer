@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
@@ -74,7 +75,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
             if (token.IsCancellationRequested) return;
 
+            // The reconnect check above is the whole cycle once heartbeats are off; this still returns on the
+            // main thread so the loop resumes its player-loop delay exactly as the heartbeat path leaves it.
             await UniTask.SwitchToMainThread(token);
+
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.ArchipelagoHeartbeats)) return;
+
             Vector3 position = characterObject.Position;
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
 

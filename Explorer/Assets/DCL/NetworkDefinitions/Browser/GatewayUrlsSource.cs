@@ -36,7 +36,6 @@ namespace DCL.Browser
             DecentralandUrl.GatekeeperStatus,
             DecentralandUrl.BannedUsers,
             DecentralandUrl.RemotePeers,
-            DecentralandUrl.RemotePeersWorld,
             DecentralandUrl.ArchipelagoStatus,
             DecentralandUrl.ArchipelagoHotScenes,
             DecentralandUrl.WorldCommsAdapter,
