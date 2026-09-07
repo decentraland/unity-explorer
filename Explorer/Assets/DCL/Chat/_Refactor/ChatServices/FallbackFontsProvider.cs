@@ -11,7 +11,7 @@ namespace DCL.Chat.ChatServices
 {
     public class FallbackFontsProvider : IDisposable
     {
-        private readonly List<ProvidedAsset<TMP_FontAsset>> providedAssets = new();
+        private readonly List<ProvidedAsset<TMP_FontAsset>> providedAssets = new ();
 
         public FallbackFontsProvider(IAssetsProvisioner assetsProvisioner, List<AssetReferenceT<TMP_FontAsset>> fallbackFonts, CancellationToken ct)
         {
@@ -22,25 +22,57 @@ namespace DCL.Chat.ChatServices
         {
             try
             {
-                foreach (AssetReferenceT<TMP_FontAsset>? fallbackFont in fallbackFonts)
-                    providedAssets.Add(await assetsProvisioner.ProvideMainAssetAsync(fallbackFont, ct));
+                List<TMP_FontAsset> fallbackList = EnsureGlobalFallbackList();
 
-                if (ct.IsCancellationRequested) return;
+                // Each font is provided on its own so one unresolvable reference cannot cost the others, and is
+                // appended to the live list as it arrives so it starts covering characters immediately.
+                foreach (AssetReferenceT<TMP_FontAsset> reference in fallbackFonts)
+                {
+                    if (ct.IsCancellationRequested) return;
 
-                List<TMP_FontAsset> fallbackList = TMP_Settings.fallbackFontAssets ?? new List<TMP_FontAsset>();
+                    try
+                    {
+                        ProvidedAsset<TMP_FontAsset> provided = await assetsProvisioner.ProvideMainAssetAsync(reference, ct);
 
-                foreach (ProvidedAsset<TMP_FontAsset> font in providedAssets)
-                    if (font.Value != null && !fallbackList.Contains(font.Value))
-                        fallbackList.Add(font.Value);
+                        if (provided.Value == null)
+                        {
+                            ReportHub.LogError(ReportCategory.TRANSLATE,
+                                $"Fallback font {reference.AssetGUID} provided no asset, so the characters it covers will not render.");
 
-                TMP_Settings.fallbackFontAssets = fallbackList;
+                            continue;
+                        }
+
+                        providedAssets.Add(provided);
+
+                        if (!fallbackList.Contains(provided.Value))
+                            fallbackList.Add(provided.Value);
+                    }
+                    catch (OperationCanceledException) { return; }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogError(ReportCategory.TRANSLATE,
+                            $"Fallback font {reference.AssetGUID} could not be loaded, so the characters it covers will not render. " + e.Message + e.StackTrace);
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                // ignore: fallback fonts are optional, avoid crashing chat on load errors
-                ReportHub.LogWarning(ReportCategory.TRANSLATE,
-                    $"Fallback fonts could not be loaded, some characters may not display correctly. Details: {ex.Message}");
-            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.TRANSLATE)); }
+        }
+
+        /// <summary>
+        ///     Returns the list TMP resolves fallbacks against, installing one when the settings carry none, so that
+        ///     appending to it afterwards is enough to register a font.
+        /// </summary>
+        private static List<TMP_FontAsset> EnsureGlobalFallbackList()
+        {
+            List<TMP_FontAsset> fallbackList = TMP_Settings.fallbackFontAssets;
+
+            if (fallbackList != null)
+                return fallbackList;
+
+            fallbackList = new List<TMP_FontAsset>();
+            TMP_Settings.fallbackFontAssets = fallbackList;
+            return fallbackList;
         }
 
         public void Dispose()

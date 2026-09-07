@@ -56,7 +56,7 @@ namespace DCL.LOD.Data.Editor
 
                     if (child.name.Contains("_collider")) {
                         MeshFilter meshFilter = child.GetComponent<MeshFilter>();
-                        Physics.BakeMesh(meshFilter.sharedMesh.GetInstanceID(), false);
+                        Physics.BakeMesh(meshFilter.sharedMesh.GetEntityId(), false);
                         meshFilter.gameObject.AddComponent<MeshCollider>();
 
                         if (meshFilter != null)

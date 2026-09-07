@@ -12,7 +12,11 @@ namespace DCL.AvatarRendering.Loading.DTO
         public const int SUPPORTED_VERSION = 1;
 
         public int version;
+
+        // Newtonsoft-deserialized wire DTO (OverwriteFromJsonAsync with WRJsonParser.Newtonsoft); Unity serialization never sees this field.
+#pragma warning disable UAC1009
         public Dictionary<string, Dictionary<string, SpringBoneParamsDto>>? models;
+#pragma warning restore UAC1009
     }
 
     [Serializable]
