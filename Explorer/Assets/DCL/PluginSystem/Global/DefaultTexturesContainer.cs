@@ -72,8 +72,8 @@ namespace DCL.PluginSystem.Global
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultNormal512, ct: ct)).Value);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive256, ct: ct)).Value);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive512, ct: ct)).Value);
-                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 256, 0), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMouthBrowMask256, ct: ct)).Value);
-                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 512, 0), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMouthBrowMask512, ct: ct)).Value);
+                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMouthBrowMask256, ct: ct)).Value);
+                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMouthBrowMask512, ct: ct)).Value);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 256, 1), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEyesMask256, ct: ct)).Value);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 512, 1), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEyesMask512, ct: ct)).Value);
 
