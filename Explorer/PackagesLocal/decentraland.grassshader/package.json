@@ -1,0 +1,7 @@
+{
+  "name": "decentraland.grassshader",
+  "version": "1.0.0",
+  "displayName": "Stylized Grass Shader",
+  "description": "URP stylized grass/foliage shader plus the GrassColorMap color-map baker used by the landscape terrain. Renders wind-swept, ground-tinted grass and bakes the world-space ground colour map that grass and terrain sample for a coherent palette.",
+  "unity": "6000.0"
+}
