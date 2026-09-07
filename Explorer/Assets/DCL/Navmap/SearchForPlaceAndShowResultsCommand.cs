@@ -112,8 +112,7 @@ namespace DCL.Navmap
                     using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchDestinationsAsync(@params.page, @params.pageSize, ct,
                         searchText: @params.text,
                         sortBy: sort, sortDirection: sortDirection,
-                        category: @params.category is "All" or "Favorites" ? string.Empty : @params.category,
-                        onlySdk7: true);
+                        category: @params.category is "All" or "Favorites" ? string.Empty : @params.category);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }
@@ -122,8 +121,7 @@ namespace DCL.Navmap
                     using PlacesData.IPlacesAPIResponse response = await placesAPIService.GetFavoritesDestinationsAsync(
                         ct,
                         pageNumber: @params.page, pageSize: @params.pageSize,
-                        sortByBy: sort, sortDirection: sortDirection,
-                        onlySdk7: true);
+                        sortByBy: sort, sortDirection: sortDirection);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }
