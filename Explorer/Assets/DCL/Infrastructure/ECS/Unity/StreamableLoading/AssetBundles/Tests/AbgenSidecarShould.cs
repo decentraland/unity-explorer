@@ -23,6 +23,17 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
     {
         private const string SMALL_SCENE = "bafkreicylzyfld7ittipww6rot5oeldgikc77222d64lwyp2m4slr43lny";
 
+        [Test]
+        public void NeverReserveTheStackAbgenPort()
+        {
+            var url = new Uri(AbgenSidecar.ReserveBaseUrl());
+
+            Assert.AreNotEqual(5147, url.Port,
+                "5147 is the default port of a separately-running abgen instance: a --local-ab player racing " +
+                "that unit's restart can steal the bind and crash-loop the stack service. The sidecar " +
+                "must reserve its own registered port (5177) or a free ephemeral one.");
+        }
+
         [UnityTest]
         public IEnumerator ConvertAndServeASceneJit() =>
             RunAsync().ToCoroutine();

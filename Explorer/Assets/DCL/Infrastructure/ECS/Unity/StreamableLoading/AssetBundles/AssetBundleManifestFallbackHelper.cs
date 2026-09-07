@@ -62,6 +62,18 @@ namespace ECS.StreamableLoading.AssetBundles
                 else
                 {
                     assetBundleManifest.TryLogException();
+
+                    // The report category is silenced in shipped players, so under the golden
+                    // harness the real failure also lands in a file the driver can read.
+                    if (Environment.GetEnvironmentVariable("DCL_PLAZABENCH_DETERM_CLOCK") == "1")
+                        try
+                        {
+                            System.IO.File.AppendAllText(
+                                System.IO.Path.Combine(System.IO.Path.GetTempPath(), "golden-abfail.txt"),
+                                $"{entityDefinition.id}: {assetBundleManifest.Exception}\n---\n");
+                        }
+                        catch (Exception) { /* diagnostics only */ }
+
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.FAILED;
                 }
             }

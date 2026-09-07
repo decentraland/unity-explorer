@@ -86,6 +86,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     loadRawGltf = true;
             }
 
+            // Linux: the CDN builds no Linux scene bundles and the windows ones only partially
+            // load here, so scene content stays on the raw-GLTF pipeline until cross-platform
+            // bundle consumption is proven. DCL_GOLDEN_RAW_SCENES extends the same pipeline to
+            // any platform so cross-platform goldens compare identical content sources.
+            if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer
+                || System.Environment.GetEnvironmentVariable("DCL_GOLDEN_RAW_SCENES") == "1")
+                loadRawGltf = true;
+
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
