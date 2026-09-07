@@ -43,17 +43,35 @@ pub(crate) struct UUAVPlayer {
     play_control: ControlPush<bool>,
     looping_control: ControlPush<bool>,
     rate_control: ControlPush<f64>,
-    sender_open_intent: Sender<OpenIntent>,
+    /// `Some` for the player's whole life; taken in `Drop` to close the
+    /// open-intent channel so the playback thread's `recv` returns and it
+    /// exits, letting the join below complete.
+    sender_open_intent: Option<Sender<OpenIntent>>,
     receiver_open_intent: Receiver<OpenIntent>,
     last_cancel_token: Option<CancelToken>,
     /// Cumulative audio diagnostics; outlives the playback units so the
     /// counters accumulate across url switches.
     audio_telemetry: SharedAudioTelemetry,
+    /// The playback thread, joined in `Drop`.
+    handle: Option<thread::JoinHandle<()>>,
 }
 
 impl Drop for UUAVPlayer {
     fn drop(&mut self) {
+        // Cancel any in-flight playback (the demuxer interrupt callback
+        // aborts a blocking network read), then close the open-intent
+        // channel so the thread leaves its recv loop, then join it. The
+        // join is what makes teardown deterministic: on Linux the
+        // playback thread holds a share of the one Vulkan device, and
+        // destroying that device from a detached thread races the
+        // helper's own teardown. After the join every playback-thread
+        // reference to the device is released, so the device is destroyed
+        // exactly once, single-threaded, by whoever drops the last share.
         self.close_media();
+        self.sender_open_intent = None;
+        if let Some(handle) = self.handle.take() {
+            let _ = handle.join();
+        }
     }
 }
 
@@ -125,17 +143,17 @@ impl UUAVPlayer {
             });
 
         match spawned {
-            // Safe to do not join the handle on drop
-            Ok(_handle) => Ok(Self {
+            Ok(handle) => Ok(Self {
                 audio_out,
                 playback,
                 play_control,
                 looping_control,
                 rate_control,
-                sender_open_intent,
+                sender_open_intent: Some(sender_open_intent),
                 receiver_open_intent,
                 last_cancel_token: None,
                 audio_telemetry,
+                handle: Some(handle),
             }),
             Err(e) => Err(anyhow!("failed to spawn playback thread: {e}")),
         }
@@ -153,9 +171,15 @@ impl UUAVPlayer {
 
         let mut payload: OpenIntent = (url, cancel.into());
 
+        // present for the player's whole life; only Drop takes it
+        let sender = self
+            .sender_open_intent
+            .as_ref()
+            .ok_or_else(|| anyhow!("player is being disposed"))?;
+
         // Send, discard the oldest one if exists
         for _ in 0..ATTEMPTS {
-            match self.sender_open_intent.try_send(payload) {
+            match sender.try_send(payload) {
                 Ok(()) => return Ok(()),
                 Err(TrySendError::Full(recovery)) => {
                     payload = recovery;
@@ -286,10 +310,10 @@ impl UUAVPlayer {
 
     pub(crate) fn video_texture(
         &self,
-        #[cfg(target_os = "macos")] plane: i32,
+        #[cfg(any(target_os = "macos", target_os = "linux"))] plane: i32,
     ) -> Option<VideoTextureView> {
         self.unit()?.video_texture(
-            #[cfg(target_os = "macos")]
+            #[cfg(any(target_os = "macos", target_os = "linux"))]
             plane,
         )
     }

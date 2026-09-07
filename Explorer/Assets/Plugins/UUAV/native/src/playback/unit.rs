@@ -165,7 +165,7 @@ impl PlaybackUnit {
         let (video_queue, video_reader) = VideoQueue::channel();
 
         let (hw_ctx, video, video_size) = if video_index >= 0 {
-            #[cfg(target_os = "windows")]
+            #[cfg(any(target_os = "windows", target_os = "linux"))]
             let hw = HwDeviceContext::new(&device)?;
             #[cfg(target_os = "macos")]
             let hw = HwDeviceContext::new()?;
@@ -196,7 +196,10 @@ impl PlaybackUnit {
             None
         };
 
-        #[cfg(target_os = "macos")]
+        // the decoder holds its own reference; only D3D11 keeps the
+        // context around (its present copies go through the locked
+        // immediate context)
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
         drop(hw_ctx);
 
         let unit = Self {
@@ -497,11 +500,11 @@ impl PlaybackUnit {
 
     pub(crate) fn video_texture(
         &self,
-        #[cfg(target_os = "macos")] plane: i32,
+        #[cfg(any(target_os = "macos", target_os = "linux"))] plane: i32,
     ) -> Option<VideoTextureView> {
         #[cfg(target_os = "windows")]
         let texture = self.output.lock().as_ref().and_then(VideoOutput::texture);
-        #[cfg(target_os = "macos")]
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
         let texture = self
             .output
             .lock()
@@ -524,14 +527,14 @@ impl PlaybackUnit {
         let out = output.get_or_insert_with(|| VideoOutput::new(&self.device));
 
         // D3D11 copies through the decode context (the immediate context
-        // under the FFmpeg device lock); Metal blits on the plugin's own
-        // queue and takes nothing from the decode context
+        // under the FFmpeg device lock); Metal and Vulkan blit on the
+        // plugin's own queue and take nothing from the decode context
         #[cfg(target_os = "windows")]
         let presented = match self.hw_ctx.as_ref() {
             Some(hw) => out.present(hw, &frame),
             None => return,
         };
-        #[cfg(target_os = "macos")]
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
         let presented = out.present(&frame);
 
         if let Err(e) = presented {

@@ -226,11 +226,11 @@ namespace DCL.SDKComponents.MediaStream
                 }
 
                 // Muxed MP4 (typically itag=18) is YouTube's legacy compatibility format: capped
-                // around 360p, and AVPro can show minor A/V sync drift on it — a YouTube-side
+                // around 360p, and playback can show minor A/V sync drift on it — a YouTube-side
                 // limitation. Logged at Warning so operators notice the reduced-quality path.
                 ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
                     $"[{TAG}] Resolved VOD {videoId} to muxed {selectedStream.Container} " +
-                    $"{(selectedStream is IVideoStreamInfo vs ? $"{vs.VideoResolution.Width}x{vs.VideoResolution.Height}" : "audio-only")} (no manifest playable on this backend — reduced quality; AVPro may show A/V sync drift)");
+                    $"{(selectedStream is IVideoStreamInfo vs ? $"{vs.VideoResolution.Width}x{vs.VideoResolution.Height}" : "audio-only")} (no playable manifest — reduced quality; playback may show A/V sync drift)");
 
                 return new ResolvedYouTubeUrl(
                     selectedStream.Url,

@@ -2,8 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.CharacterCamera;
 using DCL.Optimization.PerformanceBudgeting;
@@ -13,8 +11,7 @@ using DCL.PluginSystem.World;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
-using DCL.AvProSwitch;
-using DCL.Platforms;
+using DCL.VideoPlayback;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -53,11 +50,6 @@ namespace DCL.SDKComponents.MediaStream
 
         protected override async UniTask InitializeInternalAsync(Settings containerSettings, CancellationToken ct)
         {
-            // Every MediaPlayer instance picks its backend at Awake from this
-            // selection, so it must be installed before the first player is created.
-            MediaPlayerBackendSelection.Install(FeaturesRegistry.Instance.IsEnabled(CurrentPlatformMediaPlayerFeature()));
-            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Media player backend: {(MediaPlayerBackendSelection.UseCustomPlayer ? "UUAV" : "AVPro")}");
-
             MediaPlayer mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(containerSettings.MediaPlayerPrefab, ct: ct)).Value;
 
             var videoTexturesPool = new ExtendedObjectPool<RenderTexture>(
@@ -80,16 +72,6 @@ namespace DCL.SDKComponents.MediaStream
 
         public override void Dispose() =>
             mediaVolume.Dispose();
-
-        private static FeatureId CurrentPlatformMediaPlayerFeature()
-        {
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
-                return SystemInfo.processorType.Contains("apple", StringComparison.OrdinalIgnoreCase)
-                    ? FeatureId.UseCustomMediaPlayerMacSilicon
-                    : FeatureId.UseCustomMediaPlayerMacIntel;
-
-            return FeatureId.UseCustomMediaPlayerWindows;
-        }
 
         [Serializable]
         public class MediaPlayerReference : ComponentReference<MediaPlayer>

@@ -62,6 +62,28 @@ namespace UUAV
                 );
                 return;
             }
+#elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
+            // native captures Unity's device through IUnityGraphicsVulkan at
+            // plugin load (Vulkan) or drives the current GL context (OpenGL
+            // Core); no other API has an import path for the shared frames
+            if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Vulkan
+                && SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore)
+            {
+                Debug.LogError(
+                    $"[UUAV] init: unsupported graphics API {SystemInfo.graphicsDeviceType}; Linux requires Vulkan or OpenGL Core"
+                );
+                return;
+            }
+#elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+            // native reinterprets the probe texture pointer as an ID3D11Texture2D and builds the
+            // D3D11VA decode interop from its device; any other device type dereferences garbage
+            if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Direct3D11)
+            {
+                Debug.LogError(
+                    $"[UUAV] init: unsupported graphics API {SystemInfo.graphicsDeviceType}; Windows requires Direct3D 11"
+                );
+                return;
+            }
 #endif
 
             Application.quitting += Deinit;

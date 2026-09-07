@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///     not just the first client that returns "any" content. Why: ANDROID_VR often returns
     ///     a low-quality muxed MP4 (itag=18) along with adaptive formats, but no manifest;
     ///     itag=18 has known A/V sync problems. MWEB/TVHTML5 reliably return an HLS or DASH
-    ///     manifest URL that AVPro plays cleanly. So we keep searching for a manifest and only
+    ///     manifest URL that the player handles cleanly. So we keep searching for a manifest and only
     ///     accept the muxed MP4 as a last-resort fallback if no client offers a manifest.
     ///
     ///     YouTube deprecates client versions periodically. Symptom: HTTP 200 with
@@ -174,7 +174,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                         $"dash={!string.IsNullOrEmpty(response.DashManifestUrl)}, " +
                         $"muxed={response.MuxedStreams.Count}, videoOnly={response.VideoOnlyStreams.Count}, isLive={response.IsLive}");
 
-                    // Best case: this client returned an HLS or DASH manifest — clean A/V sync via AVPro.
+                    // Best case: this client returned an HLS or DASH manifest — clean A/V sync.
                     if (response.HasStreamingManifest)
                     {
                         CachePlayerResponse(videoId.Value, response);
@@ -617,8 +617,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             || VideoOnlyStreams.Count > 0;
 
         /// <summary>
-        ///     True if the response carries an HLS or DASH manifest URL — the formats AVPro
-        ///     plays without A/V sync issues. Preferred over muxed MP4 (itag=18 has known
+        ///     True if the response carries an HLS or DASH manifest URL — the formats the
+        ///     player handles without A/V sync issues. Preferred over muxed MP4 (itag=18 has known
         ///     timing problems). Drives the fallback chain in <see cref="InnerTubeClient"/>.
         /// </summary>
         public bool HasStreamingManifest =>
@@ -740,7 +740,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                     initStart, initEnd, indexStart, indexEnd, contentLength));
 
                 // Also populate the simple IStreamInfo collection for the muxed-fallback path
-                // — but only for video entries (audio-only is useless on its own to AVPro).
+                // — but only for video entries (audio-only is useless on its own to the player).
                 if (width != null && height != null)
                 {
                     Container container = ContainerExtensions.ParseMimeType(mimeType);

@@ -1,6 +1,6 @@
 # UUAV is a vendored standalone UPM package (com.nickkhalow.uuav) that keeps its
-# upstream Unity/C# naming conventions; its AVProCompat layer must mirror AVPro's
-# exact API member names to stay a drop-in facade.
+# upstream Unity/C# naming conventions; its Compat layer keeps the exact member
+# names the Explorer's media systems call to stay a drop-in facade.
 [*.cs]
 # Package style: PascalCase enum members, UUAV* type names.
 resharper_inconsistent_naming_highlighting = none

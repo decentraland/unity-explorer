@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AvProSwitch;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
@@ -23,7 +22,6 @@ namespace DCL.SDKComponents.MediaStream
 
         public MediaPlayerDebugContainer(IDebugContainerBuilder debugContainer, MediaPlayerDebugRegistry registry)
         {
-            var backendMarker = new ElementBinding<string>(string.Empty);
             var uuavInitialized = new ElementBinding<string>(string.Empty);
             var uuavPlayers = new ElementBinding<ulong>(0);
             var uuavLifecycle = new ElementBinding<string>(string.Empty);
@@ -50,8 +48,7 @@ namespace DCL.SDKComponents.MediaStream
             ulong prevPullClamps = 0;
 
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MEDIA_PLAYER)
-                         ?.AddCustomMarker("Backend", backendMarker)
-                          .AddCustomMarker("UUAV Initialized", uuavInitialized)
+                         ?.AddCustomMarker("UUAV Initialized", uuavInitialized)
                           .AddMarker("UUAV Native Players", uuavPlayers, DebugLongMarkerDef.Unit.NoFormat)
                           .AddCustomMarker("UUAV Audio Engine", uuavAudioEngine)
                           .AddList("UUAV Players", uuavPlayersList)
@@ -88,10 +85,6 @@ namespace DCL.SDKComponents.MediaStream
 
             void RenderUuavSection()
             {
-                backendMarker.Value = MediaPlayerBackendSelection.UseCustomPlayer
-                    ? "<color=green>UUAV</color>"
-                    : "<color=yellow>AVPro</color>";
-
                 UUAVDebug.Info info = UUAVDebug.Query();
 
                 uuavInitialized.Value = info.NativeLibLoaded ? info.Initialized.ToString() : "library not loaded";
