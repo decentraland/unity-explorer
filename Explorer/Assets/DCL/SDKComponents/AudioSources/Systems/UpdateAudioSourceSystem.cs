@@ -140,6 +140,7 @@ namespace DCL.SDKComponents.AudioSources
             {
                 component.CleanUp(world);
                 component.AudioClipUrl = sdkComponent.AudioClipUrl!;
+                component.LastAppliedCurrentTime = float.NaN;
 
                 if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl!, partitionComponent, out Promise? clipPromise))
                     component.ClipPromise = clipPromise!.Value;
@@ -152,15 +153,27 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     if (sdkComponent is {HasPlaying: true, Playing: true })
                     {
+                        // A whole-component LWW PUT re-sends CurrentTime on every property change (e.g.
+                        // volume), so field presence alone is not a retrigger. Only seek + restart when the
+                        // seek target actually changed; otherwise a volume-only PUT would restart playback (#9903).
                         if (sdkComponent.HasCurrentTime)
                         {
                             float currentTime = sdkComponent.CurrentTime;
 
-                            audioSource.time = float.IsNaN(currentTime)
+                            // CurrentTime arrives from the scene unvalidated: clamp it into the clip's seekable
+                            // range, otherwise FMOD rejects the seek ("An invalid seek position was passed").
+                            float seekTarget = float.IsNaN(currentTime)
                                 ? 0f
                                 : Mathf.Clamp(currentTime, 0f, Mathf.Max(0f, audioSource.clip.length - CLIP_END_SEEK_MARGIN));
 
-                            audioSource.Play();
+                            if (!Mathf.Approximately(seekTarget, component.LastAppliedCurrentTime))
+                            {
+                                audioSource.time = seekTarget;
+                                component.LastAppliedCurrentTime = seekTarget;
+                                audioSource.Play();
+                            }
+                            else if (!audioSource.isPlaying)
+                                audioSource.Play();
                         }
                         else if (!audioSource.isPlaying)
                         {

@@ -18,6 +18,14 @@ namespace DCL.SDKComponents.AudioSources
         public MediaState LastPropagatedAudioState;
 
         /// <summary>
+        ///     Last (clamped) CurrentTime seek target applied to the AudioSource. SDK7 AudioSource is a
+        ///     whole-component LWW PUT, so CurrentTime is re-sent on every property change (e.g. volume);
+        ///     comparing against this value distinguishes a genuine seek from a stale re-send and avoids
+        ///     restarting already-playing audio. NaN means "no seek applied yet".
+        /// </summary>
+        public float LastAppliedCurrentTime;
+
+        /// <summary>
         ///     The final audio source ready for consumption
         /// </summary>
         public AudioSource? AudioSource { get; private set; }
@@ -41,6 +49,7 @@ namespace DCL.SDKComponents.AudioSources
             AudioSource = null;
             AudioSourceAssigned = false;
             LastPropagatedAudioState = MediaState.MsNone;
+            LastAppliedCurrentTime = float.NaN;
 
             lastAudioFrameReadFilter = new ();
         }

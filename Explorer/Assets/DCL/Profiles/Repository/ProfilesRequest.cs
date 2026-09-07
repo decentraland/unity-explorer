@@ -38,6 +38,16 @@ namespace DCL.Profiles
 
             Profile? profile = null;
 
+            // Two distinct policies drive two nested retry mechanisms, so they must not share one value:
+            //   - requestRetryPolicy is consumed by WebRequestController's own retry loop. A profile GET is
+            //     idempotent, so DEFAULT retries a transient network/DNS hiccup that would otherwise surface
+            //     as "Profile fetch timed out after 15s" (#9878). DEFAULT is bounded (transient-only, capped).
+            //   - repeatPolicy drives the outer loop below, which re-issues the whole request on a null or
+            //     stale-version response. On the non-retry-until-resolved path that must stay one-shot (NONE);
+            //     otherwise DEFAULT here would multiply attempts (up to 3x3) and poll a lagging catalyst.
+            RetryPolicy requestRetryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.DEFAULT;
+            RetryPolicy repeatPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.NONE;
+
             while (repeatValues.shouldRepeat)
             {
                 attemptNumber++;
@@ -45,20 +55,15 @@ namespace DCL.Profiles
                 if (repeatValues.delay > TimeSpan.Zero)
                     await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
 
-                // A profile GET is idempotent, so a transient network/DNS failure is safe to retry.
-                // Without retries a single hiccup surfaces as "Profile fetch timed out after 15s" (#9878).
-                // DEFAULT is bounded (transient-only, capped retries), unlike the retry-until-resolved policy.
-                RetryPolicy retryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.DEFAULT;
-
                 // Suppress logging errors here as we have very custom errors handling below
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, retryPolicy), ct, ReportCategory.PROFILE, suppressErrors: true);
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, requestRetryPolicy), ct, ReportCategory.PROFILE, suppressErrors: true);
 
                 profile = await response.CreateFromNewtonsoftJsonAsync<Profile>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, text, exception),
                     serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS);
 
                 repeatValues = profile == null || profile.Version < version
-                    ? WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, true, null)
+                    ? WebRequestUtils.CanBeRepeated(attemptNumber, repeatPolicy, true, null)
                     : (false, TimeSpan.Zero);
             }
 

@@ -351,7 +351,9 @@ namespace DCL.Profiles
                 if (useCentralizedProfiles && !forceCatalyst)
                 {
                     // A profile fetch-by-id is idempotent, so retry transient failures instead of letting a
-                    // single miss bubble up as "Profile fetch timed out after 15s" (#9878). DEFAULT is bounded.
+                    // single miss bubble up as "Profile fetch timed out after 15s" (#9878). Unlike the GET
+                    // path, PostSingleAsync's POST is not retried by WebRequestController (non-idempotent), so
+                    // this policy only drives PostSingleAsync's own re-issue loop — DEFAULT keeps it bounded.
                     profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version,
                         retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.DEFAULT, ct);
 

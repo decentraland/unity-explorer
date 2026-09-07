@@ -12,6 +12,12 @@ namespace DCL.Multiplayer.Connectivity
     {
         public override void WriteJson(JsonWriter writer, List<OnlineUserData>? value, JsonSerializer serializer)
         {
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
             writer.WriteStartArray();
             foreach (var item in value)
                 serializer.Serialize(writer, item);
@@ -19,7 +25,7 @@ namespace DCL.Multiplayer.Connectivity
             writer.WriteEndArray();
         }
 
-        public override List<OnlineUserData> ReadJson(JsonReader reader, Type objectType, List<OnlineUserData>? existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override List<OnlineUserData>? ReadJson(JsonReader reader, Type objectType, List<OnlineUserData>? existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;
@@ -34,21 +40,27 @@ namespace DCL.Multiplayer.Connectivity
 
             foreach (JToken peer in peers)
             {
-                string? address = peer["address"]?.Value<string>();
-                var posArray = peer["position"] as JArray;
+                // A peers element may itself be a non-object (e.g. a literal null); JToken's indexer would
+                // throw InvalidOperationException on those, which defeats the point of tolerating malformed payloads.
+                if (peer is not JObject peerObject)
+                    continue;
+
+                string? address = peerObject["address"]?.Value<string>();
+                var posArray = peerObject["position"] as JArray;
 
                 if (address == null || posArray == null || posArray.Count < 3)
                     continue;
 
-                JToken xToken = posArray[0];
-                JToken zToken = posArray[2];
+                // Value<float?>() yields null for null/missing/non-numeric tokens instead of throwing.
+                float? x = posArray[0].Value<float?>();
+                float? z = posArray[2].Value<float?>();
 
-                if (xToken.Type == JTokenType.Null || zToken.Type == JTokenType.Null)
+                if (x == null || z == null)
                     continue;
 
                 existingValue.Add(new OnlineUserData
                 {
-                    position = ToVector3(xToken.Value<float>(), zToken.Value<float>()),
+                    position = ToVector3(x.Value, z.Value),
                     avatarId = address
                 });
             }

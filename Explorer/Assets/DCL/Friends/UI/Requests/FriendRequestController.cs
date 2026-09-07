@@ -305,8 +305,12 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid RejectThenCloseAsync(CancellationToken ct)
             {
+                // A null Request has nothing to reject; close so the panel does not hang awaiting lifeCycleTask.
                 if (inputData.Request is not { } request)
+                {
+                    Close();
                     return;
+                }
 
                 await friendsService.RejectFriendshipAsync(request.From.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
@@ -352,8 +356,12 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid CancelThenCloseAsync(CancellationToken ct)
             {
+                // A null Request has nothing to cancel; close so the panel does not hang awaiting lifeCycleTask.
                 if (inputData.Request is not { } request)
+                {
+                    Close();
                     return;
+                }
 
                 await friendsService.CancelFriendshipAsync(request.To.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 

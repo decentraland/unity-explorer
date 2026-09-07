@@ -17,6 +17,15 @@ namespace DCL.Diagnostics.Sentry
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
         private const string UNKNOWN_SCENE_NAME = "unknown-scene";
 
+        // Prefixes of native (engine-emitted) log messages that reach us as UNSPECIFIED errors and are
+        // un-actionable on our side. "[Physics.PhysX]" covers mesh-cooking warnings ("cleaning the mesh
+        // failed", etc.) produced by degenerate/non-manifold geometry in creator-uploaded scene assets
+        // (tracker #7928). They are informational for us and must not create Sentry issues.
+        private static readonly string[] SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES =
+        {
+            "[Physics.PhysX]",
+        };
+
 #if UNITY_EDITOR
         private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
 #endif
@@ -200,15 +209,6 @@ namespace DCL.Diagnostics.Sentry
                     break;
             }
         }
-
-        // Prefixes of native (engine-emitted) log messages that reach us as UNSPECIFIED errors and are
-        // un-actionable on our side. "[Physics.PhysX]" covers mesh-cooking warnings ("cleaning the mesh
-        // failed", etc.) produced by degenerate/non-manifold geometry in creator-uploaded scene assets
-        // (tracker #7928). They are informational for us and must not create Sentry issues.
-        private static readonly string[] SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES =
-        {
-            "[Physics.PhysX]",
-        };
 
         private static bool IsIgnoredNativeMessage(string message)
         {
