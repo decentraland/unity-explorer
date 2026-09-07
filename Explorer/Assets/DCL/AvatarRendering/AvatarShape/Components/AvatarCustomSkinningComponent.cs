@@ -20,8 +20,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         public struct Buffers
         {
-            // since it's impossible to guarantee initialization of structure in C# the case requires to provide an additional check
-            private ComputeSkinningBufferContainer computeSkinningBufferContainer;
+            // A struct cannot guarantee initialization, so the container stays null until AssignBuffer runs
+            private ComputeSkinningBufferContainer? computeSkinningBufferContainer;
             private readonly ComputeBuffer bones; 
             internal readonly int kernel;
 
@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             public void DisposeBuffers()
             {
-                computeSkinningBufferContainer.Dispose();
+                computeSkinningBufferContainer?.Dispose();
                 bones.Dispose();
             }
         }
