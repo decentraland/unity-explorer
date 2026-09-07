@@ -97,6 +97,7 @@ namespace DCL.Multiplayer.Movement
             {
                 emoteIntentions.Clear();
                 emoteStopIntentions.Clear();
+                socialEmoteIntentions.Clear();
             }
         }
 

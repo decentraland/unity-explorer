@@ -152,6 +152,18 @@ namespace DCL.Multiplayer.Movement
                 pulseMultiplayerBus.SaveForRetry(intention);
                 liveKitEmotesMessageBus.SaveForRetry(intention);
             }
+
+            public OwnedBunch<RemoteSocialEmoteIntention> SocialEmoteIntentions() =>
+                pulseMultiplayerBus.SocialEmoteIntentions();
+
+            public void SendSocialEmoteStart(URN urn, string targetWalletId, uint durationMs, NetworkMovementMessage playerState) =>
+                pulseMultiplayerBus.SendSocialEmoteStart(urn, targetWalletId, durationMs, playerState);
+
+            public void SendSocialEmoteOutcome(uint interactionId, int outcomeIndex, uint durationMs, NetworkMovementMessage playerState) =>
+                pulseMultiplayerBus.SendSocialEmoteOutcome(interactionId, outcomeIndex, durationMs, playerState);
+
+            public void SaveForRetry(RemoteSocialEmoteIntention intention) =>
+                pulseMultiplayerBus.SaveForRetry(intention);
         }
 
         private class RemoveIntentionsProxy : IRemoveIntentions

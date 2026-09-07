@@ -34,6 +34,9 @@ namespace DCL.Multiplayer.Emotes
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
 
+        // Social emotes travel over Pulse only, so this transport never produces or sends them
+        private readonly HashSet<RemoteSocialEmoteIntention> socialEmoteIntentions = new (0);
+
         private readonly MutexSync sync = new();
 
         public LiveKitEmotesMessageBus(IMessagePipesHub messagePipesHub,
@@ -60,6 +63,15 @@ namespace DCL.Multiplayer.Emotes
 
         public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
             new (sync, emoteStopIntentions);
+
+        public OwnedBunch<RemoteSocialEmoteIntention> SocialEmoteIntentions() =>
+            new (sync, socialEmoteIntentions);
+
+        public void SendSocialEmoteStart(URN urn, string targetWalletId, uint durationMs, NetworkMovementMessage playerState) { }
+
+        public void SendSocialEmoteOutcome(uint interactionId, int outcomeIndex, uint durationMs, NetworkMovementMessage playerState) { }
+
+        public void SaveForRetry(RemoteSocialEmoteIntention intention) { }
 
         public void Send(URN emote, bool loopCyclePassed, AvatarEmoteMask mask, uint durationMs = 0, NetworkMovementMessage? playerState = null)
         {

@@ -39,6 +39,7 @@ namespace DCL.FeatureFlags
         public const string SCENE_MEMORY_LIMIT = "alfa-use-scene-memory-limit";
         public const string KTX2_CONVERSION = "ktx2-conversion";
         public const string PULSE = "pulse";
+        public const string SOCIAL_EMOTES = "alfa-social-emotes";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
         public const string USER_CREDITS = "alfa-user-credits";
         public const string CREDITS_WEARABLE_PURCHASE = "alfa-credits-wearable-purchase";
@@ -147,6 +148,7 @@ namespace DCL.FeatureFlags
         SkyboxSettings,
         SkyboxSettingsVariant,
         ReportUser,
+        SocialEmotes,
     }
 
     public static class FeatureFlagExtensions
@@ -195,6 +197,7 @@ namespace DCL.FeatureFlags
                 FeatureFlag.SkyboxSettings => FeatureFlagsStrings.SKYBOX_SETTINGS,
                 FeatureFlag.SkyboxSettingsVariant  => FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT,
                 FeatureFlag.ReportUser => FeatureFlagsStrings.REPORT_USER,
+                FeatureFlag.SocialEmotes => FeatureFlagsStrings.SOCIAL_EMOTES,
                 _ => string.Empty
             };
         }

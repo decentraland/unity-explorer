@@ -148,6 +148,9 @@ namespace DCL.PluginSystem.Global
 
             RemoteEmotesSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
 
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.SocialEmotes))
+                SocialEmoteInteractionSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
+
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, EMOTES_EMBEDDED_SUBDIRECTORY);
         }
 

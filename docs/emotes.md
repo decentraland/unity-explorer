@@ -50,3 +50,30 @@ Every Entity contains a `CharacterEmoteComponent` which tracks the current state
 Entities can receive a `CharacterEmoteIntent` component which will be consumed by `CharacterEmoteSystem`. If the emote has not been loaded yet, this intent will persist until the emote is played unless there has been an issue with the loading of the asset.
 
 The `EmotePlayer` class is responsible for playing, stopping, and pool-handling every emote in the game. Since multiple avatars may own the same emote and play them at the same time, we need to instantiate the same emote multiple times but download it only once. That's why this domain implements the usage of `EmoteReferences` which is just a MonoBehaviour with references. It's being used as a key for the pools as well, so that's why the `CharacterEmoteComponent` keeps track of it.
+
+## Social Emotes
+
+Social emotes are two-avatar emotes: an initiator loops a start animation until a receiver reacts with one of the
+emote's outcomes, then both play their outcome animation. They are gated by `FeatureId.SocialEmotes`
+(`alfa-social-emotes` / `--social-emotes`) and require Pulse: the registry only enables them when `FeatureId.Pulse` is on.
+
+Every event of an interaction is relayed by the Pulse server on the reliable channel with a server-assigned
+`interaction_id`, so the client never reconstructs pairing or ordering. The bus exposes them as
+`RemoteSocialEmoteIntention` (`IEmotesMessageBus.SocialEmoteIntentions()`), reusing the save-for-retry mechanism of
+regular remote emotes.
+
+`SocialEmoteInteractionSystem` is the only writer of `SocialEmoteInteractionComponent`, which lives on each participant:
+
+- A start puts the initiator in `Started`; a repeated start is ignored, a new one replaces the previous interaction.
+- The first receiver outcome pairs the receiver with the initiator; later reactions are dropped. The initiator's own
+  outcome event moves it to `Outcome`.
+- Events whose prerequisites have not arrived are retried until the remote interpolation timeline passes their timestamp
+  by `REACTION_TIMEOUT`, then dropped.
+- `Started` ends after `REACTION_TIMEOUT` seconds; a deleted participant finishes its partner. `Finished` components are
+  removed on the next update.
+
+All writes are `AddOrSet`, so re-delivered events never double-add a component.
+
+Pending: the Pulse protocol does not carry the social payload yet, so `PulseMultiplayerBus` logs a warning instead of
+sending and registers no handler. Outcome clip selection and the outcomes UI build on top of this component.
+

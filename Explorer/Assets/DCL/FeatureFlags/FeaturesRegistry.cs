@@ -89,6 +89,9 @@ namespace DCL.FeatureFlags
 
             // The intro tip is a kill switch: unlike the feature itself it stays off until the flag is explicitly enabled.
             SetFeatureState(FeatureId.NearbyVoiceChatTip, IsEnabled(FeatureId.NearbyVoiceChat) && featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT_TIP));
+
+            // Social emotes ride the Pulse reliable channel, so they are unavailable without it
+            SetFeatureState(FeatureId.SocialEmotes, IsEnabled(FeatureId.Pulse) && appArgs.ResolveFeatureFlagArg(AppArgsFlags.SOCIAL_EMOTES, featureFlags.IsEnabled(FeatureFlagsStrings.SOCIAL_EMOTES)));
         }
 
         /// <summary>
@@ -227,5 +230,6 @@ namespace DCL.FeatureFlags
         NearbyVoiceChatTip = 74,
         BugReport = 75,
         InGameShop = 76,
+        SocialEmotes = 77,
     }
 }
