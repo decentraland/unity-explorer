@@ -109,6 +109,7 @@ float4 frag(VertexOutput i) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(i);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+    DCLTeleportClip(TRANSFORM_TEX(i.uv0, _BaseMap));
     Dithering(_FadeDistance, i.positionCS, _StartFadeDistance, _StartFadeDistance);
     if (_RevealEnabled > 0.5)
     {
@@ -155,6 +156,7 @@ float4 frag(VertexOutput i) : SV_Target
         float Set_Clipping = saturate((_Inverse_Clipping_var+_Clipping_Level));
         clip(Set_MainTexAlpha - 0.5);
         float4 Set_Outline_Color = float4(_Is_BlendBaseColor_var,Set_Clipping);//lerp( float4(_Is_BlendBaseColor_var,Set_Clipping), float4((_OutlineTex_var.rgb*_Outline_Color.rgb*lightColor),Set_Clipping), _Is_OutlineTex );
+        Set_Outline_Color.rgb = DCLTeleportColor(Set_Outline_Color.rgb, i.positionWS, i.normalDir, TRANSFORM_TEX(i.uv0, _BaseMap));
         return Set_Outline_Color;
     //#endif
 }

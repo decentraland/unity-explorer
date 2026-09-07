@@ -38,6 +38,7 @@ using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.Commands;
+using DCL.Chat.Teleport;
 using DCL.ChatArea;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
@@ -101,6 +102,7 @@ namespace DCL.PluginSystem.Global
         private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
         private readonly StreamReactionsChatCommand streamReactionsChatCommand;
+        private readonly GotoTeleportAnimation gotoTeleportAnimation;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
 
@@ -149,6 +151,7 @@ namespace DCL.PluginSystem.Global
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
             StreamReactionsChatCommand streamReactionsChatCommand,
+            GotoTeleportAnimation gotoTeleportAnimation,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -188,6 +191,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
             this.streamReactionsChatCommand = streamReactionsChatCommand;
+            this.gotoTeleportAnimation = gotoTeleportAnimation;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -209,7 +213,10 @@ namespace DCL.PluginSystem.Global
             pluginCts.SafeCancelAndDispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            GotoTeleportAnimationSystem.InjectToWorld(ref builder, gotoTeleportAnimation);
+        }
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {

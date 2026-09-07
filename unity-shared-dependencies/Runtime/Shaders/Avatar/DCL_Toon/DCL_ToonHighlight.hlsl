@@ -28,6 +28,7 @@ struct VertexInput
 struct VertexOutput
 {
     float4 pos : SV_POSITION;
+    float2 uv : TEXCOORD0;
     float4 positionCS : TEXCOORD4;
 
     UNITY_VERTEX_OUTPUT_STEREO
@@ -39,6 +40,7 @@ VertexOutput vert_highlight (VertexInput v)
 
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+    o.uv = TRANSFORM_TEX(v.texcoord0, _BaseMap);
 
     float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
 
@@ -88,6 +90,7 @@ VertexOutput vert_highlight (VertexInput v)
 
 float4 frag_highlight(VertexOutput i) : SV_Target
 {
+    DCLTeleportClip(i.uv);
     Dithering(_FadeDistance, i.positionCS, _EndFadeDistance, _StartFadeDistance);
     return _Highlight_Colour;
 }
