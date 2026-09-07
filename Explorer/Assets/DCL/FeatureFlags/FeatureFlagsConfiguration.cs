@@ -23,6 +23,13 @@ namespace DCL.FeatureFlags
             result.flags.GetValueOrDefault(id, false);
         public bool IsEmpty => result.IsEmpty;
 
+        /// <summary>
+        ///     The flag's value, or <paramref name="defaultWhenAbsent" /> when the resolved configuration does not
+        ///     carry it. Pass true for a kill switch: the feature stays on until the backend serves the flag as false.
+        /// </summary>
+        public bool IsEnabled(string id, bool defaultWhenAbsent) =>
+            result.flags.GetValueOrDefault(id, defaultWhenAbsent);
+
         public bool IsEnabled(string id, string variantId)
         {
             if (!result.variants.TryGetValue(id, out FeatureFlagVariantDto variant)) return false;
