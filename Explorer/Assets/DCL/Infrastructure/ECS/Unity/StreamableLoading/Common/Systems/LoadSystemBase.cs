@@ -197,6 +197,18 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 // If we don't set an exception it will spin forever
                 result = new StreamableLoadingResult<TAsset>(GetReportCategory(), e);
+
+                // The runtime logger mutes asset categories, so under the golden harness every
+                // streamable failure also lands in a file: content presence differences between
+                // runs start here, and the muted log otherwise hides them completely.
+                if (System.Environment.GetEnvironmentVariable("DCL_PLAZABENCH_DETERM_CLOCK") == "1")
+                    try
+                    {
+                        System.IO.File.AppendAllText(
+                            System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"golden-loadfail-{System.Diagnostics.Process.GetCurrentProcess().Id}.txt"),
+                            $"{typeof(TAsset).Name} {intention.ToString()} :: {e.GetType().Name} {e.Message}\n");
+                    }
+                    catch (Exception) { /* diagnostics only */ }
             }
             finally { FinalizeLoading(entity, intention, result, source, state); }
         }

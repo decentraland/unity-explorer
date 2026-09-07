@@ -31,9 +31,14 @@ namespace DCL.SpringBones
             this.simulationSettings = simulationSettings;
         }
 
+        // Golden captures: spring state is wall-clock simulation history, unreproducible
+        // across boots; disabled, the joints snap to their authored rest rotations.
+        private static readonly bool GOLDEN_DETERM =
+            System.Environment.GetEnvironmentVariable("DCL_PLAZABENCH_DETERM_CLOCK") == "1";
+
         protected override void Update(float t)
         {
-            if (!simulationSettings.SimulationEnabled)
+            if (!simulationSettings.SimulationEnabled || GOLDEN_DETERM)
             {
                 if (wasEnabled)
                 {

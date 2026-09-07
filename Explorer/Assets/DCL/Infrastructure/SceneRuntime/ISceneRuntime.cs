@@ -45,6 +45,13 @@ namespace SceneRuntime
 
         UniTask UpdateScene(float dt);
 
+        /// <summary>
+        ///     False when the last <see cref="UpdateScene" /> call was absorbed by the golden
+        ///     harness (phase hold or frozen clock ceiling) without invoking the scene, so tick
+        ///     counters track ticks the scene actually observed.
+        /// </summary>
+        bool LastUpdateDispatched => true;
+
         void ApplyStaticMessages(ReadOnlyMemory<byte> data);
 
         /// <summary>

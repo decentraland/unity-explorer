@@ -38,8 +38,18 @@ namespace DCL.Optimization.PerformanceBudgeting
             this.memoryThreshold = memoryThreshold;
         }
 
+        // Golden-capture determinism: whether memory rates Full at the instant a streamable is
+        // requested is machine- and boot-dependent, and the deferred loader denies denied
+        // requests forever — content presence becomes a coin flip (the news-screen textures).
+        // Golden content is fixed and fits; the budget always permits under the harness.
+        private static readonly bool GOLDEN_DETERM_CLOCK =
+            System.Environment.GetEnvironmentVariable("DCL_PLAZABENCH_DETERM_CLOCK") == "1";
+
         private MemoryUsageStatus GetMemoryUsageStatus()
         {
+            if (GOLDEN_DETERM_CLOCK)
+                return Normal;
+
             if(UnityEngine.Time.frameCount == cachedFrame)
                 return cachedStatus;
 

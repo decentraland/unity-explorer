@@ -27,7 +27,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             componentPool.Get().Returns(new PBGltfContainerLoadingState());
 
-            system = new WriteGltfContainerLoadingStateSystem(world, writer, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
+            system = new WriteGltfContainerLoadingStateSystem(world, writer, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1), Substitute.For<SceneRunner.Scene.ISceneStateProvider>());
         }
 
         [Test]

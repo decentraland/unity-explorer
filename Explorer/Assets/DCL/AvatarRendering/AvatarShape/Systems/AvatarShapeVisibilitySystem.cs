@@ -12,6 +12,7 @@ using DCL.Quality;
 using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
 using DCL.SceneBannedUsers;
 using ECS.Abstract;
+using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Arch;
@@ -253,6 +254,12 @@ namespace DCL.AvatarRendering.AvatarShape
         private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, IAvatarView avatarView, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden, bool shouldPlayFootstepFX,
             in CharacterEmoteComponent characterEmoteComponent)
         {
+            // Golden capture: the freeze rewinds and disables animators, but this method
+            // would re-enable them next frame and the animator advances by real time before
+            // the render-callback rewind runs - a slow post-freeze breathing drift. Once the
+            // harness signals frozen, animator enablement stays wherever the freeze put it.
+            bool goldenFrozen = (AppDomain.CurrentDomain.GetData("golden.frozen") as bool?) == true;
+
             // Compared against the cached flag, not Animator.enabled: the culling gate in
             // FinishAvatarMatricesCalculationSystem also writes that property, and reading it back here would
             // re-run this transition every frame an avatar is culled.
@@ -268,7 +275,8 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarCachedVisibility.IsVisible = shouldBeHidden;
             avatarCachedVisibility.PlaysFootstepFX = shouldPlayFootstepFX;
 
-            avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX && !avatarView.IsLegacyAnimationPlaying;
+            if (!goldenFrozen)
+                avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX && !avatarView.IsLegacyAnimationPlaying;
             avatarView.AvatarAnimator.fireEvents = shouldPlayFootstepFX;
         }
 

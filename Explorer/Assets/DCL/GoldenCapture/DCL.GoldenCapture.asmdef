@@ -1,0 +1,22 @@
+{
+    "name": "DCL.GoldenCapture",
+    "rootNamespace": "",
+    "references": [
+        "GUID:15fc0a57446b3144c949da3e2b9737a9",
+        "Unity.RenderPipelines.Core.Runtime",
+        "DCL.VideoPlayback",
+        "GPUInstancerPro",
+        "DCL.AvatarRendering",
+        "Unity.Animation.Rigging",
+        "Utility"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

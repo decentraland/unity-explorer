@@ -56,6 +56,19 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
 
+            // Golden-capture determinism: scene websockets carry live multiplayer state (the
+            // plaza's colyseus fishing room spawns other real players' rigs), which can never
+            // match across boots. Refusing the connection puts every run in the same offline
+            // branch of the scene's networking code — and the rejection is held to the phase
+            // lock like fetch resolutions, so the offline branch starts on the same canonical
+            // tick everywhere instead of whatever tick the throw happens to land on.
+            if (GoldenReleaseQueue.Enabled)
+            {
+                await GoldenReleaseQueue.AwaitTurnAsync(GoldenReleaseQueue.TakeTicket(), ct);
+
+                throw new System.Net.WebSockets.WebSocketException("golden capture: scene websockets are pinned offline");
+            }
+
             await GetInstanceOrThrow(websocketId).WebSocket.ConnectAsync(new Uri(url), ct);
         }
 
