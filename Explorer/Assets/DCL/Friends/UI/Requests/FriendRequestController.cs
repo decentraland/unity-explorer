@@ -6,7 +6,6 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.Utilities.Extensions;
-using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;

@@ -40,8 +40,8 @@ namespace DCL.Profiles
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
 
-        private ulong passedTimeSinceLastDeployment = 0;
-        private ulong lastDeployTimestampInSeconds = 0;
+        private ulong passedTimeSinceLastDeployment;
+        private ulong lastDeployTimestampInSeconds;
 
         private UniTaskCompletionSource? currentProfileResolutionTask;
         private Profile? currentProfile;
@@ -130,7 +130,7 @@ namespace DCL.Profiles
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = Array.Empty<ContentDefinition>(),
-                pointers = new string[] { profile.UserId.Value },
+                pointers = new[] { profile.UserId.Value },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };
