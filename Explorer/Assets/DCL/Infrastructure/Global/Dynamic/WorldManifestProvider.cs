@@ -16,6 +16,7 @@ namespace Global.Dynamic
     public class WorldManifestProvider
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private static readonly URLAddress ORG_MANIFEST_URL = URLAddress.FromString("https://places-dcf8abb.s3.amazonaws.com/WorldManifest.json");
         private static readonly URLAddress ZONE_MANIFEST_URL = URLAddress.FromString("https://places-e22845c.s3.us-east-1.amazonaws.com/WorldManifest.json");
@@ -24,16 +25,17 @@ namespace Global.Dynamic
 
         private WorldManifest? cachedMainManifest;
 
-        public WorldManifestProvider(IWebRequestController webRequestController)
+        public WorldManifestProvider(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public async UniTask<WorldManifest> FetchWorldManifestAsync(URLDomain assetBundleRegistry, string realmName, DecentralandEnvironment environment, CancellationToken ct)
+        public async UniTask<WorldManifest> FetchWorldManifestAsync(URLDomain assetBundleRegistry, string realmName, DecentralandEnvironment environment, bool realmIsGenesis, CancellationToken ct)
         {
             try
             {
-                if (MAIN_REALM_NAMES.Contains(realmName))
+                if (IsGenesisRealm(realmName, environment, realmIsGenesis))
                     return GenesisManifestUrl(environment) is { } genesisManifestUrl
                         ? await FetchGenesisManifestAsync(genesisManifestUrl, ct)
                         : WorldManifest.Empty;
@@ -86,17 +88,25 @@ namespace Global.Dynamic
         }
 
         /// <summary>
-        ///     Where the Genesis City manifest lives, or null for an environment that has none. It is a static S3
-        ///     artifact describing decentraland's own Genesis City, so a <c>--base-domain</c> deployment's realms are
-        ///     not that city even when they reuse its realm names — it has no genesis manifest rather than a
-        ///     differently-hosted one, and applying decentraland's would describe the wrong world.
+        ///     The decentraland environments recognize their genesis realms by name. A <c>--base-domain</c> deployment
+        ///     names its realms freely, so there genesis is the realm's classification — no fixed scene urns, the same
+        ///     rule <see cref="RealmData.Reconfigure" /> applies — and the name list stays out of it.
         /// </summary>
-        private static URLAddress? GenesisManifestUrl(DecentralandEnvironment environment) =>
+        private static bool IsGenesisRealm(string realmName, DecentralandEnvironment environment, bool realmIsGenesis) =>
+            environment == DecentralandEnvironment.Custom ? realmIsGenesis : MAIN_REALM_NAMES.Contains(realmName);
+
+        /// <summary>
+        ///     Where the Genesis City manifest lives. For the decentraland environments it is a static S3 artifact
+        ///     describing decentraland's own Genesis City. A <c>--base-domain</c> deployment's genesis realm is a
+        ///     different city, so decentraland's artifact never applies to it — Custom resolves the deployment's own
+        ///     manifest from the base domain instead (<see cref="DecentralandUrl.GenesisWorldManifest" />).
+        /// </summary>
+        private URLAddress? GenesisManifestUrl(DecentralandEnvironment environment) =>
             environment switch
             {
                 DecentralandEnvironment.Org => ORG_MANIFEST_URL,
                 DecentralandEnvironment.Zone => ZONE_MANIFEST_URL,
-                DecentralandEnvironment.Custom => null,
+                DecentralandEnvironment.Custom => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.GenesisWorldManifest)),
                 _ => throw new ArgumentOutOfRangeException(nameof(environment), environment, null),
             };
 

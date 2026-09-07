@@ -176,5 +176,12 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ChainRpc = 106,
 
         LodAssetBundlesCDN = 107,
+
+        /// <summary>
+        ///     Where a custom deployment publishes the world manifest of its own Genesis City (occupied parcels for
+        ///     terrain generation and scene-pointer gating). Only consulted for the Custom environment: the
+        ///     decentraland environments read their manifests from pinned S3 artifacts instead.
+        /// </summary>
+        GenesisWorldManifest = 108,
     }
 }
