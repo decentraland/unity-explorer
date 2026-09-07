@@ -136,6 +136,8 @@ namespace DCL.McpServer.Systems
                           .Add(new GetEntityDetailsTool(worldInfoHub))
                           .Add(new TriggerEmoteTool(globalWorldActions))
                           .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new SetRendererVisibleTool())
+                          .Add(new SetGameObjectActiveTool())
                           .Build();
 
             server = new McpHttpServer(toolsRegistry, port);
