@@ -57,6 +57,17 @@ namespace Global.Dynamic.Landscapes
                         cancellationToken: ct);
                 else
                     await genesisTerrain.ShowAsync(landscapeLoadReport, ct);
+
+                // Generation can be skipped entirely (uninitialized generator, or an empty world
+                // manifest — a --base-domain deployment has no genesis manifest). Announcing a
+                // terrain that has no model would fire TerrainLoaded on subscribers that read it.
+                if (genesisTerrain.TerrainModel == null)
+                {
+                    genesisTerrain.Hide();
+                    landscapeLoadReport.SetProgress(1f);
+
+                    return EnumResult<LandscapeError>.ErrorResult(LandscapeError.TerrainDataUnavailable);
+                }
             }
             else
             {

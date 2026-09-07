@@ -17,7 +17,6 @@ namespace ECS
         private readonly ReactiveProperty<RealmKind> realmType = new (RealmKind.Uninitialized);
 
         private IIpfsRealm ipfs = InvalidIpfsRealm.Instance;
-        private bool hasSceneURNs;
         private string pendingWorldCommsSecret = string.Empty;
         private URLDomain? pendingSecretScope;
 
@@ -113,7 +112,6 @@ namespace ECS
             IsDirty = true;
             Configured = true;
             RealmName = realmName;
-            hasSceneURNs = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
             CommsAdapter = commsAdapter;
             Protocol = protocol;
@@ -123,12 +121,7 @@ namespace ECS
             WorldManifest = worldManifest;
             SkyboxFixedHour = skyboxFixedHour;
 
-            if (isLocalSceneDevelopment)
-                realmType.Value = RealmKind.LocalScene;
-            else if (!hasSceneURNs)
-                realmType.Value = RealmKind.GenesisCity;
-            else
-                realmType.Value = RealmKind.World;
+            realmType.Value = ClassifyRealm(isLocalSceneDevelopment, ipfsRealm);
 
             // Pending is kept on a match so the same realm can be reconfigured again without re-validation.
             if (pendingSecretScope.HasValue && !string.IsNullOrEmpty(realmUrl.Value) && pendingSecretScope.Value == realmUrl)
@@ -138,6 +131,18 @@ namespace ECS
                 WorldCommsSecret = string.Empty;
                 ClearPendingWorldCommsSecret();
             }
+        }
+
+        /// <summary>
+        ///     How a realm's kind is decided, exposed so callers that need the classification before
+        ///     <see cref="Reconfigure" /> runs (the world-manifest fetch) apply the same rule.
+        /// </summary>
+        public static RealmKind ClassifyRealm(bool isLocalSceneDevelopment, IIpfsRealm ipfsRealm)
+        {
+            if (isLocalSceneDevelopment)
+                return RealmKind.LocalScene;
+
+            return ipfsRealm.SceneUrns is { Count: > 0 } ? RealmKind.World : RealmKind.GenesisCity;
         }
 
         public void SetPendingWorldCommsSecret(URLDomain validatedRealm, string secret)
