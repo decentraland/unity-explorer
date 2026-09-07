@@ -51,7 +51,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         PeerAbout = 31,
         RemotePeers = 32,
-        RemotePeersWorld = 33,
 
         DAO = 34,
 

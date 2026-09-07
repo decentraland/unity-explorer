@@ -53,13 +53,9 @@ namespace Global.Dynamic
 
         public static PlacesAndEventsContainer Create(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
         {
-            IOnlineUsersProvider baseUserProvider = new ArchipelagoHttpOnlineUsersProvider(webRequestController,
+            // One all-realms lookup: every peer carries its realm, so a friend in a world needs no second request.
+            var onlineUsersProvider = new ArchipelagoHttpOnlineUsersProvider(webRequestController,
                 URLAddress.FromString(urlsSource.Url(DecentralandUrl.RemotePeers)));
-
-            var onlineUsersProvider = new WorldInfoOnlineUsersProviderDecorator(
-                baseUserProvider,
-                webRequestController,
-                URLAddress.FromString(urlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(webRequestController, urlsSource));
             var eventsApiService = new HttpEventsApiService(webRequestController, urlsSource);
