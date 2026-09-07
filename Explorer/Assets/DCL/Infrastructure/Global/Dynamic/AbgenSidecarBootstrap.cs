@@ -83,6 +83,36 @@ namespace Global.Dynamic
             return true;
         }
 
+        /// <summary>
+        ///     Brings the server up as the AB CDN read-through fallback: requires the binary shipped in
+        ///     StreamingAssets (never downloads), reads content-addressed hashes from the live catalyst
+        ///     (no forced re-hash), and runs no warm-up — the server JIT-converts only genuine CDN
+        ///     misses on demand. True once it is serving. Never faults.
+        /// </summary>
+        public async UniTask<bool> StartFallbackAsync()
+        {
+            CancellationToken ct = lifeCycleCancellationTokenSource.Token;
+
+            try
+            {
+                // The sidecar reads the catalyst through at peer.{baseDomain}, so no realm override is needed.
+                AbgenSidecar? created = AbgenSidecar.TryCreate(BaseUrl, baseDomain, jitContentDigest: false);
+
+                // The fallback only ever runs the binary shipped in StreamingAssets — a miss means the
+                // build carries none and the sidecar stays down.
+                if (created == null) return false;
+
+                sidecar = created;
+                return await sidecar.StartAsync(ct);
+            }
+            catch (OperationCanceledException) { return false; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.ASSET_BUNDLES);
+                return false;
+            }
+        }
+
         private static async UniTask WarmUpAsync(AbgenSidecar sidecar, CancellationToken ct)
         {
             try { await sidecar.WarmUpLocalSceneAsync(ct); }

@@ -15,6 +15,8 @@ namespace DCL.Rendering.Menus
     public static class CompileSceneShader
     {
         private const string ASSET_BUNDLE_DIRECTORY = "Assets/StreamingAssets/AssetBundles";
+        private const string BUILD_DIRECTORY = "Library/SceneShaderBundles";
+        private const string LOD_SUBDIRECTORY = "lods";
 
         private static readonly string[] SCENE_SHADER_ASSET_NAMES =
         {
@@ -41,7 +43,7 @@ namespace DCL.Rendering.Menus
         [MenuItem("Decentraland/Shaders/Compile \"Scene_TexArray\" Shader Variants")]
         public static void CompileSceneTexArrayShaderMenuItem()
         {
-            CompileTheSceneShader("dcl/scene_texarray_ignore", SCENE_TEXARRAY_SHADER_ASSET_NAMES);
+            CompileTheSceneShader("dcl/scene_texarray_ignore", SCENE_TEXARRAY_SHADER_ASSET_NAMES, targetSubdirectory: LOD_SUBDIRECTORY);
         }
 
         [MenuItem("Decentraland/Shaders/Force Recompile \"Scene\" Shader Variants")]
@@ -50,10 +52,27 @@ namespace DCL.Rendering.Menus
             CompileTheSceneShader("dcl/scene_ignore", SCENE_SHADER_ASSET_NAMES, forceRecompile: true);
         }
 
-        private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, bool forceRecompile = false)
+        [MenuItem("Decentraland/Shaders/Compile All Scene Shader Variants")]
+        public static void CompileAllSceneShadersMenuItem()
         {
-            string platformSuffix = PlatformUtils.GetCurrentPlatform();
-            bundleName += platformSuffix;
+            CompileTheSceneShader("dcl/scene_ignore", SCENE_SHADER_ASSET_NAMES);
+            CompileTheSceneShader("dcl/scene_texarray_ignore", SCENE_TEXARRAY_SHADER_ASSET_NAMES, targetSubdirectory: LOD_SUBDIRECTORY);
+        }
+
+        private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, bool forceRecompile = false, string targetSubdirectory = "")
+        {
+            // The bundle name is the identity content bundles bind the shader through (internal CAB name and object ids),
+            // so it follows the content platform; the compiled variants and the shipped file name follow the host
+            // platform, which differ on Linux (see PlatformUtils.GetEmbeddedShaderBundleName)
+            bundleName += PlatformUtils.GetCurrentPlatform();
+            string fileName = PlatformUtils.GetEmbeddedShaderBundleName(bundleName, Application.platform);
+
+            BuildTarget bt = Application.platform switch
+                             {
+                                 RuntimePlatform.OSXEditor => BuildTarget.StandaloneOSX,
+                                 RuntimePlatform.LinuxEditor => BuildTarget.StandaloneLinux64,
+                                 _ => BuildTarget.StandaloneWindows64,
+                             };
 
             // Try multiple paths in order of preference:
             // 1. Local embedded package (if you've made it local)
@@ -70,9 +89,11 @@ namespace DCL.Rendering.Menus
 
                 // Check embedded/local package in Packages folder
                 "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/Scene/SceneRendering/",
+                "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/Scene/SceneRendering/TexArray/",
 
                 // Check if package has been made local/embedded
                 "Packages/com.decentraland.unity-shared-dependencies-local/Runtime/Shaders/Scene/SceneRendering/",
+                "Packages/com.decentraland.unity-shared-dependencies-local/Runtime/Shaders/Scene/SceneRendering/TexArray/",
             };
 
             // Also check the dynamic package path
@@ -168,14 +189,14 @@ namespace DCL.Rendering.Menus
             }
 
             // Create the directory if it doesn't exist
-            if (!Directory.Exists(ASSET_BUNDLE_DIRECTORY))
-                Directory.CreateDirectory(ASSET_BUNDLE_DIRECTORY);
+            if (!Directory.Exists(BUILD_DIRECTORY))
+                Directory.CreateDirectory(BUILD_DIRECTORY);
 
             // Build the asset bundle
-            Debug.Log("Building asset bundle to: " + ASSET_BUNDLE_DIRECTORY);
+            Debug.Log("Building asset bundle to: " + BUILD_DIRECTORY);
 
             // Delete existing bundle to force rebuild
-            string existingBundle = Path.Combine(ASSET_BUNDLE_DIRECTORY, bundleName);
+            string existingBundle = Path.Combine(BUILD_DIRECTORY, bundleName);
             if (File.Exists(existingBundle))
             {
                 Debug.Log($"Deleting existing bundle: {existingBundle}");
@@ -188,15 +209,9 @@ namespace DCL.Rendering.Menus
             for (var i = 0; i < buildInput.Length; i++)
                 buildInput[i].addressableNames = buildInput[i].assetNames.Select(Path.GetFileName).ToArray();
 
-            BuildTarget bt = platformSuffix switch
-                             {
-                                 "_windows" => BuildTarget.StandaloneWindows64,
-                                 "_mac" => BuildTarget.StandaloneOSX,
-                                 _ => BuildTarget.StandaloneWindows64,
-                             };
             BuildTargetGroup group = BuildPipeline.GetBuildTargetGroup(bt);
 
-            var parameters = new BundleBuildParameters(bt, group, ASSET_BUNDLE_DIRECTORY)
+            var parameters = new BundleBuildParameters(bt, group, BUILD_DIRECTORY)
             {
                 AppendHash = false,
                 BundleCompression = BuildCompression.Uncompressed,
@@ -223,10 +238,22 @@ namespace DCL.Rendering.Menus
                 Debug.LogError($"Asset bundle build failed with code: {result}");
             }
 
-            AssetDatabase.Refresh();
+            // Copy the asset bundle to the streaming assets under the shipped file name
+            string sourceFilePath = Path.Combine(BUILD_DIRECTORY, bundleName);
+            string targetFilePath = Path.Combine(ASSET_BUNDLE_DIRECTORY, targetSubdirectory, fileName);
 
-            // Copy the asset bundle to target directories
-            string sourceFilePath = Path.Combine(ASSET_BUNDLE_DIRECTORY, bundleName);
+            if (File.Exists(sourceFilePath))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(targetFilePath)!);
+                File.Copy(sourceFilePath, targetFilePath, true);
+                Debug.Log($"Bundle created successfully: {targetFilePath} ({new FileInfo(targetFilePath).Length} bytes, identity {bundleName}, target {bt})");
+            }
+            else
+            {
+                Debug.LogWarning($"Bundle file not found after build: {sourceFilePath}");
+            }
+
+            AssetDatabase.Refresh();
 
             // Remove the asset bundle mark
             foreach (AssetImporter assetImporter in importers)
@@ -235,17 +262,6 @@ namespace DCL.Rendering.Menus
             AssetDatabase.RemoveUnusedAssetBundleNames();
 
             Debug.Log("Asset bundle build and copy process completed.");
-
-            // Verify the bundle was created
-            if (File.Exists(sourceFilePath))
-            {
-                var fileInfo = new FileInfo(sourceFilePath);
-                Debug.Log($"Bundle created successfully: {sourceFilePath} ({fileInfo.Length} bytes)");
-            }
-            else
-            {
-                Debug.LogWarning($"Bundle file not found after build: {sourceFilePath}");
-            }
         }
 
         /// <summary>

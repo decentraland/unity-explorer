@@ -38,6 +38,7 @@ using DCL.NftInfoAPIService;
 using DCL.Notifications;
 using DCL.NotificationsBus;
 using DCL.Optimization.AdaptivePerformance.Systems;
+using DCL.PerformanceBenchmark;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.SmartWearables;
@@ -526,7 +527,7 @@ namespace Global.Dynamic
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
                 new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
                 new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),
-                commsContainer.CreateMultiplayerPlugin(staticContainer, assetsProvisioner, debugBuilder, multiplayerContainer),
+                commsContainer.CreateMultiplayerPlugin(staticContainer, assetsProvisioner, debugBuilder, multiplayerContainer, appArgs.HasFlag(AppArgsFlags.PLAZA_BENCH_CONTROLLED)),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(realmNavigatorContainer.WorldInfoHub, debugBuilder, chatContainer.ChatHistory),
                 new CharacterMotionPlugin(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
@@ -901,6 +902,19 @@ namespace Global.Dynamic
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LocalSceneDevelopment) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SelfPreviewBuilderCollections))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentUrl.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
+
+            if (appArgs.TryGetValue(AppArgsFlags.PLAZA_BENCH, out string? plazaBenchOutputDir) && !string.IsNullOrEmpty(plazaBenchOutputDir))
+                globalPlugins.Add(new PlazaBenchPlugin(
+                    plazaBenchOutputDir,
+                    globalWorld,
+                    staticContainer.LoadingStatus,
+                    staticContainer.ScenesCache,
+                    dynamicWorldDependencies.SettingsContainer.GetSettings<SkyboxPlugin.SkyboxTimeSettings>().Settings,
+                    staticContainer.Profiler,
+                    coroutineRunner,
+                    dclVersion,
+                    appArgs.HasFlag(AppArgsFlags.PLAZA_BENCH_LOCKSTEP),
+                    appArgs.TryGetValue(AppArgsFlags.PLAZA_BENCH_ANCHOR, out string? plazaBenchAnchor) ? plazaBenchAnchor : null));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 

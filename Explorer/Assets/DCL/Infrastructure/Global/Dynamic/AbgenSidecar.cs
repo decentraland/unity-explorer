@@ -44,8 +44,18 @@ namespace Global.Dynamic
         private const int HEALTH_POLL_MS = 250;
         private const int PROGRESS_POLL_MS = 500;
 
-        /// <summary>abgen's built-in default bind port (crate/src/abcdn/config.rs) — never exported as an env var.</summary>
-        private const int ABGEN_DEFAULT_PORT = 5147;
+        /// <summary>
+        ///     abgen's built-in default bind port (crate/src/abcdn/config.rs). The sidecar must
+        ///     NEVER bind it: if a separate, long-lived abgen instance is already running on this box, a
+        ///     --local-ab player racing that unit's restart can steal the bind and crash-loop the
+        ///     stack service. Probing it to reuse an already-running dedicated abgen is fine.
+        /// </summary>
+        private const int STACK_ABGEN_PORT = 5147;
+
+        /// <summary>The sidecar's own default port (5177) — preferred, with an ephemeral fallback.</summary>
+        private const int SIDECAR_PREFERRED_PORT = 5177;
+
+        private static int? reservedPort;
         private const int SUPERVISION_POLL_MS = 2000;
 
         /// <summary>Path under the realm root where a content server exposes its entities and files.</summary>
@@ -92,25 +102,59 @@ namespace Global.Dynamic
         /// <summary>
         ///     The server's endpoint WITHOUT creating or starting anything — synchronous, so the URL can
         ///     seed the URL sources built early in startup. The server is created on this URL later via
-        ///     <see cref="TryCreate" />. Always abgen's default bind (127.0.0.1:5147): exporting the port
-        ///     would take the generic HTTP_SERVER_HOST/PORT names, which leak into every child process
-        ///     spawned after <see cref="Launch" />. A second --local-ab instance loses the port and its
-        ///     scene degrades to raw GLTFs — acceptable for a dev-only tool.
+        ///     <see cref="TryCreate" />. Prefers the sidecar's registered port and falls back to a free
+        ///     ephemeral one; the chosen port travels in <see cref="BaseUrl" /> and is handed to the
+        ///     child scoped to its spawn, so nothing else reads the generic HTTP_SERVER_* names.
         /// </summary>
         public static string ReserveBaseUrl() =>
-            $"http://127.0.0.1:{ABGEN_DEFAULT_PORT}";
+            $"http://127.0.0.1:{ReservePort()}";
+
+        private static int ReservePort()
+        {
+            if (reservedPort.HasValue)
+                return reservedPort.Value;
+
+            reservedPort = TryBindProbe(SIDECAR_PREFERRED_PORT) ? SIDECAR_PREFERRED_PORT : FreeEphemeralPort();
+            return reservedPort.Value;
+        }
+
+        private static bool TryBindProbe(int port)
+        {
+            try
+            {
+                var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, port);
+                listener.Start();
+                listener.Stop();
+                return true;
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                return false;
+            }
+        }
+
+        private static int FreeEphemeralPort()
+        {
+            var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            return port;
+        }
 
         /// <summary>
         ///     Resolves the server binary and creates the (not yet started) sidecar on
         ///     <paramref name="baseUrl" />; <see cref="StartAsync" /> launches it. Returns null when no
         ///     binary is installed — <see cref="EnsurePinnedBinaryAsync" /> downloads it.
         ///     <para>
-        ///     <paramref name="realmRootOverride" /> points the server at a non-catalyst realm (the
-        ///     local-scene-development preview server), whose /content endpoints the scene is read through;
-        ///     its cache is kept apart from the catalyst one.
+        ///     <paramref name="realmRootOverride" /> replaces the default catalyst root
+        ///     (<c>peer.{baseDomain}</c>) with a specific realm — the local-scene-development
+        ///     preview server, or the base-domain catalyst under a Custom deployment — whose /content and /about
+        ///     are read through in its place.
         ///     <paramref name="jitContentDigest" /> enables abgen's dev-mode freshness: every manifest request
         ///     re-downloads and re-hashes the entity's content, so edits reconvert even under LSD's
-        ///     path-derived hashes, which never change.
+        ///     path-derived hashes, which never change. It also selects the LSD on-disk cache home, kept apart
+        ///     from the content-addressed catalyst one.
         ///     </para>
         /// </summary>
         public static AbgenSidecar? TryCreate(string baseUrl, string baseDomain, string? cacheRoot = null, string? realmRootOverride = null, bool jitContentDigest = false)
@@ -124,7 +168,7 @@ namespace Global.Dynamic
                 exe,
                 realmRootOverride?.TrimEnd('/') ?? $"https://peer.{baseDomain}",
                 $"https://ab-cdn.{baseDomain}",
-                cacheRoot ?? Path.Combine(Application.persistentDataPath, realmRootOverride == null ? AbgenBundleDiskCache.SIDECAR_DIR : AbgenBundleDiskCache.SIDECAR_LSD_DIR),
+                cacheRoot ?? Path.Combine(Application.persistentDataPath, jitContentDigest ? AbgenBundleDiskCache.SIDECAR_LSD_DIR : AbgenBundleDiskCache.SIDECAR_DIR),
                 jitContentDigest);
         }
 
@@ -569,9 +613,12 @@ namespace Global.Dynamic
             try
             {
                 // abgen is configured entirely through environment variables, and every spawn path
-                // below launches the child with this process's environment. The bind endpoint is NOT
-                // exported: the server's defaults already match ReserveBaseUrl (127.0.0.1:5147), and
-                // HTTP_SERVER_HOST/PORT are generic names any later-spawned child could misread.
+                // below launches the child with this process's environment. The bind endpoint uses
+                // the reserved sidecar port (never abgen's 5147 default — a dedicated stack abgen
+                // may own that); HTTP_SERVER_* are generic names other children could misread, so
+                // they are cleared again right after the spawn.
+                Environment.SetEnvironmentVariable("HTTP_SERVER_HOST", "127.0.0.1");
+                Environment.SetEnvironmentVariable("HTTP_SERVER_PORT", ReservePort().ToString());
                 Environment.SetEnvironmentVariable("ABGEN_CACHE_DIR", Path.Combine(cacheRoot, "cache"));
                 Environment.SetEnvironmentVariable("ABGEN_OUT_ROOT", Path.Combine(cacheRoot, "out"));
                 Environment.SetEnvironmentVariable("ABGEN_CATALYST_URL", catalystContentUrl);
@@ -584,7 +631,15 @@ namespace Global.Dynamic
                 // bundles, so pinning it off only trades encode throughput for a ~1s startup.
                 Environment.SetEnvironmentVariable("ABGEN_GPU_BACKEND", "off");
 
-                return LaunchChild();
+                try
+                {
+                    return LaunchChild();
+                }
+                finally
+                {
+                    Environment.SetEnvironmentVariable("HTTP_SERVER_HOST", null);
+                    Environment.SetEnvironmentVariable("HTTP_SERVER_PORT", null);
+                }
             }
             catch (Exception e)
             {
