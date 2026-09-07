@@ -7,6 +7,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     /// </summary>
     public static class AvatarCullingRule
     {
+        public static bool IsExempt(bool isMainPlayer, bool isPreview) =>
+            isMainPlayer || isPreview;
+
         /// <param name="exemptFromCulling">
         ///     True for the main player, whose pose is sampled by reflections and portraits outside the player
         ///     frustum, and for preview avatars, which their own camera draws into a render texture.

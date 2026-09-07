@@ -270,7 +270,7 @@ magenta ghost renderer bounds, tested before");
             public readonly bool IsPreview;
             public readonly bool IsVisible;
 
-            public bool ExemptFromCulling => IsMainPlayer || IsPreview;
+            public bool ExemptFromCulling => AvatarCullingRule.IsExempt(IsMainPlayer, IsPreview);
 
             public CullingInputs(Bounds bounds, bool isMainPlayer, bool isPreview, bool isVisible)
             {

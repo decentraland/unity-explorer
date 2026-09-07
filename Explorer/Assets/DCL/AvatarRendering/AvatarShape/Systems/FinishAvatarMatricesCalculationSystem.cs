@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.AvatarShape
             // The main player never skips: reflections and portraits sample it outside this frustum. Preview
             // avatars are drawn by their own camera into a render texture, so the player camera says nothing
             // about them either.
-            bool exempt = avatarTransformMatrixComponent.IsMainPlayer || avatarShape.IsPreview;
+            bool exempt = AvatarCullingRule.IsExempt(avatarTransformMatrixComponent.IsMainPlayer, avatarShape.IsPreview);
 
             // The || short-circuits, so an exempt avatar never indexes the remote bounds array.
             bool culled = AvatarCullingRule.IsCulled(exempt, avatarShape.IsVisible,

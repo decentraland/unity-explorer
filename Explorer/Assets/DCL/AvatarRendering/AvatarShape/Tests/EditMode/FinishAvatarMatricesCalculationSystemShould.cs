@@ -49,7 +49,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
         protected override void OnTearDown()
         {
-            LogAssert.ignoreFailingMessages = false;
             jobWrapper.Dispose();
 
             foreach (GameObject createdGameObject in createdGameObjects)
@@ -77,7 +76,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public void NotCullAnInWorldAvatarInFrontOfTheCamera()
         {
-            AllowTheSkinningDispatchToReport();
+            ExpectMissingSkinningBuffer();
 
             // Arrange - start culled, so the assertion can only pass on a transition the system drove
             AvatarBase avatarBase = CreateAvatar(IN_FRONT_OF_CAMERA, isPreview: false, out _);
@@ -94,7 +93,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public void KeepTheMainPlayerAnimatorOffInsideAHideAvatarsArea()
         {
-            AllowTheSkinningDispatchToReport();
+            ExpectMissingSkinningBuffer();
 
             // Arrange - exempt from culling and in view, so only the modifier-area rule can turn the Animator
             // off; start animated so the assertion can only pass on a transition the system drove
@@ -112,7 +111,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public void KeepThePreviewAvatarLiveWhereverThePlayerCameraLooks()
         {
-            AllowTheSkinningDispatchToReport();
+            ExpectMissingSkinningBuffer();
 
             // Arrange - same position that culls the in-world avatar above, and start culled so the assertion
             // can only pass on a transition the system drove
@@ -164,9 +163,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         ///     An avatar that is not culled reaches ComputeSkinning, which reports against the placeholder
         ///     skinning component this fixture creates rather than a real one backed by GPU buffers.
         /// </summary>
-        private static void AllowTheSkinningDispatchToReport()
+        private static void ExpectMissingSkinningBuffer()
         {
-            LogAssert.ignoreFailingMessages = true;
+            LogAssert.Expect(LogType.Exception, "Exception: ComputeSkinning error: Cannot get bones (ComputeBuffer)");
         }
 
         private void RunFrame()
