@@ -1,10 +1,13 @@
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using Utility;
+using Utility.Animations;
 
 namespace DCL.GoldenCapture
 {
@@ -18,11 +21,70 @@ namespace DCL.GoldenCapture
     ///     normalize stochastic state (particles, animators, Random) → freeze (time stops, TAA off) and
     ///     re-issue the pinned shader time inside every camera's render passes so all _Time-driven
     ///     effects hold an identical phase across runs.
+    ///     <para>
+    ///         Harness state crosses assemblies through AppDomain data slots, so no producer or consumer
+    ///         references this assembly. A reader treats an absent or differently typed slot as unset.
+    ///         <list type="bullet">
+    ///             <item>
+    ///                 <c>golden.frozen</c> — bool, raised here at the freeze and never lowered. Consumers:
+    ///                 SceneRuntimeImpl stops dispatching scene ticks, UpdateCinemachineBrainSystem snaps
+    ///                 the camera pose, AvatarShapeVisibilitySystem holds animator enablement,
+    ///                 FinishAvatarMatricesCalculationSystem dumps the bone hashes.
+    ///             </item>
+    ///             <item>
+    ///                 <c>golden.sceneHold</c> — bool, raised here one lockstep frame ahead of the freeze;
+    ///                 lowered again only when that frame does not freeze. Consumer: SceneRuntimeImpl stops
+    ///                 dispatching scene ticks while it is raised.
+    ///             </item>
+    ///             <item>
+    ///                 <c>golden.sceneClocksBelowCeiling</c> — int, republished by SceneRuntimeImpl under its
+    ///                 own lock on every change: quantized scene clocks on their runway that have not reached
+    ///                 the ceiling. Consumer: the freeze report.
+    ///             </item>
+    ///             <item>
+    ///                 <c>golden.currentSceneTicks</c> — long, incremented by SceneFacade per dispatched tick
+    ///                 of the current scene. Consumer: the manual tween pump.
+    ///             </item>
+    ///             <item>
+    ///                 <c>golden.cameraRaw</c> — double[7] (position xyz, rotation xyzw), one array published
+    ///                 once by UpdateCinemachineBrainSystem and rewritten in place every frozen frame with the
+    ///                 pre-snap brain output. Consumer: the camera pose dump.
+    ///             </item>
+    ///             <item>
+    ///                 <c>golden.cameraRig</c> — string, republished sparsely by UpdateCinemachineBrainSystem
+    ///                 with the live rig state. Consumer: the camera pose dump.
+    ///             </item>
+    ///         </list>
+    ///     </para>
     /// </summary>
     public static class GoldenFreeze
     {
+        private const string FROZEN_SLOT = "golden.frozen";
+        private const string SCENE_HOLD_SLOT = "golden.sceneHold";
+        private const string SCENE_CLOCKS_BELOW_CEILING_SLOT = "golden.sceneClocksBelowCeiling";
+        private const string CURRENT_SCENE_TICKS_SLOT = "golden.currentSceneTicks";
+        private const string CAMERA_RAW_SLOT = "golden.cameraRaw";
+        private const string CAMERA_RIG_SLOT = "golden.cameraRig";
+
         private const float LOCKSTEP_DELTA = 1f / 60f;
         private const float FROZEN_SHADER_TIME = 100f;
+
+        // Grid the frozen character root snaps to: 2^-10 m per axis, exact in float on every platform.
+        private const double CHARACTER_ROOT_GRID = 1024.0;
+
+        // Canonical pose source for pinned avatar skeletons: the movement state at MovementBlend 0 keys
+        // every avatar bone at its first frame. The short name is the fallback lookup for the same state.
+        private static readonly int BASE_LAYER_MOVEMENT_STATE = Animator.StringToHash("Base Layer.Movement");
+        private static readonly int MOVEMENT_STATE = Animator.StringToHash("Movement");
+
+        // Frozen-frame counts at which the camera pose dump, with the pinned-pose trace, is written.
+        private const int POSE_DUMP_FRAME_EARLY = 60;
+        private const int POSE_DUMP_FRAME_LATE = 600;
+
+        // Skeleton poses held for the freeze, per avatar animator, re-applied after every animator pass.
+        private static readonly Dictionary<Animator, PinnedNode[]> PINNED_POSES = new ();
+        private static readonly System.Text.StringBuilder animatorOutputTrace = new ();
+        private static GoldenPosePinHost? posePinHost;
 
         // Freeze only when game time crosses a multiple of this quantum, so every run freezes at
         // the same absolute Time.time (± one lockstep step) and all game-time-driven phases —
@@ -31,6 +93,7 @@ namespace DCL.GoldenCapture
 
         private static bool armed;
         private static bool lockstepEngaged;
+        private static bool sceneHoldRaised;
         private static bool frozen;
         private static int frozenFrames;
         private static int lastTextureCount;
@@ -120,11 +183,15 @@ namespace DCL.GoldenCapture
             // with streaming back on lets a texture-array copy bake a low-mip source.
             QualitySettings.streamingMipmapsActive = false;
 
+            PinSceneLightBudget();
+
             if (!frozen)
                 PumpTweensManually();
 
             if (frozen)
             {
+                frozenFrames++;
+
                 // Global copies for anything that samples shader time outside a URP camera pass.
                 // The camera passes themselves are covered by PinnedShaderTimeFeature: URP rewrites
                 // all six time globals from Time.time inside every camera's setup pass, after this
@@ -143,13 +210,17 @@ namespace DCL.GoldenCapture
                 QualitySettings.streamingMipmapsActive = false;
 
                 PinSkyboxNoon();
-                PinEnvironmentReflection();
                 PinProjection();
+                PinCharacterRoot();
 
                 // Only catch animators that something re-enabled (late spawners); the
                 // engage rewind plus the spring pin cover everything else, and repeated
                 // full rewinds re-roll animation state machines visibly.
                 FreezeAnimationSources(onlyActive: true);
+                ApplyPinnedPoses();
+
+                if (frozenFrames == POSE_DUMP_FRAME_EARLY || frozenFrames == POSE_DUMP_FRAME_LATE)
+                    WriteCameraPoseDump(frozenFrames == POSE_DUMP_FRAME_EARLY ? 1 : 2);
 
                 PollRenderDocTrigger();
                 return;
@@ -246,7 +317,10 @@ namespace DCL.GoldenCapture
             // absolute freeze floor is the settle guarantee instead. A frame-count bound would
             // scale with the machine's frame rate, which is exactly what these gates must not do.
             if (stableTextureSamples < 3 && SecondsSinceProcessStart < engagedAt + 60.0)
+            {
+                ReleaseSceneClocks();
                 return;
+            }
 
             // DCL_GOLDEN_FREEZE_AT is a REAL-time floor: the phase-locked scene clocks settle on
             // the wall clock (bootstrap ticks, real-time hold, real-paced resume to the ceiling),
@@ -255,7 +329,10 @@ namespace DCL.GoldenCapture
             // the freeze captures is pinned at the freeze itself, so the exact frame chosen only
             // needs the quantum gate below for a stable game-time anchor.
             if (freezeAtAbs > 0f && SecondsSinceProcessStart < freezeAtAbs)
+            {
+                ReleaseSceneClocks();
                 return;
+            }
 
             // Land game time EXACTLY on the quantum boundary: the crossing frame's residue
             // (time % quantum, up to one lockstep step) is boot-random and every
@@ -267,12 +344,25 @@ namespace DCL.GoldenCapture
             if (phase >= LOCKSTEP_DELTA)
             {
                 double rem = FREEZE_QUANTUM - phase;
+
+                if (rem <= LOCKSTEP_DELTA)
+                    HoldSceneClocks();
+                else
+                    ReleaseSceneClocks();
+
                 Time.captureDeltaTime = rem <= LOCKSTEP_DELTA ? (float)rem : LOCKSTEP_DELTA;
                 return;
             }
 
             if (phase > 0.0001)
+            {
+                // The boundary frame overshot and does not freeze: scenes held for it resume
+                // until the next approach to the quantum raises the hold again.
+                ReleaseSceneClocks();
                 return;
+            }
+
+            HoldSceneClocks();
 
             foreach (Camera cam in Camera.allCameras)
                 if (cam.TryGetComponent(out UniversalAdditionalCameraData data))
@@ -324,8 +414,33 @@ namespace DCL.GoldenCapture
             Time.captureDeltaTime = 0f;
             Time.timeScale = 0f;
             frozen = true;
-            AppDomain.CurrentDomain.SetData("golden.frozen", true);
+            AppDomain.CurrentDomain.SetData(FROZEN_SLOT, true);
             Debug.Log($"[GoldenFreeze] FROZEN at time={Time.time:F2}");
+        }
+
+        /// <summary>
+        ///     Stops every quantized scene clock from dispatching further ticks, whether or not it has
+        ///     reached its ceiling. The hold rises on the last lockstep frame before the freeze so a
+        ///     tick already in flight on a scene thread lands and its CRDT output is applied before the
+        ///     freeze-time normalizations run; from then on no tick can re-issue output on top of them.
+        ///     A tick that is mid-execution when the hold rises can still land after it. The hold is
+        ///     raised exactly while the next frame is expected to freeze; once the freeze lands,
+        ///     <c>golden.frozen</c> keeps the clocks stopped whatever this slot holds.
+        /// </summary>
+        private static void HoldSceneClocks()
+        {
+            if (sceneHoldRaised) return;
+
+            sceneHoldRaised = true;
+            AppDomain.CurrentDomain.SetData(SCENE_HOLD_SLOT, true);
+        }
+
+        private static void ReleaseSceneClocks()
+        {
+            if (!sceneHoldRaised) return;
+
+            sceneHoldRaised = false;
+            AppDomain.CurrentDomain.SetData(SCENE_HOLD_SLOT, false);
         }
 
         /// <summary>
@@ -447,18 +562,50 @@ namespace DCL.GoldenCapture
                 catch (Exception) { /* best-effort per renderer */ }
             }
 
+            PinCharacterRoot();
             FreezeAnimationSources(onlyActive: false);
+
+            // The per-animator rewind re-evaluated the pinned avatars; the report must show the held pose.
+            ApplyPinnedPoses();
 
             WriteFreezeReport();
         }
 
         /// <summary>
-        ///     The runtime logger is silenced after bootstrap, so the freeze diagnostics go to a file:
-        ///     everything that was normalized (tweens with their targets, animators, legacy animations,
-        ///     particle systems) plus every renderer material with an unassigned texture property —
-        ///     the fingerprint of content that samples undefined memory and breaks reproducibility.
+        ///     The character root's grounded height is a physics contact fixed point that differs per boot
+        ///     in its last bits, and that residual flips the rounding of the inverse(root) × boneWorld
+        ///     skinning product for individual bones. Snapping the root to a power-of-two grid makes its
+        ///     position exact on every platform. Only the player's controller is pinned: the drone
+        ///     camera's follow target carries a controller too and keeps its own framing. The pin re-runs
+        ///     every frozen frame right before rendering because the emote system re-enables the
+        ///     controller on every non-emote frame and InterpolateCharacterSystem's Move then re-grounds
+        ///     the root; the main avatar's root and bone gather completes inside AvatarGroup, ahead of that
+        ///     Move, so the skinning matrices and the rendered root both see the snapped position. Moving
+        ///     that gather after ChangeCharacterPositionGroup would break the pin.
         /// </summary>
-        private static readonly bool HARD_FREEZE_ANIMATORS = Environment.GetEnvironmentVariable("DCL_GOLDEN_FREEZE_ANIMATORS") == "1";
+        private static void PinCharacterRoot()
+        {
+            foreach (CharacterController controller in UnityEngine.Object.FindObjectsByType<CharacterController>(FindObjectsSortMode.None))
+            {
+                try
+                {
+                    if (controller.GetComponentInChildren<AvatarBase>(true) == null) continue;
+
+                    controller.enabled = false;
+                    Transform t = controller.transform;
+                    Vector3 p = t.position;
+
+                    t.position = new Vector3(
+                        (float)Snap(p.x, CHARACTER_ROOT_GRID),
+                        (float)Snap(p.y, CHARACTER_ROOT_GRID),
+                        (float)Snap(p.z, CHARACTER_ROOT_GRID));
+                }
+                catch (Exception) { /* best-effort per controller */ }
+            }
+        }
+
+        private static double Snap(double value, double grid) =>
+            Math.Round(value * grid) / grid;
 
         /// <summary>
         ///     Rewinds and stops every animation source. Avatars that finish instantiating
@@ -467,16 +614,25 @@ namespace DCL.GoldenCapture
         /// </summary>
         private static void FreezeAnimationSources(bool onlyActive)
         {
-            // Animation-rigging constraints (feet/hands/head IK) evaluate after the
-            // animator with weights and targets smoothed over wall time; the rewound
-            // pose would re-apply whatever offsets each boot happened to hold. Zeroed
-            // weights make Update(0) evaluate the pure animator pose.
-            if (HARD_FREEZE_ANIMATORS)
-                foreach (UnityEngine.Animations.Rigging.Rig rig in UnityEngine.Object.FindObjectsByType<UnityEngine.Animations.Rigging.Rig>(FindObjectsSortMode.None))
+            // Animation-rigging constraints carry dt-gated targets and weights (leg IK targets,
+            // hips offset, head RotateTowards) that hold their pre-rewind values once dt is 0 and
+            // are re-applied on top of the rewound pose every animation pass. Constraint weights
+            // reach the animation stream multiplied by their layer's active gate, so an inactive
+            // layer holds the clip pose alone no matter what the IK systems write to the rigs.
+            // A disabled Rig component is additionally the feet-IK off switch, which keeps that
+            // system from driving hip/leg targets against the gate.
+            foreach (UnityEngine.Animations.Rigging.RigBuilder rigBuilder in UnityEngine.Object.FindObjectsByType<UnityEngine.Animations.Rigging.RigBuilder>(FindObjectsSortMode.None))
+            {
+                try
                 {
-                    try { if (rig.weight != 0f) rig.weight = 0f; }
-                    catch (Exception) { /* best-effort per rig */ }
+                    foreach (UnityEngine.Animations.Rigging.RigLayer layer in rigBuilder.layers)
+                    {
+                        layer.active = false;
+                        if (layer.rig != null) layer.rig.enabled = false;
+                    }
                 }
+                catch (Exception) { /* best-effort per rig builder */ }
+            }
 
             foreach (Animator anim in UnityEngine.Object.FindObjectsByType<Animator>(FindObjectsSortMode.None))
             {
@@ -488,9 +644,16 @@ namespace DCL.GoldenCapture
                     // skip the disable, or that animator keeps re-driving its bones with the
                     // wall-dependent pose it happened to hold.
 
-                    // Bones the current states do not key keep whatever the last transient
-                    // pose left in them; writing defaults first lands every animated value
-                    // on its authored default before the rewound states overlay theirs.
+                    // The freeze-moment pass only: composes the skeleton pose an avatar holds for the
+                    // freeze and registers it for re-application after every animator pass.
+                    if (!onlyActive)
+                        try { PinAvatarSkeleton(anim); }
+                        catch (Exception) { /* best-effort */ }
+
+                    // An animator's default values are the pose it captured at its last bind, and
+                    // a state writes them into every bound property its clip does not key. Writing
+                    // them first lands every animated value on that default before the rewound
+                    // states overlay theirs; pinned avatar skeletons are re-applied over the result.
                     try { anim.WriteDefaultValues(); }
                     catch (Exception) { /* best-effort */ }
 
@@ -506,22 +669,51 @@ namespace DCL.GoldenCapture
                     // Scaled update mode makes re-enablement harmless too: with timeScale
                     // zero an enabled animator advances by exactly nothing.
                     anim.updateMode = AnimatorUpdateMode.Normal;
-                    if (HARD_FREEZE_ANIMATORS) anim.enabled = false;
                     anim.speed = 0f;
                 }
                 catch (Exception) { /* best-effort per animator */ }
             }
 
-            // GLTF-imported looping clips play through legacy Animation components, whose phase is
-            // wall-clock-anchored; sample them all at clip start so every run renders the same pose.
+            // GLTF-imported clips play through legacy Animation components. Their phase is
+            // wall-clock-anchored, and which states are enabled at what blend weight is scene logic
+            // reacting to boot-timed events (asset arrival, the player's approach), so a crossfade
+            // caught in flight renders a different blend per run. A scene Animation with any state
+            // playing therefore samples exactly one state, chosen by state name alone — no scene
+            // input — at clip start; one with nothing playing is at rest by scene intent and stays
+            // so. An Animation sharing its object with an Animator is an avatar's emote player,
+            // driven by the stop itself: its enabled set stays and only rewinds.
             foreach (Animation anim in UnityEngine.Object.FindObjectsByType<Animation>(FindObjectsSortMode.None))
             {
                 try
                 {
                     if (onlyActive && !anim.isPlaying) continue;
 
+                    string canonical = null;
+
+                    if (anim.GetComponent<Animator>() == null)
+                    {
+                        var anyPlaying = false;
+
+                        foreach (AnimationState st in anim)
+                        {
+                            anyPlaying |= st.enabled;
+
+                            if (st.clip != null && (canonical == null || string.CompareOrdinal(st.name, canonical) < 0))
+                                canonical = st.name;
+                        }
+
+                        if (!anyPlaying)
+                            canonical = null;
+                    }
+
                     foreach (AnimationState st in anim)
                     {
+                        if (canonical != null)
+                        {
+                            st.enabled = st.name == canonical;
+                            st.weight = st.enabled ? 1f : 0f;
+                        }
+
                         // The sun cycle must agree with the pinned noon skybox; every other clip
                         // samples its start.
                         st.time = st.clip != null && st.clip.name == "DirectionalLightCycle" ? st.length * 0.5f : 0f;
@@ -534,12 +726,255 @@ namespace DCL.GoldenCapture
             }
         }
 
+        /// <summary>
+        ///     Pins an avatar's skeleton to an explicitly composed pose for the rest of the freeze. The rewound
+        ///     animator keeps evaluating every frame, and into every bone its state does not key it writes its
+        ///     default values: the pose captured at its last bind, which for the main avatar is the moment its
+        ///     controller was reassigned to load an emote — mid-idle, feet shaped by the feet IK at a wall-clock
+        ///     phase. The composed pose takes the animator's own output for the bones the state's clip keys and
+        ///     the movement state's first frame (every avatar bone keyed, IK layers inactive, Armature at its
+        ///     prefab transform) for the rest; the keyed set is read by sampling the clip directly over the
+        ///     movement pose, since <see cref="AnimationClip.SampleAnimation"/> writes exactly the properties the
+        ///     clip carries. <see cref="GoldenPosePinHost"/> re-applies the pose in LateUpdate — after the
+        ///     animator's evaluation, before the bone gather at the end of PreLateUpdate — so the skinning
+        ///     matrices never see the animator's defaults. Parameters, layer weights and states are carried
+        ///     across the pose capture so the state machine is left where it was.
+        /// </summary>
+        private static void PinAvatarSkeleton(Animator anim)
+        {
+            if (!anim.enabled)
+                return;
+
+            AvatarBase? avatarBase = anim.GetComponentInParent<AvatarBase>();
+
+            if (avatarBase == null || avatarBase.AvatarAnimator != anim || avatarBase.Armature == null)
+                return;
+
+            int layerCount = anim.layerCount;
+            var states = new int[layerCount];
+            var weights = new float[layerCount];
+
+            for (int layer = 0; layer < layerCount; layer++)
+            {
+                states[layer] = anim.GetCurrentAnimatorStateInfo(layer).fullPathHash;
+                weights[layer] = anim.GetLayerWeight(layer);
+            }
+
+            AnimatorControllerParameter[] parameters = anim.parameters;
+            var floats = new float[parameters.Length];
+            var ints = new int[parameters.Length];
+            var bools = new bool[parameters.Length];
+
+            for (int i = 0; i < parameters.Length; i++)
+                switch (parameters[i].type)
+                {
+                    case AnimatorControllerParameterType.Float:
+                        floats[i] = anim.GetFloat(parameters[i].nameHash);
+                        break;
+                    case AnimatorControllerParameterType.Int:
+                        ints[i] = anim.GetInteger(parameters[i].nameHash);
+                        break;
+                    case AnimatorControllerParameterType.Bool:
+                        bools[i] = anim.GetBool(parameters[i].nameHash);
+                        break;
+                }
+
+            avatarBase.ResetArmatureTransform();
+
+            for (int layer = 1; layer < layerCount; layer++)
+                anim.SetLayerWeight(layer, 0f);
+
+            anim.SetFloat(AnimationHashes.MOVEMENT_BLEND, 0f);
+            anim.Play(BASE_LAYER_MOVEMENT_STATE, 0, 0f);
+            anim.Update(0f);
+
+            if (anim.GetCurrentAnimatorStateInfo(0).fullPathHash != BASE_LAYER_MOVEMENT_STATE)
+            {
+                anim.Play(MOVEMENT_STATE, 0, 0f);
+                anim.Update(0f);
+            }
+
+            int movementState = anim.GetCurrentAnimatorStateInfo(0).fullPathHash;
+            Transform[] nodes = avatarBase.Armature.GetComponentsInChildren<Transform>(true);
+            PinnedNode[] movementPose = CapturePose(nodes);
+
+            for (int i = 0; i < parameters.Length; i++)
+                switch (parameters[i].type)
+                {
+                    case AnimatorControllerParameterType.Float:
+                        anim.SetFloat(parameters[i].nameHash, floats[i]);
+                        break;
+                    case AnimatorControllerParameterType.Int:
+                        anim.SetInteger(parameters[i].nameHash, ints[i]);
+                        break;
+                    case AnimatorControllerParameterType.Bool:
+                        anim.SetBool(parameters[i].nameHash, bools[i]);
+                        break;
+                }
+
+            for (int layer = 0; layer < layerCount; layer++)
+            {
+                anim.SetLayerWeight(layer, weights[layer]);
+                anim.Play(states[layer], layer, 0f);
+            }
+
+            anim.Update(0f);
+            PinnedNode[] animatorPose = CapturePose(nodes);
+
+            // Lowest weight first, ties by name, so the dominant clip lands last over the movement pose.
+            AnimatorClipInfo[] clips = anim.GetCurrentAnimatorClipInfo(0);
+
+            Array.Sort(clips, (a, b) =>
+            {
+                int byWeight = a.weight.CompareTo(b.weight);
+                return byWeight != 0 ? byWeight : string.CompareOrdinal(ClipName(a), ClipName(b));
+            });
+
+            ApplyPose(movementPose);
+            var clipList = new System.Text.StringBuilder();
+
+            foreach (AnimatorClipInfo info in clips)
+            {
+                if (info.clip == null || info.weight <= 0f) continue;
+
+                try
+                {
+                    info.clip.SampleAnimation(anim.gameObject, 0f);
+                    clipList.Append(info.clip.name).Append('@').Append(info.weight.ToString("R")).Append(';');
+                }
+                catch (Exception e) { clipList.Append(info.clip.name).Append("!").Append(e.GetType().Name).Append(';'); }
+            }
+
+            var pinned = new PinnedNode[nodes.Length];
+            int keyed = 0;
+            var trace = new System.Text.StringBuilder(16 * 1024);
+
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                bool isKeyed = !movementPose[i].MatchesLive();
+                pinned[i] = isKeyed ? animatorPose[i] : movementPose[i];
+                if (isKeyed) keyed++;
+                trace.AppendLine($"node {nodes[i].name} keyed={isKeyed} movement {movementPose[i].Describe()} animator {animatorPose[i].Describe()}");
+            }
+
+            ApplyPose(pinned);
+            PINNED_POSES[anim] = pinned;
+            EnsurePosePinHost();
+
+            TryAppendTemp($"golden-avatarpose-{System.Diagnostics.Process.GetCurrentProcess().Id}.txt",
+                $"avatarpose {Path(anim.transform)} state0={states[0]} movementState={movementState} hasMovementState={anim.HasState(0, BASE_LAYER_MOVEMENT_STATE)} clips={clipList} nodes={nodes.Length} keyed={keyed}\n{trace}");
+        }
+
+        /// <summary>A transform's local TRS as pinned for the freeze.</summary>
+        private readonly struct PinnedNode
+        {
+            public readonly Transform Node;
+            public readonly Vector3 LocalPosition;
+            public readonly Quaternion LocalRotation;
+            public readonly Vector3 LocalScale;
+
+            public PinnedNode(Transform node)
+            {
+                Node = node;
+                LocalPosition = node.localPosition;
+                LocalRotation = node.localRotation;
+                LocalScale = node.localScale;
+            }
+
+            public void Apply()
+            {
+                Node.SetLocalPositionAndRotation(LocalPosition, LocalRotation);
+                Node.localScale = LocalScale;
+            }
+
+            /// <summary>Bit-exact: the Vector3 and Quaternion equality operators are approximate.</summary>
+            public bool MatchesLive()
+            {
+                Vector3 p = Node.localPosition;
+                Quaternion r = Node.localRotation;
+                Vector3 s = Node.localScale;
+
+                return p.x.Equals(LocalPosition.x) && p.y.Equals(LocalPosition.y) && p.z.Equals(LocalPosition.z)
+                       && r.x.Equals(LocalRotation.x) && r.y.Equals(LocalRotation.y) && r.z.Equals(LocalRotation.z) && r.w.Equals(LocalRotation.w)
+                       && s.x.Equals(LocalScale.x) && s.y.Equals(LocalScale.y) && s.z.Equals(LocalScale.z);
+            }
+
+            public string Describe() =>
+                $"lp=({LocalPosition.x:R},{LocalPosition.y:R},{LocalPosition.z:R}) lr=({LocalRotation.x:R},{LocalRotation.y:R},{LocalRotation.z:R},{LocalRotation.w:R}) ls=({LocalScale.x:R},{LocalScale.y:R},{LocalScale.z:R})";
+        }
+
+        private static PinnedNode[] CapturePose(Transform[] nodes)
+        {
+            var pose = new PinnedNode[nodes.Length];
+
+            for (int i = 0; i < nodes.Length; i++)
+                pose[i] = new PinnedNode(nodes[i]);
+
+            return pose;
+        }
+
+        private static void ApplyPose(PinnedNode[] pose)
+        {
+            foreach (PinnedNode node in pose)
+                if (node.Node != null)
+                    node.Apply();
+        }
+
+        private static string ClipName(in AnimatorClipInfo info) =>
+            info.clip != null ? info.clip.name : string.Empty;
+
+        private static void EnsurePosePinHost()
+        {
+            if (posePinHost != null) return;
+
+            var host = new GameObject("GoldenPosePinHost") { hideFlags = HideFlags.HideAndDontSave };
+            UnityEngine.Object.DontDestroyOnLoad(host);
+            posePinHost = host.AddComponent<GoldenPosePinHost>();
+        }
+
+        /// <summary>
+        ///     Re-applies every pinned skeleton. From <see cref="GoldenPosePinHost"/> this runs after the
+        ///     animator wrote its pose for the frame and before the bone gather reads it; from the render hook
+        ///     it restores the pose behind the per-frame animator rewind for anything reading transforms during
+        ///     rendering. On the LateUpdate pass of a camera-dump frame every node the animator left different
+        ///     from its pin is recorded first, so the dump shows exactly what the pin overrides.
+        /// </summary>
+        internal static void ApplyPinnedPoses(bool fromLateUpdate = false)
+        {
+            if (PINNED_POSES.Count == 0) return;
+
+            // The LateUpdate pass precedes the render hook that advances frozenFrames for the same frame.
+            bool trace = fromLateUpdate && (frozenFrames + 1 == POSE_DUMP_FRAME_EARLY || frozenFrames + 1 == POSE_DUMP_FRAME_LATE);
+
+            foreach (KeyValuePair<Animator, PinnedNode[]> entry in PINNED_POSES)
+                foreach (PinnedNode node in entry.Value)
+                {
+                    if (node.Node == null) continue;
+
+                    if (trace && !node.MatchesLive())
+                        animatorOutputTrace.AppendLine($"animOut {node.Node.name} {new PinnedNode(node.Node).Describe()}");
+
+                    node.Apply();
+                }
+        }
+
+        /// <summary>
+        ///     The runtime logger is silenced after bootstrap, so the freeze diagnostics go to a file:
+        ///     everything that was normalized (tweens with their targets, animators, legacy animations,
+        ///     particle systems) plus every renderer material with an unassigned texture property —
+        ///     the fingerprint of content that samples undefined memory and breaks reproducibility.
+        /// </summary>
         private static void WriteFreezeReport()
         {
             try
             {
                 var sb = new System.Text.StringBuilder(64 * 1024);
                 sb.AppendLine($"time={Time.timeAsDouble:F4} frame={Time.frameCount}");
+
+                // Scene runtimes that resumed their post-hold runway but had not reached the clock
+                // ceiling at the freeze: any such scene holds mid-runway state rather than its
+                // canonical final-tick state. n/a when the quantized scene clock is off.
+                sb.AppendLine($"sceneClocks belowCeiling={(AppDomain.CurrentDomain.GetData(SCENE_CLOCKS_BELOW_CEILING_SLOT) is int below ? below.ToString() : "n/a")}");
                 sb.AppendLine($"quality={QualitySettings.GetQualityLevel()}/{QualitySettings.names.Length - 1} ({QualitySettings.names[QualitySettings.GetQualityLevel()]}) lodBias={QualitySettings.lodBias:F2} maxLOD={QualitySettings.maximumLODLevel} aniso={QualitySettings.anisotropicFiltering}");
 
                 if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset urp)
@@ -580,8 +1015,6 @@ namespace DCL.GoldenCapture
                     if (li.type == LightType.Directional)
                         sb.AppendLine($"dirLight: {li.name} enabled={li.enabled} color={li.color} intensity={li.intensity:F4} rot={li.transform.rotation.ToString("F5")}");
 
-                DumpReflection(sb);
-
                 // The pipeline block must be comparable across machines even where the report file
                 // path is not writable — the player log always carries it.
                 Debug.Log($"[GoldenFreeze] pipeline: {sb}");
@@ -620,7 +1053,11 @@ namespace DCL.GoldenCapture
 
                     sb.AppendLine();
 
-                    if (censusBox.Contains(a.transform.position))
+                    // Avatar animators are the subject of the avatar stops: their root and every node
+                    // under them are dumped wherever they stand.
+                    bool avatarAnimator = a.TryGetComponent(out AvatarBase avatarBase) && avatarBase.AvatarAnimator == a;
+
+                    if (censusBox.Contains(a.transform.position) || avatarAnimator)
                     {
                         Vector3 wp = a.transform.position;
                         Quaternion wr = a.transform.rotation;
@@ -644,8 +1081,9 @@ namespace DCL.GoldenCapture
                 {
                     sb.Append($"animation {Path(a.transform)} pos={a.transform.position} clips=");
 
+                    // '*' marks an enabled state; the sampled pose is the weighted blend of those.
                     foreach (AnimationState st in a)
-                        sb.Append(st.clip != null ? st.clip.name : "?").Append(',');
+                        sb.Append(st.clip != null ? st.clip.name : "?").Append(st.enabled ? $"*{st.weight:F2}" : "").Append(',');
 
                     sb.AppendLine();
                 }
@@ -908,31 +1346,28 @@ namespace DCL.GoldenCapture
         }
 
         /// <summary>
-        ///     "--skybox-time-enabled false" freezes the day cycle wherever it happens to be at
-        ///     boot, so the frozen hour — and with it sky tint and ambient — is machine- and
-        ///     boot-dependent. Pin exact noon through the UI-override channel, which outranks the
-        ///     skybox systems.
-        /// </summary>
-        /// <summary>
         ///     The projection matrix holds 1/tan(fov/2), and libm tangent rounding differs by an
-        ///     ULP between platforms (glibc vs the Windows CRT), shifting every vertex sub-pixel —
-        ///     visible only as edge flips on knife-thin geometry. The golden camera always runs at
-        ///     fov 60, so the frozen frames use the correctly-rounded literal on every platform;
-        ///     the rest of the matrix is exact IEEE arithmetic. Reasserted per frame because the
-        ///     engine rewrites the matrix whenever camera state is touched.
+        ///     ULP between platforms (glibc vs the Windows CRT vs Apple libm), shifting every vertex
+        ///     sub-pixel — visible only as edge flips on knife-thin geometry. Every perspective camera
+        ///     the frozen frames render (fov 60 in first and third person, 70 in the drone view) gets
+        ///     a cotangent computed in double and rounded once to float: a double-ULP libm difference
+        ///     survives that rounding only when the value sits within half a float ULP of a rounding
+        ///     boundary, which none of the fixed lens FOVs does. The rest of the matrix is exact IEEE
+        ///     arithmetic. Reasserted per frame because the engine rewrites the matrix whenever camera
+        ///     state is touched. Physical cameras keep their engine matrix (lens shift, sensor fit).
         /// </summary>
         private static void PinProjection()
         {
             foreach (Camera cam in Camera.allCameras)
             {
-                if (Mathf.Abs(cam.fieldOfView - 60f) > 0.01f || cam.orthographic) continue;
+                if (cam.orthographic || cam.usePhysicalProperties) continue;
 
-                const float COT_HALF_FOV = 1.7320508075688772f; // 1/tan(30 deg), correctly rounded
+                var cotHalfFov = (float)(1.0 / Math.Tan(cam.fieldOfView * (Math.PI / 360.0)));
                 float aspect = cam.aspect;
                 float near = cam.nearClipPlane, far = cam.farClipPlane;
                 var m = Matrix4x4.zero;
-                m.m00 = COT_HALF_FOV / aspect;
-                m.m11 = COT_HALF_FOV;
+                m.m00 = cotHalfFov / aspect;
+                m.m11 = cotHalfFov;
                 m.m22 = -(far + near) / (far - near);
                 m.m23 = -(2f * far * near) / (far - near);
                 m.m32 = -1f;
@@ -940,6 +1375,76 @@ namespace DCL.GoldenCapture
             }
         }
 
+        /// <summary>
+        ///     Full-precision pose and matrices of every camera in the frozen frame, next to the raw
+        ///     (pre-snap) brain output and the live rig state that UpdateCinemachineBrainSystem
+        ///     publishes, plus the environment reflection the frame samples. Two boots whose pixels
+        ///     differ while these lines agree diverge downstream of the camera; two boots whose raw
+        ///     lines differ while the snapped pose agrees are covered by the snap. Appended per
+        ///     section so both sections sit in one file.
+        /// </summary>
+        private static void WriteCameraPoseDump(int section)
+        {
+            try
+            {
+                var sb = new System.Text.StringBuilder(8 * 1024);
+                sb.AppendLine($"section {section} frozenFrames={frozenFrames} frame={Time.frameCount} time={Time.timeAsDouble:R}");
+
+                if (AppDomain.CurrentDomain.GetData(CAMERA_RAW_SLOT) is double[] raw && raw.Length >= 7)
+                    sb.AppendLine($"brainRaw pos={raw[0]:R},{raw[1]:R},{raw[2]:R} rot={raw[3]:R},{raw[4]:R},{raw[5]:R},{raw[6]:R}");
+
+                if (AppDomain.CurrentDomain.GetData(CAMERA_RIG_SLOT) is string rig)
+                    sb.AppendLine(rig);
+
+                DumpReflection(sb);
+
+                if (animatorOutputTrace.Length > 0)
+                {
+                    sb.Append(animatorOutputTrace.ToString());
+                    animatorOutputTrace.Clear();
+                }
+
+                foreach (KeyValuePair<Animator, PinnedNode[]> entry in PINNED_POSES)
+                    foreach (PinnedNode node in entry.Value)
+                        if (node.Node != null)
+                            sb.AppendLine($"pin {node.Node.name} {node.Describe()}");
+
+                foreach (Camera cam in Camera.allCameras)
+                {
+                    Transform t = cam.transform;
+                    Vector3 p = t.position;
+                    Quaternion q = t.rotation;
+                    sb.AppendLine($"cam {cam.name} enabled={cam.enabled} depth={cam.depth:R} target={(cam.targetTexture != null ? cam.targetTexture.name : "screen")} pos={p.x:R},{p.y:R},{p.z:R} rot={q.x:R},{q.y:R},{q.z:R},{q.w:R} fov={cam.fieldOfView:R} near={cam.nearClipPlane:R} far={cam.farClipPlane:R} aspect={cam.aspect:R} px={cam.pixelWidth}x{cam.pixelHeight} ortho={cam.orthographic} physical={cam.usePhysicalProperties}");
+                    sb.AppendLine($"  proj {MatrixRow(cam.projectionMatrix)}");
+                    sb.AppendLine($"  w2c {MatrixRow(cam.worldToCameraMatrix)}");
+                }
+
+                System.IO.File.AppendAllText(
+                    TempPath($"golden-campose-{System.Diagnostics.Process.GetCurrentProcess().Id}.txt"),
+                    sb.ToString());
+            }
+            catch (Exception) { /* diagnostics only */ }
+        }
+
+        private static string MatrixRow(Matrix4x4 m)
+        {
+            var sb = new System.Text.StringBuilder(320);
+
+            for (var i = 0; i < 16; i++)
+            {
+                if (i > 0) sb.Append(',');
+                sb.Append(m[i].ToString("R"));
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     "--skybox-time-enabled false" freezes the day cycle wherever it happens to be at
+        ///     boot, so the frozen hour — and with it sky tint and ambient — is machine- and
+        ///     boot-dependent. Pin exact noon through the UI-override channel, which outranks the
+        ///     skybox systems.
+        /// </summary>
         private static void PinSkyboxNoon()
         {
             foreach (ScriptableObject so in Resources.FindObjectsOfTypeAll<ScriptableObject>())
@@ -961,6 +1466,12 @@ namespace DCL.GoldenCapture
         private static void TryWriteTemp(string name, string content)
         {
             try { System.IO.File.WriteAllText(TempPath(name), content); }
+            catch (Exception) { /* diagnostics only */ }
+        }
+
+        private static void TryAppendTemp(string name, string content)
+        {
+            try { System.IO.File.AppendAllText(TempPath(name), content); }
             catch (Exception) { /* diagnostics only */ }
         }
 
@@ -992,6 +1503,159 @@ namespace DCL.GoldenCapture
         ///     MediaPlayer; park every instance at its first frame.
         /// </summary>
         private static Material? goldenBlackMaterial;
+
+        private static ScriptableObject lightSourceSettings;
+        private static int lightSettingsScanFrame = -1;
+        private static bool lightBudgetPinDisabled;
+
+        // Reflection handles into one LightSourceSettings shape, cached per settings type: a settings
+        // object of another type resolves its own entry and never displaces the runtime asset's, and a
+        // shape that fails to resolve caches nothing.
+        private static readonly Dictionary<Type, LightBudgetFields> LIGHT_BUDGET_FIELDS = new ();
+
+        // The scene-light budget (LightSourceCullingSystem) keeps only the lights nearest the
+        // character, caps how many of those cast shadows, and picks each light's LOD by that same
+        // distance, so the lit set follows wherever the avatar happens to stand. Goldens light every
+        // active scene light at LOD 0 regardless of position: no per-scene cap, no shadow-count cap,
+        // one LOD that reaches any distance. The quality runtime rewrites these fields whenever a
+        // preset applies, so the pin re-asserts every frame; the settings asset is provisioned some
+        // time after startup, so the lookup retries until it is found. The asset shape is owned by
+        // the light-source plugin and reached by reflection, so a shape the pin does not recognize
+        // disables it with one warning instead of failing on every frame.
+        private static void PinSceneLightBudget()
+        {
+            if (lightBudgetPinDisabled) return;
+
+            if (lightSourceSettings == null)
+            {
+                if (Time.frameCount - lightSettingsScanFrame < 30) return;
+                lightSettingsScanFrame = Time.frameCount;
+
+                foreach (ScriptableObject so in Resources.FindObjectsOfTypeAll<ScriptableObject>())
+                    if (so != null && so.GetType().Name == "LightSourceSettings") { lightSourceSettings = so; break; }
+
+                if (lightSourceSettings == null) return;
+            }
+
+            try
+            {
+                PinSceneLightBudget(lightSourceSettings);
+            }
+            catch (Exception e)
+            {
+                DisableLightBudgetPin(e.Message);
+            }
+        }
+
+        /// <summary>
+        ///     Unbounds the scene-light budget held by one LightSourceSettings asset: no per-scene
+        ///     light cap, no shadow-count cap, LOD 0 reaching any distance. Throws when the asset does
+        ///     not have the shape the pin expects, naming the first field that failed to resolve; a
+        ///     rejected type leaves the runtime asset's cached handles untouched.
+        /// </summary>
+        public static void PinSceneLightBudget(ScriptableObject settings)
+        {
+            if (!TryResolveLightBudgetFields(settings, out LightBudgetFields? fields, out string missingField))
+                throw new MissingFieldException(settings.GetType().Name, missingField);
+
+            ApplyLightBudgetPin(settings, fields);
+        }
+
+        private static void ApplyLightBudgetPin(ScriptableObject settings, LightBudgetFields fields)
+        {
+            object limits = fields.SceneLimitations.GetValue(settings);
+            fields.LightsPerParcel.SetValue(limits, 1e5f);
+            fields.HardMaxLightCount.SetValue(limits, int.MaxValue);
+            fields.MaxPointLightShadows.SetValue(limits, int.MaxValue);
+            fields.MaxSpotLightShadows.SetValue(limits, int.MaxValue);
+            fields.SceneLimitations.SetValue(settings, limits);
+
+            PinLod0Distance(settings, fields.SpotLightsLods, ref fields.SpotLodDistance);
+            PinLod0Distance(settings, fields.PointLightsLods, ref fields.PointLodDistance);
+        }
+
+        // Fields are looked up in the order the pin needs them, so missingField names the first one
+        // the shape lacks.
+        private static bool TryResolveLightBudgetFields(ScriptableObject settings, [NotNullWhen(true)] out LightBudgetFields? fields, out string missingField)
+        {
+            Type type = settings.GetType();
+            missingField = string.Empty;
+
+            if (LIGHT_BUDGET_FIELDS.TryGetValue(type, out fields)) return true;
+
+            System.Reflection.FieldInfo? sceneLimitations = type.GetField("SceneLimitations");
+            System.Reflection.FieldInfo? spotLightsLods = type.GetField("SpotLightsLods");
+            System.Reflection.FieldInfo? pointLightsLods = type.GetField("PointLightsLods");
+
+            // The caps live on the limits value, whose type is only known from an instance.
+            if (sceneLimitations == null || sceneLimitations.GetValue(settings) is not { } limits) { missingField = "SceneLimitations"; return false; }
+            if (spotLightsLods == null) { missingField = "SpotLightsLods"; return false; }
+            if (pointLightsLods == null) { missingField = "PointLightsLods"; return false; }
+
+            Type limitsType = limits.GetType();
+            System.Reflection.FieldInfo? lightsPerParcel = limitsType.GetField("LightsPerParcel");
+            System.Reflection.FieldInfo? hardMaxLightCount = limitsType.GetField("HardMaxLightCount");
+            System.Reflection.FieldInfo? maxPointLightShadows = limitsType.GetField("MaxPointLightShadows");
+            System.Reflection.FieldInfo? maxSpotLightShadows = limitsType.GetField("MaxSpotLightShadows");
+
+            if (lightsPerParcel == null) { missingField = "SceneLimitations.LightsPerParcel"; return false; }
+            if (hardMaxLightCount == null) { missingField = "SceneLimitations.HardMaxLightCount"; return false; }
+            if (maxPointLightShadows == null) { missingField = "SceneLimitations.MaxPointLightShadows"; return false; }
+            if (maxSpotLightShadows == null) { missingField = "SceneLimitations.MaxSpotLightShadows"; return false; }
+
+            fields = new LightBudgetFields(sceneLimitations, lightsPerParcel, hardMaxLightCount, maxPointLightShadows, maxSpotLightShadows, spotLightsLods, pointLightsLods);
+            LIGHT_BUDGET_FIELDS[type] = fields;
+            return true;
+        }
+
+        // The LOD element type is only reachable through a populated list, so its field resolves on
+        // first use; an element without the field is a shape drift and throws to the caller's latch.
+        private static void PinLod0Distance(ScriptableObject settings, System.Reflection.FieldInfo lodsField, ref System.Reflection.FieldInfo? distanceField)
+        {
+            if (lodsField.GetValue(settings) is not System.Collections.IList lods || lods.Count == 0) return;
+
+            object lod0 = lods[0];
+            distanceField ??= lod0.GetType().GetField("Distance");
+
+            if (distanceField == null)
+                throw new MissingFieldException(lod0.GetType().Name, "Distance");
+
+            distanceField.SetValue(lod0, float.MaxValue);
+            lods[0] = lod0;
+        }
+
+        private static void DisableLightBudgetPin(string reason)
+        {
+            lightBudgetPinDisabled = true;
+            Debug.LogWarning($"[GoldenFreeze] scene-light budget pin disabled: {reason}");
+        }
+
+        private sealed class LightBudgetFields
+        {
+            public readonly System.Reflection.FieldInfo SceneLimitations;
+            public readonly System.Reflection.FieldInfo LightsPerParcel;
+            public readonly System.Reflection.FieldInfo HardMaxLightCount;
+            public readonly System.Reflection.FieldInfo MaxPointLightShadows;
+            public readonly System.Reflection.FieldInfo MaxSpotLightShadows;
+            public readonly System.Reflection.FieldInfo SpotLightsLods;
+            public readonly System.Reflection.FieldInfo PointLightsLods;
+
+            // Resolved on first use from a populated list's element.
+            public System.Reflection.FieldInfo? SpotLodDistance;
+            public System.Reflection.FieldInfo? PointLodDistance;
+
+            public LightBudgetFields(System.Reflection.FieldInfo sceneLimitations, System.Reflection.FieldInfo lightsPerParcel, System.Reflection.FieldInfo hardMaxLightCount,
+                System.Reflection.FieldInfo maxPointLightShadows, System.Reflection.FieldInfo maxSpotLightShadows, System.Reflection.FieldInfo spotLightsLods, System.Reflection.FieldInfo pointLightsLods)
+            {
+                SceneLimitations = sceneLimitations;
+                LightsPerParcel = lightsPerParcel;
+                HardMaxLightCount = hardMaxLightCount;
+                MaxPointLightShadows = maxPointLightShadows;
+                MaxSpotLightShadows = maxSpotLightShadows;
+                SpotLightsLods = spotLightsLods;
+                PointLightsLods = pointLightsLods;
+            }
+        }
 
         private static void ParkMediaPlayers()
         {
@@ -1100,7 +1764,7 @@ namespace DCL.GoldenCapture
         {
             try
             {
-                long sceneTicks = AppDomain.CurrentDomain.GetData("golden.currentSceneTicks") is long t ? t : 0L;
+                long sceneTicks = AppDomain.CurrentDomain.GetData(CURRENT_SCENE_TICKS_SLOT) is long t ? t : 0L;
 
                 if (sceneTicks <= pumpedTicks) return;
 
@@ -1198,69 +1862,12 @@ namespace DCL.GoldenCapture
             }
         }
 
-        private static ReflectionProbe goldenProbe;
-        private static int goldenProbeRenderId = -1;
-        private static bool reflectionPinned;
-
         /// <summary>
-        ///     Unity's skybox-generated environment reflection never materializes on the Linux
-        ///     Vulkan player (the default reflection stays UnityBlackCube even after
-        ///     DynamicGI.UpdateEnvironment), so smooth surfaces lose all sky tint there while other
-        ///     platforms keep it. Render one scripted probe of the frozen noon world instead and
-        ///     pin it as the custom reflection — both platforms then light surfaces from the same
-        ///     deterministic source. Spread over frozen frames: RenderProbe is asynchronous.
-        /// </summary>
-        private static void PinEnvironmentReflection()
-        {
-            if (reflectionPinned)
-                return;
-
-            try
-            {
-                if (goldenProbe == null)
-                {
-                    var go = new GameObject("GoldenReflectionProbe");
-                    goldenProbe = go.AddComponent<ReflectionProbe>();
-                    goldenProbe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
-                    goldenProbe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
-                    goldenProbe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
-                    goldenProbe.resolution = 128;
-                    goldenProbe.hdr = true;
-
-                    // Skybox only — no scene geometry. This mirrors what
-                    // DefaultReflectionMode.Skybox produces on platforms where it works, and a
-                    // pure-sky cubemap is deterministic per boot where a scene render is not.
-                    goldenProbe.cullingMask = 0;
-                    goldenProbe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
-
-                    Camera cam = Camera.main;
-
-                    if (cam != null)
-                        go.transform.position = cam.transform.position;
-
-                    goldenProbeRenderId = goldenProbe.RenderProbe();
-                }
-                else if (goldenProbeRenderId >= 0 && goldenProbe.IsFinishedRendering(goldenProbeRenderId) && goldenProbe.texture != null)
-                {
-                    RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
-                    RenderSettings.customReflectionTexture = goldenProbe.texture;
-                    reflectionPinned = true;
-                    Debug.Log("[GoldenFreeze] environment reflection pinned from golden probe");
-
-                    var pinSb = new System.Text.StringBuilder();
-                    DumpReflection(pinSb);
-                    TryWriteTemp("golden-reflpin.txt", "pinned\n" + pinSb);
-                }
-                else if (goldenProbeRenderId >= 0 && Time.frameCount % 300 == 0)
-                    TryWriteTemp("golden-reflpin.txt", $"waiting: renderId={goldenProbeRenderId} finished={goldenProbe.IsFinishedRendering(goldenProbeRenderId)} tex={(goldenProbe.texture != null ? goldenProbe.texture.name : "null")}\n");
-            }
-            catch (Exception) { /* diagnostics-mode only */ }
-        }
-
-        /// <summary>
-        ///     The custom reflection cubemap tints every smooth surface, so a cross-machine tone
-        ///     offset with identical CPU lighting usually lives here: dump its format plus a
-        ///     per-face mean color so two reports localize the difference to a face and channel.
+        ///     The environment reflection cubemap tints every smooth surface, so a cross-machine tone
+        ///     offset with identical CPU lighting usually lives here: dump its format plus a per-face
+        ///     mean color so two dumps localize the difference to a face and channel. The skybox
+        ///     renderer feature owns <see cref="RenderSettings.customReflectionTexture"/> and reasserts
+        ///     its own cube on every camera pass, so the dump reads whatever it assigned last.
         /// </summary>
         private static void DumpReflection(System.Text.StringBuilder sb)
         {
