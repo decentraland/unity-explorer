@@ -37,6 +37,15 @@ scripts/uuav/*.sh text eol=lf
 # --update rewrites the lock, so its own newlines must not depend on the host
 scripts/uuav/uuav-binaries.lock.json text eol=lf
 
+##############################################################################
+# iteration-2 contract goldens - hashed bytes, so the line endings are content
+#
+# The fixture pack (docs/contracts/iteration-2/manifest.json in archipelago-workers)
+# carries a sha256 per golden and its validator checks every copy against it, so a
+# copy kept here must hold the pack's LF bytes on every host.
+##############################################################################
+Explorer/TestResources/iteration-2/** text eol=lf
+
 
 ##############################################################################
 # unity specifics

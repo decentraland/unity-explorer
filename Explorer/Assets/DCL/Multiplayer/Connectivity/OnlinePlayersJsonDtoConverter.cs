@@ -10,6 +10,8 @@ namespace DCL.Multiplayer.Connectivity
     [Preserve]
     public class OnlinePlayersJsonDtoConverter : JsonConverter<List<OnlineUserData>>
     {
+        private const string WORLD_REALM_SUFFIX = ".dcl.eth";
+
         public override void WriteJson(JsonWriter writer, List<OnlineUserData>? value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
@@ -32,11 +34,21 @@ namespace DCL.Multiplayer.Connectivity
                 existingValue.Add(new OnlineUserData()
                 {
                     position = ToVector3(rootObjectPeer.position[0], rootObjectPeer.position[2]),
-                    avatarId = rootObjectPeer.address
+                    avatarId = rootObjectPeer.address,
+                    worldName = WorldNameOf(rootObjectPeer.realm),
                 });
             }
             return existingValue;
         }
+
+        /// <summary>
+        ///     A peer's realm is either a world's ENS name ("cozyfarm.dcl.eth") or a Genesis City realm
+        ///     ("main"): only the former names a world, anything else leaves the world name unset.
+        /// </summary>
+        private static string? WorldNameOf(string? realm) =>
+            realm != null && realm.EndsWith(WORLD_REALM_SUFFIX, StringComparison.OrdinalIgnoreCase)
+                ? realm
+                : null;
 
         private static Vector3 ToVector3(float x, float z) =>
             new (Convert.ToInt32(x), 0, Convert.ToInt32(z));
@@ -55,6 +67,8 @@ namespace DCL.Multiplayer.Connectivity
             public string address { get; set; }
             [Preserve]
             public float[] position { get; set; }
+            [Preserve]
+            public string? realm { get; set; }
         }
     }
 }
