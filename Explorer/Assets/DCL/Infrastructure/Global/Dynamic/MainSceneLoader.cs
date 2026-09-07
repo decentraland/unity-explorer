@@ -355,7 +355,8 @@ namespace Global.Dynamic
                     ? IRealmNavigator.LOCALHOST
                     : launchSettings.customRealm;
 
-                abgenSidecar = new AbgenSidecarBootstrap(decentralandEnvironment);
+                string baseDomain = DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain);
+                abgenSidecar = new AbgenSidecarBootstrap(baseDomain);
 
                 if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
                     localAbBaseUrl = abgenSidecar.BaseUrl;
