@@ -1,6 +1,15 @@
 #ifndef DCL_TOON_INPUT_INCLUDED
 #define DCL_TOON_INPUT_INCLUDED
 
+// This file replaces URP's LitInput.hlsl for the toon stack (same UnityPerMaterial shape,
+// its own InitializeStandardLitSurfaceData). URP 17.5's LitForwardPass.hlsl includes the
+// real one itself, so claim its include guard up front to keep the replacement authoritative.
+#define UNIVERSAL_LIT_INPUT_INCLUDED
+
+// LitInput would have pulled this in; the pass code calls its parameterless
+// IsSurfaceTypeTransparent(), so include it directly.
+#include "Packages/com.unity.render-pipelines.universal/Shaders/Utils/SurfaceType.hlsl"
+
 #define _DCL_VARIABLE_OPTIMISATION
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"

@@ -10,6 +10,11 @@ CBUFFER_START(UnityPerMaterial)
     half _Surface;
 CBUFFER_END
 
+// URP 17.4 / Unity 6 removed UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO; the
+// shipping pattern now caches the DOTS-sampled values into static locals via
+// UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT and overrides the property
+// names to read from the cache. Mirrors com.unity.render-pipelines.universal/
+// Shaders/UnlitInput.hlsl exactly so future URP bumps stay diff-aligned.
 #ifdef UNITY_DOTS_INSTANCING_ENABLED
 UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
     UNITY_DOTS_INSTANCED_PROP(float4, _BaseColor)
@@ -17,9 +22,23 @@ UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
     UNITY_DOTS_INSTANCED_PROP(float , _Surface)
 UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 
-#define _BaseColor          UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float4 , Metadata__BaseColor)
-#define _Cutoff             UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float  , Metadata__Cutoff)
-#define _Surface            UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float  , Metadata__Surface)
+static float4 unity_DOTS_Sampled_BaseColor;
+static float  unity_DOTS_Sampled_Cutoff;
+static float  unity_DOTS_Sampled_Surface;
+
+void SetupDOTSUnlitMaterialPropertyCaches()
+{
+    unity_DOTS_Sampled_BaseColor = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _BaseColor);
+    unity_DOTS_Sampled_Cutoff    = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _Cutoff);
+    unity_DOTS_Sampled_Surface   = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _Surface);
+}
+
+#undef UNITY_SETUP_DOTS_MATERIAL_PROPERTY_CACHES
+#define UNITY_SETUP_DOTS_MATERIAL_PROPERTY_CACHES() SetupDOTSUnlitMaterialPropertyCaches()
+
+#define _BaseColor          unity_DOTS_Sampled_BaseColor
+#define _Cutoff             unity_DOTS_Sampled_Cutoff
+#define _Surface            unity_DOTS_Sampled_Surface
 #endif
 
 #endif

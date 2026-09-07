@@ -75,6 +75,9 @@ Varyings ShadowPassVertex(Attributes input, uint svInstanceID : SV_InstanceID)
     uint instanceID = GetIndirectInstanceID_Base(svInstanceID);
     output.tintColour = _PerInstanceBuffer[_PerInstanceLookUpAndDitherBuffer[instanceID].instanceID].instColourTint;
     output.nDither = _PerInstanceLookUpAndDitherBuffer[instanceID].ditherLevel;
+    #elif defined(UNITY_DOTS_INSTANCING_ENABLED)
+    output.tintColour = unity_DOTS_Sampled_InstColourTint;
+    output.nDither    = (uint)unity_DOTS_Sampled_InstDitherLevel;
     #else
     output.tintColour = float4(1.0f, 1.0f, 1.0f, 1.0f);
     output.nDither = 0;
