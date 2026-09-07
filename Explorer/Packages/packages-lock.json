@@ -516,6 +516,13 @@
       "source": "local",
       "dependencies": {}
     },
+    "decentraland.rendergraphs": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f1a373d29ee106533b9e43a3cfb3dbaeb7a791fc"
+    },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
       "depth": 0,
