@@ -138,7 +138,7 @@ namespace DCL.Chat.ChatReactions.Tests
             reactor.SyncStreamState(true);
 
             // Assert
-            spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default);
+            spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default, default);
             spawner.Received(1).EndStream();
         }
 
@@ -153,7 +153,7 @@ namespace DCL.Chat.ChatReactions.Tests
             reactor.SyncStreamState(false);
 
             // Assert
-            spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default);
+            spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default, default);
             spawner.Received(1).EndStream();
         }
 
@@ -168,7 +168,7 @@ namespace DCL.Chat.ChatReactions.Tests
             reactor.SyncStreamState(true);
 
             // Assert
-            spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default);
+            spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default, default);
             spawner.DidNotReceiveWithAnyArgs().EndStream();
         }
     }

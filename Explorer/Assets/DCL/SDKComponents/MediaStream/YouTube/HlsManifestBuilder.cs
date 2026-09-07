@@ -188,7 +188,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 // Prefer highest resolution up to PREFERRED_HEIGHT, then highest bitrate.
                 // Resolutions above PREFERRED_HEIGHT score 0 so they only win as a fallback.
                 int height = entry.Height!.Value <= PREFERRED_HEIGHT ? entry.Height.Value : 0;
-                long score = height * 100_000_000L + Math.Min(entry.Bitrate, 100_000_000L);
+                long score = ((long)height * 100_000_000L) + Math.Min(entry.Bitrate, 100_000_000L);
 
                 if (score > bestScore)
                 {

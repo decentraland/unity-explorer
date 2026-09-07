@@ -157,7 +157,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 StatusText = "Blocked non-https redirect",
                 URL = response.URL,
                 Data = string.Empty,
-                Headers = new Dictionary<string, string>(),
+
+                // Headers intentionally left unset (defaults to null on the struct): a blocked response
+                // carries no headers, and the guard test asserts Headers is null.
                 Type = "error",
             };
         }
