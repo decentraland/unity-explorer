@@ -68,30 +68,15 @@
       "dependencies": {},
       "hash": "2e993ff18f28c931602a07292df0b0804eebef99"
     },
-    "com.dcl.gpui-assets": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
-    },
-    "com.decentraland.filebrowserpro": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
-    },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git#a4bd750e2262b9eeeee75dc83858017bbd3679ef",
+      "version": "file:../PackagesLocal/com.decentraland.livekit-sdk",
       "depth": 0,
-      "source": "git",
+      "source": "local",
       "dependencies": {
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
-      },
-      "hash": "a4bd750e2262b9eeeee75dc83858017bbd3679ef"
+      }
     },
     "com.decentraland.pulse.transport": {
       "version": "https://github.com/decentraland/Pulse.git?path=src/DCLPulse.Transport/Package",
@@ -134,26 +119,6 @@
       "source": "local",
       "dependencies": {}
     },
-    "com.gurbu.gpui-pro": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.burst": "1.6.0",
-        "com.unity.collections": "1.2.0",
-        "com.unity.mathematics": "1.2.0"
-      },
-      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
-    },
-    "com.gurbu.gpui-pro.terrain": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.gurbu.gpui-pro": "0.12.18"
-      },
-      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
-    },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.7.0",
       "depth": 0,
@@ -177,13 +142,6 @@
       "source": "git",
       "dependencies": {},
       "hash": "00cbf100acd16a024c6fb1acd2ba9a439dfa358b"
-    },
-    "com.renderheads.avpro.video-ultra": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "04b022e939c25c339fbdec5a30e11b2d3e851237"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -409,6 +367,15 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.sdk.linux-x86_64": {
+      "version": "1.1.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.sysroot.base": "1.1.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.searcher": {
       "version": "4.9.5",
       "depth": 2,
@@ -446,6 +413,13 @@
         "com.unity.searcher": "4.9.3"
       }
     },
+    "com.unity.sysroot.base": {
+      "version": "1.1.0",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.test-framework": {
       "version": "1.7.0",
       "depth": 0,
@@ -478,6 +452,15 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.toolchain.linux-x86_64-linux": {
+      "version": "1.1.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.sysroot.base": "1.1.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.ugui": {
       "version": "2.5.0",
       "depth": 0,
@@ -500,28 +483,16 @@
       }
     },
     "decentraland.grassshader": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.modules.imageconversion": "1.0.0",
-        "com.unity.modules.particlesystem": "1.0.0",
-        "com.unity.modules.wind": "1.0.0"
-      },
-      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
-    },
-    "decentraland.renderfeatures": {
-      "version": "file:../../render-features",
+      "version": "file:../PackagesLocal/decentraland.grassshader",
       "depth": 0,
       "source": "local",
       "dependencies": {}
     },
-    "decentraland.rendergraphs": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs",
+    "decentraland.renderfeatures": {
+      "version": "file:../PackagesLocal/decentraland.renderfeatures",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f1a373d29ee106533b9e43a3cfb3dbaeb7a791fc"
+      "source": "local",
+      "dependencies": {}
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
@@ -555,12 +526,31 @@
       },
       "hash": "5f385df93c2d1e4a9aed3dd0aad62c247c684a4b"
     },
-    "superscrollview": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
+    "org.decentraland.instancing-assets": {
+      "version": "file:../PackagesLocal/org.decentraland.instancing-assets",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "8e1478ec9f8fe2f5fbe1249ceeb31cdc764d1465"
+      "source": "local",
+      "dependencies": {
+        "org.decentraland.unityuniversalinstancer": "1.0.0"
+      }
+    },
+    "org.decentraland.unityfilebrowser": {
+      "version": "file:../PackagesLocal/org.decentraland.unityfilebrowser",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "org.decentraland.unityscrollview": {
+      "version": "file:../PackagesLocal/org.decentraland.unityscrollview",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
+    "org.decentraland.unityuniversalinstancer": {
+      "version": "file:../PackagesLocal/org.decentraland.unityuniversalinstancer",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
