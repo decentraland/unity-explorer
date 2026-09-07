@@ -1,0 +1,7 @@
+{
+  "name": "decentraland.renderfeatures",
+  "version": "0.0.1-local",
+  "displayName": "Decentraland Render Features (local impl)",
+  "description": "Local re-implementation of the AvatarOutline, ObjectHighlight, Ocean and SkyboxToCubemap render features against URP 17.4.0 RenderGraph (Unity 6).",
+  "unity": "6000.0"
+}
