@@ -45,7 +45,7 @@
     "com.unity.ugui": "2.5.0",
     "com.unity.visualeffectgraph": "17.5.0",
     "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
-    "decentraland.renderfeatures": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
+    "decentraland.renderfeatures": "file:../../render-features",
     "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git",
     "io.sentry.unity": "https://github.com/getsentry/unity.git#4.9.0",
     "net.tnrd.nsubstitute": "https://github.com/decentraland/Unity3D-NSubstitute.git",
