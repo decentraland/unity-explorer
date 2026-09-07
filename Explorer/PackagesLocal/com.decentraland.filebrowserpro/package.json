@@ -1,0 +1,7 @@
+{
+  "name": "com.decentraland.filebrowserpro",
+  "version": "1.0.0",
+  "displayName": "Decentraland Native File Browser",
+  "description": "Clean-room, cross-platform native file/folder/save dialog exposing the Crosstales.FB.FileBrowser surface used by unity-explorer. Backed by zenity/kdialog on Linux, the Win32 common dialogs on Windows, and NSOpenPanel/NSSavePanel on macOS.",
+  "unity": "2022.3"
+}
