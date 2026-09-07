@@ -10,7 +10,7 @@ Two player backends exist side by side:
 
 | Backend | URL scheme | Use case |
 |---------|-----------|----------|
-| **AvProPlayer** | `http://`, `https://` | Pre-recorded or HLS video |
+| **UrlMediaPlayer** | `http://`, `https://` | Pre-recorded or HLS video |
 | **LivekitPlayer** | `livekit-video://` | Real-time room streams |
 
 The `MultiMediaPlayer` REnum wraps both behind a unified interface so the ECS systems don't care which backend is active.
@@ -165,7 +165,7 @@ When no LiveKit stream is open, the system renders a black texture. When the cur
 
 ### Component
 
-`MediaPlayerComponent` wraps a `MultiMediaPlayer` (which is either `AvProPlayer` or `LivekitPlayer`). It also tracks frozen-stream detection and audio visualization buffers.
+`MediaPlayerComponent` wraps a `MultiMediaPlayer` (which is either `UrlMediaPlayer` or `LivekitPlayer`). It also tracks frozen-stream detection and audio visualization buffers.
 
 ---
 
@@ -229,7 +229,7 @@ Metadata is a JSON string parsed at query time.
 |------|------|
 | `SDKComponents/MediaStream/LivekitPlayer.cs` | Core player — video/audio routing, speaker tracking, recovery |
 | `SDKComponents/MediaStream/LivekitAddress.cs` | `CurrentStream` / `UserStream` address REnum |
-| `SDKComponents/MediaStream/MultiMediaPlayer.cs` | Unified wrapper over AvPro and Livekit backends |
+| `SDKComponents/MediaStream/MultiMediaPlayer.cs` | Unified wrapper over the URL media player and Livekit |
 | `SDKComponents/MediaStream/MediaPlayerComponent.cs` | ECS component holding the player |
 | `SDKComponents/MediaStream/Systems/UpdateMediaPlayerSystem.cs` | Per-frame system driving playback |
 | `SDKComponents/MediaStream/Systems/AvatarPlaceHolderTextureSource.cs` | Builds the camera-off placeholder texture (avatar + streamer name) shown when a camera track is muted |

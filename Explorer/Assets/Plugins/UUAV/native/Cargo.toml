@@ -10,7 +10,7 @@ strip = "symbols"
 
 [package]
 name = "uuav-core"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 
 [dependencies]
@@ -35,6 +35,13 @@ windows = { version = "0.61", features = [
     "Win32_Graphics_Direct3D11",
     "Win32_Graphics_Dxgi_Common",
 ] }
+
+# ash over hand-rolled Vulkan FFI: the dma-buf import surface (external
+# memory, DRM format modifiers) is where hand-written bindings die of
+# typos; ash is a thin sys-level wrapper. `loaded` dlopens libvulkan at
+# runtime like Unity itself does.
+[target.'cfg(target_os = "linux")'.dependencies]
+ash = { version = "0.38", default-features = false, features = ["loaded", "std", "debug"] }
 
 # objc2 over the old gfx-rs `metal` crate: actively maintained, and its
 # Retained<T> RAII with Option-returning constructors fits the crate's

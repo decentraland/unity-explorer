@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.AudioSources
             ref PBAudioAnalysis sdkComponent
         )
         {
-            // Skip players whose AVPro object was destroyed; UpdateMediaPlayerSystem tears them down.
+            // Skip players whose MediaPlayer object was destroyed; UpdateMediaPlayerSystem tears them down.
             if (!mediaPlayerComponent.MediaPlayer.IsValid) return;
 
             HandleComponent(entity, ref mediaPlayerComponent, ref sdkComponent);

@@ -6,7 +6,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
-using DCL.AvProSwitch;
+using DCL.VideoPlayback;
 using UnityEngine;
 using UnityEngine.Pool;
 

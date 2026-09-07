@@ -22,16 +22,17 @@ use anyhow::{Context as _, Result};
 use std::path::PathBuf;
 use uuav_ipc::channel::ChildHandoff;
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 const HELPER_FILE: &str = "uuav-helper";
 #[cfg(target_os = "windows")]
 const HELPER_FILE: &str = "uuav-helper.exe";
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 pub fn spawn_helper(
     handoff: ChildHandoff,
     token: &str,
     allow_file_read: bool,
+    #[cfg(target_os = "linux")] surface: uuav_ipc::fd_channel::ChildHandoff,
 ) -> Result<HelperChild> {
     let path = helper_path()?;
     let mut command = std::process::Command::new(&path);
@@ -41,11 +42,16 @@ pub fn spawn_helper(
         .arg("--token")
         .arg(token)
         .arg("--parent-pid")
-        .arg(std::process::id().to_string())
-        // the client-registered mach service the helper sends IOSurface
-        // ports to
+        .arg(std::process::id().to_string());
+    // the client-registered mach service the helper sends IOSurface
+    // ports to
+    #[cfg(target_os = "macos")]
+    command
         .arg("--service")
         .arg(uuav_ipc::mach_channel::service_name(token));
+    // the inherited surface-channel end the helper sends tagged fds to
+    #[cfg(target_os = "linux")]
+    command.arg("--surface").arg(surface.arg());
     if allow_file_read {
         command.arg("--allow-file-read");
     }
@@ -53,19 +59,23 @@ pub fn spawn_helper(
         .spawn()
         .with_context(|| format!("failed to spawn {}", path.display()))?;
     drop(handoff);
+    #[cfg(target_os = "linux")]
+    drop(surface);
     Ok(HelperChild(child))
 }
 
 /// The spawned helper process. Same trio the recovery worker and deinit
 /// used on `std::process::Child`; on Windows it wraps the raw process
 /// handle because the spawn itself is a raw `CreateProcessW`.
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 pub struct HelperChild(std::process::Child);
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 impl HelperChild {
     /// Kernel-truth pid of the spawned helper; the mach surface receiver
-    /// authenticates senders against it.
+    /// authenticates senders against it (the Linux surface channel is an
+    /// anonymous pair and needs no authentication).
+    #[cfg(target_os = "macos")]
     pub fn id(&self) -> u32 {
         self.0.id()
     }
@@ -87,10 +97,10 @@ impl HelperChild {
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 pub struct HelperExitStatus(std::process::ExitStatus);
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 impl std::fmt::Display for HelperExitStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
@@ -337,7 +347,7 @@ fn helper_path() -> Result<PathBuf> {
 }
 
 /// Path of this loaded dylib, resolved from one of its own symbols.
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 fn own_dylib_path() -> Result<PathBuf> {
     use std::ffi::CStr;
     use std::os::raw::c_void;

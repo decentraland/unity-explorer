@@ -12,8 +12,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///     <c>hlsManifestUrl</c> or <c>dashManifestUrl</c> — typically embed-restricted music
     ///     videos served only as legacy muxed MP4 (itag=18, ~360p, with known A/V drift).
     ///
-    ///     HLS chosen over DASH because every AVPro backend supports it: AVFoundation (macOS/iOS),
-    ///     Media Foundation (Windows), ExoPlayer (Android). DASH only works on a subset.
+    ///     HLS is the safe choice here: the player demuxes it on every shipped platform.
     ///
     ///     Output: three plain-text playlists whose master references the media playlists by
     ///     the relative names <see cref="VIDEO_PLAYLIST_NAME"/> / <see cref="AUDIO_PLAYLIST_NAME"/>,
@@ -35,7 +34,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         private const int HEADER_PLAYLIST_LENGTH = 256;
         private const int SEGMENT_PLAYLIST_LENGTH = 128;
 
-        // Codecs every AVPro backend decodes reliably across Windows/macOS/iOS/Android.
+        // Codecs the player decodes reliably across every shipped platform.
         private const string PREFERRED_VIDEO_CODEC_PREFIX = "avc1";
         private const string PREFERRED_AUDIO_CODEC_PREFIX = "mp4a";
         private const int PREFERRED_HEIGHT = 1080;
@@ -87,7 +86,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         ///     Builds the 3 HLS playlists (master + video + audio) from the pre-selected pair
         ///     returned by <see cref="TrySelectVideoAndAudio"/>. If SIDX-derived segment tables
         ///     are supplied the media playlists are split into one HLS segment per fmp4
-        ///     fragment — this avoids the multi-second buffer-fill stall AVPro exhibits when
+        ///     fragment — this avoids the multi-second buffer-fill stall a player exhibits when
         ///     handed a single byte range covering the entire video body (issue #8350). Falls
         ///     back to single-segment if either segment list is null or empty.
         ///
@@ -303,8 +302,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             sb.Append(",BYTERANGE=\"").Append(initSize).Append('@').Append(initOffset).Append("\"\n");
 
             // One HLS segment per fmp4 fragment. Each EXT-X-BYTERANGE points at a clean
-            // fragment boundary (sidx-described), so AVPro can decode a single segment in
-            // isolation and start playback after the first chunk lands.
+            // fragment boundary (sidx-described), so the player can decode a single segment
+            // in isolation and start playback after the first chunk lands.
             for (int i = 0; i < segments.Count; i++)
             {
                 SidxParser.SegmentInfo seg = segments[i];

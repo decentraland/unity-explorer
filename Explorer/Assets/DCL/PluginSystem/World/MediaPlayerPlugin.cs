@@ -46,8 +46,8 @@ namespace DCL.PluginSystem.World
 
         public UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
-            // The placeholder builds an offscreen camera + render texture eagerly, so only create it on
-            // platforms where the LiveKit media feature is actually compiled in (see MediaPlayerPluginWrapper).
+            // The placeholder builds an offscreen camera + render texture eagerly; skip that cost on Linux,
+            // where LivekitPlayer null-checks it and falls back to black on camera-off.
 #if !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             var placeholderSource = new AvatarPlaceHolderTextureSource(settings.CameraOffPlaceholder);
 #else

@@ -44,12 +44,18 @@ mod hw_device;
 #[cfg(target_os = "macos")]
 #[path = "hw_device_macos.rs"]
 mod hw_device;
+#[cfg(target_os = "linux")]
+#[path = "hw_device_linux.rs"]
+mod hw_device;
 
 #[cfg(target_os = "windows")]
 #[path = "video_decoder_windows.rs"]
 mod video_decoder;
 #[cfg(target_os = "macos")]
 #[path = "video_decoder_macos.rs"]
+mod video_decoder;
+#[cfg(target_os = "linux")]
+#[path = "video_decoder_linux.rs"]
 mod video_decoder;
 
 #[cfg(target_os = "windows")]
@@ -58,9 +64,19 @@ mod video_output;
 #[cfg(target_os = "macos")]
 #[path = "video_output_macos.rs"]
 mod video_output;
+#[cfg(target_os = "linux")]
+#[path = "video_output_linux.rs"]
+mod video_output;
 
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-compile_error!("uuav supports Windows (D3D11) and macOS (Metal) only");
+/// The helper-owned Vulkan device the Linux probe pointer names.
+///
+/// Public because the helper process creates it (`uuav-server`) and the
+/// examples install one headlessly.
+#[cfg(target_os = "linux")]
+pub mod linux_device;
+
+#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+compile_error!("uuav supports Windows (D3D11), macOS (Metal) and Linux (Vulkan/VAAPI) only");
 
 use anyhow::{Context as _, ensure};
 use arc_swap::{ArcSwap, ArcSwapOption};
@@ -423,10 +439,10 @@ pub const extern "C" fn uuav_abi_version() -> *const c_char {
 /// This target's `va_list` as it appears in the bindgen signatures of
 /// `av_log_set_callback`/`av_log_format_line2`: a plain `char*` on
 /// `x86_64-pc-windows-gnu` and `aarch64-apple-darwin`, a pointer to the
-/// SysV `__va_list_tag` on `x86_64-apple-darwin`.
-#[cfg(all(target_arch = "x86_64", target_os = "macos"))]
+/// SysV `__va_list_tag` on x86_64 macOS/Linux.
+#[cfg(all(target_arch = "x86_64", any(target_os = "macos", target_os = "linux")))]
 type FfmpegVaList = *mut ff::__va_list_tag;
-#[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
+#[cfg(not(all(target_arch = "x86_64", any(target_os = "macos", target_os = "linux"))))]
 type FfmpegVaList = *mut c_char;
 
 /// Process-global FFmpeg log callback installed via `av_log_set_callback`.
@@ -589,13 +605,14 @@ pub extern "C" fn uuav_status() -> Status {
         let players_count = s.registry.len() as u64;
 
         // D3D11 devices can be removed (driver reset, GPU hang)
-        // Metal has no such concept
+        // Metal has no such concept; Vulkan device loss surfaces as
+        // present errors instead
         #[cfg(target_os = "windows")]
         let device_remove_reason = match unsafe { s.device.device().GetDeviceRemovedReason() } {
             Ok(()) => ptr::null(),
             Err(e) => string_to_c_bytes(e.to_string()),
         };
-        #[cfg(target_os = "macos")]
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
         let device_remove_reason = ptr::null();
 
         Status {
@@ -953,7 +970,7 @@ pub unsafe extern "C" fn uuav_player_get_video_texture(
     unsafe {
         uuav_player_get_video_texture_internal(
             player_id,
-            #[cfg(target_os = "macos")]
+            #[cfg(any(target_os = "macos", target_os = "linux"))]
             plane,
             out_texture,
         )
@@ -963,7 +980,7 @@ pub unsafe extern "C" fn uuav_player_get_video_texture(
 
 unsafe fn uuav_player_get_video_texture_internal(
     player_id: PlayerId,
-    #[cfg(target_os = "macos")] plane: i32,
+    #[cfg(any(target_os = "macos", target_os = "linux"))] plane: i32,
     out_texture: *mut *const c_void,
 ) -> anyhow::Result<()> {
     ensure!(!out_texture.is_null(), "out pointer is null");
@@ -972,7 +989,7 @@ unsafe fn uuav_player_get_video_texture_internal(
     let texture = runtime
         .player_by_id(player_id)?
         .video_texture(
-            #[cfg(target_os = "macos")]
+            #[cfg(any(target_os = "macos", target_os = "linux"))]
             plane,
         )
         .context("video texture is not available yet")?;

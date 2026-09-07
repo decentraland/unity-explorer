@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.MediaStream
     public interface IUrlResolverService
     {
         /// <summary>
-        ///     Resolves an input URL into a direct media URL that AVPro Video can play.
+        ///     Resolves an input URL into a direct media URL that the media player can play.
         ///     Handles YouTube resolution, Google Drive rewriting, and reachability checking.
         /// </summary>
         UniTask<ResolvedMediaUrl> ResolveAsync(string url, ReportData reportData, CancellationToken ct);

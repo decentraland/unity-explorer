@@ -71,6 +71,14 @@ fn with_probe<T>(init: impl FnOnce(*const std::ffi::c_void) -> T) -> T {
     init(objc2::rc::Retained::as_ptr(&probe).cast())
 }
 
+/// Stands in for Unity's probe: on Linux the pointer is opaque — the
+/// headless Vulkan device installed here is what init captures.
+#[cfg(target_os = "linux")]
+fn with_probe<T>(init: impl FnOnce(*const std::ffi::c_void) -> T) -> T {
+    uuav::test_install_headless_device().expect("headless Vulkan device");
+    init(std::ptr::NonNull::<u8>::dangling().as_ptr().cast_const().cast())
+}
+
 /// Stands in for Unity's probe: any live `ID3D11Texture2D*` works,
 /// `uuav_init` only derives the device (and its adapter LUID) from it.
 #[cfg(target_os = "windows")]
@@ -215,7 +223,7 @@ fn main() {
         std::thread::sleep(Duration::from_millis(50));
     }
     let (y, uv) = planes.expect("video planes never became available");
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     assert_ne!(y, uv, "Y and UV planes must be distinct textures");
     // one NV12 texture covers both planes on D3D11
     #[cfg(target_os = "windows")]
@@ -323,7 +331,7 @@ fn kill_helper() {
     let status = std::process::Command::new("taskkill")
         .args(["/F", "/IM", "uuav-helper.exe"])
         .status();
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     let status = std::process::Command::new("pkill")
         .args(["-9", "-x", "uuav-helper"])
         .status();

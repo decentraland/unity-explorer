@@ -69,6 +69,14 @@ fn with_probe<T>(init: impl FnOnce(*const std::ffi::c_void) -> T) -> T {
     init(objc2::rc::Retained::as_ptr(&probe).cast())
 }
 
+/// Stands in for Unity's probe: on Linux the pointer is opaque — the
+/// headless Vulkan device installed here is what init captures.
+#[cfg(target_os = "linux")]
+fn with_probe<T>(init: impl FnOnce(*const std::ffi::c_void) -> T) -> T {
+    uuav::test_install_headless_device().expect("headless Vulkan device");
+    init(std::ptr::NonNull::<u8>::dangling().as_ptr().cast_const().cast())
+}
+
 /// Stands in for Unity's probe: any live `ID3D11Texture2D*` works,
 /// `uuav_init` only derives the device (and its adapter LUID) from it.
 #[cfg(target_os = "windows")]

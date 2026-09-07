@@ -23,3 +23,9 @@ pub mod protocol;
 
 #[cfg(target_os = "macos")]
 pub mod mach_channel;
+
+#[cfg(target_os = "linux")]
+pub mod fd_channel;
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+compile_error!("uuav-ipc supports Windows, macOS and Linux only");

@@ -1,7 +1,7 @@
 # UUAV — native media for the Explorer
 
 UUAV is the Explorer's media stack. It decodes the video and audio that scenes
-ask for, replacing AVPro on the desktop platforms the client ships to.
+ask for on the desktop platforms the client ships to.
 
 Scenes are not trusted, and neither are the URLs they name. Decoding means
 running container and codec parsers over bytes an attacker chose, so UUAV has
@@ -85,16 +85,12 @@ in the client watches the connection, respawns the helper and restores every
 player's state — URL, position, rate, looping — so a decoder crash degrades to
 a stutter rather than a session loss.
 
-**The AVPro-shaped surface belongs once, on the Explorer side — today it
-exists twice.** Scene code talks to an AVPro-shaped player, and a runtime
-switch picks the backend behind it (`Explorer/Assets/DCL/AvProSwitch/`:
-`MediaPlayer`, `AvProBackend`, `UuavBackend`). The UUAV package still carries
-a second copy of that shape (`Packages/UUAV/AVProCompat/`), and `UuavBackend`
-currently drives it, so the UUAV path runs two facades deep and the enums are
-duplicated. A facade per backend reads as symmetry but buys nothing: it
-duplicates every enum, adds a conversion at each boundary, and gives a bug two
-places to hide — which is why the package-side copy is slated to be collapsed
-into `UuavBackend`, leaving the shape defined once next to the switch.
+**The playback surface today runs two facades deep.** Scene code talks to
+`Explorer/Assets/DCL/VideoPlayback/` (`MediaPlayer`, `UuavBackend`), which
+drives the package-side facade (`Packages/UUAV/Compat/`), so the enums exist
+on both sides and each boundary carries a conversion. The two layers are
+structurally identical; collapsing the package-side copy into `UuavBackend`
+would leave the shape defined once, next to the consumer.
 
 ## Where to look
 

@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace UUAV
 {
@@ -94,6 +97,16 @@ namespace UUAV
         [SerializeField] private Texture2D? uvPlane;
         [SerializeField] private RenderTexture? runtimeSurface;
         [SerializeField] private IntPtr nativeTexture;
+
+        // Unity's Vulkan backend reads CreateExternalTexture's nativeTex as a
+        // VkImage*, so on Vulkan the value handed over is the address of an
+        // unmanaged cell holding the handle; VulkanImageCells owns that rule
+        // and the cell lifetime. Cells still inside the render-thread lag when
+        // their player is destroyed move to the shared retired list, which any
+        // player sweeps on its next create or destroy; whatever is left at
+        // process exit follows the process. Both lists are main-thread only
+        private readonly List<(int frame, IntPtr cell)> vulkanImageCells = new ();
+        private static readonly List<(int frame, IntPtr cell)> retiredVulkanImageCells = new ();
 
         private static ulong playerIncrementalID;
 
@@ -330,6 +343,9 @@ namespace UUAV
 
             ReleasePlaneViews();
 
+            SweepVulkanImageCells();
+            VulkanImageCells.Retire(vulkanImageCells, retiredVulkanImageCells);
+
             if (runtimeSurface != null)
             {
                 runtimeSurface.Release();
@@ -395,10 +411,11 @@ namespace UUAV
 
             var uvTexture = yTexture;
 
-            // on Metal each plane is its own texture; both pointers change
-            // together on resolution change, so polling plane 0 covers both.
-            // on D3D11 native ignores the plane and returns the one resource
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            // on Metal (and on Linux, Vulkan or GL) each plane is its own
+            // texture; both pointers change together on resolution change, so
+            // polling plane 0 covers both. on D3D11 native ignores the plane
+            // and returns the one NV12 resource for both
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX || UNITY_EDITOR_LINUX || UNITY_STANDALONE_LINUX
             var uvResult = NativeMethods.uuav_player_get_video_texture(
                     playerId,
                     1,
@@ -440,16 +457,20 @@ namespace UUAV
             var width = (int)size.Width;
             var height = (int)size.Height;
 
+            SweepVulkanImageCells();
+
             // D3D11: one NV12 resource passed for both planes, Unity selects
             // the plane from the view format (R8 -> Y, R8G8 -> UV).
-            // Metal: two distinct MTLTextures, wrapped as-is
+            // Metal: two distinct MTLTextures, wrapped as-is.
+            // Vulkan: two VkImage handles, each passed through a VkImage* cell;
+            // GL: two texture names by value
             yPlane = Texture2D.CreateExternalTexture(
                 width,
                 height,
                 TextureFormat.R8,
                 mipChain: false,
                 linear: true,
-                yTexture
+                NativeTextureArgument(yTexture)
             );
             uvPlane = Texture2D.CreateExternalTexture(
                 width / 2,
@@ -457,7 +478,7 @@ namespace UUAV
                 TextureFormat.RG16,
                 mipChain: false,
                 linear: true,
-                uvTexture
+                NativeTextureArgument(uvTexture)
             );
             ConfigurePlane(yPlane);
             ConfigurePlane(uvPlane);
@@ -480,6 +501,15 @@ namespace UUAV
 
             nativeTexture = yTexture;
             videoSize = size;
+        }
+
+        private IntPtr NativeTextureArgument(IntPtr handle) =>
+            VulkanImageCells.NativeTextureArgument(SystemInfo.graphicsDeviceType, handle, Time.frameCount, vulkanImageCells);
+
+        private void SweepVulkanImageCells()
+        {
+            VulkanImageCells.FreePastLag(vulkanImageCells, Time.frameCount);
+            VulkanImageCells.FreePastLag(retiredVulkanImageCells, Time.frameCount);
         }
 
         private void BlitToSurface()
@@ -551,6 +581,68 @@ namespace UUAV
         {
             plane.filterMode = FilterMode.Bilinear;
             plane.wrapMode = TextureWrapMode.Clamp;
+        }
+    }
+
+    /// <summary>
+    /// Unity's Vulkan backend reads CreateExternalTexture's nativeTex as a
+    /// VkImage*; every other backend takes the handle by value (Metal object
+    /// pointer, D3D11 resource pointer, GL texture name). On Vulkan the handle
+    /// is parked in an unmanaged cell that outlives the queued create: the
+    /// render thread reads the cell when the create executes, up to
+    /// <see cref="RenderThreadLagFrames"/> after the frame that issued it, so a
+    /// cell is never rewritten and is freed only once the current frame is past
+    /// that lag. Main-thread only
+    /// </summary>
+    internal static class VulkanImageCells
+    {
+        // the main thread runs at most one frame ahead of the render thread;
+        // a cell costs 8 bytes, so the lag keeps a margin over that bound
+        // rather than matching it exactly
+        internal const int RenderThreadLagFrames = 3;
+
+        internal static bool HandleNeedsCell(GraphicsDeviceType api) =>
+            api == GraphicsDeviceType.Vulkan;
+
+        /// <summary>
+        /// The value CreateExternalTexture receives for <paramref name="handle"/>
+        /// on <paramref name="api"/>: the handle itself, or on Vulkan a fresh cell
+        /// holding it, stamped with <paramref name="frame"/> and tracked in
+        /// <paramref name="cells"/> until <see cref="FreePastLag"/> retires it
+        /// </summary>
+        internal static IntPtr NativeTextureArgument(GraphicsDeviceType api, IntPtr handle, int frame, List<(int frame, IntPtr cell)> cells)
+        {
+            if (!HandleNeedsCell(api))
+            {
+                return handle;
+            }
+
+            IntPtr cell = Marshal.AllocHGlobal(IntPtr.Size);
+            Marshal.WriteIntPtr(cell, handle);
+            cells.Add((frame, cell));
+            return cell;
+        }
+
+        /// <summary>
+        /// Hands every cell of a destroyed player to the list that outlives it,
+        /// so each cell is still swept, and freed exactly once
+        /// </summary>
+        internal static void Retire(List<(int frame, IntPtr cell)> from, List<(int frame, IntPtr cell)> to)
+        {
+            to.AddRange(from);
+            from.Clear();
+        }
+
+        internal static void FreePastLag(List<(int frame, IntPtr cell)> cells, int currentFrame)
+        {
+            for (int i = cells.Count - 1; i >= 0; i--)
+            {
+                if (cells[i].frame + RenderThreadLagFrames < currentFrame)
+                {
+                    Marshal.FreeHGlobal(cells[i].cell);
+                    cells.RemoveAt(i);
+                }
+            }
         }
     }
 }

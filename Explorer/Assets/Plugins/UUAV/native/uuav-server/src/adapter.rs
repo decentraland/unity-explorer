@@ -112,11 +112,16 @@ struct Serve {
     /// Reused pull buffer (sized for [`AUDIO_MAX_PULL`]).
     audio_scratch: Vec<f32>,
     video: Option<crate::video::VideoPump>,
+    /// The surface channel's helper end, consumed by the pump at
+    /// Configure (one session per helper life; recovery respawns).
+    #[cfg(target_os = "linux")]
+    surface: Option<uuav_ipc::fd_channel::Sender>,
 }
 
 pub fn run(
     channel: &mut Channel,
     #[cfg(target_os = "macos")] service: &str,
+    #[cfg(target_os = "linux")] surface: uuav_ipc::fd_channel::Sender,
 ) -> anyhow::Result<()> {
     let (tx, rx) = unbounded();
     _ = FORWARD.set(tx);
@@ -127,6 +132,8 @@ pub fn run(
         audio: None,
         audio_scratch: Vec::new(),
         video: None,
+        #[cfg(target_os = "linux")]
+        surface: Some(surface),
     };
     let mut last_pump = Instant::now();
     let mut last_audio = Instant::now();
@@ -195,6 +202,27 @@ pub fn run(
     }
 }
 
+/// Builds the platform video pump at Configure time.
+fn new_pump(
+    serve: &mut Serve,
+    #[cfg(target_os = "macos")] service: &str,
+    #[cfg(target_os = "linux")] graphics: uuav_ipc::protocol::GraphicsApiWire,
+) -> Result<crate::video::VideoPump, String> {
+    #[cfg(target_os = "linux")]
+    let sender = serve
+        .surface
+        .take()
+        .ok_or("surface channel already consumed")?;
+    let probe = serve.probe.as_ref().ok_or("probe device is missing")?;
+    #[cfg(target_os = "macos")]
+    let pump = crate::video::VideoPump::new(probe, service);
+    #[cfg(target_os = "windows")]
+    let pump = crate::video::VideoPump::new(probe);
+    #[cfg(target_os = "linux")]
+    let pump = crate::video::VideoPump::new(probe, graphics, sender);
+    pump.map_err(|e| e.to_string())
+}
+
 /// Returns `true` on `Shutdown`.
 fn dispatch(
     channel: &mut Channel,
@@ -210,18 +238,22 @@ fn dispatch(
             protocol_whitelist,
             log_level,
             adapter,
+            graphics,
         } => {
+            #[cfg(not(target_os = "linux"))]
+            let _ = graphics;
             let result = configure(&mut serve.probe, audio, &protocol_whitelist, log_level, adapter);
             if result.is_ok() {
                 serve.audio = Some(audio);
             }
             let result = result.and_then(|()| {
-                let probe = serve.probe.as_ref().ok_or("probe device is missing")?;
-                #[cfg(target_os = "macos")]
-                let pump = crate::video::VideoPump::new(probe, service);
-                #[cfg(target_os = "windows")]
-                let pump = crate::video::VideoPump::new(probe);
-                serve.video = Some(pump.map_err(|e| e.to_string())?);
+                serve.video = Some(new_pump(
+                    serve,
+                    #[cfg(target_os = "macos")]
+                    service,
+                    #[cfg(target_os = "linux")]
+                    graphics,
+                )?);
                 Ok(())
             });
             reply(channel, corr, result.map(|()| ReplyBody::Unit))?;

@@ -1,10 +1,12 @@
 //! Duplex client<->helper control channel over native OS primitives.
 //!
 //! Windows: a message-mode named pipe (overlapped I/O, the helper's
-//! end explicitly inherited at spawn). macOS: an `AF_UNIX` socketpair
-//! (the helper's fd inherited across exec). One postcard-encoded
-//! message per frame; the Windows pipe preserves message boundaries by
-//! itself, the macOS stream carries a u32-LE length prefix.
+//! end explicitly inherited at spawn). macOS/Linux: an `AF_UNIX`
+//! socketpair (the helper's fd inherited across exec). One
+//! postcard-encoded message per frame; the Windows pipe preserves
+//! message boundaries by itself, the unix stream carries a u32-LE
+//! length prefix. Shared-surface handles never travel here — they have
+//! their own channel (`mach_channel` on macOS, `fd_channel` on Linux).
 //!
 //! The client creates both ends with [`Channel::pair`] before spawning
 //! the helper, hands the [`ChildHandoff`] to the spawn path, and keeps
@@ -17,8 +19,8 @@ use anyhow::Context as _;
 use serde::{Serialize, de::DeserializeOwned};
 use std::time::{Duration, Instant};
 
-#[cfg(target_os = "macos")]
-#[path = "channel_macos.rs"]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[path = "channel_unix.rs"]
 mod imp;
 #[cfg(target_os = "windows")]
 #[path = "channel_windows.rs"]

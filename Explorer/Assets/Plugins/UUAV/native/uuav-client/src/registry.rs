@@ -317,3 +317,33 @@ pub fn apply_surface(
         video.store_surface(tag, surface);
     }
 }
+
+#[cfg(target_os = "linux")]
+pub fn apply_texture_set(
+    registry: &Registry,
+    id: PlayerId,
+    generation: u32,
+    width: u32,
+    height: u32,
+    import: uuav_ipc::protocol::TextureImportWire,
+    planes: Vec<uuav_ipc::protocol::TexturePlaneWire>,
+) {
+    if let Some(mirror) = registry.by_helper(id)
+        && let Ok(mut video) = mirror.video.lock()
+    {
+        video.store_texture_set(generation, width, height, import, planes);
+    }
+}
+
+#[cfg(target_os = "linux")]
+pub fn apply_surface_fd(
+    registry: &Registry,
+    tag: &uuav_ipc::fd_channel::SurfaceTag,
+    fd: std::os::fd::OwnedFd,
+) {
+    if let Some(mirror) = registry.by_helper(tag.player)
+        && let Ok(mut video) = mirror.video.lock()
+    {
+        video.store_surface(tag, fd);
+    }
+}

@@ -16,6 +16,8 @@ namespace DCL.SDKComponents.MediaStream
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     public partial class VideoEventsSystem : BaseUnityLoopSystem
     {
+        private static readonly bool GOLDEN_DETERM_CLOCK = System.Environment.GetEnvironmentVariable("DCL_PLAZABENCH_DETERM_CLOCK") == "1";
+
         private const float MAX_VIDEO_FROZEN_SECONDS_BEFORE_ERROR = 10f;
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -40,10 +42,18 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            // Skip players whose AVPro object was destroyed; UpdateMediaPlayerSystem tears them down.
+            // Skip players whose MediaPlayer object was destroyed; UpdateMediaPlayerSystem tears them down.
             if (!mediaPlayer.MediaPlayer.IsValid) return;
 
             VideoState state = GetVideoStateForPropagation(mediaPlayer);
+
+            // Golden-capture determinism: whether a stream reaches READY or ERROR — and on which
+            // tick — is a wall-clock network race, and scenes branch visibly on it (the theater
+            // paints status text on its screen). Every video reports ERROR under the harness, so
+            // all runs take the same dead-stream branch; the media blackout already pins pixels.
+            if (GOLDEN_DETERM_CLOCK)
+                state = VideoState.VsError;
+
             PropagateStateInVideoEvent(in sdkEntity, ref mediaPlayer, state);
         }
 

@@ -7,7 +7,7 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using DCL.AvProSwitch;
+using DCL.VideoPlayback;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;

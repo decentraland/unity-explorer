@@ -38,6 +38,9 @@ mod device;
 #[cfg(target_os = "windows")]
 #[path = "device_windows.rs"]
 mod device;
+#[cfg(target_os = "linux")]
+#[path = "device_linux.rs"]
+mod device;
 
 #[cfg(target_os = "macos")]
 #[path = "video_macos.rs"]
@@ -45,20 +48,34 @@ mod video;
 #[cfg(target_os = "windows")]
 #[path = "video_windows.rs"]
 mod video;
+#[cfg(target_os = "linux")]
+#[path = "video_linux.rs"]
+mod video;
+
+// generation/slot state machine, shared; only the Linux pump uses it so
+// far (macOS/Windows adopt it on their next platform-verified change)
+#[cfg(target_os = "linux")]
+mod video_slots;
 
 #[cfg(target_os = "macos")]
 #[path = "watch_macos.rs"]
+mod watch;
+#[cfg(target_os = "linux")]
+#[path = "watch_linux.rs"]
 mod watch;
 
 #[cfg(target_os = "macos")]
 #[path = "sandbox_macos.rs"]
 mod sandbox;
+#[cfg(target_os = "linux")]
+#[path = "sandbox_linux.rs"]
+mod sandbox;
 #[cfg(target_os = "windows")]
 #[path = "watch_windows.rs"]
 mod watch;
 
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-compile_error!("uuav-helper supports Windows (D3D11) and macOS (Metal) only");
+#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+compile_error!("uuav-helper supports Windows (D3D11), macOS (Metal) and Linux (Vulkan/VAAPI) only");
 
 use anyhow::{Context as _, bail};
 use uuav_ipc::protocol;
@@ -76,9 +93,13 @@ struct Args {
     /// The client's registered mach service for IOSurface port transfer.
     #[cfg(target_os = "macos")]
     service: String,
-    /// Opens broad file reads in the Seatbelt profile for the Editor's
-    /// `file:` protocol. Never passed by player builds.
-    #[cfg(target_os = "macos")]
+    /// The inherited surface-channel fd for tagged shared-image
+    /// transfer (the mach service's Linux analog).
+    #[cfg(target_os = "linux")]
+    surface: String,
+    /// Opens broad file reads in the sandbox for the Editor's `file:`
+    /// protocol. Never passed by player builds.
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     allow_file_read: bool,
 }
 
@@ -90,7 +111,9 @@ fn parse_args() -> anyhow::Result<Args> {
     let mut parent_handle = None;
     #[cfg(target_os = "macos")]
     let mut service = None;
-    #[cfg(target_os = "macos")]
+    #[cfg(target_os = "linux")]
+    let mut surface = None;
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     let mut allow_file_read = false;
 
     let mut args = std::env::args().skip(1);
@@ -107,7 +130,9 @@ fn parse_args() -> anyhow::Result<Args> {
             "--parent-handle" => parent_handle = Some(value()?.parse::<u64>()?),
             #[cfg(target_os = "macos")]
             "--service" => service = Some(value()?),
-            #[cfg(target_os = "macos")]
+            #[cfg(target_os = "linux")]
+            "--surface" => surface = Some(value()?),
+            #[cfg(any(target_os = "macos", target_os = "linux"))]
             "--allow-file-read" => allow_file_read = true,
             other => bail!("unknown argument: {other}"),
         }
@@ -121,7 +146,9 @@ fn parse_args() -> anyhow::Result<Args> {
         parent_handle,
         #[cfg(target_os = "macos")]
         service: service.context("--service is required")?,
-        #[cfg(target_os = "macos")]
+        #[cfg(target_os = "linux")]
+        surface: surface.context("--surface is required")?,
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
         allow_file_read,
     })
 }
@@ -129,18 +156,39 @@ fn parse_args() -> anyhow::Result<Args> {
 fn main() -> anyhow::Result<()> {
     let args = parse_args()?;
 
+    // The shipped libva's compiled-in driver path points at the build
+    // prefix; give it the common host locations unless the user chose.
+    // Process-local env, set before libva initializes at Configure.
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("LIBVA_DRIVERS_PATH").is_none() {
+        unsafe {
+            std::env::set_var(
+                "LIBVA_DRIVERS_PATH",
+                "/usr/lib/x86_64-linux-gnu/dri:/usr/lib64/dri:/usr/lib/dri:/run/opengl-driver/lib/dri",
+            );
+        }
+    }
+
     // Lock down before adopting the channel or parsing any input. Fail
     // closed: on error the helper exits and the client sees channel EOF.
     #[cfg(target_os = "macos")]
     sandbox::apply(&args.service, args.allow_file_read)?;
+    #[cfg(target_os = "linux")]
+    let sandbox_line = sandbox::apply(args.allow_file_read)?;
 
     // If the parent dies for any reason (crash, force-quit), never outlive
     // it. Defense-in-depth on Windows: the client's kill-on-close job
     // object already terminates this process with the parent.
     #[cfg(target_os = "windows")]
     watch::exit_when_parent_dies(args.parent_pid, args.parent_handle)?;
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     watch::exit_when_parent_dies(args.parent_pid)?;
+
+    // adopted before Hello so a dead surface channel fails the session
+    // immediately rather than at the first texture-set announce
+    #[cfg(target_os = "linux")]
+    let surface = uuav_ipc::fd_channel::Sender::from_arg(&args.surface)
+        .context("adopt inherited surface channel")?;
 
     let mut channel =
         uuav_ipc::channel::Channel::from_arg(&args.channel).context("adopt inherited channel")?;
@@ -157,10 +205,17 @@ fn main() -> anyhow::Result<()> {
         sink: protocol::LogSink::Log,
         line: "uuav-helper: seatbelt sandbox active".to_owned(),
     })?;
+    #[cfg(target_os = "linux")]
+    channel.send(&protocol::ToClient::Log {
+        sink: protocol::LogSink::Log,
+        line: sandbox_line,
+    })?;
 
     adapter::run(
         &mut channel,
         #[cfg(target_os = "macos")]
         &args.service,
+        #[cfg(target_os = "linux")]
+        surface,
     )
 }

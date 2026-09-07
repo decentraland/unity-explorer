@@ -6,7 +6,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     ///     Parses the ISO/IEC 14496-12 §8.16.3 sidx (Segment Index) box. YouTube's adaptive
     ///     format URLs expose the sidx via the <c>indexRange</c> byte range; parsing it gives us
     ///     the offset, size and duration of each fmp4 fragment in the file. We use that to
-    ///     synthesize a multi-segment HLS playlist so AVPro can start playback after fetching
+    ///     synthesize a multi-segment HLS playlist so the player can start playback after fetching
     ///     just the first ~6-10s chunk instead of waiting for the entire byte range.
     ///
     ///     Single-pass, allocation-light, big-endian throughout (mp4 boxes are network byte

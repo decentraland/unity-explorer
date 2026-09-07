@@ -1,6 +1,6 @@
 [package]
 name = "uuav-ipc"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 
 [dependencies]
@@ -19,8 +19,12 @@ windows = { version = "0.61", features = [
     "Win32_System_Threading",
 ] }
 
-# native transport: AF_UNIX socketpair; mach message plumbing for the
-# IOSurface port channel (fds cannot carry mach port rights)
-[target.'cfg(target_os = "macos")'.dependencies]
+# native transport: AF_UNIX socketpair (macOS/Linux; on Linux it also
+# carries SCM_RIGHTS fd batches for shared-surface handoff)
+[target.'cfg(any(target_os = "macos", target_os = "linux"))'.dependencies]
 libc = "0.2"
+
+# mach message plumbing for the IOSurface port channel (fds cannot carry
+# mach port rights)
+[target.'cfg(target_os = "macos")'.dependencies]
 mach2 = "0.4"

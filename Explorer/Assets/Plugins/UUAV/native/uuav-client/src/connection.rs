@@ -13,9 +13,27 @@ use std::time::Duration;
 use uuav_ipc::channel::{Channel, ChildHandoff};
 use uuav_ipc::protocol::{ABI_VERSION, Corr, LogSink, ReplyBody, ToClient, ToServer};
 
-const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
-const REPLY_TIMEOUT: Duration = Duration::from_secs(5);
 const IO_POLL_TIMEOUT_MS: u32 = 5;
+
+/// The `UUAV_TIMEOUT_SCALE` env var multiplies the handshake and reply
+/// deadlines. Left at 1 in normal use; a slow first spawn (cold page
+/// cache, a machine under load, a memory tool slowing the helper) can
+/// raise it without a rebuild. Malformed or absent → 1.
+fn timeout_scale() -> u32 {
+    std::env::var("UUAV_TIMEOUT_SCALE")
+        .ok()
+        .and_then(|value| value.parse::<u32>().ok())
+        .filter(|scale| *scale >= 1)
+        .unwrap_or(1)
+}
+
+fn handshake_timeout() -> Duration {
+    Duration::from_secs(5).saturating_mul(timeout_scale())
+}
+
+fn reply_timeout() -> Duration {
+    Duration::from_secs(5).saturating_mul(timeout_scale())
+}
 
 /// The runtime's single lifecycle state, shared by the connection(s), the
 /// IO threads, the callback sinks, and the recovery worker. States move
@@ -106,7 +124,7 @@ impl Connection {
         spawn(handoff)?;
 
         let hello: ToClient = channel
-            .recv_timeout(HANDSHAKE_TIMEOUT)
+            .recv_timeout(handshake_timeout())
             .context("helper did not say Hello")?;
         let ToClient::Hello { token: got, abi, pid: _ } = hello else {
             bail!("unexpected first message from helper");
@@ -149,9 +167,9 @@ impl Connection {
         self.alive.store(false, Ordering::Release);
     }
 
-    /// Handle for platform channel threads (macOS mach receiver) tied to
-    /// this connection generation.
-    #[cfg(target_os = "macos")]
+    /// Handle for platform channel threads (macOS mach receiver, Linux
+    /// surface receiver) tied to this connection generation.
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     pub fn alive_flag(&self) -> Arc<AtomicBool> {
         Arc::clone(&self.alive)
     }
@@ -168,7 +186,7 @@ impl Connection {
         self.outbound.send(message).context("uuav IO thread is gone")
     }
 
-    /// Round-trip command; blocks up to [`REPLY_TIMEOUT`].
+    /// Round-trip command; blocks up to the reply timeout.
     pub fn request(
         &self,
         build: impl FnOnce(Corr) -> ToServer,
@@ -185,7 +203,7 @@ impl Connection {
             return Err(format!("uuav IO thread is gone: {e}"));
         }
 
-        rx.recv_timeout(REPLY_TIMEOUT).unwrap_or_else(|_| {
+        rx.recv_timeout(reply_timeout()).unwrap_or_else(|_| {
             self.pending.remove(&corr);
             Err("uuav helper did not reply in time".to_owned())
         })
@@ -278,6 +296,8 @@ fn route(
             width,
             height,
             handles: _, // surfaces arrive as mach ports, not handles
+            import: _,
+            planes: _,
         } => registry::apply_texture_set(registry, id, generation, width, height),
         #[cfg(target_os = "windows")]
         ToClient::TextureSet {
@@ -286,7 +306,19 @@ fn route(
             width,
             height,
             handles,
+            import: _,
+            planes: _,
         } => registry::apply_texture_set(registry, id, generation, width, height, &handles),
+        #[cfg(target_os = "linux")]
+        ToClient::TextureSet {
+            id,
+            generation,
+            width,
+            height,
+            handles: _, // fds arrive tagged on the surface channel
+            import,
+            planes,
+        } => registry::apply_texture_set(registry, id, generation, width, height, import, planes),
         ToClient::FramePublished {
             id,
             generation,

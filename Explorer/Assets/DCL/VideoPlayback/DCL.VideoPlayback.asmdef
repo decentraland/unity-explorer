@@ -1,0 +1,17 @@
+{
+    "name": "DCL.VideoPlayback",
+    "rootNamespace": "DCL.VideoPlayback",
+    "references": [
+        "GUID:4a0b2c8f3c9e5f6a0b1c2d3e4f5a6b7c",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

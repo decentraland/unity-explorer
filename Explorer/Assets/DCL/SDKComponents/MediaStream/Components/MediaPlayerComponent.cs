@@ -1,5 +1,5 @@
 using DCL.ECSComponents;
-using DCL.AvProSwitch;
+using DCL.VideoPlayback;
 using System.Threading;
 using UnityEngine;
 using Utility;

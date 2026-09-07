@@ -51,6 +51,9 @@ mod platform;
 #[cfg(target_os = "windows")]
 #[path = "platform_windows.rs"]
 mod platform;
+#[cfg(target_os = "linux")]
+#[path = "platform_linux.rs"]
+mod platform;
 
 #[cfg(target_os = "macos")]
 #[path = "present_macos.rs"]
@@ -58,9 +61,22 @@ mod present;
 #[cfg(target_os = "windows")]
 #[path = "present_windows.rs"]
 mod present;
+#[cfg(target_os = "linux")]
+#[path = "present_linux.rs"]
+mod present;
 
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-compile_error!("uuav supports Windows (D3D11) and macOS (Metal) only");
+#[cfg(target_os = "linux")]
+mod present_gl;
+#[cfg(target_os = "linux")]
+mod present_vulkan;
+
+/// Examples-only: installs a headless Vulkan device where init's probe
+/// capture finds it (no Unity, no plugin load).
+#[cfg(target_os = "linux")]
+pub use platform::test_install_headless_device;
+
+#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+compile_error!("uuav supports Windows (D3D11), macOS (Metal) and Linux (Vulkan/OpenGL) only");
 
 use arc_swap::{ArcSwap, ArcSwapOption};
 use connection::{Connection, EventSinks, Lifecycle, LifecycleCell};
@@ -73,7 +89,7 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use uuav_ipc::protocol::{
-    AudioOptionsWire, LogSink, MediaInfoWire, PlayerStateWire, ReplyBody, ToServer,
+    AudioOptionsWire, GraphicsApiWire, LogSink, MediaInfoWire, PlayerStateWire, ReplyBody, ToServer,
 };
 
 // error strings kept identical to the in-process plugin
@@ -340,10 +356,23 @@ fn media_info_to_c(info: &MediaInfoWire) -> MediaInfo {
     }
 }
 
+/// The texture-set export flavor the helper must use: Vulkan vs GL on
+/// Linux; the single-API platforms send `Default`.
+const fn graphics_wire_of(unity: &platform::UnityDevice) -> GraphicsApiWire {
+    #[cfg(target_os = "linux")]
+    return unity.graphics_wire();
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = unity;
+        GraphicsApiWire::Default
+    }
+}
+
 // ---- helper session (shared by init and the recovery worker) -----------
 
 /// One helper generation: spawn, handshake, configure. On success the
 /// helper is fully configured and the connection's IO thread is pumping.
+#[allow(clippy::too_many_arguments)] // one cohesive session parameter set
 fn start_session(
     lifecycle: &Arc<LifecycleCell>,
     registry: &Arc<Registry>,
@@ -352,6 +381,7 @@ fn start_session(
     protocol_whitelist: &str,
     log_level: i32,
     adapter: u64,
+    graphics: GraphicsApiWire,
 ) -> Result<(Connection, HelperChild), String> {
     let token = uuid::Uuid::new_v4().simple().to_string();
 
@@ -363,10 +393,15 @@ fn start_session(
             .map_err(|e| format!("mach channel: {e}"))?
     };
 
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     let allow_file_read = protocol_whitelist
         .split(',')
         .any(|p| p.trim().eq_ignore_ascii_case("file"));
+
+    // the surface channel's ends must exist before the helper inherits one
+    #[cfg(target_os = "linux")]
+    let (surface_receiver, surface_handoff) =
+        uuav_ipc::fd_channel::pair().map_err(|e| format!("surface channel: {e}"))?;
 
     let mut child: Option<HelperChild> = None;
     let conn = Connection::establish(
@@ -375,8 +410,10 @@ fn start_session(
             let spawned = spawn::spawn_helper(
                 handoff,
                 &token,
-                #[cfg(target_os = "macos")]
+                #[cfg(any(target_os = "macos", target_os = "linux"))]
                 allow_file_read,
+                #[cfg(target_os = "linux")]
+                surface_handoff,
             )?;
             // the registry pulls announced texture handles out of the
             // helper's process; arm it before any announcement can arrive
@@ -398,7 +435,7 @@ fn start_session(
                 child.kill();
                 child.wait();
             }
-            return Err(format!("failed to start uuav helper: {e:#}"));
+            return Err(format!("failed to start uuav helper: {e}"));
         }
     };
     let Some(child) = child else {
@@ -412,6 +449,7 @@ fn start_session(
         protocol_whitelist: protocol_whitelist.to_owned(),
         log_level,
         adapter,
+        graphics,
     });
     if let Err(e) = configured {
         conn.retire();
@@ -433,8 +471,40 @@ fn start_session(
             conn.alive_flag(),
         );
     }
+    // no sender authentication on Linux: the socketpair is anonymous and
+    // inherited only by the helper — possession is the authentication
+    #[cfg(target_os = "linux")]
+    spawn_surface_receiver(
+        surface_receiver,
+        Arc::clone(registry),
+        Arc::clone(lifecycle),
+        conn.alive_flag(),
+    );
 
     Ok((conn, child))
+}
+
+/// Owns the surface channel's receiving end on a dedicated thread:
+/// every transferred fd lands in the matching player mirror. Exits when
+/// its connection generation retires or the runtime shuts down.
+#[cfg(target_os = "linux")]
+fn spawn_surface_receiver(
+    mut receiver: uuav_ipc::fd_channel::Receiver,
+    registry: Arc<Registry>,
+    lifecycle: Arc<LifecycleCell>,
+    alive: Arc<std::sync::atomic::AtomicBool>,
+) {
+    _ = std::thread::Builder::new()
+        .name("uuav-surface".into())
+        .spawn(move || {
+            while alive.load(Ordering::Acquire) && lifecycle.get() != Lifecycle::ShutDown {
+                match receiver.recv(200) {
+                    Ok(Some((tag, fd))) => registry::apply_surface_fd(&registry, &tag, fd),
+                    Ok(None) => {}
+                    Err(_) => return,
+                }
+            }
+        });
 }
 
 /// Owns the mach receive right on a dedicated thread: every transferred
@@ -573,6 +643,7 @@ fn recover(client: &Arc<Client>) {
             &client.protocol_whitelist,
             client.log_level.load(Ordering::Acquire),
             client.adapter,
+            graphics_wire_of(&client.unity),
         );
         match session {
             Ok((conn, child)) => {
@@ -788,12 +859,14 @@ pub unsafe extern "C" fn uuav_init(
 
     let unity = match unsafe { platform::capture_probe(texture) } {
         Ok(unity) => Arc::new(unity),
-        Err(e) => return ResultFFI::error(format!("{e:#}")),
+        Err(e) => return ResultFFI::error(e.to_string()),
     };
     #[cfg(target_os = "macos")]
     let adapter = unity.registry_id;
     #[cfg(target_os = "windows")]
     let adapter = unity.adapter_luid;
+    #[cfg(target_os = "linux")]
+    let adapter = unity.adapter();
 
     let audio = match validate_audio(audio_options) {
         Ok(audio) => audio,
@@ -825,6 +898,7 @@ pub unsafe extern "C" fn uuav_init(
         &whitelist,
         log_level,
         adapter,
+        graphics_wire_of(&unity),
     ) {
         Ok(session) => session,
         Err(e) => return ResultFFI::error(e),
@@ -1498,7 +1572,7 @@ extern "C" fn uuav_render_event(event_id: i32) {
             Err(e) => {
                 client
                     .sinks
-                    .on_player_error(Some(player_id), &format!("present failed: {e:#}"));
+                    .on_player_error(Some(player_id), &format!("present failed: {e}"));
                 return;
             }
         }

@@ -14,6 +14,18 @@ linker = "C:\\msys64\\mingw64\\bin\\gcc.exe"
 # for the reproducibility gates (scripts/uuav/repro-gate.sh)
 rustflags = ["-C", "link-arg=-Wl,--no-insert-timestamp"]
 
+# $ORIGIN runpath: libuuav.so and uuav-helper resolve the FFmpeg/libva
+# sonames from their own folder, in-editor and in a built player alike
+# ($ORIGIN passes literally through cargo -> rustc -> cc: no shell ever
+# expands it here). --build-id=none: the GNU build id hashes the whole
+# image and would defeat the byte-reproducibility gates for no benefit
+# (panic symbolication goes through module+offset, not build ids).
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+    "-C", "link-arg=-Wl,-rpath,$ORIGIN",
+    "-C", "link-arg=-Wl,--build-id=none",
+]
+
 # @loader_path rpath: libuuav.dylib resolves the @rpath/... FFmpeg dylibs
 # from its own folder, in-editor and in a built player alike
 [target.aarch64-apple-darwin]
