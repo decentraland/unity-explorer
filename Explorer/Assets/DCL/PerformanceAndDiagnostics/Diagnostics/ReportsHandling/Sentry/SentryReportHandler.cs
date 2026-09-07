@@ -166,6 +166,15 @@ namespace DCL.Diagnostics.Sentry
 
         private void CaptureMessage(string message, ReportData reportData, LogType logType)
         {
+            // Native engine warnings that are triggered by malformed creator content, carry no
+            // actionable C# context, and flood Sentry as standalone issues. Keep them in Player.log
+            // (the DebugLog handler is untouched) but demote them here to a breadcrumb.
+            if (IsIgnoredNativeMessage(message))
+            {
+                SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Warning);
+                return;
+            }
+
             // Avoid reporting non-errors to sentry as separate issues (even if they are enabled in the matrix)
             // Report them as breadcrumbs instead
 
@@ -190,6 +199,24 @@ namespace DCL.Diagnostics.Sentry
 
                     break;
             }
+        }
+
+        // Prefixes of native (engine-emitted) log messages that reach us as UNSPECIFIED errors and are
+        // un-actionable on our side. "[Physics.PhysX]" covers mesh-cooking warnings ("cleaning the mesh
+        // failed", etc.) produced by degenerate/non-manifold geometry in creator-uploaded scene assets
+        // (tracker #7928). They are informational for us and must not create Sentry issues.
+        private static readonly string[] SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES =
+        {
+            "[Physics.PhysX]",
+        };
+
+        private static bool IsIgnoredNativeMessage(string message)
+        {
+            for (var i = 0; i < SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES.Length; i++)
+                if (message.StartsWith(SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES[i], StringComparison.Ordinal))
+                    return true;
+
+            return false;
         }
 
         private bool IsValidConfiguration(SentryUnityOptions options) =>
