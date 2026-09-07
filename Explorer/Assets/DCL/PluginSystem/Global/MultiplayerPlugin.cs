@@ -67,6 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRemoteAnnouncements remoteAnnouncements;
         private readonly IRemoveIntentions removeIntentions;
         private readonly MovementInbox movementInbox;
+        private readonly bool skipRemoteProfiles;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -92,7 +93,8 @@ namespace DCL.PluginSystem.Global
             IActivatableConnectiveRoom voiceChatRoom,
             IRemoteAnnouncements remoteAnnouncements,
             IRemoveIntentions removeIntentions,
-            MovementInbox movementInbox)
+            MovementInbox movementInbox,
+            bool skipRemoteProfiles)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -118,6 +120,7 @@ namespace DCL.PluginSystem.Global
             this.remoteAnnouncements = remoteAnnouncements;
             this.removeIntentions = removeIntentions;
             this.movementInbox = movementInbox;
+            this.skipRemoteProfiles = skipRemoteProfiles;
         }
 
         public void Dispose()
@@ -150,18 +153,22 @@ namespace DCL.PluginSystem.Global
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
-            MultiplayerProfilesSystem.InjectToWorld(ref builder,
-                remoteAnnouncements,
-                removeIntentions,
-                new RemoteProfiles(profileRepository, remoteMetadata),
-                profileBroadcast,
-                remoteEntities,
-                remoteMetadata,
-                characterObject,
-                realFlowLoadingStatus,
-                realmData,
-                movementInbox
-            );
+            // Controlled-scene bench mode: skip remote-avatar spawning entirely. This is
+            // transport-agnostic (covers LiveKit AND Pulse), unlike --no-livekit-mode which
+            // only nulls the LiveKit room hub while Pulse still feeds RemoteEntities.TryCreate.
+            if (!skipRemoteProfiles)
+                MultiplayerProfilesSystem.InjectToWorld(ref builder,
+                    remoteAnnouncements,
+                    removeIntentions,
+                    new RemoteProfiles(profileRepository, remoteMetadata),
+                    profileBroadcast,
+                    remoteEntities,
+                    remoteMetadata,
+                    characterObject,
+                    realFlowLoadingStatus,
+                    realmData,
+                    movementInbox
+                );
 
             ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
             PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);

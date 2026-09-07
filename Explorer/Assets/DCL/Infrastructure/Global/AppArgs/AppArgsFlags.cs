@@ -15,6 +15,26 @@ namespace Global.AppArgs
 
         public const string AUTOPILOT = "autopilot";
         public const string MEASURE_LOADING_TIME = "measure-loading-time";
+
+        /// <summary>
+        ///     Runs the deterministic plaza-recording benchmark and quits; the value is the output
+        ///     directory for frames.csv, results.json and the golden PNG captures.
+        /// </summary>
+        public const string PLAZA_BENCH = "plaza-bench";
+
+        /// <summary>
+        ///     Makes the plaza benchmark advance game time in fixed 1/60 s steps (Time.captureDeltaTime)
+        ///     so every run executes the identical frame sequence; real CPU/GPU frame times are unaffected.
+        /// </summary>
+        public const string PLAZA_BENCH_LOCKSTEP = "plaza-bench-lockstep";
+
+        /// <summary>
+        ///     Controlled-scene bench mode: hard-disables remote-avatar spawning (transport-agnostic,
+        ///     covers LiveKit and Pulse) and scene media, so a plaza-bench run measures only the local
+        ///     frozen scene. Pair with --realm to pin a deterministic bench world.
+        /// </summary>
+        public const string PLAZA_BENCH_CONTROLLED = "plaza-bench-controlled";
+        public const string PLAZA_BENCH_ANCHOR = "plaza-bench-anchor";
         public const string AUTOPILOT_CSV = "csv";
         public const string AUTOPILOT_SUMMARY = "summary";
         public const string PROFILER_LOG_FILE = "raw";
@@ -145,8 +165,6 @@ namespace Global.AppArgs
         public const string FORCE_CHECK_DISK_SPACE = "force-check-disk-space";
 
         public const string DOUBLE_JUMP = "double-jump";
-
-        public const string USE_CUSTOM_MEDIA_PLAYER = "use-custom-media-player";
 
         public const string GLIDING = "gliding";
         public const string POINT_AT = "point-at";

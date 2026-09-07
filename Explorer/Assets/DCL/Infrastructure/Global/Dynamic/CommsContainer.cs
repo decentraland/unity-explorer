@@ -235,7 +235,8 @@ namespace Global.Dynamic
             StaticContainer staticContainer,
             IAssetsProvisioner assetsProvisioner,
             IDebugContainerBuilder debugBuilder,
-            MultiplayerContainer multiplayerContainer) =>
+            MultiplayerContainer multiplayerContainer,
+            bool skipRemoteProfiles) =>
             new (
                 assetsProvisioner,
                 archipelagoIslandRoom,
@@ -261,7 +262,8 @@ namespace Global.Dynamic
                 // TODO: properly branch profile announcements depending on server setup
                 multiplayerContainer.RemoteAnnouncements,
                 multiplayerContainer.RemoveIntentions,
-                MovementInbox
+                MovementInbox,
+                skipRemoteProfiles
             );
 
         public ConnectionStatusPanelPlugin CreateConnectionStatusPanelPlugin(IAssetsProvisioner assetsProvisioner, IAppArgs appArgs) =>
