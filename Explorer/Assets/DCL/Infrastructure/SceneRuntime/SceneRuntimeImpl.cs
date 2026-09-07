@@ -64,8 +64,25 @@ namespace SceneRuntime
         private readonly bool determClock = Environment.GetEnvironmentVariable("DCL_GOLDEN_SCENE_CLOCK") == "1";
         private ScriptObject? setSimTime;
 
+        // Number of quantized-clock runtimes on their post-hold runway that have not yet reached
+        // the ceiling, published through an AppDomain slot so the capture harness can report it
+        // without an assembly reference. A runtime counts from its first resumed tick until the
+        // tick that reaches the ceiling (or its disposal, if it never does); a runtime that never
+        // resumes (0 FPS bucket) holds a fixed tick count and is not counted.
+        private static readonly object BELOW_CEILING_LOCK = new ();
+        private static int clocksBelowCeiling;
+        private bool countedBelowCeiling;
+
         private static bool HoldElapsed() =>
             (DateTime.UtcNow - ProcessEpoch.StartUtc).TotalSeconds >= HOLD_UNTIL_SECONDS;
+
+        // The capture harness raises the scene hold one lockstep frame ahead of the visual freeze
+        // and lowers it again when that frame does not freeze, so dispatch resumes until the next
+        // approach; once the freeze lands the frozen slot stops dispatch for good.
+        private static bool SceneHeld() =>
+            (AppDomain.CurrentDomain.GetData("golden.sceneHold") as bool?) == true
+            || (AppDomain.CurrentDomain.GetData("golden.frozen") as bool?) == true;
+
         private double sceneClockMs;
 
         public bool LastUpdateDispatched { get; private set; } = true;
@@ -128,8 +145,36 @@ namespace SceneRuntime
         /// </remarks>
         public void Dispose()
         {
+            LeaveBelowCeiling();
             engine.Dispose();
             jsApiBunch.Dispose();
+        }
+
+        private void EnterBelowCeiling()
+        {
+            if (countedBelowCeiling) return;
+
+            countedBelowCeiling = true;
+            PublishClocksBelowCeiling(+1);
+        }
+
+        private void LeaveBelowCeiling()
+        {
+            if (!countedBelowCeiling) return;
+
+            countedBelowCeiling = false;
+            PublishClocksBelowCeiling(-1);
+        }
+
+        // Runtimes tick and are disposed off the main thread; the count changes and publishes under
+        // one lock so the slot never keeps a value that a concurrent change has superseded.
+        private static void PublishClocksBelowCeiling(int delta)
+        {
+            lock (BELOW_CEILING_LOCK)
+            {
+                clocksBelowCeiling += delta;
+                AppDomain.CurrentDomain.SetData("golden.sceneClocksBelowCeiling", clocksBelowCeiling);
+            }
         }
 
         public void ExecuteSceneJson()
@@ -218,6 +263,12 @@ namespace SceneRuntime
                 if (sceneClockMs >= BOOTSTRAP_HOLD_MS && sceneClockMs < FROZEN_SCENE_CLOCK_MS && !HoldElapsed())
                     return UniTask.CompletedTask;
 
+                // Once the scene hold is raised, every scene holds its state whether or not its
+                // clock reached the ceiling: a tick dispatched after the freeze re-issues CRDT
+                // output (tween restarts, material writes) on top of the normalized frame.
+                if (SceneHeld())
+                    return UniTask.CompletedTask;
+
                 dt = NextDeterministicDelta();
 
                 // Past the ceiling the clock no longer advances, but the CALL COUNT still
@@ -247,8 +298,16 @@ namespace SceneRuntime
                 return 0f;
             }
 
+            // Reached only outside the phase hold, so a clock past its bootstrap is on its runway.
+            if (sceneClockMs >= BOOTSTRAP_HOLD_MS)
+                EnterBelowCeiling();
+
             sceneClockMs += FIXED_TICK_DELTA * 1000.0;
             setSimTime?.InvokeAsFunction(sceneClockMs);
+
+            if (sceneClockMs >= FROZEN_SCENE_CLOCK_MS)
+                LeaveBelowCeiling();
+
             return FIXED_TICK_DELTA;
         }
 
