@@ -1,0 +1,9 @@
+LiveKit SDK for Unity (com.decentraland.livekit-sdk)
+
+This package is derived from the LiveKit client SDK for Unity
+(https://github.com/livekit/client-sdk-unity).
+Copyright (c) LiveKit and contributors.
+Licensed under the Apache License, Version 2.0 (see the LICENSE file
+in this directory).
+
+Linux FFI support added by Decentraland contributors.

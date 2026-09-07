@@ -1,0 +1,19 @@
+{
+    "name": "RustAudio",
+    "rootNamespace": "",
+    "references": [
+        "RichTypes",
+        "RustAudio.Def"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "WebGL"
+    ],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
