@@ -76,6 +76,31 @@ jobs:
             exit 1
           fi
 
+  gpui-shadow-bindings:
+    name: no committed GPUI shader-bindings shadow
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Fail if a GPUI shader-bindings shadow copy is tracked
+        run: |
+          set -euo pipefail
+          # Any file tracked under GPUI's default Resources/ path wins Resources.Load("GPUIShaderBindings")
+          # and shadows the Addressables-bound registry, silently rendering terrain rocks/trees magenta (#9873).
+          # GPUI auto-creates an empty copy here during editor sessions; it must never be committed.
+          shadow=$(git ls-files -- 'Explorer/Assets/GPUInstancerPro/Resources/')
+          if [[ -n "$shadow" ]]; then
+            echo "Committed GPUI shader-bindings shadow file(s) found - delete them (see #9873):"
+            echo "$shadow"
+            exit 1
+          fi
+
   changes:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build') || (github.event.label.name == 'force-lint')
     name: Detect C# changes
