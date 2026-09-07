@@ -189,6 +189,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return true;
         }
 
+        private static readonly bool GOLDEN_RAW_WEARABLES =
+            System.Environment.GetEnvironmentVariable("DCL_GOLDEN_RAW_WEARABLES") == "1";
+
         private static void CreatePromise<T>(
             Type expectedObjectType,
             GetWearablesByPointersIntention intention,
@@ -199,7 +202,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             IPartitionComponent partitionComponent,
             World world) where T: IAvatarAttachment
         {
-            if (!string.IsNullOrEmpty(wearable.DTO.ContentDownloadUrl))
+            // Golden captures: embedded wearable bundles are baked per build target, so the
+            // same wearable can carry different content on each platform. Raw GLBs come from
+            // one content server for both; force them for any wearable whose main file is a
+            // GLB (the raw GLB promise resolves through content mappings, no download URL
+            // needed - facial-feature PNGs still require one and keep their normal path).
+            bool forceRawGlb = false;
+
+            if (GOLDEN_RAW_WEARABLES && string.IsNullOrEmpty(wearable.DTO.ContentDownloadUrl))
+                foreach (ContentDefinition content in wearable.DTO.content)
+                    if (content.hash == hash && content.file.EndsWith(".glb"))
+                    {
+                        forceRawGlb = true;
+                        break;
+                    }
+
+            if (!string.IsNullOrEmpty(wearable.DTO.ContentDownloadUrl) || forceRawGlb)
             {
                 foreach (ContentDefinition content in wearable.DTO.content)
                 {

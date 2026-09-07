@@ -174,7 +174,12 @@ namespace Global.Dynamic
                     EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
-                    EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
+                    // Golden-capture determinism: distant-scene LODs cannot render equally on both
+                    // desktop platforms — their bundles require the DCL/Scene_TexArray path, which the
+                    // golden feature flags disable for raw-GLTF parity — so captures pin them off on
+                    // every platform and the horizon holds only sky and landscape.
+                    EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play
+                                && Environment.GetEnvironmentVariable("DCL_GOLDEN_NO_SCENELOD") != "1",
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,

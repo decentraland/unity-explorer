@@ -23,6 +23,8 @@ namespace SceneRunner
         private const int UPDATE_HANG_INTERRUPT_THRESHOLD_MS = 10000;
         private const int START_HANG_INTERRUPT_THRESHOLD_MS = 30000;
 
+        private static readonly bool GOLDEN_DETERM_CLOCK = Environment.GetEnvironmentVariable("DCL_PLAZABENCH_DETERM_CLOCK") == "1";
+
         // Cap dt passed to JS so a slow tick (e.g. host-parking on first iteration) can't feed an
         // absurd value into scene code that does dt-based stepping/integration, which would otherwise
         // spin synchronously inside V8 for hundreds of iterations and trip the hang watchdog.
@@ -239,7 +241,19 @@ namespace SceneRunner
                         sceneCodeIsRunning.Reset();
                     }
 
-                    SceneStateProvider.TickNumber++;
+                    // Ticks the scene never observed (golden phase hold, frozen clock ceiling)
+                    // don't count: quantized loading-state buckets key on this number, so it must
+                    // mean the same scene-visible instant on every machine.
+                    if (runtimeInstance.LastUpdateDispatched)
+                    {
+                        SceneStateProvider.TickNumber++;
+
+                        // The golden tween pump follows the current scene's deterministic clock;
+                        // published through an AppDomain slot so the capture harness needs no
+                        // assembly reference into the scene runner.
+                        if (GOLDEN_DETERM_CLOCK && SceneStateProvider.IsCurrent)
+                            AppDomain.CurrentDomain.SetData("golden.currentSceneTicks", (AppDomain.CurrentDomain.GetData("golden.currentSceneTicks") is long gt ? gt : 0L) + 1);
+                    }
 
                     MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
 

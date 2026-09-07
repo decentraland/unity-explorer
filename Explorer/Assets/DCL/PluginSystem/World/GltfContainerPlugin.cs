@@ -133,7 +133,7 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, buffer, sharedDependencies.EcsToCRDTWriter);
-            WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);
+            WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer, sharedDependencies.SceneStateProvider);
             GltfContainerVisibilitySystem.InjectToWorld(ref builder, buffer);
             finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.ScenePartition, sharedDependencies.SceneData.ISSDescriptor));
 

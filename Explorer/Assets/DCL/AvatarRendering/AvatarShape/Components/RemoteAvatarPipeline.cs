@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     ///     slots in-place; Release does NOT touch the TAA (released avatars are pooled, so their
     ///     transforms stay valid and the calculation job skips the slot) — see Release for details.
     /// </summary>
-    internal class RemoteAvatarPipeline : IDisposable
+    public class RemoteAvatarPipeline : IDisposable
     {
         private readonly int bonesArrayLength;
         private readonly Transform dummyTransform;
@@ -223,6 +223,24 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Job.LocalBounds = localBounds.InnerNativeArray();
             Job.WorldBounds = worldBounds.InnerNativeArray();
             handle = Job.Schedule(avatarIndex, batchCount, combinedGatherHandle);
+        }
+
+        // Golden-capture diagnostic: describe exactly which transform objects a slot
+        // references and recompute bone 0's matrix main-thread from those objects, so a
+        // divergent job output can be attributed to stale references vs stale gathers.
+        public void GoldenDescribeSlot(int validIndex, System.Text.StringBuilder sb)
+        {
+            int offset = validIndex * bonesArrayLength;
+            Transform root = flatRoots[validIndex];
+            Transform b0 = flatBones[offset];
+            if (root == null || b0 == null) { sb.Append(" slot=null"); return; }
+            UnityEngine.Vector3 rp = root.position;
+            UnityEngine.Vector3 bp = b0.position;
+            var recomputed = math.mul(math.inverse((float4x4)root.localToWorldMatrix), (float4x4)b0.localToWorldMatrix);
+            sb.Append($" root={root.name}@{rp.x:R},{rp.y:R},{rp.z:R} b0={b0.name}@{bp.x:R},{bp.y:R},{bp.z:R} rc=");
+            for (var c = 0; c < 4; c++)
+            for (var r = 0; r < 4; r++)
+                sb.Append($"{recomputed[c][r]:R},");
         }
 
         public void Complete()
