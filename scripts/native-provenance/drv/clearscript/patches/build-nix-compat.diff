@@ -1,0 +1,45 @@
+--- build-pristine/config/compiler/BUILD.gn	2026-09-06 23:08:51.200204944 +0200
++++ /tmp/cs-work/v8/build/config/compiler/BUILD.gn	2026-09-06 22:03:16.772152770 +0200
+@@ -613,11 +613,9 @@
+       ]
+     }
+ 
+-    # The performance improvement does not seem worth the risk. See
+-    # https://crbug.com/484082200 for background and https://crrev.com/c/7593035
+-    # for discussion.
++    # nix-toolchain-compat: -fno-lifetime-dse is clang 23+; removed for clang 22.
+     if (!is_wasm) {
+-      cflags += [ "-fno-lifetime-dse" ]
++      cflags += []
+     }
+ 
+     # TODO(hans): Remove this once Clang generates better optimized debug info
+@@ -1062,6 +1060,14 @@
+     if (fatal_linker_warnings && is_apple) {
+       ldflags += [ "-Wl,-fatal_warnings" ]
+     }
++
++    # nix-toolchain-compat: bake nix store rpaths into host executables
++    # (torque, mksnapshot, ...) so they can locate libstdc++/glibc at build
++    # time; raw ld.lld bypasses the nix cc-wrapper's rpath handling.
++    nix_rpath_flags = getenv("NIX_V8_HOST_RPATH_FLAGS")
++    if (nix_rpath_flags != "") {
++      ldflags += string_split(nix_rpath_flags, " ")
++    }
+   }
+ 
+   if ((is_posix && !is_apple) || is_fuchsia) {
+@@ -1881,11 +1887,8 @@
+       "-fsanitize=array-bounds",
+       "-fsanitize-trap=array-bounds",
+ 
+-      # Some code users feature detection to determine if UBSAN (or any
+-      # sanitizer) is enabled, they then do expensive debug like operations. We
+-      # want to suppress this behaviour since we want to keep performance costs
+-      # as low as possible while having these checks.
+-      "-fsanitize-ignore-for-ubsan-feature=array-bounds",
++      # nix-toolchain-compat: -fsanitize-ignore-for-ubsan-feature is clang 23+;
++      # removed for clang 22.
+ 
+       # Because we've enabled array-bounds sanitizing we also want to suppress
+       # the related warning about "unsafe-buffer-usage-in-static-sized-array",

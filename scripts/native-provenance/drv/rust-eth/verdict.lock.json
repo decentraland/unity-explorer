@@ -1,0 +1,20 @@
+[
+  {
+    "name": "rust-eth",
+    "derivation": "drv/rust-eth/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/librust_eth.so",
+      "sha256": "23f7fab8b1a187ef3d5a7808f946aa396056e2f3092bcfa324538927b037eab3"
+    },
+    "built": {
+      "path": "/nix/store/0qw1z2ypxaawq9vqhxqm4kli51v1hi44-rust_eth-0.2.3/lib/librust_eth.so",
+      "sha256": "0c7b921b7e041aa465571442e135cc6d48976f0697f25d2ecde159576a45a042"
+    },
+    "checked_at": "2026-09-06T19:29:20.239907+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  }
+]

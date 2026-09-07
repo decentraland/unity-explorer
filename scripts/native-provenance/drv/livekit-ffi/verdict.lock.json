@@ -1,0 +1,20 @@
+[
+  {
+    "name": "livekit-ffi",
+    "derivation": "drv/livekit-ffi/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/liblivekit_ffi.so",
+      "sha256": "393c7e46a9704555cd59a00eb0c3d7508286605cbae498b0fec77ed784a86ee7"
+    },
+    "built": {
+      "path": "/nix/store/xsmzsy2jlcgzgfgsaj2cxnxjg172iln7-livekit-ffi-0.12.48/lib/liblivekit_ffi.so",
+      "sha256": "75e5092106f46ada26d344507d4ac80c3b93bc4ffad6046735b6cf2842c93033"
+    },
+    "checked_at": "2026-09-06T19:38:32.248985+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  }
+]

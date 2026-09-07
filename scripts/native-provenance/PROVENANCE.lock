@@ -1,0 +1,543 @@
+[
+  {
+    "name": "audio-analysis",
+    "derivation": "drv/audio-analysis/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/audio-analysis.so",
+      "sha256": "6b2fc43f493dc759267ce0b22c00a1c068fdb4c0a657902a997118c5c5860aa5"
+    },
+    "built": {
+      "path": "drv/audio-analysis/result/lib/audio-analysis.so",
+      "sha256": "8a4561ed534178a3bbb3aba390db5c5681edbb67ce2c8369a8cb85618b1daf0a"
+    },
+    "checked_at": "2026-09-06T19:28:40.832879+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "c-shims-dclprocesses",
+    "derivation": "drv/c-shims/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libDCLProcesses.so",
+      "sha256": "c6552d906d69342235da8fe6d33166d391092b23907100bdf595bb7b59963cfe"
+    },
+    "built": {
+      "path": "/nix/store/5r70aq1hlikz4q7rvg1hcahqlnqbwldj-dcl-c-shims-8c09a8708c/lib/libDCLProcesses.so",
+      "sha256": "c6552d906d69342235da8fe6d33166d391092b23907100bdf595bb7b59963cfe"
+    },
+    "checked_at": "2026-09-06T17:57:38.071154+00:00",
+    "verdict": "reproduced"
+  },
+  {
+    "name": "c-shims-windowresize",
+    "derivation": "drv/c-shims/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libWindowResizeConstraint.so",
+      "sha256": "f120b374c237f21335c41ebb28933b508b9ce68ce9e11efd30d73c8972c8cb10"
+    },
+    "built": {
+      "path": "/nix/store/5r70aq1hlikz4q7rvg1hcahqlnqbwldj-dcl-c-shims-8c09a8708c/lib/libWindowResizeConstraint.so",
+      "sha256": "f120b374c237f21335c41ebb28933b508b9ce68ce9e11efd30d73c8972c8cb10"
+    },
+    "checked_at": "2026-09-06T17:57:38.367389+00:00",
+    "verdict": "reproduced"
+  },
+  {
+    "name": "clearscript",
+    "derivation": "drv/clearscript/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/ClearScriptV8.linux-x64.so",
+      "sha256": "2fe119eaa68fa6cab84124807d1063df2c4ea4567b21e0444af106e9b65b5486"
+    },
+    "built": {
+      "path": "/nix/store/vbdpisr0mqnf1szyll3n3mj0nmq7sb2k-clearscript-v8-native-linux-x64-7.5.1/lib/ClearScriptV8.linux-x64.so",
+      "sha256": "2fe119eaa68fa6cab84124807d1063df2c4ea4567b21e0444af106e9b65b5486"
+    },
+    "checked_at": "2026-09-06T19:48:46.049720+00:00",
+    "verdict": "reproduced"
+  },
+  {
+    "name": "clearscript-source",
+    "derivation": "drv/clearscript/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/ClearScriptV8.linux-x64.so",
+      "sha256": "2fe119eaa68fa6cab84124807d1063df2c4ea4567b21e0444af106e9b65b5486"
+    },
+    "built": {
+      "path": "/nix/store/ai2gnxzrhdwjmqmri5nzgnnac3v1dbxr-clearscript-v8-source-7.5.1+v8-14.7.173.23/lib/ClearScriptV8.linux-x64.so",
+      "sha256": "18ecc03bf48f9f244575f2a33699ff0166872b0f5e7f1701fc8241b4fbbe7b21"
+    },
+    "checked_at": "2026-09-06T22:02:57.308768+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": false,
+      "dynsym_only_shipped": [
+        "B _ZN2v88internal15ThreadIsolation13trusted_data_E",
+        "T _ZNKSt3_V214error_category10_M_messageEi",
+        "T _ZStrsIcSt11char_traitsIcEERSt13basic_istreamIT_T0_ES6_PS3_",
+        "V _ZNSt6ranges5views4iotaE",
+        "V _ZNSt8__detail9__variant12__gen_vtableINS0_20__variant_idx_cookieEOZSteqIJSt9monostateN2v88internal20CompareOperationHintENS6_19BinaryOperationHintEEEbRKSt7variantIJDpT_EESE_EUlOT_T0_E_JRKS9_IJS4_S7_S8_EEEE9_S_vtableE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceI22V8ArrayBufferAllocatorSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceI22V8ForegroundTaskRunnerSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector10StackFrameESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector17V8DebuggerBarrierESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector23V8HeapProfilerAgentImpl14AsyncCallbacksESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v813WasmStreamingESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v821WasmModuleCompilation4Impl8ResolverESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v84base11OwnedVectorIKhEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v86GlobalINS0_5ValueEEESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal17OperationsBarrierESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal18WasmJSFunctionData11OffheapDataESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal21WasmDispatchTableDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal24IcuBreakIteratorWithTextESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal4wasm10WasmModuleESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal4wasm17WasmWrapperHandleESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE"
+      ],
+      "dynsym_only_built": [
+        "D _ZN2v88internal15ThreadIsolation13trusted_data_E",
+        "T _ZNKSt12__basic_fileIcE13native_handleEv",
+        "T _ZNSt16__time_get_state17_M_finalize_stateEP2tm",
+        "T _ZSt17__istream_extractRSiPcl",
+        "T _ZSt21__glibcxx_assert_failPKciS0_S0_",
+        "T _ZSt21ios_base_library_initv",
+        "T _ZSt28__throw_bad_array_new_lengthv",
+        "T __atomic_compare_exchange",
+        "T libat_lock_n",
+        "T libat_unlock_n",
+        "V _ZTCSt17basic_osyncstreamIcSt11char_traitsIcESaIcEE0_So",
+        "V _ZTVSt13basic_syncbufIcSt11char_traitsIcESaIcEE",
+        "V _ZTVSt17basic_osyncstreamIcSt11char_traitsIcESaIcEE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceI22V8ArrayBufferAllocatorSaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceI22V8ForegroundTaskRunnerSaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector10StackFrameESaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector17V8DebuggerBarrierESaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector23V8HeapProfilerAgentImpl14AsyncCallbacksESaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v813WasmStreamingESaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v821WasmModuleCompilation4Impl8ResolverESaIvELN9__gnu_cxx12_Lock_policyE2EE"
+      ]
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "draco-dec",
+    "derivation": "drv/draco/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/AnyCPU/libdracodec_unity.so",
+      "sha256": "4f137c51e9ccf0d9db6ca25d8b0070ccae6e5169f7a93468326c67ada3efbfeb"
+    },
+    "built": {
+      "path": "/nix/store/2njsxjwpwv0sv4pd24gac01ivci51344-draco-unity-unity-2021-09-11-427fc7e6/lib/libdracodec_unity.so",
+      "sha256": "1016467870d11e66476e3eef2c9d6424200e51ab4736696338eced81f005b83e"
+    },
+    "checked_at": "2026-09-06T19:34:42.536450+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": false,
+      "dynsym_only_shipped": [
+        "B __bss_start",
+        "B _end",
+        "D _edata",
+        "T _fini",
+        "T _init",
+        "W _ZN5draco11RAnsDecoderILi12EEC1Ev",
+        "W _ZN5draco11RAnsDecoderILi12EEC2Ev",
+        "W _ZN5draco11RAnsDecoderILi20EEC1Ev",
+        "W _ZN5draco11RAnsDecoderILi20EEC2Ev",
+        "W _ZN5draco12CrossProductIlEENS_7VectorDIT_Li3EEERKS3_S5_",
+        "W _ZN5draco13DecoderBuffer28DecodeLeastSignificantBits32EiPj",
+        "W _ZN5draco13DecoderBuffer4PeekIiEEbPT_",
+        "W _ZN5draco17RAnsSymbolDecoderILi10EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco17RAnsSymbolDecoderILi11EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco17RAnsSymbolDecoderILi12EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco17RAnsSymbolDecoderILi13EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco17RAnsSymbolDecoderILi9EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco19DepthFirstTraverserINS_11CornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEaSERKS4_",
+        "W _ZN5draco19DepthFirstTraverserINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC1Ev",
+        "W _ZN5draco19DepthFirstTraverserINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC2Ev"
+      ],
+      "dynsym_only_built": [
+        "W _ZN5draco13TraverserBaseINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC1Ev",
+        "W _ZN5draco13TraverserBaseINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC2Ev",
+        "W _ZN5draco14PointAttribute18SetExplicitMappingEm",
+        "W _ZN5draco22AttributeTransformData20AppendParameterValueIfEEvRKT_",
+        "W _ZN5draco26MeshEdgebreakerDecoderImplINS_31MeshEdgebreakerTraversalDecoderEE13AttributeDataD1Ev",
+        "W _ZN5draco26MeshEdgebreakerDecoderImplINS_31MeshEdgebreakerTraversalDecoderEE13AttributeDataD2Ev",
+        "W _ZN5draco26MeshEdgebreakerDecoderImplINS_38MeshEdgebreakerTraversalValenceDecoderEE13AttributeDataD1Ev",
+        "W _ZN5draco26MeshEdgebreakerDecoderImplINS_38MeshEdgebreakerTraversalValenceDecoderEE13AttributeDataD2Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_11CornerTableEEEED0Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_11CornerTableEEEED1Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_11CornerTableEEEED2Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_24MeshAttributeCornerTableEEEED0Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_24MeshAttributeCornerTableEEEED1Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_24MeshAttributeCornerTableEEEED2Ev",
+        "W _ZN5draco7VectorDIiLi2EEC1ERKS1_",
+        "W _ZN5draco7VectorDIiLi2EEC2ERKS1_",
+        "W _ZN5draco7VectorDIiLi3EEC1Ev",
+        "W _ZN5draco7VectorDIiLi3EEC2Ev",
+        "W _ZNK5draco10DataBuffer4ReadElPvm",
+        "W _ZNK5draco10EntryValue8GetValueIdEEbPSt6vectorIT_SaIS3_EE"
+      ]
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "draco-enc",
+    "derivation": "drv/draco/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libdracoenc_unity.so",
+      "sha256": "d9670d1ede0bf31bab8928f3c825b0c3ce4ed1b4bcba8fdcedc7dee39a14d64a"
+    },
+    "built": {
+      "path": "/nix/store/2njsxjwpwv0sv4pd24gac01ivci51344-draco-unity-unity-2021-09-11-427fc7e6/lib/libdracoenc_unity.so",
+      "sha256": "8c72a67413400d21739bf79f8297b8843a1a49e4b1f8840fd33619b565d3c933"
+    },
+    "checked_at": "2026-09-06T19:34:42.448300+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": false,
+      "dynsym_only_shipped": [
+        "B __bss_start",
+        "B _end",
+        "D _edata",
+        "T _fini",
+        "T _init",
+        "W _ZN5draco12CrossProductIlEENS_7VectorDIT_Li3EEERKS3_S5_",
+        "W _ZN5draco13EncoderBuffer28EncodeLeastSignificantBits32Eij",
+        "W _ZN5draco13EncoderBuffer6EncodeEPKvm",
+        "W _ZN5draco13EncoderBuffer6EncodeIaEEbRKT_",
+        "W _ZN5draco13EncoderBuffer6EncodeIiEEbRKT_",
+        "W _ZN5draco13EncoderBuffer6EncodeIjEEbRKT_",
+        "W _ZN5draco13EncoderBuffer6EncodeItEEbRKT_",
+        "W _ZN5draco17OctahedronToolBox19SetQuantizationBitsEi",
+        "W _ZN5draco17PointCloudEncoder20AddAttributesEncoderESt10unique_ptrINS_17AttributesEncoderESt14default_deleteIS2_EE",
+        "W _ZN5draco17RAnsSymbolEncoderILi10EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi11EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi12EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi13EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi14EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi15EE6CreateEPKmiPNS_13EncoderBufferE"
+      ],
+      "dynsym_only_built": [
+        "W _ZN5draco10DataBuffer5WriteElPKvm",
+        "W _ZN5draco11EncoderBaseINS_18EncoderOptionsBaseINS_17GeometryAttribute4TypeEEEE5ResetEv",
+        "W _ZN5draco11EncoderBaseINS_18EncoderOptionsBaseIiEEE5ResetEv",
+        "W _ZN5draco12DracoOptionsINS_17GeometryAttribute4TypeEED1Ev",
+        "W _ZN5draco12DracoOptionsINS_17GeometryAttribute4TypeEED2Ev",
+        "W _ZN5draco13TraverserBaseINS_11CornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC1Ev",
+        "W _ZN5draco13TraverserBaseINS_11CornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC2Ev",
+        "W _ZN5draco13TraverserBaseINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC1Ev",
+        "W _ZN5draco13TraverserBaseINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC2Ev",
+        "W _ZN5draco14PointAttribute18SetExplicitMappingEm",
+        "W _ZN5draco22AttributeTransformData20AppendParameterValueIfEEvRKT_",
+        "W _ZN5draco7VectorDIiLi2EEC1ERKS1_",
+        "W _ZN5draco7VectorDIiLi2EEC2ERKS1_",
+        "W _ZN5draco7VectorDIiLi3EEC1Ev",
+        "W _ZN5draco7VectorDIiLi3EEC2Ev",
+        "W _ZNK5draco10DataBuffer4ReadElPvm",
+        "W _ZNKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES5_St4lessIS5_ESaISt4pairIKS5_S5_EEE5countERS9_",
+        "W _ZNSt10_HashtableIiSt4pairIKiiESaIS2_ENSt8__detail10_Select1stESt8equal_toIiESt4hashIiENS4_18_Mod_range_hashingENS4_20_Default_ranged_hashENS4_20_Prime_rehash_policyENS4_17_Hashtable_traitsILb0ELb0ELb1EEEE21_M_insert_unique_nodeEmmPNS4_10_Hash_nodeIS2_Lb0EEEm",
+        "W _ZNSt10unique_ptrIN5draco13EncoderBuffer10BitEncoderESt14default_deleteIS2_EED1Ev",
+        "W _ZNSt10unique_ptrIN5draco13EncoderBuffer10BitEncoderESt14default_deleteIS2_EED2Ev"
+      ]
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "enet",
+    "derivation": "drv/enet/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libenet.so",
+      "sha256": "8269fcb7ec49d2da4d31fa93baa6833a5ac16de604229a2197a80bfb49f6c537"
+    },
+    "built": {
+      "path": "/nix/store/v08269ridi8nvj11wxb4gj22vh4vrx1r-libenet-csharp-2.4.9pre6-14c4dc5/lib/libenet.so",
+      "sha256": "8269fcb7ec49d2da4d31fa93baa6833a5ac16de604229a2197a80bfb49f6c537"
+    },
+    "checked_at": "2026-09-06T18:52:56.366592+00:00",
+    "verdict": "reproduced"
+  },
+  {
+    "name": "ffmpeg-libavcodec",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavcodec.so.62",
+      "sha256": "148dc8c4c4c390e896e7ca6f98245e2123b5c4d5861fe3a9b93ea377ddbaadee"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavcodec.so.62",
+      "sha256": "830f40e7623bd1ab106d934b42ed5d531ee7a2272e3e4333bc20d0133c02517a"
+    },
+    "checked_at": "2026-09-06T22:04:01.384534+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libavdevice",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavdevice.so.62",
+      "sha256": "3b7ff4a7e1d03cd30c03d2b0236a69c6505ee1cb596382982707836cad6940e7"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavdevice.so.62",
+      "sha256": "729ebccd7e2d5300af05600404b8bca73df0bdf5f37899688938c5c7391b2b0b"
+    },
+    "checked_at": "2026-09-06T22:04:01.491277+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libavfilter",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavfilter.so.11",
+      "sha256": "1f977e85249220015fa3bdbdd0ec5f12e6748187fff1088c20832f77965c06e2"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavfilter.so.11",
+      "sha256": "a743f1db5f21a5fc8c97502adcb1f1edee17da8a725de69a9a4cd114a7a16402"
+    },
+    "checked_at": "2026-09-06T22:04:01.573558+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libavformat",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavformat.so.62",
+      "sha256": "1b8f52c4903a8ded71965e5882b6448c9a022117f96e9b809b09d427653a567c"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavformat.so.62",
+      "sha256": "3c40b0930df0b92fc419285ecddc1dfdf5481f0ed119b6e8f396991e7e836eea"
+    },
+    "checked_at": "2026-09-06T22:04:01.692605+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libavutil",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libavutil.so.60",
+      "sha256": "b63c45f14b3416a9a8c6d067714322bc3b50aa0ddc075ec82622916a1448d4f0"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libavutil.so.60",
+      "sha256": "3bc14cd5e21a18083d5efcfa594bb401a4760222ab647a0475d8c2ac65eae2e8"
+    },
+    "checked_at": "2026-09-06T22:04:01.798140+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libswresample",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libswresample.so.6",
+      "sha256": "6099e513fb35ab9daca93021e947b911a099c6ca41fc84aa37bea9fc31afb49b"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libswresample.so.6",
+      "sha256": "136cc8e743ac521aad790d463c5263ec4f25536ffeee88cead9b0f5c9ce5e04b"
+    },
+    "checked_at": "2026-09-06T22:04:01.879487+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ffmpeg-libswscale",
+    "derivation": "drv/ffmpeg/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libswscale.so.9",
+      "sha256": "dab12cff4369a9f4f804251573094c1ba8fe62ba3b9f0b72ee7953987971946d"
+    },
+    "built": {
+      "path": "/nix/store/hw4lxas7cn17lhqyv1b0m9s5q87lpryl-ffmpeg-dcl-linux-n8.1/lib/libswscale.so.9",
+      "sha256": "5a9eaeef9fbfa60287590e0f6436b46b6efe0398a0bc397b487c5a656be4dbed"
+    },
+    "checked_at": "2026-09-06T22:04:01.949011+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "ktx",
+    "derivation": "drv/ktx/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libktx_unity.so",
+      "sha256": "36962d135310df18d7f4dfceb2aa0754f78cc1368b2cd57dc7e3cb4e063cc312"
+    },
+    "built": {
+      "path": "/nix/store/wy89ca9mms98za43fmpx4j4nxlrn4cl7-libktx_unity-1.1.0+ktx-4.4.0/lib/libktx_unity.so",
+      "sha256": "7e89517103d49df4dd7ea8773393165d847de3caebb3ee30077f0faa2e579db8"
+    },
+    "checked_at": "2026-09-06T19:45:40.154026+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": false,
+      "dynsym_only_shipped": [
+        "B __bss_start",
+        "B _end",
+        "D _edata",
+        "T _fini",
+        "T _init",
+        "W _ZN6basist11dxt5a_block12set_selectorEjjj",
+        "W _ZN6basist15bitwise_decoder14decode_huffmanERKNS_22huffman_decoding_tableEi",
+        "W _ZN6basist17decoder_etc_block11pack_color5ERKNS_7color32Ebj",
+        "W _ZN6basist17decoder_etc_block16get_block_color5ERKNS_7color32EjjRjS4_S4_",
+        "W _ZN6basist17decoder_etc_block17get_block_colors5EPNS_7color32ERKS1_j",
+        "W _ZN6basist17decoder_etc_block19get_block_colors5_gEPiRKNS_7color32Ej",
+        "W _ZN6basist17decoder_etc_block24get_block_colors5_boundsEPNS_7color32ERKS1_jjj",
+        "W _ZN6basist7color3211set_clampedEiiii",
+        "W _ZN6basist8selector10init_flagsEv",
+        "W _ZN6basist8selector12set_selectorEjjj",
+        "W _ZSt13__adjust_heapIPjljN9__gnu_cxx5__ops15_Iter_less_iterEEvT_T0_S5_T1_T2_"
+      ],
+      "dynsym_only_built": []
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "livekit-ffi",
+    "derivation": "drv/livekit-ffi/default.nix",
+    "shipped": {
+      "path": "Explorer/Assets/Plugins/LiveKit/liblivekit_ffi.so",
+      "sha256": "393c7e46a9704555cd59a00eb0c3d7508286605cbae498b0fec77ed784a86ee7"
+    },
+    "built": {
+      "path": "/nix/store/jl0fsiyc2kxg2n1kb392fvixlbi5h9n3-livekit-ffi-0.12.48/lib/liblivekit_ffi.so",
+      "sha256": "0be6d8fc975176337ad503613bccc2e150177eabf16f6f6e5a385f81667c3f42"
+    },
+    "checked_at": "2026-09-06T23:48:00.879887+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true,
+      "dynsym_count": {
+        "shipped": 383,
+        "built": 383
+      }
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "rust-audio",
+    "derivation": "drv/rust-audio/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/librust_audio.so",
+      "sha256": "a5886ad89c19551e8c8697f4ec66fd3992ee8df19bac2c78435885f64f66c55d"
+    },
+    "built": {
+      "path": "/nix/store/a7cp0310m8liqj8pc3nfvq34dz4r2715-rust-audio-0.1.0/lib/librust_audio.so",
+      "sha256": "f76a7c68b242abfb90e7ea9331dd6b83dcfb236e7511103822081fa718935b37"
+    },
+    "checked_at": "2026-09-06T19:35:29.821710+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "rust-eth",
+    "derivation": "drv/rust-eth/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/librust_eth.so",
+      "sha256": "23f7fab8b1a187ef3d5a7808f946aa396056e2f3092bcfa324538927b037eab3"
+    },
+    "built": {
+      "path": "/nix/store/0qw1z2ypxaawq9vqhxqm4kli51v1hi44-rust_eth-0.2.3/lib/librust_eth.so",
+      "sha256": "0c7b921b7e041aa465571442e135cc6d48976f0697f25d2ecde159576a45a042"
+    },
+    "checked_at": "2026-09-06T19:29:20.239907+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "sentry",
+    "derivation": "drv/sentry/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libsentry.so",
+      "sha256": "f36298dd179fa25fddc89ebb317a9b4b1c9b475bd47f388dfde3d85f404bc436"
+    },
+    "built": {
+      "path": "/nix/store/30pz10fp208vi6icj7443c21bl62wcj4-libsentry-unity-0.12.2/lib/libsentry.so",
+      "sha256": "6844e9ae04d01b9a3b969dc293052664e4933a2b8d7531a7c08270b533496633"
+    },
+    "checked_at": "2026-09-06T19:34:10.728777+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "uuav-helper",
+    "derivation": "drv/uuav/default.nix",
+    "shipped": {
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/uuav-helper",
+      "sha256": "79787e7a827b61f913f33a49939abb92429254e2965928605dd8139ae3138905"
+    },
+    "built": {
+      "path": "/nix/store/nya45snsw5ggw6pinwwcsa0ax94jpi53-uuav-0.4.0-0e3fcab/bin/uuav-helper",
+      "sha256": "79787e7a827b61f913f33a49939abb92429254e2965928605dd8139ae3138905"
+    },
+    "checked_at": "2026-09-07T02:14:15.695151+00:00",
+    "verdict": "reproduced"
+  },
+  {
+    "name": "uuav-libuuav",
+    "derivation": "drv/uuav/default.nix",
+    "shipped": {
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/libuuav.so",
+      "sha256": "996dfe8001cb4ca8b3a0218ab5df365b613a025efe256d95eb5780a6513a3b59"
+    },
+    "built": {
+      "path": "/nix/store/nya45snsw5ggw6pinwwcsa0ax94jpi53-uuav-0.4.0-0e3fcab/lib/libuuav.so",
+      "sha256": "996dfe8001cb4ca8b3a0218ab5df365b613a025efe256d95eb5780a6513a3b59"
+    },
+    "checked_at": "2026-09-07T02:14:15.566350+00:00",
+    "verdict": "reproduced"
+  },
+  {
+    "name": "uuav-libuuav-core",
+    "derivation": "drv/uuav/default.nix",
+    "shipped": {
+      "path": "Explorer/Assets/Plugins/UUAV/Packages/UUAV/Runtime/Plugins/linux-x86_64/libuuav_core.so",
+      "sha256": "18447aaa73b121c5f3311e4c08e0f717addf77ed7161f53f2e40c3d95dffc5f5"
+    },
+    "built": {
+      "path": "/nix/store/nya45snsw5ggw6pinwwcsa0ax94jpi53-uuav-0.4.0-0e3fcab/lib/libuuav_core.so",
+      "sha256": "18447aaa73b121c5f3311e4c08e0f717addf77ed7161f53f2e40c3d95dffc5f5"
+    },
+    "checked_at": "2026-09-07T02:14:15.628048+00:00",
+    "verdict": "reproduced"
+  }
+]

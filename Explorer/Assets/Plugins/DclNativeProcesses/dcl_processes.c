@@ -27,6 +27,21 @@ extern char** environ;
 
 #endif
 
+#ifdef __linux__
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <string.h>
+#include <spawn.h>
+#include <unistd.h>
+#include <errno.h>
+
+extern char** environ;
+
+#endif
+
 char* get_process_name(pid_t pid) {
 
 #ifdef _WIN32
@@ -77,6 +92,35 @@ char* get_process_name(pid_t pid) {
     return name;
 #endif
 
+#ifdef __linux__
+    // the kernel exposes the executable base name (truncated to 15 chars) here
+    char path[64];
+    snprintf(path, sizeof(path), "/proc/%d/comm", (int)pid);
+
+    FILE* f = fopen(path, "r");
+    if (!f) {
+        return NULL;
+    }
+
+    char buffer[256];
+    if (!fgets(buffer, sizeof(buffer), f)) {
+        fclose(f);
+        return NULL;
+    }
+    fclose(f);
+
+    buffer[strcspn(buffer, "\n")] = '\0';
+
+    size_t len = strlen(buffer) + 1;
+    char* name = malloc(len);
+
+    if (name == NULL)
+        return NULL;
+
+    memcpy(name, buffer, len);
+    return name;
+#endif
+
     return NULL;
 }
 
@@ -123,7 +167,7 @@ int start_process(char* filename, char** args, int argc) {
     return (int)pid;
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__linux__)
     pid_t pid = -1;
 
     // posix_spawnp searches PATH, it inherits current env and file actions/attrs.
@@ -161,7 +205,7 @@ int dcl_start_process_blocking(char* filename, char** args, int argc) {
     return (int)rc;
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__linux__)
     pid_t pid = -1;
 
     int rc = posix_spawnp(

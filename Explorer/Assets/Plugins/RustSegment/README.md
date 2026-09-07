@@ -11,7 +11,7 @@ This crate builds a native library (`cdylib`) to submit analytics operations.
 ## Overview
 
 * Language: Rust
-* Output: native dynamic library (`.dylib` / `.dll`)
+* Output: native dynamic library (`.dylib` / `.dll` / `.so`)
 * Interface: C ABI
 * Primary use case: Unity client integration
 
@@ -88,7 +88,24 @@ Each operation completes through `FfiCallbackFn` with one of:
 | 1 | `Error` | Generic failure; details arrive via the error callback. |
 | 2 | `ErrorDiskFull` | The persistent queue cannot write because the disk is full (SQLITE_FULL). |
 
-`Libraries/Linux/segment-server.so` predates `ErrorDiskFull` and has not been rebuilt (Linux is not a release target), so on Linux a full disk still completes with `Error`.
+`Libraries/Linux/segment-server.so` predates `ErrorDiskFull` and has not been rebuilt, so on Linux a full disk still completes with `Error`. Linux is a shipping target, so this binary is due a rebuild.
+
+---
+
+## Provenance
+
+Unlike the other shipped natives, this library has no derivation under
+[`scripts/native-provenance/`](../../../../scripts/native-provenance/README.md)
+and therefore cannot be rebuilt from pinned sources or checked against an
+upstream release. What the committed Linux binary establishes about itself:
+it links the `segment` analytics crate 0.2.4, `tokio` 1.40.0 and `serde_json`
+1.0.128, and it was produced on a developer workstation rather than by a
+reproducible build. The crate that wraps them — the one owning `src/server.rs`
+and the `segment_server_*` C entry points — is not identified by anything in
+this repository.
+
+Closing this gap means locating that source, adding a derivation beside the
+others, and rebuilding all three platform binaries.
 
 ---
 
