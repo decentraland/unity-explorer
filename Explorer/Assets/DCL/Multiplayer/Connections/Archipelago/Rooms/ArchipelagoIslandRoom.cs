@@ -30,7 +30,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private readonly ICharacterObject characterObject;
 
         private readonly ICurrentAdapterAddress currentAdapterAddress;
-        private readonly bool heartbeatsEnabled;
 
         private readonly Mutex<ConnectionStringState> connectionState = new (ConnectionStringState.None()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
@@ -56,7 +55,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             this.signFlow = signFlow;
             this.characterObject = characterObject;
             this.currentAdapterAddress = currentAdapterAddress;
-            heartbeatsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ArchipelagoHeartbeats);
         }
 
         protected override async UniTask PrewarmAsync(CancellationToken token)
@@ -81,7 +79,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             // main thread so the loop resumes its player-loop delay exactly as the heartbeat path leaves it.
             await UniTask.SwitchToMainThread(token);
 
-            if (!heartbeatsEnabled) return;
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.ArchipelagoHeartbeats)) return;
 
             Vector3 position = characterObject.Position;
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
