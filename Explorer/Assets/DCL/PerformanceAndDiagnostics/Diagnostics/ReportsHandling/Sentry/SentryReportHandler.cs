@@ -175,10 +175,12 @@ namespace DCL.Diagnostics.Sentry
 
         private void CaptureMessage(string message, ReportData reportData, LogType logType)
         {
-            // Native engine warnings that are triggered by malformed creator content, carry no
-            // actionable C# context, and flood Sentry as standalone issues. Keep them in Player.log
-            // (the DebugLog handler is untouched) but demote them here to a breadcrumb.
-            if (IsIgnoredNativeMessage(message))
+            // Native engine warnings triggered by malformed creator content carry no actionable C# context
+            // and flood Sentry as standalone issues; demote them to a breadcrumb here (they stay in Player.log
+            // via the untouched DebugLog handler). Native messages always arrive uncategorized (UNSPECIFIED),
+            // so scoping to that avoids silencing a non-native caller (e.g. scene JS in the JAVASCRIPT
+            // category) that happens to start its message with an ignored prefix.
+            if (reportData.Category == ReportCategory.UNSPECIFIED && IsIgnoredNativeMessage(message))
             {
                 SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Warning);
                 return;

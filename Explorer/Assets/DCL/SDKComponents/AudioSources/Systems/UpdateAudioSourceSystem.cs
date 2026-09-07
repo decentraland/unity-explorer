@@ -87,7 +87,18 @@ namespace DCL.SDKComponents.AudioSources
 
                 if (audioSource.clip != null)
                     if (sdkAudioSource is {HasPlaying: true, Playing: true })
+                    {
+                        // Honor an explicit CurrentTime at creation and record it, so the first volume-only
+                        // PUT afterwards compares equal and does not re-seek/restart the freshly started clip (#9903).
+                        if (sdkAudioSource.HasCurrentTime)
+                        {
+                            float seekTarget = ComputeSeekTarget(sdkAudioSource.CurrentTime, audioSource.clip);
+                            audioSource.time = seekTarget;
+                            audioSourceComponent.LastAppliedCurrentTime = seekTarget;
+                        }
+
                         audioSource.Play();
+                    }
             }
 
             // Reset isDirty as we just applied the PBAudioSource to the AudioSource
@@ -154,26 +165,19 @@ namespace DCL.SDKComponents.AudioSources
                     if (sdkComponent is {HasPlaying: true, Playing: true })
                     {
                         // A whole-component LWW PUT re-sends CurrentTime on every property change (e.g.
-                        // volume), so field presence alone is not a retrigger. Only seek + restart when the
-                        // seek target actually changed; otherwise a volume-only PUT would restart playback (#9903).
+                        // volume), so field presence alone is not a retrigger. While playing, only a changed
+                        // target is a real seek; while stopped, always seek — Stop() rewinds to 0 and a
+                        // finished clip has no cursor left to preserve, so resume must restore the target (#9903).
                         if (sdkComponent.HasCurrentTime)
                         {
-                            float currentTime = sdkComponent.CurrentTime;
+                            float seekTarget = ComputeSeekTarget(sdkComponent.CurrentTime, audioSource.clip);
 
-                            // CurrentTime arrives from the scene unvalidated: clamp it into the clip's seekable
-                            // range, otherwise FMOD rejects the seek ("An invalid seek position was passed").
-                            float seekTarget = float.IsNaN(currentTime)
-                                ? 0f
-                                : Mathf.Clamp(currentTime, 0f, Mathf.Max(0f, audioSource.clip.length - CLIP_END_SEEK_MARGIN));
-
-                            if (!Mathf.Approximately(seekTarget, component.LastAppliedCurrentTime))
+                            if (!audioSource.isPlaying || !Mathf.Approximately(seekTarget, component.LastAppliedCurrentTime))
                             {
                                 audioSource.time = seekTarget;
                                 component.LastAppliedCurrentTime = seekTarget;
                                 audioSource.Play();
                             }
-                            else if (!audioSource.isPlaying)
-                                audioSource.Play();
                         }
                         else if (!audioSource.isPlaying)
                         {
@@ -187,5 +191,13 @@ namespace DCL.SDKComponents.AudioSources
 
             sdkComponent.IsDirty = false;
         }
+
+        // CurrentTime arrives from the scene unvalidated: clamp it into the clip's seekable range, otherwise
+        // FMOD rejects the seek ("An invalid seek position was passed"). Shared by the creation and update
+        // paths so both compute the same target.
+        private static float ComputeSeekTarget(float currentTime, AudioClip clip) =>
+            float.IsNaN(currentTime)
+                ? 0f
+                : Mathf.Clamp(currentTime, 0f, Mathf.Max(0f, clip.length - CLIP_END_SEEK_MARGIN));
     }
 }

@@ -149,5 +149,27 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(afterUpdate.AudioSource!.time, Is.GreaterThanOrEqualTo(0f));
             Assert.That(afterUpdate.AudioSource.time, Is.LessThan(TestAudioClip.length));
         }
+
+        [Test]
+        public void SeedCurrentTimeOnCreationSoLaterVolumeChangeDoesNotReseek()
+        {
+            // Arrange: the creation PUT is playing and carries an explicit CurrentTime.
+            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClipData>(new AudioClipData(TestAudioClip)));
+
+            ref PBAudioSource sdk = ref world.Get<PBAudioSource>(entity);
+            sdk.AudioClipUrl = component.AudioClipUrl;
+            sdk.Playing = true;
+            sdk.CurrentTime = 0.5f;
+
+            // Act
+            system.Update(0);
+
+            // Assert: creation honored CurrentTime (seeked away from 0) and recorded it as the last applied
+            // target, so the next volume-only PUT compares equal and will not re-seek/restart (#9903).
+            AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
+            Assert.That(afterUpdate.AudioSource, Is.Not.Null);
+            Assert.That(afterUpdate.AudioSource!.time, Is.GreaterThan(0f));
+            Assert.That(afterUpdate.LastAppliedCurrentTime, Is.EqualTo(afterUpdate.AudioSource.time).Within(0.01f));
+        }
     }
 }

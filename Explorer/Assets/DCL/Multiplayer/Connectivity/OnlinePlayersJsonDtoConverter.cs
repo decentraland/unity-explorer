@@ -58,6 +58,12 @@ namespace DCL.Multiplayer.Connectivity
                 if (x == null || z == null)
                     continue;
 
+                // Newtonsoft parses NaN/Infinity float literals by default, and ToVector3's Convert.ToInt32
+                // throws OverflowException on those (and on out-of-int magnitudes) — one bad peer would kill
+                // the whole list, the same failure this converter exists to prevent.
+                if (!float.IsFinite(x.Value) || !float.IsFinite(z.Value))
+                    continue;
+
                 existingValue.Add(new OnlineUserData
                 {
                     position = ToVector3(x.Value, z.Value),
