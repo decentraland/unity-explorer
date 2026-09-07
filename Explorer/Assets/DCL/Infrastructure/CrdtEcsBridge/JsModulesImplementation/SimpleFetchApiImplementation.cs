@@ -139,7 +139,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         ///     initial check).
         /// </summary>
         internal static bool ShouldBlockNonHttps(ISimpleFetchApi.Response response, bool isLocalSceneDevelopment) =>
-            !isLocalSceneDevelopment && !(response.URL != null && IsHttps(response.URL));
+            !isLocalSceneDevelopment && !(!string.IsNullOrEmpty(response.URL) && IsHttps(response.URL));
 
         /// <summary>
         ///     Returns the response unchanged when its final URL is still https (or in local scene development),
@@ -157,7 +157,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 StatusText = "Blocked non-https redirect",
                 URL = response.URL,
                 Data = string.Empty,
-                Headers = null,
+                Headers = new Dictionary<string, string>(),
                 Type = "error",
             };
         }

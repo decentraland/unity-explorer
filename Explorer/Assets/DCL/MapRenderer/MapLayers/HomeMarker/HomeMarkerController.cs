@@ -132,7 +132,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 			Serialize(CurrentCoordinates);
 			SerializeWorldName(null);
-			analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(CurrentCoordinates, null));
+			analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(CurrentCoordinates));
 		}
 
 		public void SetWorldMarker(string? worldName)
