@@ -1,0 +1,64 @@
+[
+  {
+    "name": "clearscript-source",
+    "derivation": "drv/clearscript/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/ClearScriptV8.linux-x64.so",
+      "sha256": "2fe119eaa68fa6cab84124807d1063df2c4ea4567b21e0444af106e9b65b5486"
+    },
+    "built": {
+      "path": "/nix/store/ai2gnxzrhdwjmqmri5nzgnnac3v1dbxr-clearscript-v8-source-7.5.1+v8-14.7.173.23/lib/ClearScriptV8.linux-x64.so",
+      "sha256": "18ecc03bf48f9f244575f2a33699ff0166872b0f5e7f1701fc8241b4fbbe7b21"
+    },
+    "checked_at": "2026-09-06T22:02:57.308768+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": false,
+      "dynsym_only_shipped": [
+        "B _ZN2v88internal15ThreadIsolation13trusted_data_E",
+        "T _ZNKSt3_V214error_category10_M_messageEi",
+        "T _ZStrsIcSt11char_traitsIcEERSt13basic_istreamIT_T0_ES6_PS3_",
+        "V _ZNSt6ranges5views4iotaE",
+        "V _ZNSt8__detail9__variant12__gen_vtableINS0_20__variant_idx_cookieEOZSteqIJSt9monostateN2v88internal20CompareOperationHintENS6_19BinaryOperationHintEEEbRKSt7variantIJDpT_EESE_EUlOT_T0_E_JRKS9_IJS4_S7_S8_EEEE9_S_vtableE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceI22V8ArrayBufferAllocatorSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceI22V8ForegroundTaskRunnerSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector10StackFrameESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector17V8DebuggerBarrierESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector23V8HeapProfilerAgentImpl14AsyncCallbacksESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v813WasmStreamingESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v821WasmModuleCompilation4Impl8ResolverESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v84base11OwnedVectorIKhEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v86GlobalINS0_5ValueEEESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal17OperationsBarrierESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal18WasmJSFunctionData11OffheapDataESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal21WasmDispatchTableDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal24IcuBreakIteratorWithTextESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal4wasm10WasmModuleESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v88internal4wasm17WasmWrapperHandleESaIS3_ELN9__gnu_cxx12_Lock_policyE2EE"
+      ],
+      "dynsym_only_built": [
+        "D _ZN2v88internal15ThreadIsolation13trusted_data_E",
+        "T _ZNKSt12__basic_fileIcE13native_handleEv",
+        "T _ZNSt16__time_get_state17_M_finalize_stateEP2tm",
+        "T _ZSt17__istream_extractRSiPcl",
+        "T _ZSt21__glibcxx_assert_failPKciS0_S0_",
+        "T _ZSt21ios_base_library_initv",
+        "T _ZSt28__throw_bad_array_new_lengthv",
+        "T __atomic_compare_exchange",
+        "T libat_lock_n",
+        "T libat_unlock_n",
+        "V _ZTCSt17basic_osyncstreamIcSt11char_traitsIcESaIcEE0_So",
+        "V _ZTVSt13basic_syncbufIcSt11char_traitsIcESaIcEE",
+        "V _ZTVSt17basic_osyncstreamIcSt11char_traitsIcESaIcEE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceI22V8ArrayBufferAllocatorSaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceI22V8ForegroundTaskRunnerSaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector10StackFrameESaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector17V8DebuggerBarrierESaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN12v8_inspector23V8HeapProfilerAgentImpl14AsyncCallbacksESaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v813WasmStreamingESaIvELN9__gnu_cxx12_Lock_policyE2EE",
+        "V _ZTVSt23_Sp_counted_ptr_inplaceIN2v821WasmModuleCompilation4Impl8ResolverESaIvELN9__gnu_cxx12_Lock_policyE2EE"
+      ]
+    },
+    "verdict": "divergent"
+  }
+]

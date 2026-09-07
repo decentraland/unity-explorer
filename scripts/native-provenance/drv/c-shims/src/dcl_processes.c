@@ -30,10 +30,10 @@ extern char** environ;
 #ifdef __linux__
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 #include <spawn.h>
 #include <unistd.h>
 #include <errno.h>
@@ -93,7 +93,6 @@ char* get_process_name(pid_t pid) {
 #endif
 
 #ifdef __linux__
-    // the kernel exposes the executable base name (truncated to 15 chars) here
     char path[64];
     snprintf(path, sizeof(path), "/proc/%d/comm", (int)pid);
 
@@ -103,21 +102,26 @@ char* get_process_name(pid_t pid) {
     }
 
     char buffer[256];
-    if (!fgets(buffer, sizeof(buffer), f)) {
-        fclose(f);
-        return NULL;
-    }
+    char* line = fgets(buffer, sizeof(buffer), f);
     fclose(f);
 
-    buffer[strcspn(buffer, "\n")] = '\0';
-
-    size_t len = strlen(buffer) + 1;
-    char* name = malloc(len);
-
-    if (name == NULL)
+    if (!line) {
         return NULL;
+    }
 
-    memcpy(name, buffer, len);
+    size_t len = strlen(buffer);
+    // /proc/<pid>/comm is newline-terminated; drop it
+    if (len > 0 && buffer[len - 1] == '\n') {
+        buffer[len - 1] = '\0';
+        len -= 1;
+    }
+
+    char* name = malloc(len + 1);
+    if (name == NULL) {
+        return NULL;
+    }
+
+    memcpy(name, buffer, len + 1);
     return name;
 #endif
 

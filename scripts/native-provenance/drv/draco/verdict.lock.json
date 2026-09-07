@@ -1,0 +1,126 @@
+[
+  {
+    "name": "draco-dec",
+    "derivation": "drv/draco/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/AnyCPU/libdracodec_unity.so",
+      "sha256": "4f137c51e9ccf0d9db6ca25d8b0070ccae6e5169f7a93468326c67ada3efbfeb"
+    },
+    "built": {
+      "path": "/nix/store/2njsxjwpwv0sv4pd24gac01ivci51344-draco-unity-unity-2021-09-11-427fc7e6/lib/libdracodec_unity.so",
+      "sha256": "1016467870d11e66476e3eef2c9d6424200e51ab4736696338eced81f005b83e"
+    },
+    "checked_at": "2026-09-06T19:34:42.536450+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": false,
+      "dynsym_only_shipped": [
+        "B __bss_start",
+        "B _end",
+        "D _edata",
+        "T _fini",
+        "T _init",
+        "W _ZN5draco11RAnsDecoderILi12EEC1Ev",
+        "W _ZN5draco11RAnsDecoderILi12EEC2Ev",
+        "W _ZN5draco11RAnsDecoderILi20EEC1Ev",
+        "W _ZN5draco11RAnsDecoderILi20EEC2Ev",
+        "W _ZN5draco12CrossProductIlEENS_7VectorDIT_Li3EEERKS3_S5_",
+        "W _ZN5draco13DecoderBuffer28DecodeLeastSignificantBits32EiPj",
+        "W _ZN5draco13DecoderBuffer4PeekIiEEbPT_",
+        "W _ZN5draco17RAnsSymbolDecoderILi10EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco17RAnsSymbolDecoderILi11EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco17RAnsSymbolDecoderILi12EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco17RAnsSymbolDecoderILi13EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco17RAnsSymbolDecoderILi9EE13StartDecodingEPNS_13DecoderBufferE",
+        "W _ZN5draco19DepthFirstTraverserINS_11CornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEaSERKS4_",
+        "W _ZN5draco19DepthFirstTraverserINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC1Ev",
+        "W _ZN5draco19DepthFirstTraverserINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC2Ev"
+      ],
+      "dynsym_only_built": [
+        "W _ZN5draco13TraverserBaseINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC1Ev",
+        "W _ZN5draco13TraverserBaseINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC2Ev",
+        "W _ZN5draco14PointAttribute18SetExplicitMappingEm",
+        "W _ZN5draco22AttributeTransformData20AppendParameterValueIfEEvRKT_",
+        "W _ZN5draco26MeshEdgebreakerDecoderImplINS_31MeshEdgebreakerTraversalDecoderEE13AttributeDataD1Ev",
+        "W _ZN5draco26MeshEdgebreakerDecoderImplINS_31MeshEdgebreakerTraversalDecoderEE13AttributeDataD2Ev",
+        "W _ZN5draco26MeshEdgebreakerDecoderImplINS_38MeshEdgebreakerTraversalValenceDecoderEE13AttributeDataD1Ev",
+        "W _ZN5draco26MeshEdgebreakerDecoderImplINS_38MeshEdgebreakerTraversalValenceDecoderEE13AttributeDataD2Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_11CornerTableEEEED0Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_11CornerTableEEEED1Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_11CornerTableEEEED2Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_24MeshAttributeCornerTableEEEED0Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_24MeshAttributeCornerTableEEEED1Ev",
+        "W _ZN5draco27MeshPredictionSchemeDecoderIiNS_37PredictionSchemeWrapDecodingTransformIiiEENS_24MeshPredictionSchemeDataINS_24MeshAttributeCornerTableEEEED2Ev",
+        "W _ZN5draco7VectorDIiLi2EEC1ERKS1_",
+        "W _ZN5draco7VectorDIiLi2EEC2ERKS1_",
+        "W _ZN5draco7VectorDIiLi3EEC1Ev",
+        "W _ZN5draco7VectorDIiLi3EEC2Ev",
+        "W _ZNK5draco10DataBuffer4ReadElPvm",
+        "W _ZNK5draco10EntryValue8GetValueIdEEbPSt6vectorIT_SaIS3_EE"
+      ]
+    },
+    "verdict": "divergent"
+  },
+  {
+    "name": "draco-enc",
+    "derivation": "drv/draco/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/libdracoenc_unity.so",
+      "sha256": "d9670d1ede0bf31bab8928f3c825b0c3ce4ed1b4bcba8fdcedc7dee39a14d64a"
+    },
+    "built": {
+      "path": "/nix/store/2njsxjwpwv0sv4pd24gac01ivci51344-draco-unity-unity-2021-09-11-427fc7e6/lib/libdracoenc_unity.so",
+      "sha256": "8c72a67413400d21739bf79f8297b8843a1a49e4b1f8840fd33619b565d3c933"
+    },
+    "checked_at": "2026-09-06T19:34:42.448300+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": false,
+      "dynsym_only_shipped": [
+        "B __bss_start",
+        "B _end",
+        "D _edata",
+        "T _fini",
+        "T _init",
+        "W _ZN5draco12CrossProductIlEENS_7VectorDIT_Li3EEERKS3_S5_",
+        "W _ZN5draco13EncoderBuffer28EncodeLeastSignificantBits32Eij",
+        "W _ZN5draco13EncoderBuffer6EncodeEPKvm",
+        "W _ZN5draco13EncoderBuffer6EncodeIaEEbRKT_",
+        "W _ZN5draco13EncoderBuffer6EncodeIiEEbRKT_",
+        "W _ZN5draco13EncoderBuffer6EncodeIjEEbRKT_",
+        "W _ZN5draco13EncoderBuffer6EncodeItEEbRKT_",
+        "W _ZN5draco17OctahedronToolBox19SetQuantizationBitsEi",
+        "W _ZN5draco17PointCloudEncoder20AddAttributesEncoderESt10unique_ptrINS_17AttributesEncoderESt14default_deleteIS2_EE",
+        "W _ZN5draco17RAnsSymbolEncoderILi10EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi11EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi12EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi13EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi14EE6CreateEPKmiPNS_13EncoderBufferE",
+        "W _ZN5draco17RAnsSymbolEncoderILi15EE6CreateEPKmiPNS_13EncoderBufferE"
+      ],
+      "dynsym_only_built": [
+        "W _ZN5draco10DataBuffer5WriteElPKvm",
+        "W _ZN5draco11EncoderBaseINS_18EncoderOptionsBaseINS_17GeometryAttribute4TypeEEEE5ResetEv",
+        "W _ZN5draco11EncoderBaseINS_18EncoderOptionsBaseIiEEE5ResetEv",
+        "W _ZN5draco12DracoOptionsINS_17GeometryAttribute4TypeEED1Ev",
+        "W _ZN5draco12DracoOptionsINS_17GeometryAttribute4TypeEED2Ev",
+        "W _ZN5draco13TraverserBaseINS_11CornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC1Ev",
+        "W _ZN5draco13TraverserBaseINS_11CornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC2Ev",
+        "W _ZN5draco13TraverserBaseINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC1Ev",
+        "W _ZN5draco13TraverserBaseINS_24MeshAttributeCornerTableENS_36MeshAttributeIndicesEncodingObserverIS1_EEEC2Ev",
+        "W _ZN5draco14PointAttribute18SetExplicitMappingEm",
+        "W _ZN5draco22AttributeTransformData20AppendParameterValueIfEEvRKT_",
+        "W _ZN5draco7VectorDIiLi2EEC1ERKS1_",
+        "W _ZN5draco7VectorDIiLi2EEC2ERKS1_",
+        "W _ZN5draco7VectorDIiLi3EEC1Ev",
+        "W _ZN5draco7VectorDIiLi3EEC2Ev",
+        "W _ZNK5draco10DataBuffer4ReadElPvm",
+        "W _ZNKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES5_St4lessIS5_ESaISt4pairIKS5_S5_EEE5countERS9_",
+        "W _ZNSt10_HashtableIiSt4pairIKiiESaIS2_ENSt8__detail10_Select1stESt8equal_toIiESt4hashIiENS4_18_Mod_range_hashingENS4_20_Default_ranged_hashENS4_20_Prime_rehash_policyENS4_17_Hashtable_traitsILb0ELb0ELb1EEEE21_M_insert_unique_nodeEmmPNS4_10_Hash_nodeIS2_Lb0EEEm",
+        "W _ZNSt10unique_ptrIN5draco13EncoderBuffer10BitEncoderESt14default_deleteIS2_EED1Ev",
+        "W _ZNSt10unique_ptrIN5draco13EncoderBuffer10BitEncoderESt14default_deleteIS2_EED2Ev"
+      ]
+    },
+    "verdict": "divergent"
+  }
+]

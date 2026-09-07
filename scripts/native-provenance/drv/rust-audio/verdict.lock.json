@@ -1,0 +1,20 @@
+[
+  {
+    "name": "rust-audio",
+    "derivation": "drv/rust-audio/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/librust_audio.so",
+      "sha256": "a5886ad89c19551e8c8697f4ec66fd3992ee8df19bac2c78435885f64f66c55d"
+    },
+    "built": {
+      "path": "/nix/store/a7cp0310m8liqj8pc3nfvq34dz4r2715-rust-audio-0.1.0/lib/librust_audio.so",
+      "sha256": "f76a7c68b242abfb90e7ea9331dd6b83dcfb236e7511103822081fa718935b37"
+    },
+    "checked_at": "2026-09-06T19:35:29.821710+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  }
+]

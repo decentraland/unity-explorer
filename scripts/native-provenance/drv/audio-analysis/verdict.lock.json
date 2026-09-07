@@ -1,0 +1,20 @@
+[
+  {
+    "name": "audio-analysis",
+    "derivation": "drv/audio-analysis/default.nix",
+    "shipped": {
+      "path": "./build/Linux/decentraland-explorer_Data/Plugins/x86_64/audio-analysis.so",
+      "sha256": "6b2fc43f493dc759267ce0b22c00a1c068fdb4c0a657902a997118c5c5860aa5"
+    },
+    "built": {
+      "path": "drv/audio-analysis/result/lib/audio-analysis.so",
+      "sha256": "8a4561ed534178a3bbb3aba390db5c5681edbb67ce2c8369a8cb85618b1daf0a"
+    },
+    "checked_at": "2026-09-06T19:28:40.832879+00:00",
+    "detail": {
+      "normalized_match": false,
+      "dynsym_match": true
+    },
+    "verdict": "divergent"
+  }
+]
