@@ -93,6 +93,10 @@ namespace DCL.Landscape
 
             factory.CreateOcean(rootGo);
 
+            if (landscapeData.GrassIndirectRenderer != null)
+                TerrainGenerationUtils.AddColorMapRenderer(rootGo, factory,
+                    landscapeData.GrassIndirectRenderer.CreateColorMapSource(TerrainModel));
+
             Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
             boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
 
