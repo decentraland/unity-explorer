@@ -3,9 +3,10 @@
 name: CI Scripts Tests
 
 # Tests for the CI plumbing itself: build.py's pure helpers (including the
-# URL_RE drift guard against ucb-build-links) and the unified status comment's
-# upsert script against a stubbed gh. Cheap and network-free, so it runs on
-# any PR touching these paths.
+# URL_RE drift guard against ucb-build-links), the unified status comment's
+# upsert script and the no-op-build-run probe that decides whether a Unity
+# Cloud Build run may write that comment, all against a stubbed gh. Cheap and
+# network-free, so it runs on any PR touching these paths.
 on:
   pull_request:
     paths:
@@ -32,3 +33,6 @@ jobs:
 
       - name: Functional tests (upsert-ci-status.sh, stubbed gh)
         run: bash .github/actions/ci-status-comment/test-upsert-ci-status.sh
+
+      - name: Functional tests (build-run-attempted.sh, stubbed gh)
+        run: bash .github/actions/ci-status-comment/test-build-run-attempted.sh

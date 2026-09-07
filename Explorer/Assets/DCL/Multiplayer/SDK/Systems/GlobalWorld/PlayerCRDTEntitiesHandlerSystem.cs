@@ -25,6 +25,16 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
     {
         private readonly IScenesCache scenesCache;
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
+
+        /// <summary>
+        ///     The version (generation) each reserved entity number is currently handed out with, `-1` while
+        ///     it was never handed out at all. ADR-245 requires a new generation every time a number is
+        ///     recycled: a scene keeps its deleted entities as `number -> version` and drops every message
+        ///     whose version is not greater than the stored one, so a number re-issued with the same version
+        ///     stays invisible to that scene until it is reloaded.
+        /// </summary>
+        private readonly int[] reservedEntityVersions = new int[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
+
         private int currentReservedEntitiesCount;
 
         /// <summary>
@@ -56,11 +66,13 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void AddPlayerCRDTEntity(Entity entity, in CharacterTransform characterTransform)
         {
             // Reserve entity straight-away, numeration will be preserved across all scenes
-            int crdtEntityId = World.Has<PlayerComponent>(entity) ? SpecialEntitiesID.PLAYER_ENTITY : ReserveNextFreeEntity();
+            CRDTEntity crdtEntity;
 
-            // All reserved entities are taken: this player can't be exposed to any scene at all
-            if (crdtEntityId == -1)
+            if (World.Has<PlayerComponent>(entity))
+                crdtEntity = SpecialEntitiesID.PLAYER_ENTITY;
+            else if (!TryReserveNextFreeEntity(out crdtEntity))
             {
+                // All reserved entities are taken: this player can't be exposed to any scene at all
                 if (!reservedEntitiesExhaustionReported)
                 {
                     reservedEntitiesExhaustionReported = true;
@@ -73,7 +85,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 return;
             }
 
-            var playerCRDTEntity = new PlayerCRDTEntity(crdtEntityId);
+            var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity);
 
             ResolvePlayerCRDTScene(characterTransform, ref playerCRDTEntity, playerCRDTEntity.CRDTEntity);
 
@@ -145,7 +157,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 // in `AddPlayerCRDTEntity` so it must be released whenever the component goes away, otherwise players
                 // that disconnect while being in no scene (hidden spawn position, roads, empty parcels, LOD, realm change)
                 // leak their slot forever
-                FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
+                FreeReservedEntity(playerCRDTEntity.CRDTEntity);
 
                 World.Remove<PlayerCRDTEntity>(entity);
             }
@@ -165,42 +177,65 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             sceneFacade.EcsExecutor.World.Add<DeleteEntityIntention>(sceneWorldEntity);
         }
 
-        private int ReserveNextFreeEntity()
+        private bool TryReserveNextFreeEntity(out CRDTEntity crdtEntity)
         {
+            crdtEntity = default;
+
             // All reserved entities are taken
             if (currentReservedEntitiesCount == reservedEntities.Length)
-                return -1;
+                return false;
 
             for (var i = 0; i < reservedEntities.Length; i++)
             {
-                if (!reservedEntities[i])
-                {
-                    reservedEntities[i] = true;
-                    currentReservedEntitiesCount++;
-                    return SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i;
-                }
+                if (reservedEntities[i]) continue;
+
+                reservedEntities[i] = true;
+                currentReservedEntitiesCount++;
+
+                // A number that was never handed out starts at version 0, every recycle advances it
+                int version = ++reservedEntityVersions[i];
+
+                crdtEntity = CRDTEntity.Create(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + i, version);
+                return true;
             }
 
-            return -1;
+            return false;
         }
 
-        private void FreeReservedEntity(int entityId)
+        private void FreeReservedEntity(CRDTEntity crdtEntity)
         {
             // Ids outside the reserved range (e.g. the local player's PLAYER_ENTITY) are not pooled
-            entityId -= SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM;
-            if (entityId >= reservedEntities.Length || entityId < 0) return;
+            int index = crdtEntity.EntityNumber - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM;
+            if (index >= reservedEntities.Length || index < 0) return;
 
             // Idempotent on purpose: releasing an already free slot must not corrupt the count
-            if (!reservedEntities[entityId]) return;
+            if (!reservedEntities[index]) return;
 
-            reservedEntities[entityId] = false;
+            // The number ran out of versions: handing it out again would repeat a generation that
+            // scenes may still hold as deleted, so the slot stays taken and is retired for good
+            if (reservedEntityVersions[index] >= CRDTEntity.MAX_VERSION)
+            {
+                ReportHub.LogWarning(GetReportData(),
+                    $"Reserved CRDT entity number {crdtEntity.EntityNumber} ran out of versions and is retired: "
+                    + "the pool of ids exposed to scenes shrinks by one for the rest of the session.");
+
+                return;
+            }
+
+            reservedEntities[index] = false;
             currentReservedEntitiesCount--;
             reservedEntitiesExhaustionReported = false;
         }
 
         private void ClearReservedEntities()
         {
-            for (var i = 0; i < reservedEntities.Length; i++) { reservedEntities[i] = false; }
+            for (var i = 0; i < reservedEntities.Length; i++)
+            {
+                reservedEntities[i] = false;
+
+                // `-1` so the first reservation of every number is handed out with version 0
+                reservedEntityVersions[i] = -1;
+            }
 
             currentReservedEntitiesCount = 0;
             reservedEntitiesExhaustionReported = false;
