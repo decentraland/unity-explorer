@@ -8,7 +8,7 @@ namespace DCL.Landscape.Jobs
     [BurstCompile]
     public struct BakeColliderMeshes : IJobParallelFor
     {
-        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int> Meshes;
+        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<EntityId> Meshes;
 
         public void Execute(int index) =>
             Physics.BakeMesh(Meshes[index], false, MeshColliderCookingOptions.UseFastMidphase);

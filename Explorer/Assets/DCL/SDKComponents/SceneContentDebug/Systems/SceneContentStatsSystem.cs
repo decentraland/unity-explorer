@@ -367,7 +367,7 @@ namespace DCL.SDKComponents.SceneContentDebug.Systems
                 shaderKeywordsCache[shader] = keywords;
             }
 
-            long key = (int)shader.GetEntityId();
+            long key = shader.GetEntityId().GetHashCode();
 
             for (var i = 0; i < keywords.Length; i++)
                 if (material.IsKeywordEnabled(keywords[i]))

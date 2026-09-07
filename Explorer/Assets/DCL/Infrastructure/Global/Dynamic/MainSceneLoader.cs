@@ -46,6 +46,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Versioning;
+using LiveKit.Internal.FFIClients.Requests;
 using MVC;
 using Newtonsoft.Json.Linq;
 using Plugins.NativeWindowManager;
@@ -59,6 +60,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
+using Utility.Networking;
 using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
 
 // ReSharper disable once CheckNamespace
@@ -74,6 +76,8 @@ namespace Global.Dynamic
 
         // Non-null only for DecentralandEnvironment.Custom; set from the command line by ApplyBaseDomainArg.
         private string? customBaseDomain;
+        private string? cliGatewayArg;
+        private string? cliGatewayPrefix;
 
         // The validated --eth-network value, or null when it was not passed on the command line. Captured by
         // CaptureEthNetworkArg and turned into a network by ResolveEthereumNetwork once the environment is settled.
@@ -253,10 +257,25 @@ namespace Global.Dynamic
             // it has not supplied yet. (base-domain is denied by the allowlist, so a link carrying it still reaches
             // the consent dialog; WarnIfCommandLineOnlyArgCameFromTheDeepLink reports that accepting it changes nothing.)
             ApplyBaseDomainArg(applicationParametersParser);
+            LocalCertificateValidation.Configure(applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM));
+
+            // Configure the local ICE policy before any dynamic container or room is created. The SDK still
+            // applies its own loopback URL check, so this opt-in cannot change transport behavior for a remote
+            // realm. RealmController recomputes the value after every realm bootstrap/change as a second guard.
+            FFIBridgeExtensions.UseTransportAllForLoopbackUrls = applicationParametersParser.HasFlag(AppArgsFlags.ACCEPT_UNTRUSTED_REALM);
 
             // Read while the deep link is still deferred for the same reason as the base domain: which chain the
             // client signs against is not something a link may pick, not even through the denied-params dialog.
             if (!CaptureEthNetworkArg(applicationParametersParser))
+            {
+                ExitUtils.Exit();
+                return;
+            }
+
+            // Read while the deep link is still deferred, for the same reason as the two above: where a session's
+            // supported-service traffic goes is not something a link may pick, not even through the denied-params
+            // dialog.
+            if (!CaptureGatewayArg(applicationParametersParser))
             {
                 ExitUtils.Exit();
                 return;
@@ -281,6 +300,7 @@ namespace Global.Dynamic
 
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.BASE_DOMAIN, customBaseDomain);
             WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.ETH_NETWORK, ethNetworkArg);
+            WarnIfCommandLineOnlyArgCameFromTheDeepLink(applicationParametersParser, AppArgsFlags.GATEWAY, cliGatewayArg);
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
@@ -348,7 +368,8 @@ namespace Global.Dynamic
                 cliGatekeeperUrl,
                 cliOptimizedAssetsUrl,
                 customBaseDomain,
-                cliAbgenPipeline);
+                cliAbgenPipeline,
+                cliGatewayPrefix);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var web3AccountFactory = new Web3AccountFactory();
@@ -655,6 +676,31 @@ namespace Global.Dynamic
             }
 
             ethNetworkArg = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            return true;
+        }
+
+        /// <summary>
+        ///     Captures <see cref="AppArgsFlags.GATEWAY" /> into <see cref="cliGatewayArg" /> and its normalized form
+        ///     into <see cref="cliGatewayPrefix" />. Returns false when the launch must be abandoned; the reason is
+        ///     already reported.
+        ///     <para>
+        ///         Rejecting rather than ignoring: naming a gateway forces routing on, so a value that cannot be read
+        ///         as an origin would otherwise send every supported service to a host nobody named.
+        ///     </para>
+        /// </summary>
+        private bool CaptureGatewayArg(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.GATEWAY, out string? value) || string.IsNullOrWhiteSpace(value))
+                return true;
+
+            if (!GatewayUrlsSource.TryNormalizeGatewayPrefix(value, out string prefix))
+            {
+                ReportHub.LogError(ReportCategory.STARTUP, $"--{AppArgsFlags.GATEWAY} '{value}' is not a gateway origin. Expected an absolute http or https url with a host and no query or fragment");
+                return false;
+            }
+
+            cliGatewayArg = value.Trim();
+            cliGatewayPrefix = prefix;
             return true;
         }
 
@@ -987,23 +1033,18 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realm)) return true;
 
             var uri = new Uri(realm);
-            if (uri.Host == "127.0.0.1") return true;
-            if (uri.Host == "localhost") return true;
+            // A controlled host skips the consent prompt and the contracts/servers lookup below.
+            if (TrustedRealms.IsTrusted(uri)) return true;
 
             // A --base-domain deployment owns everything under its domain, so its realms and worlds carry the same
-            // trust the hardcoded decentraland hosts below do. Its worlds server in particular cannot be reached any
-            // other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers, which
-            // is exactly why decentraland's is hardcoded. Widening trust this way is safe because --base-domain is
-            // command-line only (never accepted from a deep link), so the operator already chose this deployment.
+            // trust TrustedRealms grants decentraland's own hosts. Its worlds server in particular cannot be reached
+            // any other way: the catalyst server list consulted at the end enumerates catalysts, not worlds servers,
+            // which is exactly why decentraland's is named outright. Widening trust this way is safe because
+            // --base-domain is command-line only (never accepted from a deep link), so the operator already chose
+            // this deployment.
             if (decentralandEnvironment == DecentralandEnvironment.Custom
                 && IDecentralandUrlsSource.IsHostWithinDomain(uri.Host, dclUrls.BaseDomain))
                 return true;
-            if (uri.Host == "sdk-team-cdn." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "sdk-test-scenes." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "realm-provider-ea." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ORG_DOMAIN) return true;
-            if (uri.Host == "worlds-content-server." + IDecentralandUrlsSource.ZONE_DOMAIN) return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 

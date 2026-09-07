@@ -52,8 +52,14 @@ jobs:
           # SHA was already built by the push to dev — reuse that run's
           # artifacts instead of rebuilding.
           PR_NUMBER=$(gh pr view "$BRANCH_NAME" --json number --jq '.number')
+          # This standalone build-links comment predates the unified CI status
+          # comment, whose build section ALSO carries an img.shields.io/badge/Build
+          # badge under github-actions[bot]. Exclude it explicitly (by its
+          # <!-- ci-status --> marker) or a release PR that has one would either
+          # short-circuit here on its "Build-Success!" badge, or have its whole
+          # unified comment PATCHed away by post_comment below.
           EXISTING=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
-            --jq '[.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("img.shields.io/badge/Build"))] | .[0] // empty')
+            --jq '[.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("img.shields.io/badge/Build")) | select(.body | contains("<!-- ci-status -->") | not)] | .[0] // empty')
 
           # A "Build Not Found" comment is upgraded in place on re-run once the
           # build exists; only a success comment short-circuits.
