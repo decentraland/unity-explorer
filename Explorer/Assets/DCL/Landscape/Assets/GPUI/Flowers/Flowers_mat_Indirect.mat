@@ -13,6 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ADVANCED_LIGHTING
+  - _ALPHATEST_ON
   - _GPU_GRASS_BATCHING
   m_InvalidKeywords:
   - _ENVIRONMENTREFLECTIONS_ON

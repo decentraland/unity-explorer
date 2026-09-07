@@ -98,7 +98,9 @@
 			#pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
 			#pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
 			#pragma multi_compile_instancing
-			#pragma instancing_options renderinglayer
+			// instancing_options is declared once, after GPUInstancerSetup.hlsl below —
+			// a second declaration here (renderinglayer) overrides the procedural option
+			// and strips the per-instance transform fetch from this pass.
 			#pragma multi_compile _ LOD_FADE_CROSSFADE
 			#define ASE_FOG 1
 			#define _SPECULAR_SETUP 1
@@ -198,7 +200,7 @@
 			//#pragma shader_feature_local AI_CLIP_NEIGHBOURS_FRAMES
 			
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma multi_compile_instancing
             #pragma instancing_options procedural:setupGPUI
 
@@ -290,7 +292,7 @@
 			#pragma shader_feature_local AI_CLIP_NEIGHBOURS_FRAMES
 			
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma multi_compile_instancing
             #pragma instancing_options procedural:setupGPUI
 
@@ -379,7 +381,7 @@
 			#pragma shader_feature_local AI_CLIP_NEIGHBOURS_FRAMES
 			
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma multi_compile_instancing
             #pragma instancing_options procedural:setupGPUI
 
@@ -475,7 +477,7 @@
 			#pragma shader_feature_local AI_CLIP_NEIGHBOURS_FRAMES
 			
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma multi_compile_instancing
             #pragma instancing_options procedural:setupGPUI
 			

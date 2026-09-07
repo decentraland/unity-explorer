@@ -113,7 +113,14 @@ namespace DCL.Optimization.Pools
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
 
-            component.gameObject.transform.SetParent(ParentContainer, false);
+            // Park with a clean local TRS — a renter that only sets some of position/rotation/scale
+            // must not inherit the previous tenant's remaining components (stale rotations made
+            // pooled GLTF containers render visibly flipped, dependent on pool acquisition order).
+            Transform transform = gameObject.transform;
+            transform.SetParent(ParentContainer, false);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+            transform.localScale = Vector3.one;
         }
     }
 }
