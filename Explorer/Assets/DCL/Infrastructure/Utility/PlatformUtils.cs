@@ -24,18 +24,62 @@ namespace DCL.Utility
             }
         }
 
+        // The shader bundles the Linux build ships, compiled for its graphics APIs under the Windows bundle identity.
+        private static readonly (string windows, string linux)[] LINUX_SHADER_BUNDLES =
+        {
+            ("dcl/scene_ignore_windows", "dcl/scene_ignore_linux"),
+            ("dcl/scene_texarray_ignore_windows", "dcl/scene_texarray_ignore_linux"),
+        };
+
         private static string? platformSuffix;
+
+        /// <summary>
+        ///     Linux consumes Windows content bundles, whose materials bind to the scene shaders through the Windows
+        ///     bundle identity (internal CAB name and object ids). The scene and LOD texture-array shader bundles are
+        ///     opened from the files compiled for Linux graphics APIs under that identity. Content bundles, the legacy
+        ///     URP Lit bundle (no Linux build) and other platforms open the name as given.
+        /// </summary>
+        public static string GetEmbeddedShaderBundleName(string bundleName) =>
+            GetEmbeddedShaderBundleName(bundleName, Application.platform);
+
+        public static string GetEmbeddedShaderBundleName(string bundleName, RuntimePlatform platform)
+        {
+            if (platform is not (RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer))
+                return bundleName;
+
+            foreach ((string windows, string linux) in LINUX_SHADER_BUNDLES)
+                if (bundleName.Equals(windows, StringComparison.OrdinalIgnoreCase))
+                    return linux;
+
+            return bundleName;
+        }
 
         public static string GetCurrentPlatform()
         {
             if (platformSuffix == null)
             {
+                // Golden-capture parity override: asset-bundle URLs carry this platform suffix,
+                // so forcing another platform's suffix makes every bundle fetch miss and the
+                // client fall back to raw GLTF conversion — the only content pipeline that exists
+                // on platforms without CDN bundles. Cross-platform goldens need both machines on
+                // that same pipeline.
+                platformSuffix = Environment.GetEnvironmentVariable("DCL_GOLDEN_AB_PLATFORM");
+
+                if (platformSuffix != null)
+                    return platformSuffix;
+
                 if (Application.platform is RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer)
                     platformSuffix = "_windows";
                 else if (Application.platform is RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer)
                     platformSuffix = "_mac";
                 else if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer)
-                    platformSuffix = "_linux";
+
+                    // The CDN builds no Linux bundles; desktop asset bundles are cross-platform
+                    // except shaders, which the client strips and replaces from its local
+                    // scene_ignore bundle anyway (AssetBundleManifestVersion reads the windows
+                    // manifest for Linux on the same grounds). Requesting "_linux" made every
+                    // fetch 404 and silently dropped the whole platform to raw GLTF conversion.
+                    platformSuffix = "_windows";
                 else
                     platformSuffix = string.Empty; // WebGL requires no platform suffix
             }
@@ -74,6 +118,13 @@ namespace DCL.Utility
             if (string.IsNullOrEmpty(path))
                 return null;
 
+            // Platform #if directives resolve to the active build target, not the OS the process
+            // runs on: a Linux editor (or a Linux player produced from a non-Linux target build)
+            // would otherwise compile the kernel32/libc native path and fail at runtime. Resolve
+            // via managed DriveInfo (statvfs under Mono) whenever the runtime is actually Linux.
+            if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer)
+                return GetManagedDriveInfoForPath(path);
+
             try
             {
 #if UNITY_STANDALONE_WIN
@@ -89,6 +140,8 @@ namespace DCL.Utility
                 return null;
 #elif UNITY_STANDALONE_OSX
                 return GetMacDriveInfoForPath(path);
+#elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
+                return GetManagedDriveInfoForPath(path);
 #else
                 return null;
 #endif
@@ -98,6 +151,57 @@ namespace DCL.Utility
                 return null;
             }
         }
+
+        // Queries the volume that actually hosts the path via statvfs, the same way the Windows and macOS
+        // branches query the path directly. Path.GetPathRoot collapses to "/", which under the editor's
+        // FHS sandbox is a small overlay rather than the bind-mounted volume that holds the path.
+        private static DriveData? GetManagedDriveInfoForPath(string path)
+        {
+            try
+            {
+                if (statvfs(path, out StatvfsRaw vfs) != 0)
+                    return null;
+
+                ulong unit = vfs.f_frsize != 0 ? vfs.f_frsize : vfs.f_bsize;
+
+                return new DriveData
+                {
+                    AvailableFreeSpace = vfs.f_bavail * unit,
+                    TotalSize = vfs.f_blocks * unit,
+                };
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        // glibc statvfs on the Linux x86_64 ABI: every field is unsigned long (8 bytes) and fsblkcnt_t is
+        // 64-bit, so no _FILE_OFFSET_BITS variant is needed. Only the block counts are read.
+        [StructLayout(LayoutKind.Sequential)]
+        private struct StatvfsRaw
+        {
+            public ulong f_bsize;
+            public ulong f_frsize;
+            public ulong f_blocks;
+            public ulong f_bfree;
+            public ulong f_bavail;
+            public ulong f_files;
+            public ulong f_ffree;
+            public ulong f_favail;
+            public ulong f_fsid;
+            public ulong f_flag;
+            public ulong f_namemax;
+            private readonly int spare0;
+            private readonly int spare1;
+            private readonly int spare2;
+            private readonly int spare3;
+            private readonly int spare4;
+            private readonly int spare5;
+        }
+
+        [DllImport("libc", SetLastError = true, EntryPoint = "statvfs")]
+        private static extern int statvfs(string path, out StatvfsRaw buf);
 
         public static void ShellExecute(string fileName)
         {
@@ -125,6 +229,17 @@ namespace DCL.Utility
                     : "Unknown error";
                 throw new Exception($"error {code}: {message}");
             }
+#elif UNITY_STANDALONE_LINUX
+            // Launch through /bin/sh so the child survives the client exiting. The 3s delay lets the
+            // current player release locks held by the launcher wrapper (e.g. the NixOS flock) before
+            // the replacement launcher starts: the caller exits the client ~2s after spawning us.
+            var psi = new System.Diagnostics.ProcessStartInfo("/bin/sh", "-c \"sleep 3; exec '" + fileName + "'\"")
+            {
+                UseShellExecute = false,
+            };
+
+            if (System.Diagnostics.Process.Start(psi) == null)
+                throw new Exception($"Failed to start {fileName}");
 #else
             throw new NotImplementedException();
 #endif

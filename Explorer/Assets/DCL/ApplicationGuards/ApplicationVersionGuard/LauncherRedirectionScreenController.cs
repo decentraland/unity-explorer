@@ -14,6 +14,10 @@ namespace DCL.ApplicationGuards
         private readonly string current;
         private readonly string latest;
 
+        private UniTaskCompletionSource closeIntent = null!;
+
+        public bool UpdateSkipped { get; private set; }
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public LauncherRedirectionScreenController(ApplicationVersionGuard versionGuard, ViewFactoryMethod viewFactory, string current, string latest) : base(viewFactory)
@@ -28,12 +32,23 @@ namespace DCL.ApplicationGuards
             viewInstance.SetVersions(current, latest);
             viewInstance.CloseButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.CloseWithLauncherButton.onClick.AddListener(HandleVersionUpdate);
+
+            if (viewInstance.ContinueAnywayButton != null)
+                viewInstance.ContinueAnywayButton.onClick.AddListener(HandleContinueAnyway);
+        }
+
+        protected override void OnViewShow()
+        {
+            closeIntent = new UniTaskCompletionSource();
         }
 
         public override void Dispose()
         {
             viewInstance.CloseButton.onClick.RemoveListener(ExitUtils.Exit);
             viewInstance.CloseWithLauncherButton.onClick.RemoveListener(HandleVersionUpdate);
+
+            if (viewInstance.ContinueAnywayButton != null)
+                viewInstance.ContinueAnywayButton.onClick.RemoveListener(HandleContinueAnyway);
         }
 
         private void HandleVersionUpdate()
@@ -41,7 +56,13 @@ namespace DCL.ApplicationGuards
             versionGuard.LaunchOrDownloadLauncherAsync().Forget();
         }
 
+        private void HandleContinueAnyway()
+        {
+            UpdateSkipped = true;
+            closeIntent.TrySetResult();
+        }
+
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+            closeIntent.Task.AttachExternalCancellation(ct);
     }
 }

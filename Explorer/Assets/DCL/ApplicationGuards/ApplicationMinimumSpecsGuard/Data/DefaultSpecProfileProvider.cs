@@ -8,6 +8,9 @@ namespace DCL.ApplicationGuards
         private const int MIN_RAM_MB = 16 * 1024;
         private const int MIN_STORAGE_MB = 8 * 1024;
 
+        private const int LINUX_MIN_VRAM_MB = 2 * 1024;
+        private const int LINUX_MIN_RAM_MB = 8 * 1024;
+
         private const string WIN_OS_REQ = "Windows 10 or newer";
         private const string WIN_CPU_REQ = "Intel i5 (7th Gen) or AMD Ryzen 5+";
         private const string WIN_GPU_REQ = "Nvidia RTX 20 series or AMD RX 5000 series+ (DirectX 12 compatible)";
@@ -18,6 +21,12 @@ namespace DCL.ApplicationGuards
         private const string MAC_CPU_REQ = "Apple M1 or newer";
         private const string MAC_GPU_REQ = "Apple M1 Integrated";
         private const string MAC_SHADER_REQ = "Metal-compatible (Compute Shaders)";
+
+        private const string LINUX_OS_REQ = "Linux kernel 5.15 or newer";
+        private const string LINUX_CPU_REQ = "x86_64 Intel or AMD CPU, 2+ cores";
+        private const string LINUX_GPU_REQ = "Vulkan-capable GPU (NVIDIA, AMD, or Intel — discrete or integrated). Software renderers (llvmpipe, lavapipe, softpipe, swrast, SwiftShader) are unsupported.";
+        private const string LINUX_GPU_INTEGRATED_REQ = "Performance may be reduced on integrated graphics.";
+        private const string LINUX_SHADER_REQ = "Compute Shaders";
 
         public SpecProfile GetProfile(PlatformOS platform)
         {
@@ -50,6 +59,25 @@ namespace DCL.ApplicationGuards
 
                     // Numeric Values
                     MinVramMB = MIN_VRAM_MB, MinRamMB = MIN_RAM_MB, MinStorageMB = MIN_STORAGE_MB
+                },
+
+                PlatformOS.Linux => new SpecProfile
+                {
+                    OsCheck = SystemSpecUtils.IsLinuxOsAcceptable,
+                    CpuCheck = SystemSpecUtils.IsLinuxCpuAcceptable,
+                    GpuCheck = SystemSpecUtils.IsLinuxGpuAcceptable,
+                    IsIntegratedGpuCheck = SystemSpecUtils.IsLinuxIntegratedGpu,
+                    ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
+
+                    OsRequirement = LINUX_OS_REQ,
+                    CpuRequirement = LINUX_CPU_REQ,
+                    GpuRequirement = LINUX_GPU_REQ,
+                    GpuIntegratedRequirement = LINUX_GPU_INTEGRATED_REQ,
+                    ShaderRequirement = LINUX_SHADER_REQ,
+
+                    MinVramMB = LINUX_MIN_VRAM_MB,
+                    MinRamMB = LINUX_MIN_RAM_MB,
+                    MinStorageMB = MIN_STORAGE_MB,
                 },
 
                 _ => throw new NotSupportedException($"Platform '{platform}' is not supported.")
