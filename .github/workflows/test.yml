@@ -168,24 +168,6 @@ jobs:
           git add .
           git reset --hard
 
-      - uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add GitHub to the SSH known hosts file
-        run: |
-          mkdir -p -m 0700 /home/runner/.ssh
-          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
-          chmod 600 /home/runner/.ssh/known_hosts
-
-      - name: Prepare SSH for Unity
-        run: |
-          rm -rf /tmp/ssh-unity
-          mkdir -p -m 0700 /tmp/ssh-unity
-          cp /home/runner/.ssh/known_hosts /tmp/ssh-unity/known_hosts
-          cp /home/runner/.ssh/key-* /tmp/ssh-unity/ 2>/dev/null || true
-          chmod 600 /tmp/ssh-unity/*
-
       - name: Prepare Unity writable dirs
         run: |
           mkdir -p /tmp/unity-home/.local/share/unity3d
@@ -262,12 +244,9 @@ jobs:
       #   run: |
       #     docker run --rm \
       #       -v "${{ github.workspace }}:/workspace" \
-      #       -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
-      #       -v /tmp/ssh-unity:/root/.ssh:ro \
       #       -v /tmp/unity-home/.local/share/unity3d:/root/.local/share/unity3d \
       #       -v /tmp/unity-home/.cache/unity3d:/root/.cache/unity3d \
       #       -v /tmp/unity-home/.config/unity3d:/root/.config/unity3d \
-      #       -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
       #       -e UNITY_EMAIL="$UNITY_EMAIL" \
       #       -e UNITY_PASSWORD="$UNITY_PASSWORD" \
       #       -e UNITY_LICENSE="$UNITY_LICENSE" \
@@ -588,18 +567,6 @@ jobs:
           git add .
           git reset --hard
           
-      - uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          
-      - name: 'Add GitHub to the SSH known hosts file'
-        run: |
-          mkdir -p -m 0700 ~/.ssh
-          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >> ~/.ssh/known_hosts
-          echo 'github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=' >> ~/.ssh/known_hosts
-          echo 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZKAc/NKgzBh2bFNFMR0mVmYeeNR1cb+gZXH6N1gjEHGo2J3qjVg9rBJ0aM5st/22iqkAl7K6d9jMTi6COwJKqFHGmn7gwK+FBnfaYDwdOB8JqGz9eDNi2SegGaKie1jURLEuRPkLqlJrJ3AEdC5v7ibREzMQPGiHlIC5bE0GD/3mPN1Kul4a4EZhIC5RFxewRqDaK7be0wYMbSW7JzfLDMVtRAkKO5GjaKKv4RzGmrgVApFI/j6jJ0sTJZVgmmqODx0P+RcAfGV0RBCjMEdOPj4yr5ObHGjYCdaFEhXGTIlSGeFSEAFGFweZb9t80b8ABbeBRwx/dqI94aaFkMRkzT8VJ9B4yQvbWO7HP64Lxk6rab5Ygwypbcghmms/ATrc0CVh0zGw36VTzV2eBwboRa7G0sxgBudGrJ4BAOI/JrF4BnWcG5fvQewJ1Uc=' >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-
       - name: Restore Library cache
         uses: actions/cache@v5
         with:
@@ -715,7 +682,6 @@ jobs:
         with:
           projectPath: Explorer
           testMode: ${{ matrix.testMode }}
-          sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ matrix.testMode == 'editmode' && steps.rg-img.outputs.image || steps.img.outputs.ghcr }}
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}

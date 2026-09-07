@@ -1,63 +1,67 @@
 # Working with Explorer Packages
 
-**Warning:** This process does need some improvement.
+Every Decentraland-authored UPM package the Explorer consumes lives in this repository under
+[`Explorer/PackagesLocal/`](../Explorer/PackagesLocal/). Both Unity projects resolve them through `file:` references in
+their `Packages/manifest.json`, so a clone of this repository is self-contained: no private package registry, no
+Git-over-SSH dependency, and no deploy key is needed to open either project or to run CI.
 
-[https://github.com/decentraland/unity-explorer-packages](https://github.com/decentraland/unity-explorer-packages) is a repository used to store private Unity packages.
+| Package | Provides |
+| --- | --- |
+| `com.decentraland.livekit-sdk` | LiveKit client SDK with the Linux FFI loader (Apache-2.0, see its `LICENSE`/`NOTICE`) |
+| `decentraland.grassshader` | Stylized grass shader and the grass colour-map baker |
+| `decentraland.renderfeatures` | Avatar outline, object highlight, ocean and skybox-to-cubemap URP render features |
+| `org.decentraland.unityuniversalinstancer` | GPU-driven indirect instancing runtime behind the `GPUInstancerPro` C# surface |
+| `org.decentraland.instancing-assets` | Landscape prototype bindings for the instancer; together they raise `GPUI_PRO_PRESENT` |
+| `org.decentraland.unityscrollview` | Virtualized list and grid views behind the `SuperScrollView` surface |
+| `org.decentraland.unityfilebrowser` | Native open/save/folder dialogs behind the `Crosstales.FB` surface |
 
-Access requires membership in the Decentraland GitHub organization or being manually added to it.
-
-Due to its private nature, there are a few important nuances when working with packages from this repo.
-
----
-
-## GitHub Actions: `tests.yml`
-
-See: [unity-explorer/.github/workflows/test.yml](https://github.com/decentraland/unity-explorer/blob/dev/.github/workflows/test.yml)
-
-Tests require packages to be copied locally at build time, due to GitHub Action permission constraints.
-
-We do this using a `find & replace` step that affects `Explorer/Packages/manifest.json`:
-
-```powershell
--replace 'git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader'
-```
-
-Since the entire repo is cloned during the workflow, all package folders are available locally. The example above replaces the Git-based path to `StylizedGrassShader` with a local file path.
-
-**Important:**
-If you add, remove, or rename packages in `manifest.json`, you **must** also update `test.yml` accordingly, or CI will fail when resolving package dependencies.
-
+The one package outside that folder is `com.decentraland.unity-shared-dependencies` (avatar/scene shaders and glTFast
+wrappers shared with `avatar-preview-renderer`): it lives at the repository root as
+[`unity-shared-dependencies/`](../unity-shared-dependencies/) and both projects reference it as
+`file:../../unity-shared-dependencies`.
 
 ---
 
-## Testing Feature Branches
+## Referencing a package
 
-To test changes in a package without merging them to `main`, you can point `manifest.json` to a specific feature branch:
+Paths are relative to the project's `Packages/` folder:
 
 ```json
-"com.decentraland.stylizedgrassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader#feat/your_feat_branch"
+"decentraland.renderfeatures": "file:../PackagesLocal/decentraland.renderfeatures"
 ```
 
-If you do this, remember to update `test.yml` to match your branch as well -- otherwise tests will break.
+from `Explorer/Packages/manifest.json`, and
+
+```json
+"decentraland.renderfeatures": "file:../../Explorer/PackagesLocal/decentraland.renderfeatures"
+```
+
+from `avatar-preview-renderer/Packages/manifest.json`. Unity records a `file:` dependency in `packages-lock.json` with
+`"source": "local"` and no hash; commit both files together.
+
+Packages that ship tests are listed under `"testables"` in the Explorer manifest so the Test Runner picks them up.
 
 ---
 
-## Merge Workflow
+## Changing a package
 
-Packages in `manifest.json` are pinned by Git commit hash. Even if you merge changes into `unity-explorer-packages`, nothing changes in `dev` unless you explicitly update the hash.
+1. Edit the package in place under `Explorer/PackagesLocal/<package>/`. Unity reloads local packages on focus, so the
+   change is live in both projects immediately.
+2. Run the package's own tests from the Test Runner (EditMode and, where present, PlayMode).
+3. Commit the package change together with the Explorer or `avatar-preview-renderer` change that needs it. There is no
+   separate repository to merge first and no commit hash to bump.
 
-**Recommended flow:**
+---
 
-1. **Develop & Test**
-   Create a feature branch in `unity-explorer-packages`. Point `manifest.json` to it while testing in Unity.
+## Adding a package
 
-2. **Merge the Package**
-   Once validated, merge your feature branch into `main` in `unity-explorer-packages`.
-   **Warning:** `dev` still uses the previous commit hash.
-   **Warning:** `tests.yml` may start failing until you merge & update your commit hash.
+1. Create `Explorer/PackagesLocal/<package>/` with a `package.json`, a `Runtime/` assembly definition and, if it has
+   tests, a `Tests/` assembly definition.
+2. Add the `file:` reference to each project's `manifest.json` that consumes it and let Unity regenerate
+   `packages-lock.json`.
+3. If the package must gate call sites behind a define, add a `versionDefines` entry on the consuming assembly
+   definition instead of a global scripting define, so the code compiles cleanly when the package is absent.
 
-3. **Update Manifest**
-   Update `manifest.json` and `packages-lock.json` to point to the latest commit hash on `main` (in unity-explorer-packages)
-
-4. **Merge to Dev**
-   Once `manifest.json` points to the correct commit, merge your Unity project branch to `dev`.
+Third-party code is not vendored into `PackagesLocal`. Keep upstream open-source dependencies as Git or registry
+references in the manifest with their licence files intact, and keep proprietary Asset Store packages out of the
+repository entirely.

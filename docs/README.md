@@ -9,7 +9,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 ## Getting Started
 - **[Setup](setup.md)** — SSH, GPG, LODs, and environment setup
 - **[Getting Started](getting-started.md)** — Scene loaders and Unity project entry points
-- **[Working with Explorer Packages](working-with-explorer-packages.md)** — Managing private UPM packages
+- **[Working with Explorer Packages](working-with-explorer-packages.md)** — Local UPM packages under Explorer/PackagesLocal
 
 ## Contributing
 - **[Branch & PR Standards](branch-and-pr-standards.md)** — Branches, PRs, commits, and merge policy

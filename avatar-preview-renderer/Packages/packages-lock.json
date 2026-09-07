@@ -195,7 +195,7 @@
       }
     },
     "decentraland.renderfeatures": {
-      "version": "file:../../render-features",
+      "version": "file:../../Explorer/PackagesLocal/decentraland.renderfeatures",
       "depth": 0,
       "source": "local",
       "dependencies": {}
