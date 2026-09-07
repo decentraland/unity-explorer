@@ -30,7 +30,7 @@ MonoBehaviour:
   radius: 1
   secondaryRadius: 0
   TerrainDetailSettings:
-    <Mesh>k__BackingField: {fileID: 8666578268043267355, guid: 396ff52ab0b0210408b55a00b0c3cd57, type: 3}
+    <Mesh>k__BackingField: {fileID: -4648866359324950487, guid: 59b704c2a2c7c8c45884563197e63a54, type: 3}
     <Material>k__BackingField: {fileID: 2100000, guid: b1f12e6193a78cd4e91a63bb74645dc4, type: 2}
     alignToGround: 100
     positionJitter: 50

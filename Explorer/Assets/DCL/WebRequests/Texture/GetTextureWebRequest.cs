@@ -38,7 +38,7 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(string url, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
-            bool useKtx = textureArguments.UseKtx && ktxEnabled && KtxNativeSupport.IsSupported && !LoopbackUrls.IsLoopbackWebUrl(url);
+            bool useKtx = textureArguments.UseKtx && ktxEnabled && KtxNativeSupport.IsSupported && !LoopbackUrls.IsLoopbackWebUrl(url) && !WebRequestUtils.IsPrivateNetworkHost(url);
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
             UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
 
@@ -77,10 +77,18 @@ namespace DCL.WebRequests
                     if (data == null)
                         throw new Exception("Texture content is empty");
 
-                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false,
-                        linear: webRequest.textureType == TextureType.NormalMap);
+                    bool linear = webRequest.textureType == TextureType.NormalMap;
 
-                    if (!texture.LoadImage(data)) { throw new Exception($"Failed to load image from data: {webRequest.url}"); }
+                    // LoadImage silently produces an unwritten texture for palette-indexed PNGs on
+                    // Linux (reports success, pixels never filled) — expand those on the CPU instead.
+                    if (PalettedPng.IsPalettedPng(data) && PalettedPng.TryDecode(data, linear, out Texture2D palettedTexture))
+                        texture = palettedTexture;
+                    else
+                    {
+                        texture = new Texture2D(2, 2, TextureFormat.RGBA32, false, linear: linear);
+
+                        if (!texture.LoadImage(data)) { throw new Exception($"Failed to load image from data: {webRequest.url}"); }
+                    }
                 }
 
                 texture.wrapMode = wrapMode;

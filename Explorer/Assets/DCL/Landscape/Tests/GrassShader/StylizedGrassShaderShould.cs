@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEditor.Rendering;
@@ -40,7 +41,31 @@ namespace StylizedGrass.Tests
                 AssertCompiles(pass.Name, ShaderType.Vertex);
                 AssertCompiles(pass.Name, ShaderType.Fragment);
                 AssertCompiles(pass.Name, ShaderType.Vertex, "_GPU_GRASS_BATCHING");
+                AssertCompiles(pass.Name, ShaderType.Vertex, "_GPU_INSTANCER_BATCHER");
+                AssertCompiles(pass.Name, ShaderType.Fragment, "_GPU_INSTANCER_BATCHER");
             }
+        }
+
+        [Test]
+        public void DeclareTheRoadInstancerKeywordAndBuffers()
+        {
+            // GPUInstancingService admits a material to its indirect draws only when its shader
+            // declares this keyword, then binds these two structured buffers by name through the
+            // material property block. The Vulkan reflection exposes textures and constant buffers
+            // only, so the buffer declarations are checked in the batcher branch of the source.
+            CollectionAssert.Contains(shader.keywordSpace.keywordNames, "_GPU_INSTANCER_BATCHER");
+
+            // The road-prop materials enable instancing variants, so the variant they draw with
+            // pairs the batcher keyword with INSTANCING_ON: the vertex input takes SV_InstanceID
+            // from the instancing macros and the Varyings carry the instancing fields too.
+            AssertCompiles(FORWARD_PASS, ShaderType.Vertex, "INSTANCING_ON", "_GPU_INSTANCER_BATCHER");
+            AssertCompiles(FORWARD_PASS, ShaderType.Fragment, "INSTANCING_ON", "_GPU_INSTANCER_BATCHER");
+            AssertCompiles(SHADOW_PASS, ShaderType.Vertex, "INSTANCING_ON", "_GPU_INSTANCER_BATCHER");
+            AssertCompiles(SHADOW_PASS, ShaderType.Fragment, "INSTANCING_ON", "_GPU_INSTANCER_BATCHER");
+
+            string source = File.ReadAllText(FileUtil.GetPhysicalPath(SHADER_PATH));
+            StringAssert.Contains("StructuredBuffer<PerInstanceBuffer> _PerInstanceBuffer;", source);
+            StringAssert.Contains("StructuredBuffer<PerInstanceLookUpAndDither> _PerInstanceLookUpAndDitherBuffer;", source);
         }
 
         [Test]

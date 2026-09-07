@@ -93,7 +93,7 @@ Shader "DCL/Tree"
             AlphaToMask[_AlphaToMask]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 4.5
 
             // -------------------------------------
             // Shader Stages
@@ -155,7 +155,7 @@ Shader "DCL/Tree"
             #define BUMP_SCALE_NOT_SUPPORTED 1
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             
@@ -182,7 +182,7 @@ Shader "DCL/Tree"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 4.5
 
             // -------------------------------------
             // Shader Stages
@@ -207,7 +207,7 @@ Shader "DCL/Tree"
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             
@@ -233,7 +233,7 @@ Shader "DCL/Tree"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 4.5
 
             // -------------------------------------
             // Shader Stages
@@ -255,7 +255,7 @@ Shader "DCL/Tree"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             
@@ -281,7 +281,7 @@ Shader "DCL/Tree"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 4.5
 
             // -------------------------------------
             // Shader Stages
@@ -307,7 +307,7 @@ Shader "DCL/Tree"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include_with_pragmas "Packages/com.gurbu.gpui-pro/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
+            #include_with_pragmas "Packages/org.decentraland.unityuniversalinstancer/Runtime/Shaders/Include/GPUInstancerSetup.hlsl"
             #pragma instancing_options procedural:setupGPUI
             #pragma multi_compile_instancing
             

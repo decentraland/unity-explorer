@@ -29,6 +29,9 @@
 //   * Under _BILLBOARD, turns each card toward the camera (yaw only unless
 //     _BillboardingVerticalRotation) and thins its shadow as it turns edge-on to the light.
 //   * Casts and receives shadows; participates in DepthOnly / DepthNormals.
+//   * Two indirect-draw paths besides the plain object draw: _GPU_GRASS_BATCHING reads the
+//     landscape scatter buffers, _GPU_INSTANCER_BATCHER reads the road-prop instancer buffers
+//     (matrix, colour tint and LOD cross-fade dither per instance).
 
 Shader "Decentraland/StylizedGrass"
 {
@@ -301,6 +304,87 @@ Shader "Decentraland/StylizedGrass"
         float4 _ColorMapBounds;
         float4 _ColorMap_TexelSize;
 
+        // --- Road-prop indirect path (_GPU_INSTANCER_BATCHER) ----------------
+        // GPUInstancingService draws the baked road props with Graphics.RenderMeshIndirect and
+        // binds two structured buffers per candidate through the material property block:
+        //   _PerInstanceBuffer                 one entry per instance: object-to-world matrix,
+        //                                      colour tint and a UV tiling/offset pair (the layout
+        //                                      of the C# PerInstanceBuffer struct)
+        //   _PerInstanceLookUpAndDitherBuffer  one 16-byte entry per (LOD, instance) slot written
+        //                                      by the culling compute: the index into
+        //                                      _PerInstanceBuffer and the 0..255 LOD dither level
+        // Each LOD is its own indirect command whose startInstance is lodLevel * instanceCount, so
+        // the lookup slot is the absolute instance index. GetIndirectInstanceID_Base yields that on
+        // every graphics API: SV_InstanceID already includes startInstance on Vulkan and the
+        // accessor adds it where it does not.
+        //
+        // Every pass declares the two indirect keywords as one local multi_compile set: a material
+        // is drawn by the landscape scatter, by the road-prop instancer, or as a plain object, never
+        // two of these at once, and both stages see the keyword so the Varyings layout agrees
+        // between vertex and fragment. The set is local so a global Shader.EnableKeyword can never
+        // move a material between paths: each path reads a different buffer layout, so the choice
+        // belongs to the material that owns the buffers.
+        #if defined(_GPU_INSTANCER_BATCHER)
+        #define UNITY_INDIRECT_DRAW_ARGS IndirectDrawIndexedArgs
+        #include "UnityIndirect.cginc"
+
+        struct PerInstanceBuffer
+        {
+            float4x4 instMatrix;
+            float4   instColourTint;
+            float2   instTiling;
+            float2   instOffset;
+        };
+        StructuredBuffer<PerInstanceBuffer> _PerInstanceBuffer;
+
+        struct PerInstanceLookUpAndDither
+        {
+            uint instanceID;
+            uint ditherLevel;
+            uint padding0;
+            uint padding1;
+        };
+        StructuredBuffer<PerInstanceLookUpAndDither> _PerInstanceLookUpAndDitherBuffer;
+
+        void FetchBatchedInstance(uint svInstanceID, out float4x4 m, out float4 tint, out uint dither)
+        {
+            InitIndirectDrawArgs(0);
+            uint slot = GetIndirectInstanceID_Base(svInstanceID);
+            PerInstanceLookUpAndDither lookUp = _PerInstanceLookUpAndDitherBuffer[slot];
+            m      = _PerInstanceBuffer[lookUp.instanceID].instMatrix;
+            tint   = _PerInstanceBuffer[lookUp.instanceID].instColourTint;
+            dither = lookUp.ditherLevel;
+        }
+
+        // Screen-door LOD cross-fade, the same arithmetic the road props' Scene shader applies so
+        // a hedge and the pot it stands in dissolve through one pattern: nDither is the 0..255
+        // hide level and a 4x4 Bayer threshold picks which pixels drop out. The culling compute
+        // writes the incoming LOD with 0, so it draws solid while the outgoing LOD thins out over
+        // it (and the last LOD thins over its final stretch of range).
+        void GrassDither(float4 positionCS, uint nDither)
+        {
+            float4 ndc = positionCS * 0.5;
+            float4 positionNDC;
+            positionNDC.xy = float2(ndc.x, ndc.y * _ProjectionParams.x) + ndc.w;
+            positionNDC.zw = positionCS.zw;
+
+            float hideAmount = (255.0 - (float)nDither) / 255.0;
+
+            float DITHER_THRESHOLDS[16] =
+            {
+                1.0 / 17.0,  9.0 / 17.0,  3.0 / 17.0, 11.0 / 17.0,
+                13.0 / 17.0,  5.0 / 17.0, 15.0 / 17.0,  7.0 / 17.0,
+                4.0 / 17.0, 12.0 / 17.0,  2.0 / 17.0, 10.0 / 17.0,
+                16.0 / 17.0,  8.0 / 17.0, 14.0 / 17.0,  6.0 / 17.0
+            };
+
+            float2 uv = positionNDC.xy / positionNDC.w;
+            uv *= _ScreenParams.xy;
+            uint index = (uint(uv.x) % 4) * 4 + uint(uv.y) % 4;
+            if ((hideAmount - DITHER_THRESHOLDS[index]) <= 0.0)
+                clip(-1);
+        }
+
         // --- GPU-scattered indirect path (_GPU_GRASS_BATCHING) -------------
         // GrassIndirectRenderer draws this material with Graphics.RenderMeshIndirect;
         // placement comes from the scatter computes (GrassScatter / FlowerScatter /
@@ -313,7 +397,7 @@ Shader "Decentraland/StylizedGrass"
         //   colour       = ground albedo at the root (grass) or white (flowers)
         // The owning parcel is _PerParcelBuffer[instanceID / _batchingBlockSize] in _ParcelSize
         // metre parcel coordinates.
-        #if defined(_GPU_GRASS_BATCHING)
+        #elif defined(_GPU_GRASS_BATCHING)
         struct GrassPerInst
         {
             float4 position;
@@ -348,14 +432,14 @@ Shader "Decentraland/StylizedGrass"
             originWS = m._m03_m13_m23;
             scale    = length(m._m00_m10_m20);
         }
-        #endif // _GPU_GRASS_BATCHING
+        #endif // instance fetch path
 
         struct GrassAttributes
         {
             float4 positionOS : POSITION;
             float3 normalOS   : NORMAL;
             float2 uv         : TEXCOORD0;
-            #if defined(_GPU_GRASS_BATCHING) && !UNITY_ANY_INSTANCING_ENABLED
+            #if (defined(_GPU_GRASS_BATCHING) || defined(_GPU_INSTANCER_BATCHER)) && !UNITY_ANY_INSTANCING_ENABLED
             // UNITY_VERTEX_INPUT_INSTANCE_ID already declares an SV_InstanceID field whenever
             // instancing is on (UNITY_ANY_INSTANCING_ENABLED is always defined, as 1 or 0),
             // and a struct may only carry that semantic once.
@@ -364,7 +448,7 @@ Shader "Decentraland/StylizedGrass"
             UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
-        #if defined(_GPU_GRASS_BATCHING)
+        #if defined(_GPU_GRASS_BATCHING) || defined(_GPU_INSTANCER_BATCHER)
             #if UNITY_ANY_INSTANCING_ENABLED
                 // UNITY_VERTEX_INPUT_INSTANCE_ID declares the field as `instanceID`.
                 #define GRASS_INSTANCE_ID(IN) (IN).instanceID
@@ -382,8 +466,11 @@ Shader "Decentraland/StylizedGrass"
             // x = tipness (0 root .. 1 tip), y = gust envelope, z = per-instance random.
             float4 misc        : TEXCOORD3;
             float  fogFactor   : TEXCOORD4;
-            #if defined(_GPU_GRASS_BATCHING)
+            #if defined(_GPU_GRASS_BATCHING) || defined(_GPU_INSTANCER_BATCHER)
             float4 instTint    : TEXCOORD5;
+            #endif
+            #if defined(_GPU_INSTANCER_BATCHER)
+            nointerpolation uint nDither : TEXCOORD6;
             #endif
             UNITY_VERTEX_INPUT_INSTANCE_ID
             UNITY_VERTEX_OUTPUT_STEREO
@@ -394,6 +481,9 @@ Shader "Decentraland/StylizedGrass"
             float4 positionCS : SV_POSITION;
             float2 uv         : TEXCOORD0;
             float  shadowFade : TEXCOORD1;
+            #if defined(_GPU_INSTANCER_BATCHER)
+            nointerpolation uint nDither : TEXCOORD2;
+            #endif
         };
 
         // Root -> tip gradient, driven by object-space height. The source meshes (grass.fbx,
@@ -467,24 +557,36 @@ Shader "Decentraland/StylizedGrass"
         }
 
         // Instance placement, billboarding and wind for every pass. rand.x is per instance, rand.y
-        // per vertex; gust is the wind-map envelope at the blade.
+        // per vertex; gust is the wind-map envelope at the blade; nDither is the LOD cross-fade
+        // level of a road-prop instance and 0 on every other path.
         void GrassTransform(GrassAttributes IN,
             out float3 positionWS, out float3 normalWS, out float3 originWS,
-            out float4 instTint, out float2 rand, out float gust)
+            out float4 instTint, out float2 rand, out float gust, out uint nDither)
         {
             float3 positionOS = IN.positionOS.xyz;
             float  scale;
 
-            #if defined(_GPU_GRASS_BATCHING)
+            #if defined(_GPU_INSTANCER_BATCHER)
+            // Road props are rigid, uniformly scaled placements, so the upper 3x3 of the
+            // instance matrix transforms normals directly.
+            float4x4 m;
+            FetchBatchedInstance(GRASS_INSTANCE_ID(IN), m, instTint, nDither);
+            originWS   = m._m03_m13_m23;
+            scale      = length(m._m00_m10_m20);
+            positionWS = mul(m, float4(positionOS, 1.0)).xyz;
+            normalWS   = normalize(mul((float3x3)m, IN.normalOS));
+            #elif defined(_GPU_GRASS_BATCHING)
             float4 rotation;
             FetchScatterInstance(GRASS_INSTANCE_ID(IN), originWS, rotation, scale, instTint);
             positionWS = originWS + RotateByQuaternion(rotation, positionOS * scale);
             normalWS   = RotateByQuaternion(rotation, IN.normalOS);
+            nDither    = 0;
             #else
             FetchObjectInstance(originWS, scale);
             positionWS = TransformObjectToWorld(positionOS);
             normalWS   = TransformObjectToWorldNormal(IN.normalOS);
             instTint   = float4(1, 1, 1, 1);
+            nDither    = 0;
             #endif
 
             rand.x = Hash21(originWS.xz);
@@ -572,7 +674,8 @@ Shader "Decentraland/StylizedGrass"
             float4 instTint;
             float2 rand;
             float  gust;
-            GrassTransform(IN, positionWS, normalWS, originWS, instTint, rand, gust);
+            uint   nDither;
+            GrassTransform(IN, positionWS, normalWS, originWS, instTint, rand, gust, nDither);
 
             float tipness = GrassTipness(IN.positionOS.xyz);
 
@@ -582,8 +685,11 @@ Shader "Decentraland/StylizedGrass"
             OUT.normalWS    = GrassShadingNormal(normalWS, positionWS, originWS, tipness);
             OUT.misc        = float4(tipness, gust, rand.x, 0);
             OUT.fogFactor   = ComputeFogFactor(OUT.positionCS.z);
-            #if defined(_GPU_GRASS_BATCHING)
+            #if defined(_GPU_GRASS_BATCHING) || defined(_GPU_INSTANCER_BATCHER)
             OUT.instTint    = instTint;
+            #endif
+            #if defined(_GPU_INSTANCER_BATCHER)
+            OUT.nDither     = nDither;
             #endif
             return OUT;
         }
@@ -614,8 +720,9 @@ Shader "Decentraland/StylizedGrass"
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
-            #pragma multi_compile _ _GPU_GRASS_BATCHING
+            #pragma multi_compile_local _ _GPU_GRASS_BATCHING _GPU_INSTANCER_BATCHER
             #pragma target 4.5 _GPU_GRASS_BATCHING
+            #pragma target 4.5 _GPU_INSTANCER_BATCHER
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _ALPHATOCOVERAGE_ON
             #pragma shader_feature_local _ _FADING
@@ -631,6 +738,13 @@ Shader "Decentraland/StylizedGrass"
 
                 half4 baseSample = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
                 half4 albedo = baseSample * _BaseColor * _Color;
+                #if defined(_GPU_INSTANCER_BATCHER)
+                // Road props carry their colour in the baked per-instance tint, applied to the
+                // albedo exactly as the Scene shader applies it to the pots beside them, and
+                // dissolve through the shared LOD cross-fade dither.
+                GrassDither(IN.positionCS, IN.nDither);
+                albedo *= IN.instTint;
+                #endif
 
                 float tipness  = IN.misc.x;
                 float gust     = IN.misc.y;
@@ -785,8 +899,9 @@ Shader "Decentraland/StylizedGrass"
             #pragma fragment ShadowFragment
 
             #pragma multi_compile_instancing
-            #pragma multi_compile _ _GPU_GRASS_BATCHING
+            #pragma multi_compile_local _ _GPU_GRASS_BATCHING _GPU_INSTANCER_BATCHER
             #pragma target 4.5 _GPU_GRASS_BATCHING
+            #pragma target 4.5 _GPU_INSTANCER_BATCHER
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma shader_feature_local _ _BILLBOARD
             #pragma shader_feature_local_fragment _ALPHATEST_ON
@@ -828,7 +943,8 @@ Shader "Decentraland/StylizedGrass"
                 float4 instTint;
                 float2 rand;
                 float  gust;
-                GrassTransform(IN, positionWS, normalWS, originWS, instTint, rand, gust);
+                uint   nDither;
+                GrassTransform(IN, positionWS, normalWS, originWS, instTint, rand, gust, nDither);
 
                 float3 lightDirectionWS = ShadowLightDirection(positionWS);
 
@@ -842,12 +958,18 @@ Shader "Decentraland/StylizedGrass"
                 OUT.shadowFade = lerp(1.0, saturate(abs(dot(normalWS, lightDirectionWS))),
                                       _BillboardShadowFade * _Billboard);
                 #endif
+                #if defined(_GPU_INSTANCER_BATCHER)
+                OUT.nDither = nDither;
+                #endif
 
                 return OUT;
             }
 
             half4 ShadowFragment(GrassDepthVaryings IN) : SV_Target
             {
+                #if defined(_GPU_INSTANCER_BATCHER)
+                GrassDither(IN.positionCS, IN.nDither);
+                #endif
                 #if defined(_ALPHATEST_ON) || defined(_ALPHATOCOVERAGE_ON)
                     half a = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv).a * _BaseColor.a * _Color.a;
                     clip(a * IN.shadowFade - _Cutoff);
@@ -875,8 +997,9 @@ Shader "Decentraland/StylizedGrass"
             #pragma vertex   DepthVertex
             #pragma fragment DepthFragment
             #pragma multi_compile_instancing
-            #pragma multi_compile _ _GPU_GRASS_BATCHING
+            #pragma multi_compile_local _ _GPU_GRASS_BATCHING _GPU_INSTANCER_BATCHER
             #pragma target 4.5 _GPU_GRASS_BATCHING
+            #pragma target 4.5 _GPU_INSTANCER_BATCHER
             #pragma shader_feature_local _ _BILLBOARD
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _ALPHATOCOVERAGE_ON
@@ -892,16 +1015,23 @@ Shader "Decentraland/StylizedGrass"
                 float4 instTint;
                 float2 rand;
                 float  gust;
-                GrassTransform(IN, positionWS, normalWS, originWS, instTint, rand, gust);
+                uint   nDither;
+                GrassTransform(IN, positionWS, normalWS, originWS, instTint, rand, gust, nDither);
 
                 OUT.positionCS = TransformWorldToHClip(positionWS);
                 OUT.uv         = TRANSFORM_TEX(IN.uv, _BaseMap);
                 OUT.shadowFade = 1.0;
+                #if defined(_GPU_INSTANCER_BATCHER)
+                OUT.nDither = nDither;
+                #endif
                 return OUT;
             }
 
             half4 DepthFragment(GrassDepthVaryings IN) : SV_Target
             {
+                #if defined(_GPU_INSTANCER_BATCHER)
+                GrassDither(IN.positionCS, IN.nDither);
+                #endif
                 #if defined(_ALPHATEST_ON) || defined(_ALPHATOCOVERAGE_ON)
                     half a = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv).a * _BaseColor.a * _Color.a;
                     clip(a - _Cutoff);
@@ -928,8 +1058,9 @@ Shader "Decentraland/StylizedGrass"
             #pragma vertex   DepthNormalsVertex
             #pragma fragment DepthNormalsFragment
             #pragma multi_compile_instancing
-            #pragma multi_compile _ _GPU_GRASS_BATCHING
+            #pragma multi_compile_local _ _GPU_GRASS_BATCHING _GPU_INSTANCER_BATCHER
             #pragma target 4.5 _GPU_GRASS_BATCHING
+            #pragma target 4.5 _GPU_INSTANCER_BATCHER
             #pragma shader_feature_local _ _BILLBOARD
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _ALPHATOCOVERAGE_ON
@@ -939,6 +1070,9 @@ Shader "Decentraland/StylizedGrass"
                 float4 positionCS : SV_POSITION;
                 float2 uv         : TEXCOORD0;
                 float3 normalWS   : TEXCOORD1;
+                #if defined(_GPU_INSTANCER_BATCHER)
+                nointerpolation uint nDither : TEXCOORD2;
+                #endif
             };
 
             DNVaryings DepthNormalsVertex(GrassAttributes IN)
@@ -952,7 +1086,8 @@ Shader "Decentraland/StylizedGrass"
                 float4 instTint;
                 float2 rand;
                 float  gust;
-                GrassTransform(IN, positionWS, normalWS, originWS, instTint, rand, gust);
+                uint   nDither;
+                GrassTransform(IN, positionWS, normalWS, originWS, instTint, rand, gust, nDither);
 
                 OUT.positionCS = TransformWorldToHClip(positionWS);
                 OUT.uv         = TRANSFORM_TEX(IN.uv, _BaseMap);
@@ -961,11 +1096,17 @@ Shader "Decentraland/StylizedGrass"
                 OUT.normalWS   = lerp(normalWS,
                                       GrassShadingNormal(normalWS, positionWS, originWS, GrassTipness(IN.positionOS.xyz)),
                                       saturate(_NormalFlattenDepthNormals));
+                #if defined(_GPU_INSTANCER_BATCHER)
+                OUT.nDither = nDither;
+                #endif
                 return OUT;
             }
 
             half4 DepthNormalsFragment(DNVaryings IN) : SV_Target
             {
+                #if defined(_GPU_INSTANCER_BATCHER)
+                GrassDither(IN.positionCS, IN.nDither);
+                #endif
                 #if defined(_ALPHATEST_ON) || defined(_ALPHATOCOVERAGE_ON)
                     half a = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv).a * _BaseColor.a * _Color.a;
                     clip(a - _Cutoff);

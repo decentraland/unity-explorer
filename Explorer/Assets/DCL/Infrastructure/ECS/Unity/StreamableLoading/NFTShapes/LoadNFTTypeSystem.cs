@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.NFTShapes
             StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
-            string convertUrl = ktxEnabled ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(imageUrl)) : imageUrl;
+            string convertUrl = ktxEnabled && !WebRequestUtils.IsPrivateNetworkHost(imageUrl) ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(imageUrl)) : imageUrl;
             var contentInfo = await WebContentInfo.FetchAsync(convertUrl, ct);
 
             if (!ktxEnabled && contentInfo is { Type: WebContentInfo.ContentType.Image, SizeInBytes: > MAX_PREVIEW_SIZE })
