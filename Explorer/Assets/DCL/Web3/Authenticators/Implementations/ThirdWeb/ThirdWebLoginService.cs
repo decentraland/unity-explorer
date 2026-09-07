@@ -26,8 +26,10 @@ namespace DCL.Web3.Authenticators
         private readonly string? guestSessionIdOverride;
         public IThirdwebWallet? ActiveWallet { get; private set; }
         private InAppWallet? pendingWallet;
+        private InAppWallet? pendingLinkWallet;
+        private string pendingLinkEmail = string.Empty;
 
-        private readonly DCLSemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new ();
         private readonly ThirdwebClient client;
 
         private UniTaskCompletionSource<bool>? loginCompletionSource;
@@ -47,7 +49,7 @@ namespace DCL.Web3.Authenticators
         public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {
             bool isGuest = DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE);
-            string? email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, null);
+            string email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
 
             if (!isGuest && string.IsNullOrEmpty(email))
                 return false;
@@ -257,6 +259,69 @@ namespace DCL.Web3.Authenticators
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
+        }
+
+        public async UniTask SendEmailLinkOtpAsync(string email, CancellationToken ct)
+        {
+            InAppWallet walletToLink = await CreateEmailWalletAsync(email, ct);
+
+            try { await walletToLink.SendOTP().AsUniTask().AttachExternalCancellation(ct); }
+            catch (Exception ex) when (ContainsInvalidEmailError(ex))
+            {
+                throw new InvalidEmailException(ex.Message, ex);
+            }
+
+            pendingLinkWallet = walletToLink;
+            pendingLinkEmail = email;
+            ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb link: OTP sent to email");
+        }
+
+        public UniTask ResendEmailLinkOtpAsync(CancellationToken ct) =>
+            pendingLinkWallet!.SendOTP().AsUniTask().AttachExternalCancellation(ct);
+
+        public async UniTask<IWeb3Identity> LinkEmailAsync(string otp, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var activeWallet = (InAppWallet)ActiveWallet!;
+
+            try { await activeWallet.LinkAccount(pendingLinkWallet!, otp); }
+            catch (Exception e) when (ContainsInvalidOtpError(e)) { throw new CodeVerificationException("Incorrect OTP code", e); }
+            catch (Exception e) when (ContainsAlreadyLinkedError(e)) { throw new EmailAlreadyLinkedException("The email is already linked to another account", e); }
+
+            ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb link: email linked to the active wallet");
+
+            DCLPlayerPrefs.SetString(DCLPrefKeys.LOGGEDIN_EMAIL, pendingLinkEmail, save: true);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
+
+            pendingLinkWallet = null;
+            pendingLinkEmail = string.Empty;
+
+            return await BuildIdentityAsync(activeWallet, IWeb3Identity.Web3IdentitySource.OTP, ct);
+        }
+
+        private static bool ContainsInvalidOtpError(Exception ex) =>
+            ContainsMessage(ex, "invalid or expired");
+
+        private static bool ContainsAlreadyLinkedError(Exception ex) =>
+            ContainsMessage(ex, "already linked")
+            || ContainsMessage(ex, "already been linked")
+            || ContainsMessage(ex, "already associated")
+            || ContainsMessage(ex, "ACCOUNT_ALREADY_LINKED");
+
+        private static bool ContainsMessage(Exception ex, string message)
+        {
+            Exception? current = ex;
+
+            while (current != null)
+            {
+                if (current.Message.Contains(message, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                current = current.InnerException;
+            }
+
+            return false;
         }
 
         private static bool ContainsInvalidEmailError(Exception ex)

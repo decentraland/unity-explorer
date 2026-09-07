@@ -2,8 +2,10 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Clipboard;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.UpgradeGuestAccountPopup;
+using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
@@ -16,6 +18,8 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly ClipboardManager clipboardManager;
+        private readonly IAccountLinkAuthenticator accountLinkAuthenticator;
+        private readonly ISelfProfile selfProfile;
 
         private PastePopupToastController? pasteToastButtonController;
         private ChatEntryMenuPopupController? chatEntryMenuPopupController;
@@ -24,11 +28,15 @@ namespace DCL.PluginSystem.Global
         public GenericPopupsPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            ClipboardManager clipboardManager)
+            ClipboardManager clipboardManager,
+            IAccountLinkAuthenticator accountLinkAuthenticator,
+            ISelfProfile selfProfile)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.clipboardManager = clipboardManager;
+            this.accountLinkAuthenticator = accountLinkAuthenticator;
+            this.selfProfile = selfProfile;
         }
 
         public void Dispose()
@@ -66,7 +74,7 @@ namespace DCL.PluginSystem.Global
             ControllerBase<UpgradeGuestAccountPopupView, ControllerNoData>.ViewFactoryMethod upgradeGuestAccountViewFactoryMethod =
                 UpgradeGuestAccountPopupController.Preallocate(upgradeGuestAccountPopupAsset, null, out _);
 
-            upgradeGuestAccountPopupController = new UpgradeGuestAccountPopupController(upgradeGuestAccountViewFactoryMethod);
+            upgradeGuestAccountPopupController = new UpgradeGuestAccountPopupController(upgradeGuestAccountViewFactoryMethod, accountLinkAuthenticator, selfProfile);
             mvcManager.RegisterController(upgradeGuestAccountPopupController);
         }
 

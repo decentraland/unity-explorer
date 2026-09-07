@@ -140,6 +140,12 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithGuestMode(bool isGuest)
+        {
+            hasConnectedWeb3 = !isGuest;
+            return this;
+        }
+
         public Profile Build()
         {
             Option<UserId> id = UserId.New(userId);

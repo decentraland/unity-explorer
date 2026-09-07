@@ -14,7 +14,7 @@ namespace DCL.Web3.Authenticators
     ///     Combines base authentication, Ethereum API, and OTP flows.
     ///     This is the single entry point for all Web3 authentication needs.
     /// </summary>
-    public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator
+    public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator, IAccountLinkAuthenticator
     {
         /// <summary>
         /// Currently selected authentication method
