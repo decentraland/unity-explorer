@@ -1,0 +1,21 @@
+{
+    "name": "LiveKit",
+    "rootNamespace": "LiveKit",
+    "references": [
+        "RichTypes",
+        "UniTask",
+        "RustAudio",
+        "RustAudio.Def",
+        "LiveKitBridge",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

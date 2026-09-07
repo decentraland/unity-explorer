@@ -1,0 +1,23 @@
+{
+    "name": "livekit.unity.Examples",
+    "rootNamespace": "livekit.unity.Examples",
+    "references": [
+        "UniTask",
+        "RichTypes",
+        "LiveKit",
+        "RustAudio"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "DCL_LIVEKIT_CAMERA_VIDEO_INPUT_ON"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

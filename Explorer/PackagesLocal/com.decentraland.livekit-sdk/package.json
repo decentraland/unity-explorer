@@ -1,0 +1,23 @@
+{
+  "name": "com.decentraland.livekit-sdk",
+  "version": "1.1.0",
+  "displayName": "LiveKit SDK",
+  "description": "LiveKit",
+  "unity": "2021.3",
+  "author": {
+    "name": "Decentraland"
+  },
+  "samples": [
+    {
+      "displayName": "Example",
+      "description": "LiveKit sample",
+      "path": "Samples~"
+    }
+  ],
+  "type": "library",
+  "dependencies": {
+    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+    "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
+    "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
+  }
+}
