@@ -350,8 +350,10 @@ namespace DCL.Profiles
                 // Centralized endpoint doesn't support GET
                 if (useCentralizedProfiles && !forceCatalyst)
                 {
+                    // A profile fetch-by-id is idempotent, so retry transient failures instead of letting a
+                    // single miss bubble up as "Profile fetch timed out after 15s" (#9878). DEFAULT is bounded.
                     profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version,
-                        retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.NONE, ct);
+                        retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.DEFAULT, ct);
 
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);

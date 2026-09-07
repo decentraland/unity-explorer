@@ -45,7 +45,10 @@ namespace DCL.Profiles
                 if (repeatValues.delay > TimeSpan.Zero)
                     await UniTask.Delay(repeatValues.delay, DelayType.Realtime, cancellationToken: ct);
 
-                RetryPolicy retryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.NONE;
+                // A profile GET is idempotent, so a transient network/DNS failure is safe to retry.
+                // Without retries a single hiccup surfaces as "Profile fetch timed out after 15s" (#9878).
+                // DEFAULT is bounded (transient-only, capped retries), unlike the retry-until-resolved policy.
+                RetryPolicy retryPolicy = retryUntilResolved ? CatalystRetryPolicy.VALUE : RetryPolicy.DEFAULT;
 
                 // Suppress logging errors here as we have very custom errors handling below
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> response = webRequestController.GetAsync(new CommonArguments(url, retryPolicy), ct, ReportCategory.PROFILE, suppressErrors: true);
