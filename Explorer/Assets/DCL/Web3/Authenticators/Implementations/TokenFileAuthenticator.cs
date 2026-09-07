@@ -24,6 +24,16 @@ namespace DCL.Web3.Authenticators
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "DecentralandLauncherLight", "auth-token-bridge.txt"
             );
+#elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
+        // path for: ${XDG_DATA_HOME:-~/.local/share}/DecentralandLauncherLight/ — the launcher's app
+        // directory on Linux (dirs::data_local_dir()); a sandboxed launcher hands the client the same XDG_DATA_HOME.
+        private static readonly string TOKEN_PATH =
+            Path.Combine(
+                Environment.GetEnvironmentVariable("XDG_DATA_HOME") is { Length: > 0 } xdgDataHome
+                    ? xdgDataHome
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".local", "share"),
+                "DecentralandLauncherLight", "auth-token-bridge.txt"
+            );
 #else
         // path for: ~/Library/Application Support/DecentralandLauncherLight/
         private static readonly string TOKEN_PATH =

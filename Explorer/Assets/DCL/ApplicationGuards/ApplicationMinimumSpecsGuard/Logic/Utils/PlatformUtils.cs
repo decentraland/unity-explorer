@@ -13,6 +13,7 @@ namespace DCL.ApplicationGuards
                    {
                        RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => PlatformOS.Windows,
                        RuntimePlatform.OSXPlayer or RuntimePlatform.OSXEditor => PlatformOS.Mac,
+                       RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor => PlatformOS.Linux,
                        _ => PlatformOS.Unsupported,
                    };
         }

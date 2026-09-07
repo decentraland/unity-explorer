@@ -9,8 +9,8 @@ namespace DCL.ApplicationGuards
 
         private static bool IsOlderThan(this (int Major, int Minor, int Patch) current, (int Major, int Minor, int Patch) latest)
         {
-            if (current.Major < latest.Major) return true;
-            if (current.Minor < latest.Minor) return true;
+            if (current.Major != latest.Major) return current.Major < latest.Major;
+            if (current.Minor != latest.Minor) return current.Minor < latest.Minor;
             return current.Patch < latest.Patch;
         }
 

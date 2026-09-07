@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
 using DCL.WebRequests;
+using Global.AppArgs;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.IO;
@@ -30,19 +31,55 @@ namespace DCL.ApplicationGuards
         //Aga: Rust version of launcher does not support intel macs, until fully deprecating it, we need to keep the old launcher for intel based macs
         private const string DECENTRALAND_LEGACY_LAUNCHER_MAC_X_64_DMG = "Decentraland Outdated-mac-x64.dmg";
 
+        // Linux ships without a launcher: the preview channel publishes its own latest.json
+        // beside the artifact, and the update path is the download page itself.
+        private const string LINUX_LATEST_RELEASE_URL = "https://interconnected.online/downloads/latest-linux.json";
+        private const string LINUX_DOWNLOAD_PAGE_URL = "https://interconnected.online/download/linux";
+
         private readonly IWebRequestController webRequestController;
         private readonly UnityAppWebBrowser webBrowser;
+        private readonly IAppArgs appArgs;
 
-        public ApplicationVersionGuard(IWebRequestController webRequestController, UnityAppWebBrowser webBrowser)
+        public ApplicationVersionGuard(IWebRequestController webRequestController, UnityAppWebBrowser webBrowser, IAppArgs appArgs)
         {
             this.webRequestController = webRequestController;
             this.webBrowser = webBrowser;
+            this.appArgs = appArgs;
         }
+
+        /// <summary>
+        ///     True when a launcher owns the process: launchers identify themselves on the command line through
+        ///     their analytics id and their version; a hand-run player carries neither.
+        /// </summary>
+        public static bool IsLauncherOwned(IAppArgs appArgs) =>
+            appArgs.HasFlag(AppArgsFlags.Analytics.LAUNCHER_ID) || appArgs.HasFlag(AppArgsFlags.Launcher.VERSION);
 
         public async UniTask<string> GetLatestVersionAsync(CancellationToken ct)
         {
+            if (isLinux)
+            {
+                try
+                {
+                    string latestVersion = await FetchLatestVersionAsync(LINUX_LATEST_RELEASE_URL, ct);
+                    ReportHub.LogProductionInfo($"[VersionGuard] Running version {Application.version}: {LINUX_LATEST_RELEASE_URL} publishes {latestVersion}");
+                    return latestVersion;
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    // An unreachable update channel is not a reason to block a preview boot.
+                    ReportHub.LogException(e, ReportCategory.VERSION_CONTROL);
+                    ReportHub.LogProductionInfo($"[VersionGuard] Release manifest {LINUX_LATEST_RELEASE_URL} could not be read, continuing with version {Application.version} unchecked");
+                    return "0.0.0";
+                }
+            }
+
+            return await FetchLatestVersionAsync(IDecentralandUrlsSource.EXPLORER_LATEST_RELEASE_URL, ct);
+        }
+
+        private async UniTask<string> FetchLatestVersionAsync(string releaseUrl, CancellationToken ct)
+        {
             FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                IDecentralandUrlsSource.EXPLORER_LATEST_RELEASE_URL,
+                releaseUrl,
                 new FlatFetchResponse<GenericGetRequest>(),
                 ct,
                 ReportCategory.VERSION_CONTROL,
@@ -56,6 +93,23 @@ namespace DCL.ApplicationGuards
 
         public async UniTask LaunchOrDownloadLauncherAsync(CancellationToken ct = default)
         {
+            if (isLinux)
+            {
+                // A launcher-owned process only has to end: the launcher re-resolves the download itself.
+                if (IsLauncherOwned(appArgs))
+                {
+                    ReportHub.LogProductionInfo("[VersionGuard] Exiting so the owning launcher fetches the update");
+                    ExitUtils.Exit();
+                    return;
+                }
+
+                // Without a launcher the download page is the whole update path.
+                webBrowser.OpenUrlMainThreadOnly(LINUX_DOWNLOAD_PAGE_URL);
+                await UniTask.Delay(2000, cancellationToken: ct);
+                ExitUtils.Exit();
+                return;
+            }
+
             string? launcherPath = GetLauncherPath();
 
             if (string.IsNullOrEmpty(launcherPath))
@@ -85,6 +139,13 @@ namespace DCL.ApplicationGuards
 
         private void DownloadLauncher()
         {
+            if (Application.platform is RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor)
+            {
+                // Fork-specific preview channel URL; upstream ships no Linux launcher asset yet.
+                webBrowser.OpenUrlMainThreadOnly("https://interconnected.online/download/linux");
+                return;
+            }
+
             string assetName = GetLauncherAssetName();
             string downloadUrl = $"{GetLauncherDownloadPath()}/{assetName}";
 
@@ -144,6 +205,10 @@ namespace DCL.ApplicationGuards
                         };
                     break;
 
+                case RuntimePlatform.LinuxEditor:
+                case RuntimePlatform.LinuxPlayer:
+                    return GetLinuxLauncherPath();
+
                 default:
                     ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Unsupported platform for launching the application.");
                     return null;
@@ -152,6 +217,34 @@ namespace DCL.ApplicationGuards
             return possiblePaths.FirstOrDefault(path =>
                 File.Exists(path) ||
                 (Directory.Exists(path) && (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)));
+        }
+
+        private static bool isLinux =>
+            Application.platform is RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor;
+
+        private static string? GetLinuxLauncherPath()
+        {
+            // Explicit override for custom setups.
+            string? envPath = Environment.GetEnvironmentVariable("DCL_LAUNCHER_BIN");
+
+            if (!string.IsNullOrEmpty(envPath) && File.Exists(envPath))
+                return envPath;
+
+            // Fall back to the NixOS launcher wrapper name on PATH.
+            string? pathVar = Environment.GetEnvironmentVariable("PATH");
+
+            if (string.IsNullOrEmpty(pathVar))
+                return null;
+
+            foreach (string dir in pathVar.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string candidate = Path.Combine(dir, "decentraland");
+
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            return null;
         }
 
         private static bool isAppleSiliconMac =>

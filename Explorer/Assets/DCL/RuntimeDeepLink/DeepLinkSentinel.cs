@@ -23,6 +23,16 @@ namespace DCL.RuntimeDeepLink
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "DecentralandLauncherLight", "deeplink-bridge.json"
             );
+#elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
+        // path for: ${XDG_DATA_HOME:-~/.local/share}/DecentralandLauncherLight/ — the launcher's app
+        // directory on Linux (dirs::data_local_dir()); a sandboxed launcher hands the client the same XDG_DATA_HOME.
+        private static readonly string DEEP_LINK_BRIDGE_PATH =
+            Path.Combine(
+                Environment.GetEnvironmentVariable("XDG_DATA_HOME") is { Length: > 0 } xdgDataHome
+                    ? xdgDataHome
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".local", "share"),
+                "DecentralandLauncherLight", "deeplink-bridge.json"
+            );
 #else
 
         // path for: ~/Library/Application Support/DecentralandLauncherLight/
