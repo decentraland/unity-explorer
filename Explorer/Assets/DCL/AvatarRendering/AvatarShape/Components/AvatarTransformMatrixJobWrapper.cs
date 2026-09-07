@@ -145,7 +145,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             if (dummyTransform != null)
             {
-                UnityEngine.Object.Destroy(dummyTransform.gameObject);
+                // Destroy is illegal in edit mode, where the system's edit-mode tests dispose this wrapper.
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(dummyTransform.gameObject);
+                else
+                    UnityEngine.Object.DestroyImmediate(dummyTransform.gameObject);
+
                 stopwatch.LogStep("dummyTransform.Destroy");
             }
 

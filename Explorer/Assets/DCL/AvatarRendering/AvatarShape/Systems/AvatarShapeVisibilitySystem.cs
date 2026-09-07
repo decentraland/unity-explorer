@@ -253,10 +253,11 @@ namespace DCL.AvatarRendering.AvatarShape
         private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, IAvatarView avatarView, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden, bool shouldPlayFootstepFX,
             in CharacterEmoteComponent characterEmoteComponent)
         {
-            bool isAnimationsEnabled = avatarView.AvatarAnimator.enabled;
-
+            // Compared against the cached flag, not Animator.enabled: the culling gate in
+            // FinishAvatarMatricesCalculationSystem also writes that property, and reading it back here would
+            // re-run this transition every frame an avatar is culled.
             if (avatarCachedVisibility.IsVisible == shouldBeHidden
-                && isAnimationsEnabled == shouldPlayFootstepFX)
+                && avatarCachedVisibility.PlaysFootstepFX == shouldPlayFootstepFX)
                 return;
 
             if (shouldBeHidden)
@@ -265,6 +266,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 Show(ref avatarShape);
 
             avatarCachedVisibility.IsVisible = shouldBeHidden;
+            avatarCachedVisibility.PlaysFootstepFX = shouldPlayFootstepFX;
 
             avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX && !avatarView.IsLegacyAnimationPlaying;
             avatarView.AvatarAnimator.fireEvents = shouldPlayFootstepFX;

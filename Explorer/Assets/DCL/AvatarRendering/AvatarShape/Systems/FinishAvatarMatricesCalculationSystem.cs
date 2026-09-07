@@ -74,9 +74,14 @@ namespace DCL.AvatarRendering.AvatarShape
                 exempt || IsInFrustum(avatarTransformMatrixComponent.IndexInGlobalJobArray));
 
             // Unity's own animator culling only consults SkinnedMeshRenderers and the custom skinning
-            // pipeline deletes them all, so visibility must gate the Animator manually.
-            if (avatarBase.AvatarAnimator.enabled == culled)
-                avatarBase.AvatarAnimator.enabled = !culled;
+            // pipeline deletes them all, so visibility must gate the Animator manually. The rule is a strict
+            // refinement of the one AvatarShapeVisibilitySystem applies on its transitions, so the two writers
+            // agree whenever nothing changed: no footstep FX inside a hide-avatars modifier area, which culling
+            // covers for everyone but the exempt avatars, and never while a legacy Animation drives the rig.
+            bool animatorShouldRun = !culled && !avatarShape.HiddenByModifierArea && !avatarBase.IsLegacyAnimationPlaying;
+
+            if (avatarBase.AvatarAnimator.enabled != animatorShouldRun)
+                avatarBase.AvatarAnimator.enabled = animatorShouldRun;
 
             if (!computeShaderSkinning.ForceSkinNextFrame && culled)
                 return;

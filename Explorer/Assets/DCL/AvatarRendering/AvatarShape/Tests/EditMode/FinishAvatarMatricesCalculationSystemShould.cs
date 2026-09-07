@@ -92,6 +92,24 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
+        public void KeepTheMainPlayerAnimatorOffInsideAHideAvatarsArea()
+        {
+            AllowTheSkinningDispatchToReport();
+
+            // Arrange - exempt from culling and in view, so only the modifier-area rule can turn the Animator
+            // off; start animated so the assertion can only pass on a transition the system drove
+            AvatarBase avatarBase = CreateAvatar(IN_FRONT_OF_CAMERA, isPreview: false, out _, isMainPlayer: true, hiddenByModifierArea: true);
+            avatarBase.AvatarAnimator.enabled = true;
+
+            // Act
+            RunFrame();
+
+            // Assert
+            Assert.IsFalse(avatarBase.AvatarAnimator.enabled,
+                "the main player skips culling, so its Animator must still follow the hide-avatars modifier area");
+        }
+
+        [Test]
         public void KeepThePreviewAvatarLiveWhereverThePlayerCameraLooks()
         {
             AllowTheSkinningDispatchToReport();
@@ -162,7 +180,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         ///     for it, which is what the system tests against.
         /// </summary>
         private AvatarBase CreateAvatar(Vector3 position, bool isPreview, out AvatarTransformMatrixComponent transformMatrix,
-            Bounds? localBounds = null)
+            Bounds? localBounds = null, bool isMainPlayer = false, bool hiddenByModifierArea = false)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AVATAR_BASE_TEST_ASSET_PATH);
             Assert.IsNotNull(prefab, $"Could not load AvatarBase test prefab from {AVATAR_BASE_TEST_ASSET_PATH}");
@@ -177,10 +195,16 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Bounds bounds = localBounds ?? new Bounds(Vector3.zero, Vector3.one);
 
             transformMatrix = AvatarTransformMatrixComponent.NewDefault();
-            jobWrapper.RegisterAvatar(avatarBase, ref transformMatrix);
-            jobWrapper.SetLocalBounds(ref transformMatrix, bounds);
 
-            var avatarShape = new AvatarShapeComponent("test-user-id", "TestUser") { IsPreview = isPreview };
+            if (isMainPlayer)
+                jobWrapper.RegisterMainPlayerAvatar(avatarBase, ref transformMatrix);
+            else
+            {
+                jobWrapper.RegisterAvatar(avatarBase, ref transformMatrix);
+                jobWrapper.SetLocalBounds(ref transformMatrix, bounds);
+            }
+
+            var avatarShape = new AvatarShapeComponent("test-user-id", "TestUser") { IsPreview = isPreview, HiddenByModifierArea = hiddenByModifierArea };
 
             world.Create(avatarShape, transformMatrix, avatarBase, AvatarCustomSkinningComponent.NewWithLocalBounds(bounds));
             return avatarBase;

@@ -4,6 +4,12 @@
     {
         public bool IsVisible;
 
+        /// <summary>
+        ///     The footstep-FX flag AvatarShapeVisibilitySystem last applied. Kept here rather than read back from
+        ///     Animator.enabled, which FinishAvatarMatricesCalculationSystem also drives with its culling verdict.
+        /// </summary>
+        public bool PlaysFootstepFX;
+
         private DITHER_STATE currentDitherState;
 
         public bool ShouldUpdateDitherState(float newDistance, float startFadeDithering, float endFadeDithering)
