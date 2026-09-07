@@ -1,6 +1,11 @@
 #ifndef TOON_INPUT_SURFACE_INCLUDED
 #define TOON_INPUT_SURFACE_INCLUDED
 
+// This file replaces URP's SurfaceInput.hlsl for the toon stack (same declarations, toon
+// sampling stubs). URP 17.5 includes the real one transitively from other ShaderLibrary
+// headers, so claim its include guard up front to keep the replacement authoritative.
+#define UNIVERSAL_INPUT_SURFACE_INCLUDED
+
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceData.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"

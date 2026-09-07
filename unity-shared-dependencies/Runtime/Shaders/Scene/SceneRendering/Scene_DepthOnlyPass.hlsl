@@ -47,6 +47,8 @@ Varyings DepthOnlyVertex(Attributes input, uint svInstanceID : SV_InstanceID)
     #ifdef _GPU_INSTANCER_BATCHER
     uint instanceID = GetIndirectInstanceID_Base(svInstanceID);
     output.nDither = _PerInstanceLookUpAndDitherBuffer[instanceID].ditherLevel;
+    #elif defined(UNITY_DOTS_INSTANCING_ENABLED)
+    output.nDither = (uint)unity_DOTS_Sampled_InstDitherLevel;
     #else
     output.nDither = 0;
     #endif
