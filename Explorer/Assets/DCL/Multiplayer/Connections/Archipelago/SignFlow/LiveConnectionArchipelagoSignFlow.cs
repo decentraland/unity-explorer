@@ -27,7 +27,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly bool heartbeatsEnabled;
 
         /// <param name="connection">Relies on capabilities of auto-reconnection to transport</param>
         public LiveConnectionArchipelagoSignFlow(IArchipelagoLiveConnection connection, IMemoryPool memoryPool, IMultiPool multiPool)
@@ -35,13 +34,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             this.connection = connection;
             this.memoryPool = memoryPool;
             this.multiPool = multiPool;
-            heartbeatsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ArchipelagoHeartbeats);
         }
 
         public async UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
         {
-            // Flag off: no Heartbeat packet is ever produced, and the call succeeds without touching the connection.
-            if (!heartbeatsEnabled)
+            // Flag off: no Heartbeat packet is ever produced, and the call succeeds without touching the
+            // connection. Read here and not in the constructor, so building a flow needs no feature registry.
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.ArchipelagoHeartbeats))
                 return Result.SuccessResult();
 
             try
