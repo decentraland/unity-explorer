@@ -67,7 +67,6 @@ namespace DCL.PlacesAPIService
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
             string? category = null,
             bool? withConnectedUsers = null,
-            bool? onlySdk7 = null,
             bool? withLiveEvents = null,
             bool? onlyPlaces = null)
         {
@@ -84,7 +83,6 @@ namespace DCL.PlacesAPIService
                 searchString: searchText, pagination: (pageNumber, pageSize),
                 sortByStr, sortDirectionStr, category, addRealmDetails: true,
                 withConnectedUsers: withConnectedUsers,
-                onlySdk7: onlySdk7,
                 withLiveEvents: withLiveEvents,
                 onlyPlaces: onlyPlaces);
         }
@@ -200,8 +198,8 @@ namespace DCL.PlacesAPIService
         public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null, bool? withLiveEvents = null) =>
-            await client.GetDestinationsAsync(ct, ownerAddress: ownerAddress, withConnectedUsers: withConnectedUsers, onlySdk7: onlySdk7, withLiveEvents: withLiveEvents);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? withLiveEvents = null) =>
+            await client.GetDestinationsAsync(ct, ownerAddress: ownerAddress, withConnectedUsers: withConnectedUsers, withLiveEvents: withLiveEvents);
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetWorldsAsync(ct, ownerAddress: ownerAddress);
@@ -234,7 +232,6 @@ namespace DCL.PlacesAPIService
             IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
             bool? withConnectedUsers = null,
-            bool? onlySdk7 = null,
             bool? withLiveEvents = null,
             bool? onlyPlaces = null)
         {
@@ -252,7 +249,6 @@ namespace DCL.PlacesAPIService
                 sortBy: sortByStr, sortDirection: sortDirectionStr, addRealmDetails: true,
                 onlyFavorites: true,
                 withConnectedUsers: withConnectedUsers,
-                onlySdk7: onlySdk7,
                 withLiveEvents: withLiveEvents,
                 onlyPlaces: onlyPlaces);
         }
