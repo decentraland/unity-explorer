@@ -225,7 +225,10 @@ namespace DCL.Chat
                 chatEventBus,
                 chatMemberListService,
                 chatContextMenuService,
-                chatCommandRegistry.GetChannelMembersCommand);
+                chatCommandRegistry.GetChannelMembersCommand,
+                mvcManager,
+                web3IdentityCache,
+                chatHistory);
 
             SituationalReactionPresenter? situationalReactionPresenter = null;
             if (isChatReactionsEnabled)

@@ -1,4 +1,5 @@
 using CodeLess.Attributes;
+using DCL.Chat.History;
 using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3.Identities;
 using MVC;
@@ -11,12 +12,14 @@ namespace DCL.Chat
         private readonly ChatEventBus chatEventBus;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IChatHistory chatHistory;
 
-        public ChatOpener(ChatEventBus chatEventBus, IMVCManager mvcManager, IWeb3IdentityCache identityCache)
+        public ChatOpener(ChatEventBus chatEventBus, IMVCManager mvcManager, IWeb3IdentityCache identityCache, IChatHistory chatHistory)
         {
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
             this.identityCache = identityCache;
+            this.chatHistory = chatHistory;
         }
 
         /// <summary>
@@ -25,7 +28,8 @@ namespace DCL.Chat
         /// <param name="id"> The id or walletId of the user to open a conversation with</param>
         public void OpenPrivateConversationWithUserId(string id)
         {
-            if (identityCache.IsGuest())
+            // A guest can answer a conversation someone else started, but cannot start one
+            if (identityCache.IsGuest() && !chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(id)))
             {
                 mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
                 return;
