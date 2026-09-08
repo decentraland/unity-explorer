@@ -70,8 +70,8 @@ namespace DCL.FeatureFlags.Tests
             // Arrange
             var configuration = new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty);
 
-            // Assert - the default-on read is what keeps today's behaviour; the plain overload still reads off
-            Assert.IsTrue(configuration.IsEnabled(FeatureFlagsStrings.ARCHIPELAGO_HEARTBEATS, defaultWhenAbsent: true));
+            // Assert - the kill-switch read is what keeps today's behaviour; the plain read still reports off
+            Assert.IsTrue(configuration.IsEnabledUnlessKilled(FeatureFlagsStrings.ARCHIPELAGO_HEARTBEATS));
             Assert.IsFalse(configuration.IsEnabled(FeatureFlagsStrings.ARCHIPELAGO_HEARTBEATS));
         }
 

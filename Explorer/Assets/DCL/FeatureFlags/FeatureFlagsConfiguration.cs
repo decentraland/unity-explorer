@@ -24,11 +24,13 @@ namespace DCL.FeatureFlags
         public bool IsEmpty => result.IsEmpty;
 
         /// <summary>
-        ///     The flag's value, or <paramref name="defaultWhenAbsent" /> when the resolved configuration does not
-        ///     carry it. Pass true for a kill switch: the feature stays on until the backend serves the flag as false.
+        ///     The read for a kill switch: the feature is on unless the backend explicitly serves the flag as
+        ///     <c>false</c>, so a client that resolved no flags at all keeps today's behaviour (CONTEXT rule 3).
+        ///     Deliberately not an <see cref="IsEnabled(string)" /> overload: that one defaults to off, and an
+        ///     overload differing only by an argument is one forgotten keyword away from inverting a rollout.
         /// </summary>
-        public bool IsEnabled(string id, bool defaultWhenAbsent) =>
-            result.flags.GetValueOrDefault(id, defaultWhenAbsent);
+        public bool IsEnabledUnlessKilled(string id) =>
+            result.flags.GetValueOrDefault(id, true);
 
         public bool IsEnabled(string id, string variantId)
         {
