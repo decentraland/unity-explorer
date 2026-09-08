@@ -503,6 +503,28 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
+        public void LeaveAnAnimatorTheCullingGateDisabledAlone()
+        {
+            // Arrange - a visible non-player avatar, primed so the cache holds its visible state
+            var avatarShape = CreateAvatarShapeComponent();
+            world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
+            system!.Update(0);
+
+            Assume.That(avatarBase.AvatarAnimator.enabled, Is.True,
+                "Sanity check: a visible avatar outside any modifier area starts animated.");
+
+            // FinishAvatarMatricesCalculationSystem culls the avatar later in the same frame
+            avatarBase.AvatarAnimator.enabled = false;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(avatarBase.AvatarAnimator.enabled,
+                "With no visibility change the system must leave the Animator alone, otherwise it re-enables every culled avatar each frame.");
+        }
+
+        [Test]
         public void HidePlayerAvatarWhenTransitioningToFirstPersonAndCloseToCameraStart()
         {
             // Arrange

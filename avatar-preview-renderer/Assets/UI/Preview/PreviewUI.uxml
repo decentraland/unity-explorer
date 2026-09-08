@@ -5,11 +5,6 @@
             <engine:VisualElement name="WearableButton" tooltip="Wearable" class="switcher__button switcher__button--selected" style="background-image: url(&quot;project://database/Assets/UI/Sprites/UpperBodyIcon.png?fileID=2800000&amp;guid=485539051aef5498a9871192a27ad7ca&amp;type=3#UpperBodyIcon&quot;);" />
             <engine:VisualElement name="AvatarButton" tooltip="Try On" class="switcher__button" style="background-image: url(&quot;project://database/Assets/UI/Sprites/BodyIcon.png?fileID=2800000&amp;guid=c6339aa049f3a42c6b337d3822bf7118&amp;type=3#BodyIcon&quot;);" />
         </engine:VisualElement>
-        <engine:VisualElement name="ZoomControls" class="zoomer">
-            <engine:Button name="ZoomInButton" class="zoomer__button zoomer__button--in" />
-            <engine:VisualElement name="Spacer" style="height: 1px;" />
-            <engine:Button name="ZoomOutButton" class="zoomer__button zoomer__button--out" />
-        </engine:VisualElement>
         <engine:VisualElement name="EmoteControls" class="emote-controls">
             <engine:Button name="PlayStopButton" class="emote-controls__button emote-controls__button-play dcl-clickable">
                 <engine:VisualElement picking-mode="Ignore" name="Icon" style="flex-grow: 1;" />
