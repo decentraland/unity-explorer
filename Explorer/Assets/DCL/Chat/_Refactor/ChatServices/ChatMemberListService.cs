@@ -122,7 +122,6 @@ namespace DCL.Chat.ChatServices
 
         /// <summary>
         ///     Registers the consumer of the full member list. It is invoked on every refresh until <see cref="StopLiveMemberUpdates" />.
-        ///     Call <see cref="RequestInitialMemberListAsync" /> afterwards to receive the current list right away.
         /// </summary>
         public void StartLiveMemberUpdates(Action<IReadOnlyList<ChatMemberListData>> onMemberListUpdated)
         {
@@ -141,7 +140,6 @@ namespace DCL.Chat.ChatServices
 
         /// <summary>
         ///     Performs a single, fresh fetch of the full member list.
-        ///     This should be called by the UI when the member list panel is first opened.
         /// </summary>
         public UniTask RequestInitialMemberListAsync() =>
             RefreshFullListIfNeeded(force: true);
