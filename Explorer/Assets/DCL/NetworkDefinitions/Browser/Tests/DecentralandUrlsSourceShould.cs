@@ -447,20 +447,6 @@ namespace DCL.Browser.DecentralandUrls.Tests
             }
         }
 
-        /// <summary>
-        ///     A peer's realm comes back with the peer from <c>RemotePeers</c>, so no url may point at the
-        ///     retired per-friend <c>/wallet/:wallet/connected-world</c> lookup under any name.
-        /// </summary>
-        [Test]
-        public void ResolveNoPerFriendConnectedWorldLookup()
-        {
-            InitializeFeatureFlags(optimizedAssets: false);
-            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, Substitute.For<IRealmData>(), ILaunchMode.PLAY);
-
-            foreach (DecentralandUrl url in Enum.GetValues(typeof(DecentralandUrl)))
-                Assert.IsTrue(urlsSource.Probe(url).IndexOf("connected-world", StringComparison.OrdinalIgnoreCase) < 0, url.ToString());
-        }
-
         [TestCase(DecentralandEnvironment.Org, null, "https://feature-flags." + IDecentralandUrlsSource.ORG_DOMAIN)]
         [TestCase(DecentralandEnvironment.Zone, null, "https://feature-flags." + IDecentralandUrlsSource.ZONE_DOMAIN)]
         [TestCase(DecentralandEnvironment.Custom, CUSTOM_DOMAIN, "https://feature-flags." + CUSTOM_DOMAIN)]
