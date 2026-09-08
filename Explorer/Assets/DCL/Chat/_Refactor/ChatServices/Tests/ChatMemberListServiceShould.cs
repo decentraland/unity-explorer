@@ -1,12 +1,14 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
+using Global.AppArgs;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -45,6 +47,12 @@ namespace DCL.Chat.ChatServices.Tests
         public void SetUp()
         {
             LogAssert.ignoreFailingMessages = true;
+
+            // Profile.CompactInfo reads the registry while validating the name; the registry reads the flags configuration on construction
+            FeatureFlagsConfiguration.Reset();
+            FeaturesRegistry.Reset();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(Substitute.For<IAppArgs>(), false));
 
             profileRepository = Substitute.For<IProfileRepository>();
 
@@ -98,6 +106,8 @@ namespace DCL.Chat.ChatServices.Tests
         {
             service.Dispose();
             currentChannelService.Dispose();
+            FeaturesRegistry.Reset();
+            FeatureFlagsConfiguration.Reset();
         }
 
         [UnityTest]
