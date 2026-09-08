@@ -3,6 +3,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.Pools;
 using DCL.LiveKit.Public;
+using DCL.Web3;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -102,10 +103,15 @@ namespace DCL.Chat.ChatServices
                 blockedOnlineParticipants.Clear();
 
                 foreach (string participantIdentity in participantIdentities)
+                {
+                    if (!IsPlayer(participantIdentity))
+                        continue;
+
                     if (userBlockingCache.UserIsBlocked(participantIdentity))
                         blockedOnlineParticipants.Add(participantIdentity);
                     else
                         onlineParticipants.Add(participantIdentity);
+                }
             }
         }
 
@@ -121,6 +127,9 @@ namespace DCL.Chat.ChatServices
 
         private void OnRoomUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update, IRoom otherRoom)
         {
+            if (!IsPlayer(participant.Identity))
+                return;
+
             lock (onlineParticipants)
             {
                 bool participantIsBlocked = userBlockingCache.UserIsBlocked(participant.Identity);
@@ -170,6 +179,13 @@ namespace DCL.Chat.ChatServices
                 }
             }
         }
+
+        /// <summary>
+        ///     Cast presentation bots and unauthenticated castV2 viewers join the scene room without a wallet identity;
+        ///     they have no avatar or profile, so they are not nearby users.
+        /// </summary>
+        private static bool IsPlayer(string identity) =>
+            Web3Address.IsValidWalletAddress(identity);
 
         private void SetOnline(string userId)
         {

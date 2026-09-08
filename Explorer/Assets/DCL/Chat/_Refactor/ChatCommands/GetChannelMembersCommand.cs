@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.UI.ProfileElements;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -23,18 +22,24 @@ namespace DCL.Chat.ChatCommands
         {
             targetList.Clear();
 
-            foreach (var member in rawMembers)
+            // The service already orders the list: resolved members by name, then wallet placeholders
+            foreach (ChatMemberListData member in rawMembers)
             {
                 var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online);
 
                 targetList.Add(viewModel);
 
+                // A wallet placeholder has no picture to download
+                if (string.IsNullOrEmpty(member.Profile.FaceSnapshotUrl.Value))
+                {
+                    viewModel.ProfileThumbnail.UpdateValue(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail, viewModel.Profile.UserNameColor));
+
+                    continue;
+                }
+
                 GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileThumbnail, chatConfig.DefaultProfileThumbnail, viewModel.Profile, ct)
                                           .Forget();
             }
-
-            targetList.Sort(static (a, b)
-                => string.Compare(a.UserName, b.UserName, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

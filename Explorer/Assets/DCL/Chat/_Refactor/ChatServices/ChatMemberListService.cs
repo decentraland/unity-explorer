@@ -3,14 +3,11 @@ using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Friends;
-using DCL.Friends.UserBlocking;
-using DCL.Utilities;
+using DCL.Optimization.Pools;
 using DCL.UI.Profiles.Helpers;
-using DCL.Web3.Identities;
-using UnityEngine;
+using DCL.Utility.Types;
 using Utility;
 using Utility.Multithreading;
 
@@ -23,17 +20,36 @@ namespace DCL.Chat.ChatServices
     /// </summary>
     public class ChatMemberListService : IDisposable
     {
-        private const int UNIFIED_POLL_INTERVAL_MS = 500;
+        // Mirrors the retry horizon of CentralizedProfileRetryPolicy used for remote avatars, so the list and the avatars give up together
+        internal const int MAX_UNRESOLVED_RETRIES = 5;
+        private const int UNRESOLVED_RETRY_DELAY_MS = 2000;
+
+        private static readonly Comparison<ChatMemberListData> BY_NAME = static (a, b) =>
+            string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+
+        private static readonly Comparison<ChatMemberListData> BY_WALLET = static (a, b) =>
+            string.Compare(a.Profile.UserId.Value, b.Profile.UserId.Value, StringComparison.OrdinalIgnoreCase);
 
         private readonly CurrentChannelService currentChannelService;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly IFriendsService? friendsService;
         private readonly IEventBus eventBus;
+        private readonly int unresolvedRetryDelayMs;
 
-        private readonly List<ChatMemberListData> membersBuffer = new ();
+        // Published list: resolved members first, then one placeholder row per wallet whose profile is not available yet
+        private readonly List<ChatMemberListData> membersBuffer = new (PoolConstants.AVATARS_COUNT);
+        private readonly List<ChatMemberListData> resolvedMembers = new (PoolConstants.AVATARS_COUNT);
+        private readonly List<ChatMemberListData> placeholderMembers = new (PoolConstants.AVATARS_COUNT);
 
         private readonly HashSet<string> lastKnownMemberIds = new (StringComparer.OrdinalIgnoreCase);
-        private readonly HashSet<string> participantsBuffer = new ();
+        private readonly HashSet<string> participantsBuffer = new (StringComparer.OrdinalIgnoreCase);
+
+        // Profile UserIds can differ in casing from LiveKit identities
+        private readonly HashSet<string> unresolvedMemberIds = new (StringComparer.OrdinalIgnoreCase);
+        private readonly List<string> requestBuffer = new (PoolConstants.AVATARS_COUNT);
+
+        private readonly EventSubscriptionScope subscriptionToCounterUpdate = new ();
+        private readonly EventSubscriptionScope subscriptionToUserStatus = new ();
 
         private int lastKnownTitleBarCount = -1;
 
@@ -42,10 +58,12 @@ namespace DCL.Chat.ChatServices
         /// </summary>
         private CancellationTokenSource? liveUpdateCts;
 
-        private IDisposable? subscriptionToChannel;
+        /// <summary>
+        ///     Only one refresh may write the buffers at a time; restarted on every refresh and linked to <see cref="liveUpdateCts" />.
+        /// </summary>
+        private CancellationTokenSource? refreshCts;
 
-        private readonly EventSubscriptionScope subscriptionToCounterUpdate = new ();
-        private readonly EventSubscriptionScope subscriptionToUserStatus = new ();
+        private IDisposable? subscriptionToChannel;
 
         /// <summary>
         ///     Fires when the total number of members in the current channel changes.
@@ -62,12 +80,19 @@ namespace DCL.Chat.ChatServices
         public ChatMemberListService(ProfileRepositoryWrapper profileRepository,
             IFriendsService? friendsService,
             CurrentChannelService currentChannelService,
-            IEventBus eventBus)
+            IEventBus eventBus) : this(profileRepository, friendsService, currentChannelService, eventBus, UNRESOLVED_RETRY_DELAY_MS) { }
+
+        internal ChatMemberListService(ProfileRepositoryWrapper profileRepository,
+            IFriendsService? friendsService,
+            CurrentChannelService currentChannelService,
+            IEventBus eventBus,
+            int unresolvedRetryDelayMs)
         {
             this.profileRepository = profileRepository;
             this.friendsService = friendsService;
             this.currentChannelService = currentChannelService;
             this.eventBus = eventBus;
+            this.unresolvedRetryDelayMs = unresolvedRetryDelayMs;
         }
 
         public void Dispose() =>
@@ -91,18 +116,6 @@ namespace DCL.Chat.ChatServices
             OnChannelSelected();
         }
 
-        private void UpdateCounter(ChatEvents.ChannelUsersStatusUpdated evt)
-        {
-            if (evt.Qualifies(currentChannelService.CurrentChannel))
-                UpdateAndBroadcastCount(evt.OnlineUsers.Count);
-        }
-
-        private void UpdateCounter(ChatEvents.UserStatusUpdatedEvent evt)
-        {
-            if (evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
-                UpdateAndBroadcastCount(currentChannelService.UserStateService!.OnlineParticipants.Count);
-        }
-
         /// <summary>
         ///     Stops the service, cancels all running tasks, and unsubscribes from events.
         /// </summary>
@@ -114,8 +127,7 @@ namespace DCL.Chat.ChatServices
         }
 
         /// <summary>
-        ///     Starts a background polling loop to check for changes in the member list.
-        ///     The polling strategy is optimized based on the current channel type.
+        ///     Subscribes to member status changes of the current channel so the full list is refreshed while the panel is open.
         ///     This should be called AFTER the initial list is displayed.
         /// </summary>
         public void StartLiveMemberUpdates(Action<IReadOnlyList<ChatMemberListData>> onMemberListUpdated)
@@ -130,44 +142,37 @@ namespace DCL.Chat.ChatServices
             this.onMemberListUpdated = onMemberListUpdated;
         }
 
-        private void RefreshFullListIfNeeded(ChatEvents.ChannelUsersStatusUpdated evt)
-        {
-            if (!evt.Qualifies(currentChannelService.CurrentChannel))
-                return;
-
-            // If the event is for the current channel, refresh the full list
-            RefreshFullListIfNeededAsync(liveUpdateCts!.Token).Forget();
-        }
-
         /// <summary>
-        ///     Stops the live member list polling.
+        ///     Stops the live member list updates.
         ///     This should be called when the member list panel is closed to conserve resources.
         /// </summary>
         public void StopLiveMemberUpdates()
         {
             ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Stopping live member updates...");
 
-            subscriptionToUserStatus?.Dispose();
+            subscriptionToUserStatus.Dispose();
+            CancelRefresh();
             liveUpdateCts.SafeCancelAndDispose();
             onMemberListUpdated = null;
-        }
-
-        private void RefreshFullListIfNeeded(ChatEvents.UserStatusUpdatedEvent @event)
-        {
-            if (!@event.ChannelId.Equals(currentChannelService.CurrentChannelId))
-                return;
-
-            RefreshFullListIfNeededAsync(liveUpdateCts!.Token).Forget();
         }
 
         /// <summary>
         ///     Performs a single, fresh fetch of the full member list.
         ///     This should be called by the UI when the member list panel is first opened.
         /// </summary>
-        public UniTask RequestInitialMemberListAsync()
+        public UniTask RequestInitialMemberListAsync() =>
+            RefreshFullListIfNeeded(force: true);
+
+        private void UpdateCounter(ChatEvents.ChannelUsersStatusUpdated evt)
         {
-            currentChannelService.UserStateService!.CopyOnlineParticipantsTo(participantsBuffer);
-            return RefreshFullListAsync(participantsBuffer, liveUpdateCts!.Token);
+            if (evt.Qualifies(currentChannelService.CurrentChannel))
+                UpdateAndBroadcastCount(evt.OnlineUsers.Count);
+        }
+
+        private void UpdateCounter(ChatEvents.UserStatusUpdatedEvent evt)
+        {
+            if (evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                UpdateAndBroadcastCount(currentChannelService.UserStateService!.OnlineParticipants.Count);
         }
 
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent @event)
@@ -183,53 +188,138 @@ namespace DCL.Chat.ChatServices
 
         private void ResetAllMemberState()
         {
+            // A refresh started for the previous channel must not publish into the new one
+            CancelRefresh();
             membersBuffer.Clear();
+            resolvedMembers.Clear();
             lastKnownMemberIds.Clear();
+            unresolvedMemberIds.Clear();
             lastKnownTitleBarCount = -1;
         }
 
-        private UniTask RefreshFullListIfNeededAsync(CancellationToken ct)
+        private void CancelRefresh()
+        {
+            refreshCts.SafeCancelAndDispose();
+            refreshCts = null;
+        }
+
+        private void RefreshFullListIfNeeded(ChatEvents.ChannelUsersStatusUpdated evt)
+        {
+            if (!evt.Qualifies(currentChannelService.CurrentChannel))
+                return;
+
+            RefreshFullListIfNeeded(force: false).Forget();
+        }
+
+        private void RefreshFullListIfNeeded(ChatEvents.UserStatusUpdatedEvent @event)
+        {
+            if (!@event.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                return;
+
+            RefreshFullListIfNeeded(force: false).Forget();
+        }
+
+        private UniTask RefreshFullListIfNeeded(bool force)
         {
             currentChannelService.UserStateService!.CopyOnlineParticipantsTo(participantsBuffer);
 
-            if (lastKnownMemberIds.SetEquals(participantsBuffer))
+            // On panel re-open the last known set is still the one from the previous opening
+            if (!force && lastKnownMemberIds.SetEquals(participantsBuffer))
                 return UniTask.CompletedTask;
 
             lastKnownMemberIds.Clear();
+            lastKnownMemberIds.UnionWith(participantsBuffer);
 
-            foreach (string participant in participantsBuffer)
-                lastKnownMemberIds.Add(participant);
-
-            return RefreshFullListAsync(lastKnownMemberIds, ct);
+            refreshCts = refreshCts.SafeRestartLinked(liveUpdateCts!.Token);
+            return RefreshFullListAsync(refreshCts.Token);
         }
 
         /// <summary>
-        ///     Fetches the full, detailed member list for the current channel, sorts it,
-        ///     and broadcasts it via the OnMemberListUpdated event.
+        ///     Publishes one row per online wallet right away (a wallet placeholder when the profile is not available yet),
+        ///     then keeps re-requesting the unresolved profiles for a bounded time and republishes as they land.
         /// </summary>
-        private async UniTask RefreshFullListAsync(IReadOnlyCollection<string> participants, CancellationToken ct)
+        private async UniTask RefreshFullListAsync(CancellationToken ct)
         {
-            // TODO execution must be deferred
-
-            membersBuffer.Clear();
-
             try
             {
-                await FetchOnlineParticipantsMemberDataAsync(participants, ct);
+                resolvedMembers.Clear();
+                unresolvedMemberIds.Clear();
+                unresolvedMemberIds.UnionWith(lastKnownMemberIds);
+
+                await FetchUnresolvedAsync(ct);
 
                 if (ct.IsCancellationRequested) return;
 
-                membersBuffer.Sort((a, b) =>
-                    string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+                PublishMembers();
 
-                onMemberListUpdated?.Invoke(membersBuffer);
+                for (var attempt = 0; unresolvedMemberIds.Count > 0 && attempt < MAX_UNRESOLVED_RETRIES; attempt++)
+                {
+                    await UniTask.Delay(unresolvedRetryDelayMs, DelayType.Realtime, cancellationToken: ct);
+
+                    int unresolvedBefore = unresolvedMemberIds.Count;
+
+                    await FetchUnresolvedAsync(ct);
+
+                    if (ct.IsCancellationRequested) return;
+
+                    if (unresolvedMemberIds.Count < unresolvedBefore)
+                        PublishMembers();
+                }
+
+                if (unresolvedMemberIds.Count > 0)
+                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES,
+                        $"[ChatMemberListService] {unresolvedMemberIds.Count} online member(s) have no resolvable profile after {MAX_UNRESOLVED_RETRIES} retries and stay listed by wallet: {string.Join(", ", unresolvedMemberIds)}");
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
         }
 
-        private static UniTask UnifiedDelay(CancellationToken ct) =>
-            UniTask.Delay(UNIFIED_POLL_INTERVAL_MS, DelayType.UnscaledDeltaTime, cancellationToken: ct);
+        private async UniTask FetchUnresolvedAsync(CancellationToken ct)
+        {
+            requestBuffer.Clear();
+
+            foreach (string id in unresolvedMemberIds)
+                requestBuffer.Add(id);
+
+            // Suppresses failures per id: one null or throwing profile must not drop the others
+            List<Profile.CompactInfo> profiles = await profileRepository.GetProfilesAsync(requestBuffer, ct);
+
+            if (ct.IsCancellationRequested) return;
+
+            foreach (Profile.CompactInfo profile in profiles)
+                if (unresolvedMemberIds.Remove(profile.UserId.Value))
+                    resolvedMembers.Add(new ChatMemberListData(profile, ChatMemberConnectionStatus.Online));
+        }
+
+        private void PublishMembers()
+        {
+            placeholderMembers.Clear();
+
+            foreach (string identity in unresolvedMemberIds)
+            {
+                Option<UserId> userId = UserId.New(identity);
+
+                if (!userId.Has)
+                    continue;
+
+                placeholderMembers.Add(new ChatMemberListData(new Profile.CompactInfo(userId.Value, PlaceholderName(identity)), ChatMemberConnectionStatus.Online));
+            }
+
+            resolvedMembers.Sort(BY_NAME);
+            placeholderMembers.Sort(BY_WALLET);
+
+            membersBuffer.Clear();
+            membersBuffer.AddRange(resolvedMembers);
+            membersBuffer.AddRange(placeholderMembers);
+
+            onMemberListUpdated?.Invoke(membersBuffer);
+        }
+
+        /// <summary>
+        ///     The row shows this as the name and the wallet's last four characters as the hashtag, like an unclaimed name.
+        /// </summary>
+        private static string PlaceholderName(string identity) =>
+            identity.Length > 6 ? identity[..6] : identity;
 
         private void UpdateAndBroadcastCount(int newCount)
         {
@@ -238,58 +328,5 @@ namespace DCL.Chat.ChatServices
 
             MultithreadingUtility.InvokeOnMainThread(() => OnMemberCountUpdated?.Invoke(lastKnownTitleBarCount));
         }
-
-        private async UniTask FetchOnlineParticipantsMemberDataAsync(IReadOnlyCollection<string> participants, CancellationToken ct)
-        {
-            // TODO requires pooling
-            var profiles = new List<Profile.CompactInfo>();
-
-            // 1. Await the new asynchronous method to get the fully populated list of profiles.
-            await GetProfilesFromParticipantsAsync(participants, profiles, ct);
-
-            // If cancellation was requested during the fetch, stop processing.
-            if (ct.IsCancellationRequested) return;
-
-            // 2. The rest of your logic remains the same.
-            //    By the time we get here, 'profiles' contains all members that could be found.
-            foreach (Profile.CompactInfo profile in profiles)
-            {
-                if (ct.IsCancellationRequested) return;
-
-                membersBuffer.Add(CreateMemberDataFromProfile(profile));
-            }
-        }
-
-        private async UniTask GetProfilesFromParticipantsAsync(IEnumerable<string> participantIdentities, List<Profile.CompactInfo> outProfiles, CancellationToken ct)
-        {
-            outProfiles.Clear();
-
-            // 1. Create a list to hold all the asynchronous operations (Tasks).
-            var profileTasks = new List<UniTask<Profile.CompactInfo?>>();
-
-            foreach (string? identity in participantIdentities)
-            {
-                if (ct.IsCancellationRequested) return;
-
-                // 2. Start the fetch operation for each identity and add the Task to our list.
-                //    We do NOT await here. This starts the download immediately.
-                profileTasks.Add(profileRepository.GetProfileAsync(identity, ct));
-            }
-
-            // 3. Now, wait for ALL the tasks in the list to complete.
-            //    The requests run concurrently, making this very efficient.
-            Profile.CompactInfo?[]? profiles = await UniTask.WhenAll(profileTasks);
-
-            // 4. Iterate through the results and add the valid, non-null profiles.
-            foreach (Profile.CompactInfo? profile in profiles)
-            {
-                if (ct.IsCancellationRequested) return;
-
-                if (profile != null) { outProfiles.Add(profile.Value); }
-            }
-        }
-
-        private ChatMemberListData CreateMemberDataFromProfile(Profile.CompactInfo profile) =>
-            new (profile, ChatMemberConnectionStatus.Online);
     }
 }
