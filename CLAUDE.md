@@ -20,6 +20,8 @@ Before writing or modifying any code, follow the code-standards skill for naming
 
 A `Stop` hook (`.claude/settings.json` → [`scripts/lint/lint-changed.sh`](scripts/lint/lint-changed.sh)) runs ReSharper InspectCode over the C# files changed in the session **using the exact same scripts, flags, and `.editorconfig` rules as CI** (`scripts/lint/{download-resharper,run-inspectcode,filter-warnings}.sh`, shared with `.github/workflows/test.yml`). Resolve any issues it reports in files you changed before finishing — they are real CI lint findings. If the ReSharper CLI isn't installed it prints how to get it (`bash scripts/lint/download-resharper.sh`) and does not block. It only inspects when `.cs` files changed.
 
+A tracked `pre-commit` hook ([`.githooks/pre-commit`](.githooks/pre-commit), enabled per clone via `bash scripts/install-git-hooks.sh`) runs [`scripts/lint/clean-up-excessive-ai-comments.sh`](scripts/lint/clean-up-excessive-ai-comments.sh) when a commit adds comment lines to C# files. It asks Claude to trim excessive comments introduced by the branch and to enforce the comment rule in § 11 below, then lets the committer keep or discard the edits. The script's `go` mode does the same non-interactively; run it with `--help` for the argument reference.
+
 ---
 
 ## Project Code Standards for Claude Reviews
