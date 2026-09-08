@@ -67,7 +67,7 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "clean-up-excessiv
 cd "$ROOT"
 
 if [ -z "$mode" ]; then
-    if [ -t 0 ] || [ -e /dev/tty ]; then mode="interactive"; else mode="go"; fi
+    if [ -t 0 ]; then mode="interactive"; else mode="go"; fi
 fi
 
 CLAUDE_BIN="${CLAUDE_BIN:-claude}"
@@ -108,6 +108,7 @@ files="$(printf '%s\n' "$files" | sed '/^$/d' | while IFS= read -r f; do [ -f "$
 
 # Build the prompt.
 if [ -n "$prompt_file" ]; then
+    [ -f "$prompt_file" ] || { echo "clean-up-excessive-ai-comments: prompt file not found: $prompt_file" >&2; exit 1; }
     prompt="$(cat "$prompt_file")"
 else
     prompt="$(cat <<EOF
