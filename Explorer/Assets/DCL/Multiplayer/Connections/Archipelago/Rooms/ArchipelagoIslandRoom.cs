@@ -79,12 +79,25 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             // main thread so the loop resumes its player-loop delay exactly as the heartbeat path leaves it.
             await UniTask.SwitchToMainThread(token);
 
+            await SendHeartbeatIfEnabledAsync(token);
+        }
+
+        /// <summary>
+        ///     The only place the <c>archipelago-heartbeats</c> kill switch is read, and the only place a
+        ///     <c>Heartbeat</c> is ever produced: with the flag off the sign flow is not called at all, so no
+        ///     packet reaches the archipelago socket. The flag is absent-means-on, so a client that resolved no
+        ///     feature flags keeps reporting its position exactly as it does today.
+        ///     <c>internal</c> for <c>ArchipelagoHeartbeatKillSwitchShould</c>: the cycle step itself is
+        ///     <c>protected</c> and cannot be driven from the test assembly.
+        /// </summary>
+        internal async UniTask SendHeartbeatIfEnabledAsync(CancellationToken token)
+        {
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.ArchipelagoHeartbeats)) return;
 
             Vector3 position = characterObject.Position;
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
 
-            var result = await signFlow.SendHeartbeatAsync(position, token);
+            Result result = await signFlow.SendHeartbeatAsync(position, token);
 
             if (result.Success == false)
                 ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
