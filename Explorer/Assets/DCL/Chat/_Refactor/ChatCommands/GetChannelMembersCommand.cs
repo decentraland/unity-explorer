@@ -22,7 +22,6 @@ namespace DCL.Chat.ChatCommands
         {
             targetList.Clear();
 
-            // Ordering is owned by the service
             foreach (ChatMemberListData member in rawMembers)
             {
                 var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online);

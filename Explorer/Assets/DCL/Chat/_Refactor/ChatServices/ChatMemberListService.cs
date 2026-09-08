@@ -3,7 +3,6 @@ using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Optimization.Pools;
@@ -39,7 +38,6 @@ namespace DCL.Chat.ChatServices
         private readonly HashSet<string> lastKnownMemberIds = new (StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> participantsBuffer = new (StringComparer.OrdinalIgnoreCase);
 
-        // Profile UserIds can differ in casing from LiveKit identities
         private readonly HashSet<string> unresolvedMemberIds = new (StringComparer.OrdinalIgnoreCase);
         private readonly List<string> requestBuffer = new (PoolConstants.AVATARS_COUNT);
 
