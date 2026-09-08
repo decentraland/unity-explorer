@@ -40,8 +40,7 @@ namespace DCL.Multiplayer.Connectivity
 
             foreach (JToken peer in peers)
             {
-                // A peers element may itself be a non-object (e.g. a literal null); JToken's indexer would
-                // throw InvalidOperationException on those, which defeats the point of tolerating malformed payloads.
+                // JToken's indexer throws on non-object elements (e.g. null)
                 if (peer is not JObject peerObject)
                     continue;
 
@@ -51,16 +50,13 @@ namespace DCL.Multiplayer.Connectivity
                 if (address == null || posArray == null || posArray.Count < 3)
                     continue;
 
-                // Value<float?>() yields null for null/missing/non-numeric tokens instead of throwing.
                 float? x = posArray[0].Value<float?>();
                 float? z = posArray[2].Value<float?>();
 
                 if (x == null || z == null)
                     continue;
 
-                // Newtonsoft parses NaN/Infinity float literals by default, and ToVector3's Convert.ToInt32
-                // throws OverflowException on those (and on out-of-int magnitudes) — one bad peer would kill
-                // the whole list, the same failure this converter exists to prevent.
+                // NaN/Infinity would overflow in ToVector3
                 if (!float.IsFinite(x.Value) || !float.IsFinite(z.Value))
                     continue;
 

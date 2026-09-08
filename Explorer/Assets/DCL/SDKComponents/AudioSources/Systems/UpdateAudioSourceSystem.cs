@@ -88,8 +88,7 @@ namespace DCL.SDKComponents.AudioSources
                 if (audioSource.clip != null)
                     if (sdkAudioSource is {HasPlaying: true, Playing: true })
                     {
-                        // Honor an explicit CurrentTime at creation and record it, so the first volume-only
-                        // PUT afterwards compares equal and does not re-seek/restart the freshly started clip (#9903).
+                        // Record the seek so a later re-sent CurrentTime does not restart the clip (#9903)
                         if (sdkAudioSource.HasCurrentTime)
                         {
                             float seekTarget = ComputeSeekTarget(sdkAudioSource.CurrentTime, audioSource.clip);
@@ -164,10 +163,7 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     if (sdkComponent is {HasPlaying: true, Playing: true })
                     {
-                        // A whole-component LWW PUT re-sends CurrentTime on every property change (e.g.
-                        // volume), so field presence alone is not a retrigger. While playing, only a changed
-                        // target is a real seek; while stopped, always seek — Stop() rewinds to 0 and a
-                        // finished clip has no cursor left to preserve, so resume must restore the target (#9903).
+                        // CurrentTime is re-sent on every PUT: while playing only a changed target is a seek, while stopped always seek (#9903)
                         if (sdkComponent.HasCurrentTime)
                         {
                             float seekTarget = ComputeSeekTarget(sdkComponent.CurrentTime, audioSource.clip);
@@ -192,9 +188,7 @@ namespace DCL.SDKComponents.AudioSources
             sdkComponent.IsDirty = false;
         }
 
-        // CurrentTime arrives from the scene unvalidated: clamp it into the clip's seekable range, otherwise
-        // FMOD rejects the seek ("An invalid seek position was passed"). Shared by the creation and update
-        // paths so both compute the same target.
+        // Clamp into the seekable range, otherwise FMOD rejects the seek
         private static float ComputeSeekTarget(float currentTime, AudioClip clip) =>
             float.IsNaN(currentTime)
                 ? 0f

@@ -148,9 +148,7 @@ namespace DCL.Profiles
                 return TryGetExistingRequest(userId, pendingBatches, out req);
         }
 
-        /// <summary>
-        ///     The caller must hold the lock on <paramref name="list" />
-        /// </summary>
+        // Caller holds the lock on `list`
         private static bool TryGetExistingRequest(string userId, List<ProfilesBatchRequest> list, out ProfilesBatchRequest.Input req)
         {
             foreach (ProfilesBatchRequest profilesBatch in list)
@@ -206,9 +204,7 @@ namespace DCL.Profiles
             return false;
         }
 
-        /// <summary>
-        ///     The caller must hold the lock on <paramref name="requests" />
-        /// </summary>
+        // Caller holds the lock on `requests`
         private UniTaskCompletionSource<ProfileTier?> AddToBatch(string userId, URLDomain? fromCatalyst,
             List<ProfilesBatchRequest> requests, ProfileTier.Kind tier, IPartitionComponent partition)
         {
@@ -366,10 +362,7 @@ namespace DCL.Profiles
                 // Centralized endpoint doesn't support GET
                 if (useCentralizedProfiles && !forceCatalyst)
                 {
-                    // A profile fetch-by-id is idempotent, so retry transient failures instead of letting a
-                    // single miss bubble up as "Profile fetch timed out after 15s" (#9878). Unlike the GET
-                    // path, PostSingleAsync's POST is not retried by WebRequestController (non-idempotent), so
-                    // this policy only drives PostSingleAsync's own re-issue loop — DEFAULT keeps it bounded.
+                    // POST is not retried by the web request itself, so this policy drives PostSingleAsync's re-issue loop (#9878)
                     profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version,
                         retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.DEFAULT, ct);
 

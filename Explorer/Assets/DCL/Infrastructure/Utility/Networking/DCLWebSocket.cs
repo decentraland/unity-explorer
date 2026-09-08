@@ -60,7 +60,7 @@ namespace Utility.Networking
             }
             catch (System.Net.WebSockets.WebSocketException e) when (e.InnerException is ObjectDisposedException)
             {
-                // Dispose() ran between the flag check and the actual send.
+                // Dispose() raced the send
             }
             catch (System.Net.WebSockets.WebSocketException e)
             {

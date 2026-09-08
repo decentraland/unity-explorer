@@ -17,10 +17,7 @@ namespace DCL.Diagnostics.Sentry
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
         private const string UNKNOWN_SCENE_NAME = "unknown-scene";
 
-        // Prefixes of native (engine-emitted) log messages that reach us as UNSPECIFIED errors and are
-        // un-actionable on our side. "[Physics.PhysX]" covers mesh-cooking warnings ("cleaning the mesh
-        // failed", etc.) produced by degenerate/non-manifold geometry in creator-uploaded scene assets
-        // (tracker #7928). They are informational for us and must not create Sentry issues.
+        // Un-actionable native engine messages, e.g. PhysX mesh-cooking warnings from creator assets (#7928)
         private static readonly string[] SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES =
         {
             "[Physics.PhysX]",
@@ -175,11 +172,7 @@ namespace DCL.Diagnostics.Sentry
 
         private void CaptureMessage(string message, ReportData reportData, LogType logType)
         {
-            // Native engine warnings triggered by malformed creator content carry no actionable C# context
-            // and flood Sentry as standalone issues; demote them to a breadcrumb here (they stay in Player.log
-            // via the untouched DebugLog handler). Native messages always arrive uncategorized (UNSPECIFIED),
-            // so scoping to that avoids silencing a non-native caller (e.g. scene JS in the JAVASCRIPT
-            // category) that happens to start its message with an ignored prefix.
+            // Native messages always arrive as UNSPECIFIED; demote the ignored ones to breadcrumbs
             if (reportData.Category == ReportCategory.UNSPECIFIED && IsIgnoredNativeMessage(message))
             {
                 SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Warning);
@@ -255,7 +248,7 @@ namespace DCL.Diagnostics.Sentry
             if (string.IsNullOrEmpty(message))
                 return;
 
-            // default(SceneShortInfo) carries a null Name despite the non-nullable declaration
+            // default(SceneShortInfo) has a null Name
             string sceneName = data.SceneShortInfo.Name;
             scope.SetFingerprint("scene-js", string.IsNullOrEmpty(sceneName) ? UNKNOWN_SCENE_NAME : sceneName, FirstLine(message));
         }

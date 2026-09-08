@@ -307,7 +307,7 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid RejectThenCloseAsync(CancellationToken ct)
             {
-                // A null Request has nothing to reject; close so the panel does not hang awaiting lifeCycleTask.
+                // Nothing to reject: close instead of hanging on lifeCycleTask
                 if (inputData.Request is not { } request)
                 {
                     Close();
@@ -358,7 +358,7 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid CancelThenCloseAsync(CancellationToken ct)
             {
-                // A null Request has nothing to cancel; close so the panel does not hang awaiting lifeCycleTask.
+                // Nothing to cancel: close instead of hanging on lifeCycleTask
                 if (inputData.Request is not { } request)
                 {
                     Close();
