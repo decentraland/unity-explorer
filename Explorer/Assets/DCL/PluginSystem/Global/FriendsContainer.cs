@@ -20,7 +20,6 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.SocialService;
 using DCL.UI.MainUI;
-using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -147,8 +146,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 passportBridge,
                 friendsService,
-                friendsPanelController,
-                web3IdentityCache);
+                friendsPanelController);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
         }
@@ -219,12 +217,6 @@ namespace DCL.PluginSystem.Global
 
         private void OnInputShortcutsFriendPanelPerformed(InputAction.CallbackContext _)
         {
-            if (web3IdentityCache.IsGuest())
-            {
-                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
-                return;
-            }
-
             if (friendsPanelController.State != ControllerState.ViewHidden)
                 friendsPanelController.CloseFriendsPanel();
             else

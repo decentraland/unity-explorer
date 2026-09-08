@@ -8,9 +8,7 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
-using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3;
-using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -25,7 +23,6 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly IPassportBridge passportBridge;
         private readonly IFriendsService friendsService;
         private readonly FriendsPanelController friendsPanelController;
-        private readonly IWeb3IdentityCache identityCache;
 
         private CancellationTokenSource? friendRequestReceivedCts;
 
@@ -37,15 +34,13 @@ namespace DCL.Friends.UI.FriendPanel
             IMVCManager mvcManager,
             IPassportBridge passportBridge,
             IFriendsService friendsService,
-            FriendsPanelController friendsPanelController,
-            IWeb3IdentityCache identityCache)
+            FriendsPanelController friendsPanelController)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
             this.friendsService = friendsService;
             this.friendsPanelController = friendsPanelController;
-            this.identityCache = identityCache;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED, FriendRequestAccepted);
@@ -92,9 +87,7 @@ namespace DCL.Friends.UI.FriendPanel
                 switch (friendshipStatus)
                 {
                     case FriendshipStatus.Friend:
-                        if (identityCache.IsGuest())
-                            mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand(), ct);
-                        else if (friendsPanelController.State != ControllerState.ViewHidden)
+                        if (friendsPanelController.State != ControllerState.ViewHidden)
                             friendsPanelController.ToggleTabs(FriendsPanelController.FriendsPanelTab.Friends);
                         else
                             mvcManager.ShowAndForget(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends)), ct);

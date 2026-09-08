@@ -424,16 +424,8 @@ namespace DCL.UI.Sidebar
         }
         private void OnUnreadMessagesButtonClicked() => chatEventBus.RaiseToggleChatEvent();
         private void OnEmotesWheelButtonClicked() => OpenPanelAsync(viewInstance!.emotesWheelButton, EmotesWheelController.IssueCommand()).Forget();
-        private void OnFriendsButtonClicked()
-        {
-            if (identityCache.IsGuest())
-            {
-                OpenPanelAsync(viewInstance!.friendsButton, UpgradeGuestAccountPopupController.IssueCommand()).Forget();
-                return;
-            }
-
+        private void OnFriendsButtonClicked() =>
             OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.Friends))).Forget();
-        }
 
         private void OnMarketplaceCreditsButtonClicked()
         {
