@@ -150,7 +150,7 @@ Emit these as warnings in the review body. They do NOT cause a FAIL on their own
   > ⚠️ **Main scene modified** (`Explorer/Assets/Scenes/Main.unity`). This file is rarely changed intentionally — verify this wasn't pushed by mistake.
 
 --- Security review integration ---
-Jarvis applies the shared `security-review` skill from agent-server, including its dependency, automation and Unity references when applicable. Include its single `DEPENDENCY_REVIEW` line before the verdict block below. The security status is advisory during the pilot: its marker does not itself change the code verdict, approval, QA waiver, or merge requirements. Apply the normal review criteria to concrete findings. For binary/provenance findings where a code edit cannot establish safety, give concrete verification/remediation steps instead of fabricating a suggestion block. When Jarvis supplies a snapshot and run marker, review those exact commits and submit one COMMENT review with `commit_id` set to the supplied head SHA and the run marker copied once. Jarvis owns the security commit status.
+Follow deployed Jarvis `skills/security-review/SKILL.md` and its Unity reference for security checks, evidence-based remedies, advisory scope and snapshot/run-marker publication. Put its single `DEPENDENCY_REVIEW` line before the verdict block below; preserve the four code-review lines and attribution.
 
 --- STEP 9 — Verdict ---
 Emit exactly these four lines at the end of the review body you post to GitHub, immediately before the attribution line (order matters — downstream automation parses them):
