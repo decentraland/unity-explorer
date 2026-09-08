@@ -14,29 +14,29 @@ namespace DCL.Multiplayer.Connections.Systems.RoomIndicator
     ///     </para>
     ///     <para>Pulse exposes no roster to read, so its announcement is the only signal it can report.</para>
     ///     <para>
-    ///         Glyphs are written as escapes to keep this file ASCII. Every codepoint used here must exist in the
-    ///         sprite asset the nametags panel resolves text against, or it renders as a missing glyph.
+    ///         Named sprite tags resolve against the nametag panel's bundled default sprite asset.
+    ///         Raw Unicode emoji can resolve through Editor font fallbacks that are unavailable in player builds.
     ///     </para>
     /// </summary>
     public static class RoomIndicatorLabel
     {
         /// <summary>Green circle: a LiveKit participant that also announced over the room, the full compatibility path.</summary>
-        public const string PRESENT_AND_ANNOUNCED = "\U0001F7E2";
+        public const string PRESENT_AND_ANNOUNCED = "<sprite name=\"1f7e2\">";
 
         /// <summary>Link: a LiveKit participant that never announced over the room, the steady state under Pulse.</summary>
-        public const string PRESENT_ONLY = "\U0001F517";
+        public const string PRESENT_ONLY = "<sprite name=\"1f517\">";
 
         /// <summary>Ghost: an announcement from a wallet the roster no longer lists, a stale entry or a hand-off in flight.</summary>
-        public const string ANNOUNCED_ONLY = "\U0001F47B";
+        public const string ANNOUNCED_ONLY = "<sprite name=\"1f47b\">";
 
         /// <summary>High voltage: announced over Pulse.</summary>
-        public const string PULSE = "\u26A1";
+        public const string PULSE = "<sprite name=\"26a1\">";
 
         /// <summary>Drawn when no room accounts for the avatar at all.</summary>
         public const string NONE = "None";
 
         /// <summary>Reused across builds; the indicator is written from the main thread only.</summary>
-        private static readonly StringBuilder BUILDER = new (48);
+        private static readonly StringBuilder BUILDER = new (96);
 
         /// <summary>The label for one avatar, or <see cref="NONE" /> when no room accounts for it.</summary>
         /// <param name="announced">Rooms that delivered an announcement, as recorded on the participant table.</param>

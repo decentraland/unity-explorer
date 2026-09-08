@@ -1,6 +1,10 @@
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Systems.RoomIndicator;
 using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.TextCore.Text;
+using UnityEngine.UIElements;
 
 namespace DCL.Tests.Editor
 {
@@ -104,17 +108,25 @@ namespace DCL.Tests.Editor
             Assert.AreEqual(RoomIndicatorLabel.NONE, label);
         }
 
-        /// <remarks>
-        ///     These codepoints must stay in sync with the sprite asset the nametags panel resolves text against;
-        ///     this pins them so a swap is a deliberate edit rather than a silent one.
-        /// </remarks>
-        [Test]
-        public void PinTheGlyphCodepoints()
+        [TestCase(RoomIndicatorLabel.PRESENT_AND_ANNOUNCED, "1f7e2")]
+        [TestCase(RoomIndicatorLabel.PRESENT_ONLY, "1f517")]
+        [TestCase(RoomIndicatorLabel.ANNOUNCED_ONLY, "1f47b")]
+        [TestCase(RoomIndicatorLabel.PULSE, "26a1")]
+        public void ResolveNamedSpritesFromTheNametagPrefab(string tag, string spriteName)
         {
-            Assert.AreEqual("\U0001F7E2", RoomIndicatorLabel.PRESENT_AND_ANNOUNCED);
-            Assert.AreEqual("\U0001F517", RoomIndicatorLabel.PRESENT_ONLY);
-            Assert.AreEqual("\U0001F47B", RoomIndicatorLabel.ANNOUNCED_ONLY);
-            Assert.AreEqual("\u26A1", RoomIndicatorLabel.PULSE);
+            // Arrange
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/DCL/NameTags/Assets/NametagUIDocument.prefab");
+            PanelSettings panel = prefab.GetComponent<UIDocument>().panelSettings;
+            SpriteAsset sprites = panel.textSettings.defaultSpriteAsset;
+
+            // Act
+            int index = sprites.GetSpriteIndexFromName(spriteName);
+
+            // Assert
+            Assert.AreEqual($"<sprite name=\"{spriteName}\">", tag);
+            Assert.That(index, Is.GreaterThanOrEqualTo(0));
+            Assert.That(sprites.spriteSheet, Is.Not.Null);
+            Assert.That(sprites.material, Is.Not.Null);
         }
 
         [Test]

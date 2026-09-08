@@ -91,6 +91,8 @@ Expand **Room: Info** and enable **Show Room Indicator**.
 
 Needed to judge Tests 2–4.
 
+The icons use named rich-text sprite tags from the nametag panel's bundled emoji atlas. Raw Unicode emoji can work through Editor font fallbacks while showing missing-glyph boxes in a player build. Verify all four icons in a standalone build as well as the Editor.
+
 The tag above a remote avatar names every room that accounts for it, each prefixed by a glyph. The glyph separates two facts that are **not** the same thing:
 
 | Glyph | Means |
