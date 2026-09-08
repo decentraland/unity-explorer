@@ -130,7 +130,7 @@ namespace Utility.Networking
             {
 
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-                await ws.CloseAsync(status, description, cancellationToken);
+                await ws.CloseAsync(status, description ?? string.Empty, cancellationToken);
 #else
                 // A racing Dispose() nulls Mono's inner socket; bail before touching ws.
                 if (disposed)
@@ -144,7 +144,7 @@ namespace Utility.Networking
                 }
 
                 System.Net.WebSockets.WebSocketCloseStatus statusType = (System.Net.WebSockets.WebSocketCloseStatus)status;
-                await ws.CloseAsync(statusType, description, cancellationToken);
+                await ws.CloseAsync(statusType, description ?? string.Empty, cancellationToken);
 #endif
             }
             catch (System.Net.WebSockets.WebSocketException e) when (e.InnerException is ObjectDisposedException)

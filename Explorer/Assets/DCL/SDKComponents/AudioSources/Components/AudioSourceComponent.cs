@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.AudioSources
         ///     Use ThreadSafeLastAudioFrameReadFilter because it has to be attached to the same GameObject.
         ///     But GameObject is owned by AudioSource MonoBehavour in practice, and gets repooled with it.
         ///     To avoid LifeCycle complications ThreadSafeLastAudioFrameReadFilter is referenced directly and owned by AudioSourceComponent.
-        ///     MonoBehaviour cannot be easily pooled because the ownership issue arise. 
+        ///     MonoBehaviour cannot be easily pooled because the ownership issue arise.
         ///     AudioSource and ThreadSafeLastAudioFrameReadFilter share the same GameObject.
         /// </summary>
         private ThreadSafeLastAudioFrameReadFilterWrap lastAudioFrameReadFilter;
@@ -63,12 +63,16 @@ namespace DCL.SDKComponents.AudioSources
             AudioSourceAssigned = true;
         }
 
-        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
+        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output)
         {
-            return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(AudioSource, out output);
+            if (AudioSource is { } audioSource)
+                return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(audioSource, out output);
+
+            output = null;
+            return false;
         }
 
-        public void EnsureLastAudioFrameReadFilterIsRemoved() 
+        public void EnsureLastAudioFrameReadFilterIsRemoved()
         {
             lastAudioFrameReadFilter.EnsureLastAudioFrameReadFilterIsRemoved();
         }

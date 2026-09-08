@@ -255,7 +255,9 @@ namespace DCL.Diagnostics.Sentry
             if (string.IsNullOrEmpty(message))
                 return;
 
-            scope.SetFingerprint("scene-js", data.SceneShortInfo.Name ?? UNKNOWN_SCENE_NAME, FirstLine(message));
+            // default(SceneShortInfo) carries a null Name despite the non-nullable declaration
+            string sceneName = data.SceneShortInfo.Name;
+            scope.SetFingerprint("scene-js", string.IsNullOrEmpty(sceneName) ? UNKNOWN_SCENE_NAME : sceneName, FirstLine(message));
         }
 
         private static string FirstLine(string message)
