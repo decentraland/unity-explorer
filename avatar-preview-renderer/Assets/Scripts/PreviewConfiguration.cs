@@ -126,6 +126,38 @@ public class PreviewConfiguration
     }
 
     /// <summary>
+    /// Whether the avatar casts a shadow onto the floor. On by default, so every existing caller gets
+    /// one; a caller compositing the canvas over its own artwork can opt out with <c>shadow=off</c>.
+    /// </summary>
+    public bool Shadow { get; private set; } = true;
+
+    public void SetShadow(string value) => Shadow = ParseToggle(value, "shadow", Shadow);
+
+    /// <summary>
+    /// Whether a soft pool of light is drawn on the floor under the avatar, so it reads as standing
+    /// on a lit surface rather than floating. Brightens the canvas the same way
+    /// <see cref="Shadow"/> darkens it, and is on by default for the same reason.
+    /// </summary>
+    public bool Glow { get; private set; } = true;
+
+    public void SetGlow(string value) => Glow = ParseToggle(value, "glow", Glow);
+
+    // Accepts both the documented `off` spelling and the bool spelling the other parameters use. An
+    // unrecognised value keeps `current` rather than throwing: bool.Parse would abort RecreateFrom
+    // mid-loop on a typo and drop every parameter after it.
+    private static bool ParseToggle(string value, string name, bool current)
+    {
+        switch (value.ToLowerInvariant())
+        {
+            case "off" or "false" or "0" or "no": return false;
+            case "on" or "true" or "1" or "yes" or "": return true;
+            default:
+                Debug.LogWarning($"Unknown {name} value [{value}], keeping {name} {(current ? "on" : "off")}");
+                return current;
+        }
+    }
+
+    /// <summary>
     /// The color of the skin in HEX.
     /// </summary>
     public Color? SkinColor { get; private set; }
@@ -303,6 +335,12 @@ public class PreviewConfiguration
                 case "background":
                     Instance.SetBackground(value);
                     break;
+                case "shadow":
+                    Instance.SetShadow(value);
+                    break;
+                case "glow":
+                    Instance.SetGlow(value);
+                    break;
                 case "skinColor":
                     Instance.SetSkinColor(value);
                     break;
@@ -383,6 +421,8 @@ public class PreviewConfiguration
         foreach (var urn in Urns)
             sb.AppendFormat("&urn={0}", urn);
         sb.AppendFormat("&background={0}", ColorUtility.ToHtmlStringRGBA(Background));
+        sb.AppendFormat("&shadow={0}", Shadow ? "on" : "off");
+        sb.AppendFormat("&glow={0}", Glow ? "on" : "off");
         if (SkinColor.HasValue)
             sb.AppendFormat("&skinColor={0}", ColorUtility.ToHtmlStringRGB(SkinColor.Value));
         if (HairColor.HasValue)

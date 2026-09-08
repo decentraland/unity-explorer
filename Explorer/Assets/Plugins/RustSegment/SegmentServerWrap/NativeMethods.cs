@@ -13,6 +13,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             Success = 0,
             Error = 1,
+            ErrorDiskFull = 2,
         }
 
         [UnmanagedFunctionPointer(CALLING_CONVENTION)]
