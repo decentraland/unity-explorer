@@ -31,8 +31,6 @@ namespace DCL.SDKComponents.TriggerArea.Tests
         [SetUp]
         public void Setup()
         {
-            // The fixture instance is shared across tests; the capture list must not leak
-            // results from a previous test into the next one's assertions.
             capturedResults.Clear();
 
             globalWorld = World.Create();
@@ -113,7 +111,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             Assert.AreEqual(TriggerAreaEventType.TaetEnter, capturedResults[0].EventType);
             capturedResults.Clear();
 
-            // Flip the mask so the insider no longer matches; no physical exit occurs.
+            // Mask flips without a physical exit.
             SetPBTriggerAreaDirty(ColliderLayer.ClCustom2);
             system.Update(0);
 
@@ -145,7 +143,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             SetupCRDTWriterCapture();
 
-            // Physical enter of a non-matching entity: registered inside, nothing reported.
+            // Non-matching entity enters: tracked, nothing reported.
             world.Get<SDKEntityTriggerAreaComponent>(entity).SetMonoBehaviour(CreateAndAttachAreaMonoBehaviour(entity));
             var comp = world.Get<SDKEntityTriggerAreaComponent>(entity);
             comp.monoBehaviour!.OnTriggerEnter(box);
@@ -153,7 +151,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             Assert.AreEqual(0, capturedResults.Count, "Sanity: a non-matching insider must not be reported.");
 
-            // Widen the mask so the insider now matches; no physical re-enter occurs.
+            // Mask widens without a physical re-enter.
             SetPBTriggerAreaDirty(ColliderLayer.ClCustom1);
             system.Update(0);
 
@@ -236,7 +234,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             Assert.AreEqual(1, capturedResults.Count, "Sanity: the physical enter is reported.");
             capturedResults.Clear();
 
-            // Narrow to the main-player-only fast path: the insider gets its synthetic EXIT...
+            // Narrowing to the main-player fast path emits a synthetic EXIT.
             SetPBTriggerAreaDirty(ColliderLayer.ClMainPlayer);
             system.Update(0);
 
@@ -249,9 +247,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             try
             {
-                // ... and the TryAssignArea re-run (production: SDKEntityTriggerAreaHandlerSystem
-                // reacting to the component dirty flag) binds the filter, which must evict the
-                // insider it can no longer track.
+                // The TryAssignArea re-run binds the filter and must evict the insider.
                 var transformComp = world.Get<TransformComponent>(entity);
                 var comp = world.Get<SDKEntityTriggerAreaComponent>(entity);
                 comp.TryAssignArea(pool, mainPlayerGO.transform, transformComp);
@@ -259,10 +255,10 @@ namespace DCL.SDKComponents.TriggerArea.Tests
                 CollectionAssert.DoesNotContain(area.CurrentEntitiesInside, box,
                     "Binding the main-player filter must evict insiders whose exit callbacks it will swallow.");
 
-                // The insider physically leaves while filtered: the exit callback is swallowed.
+                // Exit callback is swallowed while filtered.
                 area.OnTriggerExit(box);
 
-                // Re-widening must not fabricate an ENTER for the long-gone insider.
+                // Re-widening must not fabricate an ENTER.
                 SetPBTriggerAreaDirty(ColliderLayer.ClCustom1);
                 system.Update(0);
 

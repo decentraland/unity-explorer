@@ -127,12 +127,10 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 ColliderLayer previousMask = triggerAreaComponent.LayerMask;
                 ColliderLayer newMask = pbTriggerArea.GetColliderLayer();
 
-                // Marks the component dirty so SDKEntityTriggerAreaHandlerSystem re-runs
-                // TryAssignArea (collider shape, gameObject layer, main-player fast path).
+                // Re-flags the component dirty so TryAssignArea re-runs.
                 triggerAreaComponent.UpdateMaskAndMeshType(newMask, (SDKEntityTriggerAreaMeshType)pbTriggerArea.GetMeshType());
 
-                // Unity does not synthesize OnTriggerEnter/Exit when a live area's mask changes,
-                // so entities already inside must get synthetic ENTER/EXIT events here.
+                // Unity emits no OnTriggerEnter/Exit on a mask change; synthesize them for insiders.
                 if (previousMask != newMask)
                     ReEvaluateEntitiesInside(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent, previousMask, newMask);
             }
@@ -149,13 +147,10 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         {
             foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
             {
-                // A destroyed collider (Unity fake-null, its exit callback missed) matches no
-                // mask; dereferencing its gameObject would throw.
+                // Destroyed (fake-null) collider: matches no mask, dereferencing would throw.
                 if (entityCollider == null) continue;
 
-                // A pending enter has not been reported yet — it is emitted (or filtered) under
-                // the new mask by ProcessOnEnterTriggerArea; a synthetic EXIT here would
-                // fabricate an exit for an entity the scene never saw enter.
+                // An unreported enter is handled under the new mask by ProcessOnEnterTriggerArea.
                 if (triggerAreaComponent.IsEnterPending(entityCollider)) continue;
 
                 bool matchedPreviousMask = ColliderMatchesMask(triggerAreaEntity, entityCollider, previousMask);
@@ -170,8 +165,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
 
         /// <summary>
-        ///     Mask-gate predicate mirroring the early-outs of <see cref="PropagateResultComponent" />:
-        ///     true iff a result for this collider would pass the layer-mask filtering.
+        ///     Same layer check as <see cref="PropagateResultComponent" />, without emitting a result.
         /// </summary>
         private bool ColliderMatchesMask(in Entity triggerAreaEntity, Collider entityCollider, ColliderLayer mask)
         {

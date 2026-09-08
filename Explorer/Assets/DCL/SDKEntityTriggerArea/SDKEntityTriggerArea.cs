@@ -12,7 +12,6 @@ namespace DCL.SDKEntityTriggerArea
         private readonly HashSet<Collider> currentEntitiesInside = new ();
         private readonly HashSet<Collider> enteredEntitiesToBeProcessed = new ();
         private readonly HashSet<Collider> exitedEntitiesToBeProcessed = new ();
-        private Predicate<Collider>? isNotTargetEntity;
 
         public Transform? TargetTransform { get; private set; }
 
@@ -35,8 +34,7 @@ namespace DCL.SDKEntityTriggerArea
 
             enteredEntitiesToBeProcessed.Remove(other);
 
-            // Only a tracked presence can produce an exit event: a collider admitted by physics
-            // while the target filter was bound was never tracked, so it has no ENTER to balance.
+            // Untracked colliders (filtered on enter) have no ENTER to balance.
             if (!currentEntitiesInside.Remove(other)) return;
 
             exitedEntitiesToBeProcessed.Add(other);
@@ -74,14 +72,14 @@ namespace DCL.SDKEntityTriggerArea
 
             if (targetTransform == null) return;
 
-            // Invariant: the sets only hold colliders that pass the target filter. Binding a
-            // filter re-applies it to colliders tracked while unfiltered — their callbacks are
-            // swallowed from now on, so they could never be removed again. A destroyed
-            // (fake-null) collider can no longer match the target either.
-            isNotTargetEntity ??= entityCollider => entityCollider == null || entityCollider.transform != TargetTransform;
-            currentEntitiesInside.RemoveWhere(isNotTargetEntity);
-            enteredEntitiesToBeProcessed.RemoveWhere(isNotTargetEntity);
-            exitedEntitiesToBeProcessed.RemoveWhere(isNotTargetEntity);
+            // Evict colliders the filter will swallow callbacks for; they could never be removed otherwise.
+            currentEntitiesInside.RemoveWhere(IsNotTargetEntity);
+            enteredEntitiesToBeProcessed.RemoveWhere(IsNotTargetEntity);
+            exitedEntitiesToBeProcessed.RemoveWhere(IsNotTargetEntity);
+            return;
+
+            bool IsNotTargetEntity(Collider entityCollider) =>
+                entityCollider == null || entityCollider.transform != TargetTransform;
         }
     }
 }

@@ -77,9 +77,7 @@ namespace DCL.SDKEntityTriggerArea.Components
                 triggerAreaTransform.localRotation = Quaternion.identity;
             }
 
-            // TargetTransform mirrors targetOnlyMainPlayer on every (re)assignment, so a mask
-            // update that toggles the main-player fast path rebinds or clears the filter;
-            // binding also evicts insiders that the filter stops tracking.
+            // Re-applied on every assignment so a mask update rebinds or clears the filter.
             area.SetTargetTransform(targetOnlyMainPlayer ? mainPlayerTransform : null);
 
             switch (MeshType)
@@ -115,8 +113,7 @@ namespace DCL.SDKEntityTriggerArea.Components
             LayerMask = layerMask;
             MeshType = meshType;
 
-            // Same fast-path predicate as the mask evaluation at setup: only an EXACTLY
-            // CL_MAIN_PLAYER mask may filter colliders down to the local player transform.
+            // Same fast-path predicate as the initial setup.
             targetOnlyMainPlayer = layerMask == ColliderLayer.ClMainPlayer;
             IsDirty = true;
         }
