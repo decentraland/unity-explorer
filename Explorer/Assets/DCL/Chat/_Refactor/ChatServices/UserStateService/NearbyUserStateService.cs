@@ -181,8 +181,7 @@ namespace DCL.Chat.ChatServices
         }
 
         /// <summary>
-        ///     Cast presentation bots and unauthenticated castV2 viewers join the scene room without a wallet identity;
-        ///     they have no avatar or profile, so they are not nearby users.
+        ///     Cast presentation bots and unauthenticated castV2 viewers join the scene room without a wallet identity and have no avatar or profile.
         /// </summary>
         private static bool IsPlayer(string identity) =>
             Web3Address.IsValidWalletAddress(identity);

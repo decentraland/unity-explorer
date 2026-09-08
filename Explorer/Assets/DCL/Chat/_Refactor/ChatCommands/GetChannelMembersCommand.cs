@@ -22,7 +22,7 @@ namespace DCL.Chat.ChatCommands
         {
             targetList.Clear();
 
-            // The service already orders the list: resolved members by name, then wallet placeholders
+            // Ordering is owned by the service
             foreach (ChatMemberListData member in rawMembers)
             {
                 var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online, member.HasProfile);

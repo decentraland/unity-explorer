@@ -25,7 +25,7 @@ namespace DCL.Chat.ChatServices.Tests
         private const string CAROL = "0xcccc000000000000000000000000000000000003";
         private const string DAVE = "0xdddd000000000000000000000000000000000004";
 
-        // Keeps the retry loop fast; the production delay is irrelevant to the behaviour under test
+        // Keeps the retry loop fast under test
         private const int RETRY_DELAY_MS = 10;
 
         private IProfileRepository profileRepository = null!;

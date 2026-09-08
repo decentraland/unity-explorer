@@ -36,7 +36,6 @@ namespace DCL.Chat.ChatServices
         private readonly IEventBus eventBus;
         private readonly int unresolvedRetryDelayMs;
 
-        // Published list: resolved members first, then one placeholder row per wallet whose profile is not available yet
         private readonly List<ChatMemberListData> membersBuffer = new (PoolConstants.AVATARS_COUNT);
         private readonly List<ChatMemberListData> resolvedMembers = new (PoolConstants.AVATARS_COUNT);
         private readonly List<ChatMemberListData> placeholderMembers = new (PoolConstants.AVATARS_COUNT);
@@ -59,7 +58,7 @@ namespace DCL.Chat.ChatServices
         private CancellationTokenSource? liveUpdateCts;
 
         /// <summary>
-        ///     Only one refresh may write the buffers at a time; restarted on every refresh and linked to <see cref="liveUpdateCts" />.
+        ///     Only one refresh may write the buffers at a time.
         /// </summary>
         private CancellationTokenSource? refreshCts;
 
@@ -234,10 +233,6 @@ namespace DCL.Chat.ChatServices
             return RefreshFullListAsync(refreshCts.Token);
         }
 
-        /// <summary>
-        ///     Publishes one row per online wallet right away (a wallet placeholder when the profile is not available yet),
-        ///     then keeps re-requesting the unresolved profiles for a bounded time and republishes as they land.
-        /// </summary>
         private async UniTask RefreshFullListAsync(CancellationToken ct)
         {
             try
@@ -315,9 +310,6 @@ namespace DCL.Chat.ChatServices
             onMemberListUpdated?.Invoke(membersBuffer);
         }
 
-        /// <summary>
-        ///     The row shows this as the name and the wallet's last four characters as the hashtag, like an unclaimed name.
-        /// </summary>
         private static string PlaceholderName(string identity) =>
             identity.Length > 6 ? identity[..6] : identity;
 

@@ -11,7 +11,7 @@ namespace DCL.Chat
         public readonly ChatMemberConnectionStatus ConnectionStatus;
 
         /// <summary>
-        ///     False for a wallet placeholder: the participant's profile could not be resolved, so no profile actions apply to the row.
+        ///     False when the participant's profile could not be resolved and the row is a wallet placeholder.
         /// </summary>
         public readonly bool HasProfile;
 
