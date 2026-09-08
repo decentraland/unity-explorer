@@ -41,6 +41,16 @@ namespace OutfitStudio.Editor
         // for a broad, unfiltered browse (e.g. ~11k wearables) without fetching the entire catalog,
         // so results are labelled "first N of total" whenever the cap is hit.
         private const int FETCH_CAP = 3000;
+
+        // The base-wearable collection is a fixed set (~280 items) that arrives in two lambdas
+        // requests, so this only has to be generous enough never to truncate it.
+        private const int BASE_FETCH_CAP = 1000;
+
+        // Rarity stamped on base wearables for display. They have none of their own - the field is
+        // absent from the lambdas payload, since rarity is a property of a minted collection item -
+        // and leaving it empty would blank out every tile's rarity stripe and tooltip.
+        private const string BASE_RARITY = "base";
+
         private const float NECK_LOOK_SHARE = 0.4f; // fraction of the look-at turn given to the neck vs. the head
 
         private static readonly List<string> WEARABLE_SLOTS = new()
@@ -275,7 +285,11 @@ namespace OutfitStudio.Editor
             ["legendary"] = new Color(0.63f, 0.40f, 0.90f),
             ["exotic"] = new Color(0.88f, 0.94f, 0.43f),
             ["mythic"] = new Color(1.00f, 0.43f, 0.86f),
-            ["unique"] = new Color(1.00f, 0.75f, 0.25f)
+            ["unique"] = new Color(1.00f, 0.75f, 0.25f),
+
+            // Not a marketplace rarity - the synthetic one base wearables get (see BASE_RARITY), in a
+            // muted teal that reads as "outside the rarity ladder" rather than as a tier within it.
+            [BASE_RARITY] = new Color(0.45f, 0.75f, 0.72f)
         };
 
         // Persisted state (survives domain reload / play mode transitions)
@@ -309,6 +323,14 @@ namespace OutfitStudio.Editor
         private CatalogItem[] _sortedResults = Array.Empty<CatalogItem>(); // _fetchedItems, sorted for display
         private int _fetchedTotal; // server-reported total for the current filters (may exceed FETCH_CAP)
         private int _displayOffset; // position of the current page within _sortedResults
+
+        // Base-wearable browsing: a second, separate source for the grid (see RunBaseWearableSearch).
+        // The whole collection is held here once fetched - it's a fixed list, so filtering and search
+        // run over it in memory instead of re-querying. Keyed by environment because .org and .zone
+        // are different catalysts serving their own copy of it.
+        private bool _browseBaseWearables;
+        private CatalogItem[] _baseItems = Array.Empty<CatalogItem>();
+        private string _baseItemsEnvironment;
         private int _searchSequence;
 
         // urn -> catalog item, used to resolve slot/name/thumbnail for outfit rows
@@ -333,6 +355,13 @@ namespace OutfitStudio.Editor
         private Button _prevButton, _nextButton;
         private Button _invertSortButton;
         private bool _invertSort;
+
+        // Held as fields rather than locals because the browse-source toggle enables and disables them
+        // as a group (see UpdateBrowseModeControls).
+        private Toggle _baseWearablesToggle;
+        private Toggle _onSaleToggle;
+        private Toggle _primarySalesToggle;
+        private PopupField<string> _rarityPopup;
         private VisualElement _slotsContainer;
 
         // Shown only while a wearable is isolated (see RefreshIsolation). The outfit list above it stays
@@ -676,6 +705,7 @@ namespace OutfitStudio.Editor
                 _query.Category = tab;
                 _query.WearableCategory = null;
                 _query.EmoteCategory = null;
+                UpdateBrowseModeControls();
                 ResetAndSearch();
             }
 
@@ -726,13 +756,13 @@ namespace OutfitStudio.Editor
             });
             filters.Add(slotPopup);
 
-            var rarityPopup = new PopupField<string>("Rarity", RARITIES, 0);
-            rarityPopup.RegisterValueChangedCallback(_ =>
+            _rarityPopup = new PopupField<string>("Rarity", RARITIES, 0);
+            _rarityPopup.RegisterValueChangedCallback(_ =>
             {
-                _query.Rarity = rarityPopup.value == "any" ? null : rarityPopup.value;
+                _query.Rarity = _rarityPopup.value == "any" ? null : _rarityPopup.value;
                 ResetAndSearch();
             });
-            filters.Add(rarityPopup);
+            filters.Add(_rarityPopup);
 
             var genderPopup = new PopupField<string>("Body", GENDERS, 0);
             genderPopup.RegisterValueChangedCallback(_ =>
@@ -751,48 +781,74 @@ namespace OutfitStudio.Editor
             });
             filters.Add(sortPopup);
 
-            var onSaleToggle = new Toggle("On Sale")
+            // The three toggles use the compact "checkbox then its own text" form (like the toolbar's
+            // toggles) rather than Toggle(label). A constructor label goes into the fixed-width label
+            // column BaseField reserves for it, which in this wrapped horizontal row is wide enough to
+            // push each checkbox clear of its own text and up against the *next* toggle's label - so
+            // the checkmarks read as belonging to the wrong filters. The wider left margin then keeps
+            // the gap between toggles bigger than the gap inside one.
+            _baseWearablesToggle = new Toggle
             {
+                text = "Base",
+                value = _browseBaseWearables,
+                tooltip = "Browse the base wearables instead of the marketplace - the off-chain set " +
+                          "every avatar starts with (default body parts and starter clothing), which " +
+                          "marketplace-api doesn't serve at all. They were never minted, so they carry " +
+                          "no rarity, price or sale state and those filters switch off while this is on.",
+                style = { marginLeft = 10 }
+            };
+            _baseWearablesToggle.RegisterValueChangedCallback(evt =>
+            {
+                _browseBaseWearables = evt.newValue;
+                UpdateBrowseModeControls();
+                ResetAndSearch();
+            });
+            filters.Add(_baseWearablesToggle);
+
+            _onSaleToggle = new Toggle
+            {
+                text = "On Sale",
                 value = _query.IsOnSale,
                 tooltip = "Only show items you can currently buy - mintable from their collection or " +
                           "with an open listing - exactly like the web marketplace's \"On Sale\" filter. " +
                           "Off shows everything, on sale or not.",
-                style = { marginLeft = 4 }
+                style = { marginLeft = 10 }
             };
-            var primarySalesToggle = new Toggle("Primary Sales")
+            _primarySalesToggle = new Toggle
             {
+                text = "Primary Sales",
                 value = _query.OnlyMinting,
                 tooltip = "Only show primary sales - items still mintable from the creator's own " +
                           "collection. Every secondary sale (an item only available through someone " +
                           "else's listing) drops out. Implies \"On Sale\", which is switched on and " +
                           "off with it.",
-                style = { marginLeft = 4 }
+                style = { marginLeft = 10 }
             };
 
             // The two filters are nested, not independent: a primary sale is always on sale, so the
             // pair is kept consistent instead of allowing the contradictory "Primary Sales on, On Sale
             // off" state. SetValueWithoutNotify on the follower avoids a second redundant re-query.
-            onSaleToggle.RegisterValueChangedCallback(evt =>
+            _onSaleToggle.RegisterValueChangedCallback(evt =>
             {
                 _query.IsOnSale = evt.newValue;
                 if (!evt.newValue && _query.OnlyMinting)
                 {
                     _query.OnlyMinting = false;
-                    primarySalesToggle.SetValueWithoutNotify(false);
+                    _primarySalesToggle.SetValueWithoutNotify(false);
                 }
 
                 ResetAndSearch(); // server-side filter (see CatalogService.BuildUrl), so re-query
             });
-            filters.Add(onSaleToggle);
+            filters.Add(_onSaleToggle);
 
-            primarySalesToggle.RegisterValueChangedCallback(evt =>
+            _primarySalesToggle.RegisterValueChangedCallback(evt =>
             {
                 _query.OnlyMinting = evt.newValue;
                 _query.IsOnSale = evt.newValue;
-                onSaleToggle.SetValueWithoutNotify(evt.newValue);
+                _onSaleToggle.SetValueWithoutNotify(evt.newValue);
                 ResetAndSearch(); // server-side filter too, so re-query
             });
-            filters.Add(primarySalesToggle);
+            filters.Add(_primarySalesToggle);
 
             _invertSortButton = new Button(() =>
             {
@@ -806,6 +862,8 @@ namespace OutfitStudio.Editor
             };
             UpdateInvertSortButton();
             filters.Add(_invertSortButton);
+
+            UpdateBrowseModeControls();
 
             // Swap slot filter choices when the tab changes
             wearablesTab.clicked += () => { slotPopup.choices = WEARABLE_SLOTS; slotPopup.index = 0; };
@@ -1603,9 +1661,41 @@ namespace OutfitStudio.Editor
             RunSearch();
         }
 
+        /// <summary>
+        /// True while the grid should be showing base wearables rather than the marketplace. The
+        /// toggle keeps its value behind the Emotes tab (it's hidden there, not reset), so the active
+        /// category is part of the answer - there is no browsable off-chain emote collection.
+        /// </summary>
+        private bool BrowsingBaseWearables => _browseBaseWearables && _query.Category != "emote";
+
+        /// <summary>
+        /// Keeps the filter row honest about which source is being browsed. Base wearables come from
+        /// the catalyst rather than marketplace-api and carry no rarity, price or sale state at all,
+        /// so instead of leaving those three filters live and silently emptying the grid, they're
+        /// disabled while base browsing is on. The toggle itself only appears on the Wearables tab:
+        /// the matching off-chain emote collection (urn:decentraland:off-chain:base-emotes) is served
+        /// empty by the same endpoint, because the client's base emotes ship inside the renderer as
+        /// embedded clips instead - they're reachable from the Embedded pose dropdown.
+        /// </summary>
+        private void UpdateBrowseModeControls()
+        {
+            _baseWearablesToggle.style.display = _query.Category == "emote" ? DisplayStyle.None : DisplayStyle.Flex;
+
+            var marketplaceFiltersApply = !BrowsingBaseWearables;
+            _rarityPopup.SetEnabled(marketplaceFiltersApply);
+            _onSaleToggle.SetEnabled(marketplaceFiltersApply);
+            _primarySalesToggle.SetEnabled(marketplaceFiltersApply);
+        }
+
         private void RunSearch()
         {
             if (_grid == null) return;
+
+            if (BrowsingBaseWearables)
+            {
+                RunBaseWearableSearch();
+                return;
+            }
 
             SetStatus("Searching catalog...");
 
@@ -1639,7 +1729,7 @@ namespace OutfitStudio.Editor
         /// marketplace-api's own <c>search</c> param (already applied by the caller's CatalogQuery)
         /// only matches item name/description, with no concept of tags - so a query like "jacket"
         /// misses an item named "Black Jacket" that's tagged "Jacket" but doesn't say so in its name.
-        /// The catalyst lambdas endpoint (<see cref="CatalystTextSearchService"/>) indexes tags, so
+        /// The catalyst lambdas endpoint (<see cref="CatalystCollectionsService"/>) indexes tags, so
         /// it's used here purely to find items marketplace-api's name search missed. Those extra
         /// items are built directly from the lambdas payload (name/thumbnail/rarity/slot/bodyShapes)
         /// rather than hydrated through marketplace-api's URN lookup - that lookup only resolves
@@ -1650,7 +1740,7 @@ namespace OutfitStudio.Editor
         /// </summary>
         private void AugmentWithTagMatches(CatalogItem[] nameMatches, int sequence, Action<string> onError)
         {
-            CatalystTextSearchService.SearchItems(_query.Category, _query.Search, TAG_SEARCH_CAP,
+            CatalystCollectionsService.SearchItems(_query.Category, _query.Search, TAG_SEARCH_CAP,
                 tagMatches =>
                 {
                     if (sequence != _searchSequence) return;
@@ -1667,11 +1757,101 @@ namespace OutfitStudio.Editor
         }
 
         /// <summary>
+        /// Fills the grid from the base-wearable collection instead of marketplace-api, which doesn't
+        /// serve those items at all - they were never minted, so the only source is the catalyst's own
+        /// collection listing. The whole set is ~280 items across two requests, so it's fetched once
+        /// per environment and then filtered and searched in memory: no request per keystroke, and
+        /// flipping the toggle back and forth costs nothing.
+        /// </summary>
+        private void RunBaseWearableSearch()
+        {
+            if (_baseItems.Length > 0 && _baseItemsEnvironment == APIService.Environment)
+            {
+                ShowBaseWearables();
+                return;
+            }
+
+            SetStatus("Loading base wearables...");
+
+            var sequence = ++_searchSequence; // same out-of-order guard the catalog path uses
+
+            CatalystCollectionsService.FetchCollection(_query.Category,
+                CatalystCollectionsService.BASE_WEARABLES_COLLECTION, BASE_FETCH_CAP,
+                items =>
+                {
+                    if (sequence != _searchSequence) return;
+
+                    _baseItems = AdaptBaseWearables(items);
+                    _baseItemsEnvironment = APIService.Environment;
+                    ShowBaseWearables();
+                },
+                error =>
+                {
+                    if (sequence != _searchSequence) return;
+                    SetStatus($"Base wearables error: {error}", true);
+                });
+        }
+
+        /// <summary>
+        /// Two adjustments the grid needs, both specific to this collection. It also contains the two
+        /// body shapes themselves (BaseMale/BaseFemale), which belong to the Avatar tab and would
+        /// otherwise sit in the browser as "wearables" that replace the entire avatar; and no item
+        /// carries a rarity, which would leave every tile's stripe and tooltip blank.
+        /// </summary>
+        private static CatalogItem[] AdaptBaseWearables(List<CatalogItem> items)
+        {
+            var adapted = new List<CatalogItem>(items.Count);
+
+            foreach (var item in items)
+            {
+                if (item.Slot == "body_shape") continue;
+
+                item.rarity = BASE_RARITY;
+                adapted.Add(item);
+            }
+
+            return adapted.ToArray();
+        }
+
+        private void ShowBaseWearables()
+        {
+            _fetchedItems = _baseItems.Where(MatchesBaseFilters).ToArray();
+            _fetchedTotal = _fetchedItems.Length;
+            ApplySortAndRebuild();
+        }
+
+        /// <summary>
+        /// The part of the filter row that means anything for base wearables: slot, body shape and the
+        /// search box. Rarity and the two sale filters are disabled in the UI while this source is
+        /// selected (<see cref="UpdateBrowseModeControls"/>) precisely because the items hold no such
+        /// data, so they're not consulted here either.
+        ///
+        /// Search runs locally over the display name and the URN's own slug. Tags are deliberately not
+        /// matched even though the payload carries them - unlike the marketplace items in
+        /// <see cref="AugmentWithTagMatches"/>, a base item's tags are just its category spelled out
+        /// ("upper", "body", "unisex", "base-wearable"), so matching them would only blur the results
+        /// the Slot dropdown already selects exactly. Being local, it also has no minimum length,
+        /// unlike the catalyst's own textSearch.
+        /// </summary>
+        private bool MatchesBaseFilters(CatalogItem item)
+        {
+            if (!string.IsNullOrEmpty(_query.WearableCategory) && item.Slot != _query.WearableCategory)
+                return false;
+
+            if (!MatchesGender(item, _query.Gender)) return false;
+
+            if (string.IsNullOrEmpty(_query.Search)) return true;
+
+            var search = _query.Search.Trim();
+
+            return item.name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                   || item.urn.Contains(search, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
         /// Re-applies the slot/rarity/gender/on-sale filters an ordinary marketplace-api browse would
         /// already have enforced server-side (see CatalogService.BuildUrl) - needed only for tag-matched
-        /// items built from the lambdas payload, which was never filtered by any of these. Gender is
-        /// approximated from bodyShapes (matches the live API's own observed behavior: "male"/"female"
-        /// match items serving that shape at all, "unisex" requires both).
+        /// items built from the lambdas payload, which was never filtered by any of these.
         /// </summary>
         private bool MatchesActiveFilters(CatalogItem item)
         {
@@ -1689,22 +1869,30 @@ namespace OutfitStudio.Editor
             // creator's collection", which is what onlyMinting selects server-side.
             if (_query.OnlyMinting && !item.isOnSale) return false;
 
-            if (!string.IsNullOrEmpty(_query.Gender))
-            {
-                var bodyShapes = item.data?.wearable?.bodyShapes ?? item.data?.emote?.bodyShapes;
-                var hasMale = bodyShapes?.Contains("BaseMale") ?? false;
-                var hasFemale = bodyShapes?.Contains("BaseFemale") ?? false;
-                var matchesGender = _query.Gender switch
-                {
-                    "male" => hasMale,
-                    "female" => hasFemale,
-                    "unisex" => hasMale && hasFemale,
-                    _ => true
-                };
-                if (!matchesGender) return false;
-            }
+            if (!MatchesGender(item, _query.Gender)) return false;
 
             return true;
+        }
+
+        /// <summary>
+        /// Approximates the Body filter from an item's bodyShapes, matching the live API's own observed
+        /// behavior: "male"/"female" match anything serving that shape at all, "unisex" requires both.
+        /// </summary>
+        private static bool MatchesGender(CatalogItem item, string gender)
+        {
+            if (string.IsNullOrEmpty(gender)) return true;
+
+            var bodyShapes = item.data?.wearable?.bodyShapes ?? item.data?.emote?.bodyShapes;
+            var hasMale = bodyShapes?.Contains("BaseMale") ?? false;
+            var hasFemale = bodyShapes?.Contains("BaseFemale") ?? false;
+
+            return gender switch
+            {
+                "male" => hasMale,
+                "female" => hasFemale,
+                "unisex" => hasMale && hasFemale,
+                _ => true
+            };
         }
 
         private void UpdateInvertSortButton()

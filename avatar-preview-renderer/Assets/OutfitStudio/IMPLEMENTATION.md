@@ -144,7 +144,8 @@ item named e.g. "Black Jacket" that's tagged "Jacket" but doesn't literally have
 matching position, or any item whose name doesn't contain the query word at all despite being
 tagged with it — a real gap versus the web marketplace/game client, which do search tags.
 
-`CatalystTextSearchService` (new, `Runtime/CatalystTextSearchService.cs`) hits the catalyst
+`CatalystCollectionsService` (added here as `CatalystTextSearchService`, renamed in §25 when base-collection
+fetching joined it — `Runtime/CatalystCollectionsService.cs`) hits the catalyst
 content-server's lambdas collections endpoint instead, which *does* index tags:
 
 ```
@@ -160,7 +161,7 @@ only matched URNs — no commerce data (price/rarity/on-sale), so it's a discove
 
 `OutfitStudioWindow.RunSearch` (only when `_query.Search` is non-empty):
 1. Runs the normal marketplace-api name/description search unchanged (`CatalogService.SearchAll`).
-2. `AugmentWithTagMatches` runs `CatalystTextSearchService.SearchUrns` (capped at
+2. `AugmentWithTagMatches` runs `CatalystCollectionsService.SearchUrns` (capped at
    `TAG_SEARCH_CAP=500`) and diffs its matched URNs against what the name search already found.
 3. `HydrateTagMatches` hydrates just the *extra* tag-only URNs via the existing
    `CatalogQuery.Urns` direct-lookup path (chunked at `TAG_HYDRATE_CHUNK=50` items per request to
@@ -190,7 +191,7 @@ against a second unrelated collections-v1 URN (Barbarian Helmet) to confirm it's
 item-specific. This silently dropped every hydration for older L1 collections - exactly the kind of
 item a tag search tends to surface (newer items usually have decent names already).
 
-**Fix:** rewrote `CatalystTextSearchService.SearchUrns` → `SearchItems`, which builds `CatalogItem`s
+**Fix:** rewrote `CatalystCollectionsService.SearchUrns` → `SearchItems`, which builds `CatalogItem`s
 directly from the lambdas payload (`i18n[0].text` for name, `thumbnail`, `rarity`, `data.category`/
 `emoteDataADR74.category` for slot, `representations[].bodyShapes` reduced to `"BaseMale"`/
 `"BaseFemale"` markers) instead of bouncing back through marketplace-api at all. This sidesteps the
@@ -352,9 +353,10 @@ import the files); absolute paths allowed. Filenames `outfit_yyyyMMdd_HHmmss`.
 - Docked 3D preview inside the window (RenderTexture) — deferred; the Game view is the viewport.
 - Possible v2s: load-outfit-from-profile (via `APIService.GetAvatar`), multi-rarity filters,
   transparent-background video (WebM), smart-wearable filtering, preset thumbnails.
-- The base-avatar (off-chain) wearables can't be browsed — the marketplace API only serves
+- ~~The base-avatar (off-chain) wearables can't be browsed — the marketplace API only serves
   collection items. Artists get default body parts unless they equip marketplace items; browsing
-  base-avatars would need the catalyst entities endpoint instead.
+  base-avatars would need the catalyst entities endpoint instead.~~ — **done 2026-09-08 via the
+  Base toggle (§25)**, through the catalyst's collection listing rather than its entities endpoint.
 - **Catalog search quirks (2026-07-22 investigation, not a client bug):** hitting the live
   `marketplace-api.decentraland.org/v1/items` directly (outside Unity, same params `CatalogService`
   sends) confirms two upstream behaviors, not bugs in this repo:
@@ -2359,3 +2361,142 @@ would push studio values onto the production scene's lighting, in the one place 
 
 Lights are matched **by name** because they're plain scene objects with no marker component, and adding one
 would be a scene edit made in order to avoid scene edits.
+
+## 25. Base wearables in the browser (2026-09-08)
+
+A **Base** toggle in the Wearables tab's filter row switches the grid's *source* from
+marketplace-api to the off-chain collection the client itself ships with — the default body parts
+and starter clothing every avatar has without owning a single item. This closes the §10 caveat
+that said base-avatars couldn't be browsed at all.
+
+280 items after filtering (282 in the collection, see "Two payload fix-ups" below), across every
+slot an outfit uses: 56 upper_body, 38 lower_body, 35 eyes, 33 hair, 26 eyebrows, 24 feet, 20
+mouth, 14 eyewear, 13 facial_hair, 12 earring, 5 tiara, 4 hands_wear.
+
+### Why marketplace-api can't serve them, and what can
+
+`/v2/catalog` only knows about **minted collection items**. Base wearables were never minted —
+they're off-chain URNs (`urn:decentraland:off-chain:base-avatars:<name>`) that exist only as
+catalyst entities — so no query against marketplace-api reaches them; this isn't a filter that
+needs relaxing, the rows simply aren't there.
+
+The endpoint that does serve them is the catalyst's own collection listing, which the tool was
+*already* talking to for tag-aware search (§5a):
+
+```
+GET https://peer.decentraland.{org|zone}/lambdas/collections/wearables
+    ?collectionId=urn:decentraland:off-chain:base-avatars
+```
+
+So `CatalystTextSearchService` was renamed **`CatalystCollectionsService`** and its request/paging
+loop factored into a private `FetchPaged(category, filterQuery, cap, ...)`, with the two public
+entry points differing only in that one query param:
+
+- `SearchItems(...)` → `textSearch=<query>` (unchanged behavior, §5a)
+- `FetchCollection(...)` → `collectionId=<urn>` (new)
+
+Both already shared the payload → `CatalogItem` mapping (`ToCatalogItem`), which is the reason this
+is a ~30-line service change rather than a second catalog client: **base items reach the grid as
+ordinary `CatalogItem`s**, so tiles, thumbnails, click-to-equip, one-per-slot dedup, outfit rows,
+share codes and presets all work with no changes anywhere else.
+
+Verified against the live endpoint (2026-09-08): 282 items, `lastId` paging works alongside
+`collectionId` (200 + 82, second page reports no `next`), and both `.org` and `.zone` serve it.
+
+### Nothing needed to change in the apply path
+
+Off-chain URNs already resolve — `LoadForBuilder` → `EntityService.GetEntities` → the content
+server's `/entities/active` pointer lookup, which is exactly how the Avatar tab's curated face
+features (§21) have always loaded. A base wearable equipped from the grid is just another URN in
+`outfit.urns`, so it travels in share codes and presets like any marketplace item.
+
+### Fetched once, then filtered in memory
+
+It's a fixed list, not a query, so `RunBaseWearableSearch` fetches the whole collection once per
+environment (`_baseItems` + `_baseItemsEnvironment`) and does all filtering and searching locally —
+no request per keystroke, and flipping the toggle back and forth is free. The prod/dev switch
+already calls `ResetAndSearch`, so changing environment re-fetches on its own (`.org` and `.zone`
+are separate catalysts with their own copy).
+
+`BASE_FETCH_CAP = 1000` is the paging cap — the collection is ~280 items in two requests, so it
+only has to be generous enough never to truncate.
+
+### Two payload fix-ups (`AdaptBaseWearables`)
+
+1. **The collection contains the body shapes themselves** (`BaseMale`/`BaseFemale`, category
+   `body_shape`). Those are chosen in the Avatar tab; left in, they'd sit in the browser as
+   "wearables" that replace the entire avatar. Dropped.
+2. **No item carries a rarity** — the field is absent from the payload, since rarity is a property
+   of a minted item. Each gets `BASE_RARITY = "base"`, which would otherwise leave every tile's
+   rarity stripe and tooltip blank. `RARITY_COLORS` gained a matching muted-teal entry, deliberately
+   not one of the marketplace tiers — it reads as "outside the rarity ladder" rather than inside it.
+   `"base"` is *not* added to the `RARITIES` filter list: it isn't a marketplace rarity, and the
+   Rarity dropdown is disabled in this mode anyway.
+
+### Which filters stay live, and which switch off
+
+Base items have no rarity, price or listing data at all, so **Rarity, On Sale and Primary Sales are
+disabled** while the toggle is on (`UpdateBrowseModeControls`) instead of being left live to
+silently empty the grid. `_query` is never mutated to achieve that — base browsing runs its own
+`MatchesBaseFilters` (slot + body shape + search) and simply doesn't consult those three — so
+switching back restores the artist's marketplace filters exactly as they were, with no stale-value
+or restore-order bugs.
+
+Still live: **Slot**, **Body** (shared `MatchesGender`, extracted from `MatchesActiveFilters`) and
+the **search box**, matched locally against the display name and the URN slug.
+
+All three toggles in that row are built as `new Toggle { text = "..." }`, **not** `new Toggle("...")`.
+A constructor label lands in the fixed-width label column `BaseField` reserves for it, which is fine
+in the vertical settings panes (it column-aligns the checkmarks) but wrong in this wrapped
+horizontal row: it pushes each checkbox clear of its own text and hard against the *next* toggle's
+label, so the checkmarks read as belonging to the wrong filters. The `text` form is what the
+toolbar toggles already use. Left margin is 10 rather than 4 so the gap between toggles stays
+bigger than the gap inside one.
+
+**Tags are deliberately not searched here**, even though the payload carries them and §5a exists
+precisely because tags add recall for marketplace items. Measured on this collection: of 280 items,
+the tag words absent from the name/URN are almost entirely the category spelled out (`upper`,
+`body`, `unisex`, `base-wearable`) — matching them would only blur what the Slot dropdown already
+selects exactly. Being local, search also has no 3-character minimum, unlike the catalyst's own
+`textSearch`.
+
+**Sort** is left enabled and untouched. Price/date options are inert for these items (no such
+fields), but that degrades gracefully rather than misleading: every base item ties, and `OrderBy`
+is stable, so the grid keeps the payload's own URN order. "Name" works normally.
+
+### Wearables only
+
+The toggle is hidden on the Emotes / Poses tab, and `BrowsingBaseWearables` gates on the category
+too, so a toggle left on behind that tab is ignored rather than reset. Reason: the sibling
+collection is served **empty** — `?collectionId=urn:decentraland:off-chain:base-emotes` returns
+`{"emotes":[]}` (verified 2026-09-08). The client's base emotes ship inside the renderer as
+embedded clips instead, and those are already reachable from the Embedded pose dropdown.
+
+### Known quirk (shared with §5a, pre-existing)
+
+Thumbnails in this payload are absolute URLs on `peer-ec2.decentraland.org` rather than the
+environment the tool is pointed at. They serve fine (same content hash resolves identically on
+`peer.decentraland.org`), and the §5a tag-search path has always used them as-is, so they're passed
+through unchanged rather than rewritten — noted here only so the odd host isn't mistaken for a bug.
+
+### Bonus: full face-feature coverage
+
+The Avatar tab's face grid (§21) ships a *curated* subset of base hair/eyes/eyebrows/mouth/
+facial_hair, described there as a first stage. Base browsing now reaches **all** of them (33 hair,
+35 eyes, 26 eyebrows, 20 mouth, 13 facial_hair) through the Wearables tab, equipping via the same
+`outfit.urns` path. The curated grid is still the quicker pick for a body-shape-appropriate face.
+
+### Verification
+
+Compiled clean against the project's own reference set (Roslyn, `-langversion:9`, Unity 6000.4.0f1
+references + `Library/ScriptAssemblies`): 0 errors, 0 warnings in the touched files. Live endpoint
+behavior verified as noted above. **Not yet exercised in the editor** — needs a run through:
+
+1. Wearables tab → **Base** on → grid fills with ~280 items; Rarity / On Sale / Primary Sales grey
+   out; status reads "280 items".
+2. Slot `upper_body` → 56 items; Body `female` narrows further; search "hoodie" matches by name.
+3. Click items → they equip and render in both edit-mode preview and play mode; outfit rows show
+   the right names/thumbnails.
+4. Share code round-trip with a base item equipped → **Load from code** reproduces it.
+5. Toggle off → the marketplace grid and the artist's previous On Sale / Primary Sales state return.
+6. Emotes tab → the Base toggle is gone; switching back to Wearables restores it still on.

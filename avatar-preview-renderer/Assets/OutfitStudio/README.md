@@ -12,6 +12,10 @@ Open via **Decentraland ▸ Outfit Studio**.
    the tool works in either.
 2. Open the Outfit Studio window and browse the marketplace catalog (left pane).
    Search, filter by slot / rarity / body and click items to equip them.
+   The **Base** toggle in the filter row swaps the marketplace for the ~280 **base wearables** —
+   the default body parts and starter clothing every avatar has without owning anything. They were
+   never minted, so Rarity / On Sale / Primary Sales grey out while it's on; Slot, Body and search
+   keep working, and your marketplace filters come back when you switch it off.
    **The avatar assembles live in the Scene/Game view in edit mode** — no play mode needed for
    outfit selection (static idle pose; use **Clear Preview** in the toolbar to remove it).
 3. Pick a pose: a **quick-pose button** (one per GLB in `Assets/OutfitStudio/Poses/` — drop your
@@ -95,6 +99,11 @@ emotes play in play mode only.
   capture need play mode. The edit-mode preview is a static idle pose (no spring bones/outline).
 - The prod/dev toggle in the toolbar switches between `.org` and `.zone` backends.
 - Wearables with no representation for the selected body shape are skipped with a warning.
+- Base wearables cover every slot, face features included, so with **Base** on the Wearables tab
+  reaches more hair/eyes/eyebrows/mouth options than the Avatar tab's curated face grid (which
+  stays the quicker pick, since it only offers faces valid for the selected body shape). There is
+  no base *emote* collection — the client's base emotes are the **Embedded** pose-dropdown entries,
+  which is why the toggle doesn't appear on the Emotes / Poses tab.
 - Everything lives in this folder except two small touch points: the `com.unity.recorder`
   dependency in `Packages/manifest.json` and emote-URN support in
   `PreviewController.LoadForBuilder`.

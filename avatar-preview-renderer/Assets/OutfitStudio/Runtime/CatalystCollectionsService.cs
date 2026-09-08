@@ -8,14 +8,19 @@ using UnityEngine.Networking;
 namespace OutfitStudio
 {
     /// <summary>
-    /// Tag-aware text search against the catalyst content-server's lambdas collections endpoint
-    /// (GET /lambdas/collections/wearables or /emotes, ?textSearch=...).
+    /// Reads the catalyst content-server's lambdas collections endpoint
+    /// (GET /lambdas/collections/wearables or /emotes), which covers two things marketplace-api
+    /// can't answer:
     ///
-    /// This exists because marketplace-api's own <c>/v2/catalog?search=</c> (used by
-    /// <see cref="CatalogService"/> for the actual browse/filter pass) only matches item name and
-    /// description - it has no notion of tags. The lambdas endpoint indexes each item's full
-    /// <c>data.tags</c> array, so a query like "jacket" also matches an item named "Black Jacket"
-    /// or one whose name doesn't contain the word at all but is tagged with it.
+    /// - <see cref="SearchItems"/> - tag-aware text search. marketplace-api's own
+    ///   <c>/v2/catalog?search=</c> (used by <see cref="CatalogService"/> for the actual
+    ///   browse/filter pass) only matches item name and description - it has no notion of tags.
+    ///   The lambdas endpoint indexes each item's full <c>data.tags</c> array, so a query like
+    ///   "jacket" also matches an item named "Black Jacket" or one whose name doesn't contain the
+    ///   word at all but is tagged with it.
+    /// - <see cref="FetchCollection"/> - every item in one collection, which is the only way to
+    ///   reach the off-chain base wearables (<see cref="BASE_WEARABLES_COLLECTION"/>):
+    ///   marketplace-api serves on-chain collection items exclusively and knows nothing about them.
     ///
     /// Builds <see cref="CatalogItem"/>s directly from the lambdas payload (name via i18n,
     /// thumbnail, rarity, slot, bodyShapes) rather than hydrating through marketplace-api's
@@ -23,11 +28,17 @@ namespace OutfitStudio
     /// URNs and silently returns zero results for legacy collections-v1 (Ethereum) items, which the
     /// lambdas endpoint (and marketplace-api's own name search) both cover fine. Fields marketplace-
     /// api alone carries (price, on-sale status, exact listing dates) aren't available here, so
-    /// results built this way sort last under price/date-based sorts - acceptable since this is a
-    /// supplementary discovery path, not the primary browse.
+    /// results built this way sort last under price/date-based sorts.
     /// </summary>
-    public static class CatalystTextSearchService
+    public static class CatalystCollectionsService
     {
+        /// <summary>
+        /// The off-chain collection holding the wearables the client itself ships with - the default
+        /// body parts and starter clothing every avatar has without owning a single item. None of it
+        /// was ever minted, which is exactly why marketplace-api can't serve it.
+        /// </summary>
+        public const string BASE_WEARABLES_COLLECTION = "urn:decentraland:off-chain:base-avatars";
+
         // Observed to be accepted comfortably by the live endpoint; keeps each round trip small
         // while still reaching a reasonable cap in a handful of requests.
         private const int PAGE_SIZE = 200;
@@ -43,6 +54,28 @@ namespace OutfitStudio
                 return;
             }
 
+            FetchPaged(category, $"textSearch={UnityWebRequest.EscapeURL(textSearch)}", cap, onSuccess, onError);
+        }
+
+        /// <summary>
+        /// Every item in one collection, with none of the browse filters applied - the caller gets
+        /// the whole set and narrows it itself.
+        /// </summary>
+        public static void FetchCollection(string category, string collectionId, int cap,
+            Action<List<CatalogItem>> onSuccess, Action<string> onError)
+        {
+            FetchPaged(category, $"collectionId={UnityWebRequest.EscapeURL(collectionId)}", cap, onSuccess, onError);
+        }
+
+        /// <summary>
+        /// Shared paging loop behind both entry points. <paramref name="filterQuery"/> is the single
+        /// query param that selects what to fetch (a text search or a collection); paging follows the
+        /// endpoint's own <c>lastId</c> cursor for as long as it keeps reporting a next page, which is
+        /// what makes a collection larger than <see cref="PAGE_SIZE"/> arrive complete.
+        /// </summary>
+        private static void FetchPaged(string category, string filterQuery, int cap,
+            Action<List<CatalogItem>> onSuccess, Action<string> onError)
+        {
             var isEmote = category == "emote";
             var itemsKey = isEmote ? "emotes" : "wearables";
             var endpoint = $"https://peer.decentraland.{APIService.Environment}/lambdas/collections/{itemsKey}";
@@ -52,7 +85,7 @@ namespace OutfitStudio
             void FetchNext(string lastId)
             {
                 var pageLimit = Math.Min(PAGE_SIZE, cap - results.Count);
-                var url = $"{endpoint}?textSearch={UnityWebRequest.EscapeURL(textSearch)}&limit={pageLimit}";
+                var url = $"{endpoint}?{filterQuery}&limit={pageLimit}";
                 if (!string.IsNullOrEmpty(lastId))
                     url += $"&lastId={UnityWebRequest.EscapeURL(lastId)}";
 
