@@ -288,7 +288,7 @@ namespace DCL.Chat.ChatServices
 
             foreach (Profile.CompactInfo profile in profiles)
                 if (unresolvedMemberIds.Remove(profile.UserId.Value))
-                    resolvedMembers.Add(new ChatMemberListData(profile, ChatMemberConnectionStatus.Online));
+                    resolvedMembers.Add(new ChatMemberListData(profile, ChatMemberConnectionStatus.Online, hasProfile: true));
         }
 
         private void PublishMembers()
@@ -302,7 +302,7 @@ namespace DCL.Chat.ChatServices
                 if (!userId.Has)
                     continue;
 
-                placeholderMembers.Add(new ChatMemberListData(new Profile.CompactInfo(userId.Value, PlaceholderName(identity)), ChatMemberConnectionStatus.Online));
+                placeholderMembers.Add(new ChatMemberListData(new Profile.CompactInfo(userId.Value, PlaceholderName(identity)), ChatMemberConnectionStatus.Online, hasProfile: false));
             }
 
             resolvedMembers.Sort(BY_NAME);

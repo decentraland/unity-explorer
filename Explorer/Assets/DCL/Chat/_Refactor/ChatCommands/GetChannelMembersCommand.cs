@@ -25,12 +25,12 @@ namespace DCL.Chat.ChatCommands
             // The service already orders the list: resolved members by name, then wallet placeholders
             foreach (ChatMemberListData member in rawMembers)
             {
-                var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online);
+                var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online, member.HasProfile);
 
                 targetList.Add(viewModel);
 
                 // A wallet placeholder has no picture to download
-                if (string.IsNullOrEmpty(member.Profile.FaceSnapshotUrl.Value))
+                if (!member.HasProfile)
                 {
                     viewModel.ProfileThumbnail.UpdateValue(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail, viewModel.Profile.UserNameColor));
 
