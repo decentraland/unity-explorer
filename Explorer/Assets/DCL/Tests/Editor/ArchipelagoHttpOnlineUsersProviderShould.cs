@@ -12,22 +12,24 @@ using System.Threading.Tasks;
 namespace DCL.Tests.Editor
 {
     /// <summary>
-    ///     <c>/comms/peers?id=</c> searches every realm, so one request answers for every friend and the world a
-    ///     friend is in comes back with them. Nothing may reach a worlds-content-server
+    ///     <c>/comms/peers?id=</c> searches every realm, so the ids asked for in one request all come back with
+    ///     the realm they are in. Nothing may reach a worlds-content-server
     ///     <c>/wallet/:wallet/connected-world</c> url any more - that per-friend lookup is gone.
+    ///     Every production call site (friend list, friend section, passport, both context menus) passes a
+    ///     single-element buffer, so what the retired decorator cost was one extra request per jump-in click,
+    ///     not one per friend. Batching is pinned here because the url composition is what the provider owns;
+    ///     a caller that ever batches a real friend list has to respect the contract's cap of 200 ids per
+    ///     request (201+ answers 400 <c>{"ok":false,"error":"too many ids (max 200)"}</c>).
     /// </summary>
     [TestFixture]
     public class ArchipelagoHttpOnlineUsersProviderShould
     {
         private const string BASE_URL = "https://archipelago-ea-stats.example.com/comms/peers";
+
+        // The three ids the golden's own request line asks for, in that order
         private const string FRIEND_IN_A_WORLD = "0x0000000000000000000000000000000000000003";
         private const string FRIEND_IN_GENESIS = "0x0000000000000000000000000000000000000001";
         private const string OFFLINE_FRIEND = "0x0000000000000000000000000000000000000009";
-
-        private const string ALL_REALMS_RESPONSE = "{\"ok\":true,\"peers\":["
-                                                   + "{\"address\":\"" + FRIEND_IN_GENESIS + "\",\"position\":[8,0,16],\"realm\":\"main\"},"
-                                                   + "{\"address\":\"" + FRIEND_IN_A_WORLD + "\",\"position\":[8,0,8],\"realm\":\"cozyfarm.dcl.eth\"}"
-                                                   + "]}";
 
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new OnlinePlayersJsonDtoConverter() } };
 
@@ -40,8 +42,10 @@ namespace DCL.Tests.Editor
         {
             requestedUrls = new List<string>();
 
-            // The request is answered with the peers the real converter reads out of an all-realms response body
-            List<OnlineUserData> peers = JsonConvert.DeserializeObject<List<OnlineUserData>>(ALL_REALMS_RESPONSE, SERIALIZER_SETTINGS)!;
+            // The request is answered with the peers the real converter reads out of the golden all-realms
+            // body itself - id, lastPing, parcel and realm included - so this fixture cannot drift from C2.
+            List<OnlineUserData> peers = JsonConvert.DeserializeObject<List<OnlineUserData>>(
+                OnlinePlayersJsonDtoConverterShould.GoldenPeersBody(), SERIALIZER_SETTINGS)!;
 
             webRequestController = Substitute.For<IWebRequestController>();
 
@@ -59,7 +63,7 @@ namespace DCL.Tests.Editor
         }
 
         [Test]
-        public async Task AskForEveryFriendInOneRequest()
+        public async Task AskForEveryRequestedIdInOneRequest()
         {
             await provider.GetAsync(new[] { FRIEND_IN_A_WORLD, FRIEND_IN_GENESIS, OFFLINE_FRIEND }, CancellationToken.None);
 

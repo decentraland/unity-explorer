@@ -73,8 +73,10 @@ namespace DCL.Tests.Editor
 
         /// <summary>
         ///     The golden file wraps the response, so only its <c>body</c> is what the converter reads.
+        ///     <c>internal</c> so <c>ArchipelagoHttpOnlineUsersProviderShould</c> answers its stubbed request
+        ///     with the very same bytes instead of a paraphrase that can drift from the contract.
         /// </summary>
-        private static string GoldenPeersBody()
+        internal static string GoldenPeersBody()
         {
             var golden = JObject.Parse(File.ReadAllText(GOLDEN_PATH));
             return golden["body"]!.ToString(Formatting.None);
