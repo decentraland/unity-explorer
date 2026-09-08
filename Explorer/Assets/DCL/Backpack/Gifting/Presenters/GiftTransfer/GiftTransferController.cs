@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
@@ -8,11 +7,8 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.Utility;
-using Global.AppArgs;
 using MVC;
 using Plugins.NativeWindowManager;
-using UnityEngine;
 using Utility;
 using static DCL.Backpack.Gifting.Events.GiftingEvents;
 
