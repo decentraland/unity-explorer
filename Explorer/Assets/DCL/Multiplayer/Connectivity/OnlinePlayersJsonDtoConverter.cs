@@ -12,6 +12,10 @@ namespace DCL.Multiplayer.Connectivity
     {
         private const string WORLD_REALM_SUFFIX = ".dcl.eth";
 
+        /// <summary>
+        ///     Required by <see cref="JsonConverter{T}" />; the peers pipeline only ever reads. There is no wire
+        ///     contract to write back to - <c>/comms/peers</c> is a GET - so nothing depends on these key names.
+        /// </summary>
         public override void WriteJson(JsonWriter writer, List<OnlineUserData>? value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
