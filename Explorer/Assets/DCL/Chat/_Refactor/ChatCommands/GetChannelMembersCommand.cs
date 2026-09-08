@@ -25,17 +25,9 @@ namespace DCL.Chat.ChatCommands
             // Ordering is owned by the service
             foreach (ChatMemberListData member in rawMembers)
             {
-                var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online, member.HasProfile);
+                var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online);
 
                 targetList.Add(viewModel);
-
-                // A wallet placeholder has no picture to download
-                if (!member.HasProfile)
-                {
-                    viewModel.ProfileThumbnail.UpdateValue(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail, viewModel.Profile.UserNameColor));
-
-                    continue;
-                }
 
                 GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileThumbnail, chatConfig.DefaultProfileThumbnail, viewModel.Profile, ct)
                                           .Forget();

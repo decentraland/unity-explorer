@@ -39,7 +39,6 @@ namespace DCL.Chat.ChatServices.Tests
 
         private HashSet<string> online = null!;
         private List<string> publishedIds = null!;
-        private List<string> publishedNames = null!;
         private List<int> publishedCounts = null!;
         private int lastCounter;
 
@@ -78,7 +77,6 @@ namespace DCL.Chat.ChatServices.Tests
 
             eventBus = new ChatEventBus();
             publishedIds = new List<string>();
-            publishedNames = new List<string>();
             publishedCounts = new List<int>();
             lastCounter = -1;
 
@@ -89,13 +87,9 @@ namespace DCL.Chat.ChatServices.Tests
             service.StartLiveMemberUpdates(members =>
             {
                 publishedIds.Clear();
-                publishedNames.Clear();
 
                 foreach (ChatMemberListData member in members)
-                {
                     publishedIds.Add(member.Profile.UserId.Value);
-                    publishedNames.Add(member.Name);
-                }
 
                 publishedCounts.Add(members.Count);
             });
@@ -111,7 +105,7 @@ namespace DCL.Chat.ChatServices.Tests
         }
 
         [UnityTest]
-        public IEnumerator NotDropMemberWhoseProfileIsTemporarilyNull() =>
+        public IEnumerator AddMemberWhoseProfileIsTemporarilyNullOnceItResolves() =>
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
@@ -124,9 +118,9 @@ namespace DCL.Chat.ChatServices.Tests
                 await service.RequestInitialMemberListAsync();
 
                 // Assert
-                Assert.That(publishedCounts, Is.EqualTo(new[] { 3, 3 }), "one row per online wallet from the first publish, republished once the profile lands");
+                Assert.That(publishedCounts, Is.EqualTo(new[] { 2, 3 }), "resolved members are published right away, the late one on the retry");
                 Assert.That(publishedIds, Is.EquivalentTo(new[] { ALICE, BOB, CAROL }));
-                Assert.That(publishedNames, Does.Contain("carol"));
+                Assert.That(lastCounter, Is.EqualTo(3));
             });
 
         [UnityTest]
@@ -146,20 +140,21 @@ namespace DCL.Chat.ChatServices.Tests
                 await service.RequestInitialMemberListAsync();
 
                 // Assert
-                Assert.That(publishedIds, Is.EquivalentTo(new[] { ALICE, BOB, CAROL }));
-                Assert.That(publishedNames, Does.Contain("alice").And.Contain("bob"));
+                Assert.That(publishedIds, Is.EquivalentTo(new[] { ALICE, BOB }));
+                Assert.That(lastCounter, Is.EqualTo(2));
             });
 
         [UnityTest]
-        public IEnumerator AgreeWithCounterAfterRefresh() =>
+        public IEnumerator TieCounterToResolvedEntries() =>
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                SetOnline(ALICE, BOB);
+                SetOnline(ALICE, BOB, CAROL);
                 StubProfile(ALICE, "alice");
                 StubProfile(BOB, "bob");
+                StubProfileSequence(CAROL, (ProfileTier?)null);
                 await service.RequestInitialMemberListAsync();
-                Assert.That(publishedIds.Count, Is.EqualTo(online.Count));
+                Assert.That(lastCounter, Is.EqualTo(publishedIds.Count), "a participant without a profile counts neither in the list nor in the counter");
 
                 // Act
                 online.Add(DAVE);
@@ -196,7 +191,7 @@ namespace DCL.Chat.ChatServices.Tests
             });
 
         [UnityTest]
-        public IEnumerator KeepWalletPlaceholderAfterMaxRetries() =>
+        public IEnumerator ExcludeMemberWithoutProfileAfterMaxRetries() =>
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
@@ -209,12 +204,12 @@ namespace DCL.Chat.ChatServices.Tests
                 await service.RequestInitialMemberListAsync();
 
                 // Assert
-                Assert.That(publishedIds, Is.EqualTo(new[] { ALICE, BOB, CAROL }), "placeholders are listed after the resolved members");
-                Assert.That(publishedNames[2], Is.EqualTo(CAROL[..6]));
+                Assert.That(publishedIds, Is.EqualTo(new[] { ALICE, BOB }));
+                Assert.That(lastCounter, Is.EqualTo(2));
 
                 _ = profileRepository.Received(1 + ChatMemberListService.MAX_UNRESOLVED_RETRIES)
                                      .GetAsync(CAROL, 0, Arg.Any<URLDomain?>(), Arg.Any<CancellationToken>(), true,
-                                      IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact, Arg.Any<IPartitionComponent?>());
+                                          IProfileRepository.FetchBehaviour.Default, ProfileTier.Kind.Compact, Arg.Any<IPartitionComponent?>());
             });
 
         private void SetOnline(params string[] ids)

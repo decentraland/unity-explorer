@@ -3,11 +3,11 @@ using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Optimization.Pools;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utility.Types;
 using Utility;
 using Utility.Multithreading;
 
@@ -17,6 +17,7 @@ namespace DCL.Chat.ChatServices
     ///     Manages and provides data about members in the current chat channel. This service has two primary functions:
     ///     1. Provide a continuous, lightweight member count for UI elements like the chat title bar.
     ///     2. Provide a full, detailed list of members on-demand for the member list panel, with efficient live updates.
+    ///     Both are derived from the participants whose profile could be resolved, so the counter always matches the list.
     /// </summary>
     public class ChatMemberListService : IDisposable
     {
@@ -27,9 +28,6 @@ namespace DCL.Chat.ChatServices
         private static readonly Comparison<ChatMemberListData> BY_NAME = static (a, b) =>
             string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
 
-        private static readonly Comparison<ChatMemberListData> BY_WALLET = static (a, b) =>
-            string.Compare(a.Profile.UserId.Value, b.Profile.UserId.Value, StringComparison.OrdinalIgnoreCase);
-
         private readonly CurrentChannelService currentChannelService;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly IFriendsService? friendsService;
@@ -37,8 +35,6 @@ namespace DCL.Chat.ChatServices
         private readonly int unresolvedRetryDelayMs;
 
         private readonly List<ChatMemberListData> membersBuffer = new (PoolConstants.AVATARS_COUNT);
-        private readonly List<ChatMemberListData> resolvedMembers = new (PoolConstants.AVATARS_COUNT);
-        private readonly List<ChatMemberListData> placeholderMembers = new (PoolConstants.AVATARS_COUNT);
 
         private readonly HashSet<string> lastKnownMemberIds = new (StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> participantsBuffer = new (StringComparer.OrdinalIgnoreCase);
@@ -47,22 +43,19 @@ namespace DCL.Chat.ChatServices
         private readonly HashSet<string> unresolvedMemberIds = new (StringComparer.OrdinalIgnoreCase);
         private readonly List<string> requestBuffer = new (PoolConstants.AVATARS_COUNT);
 
-        private readonly EventSubscriptionScope subscriptionToCounterUpdate = new ();
-        private readonly EventSubscriptionScope subscriptionToUserStatus = new ();
+        private readonly EventSubscriptionScope subscriptions = new ();
 
         private int lastKnownTitleBarCount = -1;
 
         /// <summary>
-        ///     Will be cancelled when the live update is no longer needed (the view is closed).
+        ///     Lives from <see cref="Start" /> to <see cref="Stop" />: profiles are resolved while the panel is closed too, so the counter is always current.
         /// </summary>
-        private CancellationTokenSource? liveUpdateCts;
+        private CancellationTokenSource? lifetimeCts;
 
         /// <summary>
         ///     Only one refresh may write the buffers at a time.
         /// </summary>
         private CancellationTokenSource? refreshCts;
-
-        private IDisposable? subscriptionToChannel;
 
         /// <summary>
         ///     Fires when the total number of members in the current channel changes.
@@ -98,7 +91,7 @@ namespace DCL.Chat.ChatServices
             Stop();
 
         /// <summary>
-        ///     Starts the service by subscribing to channel changes.
+        ///     Starts the service by subscribing to channel and member status changes.
         /// </summary>
         public void Start()
         {
@@ -108,9 +101,11 @@ namespace DCL.Chat.ChatServices
                 return;
             }
 
-            subscriptionToChannel = eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected);
-            subscriptionToCounterUpdate.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(UpdateCounter));
-            subscriptionToCounterUpdate.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(UpdateCounter));
+            lifetimeCts = new CancellationTokenSource();
+
+            subscriptions.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+            subscriptions.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(RefreshFullListIfNeeded));
+            subscriptions.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(RefreshFullListIfNeeded));
 
             OnChannelSelected();
         }
@@ -120,38 +115,29 @@ namespace DCL.Chat.ChatServices
         /// </summary>
         public void Stop()
         {
-            subscriptionToChannel?.Dispose();
-            subscriptionToCounterUpdate.Dispose();
-            StopLiveMemberUpdates();
+            subscriptions.Dispose();
+            CancelRefresh();
+            lifetimeCts.SafeCancelAndDispose();
+            lifetimeCts = null;
+            onMemberListUpdated = null;
         }
 
         /// <summary>
-        ///     Subscribes to member status changes of the current channel so the full list is refreshed while the panel is open.
-        ///     This should be called AFTER the initial list is displayed.
+        ///     Registers the consumer of the full member list. It is invoked on every refresh until <see cref="StopLiveMemberUpdates" />.
+        ///     Call <see cref="RequestInitialMemberListAsync" /> afterwards to receive the current list right away.
         /// </summary>
         public void StartLiveMemberUpdates(Action<IReadOnlyList<ChatMemberListData>> onMemberListUpdated)
         {
             ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Starting live member updates...");
-
-            // Emitted from the current channel user state service
-            subscriptionToUserStatus.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(RefreshFullListIfNeeded));
-            subscriptionToUserStatus.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(RefreshFullListIfNeeded));
-
-            liveUpdateCts = new CancellationTokenSource();
             this.onMemberListUpdated = onMemberListUpdated;
         }
 
         /// <summary>
-        ///     Stops the live member list updates.
-        ///     This should be called when the member list panel is closed to conserve resources.
+        ///     Stops delivering the full member list. The counter keeps updating.
         /// </summary>
         public void StopLiveMemberUpdates()
         {
             ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Stopping live member updates...");
-
-            subscriptionToUserStatus.Dispose();
-            CancelRefresh();
-            liveUpdateCts.SafeCancelAndDispose();
             onMemberListUpdated = null;
         }
 
@@ -162,18 +148,6 @@ namespace DCL.Chat.ChatServices
         public UniTask RequestInitialMemberListAsync() =>
             RefreshFullListIfNeeded(force: true);
 
-        private void UpdateCounter(ChatEvents.ChannelUsersStatusUpdated evt)
-        {
-            if (evt.Qualifies(currentChannelService.CurrentChannel))
-                UpdateAndBroadcastCount(evt.OnlineUsers.Count);
-        }
-
-        private void UpdateCounter(ChatEvents.UserStatusUpdatedEvent evt)
-        {
-            if (evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
-                UpdateAndBroadcastCount(currentChannelService.UserStateService!.OnlineParticipants.Count);
-        }
-
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent @event)
         {
             OnChannelSelected();
@@ -182,7 +156,7 @@ namespace DCL.Chat.ChatServices
         private void OnChannelSelected()
         {
             ResetAllMemberState();
-            UpdateAndBroadcastCount(currentChannelService.UserStateService?.OnlineParticipants.Count ?? 0);
+            RefreshFullListIfNeeded(force: true).Forget();
         }
 
         private void ResetAllMemberState()
@@ -190,7 +164,6 @@ namespace DCL.Chat.ChatServices
             // A refresh started for the previous channel must not publish into the new one
             CancelRefresh();
             membersBuffer.Clear();
-            resolvedMembers.Clear();
             lastKnownMemberIds.Clear();
             unresolvedMemberIds.Clear();
             lastKnownTitleBarCount = -1;
@@ -220,7 +193,15 @@ namespace DCL.Chat.ChatServices
 
         private UniTask RefreshFullListIfNeeded(bool force)
         {
-            currentChannelService.UserStateService!.CopyOnlineParticipantsTo(participantsBuffer);
+            if (lifetimeCts == null)
+                return UniTask.CompletedTask;
+
+            ICurrentChannelUserStateService? userStateService = currentChannelService.UserStateService;
+
+            if (userStateService == null)
+                participantsBuffer.Clear();
+            else
+                userStateService.CopyOnlineParticipantsTo(participantsBuffer);
 
             // On panel re-open the last known set is still the one from the previous opening
             if (!force && lastKnownMemberIds.SetEquals(participantsBuffer))
@@ -229,7 +210,7 @@ namespace DCL.Chat.ChatServices
             lastKnownMemberIds.Clear();
             lastKnownMemberIds.UnionWith(participantsBuffer);
 
-            refreshCts = refreshCts.SafeRestartLinked(liveUpdateCts!.Token);
+            refreshCts = refreshCts.SafeRestartLinked(lifetimeCts.Token);
             return RefreshFullListAsync(refreshCts.Token);
         }
 
@@ -237,7 +218,7 @@ namespace DCL.Chat.ChatServices
         {
             try
             {
-                resolvedMembers.Clear();
+                membersBuffer.Clear();
                 unresolvedMemberIds.Clear();
                 unresolvedMemberIds.UnionWith(lastKnownMemberIds);
 
@@ -263,7 +244,7 @@ namespace DCL.Chat.ChatServices
 
                 if (unresolvedMemberIds.Count > 0)
                     ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES,
-                        $"[ChatMemberListService] {unresolvedMemberIds.Count} online member(s) have no resolvable profile after {MAX_UNRESOLVED_RETRIES} retries and stay listed by wallet: {string.Join(", ", unresolvedMemberIds)}");
+                        $"[ChatMemberListService] {unresolvedMemberIds.Count} online participant(s) have no resolvable profile after {MAX_UNRESOLVED_RETRIES} retries and are excluded from the member list and counter: {string.Join(", ", unresolvedMemberIds)}");
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
@@ -271,6 +252,9 @@ namespace DCL.Chat.ChatServices
 
         private async UniTask FetchUnresolvedAsync(CancellationToken ct)
         {
+            if (unresolvedMemberIds.Count == 0)
+                return;
+
             requestBuffer.Clear();
 
             foreach (string id in unresolvedMemberIds)
@@ -283,35 +267,15 @@ namespace DCL.Chat.ChatServices
 
             foreach (Profile.CompactInfo profile in profiles)
                 if (unresolvedMemberIds.Remove(profile.UserId.Value))
-                    resolvedMembers.Add(new ChatMemberListData(profile, ChatMemberConnectionStatus.Online, hasProfile: true));
+                    membersBuffer.Add(new ChatMemberListData(profile, ChatMemberConnectionStatus.Online));
         }
 
         private void PublishMembers()
         {
-            placeholderMembers.Clear();
-
-            foreach (string identity in unresolvedMemberIds)
-            {
-                Option<UserId> userId = UserId.New(identity);
-
-                if (!userId.Has)
-                    continue;
-
-                placeholderMembers.Add(new ChatMemberListData(new Profile.CompactInfo(userId.Value, PlaceholderName(identity)), ChatMemberConnectionStatus.Online, hasProfile: false));
-            }
-
-            resolvedMembers.Sort(BY_NAME);
-            placeholderMembers.Sort(BY_WALLET);
-
-            membersBuffer.Clear();
-            membersBuffer.AddRange(resolvedMembers);
-            membersBuffer.AddRange(placeholderMembers);
-
+            membersBuffer.Sort(BY_NAME);
+            UpdateAndBroadcastCount(membersBuffer.Count);
             onMemberListUpdated?.Invoke(membersBuffer);
         }
-
-        private static string PlaceholderName(string identity) =>
-            identity.Length > 6 ? identity[..6] : identity;
 
         private void UpdateAndBroadcastCount(int newCount)
         {

@@ -40,9 +40,6 @@ namespace DCL.Chat.ChatViews
 
         private void HandleContextMenuRequest()
         {
-            if (!model.HasProfile)
-                return;
-
             canUnhover = false;
 
             var request = new MemberEntryContextMenuRequest
@@ -59,9 +56,6 @@ namespace DCL.Chat.ChatViews
 
         private void HandleItemContextMenuRequest()
         {
-            if (!model.HasProfile)
-                return;
-
             var request = new MemberEntryContextMenuRequest
             {
                 UserId = model.Profile.UserId, Position = itemButton.transform.position,
@@ -77,15 +71,11 @@ namespace DCL.Chat.ChatViews
             bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(model.Profile.UserId);
             usernameView.Setup(model.UserName, model.Profile.UserId, model.Profile.HasClaimedName, isOfficial, model.Profile.UserNameColor);
 
-            // Pooled item: every interaction is derived from the bound model so nothing carries over from the previous member
-            bool hasProfile = model.HasProfile;
-            profilePictureView.ConfigureThumbnailClickData(hasProfile ? HandleContextMenuRequest : null, hasProfile ? model.Profile.UserId.Value : null);
-            canUnhover = true;
-            Unhover();
+            profilePictureView.ConfigureThumbnailClickData(HandleContextMenuRequest, model.Profile.UserId);
         }
 
         private void Hover() =>
-            contextMenuButton.gameObject.SetActive(model.HasProfile);
+            contextMenuButton.gameObject.SetActive(true);
 
         private void Unhover() =>
             contextMenuButton.gameObject.SetActive(false);
