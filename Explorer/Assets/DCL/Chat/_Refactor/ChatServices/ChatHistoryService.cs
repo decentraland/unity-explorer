@@ -69,10 +69,10 @@ namespace DCL.Chat.ChatServices
                     messageToAdd.Message,
                     channel.Id);
 
-            HandleMessageAudioFeedback(message, channel, type);
+            HandleMessageAudioFeedback(message, channel);
         }
 
-        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type)
+        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId channelId)
         {
             if (message.IsSentByOwnUser)
                 return;
