@@ -338,7 +338,6 @@ namespace Global.Dynamic
             var realmData = new RealmData();
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
-            applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
             bool cliAbgenPipeline = applicationParametersParser.HasFlag(AppArgsFlags.ABGEN_PIPELINE);
 
@@ -346,17 +345,21 @@ namespace Global.Dynamic
             // local scene and read-throughs everything else from production). Brought up to health serially,
             // before the URL sources are built, so the override is seeded only when the server is actually
             // serving; the whole-scene warm-up continues in the background and realm loading holds on it below.
-            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles && string.IsNullOrEmpty(cliOptimizedAssetsUrl))
+            string? localAbBaseUrl = null;
+
+            if (launchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment && launchSettings.useLocalAssetBundles)
             {
-                // Mirrors RealmUrls' LSD resolution — RealmUrls itself needs the URL sources that don't exist yet.
+                // Mirrors RealmUrls.StartingRealmAsync's Localhost/Custom branches — keep in sync.
+                // RealmUrls itself can't be used here: it needs the URL sources that don't exist yet.
                 string realmRoot = launchSettings.initialRealm == InitialRealm.Localhost
                     ? IRealmNavigator.LOCALHOST
                     : launchSettings.customRealm;
 
-                abgenSidecar = new AbgenSidecarBootstrap(decentralandEnvironment);
+                string baseDomain = DecentralandUrlsSource.ResolveBaseDomain(decentralandEnvironment, customBaseDomain);
+                abgenSidecar = new AbgenSidecarBootstrap(baseDomain);
 
                 if (await abgenSidecar.StartAsync(realmRoot).AttachExternalCancellation(ct))
-                    cliOptimizedAssetsUrl = abgenSidecar.BaseUrl;
+                    localAbBaseUrl = abgenSidecar.BaseUrl;
             }
 
             var decentralandUrlsSource = new GatewayUrlsSource(
@@ -366,7 +369,7 @@ namespace Global.Dynamic
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
                 cliGatekeeperUrl,
-                cliOptimizedAssetsUrl,
+                localAbBaseUrl,
                 customBaseDomain,
                 cliAbgenPipeline,
                 cliGatewayPrefix);

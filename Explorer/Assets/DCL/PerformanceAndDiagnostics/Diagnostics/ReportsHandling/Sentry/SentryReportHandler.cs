@@ -17,6 +17,12 @@ namespace DCL.Diagnostics.Sentry
         private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
         private const string UNKNOWN_SCENE_NAME = "unknown-scene";
 
+        // Un-actionable native engine messages, e.g. PhysX mesh-cooking warnings from creator assets (#7928)
+        private static readonly string[] SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES =
+        {
+            "[Physics.PhysX]",
+        };
+
 #if UNITY_EDITOR
         private const string EDITOR_DSN_ENV_VAR = "DCL_SENTRY_DSN";
 #endif
@@ -166,6 +172,13 @@ namespace DCL.Diagnostics.Sentry
 
         private void CaptureMessage(string message, ReportData reportData, LogType logType)
         {
+            // Native messages always arrive as UNSPECIFIED; demote the ignored ones to breadcrumbs
+            if (reportData.Category == ReportCategory.UNSPECIFIED && IsIgnoredNativeMessage(message))
+            {
+                SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Warning);
+                return;
+            }
+
             // Avoid reporting non-errors to sentry as separate issues (even if they are enabled in the matrix)
             // Report them as breadcrumbs instead
 
@@ -190,6 +203,15 @@ namespace DCL.Diagnostics.Sentry
 
                     break;
             }
+        }
+
+        private static bool IsIgnoredNativeMessage(string message)
+        {
+            for (var i = 0; i < SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES.Length; i++)
+                if (message.StartsWith(SENTRY_IGNORED_NATIVE_MESSAGE_PREFIXES[i], StringComparison.Ordinal))
+                    return true;
+
+            return false;
         }
 
         private bool IsValidConfiguration(SentryUnityOptions options) =>
@@ -226,7 +248,9 @@ namespace DCL.Diagnostics.Sentry
             if (string.IsNullOrEmpty(message))
                 return;
 
-            scope.SetFingerprint("scene-js", data.SceneShortInfo.Name ?? UNKNOWN_SCENE_NAME, FirstLine(message));
+            // default(SceneShortInfo) has a null Name
+            string sceneName = data.SceneShortInfo.Name;
+            scope.SetFingerprint("scene-js", string.IsNullOrEmpty(sceneName) ? UNKNOWN_SCENE_NAME : sceneName, FirstLine(message));
         }
 
         private static string FirstLine(string message)
