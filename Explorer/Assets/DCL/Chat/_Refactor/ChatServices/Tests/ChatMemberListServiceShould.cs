@@ -112,7 +112,7 @@ namespace DCL.Chat.ChatServices.Tests
                 SetOnline(ALICE, BOB, CAROL);
                 StubProfile(ALICE, "alice");
                 StubProfile(BOB, "bob");
-                StubProfileSequence(CAROL, (ProfileTier?)null, Compact(CAROL, "carol"));
+                StubProfileSequence(CAROL, null, Compact(CAROL, "carol"));
 
                 // Act
                 await service.RequestInitialMemberListAsync();

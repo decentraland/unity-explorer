@@ -123,10 +123,10 @@ namespace DCL.Chat.ChatServices
         /// <summary>
         ///     Registers the consumer of the full member list. It is invoked on every refresh until <see cref="StopLiveMemberUpdates" />.
         /// </summary>
-        public void StartLiveMemberUpdates(Action<IReadOnlyList<ChatMemberListData>> onMemberListUpdated)
+        public void StartLiveMemberUpdates(Action<IReadOnlyList<ChatMemberListData>> listener)
         {
             ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Starting live member updates...");
-            this.onMemberListUpdated = onMemberListUpdated;
+            onMemberListUpdated = listener;
         }
 
         /// <summary>
