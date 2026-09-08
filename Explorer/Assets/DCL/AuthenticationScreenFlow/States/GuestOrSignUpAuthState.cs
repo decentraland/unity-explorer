@@ -122,6 +122,10 @@ namespace DCL.AuthenticationScreenFlow
                 loginException = e;
                 SetButtonsInteractable(true);
             }
+            catch (GuestAccountUpgradedException e)
+            {
+                machine.Enter<LoginSelectionAuthState, string>(e.Email);
+            }
             catch (Exception e)
             {
                 loginException = e;

@@ -62,7 +62,15 @@ namespace DCL.Web3.Authenticators
         // IWeb3Authenticator
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            IWeb3Identity identity = await currentAuthenticator.LoginAsync(payload, ct);
+            IWeb3Identity identity;
+
+            try { identity = await currentAuthenticator.LoginAsync(payload, ct); }
+            catch (GuestAccountUpgradedException)
+            {
+                DiscardUpgradedGuestSession();
+                throw;
+            }
+
             identityCache.Identity = identity;
             analytics.Identify(identity);
 
@@ -114,7 +122,7 @@ namespace DCL.Web3.Authenticators
             return identity;
         }
 
-        public UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
+        public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {
             if (OtpIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
@@ -125,7 +133,13 @@ namespace DCL.Web3.Authenticators
             if (DCLPlayerPrefs.GetBool(DCLPrefKeys.GUEST_SESSION_ACTIVE))
             {
                 CurrentProvider = AuthProvider.Guest;
-                return thirdWebAuth.TryAutoLoginAsync(ct);
+
+                try { return await thirdWebAuth.TryAutoLoginAsync(ct); }
+                catch (GuestAccountUpgradedException)
+                {
+                    DiscardUpgradedGuestSession();
+                    return false;
+                }
             }
 
             string storedEmail = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
@@ -134,22 +148,27 @@ namespace DCL.Web3.Authenticators
             if (string.IsNullOrEmpty(storedEmail))
             {
                 CurrentProvider = AuthProvider.Dapp;
-                return UniTask.FromResult(true);
+                return true;
             }
 
             CurrentProvider = AuthProvider.ThirdWeb;
-            return thirdWebAuth.TryAutoLoginAsync(ct);
+            return await thirdWebAuth.TryAutoLoginAsync(ct);
 
             bool OtpIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.EmailOTPAuth);
 
             bool GuestLoginIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin);
         }
 
-        // IEthereumApi
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
             currentEthereumApi.SendAsync(request, source, ct);
 
         public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate? callback) =>
             thirdWebAuth.SetTransactionConfirmationCallback(callback);
+
+        private void DiscardUpgradedGuestSession()
+        {
+            identityCache.Clear();
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.GUEST_SESSION_ACTIVE, save: true);
+        }
     }
 }

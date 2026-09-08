@@ -114,8 +114,8 @@ namespace DCL.AuthenticationScreenFlow
                     {
                         // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
                         profile.IsDirty = true;
-                        // Catalysts don't manipulate this field, so at this point we derive it from the identity instead.
-                        profile.HasConnectedWeb3 = identity.Source != IWeb3Identity.Web3IdentitySource.Guest;
+                        // Convert into guest account, only if was not upgraded before
+                        profile.HasConnectedWeb3 |= identity.Source != IWeb3Identity.Web3IdentitySource.Guest;
                         machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                     }
                     else if (isCached)

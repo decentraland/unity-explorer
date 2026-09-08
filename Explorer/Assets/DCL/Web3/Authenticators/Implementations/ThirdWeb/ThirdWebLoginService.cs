@@ -5,6 +5,7 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Thirdweb;
@@ -81,6 +82,9 @@ namespace DCL.Web3.Authenticators
                     await LoginWithGuestAsync(wallet, linkedCt);
                 }
 
+                if (isGuest)
+                    await ThrowIfAccountWasUpgradedAsync(wallet, linkedCt);
+
                 ActiveWallet = wallet;
                 ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb auto-login successful");
                 return true;
@@ -90,7 +94,8 @@ namespace DCL.Web3.Authenticators
                 // External cancellation — rethrow so caller knows it was cancelled
                 throw;
             }
-            catch (Exception e)
+            // An upgraded account is not an auto-login failure: it propagates so the caller can require its OTP
+            catch (Exception e) when (e is not GuestAccountUpgradedException)
             {
                 ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login failed with exception: {e.Message}");
                 return false;
@@ -129,6 +134,9 @@ namespace DCL.Web3.Authenticators
                 InAppWallet wallet = isGuest
                     ? await GuestLoginFlowAsync(ct)
                     : await OTPLoginFlowAsync(payload.Email, ct);
+
+                if (isGuest)
+                    await ThrowIfAccountWasUpgradedAsync(wallet, ct);
 
                 ActiveWallet = wallet;
 
@@ -212,8 +220,51 @@ namespace DCL.Web3.Authenticators
             wallet.LoginWithGuest(GuestSessionIdProvider.Resolve(guestSessionIdOverride))
                   .AsUniTask().AttachExternalCancellation(ct);
 
+        /// <summary>
+        ///     The guest session id is derived from the device, so the guest flow keeps resolving the same wallet after
+        ///     the account was upgraded through email linking. Connecting it only proves possession of the device, never
+        ///     ownership of the linked email, so such an account is not signed in here: it needs its OTP.
+        /// </summary>
+        private async UniTask ThrowIfAccountWasUpgradedAsync(InAppWallet wallet, CancellationToken ct)
+        {
+            string? linkedEmail = await ResolveLinkedEmailAsync(wallet, ct);
+
+            if (string.IsNullOrEmpty(linkedEmail))
+                return;
+
+            ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb: the guest wallet has a linked email, the account can only be signed in with its OTP");
+
+            throw new GuestAccountUpgradedException(linkedEmail);
+        }
+
+        private async UniTask<string?> ResolveLinkedEmailAsync(InAppWallet wallet, CancellationToken ct)
+        {
+            try
+            {
+                List<LinkedAccount>? linkedAccounts = await wallet.GetLinkedAccounts().AsUniTask().AttachExternalCancellation(ct);
+
+                if (linkedAccounts == null)
+                    return null;
+
+                foreach (LinkedAccount account in linkedAccounts)
+                    if (!string.IsNullOrEmpty(account.Details.Email))
+                        return account.Details.Email;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.AUTHENTICATION,
+                    $"ThirdWeb: linked accounts of the guest wallet could not be read: {e.Message}");
+            }
+
+            return null;
+        }
+
         private async UniTask<InAppWallet> OTPLoginFlowAsync(string? email, CancellationToken ct)
         {
+            if (email == null)
+                throw new ArgumentException("Email is required for OTP authentication", nameof(email));
+
             pendingWallet = await CreateEmailWalletAsync(email, ct);
 
             try { await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct); }
