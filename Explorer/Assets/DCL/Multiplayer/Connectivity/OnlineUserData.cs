@@ -1,5 +1,4 @@
 using System;
-using Newtonsoft.Json;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connectivity
@@ -9,9 +8,7 @@ namespace DCL.Multiplayer.Connectivity
     {
         public bool IsInWorld => !string.IsNullOrEmpty(worldName);
         public Vector3 position;
-        [JsonProperty("world")]
         public string? worldName;
-        [JsonProperty("wallet")]
         public string avatarId;
 
         public override int GetHashCode() =>
