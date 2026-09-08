@@ -4,6 +4,5 @@ namespace DCL.Chat.ChatReactions.Core
     {
         public static float NextFloat(this System.Random rng, float min, float max) =>
             (float)(min + rng.NextDouble() * (max - min));
-
     }
 }
