@@ -186,8 +186,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         /// <summary>
         ///     The cached connection string keeps being rejected (e.g. its token expired during a long outage):
-        ///     re-handshaking with archipelago creates a new peer session, which makes the server push a fresh
-        ///     <c>IslandChangedMessage</c> after the next heartbeat.
+        ///     re-handshaking with archipelago makes ws-connector announce the peer on
+        ///     <c>peer.{address}.connect</c>, and comms-gatekeeper answers that by re-sending the peer's current
+        ///     island assignment as an <c>IslandChangedMessage</c>. No client <c>Heartbeat</c> is involved, so the
+        ///     recovery works with the <c>archipelago-heartbeats</c> kill switch off. Both server changes must be
+        ///     deployed before a client build carrying the switch reaches production.
         /// </summary>
         private async UniTask ForceFreshIslandAssignmentAsync(CancellationToken token)
         {
