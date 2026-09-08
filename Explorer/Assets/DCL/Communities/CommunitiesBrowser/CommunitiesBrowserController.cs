@@ -664,6 +664,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void CreateCommunity()
         {
+            if (web3IdentityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             openCommunityCreationCts = openCommunityCreationCts.SafeRestart();
             commandsLibrary.CreateCommunityCommand.Execute(openCommunityCreationCts.Token);
         }
