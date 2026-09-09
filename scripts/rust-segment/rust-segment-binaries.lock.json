@@ -65,21 +65,23 @@
         "target": "universal (aarch64-apple-darwin + x86_64-apple-darwin)",
         "profile": "release",
         "crate_version": "0.1.0",
-        "rustc": "unknown - the committed binary was hand-built before this lock existed",
-        "toolchain_comment": [
-          "No toolchain pin yet: the committed dylib predates the lock and",
-          "nobody recorded what built it. Gate B (reproduces-lock.py) skips",
-          "until the first CI relock seeds this from toolchain-macos.txt."
-        ],
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
         "source_files": 4,
-        "repo_commit": "79918bfc61ca5dd0208c9c00cf7ff53008a11186"
+        "repo_commit": "76a5e8d90a09a980184d5bf33e81360d7fe0e91f",
+        "toolchain": {
+          "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+          "clang": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+          "xcode": "Xcode 16.4 Build version 16F6",
+          "sdk": "macosx15.5 (24F74)"
+        }
       },
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac/segment-server.dylib",
-          "sha256": "9debf46ac3af4a86b03d119a79a98f240cdeba6e628c2e1bfd64d932c956bdf4",
-          "bytes": 6270256,
+          "sha256": "152b65b7ff44245fbfad7287b5557404ae8a981ad21b070ba55c5773aebc44f2",
+          "bytes": 6253936,
           "produced_by": "cargo"
         }
       ]
@@ -90,21 +92,21 @@
         "target": "x86_64-pc-windows-msvc",
         "profile": "release",
         "crate_version": "0.1.0",
-        "rustc": "unknown - the committed binary was hand-built before this lock existed",
-        "toolchain_comment": [
-          "No toolchain pin yet: the committed dll predates the lock and",
-          "nobody recorded what built it. Gate B (reproduces-lock.py) skips",
-          "until the first CI relock seeds this from toolchain-windows.txt."
-        ],
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
         "source_files": 4,
-        "repo_commit": "79918bfc61ca5dd0208c9c00cf7ff53008a11186"
+        "repo_commit": "76a5e8d90a09a980184d5bf33e81360d7fe0e91f",
+        "toolchain": {
+          "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+          "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+          "msvc": "14.51.36231"
+        }
       },
       "artifacts": [
         {
           "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows/segment-server.dll",
-          "sha256": "a95ec0c19b3151476dd728de5a81104496744cce834e461a9f476b428ed08f27",
-          "bytes": 4324352,
+          "sha256": "ed255e0839487946e61e3aa0ecbac8532755a657260f5457e6f7ee4ceb2f5518",
+          "bytes": 4557824,
           "produced_by": "cargo"
         }
       ]
