@@ -47,8 +47,8 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
         }
 
         [UsedImplicitly]
-        public void TeleportTo(int x, int y) =>
-            api.TryTeleportTo(new Vector2Int(x, y));
+        public void TeleportTo(int? x, int? y, string? realm) =>
+            api.TryTeleportTo(x.HasValue && y.HasValue ? new Vector2Int(x.Value, y.Value) : null, realm);
 
         [UsedImplicitly]
         public bool ChangeRealm(string message, string realm) =>

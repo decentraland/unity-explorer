@@ -53,9 +53,13 @@ module.exports.movePlayerTo = async function(message) {
 }
 
 module.exports.teleportTo = async function(message) {
-    const x = Number(message.worldCoordinates.x);
-    const y = Number(message.worldCoordinates.y);
-    UnityRestrictedActionsApi.TeleportTo(x, y);
+    // Both fields are optional: worldCoordinates alone teleports within the current realm, realm alone
+    // targets that realm's default spawn, and together they land on the parcel in that realm.
+    const coords = message.worldCoordinates
+    UnityRestrictedActionsApi.TeleportTo(
+        coords != undefined ? Number(coords.x) : null,
+        coords != undefined ? Number(coords.y) : null,
+        message.realm != undefined ? message.realm : null);
     return {};
 }
 

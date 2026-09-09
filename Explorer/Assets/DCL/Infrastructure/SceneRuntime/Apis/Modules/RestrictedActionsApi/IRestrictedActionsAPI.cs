@@ -12,7 +12,12 @@ namespace DCL.SceneRuntime.Apis.RestrictedActionsApi
 
         UniTask<bool> TryMovePlayerToAsync(Vector3 newRelativePosition, Vector3? cameraTarget, Vector3? avatarTarget, float duration, CancellationToken ct);
 
-        void TryTeleportTo(Vector2Int newCoords);
+        /// <summary>
+        ///     Teleports the player. <paramref name="newCoords" /> absent targets the realm's default spawn (only
+        ///     meaningful together with <paramref name="realm" />); <paramref name="realm" /> absent addresses the
+        ///     parcel in the realm the player is already in.
+        /// </summary>
+        void TryTeleportTo(Vector2Int? newCoords, string? realm);
 
         bool TryChangeRealm(string message, string realm);
 
