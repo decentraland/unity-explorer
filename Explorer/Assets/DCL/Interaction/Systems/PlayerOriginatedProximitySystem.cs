@@ -6,6 +6,7 @@ using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
@@ -230,7 +231,7 @@ namespace DCL.Interaction.Systems
             {
                 var info = events[i].EventInfo;
 
-                float maxDistance = info.MaxPlayerDistance;
+                float maxDistance = InteractionInputUtils.ResolveMaxPlayerDistance(info) ?? PROXIMITY_DEFAULT_MAX_DISTANCE;
                 if (maxDistance < maxPlayerDistance)
                     maxPlayerDistance = maxDistance;
 

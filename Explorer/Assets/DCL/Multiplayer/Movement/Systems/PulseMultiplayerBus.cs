@@ -7,7 +7,6 @@ using DCL.Profiles.Self;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
-using ECS;
 using System;
 using System.Collections.Generic;
 
@@ -49,7 +48,7 @@ namespace DCL.Multiplayer.Movement
             IWeb3IdentityCache identityCache,
             ReconnectionSettings settings,
             ISelfProfile selfProfile,
-            IRealmData realmData)
+            PulseRealm pulseRealm)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
@@ -58,7 +57,7 @@ namespace DCL.Multiplayer.Movement
             this.incomingProfiles = incomingProfiles;
             this.removeIntentions = removeIntentions;
             this.identityCache = identityCache;
-            this.realmData = realmData;
+            this.pulseRealm = pulseRealm;
             this.selfProfile = selfProfile;
             this.settings = settings;
         }
@@ -73,7 +72,7 @@ namespace DCL.Multiplayer.Movement
 
         private bool TryGetWalletInCurrentRealm(uint subjectId, string messageType, out Web3Address wallet)
         {
-            switch (peerIdCache.GetWalletInRealm(subjectId, realmData.RealmName, out wallet))
+            switch (peerIdCache.GetWalletInRealm(subjectId, pulseRealm.Value, out wallet))
             {
                 case PeerIdCache.LookupResult.UnknownPeer:
                     ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received {messageType} from unknown peer {subjectId}");
@@ -129,7 +128,7 @@ namespace DCL.Multiplayer.Movement
 
             // The comparison spares co-teleporting peers whose TeleportPerformed already refreshed the cached realm
             staleWalletsBuffer.Clear();
-            peerIdCache.CollectWalletsNotInRealm(realmData.RealmName, staleWalletsBuffer);
+            peerIdCache.CollectWalletsNotInRealm(pulseRealm.Value, staleWalletsBuffer);
 
             foreach (string wallet in staleWalletsBuffer)
             {
@@ -139,7 +138,7 @@ namespace DCL.Multiplayer.Movement
 
             routingPurgeRequested = true;
 
-            ReportHub.Log(ReportCategory.MULTIPLAYER, $"Purged {staleWalletsBuffer.Count} peers from a different realm on teleport to '{realmData.RealmName}'");
+            ReportHub.Log(ReportCategory.MULTIPLAYER, $"Purged {staleWalletsBuffer.Count} peers from a different realm on teleport to '{pulseRealm.Value}'");
         }
 
         /// <summary>
@@ -153,7 +152,7 @@ namespace DCL.Multiplayer.Movement
 
             routingPurgeRequested = false;
 
-            peerIdCache.RemoveWhereNotInRealm(realmData.RealmName, PurgeQueues);
+            peerIdCache.RemoveWhereNotInRealm(pulseRealm.Value, PurgeQueues);
         }
 
         private void PurgeQueues(uint subjectId)

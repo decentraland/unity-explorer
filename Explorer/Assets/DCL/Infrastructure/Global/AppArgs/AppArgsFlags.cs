@@ -127,6 +127,8 @@ namespace Global.AppArgs
 
         public const string DISCOVER = "discover";
 
+        public const string IN_GAME_SHOP = "in-game-shop";
+
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
         public const string NAME_COLOR_CHANGE = "name-color-change";
@@ -184,8 +186,6 @@ namespace Global.AppArgs
         ///     content base is derived from the realm the client already has.
         /// </summary>
         public const string LOCAL_AB = "local-ab";
-
-        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 
         /// <summary>Presence forces the abgen pipeline on without waiting for the abgen-pipeline feature flag.</summary>
         public const string ABGEN_PIPELINE = "abgen-pipeline";
