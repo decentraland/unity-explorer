@@ -18,12 +18,12 @@ namespace DCL.UserInAppInitializationFlow.Tests
     [TestFixture]
     public class LoadPlayerAvatarStartupOperationShould
     {
-        private World world;
-        private ILoadingStatus loadingStatus;
-        private ISelfProfile selfProfile;
-        private ObjectProxy<AvatarBase> avatarBaseProxy;
-        private GameObject avatarGameObject;
-        private CancellationTokenSource cts;
+        private World world = null!;
+        private ILoadingStatus loadingStatus = null!;
+        private ISelfProfile selfProfile = null!;
+        private ObjectProxy<AvatarBase> avatarBaseProxy = null!;
+        private GameObject avatarGameObject = null!;
+        private CancellationTokenSource cts = null!;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() =>
