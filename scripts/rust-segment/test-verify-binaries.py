@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-"""Tests for verify-binaries.py: the detection path and --update toolchain handling.
+"""Tests for verify-binaries.py: detection of drift and --update toolchain handling.
 
 Run: python3 scripts/rust-segment/test-verify-binaries.py
 
-Each test drives the real script as a subprocess against a synthetic
-repository, because the properties under test are end-to-end: corrupting a
-committed artifact or a build input must turn the exit status non-zero
-(DetectionTests - the property the lock exists for), and a relock must either
-move targets.<t>.rust.toolchain or refuse, never writing a lock whose other
-pins were refreshed around a stale toolchain identity (UpdateToolchainTests).
+Each test drives the real script as a subprocess against a synthetic repository:
+the properties are end-to-end exit statuses, not unit behaviour.
 """
 
 from __future__ import annotations
@@ -38,8 +34,7 @@ def make_repo(toolchain: dict | None, manifest_version: str | None = None,
         handle.write("pub fn probe() {}\n")
 
     if manifest_version is not None:
-        # A [dependencies] version after the [package] table: the scanner must
-        # read this manifest's own version, not the first one in the file.
+        # A [dependencies] version follows [package] so a scanner reading the first version would be wrong.
         with open(os.path.join(root, "native", "Cargo.toml"), "w",
                   encoding="utf-8") as handle:
             handle.write(f'[package]\nname = "rust-segment"\n'
@@ -98,11 +93,7 @@ def host_identity(tool: str, cwd: str) -> str | None:
 
 
 def make_detection_repo() -> str:
-    """A repo with one cargo artifact, one enforced and one pending input.
-
-    Digests start empty and are filled by a real `--update` run, so the tests
-    exercise the same write-then-verify cycle the lock lives through.
-    """
+    """A repo with one cargo artifact, one enforced and one pending input; digests are filled by a real --update."""
     root = tempfile.mkdtemp(prefix="rust-segment-lock-test-")
     os.makedirs(os.path.join(root, "scripts", "rust-segment"))
     os.makedirs(os.path.join(root, "native", "src"))
@@ -230,6 +221,24 @@ class DetectionTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("stray", result.stdout)
 
+    def test_unlisted_binary_in_a_subdirectory_fails(self):
+        nested = os.path.join(self.root, "native", "out", "nested")
+        os.makedirs(nested)
+        with open(os.path.join(nested, "stray.dylib"), "wb") as handle:
+            handle.write(b"\xcf\xfa\xed\xfe unlisted")
+        result = run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("nested/stray.dylib", result.stdout)
+
+    def test_unlisted_bundle_directory_fails(self):
+        bundle = os.path.join(self.root, "native", "out", "Stray.bundle", "Contents")
+        os.makedirs(bundle)
+        with open(os.path.join(bundle, "Info.plist"), "w", encoding="utf-8") as handle:
+            handle.write("plist\n")
+        result = run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("Stray.bundle", result.stdout)
+
     def test_non_shippable_files_in_runtime_dir_are_ignored(self):
         out = os.path.join(self.root, "native", "out")
         for name in ("plugin.bin.meta", "doctor.sh"):
@@ -259,9 +268,7 @@ class UpdateToolchainTests(unittest.TestCase):
         return path
 
     def test_update_refuses_mismatched_toolchain(self):
-        """A relock on a host whose rustc differs from the pin must refuse and
-        leave the lock byte-identical, not rewrite everything around a stale
-        toolchain identity."""
+        """A refused relock must leave the lock byte-identical."""
         root = self.repo({"rustc": "rustc 999.999.999 (0000000 2099-01-01)",
                           "cargo": "cargo 999.999.999 (0000000 2099-01-01)"})
         before = lock_text(root)
@@ -273,8 +280,7 @@ class UpdateToolchainTests(unittest.TestCase):
                          "a refused relock must not touch the lock")
 
     def test_update_refuses_unprobeable_component(self):
-        """A pinned component this host cannot probe (windows_sdk outside a VS
-        environment, xcode on non-macOS) is a refusal, not a silent keep."""
+        """An unprobeable pinned component is a refusal, not a silent keep."""
         pin = {"rustc": "rustc 999.999.999", "xcode": "Xcode 99.9"}
         if sys.platform == "darwin":
             pin = {"rustc": "rustc 999.999.999",
@@ -342,14 +348,7 @@ class UpdateToolchainTests(unittest.TestCase):
             "0" * 64)
 
     def test_update_with_toolchain_file_seeds_a_missing_pin(self):
-        """A target that has never been pinned gets its first pin from the
-        recorded build, not silently nothing.
-
-        This is the path the lock's own instructions describe for
-        windows-x86_64. It used to return early on 'no components to move',
-        so the relock rewrote every other pin and left rust.rustc reading
-        'unknown - not recorded ...' - Gate B skipping forever, with the
-        command that was supposed to fix it reporting success."""
+        """A never-pinned target gets its first pin from the recorded build; an early return here once left Gate B skipping forever."""
         root = self.repo(None, toolchain_comment=["no toolchain pin yet"])
         path = self.write_toolchain_file(root, [
             "rustc: rustc 9.9.9-test (aaaaaaa 2026-01-01)",
@@ -369,9 +368,7 @@ class UpdateToolchainTests(unittest.TestCase):
                          "the note saying there is no pin outlived the pin")
 
     def test_seeded_pin_skips_components_no_host_can_probe(self):
-        """`ld` is recorded by the macOS build and pinned by nobody: pinning a
-        component probe_toolchain_component() cannot check would make every
-        later relock without a toolchain file refuse with 'cannot probe'."""
+        """Pinning a component no host can probe would make every later relock refuse."""
         root = self.repo(None)
         path = self.write_toolchain_file(root, [
             "rustc: rustc 9.9.9-test",
@@ -383,9 +380,7 @@ class UpdateToolchainTests(unittest.TestCase):
         self.assertEqual(toolchain, {"rustc": "rustc 9.9.9-test"})
 
     def test_seeded_pin_keeps_the_msvc_toolset(self):
-        """The Windows DLL is linked by MSVC, so the toolset version the build
-        records is as much an input to the bytes as rustc and must survive
-        into the pin - `msvc` is a probeable component, unlike `ld`."""
+        """The MSVC toolset links the DLL, so its recorded version must survive into the pin."""
         root = self.repo(None)
         path = self.write_toolchain_file(root, [
             "rustc: rustc 9.9.9-test",

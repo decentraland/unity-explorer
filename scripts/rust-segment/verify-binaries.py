@@ -1,74 +1,30 @@
 #!/usr/bin/env python3
 """Verify the committed RustSegment native binaries against scripts/rust-segment/rust-segment-binaries.lock.json.
 
-A sibling of scripts/uuav/verify-binaries.py for the analytics crate under
-Explorer/Assets/Plugins/RustSegment/.native, minus the FFmpeg provenance checks
-that crate has no use for. Four independent checks, each of which fails the run
-on its own:
+Four independent checks, each of which fails the run on its own:
 
-  artifacts       sha256 of every shipped .dylib/.dll/executable matches the lock
-  build-inputs    sha256 of every manifest, cargo config and workspace source
-                  tree that feeds a shipped binary matches the lock, so a
-                  change to a build input that was not followed by a rebuild is
-                  caught. Two kinds:
-                    file                 sha256 of one file (Cargo.lock is one:
-                                         a single crate ships, so every locked
-                                         package reaches the binary)
-                    tree                 order-independent digest over a source
-                                         tree, filtered by suffix and with
-                                         directories pruned by name
-                  An input carrying "pending" is reported but never fails: it
-                  is tracked from the moment it exists and pinned at the
-                  relock that first ships a binary built from it.
-  rust-source     the digest of .native/src matches what this target's
-                  cargo-built binaries were built from - the crate has no
-                  upstream revision to pin, so the source digest is the pin
-  runtime-dir     every shippable binary in a target's runtime dir is named by
-                  the lock, so a file dropped next to the listed ones cannot
-                  reach players with no recorded hash
+  artifacts     sha256 of every shipped binary matches the lock
+  build-inputs  sha256 of every file (kind "file") or source tree (kind "tree")
+                that feeds a shipped binary matches the lock; an input carrying
+                "pending" is reported but never fails
+  rust-source   the digest of .native/src matches what this target's binaries
+                were built from - the crate has no upstream revision, so the
+                source digest is the pin
+  runtime-dir   every shippable binary under a target's runtime dir is named by
+                the lock
 
-`--update` refreshes the machine-derived fields (artifact hashes and sizes,
-build-input hashes, source digest) in place. It never clears a build input's
-"pending" key, because promoting an input from tracked to enforced is a
-deliberate human move.
+`--update` rewrites the machine-derived fields (hashes, sizes, source digest,
+crate_version, repo_commit); it never clears a "pending" key. The toolchain
+pin at targets.<t>.rust.toolchain moves only with a `--toolchain
+toolchain-<os>.txt` recorded by the build workflow, or when every pinned
+component matches this host; otherwise --update refuses, so Gate B
+(reproduces-lock.py) can never be left pinned to a host that did not build
+the bytes. `--update --only TARGET` relocks one target; build_inputs are
+global and refresh either way.
 
-targets.<t>.rust.crate_version and .repo_commit are re-derived by --update too,
-from .native/Cargo.toml and `git rev-parse HEAD`, but no check compares them.
-They describe the relock rather than pin it: a crate version bump already
-reaches the lock through cargo_manifest's digest, and repo_commit is false one
-commit after it is written, so failing on either would fail correct runs. They
-are derived rather than hand-copied only so they cannot quietly contradict the
-binaries beside them.
-
-targets.<t>.rust.toolchain - the host identities Gate B (reproduces-lock.py)
-pins byte reproduction against - moves with the relock, not silently: relocking
-leaves it as it is only when every pinned component matches this host, verified
-with the same commands the build workflow's 'Record the toolchain actually
-used' step runs. Otherwise --update refuses, because rewriting every other pin
-while keeping the old toolchain identity would leave Gate B either skipping
-forever or claiming a reproduction the relock itself just invalidated. To
-relock a target built elsewhere (or on a changed toolchain), pass
-`--toolchain toolchain-<os>.txt` - the file that workflow step records - and
-the pin is rewritten from it along with everything else.
-
-A target with no toolchain pin at all is the same instruction seen from the
-start: `--toolchain` gives it its first one, taken from every component of the
-record probe_toolchain_component() knows how to check again later, and drops any
-"toolchain_comment" saying it has none. Without the flag it relocks unpinned and
-Gate B goes on skipping it, which is what an unpinned target means.
-
-`--update --only TARGET` relocks one target and leaves every other target's
-pins alone. The two platforms are built on two different machines, so the
-common case is that only one of them has just been rebuilt; relocking both
-from a tree only one was built from would record, of the target that was not
-rebuilt, a pin that is simply false. The shared build_inputs are global and
-are still refreshed, because they belong to no single target - a target whose
-binaries predate them stays red on its own per-target pins.
-
-`--report TARGET` compares a freshly built target against the lock and writes
-rust-segment-<TARGET>.sha256; used by the build workflow, where artifact hashes
-are expected to differ from the committed ones until the relock (see
-Explorer/Assets/Plugins/RustSegment/README.md).
+`--report TARGET` compares a fresh build against the lock and writes
+rust-segment-<TARGET>.sha256 (build workflow; differing hashes are expected
+until the relock).
 
 Exit status: 0 all checks passed, 1 at least one check failed, 2 bad usage.
 """
@@ -104,18 +60,7 @@ def sha256_of(path: str) -> str:
 
 
 def tree_sha256(root: str, suffix, prune=()) -> tuple[str, int]:
-    """Order-independent digest over every *suffix* file under *root*.
-
-    Hashing the Rust sources, not just Cargo.toml/Cargo.lock, is what makes an
-    edit to a workspace source tree that was never followed by a rebuild
-    visible: the shipped binary's own hash still matches the lock in that
-    case, because nobody rebuilt it.
-
-    *suffix* is one extension or a list of them. Directory names in *prune* are
-    skipped wherever they occur - `tests`, `examples` and the build
-    directories, none of which end up inside a shipped binary, so including
-    them would turn the lock red on edits that cannot change what ships.
-    """
+    """Order-independent digest over every *suffix* file under *root*, skipping *prune* directory names."""
     suffixes = (suffix,) if isinstance(suffix, str) else tuple(suffix)
     pruned = set(prune)
     entries = []
@@ -134,13 +79,7 @@ def tree_sha256(root: str, suffix, prune=()) -> tuple[str, int]:
 
 
 def package_version(path: str) -> str | None:
-    """The `[package] version` of one Cargo.toml, or None if it has none.
-
-    Hand-parsed: this script is a gate that must run on whatever python3 a
-    runner happens to have, without tomllib and without a pip install.
-    Only the [package] table is read, so a [dependencies] entry pinning some
-    crate's version cannot be mistaken for this manifest's own.
-    """
+    """The `[package] version` of one Cargo.toml, or None; hand-parsed because runners may lack tomllib."""
     in_package = False
     try:
         with open(path, encoding="utf-8") as handle:
@@ -168,16 +107,7 @@ def head_commit(repo: str) -> str | None:
 
 
 def refresh_provenance_notes(repo: str, lock: dict, spec: dict) -> None:
-    """Re-derive the two fields that describe, rather than pin, this relock.
-
-    crate_version and repo_commit are documentation: nothing compares them, and
-    nothing should. A version bump already reaches the lock through
-    cargo_manifest's digest, and repo_commit is false one commit after it is
-    written, so checking either would fail runs that are correct. What they must
-    not do is contradict the relock that wrote them - the pair drifting apart
-    from the binaries beside them (crate_version 0.2.0 against a 0.3.0
-    workspace) is what made them worth deriving instead of hand-copying.
-    """
+    """Re-derive crate_version and repo_commit: descriptive only, derived so they cannot contradict the binaries."""
     manifest = os.path.dirname(os.path.join(repo, lock["rust_source"]["path"]))
     version = package_version(os.path.join(manifest, "Cargo.toml"))
     if version:
@@ -225,15 +155,7 @@ VSWHERE = os.path.join(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x
 
 
 def msvc_tools_version() -> str | None:
-    """The VC++ toolset link.exe comes from, as `msvc: 14.44.35207`.
-
-    The shipped DLL is linked by the MSVC linker, which rustc locates itself
-    without a vcvars shell - so nothing in the environment names the toolset
-    and WindowsSDKVersion is unset. vswhere is the one stable way to find the
-    installation, and Microsoft.VCToolsVersion.default.txt inside it names the
-    default toolset the same way the build workflow's 'Record the toolchain
-    actually used' step reads it.
-    """
+    """The VC++ toolset version; rustc finds link.exe without a vcvars shell, so vswhere is the only stable way to name it."""
     if not os.path.exists(VSWHERE):
         return None
     install = _first_line([VSWHERE, "-latest", "-products", "*", "-requires",
@@ -252,12 +174,7 @@ def msvc_tools_version() -> str | None:
 
 
 def probe_toolchain_component(component: str, native_dir: str) -> str | None:
-    """This host's identity for one pinned component, or None if unprobeable.
-
-    Each probe is the command the build workflow's 'Record the toolchain
-    actually used' step runs for the same component, so a value compared or
-    written here is the value Gate B will later compare against.
-    """
+    """This host's identity for one pinned component, probed with the same command the build workflow records."""
     if component in ("rustc", "cargo", "clang"):
         return _first_line([component, "--version"], native_dir)
     if component == "gcc":
@@ -284,45 +201,22 @@ def probe_toolchain_component(component: str, native_dir: str) -> str | None:
 
 
 def seed_toolchain_pin(spec: dict, toolchain_file: str) -> None:
-    """Give a target its first targets.<target>.rust.toolchain, from the build.
-
-    A target with no pin is one Gate B has never been able to check: it skips,
-    naming the file whose identities would let it. Every recorded component the
-    build reached is worth pinning - for x86_64-pc-windows-gnu the mingw gcc
-    reached the bytes as directly as rustc did, which is why
-    .cargo/config.toml pins its path - so the pin starts as wide as the record.
-
-    Only components probe_toolchain_component() knows, though: a pinned
-    component no host can probe makes every later relock that does not carry a
-    toolchain file refuse with 'cannot probe', so seeding one would trap the
-    next rebuild. macOS records `ld` for that reason and does not pin it.
-    """
+    """Seed a target's first toolchain pin from the recorded build; unprobeable components (ld) stay out or every later relock would refuse."""
     recorded = read_toolchain_file(toolchain_file)
     spec["rust"]["toolchain"] = {component: identity
                                  for component, identity in recorded.items()
                                  if component in PROBEABLE_COMPONENTS}
-    # Whatever this said, it said the target had no pin.
     spec["rust"].pop("toolchain_comment", None)
 
 
 def resolve_toolchain_pin(target: str, spec: dict, toolchain_file: str | None,
                           native_dir: str) -> list[str]:
-    """Move or hold targets.<target>.rust.toolchain for a relock; never stale it.
-
-    Without this, --update rewrote every machine-derived pin while silently
-    keeping the old toolchain identity: a relock on a different rustc / mingw /
-    SDK left Gate B pinned to a host that did not produce the new binaries, so
-    it either 'skipped' forever or claimed a reproduction the relock had just
-    invalidated. Returns problems; on success with a file, mutates the pin.
-    """
+    """Move or hold the toolchain pin for a relock, never leaving it stale; returns refusals."""
     pinned = spec["rust"].get("toolchain")
     components = {key: value for key, value in pinned.items() if key != "comment"} \
         if isinstance(pinned, dict) else {}
 
     if not components:
-        # No pin to move. With a recorded build to take one from, this relock is
-        # the moment the target gets its first; without one it relocks unpinned,
-        # exactly as before, and Gate B keeps skipping.
         if toolchain_file:
             seed_toolchain_pin(spec, toolchain_file)
             seeded = spec["rust"]["toolchain"]
@@ -397,41 +291,34 @@ def check_artifacts(repo: str, target: str, spec: dict, update: bool) -> list[st
     return problems
 
 
-# What counts as a shippable binary inside a runtime dir: native libraries and
-# executables by extension, plus extensionless files (a macOS executable has no
-# extension). Everything else there (.meta) is not loaded by the player.
-SHIPPABLE_SUFFIXES = (".dll", ".dylib", ".exe")
+# Extensionless files count too: a macOS executable has no extension.
+SHIPPABLE_SUFFIXES = (".dll", ".dylib", ".exe", ".so", ".bundle")
 
 
 def check_runtime_dir_completeness(repo: str, target: str, spec: dict) -> list[str]:
-    """Every shippable binary in the runtime dir must be named by the lock.
-
-    check_artifacts() walks the lock; this walks the directory. Without it the
-    lock is an allowlist with no completeness check - a binary dropped into
-    the shipped plugin folder next to the listed ones would reach end users
-    with no recorded hash and this script would never mention it.
-
-    Runs in --update mode too: a relock can refresh hashes of listed
-    artifacts, but only a human can decide that a new binary belongs in the
-    shipping set, so an unlisted one always fails.
-    """
+    """Every shippable binary under the runtime dir must be named by the lock; runs on --update too, since only a human can admit a new binary."""
     runtime_dir = os.path.join(repo, spec["runtime_dir"])
     if not os.path.isdir(runtime_dir):
         return [f"[{target}] missing runtime dir: {spec['runtime_dir']}"]
 
-    listed = {os.path.basename(artifact["path"]) for artifact in spec["artifacts"]}
+    listed = {os.path.normpath(os.path.join(repo, artifact["path"]))
+              for artifact in spec["artifacts"]}
     problems = []
-    for name in sorted(os.listdir(runtime_dir)):
-        if not os.path.isfile(os.path.join(runtime_dir, name)):
-            continue
-        extension = os.path.splitext(name)[1].lower()
-        if extension not in SHIPPABLE_SUFFIXES and extension != "":
-            continue
-        if name not in listed:
+    for base, dirs, files in os.walk(runtime_dir):
+        # A .bundle is a directory-shaped binary; report it whole and do not descend.
+        bundles = [d for d in dirs if d.lower().endswith(".bundle")]
+        dirs[:] = [d for d in dirs if d not in bundles]
+        for name in sorted(files + bundles):
+            extension = os.path.splitext(name)[1].lower()
+            if extension not in SHIPPABLE_SUFFIXES and extension != "":
+                continue
+            full = os.path.normpath(os.path.join(base, name))
+            if full in listed:
+                continue
+            rel = os.path.relpath(full, repo).replace(os.sep, "/")
             problems.append(
-                f"[{target}] {spec['runtime_dir']}/{name} is in the shipped "
-                f"plugin folder but has no entry in the lock - its provenance "
-                f"is unverified.\n"
+                f"[{target}] {rel} is in the shipped plugin folder but has no "
+                f"entry in the lock - its provenance is unverified.\n"
                 f"    Add it to this target's artifacts and relock with "
                 f"--update, or remove it from the folder.")
     return problems
@@ -491,14 +378,7 @@ def check_build_inputs(repo: str, lock: dict, update: bool) -> list[str]:
 
 def check_rust_source(repo: str, lock: dict, target: str, spec: dict,
                       update: bool) -> list[str]:
-    """Tie this target's binaries to the native/src state that produced them.
-
-    The crate has no upstream repository - it is built out of this repo - so
-    there is no revision to pin. The digest of the source tree is the pin.
-    Recording it per target rather than once globally is deliberate: the two
-    platforms are built on two different machines and can easily end up
-    shipping binaries from different source states.
-    """
+    """Tie this target's binaries to the .native/src digest they were built from; per target, since the platforms can ship from different source states."""
     source = lock["rust_source"]
     root = os.path.join(repo, source["path"])
     if not os.path.isdir(root):
@@ -516,18 +396,12 @@ def check_rust_source(repo: str, lock: dict, target: str, spec: dict,
                 f"    expected digest {spec['rust']['source_digest']} "
                 f"({spec['rust']['source_files']} files)\n"
                 f"    actual   digest {actual} ({files} files)\n"
-                f"    The shipped binaries no longer correspond to native/src."]
+                f"    The shipped binaries no longer correspond to .native/src."]
     return []
 
 
 def report_fresh_build(repo: str, lock: dict, target: str) -> int:
-    """Compare a just-built target against the lock and write its SHA256SUMS.
-
-    Used by the build workflow. A fresh build is only expected to be
-    byte-identical to what is committed on the toolchain the lock pins, and
-    that comparison is Gate B's (reproduces-lock.py); here a differing hash is
-    reported, not failed. What fails is an artifact the build did not produce.
-    """
+    """Report a fresh build against the lock and write its SHA256SUMS; byte comparison is Gate B's job, so only a missing artifact fails."""
     spec = lock["targets"][target]
     lines, mismatches, missing = [], 0, 0
 
@@ -646,8 +520,7 @@ def main() -> int:
             refresh_provenance_notes(repo, lock, spec)
 
     if args.update:
-        # newline="\n": the lock is read on every platform and its diff should
-        # not depend on which one rewrote it.
+        # newline="\n": the lock's diff must not depend on which platform rewrote it.
         with open(lock_path, "w", encoding="utf-8", newline="\n") as handle:
             json.dump(lock, handle, indent=2)
             handle.write("\n")

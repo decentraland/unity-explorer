@@ -29,8 +29,7 @@ fi
 rm -rf "$CANONICAL_ROOT"
 mkdir -p "$CANONICAL_ROOT"
 
-# The build path is an input to the bytes (panic locations, PDB records), so
-# every build goes through the same fixed directory rather than the checkout.
+# The build path leaks into the bytes (panic locations, PDB records), so every build uses one fixed directory.
 git -C "$REPO" -c core.autocrlf=false -c core.eol=lf archive "$REV" "$PLUGIN" scripts/rust-segment |
     tar -x -C "$CANONICAL_ROOT"
 

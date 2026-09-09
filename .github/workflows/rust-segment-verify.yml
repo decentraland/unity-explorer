@@ -3,6 +3,9 @@ name: RustSegment Binary Verification
 
 on:
   workflow_dispatch:
+  # Weekly: advisories against the pinned Cargo.lock land without any PR touching the crate.
+  schedule:
+    - cron: '0 6 * * 1'
   pull_request:
     paths:
       - 'Explorer/Assets/Plugins/RustSegment/**'
@@ -65,10 +68,7 @@ jobs:
           status=0
           while IFS= read -r path; do
             [ -n "$path" ] || continue
-            # A file stored in LFS has an ~130 byte pointer as its git blob
-            # whose first line is the spec URL; a plain blob is the whole
-            # binary. Match the whole first line, not a byte-count prefix -
-            # a truncated prefix can never match the anchored pattern.
+            # An LFS blob is a pointer whose first line is the spec URL; a whole-line match cannot pass on a truncated prefix.
             if git cat-file blob "$HEAD_SHA:$path" 2>/dev/null \
                  | head -n1 | grep -q '^version https://git-lfs.github.com/spec/v1'; then
               echo "  ok (lfs)    $path"
@@ -94,9 +94,7 @@ jobs:
 
   rust:
     name: Check, test and lint the crate
-    # macOS is the one hosted platform the crate is known to compile on (the
-    # shipped dylib is built there); the Linux build has not been exercised
-    # since 2024, so ubuntu would first have to be proven.
+    # The only hosted platform the crate is proven to compile on; Linux is unexercised since 2024.
     runs-on: macos-15
     defaults:
       run:
@@ -107,8 +105,7 @@ jobs:
         with:
           lfs: false
 
-      # rustup reads rust-toolchain.toml from the working directory, so the
-      # pinned toolchain is what every command below runs.
+      # rustup honours rust-toolchain.toml only from inside .native/.
       - name: Record the toolchain
         run: |
           rustc --version
@@ -118,10 +115,24 @@ jobs:
       - name: Check
         run: cargo check --all-targets --locked
 
-      # test_integration is #[ignore]d: it needs a Segment write key and the
-      # network. The unit tests (disk-full mapping, operation construction) run.
+      # test_integration is #[ignore]d: it needs a Segment write key and the network.
       - name: Test
         run: cargo test --locked
 
       - name: Clippy
         run: cargo clippy --all-targets --locked -- -D warnings
+
+  audit:
+    name: RUSTSEC advisories against Cargo.lock
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Audit the pinned dependencies
+        run: cargo audit --file Explorer/Assets/Plugins/RustSegment/.native/Cargo.lock

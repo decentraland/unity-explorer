@@ -1,36 +1,16 @@
 #!/usr/bin/env python3
 """Gate B: did this runner reproduce the binaries committed to Git LFS?
 
-Compares the cargo-produced artifacts a fresh canonical build has just deployed
-against the sha256 scripts/rust-segment/rust-segment-binaries.lock.json records
-for them - the hashes of the committed binaries themselves, which
-rust-segment-verify.yml re-asserts on every pull request.
+Compares a fresh canonical build's cargo artifacts against the sha256 the lock
+records for them. Byte reproduction is only meaningful on the toolchain that
+produced the committed bytes, pinned at targets.<target>.rust.toolchain as
+component -> identity, matching the lines of the recorded toolchain-<os>.txt.
 
-Byte-identical output needs an identical toolchain, and the two shipped targets
-were built on two hosts whose rustc versions can differ from each other.
-GitHub-hosted runners carry their own rustc, and their MSVC and Xcode/ld64
-versions move with the runner image. So the comparison only means anything when
-the runner's toolchain is the one that produced the committed binaries, and the
-expected identity is pinned in the lock at
-
-    targets.<target>.rust.toolchain
-
-as an object of component name -> exact identity string, matching the lines the
-workflow's "Record the toolchain actually used" step writes to
-toolchain-<os>.txt. Only the components the lock lists are compared; anything
-else the runner records is context, not a pin.
-
-Skipped, with a notice naming what differed and the hashes the fresh build
-produced, when:
-
-  - the lock pins no toolchain for this target (nothing to compare against yet)
-  - a pinned component differs from what this runner recorded
-  - .native/src no longer matches the source digest this target's binaries
-    were built from, so they could not reproduce on any toolchain; that mismatch
-    is rust-segment-verify.yml's failure to raise, not this one's
-
-Fails only when toolchain and source both match and the bytes do not - the one
-case where somebody can actually do something about it.
+Skipped (exit 0, with a notice and the fresh hashes) when the lock pins no
+toolchain, a pinned component differs from this runner, or .native/src has
+moved from the recorded source digest. Fails only when toolchain and source
+both match and the bytes differ. Writes rust-segment-<target>.gate-b.txt with
+the one-line outcome for the build workflow's summary.
 
 Exit status: 0 reproduced or skipped, 1 did not reproduce, 2 bad usage.
 """
@@ -83,6 +63,12 @@ def summarize(lines) -> None:
         return
     with open(summary, "a", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n\n")
+
+
+def record_outcome(repo: str, target: str, outcome: str) -> None:
+    path = os.path.join(repo, f"rust-segment-{target}.gate-b.txt")
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(outcome + "\n")
 
 
 def main() -> int:
@@ -149,6 +135,7 @@ def main() -> int:
         summarize([f"### Gate B - reproduction ({args.target})", "",
                    "Skipped: the lock pins no toolchain for this target.", "",
                    "```", *(f"{k}: {v}" for k, v in recorded.items()), "```"])
+        record_outcome(repo, args.target, "skipped - the lock pins no toolchain")
         return 0
 
     expected = {key: value for key, value in expected.items() if key != "comment"}
@@ -172,6 +159,8 @@ def main() -> int:
                    *(f"| {c} | `{p}` | `{a}` |" for c, p, a in differing), "",
                    "| artifact | fresh sha256 |", "|---|---|",
                    *(f"| `{n}` | `{d}` |" for n, (d, _, _) in fresh.items())])
+        record_outcome(repo, args.target, "skipped - toolchain mismatch: "
+                       + ", ".join(c for c, _, _ in differing))
         return 0
 
     source = lock["rust_source"]
@@ -186,6 +175,7 @@ def main() -> int:
         summarize([f"### Gate B - reproduction ({args.target})", "",
                    f"Skipped: `{source['path']}` has moved on from the digest "
                    f"this target was built at.", ""])
+        record_outcome(repo, args.target, "skipped - source digest moved")
         return 0
 
     mismatched = []
@@ -210,6 +200,7 @@ def main() -> int:
                    "**Did not reproduce** on the pinned toolchain.", "",
                    "```", *mismatched, "```", "",
                    "| pinned component | identity |", "|---|---|", *pinned_table])
+        record_outcome(repo, args.target, "DID NOT REPRODUCE")
         return 1
 
     print(f"\nGate B PASS - {len(fresh)} cargo-produced artifact(s) reproduced the "
@@ -217,6 +208,7 @@ def main() -> int:
     summarize([f"### Gate B - reproduction ({args.target})", "",
                f"Reproduced {len(fresh)} cargo-produced artifact(s) byte-for-byte.", "",
                "| pinned component | identity |", "|---|---|", *pinned_table])
+    record_outcome(repo, args.target, "reproduced")
     return 0
 
 

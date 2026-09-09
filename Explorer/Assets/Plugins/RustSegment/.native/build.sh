@@ -4,9 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-# --locked: the committed Cargo.lock is a hashed build input of the shipped
-# binaries, so a manifest change that would rewrite it fails the build instead
-# of silently resolving to different crates than the lock records
+# --locked: Cargo.lock is a hashed build input, so a manifest change that would rewrite it must fail.
 CARGO_FLAGS=(--release --locked)
 
 case "$(uname -s)" in
@@ -23,9 +21,7 @@ Darwin)
         -output "$DEST"
     ;;
 *)
-    # msvc, not gnu: the shipped DLL has always linked the UCRT that
-    # Plugins/.VCRedist deploys with the player; the deterministic-link flags
-    # for this target live in .cargo/config.toml
+    # MSVC, not GNU: the shipped DLL has always imported the UCRT that Plugins/.VCRedist deploys.
     TARGET="x86_64-pc-windows-msvc"
     DEST="../SegmentServerWrap/Libraries/Windows/segment-server.dll"
 

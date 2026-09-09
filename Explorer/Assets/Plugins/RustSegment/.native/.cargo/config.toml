@@ -3,13 +3,9 @@ rustflags = [
   "-Dwarnings",         # treat all warnings as errors
 ]
 
-# A [target.*] rustflags entry REPLACES build.rustflags (cargo does not merge
-# them), so -Dwarnings is repeated here.
-# /Brepro: link.exe derives the PE TimeDateStamp and the debug-directory GUID
-# from the image contents instead of the wall clock, which is what lets two
-# builds of the same source produce identical bytes (scripts/rust-segment/
-# repro-gate.sh).
-# /PDBALTPATH: the image records only the .pdb file name, not the absolute
-# path it was written to.
 [target.x86_64-pc-windows-msvc]
-rustflags = ["-Dwarnings", "-C", "link-arg=/Brepro", "-C", "link-arg=/PDBALTPATH:%_PDB%"]
+rustflags = [
+  "-Dwarnings",                      # repeated: a target's rustflags replace build.rustflags
+  "-C", "link-arg=/Brepro",          # no wall clock in the PE header, so two builds are byte-identical
+  "-C", "link-arg=/PDBALTPATH:%_PDB%", # no absolute pdb path in the image
+]

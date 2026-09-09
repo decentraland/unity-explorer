@@ -36,7 +36,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/RustSegment/.native/.cargo/config.toml",
-      "sha256": "33b55a3a9dad46546c19df7747366b2c06b624f1c334746a769b591a85ffa1bc"
+      "sha256": "6386e46ba201c3ecf67904a4d98e048e17b402a82f5815fcad0daeb351b92cab"
     },
     "rust_toolchain": {
       "comment": [
@@ -46,7 +46,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/RustSegment/.native/rust-toolchain.toml",
-      "sha256": "ef761568f455d1e3202a28f46680e4a1a15cc97e125f577d8a5f03cdefbcec5d"
+      "sha256": "ae01c53492badb30bf0421d631f2a6e8092a059b8654d30207d0bcc637893b70"
     },
     "build_script": {
       "comment": [
@@ -55,7 +55,7 @@
       ],
       "kind": "file",
       "path": "Explorer/Assets/Plugins/RustSegment/.native/build.sh",
-      "sha256": "62177c4142beaa05d4b65db818839307b6879e6d5a6e46dd31ba72e4d5cbc7a8"
+      "sha256": "85f560ff93ae5cdd2b1b57b50b27efad3d4f03b99f4903cee18fcc1f889f842a"
     }
   },
   "targets": {
@@ -68,7 +68,7 @@
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
         "source_files": 4,
-        "repo_commit": "76a5e8d90a09a980184d5bf33e81360d7fe0e91f",
+        "repo_commit": "6a68315e26557cfefe3937deace3e2adf07fe3b3",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
@@ -95,7 +95,7 @@
         "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
         "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
         "source_files": 4,
-        "repo_commit": "76a5e8d90a09a980184d5bf33e81360d7fe0e91f",
+        "repo_commit": "6a68315e26557cfefe3937deace3e2adf07fe3b3",
         "toolchain": {
           "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
           "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",

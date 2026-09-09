@@ -47,21 +47,13 @@ jobs:
 
       - run: git lfs pull --include "$PLUGIN_LFS_GLOB"
 
-      # In .native/, always: rustup reads .native/rust-toolchain.toml there,
-      # and nowhere else in this checkout. At the repo root every rustc/cargo/
-      # rustup command below would address the runner image's default
-      # toolchain instead of the pinned one the build compiles with, so the
-      # slices would be added to the wrong toolchain and the recorded
-      # identities would name a compiler that produced none of the bytes -
-      # the identities Gate B then pins reproduction against.
+      # From .native/, always: rustup honours rust-toolchain.toml only there, not at the repo root.
       - name: Install both Rust slices
         working-directory: ${{ env.NATIVE }}
         run: |
           set -euo pipefail
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
-          # The x86_64 slice is the leg that dies when a rustc without that std
-          # is first on PATH, and it dies inside cargo talking about a missing
-          # crate rather than about the toolchain. Say so here instead.
+          # A missing x86_64 std surfaces inside cargo as a missing crate; name the real cause.
           sysroot="$(rustc --print sysroot)"
           for slice in aarch64-apple-darwin x86_64-apple-darwin; do
             if [ ! -d "$sysroot/lib/rustlib/$slice/lib" ]; then
@@ -70,12 +62,10 @@ jobs:
             fi
           done
 
-      # rustc and cargo are asked from .native/ for the reason above; the file
-      # itself is written at the repo root, where Gate B and the upload expect
-      # it. Nothing else here is toolchain-file sensitive.
+      # Written at the repo root, where Gate B and the upload expect it.
       - name: Record the toolchain actually used
         run: |
-          set -uo pipefail
+          set -euo pipefail
           {
             echo "rustc: $(cd "$NATIVE" && rustc --version)"
             echo "cargo: $(cd "$NATIVE" && cargo --version)"
@@ -94,9 +84,7 @@ jobs:
       - name: Compare the fresh build against the lock
         run: python3 scripts/rust-segment/verify-binaries.py --report macos-universal
 
-      # always(): a round that fails a gate is exactly the round whose fresh
-      # hashes and recorded toolchain someone needs to read. Without this the
-      # job that found the problem hands back nothing to diagnose it with.
+      # always(): a failed gate is exactly the round whose hashes and toolchain need reading.
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -105,13 +93,15 @@ jobs:
             Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac/*.dylib
             toolchain-macos.txt
             rust-segment-macos-universal.sha256
+            rust-segment-macos-universal.gate-b.txt
           if-no-files-found: error
 
   windows:
     name: Build windows-x86_64
     needs: gate
     if: needs.gate.outputs.run == 'true'
-    runs-on: windows-latest
+    # Dated image: the lock pins the MSVC toolset, and a floating label would turn Gate B into a silent skip.
+    runs-on: windows-2025
     defaults:
       run:
         shell: bash
@@ -122,19 +112,13 @@ jobs:
 
       - run: git lfs pull --include "$PLUGIN_LFS_GLOB"
 
-      # In .native/, always - see the macOS job's note: rustup honours
-      # .native/rust-toolchain.toml only there, so at the repo root this would
-      # target the runner image's default toolchain and record a compiler that
-      # built none of the shipped bytes.
+      # From .native/, always - see the macOS job.
       - name: Install the Rust target
         working-directory: ${{ env.NATIVE }}
         run: |
           set -euo pipefail
           rustup target add x86_64-pc-windows-msvc
-          # build.sh hardcodes the triple and the deterministic-link flags in
-          # .cargo/config.toml hang off it, so the lock has to agree with it
-          # rather than be assumed to.
-          # LOCK is repo-relative and this step runs in .native/, so anchor it
+          # build.sh hardcodes the triple, so the lock must agree with it; LOCK is repo-relative and this step runs in .native/.
           pinned=$(python - <<'PY'
           import json, os, sys
           sys.stdout.reconfigure(newline="\n")
@@ -147,13 +131,10 @@ jobs:
             exit 1
           fi
 
-      # rustc and cargo are asked from .native/ - see the macOS job's note.
-      # The MSVC toolset is what link.exe comes from: rustc finds it on its
-      # own, so no vcvars shell names it; vswhere does, the same way
-      # verify-binaries.py's `msvc` probe reads it back at relock time.
+      # rustc locates link.exe itself, so no vcvars shell names the toolset; vswhere does, as verify-binaries.py's msvc probe reads it back.
       - name: Record the toolchain actually used
         run: |
-          set -uo pipefail
+          set -euo pipefail
           vswhere="/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
           install=$("$vswhere" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath | tr -d '\r')
           msvc=$(tr -d '\r\n' < "$(cygpath -u "$install")/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt")
@@ -172,7 +153,7 @@ jobs:
       - name: Compare the fresh build against the lock
         run: python scripts/rust-segment/verify-binaries.py --report windows-x86_64
 
-      # always(): see the macOS job's note.
+      # always(): see the macOS job.
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -181,6 +162,7 @@ jobs:
             Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows/*.dll
             toolchain-windows.txt
             rust-segment-windows-x86_64.sha256
+            rust-segment-windows-x86_64.gate-b.txt
           if-no-files-found: error
 
   publish:
@@ -206,6 +188,13 @@ jobs:
           cat built/*/toolchain-*.txt > manifest/TOOLCHAINS.txt
           {
             echo "### RustSegment native build"
+            echo
+            echo "| target | Gate B |"
+            echo "|---|---|"
+            for f in built/*/*.gate-b.txt; do
+              target=$(basename "$f" .gate-b.txt); target=${target#rust-segment-}
+              echo "| $target | $(cat "$f") |"
+            done
             echo
             echo '```'
             cat manifest/SHA256SUMS
