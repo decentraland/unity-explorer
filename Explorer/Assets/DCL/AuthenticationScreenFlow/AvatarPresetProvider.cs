@@ -14,92 +14,68 @@ namespace DCL.AuthenticationScreenFlow
             new (
                 new URN[]
                 {
-                    "urn:decentraland:off-chain:base-avatars:standard_hair",
-                    "urn:decentraland:off-chain:base-avatars:f_eyes_00",
-                    "urn:decentraland:off-chain:base-avatars:f_eyebrows_00",
-                    "urn:decentraland:off-chain:base-avatars:f_mouth_02",
-                    "urn:decentraland:off-chain:base-avatars:f_sweater",
-                    "urn:decentraland:off-chain:base-avatars:f_jeans",
-                    "urn:decentraland:off-chain:base-avatars:bun_shoes",
-                },
-                new (0.109804f, 0.109804f, 0.109804f),
-                new (0.596078f, 0.372549f, 0.219608f),
-                new (0.866667f, 0.694118f, 0.560784f)),
-            new (
-                new URN[]
-                {
-                    "urn:decentraland:off-chain:base-avatars:rasta",
+                    "urn:decentraland:off-chain:base-avatars:eyebrows_01",
+                    "urn:decentraland:off-chain:base-avatars:mouth_02",
                     "urn:decentraland:off-chain:base-avatars:eyes_08",
-                    "urn:decentraland:off-chain:base-avatars:eyebrows_09",
-                    "urn:decentraland:off-chain:base-avatars:mouth_01",
-                    "urn:decentraland:off-chain:base-avatars:m_sweater_02",
-                    "urn:decentraland:off-chain:base-avatars:swim_short",
-                    "urn:decentraland:off-chain:base-avatars:m_greenflipflops",
-                },
-                new (0.749020f, 0.619608f, 0.352941f),
-                new (0.486275f, 0.286275f, 0.086275f),
-                new (0.239216f, 0.133333f, 0.086275f)),
-            new (
-                new URN[]
-                {
-                    "urn:decentraland:off-chain:base-avatars:tall_front_01",
-                    "urn:decentraland:off-chain:base-avatars:f_eyes_04",
-                    "urn:decentraland:off-chain:base-avatars:f_eyebrows_06",
-                    "urn:decentraland:off-chain:base-avatars:f_mouth_00",
+                    "urn:decentraland:off-chain:base-avatars:f_m_sandals",
+                    "urn:decentraland:off-chain:base-avatars:pony_tail",
                     "urn:decentraland:off-chain:base-avatars:brown_sleveless_dress",
-                    "urn:decentraland:off-chain:base-avatars:f_brown_skirt",
-                    "urn:decentraland:off-chain:base-avatars:citycomfortableshoes",
+                    "urn:decentraland:off-chain:base-avatars:kilt",
+                    "urn:decentraland:off-chain:base-avatars:pearls_earring",
+                    "urn:decentraland:off-chain:base-avatars:cord_bracelet",
                 },
-                new (1.000000f, 0.000000f, 0.772549f),
-                new (1.000000f, 0.000000f, 0.772549f),
-                new (0.674510f, 1.000000f, 0.988235f)),
+                new (0.086275f, 0.117647f, 0.376471f),
+                new (0.945098f, 0.745098f, 0.317647f),
+                new (0.886275f, 0.713725f, 0.564706f)),
             new (
                 new URN[]
                 {
-                    "urn:decentraland:off-chain:base-avatars:curly_hair",
-                    "urn:decentraland:off-chain:base-avatars:eyes_03",
-                    "urn:decentraland:off-chain:base-avatars:eyebrows_00",
-                    "urn:decentraland:off-chain:base-avatars:f_mouth_03",
-                    "urn:decentraland:off-chain:base-avatars:f_body_swimsuit",
-                    "urn:decentraland:off-chain:base-avatars:f_yoga_trousers",
-                    "urn:decentraland:off-chain:base-avatars:espadrilles",
-                    "urn:decentraland:off-chain:base-avatars:dcl_watch",
-                    "urn:decentraland:off-chain:base-avatars:pink_gem_earring",
-                },
-                new (0.525490f, 0.376471f, 0.258824f),
-                new (1.000000f, 0.745098f, 0.149020f),
-                new (0.949020f, 0.760784f, 0.647059f)),
-            new (
-                new URN[]
-                {
-                    "urn:decentraland:off-chain:base-avatars:double_bun",
-                    "urn:decentraland:off-chain:base-avatars:f_eyes_10",
-                    "urn:decentraland:off-chain:base-avatars:f_eyebrows_03",
-                    "urn:decentraland:off-chain:base-avatars:f_mouth_02",
-                    "urn:decentraland:off-chain:base-avatars:black_top",
-                    "urn:decentraland:off-chain:base-avatars:jean_shorts",
-                    "urn:decentraland:off-chain:base-avatars:sport_colored_shoes",
-                    "urn:decentraland:off-chain:base-avatars:cyclope",
-                    "urn:decentraland:off-chain:base-avatars:dcl_watch",
-                },
-                new (0.674510f, 1.000000f, 0.737255f),
-                new (0.674510f, 1.000000f, 0.737255f),
-                new (0.866667f, 0.694118f, 0.560784f)),
-            new (
-                new URN[]
-                {
+                    "urn:decentraland:off-chain:base-avatars:cord_bracelet",
                     "urn:decentraland:off-chain:base-avatars:hair_anime_01",
                     "urn:decentraland:off-chain:base-avatars:f_eyes_08",
-                    "urn:decentraland:off-chain:base-avatars:f_eyebrows_02",
-                    "urn:decentraland:off-chain:base-avatars:f_mouth_05",
+                    "urn:decentraland:off-chain:base-avatars:blue_star_earring",
                     "urn:decentraland:off-chain:base-avatars:school_shirt",
                     "urn:decentraland:off-chain:base-avatars:f_school_skirt",
-                    "urn:decentraland:off-chain:base-avatars:schoolshoes",
-                    "urn:decentraland:off-chain:base-avatars:blue_star_earring",
+                    "urn:decentraland:off-chain:base-avatars:ruby_blue_loafer",
+                    "urn:decentraland:off-chain:base-avatars:eyebrows_09",
+                    "urn:decentraland:off-chain:base-avatars:f_mouth_05",
                 },
-                new (0.219608f, 0.486275f, 0.690196f),
-                new (0.109804f, 0.109804f, 0.109804f),
-                new (1.000000f, 0.894118f, 0.776471f)),
+                new (0.168627f, 0.035294f, 0.019608f),
+                new (0.141176f, 0.141176f, 0.137255f),
+                new (0.886275f, 0.713725f, 0.564706f)),
+            new (
+                new URN[]
+                {
+                    "urn:decentraland:off-chain:base-avatars:cord_bracelet",
+                    "urn:decentraland:off-chain:base-avatars:hair_anime_01",
+                    "urn:decentraland:off-chain:base-avatars:eyebrows_09",
+                    "urn:decentraland:off-chain:base-avatars:mouth_02",
+                    "urn:decentraland:off-chain:base-avatars:pink_gem_earring",
+                    "urn:decentraland:off-chain:base-avatars:f_red_elegant_jacket",
+                    "urn:decentraland:off-chain:base-avatars:ruby_red_loafer",
+                    "urn:decentraland:off-chain:base-avatars:f_capris",
+                    "urn:decentraland:off-chain:base-avatars:eyes_15",
+                },
+                new (0.168627f, 0.035294f, 0.019608f),
+                new (0.435294f, 0.003922f, 0.039216f),
+                new (0.501961f, 0.333333f, 0.188235f)),
+            new (
+                new URN[]
+                {
+                    "urn:decentraland:off-chain:base-avatars:f_eyebrows_07",
+                    "urn:decentraland:off-chain:base-avatars:f_mouth_08",
+                    "urn:decentraland:off-chain:base-avatars:eyes_01",
+                    "urn:decentraland:off-chain:base-avatars:slicked_hair",
+                    "urn:decentraland:off-chain:base-avatars:f_skull_earring",
+                    "urn:decentraland:off-chain:base-avatars:black_sun_glasses",
+                    "urn:decentraland:off-chain:base-avatars:cord_bracelet",
+                    "urn:decentraland:off-chain:base-avatars:citycomfortableshoes",
+                    "urn:decentraland:off-chain:base-avatars:trash_jean",
+                    "urn:decentraland:off-chain:base-avatars:black_top",
+                },
+                new (0.262745f, 0.262745f, 0.262745f),
+                new (0.180392f, 0.172549f, 0.172549f),
+                new (0.772549f, 0.509804f, 0.282353f)),
         };
 
         private static readonly Preset[] MALE_PRESETS =
@@ -107,84 +83,74 @@ namespace DCL.AuthenticationScreenFlow
             new (
                 new URN[]
                 {
-                    "urn:decentraland:off-chain:base-avatars:green_hoodie",
-                    "urn:decentraland:off-chain:base-avatars:brown_pants",
-                    "urn:decentraland:off-chain:base-avatars:sneakers",
-                    "urn:decentraland:off-chain:base-avatars:casual_hair_01",
-                    "urn:decentraland:off-chain:base-avatars:beard",
-                },
-                new (0.525490f, 0.380392f, 0.258824f),
-                new (0.235294f, 0.129412f, 0.043137f),
-                new (0.490196f, 0.364706f, 0.278431f)),
-            new (
-                new URN[]
-                {
+                    "urn:decentraland:off-chain:base-avatars:crocs",
+                    "urn:decentraland:off-chain:base-avatars:f_short_colored_leggins",
+                    "urn:decentraland:off-chain:base-avatars:mouth_07",
+                    "urn:decentraland:off-chain:base-avatars:eyes_21",
+                    "urn:decentraland:off-chain:base-avatars:modern_hair",
                     "urn:decentraland:off-chain:base-avatars:yellow_tshirt",
-                    "urn:decentraland:off-chain:base-avatars:soccer_pants",
-                    "urn:decentraland:off-chain:base-avatars:comfy_sport_sandals",
-                    "urn:decentraland:off-chain:base-avatars:keanu_hair",
-                    "urn:decentraland:off-chain:base-avatars:granpa_beard",
+                    "urn:decentraland:off-chain:base-avatars:square_earring",
+                    "urn:decentraland:off-chain:base-avatars:dcl_watch",
+                    "urn:decentraland:off-chain:base-avatars:retro_sunglasses",
                 },
-                new (0.686275f, 0.772549f, 0.780392f),
-                new (0.596078f, 0.372549f, 0.215686f),
-                new (0.490196f, 0.364706f, 0.278431f)),
+                new (0.231373f, 0.141176f, 0.050980f),
+                new (0.850980f, 0.313725f, 0.109804f),
+                new (0.764706f, 0.549020f, 0.443137f)),
             new (
                 new URN[]
                 {
-                    "urn:decentraland:off-chain:base-avatars:turtle_neck_sweater",
-                    "urn:decentraland:off-chain:base-avatars:kilt",
-                    "urn:decentraland:off-chain:base-avatars:m_mountainshoes.glb",
-                    "urn:decentraland:off-chain:base-avatars:keanu_hair",
+                    "urn:decentraland:off-chain:base-avatars:f_eyes_02",
+                    "urn:decentraland:off-chain:base-avatars:f_mouth_02",
+                    "urn:decentraland:off-chain:base-avatars:curtained_hair",
+                    "urn:decentraland:off-chain:base-avatars:classic_shoes",
+                    "urn:decentraland:off-chain:base-avatars:cord_bracelet",
+                    "urn:decentraland:off-chain:base-avatars:toruspiercing",
+                    "urn:decentraland:off-chain:base-avatars:green_square_shirt",
+                    "urn:decentraland:off-chain:base-avatars:f_short_blue_jeans",
+                },
+                new (0.231373f, 0.141176f, 0.050980f),
+                new (0.035294f, 0.262745f, 0.007843f),
+                new (0.556863f, 0.439216f, 0.313725f)),
+            new (
+                new URN[]
+                {
+                    "urn:decentraland:off-chain:base-avatars:semi_afro",
+                    "urn:decentraland:off-chain:base-avatars:eyes_01",
+                    "urn:decentraland:off-chain:base-avatars:lincoln_beard",
+                    "urn:decentraland:off-chain:base-avatars:mouth_05",
+                    "urn:decentraland:off-chain:base-avatars:sport_jacket",
+                    "urn:decentraland:off-chain:base-avatars:grey_joggers",
+                    "urn:decentraland:off-chain:base-avatars:punk_piercing",
+                    "urn:decentraland:off-chain:base-avatars:sport_colored_shoes",
+                },
+                new (0.231373f, 0.141176f, 0.050980f),
+                new (0.231373f, 0.129412f, 0.090196f),
+                new (0.415686f, 0.286275f, 0.176471f)),
+            new (
+                new URN[]
+                {
+                    "urn:decentraland:off-chain:base-avatars:f_eyes_08",
+                    "urn:decentraland:off-chain:base-avatars:mouth_05",
                     "urn:decentraland:off-chain:base-avatars:full_beard",
-                },
-                new (0.125490f, 0.701961f, 0.964706f),
-                new (0.549020f, 0.125490f, 0.078431f),
-                new (0.490196f, 0.364706f, 0.278431f)),
-            new (
-                new URN[]
-                {
-                    "urn:decentraland:off-chain:base-avatars:sleeveless_punk_shirt",
-                    "urn:decentraland:off-chain:base-avatars:trash_jean",
-                    "urn:decentraland:off-chain:base-avatars:citycomfortableshoes",
                     "urn:decentraland:off-chain:base-avatars:punk",
-                    "urn:decentraland:off-chain:base-avatars:horseshoe_beard",
-                    "urn:decentraland:off-chain:base-avatars:thunder_earring",
-                },
-                new (0.125490f, 0.701961f, 0.964706f),
-                new (0.925490f, 0.909804f, 0.886275f),
-                new (0.490196f, 0.364706f, 0.278431f)),
-            new (
-                new URN[]
-                {
-                    "urn:decentraland:off-chain:base-avatars:striped_pijama",
-                    "urn:decentraland:off-chain:base-avatars:pijama_pants",
-                    "urn:decentraland:off-chain:base-avatars:bear_slippers",
-                    "urn:decentraland:off-chain:base-avatars:semi_bold",
-                    "urn:decentraland:off-chain:base-avatars:mouth_04",
-                },
-                new (0.125490f, 0.701961f, 0.964706f),
-                new (0.925490f, 0.909804f, 0.886275f),
-                new (0.490196f, 0.364706f, 0.278431f)),
-            new (
-                new URN[]
-                {
-                    "urn:decentraland:off-chain:base-avatars:red_square_shirt",
-                    "urn:decentraland:off-chain:base-avatars:brown_pants",
-                    "urn:decentraland:off-chain:base-avatars:sneakers",
-                    "urn:decentraland:off-chain:base-avatars:slicked_hair",
-                    "urn:decentraland:off-chain:base-avatars:eyes_08",
+                    "urn:decentraland:off-chain:base-avatars:eyebrows_12",
+                    "urn:decentraland:off-chain:base-avatars:aviatorstyle",
+                    "urn:decentraland:off-chain:base-avatars:black_glove",
+                    "urn:decentraland:off-chain:base-avatars:sleeveless_punk_shirt",
+                    "urn:decentraland:off-chain:base-avatars:distressed_black_jeans",
+                    "urn:decentraland:off-chain:base-avatars:citycomfortableshoes",
                     "urn:decentraland:off-chain:base-avatars:punk_piercing",
                 },
-                new (0.125490f, 0.701961f, 0.964706f),
-                new (1.000000f, 0.745098f, 0.156863f),
-                new (0.490196f, 0.364706f, 0.278431f)),
+                new (0.168627f, 0.035294f, 0.019608f),
+                new (0.141176f, 0.141176f, 0.137255f),
+                new (0.886275f, 0.713725f, 0.564706f)),
         };
 
         private int lastIndex = -1;
 
         public Avatar Next(BodyShape bodyShape)
         {
-            Preset[] presets = bodyShape.Equals(BodyShape.FEMALE) ? FEMALE_PRESETS : MALE_PRESETS;
+            Preset[] presets = PresetsFor(bodyShape);
 
             int index = Random.Range(0, presets.Length);
 
@@ -195,6 +161,19 @@ namespace DCL.AuthenticationScreenFlow
 
             return presets[index].ToAvatar(bodyShape);
         }
+
+        public Avatar Get(BodyShape bodyShape, int slot)
+        {
+            Preset[] presets = PresetsFor(bodyShape);
+
+            int index = ((slot % presets.Length) + presets.Length) % presets.Length;
+            lastIndex = index;
+
+            return presets[index].ToAvatar(bodyShape);
+        }
+
+        private static Preset[] PresetsFor(BodyShape bodyShape) =>
+            bodyShape.Equals(BodyShape.FEMALE) ? FEMALE_PRESETS : MALE_PRESETS;
 
         private readonly struct Preset
         {

@@ -85,10 +85,11 @@ namespace DCL.AuthenticationScreenFlow
 
             loginCt = payload.ct;
             userEmail = payload.email;
-            selectedBodyType = BodyShape.MALE;
             newUserProfile = payload.profile;
+            selectedBodyType = payload.profile.Avatar.BodyShape;
 
-            UpdateCharacterPreview(avatarPresetProvider.Next(selectedBodyType));
+            // The avatar was already picked in SelectAvatarForNewAccountAuthState
+            UpdateCharacterPreview(payload.profile.Avatar);
 
             controller.IsCurrentlyNewAccount = true;
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;

@@ -128,7 +128,7 @@ namespace DCL.AuthenticationScreenFlow
                     else
                     {
                         profile = CreateRandomProfile(identity);
-                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
+                        machine.Enter<SelectAvatarForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
                     }
                 }
                 catch (OperationCanceledException e)

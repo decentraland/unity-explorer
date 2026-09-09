@@ -183,7 +183,8 @@ namespace DCL.AuthenticationScreenFlow
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
-                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer)
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus, referrer),
+                new SelectAvatarForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController)
             );
 
             if (enableEmailOTP)
@@ -231,7 +232,7 @@ namespace DCL.AuthenticationScreenFlow
 
         internal void ReturnToOrigin(int animHash)
         {
-            if (CurrentLoginMethod == LoginMethod.GUEST)
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.GuestLogin))
                 EnterLoginEntryState(animHash);
             else
                 fsm?.Enter<LoginSelectionAuthState, int>(animHash);
