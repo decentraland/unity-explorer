@@ -66,13 +66,21 @@ jobs:
       - name: Record the toolchain actually used
         run: |
           set -euo pipefail
+          # Assignments, not substitutions inside echo: only these let -e fail the step on a dead probe.
+          rustc=$(cd "$NATIVE" && rustc --version)
+          cargo=$(cd "$NATIVE" && cargo --version)
+          clang=$(clang --version | head -1)
+          xcode=$(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')
+          sdk_version=$(xcrun --sdk macosx --show-sdk-version)
+          sdk_build=$(xcrun --sdk macosx --show-sdk-build-version)
+          ld=$(ld -v 2>&1 | head -1 || true)
           {
-            echo "rustc: $(cd "$NATIVE" && rustc --version)"
-            echo "cargo: $(cd "$NATIVE" && cargo --version)"
-            echo "clang: $(clang --version | head -1)"
-            echo "xcode: $(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')"
-            echo "sdk: macosx$(xcrun --sdk macosx --show-sdk-version) ($(xcrun --sdk macosx --show-sdk-build-version))"
-            echo "ld: $(ld -v 2>&1 | head -1 || true)"
+            echo "rustc: $rustc"
+            echo "cargo: $cargo"
+            echo "clang: $clang"
+            echo "xcode: $xcode"
+            echo "sdk: macosx$sdk_version ($sdk_build)"
+            echo "ld: $ld"
           } | tee toolchain-macos.txt
 
       - name: Gate A - the same runner must build the same bytes twice
@@ -135,12 +143,14 @@ jobs:
       - name: Record the toolchain actually used
         run: |
           set -euo pipefail
+          rustc=$(cd "$NATIVE" && rustc --version)
+          cargo=$(cd "$NATIVE" && cargo --version)
           vswhere="/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
           install=$("$vswhere" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath | tr -d '\r')
           msvc=$(tr -d '\r\n' < "$(cygpath -u "$install")/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt")
           {
-            echo "rustc: $(cd "$NATIVE" && rustc --version)"
-            echo "cargo: $(cd "$NATIVE" && cargo --version)"
+            echo "rustc: $rustc"
+            echo "cargo: $cargo"
             echo "msvc: $msvc"
           } | tee toolchain-windows.txt
 
@@ -182,6 +192,7 @@ jobs:
       - name: Assemble the release manifest
         run: |
           set -euo pipefail
+          shopt -s nullglob
           mkdir -p manifest
           cp "$LOCK" manifest/rust-segment-binaries.lock.json
           cat built/*/*.sha256 > manifest/SHA256SUMS

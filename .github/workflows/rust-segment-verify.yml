@@ -32,6 +32,8 @@ env:
 jobs:
   verify:
     name: Verify committed binaries against the lock
+    # The weekly tick exists for the advisory scan only.
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -94,6 +96,7 @@ jobs:
 
   rust:
     name: Check, test and lint the crate
+    if: github.event_name != 'schedule'
     # The only hosted platform the crate is proven to compile on; Linux is unexercised since 2024.
     runs-on: macos-15
     defaults:
@@ -131,8 +134,9 @@ jobs:
         with:
           lfs: false
 
+      # Pinned: --locked fixes cargo-audit's dependency graph, not cargo-audit itself.
       - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+        run: cargo install cargo-audit --version 0.22.2 --locked
 
       - name: Audit the pinned dependencies
         run: cargo audit --file Explorer/Assets/Plugins/RustSegment/.native/Cargo.lock
