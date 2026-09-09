@@ -1,0 +1,127 @@
+name: RustSegment Binary Verification
+
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'Explorer/Assets/Plugins/RustSegment/**'
+      - 'scripts/rust-segment/**'
+      - '.gitattributes'
+      - '.github/workflows/rust-segment-verify.yml'
+  merge_group: {}
+  push:
+    branches: [dev]
+    paths:
+      - 'Explorer/Assets/Plugins/RustSegment/**'
+      - 'scripts/rust-segment/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLUGIN_LFS_GLOB: 'Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/**'
+
+jobs:
+  verify:
+    name: Verify committed binaries against the lock
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          lfs: false
+
+      - name: Fetch the plugin binaries from LFS
+        run: git lfs pull --include "$PLUGIN_LFS_GLOB"
+
+      - name: Test the verifier itself
+        run: python3 scripts/rust-segment/test-verify-binaries.py
+
+      - name: Verify hashes and build inputs
+        run: python3 scripts/rust-segment/verify-binaries.py
+
+      - name: Require new native binaries to be stored in LFS
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")
+          changed=$(git diff --name-only --diff-filter=AM "$base" "$HEAD_SHA" \
+            -- '*.dll' '*.dylib' '*.so' || true)
+
+          if [ -z "$changed" ]; then
+            echo "No native binaries added or modified."
+            exit 0
+          fi
+
+          status=0
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            # A file stored in LFS has an ~130 byte pointer as its git blob
+            # whose first line is the spec URL; a plain blob is the whole
+            # binary. Match the whole first line, not a byte-count prefix -
+            # a truncated prefix can never match the anchored pattern.
+            if git cat-file blob "$HEAD_SHA:$path" 2>/dev/null \
+                 | head -n1 | grep -q '^version https://git-lfs.github.com/spec/v1'; then
+              echo "  ok (lfs)    $path"
+            else
+              echo "::error file=$path::$path was committed as a plain git blob, not Git LFS. Re-add it with an LFS rule in .gitattributes in effect: *.dll and *.dylib are covered by globs; anything else needs an explicit entry. See Explorer/Assets/Plugins/RustSegment/README.md."
+              status=1
+            fi
+          done <<< "$changed"
+          exit $status
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### RustSegment binary verification"
+            echo
+            echo "Lock: \`scripts/rust-segment/rust-segment-binaries.lock.json\`"
+            echo
+            echo '```'
+            python3 scripts/rust-segment/verify-binaries.py 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  rust:
+    name: Check, test and lint the crate
+    # macOS is the one hosted platform the crate is known to compile on (the
+    # shipped dylib is built there); the Linux build has not been exercised
+    # since 2024, so ubuntu would first have to be proven.
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: Explorer/Assets/Plugins/RustSegment/.native
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      # rustup reads rust-toolchain.toml from the working directory, so the
+      # pinned toolchain is what every command below runs.
+      - name: Record the toolchain
+        run: |
+          rustc --version
+          cargo --version
+          cargo clippy --version
+
+      - name: Check
+        run: cargo check --all-targets --locked
+
+      # test_integration is #[ignore]d: it needs a Segment write key and the
+      # network. The unit tests (disk-full mapping, operation construction) run.
+      - name: Test
+        run: cargo test --locked
+
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings

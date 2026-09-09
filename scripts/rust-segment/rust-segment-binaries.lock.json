@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "comment": [
+    "Hash lock for the prebuilt RustSegment native binaries committed under",
+    "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/.",
+    "Verified by scripts/rust-segment/verify-binaries.py; regenerate with --update.",
+    "See Explorer/Assets/Plugins/RustSegment/README.md.",
+    "Libraries/Linux/segment-server.so is outside this lock: Linux is not a",
+    "release target and the file predates the crate's current source."
+  ],
+  "rust_source": {
+    "comment": "The crate has no upstream repository - it is built from this repo's own .native/ tree. source_digest below is what ties each target's shipped binary to the exact .native/src state that produced it.",
+    "path": "Explorer/Assets/Plugins/RustSegment/.native/src",
+    "suffix": ".rs"
+  },
+  "build_inputs": {
+    "cargo_manifest": {
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/Cargo.toml",
+      "sha256": "1e129e80a4f40f1d460877e724e82e9ca674e4208b7fcda584b17be434435da8"
+    },
+    "cargo_lock": {
+      "comment": [
+        "A single crate ships, so every package Cargo.lock resolves reaches",
+        "the shipped binary; the whole file is the input. build.sh passes",
+        "--locked so a build can never quietly move away from it."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/Cargo.lock",
+      "sha256": "765065117c45930b0840fa2a4a064d29df9c29e0ebfdc56f31b2786f6ffa0e15"
+    },
+    "cargo_config": {
+      "comment": [
+        "-Dwarnings and the deterministic MSVC link flags live here; each",
+        "one changes the shipped bytes."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/.cargo/config.toml",
+      "sha256": "33b55a3a9dad46546c19df7747366b2c06b624f1c334746a769b591a85ffa1bc"
+    },
+    "rust_toolchain": {
+      "comment": [
+        "The pinned compiler is an input to the shipped bytes. Bumping the",
+        "channel is a rebuild-and-relock event for both targets, not a",
+        "routine edit."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/rust-toolchain.toml",
+      "sha256": "ef761568f455d1e3202a28f46680e4a1a15cc97e125f577d8a5f03cdefbcec5d"
+    },
+    "build_script": {
+      "comment": [
+        "The targets it compiles and how it assembles the universal dylib",
+        "decide what ships."
+      ],
+      "kind": "file",
+      "path": "Explorer/Assets/Plugins/RustSegment/.native/build.sh",
+      "sha256": "62177c4142beaa05d4b65db818839307b6879e6d5a6e46dd31ba72e4d5cbc7a8"
+    }
+  },
+  "targets": {
+    "macos-universal": {
+      "runtime_dir": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac",
+      "rust": {
+        "target": "universal (aarch64-apple-darwin + x86_64-apple-darwin)",
+        "profile": "release",
+        "crate_version": "0.1.0",
+        "rustc": "unknown - the committed binary was hand-built before this lock existed",
+        "toolchain_comment": [
+          "No toolchain pin yet: the committed dylib predates the lock and",
+          "nobody recorded what built it. Gate B (reproduces-lock.py) skips",
+          "until the first CI relock seeds this from toolchain-macos.txt."
+        ],
+        "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
+        "source_files": 4,
+        "repo_commit": "79918bfc61ca5dd0208c9c00cf7ff53008a11186"
+      },
+      "artifacts": [
+        {
+          "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Mac/segment-server.dylib",
+          "sha256": "9debf46ac3af4a86b03d119a79a98f240cdeba6e628c2e1bfd64d932c956bdf4",
+          "bytes": 6270256,
+          "produced_by": "cargo"
+        }
+      ]
+    },
+    "windows-x86_64": {
+      "runtime_dir": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows",
+      "rust": {
+        "target": "x86_64-pc-windows-msvc",
+        "profile": "release",
+        "crate_version": "0.1.0",
+        "rustc": "unknown - the committed binary was hand-built before this lock existed",
+        "toolchain_comment": [
+          "No toolchain pin yet: the committed dll predates the lock and",
+          "nobody recorded what built it. Gate B (reproduces-lock.py) skips",
+          "until the first CI relock seeds this from toolchain-windows.txt."
+        ],
+        "source_digest": "07c6eccaba3b88ed8e54c5192fcaf18bb03f256b7fa73ae7ac4fb788c90cae88",
+        "source_files": 4,
+        "repo_commit": "79918bfc61ca5dd0208c9c00cf7ff53008a11186"
+      },
+      "artifacts": [
+        {
+          "path": "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/Windows/segment-server.dll",
+          "sha256": "a95ec0c19b3151476dd728de5a81104496744cce834e461a9f476b428ed08f27",
+          "bytes": 4324352,
+          "produced_by": "cargo"
+        }
+      ]
+    }
+  }
+}

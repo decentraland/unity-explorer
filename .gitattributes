@@ -37,6 +37,18 @@ scripts/uuav/*.sh text eol=lf
 # --update rewrites the lock, so its own newlines must not depend on the host
 scripts/uuav/uuav-binaries.lock.json text eol=lf
 
+##############################################################################
+# RustSegment native - same rule, same reason: scripts/rust-segment/
+# rust-segment-binaries.lock.json digests these files as raw bytes and
+# build-canonical.sh compiles them with LF forced.
+##############################################################################
+Explorer/Assets/Plugins/RustSegment/.native/**/*.rs text eol=lf
+Explorer/Assets/Plugins/RustSegment/.native/**/*.toml text eol=lf
+Explorer/Assets/Plugins/RustSegment/.native/**/*.lock text eol=lf
+Explorer/Assets/Plugins/RustSegment/.native/*.sh text eol=lf
+scripts/rust-segment/*.sh text eol=lf
+scripts/rust-segment/rust-segment-binaries.lock.json text eol=lf
+
 
 ##############################################################################
 # unity specifics
