@@ -64,8 +64,8 @@ def summarize(lines) -> None:
         handle.write("\n".join(lines) + "\n\n")
 
 
-def record_outcome(repo: str, name: str, target: str, outcome: str) -> None:
-    path = os.path.join(repo, f"{name}-{target}.gate-b.txt")
+def record_outcome(repo: str, lock_name: str, target: str, outcome: str) -> None:
+    path = os.path.join(repo, f"{lock_name}-{target}.gate-b.txt")
     with open(path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(outcome + "\n")
 
@@ -92,8 +92,8 @@ def main() -> int:
 
     with open(lock_path, encoding="utf-8") as handle:
         lock = json.load(handle)
-    name = lock.get("name")
-    if not name:
+    lock_name = lock.get("name")
+    if not lock_name:
         print(f"FAIL: {lock_rel} has no top-level \"name\"", file=sys.stderr)
         return 2
     if args.target not in lock["targets"]:
@@ -141,7 +141,7 @@ def main() -> int:
         summarize([f"### Gate B - reproduction ({args.target})", "",
                    "Skipped: the lock pins no toolchain for this target.", "",
                    "```", *(f"{k}: {v}" for k, v in recorded.items()), "```"])
-        record_outcome(repo, name, args.target, "skipped - the lock pins no toolchain")
+        record_outcome(repo, lock_name, args.target, "skipped - the lock pins no toolchain")
         return 0
 
     expected = {key: value for key, value in expected.items() if key != "comment"}
@@ -165,7 +165,7 @@ def main() -> int:
                    *(f"| {c} | `{p}` | `{a}` |" for c, p, a in differing), "",
                    "| artifact | fresh sha256 |", "|---|---|",
                    *(f"| `{n}` | `{d}` |" for n, (d, _, _) in fresh.items())])
-        record_outcome(repo, name, args.target, "skipped - toolchain mismatch: "
+        record_outcome(repo, lock_name, args.target, "skipped - toolchain mismatch: "
                        + ", ".join(c for c, _, _ in differing))
         return 0
 
@@ -181,7 +181,7 @@ def main() -> int:
         summarize([f"### Gate B - reproduction ({args.target})", "",
                    f"Skipped: `{source['path']}` has moved on from the digest "
                    f"this target was built at.", ""])
-        record_outcome(repo, name, args.target, "skipped - source digest moved")
+        record_outcome(repo, lock_name, args.target, "skipped - source digest moved")
         return 0
 
     mismatched = []
@@ -206,7 +206,7 @@ def main() -> int:
                    "**Did not reproduce** on the pinned toolchain.", "",
                    "```", *mismatched, "```", "",
                    "| pinned component | identity |", "|---|---|", *pinned_table])
-        record_outcome(repo, name, args.target, "DID NOT REPRODUCE")
+        record_outcome(repo, lock_name, args.target, "DID NOT REPRODUCE")
         return 1
 
     print(f"\nGate B PASS - {len(fresh)} cargo-produced artifact(s) reproduced the "
@@ -214,7 +214,7 @@ def main() -> int:
     summarize([f"### Gate B - reproduction ({args.target})", "",
                f"Reproduced {len(fresh)} cargo-produced artifact(s) byte-for-byte.", "",
                "| pinned component | identity |", "|---|---|", *pinned_table])
-    record_outcome(repo, name, args.target, "reproduced")
+    record_outcome(repo, lock_name, args.target, "reproduced")
     return 0
 
 

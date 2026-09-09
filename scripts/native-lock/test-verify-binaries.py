@@ -19,6 +19,8 @@ import unittest
 
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                       "verify-binaries.py")
+GATE_B = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                      "reproduces-lock.py")
 LOCK_REL = os.path.join("scripts", "test-plugin", "test-plugin-binaries.lock.json")
 TARGET = "windows-x86_64"
 
@@ -456,6 +458,58 @@ class UpdateToolchainTests(unittest.TestCase):
             result = run(root, *args)
             self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
             self.assertIn("--toolchain", result.stderr)
+
+
+class GateBTests(unittest.TestCase):
+    """reproduces-lock.py must name its outcome file after the lock's plugin, not an artifact."""
+
+    def setUp(self):
+        self.root = make_detection_repo()
+        result = run(self.root, "--update")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.toolchain = os.path.join(self.root, "toolchain-test.txt")
+        with open(self.toolchain, "w", encoding="utf-8") as handle:
+            handle.write("rustc: rustc 9.9.9-test\ncargo: cargo 9.9.9-test\n")
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def gate_b(self):
+        return subprocess.run([sys.executable, GATE_B, "--repo", self.root,
+                               "--lock", LOCK_REL, TARGET,
+                               "--toolchain", self.toolchain],
+                              capture_output=True, text=True)
+
+    def outcome(self) -> str:
+        path = os.path.join(self.root, f"test-plugin-{TARGET}.gate-b.txt")
+        self.assertTrue(os.path.exists(path),
+                        "outcome file missing: " + ", ".join(sorted(os.listdir(self.root))))
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().strip()
+
+    def test_unpinned_target_records_a_skip(self):
+        result = self.gate_b()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(self.outcome().startswith("skipped"))
+
+    def test_matching_toolchain_records_reproduced(self):
+        pinned = run(self.root, "--update", "--only", TARGET,
+                     "--toolchain", self.toolchain)
+        self.assertEqual(pinned.returncode, 0, pinned.stdout + pinned.stderr)
+        result = self.gate_b()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.outcome(), "reproduced")
+
+    def test_changed_bytes_record_a_failure(self):
+        pinned = run(self.root, "--update", "--only", TARGET,
+                     "--toolchain", self.toolchain)
+        self.assertEqual(pinned.returncode, 0, pinned.stdout + pinned.stderr)
+        with open(os.path.join(self.root, "native", "out", "plugin.bin"),
+                  "ab") as handle:
+            handle.write(b"\x00")
+        result = self.gate_b()
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(self.outcome(), "DID NOT REPRODUCE")
 
 
 if __name__ == "__main__":

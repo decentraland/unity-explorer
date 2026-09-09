@@ -852,7 +852,7 @@ def check_provenance(repo: str, target: str, spec: dict, update: bool) -> list[s
     ffmpeg_artifacts = [a for a in spec["artifacts"] if a["produced_by"] == "ffmpeg"]
     if not ffmpeg_artifacts:
         return problems
-    recorded = spec["ffmpeg"].get("configure_observed")
+    recorded = spec.get("ffmpeg", {}).get("configure_observed")
 
     seen = {}
     for artifact in ffmpeg_artifacts:
