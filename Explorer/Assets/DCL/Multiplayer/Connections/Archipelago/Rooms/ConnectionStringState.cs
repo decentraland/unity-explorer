@@ -4,20 +4,24 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
     public readonly struct PendingConnection
     {
+        public readonly string IslandId;
         public readonly string ConnectionString;
 
-        public PendingConnection(string connectionString)
+        public PendingConnection(string islandId, string connectionString)
         {
+            IslandId = islandId;
             ConnectionString = connectionString;
         }
     }
 
     public readonly struct CurrentConnection
     {
+        public readonly string IslandId;
         public readonly string ConnectionString;
 
-        public CurrentConnection(string connectionString)
+        public CurrentConnection(string islandId, string connectionString)
         {
+            IslandId = islandId;
             ConnectionString = connectionString;
         }
     }
@@ -36,7 +40,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         /// <summary>A pending string becomes current once read by the cycle loop; other states are unchanged.</summary>
         public ConnectionStringState Consume() =>
             IsPendingConnection(out PendingConnection pending)
-                ? FromCurrentConnection(new CurrentConnection(pending.ConnectionString))
+                ? FromCurrentConnection(new CurrentConnection(pending.IslandId, pending.ConnectionString))
                 : this;
     }
 }

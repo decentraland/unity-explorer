@@ -11,6 +11,7 @@ using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using LiveKit.Rooms.Info;
 using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
@@ -65,7 +66,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             nextReconnectAttemptUtc = DateTime.MinValue;
 
             await ConnectToArchipelagoAsync(token);
-            signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token).Forget();
+            signFlow.StartListeningForConnectionStringAsync(OnNewIslandAssignment, token).Forget();
         }
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
@@ -84,10 +85,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
         }
 
-        private void OnNewConnectionString(string connectionString)
+        private void OnNewIslandAssignment(string islandId, string connectionString)
         {
             using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-            guard.Value = ConnectionStringState.FromPendingConnection(new PendingConnection(connectionString));
+            guard.Value = ConnectionStringState.FromPendingConnection(new PendingConnection(islandId, connectionString));
         }
 
         private void ResetConnectionState()
@@ -96,7 +97,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             guard.Value = ConnectionStringState.None();
         }
 
-        // Reads the state and consumes it (Pending -> Current) atomically so a pushed string is acted on once.
+        // Reads the state and consumes it (Pending -> Current) atomically so a pushed string is acted on
+        // once. The consume is unconditional, so the cached string is always the most recently pushed one,
+        // whether or not this tick connects with it.
         private ConnectionStringState ReadAndConsumeConnectionState()
         {
             using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -111,10 +114,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
             if (CurrentState() is not (IConnectiveRoom.State.Starting or IConnectiveRoom.State.Running)) return;
 
-            bool roomIsDisconnected = Room().Info.ConnectionState != LKConnectionState.ConnConnected;
+            // Sampled once: connection state and name must describe the same room.
+            IRoomInfo info = Room().Info;
 
-            if (!ShouldAttemptConnection(state, roomIsDisconnected, DateTime.UtcNow, nextReconnectAttemptUtc, out string? connectionString))
+            if (!ShouldAttemptConnection(state, info.ConnectionState, info.Name, DateTime.UtcNow, nextReconnectAttemptUtc, out string? connectionString))
+            {
+                if (state.IsPendingConnection(out PendingConnection skipped))
+                    ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Island {skipped.IslandId} was re-announced while already held, skipping the re-join");
+
                 return;
+            }
 
             await TryConnectToRoomAsync(connectionString, token);
 
@@ -141,18 +150,32 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         }
 
         /// <summary>
-        ///     A pending string means the server assigned a new island: always connect, even if the room
-        ///     looks healthy. A current (cached) string is only retried on disconnect once the backoff elapsed.
+        ///     A pending string means the server assigned an island: connect, even if the room looks
+        ///     healthy — unless it names the island already held, which is a re-announcement rather than a
+        ///     move. Joining the held room again would place a second participant under this client's own
+        ///     identity in it — the condition this guard exists to avoid. A current (cached) string is
+        ///     only retried once the room no longer holds an island and the backoff elapsed.
+        ///     <para />
+        ///     A reconnecting room still holds its island server-side, so it counts as held for both
+        ///     decisions — the same reading <c>InteriorRoom.Assign</c> takes.
         /// </summary>
-        internal static bool ShouldAttemptConnection(in ConnectionStringState state, bool roomIsDisconnected, DateTime nowUtc, DateTime nextAttemptUtc, [NotNullWhen(true)] out string? connectionString)
+        internal static bool ShouldAttemptConnection(in ConnectionStringState state, LKConnectionState roomState, string connectedIslandId, DateTime nowUtc, DateTime nextAttemptUtc, [NotNullWhen(true)] out string? connectionString)
         {
+            bool roomHoldsIsland = roomState is LKConnectionState.ConnConnected or LKConnectionState.ConnReconnecting;
+
             if (state.IsPendingConnection(out PendingConnection pending))
             {
+                if (roomHoldsIsland && string.Equals(pending.IslandId, connectedIslandId, StringComparison.Ordinal))
+                {
+                    connectionString = null;
+                    return false;
+                }
+
                 connectionString = pending.ConnectionString;
                 return true;
             }
 
-            if (state.IsCurrentConnection(out CurrentConnection current) && roomIsDisconnected && nowUtc >= nextAttemptUtc)
+            if (state.IsCurrentConnection(out CurrentConnection current) && !roomHoldsIsland && nowUtc >= nextAttemptUtc)
             {
                 connectionString = current.ConnectionString;
                 return true;
