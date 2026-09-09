@@ -1,9 +1,11 @@
 {
   "schema": 1,
+  "name": "rust-segment",
+  "docs": "Explorer/Assets/Plugins/RustSegment/README.md",
   "comment": [
     "Hash lock for the prebuilt RustSegment native binaries committed under",
     "Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/.",
-    "Verified by scripts/rust-segment/verify-binaries.py; regenerate with --update.",
+    "Verified by scripts/native-lock/verify-binaries.py --lock <this file>; regenerate with --update.",
     "See Explorer/Assets/Plugins/RustSegment/README.md.",
     "Libraries/Linux/segment-server.so is outside this lock: Linux is not a",
     "release target and the file predates the crate's current source."

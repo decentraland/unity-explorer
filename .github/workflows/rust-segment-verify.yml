@@ -10,6 +10,7 @@ on:
     paths:
       - 'Explorer/Assets/Plugins/RustSegment/**'
       - 'scripts/rust-segment/**'
+      - 'scripts/native-lock/**'
       - '.gitattributes'
       - '.github/workflows/rust-segment-verify.yml'
   merge_group: {}
@@ -18,6 +19,7 @@ on:
     paths:
       - 'Explorer/Assets/Plugins/RustSegment/**'
       - 'scripts/rust-segment/**'
+      - 'scripts/native-lock/**'
 
 permissions:
   contents: read
@@ -28,6 +30,7 @@ concurrency:
 
 env:
   PLUGIN_LFS_GLOB: 'Explorer/Assets/Plugins/RustSegment/SegmentServerWrap/Libraries/**'
+  LOCK: scripts/rust-segment/rust-segment-binaries.lock.json
 
 jobs:
   verify:
@@ -46,10 +49,10 @@ jobs:
         run: git lfs pull --include "$PLUGIN_LFS_GLOB"
 
       - name: Test the verifier itself
-        run: python3 scripts/rust-segment/test-verify-binaries.py
+        run: python3 scripts/native-lock/test-verify-binaries.py
 
       - name: Verify hashes and build inputs
-        run: python3 scripts/rust-segment/verify-binaries.py
+        run: python3 scripts/native-lock/verify-binaries.py --lock "$LOCK"
 
       - name: Require new native binaries to be stored in LFS
         if: github.event_name == 'pull_request'
@@ -90,7 +93,7 @@ jobs:
             echo "Lock: \`scripts/rust-segment/rust-segment-binaries.lock.json\`"
             echo
             echo '```'
-            python3 scripts/rust-segment/verify-binaries.py 2>&1 || true
+            python3 scripts/native-lock/verify-binaries.py --lock "$LOCK" 2>&1 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

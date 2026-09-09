@@ -152,7 +152,7 @@ macOS notes:
 The committed binaries are pinned by a hash lock, `scripts/uuav/uuav-binaries.lock.json`, and two workflows enforce it:
 
 - **`uuav-verify.yml`** runs on every PR touching this plugin or `scripts/uuav/`. It re-hashes every shipped binary and every build input that feeds one (Rust source trees, manifests, `Cargo.lock` closure of the shipping roots, `.cargo/config.toml`, the FFmpeg builder script) against the lock, reads the FFmpeg configure line embedded in each shipped library and compares it with the recorded provenance, and requires new native binaries to be stored in Git LFS. It also `cargo check`/`test`/`clippy`s the FFmpeg-free crates (`uuav-ipc`, `uuav-client`) on a macOS runner and asserts nothing links `uuav-client`'s rlib.
-- **`uuav-native.yml`** runs on demand (`workflow_dispatch`, or the `build-uuav-native` PR label). It rebuilds both targets from pinned inputs — macOS FFmpeg from the source commit in the lock, Windows FFmpeg fetched as the hash-pinned BtbN release asset via `scripts/uuav/fetch-ffmpeg-windows.sh` — then runs two gates: Gate A (`scripts/uuav/repro-gate.sh`) builds twice from two source trees through one canonical path (`scripts/uuav/build-canonical.sh`) and requires byte-identical cargo artifacts; Gate B (`scripts/uuav/reproduces-lock.py`) compares the fresh build against the committed hashes, hard-failing only when the runner's toolchain matches the one pinned in the lock.
+- **`uuav-native.yml`** runs on demand (`workflow_dispatch`, or the `build-uuav-native` PR label). It rebuilds both targets from pinned inputs — macOS FFmpeg from the source commit in the lock, Windows FFmpeg fetched as the hash-pinned BtbN release asset via `scripts/uuav/fetch-ffmpeg-windows.sh` — then runs two gates: Gate A (`scripts/uuav/repro-gate.sh`) builds twice from two source trees through one canonical path (`scripts/uuav/build-canonical.sh`) and requires byte-identical cargo artifacts; Gate B (`scripts/native-lock/reproduces-lock.py`, shared with RustSegment) compares the fresh build against the committed hashes, hard-failing only when the runner's toolchain matches the one pinned in the lock.
 
 ### Relocking after a deliberate rebuild
 
@@ -162,7 +162,7 @@ The committed binaries are pinned by a hash lock, `scripts/uuav/uuav-binaries.lo
 2. Relock that target, passing the toolchain the build recorded:
 
 ```
-python3 scripts/uuav/verify-binaries.py --update --only macos-universal --toolchain toolchain-macos.txt
+python3 scripts/native-lock/verify-binaries.py --lock scripts/uuav/uuav-binaries.lock.json --update --only macos-universal --toolchain toolchain-macos.txt
 ```
 
 `--toolchain` is what makes the relock honest about who built the bytes. Without it, `--update` refuses on any host whose pinned components differ from `targets.<t>.rust.toolchain` — including the host that just bumped `rust-toolchain.toml`, which by definition no longer matches the pin the previous binaries carry. For a target with no pin yet, the same flag gives it its first one, taken from the recorded components the script can probe again later (`ld` is recorded and deliberately not pinned; nothing can re-probe it).

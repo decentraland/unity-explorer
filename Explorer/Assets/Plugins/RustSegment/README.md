@@ -129,10 +129,10 @@ SEGMENT_WRITE_KEY=... SEGMENT_QUEUE_PATH=... cargo test -- --ignored
 
 ## CI verification of the shipped binaries
 
-The committed binaries are pinned by a hash lock, `scripts/rust-segment/rust-segment-binaries.lock.json`, and two workflows enforce it. The design is the one UUAV uses (see [`Explorer/Assets/Plugins/UUAV/README.md`](../UUAV/README.md) and [`docs/uuav.md`](../../../../docs/uuav.md) for the rationale); the scripts under `scripts/rust-segment/` are its own copies, minus the FFmpeg provenance checks this crate has no use for.
+The committed binaries are pinned by a hash lock, `scripts/rust-segment/rust-segment-binaries.lock.json`, and two workflows enforce it. The design is the one UUAV uses (see [`Explorer/Assets/Plugins/UUAV/README.md`](../UUAV/README.md) and [`docs/uuav.md`](../../../../docs/uuav.md) for the rationale). The verifier, Gate B and their self-tests are shared with UUAV under `scripts/native-lock/` and take the plugin's lock with `--lock`; only the build and Gate A shell scripts under `scripts/rust-segment/` are plugin-specific.
 
 - **`rust-segment-verify.yml`** runs on every PR touching this plugin or `scripts/rust-segment/`. It re-hashes the shipped `.dylib`/`.dll` and every build input that feeds them (`.native/src`, `Cargo.toml`, `Cargo.lock`, `.cargo/config.toml`, `rust-toolchain.toml`, `build.sh`) against the lock, fails on any binary under a `Libraries/<Mac|Windows>` folder the lock does not name, and requires new native binaries to be stored in Git LFS. It also checks, tests and lints the crate on a macOS runner and runs `cargo audit` over the committed `Cargo.lock`; the audit alone also runs weekly on a schedule, since advisories land without any PR touching the crate.
-- **`rust-segment-native.yml`** runs on demand (`workflow_dispatch`, or the `build-rust-segment-native` PR label). It rebuilds both targets on hosted runners under the pinned toolchain, then runs two gates: Gate A (`scripts/rust-segment/repro-gate.sh`) builds twice from two source trees through one canonical path (`scripts/rust-segment/build-canonical.sh`) and requires byte-identical output; Gate B (`scripts/rust-segment/reproduces-lock.py`) compares the fresh build against the committed hashes, hard-failing only when the runner's toolchain matches the one pinned in the lock. Its step summary opens with a per-target Gate B line (`reproduced` or `skipped - <reason>`), so a green run that verified nothing is visible at a glance. Runners are dated images (`macos-15`, `windows-2025`) because the lock pins their toolsets. It has `contents: read` and never commits.
+- **`rust-segment-native.yml`** runs on demand (`workflow_dispatch`, or the `build-rust-segment-native` PR label). It rebuilds both targets on hosted runners under the pinned toolchain, then runs two gates: Gate A (`scripts/rust-segment/repro-gate.sh`) builds twice from two source trees through one canonical path (`scripts/rust-segment/build-canonical.sh`) and requires byte-identical output; Gate B (`scripts/native-lock/reproduces-lock.py`) compares the fresh build against the committed hashes, hard-failing only when the runner's toolchain matches the one pinned in the lock. Its step summary opens with a per-target Gate B line (`reproduced` or `skipped - <reason>`), so a green run that verified nothing is visible at a glance. Runners are dated images (`macos-15`, `windows-2025`) because the lock pins their toolsets. It has `contents: read` and never commits.
 
 ### Relocking after a deliberate rebuild
 
@@ -143,8 +143,8 @@ Relocking is the human step that commits both the CI-built binaries and the lock
 3. Relock each target, passing the toolchain the build recorded:
 
 ```sh
-python3 scripts/rust-segment/verify-binaries.py --update --only macos-universal --toolchain toolchain-macos.txt
-python3 scripts/rust-segment/verify-binaries.py --update --only windows-x86_64 --toolchain toolchain-windows.txt
+python3 scripts/native-lock/verify-binaries.py --lock scripts/rust-segment/rust-segment-binaries.lock.json --update --only macos-universal --toolchain toolchain-macos.txt
+python3 scripts/native-lock/verify-binaries.py --lock scripts/rust-segment/rust-segment-binaries.lock.json --update --only windows-x86_64 --toolchain toolchain-windows.txt
 ```
 
 `--toolchain` is what makes the relock honest about who built the bytes: without it `--update` refuses on any host whose pinned components differ from `targets.<t>.rust.toolchain`, and for a target with no pin yet the flag gives it its first one. On Windows the pinned components are `rustc`, `cargo` and `msvc` (the VC++ toolset `link.exe` came from); on macOS `rustc`, `cargo`, `clang`, `xcode` and `sdk` (`ld` is recorded and deliberately not pinned).
