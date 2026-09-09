@@ -4,7 +4,9 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -21,6 +23,8 @@ namespace DCL.UI.ProfileNames
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? saveCancellationToken;
@@ -36,13 +40,17 @@ namespace DCL.UI.ProfileNames
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus) : base(viewFactory)
+            ProfileChangesBus profileChangesBus,
+            IMVCManager mvcManager,
+            IWeb3IdentityCache identityCache) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.mvcManager = mvcManager;
+            this.identityCache = identityCache;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -186,6 +194,12 @@ namespace DCL.UI.ProfileNames
 
         private void ClaimNewName()
         {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             webBrowser.OpenUrlMainThreadOnly(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
             NameClaimRequested?.Invoke();
         }

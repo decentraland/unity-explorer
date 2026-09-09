@@ -8,7 +8,9 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.ProfileNames;
+using DCL.UI.UpgradeGuestAccountPopup;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -28,6 +30,7 @@ namespace DCL.Passport.Modules
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly bool isNameEditorFeatureEnabled;
         private readonly NameColorPickerController colorPickerController;
+        private readonly IWeb3IdentityCache identityCache;
 
         private CancellationTokenSource? checkNameEditionCancellationToken;
         private CancellationTokenSource? showNameEditorCancellationToken;
@@ -42,7 +45,8 @@ namespace DCL.Passport.Modules
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            NameColorPickerController colorPickerController
+            NameColorPickerController colorPickerController,
+            IWeb3IdentityCache identityCache
             )
         {
             this.view = view;
@@ -52,6 +56,7 @@ namespace DCL.Passport.Modules
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.colorPickerController = colorPickerController;
+            this.identityCache = identityCache;
             isNameEditorFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.ProfileNameEditor);
             userNameElementPresenter = new UserNameElementPresenter(view.UserNameElement);
             walletAddressElementPresenter = new UserWalletAddressElementPresenter(view.UserWalletAddressElement);
@@ -148,6 +153,12 @@ namespace DCL.Passport.Modules
 
         private void ClaimName()
         {
+            if (identityCache.IsGuest())
+            {
+                mvcManager.ShowAndForget(UpgradeGuestAccountPopupController.IssueCommand());
+                return;
+            }
+
             webBrowser.OpenUrlMainThreadOnly(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
             NameClaimRequested?.Invoke();
         }
