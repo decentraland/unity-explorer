@@ -1,7 +1,9 @@
 using Global.AppArgs;
+using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.Tests
 {
@@ -48,6 +50,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Tests
         }
 
         private IAnalyticsService CreateServiceFor(IAppArgs args) =>
-            AnalyticsContainer.CreateAnalyticsService(config, LauncherTraits.FromAppArgs(args), args, false, CancellationToken.None);
+            AnalyticsContainer.CreateAnalyticsService(config, LauncherTraits.FromAppArgs(args), args, false, Substitute.For<IEventBus>(), CancellationToken.None);
     }
 }
