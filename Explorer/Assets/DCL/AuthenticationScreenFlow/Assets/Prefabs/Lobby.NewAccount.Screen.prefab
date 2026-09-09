@@ -1254,17 +1254,6 @@ MonoBehaviour:
   <FinalizeNewUserButton>k__BackingField: {fileID: 3173969130928085357}
   <JumpInIcon>k__BackingField: {fileID: 7198789231518003281}
   <FinalizeLoading>k__BackingField: {fileID: 3407687760501345149}
-  <RandomizeButton>k__BackingField: {fileID: 5000000000000000004}
-  <BodyTypeDropdownButton>k__BackingField: {fileID: 6458339435592951374}
-  <BodyTypeDropdownPanel>k__BackingField: {fileID: 6347562781986431726}
-  <BodyTypeOptionA>k__BackingField: {fileID: 214529506586251399}
-  <BodyTypeOptionB>k__BackingField: {fileID: 2817423320584728942}
-  <BodyTypeLabel>k__BackingField: {fileID: 7755734285382639315}
-  <ChevronIcon>k__BackingField: {fileID: 1000000000000000001}
-  <DropdownManIcon>k__BackingField: {fileID: 2000000000000000000}
-  <DropdownWomanIcon>k__BackingField: {fileID: 2000000000000000010}
-  <CheckmarkIconA>k__BackingField: {fileID: 1000000000000000020}
-  <CheckmarkIconB>k__BackingField: {fileID: 3000000000000000000}
   <SubscribeToggle>k__BackingField: {fileID: 6362815156590129799}
   <TermsOfUse>k__BackingField: {fileID: 2640047136852999159}
   <TermsOfUseAndPrivacyLink>k__BackingField: {fileID: 1611369640940411507}

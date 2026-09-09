@@ -14,6 +14,7 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField] public GameObject FemaleAvatarPresetsRoot { get; private set; } = null!;
         [field: SerializeField] public Button[] MaleAvatarPresets { get; private set; } = null!;
         [field: SerializeField] public Button[] FemaleAvatarPresets { get; private set; } = null!;
+        [field: SerializeField] public RectTransform SelectedSlotObj { get; private set; } = null!;
         [field: SerializeField] public Button BackButton { get; private set; } = null!;
         [field: SerializeField] public Button ContinueButton { get; private set; } = null!;
 
@@ -44,6 +45,20 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Hide() =>
             HideAsync(CancellationToken.None).Forget();
+
+        /// <summary>
+        ///     Moves the selection frame into the given slot and stretches it over the whole button.
+        /// </summary>
+        public void MoveSelectedSlotTo(Button slot)
+        {
+            SelectedSlotObj.SetParent(slot.transform, false);
+            SelectedSlotObj.anchorMin = Vector2.zero;
+            SelectedSlotObj.anchorMax = Vector2.one;
+            SelectedSlotObj.offsetMin = Vector2.zero;
+            SelectedSlotObj.offsetMax = Vector2.zero;
+            SelectedSlotObj.localScale = Vector3.one;
+            SelectedSlotObj.gameObject.SetActive(true);
+        }
 
         public void SetBodyTypeDropdownOpen(bool isOpen)
         {

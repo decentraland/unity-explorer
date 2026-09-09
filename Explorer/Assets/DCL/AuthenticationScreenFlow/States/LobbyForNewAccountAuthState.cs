@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -34,10 +33,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly Web3Address? referrer;
-
-        private readonly AvatarPresetProvider avatarPresetProvider = new ();
-
-        private BodyShape selectedBodyType = BodyShape.MALE;
 
         private Profile newUserProfile;
         private string userEmail;
@@ -86,7 +81,6 @@ namespace DCL.AuthenticationScreenFlow
             loginCt = payload.ct;
             userEmail = payload.email;
             newUserProfile = payload.profile;
-            selectedBodyType = payload.profile.Avatar.BodyShape;
 
             // The avatar was already picked in SelectAvatarForNewAccountAuthState
             UpdateCharacterPreview(payload.profile.Avatar);
@@ -103,15 +97,6 @@ namespace DCL.AuthenticationScreenFlow
 
             view.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
             view.BackButton.onClick.AddListener(OnBackButtonClicked);
-
-            view.RandomizeButton.onClick.AddListener(OnRandomizeButtonPressed);
-
-            // Body type selector
-            view.BodyTypeDropdownButton.onClick.AddListener(ToggleBodyTypeDropdown);
-            view.BodyTypeOptionA.onClick.AddListener(() => SelectBodyType(BodyShape.MALE));
-            view.BodyTypeOptionB.onClick.AddListener(() => SelectBodyType(BodyShape.FEMALE));
-            view.SetBodyTypeDropdownOpen(false);
-            view.UpdateBodyTypeUI(selectedBodyType.Equals(BodyShape.MALE));
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.SetIsOnWithoutNotify(false);
@@ -138,11 +123,6 @@ namespace DCL.AuthenticationScreenFlow
 
             view.FinalizeNewUserButton.onClick.RemoveAllListeners();
             view.BackButton.onClick.RemoveAllListeners();
-
-            view.RandomizeButton.onClick.RemoveAllListeners();
-            view.BodyTypeDropdownButton.onClick.RemoveAllListeners();
-            view.BodyTypeOptionA.onClick.RemoveAllListeners();
-            view.BodyTypeOptionB.onClick.RemoveAllListeners();
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.onValueChanged.RemoveAllListeners();
@@ -176,26 +156,6 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController.Initialize(newAvatar, CharacterPreviewUtils.AUTH_SCREEN_PREVIEW_POSITION);
             characterPreviewController.OnBeforeShow();
             characterPreviewController.OnShow();
-        }
-
-        private void OnRandomizeButtonPressed()
-        {
-            UpdateCharacterPreview(avatarPresetProvider.Next(selectedBodyType));
-        }
-
-        private void ToggleBodyTypeDropdown()
-        {
-            bool isOpen = !view.BodyTypeDropdownPanel.activeSelf;
-            view.SetBodyTypeDropdownOpen(isOpen);
-        }
-
-        private void SelectBodyType(BodyShape bodyShape)
-        {
-            selectedBodyType = bodyShape;
-            view.SetBodyTypeDropdownOpen(false);
-            view.UpdateBodyTypeUI(bodyShape.Equals(BodyShape.MALE));
-            // Regenerate avatar with the new body type
-            UpdateCharacterPreview(avatarPresetProvider.Next(selectedBodyType));
         }
 
         private void OnToggleChanged(bool _) =>

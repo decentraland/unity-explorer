@@ -89,6 +89,7 @@ namespace DCL.AuthenticationScreenFlow
             view.SetBodyTypeDropdownOpen(false);
             view.UpdateBodyTypeUi(selectedBodyType.Equals(BodyShape.MALE));
 
+            UpdateSelectedSlot();
             UpdateCharacterPreview(avatarPresetProvider.Get(selectedBodyType, selectedPresetSlot));
         }
 
@@ -123,7 +124,15 @@ namespace DCL.AuthenticationScreenFlow
             selectedBodyType = bodyShape;
             selectedPresetSlot = slot;
 
+            UpdateSelectedSlot();
             UpdateCharacterPreview(avatarPresetProvider.Get(bodyShape, slot));
+        }
+
+        private void UpdateSelectedSlot()
+        {
+            Button[] presets = selectedBodyType.Equals(BodyShape.FEMALE) ? view.FemaleAvatarPresets : view.MaleAvatarPresets;
+
+            view.MoveSelectedSlotTo(presets[Mathf.Min(selectedPresetSlot, presets.Length - 1)]);
         }
 
         private void ToggleBodyTypeDropdown() =>
@@ -135,6 +144,7 @@ namespace DCL.AuthenticationScreenFlow
             view.SetBodyTypeDropdownOpen(false);
             view.UpdateBodyTypeUi(bodyShape.Equals(BodyShape.MALE));
 
+            UpdateSelectedSlot();
             UpdateCharacterPreview(avatarPresetProvider.Get(selectedBodyType, selectedPresetSlot));
         }
 
