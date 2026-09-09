@@ -13,12 +13,15 @@ namespace DCL.BugReporting.UI
 
     public class BugReportView : ViewBase, IView
     {
+        private const float DISABLED_LABEL_ALPHA = 0.5f;
+
         [field: Header("Form")]
         [field: SerializeField] public TMP_Dropdown IssueTypeDropdown { get; private set; } = null!;
         [field: SerializeField] public TMP_InputField DescriptionInput { get; private set; } = null!;
         [field: SerializeField] public TMP_Text DescriptionCharCounter { get; private set; } = null!;
         [field: SerializeField] public Toggle ShareLogsToggle { get; private set; } = null!;
         [field: SerializeField] public Button SubmitButton { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text SubmitButtonLabel { get; private set; } = null!;
         [field: SerializeField] public Button CancelButton { get; private set; } = null!;
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
 
@@ -48,6 +51,16 @@ namespace DCL.BugReporting.UI
         {
             FormPanel.SetActive(state == BugReportViewState.Form);
             SuccessPanel.SetActive(state == BugReportViewState.Success);
+        }
+
+        /// <summary>The button's color tint only fades its background, so the label is faded here to match.</summary>
+        public void SetSubmitInteractable(bool interactable)
+        {
+            SubmitButton.interactable = interactable;
+
+            Color labelColor = SubmitButtonLabel.color;
+            labelColor.a = interactable ? 1f : DISABLED_LABEL_ALPHA;
+            SubmitButtonLabel.color = labelColor;
         }
 
         /// <summary>The field can still be focused when the view closes, so a reopen hides the counter explicitly.</summary>

@@ -164,7 +164,7 @@ namespace DCL.BugReporting.UI
             RefreshSubmitInteractable();
 
         private void RefreshSubmitInteractable() =>
-            viewInstance!.SubmitButton.interactable = CanSubmit(viewInstance.IssueTypeDropdown.value, viewInstance.DescriptionInput.text, viewInstance.ShareLogsToggle.isOn);
+            viewInstance!.SetSubmitInteractable(CanSubmit(viewInstance.IssueTypeDropdown.value, viewInstance.DescriptionInput.text, viewInstance.ShareLogsToggle.isOn));
 
         private void OnSubmitClicked()
         {
