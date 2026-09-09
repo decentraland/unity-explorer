@@ -27,6 +27,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private readonly Stack<GlobalJobArrayIndex> releasedIndexes;
 
         private QuickArray<float4x4> matrixFromAllAvatars;
+        private QuickArray<float4x4> localToWorldFromAllAvatars;
+        private QuickArray<float3x2> localBounds;
+        private QuickArray<float3x2> worldBounds;
         private QuickArray<bool> updateAvatar;
         private QuickArray<float4x4> bonesCombined;
 
@@ -46,6 +49,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public BoneMatrixCalculationJob Job;
 
+        /// <summary>
+        ///     Avatar bounds in world space, written by the calculation job. Only valid after Complete.
+        /// </summary>
+        public NativeArray<float3x2> WorldBounds => worldBounds.InnerNativeArray();
+
 #if UNITY_INCLUDE_TESTS
         public int MatrixFromAllAvatarsLength => matrixFromAllAvatars.Length;
         public int UpdateAvatarLength => updateAvatar.Length;
@@ -61,6 +69,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Job = new BoneMatrixCalculationJob(bonesArrayLength, bonesPerAvatarLength, bonesCombined.InnerNativeArray());
 
             matrixFromAllAvatars = new QuickArray<float4x4>(initialCapacity);
+            localToWorldFromAllAvatars = new QuickArray<float4x4>(initialCapacity);
+            localBounds = new QuickArray<float3x2>(initialCapacity);
+            worldBounds = new QuickArray<float3x2>(initialCapacity);
             updateAvatar = new QuickArray<bool>(initialCapacity);
 
             perAvatarBoneCount = new QuickArray<int>(initialCapacity);
@@ -170,6 +181,18 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             perAvatarBoneCount[validIndex] = boneCount;
         }
 
+        /// <summary>
+        ///     Refreshes the avatar-space bounds for a live slot. Pushed every frame alongside the bone count, so
+        ///     the value is current whether the avatar kept its slot or was re-registered into a recycled one.
+        /// </summary>
+        public void SetLocalBounds(int validIndex, float3x2 bounds)
+        {
+            if (validIndex < 0 || validIndex >= localBounds.Length)
+                return;
+
+            localBounds[validIndex] = bounds;
+        }
+
         public void Schedule(int batchCount)
         {
             if (avatarIndex == 0)
@@ -184,7 +207,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             var boneGatherJob = new BoneGatherJob { BonesCombined = bonesCombined.InnerNativeArray() };
             var boneGatherHandle = boneGatherJob.Schedule(bonesTransformAccessArray);
 
-            var rootGatherJob = new AvatarRootGatherJob { MatrixFromAllAvatars = matrixFromAllAvatars.InnerNativeArray() };
+            var rootGatherJob = new AvatarRootGatherJob
+            {
+                MatrixFromAllAvatars = matrixFromAllAvatars.InnerNativeArray(),
+                LocalToWorldFromAllAvatars = localToWorldFromAllAvatars.InnerNativeArray(),
+            };
             var rootGatherHandle = rootGatherJob.Schedule(rootsTransformAccessArray);
 
             var combinedGatherHandle = JobHandle.CombineDependencies(boneGatherHandle, rootGatherHandle);
@@ -192,6 +219,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Job.AvatarTransform = matrixFromAllAvatars.InnerNativeArray();
             Job.UpdateAvatar = updateAvatar.InnerNativeArray();
             Job.PerAvatarBoneCount = perAvatarBoneCount.InnerNativeArray();
+            Job.AvatarLocalToWorld = localToWorldFromAllAvatars.InnerNativeArray();
+            Job.LocalBounds = localBounds.InnerNativeArray();
+            Job.WorldBounds = worldBounds.InnerNativeArray();
             handle = Job.Schedule(avatarIndex, batchCount, combinedGatherHandle);
         }
 
@@ -220,6 +250,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             bonesCombined.ReAlloc(newCapacity * bonesArrayLength);
             matrixFromAllAvatars.ReAlloc(newCapacity);
+            localToWorldFromAllAvatars.ReAlloc(newCapacity);
+            localBounds.ReAlloc(newCapacity, NativeArrayOptions.ClearMemory);
+            worldBounds.ReAlloc(newCapacity, NativeArrayOptions.ClearMemory);
             updateAvatar.ReAlloc(newCapacity);
 
             int oldCapacity = currentAvatarAmountSupported;
@@ -269,6 +302,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             matrixFromAllAvatars.Dispose();
             stopwatch.LogStep("matrixFromAllAvatars.Dispose");
+
+            localToWorldFromAllAvatars.Dispose();
+            localBounds.Dispose();
+            worldBounds.Dispose();
+            stopwatch.LogStep("avatarBounds.Dispose");
 
             updateAvatar.Dispose();
             stopwatch.LogStep("updateAvatar.Dispose");
